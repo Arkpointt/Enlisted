@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
@@ -21,33 +22,33 @@ namespace Enlisted.Patches
             try
             {
                 var enlistmentBehavior = EnlistmentBehavior.Instance;
-                if (enlistmentBehavior == null || !enlistmentBehavior.IsEnlisted) 
-                    return true;
-
-                bool isMainPartyInvolved = (attackerParty == PartyBase.MainParty || defenderParty == PartyBase.MainParty);
-                if (!isMainPartyInvolved) 
-                    return true;
-
-                if (defenderParty == PartyBase.MainParty)
+                if (enlistmentBehavior == null || !enlistmentBehavior.IsEnlisted)
                 {
-                    if (IsHostileToEnlistedPlayer(attackerParty, enlistmentBehavior.Commander))
-                    {
-                        string attackerName = GetPartyName(attackerParty);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"[Enlisted] {attackerName} avoids attacking you while you serve {enlistmentBehavior.Commander?.Name}."));
-                        return false;
-                    }
+                    return true;
                 }
 
-                if (attackerParty == PartyBase.MainParty)
+                bool isMainPartyInvolved = (attackerParty == PartyBase.MainParty || defenderParty == PartyBase.MainParty);
+                if (!isMainPartyInvolved)
                 {
-                    if (IsHostileToEnlistedPlayer(defenderParty, enlistmentBehavior.Commander))
-                    {
-                        string defenderName = GetPartyName(defenderParty);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"[Enlisted] You cannot attack {defenderName} while serving {enlistmentBehavior.Commander?.Name}."));
-                        return false;
-                    }
+                    return true;
+                }
+
+                if (defenderParty == PartyBase.MainParty &&
+                    IsHostileToEnlistedPlayer(attackerParty, enlistmentBehavior.Commander))
+                {
+                    string attackerName = GetPartyName(attackerParty);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"[Enlisted] {attackerName} avoids attacking you while you serve {enlistmentBehavior.Commander?.Name}."));
+                    return false;
+                }
+
+                if (attackerParty == PartyBase.MainParty &&
+                    IsHostileToEnlistedPlayer(defenderParty, enlistmentBehavior.Commander))
+                {
+                    string defenderName = GetPartyName(defenderParty);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"[Enlisted] You cannot attack {defenderName} while serving {enlistmentBehavior.Commander?.Name}."));
+                    return false;
                 }
 
                 return true;
@@ -65,11 +66,20 @@ namespace Enlisted.Patches
             try
             {
                 if (party?.Name != null)
+                {
                     return party.Name.ToString();
+                }
+
                 if (party?.MobileParty?.Name != null)
+                {
                     return party.MobileParty.Name.ToString();
+                }
+
                 if (party?.MobileParty?.LeaderHero != null)
+                {
                     return party.MobileParty.LeaderHero.Name?.ToString() ?? "Unknown Hero";
+                }
+
                 return "Unknown party";
             }
             catch
@@ -80,28 +90,40 @@ namespace Enlisted.Patches
 
         public static bool IsHostileToEnlistedPlayer(PartyBase party, Hero commander)
         {
-            if (party?.MobileParty == null) return false;
+            if (party?.MobileParty == null)
+            {
+                return false;
+            }
 
             if (commander != null && party.MobileParty == commander.PartyBelongedTo)
+            {
                 return false;
+            }
 
             if (commander?.MapFaction != null && party.MapFaction == commander.MapFaction)
+            {
                 return false;
+            }
 
             var mobileParty = party.MobileParty;
 
             if (mobileParty.IsBandit || (party.MapFaction != null && party.MapFaction.IsBanditFaction))
+            {
                 return true;
+            }
 
-            if (mobileParty.StringId != null && 
-                (mobileParty.StringId.Contains("looter") || 
-                 mobileParty.StringId.Contains("bandit") ||
-                 mobileParty.StringId.ToLower().Contains("desert_bandit") ||
-                 mobileParty.StringId.ToLower().Contains("steppe_bandit") ||
-                 mobileParty.StringId.ToLower().Contains("sea_raider") ||
-                 mobileParty.StringId.ToLower().Contains("forest_bandit") ||
-                 mobileParty.StringId.ToLower().Contains("mountain_bandit")))
+            var id = mobileParty.StringId;
+            if (!string.IsNullOrEmpty(id) &&
+                (id.IndexOf("looter", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 id.IndexOf("bandit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 id.IndexOf("desert_bandit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 id.IndexOf("steppe_bandit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 id.IndexOf("sea_raider", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 id.IndexOf("forest_bandit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                 id.IndexOf("mountain_bandit", StringComparison.OrdinalIgnoreCase) >= 0))
+            {
                 return true;
+            }
 
             if (commander?.MapFaction != null && party.MapFaction != null)
             {
@@ -123,16 +145,26 @@ namespace Enlisted.Patches
             try
             {
                 var enlistmentBehavior = EnlistmentBehavior.Instance;
-                if (enlistmentBehavior == null || !enlistmentBehavior.IsEnlisted) 
+                if (enlistmentBehavior == null || !enlistmentBehavior.IsEnlisted)
+                {
                     return true;
+                }
 
                 bool isMainPartyInvolved = (majorParty == PartyBase.MainParty || joinedParty == PartyBase.MainParty);
-                if (!isMainPartyInvolved) 
+                if (!isMainPartyInvolved)
+                {
                     return true;
+                }
 
                 PartyBase hostileParty = null;
-                if (majorParty == PartyBase.MainParty) hostileParty = joinedParty;
-                else if (joinedParty == PartyBase.MainParty) hostileParty = majorParty;
+                if (majorParty == PartyBase.MainParty)
+                {
+                    hostileParty = joinedParty;
+                }
+                else if (joinedParty == PartyBase.MainParty)
+                {
+                    hostileParty = majorParty;
+                }
 
                 if (hostileParty != null && BanditEncounterPatch.IsHostileToEnlistedPlayer(hostileParty, enlistmentBehavior.Commander))
                 {
@@ -164,8 +196,10 @@ namespace Enlisted.Patches
             try
             {
                 var enlistmentBehavior = EnlistmentBehavior.Instance;
-                if (enlistmentBehavior == null || !enlistmentBehavior.IsEnlisted) 
+                if (enlistmentBehavior == null || !enlistmentBehavior.IsEnlisted)
+                {
                     return true;
+                }
 
                 if (defenderParty == PartyBase.MainParty && BanditEncounterPatch.IsHostileToEnlistedPlayer(attackerParty, enlistmentBehavior.Commander))
                 {
