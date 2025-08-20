@@ -1,44 +1,52 @@
-# Visual Studio
-.vs/
-*.suo
+# Build outputs
+bin/
+obj/
+[Bb]uild/
+[Bb]in*/
+obj*/
+TestResults/
 *.user
-*.userosscache
-*.sln.docstates
+*.suo
+*.userprefs
+*.ncrunch*
+*.localhistory
+*.cache
+*.log
 
-# JetBrains Rider / ReSharper
+# VS/VSCode/Rider
+.vs/
+.vscode/
 .idea/
-.rider/
-_ReSharper*/
-_ReSharper.Caches/
+.ReSharper*/
+*_ReSharper.Caches/
 *.DotSettings.user
 
-# VS Code
-.vscode/
-
-# Build artifacts
-[Bb]in/
-[Oo]bj/
-*.cache/
-*.log
-TestResults/
-
-# NuGet
+# Packages
 packages/
-*.nupkg
-*.nuspec
+*.nuget/
 .nuget/
 
-# OS generated
+# OS junk
 .DS_Store
 Thumbs.db
+$RECYCLE.BIN/
 
-# Decompiled content (reference-only)
-DECOMPILE/**
+# Tooling
+.qodo/
 
-# Always ignore build outputs from any mod projects under DECOMPILE
-DECOMPILE/**/bin/
-DECOMPILE/**/obj/
+# Archives
+*.zip
+*.7z
+*.rar
 
-# Solution-local caches
-*.VC.db
-*.opendb
+# Coverage / analysis
+coverage/
+*.coverage*
+*.report.*
+
+# Do not commit any accidental game dumps
+*.sav
+*.dmp
+
+# Keep module manifest tracked (needed for deployment)
+# SubModule.xml is intentionally NOT ignored

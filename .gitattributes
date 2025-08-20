@@ -1,43 +1,20 @@
-* text=auto eol=crlf
+* text=auto
 
-# Source files
-*.cs      text diff=csharp
-*.csproj  text
-*.sln     text
-*.props   text eol=crlf
-*.targets text eol=crlf
-*.xml     text
-*.json    text
-*.yml     text
-*.yaml    text
-*.md      text
-*.editorconfig text
+# Treat C# files as text with CRLF on Windows
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.sln text eol=crlf
+*.tt text eol=crlf
+*.ps1 text eol=crlf
 
-# Common binary assets
+# Keep images/binaries exact
 *.png binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
-*.bmp binary
-*.ico binary
-*.pdf binary
-*.zip binary
-*.7z  binary
-*.rar binary
 *.dll binary
-*.exe binary
 *.pdb binary
-*.bnk binary
-*.ogg binary
-*.wav binary
-*.ttf binary
-*.otf binary
-*.shader binary
-
-# Merge strategy for solution files
-*.sln merge=union
-
-# Optional: Uncomment if you use Git LFS for large assets
-# *.fbx filter=lfs diff=lfs merge=lfs -text
-# *.dds filter=lfs diff=lfs merge=lfs -text
-# *.wav filter=lfs diff=lfs merge=lfs -text
+*.exe binary
+*.zip binary
+*.7z binary
+*.rar binary
