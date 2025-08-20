@@ -1,8 +1,11 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
+using Enlisted.Services;
+using Enlisted.Services.Abstractions;
+using Enlisted.Services.Impl;
 
 namespace Enlisted
 {
@@ -19,6 +22,13 @@ namespace Enlisted
             base.OnSubModuleLoad();
             _harmony = new Harmony("Enlisted");
             _harmony.PatchAll();
+
+            // Configure services (DI)
+            ServiceLocator.Configure(
+                new ArmyServiceImpl(),
+                new PartyIllusionServiceImpl(),
+                new DialogServiceImpl(),
+                new PromotionRulesImpl());
         }
 
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)

@@ -4,56 +4,21 @@ using TaleWorlds.SaveSystem;
 namespace Enlisted.Models
 {
     /// <summary>
-    /// Data model representing the enlistment state.
-    /// Encapsulates all saveable data for the enlistment system.
-    /// Properly integrated with Bannerlord's save system.
+    /// Data persisted for enlistment lifecycle. Accessed only by behaviors/services.
     /// </summary>
     public class EnlistmentState
     {
-        [SaveableField(1)] 
-        private bool _isEnlisted;
-        
-        [SaveableField(2)] 
-        private Hero _commander;
-        
-        [SaveableField(3)] 
-        private bool _pendingDetach;
-        
-        [SaveableField(4)] 
-        private bool _playerPartyWasVisible;
+        [SaveableField(1)] private bool _isEnlisted;
+        [SaveableField(2)] private Hero _commander;
+        [SaveableField(3)] private bool _pendingDetach;
+        [SaveableField(4)] private bool _playerPartyWasVisible;
+        [SaveableField(5)] private bool _waitingInReserve;
 
-        [SaveableField(5)] 
-        private bool _waitingInReserve;
-
-        public bool IsEnlisted 
-        { 
-            get => _isEnlisted; 
-            set => _isEnlisted = value; 
-        }
-        
-        public Hero Commander 
-        { 
-            get => _commander; 
-            set => _commander = value; 
-        }
-        
-        public bool PendingDetach 
-        { 
-            get => _pendingDetach; 
-            set => _pendingDetach = value; 
-        }
-        
-        public bool PlayerPartyWasVisible 
-        { 
-            get => _playerPartyWasVisible; 
-            set => _playerPartyWasVisible = value; 
-        }
-
-        public bool WaitingInReserve 
-        { 
-            get => _waitingInReserve; 
-            set => _waitingInReserve = value; 
-        }
+        public bool IsEnlisted { get => _isEnlisted; set => _isEnlisted = value; }
+        public Hero Commander { get => _commander; set => _commander = value; }
+        public bool PendingDetach { get => _pendingDetach; set => _pendingDetach = value; }
+        public bool PlayerPartyWasVisible { get => _playerPartyWasVisible; set => _playerPartyWasVisible = value; }
+        public bool WaitingInReserve { get => _waitingInReserve; set => _waitingInReserve = value; }
 
         public EnlistmentState()
         {
@@ -64,9 +29,7 @@ namespace Enlisted.Models
             _waitingInReserve = false;
         }
 
-        /// <summary>
-        /// Initiates enlistment with the specified commander.
-        /// </summary>
+        /// <summary>Start service under a commander.</summary>
         public void Enlist(Hero commander)
         {
             _isEnlisted = true;
@@ -75,9 +38,7 @@ namespace Enlisted.Models
             _waitingInReserve = false;
         }
 
-        /// <summary>
-        /// Initiates the leave service process.
-        /// </summary>
+        /// <summary>Initiate leaving service; behavior performs cleanup then clears flag.</summary>
         public void Leave()
         {
             _isEnlisted = false;
@@ -86,27 +47,12 @@ namespace Enlisted.Models
             _waitingInReserve = false;
         }
 
-        /// <summary>
-        /// Clears the pending detach flag after cleanup is complete.
-        /// </summary>
-        public void CompletePendingDetach()
-        {
-            _pendingDetach = false;
-        }
+        public void CompletePendingDetach() => _pendingDetach = false;
 
-        /// <summary>
-        /// Checks if the commander is still valid for continued service.
-        /// </summary>
-        public bool IsCommanderValid()
-        {
-            return _commander != null && 
-                   !_commander.IsDead && 
-                   _commander.PartyBelongedTo != null;
-        }
+        /// <summary>Commander still valid and in a party.</summary>
+        public bool IsCommanderValid() => _commander != null && !_commander.IsDead && _commander.PartyBelongedTo != null;
 
-        /// <summary>
-        /// Forces end of service (used when commander becomes unavailable).
-        /// </summary>
+        /// <summary>Emergency termination of service due to invalid commander or errors.</summary>
         public void ForceEndService()
         {
             _isEnlisted = false;
@@ -117,8 +63,7 @@ namespace Enlisted.Models
     }
     
     /// <summary>
-    /// Save type definer for the Enlisted mod.
-    /// Required for proper serialization of custom types.
+    /// Save-type definer required by Bannerlord for custom classes.
     /// </summary>
     public class EnlistedSaveDefiner : SaveableTypeDefiner
     {

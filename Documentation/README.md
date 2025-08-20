@@ -1,6 +1,10 @@
-# Enlisted – Serve as a Soldier
+# Enlisted – Serve as a Soldier (Developer Guide)
 
-A Bannerlord mod that lets the player enlist under a lord and play as a soldier. Targeting .NET Framework 4.7.2. Harmony is used for non-invasive game patches.
+This is the full README for developers. It explains how the mod works internally and how to build and deploy it.
+
+Overview
+- A Bannerlord mod that lets the player enlist under a lord and play as a soldier. Targeting .NET Framework 4.7.2.
+- Entry point: SubModule.cs. Harmony is used for non-invasive game patches.
 
 Features
 - Enlist/discharge via lord dialog (priority 110)

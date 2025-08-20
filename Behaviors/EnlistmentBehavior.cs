@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Conversation;
@@ -11,8 +11,8 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.SaveSystem;
 using Enlisted.Models;
-using Enlisted.Services;
 using Enlisted.Utils;
+using Enlisted.Services; // ServiceLocator
 
 namespace Enlisted.Behaviors
 {
@@ -58,7 +58,7 @@ namespace Enlisted.Behaviors
             // Sync the visibility state with the service after loading
             if (_state != null)
             {
-                PartyIllusionService.SetOriginalVisibilityState(_state.PlayerPartyWasVisible);
+                ServiceLocator.PartyIllusion?.SetOriginalVisibilityState(_state.PlayerPartyWasVisible);
             }
         }
 
@@ -76,7 +76,7 @@ namespace Enlisted.Behaviors
                 Hero.OneToOneConversationHero == _state.Commander;
 
             // Register dialogs using the service
-            DialogService.RegisterDialogs(starter, Constants.MAIN_HUBS, canEnlist, canLeave, OnEnlist, OnLeave);
+            ServiceLocator.Dialog?.RegisterDialogs(starter, Constants.MAIN_HUBS, canEnlist, canLeave, OnEnlist, OnLeave);
         }
 
         private void OnTick(float _)
@@ -84,8 +84,8 @@ namespace Enlisted.Behaviors
             if (_state.PendingDetach)
             {
                 _state.CompletePendingDetach();
-                PartyIllusionService.RestorePlayerPartyVisibility();
-                _state.PlayerPartyWasVisible = PartyIllusionService.GetOriginalVisibilityState();
+                ServiceLocator.PartyIllusion?.RestorePlayerPartyVisibility();
+                _state.PlayerPartyWasVisible = ServiceLocator.PartyIllusion?.GetOriginalVisibilityState() ?? _state.PlayerPartyWasVisible;
             }
 
             // Maintain the illusion while enlisted - ENHANCED VERSION
@@ -97,9 +97,9 @@ namespace Enlisted.Behaviors
                 // Validate commander is still in a party and active
                 if (commanderParty == null || !commanderParty.IsActive)
                 {
-                    ArmyService.SafeDetach();
+                    ServiceLocator.Army?.SafeDetach();
                     _state.ForceEndService();
-                    PartyIllusionService.RestorePlayerPartyVisibility();
+                    ServiceLocator.PartyIllusion?.RestorePlayerPartyVisibility();
                     InformationManager.DisplayMessage(new InformationMessage(Constants.Messages.SERVICE_ENDED));
                     return;
                 }
@@ -135,7 +135,7 @@ namespace Enlisted.Behaviors
                 }
 
                 // Maintain visual illusion
-                PartyIllusionService.MaintainIllusion(_state.Commander);
+                ServiceLocator.PartyIllusion?.MaintainIllusion(_state.Commander);
                 
                 // Ensure escort behavior persists
                 EnsureEscortBehavior();
@@ -204,9 +204,9 @@ namespace Enlisted.Behaviors
 
             if (!_state.IsCommanderValid())
             {
-                ArmyService.SafeDetach();
+                ServiceLocator.Army?.SafeDetach();
                 _state.ForceEndService();
-                PartyIllusionService.RestorePlayerPartyVisibility();
+                ServiceLocator.PartyIllusion?.RestorePlayerPartyVisibility();
                 InformationManager.DisplayMessage(new InformationMessage(Constants.Messages.SERVICE_ENDED));
             }
         }
@@ -217,13 +217,13 @@ namespace Enlisted.Behaviors
             _state.Enlist(commander);
 
             // Store original visibility state before hiding
-            _state.PlayerPartyWasVisible = PartyIllusionService.GetOriginalVisibilityState();
+            _state.PlayerPartyWasVisible = ServiceLocator.PartyIllusion?.GetOriginalVisibilityState() ?? _state.PlayerPartyWasVisible;
 
             // Attempt to join army
-            if (ArmyService.TryJoinCommandersArmy(commander))
+            if (ServiceLocator.Army?.TryJoinCommandersArmy(commander) == true)
             {
                 // Create the party illusion
-                PartyIllusionService.HidePlayerPartyAndFollowCommander(commander);
+                ServiceLocator.PartyIllusion?.HidePlayerPartyAndFollowCommander(commander);
                 InformationManager.DisplayMessage(new InformationMessage(string.Format(Constants.Messages.ENLISTED_SUCCESS, commander?.Name)));
                 
                 // Verify encounter protection is active
@@ -233,7 +233,7 @@ namespace Enlisted.Behaviors
 
         private void OnLeave()
         {
-            ArmyService.LeaveCurrentArmy();
+            ServiceLocator.Army?.LeaveCurrentArmy();
             _state.Leave();
             InformationManager.DisplayMessage(new InformationMessage(Constants.Messages.LEFT_SERVICE));
         }

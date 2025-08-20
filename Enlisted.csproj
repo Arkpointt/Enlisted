@@ -105,6 +105,11 @@
     <Reference Include="TaleWorlds.ScreenSystem">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.ScreenSystem.dll</HintPath>
     </Reference>
+    <!-- Harmony compile-time reference; runtime is supplied by the Bannerlord.Harmony module -->
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Behaviors\EnlistmentBehavior.cs" />
@@ -118,10 +123,19 @@
     <Compile Include="Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="Patches\SuppressArmyMenuPatch.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\Abstractions\IArmyService.cs" />
+    <Compile Include="Services\Abstractions\IDialogService.cs" />
+    <Compile Include="Services\Abstractions\IPartyIllusionService.cs" />
+    <Compile Include="Services\Abstractions\IPromotionRules.cs" />
     <Compile Include="Services\ArmyService.cs" />
     <Compile Include="Services\DialogService.cs" />
+    <Compile Include="Services\Impl\ArmyServiceImpl.cs" />
+    <Compile Include="Services\Impl\DialogServiceImpl.cs" />
+    <Compile Include="Services\Impl\PartyIllusionServiceImpl.cs" />
+    <Compile Include="Services\Impl\PromotionRulesImpl.cs" />
     <Compile Include="Services\PartyIllusionService.cs" />
     <Compile Include="Services\PromotionRules.cs" />
+    <Compile Include="Services\ServiceLocator.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="SubModule.cs" />
     <Compile Include="Utils\Constants.cs" />
@@ -130,15 +144,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Documentation\BLUEPRINT.md" />
-    <None Include="Documentation\QUICK_REFERENCE.md" />
+    <None Include="Documentation\README.md" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />
   </ItemGroup>
-  <!-- Harmony compile-time reference; runtime is supplied by the Bannerlord.Harmony module -->
-  <ItemGroup>
-    <PackageReference Include="HarmonyLib" Version="2.2.2" ExcludeAssets="runtime" />
-  </ItemGroup>
+  <!-- Removed HarmonyLib PackageReference to avoid NuGet restore issues; using direct reference to 0Harmony above -->
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>set MODROOT="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"

@@ -1,275 +1,124 @@
-# ENLISTED MOD BLUEPRINT
-*Complete documentation of features, architecture, and implementation*
+# Enlisted Mod Blueprint
+Comprehensive reference for features, architecture, and standards used in this repository.
 
----
+1. Overview
+- Name: Enlisted – Serve as a Soldier
+- Game: Mount & Blade II: Bannerlord
+- Target framework: .NET Framework 4.7.2
+- Entry point: SubModule.cs (TaleWorlds module)
+- Build targets: Debug/Release for AnyCPU and x64 (use Debug|x64 for game runtime)
 
-## ?? TABLE OF CONTENTS
-1. [Mod Overview](#mod-overview)
-2. [Current Features](#current-features)
-3. [Technical Architecture](#technical-architecture)
-4. [Implementation Status](#implementation-status)
-5. [Development Roadmap](#development-roadmap)
-6. [Technical Notes](#technical-notes)
-7. [Testing Checklist](#testing-checklist)
+Core idea: The player can enlist under a lord and serve as a soldier. The mod integrates with native systems (armies, dialogs, encounters, UI) to make the experience seamless and stable.
 
----
+2. Coding Standards (adapted for this repo)
+- Follow Microsoft C# conventions.
+- Naming
+  - Classes/structs/enums/constants: PascalCase (PromotionBehavior, MaxPartySize)
+  - Methods/properties/events: PascalCase
+  - Parameters/local vars: camelCase
+  - Private fields: _camelCase (private bool _isEnlisted)
+  - Interfaces: IPascalCase (IArmyService)
+- Formatting
+  - Allman braces; 4-space indentation; no tabs.
+  - One type per file. Keep files under the correct folder by concern.
+- Comments
+  - XML docs (///) on public/internal types and members exposed outside their file.
+  - In-method comments explain why, not what.
+- Defensive coding
+  - Prefer null-conditional and null-coalescing (?. and ??).
+  - Guard game state reads; Bannerlord can return nulls.
+- Harmony patch safety
+  - One patched game class per file under Patches/.
+  - Patch class names: <GameClass>_<Method>_<Prefix|Postfix|Transpiler>.
+  - Wrap patch logic in try/catch and log via DebugHelper to avoid game crashes.
+- Localization
+  - No hardcoded user-facing strings. Use TextObject with string IDs.
+- Performance
+  - Keep per-tick logic minimal; offload to hourly/daily events where possible.
+  - Cache repeated lookups in a scope.
 
-## ?? MOD OVERVIEW
+3. Professional Modularity Rules
+- Layered dependencies (allow-list)
+  - Patches ➜ Services
+  - Behaviors ➜ Services
+  - Services ➜ Models, Utils (and TaleWorlds APIs)
+  - Models, Utils ➜ no upward references
+  - Forbidden: Patches ➜ Behaviors; Behaviors ➜ Patches; cross-service concrete coupling
+- Service contracts
+  - Define interfaces for every service consumed by other layers:
+    - IArmyService, IPartyIllusionService, IDialogService, IPromotionRules
+  - Behaviors depend on interfaces only. SubModule wires concrete implementations.
+- Patch discipline
+  - Patches contain no business logic. They only:
+    1) detect the game event/state, 2) map to a service call, 3) guard with try/catch and log.
+- Reflection boundaries
+  - ReflectionHelpers may be used inside Services only (never in Behaviors/Patches).
+- Feature boundaries
+  - Keep feature logic self-contained: enlistment, wages, promotion, encounters, UI.
+  - Cross-feature communication goes through service interfaces or events, not direct calls.
+- Observability
+  - Centralized logging via DebugHelper with levels (Info/Warning/Error). Minimal per-tick logging.
 
-**Name:** Enlisted - Serve as a Soldier  
-**Version:** 1.0.0  
-**Target Game:** Mount & Blade II: Bannerlord  
-**Framework:** .NET Framework 4.7.2, C# 13.0  
+4. Repository Structure (this project)
+- Behaviors/
+  - EnlistmentBehavior: Orchestrates enlist/leave life cycle and save/load.
+  - PromotionBehavior: Handles rank and promotion tracking via PromotionRules.
+  - WageBehavior: Pays daily wages while enlisted.
+- Services/
+  - ArmyService: Create/join/leave armies; escort AI setup.
+  - PartyIllusionService: Hides player party, handles camera follow/restore.
+  - DialogService: Registers dialog lines and conditions/actions.
+  - PromotionRules: Encapsulates promotion thresholds and logic.
+- Patches/
+  - BanditEncounterPatch: Prevents hostile encounters while enlisted.
+  - BattleParticipationPatch: Auto-joins commander battles on correct side.
+  - EngagementPatch: Participation/engagement helpers.
+  - HidePartyNamePlatePatch: UI cleanup while enlisted.
+  - SuppressArmyMenuPatch: Removes inappropriate army UI while enlisted.
+- Models/
+  - EnlistmentState, PromotionState: Persistent state for save system.
+- Utils/
+  - Constants, DebugHelper (logging), ReflectionHelpers (API-compat wrappers).
+- Settings.cs: Centralized knobs for wages, toggles, etc.
+- SubModule.cs: Module bootstrap; adds CampaignBehaviors and wires services.
+- SubModule.xml: Bannerlord module manifest (copied by post-build).
 
-**Core Concept:** Allow players to enlist in a lord's army as a subordinate, creating an immersive "serve as a soldier" experience where the player follows and fights alongside their commander rather than leading independently.
+Optional evolution (feature modules)
+- If the codebase grows, introduce a Features/ folder with subfolders per feature (Enlistment, Promotion, Wages, Encounters, UI), each hosting its behavior, service(s), patches, and models. Keep public APIs in Services interfaces at the root namespace to avoid circular deps.
 
-**Key Philosophy:** Seamless integration with existing game mechanics using the same APIs as Bannerlord's built-in systems.
+5. Game Integration
+- Dialog integration: Options appear in lord_talk and hero_main_options with priority 110.
+- Army integration: Uses Kingdom.CreateArmy and escort AI for joining/escorting.
+- Camera/visibility: Transfers camera to commander; hides player party; restores on discharge.
+- Encounters/battles: Watches commander combat state and joins automatically.
+- UI: Hides party nameplate and suppresses conflicting screens while enlisted.
+- Save/load: EnlistmentState and PromotionState saved via Bannerlord save system.
 
----
+6. Build & Deploy
+- Visual Studio: Build Debug|x64.
+- Post-build: Copies Enlisted.dll and SubModule.xml to
+  Modules/Enlisted/bin/Win64_Shipping_Client under your Bannerlord installation (see .csproj PostBuildEvent).
+- References: .csproj points to TaleWorlds and 0Harmony DLLs in Steam installation; keep paths valid.
 
-## ? CURRENT FEATURES
+7. Review & Testing Checklists
+- Review (PR) checklist
+  - Layering respected (see section 3) and dependencies are interface-based.
+  - Patches are thin and delegate to services; have try/catch + logging.
+  - No hardcoded user-facing strings; uses TextObject IDs.
+  - XML docs on new public/internal members. No tabs; Allman braces.
+  - Per-tick logic kept minimal.
+- Functional testing
+  - Enlistment: dialog shows, enlist succeeds, wages start, camera/visibility update.
+  - Battles: auto-join commander battles on correct side.
+  - Discharge: visibility/camera restore; wages stop.
+  - Stability: no hostile encounters; no unhandled exceptions in logs.
 
-### ?? Core Enlistment System
-- **Dialog Integration**: Seamlessly integrated into existing lord conversation hubs
-  - "I wish to enlist in your army" option
-  - "I'd like to leave your service" option
-  - Appears in `lord_talk` and `hero_main_options` hubs
-  - Priority 110 to appear prominently
+8. Roadmap
+- Promotions: Expand PromotionRules and UI feedback for ranks.
+- Advanced battle roles: Formation placement and role assignment.
+- Settings: Expose more knobs (wage, visibility toggles, logging level).
 
-### ?? Army Management Integration
-- **True Army Joining**: Uses exact same APIs as game's Army Management screen
-  - Creates army for commander if they don't have one
-  - Adds player to commander's army via `Kingdom.CreateArmy()`
-  - Sets proper AI escort behavior via `SetPartyAiAction.GetActionForEscortingParty()`
-  - Leaves army cleanly via `main.Army = null`
-
-### ??? Party Illusion System
-- **Visual Merger**: Creates convincing illusion of merged parties
-  - Hides player party from map (`main.IsVisible = false`)
-  - Transfers camera control to commander (`commanderParty.Party.SetAsCameraFollowParty()`)
-  - Maintains escort behavior when not in formal army
-  - Restores player control on discharge
-
-### ?? Wage System
-- **Daily Compensation**: Integrated wage payment system
-  - Configurable daily wage amount
-  - Automatic payment while enlisted
-  - Settings persistence across game sessions
-
-### ??? Settlement Integration
-- **Seamless Town Entry**: Follow commander into settlements
-  - Automatic entry when commander enters towns
-  - Maintains enlisted status inside settlements
-  - Can talk to commander while in settlements
-
-### ?? Battle Participation
-- **Automatic Battle Joining**: Join commander's battles automatically
-  - Monitors when commander enters combat
-  - Uses encounter system to join battles on correct side
-  - Provides battle notifications to player
-
-### ??? Hostile Encounter Protection
-- **Protection While Enlisted**: Prevents independent hostile encounters
-  - Blocks bandit attacks while serving
-  - Prevents enemy faction encounters
-  - Smart detection of hostile vs. friendly parties
-
-### ?? UI Integration
-- **Clean Visual Experience**: Professional UI modifications
-  - Hides party nameplate when enlisted
-  - Removes visual indicators of independent party
-  - Seamless restoration when leaving service
-
----
-
-## ??? TECHNICAL ARCHITECTURE
-
-### ?? Folder Structure
-```
-Enlisted/
-??? Behaviors/           # Main orchestrators
-?   ??? EnlistmentBehavior.cs    # Core enlistment orchestrator
-?   ??? WageBehavior.cs          # Wage payment system
-??? Services/            # Business logic layer
-?   ??? ArmyService.cs           # Army creation/joining/leaving
-?   ??? PartyIllusionService.cs  # Party hiding & camera control
-?   ??? DialogService.cs         # Dialog registration & text
-??? Patches/             # Harmony patches
-?   ??? BanditEncounterPatch.cs  # Hostile encounter prevention
-?   ??? BattleParticipationPatch.cs # Auto-join battles
-?   ??? HidePartyNamePlatePatch.cs # UI nameplate hiding
-??? Utils/               # Utilities and helpers
-?   ??? ReflectionHelpers.cs     # Reflection-based API calls
-?   ??? Constants.cs             # All constants & messages
-?   ??? DebugHelper.cs           # Production utilities
-??? Models/              # Data structures
-?   ??? EnlistmentState.cs       # Save/load state management
-??? SubModule.cs         # Mod entry point
-```
-
-### ?? Design Patterns Used
-- **Service Layer Pattern**: Clean separation of concerns
-- **Orchestrator Pattern**: Main behavior coordinates services
-- **Reflection Pattern**: API compatibility across game versions
-- **State Management**: Clean save/load system
-- **Harmony Patching**: Non-intrusive game modification
-
-### ?? Key Design Principles
-1. **Single Responsibility**: Each class has one clear purpose
-2. **Dependency Injection**: Services are injected, not instantiated
-3. **Fail-Safe Fallbacks**: Multiple layers of fallback behavior
-4. **Game API Compatibility**: Uses exact same patterns as base game
-
----
-
-## ?? IMPLEMENTATION STATUS
-
-### ? COMPLETED FEATURES
-- [x] Core enlistment dialog system
-- [x] Army creation and joining using game APIs
-- [x] Party illusion system (hiding/camera)
-- [x] Clean army leaving system
-- [x] Save/load state persistence
-- [x] Wage system integration
-- [x] Settlement following behavior
-- [x] Service-based architecture
-- [x] Reflection-based API compatibility
-- [x] Battle participation system
-- [x] Hostile encounter protection
-- [x] UI integration and nameplate hiding
-- [x] Professional code cleanup
-
-### ?? READY FOR PRODUCTION
-- Complete "Serve as a Soldier" experience
-- Seamless lord integration
-- Automatic battle participation
-- Protection from independent encounters
-- Settlement following
-- Professional UI hiding
-
----
-
-## ??? DEVELOPMENT ROADMAP
-
-### ??? Phase 1: Military Career System
-- [ ] Rank progression system
-- [ ] Merit-based promotions
-- [ ] Specialized military roles
-- [ ] Equipment standardization by rank
-
-### ?? Phase 2: Advanced Battle Features
-- [ ] Formation positioning within army
-- [ ] Command chain simulation
-- [ ] Battle reward distribution
-- [ ] Tactical role assignments
-
-### ?? Phase 3: Faction Integration
-- [ ] Multiple army types support
-- [ ] Faction-specific military traditions
-- [ ] Training and skill development
-- [ ] Military mission system
-
----
-
-## ?? TECHNICAL NOTES
-
-### ?? Game Integration Points
-1. **ArmyManagementVM Pattern**: Uses identical army creation logic
-2. **CampaignBehaviorBase**: Proper game event registration
-3. **SaveableField**: Bannerlord-compatible save system
-4. **ConversationSentence**: Native dialog integration
-5. **Harmony Patches**: Non-intrusive game modification
-
-### ?? Reflection API Usage
-- **SetPartyAiAction.GetActionForEscortingParty**: AI escort behavior
-- **Kingdom.CreateArmy**: Army creation using game's method
-- **Party.SetAsCameraFollowParty**: Camera control transfer
-
-### ?? Save Data Structure
-```csharp
-EnlistmentState {
-    bool IsEnlisted              // Core enlistment status
-    Hero Commander              // Current commander reference
-    bool PendingDetach          // Cleanup flag
-    bool PlayerPartyWasVisible  // Original visibility state
-}
-```
-
-### ?? Configuration Constants
-- Dialog Priority: 110 (high visibility)
-- Message Prefix: "[Enlisted]"
-- Main Dialog Hubs: "lord_talk", "hero_main_options"
-- Army Type: Army.ArmyTypes.Patrolling
-
----
-
-## ? TESTING CHECKLIST
-
-### ?? Core Functionality
-- [x] Can enlist with various lord types
-- [x] Dialog appears in correct conversation hubs
-- [x] Army creation works when commander has no army
-- [x] Army joining works when commander has existing army
-- [x] Party becomes invisible on enlistment
-- [x] Camera follows commander party
-- [x] Can discharge from service
-- [x] Party visibility restores on discharge
-- [x] Camera control returns to player
-
-### ??? Settlement Integration
-- [x] Follows commander into towns
-- [x] Can talk to commander inside settlements
-- [x] Maintains enlisted status in settlements
-- [x] Proper exit behavior from settlements
-
-### ?? Save/Load System
-- [x] Enlistment state persists across saves
-- [x] Commander reference survives save/load
-- [x] Party visibility state preserved
-- [x] No corruption or crashes on load
-
-### ?? Battle Integration
-- [x] Participates in battles as army member
-- [x] Automatic battle joining
-- [x] Proper side selection
-- [x] Battle notifications
-
-### ??? Protection System
-- [x] Blocks bandit encounters while enlisted
-- [x] Blocks enemy faction encounters
-- [x] Smart hostile party detection
-- [x] Proper encounter cancellation
-
-### ?? UI Integration
-- [x] Nameplate hiding when enlisted
-- [x] Nameplate restoration when leaving
-- [x] Clean visual experience
-
----
-
-## ?? DEVELOPMENT NOTES
-
-### ?? Success Metrics
-- Seamless integration feeling (no "modded" feel)
-- No crashes or save corruption
-- Intuitive user experience
-- Performance equivalent to base game
-
-### ?? Key Learnings
-1. **Use Game APIs**: Bannerlord's own systems are best practice
-2. **Reflection for Compatibility**: Future-proofs against API changes
-3. **Service Architecture**: Maintainable and testable code structure
-4. **Fail-Safe Design**: Multiple fallback layers prevent crashes
-5. **Clean Production Code**: Professional standards throughout
-
-### ?? Player Experience Goals
-- Feel like truly serving in an army
-- Maintain player agency while following orders
-- Provide meaningful military experience
-- Integrate seamlessly with existing gameplay
-
----
-
-**Last Updated:** [Current Date]  
-**Status:** Production Ready  
-**Version:** 1.0.0
+9. Contribution Guidelines (summary)
+- Feature branches: feature/<name>; create PRs to main/develop as per repo policy.
+- Adhere to standards above; run analyzers and fix warnings.
+- Keep patches minimal and focused. Prefer services/behaviors for logic.

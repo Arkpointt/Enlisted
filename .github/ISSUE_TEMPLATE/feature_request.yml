@@ -1,0 +1,26 @@
+name: Feature request
+about: Suggest an idea for this project
+labels: enhancement
+assignees: ''
+
+title: "[Feature] <short summary>"
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What do you want to happen?
+      placeholder: Clear and concise proposal
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Additional context, mockups, alternatives
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing notes
+      description: How should this be tested in-game?

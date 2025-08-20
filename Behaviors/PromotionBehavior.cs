@@ -1,11 +1,13 @@
 using Enlisted.Models;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Library;
+using Enlisted.Services; // PromotionRules via interface
 
 namespace Enlisted.Behaviors
 {
     /// <summary>
-    /// Core promotion engine. Phase 1: XP-only + daily trickle + AddXp API.
+    /// Core promotion engine. Phase 1 implements XP accrual (daily trickle + external AddXp calls)
+    /// and tier advancement using PromotionRules through ServiceLocator.
     /// </summary>
     public sealed class PromotionBehavior : CampaignBehaviorBase
     {
@@ -28,7 +30,9 @@ namespace Enlisted.Behaviors
             _state.EnsureInitialized();
         }
 
-        // Public API for any system to grant XP (Phase 2 will call this from battle tracker)
+        /// <summary>
+        /// Grant XP from outside systems (e.g., battle results). Cheap and safe.
+        /// </summary>
         public void AddXp(int amount, string reason = null)
         {
             if (amount <= 0) return;
@@ -52,11 +56,14 @@ namespace Enlisted.Behaviors
 
         private void TryPromote()
         {
+            var rules = Services.ServiceLocator.PromotionRules;
+            if (rules == null) return;
+
             if (_state.CurrentXp < _state.NextTierXp) return;
 
             _state.CurrentXp -= _state.NextTierXp;
             _state.Tier++;
-            _state.NextTierXp = PromotionRules.GetRequiredXpForTier(_state.Tier);
+            _state.NextTierXp = rules.GetRequiredXpForTier(_state.Tier);
 
             InformationManager.DisplayMessage(
                 new InformationMessage($"[Enlisted] Promoted to tier {_state.Tier}.", Colors.Green));
