@@ -1,119 +1,66 @@
 # ---
-# Safer and More Reliable Bannerlord Project Setup Script (v6)
-# ---
-# This script applies best practices for setting up a Bannerlord mod project.
-# 1. Edits the .csproj file to replace the HarmonyLib NuGet package 
-#    with a direct DLL reference, using proper XML namespace handling.
-# 2. Edits the .sln file to use a relative path for the project,
-#    making the solution portable.
-#
-# IMPORTANT: Close the solution in Visual Studio before running this script
-# to avoid file locking issues.
+# This is a comprehensive script to normalize the .csproj and .sln files for a Bannerlord mod.
+# It performs the following actions:
+# 1. Creates backups of both the project and solution files.
+# 2. Corrects any XML encoding issues with ampersands (&).
+# 3. Sets a known-good PostBuildEvent to copy mod files correctly.
+# 4. Fixes a common issue in the .sln file where "Any CPU" incorrectly maps to "x64".
 # ---
 
-try {
-    # Stop the script if any command fails
-    $ErrorActionPreference = 'Stop'
+# --- Configuration ---
+$proj = "C:\Dev\Enlisted\Enlisted\Enlisted.csproj"
+$sln  = "C:\Dev\Enlisted\Enlisted\Enlisted.sln"
 
-    # --- PART 1: Update the .csproj file ---
+# --- 1. Create Backups ---
+Write-Host "Creating backups..."
+Copy-Item $proj "$proj.bak" -Force
+if (Test-Path $sln) {
+    Copy-Item $sln "$sln.bak" -Force
+}
 
-    # ** ROBUST PATHING **
-    # This script assumes it is located in the same directory as the .csproj file
-    # (e.g., C:\Dev\Enlisted\Enlisted\)
-    $scriptDir = $PSScriptRoot
-    $csprojPath = Join-Path -Path $scriptDir -ChildPath "Enlisted.csproj"
+# --- 2. Fix .csproj File ---
+Write-Host "Fixing .csproj file..."
+$content = Get-Content -Raw -LiteralPath $proj
+
+# Normalize any double-encoded '&amp;' to a single '&' before processing
+$content = $content -replace '&amp;', '&'
+
+# Define the correct PostBuildEvent content.
+# Note: The ampersand in "Mount & Blade" is escaped with a caret (^) for cmd.exe,
+# and the XML DOM will handle escaping it to '&amp;' when it saves.
+$post = @'
+set "MODROOT=C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
+set "BINDIR=%MODROOT%\bin\Win64_Shipping_Client"
+if not exist "%BINDIR%" mkdir "%BINDIR%"
+xcopy /Y /I /D "$(TargetPath)" "%BINDIR%"
+if not exist "%MODROOT%" mkdir "%MODROOT%"
+xcopy /Y /I /D "$(ProjectDir)SubModule.xml" "%MODROOT%"
+'@
+
+# Use regex to replace the existing PostBuildEvent content
+$pattern = '(?s)(<PostBuildEvent>)(.*?)(</PostBuildEvent>)'
+if ($content -match $pattern) {
+    $content = [regex]::Replace($content, $pattern, { param($m) $m.Groups[1].Value + $post + $m.Groups[3].Value })
+} else {
+    # If no PostBuildEvent exists, append one before the final </Project> tag
+    $content = $content.TrimEnd() -replace '</Project>', "  <PropertyGroup>`r`n    <PostBuildEvent>$post</PostBuildEvent>`r`n  </PropertyGroup>`r`n</Project>"
+}
+
+Set-Content -LiteralPath $proj -Value $content -Encoding UTF8
+Write-Host ".csproj file updated."
+
+# --- 3. Fix .sln File ---
+Write-Host "Fixing .sln file..."
+if (Test-Path $sln) {
+    $s = Get-Content -Raw -LiteralPath $sln
+    $guid = '{580669B1-F074-4840-9B20-D7C18FBC4935}'
     
-    Write-Host "Loading project file: $csprojPath"
-
-    # Load the .csproj file as an XML document
-    [xml]$csproj = Get-Content -Path $csprojPath
-
-    # ** CRITICAL STEP (Based on AI feedback) **
-    # Define the MSBuild XML namespace to correctly find elements.
-    $ns = New-Object System.Xml.XmlNamespaceManager($csproj.NameTable)
-    $msbuildNamespace = "http://schemas.microsoft.com/developer/msbuild/2003"
-    $ns.AddNamespace("msb", $msbuildNamespace)
-
-    # Find the HarmonyLib PackageReference node using the namespace
-    $harmonyPackageNode = $csproj.SelectSingleNode("//msb:PackageReference[@Include='HarmonyLib']", $ns)
-
-    if ($harmonyPackageNode) {
-        Write-Host "Found HarmonyLib PackageReference. Removing it..."
-        $itemGroup = $harmonyPackageNode.ParentNode
-        $itemGroup.RemoveChild($harmonyPackageNode)
-
-        # If the ItemGroup is now empty, remove it as well
-        if (-not $itemGroup.HasChildNodes) {
-            $itemGroup.ParentNode.RemoveChild($itemGroup)
-        }
-    } else {
-        Write-Host "HarmonyLib PackageReference not found (this is okay)."
-    }
-
-    # Check if the direct 0Harmony reference already exists using the namespace
-    $harmonyReferenceNode = $csproj.SelectSingleNode("//msb:Reference[@Include='0Harmony']", $ns)
-
-    if (-not $harmonyReferenceNode) {
-        Write-Host "Adding direct reference to 0Harmony.dll..."
-
-        # Find the first ItemGroup that already contains references
-        $referenceGroup = $csproj.SelectSingleNode('(//msb:ItemGroup[msb:Reference])[1]', $ns)
-
-        # If no such group exists, create a new one in the correct namespace
-        if (-not $referenceGroup) {
-            Write-Host "No existing Reference group found. Creating a new one."
-            $referenceGroup = $csproj.CreateElement("ItemGroup", $msbuildNamespace)
-            $csproj.Project.AppendChild($referenceGroup)
-        }
-
-        # Create the new elements IN THE CORRECT NAMESPACE
-        $newReference = $csproj.CreateElement("Reference", $msbuildNamespace)
-        $newReference.SetAttribute("Include", "0Harmony")
-
-        $hintPath = $csproj.CreateElement("HintPath", $msbuildNamespace)
-        # The DOM will correctly handle escaping special characters like '&'
-        $hintPath.InnerText = '..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll'
-        $newReference.AppendChild($hintPath)
-
-        $privateNode = $csproj.CreateElement("Private", $msbuildNamespace)
-        $privateNode.InnerText = 'False'
-        $newReference.AppendChild($privateNode)
-        
-        $referenceGroup.AppendChild($newReference)
-
-    } else {
-        Write-Host "Direct 0Harmony reference already exists."
-    }
-
-    # Save the modified .csproj file
-    $csproj.Save($csprojPath)
-    Write-Host "Project file updated successfully."
-
-
-    # --- PART 2: Update the .sln file ---
-
-    # The solution file is now assumed to be in the SAME directory as the script.
-    $slnPath = Join-Path -Path $scriptDir -ChildPath "Enlisted.sln"
-
-    if (Test-Path $slnPath) {
-        Write-Host "Updating solution file: $slnPath to use relative path."
-        $slnContent = Get-Content -Path $slnPath -Raw
-        
-        # This regex finds the project line and replaces the absolute path with a relative one
-        $pattern = 'Project\("{[^}]+}"\) = "Enlisted", "[^"]+"'
-        $replacement = 'Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Enlisted", "Enlisted.csproj"'
-        $newSlnContent = $slnContent -replace $pattern, $replacement
-
-        Set-Content -Path $slnPath -Value $newSlnContent -Encoding UTF8
-        Write-Host "Solution file updated successfully."
-    } else {
-        Write-Host "Solution file not found at expected location: $slnPath" -ForegroundColor Yellow
-    }
-
-    Write-Host "Project and solution update complete."
-
+    # Correct the "Any CPU" mappings if they point to x64
+    $s = $s -replace "($guid.Debug|Any CPU.ActiveCfg\s*=\s*)Debug|x64", "`$1Debug|Any CPU"
+    $s = $s -replace "($guid.Debug|Any CPU.Build.0\s*=\s*)Debug|x64", "`$1Debug|Any CPU"
+    
+    Set-Content -LiteralPath $sln -Value $s -Encoding UTF8
+    Write-Host ".sln file updated."
 }
-catch {
-    Write-Host "An error occurred:" -ForegroundColor Red
-    Write-Host $_.Exception.Message -ForegroundColor Red
-}
+
+Write-Host "Done. You can now reopen and rebuild the solution."
