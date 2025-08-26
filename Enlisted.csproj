@@ -134,8 +134,6 @@
     <Compile Include="src\Mod.Entry\SubModule.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ADR-004-IMPLEMENTATION-COMPLETE.md" />
-    <None Include="CHANGELOG.md" />
     <None Include="docs\adr\ADR-001-package-by-feature-architecture.md" />
     <None Include="docs\adr\ADR-002-isolate-game-api-interactions.md" />
     <None Include="docs\adr\ADR-003-centralized-configuration.md" />
@@ -143,15 +141,10 @@
     <None Include="docs\ARCHITECTURE.md" />
     <None Include="docs\TESTING.md" />
     <None Include="docs\BLUEPRINT.md" />
-    <None Include="Enlisted_Blueprint.csproj" />
-    <None Include="GITHUB_UPLOAD_COMPLETE.md" />
-    <None Include="MIGRATION_COMPLETE.md" />
-    <None Include="QUICKSTART.md" />
-    <None Include="README_BLUEPRINT.md" />
-    <None Include="settings.xml.example" />
+    <None Include="docs\QUICKSTART.md" />
+    <None Include="docs\settings.xml.example" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Enlisted_Blueprint.sln" />
     <Content Include="SubModule.xml" />
   </ItemGroup>
   <ItemGroup>
