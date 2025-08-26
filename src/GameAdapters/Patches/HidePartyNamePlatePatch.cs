@@ -7,15 +7,11 @@ using Enlisted.Core.DependencyInjection;
 
 namespace Enlisted.GameAdapters.Patches
 {
-    /// <summary>
-    /// Game adapter that hides main party nameplate UI when enlisted.
-    /// Isolates TaleWorlds UI system interactions from domain logic per blueprint.
-    /// 
-    /// Updated to use dependency injection (ADR-004) and centralized logging.
-    /// Reinforces the party illusion by suppressing main party visual indicators
-    /// in the game's nameplate system. This prevents the UI from contradicting
-    /// the narrative that the player is part of the commander's party.
-    /// </summary>
+    // Harmony Patch
+    // Target: SandBox.ViewModelCollection.Nameplate.PartyNameplateVM.RefreshBinding()
+    // Why: Hide main party nameplate while enlisted to maintain the illusion of being part of the commander’s party
+    // Safety: Campaign/UI only; affect only MainParty; restores defaults when not enlisted
+    // Notes: Logs at Debug; minimal object access; no allocations
     [HarmonyPatch(typeof(PartyNameplateVM), "RefreshBinding")]
     public class HidePartyNamePlatePatch
     {

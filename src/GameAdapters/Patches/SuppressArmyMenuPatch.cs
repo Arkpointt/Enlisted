@@ -9,17 +9,11 @@ using Enlisted.Core.DependencyInjection;
 
 namespace Enlisted.GameAdapters.Patches
 {
-    /// <summary>
-    /// Game adapter that suppresses army leave/abandon menu options while enlisted.
-    /// Isolates TaleWorlds API interactions from domain logic per blueprint.
-    /// 
-    /// Updated to use dependency injection (ADR-004) and centralized logging.
-    /// This adapter prevents conflicting UX between game army mechanics and 
-    /// enlistment contract system by hiding problematic menu options.
-    /// 
-    /// Patches game methods that control menu option visibility conditions.
-    /// When enlisted, these options are suppressed to maintain narrative consistency.
-    /// </summary>
+    // Harmony Patch
+    // Target: Various army wait/raiding menu condition methods
+    // Why: Suppress leave/abandon options while enlisted to prevent breaking enlistment contract and conflicting UX
+    // Safety: Campaign-only; returns early when not enlisted; modifies only boolean condition results and menu state
+    // Notes: Logs at Debug; attribute-based targets; no allocations
     [HarmonyPatch]
     public class SuppressArmyMenuPatch
     {

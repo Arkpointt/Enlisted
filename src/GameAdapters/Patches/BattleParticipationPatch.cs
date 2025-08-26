@@ -11,15 +11,11 @@ using Enlisted.Core.DependencyInjection;
 
 namespace Enlisted.GameAdapters.Patches
 {
-    /// <summary>
-    /// Game adapter for automatic battle participation when enlisted.
-    /// Isolates TaleWorlds battle event handling from domain logic per blueprint.
-    /// 
-    /// Updated to use dependency injection (ADR-004) and centralized logging.
-    /// Listens to MapEvent start and triggers encounter mechanics to join
-    /// commander's battles on the correct side. Handles integration with
-    /// game's encounter system while keeping logic minimal and safe.
-    /// </summary>
+    // Harmony Patch
+    // Target: TaleWorlds.CampaignSystem.CampaignEventDispatcher.OnMapEventStarted(MapEvent, PartyBase, PartyBase)
+    // Why: Auto-join the commander’s battles when the player is enlisted, maintaining enlistment narrative flow
+    // Safety: Campaign-only; null-check commander/player parties; skip if player already in encounter; fail closed on exceptions
+    // Notes: Logs at Info; no allocations on hot path beyond message formatting; gated by enlistment state
     [HarmonyPatch]
     public static class BattleParticipationPatch
     {
