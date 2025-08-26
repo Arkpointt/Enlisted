@@ -19,6 +19,9 @@ namespace Enlisted.Entry
     /// </summary>
     public class SubModule : MBSubModuleBase
     {
+        // Stable Harmony ID (blueprint Appendix B) so patches can be unapplied/diagnosed reliably
+        private const string HarmonyId = "com.enlisted.mod";
+
         private Harmony _harmony;
         private IServiceContainer _serviceContainer;
         private ILoggingService _logger;
@@ -31,7 +34,7 @@ namespace Enlisted.Entry
             InitializeServices();
             
             // Apply Harmony patches
-            _harmony = new Harmony("Enlisted");
+            _harmony = new Harmony(HarmonyId);
             _harmony.PatchAll();
             
             _logger?.LogInfo(LogCategories.Initialization, "Enlisted mod loaded successfully with dependency injection");
@@ -69,7 +72,7 @@ namespace Enlisted.Entry
             
             _logger?.LogInfo(LogCategories.Initialization, "Enlisted mod unloading");
             
-            _harmony?.UnpatchAll("Enlisted");
+            _harmony?.UnpatchAll(HarmonyId);
         }
 
         /// <summary>
