@@ -87,8 +87,9 @@ namespace Enlisted.Entry
                 var settings = ModSettings.Instance;
 
                 // Register core services
-                _logger = new LoggingService(settings);
-                _serviceContainer.RegisterSingleton<ILoggingService, LoggingService>(_logger);
+                var loggingServiceInstance = new LoggingService(settings);
+                _logger = loggingServiceInstance;
+                _serviceContainer.RegisterSingleton<ILoggingService, LoggingService>(loggingServiceInstance);
                 _serviceContainer.RegisterSingleton<ModSettings, ModSettings>(settings);
 
                 // Initialize global service locator for transition period

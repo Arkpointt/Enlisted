@@ -133,7 +133,7 @@ namespace Enlisted.GameAdapters.Patches
         /// <summary>
         /// Show battle participation message to player.
         /// </summary>
-        private static void ShowBattleMessage(string message, LogCategories category)
+        private static void ShowBattleMessage(string message, string category)
         {
             if (ServiceLocator.TryGetService<ILoggingService>(out var logger))
             {

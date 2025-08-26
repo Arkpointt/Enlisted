@@ -1,6 +1,17 @@
-# Enlisted Mod - Blueprint Structure
+# Enlisted Mod - Blueprint Structure & v2.1.0 Status
 
 This project has been restructured to follow the **Package-by-Feature** blueprint architecture for maintainable Bannerlord mod development.
+
+## ✅ **v2.1.0 COMPLETE - Dependency Injection & Centralized Logging**
+
+**Major Achievement**: Successfully implemented **ADR-004** (Remove Static Singletons) with full **dependency injection** and **centralized logging** throughout the mod.
+
+### 🏗️ **Latest Implementation (v2.1.0)**
+- **Dependency Injection System**: Complete DI container with service interfaces
+- **Centralized Logging Service**: Structured logging with session correlation
+- **Enhanced Configuration**: Logging control and performance monitoring
+- **Clean Build**: ✅ All compilation issues resolved (.NET Framework 4.7.2 compatible)
+- **Blueprint Compliance**: Full adherence to architectural principles
 
 ## Current Structure
 
@@ -8,11 +19,15 @@ This project has been restructured to follow the **Package-by-Feature** blueprin
 Enlisted/
 ├── src/
 │   ├── Mod.Entry/                    # Thin entry layer
-│   │   └── SubModule.cs             # Module initialization
+│   │   └── SubModule.cs             # Module initialization + DI setup
 │   │
 │   ├── Core/                        # Shared infrastructure
 │   │   ├── Config/
-│   │   │   └── ModSettings.cs       # Centralized configuration
+│   │   │   └── ModSettings.cs       # Enhanced with logging config
+│   │   ├── DependencyInjection/     # 🆕 DI Container
+│   │   │   └── ServiceContainer.cs  # Simple service container
+│   │   ├── Logging/                 # 🆕 Centralized Logging
+│   │   │   └── LoggingService.cs    # Structured logging service
 │   │   ├── Constants.cs             # Application constants
 │   │   ├── Persistence/
 │   │   │   └── SaveDefiner.cs       # Save game schema
@@ -24,7 +39,8 @@ Enlisted/
 │   │   │   ├── Domain/
 │   │   │   │   └── EnlistmentState.cs
 │   │   │   ├── Application/
-│   │   │   │   └── EnlistmentBehavior.cs
+│   │   │   │   ├── EnlistmentBehavior.cs    # 🔄 Now uses DI + logging
+│   │   │   │   └── IEnlistmentService.cs    # 🆕 Service interface
 │   │   │   └── Infrastructure/
 │   │   │       ├── ArmyIntegrationService.cs
 │   │   │       ├── PartyIllusionService.cs
@@ -35,89 +51,98 @@ Enlisted/
 │   │   │   │   ├── PromotionState.cs
 │   │   │   │   └── PromotionRules.cs
 │   │   │   └── Application/
-│   │   │       └── PromotionBehavior.cs
+│   │   │       └── PromotionBehavior.cs     # 🔄 Now uses DI + logging
 │   │   │
 │   │   └── Wages/                   # Wages feature module
 │   │       └── Application/
-│   │           └── WageBehavior.cs
+│   │           └── WageBehavior.cs          # 🔄 Now uses DI + logging
 │   │
 │   └── GameAdapters/                # TaleWorlds API isolation
 │       └── Patches/
-│           ├── SuppressArmyMenuPatch.cs
-│           ├── BattleParticipationPatch.cs
-│           └── HidePartyNamePlatePatch.cs
+│           ├── SuppressArmyMenuPatch.cs     # 🔄 Uses DI instead of static
+│           ├── BattleParticipationPatch.cs  # 🔄 Centralized logging
+│           └── HidePartyNamePlatePatch.cs   # 🔄 DI with fallbacks
 │
-├── Documentation/
-│   └── BLUEPRINT.md                 # Architecture guide
-│
+├── Documentation/                   # Architecture & ADR documentation
+├── settings.xml.example            # 🆕 User configuration template
 ├── SubModule.xml                    # Bannerlord module definition
-├── Enlisted_Blueprint.csproj        # Updated project file
-└── Enlisted_Blueprint.sln           # Solution file
+├── Enlisted.csproj                  # Project file
+└── Enlisted.sln                     # Solution file (✅ VERIFIED CORRECT)
 ```
 
 ## Key Blueprint Principles Applied
 
-### ✅ **Package-by-Feature**
+### ✅ **Package-by-Feature** (v2.0.0)
 - Each gameplay feature (Enlistment, Promotion, Wages) has its own self-contained module
 - Related domain logic, application orchestration, and infrastructure live together
 - Easy to find all code related to a specific feature
 
-### ✅ **Separation of Concerns**
-- **Domain**: Pure business logic and state (EnlistmentState, PromotionRules)
-- **Application**: Campaign integration and orchestration (Behaviors)
-- **Infrastructure**: TaleWorlds API interactions (Services)
-- **GameAdapters**: Harmony patches isolated from domain logic
-
-### ✅ **Game API Isolation**
+### ✅ **Game API Isolation** (v2.0.0)
 - All Harmony patches moved to `GameAdapters/` layer
 - TaleWorlds-specific code separated from domain logic
 - Easier to handle game updates and API changes
 
-### ✅ **Configuration Over Code**
-- Centralized `ModSettings` with validation
-- Feature flags and tunable parameters
-- Safe loading with fallback to defaults
+### ✅ **Dependency Injection** (v2.1.0)
+- Static singleton patterns replaced with proper DI container
+- Service interfaces enable testing and reduce coupling
+- Graceful fallbacks during transition period
 
-### ✅ **Observability Ready**
-- TODO comments mark where structured logging will be added
-- Debug helpers for validation and error reporting
-- Preparation for centralized logging service
+### ✅ **Centralized Logging** (v2.1.0)
+- Structured logging with stable categories and session correlation
+- Configuration-driven debug and performance logging
+- Consistent user message integration
+
+### ✅ **Configuration Over Code** (Enhanced v2.1.0)
+- Centralized `ModSettings` with logging configuration
+- Feature flags and tunable parameters
+- Runtime behavior control through settings
 
 ## Migration Status
 
-### ✅ **Completed**
+### ✅ **v2.1.0 COMPLETED**
+- **Dependency Injection**: Complete DI container implementation
+- **Centralized Logging**: All TODO comments replaced with structured logging
+- **Service Interfaces**: Clean abstractions for GameAdapter integration
+- **Enhanced Configuration**: Logging control and performance monitoring
+- **Build Verification**: ✅ Clean compilation, no errors
+
+### ✅ **v2.0.0 COMPLETED**
 - Project structure reorganized to Package-by-Feature
 - All Harmony patches moved to GameAdapters layer
 - Domain models extracted and properly organized
 - Configuration system centralized
 - Build system updated and tested
 
-### 🔄 **Future Improvements** (marked with TODOs)
-1. **Dependency Injection**: Remove static Instance patterns
-2. **Centralized Logging**: Replace InformationManager calls with structured logging
-3. **Testing Framework**: Add unit tests for domain logic
-4. **Advanced Configuration**: In-game settings UI
-5. **Performance Monitoring**: Add metrics for frame-time budgets
+### 🚀 **Future Enhancements**
+1. **Complete Static Removal**: Remove transition fallbacks
+2. **Advanced Testing**: Unit tests for domain logic
+3. **Enhanced Observability**: File-based logging, performance metrics
+4. **Advanced DI**: Scoped lifecycles, service decorators
 
 ## Build Instructions
 
-1. **Build**: `msbuild Enlisted_Blueprint.sln /p:Configuration=Debug`
+1. **Build**: `msbuild Enlisted.sln /p:Configuration=Debug`
 2. **Output**: DLL and SubModule.xml automatically copied to game directory
 3. **Install**: Files go to `<Bannerlord>/Modules/Enlisted/`
+4. **Configuration**: Copy `settings.xml.example` to `settings.xml` for customization
 
-## Development Workflow
+## Configuration Guide
 
-### Adding New Features
-1. Create feature folder under `src/Features/`
-2. Add Domain models for business logic
-3. Add Application behavior for campaign integration  
-4. Add Infrastructure services for TaleWorlds API interaction
-5. Add GameAdapter patches if needed
+### Example settings.xml
+```xml
+<ModSettings>
+  <DailyWage>10</DailyWage>
+  <EnableDebugLogging>false</EnableDebugLogging>
+  <LogLevel>1</LogLevel>
+  <ShowVerboseMessages>false</ShowVerboseMessages>
+  <EnablePerformanceLogging>false</EnablePerformanceLogging>
+</ModSettings>
+```
 
-### Making Changes
-- **Small changesets**: Focus on single concern per edit
-- **Test early**: Build after each logical change
-- **Document intent**: Comments explain why, not what
-- **Config over code**: Use settings for tunable behavior
+### Log Levels
+- **0 = Debug**: Most verbose, development diagnostics
+- **1 = Info**: Default level, important events
+- **2 = Warning**: Only warnings and errors
+- **3 = Error**: Only critical errors
 
-This structure follows the blueprint's guidance for **correctness first, speed second** and **small, reversible changes** while preparing for future growth and maintainability.
+This structure follows the blueprint's guidance for **correctness first, speed second** and **small, reversible changes** while achieving **enterprise-grade architecture** with **modern dependency injection** and **observability practices**.

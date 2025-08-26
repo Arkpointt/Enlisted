@@ -39,11 +39,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Missing Using Statements**: LoggingService properly references ModSettings
 - **Log Level Filtering**: Respects user-configured log level thresholds
 - **Service Resolution**: Graceful fallbacks when DI unavailable
+- **Compilation Errors**: Fixed LogCategories parameter type in BattleParticipationPatch
+- **Framework Compatibility**: Replaced range operator with Substring for .NET Framework 4.7.2
+- **Service Registration**: Fixed DI container registration in SubModule
 
 ### 📚 **Documentation**
-- **ADR-004-IMPLEMENTATION-COMPLETE.md**: Detailed implementation summary
+- **ADR-004-IMPLEMENTATION-COMPLETE.md**: Detailed implementation summary with build verification
 - **settings.xml.example**: User configuration template
 - **Enhanced Code Comments**: Blueprint-compliant intent-focused documentation
+- **README_BLUEPRINT.md**: Updated with v2.1.0 completion status
 
 ### 🎯 **Blueprint Compliance**
 - ✅ **ADR-004**: Static singleton patterns replaced with dependency injection
@@ -51,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ **Config over Code**: Logging behavior controlled by configuration
 - ✅ **Make it Observable**: Session correlation and stable categories
 - ✅ **Fail Closed**: Safe fallbacks when services unavailable
+- ✅ **Clean Build**: All compilation issues resolved, framework compatible
 
 ---
 

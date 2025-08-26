@@ -114,7 +114,7 @@ namespace Enlisted.Core.Logging
 
         private static string GenerateSessionId()
         {
-            return DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
+            return DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N").Substring(0, 8);
         }
     }
 
