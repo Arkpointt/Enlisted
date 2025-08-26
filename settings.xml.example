@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Enlisted Mod Configuration File
+Place this file in your Modules/Enlisted/ directory to customize mod behavior.
+
+Log Levels:
+  0 = Debug (most verbose)
+  1 = Info (default)
+  2 = Warning
+  3 = Error (least verbose)
+-->
+<ModSettings>
+  <!-- Daily wage paid to enlisted players -->
+  <DailyWage>10</DailyWage>
+  
+  <!-- Enable debug logging (shows detailed mod operations) -->
+  <EnableDebugLogging>false</EnableDebugLogging>
+  
+  <!-- Use advanced party hiding mechanics (reflection-based) -->
+  <UseAdvancedPartyHiding>true</UseAdvancedPartyHiding>
+  
+  <!-- Enable performance logging (frame-time monitoring) -->
+  <EnablePerformanceLogging>false</EnablePerformanceLogging>
+  
+  <!-- Show verbose messages to player (for debugging) -->
+  <ShowVerboseMessages>false</ShowVerboseMessages>
+  
+  <!-- Log level threshold (0=Debug, 1=Info, 2=Warning, 3=Error) -->
+  <LogLevel>1</LogLevel>
+</ModSettings>

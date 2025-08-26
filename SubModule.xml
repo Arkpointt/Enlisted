@@ -2,7 +2,7 @@
 <Module>
   <Name value="Enlisted" />
   <Id value="Enlisted" />
-  <Version value="v1.0.0" />
+  <Version value="v2.1.0" />
   <SingleplayerModule value="true" />
   <Official value="false" />
   <DependedModules>
