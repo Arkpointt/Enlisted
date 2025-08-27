@@ -1,19 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Module>
-  <Name value="Enlisted" />
-  <Id value="Enlisted" />
-  <Version value="v2.1.0" />
-  <SingleplayerModule value="true" />
-  <Official value="false" />
-  <DependedModules>
-    <!-- Base game modules -->
-    <DependedModule Id="Native" />
-    <DependedModule Id="SandBoxCore" />
-    <DependedModule Id="Sandbox" />
-    <!-- Optional, if you target story-mode start -->
-    <DependedModule Id="StoryMode" Optional="true" />
-    <DependedModule Id="CustomBattle" Optional="true" />
-    <!-- Ensure Harmony is loaded before this mod -->
-    <DependedModule Id="Bannerlord.Harmony" />
-  </DependedModules>
+    <Name value="Enlisted" />
+    <Id value="Enlisted" />
+    <Version value="v2.1.0" />
+    <SingleplayerModule value="true" />
+    <Official value="false" />
+    <DependedModules>
+        <!-- Base game modules -->
+        <DependedModule Id="Native" />
+        <DependedModule Id="SandBoxCore" />
+        <DependedModule Id="Sandbox" />
+        <!-- Optional, if you target story-mode start -->
+        <DependedModule Id="StoryMode" Optional="true" />
+        <DependedModule Id="CustomBattle" Optional="true" />
+        <!-- Ensure Harmony is loaded before this mod -->
+        <DependedModule Id="Bannerlord.Harmony" />
+    </DependedModules>
+    <SubModules>
+        <SubModule>
+            <Name value="Enlisted" />
+            <DLLName value="Enlisted.dll" />
+            <SubModuleClassType value="Enlisted.Entry.SubModule" />
+            <Tags>
+                <Tag key="DedicatedServerType" value="none" />
+                <Tag key="IsNoRenderModeElement" value="false" />
+            </Tags>
+        </SubModule>
+    </SubModules>
 </Module>
+
