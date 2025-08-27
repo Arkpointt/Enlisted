@@ -13,123 +13,133 @@
     <Deterministic>true</Deterministic>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
-
-  <!-- Shared game paths -->
-  <PropertyGroup Condition="'$(Configuration)'=='Enlisted RETAIL'">
-    <GameBinPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client</GameBinPath>
-    <ModBinPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_Client</ModBinPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)'=='Enlisted EDITOR'">
-    <GameBinPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor</GameBinPath>
-    <ModBinPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_wEditor</ModBinPath>
-  </PropertyGroup>
-
-  <!-- Output paths - Build directly to Bannerlord modules directory -->
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Enlisted RETAIL|x64'">
-    <OutputPath>$(ModBinPath)\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <DebugType>full</DebugType>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <PlatformTarget>x64</PlatformTarget>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Enlisted EDITOR|x64'">
-    <OutputPath>$(ModBinPath)\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-
-  <!-- Post-build logic - Only copy SubModule.xml since DLL is already in the right place -->
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Enlisted EDITOR|x64' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_wEditor\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Enlisted RETAIL|x64' ">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_Client\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  
   <PropertyGroup>
     <PostBuildEvent>
-      xcopy /Y /I /D "$(ProjectDir)SubModule.xml" "$(ModBinPath)\..\"
-      REM Ensure Harmony DLL exists in both retail and editor bins
-      xcopy /Y /I /D "$(GameBinPath)\..\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll" "$(GameBinPath)\..\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\"
+      xcopy /Y /I /D "$(ProjectDir)SubModule.xml" "$(OutputPath)..\" 
     </PostBuildEvent>
   </PropertyGroup>
-
-  <!-- TaleWorlds references using GameBinPath variable -->
+  
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="0Harmony">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\0Harmony.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TaleWorlds.Core">
-      <HintPath>$(GameBinPath)\TaleWorlds.Core.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.Engine">
-      <HintPath>$(GameBinPath)\TaleWorlds.Engine.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Engine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.Library">
-      <HintPath>$(GameBinPath)\TaleWorlds.Library.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Library.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.MountAndBlade">
-      <HintPath>$(GameBinPath)\TaleWorlds.MountAndBlade.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.CampaignSystem">
-      <HintPath>$(GameBinPath)\TaleWorlds.CampaignSystem.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.CampaignSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.ObjectSystem">
-      <HintPath>$(GameBinPath)\TaleWorlds.ObjectSystem.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.ObjectSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.SaveSystem">
-      <HintPath>$(GameBinPath)\TaleWorlds.SaveSystem.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.SaveSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.ScreenSystem">
-      <HintPath>$(GameBinPath)\TaleWorlds.ScreenSystem.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.ScreenSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.InputSystem">
-      <HintPath>$(GameBinPath)\TaleWorlds.InputSystem.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.InputSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.Localization">
-      <HintPath>$(GameBinPath)\TaleWorlds.Localization.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Localization.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.GauntletUI">
-      <HintPath>$(GameBinPath)\TaleWorlds.GauntletUI.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TaleWorlds.MountAndBlade.ViewModelCollection">
-      <HintPath>$(GameBinPath)\TaleWorlds.MountAndBlade.ViewModelCollection.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.ViewModelCollection.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.CampaignSystem.ViewModelCollection">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.CampaignSystem.ViewModelCollection.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.Core.ViewModelCollection">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Core.ViewModelCollection.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="SandBox">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SandBox.View">
-      <HintPath>$(GameBinPath)\..\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.View.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.View.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="SandBox.ViewModelCollection">
-      <HintPath>$(GameBinPath)\..\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.ViewModelCollection.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.ViewModelCollection.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-
-  <!-- Harmony references per config -->
-  <ItemGroup Condition="'$(Configuration)'=='Enlisted RETAIL'">
-    <Reference Include="0Harmony">
-      <HintPath>$(GameBinPath)\..\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)'=='Enlisted EDITOR'">
-    <Reference Include="0Harmony">
-      <HintPath>$(GameBinPath)\..\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\0Harmony.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-
-  <!-- Source files -->
+  
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Mod.Entry\SubModule.cs" />
@@ -153,13 +163,12 @@
     <Compile Include="src\GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="src\GameAdapters\Patches\SuppressArmyMenuPatch.cs" />
   </ItemGroup>
-
-  <!-- Configuration files -->
+  
   <ItemGroup>
     <Content Include="SubModule.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
+  
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
