@@ -1,4 +1,6 @@
 using HarmonyLib;
+using System;
+using System.Reflection;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
@@ -13,99 +15,208 @@ namespace Enlisted.GameAdapters.Patches
     // Target: Various army wait/raiding menu condition methods
     // Why: Suppress leave/abandon options while enlisted to prevent breaking enlistment contract and conflicting UX
     // Safety: Campaign-only; returns early when not enlisted; modifies only boolean condition results and menu state
-    // Notes: Logs at Debug; attribute-based targets; no allocations
+    // Notes: Logs at Debug; uses TargetMethod approach for better error handling; no allocations
+    //
+    // IMPORTANT: Method signatures verified against game version 1.2.12.77991 decompiled DLLs
+    // See ADR-009 and Blueprint Appendix C for Harmony patch development standards
+    // Do NOT use outdated mod references - always verify against current game DLLs
     [HarmonyPatch]
     public class SuppressArmyMenuPatch
     {
-        /// <summary>
-        /// Suppresses the "leave army" option in wait menus when enlisted.
-        /// Prevents conflict between game army leave mechanics and enlistment contract.
-        /// </summary>
-        [HarmonyPatch("TaleWorlds.CampaignSystem.CampaignBehaviors.PlayerArmyWaitBehavior", "wait_menu_army_leave_on_condition")]
-        [HarmonyPrefix]
-        private static bool SuppressLeaveArmyOption(ref bool __result)
+        private static ILoggingService _logger;
+
+        static SuppressArmyMenuPatch()
         {
-            if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
-            {
-                LogDecision("Suppressed army leave option - player is enlisted");
-                __result = false;
-                return false; // Skip original method execution
-            }
-            
-            return true; // Execute original method
+            // Try to get logger during static initialization
+            ServiceLocator.TryGetService<ILoggingService>(out _logger);
         }
 
-        /// <summary>
-        /// Suppresses the "abandon army" option in wait menus when enlisted.
-        /// Prevents abandoning army while under active enlistment contract.
-        /// </summary>
-        [HarmonyPatch("TaleWorlds.CampaignSystem.CampaignBehaviors.PlayerArmyWaitBehavior", "wait_menu_army_abandon_on_condition")]
-        [HarmonyPrefix]
-        private static bool SuppressAbandonArmyOption(ref bool __result)
+        // Patch for PlayerArmyWaitBehavior.wait_menu_army_leave_on_condition (INSTANCE METHOD)
+        // Signature verified: private bool wait_menu_army_leave_on_condition(MenuCallbackArgs args)
+        [HarmonyPatch]
+        private static class LeaveArmyPatch
         {
-            if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+            public static MethodBase TargetMethod()
             {
-                LogDecision("Suppressed army abandon option - player is enlisted");
-                __result = false;
-                return false; // Skip original method execution
+                try
+                {
+                    var type = AccessTools.TypeByName("TaleWorlds.CampaignSystem.CampaignBehaviors.PlayerArmyWaitBehavior");
+                    if (type == null)
+                    {
+                        LogPatchError("Could not find PlayerArmyWaitBehavior type");
+                        return null;
+                    }
+
+                    var method = AccessTools.Method(type, "wait_menu_army_leave_on_condition", new[] { typeof(MenuCallbackArgs) });
+                    if (method == null)
+                    {
+                        LogPatchError("Could not find wait_menu_army_leave_on_condition method");
+                        return null;
+                    }
+
+                    LogPatchSuccess("Successfully found PlayerArmyWaitBehavior.wait_menu_army_leave_on_condition");
+                    return method;
+                }
+                catch (Exception ex)
+                {
+                    LogPatchError($"Exception finding LeaveArmy patch target: {ex.Message}");
+                    return null;
+                }
             }
-            
-            return true; // Execute original method
+
+            [HarmonyPrefix]
+            private static bool Prefix(ref bool __result, MenuCallbackArgs args)
+            {
+                if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+                {
+                    LogDecision("Suppressed army leave option - player is enlisted");
+                    __result = false;
+                    return false; // Skip original method execution
+                }
+                
+                return true; // Execute original method
+            }
         }
 
-        /// <summary>
-        /// Redirects army menu flow when enlisted to maintain narrative consistency.
-        /// Prevents showing standard army wait menu which contains options that conflict
-        /// with enlistment state. Returns null to preserve current menu context.
-        /// </summary>
-        [HarmonyPatch("TaleWorlds.CampaignSystem.GameModels.DefaultEncounterGameMenuModel", "GetGenericStateMenu")]
-        [HarmonyPostfix]
-        private static void RedirectArmyMenuWhenEnlisted(ref string __result)
+        // Patch for PlayerArmyWaitBehavior.wait_menu_army_abandon_on_condition (INSTANCE METHOD)
+        // Signature verified: private bool wait_menu_army_abandon_on_condition(MenuCallbackArgs args)
+        [HarmonyPatch]
+        private static class AbandonArmyPatch
         {
-            if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted && 
-                (__result == "army_wait" || __result == "army_wait_at_settlement"))
+            public static MethodBase TargetMethod()
             {
-                LogDecision("Redirected army menu - maintaining enlistment narrative flow");
-                __result = null; // Maintain current state instead of problematic army wait menu
+                try
+                {
+                    var type = AccessTools.TypeByName("TaleWorlds.CampaignSystem.CampaignBehaviors.PlayerArmyWaitBehavior");
+                    if (type == null)
+                    {
+                        LogPatchError("Could not find PlayerArmyWaitBehavior type");
+                        return null;
+                    }
+
+                    var method = AccessTools.Method(type, "wait_menu_army_abandon_on_condition", new[] { typeof(MenuCallbackArgs) });
+                    if (method == null)
+                    {
+                        LogPatchError("Could not find wait_menu_army_abandon_on_condition method");
+                        return null;
+                    }
+
+                    LogPatchSuccess("Successfully found PlayerArmyWaitBehavior.wait_menu_army_abandon_on_condition");
+                    return method;
+                }
+                catch (Exception ex)
+                {
+                    LogPatchError($"Exception finding AbandonArmy patch target: {ex.Message}");
+                    return null;
+                }
+            }
+
+            [HarmonyPrefix]
+            private static bool Prefix(ref bool __result, MenuCallbackArgs args)
+            {
+                if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+                {
+                    LogDecision("Suppressed army abandon option - player is enlisted");
+                    __result = false;
+                    return false; // Skip original method execution
+                }
+                
+                return true; // Execute original method
             }
         }
 
-        /// <summary>
-        /// Suppresses the "leave army while raiding" option when enlisted.
-        /// Ensures enlisted players cannot break contract during hostile actions.
-        /// Maintains contract obligation even during village raids.
-        /// </summary>
-        [HarmonyPatch("TaleWorlds.CampaignSystem.CampaignBehaviors.VillageHostileActionCampaignBehavior", "wait_menu_end_raiding_at_army_by_leaving_on_condition")]
-        [HarmonyPrefix]
-        private static bool SuppressRaidingLeaveArmy(ref bool __result)
+        // Patch for VillageHostileActionCampaignBehavior.wait_menu_end_raiding_at_army_by_leaving_on_condition (STATIC METHOD)
+        // Signature verified: private static bool wait_menu_end_raiding_at_army_by_leaving_on_condition(MenuCallbackArgs args)
+        [HarmonyPatch]
+        private static class RaidingLeaveArmyPatch
         {
-            if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+            public static MethodBase TargetMethod()
             {
-                LogDecision("Suppressed raiding leave option - player is enlisted");
-                __result = false;
-                return false; // Skip original method execution
+                try
+                {
+                    var type = AccessTools.TypeByName("TaleWorlds.CampaignSystem.CampaignBehaviors.VillageHostileActionCampaignBehavior");
+                    if (type == null)
+                    {
+                        LogPatchError("Could not find VillageHostileActionCampaignBehavior type");
+                        return null;
+                    }
+
+                    var method = AccessTools.Method(type, "wait_menu_end_raiding_at_army_by_leaving_on_condition", new[] { typeof(MenuCallbackArgs) });
+                    if (method == null)
+                    {
+                        LogPatchError("Could not find wait_menu_end_raiding_at_army_by_leaving_on_condition method");
+                        return null;
+                    }
+
+                    LogPatchSuccess("Successfully found VillageHostileActionCampaignBehavior.wait_menu_end_raiding_at_army_by_leaving_on_condition");
+                    return method;
+                }
+                catch (Exception ex)
+                {
+                    LogPatchError($"Exception finding RaidingLeaveArmy patch target: {ex.Message}");
+                    return null;
+                }
             }
-            
-            return true; // Execute original method
+
+            [HarmonyPrefix]
+            private static bool Prefix(ref bool __result, MenuCallbackArgs args)
+            {
+                if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+                {
+                    LogDecision("Suppressed raiding leave option - player is enlisted");
+                    __result = false;
+                    return false; // Skip original method execution
+                }
+                
+                return true; // Execute original method
+            }
         }
 
-        /// <summary>
-        /// Suppresses the "abandon army while raiding" option when enlisted.
-        /// Ensures enlisted players cannot abandon during hostile actions.
-        /// Prevents contract violation during village raids.
-        /// </summary>
-        [HarmonyPatch("TaleWorlds.CampaignSystem.CampaignBehaviors.VillageHostileActionCampaignBehavior", "wait_menu_end_raiding_at_army_by_abandoning_on_condition")]
-        [HarmonyPrefix]
-        private static bool SuppressRaidingAbandonArmy(ref bool __result)
+        // Patch for VillageHostileActionCampaignBehavior.wait_menu_end_raiding_at_army_by_abandoning_on_condition (STATIC METHOD)
+        // Signature verified: private static bool wait_menu_end_raiding_at_army_by_abandoning_on_condition(MenuCallbackArgs args)
+        [HarmonyPatch]
+        private static class RaidingAbandonArmyPatch
         {
-            if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+            public static MethodBase TargetMethod()
             {
-                LogDecision("Suppressed raiding abandon option - player is enlisted");
-                __result = false;
-                return false; // Skip original method execution
+                try
+                {
+                    var type = AccessTools.TypeByName("TaleWorlds.CampaignSystem.CampaignBehaviors.VillageHostileActionCampaignBehavior");
+                    if (type == null)
+                    {
+                        LogPatchError("Could not find VillageHostileActionCampaignBehavior type");
+                        return null;
+                    }
+
+                    var method = AccessTools.Method(type, "wait_menu_end_raiding_at_army_by_abandoning_on_condition", new[] { typeof(MenuCallbackArgs) });
+                    if (method == null)
+                    {
+                        LogPatchError("Could not find wait_menu_end_raiding_at_army_by_abandoning_on_condition method");
+                        return null;
+                    }
+
+                    LogPatchSuccess("Successfully found VillageHostileActionCampaignBehavior.wait_menu_end_raiding_at_army_by_abandoning_on_condition");
+                    return method;
+                }
+                catch (Exception ex)
+                {
+                    LogPatchError($"Exception finding RaidingAbandonArmy patch target: {ex.Message}");
+                    return null;
+                }
             }
-            
-            return true; // Execute original method
+
+            [HarmonyPrefix]
+            private static bool Prefix(ref bool __result, MenuCallbackArgs args)
+            {
+                if (TryGetEnlistmentService(out var enlistmentService) && enlistmentService.IsEnlisted)
+                {
+                    LogDecision("Suppressed raiding abandon option - player is enlisted");
+                    __result = false;
+                    return false; // Skip original method execution
+                }
+                
+                return true; // Execute original method
+            }
         }
 
         /// <summary>
@@ -137,14 +248,44 @@ namespace Enlisted.GameAdapters.Patches
         /// </summary>
         private static void LogDecision(string decision)
         {
-            if (ServiceLocator.TryGetService<ILoggingService>(out var logger))
+            if (_logger != null)
             {
-                logger.LogDebug(LogCategories.GameAdapters, decision);
+                _logger.LogDebug(LogCategories.GameAdapters, decision);
             }
             else
             {
                 // Fallback during transition period
                 Debug.Print($"[Enlisted] {decision}");
+            }
+        }
+
+        /// <summary>
+        /// Log patch success using centralized logging service.
+        /// </summary>
+        private static void LogPatchSuccess(string message)
+        {
+            if (_logger != null)
+            {
+                _logger.LogInfo(LogCategories.GameAdapters, message);
+            }
+            else
+            {
+                Debug.Print($"[Enlisted] PATCH SUCCESS: {message}");
+            }
+        }
+
+        /// <summary>
+        /// Log patch errors using centralized logging service.
+        /// </summary>
+        private static void LogPatchError(string message)
+        {
+            if (_logger != null)
+            {
+                _logger.LogError(LogCategories.GameAdapters, message, null);
+            }
+            else
+            {
+                Debug.Print($"[Enlisted] PATCH ERROR: {message}");
             }
         }
     }

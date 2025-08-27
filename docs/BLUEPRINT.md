@@ -347,3 +347,85 @@ harmony.PatchAll();
 - Architecture: Target x64 in the project to align with TaleWorlds assemblies and avoid MSB3270 warnings.
 - Logging: Use centralized logging (`GameAdapters` or feature category). Gate Debug logs behind a mod setting to avoid spam in high-frequency hooks.
 
+## Appendix C — Harmony Patch Development & Decompiled References
+
+### Critical Rule: Use Current Game DLL Decompiled References
+
+**NEVER rely on outdated mod source code for method signatures.** Always use decompiled references from the current game version's DLLs.
+
+#### Problem Example
+Using outdated mod references (e.g., "ServeAsSoldier" mod) led to:
+- Incorrect method signatures (static vs instance methods)
+- Wrong parameter types and counts
+- Runtime crashes during patch application
+- Hours of debugging time
+
+#### Solution Pattern
+1. **Decompile current game DLLs** for the exact game version you're targeting
+2. **Verify method signatures** in the actual TaleWorlds assemblies
+3. **Use `TargetMethod()` with proper reflection** instead of string-based attributes
+4. **Add graceful error handling** for missing methods
+
+#### Correct Harmony Patch Structure
+```csharp
+[HarmonyPatch]
+public static class YourPatch
+{
+    public static MethodBase TargetMethod()
+    {
+        try
+        {
+            var type = AccessTools.TypeByName("Full.Type.Name");
+            if (type == null)
+            {
+                LogPatchError("Could not find target type");
+                return null;
+            }
+
+            var method = AccessTools.Method(type, "MethodName", new[] { typeof(ParamType) });
+            if (method == null)
+            {
+                LogPatchError("Could not find target method");
+                return null;
+            }
+
+            LogPatchSuccess("Successfully found target method");
+            return method;
+        }
+        catch (Exception ex)
+        {
+            LogPatchError($"Exception finding patch target: {ex.Message}");
+            return null;
+        }
+    }
+
+    [HarmonyPrefix] // or [HarmonyPostfix]
+    private static bool Prefix(/* match exact signature from decompiled code */)
+    {
+        // Implementation with error handling
+    }
+}
+```
+
+#### Method Signature Examples (Game Version 1.2.12.77991)
+- `PlayerArmyWaitBehavior.wait_menu_army_leave_on_condition` → **Instance method**: `bool MethodName(MenuCallbackArgs args)`
+- `VillageHostileActionCampaignBehavior.wait_menu_end_raiding_at_army_by_leaving_on_condition` → **Static method**: `bool MethodName(MenuCallbackArgs args)`
+- `CampaignEventDispatcher.OnMapEventStarted` → **Instance method**: `void MethodName(MapEvent, PartyBase, PartyBase)`
+
+#### Verification Checklist
+- [ ] Decompiled current game version DLLs (not mod source)
+- [ ] Verified static vs instance method nature
+- [ ] Confirmed exact parameter types and order
+- [ ] Used `AccessTools.Method()` with parameter type array
+- [ ] Added error handling for missing methods
+- [ ] Tested patch application success in logs
+
+#### Debugging Failed Patches
+Check logs for patch status messages:
+```
+[Enlisted] PATCH SUCCESS: Successfully found ClassName.MethodName
+[Enlisted] PATCH ERROR: Could not find target method
+```
+
+This prevents crashes and provides clear feedback on what's failing.
+
