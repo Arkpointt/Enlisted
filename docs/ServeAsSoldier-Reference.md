@@ -27,6 +27,10 @@ This document summarizes how ServeAsSoldier (SAS) implements its enlistment syst
       GameOverlays.MenuOverlayType.None);
   ```
 - **Menu Flags**: Uses `GameMenu.MenuFlags.None` and `GameOverlays.MenuOverlayType.None` for clean background display
+- **Time Control While Open**: After activation or in `party_wait_on_init`, SAS explicitly sets
+  `Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay`, then calls
+  `args.MenuContext.GameMenu.StartWait()` and `Campaign.Current.GameMenuManager.RefreshMenuOptions(...)`.
+  This lets the top-left ribbon time controls work while the panel remains open/collapsible.
 - **Activation**: Called via `GameMenu.ActivateGameMenu("party_wait")` when commander enters settlements
 - **Time Control**: For towns, pauses time with `Campaign.Current.TimeControlMode = 0` to maintain menu focus
 - **Menu Options**: Added via `campaignStarter.AddGameMenuOption("party_wait", ...)` for various soldier actions

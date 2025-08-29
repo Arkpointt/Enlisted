@@ -47,8 +47,7 @@ namespace Enlisted.Features.Enlistment.Application
 		private float _visualHideTimer;
 		private bool _pendingCloseEnlistedMenu;
 		private bool _pendingOpenStatusMenu;
-		private int _statusMenuCloseCountdown;
-		private bool _statusMenuOpened;
+		// Deprecated countdown/flag kept previously for auto-close behavior; removed to avoid warnings
 		private bool _autoCloseStatusOnInit;
 
 		// Diagnostic helpers
@@ -298,27 +297,30 @@ namespace Enlisted.Features.Enlistment.Application
 				try
 				{
 					// Use ActivateGameMenu because after conversation there may be no active menu
-					GameMenu.ActivateGameMenu("enlisted_soldier_status");
-					_statusMenuOpened = true;
+					var hasMenuCtx = Campaign.Current?.CurrentMenuContext != null;
+					if (hasMenuCtx)
+					{
+						LoggingService.Debug("EnlistmentBehavior", "Opening enlisted_soldier_status via SwitchToMenu");
+						GameMenu.SwitchToMenu("enlisted_soldier_status");
+					}
+					else
+					{
+						LoggingService.Debug("EnlistmentBehavior", "Opening enlisted_soldier_status via ActivateGameMenu");
+						GameMenu.ActivateGameMenu("enlisted_soldier_status");
+					}
+					// menu opened
+					LoggingService.Info("EnlistmentBehavior", "Opened enlisted_soldier_status successfully");
 				}
 				catch
 				{
-					_statusMenuOpened = false;
+					// open failed
+					LoggingService.Warning("EnlistmentBehavior", "Failed to open enlisted_soldier_status (ActivateGameMenu threw)");
 				}
 				_pendingOpenStatusMenu = false;
-				_statusMenuCloseCountdown = Math.Max(_statusMenuCloseCountdown, 1);
+				// keep menu open until player leaves
 			}
 
-			// Defer menu close by a tick so the player briefly sees it but time resumes
-			if (_statusMenuCloseCountdown > 0)
-			{
-				_statusMenuCloseCountdown--;
-				if (_statusMenuCloseCountdown == 0 && _statusMenuOpened)
-				{
-					try { TaleWorlds.CampaignSystem.GameMenus.GameMenu.ExitToLast(); } catch { }
-					_statusMenuOpened = false;
-				}
-			}
+			// Removed auto-close behavior to ensure status menu stays visible
 
 			// Auto-close enlisted menu next tick so time continues (Freelancer-style)
 			if (_pendingCloseEnlistedMenu)
@@ -343,6 +345,39 @@ namespace Enlisted.Features.Enlistment.Application
 				}
 				_pendingCloseEnlistedMenu = false;
 			}
+
+			// While our enlisted menus are open, force StoppablePlay so spacebar/arrows work
+			try
+			{
+				var menuCtx = Campaign.Current?.CurrentMenuContext;
+				if (menuCtx != null)
+				{
+					var activeId = GetActiveMenuId();
+					if (activeId == "enlisted_soldier_status" || activeId == "enlisted_status_report")
+					{
+						if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
+						{
+							Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+						}
+						// If an encounter is still active, finish it so time controls are not blocked
+						if (PlayerEncounter.Current != null)
+						{
+							LoggingService.Debug("EnlistmentBehavior", "Finishing lingering PlayerEncounter while enlisted menu is open");
+							try { PlayerEncounter.Finish(true); } catch { }
+							// Drain any leftover menus opened by encounter
+							int safetyDrain = 3;
+							while (Campaign.Current?.CurrentMenuContext != null && safetyDrain-- > 0)
+							{
+								try { GameMenu.ExitToLast(); } catch { break; }
+							}
+							// Re-open our status menu without pausing
+							try { GameMenu.ActivateGameMenu("enlisted_soldier_status"); } catch { }
+							try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+						}
+					}
+				}
+			}
+			catch { }
 		}
 		
 
@@ -440,7 +475,15 @@ namespace Enlisted.Features.Enlistment.Application
 				"{=ENLIST_STATUS}You are serving as a soldier in this army.",
 				new OnInitDelegate(OnSoldierStatusInit),
 				GameOverlays.MenuOverlayType.None,
-				(GameMenu.MenuFlags)0);
+				GameMenu.MenuFlags.None);
+
+			// Detailed status report (separate screen like Freelancer's report)
+			campaignStarter.AddGameMenu(
+				"enlisted_status_report",
+				"{=ENLIST_REPORT}You are serving in the army of {ENLIST_FACTION_NAME}. Your lord is {ENLIST_LORD_NAME}.\nYour reputation with {ENLIST_LORD_NAME} is {ENLIST_RELATION}.\nYou have served {ENLIST_DAYS} days as tier {ENLIST_TIER}.",
+				new OnInitDelegate(OnStatusReportInit),
+				GameOverlays.MenuOverlayType.None,
+				GameMenu.MenuFlags.None);
 
 			// SAS-style wait menu while commander is inside a settlement (use standard menu for broad compatibility)
 			campaignStarter.AddGameMenu(
@@ -461,6 +504,50 @@ namespace Enlisted.Features.Enlistment.Application
 				-1,
 				false);
 
+			// Get Status Report – navigates to detailed report menu
+			campaignStarter.AddGameMenuOption(
+				"enlisted_soldier_status",
+				"enlisted_go_to_report",
+				"Get Status Report",
+				new GameMenuOption.OnConditionDelegate(OnSoldierStatusCondition),
+				new GameMenuOption.OnConsequenceDelegate((MenuCallbackArgs args) => { TryOpenStatusReport(); }),
+				true,
+				-1,
+				false);
+
+			// Leave back to campaign from status menu
+			campaignStarter.AddGameMenuOption(
+				"enlisted_soldier_status",
+				"enlisted_return_campaign",
+				"Return to campaign",
+				new GameMenuOption.OnConditionDelegate((MenuCallbackArgs args) => true),
+				new GameMenuOption.OnConsequenceDelegate(OnReturnToCampaign),
+				true,
+				-1,
+				false);
+
+			// Back from report to status
+			campaignStarter.AddGameMenuOption(
+				"enlisted_status_report",
+				"enlisted_report_back",
+				"Back",
+				new GameMenuOption.OnConditionDelegate(OnSoldierStatusCondition),
+				new GameMenuOption.OnConsequenceDelegate((MenuCallbackArgs args) => { GameMenu.SwitchToMenu("enlisted_soldier_status"); }),
+				true,
+				-1,
+				false);
+
+			// Leave from report directly to campaign
+			campaignStarter.AddGameMenuOption(
+				"enlisted_status_report",
+				"enlisted_report_leave",
+				"Return to campaign",
+				new GameMenuOption.OnConditionDelegate((MenuCallbackArgs args) => true),
+				new GameMenuOption.OnConsequenceDelegate(OnReturnToCampaign),
+				true,
+				-1,
+				false);
+
 			// Desert the army – reuse leave logic
 			campaignStarter.AddGameMenuOption(
 				"enlisted_soldier_status",
@@ -473,11 +560,61 @@ namespace Enlisted.Features.Enlistment.Application
 				false);
 		}
 
+		private void TryOpenStatusReport()
+		{
+			try
+			{
+				LoggingService.Debug("EnlistmentBehavior", "Switching to enlisted_status_report");
+				GameMenu.ActivateGameMenu("enlisted_status_report");
+			}
+			catch { }
+		}
+
 		private void OnWaitMenuInit(MenuCallbackArgs args)
 		{
 			if (_state.Commander != null)
 			{
 				args.MenuTitle = new TextObject(EnlistmentDialogs.GetSoldierStatusTitle(_state.Commander.Name.ToString()));
+			}
+		}
+
+		private void OnStatusReportInit(MenuCallbackArgs args)
+		{
+			try
+			{
+				LoggingService.Debug("EnlistmentBehavior", "OnStatusReportInit called");
+				var commander = _state.Commander;
+				if (commander == null)
+				{
+					LoggingService.Warning("EnlistmentBehavior", "OnStatusReportInit: commander was null");
+					return;
+				}
+
+				// Keep ribbon time controls available while report is open
+				try { if (Campaign.Current != null) Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+				// Match SAS/Freelancer: mark menu as wait-active so time controls work while menu is shown
+				try { args.MenuContext?.GameMenu?.StartWait(); } catch { }
+
+				// Compose report variables (relation-only focus per design)
+				var factionName = commander.MapFaction?.Name?.ToString() ?? "Unknown Faction";
+				var lordName = commander.Name?.ToString() ?? "Unknown Lord";
+				int days = _state.GetDaysServed();
+				int tier = _state.EnlistTier;
+				int relation = Hero.MainHero != null ? Hero.MainHero.GetRelation(commander) : 0;
+
+				MBTextManager.SetTextVariable("ENLIST_FACTION_NAME", new TextObject(factionName));
+				MBTextManager.SetTextVariable("ENLIST_LORD_NAME", new TextObject(lordName));
+				MBTextManager.SetTextVariable("ENLIST_DAYS", days);
+				MBTextManager.SetTextVariable("ENLIST_TIER", tier);
+				MBTextManager.SetTextVariable("ENLIST_RELATION", relation);
+
+				args.MenuTitle = new TextObject("Status Report");
+				// Refresh menu options after variables/flags are set
+				try { Campaign.Current?.GameMenuManager?.RefreshMenuOptions(Campaign.Current.CurrentMenuContext); } catch { }
+			}
+			catch (Exception ex)
+			{
+				LoggingService.Exception("EnlistmentBehavior", ex, "OnStatusReportInit");
 			}
 		}
 
@@ -571,7 +708,29 @@ namespace Enlisted.Features.Enlistment.Application
 					InformationManager.DisplayMessage(new InformationMessage("Enlist failed: player party invalid."));
 					return;
 				}
-				
+
+				// A) Finish any active encounter and drain menus BEFORE applying escort/camera/state
+				try 
+				{ 
+					if (PlayerEncounter.Current != null)
+					{
+						LoggingService.Debug("EnlistmentBehavior", "Finishing active PlayerEncounter prior to enlistment state changes");
+						PlayerEncounter.Finish(true);
+					}
+				}
+				catch { }
+				try
+				{
+					int drainSafety = 5;
+					while (Campaign.Current?.CurrentMenuContext != null && drainSafety-- > 0)
+					{
+						GameMenu.ExitToLast();
+					}
+				}
+				catch { }
+				try { if (Campaign.Current != null) Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+				_pendingOpenStatusMenu = true;
+
 				// 1) Snapshot player party
 				var mainPartyBefore = MobileParty.MainParty;
 				_snapshot = SnapshotPlayerParty(mainPartyBefore);
@@ -583,7 +742,8 @@ namespace Enlisted.Features.Enlistment.Application
 				_state.Enlist(lord);
 				_state.StorePlayerEquipment();
 				_state.ApplySoldierEquipment();
-				
+
+
 				// 4) Camera follow and tracking
 				_pendingFollowParty = lordPartyBase;
 				_pendingCameraFollow = true;
@@ -604,19 +764,8 @@ namespace Enlisted.Features.Enlistment.Application
 				IsPlayerEnlisted = true;
 				CurrentCommanderParty = lordMobileParty;
 				
-				// Cleanup any lingering encounters/menus
-				_pendingOpenStatusMenu = false;
-				try { if (PlayerEncounter.Current != null) PlayerEncounter.Finish(true); } catch { }
-				try
-				{
-					int safety = 5;
-					while (Campaign.Current?.CurrentMenuContext != null && safety-- > 0)
-					{
-						GameMenu.ExitToLast();
-					}
-				}
-				catch { }
-				_pendingCloseEnlistedMenu = true;
+				// Open status once on next tick; do not force-close menus immediately
+				_pendingCloseEnlistedMenu = false;
 				LogState("OnEnlistmentConfirmed:queued-close");
 			}
 			catch (Exception ex)
@@ -704,6 +853,12 @@ namespace Enlisted.Features.Enlistment.Application
 			{
 				args.MenuTitle = new TextObject(EnlistmentDialogs.GetSoldierStatusTitle(_state.Commander.Name.ToString()));
 			}
+			LoggingService.Debug("EnlistmentBehavior", "OnSoldierStatusInit called");
+			// Keep ribbon time controls available while status menu is open
+			try { if (Campaign.Current != null) Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+			// Match SAS/Freelancer: start wait mode so time controls are accepted with menu open
+			try { args.MenuContext?.GameMenu?.StartWait(); } catch { }
+			try { Campaign.Current?.GameMenuManager?.RefreshMenuOptions(Campaign.Current.CurrentMenuContext); } catch { }
 			// Immediately bounce out to campaign if this menu was opened post-enlistment
 			if (_autoCloseStatusOnInit)
 			{

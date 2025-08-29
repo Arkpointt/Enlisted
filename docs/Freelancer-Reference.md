@@ -58,7 +58,10 @@ This document summarizes how the Freelancer mod implements enlistment gameplay, 
 
 ### Time/Menu Control
 - Uses `GameMenu.SwitchToMenu(...)`, `GameMenu.ActivateGameMenu(...)` contextually.
-- Uses `GameMenu.StartWait/EndWait` in specific flows; does not globally pause on settlement entry.
+- Keeps time controls enabled while panels are open by setting
+  `Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay` and starting wait on the active
+  menu (`args.MenuContext.GameMenu.StartWait();`) followed by `Campaign.Current.GameMenuManager.RefreshMenuOptions(...)`.
+- Does not globally pause on settlement entry; panels remain collapsible via the chevron.
 
 ### APIs and Patterns to Mirror
 - Event subscription via `CampaignEvents` (e.g., session launched, map/battle related).

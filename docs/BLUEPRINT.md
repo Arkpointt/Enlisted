@@ -150,6 +150,11 @@ Copy the DLL and `SubModule.xml` into the module folder after build. In this pro
 - If the mod doesn’t appear, confirm `SubModule.xml` is present and valid.
 - If patches fail, check Harmony IDs and ensure x64 target.
 - Use a simple logger to confirm `OnSubModuleLoad` and `OnGameStart` are hit.
+- Enlisted menu opens but spacebar/arrows do nothing: finish encounters before opening the menu and
+  adopt the menu wait pattern:
+  `if (PlayerEncounter.Current != null) PlayerEncounter.Finish(true);` → drain `GameMenu.ExitToLast()`
+  → open menu → `Campaign.Current.TimeControlMode = StoppablePlay` → `args.MenuContext.GameMenu.StartWait()`
+  → `GameMenuManager.RefreshMenuOptions(...)`.
 
 ## 1. Purpose & Scope
 
@@ -310,6 +315,18 @@ tools/                            # Packaging helper scripts, VS build tasks
 ```
 
 If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove it (we don't store patch files).
+
+## 4.5 Campaign Menu & Time-Control Policy (authoritative)
+
+- Menus created via `CampaignGameStarter.AddGameMenu/ AddWaitGameMenu` must not break map time controls.
+- Pattern to keep the game unpaused while a menu panel is open (Freelancer/SAS-style):
+  1. Finish any active encounter before switching menus: `if (PlayerEncounter.Current != null) PlayerEncounter.Finish(true);`
+  2. Drain stray menus: loop `GameMenu.ExitToLast()` a few times until `CurrentMenuContext` is null.
+  3. Open your menu via `GameMenu.ActivateGameMenu(id)` or `GameMenu.SwitchToMenu(id)` depending on context.
+  4. Set time to `CampaignTimeControlMode.StoppablePlay`.
+  5. In the menu `OnInit` handler, call `args.MenuContext.GameMenu.StartWait();` and then `Campaign.Current.GameMenuManager.RefreshMenuOptions(...)`.
+- Use `GameOverlays.MenuOverlayType.None` and `GameMenu.MenuFlags.None` unless you intentionally need overlays/flags.
+- This ensures the top-left ribbon (spacebar/arrow time controls) works while the panel is expanded and the panel can be collapsed via the chevron without pausing.
 
 ## 5. Development Standards (C# / VS2022)
 
