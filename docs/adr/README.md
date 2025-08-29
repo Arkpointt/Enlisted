@@ -8,6 +8,7 @@ This directory contains all Architecture Decision Records for the Enlisted mod, 
 - **[ADR-001: Enlistment System Implementation](ADR-001-enlistment-system-implementation.md)** — Current enlistment lifecycle, dialogs, and state
 - **[ADR-010: Robust Logging System](ADR-010-robust-logging-system.md)** — Centralized logging approach and file layout
  - **[ADR-011: Map Tracker Redirection and Main Party Nameplate Suppression](ADR-011-map-tracker-and-nameplate-suppression.md)** — Visual integration while enlisted
+ - **[ADR-012: In-Game Enlistment Menu and Time-Control Behavior](ADR-012-enlisted-menu-and-time-control.md)** — Persistent panel with StartWait/StoppablePlay and encounter drain
 
 ### Feature Designs
 // Removed outdated feature ADRs; recreate as features are reintroduced
@@ -19,6 +20,7 @@ This directory contains all Architecture Decision Records for the Enlisted mod, 
 | 001 | ✅ Accepted | Architecture | High |
 | 010 | ✅ Accepted | Architecture | High |
 | 011 | ✅ Accepted | Architecture | Medium |
+| 012 | ✅ Accepted | Feature/UX | High |
 
 ## Usage Guidelines
 
