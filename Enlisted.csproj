@@ -22,7 +22,6 @@
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>13.0</LangVersion>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Enlisted RETAIL|x64'">
     <OutputPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_Client\</OutputPath>
@@ -32,7 +31,6 @@
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>13.0</LangVersion>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -116,53 +114,27 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-  
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Mod.Entry\SubModule.cs" />
-    <Compile Include="src\Core\Config\ModSettings.cs" />
-    <Compile Include="src\Core\Constants.cs" />
-    <Compile Include="src\Core\DependencyInjection\ServiceContainer.cs" />
-    <Compile Include="src\Core\Logging\LoggingService.cs" />
-    <Compile Include="src\Core\Persistence\SaveDefiner.cs" />
-    <Compile Include="src\Core\Utils\DebugHelper.cs" />
-    <Compile Include="src\Features\Enlistment\Application\EnlistmentBehavior.cs" />
-    <Compile Include="src\Features\Enlistment\Application\IEnlistmentService.cs" />
+    <Compile Include="src\Mod.Core\Logging\LoggingService.cs" />
     <Compile Include="src\Features\Enlistment\Domain\EnlistmentState.cs" />
-    <Compile Include="src\Features\Enlistment\Infrastructure\ArmyIntegrationService.cs" />
-    <Compile Include="src\Features\Enlistment\Infrastructure\DialogService.cs" />
-    <Compile Include="src\Features\Enlistment\Infrastructure\PartyIllusionService.cs" />
-    <Compile Include="src\Features\Promotion\Application\PromotionBehavior.cs" />
-    <Compile Include="src\Features\Promotion\Domain\PromotionRules.cs" />
-    <Compile Include="src\Features\Promotion\Domain\PromotionState.cs" />
-    <Compile Include="src\Features\Wages\Application\WageBehavior.cs" />
-    <Compile Include="src\GameAdapters\Patches\BattleParticipationPatch.cs" />
-    <Compile Include="src\GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
-    <Compile Include="src\GameAdapters\Patches\SuppressArmyMenuPatch.cs" />
+    <Compile Include="src\Features\Enlistment\Domain\EnlistmentDialogs.cs" />
+    <Compile Include="src\Features\Enlistment\Application\EnlistmentBehavior.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\MobilePartyTrackerPatches.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
   </ItemGroup>
-  
   <ItemGroup>
     <Content Include="SubModule.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
   <ItemGroup>
     <!-- Main Documentation -->
     <None Include="docs\ARCHITECTURE.md" />
     <None Include="docs\BLUEPRINT.md" />
-    <None Include="docs\QUICKSTART.md" />
     <None Include="docs\TESTING.md" />
-    <None Include="docs\settings.xml.example" />
-    
-    <!-- Architecture Decision Records -->
-    <None Include="docs\adr\README.md" />
-    <None Include="docs\adr\ADR-005-enlistment-feature.md" />
-    <None Include="docs\adr\ADR-006-promotion-system.md" />
-    <None Include="docs\adr\ADR-007-wage-system.md" />
-    <None Include="docs\adr\ADR-008-game-integration-patches.md" />
-    <None Include="docs\adr\ADR-009-harmony-patch-method-signatures.md" />
   </ItemGroup>
-  
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  
 </Project>

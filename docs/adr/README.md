@@ -5,29 +5,20 @@ This directory contains all Architecture Decision Records for the Enlisted mod, 
 ## Index
 
 ### Technical Architecture
-- **[ADR-001: Package-by-Feature Architecture](ADR-001-package-by-feature-architecture.md)** - Restructured codebase organization
-- **[ADR-002: Isolate Game API Interactions](ADR-002-isolate-game-api-interactions.md)** - Game integration patterns  
-- **[ADR-003: Centralized Configuration](ADR-003-centralized-configuration.md)** - Configuration management approach
-- **[ADR-004: Remove Static Singleton Patterns](ADR-004-remove-static-singleton-patterns.md)** - Dependency injection adoption
+- **[ADR-001: Enlistment System Implementation](ADR-001-enlistment-system-implementation.md)** — Current enlistment lifecycle, dialogs, and state
+- **[ADR-010: Robust Logging System](ADR-010-robust-logging-system.md)** — Centralized logging approach and file layout
+ - **[ADR-011: Map Tracker Redirection and Main Party Nameplate Suppression](ADR-011-map-tracker-and-nameplate-suppression.md)** — Visual integration while enlisted
 
 ### Feature Designs
-- **[ADR-005: Enlistment Feature](ADR-005-enlistment-feature.md)** - Core military enlistment system
-- **[ADR-006: Promotion System](ADR-006-promotion-system.md)** - XP-based rank advancement
-- **[ADR-007: Wage System](ADR-007-wage-system.md)** - Daily compensation for enlisted service
-- **[ADR-008: Game Integration Patches](ADR-008-game-integration-patches.md)** - Harmony patches for game system integration
+// Removed outdated feature ADRs; recreate as features are reintroduced
 
 ## ADR Status
 
 | ADR | Status | Category | Impact |
 |-----|--------|----------|---------|
 | 001 | ✅ Accepted | Architecture | High |
-| 002 | ✅ Accepted | Architecture | High |
-| 003 | ✅ Accepted | Architecture | Medium |
-| 004 | ✅ Accepted | Architecture | Medium |
-| 005 | ✅ Accepted | Feature | High |
-| 006 | ✅ Accepted | Feature | Medium |
-| 007 | ✅ Accepted | Feature | Low |
-| 008 | ✅ Accepted | Integration | High |
+| 010 | ✅ Accepted | Architecture | High |
+| 011 | ✅ Accepted | Architecture | Medium |
 
 ## Usage Guidelines
 
@@ -67,6 +58,5 @@ This directory contains all Architecture Decision Records for the Enlisted mod, 
 
 ## Related Documentation
 
-- **[ARCHITECTURE.md](../ARCHITECTURE.md)** - High-level architectural overview
-- **[BLUEPRINT.md](../BLUEPRINT.md)** - Detailed engineering guidelines  
-- **[TESTING.md](../TESTING.md)** - Testing strategies and conventions
+- **[BLUEPRINT.md](../BLUEPRINT.md)** — Engineering guidelines
+- **[DEBUGGING.md](../DEBUGGING.md)** — Debugging and log locations

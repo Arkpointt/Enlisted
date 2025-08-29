@@ -1,14 +1,155 @@
 # Bannerlord Mod Engineering Blueprint
 
-**Version:** 1.2 (Living Document)  
+**Version:** 1.3 (Living Document)  
 **Status:** Authoritative Reference  
-**Last Updated:** August 26, 2025
+**Last Updated:** August 29, 2025
 
 ## Changelog
 
 - **2025-08-26:** Added Harmony Patching Policy (Section 4.2.1) and Harmony commenting standard (Section 6.1); noted Harmony packaging/runtime dependency in Appendix B. Clarified SubModule.xml dependency example, 0Harmony reference strategy, engine-invoked examples, and Harmony ID stability.
 - **2025-08-25:** Renamed "Patch (default)" → "Small Changeset (default)"; clarified workflow to match approve-changes flow; removed .artifacts/patches/ from structure.
 - **2025-08-22:** Initial release for a Mount & Blade II: Bannerlord mod in Visual Studio 2022 with minimal root, Package-by-Feature organization, change levels, and concise commenting standards.
+
+## Quickstart: Generic Bannerlord Mod
+
+This quickstart sets up a minimal, generic Bannerlord mod with Harmony and a clean packaging flow. Replace `YourModName`/`com.yourmodid.mod` with your values.
+
+### Prerequisites
+- Visual Studio 2022
+- Bannerlord installed (know your `<BannerlordInstall>` path)
+- Depends on `Bannerlord.Harmony` (runtime)
+
+### Repository Layout (current project)
+```
+Enlisted/
+├── Enlisted.sln
+├── docs/
+├── src/
+│   ├── Mod.Entry/
+│   │   └── SubModule.cs
+│   ├── Mod.Core/
+│   │   └── Logging/
+│   ├── Mod.GameAdapters/
+│   │   └── Patches/
+│   └── Features/
+└── SubModule.xml
+```
+
+### Minimal SubModule.cs (project pattern)
+```csharp
+using TaleWorlds.MountAndBlade;
+using TaleWorlds.CampaignSystem;
+using HarmonyLib;
+
+namespace YourModName
+{
+    public class SubModule : MBSubModuleBase
+    {
+        private Harmony _harmony;
+
+        protected override void OnSubModuleLoad()
+        {
+            _harmony = new Harmony("com.yourmodid.mod");
+            _harmony.PatchAll();
+        }
+
+        protected override void OnGameStart(Game game, IGameStarter starterObj)
+        {
+            if (starterObj is CampaignGameStarter campaign)
+            {
+                // Register CampaignBehavior(s) here
+                // campaign.AddBehavior(new YourBehavior());
+            }
+        }
+    }
+}
+```
+
+### SubModule.xml (template)
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<Module>
+  <Name value="YourModName" />
+  <Id value="YourModName" />
+  <Version value="v1.0.0" />
+  <DefaultModule value="false" />
+
+  <SingleplayerModule value="true" />
+  <MultiplayerModule value="false" />
+
+  <DependedModules>
+    <DependedModule Id="Bannerlord.Harmony" />
+  </DependedModules>
+
+  <SubModules>
+    <SubModule>
+      <Name value="YourMod SubModule" />
+      <DLLName value="YourModName.dll" />
+      <SubModuleClassType value="YourModName.SubModule" />
+      <Tags>
+        <Tag key="DedicatedServerType" value="none" />
+        <Tag key="IsNoRenderModeElement" value="false" />
+      </Tags>
+    </SubModule>
+  </SubModules>
+
+  <Xmls />
+</Module>
+```
+
+### Project Settings (csproj snippets)
+```xml
+<PropertyGroup>
+  <TargetFramework>net472</TargetFramework>
+  <Platforms>x64</Platforms>
+  <PlatformTarget>x64</PlatformTarget>
+  <LangVersion>latest</LangVersion>
+  <Nullable>disable</Nullable>
+</PropertyGroup>
+```
+
+Optional reference for IntelliSense (prefer runtime Harmony from Bannerlord.Harmony; do not copy):
+```xml
+<ItemGroup>
+  <Reference Include="0Harmony">
+    <HintPath>..\..\..\Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
+    <Private>false</Private>
+  </Reference>
+  <Reference Include="TaleWorlds.MountAndBlade">
+    <HintPath>..\..\..\Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.MountAndBlade.dll</HintPath>
+    <Private>false</Private>
+  </Reference>
+  <Reference Include="TaleWorlds.CampaignSystem">
+    <HintPath>..\..\..\Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.CampaignSystem.dll</HintPath>
+    <Private>false</Private>
+  </Reference>
+  <!-- add other TaleWorlds references as needed, Private=false -->
+  </ItemGroup>
+```
+
+### Packaging (post-build)
+Copy the DLL and `SubModule.xml` into the module folder after build. In this project the `Enlisted EDITOR` configuration already outputs to the module path. Example snippet (if you need a post-build copy):
+```xml
+<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+  <PropertyGroup>
+    <ModuleDir>C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\YourModName</ModuleDir>
+  </PropertyGroup>
+  <MakeDir Directories="$(ModuleDir)\bin\Win64_Shipping_Client" />
+  <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(ModuleDir)\bin\Win64_Shipping_Client" />
+  <Copy SourceFiles="$(ProjectDir)..\..\SubModule.xml" DestinationFolder="$(ModuleDir)" />
+</Target>
+```
+
+### Test Run
+1. Build in Release/x64.
+2. Verify files under `<BannerlordInstall>/Modules/YourModName/`.
+3. Enable the mod in the launcher (ensure `Bannerlord.Harmony` loads first).
+4. Launch a new campaign to see SubModule hooks active.
+
+### Troubleshooting
+- If the mod doesn’t appear, confirm `SubModule.xml` is present and valid.
+- If patches fail, check Harmony IDs and ensure x64 target.
+- Use a simple logger to confirm `OnSubModuleLoad` and `OnGameStart` are hit.
 
 ## 1. Purpose & Scope
 
@@ -97,7 +238,7 @@ src/
 
 **Scope and placement**
 
-- All Harmony patches against TaleWorlds types must be placed in `src/GameAdapters/Patches/`.
+- All Harmony patches against TaleWorlds types must be placed in `src/Mod.GameAdapters/Patches/`.
 - One class per target patch; name by feature + target (e.g., `EconomyCampaignBehavior_DailyTickPatch.cs`).
 - Patch classes must declare scope with `[HarmonyPatch]` attributes.
 
@@ -105,12 +246,13 @@ src/
 
 - Intercept or extend TaleWorlds methods that are sealed, internal/private, or engine-invoked.
 - When critical side effects cannot be reached via public APIs or CampaignBehavior hooks.
+- It is acceptable to patch menu/time control, encounter/battle flows, and dispatcher surfaces when required by feature design, provided patches are guarded, observable, and configurable.
 - Examples of engine-invoked surfaces: module load/unload lifecycle, campaign daily/hourly ticks, battle/agent updates, menu open/close, economy/party recalculations.
 
 **When not to use Harmony**
 
-- Do not place domain logic, configuration, or feature orchestration in patches.
-- Prefer CampaignBehavior, event hooks, and public APIs when available.
+- Do not place domain logic in patches; keep orchestration and configuration in feature services.
+- Prefer CampaignBehavior, event hooks, and public APIs when straightforward; however, extensive Harmony usage is acceptable where it simplifies integration with engine-invoked behavior. Document assumptions and gate via settings where appropriate.
 
 **Documentation standard (mandatory)**
 
@@ -339,11 +481,11 @@ These standards set strong defaults without over-prescribing tactics. When evide
 using HarmonyLib;
 
 // e.g., inside SubModule.OnSubModuleLoad or appropriate init hook
-var harmony = new Harmony("com.enlisted.mod");
+var harmony = new Harmony("com.yourmodid.mod");
 harmony.PatchAll();
 ```
 
-- Placement: All patches in `src/GameAdapters/Patches/`.
+- Placement: All patches in `src/Mod.GameAdapters/Patches/`.
 - Architecture: Target x64 in the project to align with TaleWorlds assemblies and avoid MSB3270 warnings.
 - Logging: Use centralized logging (`GameAdapters` or feature category). Gate Debug logs behind a mod setting to avoid spam in high-frequency hooks.
 
@@ -423,8 +565,8 @@ public static class YourPatch
 #### Debugging Failed Patches
 Check logs for patch status messages:
 ```
-[Enlisted] PATCH SUCCESS: Successfully found ClassName.MethodName
-[Enlisted] PATCH ERROR: Could not find target method
+[YourModName] PATCH SUCCESS: Successfully found ClassName.MethodName
+[YourModName] PATCH ERROR: Could not find target method
 ```
 
 This prevents crashes and provides clear feedback on what's failing.
