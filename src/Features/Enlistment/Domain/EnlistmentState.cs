@@ -73,6 +73,24 @@ namespace Enlisted.Features.Enlistment.Domain
             }
         }
 
+        // Restore minimal state from save (used when SaveSystem field mapping is not present)
+        public void RestoreFromSave(string commanderId, bool isEnlisted, CampaignTime enlistTime, int enlistTier)
+        {
+            _commanderId = commanderId;
+            _isEnlisted = isEnlisted;
+            _enlistTime = enlistTime;
+            _enlistTier = enlistTier;
+        }
+
+        // Extract minimal state for saving
+        public void ExtractForSave(out string commanderId, out bool isEnlisted, out CampaignTime enlistTime, out int enlistTier)
+        {
+            commanderId = _commanderId;
+            isEnlisted = _isEnlisted;
+            enlistTime = _enlistTime;
+            enlistTier = _enlistTier;
+        }
+
         public void LeaveArmy()
         {
             if (!_isEnlisted)
@@ -170,6 +188,18 @@ namespace Enlisted.Features.Enlistment.Domain
             {
                 PartyBase.MainParty.ItemRoster.AddToCounts(item, 1);
             }
+        }
+
+        // Accessors for saving/restoring stored equipment/items across save/load
+        public (List<EquipmentElement> equipment, List<ItemObject> items) GetStoredLoadout()
+        {
+            return (_storedEquipment, _storedItems);
+        }
+
+        public void RestoreStoredLoadout(List<EquipmentElement> equipment, List<ItemObject> items)
+        {
+            _storedEquipment = equipment ?? new List<EquipmentElement>();
+            _storedItems = items ?? new List<ItemObject>();
         }
 
         public void Promote()

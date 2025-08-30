@@ -1,0 +1,325 @@
+C:\Program Files (x86)\Steam\gameoverlayrenderer64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\amd_ags_x64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\D3DCOMPILER_47.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\dbgcore.DLL
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\dbghelp.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\embree3.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\FreeImage.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\GfeSDK.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\GFSDK_Aftermath_Lib.x64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\grCore.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\grGranite.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\grGraniteDX11.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\grGraniteQuartzFast.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qgif.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qicns.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qico.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qjpeg.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qtga.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qtiff.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qwbmp.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\imageformats\qwebp.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\ispc_texcomp.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\libfbxsdk.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\mono-2.0-sgen.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\msdia140.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Newtonsoft.Json.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\nvtt.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\PhysX_64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\PhysXCommon_64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\PhysXCooking_64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\PhysXFoundation_64.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\platforms\qwindows.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Qt5Core.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Qt5Gui.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Qt5Sql.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Qt5Test.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Qt5Widgets.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\StbSharp.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\steam_api64.DLL
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\Steamworks.NET.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\System.Numerics.Vectors.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.AchievementSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.ActivitySystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.CampaignSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.CampaignSystem.ViewModelCollection.BirthAndDeath.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.CampaignSystem.ViewModelCollection.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Core.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Core.ViewModelCollection.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Diamond.AccessProvider.Test.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Diamond.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.DotNet.AutoGenerated.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.DotNet.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Engine.AutoGenerated.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Engine.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Engine.GauntletUI.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.Data.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.ExtraWidgets.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.PrefabSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.InputSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Library.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.LinQuick.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Localization.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.ModuleManager.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.AutoGenerated.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.Diamond.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.GauntletUI.Widgets.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.Helpers.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.Launcher.exe
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.Launcher.Library.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.Launcher.Steam.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.ViewModelCollection.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Native.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Network.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.ObjectSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.PlatformService.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.PlatformService.Steam.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.PlayerServices.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.PSAI.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.SaveSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.ScreenSystem.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Starter.Library.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.TwoDimension.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.TwoDimension.Standalone.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\bin\Win64_Shipping_wEditor\tbb.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\0Harmony.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\Bannerlord.Harmony.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\Mono.Cecil.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\Mono.Cecil.Mdb.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\Mono.Cecil.Pdb.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\Mono.Cecil.Rocks.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\MonoMod.Backports.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\MonoMod.Core.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\MonoMod.Iced.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\MonoMod.ILHelpers.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_wEditor\MonoMod.Utils.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\CustomBattle\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.CustomBattle.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_wEditor\Enlisted.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Native\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.GauntletUI.AutoGenerated.0.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Native\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.GauntletUI.AutoGenerated.1.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Native\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.GauntletUI.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Native\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.Platform.PC.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Native\bin\Win64_Shipping_wEditor\TaleWorlds.MountAndBlade.View.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.GauntletUI.AutoGenerated.0.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.GauntletUI.AutoGenerated.1.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.GauntletUI.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.View.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.ViewModelCollection.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\StoryMode\bin\Win64_Shipping_wEditor\StoryMode.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\StoryMode\bin\Win64_Shipping_wEditor\StoryMode.GauntletUI.AutoGenerated.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\StoryMode\bin\Win64_Shipping_wEditor\StoryMode.GauntletUI.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\StoryMode\bin\Win64_Shipping_wEditor\StoryMode.View.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\StoryMode\bin\Win64_Shipping_wEditor\StoryMode.ViewModelCollection.dll
+C:\Program Files (x86)\Steam\steamclient64.dll
+C:\Program Files (x86)\Steam\tier0_s64.dll
+C:\Program Files (x86)\Steam\vstdlib_s64.dll
+C:\Program Files\NVIDIA Corporation\NVIDIA App\MessageBus\MessageBus.dll
+C:\Program Files\NVIDIA Corporation\NvTelemetry\NvTelemetryAPI64.dll
+C:\Program Files\NVIDIA Corporation\NvTelemetry\NvTelemetryBridge64.dll
+C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.25070.5-0\MPCLIENT.DLL
+C:\ProgramData\Microsoft\Windows Defender\Platform\4.18.25070.5-0\MpOav.dll
+C:\ProgramData\NVIDIA\NGX\models\dlss\versions\131529\files\160_B9D3D54.bin
+C:\windows\assembly\NativeImages_v4.0.30319_64\Accessibility\6c10694cf5af9a73c681597d3ecdc1a0\Accessibility.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\mscorlib\8967064a93c70884749ad00de74dd7a1\mscorlib.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\netstandard\6c684711d3c90fc4554c96552f5ba00f\netstandard.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Configuration\5981d875c9b7bffd26ef1ecacb57079c\System.Configuration.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Core\cf9616e40d9e7e4d682f88f6d5725156\System.Core.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Data.SqlXml\c2260de8bbf401fc3d2b39f5c00a7e6e\System.Data.SqlXml.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Data\8929eb8d8787b5e32eed7cb0cb09e57a\System.Data.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Drawing\f8bbe472ae72b0b981525825470239b1\System.Drawing.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Net.Http\71a9146b7e9b266058e6dcd73a846ca8\System.Net.Http.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Numerics\33788d0889c2acfd59e5fe42090f42ab\System.Numerics.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Runt54187d77#\fe146ec9fa5718eae8fcd549bbc65ad8\System.Runtime.InteropServices.RuntimeInformation.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Runteb92aa12#\2fb6fb234e920e0479995cf50aedbc11\System.Runtime.Serialization.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Security\15ac903b100326c36dbfa0338979a499\System.Security.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Servd1dec626#\d791af573950c4523270385f74bd77cf\System.ServiceModel.Internals.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Transactions\ac5cc94b073e40febf26cfd22cf36718\System.Transactions.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.ValueTuple\480979e64b4b57a2c0e7546b0c61dd3e\System.ValueTuple.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Windows.Forms\050d53bc454495448563778ee06e7501\System.Windows.Forms.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Xml.Linq\e84094b995224daaa5bd5dc25cb826bc\System.Xml.Linq.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System.Xml\712338b74f96d32fc2d4d8d3c14667d5\System.Xml.ni.dll
+C:\windows\assembly\NativeImages_v4.0.30319_64\System\fc7509f3c5d3bef48dfefcb3947d3b56\System.ni.dll
+C:\windows\Microsoft.Net\assembly\GAC_64\mscorlib\v4.0_4.0.0.0__b77a5c561934e089\mscorlib.dll
+C:\windows\Microsoft.Net\assembly\GAC_64\System.Data\v4.0_4.0.0.0__b77a5c561934e089\System.Data.dll
+C:\windows\Microsoft.Net\assembly\GAC_64\System.Transactions\v4.0_4.0.0.0__b77a5c561934e089\System.Transactions.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\Accessibility\v4.0_4.0.0.0__b03f5f7f11d50a3a\Accessibility.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\netstandard\v4.0_2.0.0.0__cc7b13ffcd2ddd51\netstandard.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Configuration\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Configuration.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Core\v4.0_4.0.0.0__b77a5c561934e089\System.Core.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Data.SqlXml\v4.0_4.0.0.0__b77a5c561934e089\System.Data.SqlXml.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Drawing\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Drawing.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Net.Http\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Net.Http.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Numerics\v4.0_4.0.0.0__b77a5c561934e089\System.Numerics.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Runtime.InteropServices.RuntimeInformation\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Runtime.InteropServices.RuntimeInformation.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Runtime.Serialization\v4.0_4.0.0.0__b77a5c561934e089\System.Runtime.Serialization.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Security\v4.0_4.0.0.0__b03f5f7f11d50a3a\System.Security.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.ServiceModel.Internals\v4.0_4.0.0.0__31bf3856ad364e35\System.ServiceModel.Internals.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.ValueTuple\v4.0_4.0.0.0__cc7b13ffcd2ddd51\System.ValueTuple.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Windows.Forms\v4.0_4.0.0.0__b77a5c561934e089\System.Windows.Forms.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Xml.Linq\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.Linq.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System.Xml\v4.0_4.0.0.0__b77a5c561934e089\System.Xml.dll
+C:\windows\Microsoft.Net\assembly\GAC_MSIL\System\v4.0_4.0.0.0__b77a5c561934e089\System.dll
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\clr.dll
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\clrcompression.dll
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\clrjit.dll
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\diasymreader.dll
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\mscoreei.dll
+C:\windows\SYSTEM32\AcGenral.DLL
+C:\windows\System32\advapi32.dll
+C:\windows\SYSTEM32\amsi.dll
+C:\windows\SYSTEM32\apphelp.dll
+C:\windows\SYSTEM32\AUDIOSES.DLL
+C:\windows\SYSTEM32\bcrypt.dll
+C:\windows\System32\bcryptPrimitives.dll
+C:\windows\SYSTEM32\CFGMGR32.dll
+C:\windows\System32\clbcatq.dll
+C:\Windows\System32\cldapi.dll
+C:\windows\System32\combase.dll
+C:\windows\System32\coml2.dll
+C:\windows\SYSTEM32\CONCRT140.dll
+C:\windows\SYSTEM32\CoreMessaging.dll
+C:\windows\SYSTEM32\CoreUIComponents.dll
+C:\windows\System32\CRYPT32.dll
+C:\windows\SYSTEM32\CRYPTBASE.dll
+C:\windows\SYSTEM32\cryptnet.dll
+C:\windows\SYSTEM32\CRYPTSP.dll
+C:\windows\SYSTEM32\cscapi.dll
+C:\windows\SYSTEM32\d3d11.dll
+C:\windows\system32\dataexchange.dll
+C:\windows\SYSTEM32\dcomp.dll
+C:\windows\SYSTEM32\devobj.dll
+C:\windows\SYSTEM32\DEVRTL.dll
+C:\windows\SYSTEM32\dhcpcsvc.DLL
+C:\windows\SYSTEM32\dhcpcsvc6.DLL
+C:\windows\SYSTEM32\DINPUT8.dll
+C:\windows\SYSTEM32\directxdatabasehelper.dll
+C:\windows\SYSTEM32\DNSAPI.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\_nvngx.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\Display.NvContainer\NvMessageBus.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\NvCamera\d3dcompiler_47_64.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\NvCamera\NvCamera64.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvcuda64.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvdxgdmal64.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvgpucomp64.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvldumdx.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\NvMemMapStoragex.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvngx.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvoglv64.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvppex.dll
+C:\windows\System32\DriverStore\FileRepository\nvddi.inf_amd64_0add47f53d2adeb3\nvwgf2umx.dll
+C:\windows\SYSTEM32\drvstore.dll
+C:\windows\SYSTEM32\Dwmapi.dll
+C:\windows\system32\dwrite.dll
+C:\windows\SYSTEM32\dxcore.dll
+C:\windows\SYSTEM32\dxgi.dll
+C:\windows\SYSTEM32\DXGIDebug.dll
+C:\windows\System32\fwpuclnt.dll
+C:\windows\System32\GDI32.dll
+C:\windows\System32\gdi32full.dll
+C:\windows\SYSTEM32\GLU32.dll
+C:\windows\SYSTEM32\gpapi.dll
+C:\windows\SYSTEM32\HID.DLL
+C:\windows\SYSTEM32\iertutil.dll
+C:\windows\System32\imagehlp.dll
+C:\windows\System32\IMM32.DLL
+C:\windows\SYSTEM32\inputhost.dll
+C:\windows\SYSTEM32\IPHLPAPI.DLL
+C:\windows\SYSTEM32\kernel.appcore.dll
+C:\windows\System32\KERNEL32.dll
+C:\windows\System32\KERNELBASE.dll
+C:\windows\SYSTEM32\LINKINFO.dll
+C:\windows\SYSTEM32\Microsoft.Internal.WarpPal.dll
+C:\windows\System32\MMDevApi.dll
+C:\windows\SYSTEM32\MPR.dll
+C:\windows\SYSTEM32\MSACM32.dll
+C:\windows\SYSTEM32\msasn1.dll
+C:\windows\SYSTEM32\MSCOREE.DLL
+C:\windows\System32\MSCTF.dll
+C:\windows\system32\mssprxy.dll
+C:\windows\System32\msvcp_win.dll
+C:\windows\SYSTEM32\MSVCP120.dll
+C:\windows\SYSTEM32\MSVCP140.dll
+C:\windows\SYSTEM32\MSVCR120.dll
+C:\windows\System32\msvcrt.dll
+C:\windows\SYSTEM32\MSWSOCK.dll
+C:\windows\SYSTEM32\ncrypt.dll
+C:\windows\system32\ncryptsslp.dll
+C:\windows\SYSTEM32\NETAPI32.dll
+C:\windows\SYSTEM32\netutils.dll
+C:\windows\System32\NSI.dll
+C:\windows\SYSTEM32\NTASN1.dll
+C:\windows\SYSTEM32\ntdll.dll
+C:\windows\SYSTEM32\ntmarta.dll
+C:\windows\system32\ntshrui.dll
+C:\windows\SYSTEM32\nvapi64.dll
+C:\windows\system32\nvspcap64.dll
+C:\windows\System32\ole32.dll
+C:\windows\SYSTEM32\OLEACC.dll
+C:\windows\System32\OLEAUT32.dll
+C:\Windows\System32\OneCoreCommonProxyStub.dll
+C:\windows\SYSTEM32\Opengl32.dll
+C:\windows\SYSTEM32\powrprof.dll
+C:\windows\SYSTEM32\profapi.dll
+C:\windows\SYSTEM32\PROPSYS.dll
+C:\windows\System32\PSAPI.DLL
+C:\Windows\System32\rasadhlp.dll
+C:\windows\SYSTEM32\rasapi32.dll
+C:\windows\SYSTEM32\RASMAN.DLL
+C:\windows\SYSTEM32\resourcepolicyclient.dll
+C:\windows\System32\RPCRT4.dll
+C:\windows\system32\rsaenh.dll
+C:\windows\SYSTEM32\rtutils.dll
+C:\windows\system32\schannel.DLL
+C:\windows\System32\sechost.dll
+C:\windows\SYSTEM32\Secur32.dll
+C:\windows\System32\SETUPAPI.dll
+C:\windows\System32\shcore.dll
+C:\windows\System32\SHELL32.dll
+C:\windows\System32\SHLWAPI.dll
+C:\windows\SYSTEM32\SPINF.dll
+C:\windows\SYSTEM32\srvcli.dll
+C:\windows\SYSTEM32\SspiCli.dll
+C:\windows\SYSTEM32\textinputframework.dll
+C:\windows\SYSTEM32\TextShaping.dll
+C:\Windows\System32\threadpoolwinrt.dll
+C:\windows\system32\twinapi.appcore.dll
+C:\windows\SYSTEM32\ucrtbase_clr0400.dll
+C:\windows\System32\ucrtbase.dll
+C:\windows\SYSTEM32\uiautomationcore.dll
+C:\windows\SYSTEM32\UMPDC.dll
+C:\windows\SYSTEM32\urlmon.dll
+C:\windows\System32\USER32.dll
+C:\windows\SYSTEM32\USERENV.dll
+C:\windows\system32\uxtheme.dll
+C:\windows\SYSTEM32\VCOMP140.DLL
+C:\windows\SYSTEM32\VCRUNTIME140_1_CLR0400.dll
+C:\windows\SYSTEM32\VCRUNTIME140_1.dll
+C:\windows\SYSTEM32\VCRUNTIME140_CLR0400.dll
+C:\windows\SYSTEM32\VCRUNTIME140.dll
+C:\windows\SYSTEM32\VERSION.dll
+C:\windows\SYSTEM32\virtdisk.dll
+C:\windows\System32\win32u.dll
+C:\Windows\System32\Windows.FileExplorer.Common.dll
+C:\windows\SYSTEM32\windows.staterepositoryclient.dll
+C:\windows\SYSTEM32\windows.staterepositorycore.dll
+C:\Windows\System32\Windows.StateRepositoryPS.dll
+C:\windows\SYSTEM32\windows.storage.dll
+C:\Windows\System32\Windows.UI.dll
+C:\windows\SYSTEM32\WindowsCodecs.dll
+C:\windows\SYSTEM32\winhttp.dll
+C:\windows\SYSTEM32\WINMM.dll
+C:\windows\SYSTEM32\WINNSI.DLL
+C:\windows\SYSTEM32\WINSTA.dll
+C:\windows\System32\WINTRUST.dll
+C:\windows\System32\wintypes.dll
+C:\windows\SYSTEM32\wldp.dll
+C:\windows\System32\WS2_32.dll
+C:\windows\SYSTEM32\WTSAPI32.dll
+C:\windows\SYSTEM32\XInput1_4.dll
+C:\windows\SYSTEM32\XINPUT9_1_0.dll
+C:\windows\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.4768_none_3e0c112ce331287c\comctl32.dll
+HarmonySharedState, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+MonoMod.Utils.Cil.ILGeneratorProxy, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null

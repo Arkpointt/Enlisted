@@ -18,6 +18,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	internal static class MobilePartyTracker_Refresh_Patch
 	{
 		private static List<MethodBase> _targets;
+		private static DateTime _lastDebugLogUtc;
 
 		static bool Prepare()
 		{
@@ -118,7 +119,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		{
 			try
 			{
-				LoggingService.Debug("TrackerPatch", $"Postfix hit: {__instance.GetType().FullName}");
+				var now = DateTime.UtcNow;
+				if ((now - _lastDebugLogUtc).TotalSeconds > 5)
+				{
+					LoggingService.Debug("TrackerPatch", $"Postfix hit: {__instance.GetType().FullName}");
+					_lastDebugLogUtc = now;
+				}
 				if (!Enlisted.Features.Enlistment.Application.EnlistmentBehavior.IsPlayerEnlisted)
 				{
 					return;
@@ -137,14 +143,22 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				if (track != null)
 				{
 					track.Invoke(__instance, new object[] { commander });
-					LoggingService.Debug("TrackerPatch", $"TrackParty(commander) invoked");
+					if ((DateTime.UtcNow - _lastDebugLogUtc).TotalSeconds > 5)
+					{
+						LoggingService.Debug("TrackerPatch", $"TrackParty(commander) invoked");
+						_lastDebugLogUtc = DateTime.UtcNow;
+					}
 				}
 
 				var main = Campaign.Current?.MainParty;
 				if (main != null && untrack != null)
 				{
 					untrack.Invoke(__instance, new object[] { main });
-					LoggingService.Debug("TrackerPatch", $"UntrackParty(main) invoked");
+					if ((DateTime.UtcNow - _lastDebugLogUtc).TotalSeconds > 5)
+					{
+						LoggingService.Debug("TrackerPatch", $"UntrackParty(main) invoked");
+						_lastDebugLogUtc = DateTime.UtcNow;
+					}
 				}
 
 				// Fallback: aggressively remove MainParty from any tracked collections inside the VM
@@ -219,7 +233,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					}
 					if (removeTargets.Count > 0)
 					{
-						LoggingService.Debug("TrackerPatch", $"Removed {removeTargets.Count} tracker entries for MainParty");
+						if ((DateTime.UtcNow - _lastDebugLogUtc).TotalSeconds > 5)
+						{
+							LoggingService.Debug("TrackerPatch", $"Removed {removeTargets.Count} tracker entries for MainParty");
+							_lastDebugLogUtc = DateTime.UtcNow;
+						}
 					}
 				}
 			}

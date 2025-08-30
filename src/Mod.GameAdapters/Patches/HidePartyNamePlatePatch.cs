@@ -16,6 +16,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [HarmonyPatch]
     internal static class HidePartyNamePlatePatch
     {
+        private static bool _loggedHideOnce;
+        private static DateTime _lastResetCheckUtc;
+
         public static MethodBase TargetMethod()
         {
             try
@@ -44,8 +47,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Reset one-shot log flag when not enlisted (rate-limited)
                 if (!EnlistmentBehavior.IsPlayerEnlisted)
                 {
+                    var now = DateTime.UtcNow;
+                    if ((now - _lastResetCheckUtc).TotalSeconds > 5)
+                    {
+                        _loggedHideOnce = false;
+                        _lastResetCheckUtc = now;
+                    }
                     return;
                 }
 
@@ -74,7 +84,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
                     catch { }
 
-                    LoggingService.Debug("NameplatePatch", "Hidden main party nameplate while enlisted");
+                    if (!_loggedHideOnce)
+                    {
+                        LoggingService.Debug("NameplatePatch", "Hidden main party nameplate while enlisted");
+                        _loggedHideOnce = true; // log only once per enlistment session
+                    }
                 }
             }
             catch (Exception ex)

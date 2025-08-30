@@ -1,0 +1,577 @@
+CrashDumper Configuration
+	PID: 			56224
+	Dump Directory: 	C:\ProgramData/Mount and Blade II Bannerlord/\crashes
+	Log Directory: 		C:\ProgramData/Mount and Blade II Bannerlord/\logs
+	Maximum Dump Count: 	2147483647
+	Full memory dump: 	False
+	Published Build: 	True
+	Server Build: 	False
+Waiting for an exception event...
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Product Name#TW#"Mount and Blade II Bannerlord"
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Name#TW#Win64_Shipping_wEditor
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Arguments#TW#/singleplayer _MODULES_*Bannerlord.Harmony*Native*SandBoxCore*BirthAndDeath*CustomBattle*Sandbox*StoryMode*Enlisted*_MODULES_ /continuegame
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Platform#TW#WindowsSteam
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Source#TW#77991
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Target#TW#Public
+Debuggee message: #TW#-mf0
+[DebuggerConfiguration] -mf 0
+Debuggee message: #TW#-ar0
+[DebuggerConfiguration] -ar 0
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Runtime#TW#Build Platform#TW#WindowsSteam
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#New Game Version#TW#v1.2.12.77991
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Used Cheats#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Installed Unofficial Modules#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Has Reverted to Older Versions#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Campaign Dump Integrity#TW#Game Integrity is Achieved#TW#False
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Bannerlord.Harmony#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Native#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#SandBoxCore#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#BirthAndDeath#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#CustomBattle#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Sandbox#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#StoryMode#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Mods#TW#Enlisted#TW#True
+Debuggee message: #TW#crash_tags.txt#TW#Used Game Versions#TW#v1.2.12.77991#TW#
+Crash occurred. Asking for dump.
+Caught Exception! Taking dump...
+ExceptionRecord:
+ExceptionCode: 0xC0000005
+ExceptionFlags: 0x80
+ExceptionAddress: 0x7ffb326f71c5
+NumberParameters: 2
+Parameter-0: 0x0 == 0
+Parameter-1: 0x70 == 112
+Parameter-2: 0x0 == 0
+Parameter-3: 0x0 == 0
+Parameter-4: 0x0 == 0
+Parameter-5: 0x0 == 0
+Parameter-6: 0x0 == 0
+Parameter-7: 0x0 == 0
+Parameter-8: 0x0 == 0
+Parameter-9: 0x0 == 0
+Parameter-10: 0x0 == 0
+Parameter-11: 0x0 == 0
+Parameter-12: 0x0 == 0
+Parameter-13: 0x0 == 0
+Parameter-14: 0x0 == 0
+
+Writing stack only dump... This may take a while...
+Dump file created at C:\ProgramData/Mount and Blade II Bannerlord/\crashes\2025-08-30_01.17.48\dump.dmp.
+Caught Exception! Taking dump...
+ExceptionRecord:
+ExceptionCode: 0xC0000005
+ExceptionFlags: 0x80
+ExceptionAddress: 0x7ffb326f71c5
+NumberParameters: 2
+Parameter-0: 0x0 == 0
+Parameter-1: 0x70 == 112
+Parameter-2: 0x0 == 0
+Parameter-3: 0x0 == 0
+Parameter-4: 0x0 == 0
+Parameter-5: 0x0 == 0
+Parameter-6: 0x0 == 0
+Parameter-7: 0x0 == 0
+Parameter-8: 0x0 == 0
+Parameter-9: 0x0 == 0
+Parameter-10: 0x0 == 0
+Parameter-11: 0x0 == 0
+Parameter-12: 0x0 == 0
+Parameter-13: 0x0 == 0
+Parameter-14: 0x0 == 0
+
+Included Committed and Private Heap Regions
+	[Base:0x7ff41eae0000] [End:0x7ff41eae1000] [Size:4096B] [Protect:PAGE_READWRITE]
+	[Base:0x7ff520d50000] [End:0x7ff520d51000] [Size:4096B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb300b0000] [End:0x7ffb300b3000] [Size:12288B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb300b4000] [End:0x7ffb300bd000] [Size:36864B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb300c0000] [End:0x7ffb300cd000] [Size:53248B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb300d0000] [End:0x7ffb300db000] [Size:45056B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30160000] [End:0x7ffb30161000] [Size:4096B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30166000] [End:0x7ffb30167000] [Size:4096B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30250000] [End:0x7ffb3025f000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30260000] [End:0x7ffb30270000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30270000] [End:0x7ffb30280000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30280000] [End:0x7ffb30287000] [Size:28672B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30290000] [End:0x7ffb302a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb302a0000] [End:0x7ffb302af000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb302b0000] [End:0x7ffb302c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb302c0000] [End:0x7ffb302d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb302d0000] [End:0x7ffb302e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb302e0000] [End:0x7ffb302ef000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb302f0000] [End:0x7ffb30300000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30300000] [End:0x7ffb30310000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30310000] [End:0x7ffb30320000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30320000] [End:0x7ffb30330000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30330000] [End:0x7ffb30340000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30340000] [End:0x7ffb30350000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30350000] [End:0x7ffb30360000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30360000] [End:0x7ffb30370000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30370000] [End:0x7ffb30380000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30380000] [End:0x7ffb3038f000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30390000] [End:0x7ffb303a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb303b0000] [End:0x7ffb303c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb303c0000] [End:0x7ffb303d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb303d0000] [End:0x7ffb303e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb303e0000] [End:0x7ffb303f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb303f0000] [End:0x7ffb30400000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30400000] [End:0x7ffb30410000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb304a0000] [End:0x7ffb304b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb304b0000] [End:0x7ffb304c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb304c0000] [End:0x7ffb304d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb304d0000] [End:0x7ffb304dc000] [Size:49152B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb304e0000] [End:0x7ffb304f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb304f0000] [End:0x7ffb304ff000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30500000] [End:0x7ffb30510000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30510000] [End:0x7ffb30520000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30520000] [End:0x7ffb30530000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30530000] [End:0x7ffb30540000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30560000] [End:0x7ffb30570000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30580000] [End:0x7ffb30590000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30590000] [End:0x7ffb305a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb305a0000] [End:0x7ffb305b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb305b0000] [End:0x7ffb305b5000] [Size:20480B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb305c0000] [End:0x7ffb305f8000] [Size:229376B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30600000] [End:0x7ffb30610000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30610000] [End:0x7ffb30620000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30620000] [End:0x7ffb30630000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30630000] [End:0x7ffb30640000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb306c0000] [End:0x7ffb306c4000] [Size:16384B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb306d0000] [End:0x7ffb306e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb306e0000] [End:0x7ffb30700000] [Size:131072B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30700000] [End:0x7ffb30710000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30710000] [End:0x7ffb30720000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30720000] [End:0x7ffb30730000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30730000] [End:0x7ffb30740000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30740000] [End:0x7ffb30750000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30750000] [End:0x7ffb30760000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30760000] [End:0x7ffb30770000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30770000] [End:0x7ffb30780000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30780000] [End:0x7ffb30790000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30790000] [End:0x7ffb307a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb307a0000] [End:0x7ffb307b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb307b0000] [End:0x7ffb307c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb307c0000] [End:0x7ffb307d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb307d0000] [End:0x7ffb307e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb307e0000] [End:0x7ffb307f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb307f0000] [End:0x7ffb30800000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30800000] [End:0x7ffb30810000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30810000] [End:0x7ffb30820000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30820000] [End:0x7ffb30826000] [Size:24576B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb308b0000] [End:0x7ffb308c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb308c0000] [End:0x7ffb308d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb308d0000] [End:0x7ffb308e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb308e0000] [End:0x7ffb308f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb308f0000] [End:0x7ffb30900000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30900000] [End:0x7ffb30910000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30910000] [End:0x7ffb30920000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30920000] [End:0x7ffb30930000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30930000] [End:0x7ffb30940000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30940000] [End:0x7ffb30950000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30950000] [End:0x7ffb30960000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30960000] [End:0x7ffb30970000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30970000] [End:0x7ffb30980000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30980000] [End:0x7ffb30990000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30990000] [End:0x7ffb309a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb309a0000] [End:0x7ffb309b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb309b0000] [End:0x7ffb309c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb309c0000] [End:0x7ffb309d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb309d0000] [End:0x7ffb309e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb309e0000] [End:0x7ffb309f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb309f0000] [End:0x7ffb30a00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30a00000] [End:0x7ffb30a10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30a10000] [End:0x7ffb30a20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30a20000] [End:0x7ffb30a30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30a30000] [End:0x7ffb30a40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ac0000] [End:0x7ffb30ad0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ad0000] [End:0x7ffb30ae0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ae0000] [End:0x7ffb30af0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30af0000] [End:0x7ffb30b00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b00000] [End:0x7ffb30b10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b10000] [End:0x7ffb30b20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b20000] [End:0x7ffb30b30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b30000] [End:0x7ffb30b40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b40000] [End:0x7ffb30b50000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b50000] [End:0x7ffb30b60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b60000] [End:0x7ffb30b70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b70000] [End:0x7ffb30b80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b80000] [End:0x7ffb30b90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30b90000] [End:0x7ffb30ba0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ba0000] [End:0x7ffb30bb0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30bb0000] [End:0x7ffb30bc0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30bc0000] [End:0x7ffb30bd0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30bd0000] [End:0x7ffb30bdf000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30be0000] [End:0x7ffb30bf0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30bf0000] [End:0x7ffb30c00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c00000] [End:0x7ffb30c10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c10000] [End:0x7ffb30c20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c20000] [End:0x7ffb30c30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c30000] [End:0x7ffb30c40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c40000] [End:0x7ffb30c50000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c50000] [End:0x7ffb30c60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c60000] [End:0x7ffb30c70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c70000] [End:0x7ffb30c80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c80000] [End:0x7ffb30c90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30c90000] [End:0x7ffb30ca0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ca0000] [End:0x7ffb30cb0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d30000] [End:0x7ffb30d40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d40000] [End:0x7ffb30d50000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d50000] [End:0x7ffb30d60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d60000] [End:0x7ffb30d70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d70000] [End:0x7ffb30d7a000] [Size:40960B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d80000] [End:0x7ffb30d90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30d90000] [End:0x7ffb30da0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30da0000] [End:0x7ffb30db0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30db0000] [End:0x7ffb30db8000] [Size:32768B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30dc0000] [End:0x7ffb30dd0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30dd0000] [End:0x7ffb30def000] [Size:126976B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30df0000] [End:0x7ffb30e00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e00000] [End:0x7ffb30e10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e10000] [End:0x7ffb30e1e000] [Size:57344B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e20000] [End:0x7ffb30e30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e30000] [End:0x7ffb30e3d000] [Size:53248B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e40000] [End:0x7ffb30e50000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e50000] [End:0x7ffb30e5d000] [Size:53248B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e60000] [End:0x7ffb30e6b000] [Size:45056B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e70000] [End:0x7ffb30e80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e80000] [End:0x7ffb30e8e000] [Size:57344B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30e90000] [End:0x7ffb30e9f000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ea0000] [End:0x7ffb30eaf000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30eb0000] [End:0x7ffb30eb3000] [Size:12288B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ec0000] [End:0x7ffb30ee0000] [Size:131072B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ee0000] [End:0x7ffb30eee000] [Size:57344B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ef0000] [End:0x7ffb30f00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30f00000] [End:0x7ffb30f0a000] [Size:40960B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30f10000] [End:0x7ffb30f20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30f20000] [End:0x7ffb30f30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30f30000] [End:0x7ffb30f40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30f40000] [End:0x7ffb30f90000] [Size:327680B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30f90000] [End:0x7ffb30fa0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30fa0000] [End:0x7ffb30fb0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30fb0000] [End:0x7ffb30fc0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30fc0000] [End:0x7ffb30fd0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30fd0000] [End:0x7ffb30fe0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30fe0000] [End:0x7ffb30ff0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb30ff0000] [End:0x7ffb30ffc000] [Size:49152B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31000000] [End:0x7ffb31010000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31010000] [End:0x7ffb31020000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31020000] [End:0x7ffb31024000] [Size:16384B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31030000] [End:0x7ffb31040000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31040000] [End:0x7ffb3106b000] [Size:176128B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31070000] [End:0x7ffb310d0000] [Size:393216B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb310d0000] [End:0x7ffb310e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb310e0000] [End:0x7ffb310f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb310f0000] [End:0x7ffb31100000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31100000] [End:0x7ffb31110000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31110000] [End:0x7ffb31120000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31120000] [End:0x7ffb31130000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31130000] [End:0x7ffb31140000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31140000] [End:0x7ffb31150000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31150000] [End:0x7ffb31160000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31360000] [End:0x7ffb31370000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31370000] [End:0x7ffb31380000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31380000] [End:0x7ffb31390000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31390000] [End:0x7ffb313a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb313a0000] [End:0x7ffb313b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb313b0000] [End:0x7ffb313c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb313c0000] [End:0x7ffb313d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb313d0000] [End:0x7ffb313e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb313e0000] [End:0x7ffb313f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb313f0000] [End:0x7ffb31400000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31400000] [End:0x7ffb31410000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31410000] [End:0x7ffb31420000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31420000] [End:0x7ffb31430000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31430000] [End:0x7ffb31440000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31440000] [End:0x7ffb31450000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31450000] [End:0x7ffb31460000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31460000] [End:0x7ffb31470000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31470000] [End:0x7ffb31480000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31480000] [End:0x7ffb31490000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31490000] [End:0x7ffb314a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb314a0000] [End:0x7ffb314b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb314b0000] [End:0x7ffb314c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb314c0000] [End:0x7ffb314d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb314d0000] [End:0x7ffb314e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb314e0000] [End:0x7ffb314f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb314f0000] [End:0x7ffb31500000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31500000] [End:0x7ffb31510000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31510000] [End:0x7ffb31520000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31520000] [End:0x7ffb31530000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31530000] [End:0x7ffb31540000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31540000] [End:0x7ffb31550000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31550000] [End:0x7ffb31560000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31560000] [End:0x7ffb31570000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31570000] [End:0x7ffb31580000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31580000] [End:0x7ffb31590000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31590000] [End:0x7ffb315a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb315a0000] [End:0x7ffb315b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb315b0000] [End:0x7ffb315c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb315c0000] [End:0x7ffb315cc000] [Size:49152B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb315d0000] [End:0x7ffb315e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb315e0000] [End:0x7ffb315f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb315f0000] [End:0x7ffb31600000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31600000] [End:0x7ffb31620000] [Size:131072B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31620000] [End:0x7ffb31630000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31630000] [End:0x7ffb31640000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31640000] [End:0x7ffb31650000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31650000] [End:0x7ffb31660000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31660000] [End:0x7ffb31670000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31670000] [End:0x7ffb31680000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31680000] [End:0x7ffb31690000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31690000] [End:0x7ffb316a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb316a0000] [End:0x7ffb316b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb316b0000] [End:0x7ffb316c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb316c0000] [End:0x7ffb316d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb316d0000] [End:0x7ffb316e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb316e0000] [End:0x7ffb316f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb316f0000] [End:0x7ffb31700000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31700000] [End:0x7ffb31710000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31710000] [End:0x7ffb31720000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31720000] [End:0x7ffb31730000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31730000] [End:0x7ffb31740000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31740000] [End:0x7ffb31750000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31750000] [End:0x7ffb31760000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31760000] [End:0x7ffb31770000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31770000] [End:0x7ffb31780000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31780000] [End:0x7ffb31790000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31790000] [End:0x7ffb317a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb317a0000] [End:0x7ffb317b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb317b0000] [End:0x7ffb317c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb317c0000] [End:0x7ffb317d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb317d0000] [End:0x7ffb317e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb317e0000] [End:0x7ffb317f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb317f0000] [End:0x7ffb31800000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31800000] [End:0x7ffb31810000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31810000] [End:0x7ffb31820000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a20000] [End:0x7ffb31a30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a30000] [End:0x7ffb31a40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a40000] [End:0x7ffb31a50000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a50000] [End:0x7ffb31a60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a60000] [End:0x7ffb31a70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a70000] [End:0x7ffb31a80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a80000] [End:0x7ffb31a90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31a90000] [End:0x7ffb31aa0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31aa0000] [End:0x7ffb31ab0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ab0000] [End:0x7ffb31ac0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ac0000] [End:0x7ffb31ad0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ad0000] [End:0x7ffb31ae0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ae0000] [End:0x7ffb31af0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31af0000] [End:0x7ffb31b00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b00000] [End:0x7ffb31b0f000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b10000] [End:0x7ffb31b20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b20000] [End:0x7ffb31b30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b30000] [End:0x7ffb31b40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b40000] [End:0x7ffb31b50000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b50000] [End:0x7ffb31b60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b60000] [End:0x7ffb31b70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b70000] [End:0x7ffb31b80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b80000] [End:0x7ffb31b90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31b90000] [End:0x7ffb31ba0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ba0000] [End:0x7ffb31bb0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31bb0000] [End:0x7ffb31bc0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31bc0000] [End:0x7ffb31bd0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31bd0000] [End:0x7ffb31be0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31be0000] [End:0x7ffb31bf0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31bf0000] [End:0x7ffb31c00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c00000] [End:0x7ffb31c10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c10000] [End:0x7ffb31c20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c20000] [End:0x7ffb31c30000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c30000] [End:0x7ffb31c40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c50000] [End:0x7ffb31c60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c60000] [End:0x7ffb31c70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c70000] [End:0x7ffb31c80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c80000] [End:0x7ffb31c90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31c90000] [End:0x7ffb31ca0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ca0000] [End:0x7ffb31cb0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31cb0000] [End:0x7ffb31cc0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31cc0000] [End:0x7ffb31cd0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31cd0000] [End:0x7ffb31ce0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31ce0000] [End:0x7ffb31cf0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31cf0000] [End:0x7ffb31d00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d00000] [End:0x7ffb31d10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d10000] [End:0x7ffb31d20000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d20000] [End:0x7ffb31d2e000] [Size:57344B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d30000] [End:0x7ffb31d40000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d40000] [End:0x7ffb31d4a000] [Size:40960B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d50000] [End:0x7ffb31d60000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d60000] [End:0x7ffb31d70000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d70000] [End:0x7ffb31d80000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d80000] [End:0x7ffb31d90000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31d90000] [End:0x7ffb31da0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31da0000] [End:0x7ffb31db0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31db0000] [End:0x7ffb31dc0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31dc0000] [End:0x7ffb31dd0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31dd0000] [End:0x7ffb31de0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31de0000] [End:0x7ffb31dee000] [Size:57344B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31df0000] [End:0x7ffb31e00000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb31e00000] [End:0x7ffb31e10000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32010000] [End:0x7ffb32020000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32020000] [End:0x7ffb32030000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32030000] [End:0x7ffb32040000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32040000] [End:0x7ffb32050000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32050000] [End:0x7ffb32060000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32060000] [End:0x7ffb32070000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32070000] [End:0x7ffb32080000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32080000] [End:0x7ffb32090000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32090000] [End:0x7ffb320a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb320a0000] [End:0x7ffb320b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb320b0000] [End:0x7ffb320c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb320c0000] [End:0x7ffb320cf000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb320d0000] [End:0x7ffb320e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb320e0000] [End:0x7ffb320f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb320f0000] [End:0x7ffb32100000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32100000] [End:0x7ffb3210c000] [Size:49152B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32110000] [End:0x7ffb3211b000] [Size:45056B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32120000] [End:0x7ffb32130000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32130000] [End:0x7ffb32140000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32140000] [End:0x7ffb32150000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32150000] [End:0x7ffb32160000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32160000] [End:0x7ffb32170000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32170000] [End:0x7ffb32180000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32180000] [End:0x7ffb32190000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32190000] [End:0x7ffb321a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb321a0000] [End:0x7ffb321b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb321b0000] [End:0x7ffb321c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb321c0000] [End:0x7ffb321d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb321d0000] [End:0x7ffb321e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb321e0000] [End:0x7ffb321f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb321f0000] [End:0x7ffb32200000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32200000] [End:0x7ffb32210000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32210000] [End:0x7ffb32220000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32220000] [End:0x7ffb32230000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32230000] [End:0x7ffb32240000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32240000] [End:0x7ffb32250000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32250000] [End:0x7ffb32260000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32260000] [End:0x7ffb32270000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32270000] [End:0x7ffb32280000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32480000] [End:0x7ffb3248d000] [Size:53248B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32490000] [End:0x7ffb324a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb324a0000] [End:0x7ffb324b0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb324b0000] [End:0x7ffb324c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb324c0000] [End:0x7ffb324d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb324d0000] [End:0x7ffb324e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb324e0000] [End:0x7ffb324f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb324f0000] [End:0x7ffb32500000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32500000] [End:0x7ffb32510000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32510000] [End:0x7ffb32520000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32520000] [End:0x7ffb32530000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32530000] [End:0x7ffb32540000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32540000] [End:0x7ffb32550000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32550000] [End:0x7ffb32560000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32560000] [End:0x7ffb32570000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32570000] [End:0x7ffb32580000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32580000] [End:0x7ffb32590000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32590000] [End:0x7ffb325a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb325a0000] [End:0x7ffb325af000] [Size:61440B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb325b0000] [End:0x7ffb325c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb325c0000] [End:0x7ffb325d0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb325d0000] [End:0x7ffb325e0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb325e0000] [End:0x7ffb325f0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb325f0000] [End:0x7ffb32600000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32600000] [End:0x7ffb32610000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32810000] [End:0x7ffb3281e000] [Size:57344B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32820000] [End:0x7ffb32830000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32830000] [End:0x7ffb32840000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32840000] [End:0x7ffb32850000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32850000] [End:0x7ffb32860000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32860000] [End:0x7ffb32870000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32870000] [End:0x7ffb32880000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32880000] [End:0x7ffb32885000] [Size:20480B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb32890000] [End:0x7ffb328a0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb328a0000] [End:0x7ffb328ab000] [Size:45056B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb328b0000] [End:0x7ffb328c0000] [Size:65536B] [Protect:PAGE_READWRITE]
+	[Base:0x7ffb328c0000] [End:0x7ffb328cf000] [Size:61440B] [Protect:PAGE_READWRITE]
+400 virtual memory regions with sizeof 25.0703125MB are included.
+Included Managed Heap Regions
+	[Base:0x2010831781888] [End:0x2011037986816] [Size:206204928B]
+	[Base:0x2011100217344] [End:0x2011182493696] [Size:82276352B]
+	[Base:0x2024416739328] [End:0x2024424099840] [Size:7360512B]
+Managed heap with sizeof 282.13671875MB are included.
+Writing dump... This may take a while...
+Dump file created at C:\ProgramData/Mount and Blade II Bannerlord/\crashes\2025-08-30_01.17.48\dump.dmp.
+Thread ID writing is skipped
