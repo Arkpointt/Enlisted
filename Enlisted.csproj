@@ -122,6 +122,7 @@
     <Compile Include="src\Features\Enlistment\Domain\EnlistmentDialogs.cs" />
     <Compile Include="src\Features\Enlistment\Domain\EnlistmentSaveDefiner.cs" />
     <Compile Include="src\Features\Enlistment\Application\EnlistmentBehavior.cs" />
+    <Compile Include="src\Features\EnlistedMenu\Application\EnlistedMenuBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\MobilePartyTrackerPatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
   </ItemGroup>

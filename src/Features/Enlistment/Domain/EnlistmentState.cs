@@ -17,14 +17,24 @@ namespace Enlisted.Features.Enlistment.Domain
         private CampaignTime _enlistTime;
         private int _enlistTier;
         private List<EquipmentElement> _storedEquipment;
+        private List<int> _storedEquipmentSlots;
         private List<ItemObject> _storedItems;
+        private Equipment _storedBattleEquipment;
+        private Equipment _storedCivilianEquipment;
+        private List<EquipmentElement> _storedRosterElements;
+        private List<int> _storedRosterCounts;
 
         public EnlistmentState()
         {
             _isEnlisted = false;
             _enlistTier = 1;
             _storedEquipment = new List<EquipmentElement>();
+            _storedEquipmentSlots = new List<int>();
             _storedItems = new List<ItemObject>();
+            _storedBattleEquipment = null;
+            _storedCivilianEquipment = null;
+            _storedRosterElements = new List<EquipmentElement>();
+            _storedRosterCounts = new List<int>();
         }
 
         public bool IsEnlisted => _isEnlisted;
@@ -97,20 +107,29 @@ namespace Enlisted.Features.Enlistment.Domain
                 return;
 
             // Restore player's original equipment
-            RestorePlayerEquipment();
+            try { RestorePlayerEquipment(); } catch { }
 
             // Clear enlistment state
             _isEnlisted = false;
             _commanderId = null;
-            _storedEquipment.Clear();
-            _storedItems.Clear();
+            _storedEquipment?.Clear();
+            _storedEquipmentSlots?.Clear();
+            _storedItems?.Clear();
+            _storedBattleEquipment = null;
+            _storedCivilianEquipment = null;
+            _storedRosterElements?.Clear();
+            _storedRosterCounts?.Clear();
 
             // No explicit detach needed when escorting; player regains control
 
             // Show leave message
-            InformationManager.DisplayMessage(new InformationMessage(
-                EnlistmentDialogs.Messages.LeaveSuccess, 
-                Color.FromUint(0xFFFF8000)));
+            try
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    EnlistmentDialogs.Messages.LeaveSuccess, 
+                    Color.FromUint(0xFFFF8000)));
+            }
+            catch { }
         }
 
         public void StorePlayerEquipment()
@@ -118,28 +137,73 @@ namespace Enlisted.Features.Enlistment.Domain
             if (Hero.MainHero == null)
                 return;
 
+            // Ensure lists exist
+            _storedEquipment = _storedEquipment ?? new List<EquipmentElement>();
+            _storedEquipmentSlots = _storedEquipmentSlots ?? new List<int>();
+            _storedItems = _storedItems ?? new List<ItemObject>();
+            _storedRosterElements = _storedRosterElements ?? new List<EquipmentElement>();
+            _storedRosterCounts = _storedRosterCounts ?? new List<int>();
+
             _storedEquipment.Clear();
+            _storedEquipmentSlots.Clear();
             _storedItems.Clear();
+            _storedRosterElements.Clear();
+            _storedRosterCounts.Clear();
 
-            // Store current equipment
-            Equipment equipment = Hero.MainHero.BattleEquipment;
-            for (int i = 0; i < 12; i++) // Equipment slots
+            // Snapshot full battle equipment for safe restoration
+            try { _storedBattleEquipment = Hero.MainHero.BattleEquipment.Clone(false); } catch { _storedBattleEquipment = null; }
+            try { _storedCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone(false); } catch { _storedCivilianEquipment = null; }
+
+            // Snapshot inventory exactly (element + count)
+            try
             {
-                EquipmentElement element = equipment[i];
-                if (!element.IsEmpty)
+                var roster = PartyBase.MainParty?.ItemRoster;
+                if (roster != null)
                 {
-                    _storedEquipment.Add(element);
+                    foreach (ItemRosterElement item in roster)
+                    {
+                        if (item.Amount > 0)
+                        {
+                            _storedRosterElements.Add(item.EquipmentElement);
+                            _storedRosterCounts.Add(item.Amount);
+                        }
+                    }
                 }
             }
+            catch { }
 
-            // Store inventory items
-            foreach (ItemRosterElement item in Hero.MainHero.PartyBelongedTo.ItemRoster)
+            // Store slot-indexed elements as a fallback representation
+            try
             {
-                if (item.Amount > 0)
+                Equipment equipment = Hero.MainHero.BattleEquipment;
+                for (int i = 0; i < 12; i++) // Equipment slots
                 {
-                    _storedItems.Add(item.EquipmentElement.Item);
+                    EquipmentElement element = equipment[i];
+                    if (!element.IsEmpty)
+                    {
+                        _storedEquipment.Add(element);
+                        _storedEquipmentSlots.Add(i);
+                    }
                 }
             }
+            catch { }
+
+            // Legacy list of items fallback (kept for compatibility)
+            try
+            {
+                var partyRoster = Hero.MainHero?.PartyBelongedTo?.ItemRoster;
+                if (partyRoster != null)
+                {
+                    foreach (ItemRosterElement item in partyRoster)
+                    {
+                        if (item.Amount > 0)
+                        {
+                            _storedItems.Add(item.EquipmentElement.Item);
+                        }
+                    }
+                }
+            }
+            catch { }
         }
 
         public void ApplySoldierEquipment()
@@ -169,37 +233,118 @@ namespace Enlisted.Features.Enlistment.Domain
             if (Hero.MainHero == null)
                 return;
 
-            // Restore stored equipment
-            Equipment equipment = Hero.MainHero.BattleEquipment;
-            for (int i = 0; i < 12; i++)
+            bool restoredViaSnapshot = false;
+            try
             {
-                equipment[i] = EquipmentElement.Invalid;
+                if (Hero.MainHero != null && _storedBattleEquipment != null)
+                {
+                    Hero.MainHero.BattleEquipment.FillFrom(_storedBattleEquipment, true);
+                    restoredViaSnapshot = true;
+                }
+            }
+            catch { restoredViaSnapshot = false; }
+
+            // Restore civilian snapshot independently if available
+            try { if (Hero.MainHero != null && _storedCivilianEquipment != null) Hero.MainHero.CivilianEquipment.FillFrom(_storedCivilianEquipment, true); } catch { }
+
+            if (!restoredViaSnapshot)
+            {
+                // Fallback: clear and restore to original slots
+                try
+                {
+                    Equipment equipment = Hero.MainHero.BattleEquipment;
+                    for (int i = 0; i < 12; i++)
+                    {
+                        equipment[i] = EquipmentElement.Invalid;
+                    }
+
+                    int restoreCount = Math.Min(_storedEquipment.Count, _storedEquipmentSlots.Count);
+                    for (int k = 0; k < restoreCount; k++)
+                    {
+                        int slotIndex = _storedEquipmentSlots[k];
+                        if (slotIndex >= 0 && slotIndex < 12)
+                        {
+                            var el = _storedEquipment[k];
+                            try { equipment[slotIndex] = el; } catch { }
+                        }
+                    }
+                }
+                catch { }
             }
 
-            // Restore equipment to slots (simplified - you might want more sophisticated logic)
-            for (int i = 0; i < Math.Min(_storedEquipment.Count, 12); i++)
+            // Restore inventory exactly (guard nulls)
+            try
             {
-                equipment[i] = _storedEquipment[i];
-            }
+                var roster = PartyBase.MainParty?.ItemRoster;
+                if (roster != null)
+                {
+                    roster.Clear();
+                    int count = Math.Min(_storedRosterElements?.Count ?? 0, _storedRosterCounts?.Count ?? 0);
+                    for (int i = 0; i < count; i++)
+                    {
+                        var elem = _storedRosterElements[i];
+                        var amt = _storedRosterCounts[i];
+                        if (amt > 0)
+                        {
+                            roster.AddToCounts(elem, amt);
+                        }
+                    }
 
-            // Restore inventory items
-            PartyBase.MainParty.ItemRoster.Clear();
-            foreach (ItemObject item in _storedItems)
-            {
-                PartyBase.MainParty.ItemRoster.AddToCounts(item, 1);
+                    // Legacy fallback if snapshot empty
+                    if (count == 0 && _storedItems != null)
+                    {
+                        foreach (ItemObject item in _storedItems)
+                        {
+                            roster.AddToCounts(item, 1);
+                        }
+                    }
+                }
             }
+            catch { }
         }
 
-        // Accessors for saving/restoring stored equipment/items across save/load
-        public (List<EquipmentElement> equipment, List<ItemObject> items) GetStoredLoadout()
+        // Accessors for saving/restoring stored data across save/load
+        public (List<EquipmentElement> equipment, List<ItemObject> items, List<int> slots) GetStoredLoadout()
         {
-            return (_storedEquipment, _storedItems);
+            return (_storedEquipment, _storedItems, _storedEquipmentSlots);
         }
 
-        public void RestoreStoredLoadout(List<EquipmentElement> equipment, List<ItemObject> items)
+        public void RestoreStoredLoadout(List<EquipmentElement> equipment, List<ItemObject> items, List<int> slots)
         {
             _storedEquipment = equipment ?? new List<EquipmentElement>();
             _storedItems = items ?? new List<ItemObject>();
+            _storedEquipmentSlots = slots ?? new List<int>();
+        }
+
+        public Equipment GetStoredEquipmentSnapshot()
+        {
+            return _storedBattleEquipment;
+        }
+
+        public void SetStoredEquipmentSnapshot(Equipment equipment)
+        {
+            _storedBattleEquipment = equipment;
+        }
+
+        public Equipment GetStoredCivilianEquipmentSnapshot()
+        {
+            return _storedCivilianEquipment;
+        }
+
+        public void SetStoredCivilianEquipmentSnapshot(Equipment equipment)
+        {
+            _storedCivilianEquipment = equipment;
+        }
+
+        public (List<EquipmentElement> elements, List<int> counts) GetStoredRosterSnapshot()
+        {
+            return (_storedRosterElements, _storedRosterCounts);
+        }
+
+        public void SetStoredRosterSnapshot(List<EquipmentElement> elements, List<int> counts)
+        {
+            _storedRosterElements = elements ?? new List<EquipmentElement>();
+            _storedRosterCounts = counts ?? new List<int>();
         }
 
         public void Promote()

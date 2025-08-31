@@ -11,12 +11,13 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.ViewModelCollection.Map;
 using TaleWorlds.CampaignSystem.Overlay;
+using TaleWorlds.CampaignSystem.MapEvents;
 using HarmonyLib;
 using System.Reflection;
+using System.Linq;
 using Enlisted.Features.Enlistment.Domain;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem.Settlements;
-using TaleWorlds.CampaignSystem.Actions;
 using System.Collections.Generic;
 
 namespace Enlisted.Features.Enlistment.Application
@@ -45,19 +46,32 @@ namespace Enlisted.Features.Enlistment.Application
 		private MobileParty _trackedCommander;
 		private float _escortRefreshTimer;
 		private float _cameraFollowTimer;
+		private float _aiIgnoreRefreshTimer;
 		private bool _waitMenuActive;
 		private bool _commanderInSettlementPrev;
 		private float _visualHideTimer;
 		private bool _pendingCloseEnlistedMenu;
 		private bool _pendingOpenStatusMenu;
+		private bool _enlistedMenuWasOpenBeforeJoin;
 		// Deprecated countdown/flag kept previously for auto-close behavior; removed to avoid warnings
 		private bool _autoCloseStatusOnInit;
 		private static readonly bool UseSettlementWaitMenu = false; // Freelancer parity: do not auto-open wait menu on settlement entry
-		private static readonly bool PromptOnSettlementEntry = true; // Pause and prompt when lord enters town/castle
-		private bool _isPromptingSettlement;
-		private Settlement _pendingSettlementPrompt;
-		private bool _pendingEnterSettlement;
-		private Settlement _pendingEnterTarget;
+		private bool _activatedDueToCommanderBattle;
+		private bool _commanderWasInArmy;
+		private const bool UseIgnoreSafety = true;
+		private const bool AggressiveVisualDespawn = false; // disable frequent visuals.SetMapEntity(null) calls
+		private bool _deferPostLoadSetup;
+		private bool _pendingPostBattleRestore;
+		private float _postLoadSafetyTimer;
+		private bool _loggedPendingCameraWait = true;
+		private bool _loggedPostLoadWait = true;
+		private bool _loggedPostBattleWait = true;
+
+		private bool ShouldUseIgnore()
+		{
+			// Only use ignore safety when the commander is not in an army; when in an army we rely on army attachment blob
+			return UseIgnoreSafety && (_trackedCommander?.Army == null);
+		}
 
 		// Diagnostic helpers
 		private string GetActiveMenuId()
@@ -140,6 +154,9 @@ namespace Enlisted.Features.Enlistment.Application
 			CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
 			// Log when player enters any settlement
 			try { CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered); } catch { }
+			// Engagement routing via map event hooks (Freelancer/SAS parity)
+			try { CampaignEvents.MapEventStarted.AddNonSerializedListener(this, OnMapEventStarted); } catch { }
+			try { CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded); } catch { }
 			
 			
 			
@@ -151,7 +168,7 @@ namespace Enlisted.Features.Enlistment.Application
 			dataStore.SyncData("_enlistmentState", ref _state);
 			// Fallback: persist minimal fields to maintain enlisted status across loads
 			string commanderId = null; bool isEnlisted = false; CampaignTime enlistTime = default; int enlistTier = 0;
-			List<EquipmentElement> storedEq = null; List<ItemObject> storedItems = null;
+			List<EquipmentElement> storedEq = null; List<ItemObject> storedItems = null; List<int> storedSlots = null; Equipment storedEquipmentSnapshot = null; Equipment storedCivilianEquipmentSnapshot = null; List<EquipmentElement> storedRosterElements = null; List<int> storedRosterCounts = null;
 			if (dataStore.IsSaving)
 			{
 				try
@@ -160,7 +177,11 @@ namespace Enlisted.Features.Enlistment.Application
 					if (_state != null)
 					{
 						var loadout = _state.GetStoredLoadout();
-						storedEq = loadout.equipment; storedItems = loadout.items;
+						storedEq = loadout.equipment; storedItems = loadout.items; storedSlots = loadout.slots;
+						storedEquipmentSnapshot = _state.GetStoredEquipmentSnapshot();
+						storedCivilianEquipmentSnapshot = _state.GetStoredCivilianEquipmentSnapshot();
+						var roster = _state.GetStoredRosterSnapshot();
+						storedRosterElements = roster.elements; storedRosterCounts = roster.counts;
 					}
 					dataStore.SyncData("_enlistment_commanderId", ref commanderId);
 					dataStore.SyncData("_enlisted_flag", ref isEnlisted);
@@ -168,6 +189,11 @@ namespace Enlisted.Features.Enlistment.Application
 					dataStore.SyncData("_enlist_tier", ref enlistTier);
 					dataStore.SyncData("_enlist_stored_eq", ref storedEq);
 					dataStore.SyncData("_enlist_stored_items", ref storedItems);
+					dataStore.SyncData("_enlist_stored_slots", ref storedSlots);
+					dataStore.SyncData("_enlist_stored_equipment_snapshot", ref storedEquipmentSnapshot);
+					dataStore.SyncData("_enlist_stored_civilian_equipment_snapshot", ref storedCivilianEquipmentSnapshot);
+					dataStore.SyncData("_enlist_stored_roster_elements", ref storedRosterElements);
+					dataStore.SyncData("_enlist_stored_roster_counts", ref storedRosterCounts);
 				}
 				catch { }
 			}
@@ -181,9 +207,17 @@ namespace Enlisted.Features.Enlistment.Application
 					dataStore.SyncData("_enlist_tier", ref enlistTier);
 					dataStore.SyncData("_enlist_stored_eq", ref storedEq);
 					dataStore.SyncData("_enlist_stored_items", ref storedItems);
+					dataStore.SyncData("_enlist_stored_slots", ref storedSlots);
+					dataStore.SyncData("_enlist_stored_equipment_snapshot", ref storedEquipmentSnapshot);
+					dataStore.SyncData("_enlist_stored_civilian_equipment_snapshot", ref storedCivilianEquipmentSnapshot);
+					dataStore.SyncData("_enlist_stored_roster_elements", ref storedRosterElements);
+					dataStore.SyncData("_enlist_stored_roster_counts", ref storedRosterCounts);
 					if (_state == null) _state = new EnlistmentState();
 					_state.RestoreFromSave(commanderId, isEnlisted, enlistTime, enlistTier);
-					if (storedEq != null || storedItems != null) _state.RestoreStoredLoadout(storedEq, storedItems);
+					if (storedEq != null || storedItems != null || storedSlots != null) _state.RestoreStoredLoadout(storedEq, storedItems, storedSlots);
+					if (storedEquipmentSnapshot != null) _state.SetStoredEquipmentSnapshot(storedEquipmentSnapshot);
+					if (storedCivilianEquipmentSnapshot != null) _state.SetStoredCivilianEquipmentSnapshot(storedCivilianEquipmentSnapshot);
+					if (storedRosterElements != null || storedRosterCounts != null) _state.SetStoredRosterSnapshot(storedRosterElements, storedRosterCounts);
 				}
 				catch { }
 			}
@@ -215,40 +249,137 @@ namespace Enlisted.Features.Enlistment.Application
 		{
 			if (_pendingCameraFollow && _pendingFollowParty != null)
 			{
-				try
+				bool hasMenuNow = Campaign.Current?.CurrentMenuContext != null;
+				bool inEncounterNow = PlayerEncounter.Current != null;
+				if (!hasMenuNow && !inEncounterNow && _postLoadSafetyTimer <= 0f)
 				{
-					_pendingFollowParty.SetAsCameraFollowParty();
-				}
-				catch { }
-				finally
-				{
+					try { _pendingFollowParty.SetAsCameraFollowParty(); } catch { }
+					LoggingService.Debug("EnlistmentBehavior", "PendingCameraFollow applied");
 					_pendingCameraFollow = false;
 					_pendingFollowParty = null;
+					_loggedPendingCameraWait = true;
+				}
+				else if (_loggedPendingCameraWait)
+				{
+					LoggingService.Debug("EnlistmentBehavior", $"PendingCameraFollow deferred: hasMenu={hasMenuNow} inEncounter={inEncounterNow} timer={_postLoadSafetyTimer:0.00}");
+					_loggedPendingCameraWait = false;
+				}
+			}
+
+			// Perform deferred post-load setup once it's safe (no menu/encounter)
+			if (_deferPostLoadSetup && _state.IsEnlisted && _trackedCommander != null)
+			{
+				bool hasMenuNow = Campaign.Current?.CurrentMenuContext != null;
+				bool inEncounterNow = PlayerEncounter.Current != null;
+				if (!hasMenuNow && !inEncounterNow && _postLoadSafetyTimer <= 0f)
+				{
+					try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(_trackedCommander?.Army?.LeaderParty ?? _trackedCommander); } catch { }
+					try { Campaign.Current?.VisualTrackerManager?.RegisterObject(_trackedCommander); } catch { }
+					try { ((_trackedCommander?.Army?.LeaderParty ?? _trackedCommander)?.Party)?.SetAsCameraFollowParty(); } catch { }
+					_deferPostLoadSetup = false;
+					LoggingService.Debug("EnlistmentBehavior", "PostLoadSetup applied");
+					_loggedPostLoadWait = true;
+				}
+				else if (_loggedPostLoadWait)
+				{
+					LoggingService.Debug("EnlistmentBehavior", $"PostLoadSetup deferred: hasMenu={hasMenuNow} inEncounter={inEncounterNow} timer={_postLoadSafetyTimer:0.00}");
+					_loggedPostLoadWait = false;
+				}
+			}
+
+			// Perform deferred post-battle restore once out of encounter/menus
+			if (_pendingPostBattleRestore && _state.IsEnlisted && _trackedCommander != null)
+			{
+				bool hasMenuNow2 = Campaign.Current?.CurrentMenuContext != null;
+				bool inEncounterNow2 = PlayerEncounter.Current != null;
+				if (!hasMenuNow2 && !inEncounterNow2 && _postLoadSafetyTimer <= 0f)
+				{
+					try { MobileParty.MainParty.IsActive = false; } catch { }
+					try { MobileParty.MainParty.IsVisible = false; } catch { }
+					if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
+					try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(_trackedCommander?.Army?.LeaderParty ?? _trackedCommander); } catch { }
+					try { _trackedCommander.Party.SetAsCameraFollowParty(); } catch { }
+					if (_enlistedMenuWasOpenBeforeJoin)
+					{
+						_enlistedMenuWasOpenBeforeJoin = false;
+						try { GameMenu.ActivateGameMenu("enlisted_soldier_status"); } catch { }
+						try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+					}
+					_pendingPostBattleRestore = false;
+					LoggingService.Debug("EnlistmentBehavior", "PostBattleRestore applied");
+					_loggedPostBattleWait = true;
+				}
+				else if (_loggedPostBattleWait)
+				{
+					LoggingService.Debug("EnlistmentBehavior", $"PostBattleRestore deferred: hasMenu={hasMenuNow2} inEncounter={inEncounterNow2} timer={_postLoadSafetyTimer:0.00}");
+					_loggedPostBattleWait = false;
 				}
 			}
 
 			// Ensure commander behaviors while enlisted
 			if (_state.IsEnlisted && _trackedCommander != null)
 			{
+				// Attach/detach to commander's army to be treated as part of blob (SAS parity)
+				try
+				{
+					var commanderArmy = _trackedCommander.Army;
+					if (commanderArmy != null)
+					{
+						if (MobileParty.MainParty.Army != commanderArmy)
+						{
+							try { commanderArmy.AddPartyToMergedParties(MobileParty.MainParty); } catch { }
+							try { MobileParty.MainParty.Army = commanderArmy; } catch { }
+						}
+					}
+					else
+					{
+						if (MobileParty.MainParty.Army != null)
+						{
+							try { MobileParty.MainParty.Army = null; } catch { }
+						}
+					}
+				}
+				catch { }
+
+				// Commander defeat/capture safety: if commander is no longer valid, detach and restore player state
+				try
+				{
+					var leader = _trackedCommander.LeaderHero;
+					if (leader == null || !leader.IsAlive || leader.IsPrisoner || _trackedCommander.IsDisbanding)
+					{
+						SafeDetachFromCommander("Your commander was defeated or captured.");
+						return;
+					}
+				}
+				catch { }
+
 				// Enforce hidden main party visuals each tick, since engine/UI may respawn them
 				try { MobileParty.MainParty.IsVisible = false; } catch { }
 				_visualHideTimer += dt;
 				if (_visualHideTimer >= 2.0f)
 				{
 					_visualHideTimer = 0f;
-					try { TryUntrackAndDespawn(MobileParty.MainParty); } catch { }
+					if (AggressiveVisualDespawn)
+					{
+						try { TryUntrackAndDespawn(MobileParty.MainParty); } catch { }
+					}
 				}
 
 				// Aggressively refresh escort and camera to prevent manual control and keep follow locked
 				_escortRefreshTimer += dt;
-				if (_escortRefreshTimer >= 0.2f)
+				// Do not reassert escort while the commander is inside a settlement; we want to wait outside
+				if (_trackedCommander?.CurrentSettlement == null && _escortRefreshTimer >= 0.1f)
 				{
 					_escortRefreshTimer = 0f;
 					try
 					{
 						if (MobileParty.MainParty?.Ai != null)
 						{
-							MobileParty.MainParty.Ai.SetMoveEscortParty(_trackedCommander);
+							// Escort-based speed match (engine AI handles following)
+							try { MobileParty.MainParty.IsActive = true; } catch { }
+							var escortTarget = _trackedCommander?.Army?.LeaderParty ?? _trackedCommander;
+							MobileParty.MainParty.Ai.SetMoveEscortParty(escortTarget);
+							if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
 							// Ensure main party is not tracked by the visual tracker (hide shield)
 							try
 							{
@@ -265,13 +396,78 @@ namespace Enlisted.Features.Enlistment.Application
 					catch { }
 				}
 
-				// Keep camera following the commander steadily
+				// Gentle tether every tick: smoothly correct toward a point just behind commander/leader
+				try
+				{
+					var hasMenuTether = Campaign.Current?.CurrentMenuContext != null;
+					var inEncounterTether = PlayerEncounter.Current != null;
+					var commanderInSettlementTether = _trackedCommander.CurrentSettlement != null;
+					var playerInSettlementTether = MobileParty.MainParty?.CurrentSettlement != null;
+					if (!hasMenuTether && !inEncounterTether && !commanderInSettlementTether && !playerInSettlementTether)
+					{
+						var playerPos = MobileParty.MainParty.Position2D;
+						var targetParty = (_trackedCommander?.Army?.LeaderParty ?? _trackedCommander);
+						var targetPos = targetParty.Position2D;
+						var delta = targetPos - playerPos;
+						if (delta.LengthSquared > 0.36f) // > 0.6 units
+						{
+							var dir = delta; if (dir.LengthSquared < 1e-4f) dir = new Vec2(-0.6f, -0.6f); else dir.Normalize();
+							var desired = targetPos - dir * 0.5f;
+							float alpha = dt * 8f; if (alpha > 1f) alpha = 1f;
+							MobileParty.MainParty.Position2D = playerPos + (desired - playerPos) * alpha;
+						}
+					}
+				}
+				catch { }
+
+				// Keep camera following the commander (or army leader) steadily
 				_cameraFollowTimer += dt;
 				if (_cameraFollowTimer >= 0.5f)
 				{
 					_cameraFollowTimer = 0f;
-					try { _trackedCommander.Party.SetAsCameraFollowParty(); } catch { }
+					try { ((_trackedCommander?.Army?.LeaderParty ?? _trackedCommander)?.Party)?.SetAsCameraFollowParty(); } catch { }
 				}
+
+				// Diagnostics: log when commander joins/leaves an army
+				try
+				{
+					bool inArmy = _trackedCommander.Army != null;
+					if (inArmy != _commanderWasInArmy)
+					{
+						_commanderWasInArmy = inArmy;
+						var leaderName = _trackedCommander.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "<none>";
+						LoggingService.Info("EnlistmentBehavior", $"Commander army state changed. InArmy={inArmy} Leader={leaderName}");
+					}
+				}
+				catch { }
+
+				// Auto-join commander battles (SAS/Freelancer): keep inactive, briefly activate only to let inclusion happen
+				try
+				{
+					bool commanderInBattle = _trackedCommander.MapEvent != null;
+					bool playerInBattle = MobileParty.MainParty?.MapEvent != null || PlayerEncounter.Current != null;
+					if (commanderInBattle && !playerInBattle)
+					{
+						try { MobileParty.MainParty.IsActive = true; } catch { }
+						// Nudge near commander to ensure inclusion as reinforcement
+						try
+						{
+							var commanderPos = _trackedCommander.Position2D;
+							var offset = new Vec2(0.3f, -0.3f);
+							MobileParty.MainParty.Position2D = commanderPos + offset;
+						}
+						catch { }
+						_activatedDueToCommanderBattle = true;
+					}
+					else if (!commanderInBattle && _activatedDueToCommanderBattle)
+					{
+						// Commander left battle; restore inactive hidden state
+						_activatedDueToCommanderBattle = false;
+						try { if (_state.IsEnlisted) MobileParty.MainParty.IsActive = false; } catch { }
+						if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
+					}
+				}
+				catch { }
 
 				// Settlement handling
 				try
@@ -279,6 +475,7 @@ namespace Enlisted.Features.Enlistment.Application
 					var commanderSettlement = _trackedCommander.CurrentSettlement;
 					bool commanderInSettlement = commanderSettlement != null;
 					bool playerInEncounter = PlayerEncounter.Current != null;
+					bool playerInSettlementNow = MobileParty.MainParty?.CurrentSettlement != null;
 
 					if (UseSettlementWaitMenu)
 					{
@@ -304,26 +501,12 @@ namespace Enlisted.Features.Enlistment.Application
 							try { GameMenu.ExitToLast(); } catch { }
 							_waitMenuActive = false;
 							LoggingService.Debug("EnlistmentBehavior", "Closed enlisted_party_wait; commander left settlement");
-							try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(_trackedCommander); } catch { }
+							try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(_trackedCommander?.Army?.LeaderParty ?? _trackedCommander); } catch { }
 						}
 					}
 					else
 					{
 						// Freelancer parity: do not auto-open menus on settlement entry
-						// Optional: Pause and prompt when entering towns/castles
-						if (PromptOnSettlementEntry && !_commanderInSettlementPrev && commanderInSettlement && !playerInEncounter)
-						{
-							if ((commanderSettlement?.IsTown ?? false) || (commanderSettlement?.IsCastle ?? false))
-							{
-								if (!_isPromptingSettlement)
-								{
-									_isPromptingSettlement = true;
-									_pendingSettlementPrompt = commanderSettlement;
-									try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop; } catch { }
-									try { GameMenu.ActivateGameMenu("enlisted_soldier_status"); } catch { }
-								}
-							}
-						}
 						// If commander just left a town/castle and player is inside one, leave with commander
 						if (_commanderInSettlementPrev && !commanderInSettlement)
 						{
@@ -337,12 +520,28 @@ namespace Enlisted.Features.Enlistment.Application
 									{
 										try { GameMenu.ExitToLast(); } catch { break; }
 									}
-									TaleWorlds.CampaignSystem.Actions.LeaveSettlementAction.ApplyForParty(MobileParty.MainParty);
-									try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(_trackedCommander); } catch { }
+									try { TaleWorlds.CampaignSystem.Actions.LeaveSettlementAction.ApplyForParty(MobileParty.MainParty); } catch { }
+									try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(_trackedCommander?.Army?.LeaderParty ?? _trackedCommander); } catch { }
 									try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
 								}
 							}
 							catch { }
+						}
+						// If commander just entered a town/castle, keep player outside: stop escort, hold position,
+						// and force-leave if the player somehow got inside.
+						if (!_commanderInSettlementPrev && commanderInSettlement)
+						{
+							try { MobileParty.MainParty?.Ai?.SetMoveModeHold(); } catch { }
+							if (playerInSettlementNow)
+							{
+								int drain3 = 5;
+								while (Campaign.Current?.CurrentMenuContext != null && drain3-- > 0)
+								{
+									try { GameMenu.ExitToLast(); } catch { break; }
+								}
+								try { TaleWorlds.CampaignSystem.Actions.LeaveSettlementAction.ApplyForParty(MobileParty.MainParty); } catch { }
+								try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+							}
 						}
 						_commanderInSettlementPrev = commanderInSettlement;
 					}
@@ -352,46 +551,21 @@ namespace Enlisted.Features.Enlistment.Application
 					LoggingService.Exception("EnlistmentBehavior", ex, "Settlement handling");
 				}
 
-				// Deferred enter-settlement execution (run outside of menu callback to avoid crashes)
-				if (_pendingEnterSettlement)
+				// Periodically refresh AI ignore so world parties do not target the hidden main party
+				try
 				{
-					try
+					_aiIgnoreRefreshTimer += dt;
+					if (_aiIgnoreRefreshTimer >= 10.0f)
 					{
-						// Drain menus safely now that we're on tick
-						int drain = 5;
-						while (Campaign.Current?.CurrentMenuContext != null && drain-- > 0)
-						{
-							try { GameMenu.ExitToLast(); } catch { break; }
-						}
-						// If already inside, skip
-						if (MobileParty.MainParty?.CurrentSettlement != null)
-						{
-							LoggingService.Warning("EnlistmentBehavior", "DeferredEnter: already inside settlement; skipping");
-							_pendingEnterSettlement = false;
-							_isPromptingSettlement = false;
-							_pendingEnterTarget = null;
-						}
-						else
-						{
-							var s = _pendingEnterTarget ?? _trackedCommander?.CurrentSettlement;
-							if (s != null && (s.IsTown || s.IsCastle))
-							{
-								LoggingService.Info("EnlistmentBehavior", $"DeferredEnter: applying EnterSettlement for {s.Name}");
-								try { EnterSettlementAction.ApplyForParty(MobileParty.MainParty, s); } catch (System.Exception ex) { LoggingService.Exception("EnlistmentBehavior", ex, "DeferredEnter: ApplyForParty"); }
-							}
-							else
-							{
-								LoggingService.Warning("EnlistmentBehavior", "DeferredEnter: no valid settlement target");
-							}
-							_pendingEnterSettlement = false;
-							_isPromptingSettlement = false;
-							_pendingEnterTarget = null;
-						}
+						_aiIgnoreRefreshTimer = 0f;
+						if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
 					}
-					catch { }
 				}
+				catch { }
 
-				// Proximity clamp: keep main party within range of commander on the campaign map
+				// Removed: deferred enter-settlement execution
+
+				// Recovery clamp: if somehow far away, snap back just behind commander/army leader
 				try
 				{
 					var hasMenu2 = Campaign.Current?.CurrentMenuContext != null;
@@ -401,18 +575,15 @@ namespace Enlisted.Features.Enlistment.Application
 					if (!hasMenu2 && !inEncounter2 && !commanderInSettlement2 && !playerInSettlement)
 					{
 						var playerPos = MobileParty.MainParty.Position2D;
-						var commanderPos = _trackedCommander.Position2D;
-						var delta = commanderPos - playerPos;
-						if (delta.LengthSquared > 9.0f) // > 3 units squared to avoid rubber-banding
+						var targetParty = (_trackedCommander?.Army?.LeaderParty ?? _trackedCommander);
+						var targetPos = targetParty.Position2D;
+						var delta = targetPos - playerPos;
+						if (delta.LengthSquared > 1.44f) // > 1.2 units away: smooth correction
 						{
-							var dir = delta;
-							dir.Normalize();
-							// Place player 1 unit behind commander to avoid overlap
-							var target = commanderPos - dir * 1.0f;
-							MobileParty.MainParty.Position2D = target;
-							// Reassert escort
-							try { MobileParty.MainParty.Ai.SetMoveEscortParty(_trackedCommander); } catch { }
-							LoggingService.Debug("EnlistmentBehavior", $"Proximity clamp to commander. NewPos={target}");
+							var dir = delta; if (dir.LengthSquared < 1e-4f) dir = new Vec2(-0.6f, -0.6f); else dir.Normalize();
+							var desired = targetPos - dir * 0.5f;
+							float alpha = dt * 5f; if (alpha > 1f) alpha = 1f; // smooth toward desired
+							MobileParty.MainParty.Position2D = playerPos + (desired - playerPos) * alpha;
 						}
 					}
 				}
@@ -488,7 +659,9 @@ namespace Enlisted.Features.Enlistment.Application
 							Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
 						}
 						// If an encounter is still active, finish it so time controls are not blocked
-						if (PlayerEncounter.Current != null)
+						// Do NOT finish encounters while inside a settlement/siege flow; defer instead
+						bool insideSettlement = MobileParty.MainParty?.CurrentSettlement != null;
+						if (PlayerEncounter.Current != null && !insideSettlement)
 						{
 							LoggingService.Debug("EnlistmentBehavior", "Finishing lingering PlayerEncounter while enlisted menu is open");
 							try { PlayerEncounter.Finish(true); } catch { }
@@ -506,6 +679,40 @@ namespace Enlisted.Features.Enlistment.Application
 				}
 			}
 			catch { }
+
+			// Count down safety timer
+			if (_postLoadSafetyTimer > 0f)
+			{
+				_postLoadSafetyTimer -= dt;
+				if (_postLoadSafetyTimer < 0f) _postLoadSafetyTimer = 0f;
+			}
+		}
+
+		private void SafeDetachFromCommander(string reason)
+		{
+			try
+			{
+				_state.LeaveArmy();
+				IsPlayerEnlisted = false;
+				CurrentCommanderParty = null;
+				_trackedCommander = null;
+				// Restore player party state
+				try { MobileParty.MainParty.IsVisible = true; } catch { }
+				try { MobileParty.MainParty.IsActive = true; } catch { }
+				try { MobileParty.MainParty?.Ai?.SetMoveModeHold(); } catch { }
+				// Clear ignore horizon so normal targeting resumes soon (does nothing if safety disabled)
+				if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
+				try { PartyBase.MainParty?.SetAsCameraFollowParty(); } catch { }
+				if (!string.IsNullOrEmpty(reason))
+				{
+					InformationManager.DisplayMessage(new InformationMessage(reason, Color.FromUint(0xFFFFA500)));
+				}
+				try { if (MobileParty.MainParty.Army != null) MobileParty.MainParty.Army = null; } catch { }
+			}
+			catch (Exception ex)
+			{
+				LoggingService.Exception("EnlistmentBehavior", ex, "SafeDetachFromCommander");
+			}
 		}
 		
 
@@ -597,106 +804,7 @@ namespace Enlisted.Features.Enlistment.Application
 		// Enlisted status menu (Freelancer-style): shows after successful enlist
 		private void AddEnlistmentMenus(CampaignGameStarter campaignStarter)
 		{
-			// Soldier status / camp menu
-			campaignStarter.AddGameMenu(
-				"enlisted_soldier_status",
-				"{=ENLIST_STATUS}You are serving as a soldier in this army.",
-				new OnInitDelegate(OnSoldierStatusInit),
-				GameOverlays.MenuOverlayType.None,
-				GameMenu.MenuFlags.None);
-
-			// Detailed status report (separate screen like Freelancer's report)
-			campaignStarter.AddGameMenu(
-				"enlisted_status_report",
-				"{=ENLIST_REPORT}You are serving in the army of {ENLIST_FACTION_NAME}. Your lord is {ENLIST_LORD_NAME}.\nYour reputation with {ENLIST_LORD_NAME} is {ENLIST_RELATION}.\nYou have served {ENLIST_DAYS} days as tier {ENLIST_TIER}.",
-				new OnInitDelegate(OnStatusReportInit),
-				GameOverlays.MenuOverlayType.None,
-				GameMenu.MenuFlags.None);
-
-			// SAS-style wait menu while commander is inside a settlement (use standard menu for broad compatibility)
-			campaignStarter.AddGameMenu(
-				"enlisted_party_wait",
-				"{=ENLIST_WAIT}You are waiting with {COMMANDER_NAME}'s party inside the settlement.",
-				new OnInitDelegate(OnWaitMenuInit),
-				GameOverlays.MenuOverlayType.None,
-				GameMenu.MenuFlags.None);
-
-			// Soldier Camp option (placeholder for now)
-			campaignStarter.AddGameMenuOption(
-				"enlisted_soldier_status",
-				"enlisted_soldier_camp",
-				"Soldier Camp",
-				new GameMenuOption.OnConditionDelegate(OnSoldierStatusCondition),
-				new GameMenuOption.OnConsequenceDelegate(OnSoldierStatusConsequence),
-				false,
-				-1,
-				false);
-
-			// Enter settlement with commander (towns/castles only)
-			campaignStarter.AddGameMenuOption(
-				"enlisted_soldier_status",
-				"enlisted_enter_settlement",
-				"Enter settlement with your lord",
-				new GameMenuOption.OnConditionDelegate(OnEnterSettlementCondition),
-				new GameMenuOption.OnConsequenceDelegate(OnEnterSettlementConsequence),
-				true,
-				-1,
-				false);
-
-			// Get Status Report – navigates to detailed report menu
-			campaignStarter.AddGameMenuOption(
-				"enlisted_soldier_status",
-				"enlisted_go_to_report",
-				"Get Status Report",
-				new GameMenuOption.OnConditionDelegate(OnSoldierStatusCondition),
-				new GameMenuOption.OnConsequenceDelegate((MenuCallbackArgs args) => { TryOpenStatusReport(); }),
-				true,
-				-1,
-				false);
-
-			// Leave back to campaign from status menu
-			campaignStarter.AddGameMenuOption(
-				"enlisted_soldier_status",
-				"enlisted_return_campaign",
-				"Return to campaign",
-				new GameMenuOption.OnConditionDelegate((MenuCallbackArgs args) => true),
-				new GameMenuOption.OnConsequenceDelegate((MenuCallbackArgs args) => { _isPromptingSettlement = false; OnReturnToCampaign(args); }),
-				true,
-				-1,
-				false);
-
-			// Back from report to status
-			campaignStarter.AddGameMenuOption(
-				"enlisted_status_report",
-				"enlisted_report_back",
-				"Back",
-				new GameMenuOption.OnConditionDelegate(OnSoldierStatusCondition),
-				new GameMenuOption.OnConsequenceDelegate((MenuCallbackArgs args) => { GameMenu.SwitchToMenu("enlisted_soldier_status"); }),
-				true,
-				-1,
-				false);
-
-			// Leave from report directly to campaign
-			campaignStarter.AddGameMenuOption(
-				"enlisted_status_report",
-				"enlisted_report_leave",
-				"Return to campaign",
-				new GameMenuOption.OnConditionDelegate((MenuCallbackArgs args) => true),
-				new GameMenuOption.OnConsequenceDelegate(OnReturnToCampaign),
-				true,
-				-1,
-				false);
-
-			// Desert the army – reuse leave logic
-			campaignStarter.AddGameMenuOption(
-				"enlisted_soldier_status",
-				"enlisted_desert_army",
-				"Desert the army",
-				new GameMenuOption.OnConditionDelegate(OnSoldierStatusCondition),
-				new GameMenuOption.OnConsequenceDelegate((MenuCallbackArgs args) => { OnLeaveConfirmed(); }),
-				false,
-				-1,
-				false);
+			// Menus moved to EnlistedMenuBehavior
 		}
 
 		private void TryOpenStatusReport()
@@ -754,6 +862,178 @@ namespace Enlisted.Features.Enlistment.Application
 			catch (Exception ex)
 			{
 				LoggingService.Exception("EnlistmentBehavior", ex, "OnStatusReportInit");
+			}
+		}
+
+		// Map event hooks inspired by Freelancer/SAS patterns to ensure inclusion and cleanup
+		private void OnMapEventStarted(MapEvent mapEvent, PartyBase firstParty, PartyBase secondParty)
+		{
+			try
+			{
+				if (!_state.IsEnlisted || _trackedCommander == null || mapEvent == null)
+				{
+					return;
+				}
+				// Do not attempt to join or manipulate encounters while either the commander or the player is in a settlement
+				if (_trackedCommander.CurrentSettlement != null || MobileParty.MainParty?.CurrentSettlement != null)
+				{
+					return;
+				}
+				// Debug: dump attacker/defender parties and commander
+				try
+				{
+					var attackerNames = string.Join(", ", (mapEvent.AttackerSide?.Parties ?? new System.Collections.Generic.List<MapEventParty>()).Select(mp => mp?.Party?.Name?.ToString()).Where(s => !string.IsNullOrEmpty(s)));
+					var defenderNames = string.Join(", ", (mapEvent.DefenderSide?.Parties ?? new System.Collections.Generic.List<MapEventParty>()).Select(mp => mp?.Party?.Name?.ToString()).Where(s => !string.IsNullOrEmpty(s)));
+					LoggingService.Debug("EnlistmentBehavior", $"MapEventStarted sides -> Attacker:[{attackerNames}] Defender:[{defenderNames}] Commander={_trackedCommander?.LeaderHero?.Name}");
+				}
+				catch { }
+				// If commander (or their army parties) are on either side and player not yet in an event, join
+				bool commanderInvolved = false;
+				PartyBase enemyPartyBase = null;
+				try
+				{
+					var commanderPartyBase = _trackedCommander?.Party;
+					// Build a set of commander-related parties (commander + army members)
+					var commanderRelated = new System.Collections.Generic.HashSet<PartyBase>();
+					if (commanderPartyBase != null) commanderRelated.Add(commanderPartyBase);
+					try
+					{
+						var army = _trackedCommander?.Army;
+						if (army?.Parties != null)
+						{
+							foreach (var ap in army.Parties)
+							{
+								var pb = ap?.Party;
+								if (pb != null) commanderRelated.Add(pb);
+							}
+						}
+					}
+					catch { }
+					if (commanderPartyBase != null)
+					{
+						// Attacker side
+						bool onAttacker = mapEvent.AttackerSide?.Parties?.Any(mp => mp != null && mp.Party != null && commanderRelated.Contains(mp.Party)) == true;
+						bool onDefender = mapEvent.DefenderSide?.Parties?.Any(mp => mp != null && mp.Party != null && commanderRelated.Contains(mp.Party)) == true;
+						if (onAttacker)
+						{
+							commanderInvolved = true;
+							// choose an enemy party from defender side
+							enemyPartyBase = mapEvent.DefenderSide?.Parties?.FirstOrDefault()?.Party ?? secondParty ?? firstParty;
+						}
+						else if (onDefender)
+						{
+							commanderInvolved = true;
+							// choose an enemy party from attacker side
+							enemyPartyBase = mapEvent.AttackerSide?.Parties?.FirstOrDefault()?.Party ?? firstParty ?? secondParty;
+						}
+					}
+				}
+				catch { }
+				bool playerAlreadyInvolved = MobileParty.MainParty?.MapEvent != null || PlayerEncounter.Current != null;
+				LoggingService.Debug("EnlistmentBehavior", $"OnMapEventStarted: commanderInvolved={commanderInvolved} playerInvolved={playerAlreadyInvolved} enemy={enemyPartyBase?.Name}");
+				if ((commanderInvolved || !commanderInvolved) && !playerAlreadyInvolved)
+				{
+					// If our enlisted menu is open, remember and close it so the encounter window can appear
+					try
+					{
+						var activeId = GetActiveMenuId();
+						if (activeId == "enlisted_soldier_status" || activeId == "enlisted_status_report")
+						{
+							_enlistedMenuWasOpenBeforeJoin = true;
+							int drain = 4;
+							while (Campaign.Current?.CurrentMenuContext != null && drain-- > 0)
+							{
+								try { GameMenu.ExitToLast(); } catch { break; }
+							}
+							try { if (Campaign.Current != null) Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay; } catch { }
+						}
+						else
+						{
+							_enlistedMenuWasOpenBeforeJoin = false;
+						}
+					}
+					catch { }
+					// Ensure engine can include us: briefly set active
+					try { MobileParty.MainParty.IsActive = true; } catch { }
+					try
+					{
+						bool nudged = false;
+						// Only nudge toward the commander; no nudging toward other friendly parties to avoid drift
+						if (commanderInvolved)
+						{
+							var cpos = _trackedCommander.Position2D;
+							MobileParty.MainParty.Position2D = cpos + new Vec2(0.3f, -0.3f);
+							LoggingService.Debug("EnlistmentBehavior", "Commander involved; nudged beside commander for inclusion");
+							nudged = true;
+							if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
+						}
+						// No friendly-party nudges; if commander not involved we don't move
+					}
+					catch { }
+				}
+			}
+			catch (System.Exception ex)
+			{
+				LoggingService.Exception("EnlistmentBehavior", ex, "OnMapEventStarted");
+			}
+		}
+
+		private void OnMapEventEnded(MapEvent mapEvent)
+		{
+			try
+			{
+				if (!_state.IsEnlisted || mapEvent == null)
+				{
+					return;
+				}
+
+				// Ignore unrelated events where neither commander nor player was involved
+				bool commanderInvolved = false;
+				bool playerInvolved = false;
+				try
+				{
+					var cmdParty = _trackedCommander?.Party;
+					if (cmdParty != null)
+					{
+						commanderInvolved = (mapEvent.AttackerSide?.Parties?.Any(mp => mp?.Party == cmdParty) == true)
+							|| (mapEvent.DefenderSide?.Parties?.Any(mp => mp?.Party == cmdParty) == true)
+							|| (mapEvent.InvolvedParties?.Any(p => p == cmdParty) == true);
+					}
+					var playerParty = PartyBase.MainParty;
+					playerInvolved = playerParty != null && (mapEvent.InvolvedParties?.Any(p => p == playerParty) == true);
+				}
+				catch { }
+
+				if (!commanderInvolved && !playerInvolved)
+				{
+					return;
+				}
+				// If commander is gone from the event or invalid, detach; otherwise re-hide and resume escort
+				bool commanderStillInvolved = false;
+				try
+				{
+					if (mapEvent != null && mapEvent.InvolvedParties != null && _trackedCommander != null)
+					{
+						commanderStillInvolved = mapEvent.InvolvedParties.Any(p => p == _trackedCommander.Party);
+					}
+				}
+				catch { }
+				var commanderLeader = _trackedCommander?.LeaderHero;
+				if (!commanderStillInvolved || commanderLeader == null || !commanderLeader.IsAlive || commanderLeader.IsPrisoner)
+				{
+					SafeDetachFromCommander("You were separated after the battle.");
+				}
+				else
+				{
+					// Defer restore to a safe tick to avoid engine asserts during exit/transfer screens
+					_pendingPostBattleRestore = true;
+					_loggedPostBattleWait = true;
+					LoggingService.Debug("EnlistmentBehavior", "PostBattleRestore scheduled (deferred)");
+				}
+			}
+			catch (System.Exception ex)
+			{
+				LoggingService.Exception("EnlistmentBehavior", ex, "OnMapEventEnded");
 			}
 		}
 
@@ -891,10 +1171,16 @@ namespace Enlisted.Features.Enlistment.Application
 				
 				// 5) Hide our main party and despawn visuals
 				try { MobileParty.MainParty.IsVisible = false; } catch { }
-				try { TryUntrackAndDespawn(MobileParty.MainParty); } catch { }
-				
-				try { lordPartyBase.SetAsCameraFollowParty(); } catch { }
-				
+				// SAS/Freelancer: keep main party inactive by default; rely on tethering
+				try { MobileParty.MainParty.IsActive = false; } catch { }
+				if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
+				if (AggressiveVisualDespawn)
+				{
+					try { TryUntrackAndDespawn(MobileParty.MainParty); } catch { }
+				}
+                
+                try { lordPartyBase.SetAsCameraFollowParty(); } catch { }
+                
 				InformationManager.DisplayMessage(new InformationMessage(
 					EnlistmentDialogs.GetEnlistmentSuccessMessage(lord.Name.ToString()),
 					Color.FromUint(0xFF00FF00)));
@@ -906,6 +1192,8 @@ namespace Enlisted.Features.Enlistment.Application
 				// Open status once on next tick; do not force-close menus immediately
 				_pendingCloseEnlistedMenu = false;
 				LogState("OnEnlistmentConfirmed:queued-close");
+				// Initialize settlement remembered state
+				_commanderInSettlementPrev = lordMobileParty.CurrentSettlement != null;
 			}
 			catch (Exception ex)
 			{
@@ -998,11 +1286,7 @@ namespace Enlisted.Features.Enlistment.Application
 			// Match SAS/Freelancer: start wait mode so time controls are accepted with menu open
 			try { args.MenuContext?.GameMenu?.StartWait(); } catch { }
 			try { Campaign.Current?.GameMenuManager?.RefreshMenuOptions(Campaign.Current.CurrentMenuContext); } catch { }
-			// If we're prompting for settlement entry, pause again for clarity
-			if (_isPromptingSettlement)
-			{
-				try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop; } catch { }
-			}
+			// Removed: settlement entry prompt pause
 			// Immediately bounce out to campaign if this menu was opened post-enlistment
 			if (_autoCloseStatusOnInit)
 			{
@@ -1016,38 +1300,7 @@ namespace Enlisted.Features.Enlistment.Application
 			return _state.IsEnlisted;
 		}
 
-		private bool OnEnterSettlementCondition(MenuCallbackArgs args)
-		{
-			if (!_state.IsEnlisted || _trackedCommander == null)
-			{
-				return false;
-			}
-			var s = _pendingSettlementPrompt ?? _trackedCommander.CurrentSettlement;
-			bool eligible = s != null && (s.IsTown || s.IsCastle);
-			if (!eligible)
-			{
-				args.IsEnabled = false;
-				args.Tooltip = new TextObject("Your lord is not inside a town or castle.");
-			}
-			// Note: we cannot change menu text via args; keep label static
-			return eligible;
-		}
-
-		private void OnEnterSettlementConsequence(MenuCallbackArgs args)
-		{
-			// Schedule deferred entry to avoid running heavy actions inside menu callback
-			try
-			{
-				var s = _pendingSettlementPrompt ?? _trackedCommander?.CurrentSettlement;
-				_pendingEnterTarget = s;
-				_pendingEnterSettlement = true;
-				LoggingService.Info("EnlistmentBehavior", $"EnterSettlement: scheduled deferred entry for {s?.Name}");
-			}
-			catch (System.Exception ex)
-			{
-				LoggingService.Exception("EnlistmentBehavior", ex, "OnEnterSettlementConsequence(schedule)");
-			}
-		}
+		// Removed: enter-settlement menu condition and consequence
 
 		private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
 		{
@@ -1117,27 +1370,22 @@ namespace Enlisted.Features.Enlistment.Application
 				LoggingService.Warning("EnlistmentBehavior", "ReapplyEnlistmentState: commander or commander party missing");
 				return;
 			}
-			try { MobileParty.MainParty?.Ai?.SetMoveEscortParty(commanderParty); } catch { }
 			try { MobileParty.MainParty.IsVisible = false; } catch { }
-			try { TryUntrackAndDespawn(MobileParty.MainParty); } catch { }
-			try { commanderParty.Party.SetAsCameraFollowParty(); } catch { }
-			try { Campaign.Current?.VisualTrackerManager?.RegisterObject(commanderParty); } catch { }
+			// SAS/Freelancer baseline on load
+			try { MobileParty.MainParty.IsActive = false; } catch { }
+			if (ShouldUseIgnore()) { try { MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f)); } catch { } }
+			// Defer escort/tracker/camera to first safe tick to avoid visual asserts during load
+			_deferPostLoadSetup = true;
+			// Queue camera follow once menus settle
+			_pendingFollowParty = commanderParty.Party;
+			_pendingCameraFollow = true;
+			_postLoadSafetyTimer = 1.0f;
+			LoggingService.Debug("EnlistmentBehavior", "PostLoadSetup deferred: timer=1.00 started");
 			_trackedCommander = commanderParty;
 			IsPlayerEnlisted = true;
 			CurrentCommanderParty = commanderParty;
 			_commanderInSettlementPrev = commanderParty.CurrentSettlement != null;
-			// If we loaded while commander is already in a town/castle, surface the prompt once
-			var cs = commanderParty.CurrentSettlement;
-			if (PromptOnSettlementEntry && cs != null && (cs.IsTown || cs.IsCastle))
-			{
-				if (!_isPromptingSettlement)
-				{
-					_isPromptingSettlement = true;
-					_pendingSettlementPrompt = cs;
-					try { Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop; } catch { }
-					try { GameMenu.ActivateGameMenu("enlisted_soldier_status"); } catch { }
-				}
-			}
+			// Removed: auto-prompt when loading into settlement
 			LoggingService.Info("EnlistmentBehavior", $"Reapplied enlistment state. Commander={commander.Name}");
 		}
 
@@ -1228,6 +1476,7 @@ namespace Enlisted.Features.Enlistment.Application
 				CurrentCommanderParty = null;
 				// Show player party again and clear escort orders
 				try { MobileParty.MainParty.IsVisible = true; } catch { }
+				try { MobileParty.MainParty.IsActive = true; } catch { }
 				try { MobileParty.MainParty?.Ai?.SetMoveModeHold(); } catch { }
 				try { MobileParty.MainParty?.Party?.SetAsCameraFollowParty(); } catch { }
 				InformationManager.DisplayMessage(new InformationMessage("You have left their service."));

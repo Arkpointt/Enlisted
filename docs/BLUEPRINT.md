@@ -1,11 +1,12 @@
 # Bannerlord Mod Engineering Blueprint
 
-**Version:** 1.3 (Living Document)  
+**Version:** 1.4 (Living Document)  
 **Status:** Authoritative Reference  
-**Last Updated:** August 29, 2025
+**Last Updated:** August 31, 2025
 
 ## Changelog
 
+- **2025-08-31:** Added policies for Army/Encounter handling, Deferred post-load/post-battle restores, Camera/Tracker while enlisted, and Conditional Ignore AI safety. Clarified enlisted menu guards during events/settlements and logging markers. See sections 4.6–4.9.
 - **2025-08-26:** Added Harmony Patching Policy (Section 4.2.1) and Harmony commenting standard (Section 6.1); noted Harmony packaging/runtime dependency in Appendix B. Clarified SubModule.xml dependency example, 0Harmony reference strategy, engine-invoked examples, and Harmony ID stability.
 - **2025-08-25:** Renamed "Patch (default)" → "Small Changeset (default)"; clarified workflow to match approve-changes flow; removed .artifacts/patches/ from structure.
 - **2025-08-22:** Initial release for a Mount & Blade II: Bannerlord mod in Visual Studio 2022 with minimal root, Package-by-Feature organization, change levels, and concise commenting standards.
@@ -327,6 +328,47 @@ If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove 
   5. In the menu `OnInit` handler, call `args.MenuContext.GameMenu.StartWait();` and then `Campaign.Current.GameMenuManager.RefreshMenuOptions(...)`.
 - Use `GameOverlays.MenuOverlayType.None` and `GameMenu.MenuFlags.None` unless you intentionally need overlays/flags.
 - This ensures the top-left ribbon (spacebar/arrow time controls) works while the panel is expanded and the panel can be collapsed via the chevron without pausing.
+
+### 4.6 Army & Encounter Handling (enlisted behavior)
+
+- Commander attachment
+  - Use escort AI to follow the commander: `MobileParty.MainParty.Ai.SetMoveEscortParty(commanderArmyLeader ?? commander)`.
+  - When the commander is in an army, ensure the player's party joins that army (merged parties) for blob treatment.
+- Auto-join battles
+  - When the commander enters a `MapEvent` and the player is not already in an event, briefly set `MainParty.IsActive = true` and gently nudge position near the commander to allow auto-inclusion by the engine.
+  - Do not nudge toward other friendly parties if the commander is not involved.
+- Menu guards
+  - If an enlisted menu is open when an encounter starts, close it first, then allow the encounter UI; remember to re-open after cleanup if needed.
+  - While inside towns/castles, do not attempt to join/route encounters; defer until outside.
+
+### 4.7 Deferred Operations (assert safety)
+
+- Post-load setup is deferred until there is no active menu or encounter, and a short safety timer elapses. Then re-apply:
+  - Escort AI toward commander (or army leader)
+  - Visual tracker registration
+  - Camera follow to commander party
+- Post-battle restore is likewise deferred until encounter/menus clear. Then:
+  - Re-hide and deactivate `MainParty`
+  - Re-apply escort/camera follow
+  - Optionally re-open the enlisted status menu
+- Emit clear debug markers when deferred vs applied:
+  - "PostLoadSetup deferred/applied"
+  - "PendingCameraFollow deferred/applied"
+  - "PostBattleRestore deferred/applied"
+
+### 4.8 Camera Follow, Visual Tracking, and Visibility
+
+- Camera follow cadence: reassert follow to `(commanderArmyLeader ?? commander)` frequently to keep camera locked even if the engine resets it.
+- Visuals and tracker
+  - Keep `MobileParty.MainParty.IsVisible = false` while enlisted.
+  - Unregister `MainParty` from `VisualTrackerManager` and register the commander to drive HUD focus; periodically enforce due to engine/UI refreshes.
+  - Nameplate & tracker suppression via small Harmony adapters (see ADR-011), with behavior-level enforcement as backup.
+
+### 4.9 Conditional Ignore AI Safety
+
+- To prevent world AI from targeting the hidden `MainParty`, periodically call:
+  - `MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f))`
+- Use conditionally: enable while the commander is not in an army; disable when merged into an army to avoid unintended targeting behavior changes.
 
 ## 5. Development Standards (C# / VS2022)
 

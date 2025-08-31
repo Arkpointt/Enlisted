@@ -4,16 +4,18 @@ A Bannerlord mod that lets the player enlist under a lord and play as a soldier.
 
 Features (current)
 - Enlist/discharge via lord dialog (high-priority option)
-- Commander follow: camera follows the commander; player party escorts the commander
-- Main party visuals hidden while enlisted: nameplate/shield suppressed; UI tracker redirected away from MainParty
-- Soldier status and wait menus: minimal menus to reflect enlisted status and settlement waiting
-- Structured logging written to a debugging folder for troubleshooting
+- Commander follow: camera follows the commander; player party escorts the commander; when commander is in an army, player party merges for blob treatment
+- Main party visuals hidden while enlisted: nameplate/shield suppressed; UI tracker redirects to commander; periodic enforcement
+- Soldier status and report menus: persistent enlisted panel keeps time controls responsive (Finish encounter → drain menus → StartWait + StoppablePlay)
+- Deferred safety: post-load/post-battle restore is deferred until menus/encounter clear; camera/escort re-applied safely
+- Conditional AI ignore: refresh IgnoreByOtherPartiesTill while not in an army to prevent stray targeting of hidden party
+- Structured logging written to a debugging folder, with clear markers for deferred/applied operations
 
 How the code works
 - Entry point: `src/Mod.Entry/SubModule.cs`
   - Initializes logging and applies Harmony patches, then registers behaviors during game start.
 - Behavior
-  - `src/Features/Enlistment/Application/EnlistmentBehavior.cs`: Orchestrates enlist/leave lifecycle, tracking/following the commander, minimal menus, and visual/tracker suppression for MainParty while enlisted.
+  - `src/Features/Enlistment/Application/EnlistmentBehavior.cs`: Orchestrates enlist/leave lifecycle, commander follow/army merge, encounter auto-join, enlisted menus/time control, deferred restore, and main party visual/tracker suppression.
 - Patches (Harmony)
   - `src/Mod.GameAdapters/Patches/MobilePartyTrackerPatches.cs`: Redirects the map tracker to the commander and blocks tracking the MainParty while enlisted.
   - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`: Hides the MainParty nameplate/shield while enlisted by patching `PartyNameplateVM.RefreshBinding`.
@@ -24,18 +26,18 @@ How the code works
 
 Core flows
 1) Enlist
-- DialogService exposes enlist option.
-- EnlistmentBehavior calls ArmyService to create/join army and set escort AI.
-- PartyIllusionService hides player party and sets camera to follow commander.
-- WageBehavior starts payments; EnlistmentState is saved.
+- Finish any active encounter, drain menus, enable StoppablePlay.
+- Persist enlistment, hide/deactivate main party, set escort to commander, set camera follow, register commander in tracker.
 
 2) Battle participation
-- BattleParticipationPatch tracks commander battle entry and attaches the player to the same battle/side.
-- BanditEncounterPatch prevents independent hostile encounters while enlisted.
+- Auto-join commander battles: activate briefly and nudge near commander for inclusion; avoid nudging for non-commander friendlies.
+- While in towns/castles, do not attempt joins; handle after exit.
 
-3) Discharge
-- EnlistmentBehavior/ArmyService leave army and clear AI/escort.
-- PartyIllusionService restores visibility and camera; wages stop; state is cleared.
+3) Post-battle and load
+- Defer restore until safe tick; re-hide/reactivate escort/camera; optionally re-open enlisted status menu.
+
+4) Discharge
+- Leave army, restore visibility/activation and camera to player, clear escorts/trackers.
 
 Build
 - Open `Enlisted.sln` in Visual Studio 2022, select configuration "Enlisted EDITOR" and Build.

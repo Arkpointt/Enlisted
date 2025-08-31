@@ -3,6 +3,7 @@ using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
 using HarmonyLib;
 using Enlisted.Features.Enlistment.Application;
+using Enlisted.Features.EnlistedMenu.Application;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Entry
@@ -10,6 +11,7 @@ namespace Enlisted.Entry
     public class SubModule : MBSubModuleBase
     {
         private Harmony _harmony;
+        private const bool EnableHarmonyPatches = false; // temporarily disabled for debugging visuals
 
         protected override void OnSubModuleLoad()
         {
@@ -21,9 +23,15 @@ namespace Enlisted.Entry
             
             // Initialize Harmony for potential future patches
             _harmony = new Harmony("com.enlisted.mod");
-            _harmony.PatchAll();
-            
-            LoggingService.Info("SubModule", "Harmony initialized successfully");
+            if (EnableHarmonyPatches)
+            {
+                _harmony.PatchAll();
+                LoggingService.Info("SubModule", "Harmony initialized successfully (patches enabled)");
+            }
+            else
+            {
+                LoggingService.Info("SubModule", "Harmony patches are disabled by flag for debugging");
+            }
         }
 
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
@@ -37,6 +45,9 @@ namespace Enlisted.Entry
                 // Register the EnlistmentBehavior
                 campaignStarter.AddBehavior(new EnlistmentBehavior());
                 LoggingService.Info("SubModule", "EnlistmentBehavior registered successfully");
+                // Register the EnlistedMenuBehavior (menus/status panel)
+                campaignStarter.AddBehavior(new EnlistedMenuBehavior());
+                LoggingService.Info("SubModule", "EnlistedMenuBehavior registered successfully");
             }
             else
             {
