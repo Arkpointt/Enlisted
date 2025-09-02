@@ -1,0 +1,17 @@
+{
+  "LogMenus": true,
+  "LogDialogs": true,
+  "LogCampaignEvents": true,
+  "DiscoveryStackTraces": false,
+  "DiscoveryPlayerOnly": true,
+  "LogApiCalls": true,
+  "ApiCallDetail": "summary",
+  "SAS": {
+    "AttachWhenClose": true,
+    "AttachRange": 0.6,
+    "TrailDistance": 1.2,
+    "SuppressPlayerEncounter": true
+  }
+}
+
+

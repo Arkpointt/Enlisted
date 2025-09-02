@@ -40,6 +40,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
@@ -117,17 +118,34 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Mod.Entry\SubModule.cs" />
-    <Compile Include="src\Mod.Core\Logging\LoggingService.cs" />
-    <Compile Include="src\Features\Enlistment\Domain\EnlistmentState.cs" />
-    <Compile Include="src\Features\Enlistment\Domain\EnlistmentDialogs.cs" />
-    <Compile Include="src\Features\Enlistment\Domain\EnlistmentSaveDefiner.cs" />
+    <Compile Include="src\Mod.Core\Config\ModSettings.cs" />
+    <Compile Include="src\Mod.Core\Logging\ModLogger.cs" />
+    <Compile Include="src\Mod.Core\Logging\ApiLog.cs" />
+    <Compile Include="src\Mod.Core\Logging\ApiSurfaceDumper.cs" />
+    <Compile Include="src\Mod.Core\Logging\DiscoveryAggregator.cs" />
+    <Compile Include="src\Debugging\Discovery\Application\DiscoveryBehavior.cs" />
+    <Compile Include="src\Debugging\Discovery\Application\ApiDiscoveryBehavior.cs" />
+    <Compile Include="src\Debugging\Discovery\Infrastructure\DiscoveryLog.cs" />
+    <Compile Include="src\Features\LordDialog\Application\LordDialogBehavior.cs" />
     <Compile Include="src\Features\Enlistment\Application\EnlistmentBehavior.cs" />
-    <Compile Include="src\Features\EnlistedMenu\Application\EnlistedMenuBehavior.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\MobilePartyTrackerPatches.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
+    <Compile Include="src\Features\Enlistment\Application\EncounterGuard.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\CampaignGameStarter_AddMenuPatches.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\CampaignGameStarter_AddDialogPatches.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\GameMenu_TransitionsPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\GameMenuManager_TransitionsPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\ConversationManager_DiscoveryPatches.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\ConversationManager_SelectionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\ConversationManager_AvailabilityPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\Encounter_DoMeetingGuardPatch.cs" />
+    <Compile Include="src\Mod.Core\Config\ModConfig.cs" />
+    <Compile Include="src\Mod.Core\Util\PlayerContext.cs" />
+    <Compile Include="src\Debugging\DebuggingRegistry.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ModuleData\Enlisted\settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -138,5 +156,14 @@
     <None Include="docs\TESTING.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <MakeDir Directories="$(OutputPath)..\..\Debugging" />
+    <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\" />
+    <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
+    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\discovery.log" Lines="[Init] Precreated by build" Overwrite="false" />
+    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\api.log" Lines="[Init] Precreated by build" Overwrite="false" />
+    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\dialog.log" Lines="[Init] Precreated by build" Overwrite="false" />
+  </Target>
   
 </Project>

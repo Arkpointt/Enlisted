@@ -1,63 +1,61 @@
-using TaleWorlds.Core;
-using TaleWorlds.MountAndBlade;
-using TaleWorlds.CampaignSystem;
+using System;
 using HarmonyLib;
-using Enlisted.Features.Enlistment.Application;
-using Enlisted.Features.EnlistedMenu.Application;
+using TaleWorlds.MountAndBlade;
+using TaleWorlds.Core;
+using TaleWorlds.CampaignSystem;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Config;
+using Enlisted.Features.Conversations.Behaviors;
+using Enlisted.Features.Enlistment.Behaviors;
 
-namespace Enlisted.Entry
+namespace Enlisted.Mod.Entry
 {
-    public class SubModule : MBSubModuleBase
-    {
-        private Harmony _harmony;
-        private const bool EnableHarmonyPatches = false; // temporarily disabled for debugging visuals
+	public class SubModule : MBSubModuleBase
+	{
+		private Harmony _harmony;
+		private ModSettings _settings;
 
-        protected override void OnSubModuleLoad()
-        {
-            base.OnSubModuleLoad();
-            
-            // Initialize logging service first
-            LoggingService.Initialize();
-            LoggingService.Info("SubModule", "Enlisted mod loading...");
-            
-            // Initialize Harmony for potential future patches
-            _harmony = new Harmony("com.enlisted.mod");
-            if (EnableHarmonyPatches)
-            {
-                _harmony.PatchAll();
-                LoggingService.Info("SubModule", "Harmony initialized successfully (patches enabled)");
-            }
-            else
-            {
-                LoggingService.Info("SubModule", "Harmony patches are disabled by flag for debugging");
-            }
-        }
+		protected override void OnSubModuleLoad()
+		{
+			try
+			{
+				ModLogger.Initialize();
+				ModLogger.Info("Bootstrap", "SubModule loading");
 
-        protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
-        {
-            base.OnGameStart(game, gameStarterObject);
-            
-            LoggingService.Info("SubModule", "Game started, registering behaviors...");
-            
-            if (gameStarterObject is CampaignGameStarter campaignStarter)
-            {
-                // Register the EnlistmentBehavior
-                campaignStarter.AddBehavior(new EnlistmentBehavior());
-                LoggingService.Info("SubModule", "EnlistmentBehavior registered successfully");
-                // Register the EnlistedMenuBehavior (menus/status panel)
-                campaignStarter.AddBehavior(new EnlistedMenuBehavior());
-                LoggingService.Info("SubModule", "EnlistedMenuBehavior registered successfully");
-            }
-            else
-            {
-                LoggingService.Warning("SubModule", "GameStarter is not CampaignGameStarter, behaviors not registered");
-            }
-        }
+				_harmony = new Harmony("com.enlisted.mod");
+				_harmony.PatchAll();
+				ModLogger.Info("Bootstrap", "Harmony patched");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Bootstrap", "Exception during OnSubModuleLoad", ex);
+				// Fail closed: do not crash the game on load; continue without patches.
+			}
+		}
 
-        protected override void OnSubModuleUnloaded()
-        {
-            base.OnSubModuleUnloaded();
-        }
-    }
+		protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
+		{
+			try
+			{
+				ModLogger.Info("Bootstrap", "Game start");
+				_settings = ModSettings.LoadFromModule();
+				ModConfig.Settings = _settings;
+
+				if (gameStarterObject is CampaignGameStarter campaignStarter)
+				{
+					campaignStarter.AddBehavior(new EnlistmentBehavior());
+					campaignStarter.AddBehavior(new LordDialogBehavior());
+					EncounterGuard.Initialize();
+					ModLogger.Info("Bootstrap", "Military service behaviors registered");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Bootstrap", "Exception during OnGameStart", ex);
+				// Fail closed: avoid crashing startup; behaviors may be partially unavailable.
+			}
+		}
+	}
 }
+
+

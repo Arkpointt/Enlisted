@@ -1,56 +1,46 @@
-# Enlisted – Serve as a Soldier
+# Enlisted
 
-A Bannerlord mod that lets the player enlist under a lord and play as a soldier. Targeting .NET Framework 4.7.2. Harmony is used for non-invasive game patches.
+Bannerlord mod (1.2.x) targeting .NET Framework 4.7.2.
 
-Features (current)
-- Enlist/discharge via lord dialog (high-priority option)
-- Commander follow: camera follows the commander; player party escorts the commander; when commander is in an army, player party merges for blob treatment
-- Main party visuals hidden while enlisted: nameplate/shield suppressed; UI tracker redirects to commander; periodic enforcement
-- Soldier status and report menus: persistent enlisted panel keeps time controls responsive (Finish encounter → drain menus → StartWait + StoppablePlay)
-- Deferred safety: post-load/post-battle restore is deferred until menus/encounter clear; camera/escort re-applied safely
-- Conditional AI ignore: refresh IgnoreByOtherPartiesTill while not in an army to prevent stray targeting of hidden party
-- Structured logging written to a debugging folder, with clear markers for deferred/applied operations
+## Build
+- Visual Studio: open `Enlisted.sln`, configuration "Enlisted EDITOR", Build
+- CLI: `dotnet build -c "Enlisted EDITOR"`
 
-How the code works
-- Entry point: `src/Mod.Entry/SubModule.cs`
-  - Initializes logging and applies Harmony patches, then registers behaviors during game start.
-- Behavior
-  - `src/Features/Enlistment/Application/EnlistmentBehavior.cs`: Orchestrates enlist/leave lifecycle, commander follow/army merge, encounter auto-join, enlisted menus/time control, deferred restore, and main party visual/tracker suppression.
-- Patches (Harmony)
-  - `src/Mod.GameAdapters/Patches/MobilePartyTrackerPatches.cs`: Redirects the map tracker to the commander and blocks tracking the MainParty while enlisted.
-  - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`: Hides the MainParty nameplate/shield while enlisted by patching `PartyNameplateVM.RefreshBinding`.
-- Models (persistent state)
-  - `src/Features/Enlistment/Domain/EnlistmentState.cs`: Persists enlistment state via the Bannerlord save system.
-- Core (logging)
-  - `src/Mod.Core/Logging/LoggingService.cs`: Centralized structured logging to a debugging folder.
+Output DLL:
+`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_wEditor\Enlisted.dll`
 
-Core flows
-1) Enlist
-- Finish any active encounter, drain menus, enable StoppablePlay.
-- Persist enlistment, hide/deactivate main party, set escort to commander, set camera follow, register commander in tracker.
+## Module entry & behaviors
+- `src/Mod.Entry/SubModule.cs` wires:
+  - `DiscoveryBehavior` (under `src/Debugging/Discovery/`) for runtime discovery logging
+  - `LordDialogBehavior` for our conversation entries
+  - `ApiDiscoveryBehavior` to dump API surface on session launch
 
-2) Battle participation
-- Auto-join commander battles: activate briefly and nudge near commander for inclusion; avoid nudging for non-commander friendlies.
-- While in towns/castles, do not attempt joins; handle after exit.
+## Debugging layout and outputs
+All logs and discovery artifacts are written to the module’s Debugging folder (one session at a time; cleared on init):
+`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging` [[memory:7845841]]
 
-3) Post-battle and load
-- Defer restore until safe tick; re-hide/reactivate escort/camera; optionally re-open enlisted status menu.
+Files created per session:
+- `enlisted.log` – bootstrap and general info
+- `discovery.log` – menu opens, settlement entries, session markers
+- `dialog.log` – dialog availability and selections (CampaignGameStarter + DialogFlow hooks)
+- `api.log` – API transition notes (menu switches etc.)
+- `attributed_menus.txt` – unique menu ids observed (aggregated)
+- `dialog_tokens.txt` – unique dialog tokens observed (aggregated)
+- `api_surface.txt` – reflection dump of key public surfaces
 
-4) Discharge
-- Leave army, restore visibility/activation and camera to player, clear escorts/trackers.
+## Settings (ModuleData/Enlisted/settings.json)
+Key flags:
+- `LogMenus`, `LogDialogs`, `LogCampaignEvents`
+- `DiscoveryStackTraces` – include stack traces on registration logs
+- `DiscoveryPlayerOnly` – filter to player-driven contexts
+- `LogApiCalls`, `ApiCallDetail`
 
-Build
-- Open `Enlisted.sln` in Visual Studio 2022, select configuration "Enlisted EDITOR" and Build.
-- Or use CLI:
-  - `dotnet build Enlisted.sln -c "Enlisted EDITOR"`
-- Output is configured to copy directly into the game module folder:
-  `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_wEditor\Enlisted.dll`
-- Ensure the TaleWorlds.* and 0Harmony references in `Enlisted.csproj` match your Bannerlord installation paths.
+## Dialog: “Join your army” entry
+- Added under the hub token `hero_main_options` with roleplayed lines.
+- Player: "My lord, with your leave, I wish to enlist under your banner."
+- Noble responses:
+  - Different kingdom → deny
+  - Same kingdom with army → accept
+  - Same kingdom without army → defer
 
-Configuration
-- No user settings are required currently. All user-facing strings use `TaleWorlds.Localization.TextObject`.
-
-Contributing
-- Follow the engineering standards in `docs/BLUEPRINT.md`.
-- One patched game class per file under `src/Mod.GameAdapters/Patches`.
-- Guard all patches, keep them minimal, and log via `LoggingService`.
+See `docs/BLUEPRINT.md` for architecture and phase details.

@@ -20,7 +20,7 @@
         <SubModule>
             <Name value="Enlisted" />
             <DLLName value="Enlisted.dll" />
-            <SubModuleClassType value="Enlisted.Entry.SubModule" />
+            <SubModuleClassType value="Enlisted.Mod.Entry.SubModule" />
             <Tags>
                 <Tag key="DedicatedServerType" value="none" />
                 <Tag key="IsNoRenderModeElement" value="false" />

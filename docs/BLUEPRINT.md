@@ -1,161 +1,45 @@
-# Bannerlord Mod Engineering Blueprint
+# Blueprint
 
-**Version:** 1.4 (Living Document)  
-**Status:** Authoritative Reference  
-**Last Updated:** August 31, 2025
+Vanilla starting point for a Bannerlord module.
 
-## Changelog
-
-- **2025-08-31:** Added policies for Army/Encounter handling, Deferred post-load/post-battle restores, Camera/Tracker while enlisted, and Conditional Ignore AI safety. Clarified enlisted menu guards during events/settlements and logging markers. See sections 4.6–4.9.
-- **2025-08-26:** Added Harmony Patching Policy (Section 4.2.1) and Harmony commenting standard (Section 6.1); noted Harmony packaging/runtime dependency in Appendix B. Clarified SubModule.xml dependency example, 0Harmony reference strategy, engine-invoked examples, and Harmony ID stability.
-- **2025-08-25:** Renamed "Patch (default)" → "Small Changeset (default)"; clarified workflow to match approve-changes flow; removed .artifacts/patches/ from structure.
-- **2025-08-22:** Initial release for a Mount & Blade II: Bannerlord mod in Visual Studio 2022 with minimal root, Package-by-Feature organization, change levels, and concise commenting standards.
-
-## Quickstart: Generic Bannerlord Mod
-
-This quickstart sets up a minimal, generic Bannerlord mod with Harmony and a clean packaging flow. Replace `YourModName`/`com.yourmodid.mod` with your values.
-
-### Prerequisites
-- Visual Studio 2022
-- Bannerlord installed (know your `<BannerlordInstall>` path)
-- Depends on `Bannerlord.Harmony` (runtime)
-
-### Repository Layout (current project)
+Repo layout (baseline)
 ```
 Enlisted/
 ├── Enlisted.sln
-├── docs/
-├── src/
-│   ├── Mod.Entry/
-│   │   └── SubModule.cs
-│   ├── Mod.Core/
-│   │   └── Logging/
-│   ├── Mod.GameAdapters/
-│   │   └── Patches/
-│   └── Features/
-└── SubModule.xml
+├── README.md
+├── SubModule.xml
+└── src/
+    └── Mod.Entry/
+        └── SubModule.cs
 ```
 
-### Minimal SubModule.cs (project pattern)
-```csharp
-using TaleWorlds.MountAndBlade;
-using TaleWorlds.CampaignSystem;
-using HarmonyLib;
+Build
+- Visual Studio: config "Enlisted EDITOR" → Build
+- CLI: `dotnet build -c "Enlisted EDITOR"`
 
-namespace YourModName
-{
-    public class SubModule : MBSubModuleBase
-    {
-        private Harmony _harmony;
+Next steps
+- Add your features under `src/` and reference them in `Enlisted.csproj`.
 
-        protected override void OnSubModuleLoad()
-        {
-            _harmony = new Harmony("com.yourmodid.mod");
-            _harmony.PatchAll();
-        }
+## Current implementation snapshot
 
-        protected override void OnGameStart(Game game, IGameStarter starterObj)
-        {
-            if (starterObj is CampaignGameStarter campaign)
-            {
-                // Register CampaignBehavior(s) here
-                // campaign.AddBehavior(new YourBehavior());
-            }
-        }
-    }
-}
-```
+- Entry wiring in `src/Mod.Entry/SubModule.cs` creates a Harmony instance and registers campaign behaviors:
+  - `Enlisted.Debugging.Discovery.Application.DiscoveryBehavior` – logs menus, settlements, session
+  - `Enlisted.Features.LordDialog.Application.LordDialogBehavior` – dialog entry points
+  - `Enlisted.Debugging.Discovery.Application.ApiDiscoveryBehavior` – dumps API surface on session launch
+- Discovery lives under `src/Debugging` (not under `Features`). Aggregates are written to the module `Debugging` folder.
 
-### SubModule.xml (template)
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<Module>
-  <Name value="YourModName" />
-  <Id value="YourModName" />
-  <Version value="v1.0.0" />
-  <DefaultModule value="false" />
+### Debugging outputs (session-scoped)
 
-  <SingleplayerModule value="true" />
-  <MultiplayerModule value="false" />
+Location: `…/Modules/Enlisted/Debugging/`
+- `enlisted.log` – bootstrap, init details
+- `discovery.log` – menu opens, settlement events
+- `dialog.log` – dialog availability/selection (CampaignGameStarter + DialogFlow)
+- `api.log` – menu transition API notes
+- `attributed_menus.txt` – unique menu ids
+- `dialog_tokens.txt` – unique dialog tokens
+- `api_surface.txt` – reflection dump of public surfaces
 
-  <DependedModules>
-    <DependedModule Id="Bannerlord.Harmony" />
-  </DependedModules>
-
-  <SubModules>
-    <SubModule>
-      <Name value="YourMod SubModule" />
-      <DLLName value="YourModName.dll" />
-      <SubModuleClassType value="YourModName.SubModule" />
-      <Tags>
-        <Tag key="DedicatedServerType" value="none" />
-        <Tag key="IsNoRenderModeElement" value="false" />
-      </Tags>
-    </SubModule>
-  </SubModules>
-
-  <Xmls />
-</Module>
-```
-
-### Project Settings (csproj snippets)
-```xml
-<PropertyGroup>
-  <TargetFramework>net472</TargetFramework>
-  <Platforms>x64</Platforms>
-  <PlatformTarget>x64</PlatformTarget>
-  <LangVersion>latest</LangVersion>
-  <Nullable>disable</Nullable>
-</PropertyGroup>
-```
-
-Optional reference for IntelliSense (prefer runtime Harmony from Bannerlord.Harmony; do not copy):
-```xml
-<ItemGroup>
-  <Reference Include="0Harmony">
-    <HintPath>..\..\..\Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
-    <Private>false</Private>
-  </Reference>
-  <Reference Include="TaleWorlds.MountAndBlade">
-    <HintPath>..\..\..\Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.MountAndBlade.dll</HintPath>
-    <Private>false</Private>
-  </Reference>
-  <Reference Include="TaleWorlds.CampaignSystem">
-    <HintPath>..\..\..\Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.CampaignSystem.dll</HintPath>
-    <Private>false</Private>
-  </Reference>
-  <!-- add other TaleWorlds references as needed, Private=false -->
-  </ItemGroup>
-```
-
-### Packaging (post-build)
-Copy the DLL and `SubModule.xml` into the module folder after build. In this project the `Enlisted EDITOR` configuration already outputs to the module path. Example snippet (if you need a post-build copy):
-```xml
-<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-  <PropertyGroup>
-    <ModuleDir>C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\YourModName</ModuleDir>
-  </PropertyGroup>
-  <MakeDir Directories="$(ModuleDir)\bin\Win64_Shipping_Client" />
-  <Copy SourceFiles="$(TargetDir)$(TargetFileName)" DestinationFolder="$(ModuleDir)\bin\Win64_Shipping_Client" />
-  <Copy SourceFiles="$(ProjectDir)..\..\SubModule.xml" DestinationFolder="$(ModuleDir)" />
-</Target>
-```
-
-### Test Run
-1. Build in Release/x64.
-2. Verify files under `<BannerlordInstall>/Modules/YourModName/`.
-3. Enable the mod in the launcher (ensure `Bannerlord.Harmony` loads first).
-4. Launch a new campaign to see SubModule hooks active.
-
-### Troubleshooting
-- If the mod doesn’t appear, confirm `SubModule.xml` is present and valid.
-- If patches fail, check Harmony IDs and ensure x64 target.
-- Use a simple logger to confirm `OnSubModuleLoad` and `OnGameStart` are hit.
-- Enlisted menu opens but spacebar/arrows do nothing: finish encounters before opening the menu and
-  adopt the menu wait pattern:
-  `if (PlayerEncounter.Current != null) PlayerEncounter.Finish(true);` → drain `GameMenu.ExitToLast()`
-  → open menu → `Campaign.Current.TimeControlMode = StoppablePlay` → `args.MenuContext.GameMenu.StartWait()`
-  → `GameMenuManager.RefreshMenuOptions(...)`.
+These files are cleared on init to keep one session at a time.
 
 ## 1. Purpose & Scope
 
@@ -224,18 +108,26 @@ src/
 ├── Mod.GameAdapters/            # TaleWorlds APIs, Harmony patches, event bridges
 │   └── Patches/                 # All Harmony patches live here (see 4.2.1)
 │
-├── Features/                    # One folder per feature (self-contained)
-│   ├── EconomyTweaks/
-│   │   ├── Domain/              # calculations, rules, models
-│   │   ├── Application/         # orchestrators, controllers
-│   │   ├── Presentation/        # view-models, UI bindings (if any)
-│   │   └── Tests/               # unit tests for this feature
-│   ├── PartyManagement/
-│   │   ├── Domain/
-│   │   ├── Application/
-│   │   ├── Presentation/
-│   │   └── Tests/
-│   └── (add more features here)
+├── Features/                    # Each feature is self-contained
+│   ├── Enlistment/
+│   │   ├── Core/                # basic rules and validation
+│   │   └── Behaviors/           # main enlistment logic and state
+│   ├── Assignments/
+│   │   ├── Core/                # assignment rules and XP calculations  
+│   │   └── Behaviors/           # daily assignment processing
+│   ├── Equipment/
+│   │   ├── Core/                # gear rules and tier requirements
+│   │   ├── Behaviors/           # equipment management and selection
+│   │   └── UI/                  # custom gear selector (if needed)
+│   ├── Ranks/
+│   │   ├── Core/                # promotion rules and tier logic
+│   │   └── Behaviors/           # rank tracking and wage calculation
+│   ├── Conversations/
+│   │   └── Behaviors/           # dialog handling and flows
+│   ├── Combat/
+│   │   └── Behaviors/           # battle participation and army following
+│   └── Interface/
+│       └── Behaviors/           # status menus and player interface
 │
 └── Mod.Config/                  # strongly-typed settings & validation
 ```
@@ -329,17 +221,43 @@ If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove 
 - Use `GameOverlays.MenuOverlayType.None` and `GameMenu.MenuFlags.None` unless you intentionally need overlays/flags.
 - This ensures the top-left ribbon (spacebar/arrow time controls) works while the panel is expanded and the panel can be collapsed via the chevron without pausing.
 
-### 4.6 Army & Encounter Handling (enlisted behavior)
+### 4.6 Military Service System Architecture
 
-- Commander attachment
-  - Use escort AI to follow the commander: `MobileParty.MainParty.Ai.SetMoveEscortParty(commanderArmyLeader ?? commander)`.
-  - When the commander is in an army, ensure the player's party joins that army (merged parties) for blob treatment.
-- Auto-join battles
-  - When the commander enters a `MapEvent` and the player is not already in an event, briefly set `MainParty.IsActive = true` and gently nudge position near the commander to allow auto-inclusion by the engine.
-  - Do not nudge toward other friendly parties if the commander is not involved.
-- Menu guards
-  - If an enlisted menu is open when an encounter starts, close it first, then allow the encounter UI; remember to re-open after cleanup if needed.
-  - While inside towns/castles, do not attempt to join/route encounters; defer until outside.
+Our military service system follows a modular design where each aspect has clear responsibilities:
+
+#### **Enlistment Feature**
+- **What it does**: Tracks who you're serving and manages the basic service relationship
+- **Main job**: Keep track of your current lord and make sure you're following them properly
+- **Lives in**: `src/Features/Enlistment/Behaviors/`
+- **Keep it simple**: Just handle the basics - who, when, and basic state
+
+#### **Assignments Feature** 
+- **What it does**: Handles your daily military duties and the benefits you get from them
+- **Main job**: Process your role (cook, guard, sergeant, etc.) and give you the right rewards
+- **Lives in**: `src/Features/Assignments/Behaviors/`
+- **Make it meaningful**: Each job should feel different and worthwhile
+
+#### **Equipment Feature**
+- **What it does**: Manages what gear you can access based on your rank and culture
+- **Main job**: Make sure you get appropriate equipment that matches your status and faction
+- **Lives in**: `src/Features/Equipment/Behaviors/`
+- **Progression matters**: Better ranks should unlock cooler gear, but you have to earn it
+
+#### **Battle Integration**
+- **Purpose**: Seamless participation in lord's military campaigns
+- **Implementation Strategy**:
+  - Use escort AI to follow the enlisted lord: `MobileParty.MainParty.Ai.SetMoveEscortParty(lordParty)`
+  - When lord is in an army, follow the army leader instead for proper hierarchy
+  - Auto-join battles when lord is involved, using reflection with positioning fallback
+  - Handle army formation changes gracefully without breaking player experience
+
+#### **Menu Integration**
+- **Purpose**: Rich information display and management interface
+- **Implementation Strategy**:
+  - Custom menu shows service status, wages, progression, and army information
+  - Menu guards prevent player-initiated encounters while enlisted
+  - Settlement following ensures player stays with lord during town visits
+  - Time control management maintains proper game flow
 
 ### 4.7 Deferred Operations (assert safety)
 
@@ -376,19 +294,110 @@ If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove 
 - Solution Hygiene: One solution file; each project compiles cleanly; treat warnings as meaningful.
 - Style & Linting: Enforce consistent style via `.editorconfig`. Keep namespaces/folders aligned.
 - Types & Nullability: Enable nullable reference types where compatible; prefer explicit types on public APIs.
-- Logging: Central logging service; avoid `Console.WriteLine`. Logs should be structured and filterable.
+- Logging: Use our centralized ModLogger with feature-specific categories. Structure logs for production troubleshooting and performance monitoring.
 - Module/Class Size: Keep classes reasonable (aim <500 LOC). Split by single responsibility when growing.
 - No duplicate logic: Cross-feature utilities live in `Mod.Core`; TaleWorlds/Harmony specifics live in `Mod.GameAdapters`.
 - Harmony safety: Keep patches minimal, guarded, and reversible; never remove safety checks to "make tests pass."
 
-## 6. Commenting & Documentation in Code (authoritative)
+## 6.3 Production Logging Standards
 
-**Goal:** Comments explain intent, constraints, and safety — not change history.
+### Logging Levels and Usage
 
-- Allowed: why the approach is used, assumptions (e.g., campaign-only), safety limits, invariants, side effects, known engine quirks.
-- Prohibited: "changed this on …", ticket IDs, comments that merely restate code.
-- Accuracy: When behavior changes, update or remove nearby comments/docstrings in the same change.
-- Pointers: If needed, reference a section in `docs/` or an ADR by title (not an external ticket URL).
+**Info Level** - Major state changes that users care about:
+```csharp
+ModLogger.Info("Enlistment", $"Player enlisted with {lord.Name} of {faction.Name}");
+ModLogger.Info("Equipment", $"Promoted to tier {tier} - new gear available");
+```
+
+**Debug Level** - Detailed tracking for troubleshooting (configurable):
+```csharp
+ModLogger.Debug("Assignments", $"Processing {assignment} assignment - gained {xp} XP");
+ModLogger.Debug("Combat", $"Battle participation set via reflection: {success}");
+```
+
+**Warning Level** - Issues that were handled but users should know:
+```csharp
+ModLogger.Warning("Equipment", "No tier-appropriate gear found, using fallback selection");
+ModLogger.Warning("Combat", "Battle participation failed, using positioning fallback");
+```
+
+**Error Level** - Problems that need attention:
+```csharp
+ModLogger.Error("Enlistment", "Save data corruption detected, resetting to safe state", ex);
+ModLogger.Error("Compatibility", "API validation failed - possible game update", ex);
+```
+
+### Performance-Friendly Logging
+
+- **Conditional Debug**: Only log debug info when explicitly enabled via config
+- **String Interpolation**: Use `$""` syntax for performance when logging is enabled
+- **Exception Context**: Always include relevant context with error logs
+- **Category Consistency**: Use consistent category names across related features
+
+### Troubleshooting Categories
+
+- **"Enlistment"** - Core service state and lord relationships
+- **"Assignments"** - Daily duties and assignment processing
+- **"Equipment"** - Gear selection and equipment management
+- **"Ranks"** - Promotions and wage calculations
+- **"Combat"** - Battle participation and army integration
+- **"Compatibility"** - Game updates and mod conflict detection
+- **"Performance"** - Slow operations and optimization opportunities
+
+## 6. Professional Human-Like Commenting Standards
+
+**Goal:** Comments should sound natural and professional, like a colleague explaining their approach.
+
+### 6.1 Human-Like Comment Style
+
+**Good Examples:**
+```csharp
+// We need to check if the lord is still alive before processing daily benefits
+// This prevents the system from trying to pay wages to dead lords
+if (_enlistedLord?.IsAlive == true)
+{
+    ProcessDailyWages();
+}
+
+// The tier system works like military ranks - higher tiers unlock better assignments
+// We cap it at tier 7 since that represents the highest non-officer rank
+while (_enlistmentTier < 7 && _enlistmentXP >= GetTierRequirement(_enlistmentTier + 1))
+
+// Equipment selection is culture-based because different factions have different gear styles
+// Empire uses Roman-style equipment, while Vlandia prefers medieval Western gear
+var availableGear = GetCultureAppropriateEquipment(lord.Culture, playerTier);
+```
+
+**Avoid Robotic Comments:**
+```csharp
+// BAD: "Execute daily tick processing for enlisted behavior"
+// GOOD: "Handle daily military duties like wage payments and skill training"
+
+// BAD: "Validate enlistment state parameters"  
+// GOOD: "Make sure we're still properly enlisted before doing anything"
+
+// BAD: "Apply equipment selection algorithm"
+// GOOD: "Pick gear that matches the lord's culture and the player's rank"
+```
+
+### 6.2 Comment Content Guidelines
+
+**Explain Why, Not What:**
+- ✅ **Intent**: "We use escort AI instead of direct attachment because it's more reliable"
+- ✅ **Constraints**: "Only process this during campaign mode since battles don't have lords"
+- ✅ **Safety**: "Double-check the lord exists since they might have died in battle"
+- ✅ **Context**: "This matches how real military promotions work in medieval times"
+
+**Human Context:**
+- ✅ "This feels a bit hacky, but it's the only way to detect army disbandment"
+- ✅ "We learned this approach from analyzing how the base game handles similar situations"
+- ✅ "Players expect this to work like real military service, so we mirror that experience"
+
+**Prohibited:**
+- ❌ References to "SAS" or "ServeAsSoldier mod"
+- ❌ "This was changed on [date]" or ticket references
+- ❌ Overly technical jargon without explanation
+- ❌ Comments that just repeat the code
 
 ### 6.1 Harmony Patch Commenting Standard
 
@@ -458,10 +467,12 @@ Use when small changesets aren't sufficient (recurring defects, high complexity,
 
 ## 11. Observability & Support
 
-- Structured logs: stable categories (e.g., `EconomyTweaks`, `PartyManagement`, `GameAdapters`).
+- Structured logs: stable categories (e.g., `Discovery`, `Dialog`, `Api`).
 - Minimal artifacts: keep only what aids diagnosis (e.g., config snapshot, version info).
 - Session bundles: clear folder for logs to share when reporting issues.
 - Support loop: reproduce → collect bundle → fix → capture learnings in `docs/changes/` or an ADR (if architectural).
+
+Discovery mode defaults: enabled during early phases for observability; may be set to off in `ModuleData/Enlisted/settings.json` for normal play. Optional future: console toggle (e.g., `enlisted.debug menus on`).
 
 ## 12. Performance & Reliability Budgets (examples)
 

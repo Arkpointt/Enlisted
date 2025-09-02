@@ -1,0 +1,136 @@
+{
+  "empire": {
+    "tier1": [
+      {"rosterId": "npc_wanderer_equipment_template_empire", "sourceTroop": "spc_wanderer_empire_0"},
+      {"rosterId": "imperial_spear_t1", "sourceTroop": "empire_recruit"}
+    ],
+    "tier2": [
+      {"rosterId": "npc_companion_equipment_template_empire", "sourceTroop": "spc_wanderer_empire_1"},
+      {"rosterId": "imperial_spear_t2", "sourceTroop": "guard_empire"}
+    ],
+    "tier3": [
+      {"rosterId": "legionary_mail", "sourceTroop": "guard_empire"},
+      {"rosterId": "ironlame_spiked_kettle_over_mail", "sourceTroop": "guard_empire"}
+    ],
+    "tier4": [
+      {"rosterId": "imperial_spear_t4", "sourceTroop": "empire_legionary"},
+      {"rosterId": "empire_lord_armor", "sourceTroop": "empire_noble"}
+    ],
+    "tier5": [
+      {"rosterId": "empire_noble_sword_t5", "sourceTroop": "empire_elite"},
+      {"rosterId": "empire_plate_armor", "sourceTroop": "empire_cataphract"}
+    ]
+  },
+  "aserai": {
+    "tier1": [
+      {"rosterId": "npc_wanderer_equipment_template_aserai", "sourceTroop": "spc_wanderer_aserai_0"},
+      {"rosterId": "eastern_spear_1_t1", "sourceTroop": "aserai_recruit"}
+    ],
+    "tier2": [
+      {"rosterId": "eastern_spear_2_t2", "sourceTroop": "aserai_footman"},
+      {"rosterId": "desert_mail_coif", "sourceTroop": "guard_aserai"}
+    ],
+    "tier3": [
+      {"rosterId": "eastern_spear_2_t3", "sourceTroop": "guard_aserai"},
+      {"rosterId": "southern_lamellar_armor", "sourceTroop": "guard_aserai"},
+      {"rosterId": "emirs_helmet", "sourceTroop": "guard_aserai"}
+    ],
+    "tier4": [
+      {"rosterId": "aserai_sword_4_t4", "sourceTroop": "aserai_veteran"},
+      {"rosterId": "aserai_noble_armor", "sourceTroop": "aserai_mameluke"}
+    ],
+    "tier5": [
+      {"rosterId": "aserai_noble_sword_t5", "sourceTroop": "aserai_elite"},
+      {"rosterId": "aserai_lord_armor", "sourceTroop": "aserai_faris"}
+    ]
+  },
+  "sturgia": {
+    "tier1": [
+      {"rosterId": "npc_wanderer_equipment_template_sturgia", "sourceTroop": "spc_wanderer_sturgia_0"},
+      {"rosterId": "sturgia_axe_t1", "sourceTroop": "sturgia_recruit"}
+    ],
+    "tier2": [
+      {"rosterId": "sturgia_axe_t2", "sourceTroop": "guard_sturgia"},
+      {"rosterId": "nordic_short_sword_t2", "sourceTroop": "sturgia_warrior"}
+    ],
+    "tier3": [
+      {"rosterId": "nordic_huscarl_helmet_over_imperial_mail", "sourceTroop": "guard_sturgia"},
+      {"rosterId": "sturgia_chainmail", "sourceTroop": "sturgia_veteran"}
+    ],
+    "tier4": [
+      {"rosterId": "sturgia_sword_4_t4", "sourceTroop": "sturgia_huscarl"},
+      {"rosterId": "nordic_huscarl_armor", "sourceTroop": "sturgia_huscarl"}
+    ],
+    "tier5": [
+      {"rosterId": "sturgia_noble_sword_t5", "sourceTroop": "sturgia_elite"},
+      {"rosterId": "sturgia_lord_armor", "sourceTroop": "sturgia_noble"}
+    ]
+  },
+  "vlandia": {
+    "tier1": [
+      {"rosterId": "npc_wanderer_equipment_template_vlandia", "sourceTroop": "spc_wanderer_vlandia_0"},
+      {"rosterId": "vlandia_sword_t1", "sourceTroop": "vlandia_recruit"}
+    ],
+    "tier2": [
+      {"rosterId": "vlandia_sword_2_t2", "sourceTroop": "vlandia_footman"},
+      {"rosterId": "mail_coif", "sourceTroop": "vlandia_crossbow"}
+    ],
+    "tier3": [
+      {"rosterId": "vlandia_sword_2_t3", "sourceTroop": "guard_vlandia"},
+      {"rosterId": "mail_hauberk", "sourceTroop": "guard_vlandia"},
+      {"rosterId": "great_helmet", "sourceTroop": "guard_vlandia"}
+    ],
+    "tier4": [
+      {"rosterId": "vlandia_sword_4_t4", "sourceTroop": "vlandia_knight"},
+      {"rosterId": "vlandia_plate_armor", "sourceTroop": "vlandia_knight"}
+    ],
+    "tier5": [
+      {"rosterId": "vlandia_noble_sword_t5", "sourceTroop": "vlandia_champion"},
+      {"rosterId": "vlandia_lord_armor", "sourceTroop": "vlandia_banner_knight"}
+    ]
+  },
+  "battania": {
+    "tier1": [
+      {"rosterId": "npc_wanderer_equipment_template_battania", "sourceTroop": "spc_wanderer_battania_0"},
+      {"rosterId": "battania_sword_t1", "sourceTroop": "battania_volunteer"}
+    ],
+    "tier2": [
+      {"rosterId": "battania_sword_t2", "sourceTroop": "guard_battania"},
+      {"rosterId": "highland_armor", "sourceTroop": "battania_warrior"}
+    ],
+    "tier3": [
+      {"rosterId": "battania_reinforced_leather_cap", "sourceTroop": "guard_battania"},
+      {"rosterId": "battania_chainmail", "sourceTroop": "battania_veteran"}
+    ],
+    "tier4": [
+      {"rosterId": "battania_sword_4_t4", "sourceTroop": "battania_hero"},
+      {"rosterId": "battania_noble_armor", "sourceTroop": "battania_fian"}
+    ],
+    "tier5": [
+      {"rosterId": "battania_noble_sword_t5", "sourceTroop": "battania_elite"},
+      {"rosterId": "battania_lord_armor", "sourceTroop": "battania_noble"}
+    ]
+  },
+  "khuzait": {
+    "tier1": [
+      {"rosterId": "npc_wanderer_equipment_template_khuzait", "sourceTroop": "spc_wanderer_khuzait_0"},
+      {"rosterId": "steppe_sword_t1", "sourceTroop": "khuzait_nomad"}
+    ],
+    "tier2": [
+      {"rosterId": "steppe_sword_t2", "sourceTroop": "guard_khuzait"},
+      {"rosterId": "khuzait_armor", "sourceTroop": "khuzait_horseman"}
+    ],
+    "tier3": [
+      {"rosterId": "steppe_cap", "sourceTroop": "guard_khuzait"},
+      {"rosterId": "khuzait_lamellar", "sourceTroop": "khuzait_lancer"}
+    ],
+    "tier4": [
+      {"rosterId": "khuzait_sword_4_t4", "sourceTroop": "khuzait_khan_guard"},
+      {"rosterId": "khuzait_noble_armor", "sourceTroop": "khuzait_heavy_horse_archer"}
+    ],
+    "tier5": [
+      {"rosterId": "khuzait_noble_sword_t5", "sourceTroop": "khuzait_elite"},
+      {"rosterId": "khuzait_lord_armor", "sourceTroop": "khuzait_noble"}
+    ]
+  }
+}
