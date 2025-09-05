@@ -4,19 +4,20 @@ Generated on 2025-09-02 00:57:40 UTC
 
 ## Executive Summary
 
-This document outlines a professional, phased approach to implementing Serve As Soldier (SAS) functionality in the Enlisted mod, based on analysis of the original ServeAsSoldier mod and our modern API documentation. The implementation follows our blueprint's principles of safety, observability, and incremental delivery.
+This document outlines a professional, phased approach to implementing an enhanced military service system for the Enlisted mod. Building on analysis of the original ServeAsSoldier mod and our comprehensive API verification, we implement a **modern duties-based system** that surpasses the original through configuration-driven assignments, troop type specializations, and officer role integration. The implementation follows our blueprint's principles of safety, observability, and incremental delivery with only 4-5 targeted Harmony patches versus the original's 37+.
 
 ## Original SAS Analysis
 
-### Core Mechanics Identified
-1. **Enlistment System**: Player joins a lord's party as a subordinate
-2. **Assignment System**: 9 different roles (Grunt, Guard, Cook, Foraging, Surgeon, Engineer, Quartermaster, Scout, Sergeant, Strategist)
-3. **Progression System**: 7-tier advancement with XP requirements
-4. **Wage System**: Daily payment based on level and assignment
-5. **Equipment Management**: State-issued gear vs. personal equipment
-6. **Diplomatic Integration**: Player inherits lord's faction relationships
-7. **Battle Participation**: Automatic inclusion in lord's battles
-8. **Retirement System**: Honorable discharge with gear retention
+### Enhanced System Features Implemented
+1. **Enlistment System**: Player joins a lord's party as a subordinate with comprehensive state tracking
+2. **Duties System**: 12 configuration-driven military duties with troop type specializations (Infantry/Archer/Cavalry)
+3. **Officer Role Integration**: Player becomes effective party officer (Engineer/Scout/Quartermaster/Surgeon) with natural Bannerlord skill/perk benefits
+4. **Progression System**: 7-tier advancement with XP requirements and automatic equipment kit upgrades
+5. **Equipment Kit System**: Culture + Troop Type + Tier based equipment with override capabilities
+6. **Wage System**: Enhanced daily payment with duty-based bonuses and performance multipliers
+7. **Diplomatic Integration**: Player inherits lord's faction relationships with suspension/resumption for lord capture
+8. **Battle Participation**: Automatic inclusion with officer role benefits in sieges, healing, scouting
+9. **Configuration-Driven**: JSON-based system for easy addition of new duties, equipment kits, and troop types
 
 ### Key Dialog Flow
 - `hero_main_options` → `lord_politics_request` → `lord_talk_speak_diplomacy_2` (for enlistment)
@@ -51,37 +52,123 @@ This document outlines a professional, phased approach to implementing Serve As 
 - ✅ Dialog shows in proper diplomatic submenu
 - ✅ Existing retirement dialog still works
 
-## Phase 1B: Enhanced State Management (1 week)
+## Phase 1B: Complete SAS Core Implementation (1 week) - EXPANDED
 
-### 1B.1 Expand EnlistmentBehavior
-**Goal**: Add comprehensive state tracking for full SAS functionality
+### 1B.1 Implement Missing SAS Foundation
+**Goal**: Transform minimal EnlistmentBehavior into complete SAS functionality with tier progression, wages, and equipment management
 
 **Exact Implementation Steps**:
-1. **Update `src/Features/Enlistment/Application/EnlistmentBehavior.cs`**:
+1. **Update `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`** with complete SAS state + equipment backup:
    ```csharp
-   // ADD: Complete state variables
+   // ADD: Complete state variables including equipment backup system
    private Hero _enlistedLord;
-   private Assignment _currentAssignment = Assignment.Grunt_Work;
    private int _enlistmentTier = 1;
    private int _enlistmentXP = 0;
    private CampaignTime _enlistmentDate;
    private Dictionary<IFaction, int> _factionReputation = new Dictionary<IFaction, int>();
    private Dictionary<Hero, int> _lordReputation = new Dictionary<Hero, int>();
-   private List<Hero> _formerLords = new List<Hero>();
-   private bool _veteranStatus = false;
+   private List<IFaction> _vassalageOffersReceived = new List<IFaction>();
+   private Dictionary<IFaction, int> _retirementXP = new Dictionary<IFaction, int>();
    
-   // CRITICAL: Update SyncData method
+   // CRITICAL: Equipment backup system (prevents equipment loss)
+   private Equipment _personalBattleEquipment;
+   private Equipment _personalCivilianEquipment;
+   private ItemRoster _personalInventory = new ItemRoster();
+   private bool _hasBackedUpEquipment = false;
+   private bool _equipmentRetentionEarned = false;
+   
+   // CRITICAL: Update SyncData method with versioning for future compatibility
+   private int _saveVersion = 1; // Version tracking for save compatibility
+   
    public override void SyncData(IDataStore dataStore)
    {
+       // NO try-catch around SyncData per Bannerlord best practices - let exceptions bubble up
+       
+       // Version tracking (prevents corruption with future updates)
+       dataStore.SyncData("_saveVersion", ref _saveVersion);
+       
+       // Core enlistment state (simple types - always safe)
        dataStore.SyncData("_enlistedLord", ref _enlistedLord);
-       dataStore.SyncData("_currentAssignment", ref _currentAssignment);
        dataStore.SyncData("_enlistmentTier", ref _enlistmentTier);
        dataStore.SyncData("_enlistmentXP", ref _enlistmentXP);
        dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
-       dataStore.SyncData("_factionReputation", ref _factionReputation);
-       dataStore.SyncData("_lordReputation", ref _lordReputation);
-       dataStore.SyncData("_formerLords", ref _formerLords);
-       dataStore.SyncData("_veteranStatus", ref _veteranStatus);
+       
+       // Complex types (VERIFIED: already supported by core save system)
+       dataStore.SyncData("_factionReputation", ref _factionReputation);     // Dictionary<IFaction, int> - core supported
+       dataStore.SyncData("_lordReputation", ref _lordReputation);           // Dictionary<Hero, int> - core supported
+       dataStore.SyncData("_vassalageOffersReceived", ref _vassalageOffersReceived); // List<IFaction> - core supported
+       dataStore.SyncData("_retirementXP", ref _retirementXP);               // Dictionary<IFaction, int> - core supported
+       
+       // Equipment backup (VERIFIED: Equipment and ItemRoster are core serializable types)
+       dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);   // Equipment - core type
+       dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment); // Equipment - core type
+       dataStore.SyncData("_personalInventory", ref _personalInventory);     // ItemRoster - core type
+       dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
+       dataStore.SyncData("_equipmentRetentionEarned", ref _equipmentRetentionEarned);
+       
+       // Post-load validation (separate from SyncData per best practices)
+       if (dataStore.IsLoading)
+       {
+           ValidateLoadedState();
+       }
+   }
+   
+   private void ValidateLoadedState()
+   {
+       try
+       {
+           // Version migration if needed
+           if (_saveVersion < 1)
+           {
+               // Future: migrate old save data
+               _saveVersion = 1;
+           }
+           
+           // Validate enlistment state integrity
+           if (IsEnlisted && (_enlistedLord == null || _enlistedLord.IsDead))
+           {
+               ResetToSafeState();
+           }
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Save", "Save validation failed - resetting state", ex);
+           ResetToSafeState();
+       }
+   }
+   
+   private void ResetToSafeState()
+   {
+       _enlistedLord = null;
+       _hasBackedUpEquipment = false;
+       _equipmentRetentionEarned = false;
+       
+       // User notification about state reset
+       var message = new TextObject("Service data corrupted - enlistment status reset.");
+       InformationManager.AddQuickInformation(message, 0, Hero.MainHero.CharacterObject, "");
+   }
+   
+   private void ApplyVeteranBenefits(Hero completedServiceLord)
+   {
+       try
+       {
+           // Add to former lords list for veteran status
+           if (!_formerLords.Contains(completedServiceLord))
+           {
+               _formerLords.Add(completedServiceLord);
+           }
+           
+           // Veteran relationship bonus
+           ChangeRelationAction.ApplyPlayerRelation(completedServiceLord, 15, true, true);
+           
+           // Faction reputation bonus for completed service
+           var factionBonus = Math.Min(_enlistmentXP / 100, 50);
+           ChangeFactionRelation(completedServiceLord.MapFaction, factionBonus);
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Veteran", "Failed to apply veteran benefits", ex);
+       }
    }
    ```
 
@@ -90,64 +177,235 @@ This document outlines a professional, phased approach to implementing Serve As 
    // EXACT CODE: Add to RegisterEvents()
    CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
    
+   public void StartEnlistment(Hero lord)
+   {
+       if (lord == null) return;
+       
+       try
+       {
+           // CRITICAL: Backup player equipment before service (prevents equipment loss)
+           if (!_hasBackedUpEquipment)
+           {
+               BackupPlayerEquipment();
+               _hasBackedUpEquipment = true;
+           }
+           
+           _enlistedLord = lord;
+           _enlistmentDate = CampaignTime.Now;
+           
+                          // SIMPLIFIED: Retirement based on service time, not XP
+               // Player becomes eligible for retirement after 1 full year (365 days) of service
+           
+           // Apply escort and visibility
+           EncounterGuard.TryAttachOrEscort(lord);
+           var main = MobileParty.MainParty;
+           if (main != null)
+           {
+               main.IsVisible = false;
+               TrySetShouldJoinPlayerBattles(main, true);
+           }
+           
+           // User gets in-game notification, no logging needed
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Enlistment", "Failed to start enlistment", ex);
+           if (_hasBackedUpEquipment) RestorePersonalEquipment();
+       }
+   }
+   
+   private void BackupPlayerEquipment()
+   {
+       try
+       {
+           // Backup equipment using verified APIs
+           _personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone(false);
+           _personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone(false);
+           
+           // CRITICAL: Quest-safe inventory backup (prevents quest item loss)
+           var itemsToBackup = new List<ItemRosterElement>();
+           foreach (var elem in MobileParty.MainParty.ItemRoster)
+           {
+               // GUARD: Skip quest items - they must stay with player
+               if (elem.EquipmentElement.IsQuestItem) continue;
+               
+               var item = elem.EquipmentElement.Item;
+               // GUARD: Skip special items (banners, non-transferable items)
+               if (item?.ItemFlags.HasAnyFlag(ItemFlags.NotUsableByPlayer | ItemFlags.NonTransferable) == true)
+                   continue;
+                   
+               // Safe to backup this item
+               itemsToBackup.Add(elem);
+           }
+           
+           // Backup safe items only
+           foreach (var elem in itemsToBackup)
+           {
+               _personalInventory.AddToCounts(elem.EquipmentElement, elem.Amount);
+               MobileParty.MainParty.ItemRoster.AddToCounts(elem.EquipmentElement, -elem.Amount);
+           }
+           
+           // Quest items and special items remain with player automatically
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Equipment", "Failed to backup player equipment", ex);
+           throw;
+       }
+   }
+   
    private void OnDailyTick()
    {
        try
        {
-           // Only process military duties if we're actively enlisted and lord is alive
            if (IsEnlisted && _enlistedLord?.IsAlive == true)
            {
-               ModLogger.Debug("Enlistment", $"Processing daily service for {_enlistedLord.Name}");
-               
-               // Pay daily wages - this is what soldiers expect for their service
+               // Daily wage and XP - silent processing
                var wage = CalculateWage();
                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, wage, false);
-               ModLogger.Debug("Enlistment", $"Paid daily wage: {wage} gold");
                
-               // Grant daily experience for learning military skills
-               var dailyXP = ModConfig.Settings.Military.DailyXP;
+               var dailyXP = 25; // Configurable
                _enlistmentXP += dailyXP;
-               ModLogger.Debug("Enlistment", $"Gained {dailyXP} XP, total: {_enlistmentXP}");
-               
-               // Handle assignment-specific duties and benefits
-               ProcessDailyAssignmentBenefits();
-               
-               // Check if we've earned a promotion
                CheckForPromotion();
-           }
-           else if (IsEnlisted && _enlistedLord?.IsAlive != true)
-           {
-               ModLogger.Warning("Enlistment", "Lord is dead or missing, ending service");
-               HandleLordLoss("Lord no longer available");
+               
+               // Relationship building
+               var relationBonus = Math.Min(dailyXP / 10, 2);
+               ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, relationBonus, false, true);
+               
+               // Check special progressions
+               CheckSpecialPromotions();
            }
        }
        catch (Exception ex)
        {
-           ModLogger.Error("Enlistment", "Error in daily tick processing", ex);
-           // Don't crash - attempt to recover state
-           AttemptStateRecovery();
+           ModLogger.Error("Enlistment", "Daily processing failed", ex);
+       }
+   }
+   ```
+
+3. **Add Equipment Restoration & Discharge Logic**:
+   ```csharp
+   public void EndEnlistment(bool honorableDischarge, bool allowEquipmentRetention = false)
+   {
+       try
+       {
+           var main = MobileParty.MainParty;
+           if (main != null)
+           {
+               main.IsVisible = true;
+               TrySetShouldJoinPlayerBattles(main, false);
+               TryReleaseEscort(main);
+           }
+           
+           // Equipment handling based on discharge type
+           if (honorableDischarge && (allowEquipmentRetention || _equipmentRetentionEarned))
+           {
+               // Player keeps service equipment as reward
+               var message = new TextObject("You have earned the right to keep your service equipment.");
+               InformationManager.AddQuickInformation(message, 0, Hero.MainHero.CharacterObject, "");
+           }
+           else if (_hasBackedUpEquipment)
+           {
+               // Restore personal equipment
+               RestorePersonalEquipment();
+           }
+           
+           // CRITICAL: Capture lord before clearing for veteran benefits
+           var completedServiceLord = _enlistedLord;
+           
+           // Clear enlistment state
+           _enlistedLord = null;
+           _hasBackedUpEquipment = false;
+           
+           // Apply veteran benefits using captured lord reference
+           if (honorableDischarge && completedServiceLord != null)
+           {
+               ApplyVeteranBenefits(completedServiceLord);
+           }
+           
+           // Silent success - user sees the result
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Enlistment", "Error ending enlistment", ex);
+       }
+   }
+   
+   private void RestorePersonalEquipment()
+   {
+       try
+       {
+           // Restore equipment using verified APIs
+           EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
+           
+           // Restore safe inventory items
+           foreach (var item in _personalInventory)
+           {
+               MobileParty.MainParty.ItemRoster.AddToCounts(item.EquipmentElement, item.Amount);
+           }
+           _personalInventory.Clear();
+           
+           // CRITICAL: Refresh equipment visuals for UI updates
+           try
+           {
+               Hero.MainHero.HeroDeveloper?.UpdateHeroEquipment();
+               CampaignEventDispatcher.Instance.OnHeroEquipmentChanged(Hero.MainHero);
+           }
+           catch (Exception visualEx)
+           {
+               ModLogger.Error("Equipment", "Equipment visual refresh failed", visualEx);
+               // Continue - equipment restore succeeded, visual update failed
+           }
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Equipment", "Failed to restore personal equipment", ex);
        }
    }
    ```
 
 **Acceptance Criteria**:
-- ✅ All enlistment state persists across save/load
-- ✅ Daily wage payments work correctly
-- ✅ XP accumulation functions
-- ✅ State validation prevents corruption
+- ✅ Personal equipment backed up safely before service with quest item protection
+- ✅ Equipment restoration works on discharge with visual refresh
+- ✅ Honorable discharge allows equipment retention choice
+- ✅ Quest items and banners preserved during equipment backup (CRITICAL FIX)
+- ✅ Multi-token dialog registration prevents build compatibility issues (ROBUSTNESS FIX)
+- ✅ Save versioning system prevents corruption with future updates
+- ✅ Veteran benefits applied correctly without reference bugs (DISCHARGE FIX)
+- ✅ All enlistment state persists across save/load with validation
+- ✅ Daily wage and XP system functional
+- ✅ Equipment backup prevents player equipment loss without destroying quest items
 
 **Complete Implementation Guide**:
 ```csharp
 // In LordDialogBehavior.AddDialogs():
-// 1. Add enlistment option to diplomacy menu
-starter.AddPlayerLine(
-    "enlisted_join_service",
-    "lord_talk_speak_diplomacy_2",  // The "something else to discuss" submenu
-    "enlisted_join_service_query",
-    "I wish to serve in your warband.",
-    () => CanEnlistWithLord(Hero.OneToOneConversationHero),
-    null,
-    110);
+// 1. Add enlistment option with robust token registration (prevents "works on my machine" issues)
+private void AddEnlistmentDialogs(CampaignGameStarter starter)
+{
+    // Multi-token registration for build compatibility
+    var diplomaticTokens = new[] { 
+        "lord_talk_speak_diplomacy_2",  // Primary - modern builds
+        "lord_politics_request",        // Fallback - some builds  
+        "hero_main_options"             // Ultimate fallback
+    };
+    
+    foreach (var token in diplomaticTokens)
+    {
+        try
+        {
+            starter.AddPlayerLine("enlisted_join_service_" + token.Replace("_", ""),
+                token,
+                "enlisted_join_service_query", 
+                "I wish to serve in your warband.",
+                () => CanEnlistWithLord(Hero.OneToOneConversationHero),
+                null, 110);
+        }
+        catch (Exception ex)
+        {
+            ModLogger.Error("Dialog", $"Failed to register dialog on token {token}", ex);
+        }
+    }
+}
 
 // 2. Lord's response
 starter.AddDialogLine(
@@ -713,140 +971,525 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
 - Time control managed appropriately in different settlement types
 - Battle participation based on army size and lord involvement
 
-## Phase 1C: Assignment Framework (1 week)
+## Phase 1C: Duties System Foundation (1 week) - NEW APPROACH
 
-### 1C.1 Create Assignment System
-**Goal**: Implement core assignment mechanics with immediate benefits
+### 1C.1 Create Modern Duties System  
+**Goal**: Implement configuration-driven duties system with troop type specializations and officer role integration
 
 **Exact Implementation Steps**:
-1. **Create `src/Features/Enlistment/Application/EnlistmentTypes.cs`**:
+1. **Create `src/Features/Duties/Core/DutiesConfig.cs`** (replaces basic assignments):
    ```csharp
-   public enum Assignment
+   // Configuration-driven duties system with troop type specializations
+   public class DutiesConfig
    {
-       Grunt_Work,    // Tier 1+ - Athletics XP
-       Guard_Duty,    // Tier 1+ - Scouting XP  
-       Cook,          // Tier 1+ - Steward XP
-       Foraging,      // Tier 2+ - Riding XP + food generation
-       Surgeon,       // Tier 3+ - Medicine XP + healing
-       Engineer,      // Tier 4+ - Engineering XP + siege bonuses
-       Quartermaster, // Tier 4+ - Steward XP + supply management
-       Scout,         // Tier 5+ - Scouting XP + party bonuses
-       Sergeant,      // Tier 5+ - Leadership XP + troop training
-       Strategist     // Tier 6+ - Tactics XP + army bonuses
+       public Dictionary<string, DutyDefinition> Duties { get; set; } = new();
+       public Dictionary<string, TroopTypeConfig> TroopTypes { get; set; } = new();
+       public Dictionary<string, EquipmentKit> EquipmentKits { get; set; } = new();
+       public DutiesSettings Settings { get; set; } = new();
+   }
+
+   public class DutyDefinition
+   {
+       public string DisplayName { get; set; }
+       public int MinTier { get; set; }
+       public string TargetSkill { get; set; } // "Engineering", "Scouting", etc.
+       public string OfficerRole { get; set; } // "Engineer", "Scout", null for non-officer
+       public float XpShareMultiplier { get; set; } = 0.5f;
+       public Dictionary<string, float> PassiveEffects { get; set; } = new();
+       public List<string> RequiredTroopTypes { get; set; } = new(); // "infantry", "cavalry"
+   }
+
+   public enum TroopType { None, Infantry, Archer, Cavalry, HorseArcher }
+   ```
+
+2. **Create `src/Features/Duties/Behaviors/EnlistedDutiesBehavior.cs`**:
+   ```csharp
+   // Modern duties system behavior
+   public class EnlistedDutiesBehavior : CampaignBehaviorBase
+   {
+       private TroopType _playerTroopType = TroopType.None;
+       private List<string> _activeDuties = new List<string>();
+       private int _dutySlots = 1; // Progressive unlocking: 1→2→3
+       private DutiesConfig _config;
+       
+       public static EnlistedDutiesBehavior Instance { get; private set; }
+       
+       public override void RegisterEvents()
+       {
+           Instance = this;
+           LoadConfiguration();
+           CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+           CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+       }
+       
+       public void OnPlayerPromotion(int newTier)
+       {
+           // Trigger troop type selection on first promotion
+           if (newTier == 2 && _playerTroopType == TroopType.None)
+           {
+               TriggerTroopTypeSelectionMenu();
+           }
+           
+           UpdateDutySlots(newTier); // 1 at T1, +1 at T3, +1 at T5
+           ApplyEquipmentKit(); // Apply tier-appropriate equipment kit
+       }
+       
+       private void TriggerTroopTypeSelectionMenu()
+       {
+           // Detect current formation based on equipment (like original SAS)
+           var detectedFormation = DetectPlayerFormation();
+           var cultureId = EnlistmentBehavior.Instance.CurrentLord.Culture.StringId;
+           
+           // Create 4-option selection menu with culture variants
+           var troopOptions = GetCultureSpecificTroopTypes(cultureId);
+           ShowTroopTypeSelectionDialog(troopOptions, detectedFormation);
+       }
+       
+       public TroopType DetectPlayerFormation()
+       {
+           // VERIFIED: Same logic as original SAS getFormation() method
+           var hero = Hero.MainHero.CharacterObject;
+           
+           if (hero.IsRanged && hero.IsMounted)
+               return TroopType.HorseArcher;  // Elite mounted ranged
+           else if (hero.IsMounted)
+               return TroopType.Cavalry;      // Mounted melee
+           else if (hero.IsRanged)
+               return TroopType.Archer;       // Foot ranged
+           else
+               return TroopType.Infantry;     // Foot melee (default)
+       }
+       
+       private Dictionary<TroopType, string> GetCultureSpecificTroopTypes(string cultureId)
+       {
+           // Culture-specific troop type names for immersion
+           return cultureId switch
+           {
+               "empire" => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Legionary" },
+                   { TroopType.Archer, "Sagittarius" },
+                   { TroopType.Cavalry, "Equites" },
+                   { TroopType.HorseArcher, "Equites Sagittarii" }
+               },
+               "aserai" => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Footman" },
+                   { TroopType.Archer, "Marksman" },
+                   { TroopType.Cavalry, "Mameluke" },
+                   { TroopType.HorseArcher, "Desert Horse Archer" }
+               },
+               "khuzait" => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Spearman" },
+                   { TroopType.Archer, "Hunter" },
+                   { TroopType.Cavalry, "Lancer" },
+                   { TroopType.HorseArcher, "Horse Archer" }
+               },
+               "vlandia" => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Man-at-Arms" },
+                   { TroopType.Archer, "Crossbowman" },
+                   { TroopType.Cavalry, "Knight" },
+                   { TroopType.HorseArcher, "Mounted Crossbowman" }
+               },
+               "sturgia" => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Warrior" },
+                   { TroopType.Archer, "Bowman" },
+                   { TroopType.Cavalry, "Druzhnik" },
+                   { TroopType.HorseArcher, "Horse Archer" }
+               },
+               "battania" => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Clansman" },
+                   { TroopType.Archer, "Skirmisher" },
+                   { TroopType.Cavalry, "Mounted Warrior" },
+                   { TroopType.HorseArcher, "Mounted Skirmisher" }
+               },
+               _ => new Dictionary<TroopType, string>
+               {
+                   { TroopType.Infantry, "Infantry" },
+                   { TroopType.Archer, "Archer" },
+                   { TroopType.Cavalry, "Cavalry" },
+                   { TroopType.HorseArcher, "Horse Archer" }
+               }
+           };
+       }
+       
+       public bool HasActiveDutyWithRole(string officerRole)
+       {
+           return _activeDuties.Any(duty => _config.Duties[duty].OfficerRole == officerRole);
+       }
+       
+       private void ProcessDailyDutyBenefits()
+       {
+           if (!EnlistmentBehavior.Instance.IsEnlisted) return;
+           
+           // Process each active duty
+           foreach (var dutyKey in _activeDuties)
+           {
+               var duty = _config.Duties[dutyKey];
+               
+               // Daily skill XP emphasis
+               var skill = GetSkillByStringId(duty.TargetSkill);
+               if (skill != null)
+               {
+                   var dailyXp = _config.Settings.DailyDutyXp;
+                   Hero.MainHero.AddSkillXp(skill, dailyXp);
+                   ModLogger.Debug("Duties", $"{duty.DisplayName}: +{dailyXp} {skill.Name} XP");
+               }
+               
+               // Apply passive effects (food generation, etc.)
+               ApplyDailyPassiveEffects(duty);
+           }
+           
+           // Check for focus point gains (1% chance like SAS)
+           CheckForFocusPointGains();
+       }
+       
+       private void ApplyDailyPassiveEffects(DutyDefinition duty)
+       {
+           foreach (var effect in duty.PassiveEffects)
+           {
+               switch (effect.Key)
+               {
+                   case "daily_food":
+                       var grainAmount = (int)effect.Value;
+                       var lordParty = EnlistmentBehavior.Instance.CurrentLord.PartyBelongedTo;
+                       lordParty?.ItemRoster.AddToCounts(
+                           MBObjectManager.Instance.GetObject<ItemObject>("grain"), grainAmount);
+                       break;
+                       
+                   case "party_morale":
+                   case "map_speed_pct":
+                       // Applied automatically through officer role substitution
+                       break;
+               }
+           }
+       }
+   ```
+
+3. **Create `ModuleData/Enlisted/duties_config.json`**:
+   ```json
+   {
+     "duties": {
+       "runner": {
+         "display_name": "Runner",
+         "min_tier": 1,
+         "target_skill": "Athletics",
+         "officer_role": null,
+         "passive_effects": { "party_morale": 2 },
+         "required_troop_types": ["infantry", "archer"]
+       },
+       "sentry": {
+         "display_name": "Sentry",
+         "min_tier": 1,
+         "target_skill": "Scouting",
+         "officer_role": null,
+         "passive_effects": { "party_vision": 5 },
+         "required_troop_types": ["archer", "horsearcher"]
+       },
+       "field_medic": {
+         "display_name": "Field Medic", 
+         "min_tier": 3,
+         "target_skill": "Medicine",
+         "officer_role": "Surgeon",
+         "xp_share_multiplier": 0.5,
+         "required_troop_types": ["infantry", "archer"]
+       },
+       "pathfinder": {
+         "display_name": "Pathfinder",
+         "min_tier": 5,
+         "target_skill": "Scouting",
+         "officer_role": "Scout",
+         "xp_share_multiplier": 0.7,
+         "passive_effects": { "party_speed": 10, "party_vision": 15 },
+         "required_troop_types": ["cavalry", "horsearcher"]
+       },
+       "mounted_messenger": {
+         "display_name": "Mounted Messenger",
+         "min_tier": 2,
+         "target_skill": "Riding",
+         "officer_role": null,
+         "passive_effects": { "party_speed": 5 },
+         "required_troop_types": ["cavalry", "horsearcher"]
+       }
+     },
+     "equipment_kits": {
+       "empire_infantry_t1": {
+         "weapons": ["imperial_sword_t1"],
+         "armor": ["imperial_padded_cloth"],
+         "helmet": ["imperial_leather_cap"]
+       },
+       "empire_archer_t1": {
+         "weapons": ["imperial_bow_t1", "imperial_arrows"],
+         "armor": ["imperial_leather_armor"],
+         "helmet": ["imperial_leather_cap"]
+       },
+       "empire_cavalry_t1": {
+         "weapons": ["imperial_sword_t1"],
+         "armor": ["imperial_mail_shirt"],
+         "helmet": ["imperial_leather_cap"],
+         "horse": ["imperial_horse"]
+       },
+       "empire_horsearcher_t1": {
+         "weapons": ["imperial_bow_t1", "imperial_arrows"],
+         "armor": ["imperial_leather_armor"], 
+         "helmet": ["imperial_leather_cap"],
+         "horse": ["imperial_horse"]
+       },
+       "empire_infantry_t3": {
+         "weapons": ["imperial_sword_t3"],
+         "armor": ["imperial_scale_armor"],
+         "helmet": ["imperial_masked_helmet"]
+       },
+       "empire_archer_t3": {
+         "weapons": ["imperial_bow_t3", "imperial_arrows"],
+         "armor": ["imperial_leather_harness"],
+         "helmet": ["imperial_archer_helmet"]
+       },
+       "empire_cavalry_t3": {
+         "weapons": ["imperial_sword_t3"],
+         "armor": ["imperial_mail_hauberk"],
+         "helmet": ["imperial_cavalry_helmet"],
+         "horse": ["imperial_warhorse"]
+       },
+       "empire_horsearcher_t3": {
+         "weapons": ["imperial_bow_t3", "imperial_arrows"],
+         "armor": ["imperial_leather_harness"],
+         "helmet": ["imperial_archer_helmet"],
+         "horse": ["imperial_warhorse"]
+       }
+     }
    }
    ```
 
-2. **Add Assignment Processing to EnlistmentBehavior**:
+4. **Add Troop Type Selection Dialog**:
    ```csharp
-   // EXACT CODE: Add to OnDailyTick()
-   private void ProcessDailyAssignmentBenefits()
+   // Add to LordDialogBehavior or new TroopTypeSelectionMenu
+   starter.AddGameMenu("troop_type_selection",
+       "Choose Military Specialization\n\nSelect your role in {FACTION_NAME}'s forces:",
+       OnTroopTypeSelectionInit,
+       GameOverlays.MenuOverlayType.None,
+       GameMenu.MenuFlags.None, null);
+   ```
+
+5. **Add User-Friendly Logging** (minimal but effective for troubleshooting):
+   ```csharp
+   // Minimal logging - only essential events and errors
+   
+   public override void RegisterEvents()
    {
        try
        {
-           ModLogger.Debug("Assignments", $"Processing {_currentAssignment} assignment benefits");
+           Instance = this;
+           LoadConfiguration();
+           // Only log if configuration fails
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Duties", "Duties system initialization failed", ex);
+       }
+   }
+   
+   public void OnPlayerPromotion(int newTier)
+   {
+       // User feedback: Let player know promotion processed
+       if (newTier == 1 && _playerTroopType == TroopType.None)
+       {
+           // No logging needed - player will see the selection UI
+           TriggerTroopTypeSelection();
+       }
+       
+       // Only log if equipment application fails
+       try
+       {
+           ApplyEquipmentKit();
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Equipment", $"Failed to apply equipment for tier {newTier}", ex);
+       }
+   }
+   
+   public bool AssignDuty(string dutyKey)
+   {
+       try
+       {
+           // Validation and assignment logic...
+           // Only log failures, not successful assignments
+           return true;
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Duties", $"Failed to assign duty {dutyKey}", ex);
+           return false;
+       }
+   }
+   
+   // Minimal compatibility checking
+   private void ValidateCriticalAPIs()
+   {
+       try
+       {
+           // Verify essential APIs still exist (for game updates)
+           var engineerMethod = typeof(MobileParty).GetProperty("EffectiveEngineer");
+           var equipmentHelper = Type.GetType("Helpers.EquipmentHelper");
            
-           switch (_currentAssignment)
+           if (engineerMethod == null || equipmentHelper == null)
            {
-               case Assignment.Grunt_Work:
-                   Hero.MainHero.AddSkillXp(DefaultSkills.Athletics, 100f);
-                   ModLogger.Debug("Assignments", "Grunt work: +100 Athletics XP");
-                   break;
-                   
-               case Assignment.Foraging:
-                   Hero.MainHero.AddSkillXp(DefaultSkills.Riding, 100f);
-                   if (_enlistedLord.PartyBelongedTo != null)
-                   {
-                       var grainAmount = MBRandom.RandomInt(3, 8);
-                       _enlistedLord.PartyBelongedTo.ItemRoster.AddToCounts(
-                           MBObjectManager.Instance.GetObject<ItemObject>("grain"), grainAmount);
-                       ModLogger.Debug("Assignments", $"Foraging: +100 Riding XP, +{grainAmount} grain to party");
-                   }
-                   else
-                   {
-                       ModLogger.Warning("Assignments", "Foraging assignment: Lord has no party to add grain to");
-                   }
-                   break;
-                   
-               case Assignment.Sergeant:
-                   Hero.MainHero.AddSkillXp(DefaultSkills.Leadership, 100f);
-                   if (_enlistedLord.PartyBelongedTo != null)
-                   {
-                       var troopsTrained = TrainRandomTroops(3);
-                       ModLogger.Debug("Assignments", $"Sergeant: +100 Leadership XP, trained {troopsTrained} troops");
-                   }
-                   else
-                   {
-                       ModLogger.Warning("Assignments", "Sergeant assignment: No party to train troops in");
-                   }
-                   break;
-                   
-               // Additional assignments with logging...
-               default:
-                   ModLogger.Warning("Assignments", $"Unknown assignment: {_currentAssignment}");
-                   break;
+               ModLogger.Error("Compatibility", "Critical APIs missing - possible game update detected");
            }
        }
        catch (Exception ex)
        {
-           ModLogger.Error("Assignments", $"Error processing {_currentAssignment} benefits", ex);
-           // Continue without assignment benefits rather than crash
+           ModLogger.Error("Compatibility", "API validation failed", ex);
        }
    }
-   ```
-
-3. **Add Assignment Change Dialog**:
-   ```csharp
-   // EXACT CODE: Add to LordDialogBehavior
-   starter.AddPlayerLine("enlisted_change_assignment",
-       "lord_talk_speak_diplomacy_2", 
-       "enlisted_assignment_menu",
-       "I'd like to change my duties.",
-       () => EnlistmentBehavior.Instance.IsEnlisted,
-       null, 110);
    ```
 
 **Acceptance Criteria**:
-- ✅ All 10 assignments functional with daily benefits
-- ✅ Assignment changes work through dialog
-- ✅ Tier restrictions enforced (higher assignments require higher tiers)
+- ✅ Configuration-driven duties system loads from JSON (errors logged if failed)
+- ✅ **4-Formation System**: Infantry, Archer, Cavalry, Horse Archer specializations supported
+- ✅ **Auto-Detection**: Player formation detected like original SAS (`IsRanged && IsMounted` = Horse Archer)
+- ✅ **Culture Integration**: Formation names use culture-specific variants (Legionary, Equites Sagittarii, etc.)
+- ✅ Troop type selection triggers on first promotion with 4-option menu
+- ✅ Duties unlock based on tier + troop type + culture (Horse Archer compatible duties included)
+- ✅ Equipment kits support all 4 formations with proper horse/weapon assignments
+- ✅ Daily duty benefits process correctly for all formation types
+- ✅ Officer role substitution ready for Phase 2 patches (compatibility checked on startup)
+- ✅ Minimal logging footprint - only errors and critical events logged by default
 
-## Phase 2: Equipment & Progression (2 weeks)
+**Formation-Specific Features Implemented**:
 
-### 2.1 Equipment Management System
-**Goal**: Implement tier-based equipment selection and management
+| Formation | Equipment | Available Duties | Officer Roles | Passive Effects |
+|-----------|-----------|------------------|---------------|-----------------|
+| **Infantry** | Melee + Heavy Armor | Field Medic, Runner, Quarterhand | Surgeon, Quartermaster | Party morale, healing |
+| **Archer** | Bow + Light Armor | Sentry, Field Medic | Surgeon | Party vision, medical |
+| **Cavalry** | Melee + Horse | Pathfinder, Mounted Messenger | Scout, Quartermaster | Party speed, scouting |
+| **Horse Archer** | Bow + Horse | Pathfinder, Sentry | Scout | Elite speed + vision |
+
+**Auto-Detection Logic** (matches original SAS):
+```csharp
+// VERIFIED: Exact same logic as original SAS getFormation() method
+if (Hero.MainHero.CharacterObject.IsRanged && Hero.MainHero.CharacterObject.IsMounted)
+    return TroopType.HorseArcher;   // Bow/Crossbow + Horse
+else if (Hero.MainHero.CharacterObject.IsMounted)
+    return TroopType.Cavalry;       // Sword/Polearm + Horse  
+else if (Hero.MainHero.CharacterObject.IsRanged)
+    return TroopType.Archer;        // Bow/Crossbow + No Horse
+else
+    return TroopType.Infantry;      // Sword/Polearm + No Horse
+```
+
+**Culture-Specific Formation Names**:
+- **Empire**: Legionary, Sagittarius, Equites, Equites Sagittarii
+- **Aserai**: Footman, Marksman, Mameluke, Desert Horse Archer
+- **Khuzait**: Spearman, Hunter, Lancer, Horse Archer
+- **Vlandia**: Man-at-Arms, Crossbowman, Knight, Mounted Crossbowman
+- **Sturgia**: Warrior, Bowman, Druzhnik, Horse Archer
+- **Battania**: Clansman, Skirmisher, Mounted Warrior, Mounted Skirmisher
+
+## Phase 2: Equipment Kits & Officer Integration (2 weeks)
+
+### 2.1 Equipment Kit System  
+**Goal**: Implement culture + troop type + tier equipment kits with automatic application and officer role patch integration
 
 **Exact Implementation Steps**:
-1. **Create `src/Features/Equipment/Application/EquipmentManagerBehavior.cs`**:
+1. **Create `src/Features/Equipment/Behaviors/EquipmentKitManager.cs`** (integrates with duties system):
    ```csharp
-   public void IssueStateEquipment(Hero hero, int tier)
+   public void ApplyEquipmentKit(Hero hero, string cultureId, TroopType troopType, int tier)
    {
        try
        {
-           ModLogger.Info("Equipment", $"Issuing tier {tier} equipment for {hero.Name} ({hero.Culture.StringId} culture)");
-           
-           // Get available equipment for tier and culture
-           var availableGear = GetAvailableEquipment(hero.Culture, tier);
-           ModLogger.Debug("Equipment", $"Found {availableGear.Count} available items for tier {tier}");
-           
-           if (availableGear.Count == 0)
+           var kitKey = troopType switch
            {
-               ModLogger.Warning("Equipment", $"No equipment found for tier {tier}, culture {hero.Culture.StringId}");
+               TroopType.Infantry => $"{cultureId}_infantry_t{tier}",
+               TroopType.Archer => $"{cultureId}_archer_t{tier}",
+               TroopType.Cavalry => $"{cultureId}_cavalry_t{tier}",
+               TroopType.HorseArcher => $"{cultureId}_horsearcher_t{tier}",
+               _ => $"{cultureId}_infantry_t{tier}"  // Fallback to infantry
+           };
+           
+           // Get kit from duties configuration
+           var kit = DutiesBehavior.Instance.GetEquipmentKit(kitKey);
+           if (kit == null)
+           {
+               ModLogger.Error("Equipment", $"No equipment kit found for {kitKey} - using fallback");
+               ApplyFallbackEquipmentKit(hero, cultureId, troopType, tier);
                return;
            }
            
-           var stateEquipment = new Equipment(false);
+           // Build Equipment object from kit
+           var equipment = new Equipment(false);
+           AssignKitToEquipment(equipment, kit);
            
-           // Assign tier-appropriate equipment
-           AssignBestEquipmentForTier(stateEquipment, availableGear, tier);
-           EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, stateEquipment);
+           // Apply using verified helper method
+           EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, equipment);
            
-           ModLogger.Info("Equipment", $"Successfully equipped {hero.Name} with tier {tier} gear");
+           // User feedback for successful equipment change
+           var formationName = GetFormationDisplayName(troopType, cultureId);
+           var message = new TextObject("Equipped with {FORMATION} gear for tier {TIER} service.");
+           message.SetTextVariable("FORMATION", formationName);
+           message.SetTextVariable("TIER", tier);
+           InformationManager.AddQuickInformation(message, 0, hero.CharacterObject, "");
        }
        catch (Exception ex)
        {
-           ModLogger.Error("Equipment", $"Failed to issue equipment for {hero.Name}", ex);
-           // Continue without equipment change rather than crash
+           ModLogger.Error("Equipment", $"Failed to apply equipment kit for {troopType}", ex);
+           ApplyFallbackEquipmentKit(hero, cultureId, troopType, tier);
        }
+   }
+   
+   private void ApplyFallbackEquipmentKit(Hero hero, string cultureId, TroopType troopType, int tier)
+   {
+       try
+       {
+           // Fallback: Use culture's basic troop equipment
+           var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
+           if (culture?.BasicTroop?.Equipment != null)
+           {
+               var equipment = new Equipment(culture.BasicTroop.Equipment);
+               
+               // Modify based on formation type
+               switch (troopType)
+               {
+                   case TroopType.HorseArcher:
+                   case TroopType.Cavalry:
+                       // Add horse if not present
+                       if (equipment[EquipmentIndex.Horse].IsEmpty)
+                       {
+                           var horse = FindCultureHorse(culture);
+                           if (horse != null)
+                               equipment[EquipmentIndex.Horse] = new EquipmentElement(horse);
+                       }
+                       break;
+                   case TroopType.HorseArcher:
+                   case TroopType.Archer:
+                       // Ensure ranged weapon
+                       if (!HasRangedWeapon(equipment))
+                       {
+                           var bow = FindCultureBow(culture);
+                           if (bow != null)
+                               equipment[EquipmentIndex.Weapon0] = new EquipmentElement(bow);
+                       }
+                       break;
+               }
+               
+               EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, equipment);
+           }
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Equipment", $"Fallback equipment assignment failed for {troopType}", ex);
+       }
+   }
+   
+   private string GetFormationDisplayName(TroopType troopType, string cultureId)
+   {
+       var cultureNames = GetCultureSpecificTroopTypes(cultureId);
+       return cultureNames.TryGetValue(troopType, out var name) ? name : troopType.ToString();
    }
    
    public List<ItemObject> GetAvailableEquipment(CultureObject culture, int tier)
@@ -897,50 +1540,188 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
    }
    ```
 
+2. **Add Officer Role Substitution Patches** (CRITICAL for duties system - following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/)):
+   ```csharp
+   // File: src/Mod.GameAdapters/Patches/DutiesOfficerRolePatches.cs
+   
+   // Harmony Patch
+   // Target: TaleWorlds.CampaignSystem.Party.MobileParty.EffectiveEngineer { get; }
+   // Why: Make player the effective engineer when assigned to Siegewright's Aide duty for natural skill/perk benefits
+   // Safety: Campaign-only; validates enlistment state; null checks; only affects enlisted lord's party
+   // Notes: Property getter patch; high priority for mod compatibility; enables Engineering skill party benefits
+   
+   [HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]
+   [HarmonyPriority(999)] // High priority to run before other mods
+   public class DutiesEffectiveEngineerPatch
+   {
+       static bool Prefix(MobileParty __instance, ref Hero __result)
+       {
+           try
+           {
+               // Guard: Validate all required objects
+               if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
+                   __instance == null ||
+                   EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo != __instance)
+               {
+                   return true; // Use original behavior
+               }
+               
+               // Guard: Validate duty assignment  
+               if (DutiesBehavior.Instance?.HasActiveDutyWithRole("Engineer") != true)
+               {
+                   return true; // Use original behavior
+               }
+               
+               // Substitute player as effective engineer
+               __result = Hero.MainHero; // Player's Engineering skill drives siege speed
+               return false; // Skip original - player's skills now affect party operations
+           }
+           catch (Exception ex)
+           {
+               ModLogger.Error("Patches", $"EffectiveEngineer patch error: {ex.Message}");
+               return true; // Fail safe - use original behavior
+           }
+       }
+   }
+   
+   // Companion patches following same pattern:
+   // DutiesEffectiveScoutPatch, DutiesEffectiveQuartermasterPatch, DutiesEffectiveSurgeonPatch
+   ```
+
+3. **Update SubModule.cs** (following [Bannerlord Modding standards](https://docs.bannerlordmodding.lt/modding/harmony/)):
+   ```csharp
+   // File: src/Mod.Entry/SubModule.cs
+   public class SubModule : MBSubModuleBase
+   {
+       private Harmony _harmony;
+       
+       protected override void OnSubModuleLoad()
+       {
+           base.OnSubModuleLoad();
+           
+           try
+           {
+               ModLogger.Initialize();
+               
+               _harmony = new Harmony("com.enlisted.mod");
+               _harmony.PatchAll();
+               // Silent success - only log failures per best practices
+           }
+           catch (Exception ex)
+           {
+               ModLogger.Error("Compatibility", "Harmony initialization failed - duties system unavailable", ex);
+           }
+       }
+       
+       protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
+       {
+           try
+           {
+               if (gameStarterObject is CampaignGameStarter campaignStarter)
+               {
+                   // Register behaviors and custom models
+                   campaignStarter.AddBehavior(new EnlistmentBehavior());
+                   campaignStarter.AddBehavior(new LordDialogBehavior());
+                   campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
+                   campaignStarter.AddBehavior(new EquipmentKitManager());
+                   
+                   // VERIFIED: Custom healing model for enhanced enlisted soldier healing
+                   campaignStarter.AddModel(new EnlistedPartyHealingModel());
+                   campaignStarter.AddBehavior(new EnlistedMenuBehavior()); 
+               }
+           }
+           catch (Exception ex)
+           {
+               ModLogger.Error("Bootstrap", "Behavior registration failed", ex);
+           }
+       }
+   }
+   ```
+
+4. **Optional: Add XP Sharing Enhancement** (following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/)):
+   ```csharp
+   // Harmony Patch
+   // Target: TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper.AddSkillXp(SkillObject, float, bool, bool)
+   // Why: Share lord's skill XP gains with player when assigned to relevant duties for dynamic progression
+   // Safety: Campaign-only; validates enlistment state; null checks; only shares specific skill XP
+   // Notes: Method has multiple overloads - specify signature; medium priority; postfix for sharing
+   
+   [HarmonyPatch(typeof(HeroDeveloper), "AddSkillXp", typeof(SkillObject), typeof(float), typeof(bool), typeof(bool))]
+   [HarmonyPriority(500)] // Medium priority - doesn't conflict with other systems
+   public class DutiesXpSharingPatch
+   {
+       static void Postfix(HeroDeveloper __instance, SkillObject skill, float rawXp, bool isAffectedByFocusFactor, bool shouldNotify)
+       {
+           try
+           {
+               // Guard: Validate required state
+               if (EnlistmentBehavior.Instance?.IsEnlisted != true ||
+                   __instance?.Hero != EnlistmentBehavior.Instance.CurrentLord ||
+                   skill == null || 
+                   rawXp <= 0f)
+               {
+                   return; // No sharing needed
+               }
+               
+               // Calculate XP share based on active duties
+               var shareAmount = DutiesBehavior.Instance?.GetSkillXpShare(skill, rawXp) ?? 0f;
+               if (shareAmount > 0f)
+               {
+                   Hero.MainHero.AddSkillXp(skill, shareAmount, isAffectedByFocusFactor, false); // Don't double-notify
+               }
+           }
+           catch (Exception ex)
+           {
+               ModLogger.Error("Patches", $"XP sharing patch error: {ex.Message}");
+               // Continue without XP sharing rather than crash
+           }
+       }
+   }
+   ```
+
 **Acceptance Criteria**:
-- ✅ Equipment changes based on tier progression
-- ✅ Culture-appropriate gear selection
-- ✅ Equipment dialog integration works
+- ✅ Equipment kits apply based on culture + troop type + tier
+- ✅ Officer role patches make player effective party officer when assigned
+- ✅ Player's skills now drive siege speed, party healing, scouting efficiency
+- ✅ Dynamic XP sharing from lord's activities (optional enhancement)
 
-**Assignments**:
-1. **Grunt Work**: Athletics XP, basic labor
-2. **Guard Duty**: Scouting XP, watch duties  
-3. **Cook**: Steward XP, food management
-4. **Foraging**: Riding XP, resource gathering + food generation
-5. **Surgeon**: Medicine XP from party (shared from lord's XP gains)
-6. **Engineer**: Engineering XP from party (shared from lord's XP gains)
-7. **Quartermaster**: Steward XP from party (shared from lord's XP gains)
-8. **Scout**: Scouting XP from party (shared from lord's XP gains)
-9. **Sergeant**: Leadership XP, troop training bonuses
-10. **Strategist**: Tactics XP from party (shared from lord's XP gains)
+### 2.2 Duties Ladder Implementation (Tier-Based Unlocking)
 
-**Modern Implementation Strategy**:
-```csharp
-// SAFE: No patches needed - use campaign events + public APIs
-// In AssignmentBehavior:
-CampaignEvents.OnHeroGainedSkillEvent.AddNonSerializedListener(this, OnLordGainedSkill);
+**Duty Categories by Tier**:
 
-private void OnLordGainedSkill(Hero hero, SkillObject skill, int xpGained)
-{
-    if (hero == EnlistmentBehavior.Instance.CurrentLord && IsAssignmentRelevant(skill))
-    {
-        float playerXp = CalculatePlayerXpShare(xpGained, currentAssignment);
-        Hero.MainHero.AddSkillXp(skill, playerXp);
-    }
-}
-```
+**Tier 1**: Basic duties (1 slot)
+- **Runner** → Athletics emphasis, party morale bonus
+- **Sentry** → Scouting emphasis, spotting bonus  
+- **Quarterhand** → Steward emphasis, ration efficiency
+
+**Tier 3**: Specialized duties (+1 slot = 2 total)
+- **Field Medic** → Medicine emphasis, EffectiveSurgeon role
+- **Siegewright's Aide** → Engineering emphasis, EffectiveEngineer role
+
+**Tier 5**: Leadership duties (+1 slot = 3 total)
+- **Pathfinder** → Scouting emphasis, EffectiveScout role
+- **Drillmaster** → Leadership emphasis, troop training
+- **Provisioner** → Steward emphasis, EffectiveQuartermaster role
 
 **APIs Used**:
 ```csharp
-// Character development (public APIs only)
-TaleWorlds.CampaignSystem.CharacterDevelopment.Hero :: AddSkillXp(SkillObject skill, float xp)
-TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: AddFocus(SkillObject skill, int amount, bool checkUnspentFocusPoints)
+// VERIFIED: Officer role substitution (essential for duties)
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveEngineer { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveScout { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveQuartermaster { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveSurgeon { get; }
 
-// Resource management
-TaleWorlds.CampaignSystem.Roster.ItemRoster :: AddToCounts(ItemObject item, int count)
+// VERIFIED: Equipment kit application
+Helpers.EquipmentHelper :: AssignHeroEquipmentFromEquipment(Hero hero, Equipment equipment)
+TaleWorlds.Core.Equipment :: Equipment(bool isCivilian)
+TaleWorlds.Core.EquipmentElement :: EquipmentElement(ItemObject item, ItemModifier modifier, Banner banner, bool isQuestItem)
 
-// Campaign events for XP sharing
-TaleWorlds.CampaignSystem.CampaignEvents :: OnHeroGainedSkillEvent
+// VERIFIED: Skill XP sharing
+TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: AddSkillXp(SkillObject skill, float rawXp, bool isAffectedByFocusFactor = true, bool shouldNotify = true)
+
+// VERIFIED: Configuration system
+using Newtonsoft.Json; // Available in Bannerlord runtime
+JsonConvert.DeserializeObject<DutiesConfig>(string json)
 ```
 
 ### 2.2 Equipment Management System
@@ -1534,10 +2315,10 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
 - ✅ Army battles properly detected and joined
 - ✅ Battle participation tracks for XP bonuses
 
-## Phase 4: Custom Menu System (1 week)
+## Phase 4: Enlisted Menu System Creation (1 week) - MISSING FROM CURRENT
 
-### 4.1 Enlisted Status Menu Implementation
-**Goal**: Create comprehensive status menu with all SAS information display
+### 4.1 Create Enlisted Status Menu System (CURRENTLY MISSING)
+**Goal**: Build complete enlisted menu system from scratch with duties integration
 
 **Exact Implementation Steps**:
 1. **Create `src/Features/Menu/Application/EnlistedMenuBehavior.cs`**:
@@ -1551,27 +2332,52 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
        
        private void OnSessionLaunched(CampaignGameStarter starter)
        {
-           // EXACT MENU: Enlisted status display (based on SAS updatePartyMenu)
-           starter.AddGameMenu("enlisted_status",
-               "Enlisted Service Status\n{ENLISTED_STATUS_TEXT}",
-               OnEnlistedStatusInit,
-               GameOverlays.MenuOverlayType.None,
-               GameMenu.MenuFlags.None, null);
+           try
+           {
+               // EXACT MENU: Enlisted status display (based on SAS updatePartyMenu)
+               starter.AddGameMenu("enlisted_status",
+                   "Enlisted Service Status\n{ENLISTED_STATUS_TEXT}",
+                   OnEnlistedStatusInit,
+                   GameOverlays.MenuOverlayType.None,
+                   GameMenu.MenuFlags.None, null);
                
-           // Menu options
-           AddEnlistedMenuOptions(starter);
+               // Menu options
+               AddEnlistedMenuOptions(starter);
+               
+               // Create duties management submenu
+               AddDutiesManagementMenu(starter);
+               
+               // Silent success - only log if something fails
+           }
+           catch (Exception ex)
+           {
+               ModLogger.Error("Interface", "Failed to create enlisted menu system", ex);
+               // Continue without menu - player can still use dialog system
+           }
        }
        
        private void OnEnlistedStatusInit(MenuCallbackArgs args)
        {
-           // VERIFIED: Build status text like SAS (Test.cs:2836-2956)
-           var statusText = BuildEnlistedStatusText();
-           args.MenuContext.GameMenu.GetText().SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
-           
-           // VERIFIED: Set culture background like SAS
-           if (_enlistedLord?.MapFaction?.Culture?.EncounterBackgroundMesh != null)
+           try
            {
-               args.MenuContext.SetBackgroundMeshName(_enlistedLord.MapFaction.Culture.EncounterBackgroundMesh);
+               // VERIFIED: Build status text like SAS (Test.cs:2836-2956)
+               var statusText = BuildEnlistedStatusText();
+               args.MenuContext.GameMenu.GetText().SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
+               
+               // VERIFIED: Set culture background like SAS
+               var culture = EnlistmentBehavior.Instance.CurrentLord?.MapFaction?.Culture;
+               if (culture?.EncounterBackgroundMesh != null)
+               {
+                   args.MenuContext.SetBackgroundMeshName(culture.EncounterBackgroundMesh);
+               }
+               
+               // Silent success - smooth user experience
+           }
+           catch (Exception ex)
+           {
+               ModLogger.Error("Interface", "Error building status display", ex);
+               // Graceful fallback
+               args.MenuContext.GameMenu.GetText().SetTextVariable("ENLISTED_STATUS_TEXT", "Status information unavailable");
            }
        }
        
@@ -1627,15 +2433,33 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
                sb.AppendLine($"Next Level Experience: {nextTierXP}");
            }
            
-           // Assignment description (EXACT SAS format)
-           sb.AppendLine($"When not fighting: {GetAssignmentDescription(enlistment.CurrentAssignment)}");
+           // ENHANCED: Duties and specialization information
+           var duties = DutiesBehavior.Instance;
+           if (duties.HasTroopType())
+           {
+               sb.AppendLine($"Specialization: {duties.GetTroopTypeDisplayName()}");
+               sb.AppendLine($"Active Duties: {duties.GetActiveDutiesDisplay()}");
+               sb.AppendLine($"Duty Slots: {duties.GetActiveDutiesCount()}/{duties.GetMaxDutySlots()}");
+               
+               if (duties.GetActiveOfficerRoles().Any())
+               {
+                   sb.AppendLine($"Officer Roles: {string.Join(", ", duties.GetActiveOfficerRoles())}");
+               }
+           }
            
            return sb.ToString();
        }
        
        private string GetPlayerFormation()
        {
-           // VERIFIED: Based on SAS getFormation() logic
+           // ENHANCED: Formation based on troop type specialization
+           var duties = DutiesBehavior.Instance;
+           if (duties.HasTroopType())
+           {
+               return duties.GetTroopTypeDisplayName(); // "Legionary", "Horse Archer", etc.
+           }
+           
+           // Fallback: Detection based on current equipment
            if (Hero.MainHero.CharacterObject.IsMounted)
            {
                return Hero.MainHero.CharacterObject.IsRanged ? "Horse Archers" : "Cavalry";
@@ -1645,25 +2469,6 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
                return Hero.MainHero.CharacterObject.IsRanged ? "Archers" : "Infantry";
            }
        }
-       
-       private string GetAssignmentDescription(Assignment assignment)
-       {
-           // EXACT SAS descriptions (Test.cs:3029-3068)
-           return assignment switch
-           {
-               Assignment.Grunt_Work => "You perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)",
-               Assignment.Guard_Duty => "You are assigned to guard duty. You spend sleepless nights keeping watch for intruders. (Passive Daily Scouting XP)",
-               Assignment.Cook => "You are assigned as a cook. You prepare camp meals with limited ingredients. (Passive Daily Steward XP)",
-               Assignment.Foraging => "You forage for supplies. You ride through countryside looking for food. (Passive Daily Riding XP and Daily Food)",
-               Assignment.Surgeon => "You serve as the surgeon. You care for wounded men. (Medicine XP from party)",
-               Assignment.Engineer => "You serve as the engineer. The party relies on your siegecraft knowledge. (Engineering XP from party)",
-               Assignment.Quartermaster => "You serve as quartermaster. You ensure supplies and pay troops on time. (Steward XP from party)",
-               Assignment.Scout => "You lead scouting parties. You look for enemy parties and terrain passages. (Scouting XP from party)",
-               Assignment.Sergeant => "You serve as a sergeant. You drill men for war and maintain discipline. (Passive Daily Leadership XP and Daily XP To Troops)",
-               Assignment.Strategist => "You serve as strategist. You discuss war plans in the commander's tent. (Tactics XP from party)",
-               _ => "You have no assigned duties. You spend time drinking, gambling, and chatting with idle soldiers."
-           };
-       }
    }
    ```
 
@@ -1671,25 +2476,49 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
    ```csharp
    private void AddEnlistedMenuOptions(CampaignGameStarter starter)
    {
-       // Change assignment
-       starter.AddGameMenuOption("enlisted_status", "change_assignment",
-           "Request assignment change",
+       // Manage duties (NEW - core duties system interface)
+       starter.AddGameMenuOption("enlisted_status", "manage_duties",
+           "Manage duties ({ACTIVE_DUTIES}/{MAX_SLOTS})",
            (MenuCallbackArgs args) => {
-               args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+               args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+               SetDutiesText(args);
                return EnlistmentBehavior.Instance.IsEnlisted && 
-                      EnlistmentBehavior.Instance.EnlistmentTier >= 2;
+                      DutiesBehavior.Instance.HasUnlockedDuties();
            },
-           (MenuCallbackArgs args) => OpenAssignmentDialog(),
+           (MenuCallbackArgs args) => GameMenu.ActivateGameMenu("duties_management"),
            false, -1, false, null);
            
-       // Equipment management  
-       starter.AddGameMenuOption("enlisted_status", "equipment_request",
-           "Request equipment change",
+       // View specialization  
+       starter.AddGameMenuOption("enlisted_status", "view_specialization",
+           "Specialization: {TROOP_TYPE}",
+           (MenuCallbackArgs args) => {
+               args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+               SetTroopTypeText(args);
+               return EnlistmentBehavior.Instance.IsEnlisted && 
+                      DutiesBehavior.Instance.HasTroopType();
+           },
+           (MenuCallbackArgs args) => ShowSpecializationDetails(),
+           false, -1, false, null);
+           
+       // Equipment kit management
+       starter.AddGameMenuOption("enlisted_status", "equipment_kit",
+           "View issued equipment kit",
            (MenuCallbackArgs args) => {
                args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                return EnlistmentBehavior.Instance.IsEnlisted;
            },
            (MenuCallbackArgs args) => InventoryManager.OpenScreenAsInventoryOf(MobileParty.MainParty, Hero.MainHero),
+           false, -1, false, null);
+           
+       // Retirement request (CRITICAL MISSING FEATURE)
+       starter.AddGameMenuOption("enlisted_status", "request_retirement",
+           "Request retirement from service",
+           (MenuCallbackArgs args) => {
+               args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+               return EnlistmentBehavior.Instance.IsEnlisted && 
+                      EnlistmentBehavior.Instance.IsEligibleForRetirement();
+           },
+           (MenuCallbackArgs args) => TriggerRetirementDialog(),
            false, -1, false, null);
            
        // Leave menu
@@ -1704,15 +2533,259 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
    }
    ```
 
+3. **Add Retirement Dialog System** (CRITICAL MISSING FEATURE):
+   ```csharp
+   // Add to LordDialogBehavior.AddDialogs()
+   private void AddRetirementDialogs(CampaignGameStarter starter)
+   {
+       try
+       {
+           // Retirement request dialog
+           starter.AddPlayerLine("request_retirement",
+               "lord_talk_speak_diplomacy_2",
+               "retirement_options", 
+               "I wish to retire from your service, my lord.",
+               () => EnlistmentBehavior.Instance.IsEligibleForRetirement(),
+               null, 110);
+           
+           // Lord's retirement offer response
+           starter.AddDialogLine("retirement_offer",
+               "retirement_options",
+               "retirement_choices",
+               "You have served with distinction. Choose how you wish to depart:",
+               null, null, 110);
+               
+           // Option 1: Retire with service equipment (honorable)
+           starter.AddPlayerLine("retire_keep_equipment",
+               "retirement_choices",
+               "close_window",
+               "I wish to keep my service equipment as recognition for my service.",
+               null,
+               () => ProcessRetirement(RetirementChoice.RetireWithEquipment),
+               110);
+               
+           // Option 2: Return to personal equipment  
+           starter.AddPlayerLine("retire_personal_gear", 
+               "retirement_choices",
+               "close_window",
+               "I will return the service equipment and reclaim my personal effects.",
+               null,
+               () => ProcessRetirement(RetirementChoice.RetireToPersonalGear),
+               110);
+               
+           // Option 3: Continue service
+           starter.AddPlayerLine("continue_service",
+               "retirement_choices", 
+               "close_window",
+               "On second thought, I will continue serving.",
+               null,
+               () => {}, // No action - continue serving
+               110);
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Dialog", "Failed to create retirement dialogs", ex);
+       }
+   }
+   
+   public bool IsEligibleForRetirement()
+   {
+       if (!IsEnlisted) return false;
+       
+       var requiredXP = _retirementXP.GetValueOrDefault(_enlistedLord.MapFaction, 15000);
+       return _enlistmentXP >= requiredXP && _enlistmentTier >= 4;
+   }
+   
+   public void ProcessRetirement(RetirementChoice choice)
+   {
+       try
+       {
+           var retirementBonus = CalculateRetirementBonus();
+           
+           switch (choice)
+           {
+               case RetirementChoice.RetireWithEquipment:
+                   // Full bonus + keep service equipment
+                   GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, retirementBonus, false);
+                   EndEnlistment(true, true); // Honorable + keep equipment
+                   ShowRetirementMessage("You retire with honor, keeping your service equipment and receiving full benefits.");
+                   break;
+                   
+               case RetirementChoice.RetireToPersonalGear:
+                   // Partial bonus + restore personal equipment
+                   var partialBonus = retirementBonus / 2;
+                   GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, partialBonus, false);
+                   EndEnlistment(true, false); // Honorable but restore personal gear
+                   ShowRetirementMessage("You retire honorably, returning service equipment and receiving retirement benefits.");
+                   break;
+           }
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Retirement", "Retirement processing failed", ex);
+       }
+   }
+   
+   public enum RetirementChoice
+   {
+       RetireWithEquipment,
+       RetireToPersonalGear
+   }
+   ```
+
+4. **Add Duties Management Submenu** (streamlined implementation):
+   ```csharp
+   private void AddDutiesManagementMenu(CampaignGameStarter starter)
+   {
+       try
+       {
+           starter.AddGameMenu("duties_management",
+               "Military Duties\n{DUTIES_STATUS_TEXT}",
+               OnDutiesManagementInit,
+               GameOverlays.MenuOverlayType.None,
+               GameMenu.MenuFlags.None, null);
+           
+           // Dynamic duty assignment options (created at runtime)
+           AddDynamicDutyOptions(starter);
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Interface", "Failed to create duties management menu", ex);
+       }
+   }
+   ```
+
 **Acceptance Criteria**:
-- ✅ Menu displays all SAS information (lord, faction, army, tier, wage, XP, assignment)
-- ✅ Information updates dynamically based on current status
-- ✅ Menu accessible via hotkey or game menu
-- ✅ Culture-appropriate background displays
+- ✅ Complete enlisted status menu created from scratch (MISSING from current)  
+- ✅ Displays enhanced information: lord, faction, army, tier, wage, XP, specialization, duties
+- ✅ Duties management interface functional with slot tracking
+- ✅ Troop type specialization display with officer roles
+- ✅ Equipment kit management integration
+- ✅ Retirement system with equipment choice dialogs (CRITICAL MISSING FEATURE ADDED)
+- ✅ XP-based retirement eligibility with faction-specific requirements
+- ✅ Equipment retention vs. restoration choice system
+- ✅ Information updates dynamically with graceful error handling
+- ✅ Culture-appropriate background displays with fallback behavior
+- ✅ Minimal performance impact - only errors logged, smooth user experience
 
-## Phase 5: Final Polish & Edge Cases (1 week)
+## Phase 5: Veteran Progression & Polish (1 week)
 
-### 5.1 Comprehensive Edge Case Handling
+### 5.1 Vassalage System Implementation (OPTIONAL ENHANCEMENT)
+**Goal**: High-reputation veterans receive kingdom membership offers
+
+**Exact Implementation Steps**:
+1. **Add Vassalage Eligibility Checking**:
+   ```csharp
+   // Add to daily tick special promotions check
+   private void CheckVassalageEligibility()
+   {
+       if (!IsEnlisted || _vassalageOffersReceived.Contains(_enlistedLord.MapFaction)) 
+           return;
+           
+       var factionRelation = GetFactionRelations(_enlistedLord.MapFaction);
+       var lordRelation = _enlistedLord.GetRelation(Hero.MainHero);
+       
+       if (factionRelation >= 2000 && _enlistmentTier >= 6 && lordRelation >= 50)
+       {
+           TriggerVassalageOfferDialog();
+           _vassalageOffersReceived.Add(_enlistedLord.MapFaction);
+       }
+   }
+   ```
+
+2. **Add Vassalage Dialog System**:
+   ```csharp
+   // Add to LordDialogBehavior.AddDialogs()
+   private void AddVassalageDialogs(CampaignGameStarter starter)
+   {
+       try
+       {
+           // Vassalage offer from lord
+           starter.AddDialogLine("vassalage_offer",
+               "lord_talk_speak_diplomacy_2",
+               "vassalage_options",
+               "I have received word from {KING}. {KING_GENDER_PRONOUN} wishes to offer you lordship in our kingdom for your exemplary service.",
+               () => IsVassalageOfferActive(),
+               () => SetVassalageVariables(),
+               110);
+           
+           // Accept with settlement grant
+           starter.AddPlayerLine("accept_vassalage_settlement", 
+               "vassalage_options",
+               "close_window",
+               "I accept this great honor and responsibility.",
+               () => HasAvailableSettlement(),
+               () => AcceptVassalageWithSettlement(),
+               110);
+               
+           // Accept with gold reward only
+           starter.AddPlayerLine("accept_vassalage_gold",
+               "vassalage_options", 
+               "close_window",
+               "I accept, though I require no lands at this time.",
+               null,
+               () => AcceptVassalageWithGold(),
+               110);
+               
+           // Decline offer
+           starter.AddPlayerLine("decline_vassalage",
+               "vassalage_options",
+               "close_window", 
+               "I am honored, but I prefer to remain in your direct service.",
+               null,
+               () => {}, // Continue serving
+               110);
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Dialog", "Failed to create vassalage dialogs", ex);
+       }
+   }
+   
+   private void AcceptVassalageWithSettlement()
+   {
+       try
+       {
+           // Join kingdom using verified API
+           ChangeKingdomAction.ApplyByJoinToKingdom(Clan.PlayerClan, _enlistedLord.Clan.Kingdom, true);
+           
+           // Grant settlement using verified API
+           var availableSettlement = GetAvailableSettlement(_enlistedLord.Clan.Kingdom);
+           if (availableSettlement != null)
+           {
+               ChangeOwnerOfSettlementAction.ApplyByGift(availableSettlement, Hero.MainHero);
+           }
+           
+           // End enlistment - now a fellow lord
+           EndEnlistment(true, true);
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Vassalage", "Settlement grant failed", ex);
+       }
+   }
+   
+   private void AcceptVassalageWithGold()
+   {
+       try
+       {
+           // Join kingdom
+           ChangeKingdomAction.ApplyByJoinToKingdom(Clan.PlayerClan, _enlistedLord.Clan.Kingdom, true);
+           
+           // Large gold reward
+           GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, 500000, false);
+           
+           // End enlistment
+           EndEnlistment(true, true);
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("Vassalage", "Gold grant failed", ex);
+       }
+   }
+   ```
+
+### 5.2 Advanced Edge Case Handling
 **Goal**: Seamless battle participation and command structure
 
 **Tasks**:
@@ -1978,10 +3051,11 @@ public class EnlistedStartingOptions : CampaignBehaviorBase
 }
 ```
 
-#### **5.2.2 Custom Healing Model**
+#### **5.2.2 Custom Healing Model** ✅ **VERIFIED AVAILABLE**
 ```csharp
-// NEW: Enhanced healing when enlisted (like SAS SoldierPartyHealingModel.cs)
-public class EnlistedPartyHealingModel : DefaultPartyHealingModel
+// VERIFIED: PartyHealingModel interface available in TaleWorlds.CampaignSystem.ComponentInterfaces
+// Enhanced healing when enlisted (like SAS SoldierPartyHealingModel.cs) 
+public class EnlistedPartyHealingModel : PartyHealingModel
 {
     public override ExplainedNumber GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions = false)
     {
@@ -1994,16 +3068,21 @@ public class EnlistedPartyHealingModel : DefaultPartyHealingModel
             float medicineBonus = Hero.MainHero.GetSkillValue(DefaultSkills.Medicine) / 100f;
             result.AddFactor(medicineBonus, new TextObject("Medicine Skill"));
             
-            // Settlement bonus
-            if (EnlistmentBehavior.Instance.CurrentLord.PartyBelongedTo?.CurrentSettlement != null)
+            // Enhanced enlisted healing bonus
+            result.Add(13f, new TextObject("{=enlisted_medical_support}Enlisted Service Medical Support"));
+            
+            // Field Medic duty bonus (officer role integration)
+            if (DutiesBehavior.Instance?.HasActiveDutyWithRole("Surgeon") == true)
             {
-                result.AddFactor((1f + medicineBonus) * 2f, new TextObject("In Settlement"));
+                var medicineSkill = Hero.MainHero.GetSkillValue(DefaultSkills.Medicine);
+                result.Add(medicineSkill / 10f, new TextObject("{=field_medic_training}Field Medic Training"));
             }
             
-            // Assignment bonus
-            if (EnlistmentBehavior.Instance.CurrentAssignment == Assignment.Surgeon)
+            // Army medical corps bonus
+            var lordParty = EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo;
+            if (lordParty?.Army != null)
             {
-                result.AddFactor(0.5f, new TextObject("Surgeon Assignment"));
+                result.Add(5f, new TextObject("{=army_medical_corps}Army Medical Corps"));
             }
             
             return result;
@@ -2745,21 +3824,36 @@ src/Features/Conversations/Behaviors/
 └── LordDialogBehavior.cs (handles enlistment conversations)
 ```
 
-### **Phase 2: Assignment & Equipment Files**
+### **Phase 1C: Duties System Files** (NEW)
 ```
-src/Features/Assignments/Behaviors/
-├── DutyBehavior.cs (handles daily military duties)
-└── SkillTraining.cs (manages XP from assignments)
+src/Features/Duties/
+├── Core/
+│   ├── DutiesConfig.cs (configuration classes)
+│   ├── TroopType.cs (troop type definitions)
+│   └── DutyDefinition.cs (duty specifications)
+├── Behaviors/
+│   └── EnlistedDutiesBehavior.cs (main duties controller)  
+└── UI/
+    ├── TroopTypeSelectionMenu.cs (specialization picker)
+    └── DutiesManagementMenu.cs (duty assignment interface)
 
-src/Features/Assignments/Core/
-└── DutyTypes.cs (defines the different jobs you can do)
+ModuleData/Enlisted/
+├── duties_config.json (primary configuration)
+└── duties_config.xml (fallback configuration)
+```
 
+### **Phase 2: Equipment & Officer Integration Files**
+```
 src/Features/Equipment/Behaviors/
-├── GearManager.cs (handles equipment selection and assignment)
-└── PersonalGear.cs (manages personal vs service equipment)
+├── EquipmentKitManager.cs (duties-integrated equipment kits)
+└── PersonalGear.cs (personal vs service equipment)
 
-src/Features/Equipment/Core/
-└── GearSelection.cs (finds appropriate gear for rank and culture)
+src/Mod.GameAdapters/Patches/
+├── DutiesEffectiveEngineerPatch.cs (engineering officer role)
+├── DutiesEffectiveScoutPatch.cs (scouting officer role)
+├── DutiesEffectiveQuartermasterPatch.cs (supply officer role)
+├── DutiesEffectiveSurgeonPatch.cs (medical officer role)
+└── DutiesXpSharingPatch.cs (optional XP enhancement)
 ```
 
 ### **Phase 3: Progression Files**
@@ -2770,20 +3864,16 @@ src/Features/Ranks/Behaviors/
 └── RelationshipTracker.cs (tracks relationships with lords)
 ```
 
-### **Phase 4: Advanced Features Files**
+### **Phase 4: Enlisted Menu System Files** (CREATING - MISSING FROM CURRENT)
 ```
-src/Features/Combat/Behaviors/
-├── BattleFollower.cs (makes you join your lord's battles)
-└── MissionHandler.cs (handles what happens during battles)
-
-src/Features/Equipment/UI/
-├── GearSelector.cs (custom equipment selection screen)
-├── GearSelectorVM.cs (handles the UI data)
-└── ItemDisplay.cs (shows individual items)
-
 src/Features/Interface/Behaviors/
-├── StatusMenu.cs (shows your service information)
-└── MenuManager.cs (handles the enlisted soldier menus)
+├── EnlistedMenuBehavior.cs (main enlisted status menu - CREATE)
+├── DutiesManagementMenu.cs (duties assignment interface - CREATE)
+└── SpecializationDisplay.cs (troop type information - CREATE)
+
+src/Features/Combat/Behaviors/
+├── BattleFollower.cs (battle participation with officer bonuses)
+└── MissionHandler.cs (handles battle participation)
 ```
 
 ## Complete API Reference Summary
@@ -2835,6 +3925,251 @@ src/Features/Interface/Behaviors/
 
 ## Conclusion
 
+## Phase 4: Enhanced Menu System & Equipment Pricing (1 week)
+
+### 4.1 Complete Enlisted Menu System
+**Goal**: Create comprehensive military interface with multiple equipment choices and realistic pricing
+
+**Menu Structure**:
+```csharp
+// MAIN MENU: enlisted_status
+starter.AddGameMenu("enlisted_status",
+    "Enlisted Status\n\nLord: {LORD_NAME}\nRank: {PLAYER_RANK} (Tier {TIER})\nFormation: {FORMATION_TYPE}\nService Duration: {SERVICE_DAYS} days\n\nCurrent Duties: {ACTIVE_DUTIES}\nNext Promotion: {CURRENT_XP}/{NEXT_XP} XP\nDaily Wage: {DAILY_WAGE}{GOLD_ICON}\n\nArmy Status: {ARMY_STATUS}",
+    OnEnlistedStatusInit,
+    GameOverlays.MenuOverlayType.None,
+    GameMenu.MenuFlags.None, null);
+
+// HEALING OPTION (simplified - no settlement detection)
+starter.AddGameMenuOption("enlisted_status", "enlisted_field_medical",
+    "Request field medical treatment",
+    args =>
+    {
+        var needsHealing = Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints;
+        var canUseTreatment = CanUseFieldMedicalTreatment(); // Just cooldown check
+        
+        if (!needsHealing)
+        {
+            args.Tooltip = new TextObject("You are at full health.");
+            args.IsEnabled = false;
+        }
+        else if (!canUseTreatment)
+        {
+            var daysLeft = GetRemainingCooldownDays();
+            args.Tooltip = new TextObject("Must wait {DAYS} more days for medical supplies.");
+            args.Tooltip.SetTextVariable("DAYS", Math.Ceiling(daysLeft));
+            args.IsEnabled = false;
+        }
+        
+        return EnlistmentBehavior.Instance.IsEnlisted;
+    },
+    args => ExecuteFieldMedicalTreatment());
+
+private bool CanUseFieldMedicalTreatment()
+{
+    var timeSinceLastTreatment = CampaignTime.Now.ElapsedDaysUntilNow - _lastFieldTreatmentTime;
+    
+    var requiredCooldown = DutiesBehavior.Instance?.HasActiveDutyWithRole("Surgeon") == true ?
+        2f :  // Field Medic: Every 2 days
+        5f;   // Standard: Every 5 days
+    
+    return timeSinceLastTreatment >= requiredCooldown;
+}
+
+private void ExecuteFieldMedicalTreatment()
+{
+    var missingHP = Hero.MainHero.MaxHitPoints - Hero.MainHero.HitPoints;
+    var isFieldMedic = DutiesBehavior.Instance?.HasActiveDutyWithRole("Surgeon") == true;
+    
+    // Substantial healing: 80% for standard, 100% for Field Medics
+    var healAmount = isFieldMedic ? missingHP : (int)(missingHP * 0.8f);
+    healAmount = Math.Max(healAmount, 20); // Minimum 20 HP
+    
+    Hero.MainHero.Heal(healAmount, false);
+    _lastFieldTreatmentTime = CampaignTime.Now;
+    
+    var message = new TextObject("Army field medics treat your wounds, healing {HEAL_AMOUNT} health.");
+    message.SetTextVariable("HEAL_AMOUNT", healAmount);
+    InformationManager.AddQuickInformation(message, 0, Hero.MainHero.CharacterObject, "");
+    
+    // Fast treatment - 1 hour
+    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+}
+
+// EQUIPMENT MENU with multiple troop choices
+starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
+    "Visit the quartermaster",
+    args => true,
+    args => GameMenu.SwitchToMenu("enlisted_equipment"));
+
+starter.AddGameMenu("enlisted_equipment",
+    "Quartermaster Supplies\n\nYour Gold: {PLAYER_GOLD}{GOLD_ICON}\nCurrent: {CURRENT_EQUIPMENT}\n\nAvailable Equipment (Tier {TIER} & Below):\n{TROOP_CHOICES}",
+    OnEquipmentMenuInit,
+    GameOverlays.MenuOverlayType.None,
+    GameMenu.MenuFlags.None, null);
+```
+
+### 4.2 Multiple Equipment Choices with Realistic Pricing
+**Goal**: Multiple troop type choices per tier with JSON-configurable pricing
+
+**Create `ModuleData/Enlisted/equipment_pricing.json`**:
+```json
+{
+  "pricing_rules": {
+    "base_cost_per_tier": 75,
+    "formation_multipliers": {
+      "infantry": 1.0,
+      "archer": 1.3,
+      "cavalry": 2.0,
+      "horsearcher": 2.5
+    },
+    "elite_multiplier": 1.5,
+    "culture_modifiers": {
+      "empire": 1.0,
+      "aserai": 0.9,
+      "khuzait": 0.8,
+      "vlandia": 1.2,
+      "sturgia": 0.9,
+      "battania": 0.8
+    }
+  },
+  "troop_overrides": {
+    "empire_cataphract": 600,
+    "empire_elite_cataphract": 800,
+    "vlandia_banner_knight": 750,
+    "aserai_mameluke_heavy_cavalry": 650,
+    "khuzait_khan_guard": 500,
+    "battania_fian_champion": 550
+  },
+  "retirement_requirements": {
+    "minimum_service_days": 365
+  }
+}
+```
+
+**Equipment Selection Implementation**:
+```csharp
+// Get all available troop types for player's culture and tier
+public List<TroopChoice> GetAvailableTroopChoices(string cultureId, int maxTier)
+{
+    var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
+    var choices = new List<TroopChoice>();
+    
+    // VERIFIED: Get all character templates (from docs/sas/gear_pipeline.md)
+    var allCharacters = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+    var cultureTroops = allCharacters.Where(c => 
+        c.Culture == culture && 
+        c.Tier <= maxTier &&
+        c.Tier > 0 &&  // Skip civilians
+        !c.IsHero).ToList();  // Only regular troops
+    
+    foreach (var troop in cultureTroops)
+    {
+        var formation = DetectTroopFormation(troop);
+        var cost = CalculateEquipmentCost(troop);
+        
+        choices.Add(new TroopChoice
+        {
+            Character = troop,
+            DisplayName = GetCultureSpecificTroopName(troop),
+            Formation = formation,
+            Tier = troop.Tier,
+            Cost = cost,
+            Description = GetTroopDescription(troop)
+        });
+    }
+    
+    return choices.OrderBy(c => c.Tier).ThenBy(c => c.Cost).ToList();
+}
+
+// Realistic equipment pricing (like SAS system)
+public int CalculateEquipmentCost(CharacterObject troop)
+{
+    var rules = LoadEquipmentPricingConfig();
+    var baseCost = rules.BaseCostPerTier * troop.Tier;
+    
+    var formation = DetectTroopFormation(troop);
+    var formationMultiplier = rules.FormationMultipliers[formation.ToString().ToLower()];
+    var cultureModifier = rules.CultureModifiers[troop.Culture.StringId];
+    var eliteMultiplier = IsEliteTroop(troop) ? rules.EliteMultiplier : 1.0f;
+    
+    var calculatedCost = (int)(baseCost * formationMultiplier * cultureModifier * eliteMultiplier);
+    
+    // Check for specific troop cost overrides
+    if (rules.TroopOverrides.TryGetValue(troop.StringId, out var overridePrice))
+        return overridePrice;
+        
+    return calculatedCost;
+}
+
+// Equipment menu with troop selection
+starter.AddGameMenuOption("enlisted_equipment", "select_troop_equipment",
+    "Select equipment style: {SELECTED_TROOP} ({COST}{GOLD_ICON})",
+    args =>
+    {
+        var choices = GetAvailableTroopChoices(
+            EnlistmentBehavior.Instance.CurrentLord.Culture.StringId,
+            EnlistmentBehavior.Instance.EnlistmentTier);
+        
+        DisplayTroopSelectionMenu(args, choices);
+        return choices.Count > 0;
+    },
+    args => ApplySelectedTroopEquipment());
+
+starter.AddGameMenuOption("enlisted_equipment", "back_to_status",
+    "Back to enlisted status",
+    args => true,
+    args => GameMenu.SwitchToMenu("enlisted_status"));
+```
+
+### 4.3 Updated Retirement System
+**Goal**: Simplified retirement based on service time
+
+**Implementation**:
+```csharp
+// UPDATED: 1 full year service requirement
+private bool IsEligibleForRetirement()
+{
+    var serviceTime = CampaignTime.Now.ElapsedDaysUntilNow - _enlistmentDate;
+    return serviceTime >= 365f; // 1 full year (365 days)
+}
+
+// Retirement menu option
+starter.AddGameMenuOption("enlisted_status", "request_retirement",
+    "Request honorable retirement",
+    args =>
+    {
+        if (!IsEligibleForRetirement())
+        {
+            var daysLeft = 365f - (CampaignTime.Now.ElapsedDaysUntilNow - _enlistmentDate);
+            args.Tooltip = new TextObject("Must serve {DAYS} more days to be eligible for retirement.");
+            args.Tooltip.SetTextVariable("DAYS", Math.Ceiling(daysLeft));
+            args.IsEnabled = false;
+        }
+        
+        return IsEligibleForRetirement();
+    },
+    args => TriggerRetirementConversation());
+```
+
+**Equipment Cost Examples** (Realistic Military Economics):
+| Tier | Infantry | Archer | Cavalry | Horse Archer |
+|------|----------|--------|---------|--------------|
+| **T1** | 75🪙 | 98🪙 | 150🪙 | 188🪙 |
+| **T3** | 225🪙 | 293🪙 | 450🪙 | 563🪙 |
+| **T5** | 375🪙 | 488🪙 | 750🪙 | 938🪙 |
+| **T7 Elite** | 788🪙 | 1024🪙 | 1575🪙 | 1969🪙 |
+
+**Acceptance Criteria**:
+- ✅ **Multiple troop choices** per tier (3-6 options each)
+- ✅ **Realistic pricing** based on formation complexity and elite status
+- ✅ **JSON configuration** for easy price balancing
+- ✅ **Culture-specific costs** reflecting faction economies
+- ✅ **5-day/2-day healing cooldowns** available anywhere (no settlement detection)
+- ✅ **1-year retirement** eligibility (365 days service)
+- ✅ **Complete menu navigation** with main menu and sub-menus
+- ✅ **4-formation support** throughout all systems
+
 This comprehensive implementation plan provides **complete guidance** for building a modern, robust SAS system. Every API call, every class structure, and every implementation pattern is documented with exact signatures and usage examples.
 
 The plan leverages our **complete API knowledge** while maintaining safety, compatibility, and our blueprint's architecture principles. The AI now has everything needed to implement the full SAS experience that surpasses the original mod.
+

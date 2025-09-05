@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "tier_progression": {
+    "requirements": [
+      { "tier": 1, "xp_required": 0, "name": "Recruit" },
+      { "tier": 2, "xp_required": 100, "name": "Private" },
+      { "tier": 3, "xp_required": 300, "name": "Corporal" },
+      { "tier": 4, "xp_required": 600, "name": "Sergeant" },
+      { "tier": 5, "xp_required": 1000, "name": "Staff Sergeant" },
+      { "tier": 6, "xp_required": 1500, "name": "Master Sergeant" },
+      { "tier": 7, "xp_required": 2200, "name": "Veteran" }
+    ],
+    "formation_selection": {
+      "trigger_tier": 2,
+      "allow_multiple_changes": true,
+      "change_cooldown_days": 7,
+      "free_changes": 1
+    }
+  },
+  "wage_system": {
+    "base_formula": {
+      "daily_base": 15,
+      "tier_bonus_per_level": 10,
+      "hero_level_multiplier": 2,
+      "xp_bonus_divisor": 50,
+      "maximum_base_wage": 500
+    },
+    "assignment_multipliers": {
+      "grunt_work": 0.8,
+      "guard_duty": 0.9,
+      "cook": 0.9,
+      "foraging": 1.0,
+      "surgeon": 1.3,
+      "engineer": 1.4,
+      "quartermaster": 1.2,
+      "scout": 1.1,
+      "sergeant": 1.5,
+      "strategist": 1.6
+    },
+    "performance_bonuses": {
+      "relationship_bonus_per_10": 5,
+      "battle_victory_bonus": 25,
+      "siege_success_bonus": 50,
+      "assignment_excellence_bonus": 10
+    },
+    "army_bonuses": {
+      "in_army": 1.2,
+      "army_leader": 1.5,
+      "siege_operations": 1.3
+    }
+  },
+  "xp_sources": {
+    "daily_base": 25,
+    "duty_performance": 15,
+    "battle_participation": 50,
+    "battle_victory": 25,
+    "siege_participation": 75,
+    "siege_success": 50,
+    "assignment_completion": 20,
+    "lord_conversation": 5,
+    "special_events": 30
+  },
+  "relationship_progression": {
+    "daily_service": 1,
+    "battle_together": 3,
+    "siege_together": 5,
+    "excellent_duty_performance": 2,
+    "save_lord_in_battle": 15,
+    "capture_enemies": 1,
+    "veteran_service_bonus": 10
+  },
+  "faction_reputation": {
+    "daily_service": 1,
+    "battle_victory": 5,
+    "siege_success": 10,
+    "prisoner_capture": 2,
+    "dishonor_penalty": -20,
+    "desertion_penalty": -100
+  },
+  "promotion_benefits": {
+    "tier_2": {
+      "formation_selection": true,
+      "duty_slots": 1,
+      "equipment_access": ["t1", "t2"]
+    },
+    "tier_3": {
+      "duty_slots": 2,
+      "officer_roles": ["Surgeon", "Engineer"],
+      "equipment_access": ["t1", "t2", "t3"]
+    },
+    "tier_4": {
+      "duty_slots": 2,
+      "veteran_status": true,
+      "equipment_access": ["t1", "t2", "t3", "t4"]
+    },
+    "tier_5": {
+      "duty_slots": 3,
+      "officer_roles": ["Scout", "Quartermaster"],
+      "leadership_duties": true,
+      "equipment_access": ["t1", "t2", "t3", "t4", "t5"]
+    },
+    "tier_6": {
+      "duty_slots": 3,
+      "retirement_eligible": false,
+      "vassalage_consideration": true,
+      "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
+    },
+    "tier_7": {
+      "duty_slots": 3,
+      "master_veteran": true,
+      "equipment_retention_earned": true,
+      "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6", "t7"]
+    }
+  },
+  "veteran_system": {
+    "minimum_service_days": 365,
+    "veteran_benefits": {
+      "equipment_choice": true,
+      "relationship_bonus": 15,
+      "faction_reputation": 25,
+      "discharge_bonus": 5000,
+      "rehire_bonus": true
+    },
+    "vassalage_offers": {
+      "minimum_tier": 6,
+      "minimum_faction_reputation": 200,
+      "minimum_relationship": 80,
+      "offer_chance_daily": 0.01
+    }
+  },
+  "special_events": {
+    "capture_lord_bonus": 100,
+    "save_lord_bonus": 150,
+    "siege_breakthrough": 75,
+    "battle_heroics": 50,
+    "assignment_excellence": 25
+  }
+}

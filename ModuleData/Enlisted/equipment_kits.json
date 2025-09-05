@@ -1,0 +1,288 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "equipment_kits": {
+    "empire_infantry_t1": {
+      "display_name": "Imperial Recruit Kit",
+      "formation": "infantry",
+      "tier": 1,
+      "cost": 75,
+      "equipment": {
+        "weapon0": "imperial_sword_t1",
+        "weapon1": "imperial_throwing_javelin_t1", 
+        "weapon2": null,
+        "weapon3": null,
+        "head": "imperial_leather_cap",
+        "body": "imperial_padded_cloth",
+        "leg": "wrapped_shoes",
+        "gloves": null,
+        "cape": null,
+        "horse": null,
+        "horse_harness": null,
+        "banner": null
+      }
+    },
+    "empire_archer_t1": {
+      "display_name": "Imperial Skirmisher Kit",
+      "formation": "archer", 
+      "tier": 1,
+      "cost": 98,
+      "equipment": {
+        "weapon0": "imperial_bow_t1",
+        "weapon1": "imperial_arrows",
+        "weapon2": "imperial_sword_t1",
+        "weapon3": null,
+        "head": "imperial_leather_cap",
+        "body": "imperial_leather_armor",
+        "leg": "wrapped_shoes",
+        "gloves": null,
+        "cape": null,
+        "horse": null,
+        "horse_harness": null,
+        "banner": null
+      }
+    },
+    "empire_cavalry_t1": {
+      "display_name": "Imperial Horseman Kit",
+      "formation": "cavalry",
+      "tier": 1, 
+      "cost": 150,
+      "equipment": {
+        "weapon0": "imperial_sword_t1",
+        "weapon1": "imperial_throwing_javelin_t1",
+        "weapon2": null,
+        "weapon3": null,
+        "head": "imperial_leather_cap",
+        "body": "imperial_mail_shirt", 
+        "leg": "imperial_mail_chausses",
+        "gloves": null,
+        "cape": null,
+        "horse": "imperial_horse",
+        "horse_harness": null,
+        "banner": null
+      }
+    },
+    "empire_horsearcher_t1": {
+      "display_name": "Imperial Mounted Archer Kit",
+      "formation": "horsearcher",
+      "tier": 1,
+      "cost": 188,
+      "equipment": {
+        "weapon0": "imperial_bow_t1",
+        "weapon1": "imperial_arrows", 
+        "weapon2": "imperial_sword_t1",
+        "weapon3": null,
+        "head": "imperial_leather_cap",
+        "body": "imperial_leather_armor",
+        "leg": "wrapped_shoes", 
+        "gloves": null,
+        "cape": null,
+        "horse": "imperial_horse",
+        "horse_harness": null,
+        "banner": null
+      }
+    },
+    "empire_infantry_t3": {
+      "display_name": "Imperial Legionary Kit",
+      "formation": "infantry",
+      "tier": 3,
+      "cost": 225,
+      "equipment": {
+        "weapon0": "imperial_sword_t3",
+        "weapon1": "imperial_throwing_javelin_t2",
+        "weapon2": null,
+        "weapon3": null,
+        "head": "imperial_masked_helmet",
+        "body": "imperial_scale_armor",
+        "leg": "imperial_mail_chausses",
+        "gloves": "imperial_leather_gloves",
+        "cape": null,
+        "horse": null,
+        "horse_harness": null,
+        "banner": null
+      }
+    },
+    "empire_archer_t3": {
+      "display_name": "Imperial Sagittarius Kit", 
+      "formation": "archer",
+      "tier": 3,
+      "cost": 293,
+      "equipment": {
+        "weapon0": "imperial_bow_t3",
+        "weapon1": "imperial_arrows",
+        "weapon2": "imperial_sword_t2",
+        "weapon3": null,
+        "head": "imperial_archer_helmet",
+        "body": "imperial_leather_harness",
+        "leg": "imperial_leather_boots",
+        "gloves": "imperial_leather_gloves",
+        "cape": null,
+        "horse": null,
+        "horse_harness": null,
+        "banner": null
+      }
+    },
+    "empire_cavalry_t3": {
+      "display_name": "Imperial Equites Kit",
+      "formation": "cavalry",
+      "tier": 3,
+      "cost": 450,
+      "equipment": {
+        "weapon0": "imperial_sword_t3",
+        "weapon1": "imperial_lance_t3",
+        "weapon2": "imperial_throwing_javelin_t2", 
+        "weapon3": null,
+        "head": "imperial_cavalry_helmet",
+        "body": "imperial_mail_hauberk",
+        "leg": "imperial_mail_chausses",
+        "gloves": "imperial_leather_gloves",
+        "cape": null,
+        "horse": "imperial_warhorse",
+        "horse_harness": "imperial_horse_harness",
+        "banner": null
+      }
+    },
+    "empire_horsearcher_t3": {
+      "display_name": "Imperial Equites Sagittarii Kit",
+      "formation": "horsearcher",
+      "tier": 3,
+      "cost": 563,
+      "equipment": {
+        "weapon0": "imperial_bow_t3", 
+        "weapon1": "imperial_arrows",
+        "weapon2": "imperial_sword_t2",
+        "weapon3": null,
+        "head": "imperial_archer_helmet",
+        "body": "imperial_leather_harness", 
+        "leg": "imperial_leather_boots",
+        "gloves": "imperial_leather_gloves",
+        "cape": null,
+        "horse": "imperial_warhorse",
+        "horse_harness": "imperial_horse_harness",
+        "banner": null
+      }
+    }
+  },
+  "kit_templates": {
+    "empire_infantry_template": {
+      "weapons": ["imperial_sword_t{tier}", "imperial_throwing_javelin_t{tier}"],
+      "armor_head": "imperial_{tier_name}_helmet", 
+      "armor_body": "imperial_{tier_name}_armor",
+      "armor_leg": "imperial_{tier_name}_boots",
+      "armor_gloves": "imperial_{tier_name}_gloves"
+    },
+    "empire_archer_template": {
+      "weapons": ["imperial_bow_t{tier}", "imperial_arrows", "imperial_sword_t{tier_minus_1}"],
+      "armor_head": "imperial_archer_helmet_{tier_name}",
+      "armor_body": "imperial_leather_{tier_name}",
+      "armor_leg": "imperial_leather_boots",
+      "armor_gloves": "imperial_leather_gloves" 
+    },
+    "empire_cavalry_template": {
+      "weapons": ["imperial_sword_t{tier}", "imperial_lance_t{tier}", "imperial_throwing_javelin_t{tier}"],
+      "armor_head": "imperial_cavalry_helmet_{tier_name}",
+      "armor_body": "imperial_mail_{tier_name}",
+      "armor_leg": "imperial_mail_chausses",
+      "armor_gloves": "imperial_leather_gloves",
+      "horse": "imperial_{tier_name}_horse",
+      "horse_harness": "imperial_horse_harness"
+    },
+    "empire_horsearcher_template": {
+      "weapons": ["imperial_bow_t{tier}", "imperial_arrows", "imperial_sword_t{tier_minus_1}"],
+      "armor_head": "imperial_archer_helmet_{tier_name}",
+      "armor_body": "imperial_leather_{tier_name}",
+      "armor_leg": "imperial_leather_boots", 
+      "armor_gloves": "imperial_leather_gloves",
+      "horse": "imperial_{tier_name}_horse",
+      "horse_harness": "imperial_horse_harness"
+    }
+  },
+  "culture_equipment_patterns": {
+    "empire": {
+      "weapon_prefix": "imperial_",
+      "armor_prefix": "imperial_",
+      "horse_prefix": "imperial_",
+      "tier_names": ["recruit", "basic", "veteran", "elite", "noble", "champion", "legendary"]
+    },
+    "aserai": {
+      "weapon_prefix": "aserai_",
+      "armor_prefix": "aserai_", 
+      "horse_prefix": "aserai_",
+      "tier_names": ["tribesman", "basic", "warrior", "veteran", "noble", "faris", "elite"]
+    },
+    "khuzait": {
+      "weapon_prefix": "khuzait_",
+      "armor_prefix": "khuzait_",
+      "horse_prefix": "steppe_",
+      "tier_names": ["nomad", "basic", "horseman", "lancer", "noble", "khan_guard", "elite"]
+    },
+    "vlandia": {
+      "weapon_prefix": "vlandia_", 
+      "armor_prefix": "vlandia_",
+      "horse_prefix": "vlandia_",
+      "tier_names": ["recruit", "footman", "crossbow", "sergeant", "knight", "champion", "banner_knight"]
+    },
+    "sturgia": {
+      "weapon_prefix": "sturgia_",
+      "armor_prefix": "sturgia_",
+      "horse_prefix": "sturgia_",
+      "tier_names": ["recruit", "warrior", "trained", "veteran", "huscarl", "ulfhednar", "hero"]
+    },
+    "battania": {
+      "weapon_prefix": "battania_",
+      "armor_prefix": "battania_", 
+      "horse_prefix": "battania_",
+      "tier_names": ["volunteer", "clansman", "trained", "veteran", "hero", "fian", "champion"]
+    }
+  },
+  "fallback_equipment": {
+    "empire": {
+      "basic_infantry": "imperial_sword_t1",
+      "basic_archer": "imperial_bow_t1", 
+      "basic_cavalry": "imperial_horse",
+      "basic_armor": "imperial_padded_cloth"
+    },
+    "aserai": {
+      "basic_infantry": "eastern_sword_t1",
+      "basic_archer": "nomad_bow",
+      "basic_cavalry": "aserai_horse",
+      "basic_armor": "aserai_cloth"
+    },
+    "khuzait": {
+      "basic_infantry": "steppe_sword_t1",
+      "basic_archer": "steppe_bow",
+      "basic_cavalry": "steppe_horse", 
+      "basic_armor": "steppe_armor"
+    },
+    "vlandia": {
+      "basic_infantry": "vlandia_sword_t1",
+      "basic_archer": "vlandia_crossbow",
+      "basic_cavalry": "vlandia_horse",
+      "basic_armor": "vlandia_aketon"
+    },
+    "sturgia": {
+      "basic_infantry": "sturgia_sword_t1", 
+      "basic_archer": "sturgia_bow",
+      "basic_cavalry": "sturgia_horse",
+      "basic_armor": "sturgia_cloth"
+    },
+    "battania": {
+      "basic_infantry": "battania_sword_t1",
+      "basic_archer": "battania_bow",
+      "basic_cavalry": "battania_horse",
+      "basic_armor": "battania_cloth"
+    }
+  },
+  "item_validation": {
+    "quest_item_protection": true,
+    "banner_protection": true,
+    "non_transferable_protection": true,
+    "backup_validation": true
+  },
+  "menu_settings": {
+    "auto_open_on_promotion": true,
+    "show_formation_details": true,
+    "display_equipment_previews": true,
+    "show_tier_progression": true
+  }
+}

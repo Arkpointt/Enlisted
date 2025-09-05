@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "duties": {
+    "runner": {
+      "id": "runner",
+      "display_name": "Runner",
+      "description": "Carry messages and supplies around the camp",
+      "min_tier": 1,
+      "max_concurrent": 3,
+      "target_skill": "Athletics",
+      "skill_xp_daily": 15,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 0.8,
+      "required_formations": ["infantry", "archer"],
+      "passive_effects": {
+        "party_morale": 2
+      },
+      "unlock_conditions": {
+        "relationship_required": 0,
+        "skill_required": 0
+      }
+    },
+    "sentry": {
+      "id": "sentry", 
+      "display_name": "Sentry",
+      "description": "Keep watch for enemy movements and threats",
+      "min_tier": 1,
+      "max_concurrent": 2,
+      "target_skill": "Scouting",
+      "skill_xp_daily": 15,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 0.9,
+      "required_formations": ["archer", "horsearcher"],
+      "passive_effects": {
+        "party_vision": 5
+      },
+      "unlock_conditions": {
+        "relationship_required": 10,
+        "skill_required": 25
+      }
+    },
+    "quarterhand": {
+      "id": "quarterhand",
+      "display_name": "Quarterhand", 
+      "description": "Assist with supplies and equipment management",
+      "min_tier": 1,
+      "max_concurrent": 2,
+      "target_skill": "Steward",
+      "skill_xp_daily": 15,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 0.9,
+      "required_formations": ["infantry", "cavalry"],
+      "passive_effects": {
+        "party_food_efficiency": 5
+      },
+      "unlock_conditions": {
+        "relationship_required": 0,
+        "skill_required": 0
+      }
+    },
+    "mounted_messenger": {
+      "id": "mounted_messenger",
+      "display_name": "Mounted Messenger",
+      "description": "Deliver urgent messages on horseback",
+      "min_tier": 2,
+      "max_concurrent": 1,
+      "target_skill": "Riding",
+      "skill_xp_daily": 20,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 1.1,
+      "required_formations": ["cavalry", "horsearcher"],
+      "passive_effects": {
+        "party_speed": 3
+      },
+      "unlock_conditions": {
+        "relationship_required": 20,
+        "skill_required": 50
+      }
+    },
+    "field_medic": {
+      "id": "field_medic",
+      "display_name": "Field Medic",
+      "description": "Treat wounded soldiers and maintain medical supplies", 
+      "min_tier": 3,
+      "max_concurrent": 1,
+      "target_skill": "Medicine",
+      "skill_xp_daily": 25,
+      "officer_role": "Surgeon",
+      "xp_share_multiplier": 0.5,
+      "wage_multiplier": 1.3,
+      "required_formations": ["infantry", "archer"],
+      "passive_effects": {
+        "party_healing": 10
+      },
+      "special_abilities": [
+        "reduced_medical_cooldown",
+        "enhanced_healing",
+        "treat_wounded_conversation"
+      ],
+      "unlock_conditions": {
+        "relationship_required": 40,
+        "skill_required": 75
+      }
+    },
+    "siegewright_aide": {
+      "id": "siegewright_aide",
+      "display_name": "Siegewright's Aide",
+      "description": "Assist with siege equipment and fortification work",
+      "min_tier": 3,
+      "max_concurrent": 1,
+      "target_skill": "Engineering",
+      "skill_xp_daily": 25,
+      "officer_role": "Engineer", 
+      "xp_share_multiplier": 0.5,
+      "wage_multiplier": 1.4,
+      "required_formations": ["infantry", "archer"],
+      "passive_effects": {
+        "siege_efficiency": 15
+      },
+      "unlock_conditions": {
+        "relationship_required": 40,
+        "skill_required": 75
+      }
+    },
+    "pathfinder": {
+      "id": "pathfinder",
+      "display_name": "Pathfinder",
+      "description": "Scout terrain and find safe routes for the army",
+      "min_tier": 5,
+      "max_concurrent": 1,
+      "target_skill": "Scouting",
+      "skill_xp_daily": 35,
+      "officer_role": "Scout",
+      "xp_share_multiplier": 0.7,
+      "wage_multiplier": 1.5,
+      "required_formations": ["cavalry", "horsearcher"],
+      "passive_effects": {
+        "party_speed": 8,
+        "party_vision": 12
+      },
+      "special_abilities": [
+        "enhanced_tracking",
+        "terrain_bonus",
+        "ambush_detection"
+      ],
+      "unlock_conditions": {
+        "relationship_required": 60,
+        "skill_required": 100
+      }
+    },
+    "drillmaster": {
+      "id": "drillmaster", 
+      "display_name": "Drillmaster",
+      "description": "Train troops and maintain military discipline",
+      "min_tier": 5,
+      "max_concurrent": 1,
+      "target_skill": "Leadership",
+      "skill_xp_daily": 35,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 1.5,
+      "required_formations": ["infantry", "cavalry"],
+      "passive_effects": {
+        "party_morale": 8,
+        "troop_training": 5
+      },
+      "special_abilities": [
+        "troop_xp_bonus",
+        "morale_boost",
+        "discipline_training"
+      ],
+      "unlock_conditions": {
+        "relationship_required": 70,
+        "skill_required": 125
+      }
+    },
+    "provisioner": {
+      "id": "provisioner",
+      "display_name": "Provisioner", 
+      "description": "Manage army supplies and logistics",
+      "min_tier": 5,
+      "max_concurrent": 1,
+      "target_skill": "Steward",
+      "skill_xp_daily": 35,
+      "officer_role": "Quartermaster",
+      "xp_share_multiplier": 0.6,
+      "wage_multiplier": 1.4,
+      "required_formations": ["infantry", "cavalry"], 
+      "passive_effects": {
+        "party_carry_capacity": 50,
+        "food_efficiency": 15
+      },
+      "unlock_conditions": {
+        "relationship_required": 60,
+        "skill_required": 100
+      }
+    }
+  },
+  "duty_slots": {
+    "tier_1": 1,
+    "tier_2": 1, 
+    "tier_3": 2,
+    "tier_4": 2,
+    "tier_5": 3,
+    "tier_6": 3,
+    "tier_7": 3
+  },
+  "officer_roles": {
+    "Engineer": {
+      "harmony_patch_target": "MobileParty.EffectiveEngineer",
+      "skill_benefits": ["Engineering"],
+      "party_effects": ["siege_speed", "construction_speed"],
+      "duties": ["siegewright_aide"]
+    },
+    "Scout": {
+      "harmony_patch_target": "MobileParty.EffectiveScout", 
+      "skill_benefits": ["Scouting"],
+      "party_effects": ["map_speed", "party_vision", "tracking"],
+      "duties": ["pathfinder"]
+    },
+    "Quartermaster": {
+      "harmony_patch_target": "MobileParty.EffectiveQuartermaster",
+      "skill_benefits": ["Steward"],
+      "party_effects": ["carry_capacity", "food_efficiency", "trade_bonus"],
+      "duties": ["provisioner"]
+    },
+    "Surgeon": {
+      "harmony_patch_target": "MobileParty.EffectiveSurgeon",
+      "skill_benefits": ["Medicine"], 
+      "party_effects": ["healing_rate", "wounded_recovery", "battle_recovery"],
+      "duties": ["field_medic"]
+    }
+  },
+  "formation_progression": {
+    "selection_tier": 2,
+    "auto_detect": true,
+    "allow_switching": true,
+    "switching_cost_multiplier": 0.5
+  },
+  "xp_sources": {
+    "daily_service": 25,
+    "duty_performance": 15,
+    "battle_participation": 50,
+    "siege_participation": 75,
+    "promotion_bonus": 100
+  }
+}

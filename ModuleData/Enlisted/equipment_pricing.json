@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "pricing_rules": {
+    "base_cost_per_tier": 75,
+    "formation_multipliers": {
+      "infantry": 1.0,
+      "archer": 1.3,
+      "cavalry": 2.0,
+      "horsearcher": 2.5
+    },
+    "elite_multiplier": 1.5,
+    "culture_modifiers": {
+      "empire": 1.0,
+      "aserai": 0.9,
+      "khuzait": 0.8,
+      "vlandia": 1.2,
+      "sturgia": 0.9,
+      "battania": 0.8
+    }
+  },
+  "troop_overrides": {
+    "empire_cataphract": 600,
+    "empire_elite_cataphract": 800,
+    "empire_bucellarii": 900,
+    "vlandia_banner_knight": 750,
+    "vlandia_champion": 650,
+    "aserai_mameluke_heavy_cavalry": 650,
+    "aserai_faris": 700,
+    "khuzait_khan_guard": 500,
+    "khuzait_heavy_horse_archer": 550,
+    "sturgia_ulfhednar": 600,
+    "sturgia_veteran": 450,
+    "battania_fian_champion": 550,
+    "battania_hero": 500
+  },
+  "retirement_requirements": {
+    "minimum_service_days": 365,
+    "honorable_discharge_bonus_multiplier": 2.0,
+    "equipment_retention_tier_requirement": 5
+  },
+  "medical_treatment": {
+    "standard_cooldown_days": 5,
+    "field_medic_cooldown_days": 2,
+    "base_healing_percentage": 0.8,
+    "field_medic_healing_percentage": 1.0,
+    "minimum_heal_amount": 20
+  },
+  "formation_detection": {
+    "auto_detect_on_equipment_change": true,
+    "allow_formation_switching": true,
+    "switching_cooldown_hours": 6
+  }
+}

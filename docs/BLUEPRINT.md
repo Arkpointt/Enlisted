@@ -144,6 +144,7 @@ src/
 
 - Intercept or extend TaleWorlds methods that are sealed, internal/private, or engine-invoked.
 - When critical side effects cannot be reached via public APIs or CampaignBehavior hooks.
+- **Officer Role Substitution**: Essential for duties system - patch `MobileParty.EffectiveX` properties to substitute player as party officer for natural skill/perk integration.
 - It is acceptable to patch menu/time control, encounter/battle flows, and dispatcher surfaces when required by feature design, provided patches are guarded, observable, and configurable.
 - Examples of engine-invoked surfaces: module load/unload lifecycle, campaign daily/hourly ticks, battle/agent updates, menu open/close, economy/party recalculations.
 
@@ -164,9 +165,12 @@ Every patch must start with a structured header comment:
 // Notes: <optional performance or compatibility notes>
 ```
 
-**Coding conventions**
+**Coding conventions (following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/))**
 
 - Prefer Prefix/Postfix; use Transpiler only when behavior cannot be achieved otherwise, and document the IL assumptions (target instruction patterns, invariants).
+- **Use HarmonyPriority for patch ordering**: `[HarmonyPriority(999)]` for high priority, lower numbers for lower priority.
+- **Specify method signatures for ambiguous matches**: Use `[HarmonyPatch(typeof(Type), "Method", typeof(param1), typeof(param2))]` when multiple overloads exist.
+- **Property patching**: For properties, specify `MethodType.Getter` or `MethodType.Setter`: `[HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]`
 - Suffix class names with `Patch`. Use explicit method names `Prefix`, `Postfix`, and `Transpiler` only when necessary.
 - Guard all engine objects with null checks and state checks; avoid assumptions about menu/campaign state.
 - Respect performance: avoid allocations in per-frame/tick paths; keep reflection minimal and cached if needed.
@@ -303,45 +307,44 @@ Our military service system follows a modular design where each aspect has clear
 
 ### Logging Levels and Usage
 
-**Info Level** - Major state changes that users care about:
+**Error Level** - Critical failures that need attention (primary use):
 ```csharp
-ModLogger.Info("Enlistment", $"Player enlisted with {lord.Name} of {faction.Name}");
-ModLogger.Info("Equipment", $"Promoted to tier {tier} - new gear available");
+ModLogger.Error("Config", "Configuration loading failed - using defaults", ex);
+ModLogger.Error("Compatibility", "Mod initialization failed - duties unavailable", ex);
+ModLogger.Error("Equipment", "Equipment kit application failed", ex);
 ```
 
-**Debug Level** - Detailed tracking for troubleshooting (configurable):
+**Info Level** - Minimal essential events (rare use):
 ```csharp
-ModLogger.Debug("Assignments", $"Processing {assignment} assignment - gained {xp} XP");
-ModLogger.Debug("Combat", $"Battle participation set via reflection: {success}");
+ModLogger.Info("Init", "Duties system loaded"); // Startup confirmation only
+// Avoid info logging for routine operations - use in-game notifications instead
 ```
 
-**Warning Level** - Issues that were handled but users should know:
+**Debug Level** - Disabled by default (development only):
 ```csharp
-ModLogger.Warning("Equipment", "No tier-appropriate gear found, using fallback selection");
-ModLogger.Warning("Combat", "Battle participation failed, using positioning fallback");
-```
-
-**Error Level** - Problems that need attention:
-```csharp
-ModLogger.Error("Enlistment", "Save data corruption detected, resetting to safe state", ex);
-ModLogger.Error("Compatibility", "API validation failed - possible game update", ex);
+// Only when specifically enabled for troubleshooting
+// Most operations should be silent for smooth user experience
 ```
 
 ### Performance-Friendly Logging
 
-- **Conditional Debug**: Only log debug info when explicitly enabled via config
-- **String Interpolation**: Use `$""` syntax for performance when logging is enabled
-- **Exception Context**: Always include relevant context with error logs
-- **Category Consistency**: Use consistent category names across related features
+- **Silent Success Pattern**: Normal operations don't log - use in-game notifications for user feedback
+- **Error-Only Strategy**: Only log when something fails or breaks
+- **Minimal File I/O**: Typically 0-2 log entries per game session
+- **Zero Performance Impact**: No logging overhead during normal gameplay
+- **Exception Context**: Always include error context for troubleshooting
+- **Session Correlation**: Unique session ID for support issue tracking
 
 ### Troubleshooting Categories
 
 - **"Enlistment"** - Core service state and lord relationships
-- **"Assignments"** - Daily duties and assignment processing
-- **"Equipment"** - Gear selection and equipment management
-- **"Ranks"** - Promotions and wage calculations
+- **"Duties"** - Duties system: troop types, duty assignments, officer roles, configuration loading
+- **"Equipment"** - Equipment kits, gear application, culture + troop type + tier matching
+- **"Patches"** - Harmony patch success/failure, officer role substitution, XP sharing
+- **"Config"** - Configuration loading, JSON parsing, fallback to XML, validation errors
+- **"Progression"** - Tier advancement, XP tracking, duty slot unlocking, specialization changes
 - **"Combat"** - Battle participation and army integration
-- **"Compatibility"** - Game updates and mod conflict detection
+- **"Compatibility"** - Game updates, mod conflict detection, API validation failures
 - **"Performance"** - Slow operations and optimization opportunities
 
 ## 6. Professional Human-Like Commenting Standards
@@ -408,10 +411,54 @@ Each Harmony patch must include the header described in 4.2.1. Additionally:
 - Note configuration gates (feature flags, settings) and default behavior when disabled.
 - Include a brief performance note if the patch is on a frequent path (tick, per-frame, menu draw).
 
-Example header:
+**Modern example following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/)**:
 
 ```csharp
 // Harmony Patch
+// Target: TaleWorlds.CampaignSystem.Party.MobileParty.EffectiveEngineer { get; }
+// Why: Make player the effective engineer when assigned to Siegewright's Aide duty for natural skill/perk benefits
+// Safety: Campaign-only; checks enlistment state; validates duty assignment; only affects enlisted lord's party
+// Notes: Property getter patch; high priority to run before other mods; part of duties system officer role integration
+
+[HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]
+[HarmonyPriority(999)] // High priority - run before other mods
+[HarmonyBefore(new string[] { "other.mod.id" })] // Run before conflicting mods if needed
+public class DutiesEffectiveEngineerPatch
+{
+    static bool Prefix(MobileParty __instance, ref Hero __result)
+    {
+        try
+        {
+            // Guard: Verify all required objects exist
+            if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
+                __instance == null || 
+                EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo != __instance)
+            {
+                return true; // Use original behavior
+            }
+            
+            // Guard: Verify duty assignment
+            if (DutiesBehavior.Instance?.HasActiveDutyWithRole("Engineer") != true)
+            {
+                return true; // Use original behavior
+            }
+            
+            // Substitute player as effective engineer
+            __result = Hero.MainHero;
+            return false; // Skip original method - player's Engineering skill now affects party
+        }
+        catch (Exception ex)
+        {
+            ModLogger.Error("Patches", $"EffectiveEngineer patch error: {ex.Message}");
+            return true; // Fail safe - use original behavior
+        }
+    }
+}
+```
+
+Legacy example:
+```csharp
+// Harmony Patch  
 // Target: TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors.EconomyCampaignBehavior.DailyTick()
 // Why: Adjust economy tick multipliers for player-configurable scaling
 // Safety: Campaign-only; null-check settlements; exits early if settings disabled
@@ -547,12 +594,35 @@ These standards set strong defaults without over-prescribing tactics. When evide
 
 - Harmony ID stability: create a stable Harmony instance in Mod.Entry and call PatchAll at module load so patches can be unapplied/diagnosed later.
 
+**Modern SubModule initialization following [Bannerlord Modding standards](https://docs.bannerlordmodding.lt/modding/harmony/)**:
+
 ```csharp
 using HarmonyLib;
 
-// e.g., inside SubModule.OnSubModuleLoad or appropriate init hook
-var harmony = new Harmony("com.yourmodid.mod");
-harmony.PatchAll();
+public class SubModule : MBSubModuleBase
+{
+    protected override void OnSubModuleLoad()
+    {
+        base.OnSubModuleLoad();
+        
+        try
+        {
+            Harmony harmony = new Harmony("com.enlisted.mod");
+            harmony.PatchAll();
+            // Silent success - only log failures
+        }
+        catch (Exception ex)
+        {
+            ModLogger.Error("Compatibility", "Harmony initialization failed", ex);
+        }
+    }
+    
+    protected override void OnGameStart(Game game, IGameStarter gameStarter)
+    {
+        base.OnGameStart(game, gameStarter);
+        // Behaviors and game models registered here
+    }
+}
 ```
 
 - Placement: All patches in `src/Mod.GameAdapters/Patches/`.

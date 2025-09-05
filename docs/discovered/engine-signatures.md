@@ -62,11 +62,21 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: IgnoreByOtherPartiesTill(Campaign
 TaleWorlds.CampaignSystem.Party.MobileParty :: IgnoreForHours(float hours)
 TaleWorlds.CampaignSystem.Party.MobileParty :: IsVisible { get; set; }
 TaleWorlds.CampaignSystem.Party.MobileParty :: Position2D { get; set; }
-TaleWorlds.CampaignSystem.Party.MobileParty :: TeleportPartyToSafePosition(float minDistance, float maxDistance)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveEscortParty(MobileParty mobileParty)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveGoToPoint(Vec2 point)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveGoToSettlement(Settlement settlement)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMovePatrolAroundSettlement(Settlement settlement)
+
+## Party Officer Roles (VERIFIED FOR DUTIES SYSTEM)
+
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveEngineer { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveQuartermaster { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveScout { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveSurgeon { get; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: SetPartyEngineer(Hero hero)
+TaleWorlds.CampaignSystem.Party.MobileParty :: SetPartyQuartermaster(Hero hero)
+TaleWorlds.CampaignSystem.Party.MobileParty :: SetPartyScout(Hero hero)
+TaleWorlds.CampaignSystem.Party.MobileParty :: SetPartySurgeon(Hero hero)
 
 ## Settlement Entry
 
@@ -107,6 +117,18 @@ TaleWorlds.Localization.TextObject :: SetTextVariable(string tag, TextObject var
 TaleWorlds.Localization.TextObject :: SetTextVariable(string tag, string variable)
 TaleWorlds.Localization.TextObject :: SetTextVariable(string tag, float variable)
 TaleWorlds.Localization.TextObject :: SetTextVariable(string tag, int variable)
+
+## Localization System (VERIFIED AVAILABLE)
+
+TaleWorlds.Localization.MBTextManager :: GetLocalizedText(string text)
+TaleWorlds.Localization.LocalizedTextManager :: GetTranslatedText(string languageId, string textId)
+
+## Custom Game Models (VERIFIED AVAILABLE) 
+
+TaleWorlds.CampaignSystem.ComponentInterfaces.PartyHealingModel :: GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions)
+TaleWorlds.CampaignSystem.ComponentInterfaces.PartyHealingModel :: GetDailyHealingForRegulars(MobileParty party, bool includeDescriptions)
+TaleWorlds.CampaignSystem.ComponentInterfaces.PartyHealingModel :: GetBattleEndHealingAmount(MobileParty party, Hero hero)
+TaleWorlds.CampaignSystem.GameComponents.DefaultPartyHealingModel :: GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions)
 TaleWorlds.Localization.TextObject :: ToString()
 
 ## Library
@@ -147,6 +169,7 @@ TaleWorlds.CampaignSystem.CharacterDevelopment.Hero :: Heal(int healAmount, bool
 TaleWorlds.CampaignSystem.CharacterDevelopment.Hero :: Level { get; }
 TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: AddFocus(SkillObject skill, int amount, bool checkUnspentFocusPoints)
 TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: AddAttribute(CharacterAttribute attribute, int amount, bool checkUnspentAttributePoints)
+TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: AddSkillXp(SkillObject skill, float rawXp, bool isAffectedByFocusFactor = true, bool shouldNotify = true)
 TaleWorlds.CampaignSystem.Party.MobileParty :: TotalWage { get; }
 
 ## Equipment Management
@@ -375,3 +398,74 @@ TaleWorlds.ScreenSystem.ScreenManager :: TopScreen { get; }
 
 TaleWorlds.Library.InformationManager :: AddQuickInformation(TextObject message, int priority, CharacterObject character, string soundEventPath)
 TaleWorlds.Library.InformationManager :: DisplayMessage(InformationMessage message)
+
+## Configuration & JSON Support (VERIFIED AVAILABLE)
+
+// VERIFIED: Newtonsoft.Json ships with Bannerlord runtime
+// Location: C:\...\Mount & Blade II Bannerlord\bin\Win64_Shipping_Client\Newtonsoft.Json.dll  
+using Newtonsoft.Json; 
+JsonConvert.DeserializeObject<T>(string json)
+JsonConvert.SerializeObject(object obj)
+
+## Character Type Detection (for Troop Types)
+
+TaleWorlds.CampaignSystem.CharacterObject :: IsMounted { get; }
+TaleWorlds.CampaignSystem.CharacterObject :: IsRanged { get; }
+TaleWorlds.CampaignSystem.CharacterObject :: IsInfantry { get; }
+TaleWorlds.CampaignSystem.CharacterObject :: Culture { get; }
+TaleWorlds.CampaignSystem.CharacterObject :: Tier { get; }
+
+## Equipment Backup & Restoration (VERIFIED FOR CRITICAL MISSING FEATURES)
+
+// VERIFIED: Equipment cloning for backup system
+TaleWorlds.Core.Equipment :: Clone(bool cloneWithoutWeapons)
+TaleWorlds.Core.Equipment :: Equipment(Equipment equipment) // Clone constructor
+
+// VERIFIED: ItemRoster management for inventory backup
+TaleWorlds.CampaignSystem.Roster.ItemRoster :: ItemRoster()
+TaleWorlds.CampaignSystem.Roster.ItemRoster :: AddToCounts(ItemObject item, int number)
+TaleWorlds.CampaignSystem.Roster.ItemRoster :: AddToCounts(EquipmentElement element, int number) 
+TaleWorlds.CampaignSystem.Roster.ItemRoster :: Clear()
+TaleWorlds.CampaignSystem.Roster.ItemRoster :: Remove(ItemRosterElement element)
+
+// VERIFIED: Quest item protection (prevents quest item loss)
+TaleWorlds.Core.EquipmentElement :: IsQuestItem { get; }
+TaleWorlds.Core.ItemObject :: ItemFlags { get; }
+TaleWorlds.Core.ItemFlags :: NotUsableByPlayer
+TaleWorlds.Core.ItemFlags :: NonTransferable
+
+// VERIFIED: Equipment visual refresh (UI updates after equipment changes)
+TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: UpdateHeroEquipment()
+TaleWorlds.CampaignSystem.CampaignEventDispatcher :: OnHeroEquipmentChanged(Hero hero)
+
+## Kingdom Integration (VERIFIED FOR VASSALAGE SYSTEM)
+
+// VERIFIED: Kingdom joining for vassalage offers
+TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction :: ApplyByJoinToKingdom(Clan clan, Kingdom newKingdom, bool showNotification = true)
+TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction :: ApplyByJoinToKingdomByDefection(Clan clan, Kingdom newKingdom, bool showNotification = true)
+
+// VERIFIED: Settlement ownership for land grants
+TaleWorlds.CampaignSystem.Actions.ChangeOwnerOfSettlementAction :: ApplyByGift(Settlement settlement, Hero newOwner)
+TaleWorlds.CampaignSystem.Actions.ChangeOwnerOfSettlementAction :: ApplyByDefault(Hero hero, Settlement settlement)
+
+## Save System (VERIFIED - NO CUSTOM SAVEDEFINER NEEDED)
+
+// VERIFIED: Our dictionary types already supported by core save system
+// From SaveableCampaignTypeDefiner.cs lines 515-525:
+Dictionary<Hero, int>           // ✅ Already defined in core system
+Dictionary<IFaction, int>       // ✅ Already defined in core system  
+List<Hero>                      // ✅ Already defined in core system
+List<IFaction>                  // ✅ Already defined in core system
+
+// VERIFIED: Equipment types are core serializable types
+// From Hero.cs lines 573, 578:
+Equipment                       // ✅ Core type with [SaveableProperty] support
+ItemRoster                      // ✅ Core serializable type
+
+// Standard SyncData pattern (no try-catch needed)
+TaleWorlds.CampaignSystem.CampaignBehaviorBase :: SyncData(IDataStore dataStore)
+TaleWorlds.CampaignSystem.IDataStore :: SyncData<T>(string key, ref T data)
+TaleWorlds.CampaignSystem.IDataStore :: IsLoading { get; }
+
+// Save versioning support
+dataStore.SyncData("_saveVersion", ref _saveVersion) // Standard practice for version tracking

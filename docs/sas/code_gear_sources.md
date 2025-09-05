@@ -82,6 +82,12 @@ TaleWorlds.CampaignSystem.ComponentInterfaces.EquipmentSelectionModel :: GetEqui
 TaleWorlds.CampaignSystem.ComponentInterfaces.EquipmentSelectionModel :: GetEquipmentRostersForInitialChildrenGeneration(Hero hero)
 TaleWorlds.CampaignSystem.GameComponents.DefaultEquipmentSelectionModel :: GetEquipmentRostersForHeroComeOfAge(Hero hero, bool isCivilian)
 
+### Equipment Assignment (VERIFIED AVAILABLE)
+
+Helpers.EquipmentHelper :: AssignHeroEquipmentFromEquipment(Hero hero, Equipment equipment)
+// VERIFIED: Located in TaleWorlds.CampaignSystem\Helpers\EquipmentHelper.cs:11
+// Usage: Primary method for applying complete equipment kits to heroes
+
 ### Missing/Not Found
 
 - CharacterObject.All static accessor - Use MBObjectManager.GetObjectTypeList<CharacterObject>() instead
@@ -91,3 +97,4 @@ TaleWorlds.CampaignSystem.GameComponents.DefaultEquipmentSelectionModel :: GetEq
 - CharacterObject.AllEquipments - Not found, use BattleEquipments property
 - CharacterObject.FirstBattleEquipment - Not found, use BattleEquipments[0] instead
 - CharacterObject.RandomBattleEquipment - Not found, use random selection from BattleEquipments
+

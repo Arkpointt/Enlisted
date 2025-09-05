@@ -1,4 +1,6 @@
 {
+  "schemaVersion": 1,
+  "enabled": true,
   "LogMenus": true,
   "LogDialogs": true,
   "LogCampaignEvents": true,
@@ -6,6 +8,7 @@
   "DiscoveryPlayerOnly": true,
   "LogApiCalls": true,
   "ApiCallDetail": "summary",
+  "dutiesConfig": "duties_system.json",
   "SAS": {
     "AttachWhenClose": true,
     "AttachRange": 0.6,

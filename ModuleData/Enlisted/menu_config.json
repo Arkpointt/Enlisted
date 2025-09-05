@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "menus": {
+    "enlisted_status": {
+      "id": "enlisted_status",
+      "title_key": "{=enlisted_status_title}Enlisted Status",
+      "description": "Main enlisted soldier interface showing service status and available actions",
+      "text": "Lord: {LORD_NAME} ({FACTION_NAME})\nRank: {PLAYER_RANK} (Tier {TIER})\nFormation: {FORMATION_DISPLAY} ({FORMATION_TYPE})\nService Duration: {SERVICE_DAYS} days ({RETIREMENT_COUNTDOWN})\n\nCurrent Duties:\n{ACTIVE_DUTIES}\n\nNext Promotion: {CURRENT_XP}/{NEXT_XP} XP\nDaily Wage: {DAILY_WAGE}{GOLD_ICON}\n\nArmy Status: {ARMY_STATUS}\n{CURRENT_OBJECTIVE}",
+      "overlay": "None",
+      "flags": "None",
+      "background_mesh": null
+    },
+    "enlisted_equipment": {
+      "id": "enlisted_equipment", 
+      "title_key": "{=quartermaster_title}Quartermaster Supplies",
+      "description": "Equipment management with multiple troop choices and pricing",
+      "text": "Your Gold: {PLAYER_GOLD}{GOLD_ICON} | Current: {CURRENT_EQUIPMENT}\nYour Tier: {TIER} | Formation: {FORMATION}\n\nAvailable Equipment (Tier {TIER} & Below):\n\n{EQUIPMENT_CHOICES}\n\nLower Tiers Available:\n{LOWER_TIER_OPTIONS}",
+      "overlay": "None",
+      "flags": "None"
+    },
+    "enlisted_record": {
+      "id": "enlisted_record",
+      "title_key": "{=service_record_title}Service Record", 
+      "description": "Detailed service history and progression tracking",
+      "text": "Experience Breakdown:\n{XP_BREAKDOWN}\n\nRelationships:\n{RELATIONSHIP_STATUS}\n\nBattle History:\n{BATTLE_STATISTICS}\n\nFormation Progress:\n{FORMATION_DETAILS}\n\nService Details:\n{SERVICE_INFORMATION}",
+      "overlay": "None",
+      "flags": "None"
+    }
+  },
+  "menu_options": {
+    "field_medical": {
+      "id": "enlisted_field_medical",
+      "display_text": "Request field medical treatment",
+      "description": "Army medics treat wounds (Cooldown: {COOLDOWN_STATUS})",
+      "leave_type": "Wait",
+      "priority": 100,
+      "enabled_conditions": ["enlisted", "wounded", "cooldown_expired"],
+      "disabled_tooltips": {
+        "healthy": "You are at full health.",
+        "cooldown": "Must wait {DAYS} more days for medical supplies.",
+        "not_enlisted": "Only available to enlisted soldiers."
+      }
+    },
+    "speak_with_lord": {
+      "id": "enlisted_speak_lord",
+      "display_text": "Speak with lord about duties", 
+      "description": "Discuss duty assignments and service matters",
+      "leave_type": "Conversation",
+      "priority": 110,
+      "enabled_conditions": ["enlisted", "lord_alive", "lord_accessible"]
+    },
+    "visit_quartermaster": {
+      "id": "enlisted_quartermaster",
+      "display_text": "Visit the quartermaster",
+      "description": "Access equipment and troop selection",
+      "leave_type": "Trade", 
+      "priority": 120,
+      "enabled_conditions": ["enlisted"],
+      "target_menu": "enlisted_equipment"
+    },
+    "service_record": {
+      "id": "enlisted_record",
+      "display_text": "View detailed service record",
+      "description": "Review progression and service history",
+      "leave_type": "Default",
+      "priority": 130, 
+      "enabled_conditions": ["enlisted"],
+      "target_menu": "enlisted_record"
+    },
+    "request_retirement": {
+      "id": "request_retirement",
+      "display_text": "Request honorable retirement",
+      "description": "End military service with veteran benefits",
+      "leave_type": "Conversation",
+      "priority": 140,
+      "enabled_conditions": ["enlisted", "retirement_eligible"],
+      "disabled_tooltips": {
+        "not_eligible": "Must serve {DAYS} more days to be eligible for retirement."
+      }
+    },
+    "return_to_duties": {
+      "id": "return_to_duties",
+      "display_text": "Return to duties",
+      "description": "Close menu and continue following lord", 
+      "leave_type": "Leave",
+      "priority": 999,
+      "enabled_conditions": ["always"]
+    },
+    "apply_equipment": {
+      "id": "apply_equipment",
+      "display_text": "Apply selected equipment ({COST}{GOLD_ICON})",
+      "description": "Equip selected troop equipment style",
+      "leave_type": "Trade",
+      "priority": 200,
+      "enabled_conditions": ["can_afford", "selection_made"],
+      "disabled_tooltips": {
+        "cannot_afford": "You cannot afford this equipment ({COST}{GOLD_ICON}).",
+        "no_selection": "Select equipment first."
+      }
+    },
+    "restore_personal": {
+      "id": "restore_personal",
+      "display_text": "Restore personal equipment (FREE)",
+      "description": "Return to your original equipment",
+      "leave_type": "Trade", 
+      "priority": 210,
+      "enabled_conditions": ["has_personal_backup"]
+    },
+    "back_to_status": {
+      "id": "back_to_status",
+      "display_text": "Back to enlisted status",
+      "description": "Return to main enlisted menu",
+      "leave_type": "Leave",
+      "priority": 999,
+      "target_menu": "enlisted_status"
+    }
+  },
+  "text_variables": {
+    "icons": {
+      "gold": "<img src=\"General\\\\Icons\\\\Coin@2x\" extend=\"8\">",
+      "formation_infantry": "⚔️",
+      "formation_archer": "🏹", 
+      "formation_cavalry": "🐎",
+      "formation_horsearcher": "🏇"
+    },
+    "cooldown_messages": {
+      "available": "Available",
+      "standard_cooldown": "{DAYS} days remaining",
+      "field_medic_cooldown": "{DAYS} days remaining (Medic)"
+    },
+    "equipment_status": {
+      "equipped": "[EQUIPPED]",
+      "available": "✓",
+      "too_expensive": "❌ (Too expensive)",
+      "tier_locked": "🔒 (Tier {REQUIRED} required)"
+    }
+  },
+  "ui_settings": {
+    "max_equipment_choices_displayed": 12,
+    "show_tier_progression": true,
+    "show_formation_icons": true,
+    "auto_update_intervals": {
+      "army_status": 30,
+      "relationship_display": 60,
+      "xp_progress": 1
+    }
+  }
+}

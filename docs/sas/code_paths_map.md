@@ -57,3 +57,4 @@ API signatures mapped to decompiled source locations
 - **CharacterObject.All**: Use `MBObjectManager.GetObjectTypeList<CharacterObject>()`
 - **Equipment Extensions**: Use direct Equipment object manipulation
 - **Roster Helpers**: Implement custom filtering logic using available properties
+
