@@ -49,11 +49,14 @@ Month 12: 18,000 XP → Tier 7 "Veteran" → Retirement eligible → Keep final 
 - ✅ **IMPLEMENTED**: Full lord death/capture safety validation
 - ✅ **IMPLEMENTED**: Comprehensive battle crash prevention using SAS patterns
 
-### **Phase 1C: Duties System Foundation (1 week)**
+### **Phase 1C: Duties System Foundation ✅ COMPLETE**
 **Goal**: Configuration-driven duties with formation specializations
 - ✅ Modern duties system with troop type specializations
 - ✅ Officer role integration (Engineer/Scout/Surgeon/Quartermaster)
 - ✅ JSON-driven duty definitions and progression
+- ✅ Daily skill XP and wage multipliers implemented
+- ✅ Formation auto-detection and specialization system
+- ✅ Dual approach officer roles (public APIs + optional Harmony patches)
 
 ### **Phase 2: Troop Selection & Officer Integration (2 weeks)**
 **Goal**: SAS-style troop selection with equipment replacement  
@@ -144,13 +147,15 @@ Example: Retire as "Imperial Cataphract" → Keep elite heavy cavalry gear perma
 ## 🚀 **IMPLEMENTATION STATUS: PHASE 1A/1B ✅ COMPLETE**
 
 **✅ Phase 1A Complete**: Centralized dialog system with immediate menu activation
-**✅ Phase 1B Complete**: Full SAS core implementation with lord safety validation  
-**✅ All Critical APIs 100% Verified** - IsActive, TickEvent, AddWaitGameMenu, Army management
-**✅ Battle Crash Issue Resolved** - Using comprehensive SAS lord validation patterns
+**✅ Phase 1B Complete**: Full SAS core implementation with lord safety validation + battle participation
+**✅ Phase 1C Complete**: Configuration-driven duties system with officer roles and formation specializations  
+**✅ All Critical APIs 100% Verified** - IsActive, TickEvent, AddWaitGameMenu, Army management, Officer roles
+**✅ Battle Crash Issue Resolved** - Using comprehensive SAS lord validation patterns + event-driven safety
 **✅ Lord Death/Capture Handling** - Automatic discharge with user-friendly notifications
+**✅ Pathfinding Crash Resolved** - Reverted to simple, working escort logic
 **✅ ZERO Essential Harmony Patches** - Engine properties handle encounter prevention
 **✅ All Configuration Files Updated**
-**✅ Ready for Phase 1C**: Duties system implementation
+**✅ Ready for Phase 2**: Troop selection and equipment management implementation
 
 ## 🔧 **Harmony Patch Philosophy** - **REVOLUTIONIZED BY SAS DECOMPILE**
 

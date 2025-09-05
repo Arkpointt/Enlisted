@@ -14,12 +14,12 @@ This implementation creates a complete military service system where players can
 
 ## 📋 Implementation Status
 
-### Phase Structure (5 weeks total) - **CORRECTED AFTER SAS DECOMPILE ANALYSIS**
+### Phase Structure (5 weeks total) - **UPDATED IMPLEMENTATION STATUS**
 - **Phase 1A**: Centralized Dialog System - ✅ **COMPLETE**
 - **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - SAS immediate menu replacement implemented
 - **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
-- **Phase 1C**: Duties System Foundation (1 week) - ⏳ **NEXT** - configuration-driven duties with SAS officer integration
-- **Phase 2**: Troop Selection & Officer Integration (2 weeks) - ⏳ **READY** - SAS troop selection + optional enhancement patches
+- **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
+- **Phase 2**: Troop Selection & Officer Integration (2 weeks) - ⏳ **NEXT** - SAS troop selection + optional enhancement patches
 - **Phase 3**: Army & Battle Integration (1 week) - ⏳ **SIMPLIFIED** - core army logic moved to Phase 1B
 - **Phase 4**: Menu Enhancement & Polish (1 week) - ⏳ **REDUCED** - basic menu now in Phase 1A+
 - **Phase 5**: Edge Cases & Testing (1 week) - ⏳ Ready for Implementation
@@ -165,20 +165,21 @@ We have complete and verified API documentation covering:
 ### Implementation Order
 1. ✅ **Phase 1A Complete**: Dialog system updated to use diplomatic submenu with immediate menu activation
 2. ✅ **Phase 1B Complete**: SAS core functionality implemented with lord safety validation and battle crash prevention
-3. **Phase 1C Next**: Build modern duties system with troop types and officer roles
-4. **Follow Phase Structure**: Each phase builds on the previous with clear acceptance criteria
-5. **Test Incrementally**: Verify functionality at each phase completion
+3. ✅ **Phase 1C Complete**: Modern duties system with troop types, officer roles, and configuration-driven framework
+4. **Phase 2 Next**: SAS-style troop selection with equipment replacement system
+5. **Follow Phase Structure**: Each phase builds on the previous with clear acceptance criteria
+6. **Test Incrementally**: Verify functionality at each phase completion
 
 ### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
 - `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub + immediate menu activation + SAS menu clearing
-- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: SAS real-time TickEvent + IsActive management + dynamic army membership + lord safety validation
+- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: SAS real-time TickEvent + IsActive management + dynamic army membership + lord safety validation + battle participation
 - `EnlistedMenuBehavior.cs` - ✅ **INTEGRATED**: SAS immediate menu system implemented within EnlistedDialogManager
-- `TroopSelectionManager.cs` - **READY**: SAS-style real troop selection with **equipment REPLACEMENT** (Phase 2)
-- `EnlistedDutiesBehavior.cs` - **NEXT**: Configuration-driven duties system (4-formation support) (Phase 1C)
+- `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system with formation specializations and officer roles
+- `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
+- `ConfigurationManager.cs` - ✅ **COMPLETE**: Safe JSON loading with schema versioning and validation
+- `TroopSelectionManager.cs` - **NEXT**: SAS-style real troop selection with **equipment REPLACEMENT** (Phase 2)
 - `EnlistedPartyHealingModel.cs` - **READY**: Custom healing model for enhanced enlisted soldier healing (Phase 2)
-- `DutiesOfficerRolePatches.cs` - **READY**: 4 Harmony patches for enhanced officer integration (Phase 2)
 - `RetirementSystem.cs` - **READY**: 1-year service requirement with equipment choice system (Phase 2)
-- `ConfigurationManager.cs` - **NEXT**: Safe JSON loading with schema versioning and validation (Phase 1C)
 
 ## 🎮 Player Experience
 
