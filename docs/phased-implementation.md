@@ -1551,18 +1551,173 @@ else
 - **Sturgia**: Warrior, Bowman, Druzhnik, Horse Archer
 - **Battania**: Clansman, Skirmisher, Mounted Warrior, Mounted Skirmisher
 
-## Phase 2: Troop Selection & Officer Integration (2 weeks) - PUBLIC API APPROACH
+## Phase 2A: Enhanced Menu System ✅ COMPLETE - PROFESSIONAL MILITARY INTERFACE
 
-### 2.1 Troop Selection System  
+### 2A.1 Enhanced Menu System Implementation ✅ COMPLETE
+**Goal**: Professional military interface with comprehensive status display and real-time information
+
+**✅ COMPLETED FILES**:
+```csharp
+// Enhanced menu system with comprehensive military interface
+src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs
+src/Features/Interface/Behaviors/EnlistedInputHandler.cs
+
+// Enhanced existing files with menu support methods
+src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs  // Added GetActiveDutiesDisplay(), etc.
+src/Features/Conversations/Behaviors/EnlistedDialogManager.cs // Restored working dialog patterns
+src/Mod.Entry/SubModule.cs                                   // Registered new behaviors
+Enlisted.csproj                                              // Added Interface compilation
+```
+
+**✅ KEY IMPLEMENTATION** (`EnlistedMenuBehavior.cs`):
+```csharp
+public sealed class EnlistedMenuBehavior : CampaignBehaviorBase
+{
+    public static EnlistedMenuBehavior Instance { get; private set; }
+    
+    private void AddMainEnlistedStatusMenu(CampaignGameStarter starter)
+    {
+        // ✅ CORRECT API (verified from TaleWorlds decompiled code):
+        starter.AddWaitGameMenu("enlisted_status", 
+            "Enlisted Status\n{ENLISTED_STATUS_TEXT}",
+            new OnInitDelegate(OnEnlistedStatusInit),
+            new OnConditionDelegate(OnEnlistedStatusCondition),
+            null, // No consequence
+            null, // No tick handler
+            GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
+            GameOverlays.MenuOverlayType.None,
+            1f, // Target hours
+            GameMenu.MenuFlags.None,
+            null);
+
+        // Interactive military services
+        starter.AddGameMenuOption("enlisted_status", "enlisted_field_medical",
+            "Request field medical treatment",
+            IsFieldMedicalAvailable,
+            OnFieldMedicalSelected, false, 1);
+            
+        starter.AddGameMenuOption("enlisted_status", "enlisted_duties_management",
+            "Manage military duties ({ACTIVE_DUTIES_COUNT}/{MAX_DUTIES})",
+            IsDutiesManagementAvailable,
+            OnDutiesManagementSelected, false, 2);
+            
+        starter.AddGameMenuOption("enlisted_status", "enlisted_advancement",
+            "Equipment & advancement",
+            IsAdvancementAvailable,
+            OnAdvancementSelected, false, 3);
+    }
+    
+    private void RefreshEnlistedStatusDisplay()
+    {
+        var enlistment = EnlistmentBehavior.Instance;
+        if (!enlistment?.IsEnlisted == true)
+        {
+            MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", "You are not currently enlisted.");
+            return;
+        }
+
+        var lord = enlistment.CurrentLord;
+        var faction = lord?.MapFaction?.Name?.ToString() ?? "Unknown";
+        var serviceDays = CalculateServiceDays(enlistment);
+        var rank = $"Tier {enlistment.EnlistmentTier}/7";
+        var experience = $"{enlistment.EnlistmentXP} XP";
+        
+        // Professional military status display
+        var statusText = $"Lord: {lord?.Name?.ToString() ?? "Unknown"}\n";
+        statusText += $"Faction: {faction}\n";
+        statusText += $"Rank: {rank}\n";
+        statusText += $"Experience: {experience}\n";
+        statusText += $"Service Duration: {serviceDays} days\n\n";
+        statusText += "Following your lord's commands...";
+
+        MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
+    }
+}
+```
+
+**✅ KEYBOARD SHORTCUTS** (`EnlistedInputHandler.cs`):
+```csharp
+public sealed class EnlistedInputHandler : CampaignBehaviorBase
+{
+    private const InputKey PROMOTION_HOTKEY = InputKey.P;
+    private const InputKey STATUS_MENU_HOTKEY = InputKey.N;
+    
+    private void HandlePromotionHotkey()
+    {
+        bool currentKeyState = Input.IsKeyPressed(PROMOTION_HOTKEY);
+        if (currentKeyState && !_lastPromotionKeyState)
+        {
+            if (IsPromotionAvailable())
+            {
+                GameMenu.ActivateGameMenu("enlisted_troop_selection");
+                ShowNotification("Promotion menu opened - choose your advancement!");
+            }
+        }
+        _lastPromotionKeyState = currentKeyState;
+    }
+}
+```
+
+**✅ CRITICAL API CORRECTIONS** (Using actual TaleWorlds decompiled APIs):
+- **AddWaitGameMenu**: Verified signature from `HideoutCampaignBehavior.cs:81`
+- **Dialog Structure**: Player-initiated via `AddPlayerLine` → `AddDialogLine` for diplomatic submenu
+- **Menu Delegates**: Proper `OnInitDelegate`/`OnConditionDelegate` wrappers required
+- **SAS Menu Behavior**: Menu stays active while following lord (no exit buttons)
+
+**✅ CRITICAL IMPLEMENTATION LESSONS**:
+1. **ALWAYS verify APIs using `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\`** - never use outdated docs
+2. **Dialog pattern**: Use player-initiated (`AddPlayerLine`) not lord-initiated (`AddDialogLine`) for entry point
+3. **Field name verification**: Check actual field names before adding new methods to existing behaviors
+4. **SAS menu behavior**: Remove unnecessary exit buttons - being in menu IS doing duties
+5. **Dialog restoration**: When system breaks, revert to last working pattern and fix incrementally
+
+**✅ BEHAVIOR REGISTRATION** (`SubModule.cs`):
+```csharp
+if (gameStarterObject is CampaignGameStarter campaignStarter)
+{
+    // Core military service behaviors
+    campaignStarter.AddBehavior(new EnlistmentBehavior());
+    campaignStarter.AddBehavior(new EnlistedDialogManager());
+    campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
+    
+    // Enhanced menu and input system
+    campaignStarter.AddBehavior(new EnlistedMenuBehavior());    // ✅ Phase 2A
+    campaignStarter.AddBehavior(new EnlistedInputHandler());    // ✅ Phase 2A
+}
+```
+
+**✅ INTEGRATION WITH EXISTING SYSTEMS**:
+```csharp
+// Enhanced EnlistedDutiesBehavior.cs with menu support methods:
+public string GetActiveDutiesDisplay()      // Format active duties for display
+public string GetCurrentOfficerRole()      // Get current officer assignment  
+public string GetPlayerFormationType()     // Get formation specialization
+public float GetCurrentWageMultiplier()    // Calculate duty-based wage bonus
+
+// Enhanced EnlistmentBehavior.cs with promotion notifications:
+private void CheckPromotionNotification(int previousXP, int currentXP)
+private void ShowPromotionNotification(int availableTier)
+
+// Fixed EnlistedDialogManager.cs dialog patterns:
+starter.AddPlayerLine("enlisted_diplomatic_entry",  // ✅ PLAYER initiates
+    "lord_talk_speak_diplomacy_2",
+    "enlisted_main_hub",
+    "I wish to discuss military service.",
+    IsValidLordForMilitaryService, null, 110);
+```
+
+## Phase 2B: Troop Selection & Equipment Replacement (2 weeks) - NEXT PHASE  
+
+### 2B.1 Troop Selection System  
 **Goal**: Implement SAS-style troop selection with **real Bannerlord troop templates** and **equipment replacement system**
 
-**Promotion Notification Flow**:
-1. **XP Threshold Reached** → Show notification: *"Promotion available! Press 'P' to advance."*
-2. **Player Presses 'P'** → Open troop selection menu
-3. **Menu Shows Real Troops** → Filter by culture and tier: *"Imperial Legionary", "Aserai Mameluke", etc.*
-4. **Player Selects Troop** → Apply equipment from `CharacterObject.BattleEquipments`
+**Promotion Notification Flow** (Enhanced menu framework ready):
+1. **XP Threshold Reached** → Show notification: *"Promotion available! Press 'P' to advance."* ✅ **IMPLEMENTED**
+2. **Player Presses 'P'** → Open troop selection menu ✅ **FRAMEWORK READY**
+3. **Menu Shows Real Troops** → Filter by culture and tier: *"Imperial Legionary", "Aserai Mameluke", etc.* ⏳ **NEXT**
+4. **Player Selects Troop** → Apply equipment from `CharacterObject.BattleEquipments` ⏳ **NEXT**
 
-**Exact Implementation Steps**:
+**Exact Implementation Steps** (Phase 2B):
 1. **Create `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`** (SAS approach):
    ```csharp
    public void ShowTroopSelectionMenu(int newTier)
@@ -4050,10 +4205,17 @@ public List<ItemObject> GetTierAppropriateEquipment(int tier, CultureObject cult
 - Basic following behavior works reliably
 - Enlistment state persists across sessions
 
-### Phase 2 Success
-- All 9 assignments functional with proper XP/skill bonuses
-- Equipment system working with state-issued gear
-- Assignment changes work through dialog system
+### Phase 2A Success ✅ COMPLETE
+- Enhanced menu system provides professional military interface
+- Real-time status display with comprehensive information
+- Keyboard shortcuts for quick access ('P' for promotion, 'N' for status)
+- Proper SAS menu behavior maintained (stays active while following lord)
+- API signatures corrected using actual TaleWorlds decompiled code
+
+### Phase 2B Success (NEXT)
+- Real Bannerlord troop selection system functional 
+- Equipment replacement system working (not accumulation)
+- Formation auto-detection integrated with troop selection
 
 ### Phase 3 Success
 - 7-tier progression system complete
