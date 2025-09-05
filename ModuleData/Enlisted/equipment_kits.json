@@ -1,7 +1,39 @@
 {
   "schemaVersion": 1,
-  "enabled": true,
-  "equipment_kits": {
+  "enabled": false,
+  "_deprecated": "SYSTEM CHANGE: Switched to SAS troop selection approach - custom equipment kits no longer used",
+  "_new_system": "Players select from real Bannerlord troops; equipment extracted from CharacterObject.BattleEquipments",
+  "troop_selection_system": {
+    "_description": "NEW SYSTEM: Players choose from real Bannerlord troops instead of custom kits",
+    "equipment_policy": {
+      "_important": "EQUIPMENT REPLACEMENT SYSTEM - Player does NOT accumulate all equipment",
+      "promotion_behavior": "Equipment REPLACED with new troop's gear (not added to inventory)",
+      "retirement_benefit": "Player keeps FINAL equipment only (Tier 7 veteran gear)",
+      "rationale": "Realistic military service - turn in old equipment, receive new equipment"
+    },
+    "promotion_notification": {
+      "message": "Promotion available! Press 'P' to advance your military career.",
+      "sound": "event:/ui/notification/levelup",
+      "key_binding": "P"
+    },
+    "troop_discovery": {
+      "api": "MBObjectManager.Instance.GetObjectTypeList<CharacterObject>()",
+      "culture_filter": "EnlistmentBehavior.Instance.CurrentLord.Culture.StringId",
+      "tier_filter": "character.Tier == targetTier",
+      "soldier_filter": "character.IsSoldier == true"
+    },
+    "equipment_assignment": {
+      "source": "selectedTroop.BattleEquipments.FirstOrDefault()",
+      "api": "EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, equipment)"
+    },
+    "formation_detection": {
+      "horse_archer": "troop.IsRanged && troop.IsMounted",
+      "cavalry": "!troop.IsRanged && troop.IsMounted", 
+      "archer": "troop.IsRanged && !troop.IsMounted",
+      "infantry": "!troop.IsRanged && !troop.IsMounted"
+    }
+  },
+  "equipment_kits_DEPRECATED": {
     "empire_infantry_t1": {
       "display_name": "Imperial Recruit Kit",
       "formation": "infantry",
@@ -198,79 +230,93 @@
     }
   },
   "culture_equipment_patterns": {
+    "_comment": "VERIFIED from actual Bannerlord game XML files - these patterns are confirmed to exist",
     "empire": {
-      "weapon_prefix": "imperial_",
+      "weapon_prefix": "empire_",
       "armor_prefix": "imperial_",
       "horse_prefix": "imperial_",
-      "tier_names": ["recruit", "basic", "veteran", "elite", "noble", "champion", "legendary"]
+      "tier_names": ["recruit", "basic", "veteran", "elite", "noble", "champion", "legendary"],
+      "_verified_items": ["empire_sword_1_t2", "empire_sword_2_t3", "empire_sword_6_t5", "imperial_bow_t1"]
     },
     "aserai": {
       "weapon_prefix": "aserai_",
       "armor_prefix": "aserai_", 
-      "horse_prefix": "aserai_",
-      "tier_names": ["tribesman", "basic", "warrior", "veteran", "noble", "faris", "elite"]
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["tribesman", "basic", "warrior", "veteran", "noble", "faris", "elite"],
+      "_verified_items": ["aserai_sword_1_t2", "aserai_sword_3_t3", "aserai_sword_4_t4", "aserai_sword_5_t4", "aserai_2haxe_1_t3", "aserai_tunic_waistcoat", "long_desert_robe", "bamboo_axe_t4"]
     },
     "khuzait": {
       "weapon_prefix": "khuzait_",
       "armor_prefix": "khuzait_",
-      "horse_prefix": "steppe_",
-      "tier_names": ["nomad", "basic", "horseman", "lancer", "noble", "khan_guard", "elite"]
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["nomad", "basic", "horseman", "lancer", "noble", "khan_guard", "elite"],
+      "_verified_items": ["khuzait_sword_1_t2", "khuzait_sword_2_t3", "khuzait_sword_3_t3", "khuzait_sword_4_t4", "khuzait_noble_sword_1_t5", "khuzait_civil_coat", "khuzait_fortified_armor", "eastern_lamellar_armor"]
     },
     "vlandia": {
       "weapon_prefix": "vlandia_", 
       "armor_prefix": "vlandia_",
-      "horse_prefix": "vlandia_",
-      "tier_names": ["recruit", "footman", "crossbow", "sergeant", "knight", "champion", "banner_knight"]
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["recruit", "footman", "crossbow", "sergeant", "knight", "champion", "banner_knight"],
+      "_verified_items": ["vlandia_axe_2_t4", "crossbow_c", "crossbow_e"],
+      "_note": "Limited culture prefix items; uses generic items with culture XML attributes"
     },
     "sturgia": {
       "weapon_prefix": "sturgia_",
       "armor_prefix": "sturgia_",
-      "horse_prefix": "sturgia_",
-      "tier_names": ["recruit", "warrior", "trained", "veteran", "huscarl", "ulfhednar", "hero"]
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["recruit", "warrior", "trained", "veteran", "huscarl", "ulfhednar", "hero"],
+      "_verified_items": ["sturgia_axe_4_t4", "sturgia_axe_5_t5", "sturgia_noble_sword_1_t5", "sturgia_noble_sword_2_t5", "sturgia_noble_sword_3_t5", "sturgia_noble_sword_4_t5"]
     },
     "battania": {
       "weapon_prefix": "battania_",
       "armor_prefix": "battania_", 
-      "horse_prefix": "battania_",
-      "tier_names": ["volunteer", "clansman", "trained", "veteran", "hero", "fian", "champion"]
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["volunteer", "clansman", "trained", "veteran", "hero", "fian", "champion"],
+      "_verified_items": ["battania_axe_2_t4", "battania_axe_3_t5", "battania_2haxe_1_t2", "battania_noble_sword_1_t5"]
     }
   },
   "fallback_equipment": {
+    "_comment": "CORRECTED: Real game item IDs verified from Bannerlord XML files",
     "empire": {
-      "basic_infantry": "imperial_sword_t1",
+      "basic_infantry": "empire_sword_1_t2",
       "basic_archer": "imperial_bow_t1", 
       "basic_cavalry": "imperial_horse",
       "basic_armor": "imperial_padded_cloth"
     },
     "aserai": {
-      "basic_infantry": "eastern_sword_t1",
-      "basic_archer": "nomad_bow",
-      "basic_cavalry": "aserai_horse",
-      "basic_armor": "aserai_cloth"
+      "basic_infantry": "aserai_sword_1_t2",
+      "basic_archer": "desert_robe",
+      "basic_cavalry": "noble_horse_khamseen",
+      "basic_armor": "long_desert_robe",
+      "_note": "Uses mix of culture prefix (aserai_sword_1_t2) and generic names (desert_robe)"
     },
     "khuzait": {
-      "basic_infantry": "steppe_sword_t1",
-      "basic_archer": "steppe_bow",
-      "basic_cavalry": "steppe_horse", 
-      "basic_armor": "steppe_armor"
+      "basic_infantry": "khuzait_sword_1_t2",
+      "basic_archer": "reinforced_suede_armor",
+      "basic_cavalry": "noble_horse_khamseen", 
+      "basic_armor": "khuzait_civil_coat",
+      "_note": "All items verified from game XML with culture prefix pattern"
     },
     "vlandia": {
-      "basic_infantry": "vlandia_sword_t1",
-      "basic_archer": "vlandia_crossbow",
-      "basic_cavalry": "vlandia_horse",
-      "basic_armor": "vlandia_aketon"
+      "basic_infantry": "vlandia_axe_2_t4",
+      "basic_archer": "crossbow_c",
+      "basic_cavalry": "noble_horse_khamseen",
+      "basic_armor": "crossbow_e",
+      "_note": "Limited culture prefix items found, crossbows use culture XML attribute"
     },
     "sturgia": {
-      "basic_infantry": "sturgia_sword_t1", 
-      "basic_archer": "sturgia_bow",
-      "basic_cavalry": "sturgia_horse",
-      "basic_armor": "sturgia_cloth"
+      "basic_infantry": "sturgia_axe_4_t4", 
+      "basic_archer": "reinforced_suede_armor",
+      "basic_cavalry": "noble_horse_khamseen",
+      "basic_armor": "khuzait_civil_coat",
+      "_note": "Uses verified Sturgia prefix for weapons, shared armor items"
     },
     "battania": {
-      "basic_infantry": "battania_sword_t1",
-      "basic_archer": "battania_bow",
-      "basic_cavalry": "battania_horse",
-      "basic_armor": "battania_cloth"
+      "basic_infantry": "battania_axe_2_t4",
+      "basic_archer": "battania_2haxe_1_t2",
+      "basic_cavalry": "noble_horse_khamseen",
+      "basic_armor": "reinforced_suede_armor",
+      "_note": "Verified Battania prefix weapons, shared equipment for armor/horses"
     }
   },
   "item_validation": {

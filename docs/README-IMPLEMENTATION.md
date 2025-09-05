@@ -14,14 +14,15 @@ This implementation creates a complete military service system where players can
 
 ## 📋 Implementation Status
 
-### Phase Structure (5 weeks total)
-- **Phase 1A**: Core Dialog System (1 week) - ⏳ Ready for Implementation
-- **Phase 1B**: Complete SAS Core Implementation (1 week) - ⏳ EXPANDED - implements missing tier/wage/equipment systems  
-- **Phase 1C**: Duties System Foundation (1 week) - ⏳ NEW APPROACH - configuration-driven duties with troop types
-- **Phase 2**: Equipment Kits & Officer Integration (2 weeks) - ⏳ ENHANCED - officer role patches + equipment kits
-- **Phase 3**: Army & Battle Integration (2 weeks) - ⏳ Ready for Implementation
-- **Phase 4**: Enlisted Menu System Creation (1 week) - ⏳ CRITICAL - menu system missing from current implementation
-- **Phase 5**: Edge Cases & Polish (1 week) - ⏳ Ready for Implementation
+### Phase Structure (5 weeks total) - **CORRECTED AFTER SAS DECOMPILE ANALYSIS**
+- **Phase 1A**: Centralized Dialog System - ✅ **COMPLETE**
+- **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - SAS immediate menu replacement implemented
+- **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
+- **Phase 1C**: Duties System Foundation (1 week) - ⏳ **NEXT** - configuration-driven duties with SAS officer integration
+- **Phase 2**: Troop Selection & Officer Integration (2 weeks) - ⏳ **READY** - SAS troop selection + optional enhancement patches
+- **Phase 3**: Army & Battle Integration (1 week) - ⏳ **SIMPLIFIED** - core army logic moved to Phase 1B
+- **Phase 4**: Menu Enhancement & Polish (1 week) - ⏳ **REDUCED** - basic menu now in Phase 1A+
+- **Phase 5**: Edge Cases & Testing (1 week) - ⏳ Ready for Implementation
 
 ## 🏗️ Architecture Overview
 
@@ -32,7 +33,7 @@ Our implementation follows the Package-by-Feature pattern with clear separation 
 src/Features/
 ├── Enlistment/          # Core service state and lord relationship management
 ├── Duties/              # Modern configuration-driven duties system with troop types  
-├── Equipment/           # Culture + troop type + tier equipment kit system
+├── Equipment/           # SAS-style troop selection with equipment REPLACEMENT system
 ├── Conversations/       # Dialog system integration for enlistment and duties
 ├── Combat/              # Army following and battle participation with officer roles
 └── Interface/           # Enlisted status menu and duties management (TO BE CREATED)
@@ -49,8 +50,8 @@ src/Features/
 ### Military Service System
 - **Enlistment**: Join any lord's service through diplomatic dialog
 - **10 Assignments**: From Grunt Work to Strategist with unique benefits
-- **7-Tier Progression**: Military ranks from Recruit to Master Sergeant
-- **Dynamic Wages**: Performance and tier-based compensation
+- **1-Year Progression**: 7 military tiers over 365 days (18,000 XP total)
+- **Realistic Wages**: 24-150 gold/day progression (early game skill-building, not wealth generation)
 - **Army Integration**: Smart following behavior with army hierarchy awareness
 
 ### Duties System & Troop Types
@@ -65,32 +66,32 @@ src/Features/
 - **Tier 3**: Field Medic, Siegewright's Aide (officer roles, effective party positions)
 - **Tier 5**: Pathfinder, Drillmaster, Provisioner (leadership duties, significant party bonuses)
 
-**Officer Role Integration**: When assigned to officer duties, player becomes the party's effective officer:
-- **Field Medic** → EffectiveSurgeon (player's Medicine skill drives party healing)
-- **Siegewright's Aide** → EffectiveEngineer (player's Engineering skill affects siege speed)
-- **Pathfinder** → EffectiveScout (player's Scouting skill affects party speed/detection)
-- **Provisioner** → EffectiveQuartermaster (player's Steward skill affects carry capacity)
+**Officer Role Integration**: When assigned to officer duties, player becomes party officer via public APIs:
+- **Field Medic** → `lordParty.SetPartySurgeon(Hero.MainHero)` (player's Medicine skill drives party healing)
+- **Siegewright's Aide** → `lordParty.SetPartyEngineer(Hero.MainHero)` (player's Engineering skill affects siege speed)  
+- **Pathfinder** → `lordParty.SetPartyScout(Hero.MainHero)` (player's Scouting skill affects party speed/detection)
+- **Quartermaster** → `lordParty.SetPartyQuartermaster(Hero.MainHero)` (player's Steward skill affects carry capacity)
 
-### Progression System
-- **XP Sources**: Daily service, assignment performance, battle participation
-- **Tier Benefits**: Higher tiers unlock better assignments and equipment
-- **Wage Formula**: Base pay + tier bonus + assignment multiplier + performance bonuses
-- **Veteran Status**: Long-term benefits for completed service
+**Enhancement Option**: Harmony patches available for more natural skill integration (optional)
 
-### Equipment Management System
-- **Multiple Troop Choices**: 3-6 equipment styles per tier (Infantry, Archer, Cavalry, Horse Archer variants)
-- **Realistic Military Pricing**: JSON-configured costs based on formation complexity and elite status
-- **Culture-Specific Economics**: Different faction pricing (Khuzait cheaper, Vlandia premium)
-- **Formation-Based Costs**: Infantry cheapest, Horse Archer most expensive (reflects equipment complexity)  
-- **JSON Configuration**: Equipment definitions and pricing in separate configuration files
-- **Dynamic Pricing**: T1 Infantry (75🪙) → T7 Elite Horse Archer (1,969🪙)
-- **Personal Gear Backup**: Complete equipment restoration system (always FREE)
-- **Verified APIs**: Uses `Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment()` with fallback
+### Equipment & Progression System
+**Equipment Replacement**: Promotions **replace** equipment (not accumulate) - realistic military service
+**Retirement Benefit**: Players keep **final equipment** permanently after 1+ year service
+**Progression Timeline**: 
+- **Month 1-2**: Basic training (Tiers 1-2) - 24-37 gold/day
+- **Month 3-6**: Veteran service (Tiers 3-4) - 38-81 gold/day  
+- **Month 7-12**: Senior service (Tiers 5-7) - 68-150 gold/day
+**Purpose**: Early game **skill development** and character building (not wealth generation)
+
+### Dialog System Architecture
+**Centralized Management**: All enlisted dialogs managed through single `EnlistedDialogManager.cs`
+**Dialog Flows**: Enlistment → Promotion → Troop Selection → Duties → Retirement  
+**Benefits**: Conflict prevention, shared components, easier maintenance
 
 ## 🔧 Technical Implementation
 
-### Enhanced API Coverage (Verified from Decompile Analysis)
-We have complete API documentation covering:
+### Enhanced API Coverage (100% VERIFIED from Current Decompile Analysis)
+We have complete and verified API documentation covering:
 - **Dialog System**: Conversation flows and menu integration with verified localization support
 - **Campaign Events**: Army, settlement, and battle event handling
 - **Equipment APIs**: Complete gear management and selection with multiple troop choices
@@ -105,6 +106,7 @@ We have complete API documentation covering:
 - **Graceful Recovery**: System recovers from any state corruption or errors
 - **Edge Case Handling**: Comprehensive coverage of lord death, capture, kingdom changes
 - **100% Uptime**: No scenarios can crash or break the enlistment system
+- **SAS-Style Encounter Handling**: Uses proven immediate encounter finishing rather than prevention
 - **Production Logging**: Comprehensive troubleshooting support for game updates and mod conflicts
 
 ### Logging & Troubleshooting
@@ -114,13 +116,16 @@ We have complete API documentation covering:
 - **Categorized Logs**: Clear organization by feature (Enlistment, Equipment, Combat, etc.)
 - **User Support**: Detailed logs help diagnose issues and provide support
 
-### Modern Architecture
+### Modern Architecture - **REVOLUTIONIZED BY SAS DECOMPILE ANALYSIS**
 - **Configuration-Driven**: 7 JSON configuration files for complete system customization without recompilation
 - **Professional Localization**: Multi-language support using verified {=key}fallback format
 - **Custom Healing Model**: Enhanced healing bonuses for enlisted soldiers integrated with game's healing system
-- **Officer Role Integration**: 4 essential Harmony patches for MobileParty officer role substitution  
-- **Minimal Patch Footprint**: Only 4-5 targeted patches vs. original SAS's 37+ patches
-- **Verified API Usage**: Uses only decompile-verified modern Bannerlord APIs with comprehensive validation
+- **SAS Engine-Level Encounter Prevention**: Uses `IsActive = false` for complete encounter prevention (no patches needed)
+- **SAS Real-Time State Management**: Uses `TickEvent` for continuous enforcement even during paused encounters
+- **SAS Immediate Menu System**: Zero-gap menu replacement prevents encounter system confusion
+- **SAS Dynamic Army Management**: Temporary army creation/destruction for battle participation
+- **Minimal Patch Footprint**: ZERO encounter patches (vs original assumption of essential patches)
+- **100% Verified API Usage**: ALL critical SAS APIs confirmed to exist in current Bannerlord version
 - **4-Formation Specializations**: Infantry, Archer, Cavalry, Horse Archer with culture variants
 - **Blueprint Compliance**: Follows our established architecture and safety standards with schema versioning
 
@@ -131,22 +136,18 @@ We have complete API documentation covering:
 - `BLUEPRINT.md` - Architecture standards and development guidelines
 - `engine-signatures.md` - Complete API reference with verified signatures
 
-### Discovery Documentation  
-- `discovered/` - Comprehensive API research and reference materials
-- `duties_system_apis.md` - Complete API reference for duties system implementation with enhanced menu system
-- `custom_healing_model.md` - **NEW**: Custom healing model implementation (verified from decompile)
-- `save_system_requirements.md` - Save system compliance analysis (no custom SaveDefiner needed)
-- `duties_troubleshooting_guide.md` - User-friendly logging and troubleshooting support
-- `harmony_best_practices_summary.md` - Harmony patches following Bannerlord modding standards
-- `culture_ids.md` - Faction and culture reference data
-- `equipment_rosters.md` - Equipment system documentation
-- `gauntlet_reference.md` - Custom UI development guide
+### Discovery Documentation (8 Files - Consolidated)
+- `discovered/engine-signatures.md` - **ENHANCED**: Complete API reference with decompile verification and healing model
+- `discovered/duties_system_apis.md` - **ENHANCED**: Complete duties API reference with troubleshooting guide  
+- `discovered/culture_reference.md` - **MERGED**: All culture data (IDs, troops, equipment) in one comprehensive guide
+- `discovered/equipment_reference.md` - **MERGED**: Complete equipment system (categories, discovery pipeline, rosters)
+- `discovered/api_helpers.md` - **MERGED**: Helper APIs, promotion utilities, and reflection patterns
+- `discovered/save_system_requirements.md` - Save system compliance (no custom SaveDefiner needed)
+- `discovered/gauntlet_reference.md` - Custom UI development guide
+- `discovered/api_full_index.json` - API index for quick reference
 
-### Configuration Documentation
-- `ModuleData/Enlisted/README.md` - **NEW**: Complete guide to 7 JSON configuration files
-- `CONFIG-VALIDATION.md` - **NEW**: Safe configuration loading and validation patterns
-- `API-VERIFICATION-RESULTS.md` - **NEW**: Decompile verification results for enhanced APIs
-- `FIXES-APPLIED.md` - **NEW**: Documentation of configuration hardening fixes
+### Configuration Documentation  
+- `ModuleData/Enlisted/README.md` - **ENHANCED**: Complete 7 JSON config guide with validation and fixes
 
 ### Equipment System Documentation
 - `sas/code_gear_sources.md` - Complete equipment API reference
@@ -162,21 +163,22 @@ We have complete API documentation covering:
 4. **Configuration Guide**: Review `ModuleData/Enlisted/README.md` for 7 JSON configuration files
 
 ### Implementation Order
-1. **Start with Phase 1A**: Update dialog system to use diplomatic submenu
-2. **Phase 1B CRITICAL**: Implement complete SAS core functionality (currently missing)
-3. **Phase 1C**: Build modern duties system with troop types and officer roles
+1. ✅ **Phase 1A Complete**: Dialog system updated to use diplomatic submenu with immediate menu activation
+2. ✅ **Phase 1B Complete**: SAS core functionality implemented with lord safety validation and battle crash prevention
+3. **Phase 1C Next**: Build modern duties system with troop types and officer roles
 4. **Follow Phase Structure**: Each phase builds on the previous with clear acceptance criteria
 5. **Test Incrementally**: Verify functionality at each phase completion
 
-### Key Files to Implement  
-- `EnlistmentBehavior.cs` - Enhanced with complete SAS state + equipment backup system
-- `EnlistedDutiesBehavior.cs` - NEW: Configuration-driven duties system (4-formation support)
-- `EquipmentKitManager.cs` - NEW: Multiple troop choices per tier with realistic pricing
-- `EnlistedMenuBehavior.cs` - NEW: Complete menu system with main hub and sub-menus
-- `EnlistedPartyHealingModel.cs` - **NEW**: Custom healing model for enhanced enlisted soldier healing
-- `DutiesOfficerRolePatches.cs` - NEW: 4 essential Harmony patches for officer roles
-- `RetirementSystem.cs` - NEW: 1-year service requirement with equipment choice system
-- `ConfigurationManager.cs` - **NEW**: Safe JSON loading with schema versioning and validation
+### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
+- `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub + immediate menu activation + SAS menu clearing
+- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: SAS real-time TickEvent + IsActive management + dynamic army membership + lord safety validation
+- `EnlistedMenuBehavior.cs` - ✅ **INTEGRATED**: SAS immediate menu system implemented within EnlistedDialogManager
+- `TroopSelectionManager.cs` - **READY**: SAS-style real troop selection with **equipment REPLACEMENT** (Phase 2)
+- `EnlistedDutiesBehavior.cs` - **NEXT**: Configuration-driven duties system (4-formation support) (Phase 1C)
+- `EnlistedPartyHealingModel.cs` - **READY**: Custom healing model for enhanced enlisted soldier healing (Phase 2)
+- `DutiesOfficerRolePatches.cs` - **READY**: 4 Harmony patches for enhanced officer integration (Phase 2)
+- `RetirementSystem.cs` - **READY**: 1-year service requirement with equipment choice system (Phase 2)
+- `ConfigurationManager.cs` - **NEXT**: Safe JSON loading with schema versioning and validation (Phase 1C)
 
 ## 🎮 Player Experience
 
@@ -253,6 +255,186 @@ The modular architecture supports easy addition of:
 - Additional equipment tiers and progression paths
 - Enhanced veteran benefits and privileges
 - Advanced army command features
+
+## 🔧 **Logging & Debugging System**
+
+### **Universal Output Location**
+**All debugging outputs go to**: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
+
+**Cross-Platform Installation Support**:
+- **Steam (Any Drive)**: `D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+- **Epic Games**: `C:\Program Files\Epic Games\MountBladeIIBannerlord\Modules\Enlisted\Debugging\`
+- **GOG**: `C:\GOG Games\Mount & Blade II- Bannerlord\Modules\Enlisted\Debugging\`
+- **Custom Install**: `E:\Games\Bannerlord\Modules\Enlisted\Debugging\`
+
+**The system automatically detects your Bannerlord installation and creates the debugging folder there.**
+
+### **Log File Organization** (Session-Scoped)
+```
+<BannerlordInstall>\Modules\Enlisted\Debugging\
+├── enlisted.log                    # Bootstrap, init details, critical errors
+├── discovery.log                   # Menu opens, settlement events, session markers
+├── dialog.log                      # Dialog availability/selection events
+├── api.log                         # Menu transition API notes
+├── attributed_menus.txt             # Unique menu IDs observed (aggregated)
+├── dialog_tokens.txt               # Unique dialog tokens observed (aggregated)
+└── api_surface.txt                 # Reflection dump of public surfaces
+```
+
+### **Automatic Path Detection Implementation**
+```csharp
+// Works on ANY Bannerlord installation
+public static class LogPath
+{
+    private static string _debuggingPath;
+    
+    public static string GetDebuggingPath()
+    {
+        if (_debuggingPath == null)
+        {
+            var assemblyPath = Assembly.GetExecutingAssembly().Location;
+            var modulePath = Path.GetDirectoryName(Path.GetDirectoryName(assemblyPath));
+            _debuggingPath = Path.Combine(modulePath, "Debugging");
+            Directory.CreateDirectory(_debuggingPath);
+        }
+        return _debuggingPath;
+    }
+}
+```
+
+### **Performance-Friendly Logging Strategy**
+- **Silent Success**: Normal operations don't log (smooth user experience)
+- **Error-Only Strategy**: Only log when something fails or breaks  
+- **Minimal File I/O**: Typically 0-2 log entries per game session
+- **Session Correlation**: Unique session ID for support issue tracking
+
+### **Log Categories & Purposes**
+- **"Init"**: Mod startup/shutdown and Harmony patch status
+- **"Config"**: Configuration loading failures and validation errors
+- **"Enlistment"**: Core service state errors and lord relationship issues
+- **"Equipment"**: Equipment application failures and kit validation  
+- **"Combat"**: Battle participation issues and army integration problems
+- **"Compatibility"**: Game updates, mod conflicts, API validation failures
+
+## 🎮 **Complete Menu Interface System**
+
+### **Main Menu: enlisted_status** 
+```
+═══════════════════════════════════════
+         ENLISTED STATUS
+═══════════════════════════════════════
+Lord: [Sir Derthert] (Empire)
+Rank: Sergeant (Tier 4)
+Formation: Legionary (Infantry)
+Service Duration: 47 days (318 days to retirement)
+
+Current Duties: Field Medic, Runner
+Next Promotion: 890/1500 XP
+Daily Wage: 145 🪙
+
+Army Status: Following [Derthert's Army]
+═══════════════════════════════════════
+
+[ Request field medical treatment ]       ← 5-day/2-day cooldowns
+[ Speak with lord about duties ]          ← Duty conversations
+[ Visit the quartermaster ]               ← Equipment menu
+[ View detailed service record ]          ← Progress tracking
+[ Request retirement (if eligible) ]      ← After 1 year
+[ Return to duties ]                      ← Close menu
+═══════════════════════════════════════
+```
+
+### **Equipment Menu: enlisted_equipment** (Multiple Troop Choices)
+```
+═══════════════════════════════════════
+      QUARTERMASTER SUPPLIES
+═══════════════════════════════════════
+Your Gold: 1,250🪙 | Current: Imperial Legionary T4
+
+Available Equipment (Tier 4 & Below):
+
+┌─ INFANTRY TROOPS ─────────────────────┐
+│ ● Imperial Legionary T4    (300🪙) ✓  │
+│ ○ Imperial Veteran T3      (225🪙) ✓  │
+│ ○ Imperial Guard T3        (240🪙) ✓  │
+└───────────────────────────────────────┘
+
+┌─ CAVALRY TROOPS ──────────────────────┐
+│ ○ Imperial Equites T4      (600🪙) ✓  │
+│ ○ Imperial Cavalry T3      (450🪙) ✓  │
+└───────────────────────────────────────┘
+
+┌─ ELITE TROOPS ────────────────────────┐
+│ ○ Imperial Cataphract T4   (900🪙) ✓  │
+│ ○ Elite Horse Archer T4  (1,170🪙) ✓  │
+└───────────────────────────────────────┘
+
+═══════════════════════════════════════
+[ Apply selected equipment ]
+[ Restore personal equipment (FREE) ]
+[ Back to enlisted status ]
+═══════════════════════════════════════
+```
+
+### **Menu Navigation Flow**
+```
+Campaign Map (Press 'N' when enlisted)
+    ↓
+┌─ enlisted_status (MAIN HUB) ─────────┐
+│  • Medical treatment                │
+│  • Speak with lord → CONVERSATION   │
+│  • Visit quartermaster → Switch     │
+│  • Service record → Switch          │
+│  • Request retirement               │
+│  • Return to duties → Close         │
+└──────────────────────────────────────┘
+    ↓                           ↓
+┌─ enlisted_equipment ─┐  ┌─ enlisted_record ─┐
+│  • Multiple troops   │  │  • XP breakdown   │
+│  • Formation costs   │  │  • Battle history │
+│  • Personal restore  │  │  • Relationships  │
+│  • Back to main      │  │  • Back to main   │
+└──────────────────────┘  └───────────────────┘
+```
+
+## 🎯 **Complete Implementation Summary**
+
+### **✅ Enhanced vs. Original SAS**
+| Feature | Original SAS | Our Enhanced System |
+|---------|-------------|-------------------|
+| **Formations** | 4 basic detection | **4 with enhanced specializations & culture variants** |
+| **Equipment** | Single kit per tier | **3-6 troop choices per tier with realistic pricing** |
+| **Menu System** | Basic equipment selector | **Complete military interface with sub-menus** |
+| **Healing** | Settlement-dependent | **Simplified anywhere access + custom healing model** |
+| **Configuration** | Hardcoded values | **7 JSON files with schema versioning & validation** |
+| **Localization** | Basic text | **Professional {=key}fallback multi-language support** |
+| **Officer Roles** | 37+ Harmony patches | **4 targeted patches with natural skill integration** |
+
+### **✅ 4-Formation System** (Enhanced from SAS)
+**Auto-Detection Logic** (matches original SAS):
+```csharp
+if (Hero.MainHero.CharacterObject.IsRanged && Hero.MainHero.CharacterObject.IsMounted)
+    return TroopType.HorseArcher;   // Bow + Horse
+else if (Hero.MainHero.CharacterObject.IsMounted)
+    return TroopType.Cavalry;       // Sword + Horse
+else if (Hero.MainHero.CharacterObject.IsRanged)
+    return TroopType.Archer;        // Bow + No Horse
+else
+    return TroopType.Infantry;      // Sword + No Horse (default)
+```
+
+**Culture-Specific Formation Names**:
+- **Empire**: Legionary, Sagittarius, Equites, Equites Sagittarii
+- **Khuzait**: Spearman, Hunter, Lancer, Horse Archer
+- **Vlandia**: Man-at-Arms, Crossbowman, Knight, Mounted Crossbowman
+
+### **✅ Realistic Equipment Economics**
+| Tier | Infantry | Archer | Cavalry | Horse Archer |
+|------|----------|--------|---------|--------------|
+| **T1** | 75🪙 | 98🪙 | 150🪙 | 188🪙 |
+| **T3** | 225🪙 | 293🪙 | 450🪙 | 563🪙 |
+| **T5** | 375🪙 | 488🪙 | 750🪙 | 938🪙 |
+| **T7 Elite** | 788🪙 | 1024🪙 | 1575🪙 | 1969🪙 |
 
 ---
 

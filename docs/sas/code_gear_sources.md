@@ -86,7 +86,7 @@ TaleWorlds.CampaignSystem.GameComponents.DefaultEquipmentSelectionModel :: GetEq
 
 Helpers.EquipmentHelper :: AssignHeroEquipmentFromEquipment(Hero hero, Equipment equipment)
 // VERIFIED: Located in TaleWorlds.CampaignSystem\Helpers\EquipmentHelper.cs:11
-// Usage: Primary method for applying complete equipment kits to heroes
+// Usage: Primary method for applying equipment from selected troops to heroes
 
 ### Missing/Not Found
 

@@ -30,7 +30,7 @@ Next steps
 
 ### Debugging outputs (session-scoped)
 
-Location: `…/Modules/Enlisted/Debugging/`
+Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
 - `enlisted.log` – bootstrap, init details
 - `discovery.log` – menu opens, settlement events
 - `dialog.log` – dialog availability/selection (CampaignGameStarter + DialogFlow)
@@ -144,14 +144,19 @@ src/
 
 - Intercept or extend TaleWorlds methods that are sealed, internal/private, or engine-invoked.
 - When critical side effects cannot be reached via public APIs or CampaignBehavior hooks.
-- **Officer Role Substitution**: Essential for duties system - patch `MobileParty.EffectiveX` properties to substitute player as party officer for natural skill/perk integration.
+- **Officer Role Substitution**: Can use public APIs (`lordParty.SetPartyX()`) or Harmony patches for enhanced integration - patches provide more natural skill benefits but are optional.
+- **Encounter Management**: Use SAS-proven `IsActive = false` engine property ✅ **VERIFIED** for complete encounter prevention (no patches needed)
+- **Real-Time Management**: Use `CampaignEvents.TickEvent` ✅ **VERIFIED** for continuous state enforcement
 - It is acceptable to patch menu/time control, encounter/battle flows, and dispatcher surfaces when required by feature design, provided patches are guarded, observable, and configurable.
 - Examples of engine-invoked surfaces: module load/unload lifecycle, campaign daily/hourly ticks, battle/agent updates, menu open/close, economy/party recalculations.
 
 **When not to use Harmony**
 
 - Do not place domain logic in patches; keep orchestration and configuration in feature services.
-- Prefer CampaignBehavior, event hooks, and public APIs when straightforward; however, extensive Harmony usage is acceptable where it simplifies integration with engine-invoked behavior. Document assumptions and gate via settings where appropriate.
+- **Prefer public APIs first** for simpler implementation and better compatibility; however, Harmony usage is **perfectly acceptable** when it provides clear benefits or when no public API alternative exists. Document assumptions and gate via settings where appropriate.
+- **Prefer engine properties over patches** when possible - SAS uses `IsActive = false` ✅ **VERIFIED** for encounter prevention vs complex patches
+- **Use real-time TickEvent over game-time ticks** ✅ **VERIFIED** for continuous state enforcement during paused encounters
+- **Immediate menu replacement** using `AddWaitGameMenu()` ✅ **VERIFIED** prevents encounter gaps
 
 **Documentation standard (mandatory)**
 
@@ -225,9 +230,9 @@ If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove 
 - Use `GameOverlays.MenuOverlayType.None` and `GameMenu.MenuFlags.None` unless you intentionally need overlays/flags.
 - This ensures the top-left ribbon (spacebar/arrow time controls) works while the panel is expanded and the panel can be collapsed via the chevron without pausing.
 
-### 4.6 Military Service System Architecture
+### 4.6 Military Service System Architecture - **ENHANCED WITH SAS DECOMPILE INSIGHTS**
 
-Our military service system follows a modular design where each aspect has clear responsibilities:
+Our military service system follows SAS-proven patterns with immediate menu replacement and engine-level encounter control:
 
 #### **Enlistment Feature**
 - **What it does**: Tracks who you're serving and manages the basic service relationship

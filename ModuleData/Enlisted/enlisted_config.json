@@ -7,14 +7,14 @@
     "mod_version": "1.0.0"
   },
   "enlistment": {
-    "tier_requirements": [0, 100, 300, 600, 1000, 1500, 2200, 3000],
+    "tier_requirements": [0, 500, 1500, 3500, 7000, 12000, 18000],
     "tier_names": [
       "None", "Recruit", "Private", "Corporal", 
       "Sergeant", "Staff Sergeant", "Master Sergeant", "Veteran"
     ],
     "daily_base_xp": 25,
-    "daily_base_wage": 15,
-    "wage_tier_bonus": 10,
+    "daily_base_wage": 8,
+    "wage_tier_bonus": 4,
     "assignment_wage_multipliers": {
       "grunt_work": 0.8,
       "guard_duty": 0.9, 

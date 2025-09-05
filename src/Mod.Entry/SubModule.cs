@@ -7,6 +7,7 @@ using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Assignments.Behaviors;
 
 namespace Enlisted.Mod.Entry
 {
@@ -44,9 +45,10 @@ namespace Enlisted.Mod.Entry
 				if (gameStarterObject is CampaignGameStarter campaignStarter)
 				{
 					campaignStarter.AddBehavior(new EnlistmentBehavior());
-					campaignStarter.AddBehavior(new LordDialogBehavior());
+					campaignStarter.AddBehavior(new EnlistedDialogManager());
+					campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
 					EncounterGuard.Initialize();
-					ModLogger.Info("Bootstrap", "Military service behaviors registered");
+					ModLogger.Info("Bootstrap", "Military service behaviors registered (with duties system)");
 				}
 			}
 			catch (Exception ex)
@@ -55,6 +57,7 @@ namespace Enlisted.Mod.Entry
 				// Fail closed: avoid crashing startup; behaviors may be partially unavailable.
 			}
 		}
+		
 	}
 }
 

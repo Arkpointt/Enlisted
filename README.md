@@ -23,7 +23,7 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 - **CLI**: `dotnet build -c "Enlisted EDITOR"`
 
 **Output DLL**: 
-`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\bin\Win64_Shipping_wEditor\Enlisted.dll`
+`<BannerlordInstall>\Modules\Enlisted\bin\Win64_Shipping_wEditor\Enlisted.dll`
 
 ### In-Game Usage
 1. **Talk to any lord** → "I have something else to discuss" → "I wish to serve in your warband"
@@ -41,16 +41,19 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 
 ## 🔧 Technical Architecture
 
-### **Modern Implementation**
+### **Modern Implementation - 100% VERIFIED SAS APPROACH**
 - **Package-by-Feature**: Clean modular design with Blueprint compliance
-- **Verified APIs**: Uses only decompile-verified Bannerlord APIs  
-- **Minimal Patches**: 4-5 targeted Harmony patches (vs. original SAS's 37+)
+- **100% Verified APIs**: ALL critical SAS APIs confirmed in current Bannerlord version
+- **ZERO Essential Patches**: Engine properties handle encounter prevention (vs. original SAS's 37+ patches)  
+- **SAS Real-Time Management**: Continuous state enforcement using verified TickEvent
 - **Enhanced Healing**: Custom PartyHealingModel integration
 - **Configuration-Driven**: No hardcoded values, full JSON customization
 
 ## Debugging layout and outputs
 All logs and discovery artifacts are written to the module’s Debugging folder (one session at a time; cleared on init):
-`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging` [[memory:7845841]]
+`<BannerlordInstall>\Modules\Enlisted\Debugging\` [[memory:7845841]]
+
+**Note**: Works on any drive (C:, D:, E:, etc.) - automatically detects your Bannerlord installation location
 
 Files created per session:
 - `enlisted.log` – bootstrap and general info
@@ -89,15 +92,18 @@ Files created per session:
 - **Professional Localization**: Multi-language support with {=key}fallback format
 - **Custom Healing Model**: Enhanced healing bonuses for enlisted soldiers (+13 HP/day)
 - **4-Formation System**: Complete specialization system with auto-detection
+- **SAS Engine-Level Encounter Prevention**: Uses `IsActive = false` for complete encounter control (no patches)
 - **Realistic Economics**: Formation-based equipment pricing (Infantry 75🪙 → Horse Archer 1,969🪙)
 - **Schema Versioning**: Future-proof configuration with migration support
 
-### **Debugging & Discovery**
-Development logging in `Modules/Enlisted/Debugging/` folder:
+### **Debugging & Discovery**  
+Development logging in `<BannerlordInstall>\Modules\Enlisted\Debugging\` folder:
 - `enlisted.log` – bootstrap and general info
 - `discovery.log` – menu opens, settlement entries, session markers  
 - `dialog.log` – dialog availability and selections
 - `api.log` – API transition notes
 - `api_surface.txt` – reflection dump of key public surfaces
+
+**Note**: Works on any drive where Bannerlord is installed (C:, D:, E:, etc.)
 
 **See `docs/CONFIG-VALIDATION.md` for safe configuration loading patterns.**

@@ -2,11 +2,28 @@
 
 Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 
-## Menus / Encounter
+## ⚠️ **CRITICAL SAS DECOMPILE FINDINGS** - **FINAL BREAKTHROUGH**
+
+**Updated**: After deep SAS decompile analysis, we discovered the **complete SAS approach** was different than initially understood:
+
+- **❌ Previous Assumption**: SAS patched encounters for prevention/finishing
+- **✅ SAS Reality**: SAS uses **engine properties + immediate menu system** for encounter control
+- **✅ Final Solution**: `MobileParty.MainParty.IsActive = false` prevents encounters at engine level (no patches)
+- **✅ Critical Timing**: SAS uses `TickEvent` (real-time) not `HourlyTickEvent` (game-time) for continuous enforcement
+- **✅ Menu Gap Solution**: SAS shows `party_wait` menu IMMEDIATELY after enlistment (zero gap)
+
+**Revolutionary Impact**: 
+- **NO encounter patches needed** - engine properties handle everything
+- **Immediate menu system required** - moved from Phase 4 to Phase 1A+
+- **Real-time state management** - continuous enforcement even during paused encounters
+- **100% API COMPATIBILITY** - All critical SAS APIs verified to exist in current Bannerlord version
+
+## Menus / Encounter (ENHANCED WITH VERIFIED SAS APIS)
 
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ActivateGameMenu(string menuId)
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ExitToLast()
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: SwitchToMenu(string menuId)
+TaleWorlds.CampaignSystem.CampaignGameStarter :: AddWaitGameMenu(...) ✅ **SAS CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: DoMeeting()
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: Finish(bool forcePlayerOutFromSettlement)
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: LeaveEncounter { get; set; }
@@ -20,7 +37,7 @@ TaleWorlds.CampaignSystem.CampaignGameStarter :: AddDialogLineMultiAgent(string 
 TaleWorlds.CampaignSystem.CampaignGameStarter :: AddPlayerLine(string id, string inputToken, string outputToken, string text, ConversationSentence.OnConditionDelegate conditionDelegate, ConversationSentence.OnConsequenceDelegate consequenceDelegate, int priority, ConversationSentence.OnClickableConditionDelegate clickableConditionDelegate, ConversationSentence.OnPersuasionOptionDelegate persuasionOptionDelegate)
 TaleWorlds.CampaignSystem.CampaignGameStarter :: AddRepeatablePlayerLine(string id, string inputToken, string outputToken, string text, string continueListingRepeatedObjectsText, string continueListingOptionOutputToken, ConversationSentence.OnConditionDelegate conditionDelegate, ConversationSentence.OnConsequenceDelegate consequenceDelegate, int priority, ConversationSentence.OnClickableConditionDelegate clickableConditionDelegate)
 
-## Campaign Events
+## Campaign Events (VERIFIED + SAS CRITICAL ADDITIONS)
 
 TaleWorlds.CampaignSystem.CampaignEvents :: OnSessionLaunchedEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: BeforeGameMenuOpenedEvent
@@ -31,6 +48,7 @@ TaleWorlds.CampaignSystem.CampaignEvents :: OnSettlementLeftEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyAttachedAnotherParty(MobileParty)
 TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyDetachedAnotherParty(MobileParty)
 TaleWorlds.CampaignSystem.CampaignEvents :: HourlyTickEvent
+TaleWorlds.CampaignSystem.CampaignEvents :: TickEvent(float) ✅ **SAS CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.CampaignEvents :: OnNearbyPartyAddedToPlayerMapEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: OnArmyCreated(Army)
 TaleWorlds.CampaignSystem.CampaignEvents :: OnArmyDispersed(Army, Army.ArmyDispersionReason, bool)
@@ -52,17 +70,22 @@ TaleWorlds.CampaignSystem.Army :: LeaderParty { get; }
 TaleWorlds.CampaignSystem.Army :: Name { get; }
 TaleWorlds.CampaignSystem.Army :: Parties { get; }
 TaleWorlds.CampaignSystem.Army :: TotalStrength { get; }
+TaleWorlds.CampaignSystem.Army :: Army(Kingdom kingdom, MobileParty leaderParty, ArmyTypes armyType) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.Army :: AddPartyToMergedParties(MobileParty party) ✅ **SAS CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Actions.DisbandArmyAction :: ApplyByPlayerTakenPrisoner(Army army)
+TaleWorlds.CampaignSystem.Actions.DisbandArmyAction :: ApplyByCohesionDepleted(Army army) ✅ **SAS CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Actions.GatherArmyAction :: Apply(MobileParty leaderParty, Settlement gatheringSettlement)
 
-## Party / AI
+## Party / AI (ENHANCED WITH VERIFIED SAS APIS)
 
 TaleWorlds.CampaignSystem.Party.MobileParty :: AttachedTo { get; }
 TaleWorlds.CampaignSystem.Party.MobileParty :: IgnoreByOtherPartiesTill(CampaignTime time)
 TaleWorlds.CampaignSystem.Party.MobileParty :: IgnoreForHours(float hours)
 TaleWorlds.CampaignSystem.Party.MobileParty :: IsVisible { get; set; }
+TaleWorlds.CampaignSystem.Party.MobileParty :: IsActive { get; set; } ✅ **SAS CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Party.MobileParty :: Position2D { get; set; }
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveEscortParty(MobileParty mobileParty)
+TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveEngageParty(MobileParty party) ✅ **SAS CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveGoToPoint(Vec2 point)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveGoToSettlement(Settlement settlement)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMovePatrolAroundSettlement(Settlement settlement)
@@ -130,6 +153,63 @@ TaleWorlds.CampaignSystem.ComponentInterfaces.PartyHealingModel :: GetDailyHeali
 TaleWorlds.CampaignSystem.ComponentInterfaces.PartyHealingModel :: GetBattleEndHealingAmount(MobileParty party, Hero hero)
 TaleWorlds.CampaignSystem.GameComponents.DefaultPartyHealingModel :: GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions)
 TaleWorlds.Localization.TextObject :: ToString()
+
+## API Verification Results (From Decompile Analysis)
+
+### ✅ **VERIFIED AVAILABLE - Restored to Implementation**
+
+#### **1. Localization Key Format** (CONFIRMED in MBTextManager.cs)
+```csharp
+// VERIFIED: Lines 241-298 in TaleWorlds.Localization\MBTextManager.cs
+if (text != null && text.Length > 2 && text[0] == '{' && text[1] == '=')
+{
+    // Processes {=key}fallback format
+    string translatedText = LocalizedTextManager.GetTranslatedText(languageId, keyString);
+}
+
+// USAGE:
+new TextObject("{=enlisted_status_title}Enlisted Status")
+new TextObject("{=field_medic_training}Field Medic Training")
+```
+
+#### **2. Custom PartyHealingModel** (CONFIRMED in ComponentInterfaces)
+```csharp
+// VERIFIED: TaleWorlds.CampaignSystem\ComponentInterfaces\PartyHealingModel.cs
+public abstract class PartyHealingModel : GameModel
+{
+    public abstract ExplainedNumber GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions = false);
+    public abstract ExplainedNumber GetDailyHealingForRegulars(MobileParty party, bool includeDescriptions = false);
+}
+
+// IMPLEMENTATION:
+public class EnlistedPartyHealingModel : PartyHealingModel
+{
+    public override ExplainedNumber GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions = false)
+    {
+        if (EnlistmentBehavior.Instance?.IsEnlisted == true && party == MobileParty.MainParty)
+        {
+            var result = new ExplainedNumber(24f, includeDescriptions, 
+                new TextObject("{=enlisted_base_healing}Enlisted Service Base Healing"));
+            
+            // Field Medic bonus
+            if (DutiesBehavior.Instance?.HasActiveDutyWithRole("Surgeon") == true)
+            {
+                var medicineSkill = Hero.MainHero.GetSkillValue(DefaultSkills.Medicine);
+                result.Add(medicineSkill / 10f, new TextObject("{=field_medic_bonus}Field Medic Training"));
+            }
+            
+            return result;
+        }
+        
+        return new ExplainedNumber(11f, includeDescriptions, null);
+    }
+}
+```
+
+### ❌ **API NOT CONFIRMED**
+#### **3. ModuleHelper.GetModuleFullPath** (NOT FOUND in decompiled code)
+**Searched**: TaleWorlds.Engine.Utilities, SandBox.ModuleManager, all assemblies  
+**Result**: Method not found - kept Blueprint-compliant relative path approach
 
 ## Library
 

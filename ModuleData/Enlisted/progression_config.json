@@ -2,14 +2,15 @@
   "schemaVersion": 1,
   "enabled": true,
   "tier_progression": {
+    "_comment": "UPDATED: 1-year progression system (365 days × 50 XP avg = ~18,000 total XP)",
     "requirements": [
-      { "tier": 1, "xp_required": 0, "name": "Recruit" },
-      { "tier": 2, "xp_required": 100, "name": "Private" },
-      { "tier": 3, "xp_required": 300, "name": "Corporal" },
-      { "tier": 4, "xp_required": 600, "name": "Sergeant" },
-      { "tier": 5, "xp_required": 1000, "name": "Staff Sergeant" },
-      { "tier": 6, "xp_required": 1500, "name": "Master Sergeant" },
-      { "tier": 7, "xp_required": 2200, "name": "Veteran" }
+      { "tier": 1, "xp_required": 0, "name": "Recruit", "duration": "Starting rank" },
+      { "tier": 2, "xp_required": 500, "name": "Private", "duration": "2-3 weeks - basic training" },
+      { "tier": 3, "xp_required": 1500, "name": "Corporal", "duration": "1-2 months - formation specialization" },
+      { "tier": 4, "xp_required": 3500, "name": "Sergeant", "duration": "2-3 months - veteran status" },
+      { "tier": 5, "xp_required": 7000, "name": "Staff Sergeant", "duration": "4-5 months - leadership duties" },
+      { "tier": 6, "xp_required": 12000, "name": "Master Sergeant", "duration": "8-9 months - senior roles" },
+      { "tier": 7, "xp_required": 18000, "name": "Veteran", "duration": "12+ months - master veteran" }
     ],
     "formation_selection": {
       "trigger_tier": 2,
@@ -19,12 +20,13 @@
     }
   },
   "wage_system": {
+    "_comment": "UPDATED: Realistic military wages for early game progression, not wealth generation",
     "base_formula": {
-      "daily_base": 15,
-      "tier_bonus_per_level": 10,
-      "hero_level_multiplier": 2,
-      "xp_bonus_divisor": 50,
-      "maximum_base_wage": 500
+      "daily_base": 10,
+      "tier_bonus_per_level": 5,
+      "hero_level_multiplier": 1,
+      "xp_bonus_divisor": 200,
+      "maximum_base_wage": 150
     },
     "assignment_multipliers": {
       "grunt_work": 0.8,
@@ -51,15 +53,16 @@
     }
   },
   "xp_sources": {
+    "_comment": "Balanced for 1-year progression (~50 XP/day average)",
     "daily_base": 25,
     "duty_performance": 15,
-    "battle_participation": 50,
+    "battle_participation": 75,
     "battle_victory": 25,
-    "siege_participation": 75,
+    "siege_participation": 100,
     "siege_success": 50,
     "assignment_completion": 20,
     "lord_conversation": 5,
-    "special_events": 30
+    "special_events": 50
   },
   "relationship_progression": {
     "daily_service": 1,

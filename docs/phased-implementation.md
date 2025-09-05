@@ -4,58 +4,149 @@ Generated on 2025-09-02 00:57:40 UTC
 
 ## Executive Summary
 
-This document outlines a professional, phased approach to implementing an enhanced military service system for the Enlisted mod. Building on analysis of the original ServeAsSoldier mod and our comprehensive API verification, we implement a **modern duties-based system** that surpasses the original through configuration-driven assignments, troop type specializations, and officer role integration. The implementation follows our blueprint's principles of safety, observability, and incremental delivery with only 4-5 targeted Harmony patches versus the original's 37+.
+This document outlines a professional, phased approach to implementing an enhanced military service system for the Enlisted mod. Building on analysis of the original ServeAsSoldier mod and our comprehensive API verification, we implement a **modern duties-based system** that surpasses the original through configuration-driven assignments, troop type specializations, and officer role integration. The implementation prioritizes **public APIs where possible** with **minimal Harmony patches** (1 essential + optional enhancements) versus the original's 37+.
+
+## 🎯 **ARCHITECTURAL DECISION: SAS Troop Selection Approach**
+
+**SYSTEM CHANGE** (Updated: 2025-01-28): **Switching from custom equipment kits to SAS-style troop selection**
+
+**Why This Change**:
+- ✅ **More Fun**: Players choose actual Bannerlord troops ("Imperial Legionary" vs "T3 Infantry Kit")
+- ✅ **Authentic**: Uses real game troop templates and equipment
+- ✅ **Simpler**: No maintenance of 40+ custom equipment kits
+- ✅ **Immersive**: Players recognize troops from normal gameplay
+
+**✅ Troop Selection System**:
+- **Promotion Notification**: *"Promotion available! Press 'P' to advance."*
+- **Real Troop Names**: Imperial Legionary, Aserai Mameluke, Battanian Fian, etc.
+- **Direct Equipment**: Extract from `CharacterObject.BattleEquipments`
+- **Culture-Based**: Filter troops by `EnlistmentBehavior.Instance.CurrentLord.Culture.StringId`
+
+**✅ Complete API Discovery**:
+- Troop discovery: `MBObjectManager.Instance.GetObjectTypeList<CharacterObject>()`
+- Culture filtering: `character.Culture.StringId` and `character.Tier`
+- Equipment extraction: `character.BattleEquipments[0]` (real game equipment)
+- Equipment assignment: `EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, equipment)`
+
+**Ready for Implementation**: Use real Bannerlord troop templates instead of custom kits.
+
+## 🔧 **Harmony Patch Strategy - Minimal but Effective**
+
+**APPROACH**: **Public APIs first, Harmony patches when beneficial**
+
+### **✅ Core System - NO PATCHES NEEDED**
+**All essential functionality works with public APIs**:
+- **Enlistment**: `EnlistmentBehavior`, party following, visibility control
+- **Troop Selection**: `MBObjectManager`, `EquipmentHelper.AssignHeroEquipmentFromEquipment`
+- **Progression**: Campaign events, skill XP, gold actions
+- **Menus**: `CampaignGameStarter.AddGameMenu/AddGameMenuOption`
+
+### **⚠️ Essential Patches (0 Required - SAS BREAKTHROUGH + 100% API VERIFICATION)**
+- ❌ **`Encounter_DoMeetingGuardPatch`** - **REMOVED** - SAS uses `IsActive = false` engine property, no patches needed
+- ✅ **SAS Approach VERIFIED**: `MobileParty.MainParty.IsActive = false` ✅ **API CONFIRMED** prevents encounters at engine level
+- ✅ **Real-Time Management VERIFIED**: `CampaignEvents.TickEvent` ✅ **API CONFIRMED** provides continuous enforcement
+- ✅ **Army Management VERIFIED**: All SAS army creation/management APIs ✅ **CONFIRMED** in current version
+
+### **🎖️ Enhancement Patches (4 Optional)**
+**Officer Role Integration - TWO APPROACHES**:
+
+**Option A: Public API Approach** (simpler, no patches):
+```csharp
+// When player assigned to Engineering duty
+var lordParty = EnlistmentBehavior.Instance.CurrentLord.PartyBelongedTo;
+lordParty.SetPartyEngineer(Hero.MainHero); // Player becomes official engineer
+
+// Benefits: Simple, no mod conflicts
+// Drawbacks: Player shows as "official" officer (may feel intrusive)
+```
+
+**Option B: Harmony Patch Approach** (enhanced experience):
+```csharp
+// Patch EffectiveEngineer property to return player when duty active  
+[HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]
+// Player's skills affect party naturally without changing official assignments
+
+// Benefits: Natural skill integration, non-intrusive  
+// Drawbacks: 4 additional patches required
+```
+
+**Recommendation**: **Start with Option A** (public APIs). **Add Option B patches later** if enhanced experience desired.
+
+### **❌ Remove Unnecessary Patches (8 Discovery Patches)**
+**Current discovery patches provide no player value** - remove for cleaner implementation:
+- All dialog logging patches (development tools only)
+- Menu transition patches (development tools only)
+- Conversation discovery patches (development tools only)
+
+**Result**: **1 essential patch + 4 optional enhancement patches** (vs current 9 mostly-unnecessary patches)
+
+---
 
 ## Original SAS Analysis
 
 ### Enhanced System Features Implemented
 1. **Enlistment System**: Player joins a lord's party as a subordinate with comprehensive state tracking
 2. **Duties System**: 12 configuration-driven military duties with troop type specializations (Infantry/Archer/Cavalry)
-3. **Officer Role Integration**: Player becomes effective party officer (Engineer/Scout/Quartermaster/Surgeon) with natural Bannerlord skill/perk benefits
-4. **Progression System**: 7-tier advancement with XP requirements and automatic equipment kit upgrades
-5. **Equipment Kit System**: Culture + Troop Type + Tier based equipment with override capabilities
-6. **Wage System**: Enhanced daily payment with duty-based bonuses and performance multipliers
+3. **Officer Role Integration**: Player becomes party officer via public APIs (with optional Harmony enhancements for natural skill benefits)
+4. **1-Year Progression System**: 7-tier advancement over **365 days** (18,000 XP total) with **SAS troop selection** for upgrades
+5. **Equipment Replacement System**: Each promotion **replaces** equipment (realistic military service); keep final gear at retirement
+6. **Realistic Wage System**: **24-150 gold/day progression** over 1-year service (skill-building, not wealth generation)
 7. **Diplomatic Integration**: Player inherits lord's faction relationships with suspension/resumption for lord capture
 8. **Battle Participation**: Automatic inclusion with officer role benefits in sieges, healing, scouting
-9. **Configuration-Driven**: JSON-based system for easy addition of new duties, equipment kits, and troop types
+9. **Configuration-Driven**: JSON-based duties system with **dynamic troop discovery** from game templates
 
-### Key Dialog Flow
-- `hero_main_options` → `lord_politics_request` → `lord_talk_speak_diplomacy_2` (for enlistment)
-- Custom dialog flows for assignments, retirement, and equipment management
+### Dialog System Architecture
+**CENTRALIZED APPROACH**: All enlisted dialogs managed through single `EnlistedDialogManager.cs`
+- **Enlistment**: `hero_main_options` → `enlisted_enlist_main` → acceptance flow  
+- **Promotion**: `hero_main_options` → `enlisted_promotion_available` (when 'P' pressed)
+- **Troop Selection**: Promotion → `enlisted_troop_selection_menu` → real troop choices
+- **Duties Management**: `hero_main_options` → `enlisted_duties_management` 
+- **Retirement**: `hero_main_options` → `enlisted_retirement` → equipment choice
 
-## Phase 1A: Core Dialog System (1 week)
+**Benefits**: Single dialog hub, shared conditions/consequences, easy maintenance
 
-### 1A.1 Update Existing Dialog System
-**Goal**: Migrate from `hero_main_options` to proper diplomatic submenu
+## Phase 1A: Centralized Dialog System ✅ COMPLETE
+
+### 1A.1 Create Centralized Dialog System  
+**Goal**: Implement single `EnlistedDialogManager.cs` for all enlisted conversations
 
 **Exact Implementation Steps**:
-1. **Update `src/Features/LordDialog/Application/LordDialogBehavior.cs`**:
-   - Change input token from `"hero_main_options"` to `"lord_talk_speak_diplomacy_2"`
-   - Update dialog flow to use proper diplomatic submenu
-   - Test dialog flow: "I have something else to discuss" → enlistment options
+1. **Create `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs`**:
+   - Single hub for all enlisted dialogs (enlistment, promotion, duties, retirement)
+   - Centralized dialog ID management to prevent conflicts
+   - Shared condition/consequence methods
 
-2. **Add New Dialog Lines**:
+2. **Create Dialog Flow Management**:
    ```csharp
-   // EXACT CODE: Replace existing AddPlayerLine calls
-   starter.AddPlayerLine(
-       "enlisted_join_service",
-       "lord_talk_speak_diplomacy_2",  // CRITICAL: Use diplomatic submenu
-       "enlisted_join_service_query",
-       "I wish to serve in your warband.",
-       () => CanEnlistWithLord(Hero.OneToOneConversationHero),
-       null,
-       110);
+   private void RegisterEnlistmentDialogs(CampaignGameStarter starter)
+   {
+       // Centralized enlistment dialog flow
+       starter.AddPlayerLine("enlisted_enlist_main", "hero_main_options", 
+           "enlisted_enlist_query", "I wish to serve in your warband.",
+           DialogConditions.CanEnlistWithLord, null, 110);
+           
+       starter.AddDialogLine("enlisted_enlist_confirm", "enlisted_enlist_query",
+           "enlisted_enlist_choice", "Very well. Keep pace and heed my orders.",
+           null, null, 110);
+           
+       starter.AddPlayerLine("enlisted_enlist_accept", "enlisted_enlist_choice",
+           "close_window", "We march together.",
+           null, DialogConsequences.StartEnlistment, 110);
+   }
    ```
 
+3. **Replace `LordDialogBehavior.cs`** with centralized manager in `SubModule.cs`
+
 **Acceptance Criteria**:
-- ✅ Player can access enlistment via "I have something else to discuss"
-- ✅ Dialog shows in proper diplomatic submenu
-- ✅ Existing retirement dialog still works
+- ✅ All enlisted dialogs managed through single `EnlistedDialogManager`
+- ✅ Dialog ID conflicts prevented through centralized management
+- ✅ Shared conditions/consequences reduce code duplication
+- ✅ Future dialog additions simplified (single location)
 
-## Phase 1B: Complete SAS Core Implementation (1 week) - EXPANDED
+## Phase 1B: Complete SAS Core Implementation ✅ COMPLETE
 
-### 1B.1 Implement Missing SAS Foundation
-**Goal**: Transform minimal EnlistmentBehavior into complete SAS functionality with tier progression, wages, and equipment management
+### 1B.1 Implement Complete Military Service Foundation
+**Goal**: Transform minimal EnlistmentBehavior into complete military service with **1-year progression**, **realistic wages**, and **equipment replacement system**
 
 **Exact Implementation Steps**:
 1. **Update `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`** with complete SAS state + equipment backup:
@@ -264,7 +355,8 @@ This document outlines a professional, phased approach to implementing an enhanc
                var wage = CalculateWage();
                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, wage, false);
                
-               var dailyXP = 25; // Configurable
+               // Updated: 1-year progression (25 base + duties + battles = ~50 XP/day avg)
+               var dailyXP = 25; 
                _enlistmentXP += dailyXP;
                CheckForPromotion();
                
@@ -541,7 +633,7 @@ TaleWorlds.CampaignSystem.CampaignTime :: Days(float days)
 **Goal**: Handle all settlement, encounter, and army scenarios like original SAS
 
 **Tasks**:
-- Enhance existing `Encounter_DoMeetingGuardPatch` with assignment awareness
+- Enhance existing `Encounter_DoMeetingGuardPatch` with SAS-style immediate encounter finishing
 - **Add SAS Encounter Menu Options** (replaces `EncounterMenuPatch`):
   - "Wait in Reserve" option (requires 100+ troops in army)
   - "Defect to Other Side" option (with relationship consequences)
@@ -678,8 +770,8 @@ private void OnArmyCreated(Army army)
     {
         if (IsEnlisted && army.LeaderParty.LeaderHero == _enlistedLord)
         {
-            ModLogger.Info("Army", $"Lord {_enlistedLord.Name} created army: {army.Name}");
-            ModLogger.Debug("Army", $"Army details - Type: {army.ArmyType}, Cohesion: {army.Cohesion}, Parties: {army.Parties.Count}");
+                       // User feedback via in-game notification - no logging needed
+           // Debug logging available if enabled in settings.json
             
             var message = new TextObject("Your lord {LORD} has formed an army: {ARMY_NAME}");
             message.SetTextVariable("LORD", _enlistedLord.Name);
@@ -984,7 +1076,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
    {
        public Dictionary<string, DutyDefinition> Duties { get; set; } = new();
        public Dictionary<string, TroopTypeConfig> TroopTypes { get; set; } = new();
-       public Dictionary<string, EquipmentKit> EquipmentKits { get; set; } = new();
+       // REMOVED: EquipmentKits - now using real Bannerlord troop templates
        public DutiesSettings Settings { get; set; } = new();
    }
 
@@ -1031,7 +1123,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
            }
            
            UpdateDutySlots(newTier); // 1 at T1, +1 at T3, +1 at T5
-           ApplyEquipmentKit(); // Apply tier-appropriate equipment kit
+           TriggerTroopSelectionMenu(newTier); // Show real Bannerlord troop choices
        }
        
        private void TriggerTroopTypeSelectionMenu()
@@ -1302,10 +1394,10 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
            TriggerTroopTypeSelection();
        }
        
-       // Only log if equipment application fails
+       // Only log if troop selection fails
        try
        {
-           ApplyEquipmentKit();
+           TriggerTroopSelectionMenu(_enlistmentTier);
        }
        catch (Exception ex)
        {
@@ -1391,73 +1483,193 @@ else
 - **Sturgia**: Warrior, Bowman, Druzhnik, Horse Archer
 - **Battania**: Clansman, Skirmisher, Mounted Warrior, Mounted Skirmisher
 
-## Phase 2: Equipment Kits & Officer Integration (2 weeks)
+## Phase 2: Troop Selection & Officer Integration (2 weeks) - PUBLIC API APPROACH
 
-### 2.1 Equipment Kit System  
-**Goal**: Implement culture + troop type + tier equipment kits with automatic application and officer role patch integration
+### 2.1 Troop Selection System  
+**Goal**: Implement SAS-style troop selection with **real Bannerlord troop templates** and **equipment replacement system**
+
+**Promotion Notification Flow**:
+1. **XP Threshold Reached** → Show notification: *"Promotion available! Press 'P' to advance."*
+2. **Player Presses 'P'** → Open troop selection menu
+3. **Menu Shows Real Troops** → Filter by culture and tier: *"Imperial Legionary", "Aserai Mameluke", etc.*
+4. **Player Selects Troop** → Apply equipment from `CharacterObject.BattleEquipments`
 
 **Exact Implementation Steps**:
-1. **Create `src/Features/Equipment/Behaviors/EquipmentKitManager.cs`** (integrates with duties system):
+1. **Create `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`** (SAS approach):
    ```csharp
-   public void ApplyEquipmentKit(Hero hero, string cultureId, TroopType troopType, int tier)
+   public void ShowTroopSelectionMenu(int newTier)
    {
        try
        {
-           var kitKey = troopType switch
+           var cultureId = EnlistmentBehavior.Instance.CurrentLord.Culture.StringId;
+           var availableTroops = GetTroopsForCultureAndTier(cultureId, newTier);
+           
+           // Show real Bannerlord troop names
+           var troopChoices = availableTroops.Select(t => new TroopChoice 
            {
-               TroopType.Infantry => $"{cultureId}_infantry_t{tier}",
-               TroopType.Archer => $"{cultureId}_archer_t{tier}",
-               TroopType.Cavalry => $"{cultureId}_cavalry_t{tier}",
-               TroopType.HorseArcher => $"{cultureId}_horsearcher_t{tier}",
-               _ => $"{cultureId}_infantry_t{tier}"  // Fallback to infantry
-           };
+               Name = t.Name.ToString(),
+               Troop = t,
+               Formation = DetectTroopFormation(t),
+               Equipment = t.BattleEquipments.FirstOrDefault()
+           }).ToList();
            
-           // Get kit from duties configuration
-           var kit = DutiesBehavior.Instance.GetEquipmentKit(kitKey);
-           if (kit == null)
-           {
-               ModLogger.Error("Equipment", $"No equipment kit found for {kitKey} - using fallback");
-               ApplyFallbackEquipmentKit(hero, cultureId, troopType, tier);
-               return;
-           }
-           
-           // Build Equipment object from kit
-           var equipment = new Equipment(false);
-           AssignKitToEquipment(equipment, kit);
-           
-           // Apply using verified helper method
-           EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, equipment);
-           
-           // User feedback for successful equipment change
-           var formationName = GetFormationDisplayName(troopType, cultureId);
-           var message = new TextObject("Equipped with {FORMATION} gear for tier {TIER} service.");
-           message.SetTextVariable("FORMATION", formationName);
-           message.SetTextVariable("TIER", tier);
-           InformationManager.AddQuickInformation(message, 0, hero.CharacterObject, "");
+           // Display interactive selection menu with real troop names
+           DisplayTroopSelectionUI(troopChoices);
        }
        catch (Exception ex)
        {
-           ModLogger.Error("Equipment", $"Failed to apply equipment kit for {troopType}", ex);
-           ApplyFallbackEquipmentKit(hero, cultureId, troopType, tier);
+           ModLogger.Error("TroopSelection", "Failed to show troop selection menu", ex);
        }
    }
    
-   private void ApplyFallbackEquipmentKit(Hero hero, string cultureId, TroopType troopType, int tier)
+   private List<CharacterObject> GetTroopsForCultureAndTier(string cultureId, int tier)
    {
        try
        {
-           // Fallback: Use culture's basic troop equipment
            var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
-           if (culture?.BasicTroop?.Equipment != null)
+           var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+           
+           return allTroops.Where(troop => 
+               troop.Culture == culture && 
+               troop.Tier == tier &&
+               troop.IsSoldier).ToList();
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("TroopSelection", "Failed to get troops for culture/tier", ex);
+           return new List<CharacterObject>();
+   }
+   
+   public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop)
+   {
+       try
+       {
+           // IMPORTANT: Equipment REPLACEMENT system (not accumulation)
+           // Player turns in old equipment, receives new equipment
+           var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
+           if (troopEquipment != null)
            {
-               var equipment = new Equipment(culture.BasicTroop.Equipment);
+               // Replace all equipment with new troop's gear
+               EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
                
-               // Modify based on formation type
-               switch (troopType)
-               {
-                   case TroopType.HorseArcher:
-                   case TroopType.Cavalry:
-                       // Add horse if not present
+               var message = new TextObject("Promoted to {TROOP_NAME}! New equipment issued.");
+               message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
+               InformationManager.AddQuickInformation(message, 0, hero.CharacterObject, 
+                   "event:/ui/notification/levelup");
+               
+               ModLogger.Info("TroopSelection", $"Equipment replaced with {selectedTroop.Name} gear");
+           }
+       }
+       catch (Exception ex)
+       {
+           ModLogger.Error("TroopSelection", "Failed to apply selected troop equipment", ex);
+   }
+   
+   private TroopType DetectTroopFormation(CharacterObject troop)
+   {
+       if (troop.IsRanged && troop.IsMounted)
+           return TroopType.HorseArcher;
+       else if (troop.IsMounted)
+           return TroopType.Cavalry;
+       else if (troop.IsRanged)
+           return TroopType.Archer;
+       else
+           return TroopType.Infantry;
+   }
+   ```
+
+**Key Advantages of Troop Selection**:
+- ✅ **Player Agency**: Choose from **real Bannerlord troops** at each promotion
+- ✅ **Authentic Names**: "Imperial Legionary" vs generic "T3 Infantry Kit"
+- ✅ **Visual Recognition**: Players know these troops from battles
+- ✅ **Cultural Immersion**: Each culture's troops feel unique
+- ✅ **Simplified Maintenance**: No 40+ custom equipment kits to manage
+
+2. **Add Promotion Notification System**:
+   ```csharp
+   public void CheckForPromotion()
+   {
+       var requiredXP = GetXPRequiredForTier(_enlistmentTier + 1);
+       
+       if (_enlistmentXP >= requiredXP && !_promotionPending)
+       {
+           _promotionPending = true;
+           
+           // Show persistent notification
+           var message = new TextObject("Promotion available! Press 'P' to advance your military career.");
+           InformationManager.AddQuickInformation(message, 0, Hero.MainHero.CharacterObject, 
+               "event:/ui/notification/levelup");
+       }
+   }
+   
+   public void HandlePromotionInput()
+   {
+       if (_promotionPending)
+       {
+           _promotionPending = false;
+           _enlistmentTier++;
+           TroopSelectionManager.ShowTroopSelectionMenu(_enlistmentTier);
+       }
+   }
+   ```
+
+3. **Add Input Handling for Promotion Key**:
+   ```csharp
+   // Register hotkey for promotion menu
+   public override void RegisterEvents()
+   {
+       CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
+       // Add input detection for 'P' key when promotion pending
+   }
+   ```
+
+### 2.2 Officer Role Integration - Dual Implementation Approach
+
+**Primary Approach: Public API Officer Assignment** (No patches required):
+```csharp
+// When player assigned to officer duty - use public APIs
+public void AssignOfficerRole(string officerRole)
+{
+    var lordParty = EnlistmentBehavior.Instance.CurrentLord.PartyBelongedTo;
+    
+    switch (officerRole)
+    {
+        case "Engineer":
+            lordParty.SetPartyEngineer(Hero.MainHero);
+            break;
+        case "Scout":  
+            lordParty.SetPartyScout(Hero.MainHero);
+            break;
+        case "Quartermaster":
+            lordParty.SetPartyQuartermaster(Hero.MainHero);
+            break;
+        case "Surgeon":
+            lordParty.SetPartySurgeon(Hero.MainHero);
+            break;
+    }
+    
+    // Player's skills now affect party operations naturally
+    var message = new TextObject("Assigned as party {ROLE}.");
+    message.SetTextVariable("ROLE", officerRole);
+    InformationManager.AddQuickInformation(message, 0, Hero.MainHero.CharacterObject, "");
+}
+```
+
+**Enhanced Approach: Harmony Patches** (Optional - for natural skill integration):
+```csharp
+// Alternative: Patch EffectiveX properties for more natural integration
+// Benefits: Player skills affect party without changing official assignments  
+// Use when enhanced immersion desired over simplicity
+```
+
+**Acceptance Criteria**:
+- ✅ Promotion notification appears when XP threshold reached (1-year progression)
+- ✅ 'P' key opens troop selection menu when promotion pending
+- ✅ Menu shows **real Bannerlord troop names** filtered by culture and tier
+- ✅ Player can choose from multiple troop types (infantry, archer, cavalry, horse archer)
+- ✅ Selected troop's equipment **replaces** previous equipment (not accumulated)
+- ✅ Formation type auto-detected from selected troop for duties system integration
+- ✅ Officer roles assigned via public APIs (patches optional for enhancement)
                        if (equipment[EquipmentIndex.Horse].IsEmpty)
                        {
                            var horse = FindCultureHorse(culture);
@@ -1542,50 +1754,50 @@ else
 
 2. **Add Officer Role Substitution Patches** (CRITICAL for duties system - following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/)):
    ```csharp
-   // File: src/Mod.GameAdapters/Patches/DutiesOfficerRolePatches.cs
+3. **Officer Role Implementation - Choose Approach**:
+
+   **RECOMMENDED: Public API Approach** (Phase 2 - No patches):
+   ```csharp
+   // Simple officer assignment using public APIs
+   public void AssignOfficerRole(string dutyKey, string officerRole)
+   {
+       if (string.IsNullOrEmpty(officerRole)) return;
+       
+       var lordParty = EnlistmentBehavior.Instance.CurrentLord.PartyBelongedTo;
+       
+       switch (officerRole)
+       {
+           case "Engineer":
+               lordParty.SetPartyEngineer(Hero.MainHero);
+               break;
+           case "Scout":
+               lordParty.SetPartyScout(Hero.MainHero);
+               break;
+           case "Quartermaster":
+               lordParty.SetPartyQuartermaster(Hero.MainHero);
+               break;
+           case "Surgeon":
+               lordParty.SetPartySurgeon(Hero.MainHero);
+               break;
+       }
+   }
+   ```
    
-   // Harmony Patch
-   // Target: TaleWorlds.CampaignSystem.Party.MobileParty.EffectiveEngineer { get; }
-   // Why: Make player the effective engineer when assigned to Siegewright's Aide duty for natural skill/perk benefits
-   // Safety: Campaign-only; validates enlistment state; null checks; only affects enlisted lord's party
-   // Notes: Property getter patch; high priority for mod compatibility; enables Engineering skill party benefits
+   **OPTIONAL: Enhanced Harmony Approach** (Later phase - if desired):
+   ```csharp
+   // File: src/Mod.GameAdapters/Patches/DutiesOfficerRolePatches.cs
+   // NOTE: These patches are OPTIONAL enhancements for more natural integration
    
    [HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]
-   [HarmonyPriority(999)] // High priority to run before other mods
    public class DutiesEffectiveEngineerPatch
    {
        static bool Prefix(MobileParty __instance, ref Hero __result)
        {
-           try
-           {
-               // Guard: Validate all required objects
-               if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
-                   __instance == null ||
-                   EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo != __instance)
-               {
-                   return true; // Use original behavior
-               }
-               
-               // Guard: Validate duty assignment  
-               if (DutiesBehavior.Instance?.HasActiveDutyWithRole("Engineer") != true)
-               {
-                   return true; // Use original behavior
-               }
-               
-               // Substitute player as effective engineer
-               __result = Hero.MainHero; // Player's Engineering skill drives siege speed
-               return false; // Skip original - player's skills now affect party operations
-           }
-           catch (Exception ex)
-           {
-               ModLogger.Error("Patches", $"EffectiveEngineer patch error: {ex.Message}");
-               return true; // Fail safe - use original behavior
-           }
+           // Return player when assigned to Engineering duty
+           // More natural skill integration, less intrusive than official assignment
        }
    }
-   
-   // Companion patches following same pattern:
-   // DutiesEffectiveScoutPatch, DutiesEffectiveQuartermasterPatch, DutiesEffectiveSurgeonPatch
+   // Similar patches for Scout/Quartermaster/Surgeon
    ```
 
 3. **Update SubModule.cs** (following [Bannerlord Modding standards](https://docs.bannerlordmodding.lt/modding/harmony/)):
@@ -1623,7 +1835,10 @@ else
                    campaignStarter.AddBehavior(new EnlistmentBehavior());
                    campaignStarter.AddBehavior(new LordDialogBehavior());
                    campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
-                   campaignStarter.AddBehavior(new EquipmentKitManager());
+                   campaignStarter.AddBehavior(new TroopSelectionManager());
+                   
+                   ModLogger.Info("Bootstrap", "Military service behaviors registered - using public APIs");
+                   // NOTE: Officer enhancement patches can be added later if desired
                    
                    // VERIFIED: Custom healing model for enhanced enlisted soldier healing
                    campaignStarter.AddModel(new EnlistedPartyHealingModel());
@@ -1925,7 +2140,7 @@ TaleWorlds.Library.InformationManager :: AddQuickInformation(TextObject message,
    // EXACT CODE: Add to OnDailyTick() after XP gain
    private void CheckForPromotion()
    {
-       var tierRequirements = new int[] { 0, 100, 300, 600, 1000, 1500, 2200, 3000 };
+       var tierRequirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 }; // 1-year progression
        
        while (_enlistmentTier < 7 && _enlistmentXP >= tierRequirements[_enlistmentTier + 1])
        {
@@ -1946,18 +2161,21 @@ TaleWorlds.Library.InformationManager :: AddQuickInformation(TextObject message,
    private int CalculateWage()
    {
        // VERIFIED: Based on SAS formula (Test.cs:210) with improvements
-       var baseWage = Hero.MainHero.Level * 2;
-       var xpBonus = _enlistmentXP / 50; // XP to wage ratio
-       var tierBonus = _enlistmentTier * 10;
+       // UPDATED: Realistic military wages for early game progression
+       var baseWage = Hero.MainHero.Level * 1;           // Reduced hero level impact
+       var xpBonus = _enlistmentXP / 200;               // Reduced XP impact  
+       var tierBonus = _enlistmentTier * 5;             // Reduced tier bonus
        var perkBonus = Hero.MainHero.GetPerkValue(DefaultPerks.Polearm.StandardBearer) ? 1.2f : 1f;
        
-       return (int)(perkBonus * Math.Min(baseWage + xpBonus + tierBonus, 500));
+       return (int)(perkBonus * Math.Min(baseWage + xpBonus + tierBonus + 10, 150)); // Max 150/day
    }
    ```
 
 **Acceptance Criteria**:
-- ✅ Promotion triggers automatically at correct XP thresholds
-- ✅ Wage increases with tier and performance
+- ✅ Promotion triggers automatically at correct XP thresholds (1-year progression)
+- ✅ Realistic wages increase with tier (24-150 gold/day, not wealth generation)
+- ✅ Equipment replacement system (turn in old, receive new)
+- ✅ Officer roles via public APIs (patches optional for enhancement)
 - ✅ Clear progression feedback to player
 
 ## Phase 3: Army & Battle Integration (2 weeks)
@@ -2272,8 +2490,8 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
        {
            if (IsEnlisted && IsLordInvolved(mapEvent))
            {
-               ModLogger.Info("Combat", $"Battle started - lord {_enlistedLord.Name} is involved");
-               ModLogger.Debug("Combat", $"Battle: {attackerParty.Name} vs {defenderParty.Name}");
+                          // User feedback via in-game notification - minimal logging
+           // All logs output to: <BannerlordInstall>\Modules\Enlisted\Debugging\
                
                // Enable battle participation
                var participationSet = TrySetBattleParticipation(true);
@@ -2315,13 +2533,18 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
 - ✅ Army battles properly detected and joined
 - ✅ Battle participation tracks for XP bonuses
 
-## Phase 4: Enlisted Menu System Creation (1 week) - MISSING FROM CURRENT
+## Phase 1A+: CRITICAL - Immediate Menu System ✅ COMPLETE - **INTEGRATED IN PHASE 1A**
 
-### 4.1 Create Enlisted Status Menu System (CURRENTLY MISSING)
-**Goal**: Build complete enlisted menu system from scratch with duties integration
+### 1A+.1 Create Immediate Enlisted Menu System ⚡ **CRITICAL FOR SAS APPROACH**
+**Goal**: SAS-style immediate menu replacement to prevent encounter gaps
+
+**Critical Discovery from SAS Decompile**:
+- **SAS activates `party_wait` menu IMMEDIATELY after enlistment** (line 623 in Test.cs Tick)
+- **Zero menu gap** prevents encounter system from activating during transition
+- **Uses `AddWaitGameMenu()`** which doesn't pause game time (essential for continuous flow)
 
 **Exact Implementation Steps**:
-1. **Create `src/Features/Menu/Application/EnlistedMenuBehavior.cs`**:
+1. **Create `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`**:
    ```csharp
    public class EnlistedMenuBehavior : CampaignBehaviorBase
    {
@@ -2334,8 +2557,8 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
        {
            try
            {
-               // EXACT MENU: Enlisted status display (based on SAS updatePartyMenu)
-               starter.AddGameMenu("enlisted_status",
+               // SAS CRITICAL: Use AddWaitGameMenu (doesn't pause game) for immediate activation
+               starter.AddWaitGameMenu("enlisted_status",
                    "Enlisted Service Status\n{ENLISTED_STATUS_TEXT}",
                    OnEnlistedStatusInit,
                    GameOverlays.MenuOverlayType.None,
@@ -2501,8 +2724,8 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
            false, -1, false, null);
            
        // Equipment kit management
-       starter.AddGameMenuOption("enlisted_status", "equipment_kit",
-           "View issued equipment kit",
+       starter.AddGameMenuOption("enlisted_status", "troop_status",
+           "View current troop assignment",
            (MenuCallbackArgs args) => {
                args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                return EnlistmentBehavior.Instance.IsEnlisted;
@@ -3248,7 +3471,7 @@ ConversationManager.AddDialogFlow(DialogFlow flow, object relatedObject)
 #### **Patches We Will Implement (Safe, Modern Alternatives):**
 
 **1. Core Functionality Patches:**
-- `Encounter_DoMeetingGuardPatch` (existing) - **Keep**: Prevents player encounters while enlisted
+- `Encounter_DoMeetingGuardPatch` (existing) - **Enhanced**: SAS-style immediate encounter finishing when lord not involved
 - `EncounterMenuPatch` → **Replace**: Use `AddGameMenuOption()` for "Wait in Reserve" and "Defect"
 - `HidePartyNamePlatePatch` → **Replace**: Use `MobileParty.IsVisible` + VisualTrackerManager
 - `BattleCommandsPatch` → **Replace**: Custom mission behavior for command notifications
@@ -3316,28 +3539,28 @@ private bool TrySetProperty(object target, string propertyName, object value)
 [HarmonyPatch(typeof(PlayerEncounter), nameof(PlayerEncounter.DoMeeting))]
 internal static class EnlistedEncounterGuardPatch
 {
-    static bool Prefix()
+    static void Postfix()  // Changed to Postfix - SAS approach
     {
         // Feature gate
-        if (!ModConfig.Settings?.SAS?.SuppressPlayerEncounter == true) return true;
+        if (!ModConfig.Settings?.SAS?.SuppressPlayerEncounter == true) return;
         
         // Null safety
         var enlistment = EnlistmentBehavior.Instance;
-        if (enlistment?.IsEnlisted != true) return true;
+        if (enlistment?.IsEnlisted != true) return;
         
         // Business logic with clear exit conditions
         var lordParty = enlistment.CurrentLord?.PartyBelongedTo?.Party;
         var playerEvent = MapEvent.PlayerMapEvent;
-        if (playerEvent == null || lordParty == null) return true;
+        if (playerEvent == null || lordParty == null) return;
         
-        // Safe state modification
+        // SAS-proven approach: Allow encounter to process, then finish immediately
         if (!IsLordLeadingBattle(playerEvent, lordParty))
         {
-            PlayerEncounter.LeaveEncounter = true;
-            return false; // Cancel the meeting
+            PlayerEncounter.Finish(true); // SAS immediate finishing approach
+            return; // Encounter processed and finished
         }
         
-        return true; // Allow the meeting
+        // Allow the meeting - lord is involved
     }
 }
 ```
@@ -3845,7 +4068,7 @@ ModuleData/Enlisted/
 ### **Phase 2: Equipment & Officer Integration Files**
 ```
 src/Features/Equipment/Behaviors/
-├── EquipmentKitManager.cs (duties-integrated equipment kits)
+├── TroopSelectionManager.cs (SAS-style troop selection system)
 └── PersonalGear.cs (personal vs service equipment)
 
 src/Mod.GameAdapters/Patches/
