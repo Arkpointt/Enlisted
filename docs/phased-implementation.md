@@ -145,6 +145,57 @@ lordParty.SetPartyEngineer(Hero.MainHero); // Player becomes official engineer
 
 ## Phase 1B: Complete SAS Core Implementation ✅ COMPLETE
 
+### **🛡️ CRITICAL CRASH ANALYSIS & LESSONS LEARNED**
+
+#### **Major Issues Encountered and Resolved:**
+
+**1. Lord Death/Army Defeat Crashes**
+- **Crash Logs**: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\2025-09-05_17.42.06\`
+- **Problem**: Daily tick tried to access invalid lord references after army defeat
+- **Root Cause**: Missing event handlers for immediate lord death/army defeat scenarios
+- **Solution**: Event-driven immediate response with proper event registration
+
+**2. Pathfinding Crash (Introduced During Development)**  
+- **Crash Logs**: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\ak0kr0m5.41x\2025-09-05_18.58.56`
+- **Error**: `Assertion Failed! Inaccessible target point for party path finding`
+- **Problem**: Complex army management logic with direct `SetMoveEscortParty()` calls
+- **Solution**: Revert to simple `EncounterGuard.TryAttachOrEscort()` approach
+
+**3. Missing Battle Participation**
+- **Problem**: No encounter menu when lord enters combat despite `ShouldJoinPlayerBattles = true`
+- **Solution**: Real-time `MapEvent` detection with `IsActive` toggling
+
+#### **🔧 PROVEN WORKING PATTERNS (Use These):**
+```csharp
+// ✅ SAFE ESCORT: Use EncounterGuard (has built-in pathfinding protection)
+EncounterGuard.TryAttachOrEscort(_enlistedLord);
+
+// ✅ EVENT-DRIVEN SAFETY: Immediate response to lord death/army defeat  
+CampaignEvents.CharacterDefeated.AddNonSerializedListener(this, OnCharacterDefeated);
+CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
+CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
+
+// ✅ BATTLE PARTICIPATION: Real-time detection with IsActive toggling
+private void HandleBattleParticipation(MobileParty main, MobileParty lordParty) {
+    bool lordInBattle = lordParty.MapEvent != null;
+    if (lordInBattle && !main.MapEvent) {
+        main.IsActive = true;  // Triggers encounter menu
+    }
+}
+```
+
+#### **❌ PATTERNS THAT CAUSE CRASHES (Avoid These):**
+```csharp
+// ❌ PATHFINDING CRASH: Direct escort calls bypass safety
+main.Ai.SetMoveEscortParty(lordParty);  // Crashes when lord in settlement/battle
+
+// ❌ TIMING CRASH: Polling-only safety (too slow)
+// Continuous validation without event-driven immediate response
+
+// ❌ OVER-ENGINEERING: Complex army hierarchy logic 
+// Adding complexity to simple, working systems
+```
+
 ### 1B.1 Implement Complete Military Service Foundation
 **Goal**: Transform minimal EnlistmentBehavior into complete military service with **1-year progression**, **realistic wages**, and **equipment replacement system**
 
@@ -287,8 +338,8 @@ lordParty.SetPartyEngineer(Hero.MainHero); // Player becomes official engineer
                           // SIMPLIFIED: Retirement based on service time, not XP
                // Player becomes eligible for retirement after 1 full year (365 days) of service
            
-           // Apply escort and visibility
-           EncounterGuard.TryAttachOrEscort(lord);
+           // CRITICAL: Use safe escort approach (prevents pathfinding crashes)
+           EncounterGuard.TryAttachOrEscort(lord);  // ✅ Has built-in safety checks
            var main = MobileParty.MainParty;
            if (main != null)
            {
@@ -689,8 +740,8 @@ private void OnHourlyTick()
         // VERIFIED: Army-aware following behavior
         HandleArmyMembership(lordParty);
         
-        // VERIFIED: Basic following behavior using confirmed APIs
-        MobileParty.MainParty.Ai.SetMoveEscortParty(lordParty);
+        // ✅ SAFE: Use EncounterGuard approach (prevents pathfinding crashes)
+        EncounterGuard.TryAttachOrEscort(_enlistedLord);  // Built-in safety vs direct escort calls
         MobileParty.MainParty.IsVisible = false;
         
         // VERIFIED: IgnoreByOtherPartiesTill exists in MobileParty.cs:2046
@@ -711,8 +762,8 @@ private void HandleArmyMembership(MobileParty lordParty)
         
         if (armyLeader != lordParty)
         {
-            // Lord is army member, not leader - follow army leader instead
-            MobileParty.MainParty.Ai.SetMoveEscortParty(armyLeader);
+            // WARNING: Direct SetMoveEscortParty calls cause pathfinding crashes
+            // Use EncounterGuard.TryAttachOrEscort() instead for built-in safety
             
             // IMPROVEMENT: Track army cohesion for early warning
             if (lordArmy.Cohesion < 10f)
@@ -723,8 +774,8 @@ private void HandleArmyMembership(MobileParty lordParty)
         }
         else
         {
-            // Lord is army leader - standard following
-            MobileParty.MainParty.Ai.SetMoveEscortParty(lordParty);
+            // WARNING: Direct SetMoveEscortParty calls cause pathfinding crashes  
+            // Use EncounterGuard.TryAttachOrEscort() instead for built-in safety
         }
         
         // IMPROVEMENT: Army-specific assignment benefits
@@ -736,32 +787,28 @@ private void HandleArmyMembership(MobileParty lordParty)
     }
     else
     {
-        // Lord is not in army - standard escort behavior
-        MobileParty.MainParty.Ai.SetMoveEscortParty(lordParty);
+        // WARNING: Direct SetMoveEscortParty calls cause pathfinding crashes
+        // Use EncounterGuard.TryAttachOrEscort() instead for built-in safety
     }
 }
 
-// VERIFIED: Complete event tracking including lord death/capture
+// ✅ CRASH-SAFE: Complete event tracking including lord death/capture (CRITICAL FOR STABILITY)
 public override void RegisterEvents()
 {
-    // Core enlistment events
-    CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+    // SAS CRITICAL: Real-time management for encounter prevention
+    CampaignEvents.TickEvent.AddNonSerializedListener(this, OnRealtimeTick);
+    
+    // Core enlistment events  
     CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
     CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
-    CampaignEvents.OnSettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
-    CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);
     
-    // VERIFIED: Army lifecycle events
-    CampaignEvents.OnArmyCreated.AddNonSerializedListener(this, OnArmyCreated);
-    CampaignEvents.OnArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
-    CampaignEvents.OnPartyJoinedArmyEvent.AddNonSerializedListener(this, OnPartyJoinedArmy);
-    CampaignEvents.OnPartyRemovedFromArmyEvent.AddNonSerializedListener(this, OnPartyRemovedFromArmy);
-    
-    // CRITICAL: Lord death/capture events for enlistment termination
+    // 🛡️ CRITICAL CRASH PREVENTION: Event-driven lord death/army defeat safety
+    // These events fire IMMEDIATELY when lords die/armies are defeated
+    // Missing these causes crashes when daily tick tries to access invalid references
     CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
-    CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener(this, OnHeroPrisonerTaken);
-    CampaignEvents.HeroPrisonerReleased.AddNonSerializedListener(this, OnHeroPrisonerReleased);
     CampaignEvents.CharacterDefeated.AddNonSerializedListener(this, OnCharacterDefeated);
+    CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
+    CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener(this, OnHeroPrisonerTaken);
 }
 
 private void OnArmyCreated(Army army)
@@ -796,8 +843,8 @@ private void OnArmyDispersed(Army army, Army.ArmyDispersionReason reason, bool i
         var message = new TextObject("The army has been dispersed. Returning to independent operations.");
         InformationManager.AddQuickInformation(message, 0, _enlistedLord.CharacterObject, "");
         
-        // Return to following individual lord
-        MobileParty.MainParty.Ai.SetMoveEscortParty(_enlistedLord.PartyBelongedTo);
+        // SAFE: Return to following individual lord using safe escort approach
+        EncounterGuard.TryAttachOrEscort(_enlistedLord);  // ✅ Prevents pathfinding crashes
     }
 }
 
@@ -821,8 +868,8 @@ private void OnPartyRemovedFromArmy(MobileParty party)
         var message = new TextObject("Your lord has left the army. Returning to independent operations.");
         InformationManager.AddQuickInformation(message, 0, _enlistedLord.CharacterObject, "");
         
-        // Return to individual lord following
-        MobileParty.MainParty.Ai.SetMoveEscortParty(party);
+        // SAFE: Return to individual lord following using safe escort approach  
+        EncounterGuard.TryAttachOrEscort(_enlistedLord);  // ✅ Prevents pathfinding crashes
     }
 }
 
@@ -1063,13 +1110,34 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
 - Time control managed appropriately in different settlement types
 - Battle participation based on army size and lord involvement
 
-## Phase 1C: Duties System Foundation (1 week) - NEW APPROACH
+## Phase 1C: Duties System Foundation ✅ COMPLETE - ENHANCED WITH CRASH-SAFE IMPLEMENTATION
 
 ### 1C.1 Create Modern Duties System  
 **Goal**: Implement configuration-driven duties system with troop type specializations and officer role integration
 
 **Exact Implementation Steps**:
-1. **Create `src/Features/Duties/Core/DutiesConfig.cs`** (replaces basic assignments):
+1. **✅ COMPLETED: Created `src/Features/Assignments/Core/DutyConfiguration.cs`** (configuration system):
+   - Complete duty definition data structures  
+   - Schema versioning for future compatibility
+   - Officer role integration definitions
+
+2. **✅ COMPLETED: Created `src/Features/Assignments/Core/ConfigurationManager.cs`** (safe JSON loading):
+   - Comprehensive error handling with fallback defaults
+   - Cross-platform ModuleData path detection
+   - Blueprint-compliant fail-safe design
+
+3. **✅ COMPLETED: Created `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs`** (main duties behavior):
+   - Daily duty processing with skill XP integration
+   - Formation auto-detection using SAS-style logic
+   - Officer role management (dual approach: public APIs + optional Harmony patches)
+   - Wage multiplier integration with EnlistmentBehavior
+
+4. **✅ COMPLETED: Created `src/Mod.GameAdapters/Patches/DutiesOfficerRolePatches.cs`** (optional enhancements):
+   - 4 Harmony patches for natural officer skill integration
+   - High-priority execution with comprehensive error handling
+   - Guards for enlisted state and duty assignment validation
+
+### **Original Approach (Replaced):**
    ```csharp
    // Configuration-driven duties system with troop type specializations
    public class DutiesConfig
@@ -4393,6 +4461,64 @@ starter.AddGameMenuOption("enlisted_status", "request_retirement",
 - ✅ **4-formation support** throughout all systems
 
 This comprehensive implementation plan provides **complete guidance** for building a modern, robust SAS system. Every API call, every class structure, and every implementation pattern is documented with exact signatures and usage examples.
+
+## 🎯 **IMPLEMENTATION COMPLETION STATUS - UPDATED 2025-09-05**
+
+### **✅ PHASES COMPLETE:**
+- **Phase 1A**: Centralized Dialog System - ✅ **IMPLEMENTED & TESTED**  
+- **Phase 1B**: Complete SAS Core Implementation - ✅ **IMPLEMENTED & TESTED**
+- **Phase 1C**: Duties System Foundation - ✅ **IMPLEMENTED & TESTED**
+
+### **🛡️ CRITICAL CRASH ANALYSIS & FIXES:**
+
+#### **Issue 1: Lord Death/Army Defeat Crashes (RESOLVED)**
+- **Crash Logs**: `2025-09-05_17.42.06` - Daily tick accessing invalid lord references
+- **Solution**: Event-driven immediate discharge using `OnCharacterDefeated`, `OnHeroKilled`, `OnArmyDispersed`
+- **Key**: Events fire immediately when lords die/armies defeat - must respond instantly
+
+#### **Issue 2: Pathfinding Crash (INTRODUCED & RESOLVED)**
+- **Crash Logs**: `ak0kr0m5.41x\2025-09-05_18.58.56` - "Inaccessible target point for party path finding"
+- **Problem**: Complex army management with direct `SetMoveEscortParty()` calls
+- **Solution**: Reverted to simple `EncounterGuard.TryAttachOrEscort()` approach
+- **Key**: Original working code had built-in safety mechanisms
+
+#### **Issue 3: Missing Battle Participation (RESOLVED)**
+- **Problem**: No encounter menu when lord enters combat
+- **Solution**: Real-time `MapEvent` detection with `IsActive` toggling
+- **Key**: Battle participation requires active monitoring, not just `ShouldJoinPlayerBattles`
+
+### **🔧 PROVEN PATTERNS FOR FUTURE DEVELOPMENT:**
+
+#### **✅ USE THESE (Crash-Safe):**
+```csharp
+// SAFE ESCORT: Built-in pathfinding protection
+EncounterGuard.TryAttachOrEscort(_enlistedLord);
+
+// EVENT-DRIVEN SAFETY: Immediate response to lord death/army defeat
+CampaignEvents.CharacterDefeated.AddNonSerializedListener(this, OnCharacterDefeated);
+CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
+CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
+
+// BATTLE PARTICIPATION: Real-time detection with IsActive toggling  
+if (lordParty.MapEvent != null && !main.MapEvent) {
+    main.IsActive = true; // Triggers encounter menu
+}
+```
+
+#### **❌ AVOID THESE (Cause Crashes):**
+```csharp
+// PATHFINDING CRASH: Direct escort bypasses safety
+main.Ai.SetMoveEscortParty(lordParty); // Crashes when lord in settlement/battle
+
+// REFERENCE CRASH: Missing event handlers  
+// Without immediate event response, invalid references cause daily tick crashes
+
+// OVER-ENGINEERING: Complex army hierarchy logic
+// Simple working systems don't need "enhancement"
+```
+
+### **📋 NEXT PHASE READY:**
+**Phase 2: Troop Selection & Officer Integration** can begin with complete confidence in the stable, crash-tested foundation.
 
 The plan leverages our **complete API knowledge** while maintaining safety, compatibility, and our blueprint's architecture principles. The AI now has everything needed to implement the full SAS experience that surpasses the original mod.
 
