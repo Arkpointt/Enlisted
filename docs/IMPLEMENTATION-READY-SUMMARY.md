@@ -201,6 +201,39 @@ Example: Retire as "Imperial Cataphract" → Keep elite heavy cavalry gear perma
 
 **Philosophy**: Use the **right tool for the job** - public APIs when sufficient, Harmony patches when they provide significant value.
 
+## 🔧 **Critical Implementation Discoveries & Fixes**
+
+### **Major Crash Issues Resolved During Development**
+
+#### **1. Lord Death/Army Defeat Crashes**
+**Problem**: Crashes when lord died or army was defeated during daily tick processing
+**Solution**: Added event-driven safety with immediate discharge
+**Events Added**: `CharacterDefeated`, `HeroKilledEvent`, `OnArmyDispersed`, `HeroPrisonerTaken`
+**Key**: Event-driven immediate response vs. continuous polling
+
+#### **2. Pathfinding Crash (Introduced & Fixed)**  
+**Problem**: `Assertion Failed! Inaccessible target point for party path finding`
+**Root Cause**: Complex `SetMoveEscortParty()` calls bypassing EncounterGuard safety
+**Solution**: Reverted to simple `EncounterGuard.TryAttachOrEscort()` approach
+**Key**: Original working code had built-in pathfinding protection
+
+#### **3. Missing Battle Participation**
+**Problem**: No encounter menu when lord enters combat  
+**Solution**: Added real-time battle detection with `lordParty.MapEvent` monitoring
+**Key**: Battle participation requires active `IsActive` toggling, not just `ShouldJoinPlayerBattles`
+
+### **🎯 Architecture Lessons for Future Development**
+
+#### **✅ Proven Working Patterns:**
+- **Simple escort logic**: `EncounterGuard.TryAttachOrEscort()` (has built-in safety)
+- **Event-driven safety**: Immediate response to lord death/army defeat events
+- **Real-time battle detection**: Monitor `lordParty.MapEvent` and toggle `main.IsActive`
+
+#### **❌ Patterns That Cause Crashes:**
+- **Direct SetMoveEscortParty calls**: Bypasses pathfinding safety, crashes when lord in settlement/battle
+- **Complex army hierarchy logic**: Over-engineering simple, working systems
+- **Polling-only safety**: Too slow for immediate crash scenarios (supplement with events)
+
 ---
 
-**Phase 1A/1B Implementation Complete**: Full SAS approach with **100% verified API compatibility** - all encounter handling, lord safety validation, and battle crash prevention implemented using proven SAS patterns. **Ready for Phase 1C: Duties System Implementation**.
+**Phase 1A/1B/1C Implementation Complete**: Full SAS approach with **100% verified API compatibility** - all encounter handling, lord safety validation, battle crash prevention, and duties system implemented using proven SAS patterns. **Ready for Phase 2: Troop Selection & Officer Integration**.

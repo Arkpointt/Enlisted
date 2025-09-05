@@ -437,6 +437,111 @@ else
 | **T5** | 375🪙 | 488🪙 | 750🪙 | 938🪙 |
 | **T7 Elite** | 788🪙 | 1024🪙 | 1575🪙 | 1969🪙 |
 
+## 🛡️ **Critical Crash Analysis & Solutions**
+
+### **Issue 1: Lord Death/Army Defeat Crashes**
+
+#### **Problem Identified:**
+- **Crash logs**: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\2025-09-05_17.42.06\`
+- **Scenario**: When lord dies or army is defeated during daily tick processing
+- **Root Cause**: Missing event handlers for `CharacterDefeated`, `HeroKilledEvent`, `OnArmyDispersed`
+
+#### **Solution Implemented:**
+```csharp
+// Added missing event registrations in RegisterEvents():
+CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
+CampaignEvents.CharacterDefeated.AddNonSerializedListener(this, OnCharacterDefeated);
+CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
+CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener(this, OnHeroPrisonerTaken);
+
+// Event-driven immediate response prevents crashes
+private void OnCharacterDefeated(Hero defeatedHero, Hero victorHero) {
+    if (IsEnlisted && defeatedHero == _enlistedLord) {
+        StopEnlist("Lord died in battle"); // Immediate safe discharge
+    }
+}
+```
+
+#### **Key Learning:**
+**SAS relied on event-driven safety, not continuous polling.** When armies are defeated, events fire immediately - we must respond instantly to clean up invalid lord references before daily tick tries to access them.
+
+### **Issue 2: Pathfinding Crash (Introduced During Fix)**
+
+#### **Problem Identified:**
+- **Crash logs**: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\ak0kr0m5.41x\2025-09-05_18.58.56`
+- **Error**: `Assertion Failed! Expression: Inaccessible target point for party path finding`
+- **Root Cause**: Added complex `SetMoveEscortParty()` calls bypassing EncounterGuard safety
+
+#### **Failed Solution (Over-Engineering):**
+```csharp
+// ❌ BROKE: Complex army management with direct escort calls
+private void HandleArmyMembership(...) {
+    if (lordArmy != null) {
+        main.Ai.SetMoveEscortParty(armyLeader); // CRASH: when army leader in settlement!
+    }
+}
+```
+
+#### **Working Solution (Revert to Simple):**
+```csharp
+// ✅ WORKS: Original simple approach with built-in safety
+EncounterGuard.TryAttachOrEscort(_enlistedLord); // Has pathfinding protection built-in
+```
+
+#### **Key Learning:**
+**Original working code was simple and elegant.** `EncounterGuard.TryAttachOrEscort()` already had built-in pathfinding safety. Complex "enhancements" broke working systems by bypassing proven safety mechanisms.
+
+### **Issue 3: Battle Participation Missing**
+
+#### **Problem Identified:**
+- **User Report**: "Not getting prompted with encounter menu when pulled into battle"
+- **Root Cause**: Missing real-time battle detection logic
+- **Timeline**: Should have been in Phase 1B but was incomplete
+
+#### **Solution Implemented:**
+```csharp
+// Added real-time battle detection in OnRealtimeTick():
+private void HandleBattleParticipation(MobileParty main, MobileParty lordParty) {
+    bool lordInBattle = lordParty.MapEvent != null;
+    if (lordInBattle && !main.MapEvent) {
+        main.IsActive = true;  // Trigger encounter menu
+    }
+}
+```
+
+#### **Key Learning:**
+**Battle participation requires real-time detection**, not just setting `ShouldJoinPlayerBattles = true`. Must actively monitor `lordParty.MapEvent` and enable player when lord enters combat.
+
+### **🔧 Final Architecture Guidelines for Future Development:**
+
+#### **✅ Working Escort Pattern:**
+```csharp
+// DO: Use EncounterGuard (has built-in safety)
+EncounterGuard.TryAttachOrEscort(_enlistedLord);
+
+// DON'T: Direct SetMoveEscortParty calls (causes pathfinding crashes)
+main.Ai.SetMoveEscortParty(lordParty); // ❌ Crashes when lord in settlement/battle
+```
+
+#### **✅ Working Safety Pattern:**
+```csharp
+// DO: Event-driven immediate response
+CampaignEvents.CharacterDefeated.AddNonSerializedListener(this, OnCharacterDefeated);
+
+// DON'T: Continuous polling only (too slow for crash scenarios)  
+// Real-time validation is supplementary, not primary safety
+```
+
+#### **✅ Working Battle Pattern:**
+```csharp
+// DO: Real-time detection with IsActive toggling
+if (lordParty.MapEvent != null && !main.MapEvent) {
+    main.IsActive = true; // Enable for battle
+}
+
+// DON'T: Rely only on ShouldJoinPlayerBattles property
+```
+
 ---
 
 **This implementation delivers a professional, comprehensive military service system that provides deep gameplay mechanics while maintaining reliability, modularity, and extensibility.**
