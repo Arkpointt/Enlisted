@@ -51,8 +51,8 @@ Enlisted/
 
 ### Phase 1A: Core Dialog ✅ COMPLETE 
 - ✅ Updated to `EnlistedDialogManager.cs` with centralized approach
-- ✅ Migrated to `lord_talk_speak_diplomacy_2` submenu
-- ✅ Implemented SAS immediate menu activation patterns
+- ✅ Migrated to `lord_talk_speak_diplomacy_2` submenu  
+- ✅ Implemented working player-initiated dialog structure
 
 ### Phase 1A+: CRITICAL - Immediate Menu System ✅ COMPLETE 
 - ✅ Integrated SAS immediate menu replacement within `EnlistedDialogManager.cs`
@@ -71,15 +71,23 @@ Enlisted/
 - ✅ Created `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs` - Main duties behavior with officer integration
 - ✅ Created `src/Mod.GameAdapters/Patches/DutiesOfficerRolePatches.cs` - Optional enhancement patches
 
-### Phase 2: Equipment & Progression (Weeks 2-3)
-- Create `src/Features/Equipment/Behaviors/GearManager.cs`
-- Create `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
+### Phase 2A: Enhanced Menu System ✅ COMPLETE
+- ✅ Created `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs` - Professional military interface with real-time updates
+- ✅ Created `src/Features/Interface/Behaviors/EnlistedInputHandler.cs` - Keyboard shortcuts and input handling  
+- ✅ Implemented comprehensive status display with lord, army, duties, progression information
+- ✅ Fixed API signatures using actual TaleWorlds decompiled code (not outdated documentation)
+- ✅ Proper SAS menu behavior - stays active while following lord, no game pausing
+
+### Phase 2B: Equipment & Troop Selection (Next - Weeks 2-3)
+- Create `src/Features/Equipment/Behaviors/TroopSelectionManager.cs` - SAS-style real troop selection
+- Create `src/Features/Equipment/Behaviors/EquipmentManager.cs` - Equipment replacement system
+- Create `src/Features/Ranks/Behaviors/PromotionBehavior.cs` - Promotion and advancement system
 
 ### Phase 3: Army & Battle Integration (Week 4) - **SIMPLIFIED**
 - Enhanced battle scenarios (core logic now in Phase 1B)
 
-### Phase 4: Menu Enhancement (Week 5) - **REDUCED SCOPE**
-- Advanced menu features (basic menu now in Phase 1A+)
+### Phase 4: Final Polish & Testing (Week 5) - **REDUCED SCOPE**
+- Edge case testing and performance optimization (enhanced menu now complete in Phase 2A)
 
 ## Key Changes Made
 
@@ -101,13 +109,14 @@ Enlisted/
 - ✅ **Combat/** instead of Battle/ (more descriptive)
 - ✅ **Interface/** instead of Menu/ (clearer purpose)
 
-## Phase 1A/1B/1C Complete - **100% API VERIFIED**
+## Phase 1A/1B/1C/2A Complete - **100% API VERIFIED + ENHANCED MENU SYSTEM**
 
-The project structure is clean, organized, and **Phase 1A/1B/1C implementation complete** with all critical SAS patterns and duties system successfully implemented. Ready for Phase 2 with:
+The project structure is clean, organized, and **Phase 1A/1B/1C/2A implementation complete** with all critical SAS patterns, duties system, and professional enhanced menu interface successfully implemented. Ready for Phase 2B with:
 
 **✅ Confirmed APIs**: IsActive, TickEvent, AddWaitGameMenu, Army management, AI commands, Officer roles
-**✅ Zero API blockers**: Complete SAS approach fully compatible  
-**✅ Implementation confidence**: 100% with comprehensive decompile verification
+**✅ Zero API blockers**: Complete SAS approach fully compatible using actual TaleWorlds decompiled APIs
+**✅ Implementation confidence**: 100% with comprehensive decompile verification  
 **✅ Battle crash resolved**: Lord safety validation prevents all encounter-related crashes
 **✅ Duties system complete**: Configuration-driven duties with officer integration and formation specializations
-**✅ Ready for Phase 2**: Troop selection and enhanced equipment management
+**✅ Enhanced menu system complete**: Professional military interface with keyboard shortcuts and real-time updates
+**✅ Ready for Phase 2B**: Troop selection and equipment replacement implementation

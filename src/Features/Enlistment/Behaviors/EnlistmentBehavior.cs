@@ -513,6 +513,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// <summary>
 		/// Add XP to player's military progression.
 		/// Called by duties system and other progression sources.
+		/// Triggers promotion notifications when XP thresholds are reached.
 		/// </summary>
 		public void AddEnlistmentXP(int xp, string source = "General")
 		{
@@ -521,8 +522,80 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 			
+			var previousXP = _enlistmentXP;
 			_enlistmentXP += xp;
 			ModLogger.Info("XP", $"+{xp} from {source} (Total: {_enlistmentXP})");
+			
+			// Check if we crossed a promotion threshold
+			CheckPromotionNotification(previousXP, _enlistmentXP);
+		}
+
+		/// <summary>
+		/// Check if promotion notification should be triggered after XP gain.
+		/// </summary>
+		private void CheckPromotionNotification(int previousXP, int currentXP)
+		{
+			try
+			{
+				// 1-year progression system thresholds
+				var tierXPRequirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 };
+				
+				// Check if we crossed any promotion threshold
+				for (int tier = _enlistmentTier; tier < 7; tier++)
+				{
+					var requiredXP = tierXPRequirements[tier];
+					
+					// If we crossed from below to above a threshold
+					if (previousXP < requiredXP && currentXP >= requiredXP)
+					{
+						// Direct promotion notification (safer approach)
+						ShowPromotionNotification(tier + 1);
+						break; // Only notify for the first threshold crossed
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Progression", $"Error checking promotion notification: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Show promotion notification directly to player.
+		/// </summary>
+		private void ShowPromotionNotification(int availableTier)
+		{
+			try
+			{
+				var rankName = GetRankName(availableTier);
+				var message = new TextObject($"Promotion available! You can advance to {rankName} (Tier {availableTier}). Press 'P' to choose your advancement!");
+				
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				ModLogger.Info("Progression", $"Promotion notification shown for Tier {availableTier}");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Progression", $"Error showing promotion notification: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Get rank name for tier.
+		/// </summary>
+		private string GetRankName(int tier)
+		{
+			var rankNames = new Dictionary<int, string>
+			{
+				{1, "Recruit"},
+				{2, "Private"}, 
+				{3, "Corporal"},
+				{4, "Sergeant"},
+				{5, "Staff Sergeant"},
+				{6, "Master Sergeant"},
+				{7, "Veteran"}
+			};
+			
+			return rankNames.ContainsKey(tier) ? rankNames[tier] : $"Tier {tier}";
 		}
 		
 		/// <summary>

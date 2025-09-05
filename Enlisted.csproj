@@ -135,6 +135,8 @@
     <Compile Include="src\Features\Assignments\Core\DutyConfiguration.cs" />
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs" />
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs" />
+    <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs" />
+    <Compile Include="src\Features\Interface\Behaviors\EnlistedInputHandler.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
   </ItemGroup>
   <ItemGroup>

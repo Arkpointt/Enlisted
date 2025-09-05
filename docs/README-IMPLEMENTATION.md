@@ -19,9 +19,10 @@ This implementation creates a complete military service system where players can
 - **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - SAS immediate menu replacement implemented
 - **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
 - **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
-- **Phase 2**: Troop Selection & Officer Integration (2 weeks) - ⏳ **NEXT** - SAS troop selection + optional enhancement patches
+- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with keyboard shortcuts and real-time updates
+- **Phase 2B**: Troop Selection & Equipment Replacement - ⏳ **NEXT** - SAS troop selection + equipment replacement system
 - **Phase 3**: Army & Battle Integration (1 week) - ⏳ **SIMPLIFIED** - core army logic moved to Phase 1B
-- **Phase 4**: Menu Enhancement & Polish (1 week) - ⏳ **REDUCED** - basic menu now in Phase 1A+
+- **Phase 4**: Final Polish & Testing (1 week) - ⏳ **REDUCED** - enhanced menu now complete in Phase 2A
 - **Phase 5**: Edge Cases & Testing (1 week) - ⏳ Ready for Implementation
 
 ## 🏗️ Architecture Overview
@@ -36,7 +37,10 @@ src/Features/
 ├── Equipment/           # SAS-style troop selection with equipment REPLACEMENT system
 ├── Conversations/       # Dialog system integration for enlistment and duties
 ├── Combat/              # Army following and battle participation with officer roles
-└── Interface/           # Enlisted status menu and duties management (TO BE CREATED)
+└── Interface/           # ✅ COMPLETE: Enhanced menu system with professional military interface
+    └── Behaviors/
+        ├── EnlistedMenuBehavior.cs     # ✅ Comprehensive military status menu
+        └── EnlistedInputHandler.cs     # ✅ Keyboard shortcuts ('P'/'N' keys)
 ```
 
 ### Key Design Principles
@@ -171,15 +175,16 @@ We have complete and verified API documentation covering:
 6. **Test Incrementally**: Verify functionality at each phase completion
 
 ### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
-- `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub + immediate menu activation + SAS menu clearing
+- `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub with restored working dialog patterns
 - `EnlistmentBehavior.cs` - ✅ **COMPLETE**: SAS real-time TickEvent + IsActive management + dynamic army membership + lord safety validation + battle participation
-- `EnlistedMenuBehavior.cs` - ✅ **INTEGRATED**: SAS immediate menu system implemented within EnlistedDialogManager
-- `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system with formation specializations and officer roles
+- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Professional enhanced menu system with comprehensive military interface
+- `EnlistedInputHandler.cs` - ✅ **COMPLETE**: Keyboard shortcuts ('P' for promotion, 'N' for status menu) with proper input handling
+- `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system + menu support methods for enhanced display
 - `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
 - `ConfigurationManager.cs` - ✅ **COMPLETE**: Safe JSON loading with schema versioning and validation
-- `TroopSelectionManager.cs` - **NEXT**: SAS-style real troop selection with **equipment REPLACEMENT** (Phase 2)
-- `EnlistedPartyHealingModel.cs` - **READY**: Custom healing model for enhanced enlisted soldier healing (Phase 2)
-- `RetirementSystem.cs` - **READY**: 1-year service requirement with equipment choice system (Phase 2)
+- `TroopSelectionManager.cs` - **NEXT**: SAS-style real troop selection with **equipment REPLACEMENT** (Phase 2B)
+- `EnlistedPartyHealingModel.cs` - **READY**: Custom healing model for enhanced enlisted soldier healing (Phase 2B)
+- `RetirementSystem.cs` - **READY**: 1-year service requirement with equipment choice system (Phase 2B)
 
 ## 🎮 Player Experience
 
@@ -190,15 +195,19 @@ We have complete and verified API documentation covering:
 4. **Daily Operations**: Receive wages, gain XP, perform assignments
 5. **Progression**: Earn promotions and unlock new assignments/equipment
 
-### Service Management
-- **Comprehensive Menu System**: Main enlisted status menu with equipment and duty management sub-menus
-- **Field Medical Treatment**: Healing system available anywhere with 5-day/2-day cooldowns (Field Medics get reduced cooldown)
-- **Multiple Equipment Choices**: 3-6 troop equipment styles per tier with realistic military pricing
-- **Duties Management**: Assign multiple duties within slot limits based on tier progression and formation type
-- **4-Formation Specialization**: Infantry, Archer, Cavalry, Horse Archer with auto-detection and culture variants
-- **Equipment Economics**: Formation-based pricing (Infantry cheapest → Horse Archer most expensive)  
-- **Officer Role Benefits**: Natural skill/perk application through effective party officer positions
-- **Army Operations**: Automatic participation with officer-specific bonuses and responsibilities
+### Service Management - **ENHANCED MENU SYSTEM COMPLETE**
+- **✅ Professional Military Interface**: Rich enlisted status menu with comprehensive information display
+- **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
+- **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
+- **✅ Interactive Menu Management**: Field medical treatment, duties management, equipment access, service records  
+- **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
+- **✅ Proper SAS Behavior**: Menu stays active while following lord, maintains game flow
+- **✅ Multiple Equipment Choices**: Framework ready for 3-6 troop equipment styles per tier with realistic pricing
+- **✅ Duties Management**: Interactive assignment interface with slot tracking and officer role display
+- **✅ 4-Formation Specialization**: Infantry, Archer, Cavalry, Horse Archer with auto-detection and culture variants
+- **✅ Equipment Economics**: Formation-based pricing framework (Infantry cheapest → Horse Archer most expensive)  
+- **✅ Officer Role Benefits**: Natural skill/perk application display through effective party officer positions
+- **✅ Army Operations**: Real-time army information with hierarchy and operational status display
 
 ### Veteran Benefits & Progression
 - **Service History**: Track multiple enlistments and achievements across different factions

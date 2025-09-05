@@ -503,5 +503,80 @@ namespace Enlisted.Features.Assignments.Behaviors
                 _ => formation
             };
         }
+
+        #region Menu Support Methods
+
+        /// <summary>
+        /// Get formatted display text for active duties.
+        /// </summary>
+        public string GetActiveDutiesDisplay()
+        {
+            if (_activeDuties.Count == 0)
+                return "None assigned";
+
+            var duties = _activeDuties.Select(id => _config?.Duties.ContainsKey(id) == true ? _config.Duties[id].DisplayName : id);
+            var maxSlots = GetMaxDutySlots();
+            
+            return $"{string.Join(", ", duties)} ({_activeDuties.Count}/{maxSlots})";
+        }
+
+        /// <summary>
+        /// Get current officer role for menu display.
+        /// </summary>
+        public string GetCurrentOfficerRole()
+        {
+            foreach (var dutyId in _activeDuties)
+            {
+                if (_config?.Duties.ContainsKey(dutyId) == true && !string.IsNullOrEmpty(_config.Duties[dutyId].OfficerRole))
+                {
+                    return _config.Duties[dutyId].OfficerRole;
+                }
+            }
+            return "";
+        }
+
+        /// <summary>
+        /// Get player's formation type for menu display.
+        /// </summary>
+        public string GetPlayerFormationType()
+        {
+            return _playerFormation?.ToLower() ?? "infantry";
+        }
+
+        /// <summary>
+        /// Get current wage multiplier from active duties.
+        /// </summary>
+        public float GetCurrentWageMultiplier()
+        {
+            float multiplier = 1.0f;
+            
+            foreach (var dutyId in _activeDuties)
+            {
+                if (_config?.Duties.ContainsKey(dutyId) == true)
+                {
+                    multiplier *= _config.Duties[dutyId].WageMultiplier;
+                }
+            }
+            
+            return multiplier;
+        }
+
+        // HasActiveDutyWithRole method already exists above - removed duplicate
+
+        /// <summary>
+        /// Get maximum duty slots based on tier.
+        /// </summary>
+        private int GetMaxDutySlots()
+        {
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            return tier switch
+            {
+                >= 5 => 3, // Senior tiers get 3 slots
+                >= 3 => 2, // Mid tiers get 2 slots  
+                _ => 1     // Junior tiers get 1 slot
+            };
+        }
+
+        #endregion
     }
 }

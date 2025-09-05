@@ -8,6 +8,7 @@ using Enlisted.Mod.Core.Config;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
 
 namespace Enlisted.Mod.Entry
 {
@@ -44,11 +45,17 @@ namespace Enlisted.Mod.Entry
 
 				if (gameStarterObject is CampaignGameStarter campaignStarter)
 				{
+					// Core military service behaviors
 					campaignStarter.AddBehavior(new EnlistmentBehavior());
 					campaignStarter.AddBehavior(new EnlistedDialogManager());
 					campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
+					
+					// Enhanced menu and input system
+					campaignStarter.AddBehavior(new EnlistedMenuBehavior());
+					campaignStarter.AddBehavior(new EnlistedInputHandler());
+					
 					EncounterGuard.Initialize();
-					ModLogger.Info("Bootstrap", "Military service behaviors registered (with duties system)");
+					ModLogger.Info("Bootstrap", "Military service behaviors registered (with enhanced menu system and hotkeys)");
 				}
 			}
 			catch (Exception ex)
