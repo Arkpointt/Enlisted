@@ -2,7 +2,7 @@
 
 Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 
-## ⚠️ **CRITICAL SAS DECOMPILE FINDINGS** - **FINAL BREAKTHROUGH**
+## ⚠️ **CRITICAL SAS DECOMPILE FINDINGS** - **FINAL BREAKTHROUGH + PHASE 2A API CORRECTIONS**
 
 **Updated**: After deep SAS decompile analysis, we discovered the **complete SAS approach** was different than initially understood:
 
@@ -18,12 +18,18 @@ Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 - **Real-time state management** - continuous enforcement even during paused encounters
 - **100% API COMPATIBILITY** - All critical SAS APIs verified to exist in current Bannerlord version
 
+### **🔧 PHASE 2A API CORRECTIONS** - **CRITICAL FOR FUTURE DEVELOPMENT**
+
+**RULE**: **ALWAYS use actual TaleWorlds decompiled APIs from `C:\Dev\Enlisted\DECOMPILE\`** 
+
+**❌ NEVER use outdated mod documentation** - causes compilation errors and broken functionality
+
 ## Menus / Encounter (ENHANCED WITH VERIFIED SAS APIS)
 
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ActivateGameMenu(string menuId)
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ExitToLast()
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: SwitchToMenu(string menuId)
-TaleWorlds.CampaignSystem.CampaignGameStarter :: AddWaitGameMenu(...) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.CampaignGameStarter :: AddWaitGameMenu(string menuId, string menuText, OnInitDelegate onInit, OnConditionDelegate condition, OnConsequenceDelegate consequence, OnTickDelegate onTick, MenuAndOptionType menuType, MenuOverlayType overlay, float targetWaitHours, MenuFlags flags, object relatedObject) ✅ **VERIFIED SIGNATURE FROM HIDEOUTCAMPAIGNBEHAVIOR.CS:81**
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: DoMeeting()
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: Finish(bool forcePlayerOutFromSettlement)
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: LeaveEncounter { get; set; }
@@ -49,6 +55,24 @@ TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyAttachedAnotherParty(MobilePa
 TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyDetachedAnotherParty(MobileParty)
 TaleWorlds.CampaignSystem.CampaignEvents :: HourlyTickEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: TickEvent(float) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+
+### **Menu Registration Delegate Patterns** ✅ **VERIFIED FROM DECOMPILE**
+```csharp
+// Correct delegate wrappers (from HideoutCampaignBehavior.cs):
+new OnInitDelegate(OnEnlistedStatusInit)        // Menu initialization  
+new OnConditionDelegate(OnEnlistedStatusCondition)  // Menu availability condition
+new OnConsequenceDelegate(consequence)          // Menu consequence (optional)
+new OnTickDelegate(onTick)                     // Menu tick handler (optional)
+```
+
+### **Dialog Registration Patterns** ✅ **VERIFIED WORKING STRUCTURE**
+```csharp
+// Player-initiated dialog structure (CORRECT):
+starter.AddPlayerLine("id", "lord_talk_speak_diplomacy_2", "next_token", "Player text", condition, consequence, priority);
+starter.AddDialogLine("response_id", "next_token", "final_token", "Lord text", condition, consequence, priority);
+
+// ❌ WRONG: Lord-initiated structure breaks diplomatic submenu integration
+```
 TaleWorlds.CampaignSystem.CampaignEvents :: OnNearbyPartyAddedToPlayerMapEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: OnArmyCreated(Army)
 TaleWorlds.CampaignSystem.CampaignEvents :: OnArmyDispersed(Army, Army.ArmyDispersionReason, bool)
