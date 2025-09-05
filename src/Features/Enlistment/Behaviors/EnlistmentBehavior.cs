@@ -12,6 +12,7 @@ using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using Helpers;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
@@ -149,11 +150,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					TrySetShouldJoinPlayerBattles(main, true);
 				}
 				
-				System.Console.WriteLine($"[ENLISTMENT] Successfully enlisted with {lord.Name} - Tier 1 recruit");
+				ModLogger.Info("Enlistment", $"Successfully enlisted with {lord.Name} - Tier 1 recruit");
 			}
 			catch (Exception ex)
 			{
-				System.Console.WriteLine($"[ENLISTMENT] Failed to start enlistment: {ex.Message}");
+				ModLogger.Error("Enlistment", "Failed to start enlistment", ex);
 				// Restore equipment if backup was created
 				if (_hasBackedUpEquipment) { RestorePersonalEquipment(); }
 			}
@@ -163,7 +164,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	{
 		try
 		{
-			System.Console.WriteLine($"[ENLISTMENT] Service ended: {reason}");
+			ModLogger.Info("Enlistment", $"Service ended: {reason}");
 			
 			var main = MobileParty.MainParty;
 			if (main != null)
@@ -190,7 +191,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	}
 	catch (Exception ex)
 	{
-		System.Console.WriteLine($"[ENLISTMENT] Error ending service: {ex.Message}");
+		ModLogger.Error("Enlistment", "Error ending service", ex);
 		// Ensure critical state is cleared even if restoration fails
 		_enlistedLord = null;
 		_hasBackedUpEquipment = false;
@@ -287,11 +288,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var dailyXP = 25; // Base XP - duties system can add more
 				AddEnlistmentXP(dailyXP, "Daily Service");
 				
-				System.Console.WriteLine($"[DAILY_SERVICE] Paid wage: {wage} gold, gained {dailyXP} XP");
+				ModLogger.Info("DailyService", $"Paid wage: {wage} gold, gained {dailyXP} XP");
 			}
 			catch (Exception ex)
 			{
-				System.Console.WriteLine($"[DAILY_SERVICE] Error: {ex.Message}");
+				ModLogger.Error("DailyService", "Daily service processing failed", ex);
 			}
 		}
 		
@@ -355,7 +356,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				_enlistmentTier++;
 				promoted = true;
-				System.Console.WriteLine($"[PROGRESSION] Promoted to Tier {_enlistmentTier}");
+				ModLogger.Info("Progression", $"Promoted to Tier {_enlistmentTier}");
 			}
 			
 			// Show promotion notification
@@ -376,7 +377,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			if (_enlistmentTier > 7) { _enlistmentTier = 7; }
 			if (_enlistmentXP < 0) { _enlistmentXP = 0; }
 			
-			System.Console.WriteLine($"[SAVE_LOAD] Validated enlistment state - Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
+			ModLogger.Info("SaveLoad", $"Validated enlistment state - Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
 		}
 		
 		/// <summary>
@@ -415,7 +416,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				if (!main.IsActive && !Hero.MainHero.IsPrisoner)
 				{
 					main.IsActive = true;
-					System.Console.WriteLine("[SAS_REALTIME] Re-enabled party activity - not enlisted");
+					ModLogger.Debug("Realtime", "Re-enabled party activity - not enlisted");
 				}
 			}
 		}
@@ -431,7 +432,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (IsEnlisted && victim == _enlistedLord)
 			{
-				System.Console.WriteLine($"[EVENT_SAFETY] Lord {victim.Name} killed - automatic discharge");
+				ModLogger.Info("EventSafety", $"Lord {victim.Name} killed - automatic discharge");
 				
 				var message = new TextObject("Your lord has been killed in battle. You have been honorably discharged.");
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -448,7 +449,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (IsEnlisted && defeatedHero == _enlistedLord)
 			{
-				System.Console.WriteLine($"[EVENT_SAFETY] Lord {defeatedHero.Name} defeated");
+				ModLogger.Info("EventSafety", $"Lord {defeatedHero.Name} defeated");
 				
 				// Check lord status after defeat
 				if (!_enlistedLord.IsAlive)
@@ -474,7 +475,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (IsEnlisted && army?.LeaderParty?.LeaderHero == _enlistedLord)
 			{
-				System.Console.WriteLine($"[EVENT_SAFETY] Army dispersed - reason: {reason}");
+				ModLogger.Info("EventSafety", $"Army dispersed - reason: {reason}");
 				
 				// Check if lord still exists after army defeat
 				if (_enlistedLord == null || !_enlistedLord.IsAlive || _enlistedLord.PartyBelongedTo == null)
@@ -500,7 +501,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (IsEnlisted && prisoner == _enlistedLord)
 			{
-				System.Console.WriteLine($"[EVENT_SAFETY] Lord {prisoner.Name} captured - service ended");
+				ModLogger.Info("EventSafety", $"Lord {prisoner.Name} captured - service ended");
 				
 				var message = new TextObject("Your lord has been captured. Your service has ended.");
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -521,7 +522,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 			
 			_enlistmentXP += xp;
-			System.Console.WriteLine($"[XP] +{xp} from {source} (Total: {_enlistmentXP})");
+			ModLogger.Info("XP", $"+{xp} from {source} (Total: {_enlistmentXP})");
 		}
 		
 		/// <summary>
@@ -557,11 +558,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					MobileParty.MainParty.ItemRoster.AddToCounts(elem.EquipmentElement, -elem.Amount);
 				}
 				
-				System.Console.WriteLine("[EQUIPMENT] Backed up personal equipment and safe inventory");
+				ModLogger.Info("Equipment", "Backed up personal equipment and safe inventory");
 			}
 			catch (Exception ex)
 			{
-				System.Console.WriteLine($"[EQUIPMENT] Error backing up equipment: {ex.Message}");
+				ModLogger.Error("Equipment", "Error backing up equipment", ex);
 				throw;
 			}
 		}
@@ -589,11 +590,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 				_personalInventory.Clear();
 				
-				System.Console.WriteLine("[EQUIPMENT] Restored personal equipment and inventory");
+				ModLogger.Info("Equipment", "Restored personal equipment and inventory");
 			}
 			catch (Exception ex)
 			{
-				System.Console.WriteLine($"[EQUIPMENT] Error restoring equipment: {ex.Message}");
+				ModLogger.Error("Equipment", "Error restoring equipment", ex);
 			}
 		}
 		
@@ -610,11 +611,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var basicTroopEquipment = _enlistedLord.Culture.BasicTroop.Equipment;
 				EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
 				
-				System.Console.WriteLine($"[EQUIPMENT] Assigned initial {_enlistedLord.Culture.Name} recruit equipment");
+				ModLogger.Info("Equipment", $"Assigned initial {_enlistedLord.Culture.Name} recruit equipment");
 			}
 			catch (Exception ex)
 			{
-				System.Console.WriteLine($"[EQUIPMENT] Error assigning initial equipment: {ex.Message}");
+				ModLogger.Error("Equipment", "Error assigning initial equipment", ex);
 			}
 		}
 		
@@ -633,7 +634,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				
 				if (lordInBattle && !playerInBattle)
 				{
-					System.Console.WriteLine("[BATTLE] Lord entering combat - enabling battle participation");
+					ModLogger.Info("Battle", "Lord entering combat - enabling battle participation");
 					
 					// CRITICAL: Enable player for battle participation
 					main.IsActive = true;  // This should trigger encounter menu
@@ -646,7 +647,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 				else if (!lordInBattle && playerInBattle)
 				{
-					System.Console.WriteLine("[BATTLE] Battle ended - restoring normal service");
+					ModLogger.Info("Battle", "Battle ended - restoring normal service");
 					
 					// Restore normal enlisted state
 					main.IsActive = false;  // Return to normal encounter prevention
@@ -660,7 +661,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 			catch (Exception ex)
 			{
-				System.Console.WriteLine($"[BATTLE] Error in battle participation handling: {ex.Message}");
+				ModLogger.Error("Battle", "Error in battle participation handling", ex);
 				// Fallback: maintain normal enlisted state
 				main.IsActive = false;
 			}

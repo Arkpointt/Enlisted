@@ -312,11 +312,11 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     GameMenu.ExitToLast();
                 }
-                System.Console.WriteLine("[SAS_DIALOG] Cleared all menus after enlistment - preventing encounter gap");
+                ModLogger.Debug("DialogSAS", "Cleared all menus after enlistment - preventing encounter gap");
                 
                 // SAS CRITICAL: Activate enlisted menu immediately (MISSING STEP!)
                 GameMenu.ActivateGameMenu("enlisted_status");
-                System.Console.WriteLine("[SAS_DIALOG] Activated enlisted_status menu - zero gap implementation");
+                ModLogger.Debug("DialogSAS", "Activated enlisted_status menu - zero gap implementation");
                 
                 // Professional notification
                 var message = GetLocalizedText("{=enlisted_success_notification}You have enlisted in {LORD_NAME}'s service.");
@@ -392,7 +392,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     },
                     false, -1, false, null);
 
-                System.Console.WriteLine("[SAS_DIALOG] Basic enlisted menu registered successfully");
+                ModLogger.Debug("DialogSAS", "Basic enlisted menu registered successfully");
             }
             catch (Exception ex)
             {
@@ -431,7 +431,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
-                System.Console.WriteLine("[SAS_MENU] Enlisted status menu initialized");
+                ModLogger.Debug("MenuSAS", "Enlisted status menu initialized");
             }
             catch (Exception ex)
             {

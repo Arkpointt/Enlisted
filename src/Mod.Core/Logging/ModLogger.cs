@@ -18,31 +18,31 @@ namespace Enlisted.Mod.Core.Logging
 		private static string _dialogLogPath = ResolveDialogLogPath();
 		private static string _sessionId = Guid.NewGuid().ToString("N");
 
-		public static void Initialize(string customPath = null)
+			public static void Initialize(string customPath = null)
+	{
+		try
 		{
-			try
+			lock (Sync)
 			{
-				lock (Sync)
-				{
-					_logFilePath = string.IsNullOrWhiteSpace(customPath) ? ResolveDefaultLogPath() : customPath;
-					var logDir = Path.GetDirectoryName(_logFilePath);
-					EnsureDirectoryExists(logDir);
-					EnsureDirectoryExists(Path.GetDirectoryName(_apiLogPath));
-					EnsureDirectoryExists(Path.GetDirectoryName(_discoveryLogPath));
-					EnsureDirectoryExists(Path.GetDirectoryName(_dialogLogPath));
-					ClearPreviousSessionFiles(logDir);
-					// Pre-create category logs with a header so they exist even before first entry
-					WriteToFile("INFO", "Api", "API log started", _apiLogPath);
-					WriteToFile("INFO", "Discovery", "Discovery log started", _discoveryLogPath);
-					WriteToFile("INFO", "Dialog", "Dialog log started", _dialogLogPath);
-					WriteInternal("INFO", "Init", "Logger initialized");
-				}
-			}
-			catch
-			{
-				// Do not throw from init; fall back to Debug output inside WriteInternal paths
+				_logFilePath = string.IsNullOrWhiteSpace(customPath) ? ResolveDefaultLogPath() : customPath;
+				var logDir = Path.GetDirectoryName(_logFilePath);
+				EnsureDirectoryExists(logDir);
+				EnsureDirectoryExists(Path.GetDirectoryName(_apiLogPath));
+				EnsureDirectoryExists(Path.GetDirectoryName(_discoveryLogPath));
+				EnsureDirectoryExists(Path.GetDirectoryName(_dialogLogPath));
+				ClearPreviousSessionFiles(logDir);
+				// Pre-create category logs with a header so they exist even before first entry
+				WriteToFile("INFO", "Api", "API log started", _apiLogPath);
+				WriteToFile("INFO", "Discovery", "Discovery log started", _discoveryLogPath);
+				WriteToFile("INFO", "Dialog", "Dialog log started", _dialogLogPath);
+				WriteInternal("INFO", "Init", "Logger initialized");
 			}
 		}
+		catch
+		{
+			// Do not throw from init; fall back to Debug output inside WriteInternal paths
+		}
+	}
 
 		public static void Info(string category, string message)
 		{
