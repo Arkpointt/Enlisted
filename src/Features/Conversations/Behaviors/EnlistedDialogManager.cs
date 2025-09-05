@@ -431,7 +431,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
 
                 MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
-                ModLogger.Debug("MenuSAS", "Enlisted status menu initialized");
+                // Removed spam logging - this callback triggers constantly
             }
             catch (Exception ex)
             {

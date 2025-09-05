@@ -120,10 +120,11 @@ namespace Enlisted.Features.Assignments.Core
         {
             try
             {
-                // Get the assembly location (bin folder)
+                // Get the assembly location (bin folder) and go up to module root
                 var assemblyPath = Assembly.GetExecutingAssembly().Location;
-                var binFolder = Path.GetDirectoryName(assemblyPath);
-                var moduleFolder = Path.GetDirectoryName(binFolder);
+                var binFolder = Path.GetDirectoryName(assemblyPath); // bin
+                var binParent = Path.GetDirectoryName(binFolder); // Win64_Shipping_wEditor or similar
+                var moduleFolder = Path.GetDirectoryName(binParent); // Module root
                 var moduleDataPath = Path.Combine(moduleFolder, "ModuleData", "Enlisted", fileName);
                 
                 return moduleDataPath;
