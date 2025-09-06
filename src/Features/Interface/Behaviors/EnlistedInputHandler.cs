@@ -55,12 +55,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnTick(float dt)
         {
+            // DISABLED: Hotkeys disabled per user request
             // Only process input during appropriate game states
-            if (!ShouldProcessInput())
-                return;
+            // if (!ShouldProcessInput())
+            //     return;
 
-            HandlePromotionHotkey();
-            HandleStatusMenuHotkey();
+            // HandlePromotionHotkey();
+            // HandleStatusMenuHotkey();
         }
 
         /// <summary>
@@ -133,60 +134,19 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Handle promotion hotkey press.
+        /// Handle promotion hotkey press. (DISABLED)
         /// </summary>
         private void OnPromotionHotkeyPressed()
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            
-            // Check if player is enlisted
-            if (!enlistment?.IsEnlisted == true)
-            {
-                ShowNotification("{=not_enlisted_hotkey}You must be enlisted to use promotion features.", "event:/ui/notification/quest_fail");
-                return;
-            }
-
-            // Check if promotion is available
-            if (IsPromotionAvailable())
-            {
-                // Open troop selection menu for promotion
-                GameMenu.ActivateGameMenu("enlisted_troop_selection");
-                ShowNotification("{=promotion_menu_opened}Promotion menu opened - choose your advancement!", "event:/ui/notification/quest_update");
-            }
-            else
-            {
-                // Show why promotion isn't available
-                var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier);
-                var remainingXP = nextTierXP - enlistment.EnlistmentXP;
-                
-                if (enlistment.EnlistmentTier >= 7)
-                {
-                    ShowNotification("{=max_tier_reached}You have reached the maximum military tier.", "event:/ui/notification/quest_fail");
-                }
-                else
-                {
-                    ShowNotification($"Need {remainingXP} more XP for promotion to Tier {enlistment.EnlistmentTier + 1}.", "event:/ui/notification/quest_fail");
-                }
-            }
+            // DISABLED: Hotkeys disabled per user request
         }
 
         /// <summary>
-        /// Handle status menu hotkey press.
+        /// Handle status menu hotkey press. (DISABLED)
         /// </summary>
         private void OnStatusMenuHotkeyPressed()
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            
-            // Check if player is enlisted
-            if (!enlistment?.IsEnlisted == true)
-            {
-                ShowNotification("{=not_enlisted_status}You are not currently enlisted in military service.", "event:/ui/notification/quest_fail");
-                return;
-            }
-
-            // Open enhanced enlisted status menu
-            GameMenu.ActivateGameMenu("enlisted_status");
-            ShowNotification("{=status_menu_opened}Enlisted status menu opened.", "event:/ui/notification/quest_update");
+            // DISABLED: Hotkeys disabled per user request
         }
 
         /// <summary>

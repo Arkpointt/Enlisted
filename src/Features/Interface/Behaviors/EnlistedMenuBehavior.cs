@@ -78,14 +78,12 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Add all enhanced enlisted menus with comprehensive information display and interactivity.
+        /// Add SAS-style enlisted menu with exact format from screenshot.
         /// </summary>
         private void AddEnhancedEnlistedMenus(CampaignGameStarter starter)
         {
             AddMainEnlistedStatusMenu(starter);
-            AddDutiesManagementMenu(starter);
-            AddServiceRecordMenu(starter);
-            AddTroopSelectionMenu(starter);
+            // SAS-style single menu approach - all functionality in one menu
         }
 
         /// <summary>
@@ -93,52 +91,62 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private void AddMainEnlistedStatusMenu(CampaignGameStarter starter)
         {
+            // SAS-style wait menu (restore time controls but fix UI boxes differently)
             starter.AddWaitGameMenu("enlisted_status", 
-                "Enlisted Status\n{ENLISTED_STATUS_TEXT}",
+                "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",  // SAS format
                 new OnInitDelegate(OnEnlistedStatusInit),
                 new OnConditionDelegate(OnEnlistedStatusCondition),
                 null, // No consequence for wait menu
-                null, // No tick handler for now
-                GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
+                new OnTickDelegate(OnEnlistedStatusTick), // SAS tick handler
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // SAS template - fixes UI boxes!
                 GameOverlays.MenuOverlayType.None,
-                1f, // Target hours (small value for immediate)
+                0f, // No wait time - immediate display
                 GameMenu.MenuFlags.None,
                 null);
 
-            // Field medical treatment
-            starter.AddGameMenuOption("enlisted_status", "enlisted_field_medical",
-                new TextObject("{=field_medical_option}Request field medical treatment").ToString(),
-                IsFieldMedicalAvailable,
-                OnFieldMedicalSelected,
+            // SAS EXACT MENU OPTIONS from screenshot
+            
+            // Visit Weaponsmith (SAS option 1)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_weaponsmith",
+                "Visit Weaponsmith",
+                IsWeaponsmithAvailable,
+                OnWeaponsmithSelected,
                 false, 1);
 
-            // Duties management
-            starter.AddGameMenuOption("enlisted_status", "enlisted_duties_management",
-                new TextObject("{=duties_management_option}Manage military duties ({ACTIVE_DUTIES_COUNT}/{MAX_DUTIES})").ToString(),
-                IsDutiesManagementAvailable,
-                OnDutiesManagementSelected,
+            // Battle Commands (SAS option 2)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_battle_commands",
+                "Battle Commands: Player Formation Only",
+                IsBattleCommandsAvailable,
+                OnBattleCommandsSelected,
                 false, 2);
 
-            // Equipment and advancement
-            starter.AddGameMenuOption("enlisted_status", "enlisted_advancement",
-                new TextObject("{=advancement_option}Equipment & advancement").ToString(),
-                IsAdvancementAvailable,
-                OnAdvancementSelected,
+            // Talk to... (SAS option 3)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
+                "Talk to...",
+                IsTalkToAvailable,
+                OnTalkToSelected,
                 false, 3);
 
-            // Service record
-            starter.AddGameMenuOption("enlisted_status", "enlisted_service_record",
-                new TextObject("{=service_record_option}View detailed service record").ToString(),
-                IsServiceRecordAvailable,
-                OnServiceRecordSelected,
+            // Show reputation with factions (SAS option 4)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_reputation",
+                "Show reputation with factions",
+                IsReputationAvailable,
+                OnReputationSelected,
                 false, 4);
 
-            // Retirement (if eligible)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_retirement",
-                new TextObject("{=retirement_option}Request honorable retirement").ToString(),
-                IsRetirementAvailable,
-                OnRetirementSelected,
+            // Ask commander for leave (SAS option 5)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
+                "Ask commander for leave",
+                IsAskLeaveAvailable,
+                OnAskLeaveSelected,
                 false, 5);
+
+            // Ask for a different assignment (SAS option 6)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_different_assignment",
+                "Ask for a different assignment",
+                IsDifferentAssignmentAvailable,
+                OnDifferentAssignmentSelected,
+                false, 6);
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
         }
@@ -150,7 +158,13 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // CRITICAL: Start wait to enable time controls (from BLUEPRINT)
                 args.MenuContext.GameMenu.StartWait();
+                
+                // Set time control mode to allow unpausing (from BLUEPRINT)
+                Campaign.Current.SetTimeControlModeLock(false);
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                
                 RefreshEnlistedStatusDisplay();
                 _menuNeedsRefresh = true;
             }
@@ -161,9 +175,10 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Refresh the enlisted status display with current information.
+        /// Refresh the enlisted status display with SAS-exact format.
+        /// Uses SAS text variable approach for perfect replication.
         /// </summary>
-        private void RefreshEnlistedStatusDisplay()
+        private void RefreshEnlistedStatusDisplay(MenuCallbackArgs args = null)
         {
             try
             {
@@ -175,27 +190,111 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var lord = enlistment.CurrentLord;
-                var faction = lord?.MapFaction?.Name?.ToString() ?? "Unknown";
-                var serviceDays = CalculateServiceDays(enlistment);
-                var rank = $"Tier {enlistment.EnlistmentTier}/7";
-                var experience = $"{enlistment.EnlistmentXP} XP";
+                var duties = EnlistedDutiesBehavior.Instance;
                 
-                // Build status text
-                var statusText = $"Lord: {lord?.Name?.ToString() ?? "Unknown"}\n";
-                statusText += $"Faction: {faction}\n";
-                statusText += $"Rank: {rank}\n";
-                statusText += $"Experience: {experience}\n";
-                statusText += $"Service Duration: {serviceDays} days\n\n";
-                statusText += "Following your lord's commands...";
+                if (lord == null)
+                {
+                    MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", "Error: No enlisted lord found.");
+                    return;
+                }
 
-                MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
+                // Build comprehensive SAS-style status display with error handling
+                var statusBuilder = new StringBuilder();
                 
-                ModLogger.Debug("Interface", $"Status refreshed - {lord?.Name} ({faction}) - {rank}");
+                try
+                {
+                    // EXACT SAS FORMAT from screenshot
+                    statusBuilder.AppendLine($"Party Leader: {lord.Name?.ToString()}");
+                    
+                    // Party Objective (SAS format)
+                    var objective = GetCurrentObjectiveDisplay(lord);
+                    statusBuilder.AppendLine($"Party Objective: {objective}");
+                    
+                    // Enlistment Time (SAS format with season)
+                    var enlistmentTime = GetSASEnlistmentTimeDisplay(enlistment);
+                    statusBuilder.AppendLine($"Enlistment Time: {enlistmentTime}");
+                    
+                    // Enlistment Tier (SAS exact format)
+                    statusBuilder.AppendLine($"Enlistment Tier: {enlistment.EnlistmentTier}");
+                    
+                    // Formation (SAS exact format)
+                    string formationName = "Infantry"; // Default like SAS
+                    try
+                    {
+                        if (duties?.IsInitialized == true)
+                        {
+                            var playerFormation = duties.GetPlayerFormationType();
+                            formationName = playerFormation?.ToTitleCase() ?? "Infantry";
+                        }
+                    }
+                    catch { /* Use default */ }
+                    statusBuilder.AppendLine($"Formation: {formationName}");
+                    
+                    // Wage (SAS exact format with gold symbol)
+                    var dailyWage = CalculateCurrentDailyWage();
+                    statusBuilder.AppendLine($"Wage: {dailyWage} denars");
+                    
+                    // Current Experience (SAS exact format)
+                    statusBuilder.AppendLine($"Current Experience: {enlistment.EnlistmentXP}");
+                    
+                    // Next Level Experience (SAS exact format)
+                    if (enlistment.EnlistmentTier < 7)
+                    {
+                        var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier + 1);
+                        statusBuilder.AppendLine($"Next Level Experience: {nextTierXP}");
+                    }
+                    
+                    // Assignment description (SAS exact format)
+                    try
+                    {
+                        var assignmentDesc = GetSASAssignmentDescription();
+                        statusBuilder.AppendLine($"When not fighting: {assignmentDesc}");
+                    }
+                    catch
+                    {
+                        statusBuilder.AppendLine("When not fighting: You are currently assigned to perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)");
+                    }
+                }
+                catch
+                {
+                // Fallback to simple display on any error
+                statusBuilder.Clear();
+                statusBuilder.AppendLine($"Lord: {lord?.Name?.ToString() ?? "Unknown"}");
+                statusBuilder.AppendLine($"Rank: Tier {enlistment.EnlistmentTier}");
+                statusBuilder.AppendLine($"Experience: {enlistment.EnlistmentXP} XP");
+                }
+
+                // SAS STEP 3: Use SAS text variable format (exact replication)
+                var lordName = lord?.EncyclopediaLinkWithName?.ToString() ?? lord?.Name?.ToString() ?? "Unknown";
+                var statusContent = statusBuilder.ToString();
+                
+                // Use SAS approach - MenuContext.GameMenu.GetText() and set variables
+                var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
+                if (menuContext != null)
+                {
+                    var text = menuContext.GameMenu.GetText();
+                    text.SetTextVariable("PARTY_LEADER", lordName);
+                    text.SetTextVariable("PARTY_TEXT", statusContent);
+                }
+                else
+                {
+                    // Fallback for compatibility
+                    MBTextManager.SetTextVariable("PARTY_LEADER", lordName);
+                    MBTextManager.SetTextVariable("PARTY_TEXT", statusContent);
+                }
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", "Error refreshing enlisted status", ex);
-                MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", "Error loading status information.");
+                
+                // Error fallback
+                var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
+                if (menuContext != null)
+                {
+                    var text = menuContext.GameMenu.GetText();
+                    text.SetTextVariable("PARTY_LEADER", "Error");
+                    text.SetTextVariable("PARTY_TEXT", "Status information unavailable.");
+                }
             }
         }
 
@@ -232,7 +331,10 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private string GetFormationDisplayInfo(EnlistedDutiesBehavior duties)
         {
-            if (duties == null) return "Infantry (Basic)";
+            if (duties == null) 
+            {
+                return "Infantry (Basic)";
+            }
             
             var formation = duties.GetPlayerFormationType();
             var culture = EnlistmentBehavior.Instance?.CurrentLord?.Culture?.StringId ?? "empire";
@@ -305,6 +407,99 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
+        /// Get SAS-style enlistment time display with proper date formatting.
+        /// </summary>
+        private string GetSASEnlistmentTimeDisplay(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                // Calculate approximate enlistment date from XP (since we don't store actual date yet)
+                var daysServed = enlistment.EnlistmentXP / 50; // ~50 XP per day
+                var enlistmentDate = CampaignTime.Now - CampaignTime.Days(daysServed);
+                
+                // Format like SAS: "Summer 15, 1084"
+                return enlistmentDate.ToString();
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        /// <summary>
+        /// Get SAS-style wage display with bonuses shown separately.
+        /// </summary>
+        private string GetSASWageDisplay()
+        {
+            try
+            {
+                var baseWage = CalculateBaseDailyWage();
+                var totalWage = CalculateCurrentDailyWage();
+                var bonus = totalWage - baseWage;
+                
+                // SAS format: "145(+25)" when bonus applies, otherwise just "145"  
+                if (bonus > 0)
+                {
+                    return $"{baseWage}(+{bonus})";
+                }
+                else
+                {
+                    return baseWage.ToString();
+                }
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+
+        /// <summary>
+        /// Calculate base daily wage without bonuses.
+        /// </summary>
+        private int CalculateBaseDailyWage()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (!enlistment?.IsEnlisted == true) 
+            {
+                return 0;
+            }
+            
+            // Base wage formula: 10 + (Level × 1) + (Tier × 5) + (XP ÷ 200)
+            var baseWage = 10 + Hero.MainHero.Level + (enlistment.EnlistmentTier * 5) + (enlistment.EnlistmentXP / 200);
+            return Math.Min(Math.Max(baseWage, 24), 150); // Cap between 24-150
+        }
+
+        /// <summary>
+        /// Get SAS-style assignment description (exact format from screenshot).
+        /// </summary>
+        private string GetSASAssignmentDescription()
+        {
+            try
+            {
+                var duties = EnlistedDutiesBehavior.Instance;
+                
+                // For now, return the exact SAS grunt work description
+                // This can be enhanced later to integrate with our duties system
+                if (duties?.IsInitialized == true)
+                {
+                    var activeDuties = duties.GetActiveDutiesDisplay();
+                    if (activeDuties != "None assigned")
+                    {
+                        // Enhanced description for when duties are active
+                        return $"You are currently assigned to {activeDuties.ToLower()}. (Passive Daily XP from duties)";
+                    }
+                }
+                
+                // Default SAS-style grunt work description (matches screenshot exactly)
+                return "You are currently assigned to perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)";
+            }
+            catch
+            {
+                return "You are currently assigned to perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)";
+            }
+        }
+
+        /// <summary>
         /// Calculate current daily wage with bonuses.
         /// </summary>
         private int CalculateCurrentDailyWage()
@@ -312,7 +507,10 @@ namespace Enlisted.Features.Interface.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             var duties = EnlistedDutiesBehavior.Instance;
             
-            if (!enlistment?.IsEnlisted == true) return 0;
+            if (!enlistment?.IsEnlisted == true) 
+            {
+                return 0;
+            }
             
             // Base wage calculation (from progression_config.json logic)
             var baseWage = 10 + Hero.MainHero.Level + (enlistment.EnlistmentTier * 5) + (enlistment.EnlistmentXP / 200);
@@ -368,7 +566,10 @@ namespace Enlisted.Features.Interface.Behaviors
         private string GetCurrentObjectiveDisplay(Hero lord)
         {
             var lordParty = lord?.PartyBelongedTo;
-            if (lordParty == null) return "";
+            if (lordParty == null) 
+            {
+                return "";
+            }
 
             if (lordParty.Ai.DoNotMakeNewDecisions)
             {
@@ -412,7 +613,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // Medical treatment available
             if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints)
             {
-                var cooldownStatus = GetMedicalCooldownStatus();
+                var cooldownStatus = "Available"; // Simplified for SAS-style menu
                 if (cooldownStatus == "Available")
                 {
                     messages.Add("Medical treatment available to heal wounds.");
@@ -446,21 +647,15 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             if (!enlistment?.IsEnlisted == true || enlistment.EnlistmentTier >= 7)
+            {
                 return false;
+            }
 
             var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier);
             return enlistment.EnlistmentXP >= nextTierXP;
         }
 
-        /// <summary>
-        /// Get medical cooldown status.
-        /// </summary>
-        private string GetMedicalCooldownStatus()
-        {
-            // This would need implementation in a medical system
-            // For now, return available
-            return "Available";
-        }
+        // GetMedicalCooldownStatus method removed - not used in SAS-style menu
 
         /// <summary>
         /// Get officer skill name for display.
@@ -501,14 +696,107 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool OnEnlistedStatusCondition(MenuCallbackArgs args)
         {
+            var isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
+            
+            if (isEnlisted)
+            {
+                // Refresh the display when condition is checked
+                RefreshEnlistedStatusDisplay(args);
+            }
+            
+            return isEnlisted;
+        }
+
+        // SAS Menu Option Conditions and Actions
+
+        private bool IsWeaponsmithAvailable(MenuCallbackArgs args)
+        {
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
-        private void OnEnlistedStatusTick(MenuCallbackArgs args)
+        private void OnWeaponsmithSelected(MenuCallbackArgs args)
+        {
+            // TODO: Implement weaponsmith/equipment selection
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("Equipment selection system coming soon.").ToString()));
+        }
+
+        private bool IsBattleCommandsAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        private void OnBattleCommandsSelected(MenuCallbackArgs args)
+        {
+            // TODO: Implement battle commands toggle
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("Battle commands system coming soon.").ToString()));
+        }
+
+        private bool IsTalkToAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        private void OnTalkToSelected(MenuCallbackArgs args)
+        {
+            // TODO: Implement party member conversations
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("Party conversation system coming soon.").ToString()));
+        }
+
+        private bool IsReputationAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        private void OnReputationSelected(MenuCallbackArgs args)
+        {
+            // TODO: Implement reputation display
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("Reputation system coming soon.").ToString()));
+        }
+
+        private bool IsAskLeaveAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        private void OnAskLeaveSelected(MenuCallbackArgs args)
+        {
+            // TODO: Implement leave request dialog
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("Leave request system coming soon.").ToString()));
+        }
+
+        private bool IsDifferentAssignmentAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        private void OnDifferentAssignmentSelected(MenuCallbackArgs args)
+        {
+            // TODO: Implement assignment change dialog
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("Assignment change system coming soon.").ToString()));
+        }
+
+        /// <summary>
+        /// SAS-style tick handler for real-time menu updates.
+        /// Updates information continuously like the original SAS mod.
+        /// </summary>
+        private void OnEnlistedStatusTick(MenuCallbackArgs args, CampaignTime dt)
         {
             try
             {
-                RefreshEnlistedStatusDisplay();
+                // SAS pattern - refresh every tick for real-time information
+                RefreshEnlistedStatusDisplay(args);
+                
+                // SAS safety - auto-exit if not enlisted
+                if (!EnlistmentBehavior.Instance?.IsEnlisted == true)
+                {
+                    GameMenu.ExitToLast();
+                }
             }
             catch (Exception ex)
             {
@@ -516,176 +804,13 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private bool IsFieldMedicalAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true && 
-                   Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints;
-        }
+        // Old field medical methods removed - replaced with SAS-style options
 
-        private void OnFieldMedicalSelected(MenuCallbackArgs args)
-        {
-            // Implement field medical treatment
-            var healAmount = 10; // Basic healing
-            Hero.MainHero.Heal(healAmount);
-            
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("{=field_medical_complete}Army medics have treated your wounds.").ToString()));
-                
-            GameMenu.ActivateGameMenu("enlisted_status");
-        }
-
-        private bool IsDutiesManagementAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        private void OnDutiesManagementSelected(MenuCallbackArgs args)
-        {
-            GameMenu.ActivateGameMenu("enlisted_duties_management");
-        }
-
-        private bool IsAdvancementAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        private void OnAdvancementSelected(MenuCallbackArgs args)
-        {
-            GameMenu.ActivateGameMenu("enlisted_troop_selection");
-        }
-
-        private bool IsServiceRecordAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        private void OnServiceRecordSelected(MenuCallbackArgs args)
-        {
-            GameMenu.ActivateGameMenu("enlisted_service_record");
-        }
-
-        private bool IsRetirementAvailable(MenuCallbackArgs args)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            return enlistment?.IsEnlisted == true && GetServiceDays(enlistment) >= 365;
-        }
-
-        private void OnRetirementSelected(MenuCallbackArgs args)
-        {
-            // Implement retirement dialog
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("{=retirement_available}Retirement system coming in future update.").ToString()));
-        }
-
-        // "Return to duties" button removed - player IS doing duties by staying in enlisted menu
+        // Old menu methods removed - replaced with SAS-style options
 
         #endregion
 
-        #region Placeholder Menu Methods (To Be Implemented)
-
-        private void AddDutiesManagementMenu(CampaignGameStarter starter)
-        {
-            // Placeholder for duties management menu
-            starter.AddWaitGameMenu("enlisted_duties_management",
-                "Duties Management\n{DUTIES_MANAGEMENT_TEXT}",
-                new OnInitDelegate(OnDutiesManagementInit),
-                new OnConditionDelegate(OnEnlistedStatusCondition),
-                null,
-                null,
-                GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
-                GameOverlays.MenuOverlayType.None,
-                1f,
-                GameMenu.MenuFlags.None,
-                null);
-                
-            starter.AddGameMenuOption("enlisted_duties_management", "back_to_status",
-                "Back to enlisted status",
-                args => true,
-                args => GameMenu.ActivateGameMenu("enlisted_status"));
-        }
-
-        private void AddServiceRecordMenu(CampaignGameStarter starter)
-        {
-            // Placeholder for service record menu
-            starter.AddWaitGameMenu("enlisted_service_record", 
-                "Service Record\n{SERVICE_RECORD_TEXT}",
-                new OnInitDelegate(OnServiceRecordInit),
-                new OnConditionDelegate(OnEnlistedStatusCondition),
-                null,
-                null,
-                GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
-                GameOverlays.MenuOverlayType.None,
-                1f,
-                GameMenu.MenuFlags.None,
-                null);
-                
-            starter.AddGameMenuOption("enlisted_service_record", "back_to_status",
-                "Back to enlisted status", 
-                args => true,
-                args => GameMenu.ActivateGameMenu("enlisted_status"));
-        }
-
-        private void AddTroopSelectionMenu(CampaignGameStarter starter)
-        {
-            // Placeholder for troop selection menu
-            starter.AddWaitGameMenu("enlisted_troop_selection",
-                "Equipment & Advancement\n{TROOP_SELECTION_TEXT}",
-                new OnInitDelegate(OnTroopSelectionInit),
-                new OnConditionDelegate(OnEnlistedStatusCondition),
-                null,
-                null,
-                GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption,
-                GameOverlays.MenuOverlayType.None,
-                1f,
-                GameMenu.MenuFlags.None,
-                null);
-                
-            starter.AddGameMenuOption("enlisted_troop_selection", "back_to_status",
-                "Back to enlisted status",
-                args => true, 
-                args => GameMenu.ActivateGameMenu("enlisted_status"));
-        }
-
-        private void OnDutiesManagementInit(MenuCallbackArgs args)
-        {
-            try
-            {
-                args.MenuContext.GameMenu.StartWait();
-                MBTextManager.SetTextVariable("DUTIES_MANAGEMENT_TEXT", "Duties management menu will be implemented here.\n\nAvailable duties, assignment slots, and officer roles will be displayed.");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", $"Error initializing duties management menu: {ex.Message}");
-            }
-        }
-
-        private void OnServiceRecordInit(MenuCallbackArgs args)
-        {
-            try
-            {
-                args.MenuContext.GameMenu.StartWait();
-                MBTextManager.SetTextVariable("SERVICE_RECORD_TEXT", "Service record menu will be implemented here.\n\nBattle history, relationships, and progression details will be displayed.");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", $"Error initializing service record menu: {ex.Message}");
-            }
-        }
-
-        private void OnTroopSelectionInit(MenuCallbackArgs args)
-        {
-            try
-            {
-                args.MenuContext.GameMenu.StartWait();
-                MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", "Equipment and advancement menu will be implemented here.\n\nTroop selection, promotion system, and equipment management will be available.");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", $"Error initializing troop selection menu: {ex.Message}");
-            }
-        }
-
-        #endregion
+        // SAS-style single menu approach - all functionality integrated into main enlisted_status menu
     }
 
     /// <summary>
@@ -696,7 +821,9 @@ namespace Enlisted.Features.Interface.Behaviors
         public static string ToTitleCase(this string input)
         {
             if (string.IsNullOrEmpty(input))
+            {
                 return input;
+            }
             
             return char.ToUpper(input[0]) + input.Substring(1).ToLower();
         }
