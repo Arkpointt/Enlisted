@@ -106,6 +106,18 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Core.ViewModelCollection.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TaleWorlds.Engine.GauntletUI">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Engine.GauntletUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.GauntletUI">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.GauntletUI.Data">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.GauntletUI.Data.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="SandBox">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.dll</HintPath>
       <Private>False</Private>
@@ -116,6 +128,10 @@
     </Reference>
     <Reference Include="SandBox.ViewModelCollection">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\SandBox\bin\Win64_Shipping_wEditor\SandBox.ViewModelCollection.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TaleWorlds.PlayerServices">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.PlayerServices.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -137,6 +153,15 @@
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs" />
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs" />
     <Compile Include="src\Features\Interface\Behaviors\EnlistedInputHandler.cs" />
+    <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs" />
+    <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs" />
+    <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs" />
+    <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs" />
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs" />
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs" />
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs" />
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs" />
+    <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
   </ItemGroup>
   <ItemGroup>

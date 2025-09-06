@@ -1,0 +1,17 @@
+<Prefab>
+	<Window>
+		<ListPanel Sprite="StdAssets\Popup\order_popup_canvas" DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="425" MarginTop="20" MarginLeft="20">
+			<Children>
+				<ListPanel Sprite="StdAssets\Popup\canvas_gradient" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+					<Children>
+						<ListPanel Sprite="frame_9" DataSource="{Cards}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="-20" MarginTop="-20" MarginRight="-20" MarginBottom="-20" StackLayout.LayoutMethod="HorizontalLeftToRight">
+							<ItemTemplate>
+								<QuartermasterEquipmentCard ButtonType="Radio" />
+							</ItemTemplate>
+						</ListPanel>
+					</Children>
+				</ListPanel>
+			</Children>
+		</ListPanel>
+	</Window>
+</Prefab>

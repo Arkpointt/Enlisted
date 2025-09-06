@@ -106,11 +106,11 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // SAS EXACT MENU OPTIONS from screenshot
             
-            // Visit Weaponsmith (SAS option 1)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_weaponsmith",
-                "Visit Weaponsmith",
-                IsWeaponsmithAvailable,
-                OnWeaponsmithSelected,
+            // Visit Quartermaster (SAS option 1 - Enhanced with equipment variants)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
+                "Visit Quartermaster",
+                IsQuartermasterAvailable,
+                OnQuartermasterSelected,
                 false, 1);
 
             // Battle Commands (SAS option 2)
@@ -709,16 +709,42 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // SAS Menu Option Conditions and Actions
 
-        private bool IsWeaponsmithAvailable(MenuCallbackArgs args)
+        private bool IsQuartermasterAvailable(MenuCallbackArgs args)
         {
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
-        private void OnWeaponsmithSelected(MenuCallbackArgs args)
+        private void OnQuartermasterSelected(MenuCallbackArgs args)
         {
-            // TODO: Implement weaponsmith/equipment selection
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("Equipment selection system coming soon.").ToString()));
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("You must be enlisted to access quartermaster services.").ToString()));
+                    return;
+                }
+
+                // Connect to new Quartermaster system
+                var quartermasterManager = Features.Equipment.Behaviors.QuartermasterManager.Instance;
+                if (quartermasterManager != null)
+                {
+                    // Show equipment variants for current troop selection
+                    GameMenu.ActivateGameMenu("quartermaster_equipment");
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("Quartermaster services temporarily unavailable.").ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error accessing quartermaster services", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("Quartermaster system error. Please report this issue.").ToString()));
+            }
         }
 
         private bool IsBattleCommandsAvailable(MenuCallbackArgs args)

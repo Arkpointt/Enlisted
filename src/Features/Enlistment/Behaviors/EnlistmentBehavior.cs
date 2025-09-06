@@ -30,8 +30,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	
 	// Equipment backup system
 	private bool _hasBackedUpEquipment = false;
-	private Equipment _personalBattleEquipment;
-	private Equipment _personalCivilianEquipment;
+	private TaleWorlds.Core.Equipment _personalBattleEquipment;
+	private TaleWorlds.Core.Equipment _personalCivilianEquipment;
 	private ItemRoster _personalInventory = new ItemRoster();
 	
 	// Army management state
@@ -532,6 +532,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 		/// <summary>
 		/// Check if promotion notification should be triggered after XP gain.
+		/// Now integrates with Phase 2B troop selection system.
 		/// </summary>
 		private void CheckPromotionNotification(int previousXP, int currentXP)
 		{
@@ -548,8 +549,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					// If we crossed from below to above a threshold
 					if (previousXP < requiredXP && currentXP >= requiredXP)
 					{
-						// Direct promotion notification (safer approach)
-						ShowPromotionNotification(tier + 1);
+						// Phase 2B: Trigger troop selection system
+						var troopSelectionManager = Features.Equipment.Behaviors.TroopSelectionManager.Instance;
+						if (troopSelectionManager != null)
+						{
+							troopSelectionManager.ShowTroopSelectionMenu(tier + 1);
+						}
+						else
+						{
+							// Fallback: Direct promotion notification
+							ShowPromotionNotification(tier + 1);
+						}
 						break; // Only notify for the first threshold crossed
 					}
 				}
@@ -557,6 +567,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			catch (Exception ex)
 			{
 				ModLogger.Error("Progression", $"Error checking promotion notification: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Apply basic promotion without equipment change (fallback method).
+		/// Used when troop selection system is unavailable.
+		/// </summary>
+		public void ApplyBasicPromotion(int newTier)
+		{
+			try
+			{
+				_enlistmentTier = newTier;
+				var rankName = GetRankName(newTier);
+				
+				var message = new TextObject("Promoted to {RANK} (Tier {TIER})! Visit the quartermaster for equipment upgrades.");
+				message.SetTextVariable("RANK", rankName);
+				message.SetTextVariable("TIER", newTier.ToString());
+				
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				
+				ModLogger.Info("Promotion", $"Basic promotion applied to {rankName} (Tier {newTier})");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Promotion", "Error applying basic promotion", ex);
 			}
 		}
 
@@ -600,38 +635,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		
 		/// <summary>
 		/// Backup player equipment before service to prevent loss.
+		/// Now delegated to EquipmentManager for centralized handling.
 		/// </summary>
 		private void BackupPlayerEquipment()
 		{
 			try
 			{
-				// Backup equipment using verified APIs
-				_personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone(false);
-				_personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone(false);
-				
-				// CRITICAL: Quest-safe inventory backup (prevents quest item loss)
-				var itemsToBackup = new List<ItemRosterElement>();
-				foreach (var elem in MobileParty.MainParty.ItemRoster)
+				// Phase 2B: Use centralized equipment management
+				var equipmentManager = Features.Equipment.Behaviors.EquipmentManager.Instance;
+				if (equipmentManager != null)
 				{
-					// GUARD: Skip quest items - they must stay with player
-					if (elem.EquipmentElement.IsQuestItem) { continue; }
-					
-					var item = elem.EquipmentElement.Item;
-					// GUARD: Skip special items (simplified check for current version)
-					if (item == null) { continue; }
-						
-					// Safe to backup this item
-					itemsToBackup.Add(elem);
+					equipmentManager.BackupPersonalEquipment();
+				}
+				else
+				{
+					// Fallback: Basic backup if equipment manager not available
+					_personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone(false);
+					_personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone(false);
 				}
 				
-				// Backup safe items only
-				foreach (var elem in itemsToBackup)
-				{
-					_personalInventory.AddToCounts(elem.EquipmentElement, elem.Amount);
-					MobileParty.MainParty.ItemRoster.AddToCounts(elem.EquipmentElement, -elem.Amount);
-				}
-				
-				ModLogger.Info("Equipment", "Backed up personal equipment and safe inventory");
+				ModLogger.Info("Equipment", "Personal equipment backed up");
 			}
 			catch (Exception ex)
 			{
@@ -642,28 +665,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		
 		/// <summary>
 		/// Restore personal equipment from backup.
+		/// Now delegated to EquipmentManager for centralized handling.
 		/// </summary>
 		private void RestorePersonalEquipment()
 		{
 			try
 			{
-				if (_personalBattleEquipment != null)
+				// Phase 2B: Use centralized equipment management
+				var equipmentManager = Features.Equipment.Behaviors.EquipmentManager.Instance;
+				if (equipmentManager != null)
 				{
-					EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
+					equipmentManager.RestorePersonalEquipment();
 				}
-				if (_personalCivilianEquipment != null)
+				else
 				{
-					Hero.MainHero.CivilianEquipment.FillFrom(_personalCivilianEquipment, false);
+					// Fallback: Basic restoration if equipment manager not available
+					if (_personalBattleEquipment != null)
+					{
+						EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
+					}
+					if (_personalCivilianEquipment != null)
+					{
+						Hero.MainHero.CivilianEquipment.FillFrom(_personalCivilianEquipment, false);
+					}
 				}
 				
-				// Restore safe inventory items
-				foreach (var item in _personalInventory)
-				{
-					MobileParty.MainParty.ItemRoster.AddToCounts(item.EquipmentElement, item.Amount);
-				}
-				_personalInventory.Clear();
-				
-				ModLogger.Info("Equipment", "Restored personal equipment and inventory");
+				ModLogger.Info("Equipment", "Personal equipment restored");
 			}
 			catch (Exception ex)
 			{

@@ -1,16 +1,16 @@
-# Enlisted Military Service System - Implementation Guide
+# Enlisted Military Service System
 
-**A comprehensive military service mod for Mount & Blade II: Bannerlord that allows players to enlist with lords and serve in their armies.**
+**Military service mod for Mount & Blade II: Bannerlord - enlist with lords and serve in their armies.**
 
 ## 🎯 Overview
 
-This implementation creates a complete military service system where players can:
-- Enlist with any lord through proper diplomatic channels
-- Serve in 10 different military assignments with meaningful benefits
-- Progress through 7 military tiers with promotions and wage increases
-- Participate in army operations and battles alongside their enlisted lord
-- Manage equipment and assignments through intuitive interfaces
-- Build veteran status with long-term benefits and privileges (retirement eligible after 1 year)
+Complete military service system where players can:
+- Enlist with any lord through conversation
+- Serve in military roles like Quartermaster, Scout, Field Medic with real benefits
+- Progress through 7 tiers over a year of service with wage increases
+- Choose real Bannerlord troops on promotion and get their equipment
+- Use grid UI for individual equipment selection (working Gauntlet interface)
+- Follow lord's armies and participate in battles
 
 ## 📋 Implementation Status
 
@@ -20,15 +20,16 @@ This implementation creates a complete military service system where players can
 - **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
 - **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
 - **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with keyboard shortcuts and real-time updates
-- **Phase 2B**: Troop Selection & Equipment Replacement - ⏳ **NEXT** - SAS troop selection + equipment replacement system
-- **Phase 3**: Army & Battle Integration (1 week) - ⏳ **SIMPLIFIED** - core army logic moved to Phase 1B
-- **Phase 4**: Final Polish & Testing (1 week) - ⏳ **REDUCED** - enhanced menu now complete in Phase 2A
-- **Phase 5**: Edge Cases & Testing (1 week) - ⏳ Ready for Implementation
+- **Phase 2B**: Troop Selection & Equipment Replacement - ✅ **COMPLETE** - Quartermaster grid UI with individual equipment selection
+- **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
+- **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
+- **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
+- **Phase 6**: Polish & Quality of Life - ⏳ **PLANNED** - animations, edge cases, optimization
 
 ## 🏗️ Architecture Overview
 
-### Modular Feature Design
-Our implementation follows the Package-by-Feature pattern with clear separation of concerns:
+### Code Organization
+Package-by-Feature structure keeps related code together:
 
 ```
 src/Features/
@@ -43,11 +44,11 @@ src/Features/
         └── EnlistedInputHandler.cs     # ✅ Keyboard shortcuts ('P'/'N' keys)
 ```
 
-### Key Design Principles
-- **Modular**: Each feature is self-contained and testable
-- **Professional**: Human-like comments and clean architecture
-- **Reliable**: 100% uptime with comprehensive edge case handling
-- **Extensible**: Easy to add new assignments, tiers, or features
+### Design Principles  
+- **Modular**: Each feature in its own folder
+- **Simple**: Natural language comments, clean code
+- **Reliable**: Handles edge cases like lord death without crashing
+- **Extensible**: Easy to add new duties, equipment, or features
 
 ## 🎖️ Core Features
 
@@ -120,18 +121,31 @@ We have complete and verified API documentation covering:
 - **Categorized Logs**: Clear organization by feature (Enlistment, Equipment, Combat, etc.)
 - **User Support**: Detailed logs help diagnose issues and provide support
 
-### Modern Architecture - **REVOLUTIONIZED BY SAS DECOMPILE ANALYSIS**
-- **Configuration-Driven**: 7 JSON configuration files for complete system customization without recompilation
-- **Professional Localization**: Multi-language support using verified {=key}fallback format
-- **Custom Healing Model**: Enhanced healing bonuses for enlisted soldiers integrated with game's healing system
-- **SAS Engine-Level Encounter Prevention**: Uses `IsActive = false` for complete encounter prevention (no patches needed)
-- **SAS Real-Time State Management**: Uses `TickEvent` for continuous enforcement even during paused encounters
-- **SAS Immediate Menu System**: Zero-gap menu replacement prevents encounter system confusion
-- **SAS Dynamic Army Management**: Temporary army creation/destruction for battle participation
-- **Minimal Patch Footprint**: ZERO encounter patches (vs original assumption of essential patches)
-- **100% Verified API Usage**: ALL critical SAS APIs confirmed to exist in current Bannerlord version
-- **4-Formation Specializations**: Infantry, Archer, Cavalry, Horse Archer with culture variants
-- **Blueprint Compliance**: Follows our established architecture and safety standards with schema versioning
+## Major Achievements
+
+### Working Gauntlet Grid UI ✅ 
+**Date**: 2025-09-06 - Major breakthrough in Bannerlord modding
+
+We figured out how to create working Gauntlet grid UIs using current v1.2.12 APIs:
+- **Individual equipment clicking**: Each variant has its own Select/Preview buttons
+- **Equipment images**: Proper item icons using `ImageIdentifierVM` 
+- **4K resolution support**: Responsive design that scales correctly
+- **Rich weapon details**: Shows culture, class, tier, damage stats
+- **No crashes or freezing**: Proper input handling and template registration
+
+**Technical discoveries:**
+- Templates go in `GUI/Prefabs/{FeatureName}/` (official Bannerlord structure)
+- Need `TaleWorlds.PlayerServices.dll` for equipment images
+- Register hotkeys BEFORE input restrictions or game freezes
+- Use `<Widget>` not `<Panel>` (Panel is deprecated)
+- Use center alignment for multi-resolution support
+
+### Other Key Features ✅
+- **Real troop selection**: Choose actual Bannerlord troops, get their equipment
+- **Encounter safety**: `IsActive = false` prevents map crashes during service
+- **Centralized dialogs**: Single manager prevents conversation conflicts
+- **JSON configuration**: Military duties configurable without recompiling
+- **Real-time processing**: Works even when game is paused
 
 ## 📖 Documentation Structure
 

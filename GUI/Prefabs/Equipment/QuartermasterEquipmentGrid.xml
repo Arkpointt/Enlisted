@@ -1,0 +1,57 @@
+<Prefab>
+	<Constants>
+		<Constant Name="Encyclopedia.Frame.Width" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Width" />
+		<Constant Name="Encyclopedia.Frame.Height" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Height" />
+	</Constants>
+	<Window>
+		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000CC">
+			<Children>
+
+				<!--Background (EXACT SAS PATTERN)-->
+				<BrushWidget Id="QuartermasterPopup" DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Encyclopedia.Frame.Width" SuggestedHeight="!Encyclopedia.Frame.Height" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="35" Brush="Encyclopedia.Frame">
+					<Children>
+						<!--Title (EXACT SAS PATTERN)-->
+						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="720" SuggestedHeight="155" HorizontalAlignment="Center" VerticalAlignment="Top" PositionXOffset="6" PositionYOffset="-18" Sprite="StdAssets\tabbar_popup" IsDisabled="true">
+							<Children>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" PositionYOffset="-25" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="38" IsDisabled="true" Text="@HeaderText" />
+							</Children>
+						</Widget>
+
+						<!--Equipment Grid (4K RESOLUTION FIX: Center alignment instead of fixed margins)-->
+						<ScrollablePanel WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="800" MarginTop="180" MarginBottom="50" HorizontalAlignment="Center" MouseScrollAxis="Vertical" ClipRect="ListClipRect" InnerPanel="ListClipRect\List" VerticalScrollbar="..\RightSideScrollbar" AutoHideScrollBars="false">
+							<Children>
+								<Widget Id="ListClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
+									<Children>
+										<ListPanel Id="List" DataSource="{EquipmentRows}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop">
+											<ItemTemplate>
+												<QuartermasterEquipmentCardRow ButtonType="Radio" />
+											</ItemTemplate>
+										</ListPanel>
+									</Children>
+								</Widget>
+							</Children>
+						</ScrollablePanel>
+
+						<!--Character Preview (4K RESOLUTION FIX: Proper left alignment)-->
+						<CharacterTableauWidget DataSource="{UnitCharacter}" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="350" SuggestedHeight="600" MarginLeft="50" MarginTop="200" HorizontalAlignment="Left" VerticalAlignment="Top" BodyProperties="@BodyProperties" IsFemale="@IsFemale" EquipmentCode="@EquipmentCode" CharStringId="@CharStringId" StanceIndex="@StanceIndex" BannerCodeText="@BannerCodeText" MountCreationKey="@MountCreationKey" IsEnabled="false" ArmorColor1="@ArmorColor1" ArmorColor2="@ArmorColor2"/>
+
+						<!--Player Gold (4K RESOLUTION FIX: Better positioning)-->
+						<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="820" MarginLeft="50" HorizontalAlignment="Left" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="20" Text="@PlayerGoldText"/>
+
+						<!--Scrollbar (EXACT SAS PATTERN)-->
+						<ScrollbarWidget HeightSizePolicy="Fixed" WidthSizePolicy="CoverChildren" Id="RightSideScrollbar" MinValue="0" MaxValue="100" MarginRight="20" MarginTop="180" AlignmentAxis="Vertical" HorizontalAlignment="Right" SuggestedHeight="750" Handle="RightSideScrollbarHandle" UpdateChildrenStates="true">
+							<Children>
+								<ImageWidget HeightSizePolicy="StretchToParent" WidthSizePolicy="Fixed" SuggestedWidth="2" VerticalAlignment="Center" Brush="Encyclopedia.Scrollbar.Flat.Bed"/>
+								<ImageWidget Id="RightSideScrollbarHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="8" SuggestedHeight="50" VerticalAlignment="Top" Brush="Encyclopedia.Scrollbar.Flat.Handle"/>
+							</Children>
+						</ScrollbarWidget>
+					</Children>
+				</BrushWidget>
+				
+				<!--Close Button (EXACT SAS PATTERN)-->
+				<ButtonWidget Command.Click="ExecuteClose" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="100" SuggestedWidth="100" VerticalAlignment="Center" HorizontalAlignment="Center" PositionYOffset="-465" MarginLeft="1440" Brush="Popup.CloseButton"/>
+
+			</Children>
+		</Widget>
+	</Window>
+</Prefab>

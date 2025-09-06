@@ -126,8 +126,11 @@ src/
 │   │   └── Behaviors/           # dialog handling and flows
 │   ├── Combat/
 │   │   └── Behaviors/           # battle participation and army following
-│   └── Interface/
-│       └── Behaviors/           # status menus and player interface
+│   ├── Interface/
+│   │   └── Behaviors/           # status menus and player interface
+│   └── Equipment/
+│       ├── Behaviors/           # equipment management and Quartermaster logic
+│       └── UI/                  # ✅ NEW: Gauntlet UI ViewModels for grid layouts
 │
 └── Mod.Config/                  # strongly-typed settings & validation
 ```

@@ -9,6 +9,8 @@ using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Ranks.Behaviors;
 
 namespace Enlisted.Mod.Entry
 {
@@ -54,8 +56,18 @@ namespace Enlisted.Mod.Entry
 					campaignStarter.AddBehavior(new EnlistedMenuBehavior());
 					campaignStarter.AddBehavior(new EnlistedInputHandler());
 					
+					// Phase 2B: Troop selection and equipment replacement system
+					campaignStarter.AddBehavior(new TroopSelectionManager());
+					campaignStarter.AddBehavior(new EquipmentManager());
+					campaignStarter.AddBehavior(new PromotionBehavior());
+					
+					// Quartermaster system for equipment variant management
+					campaignStarter.AddBehavior(new QuartermasterManager());
+					campaignStarter.AddBehavior(new Features.Equipment.UI.QuartermasterEquipmentSelectorBehavior());
+					
+					
 					EncounterGuard.Initialize();
-					ModLogger.Info("Bootstrap", "Military service behaviors registered (with enhanced menu system and hotkeys)");
+					ModLogger.Info("Bootstrap", "Military service behaviors registered (with Phase 2B troop selection system)");
 				}
 			}
 			catch (Exception ex)
