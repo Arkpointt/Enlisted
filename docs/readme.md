@@ -22,6 +22,7 @@ Complete military service system where players can:
 - **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with keyboard shortcuts and real-time updates
 - **Phase 2B**: Troop Selection & Equipment Replacement - ✅ **COMPLETE** - Quartermaster grid UI with individual equipment selection
 - **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - SAS-style troop selection with portraits and loadout hints
+- **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system, companion management
 - **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
 - **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
 - **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
@@ -190,9 +191,9 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 6. **Test Incrementally**: Verify functionality at each phase completion
 
 ### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
-- `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub with restored working dialog patterns
-- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: SAS real-time TickEvent + IsActive management + dynamic army membership + lord safety validation + battle participation
-- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Professional enhanced menu system with comprehensive military interface
+- `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub with enlistment, retirement, and return-from-leave dialogs
+- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: Complete military service with temporary leave system and companion management
+- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Enhanced menu system with My Lord conversations and leave requests
 - `EnlistedInputHandler.cs` - ✅ **COMPLETE**: Keyboard shortcuts ('P' for promotion, 'N' for status menu) with proper input handling
 - `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system + menu support methods for enhanced display
 - `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
@@ -216,6 +217,9 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
 - **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
 - **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits and loadout previews
+- **✅ My Lord Conversations**: Talk to nearby lords with portrait selection and faction info
+- **✅ Temporary Leave System**: Request leave with vanilla behavior restoration and dialog return option
+- **✅ Companion Management**: Automatic troop transfer to lord's party; companions restored on retirement
 - **✅ Interactive Menu Management**: Field medical treatment, duties management, equipment access, service records  
 - **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
 - **✅ Proper SAS Behavior**: Menu stays active while following lord, maintains game flow
@@ -362,12 +366,13 @@ Daily Wage: 145 🪙
 Army Status: Following [Derthert's Army]
 ═══════════════════════════════════════
 
-[ Request field medical treatment ]       ← 5-day/2-day cooldowns
-[ Speak with lord about duties ]          ← Duty conversations
-[ Visit the quartermaster ]               ← Equipment menu
-[ View detailed service record ]          ← Progress tracking
-[ Request retirement (if eligible) ]      ← After 1 year
-[ Return to duties ]                      ← Close menu
+[ Master at Arms ]                       ← Troop selection with portraits
+[ Visit Quartermaster ]                  ← Equipment variants menu
+[ Battle Commands: Player Formation Only ]
+[ My Lord... ]                           ← Talk to nearby lords
+[ Show reputation with factions ]
+[ Ask commander for leave ]              ← Temporary leave system
+[ Ask for a different assignment ]
 ═══════════════════════════════════════
 ```
 

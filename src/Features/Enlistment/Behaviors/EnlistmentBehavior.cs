@@ -7,6 +7,7 @@ using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
+using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -37,7 +38,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	// Army management state
 	private bool _disbandArmyAfterBattle = false;  // SAS pattern: track if we created army for battle
 	private CampaignTime _enlistmentDate = CampaignTime.Zero;
-			public bool IsEnlisted => _enlistedLord != null;
+	
+	// Temporary leave system
+	private bool _isOnLeave = false;
+	private CampaignTime _leaveStartDate = CampaignTime.Zero;
+			public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
+	public bool IsOnLeave => _isOnLeave;
 	public Hero CurrentLord => _enlistedLord;
 	public int EnlistmentTier => _enlistmentTier;
 	public int EnlistmentXP => _enlistmentXP;
@@ -80,6 +86,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	dataStore.SyncData("_personalInventory", ref _personalInventory);
 	dataStore.SyncData("_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
 	dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
+	dataStore.SyncData("_isOnLeave", ref _isOnLeave);
+	dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
 	
 	// Post-load validation
 	if (dataStore.IsLoading)
@@ -137,7 +145,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_enlistmentXP = 0;
 			_enlistmentDate = CampaignTime.Now;
 				
-							// Assign initial recruit equipment based on lord's culture
+							// Transfer any existing companions/troops to lord's party (SAS pattern)
+				TransferPlayerTroopsToLord();
+				
+				// Assign initial recruit equipment based on lord's culture
 			AssignInitialEquipment();
 			
 					// ORIGINAL WORKING VERSION: Simple escort setup
@@ -166,6 +177,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			ModLogger.Info("Enlistment", $"Service ended: {reason}");
 			
+			// SAS CRITICAL: Finish any active encounter first (prevents assertion crashes)
+			if (PlayerEncounter.Current != null)
+			{
+				// Ensure we're not inside a settlement before finishing encounter
+				if (PlayerEncounter.InsideSettlement)
+				{
+					PlayerEncounter.LeaveSettlement();
+				}
+				PlayerEncounter.Finish(true);
+			}
+
 			var main = MobileParty.MainParty;
 			if (main != null)
 			{
@@ -181,6 +203,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			RestorePersonalEquipment();
 			_hasBackedUpEquipment = false;
 		}
+		
+		// Restore companions to player party before ending service
+		RestoreCompanionsToPlayer();
 		
 		// Clear enlistment state
 		_enlistedLord = null;
@@ -389,7 +414,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			var main = MobileParty.MainParty;
 			if (main == null) { return; }
 			
-					if (IsEnlisted && _enlistedLord != null)
+			// Skip all enlistment logic when on leave - let vanilla behavior take over
+			if (_isOnLeave)
+			{
+				// Ensure vanilla state when on leave
+				if (!main.IsActive && !Hero.MainHero.IsPrisoner)
+				{
+					main.IsActive = true;
+					main.IsVisible = true;
+				}
+				return;
+			}
+			
+			if (IsEnlisted && _enlistedLord != null)
 		{
 			// Enhanced SAS logic - army-aware following and battle participation
 			var lordParty = _enlistedLord.PartyBelongedTo;
@@ -764,6 +801,220 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Error("Battle", "Error in battle participation handling", ex);
 				// Fallback: maintain normal enlisted state
 				main.IsActive = false;
+			}
+		}
+		
+		#endregion
+		
+		#region Temporary Leave System
+		
+		/// <summary>
+		/// Start temporary leave - suspend enlistment without ending service permanently.
+		/// </summary>
+		public void StartTemporaryLeave()
+		{
+			try
+			{
+				if (!IsEnlisted)
+				{
+					return;
+				}
+				
+				ModLogger.Info("Enlistment", "Starting temporary leave - suspending service");
+				
+				// Clean up any active encounters first
+				if (PlayerEncounter.Current != null)
+				{
+					if (PlayerEncounter.InsideSettlement)
+					{
+						PlayerEncounter.LeaveSettlement();
+					}
+					PlayerEncounter.Finish(true);
+				}
+				
+				// Restore vanilla player state
+				var main = MobileParty.MainParty;
+				if (main != null)
+				{
+					main.IsVisible = true;
+					main.IsActive = true;
+					TrySetShouldJoinPlayerBattles(main, false);
+					TryReleaseEscort(main);
+				}
+				
+				// Set leave state (preserve all service data)
+				_isOnLeave = true;
+				_leaveStartDate = CampaignTime.Now;
+				
+				ModLogger.Info("Enlistment", "Temporary leave started - player restored to vanilla behavior");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Enlistment", "Error starting temporary leave", ex);
+			}
+		}
+		
+		/// <summary>
+		/// Return from temporary leave - resume enlistment with preserved data.
+		/// </summary>
+		public void ReturnFromLeave()
+		{
+			try
+			{
+				if (!_isOnLeave || _enlistedLord == null)
+				{
+					return;
+				}
+				
+				ModLogger.Info("Enlistment", "Returning from temporary leave - resuming service");
+				
+				// Clear leave state
+				_isOnLeave = false;
+				_leaveStartDate = CampaignTime.Zero;
+				
+				// Transfer any new companions/troops to lord's party (SAS pattern)
+				TransferPlayerTroopsToLord();
+				
+				// Resume enlistment behavior (will be handled by next real-time tick)
+				var main = MobileParty.MainParty;
+				if (main != null)
+				{
+					main.IsVisible = false;
+					main.IsActive = false;
+					TrySetShouldJoinPlayerBattles(main, true);
+				}
+				
+				ModLogger.Info("Enlistment", "Service resumed - enlistment behavior restored");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Enlistment", "Error returning from leave", ex);
+			}
+		}
+		
+		/// <summary>
+		/// Transfer player companions and troops to lord's party (SAS pattern).
+		/// Called when returning from leave or initial enlistment.
+		/// </summary>
+		private void TransferPlayerTroopsToLord()
+		{
+			try
+			{
+				var main = MobileParty.MainParty;
+				var lordParty = _enlistedLord?.PartyBelongedTo;
+				
+				if (main == null || lordParty == null)
+				{
+					return;
+				}
+				
+				var transferCount = 0;
+				var companionCount = 0;
+				
+				// Transfer all non-player troops to lord's party (exact SAS pattern)
+				var troopsToTransfer = new List<TroopRosterElement>();
+				foreach (var troop in main.MemberRoster.GetTroopRoster())
+				{
+					// Skip the player character
+					if (troop.Character == CharacterObject.PlayerCharacter)
+					{
+						continue;
+					}
+					
+					if (troop.Number > 0)
+					{
+						troopsToTransfer.Add(troop);
+						transferCount += troop.Number;
+						if (troop.Character.IsHero)
+						{
+							companionCount++;
+						}
+					}
+				}
+				
+				// Perform the transfer using verified SAS pattern
+				foreach (var troop in troopsToTransfer)
+				{
+					// Add to lord's party
+					lordParty.MemberRoster.AddToCounts(troop.Character, troop.Number, false, 0, 0, true, -1);
+					// Remove from player party
+					main.MemberRoster.AddToCounts(troop.Character, -1 * troop.Number, false, 0, 0, true, -1);
+				}
+				
+				if (transferCount > 0)
+				{
+					var message = new TextObject("Your {TROOP_COUNT} troops{COMPANION_INFO} have joined your lord's party for the duration of service.");
+					message.SetTextVariable("TROOP_COUNT", transferCount.ToString());
+					message.SetTextVariable("COMPANION_INFO", companionCount > 0 ? $" (including {companionCount} companions)" : "");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+					
+					ModLogger.Info("Enlistment", $"Transferred {transferCount} troops ({companionCount} companions) to lord's party");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Enlistment", "Error transferring troops to lord", ex);
+			}
+		}
+		
+		/// <summary>
+		/// Restore companions to player party on retirement (regular troops stay with lord).
+		/// Companions should be available for the player again after service ends.
+		/// </summary>
+		private void RestoreCompanionsToPlayer()
+		{
+			try
+			{
+				var main = MobileParty.MainParty;
+				var lordParty = _enlistedLord?.PartyBelongedTo;
+				
+				if (main == null || lordParty == null)
+				{
+					return;
+				}
+				
+				var companionsRestored = 0;
+				var companionsToRestore = new List<TroopRosterElement>();
+				
+				// Find player's companions in lord's party
+				foreach (var troop in lordParty.MemberRoster.GetTroopRoster())
+				{
+					// Only restore hero companions, not regular troops
+					if (troop.Character.IsHero && troop.Character != CharacterObject.PlayerCharacter)
+					{
+						// Check if this companion belongs to player's clan
+						var hero = troop.Character.HeroObject;
+						if (hero != null && hero.Clan == Clan.PlayerClan)
+						{
+							companionsToRestore.Add(troop);
+							companionsRestored += troop.Number;
+						}
+					}
+				}
+				
+				// Transfer companions back to player using verified API pattern
+				foreach (var companion in companionsToRestore)
+				{
+					// Remove from lord's party
+					lordParty.MemberRoster.AddToCounts(companion.Character, -1 * companion.Number, false, 0, 0, true, -1);
+					// Add back to player party
+					main.MemberRoster.AddToCounts(companion.Character, companion.Number, false, 0, 0, true, -1);
+				}
+				
+				if (companionsRestored > 0)
+				{
+					var message = new TextObject("Your {COMPANION_COUNT} companions have rejoined your party upon retirement.");
+					message.SetTextVariable("COMPANION_COUNT", companionsRestored.ToString());
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+					
+					ModLogger.Info("Enlistment", $"Restored {companionsRestored} companions to player party on retirement");
+				}
+				
+				// Note: Regular troops stay with the lord as they've become part of the military unit
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Enlistment", "Error restoring companions on retirement", ex);
 			}
 		}
 		

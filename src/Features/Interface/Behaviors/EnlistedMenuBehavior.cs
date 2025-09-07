@@ -5,6 +5,9 @@ using System.Text;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Overlay;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Encounters;
+using TaleWorlds.CampaignSystem.Conversation;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -127,9 +130,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnBattleCommandsSelected,
                 false, 2);
 
-            // Talk to... (SAS option 3)
+            // My Lord... (SAS option 3 - renamed for clarity)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
-                "Talk to...",
+                "My Lord...",
                 IsTalkToAvailable,
                 OnTalkToSelected,
                 false, 3);
@@ -798,9 +801,168 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnTalkToSelected(MenuCallbackArgs args)
         {
-            // TODO: Implement party member conversations
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("Party conversation system coming soon.").ToString()));
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("You must be enlisted to speak with lords.").ToString()));
+                    return;
+                }
+
+                // Find nearby lords for conversation
+                var nearbyLords = GetNearbyLordsForConversation();
+                if (nearbyLords.Count == 0)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("No lords are available for conversation at this location.").ToString()));
+                    return;
+                }
+
+                // Show lord selection inquiry
+                ShowLordSelectionInquiry(nearbyLords);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error in Talk to My Lord: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Find nearby lords available for conversation using current TaleWorlds APIs.
+        /// </summary>
+        private List<Hero> GetNearbyLordsForConversation()
+        {
+            var nearbyLords = new List<Hero>();
+            try
+            {
+                var mainParty = MobileParty.MainParty;
+                if (mainParty == null)
+                {
+                    return nearbyLords;
+                }
+
+                // Check all mobile parties using verified API
+                foreach (var party in MobileParty.All)
+                {
+                    if (party == null || party == mainParty || !party.IsActive)
+                    {
+                        continue;
+                    }
+
+                    // Check if party is close enough for conversation (same position or very close)
+                    var distance = mainParty.Position2D.Distance(party.Position2D);
+                    if (distance > 2.0f) // Reasonable conversation distance
+                    {
+                        continue;
+                    }
+
+                    var lord = party.LeaderHero;
+                    if (lord != null && lord.IsLord && lord.IsAlive && !lord.IsPrisoner)
+                    {
+                        nearbyLords.Add(lord);
+                    }
+                }
+
+                // Always include your enlisted lord if available
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.CurrentLord != null && !nearbyLords.Contains(enlistment.CurrentLord))
+                {
+                    nearbyLords.Insert(0, enlistment.CurrentLord); // Put enlisted lord first
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error finding nearby lords: {ex.Message}");
+            }
+
+            return nearbyLords;
+        }
+
+        /// <summary>
+        /// Show lord selection inquiry with portraits.
+        /// </summary>
+        private void ShowLordSelectionInquiry(List<Hero> lords)
+        {
+            try
+            {
+                var options = new List<InquiryElement>();
+                foreach (var lord in lords)
+                {
+                    var name = lord.Name?.ToString() ?? "Unknown Lord";
+                    var portrait = new ImageIdentifier(CharacterCode.CreateFrom(lord.CharacterObject));
+                    var description = $"{lord.Clan?.Name?.ToString() ?? "Unknown Clan"}\n{lord.MapFaction?.Name?.ToString() ?? "Unknown Faction"}";
+                    
+                    options.Add(new InquiryElement(lord, name, portrait, true, description));
+                }
+
+                var data = new MultiSelectionInquiryData(
+                    titleText: "Select lord to speak with",
+                    descriptionText: string.Empty,
+                    inquiryElements: options,
+                    isExitShown: true,
+                    minSelectableOptionCount: 1,
+                    maxSelectableOptionCount: 1,
+                    affirmativeText: "Talk",
+                    negativeText: "Cancel",
+                    affirmativeAction: selected =>
+                    {
+                        try
+                        {
+                            var chosenLord = selected?.FirstOrDefault()?.Identifier as Hero;
+                            if (chosenLord != null)
+                            {
+                                StartConversationWithLord(chosenLord);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Interface", $"Error starting lord conversation: {ex.Message}");
+                        }
+                    },
+                    negativeAction: _ =>
+                    {
+                        // Return to enlisted status menu
+                        if (Campaign.Current?.CurrentMenuContext != null)
+                        {
+                            GameMenu.ActivateGameMenu("enlisted_status");
+                        }
+                    },
+                    soundEventPath: string.Empty);
+
+                MBInformationManager.ShowMultiSelectionInquiry(data);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error showing lord selection: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Start conversation with selected lord using verified TaleWorlds APIs.
+        /// </summary>
+        private void StartConversationWithLord(Hero lord)
+        {
+            try
+            {
+                if (lord?.PartyBelongedTo == null)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("Lord is not available for conversation.").ToString()));
+                    return;
+                }
+
+                // Use the same conversation system our dialogs use
+                CampaignMapConversation.OpenConversation(new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty), 
+                                                        new ConversationCharacterData(lord.CharacterObject, lord.PartyBelongedTo.Party));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error opening conversation with {lord?.Name}: {ex.Message}");
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("Unable to start conversation. Please try again.").ToString()));
+            }
         }
 
         private bool IsReputationAvailable(MenuCallbackArgs args)
@@ -822,9 +984,84 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnAskLeaveSelected(MenuCallbackArgs args)
         {
-            // TODO: Implement leave request dialog
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("Leave request system coming soon.").ToString()));
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return;
+                }
+
+                // Show leave request confirmation
+                var titleText = "Request Leave from Commander";
+                var descriptionText = "Request temporary leave from military service. You will regain independent movement but forfeit daily wages and duties until you return.";
+                
+                var confirmData = new InquiryData(
+                    titleText,
+                    descriptionText,
+                    isAffirmativeOptionShown: true,
+                    isNegativeOptionShown: true,
+                    affirmativeText: "Request Leave",
+                    negativeText: "Cancel",
+                    affirmativeAction: () =>
+                    {
+                        try
+                        {
+                            RequestTemporaryLeave();
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Interface", $"Error requesting leave: {ex.Message}");
+                        }
+                    },
+                    negativeAction: () =>
+                    {
+                        // Return to enlisted status menu
+                        if (Campaign.Current?.CurrentMenuContext != null)
+                        {
+                            GameMenu.ActivateGameMenu("enlisted_status");
+                        }
+                    });
+
+                InformationManager.ShowInquiry(confirmData);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error in Ask for Leave: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Request temporary leave from service using our established EnlistmentBehavior patterns.
+        /// </summary>
+        private void RequestTemporaryLeave()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return;
+                }
+
+                // Use temporary leave instead of permanent discharge
+                enlistment.StartTemporaryLeave();
+
+                var message = new TextObject("Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty.");
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+
+                // Exit menu to campaign map
+                while (Campaign.Current.CurrentMenuContext != null)
+                {
+                    GameMenu.ExitToLast();
+                }
+
+                ModLogger.Info("Interface", "Temporary leave granted using proper StopEnlist method");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error granting temporary leave: {ex.Message}");
+            }
         }
 
         private bool IsDifferentAssignmentAvailable(MenuCallbackArgs args)

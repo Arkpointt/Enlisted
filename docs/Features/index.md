@@ -7,6 +7,7 @@ This folder contains functional specifications for major features in the militar
 - **[quartermaster.md](quartermaster.md)** - Grid UI for equipment selection
 - **[dialog-system.md](dialog-system.md)** - Centralized conversation management  
 - **[troop-selection.md](troop-selection.md)** - Real troop choice system for promotions
+- **[temporary-leave.md](temporary-leave.md)** - Leave system with companion management
 - **[encounter-safety.md](encounter-safety.md)** - Preventing map encounter crashes
 - **[duties-system.md](duties-system.md)** - Military roles and assignments
 - **[enlistment.md](enlistment.md)** - Core military service functionality

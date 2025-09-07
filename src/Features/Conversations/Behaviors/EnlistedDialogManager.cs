@@ -102,7 +102,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddEnlistmentDialogs(CampaignGameStarter starter)
         {
-            // Option to request enlistment
+                // Option to request enlistment
             starter.AddPlayerLine(
                 "enlisted_request_service",
                 "enlisted_service_options",
@@ -111,6 +111,26 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanRequestEnlistment,
                 null,
                 110);
+
+            // Option to return from temporary leave
+            starter.AddPlayerLine(
+                "enlisted_return_from_leave",
+                "enlisted_service_options",
+                "enlisted_return_response",
+                GetLocalizedText("{=enlisted_return_from_leave}I wish to return to service.").ToString(),
+                CanReturnFromLeave,
+                null,
+                111);
+
+            // Lord's response to return from leave request
+            starter.AddDialogLine(
+                "enlisted_return_accepted",
+                "enlisted_return_response",
+                "close_window",
+                GetLocalizedText("{=enlisted_return_accepted}Welcome back to service. Resume your duties.").ToString(),
+                null,
+                OnReturnFromLeave,
+                111);
 
             // Lord's response to enlistment request
             starter.AddDialogLine(
@@ -220,6 +240,19 @@ namespace Enlisted.Features.Conversations.Behaviors
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
+        /// <summary>
+        /// Checks if the player can return from temporary leave.
+        /// </summary>
+        private bool CanReturnFromLeave()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            // Must be on leave and talking to the same lord you served
+            return enlistment?.IsOnLeave == true && 
+                   enlistment.CurrentLord == lord;
+        }
+
         #endregion
 
         #region Shared Dialog Consequences
@@ -295,6 +328,32 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("DialogManager", "Error during retirement processing", ex);
+            }
+        }
+
+        /// <summary>
+        /// Handles the consequence of returning from temporary leave.
+        /// </summary>
+        private void OnReturnFromLeave()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsOnLeave == true)
+                {
+                    var lordName = enlistment.CurrentLord?.Name?.ToString() ?? "Unknown Lord";
+                    ModLogger.Info("DialogManager", $"Player returning from leave to service with: {lordName}");
+
+                    enlistment.ReturnFromLeave();
+
+                    // Professional notification
+                    var returnMessage = GetLocalizedText("{=enlisted_return_notification}You have returned to active military service.");
+                    InformationManager.DisplayMessage(new InformationMessage(returnMessage.ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during return from leave", ex);
             }
         }
 
