@@ -8,6 +8,7 @@ using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.CampaignSystem.Encounters;
+using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -872,19 +873,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				_isOnLeave = false;
 				_leaveStartDate = CampaignTime.Zero;
 				
-				// Transfer any new companions/troops to lord's party (SAS pattern)
-				TransferPlayerTroopsToLord();
-				
-				// Resume enlistment behavior (will be handled by next real-time tick)
-				var main = MobileParty.MainParty;
-				if (main != null)
+			// Transfer any new companions/troops to lord's party (SAS pattern)
+			TransferPlayerTroopsToLord();
+			
+			// SAS CRITICAL: Finish any active encounter first (prevents assertion crashes)
+			// Same logic as StartEnlist() - must clean up encounters before setting IsActive = false
+			if (PlayerEncounter.Current != null)
+			{
+				// Ensure we're not inside a settlement before finishing encounter
+				if (PlayerEncounter.InsideSettlement)
 				{
-					main.IsVisible = false;
-					main.IsActive = false;
-					TrySetShouldJoinPlayerBattles(main, true);
+					PlayerEncounter.LeaveSettlement();
 				}
+				PlayerEncounter.Finish(true);
+			}
+			
+			// Resume enlistment behavior (will be handled by next real-time tick)
+			var main = MobileParty.MainParty;
+			if (main != null)
+			{
+				main.IsVisible = false;
+				main.IsActive = false; // Now safe to disable after encounter cleanup
+				TrySetShouldJoinPlayerBattles(main, true);
+			}
 				
-				ModLogger.Info("Enlistment", "Service resumed - enlistment behavior restored");
+				// SAS APPROACH: Activate enlisted status menu (zero gap implementation)
+			GameMenu.ActivateGameMenu("enlisted_status");
+			ModLogger.Info("Enlistment", "Service resumed - enlisted status menu activated");
 			}
 			catch (Exception ex)
 			{

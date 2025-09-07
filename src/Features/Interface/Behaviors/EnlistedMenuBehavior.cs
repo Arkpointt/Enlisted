@@ -123,12 +123,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnQuartermasterSelected,
                 false, 1);
 
-            // Battle Commands (SAS option 2)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_battle_commands",
-                "Battle Commands: Player Formation Only",
-                IsBattleCommandsAvailable,
-                OnBattleCommandsSelected,
-                false, 2);
 
             // My Lord... (SAS option 3 - renamed for clarity)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
@@ -782,17 +776,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private bool IsBattleCommandsAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        private void OnBattleCommandsSelected(MenuCallbackArgs args)
-        {
-            // TODO: Implement battle commands toggle
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("Battle commands system coming soon.").ToString()));
-        }
 
         private bool IsTalkToAvailable(MenuCallbackArgs args)
         {
