@@ -12,6 +12,7 @@ using Helpers;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Features.Equipment.UI;
 
 namespace Enlisted.Features.Equipment.Behaviors
 {
@@ -30,6 +31,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private bool _promotionPending = false;
         private int _pendingTier = 1;
         private List<CharacterObject> _availableTroops = new List<CharacterObject>();
+        private string _lastSelectedTroopId;
         
         public TroopSelectionManager()
         {
@@ -45,6 +47,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             dataStore.SyncData("_promotionPending", ref _promotionPending);
             dataStore.SyncData("_pendingTier", ref _pendingTier);
+            dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -57,6 +60,202 @@ namespace Enlisted.Features.Equipment.Behaviors
             ModLogger.Info("TroopSelection", "Troop selection system initialized");
         }
         
+        /// <summary>
+        /// Show Master at Arms popup allowing player to select among unlocked troops (tiers ≤ current tier).
+        /// Keeps tier unchanged; only equipment/role expression is changed.
+        /// </summary>
+        public void ShowMasterAtArmsPopup()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("You must be enlisted to use Master at Arms.").ToString()));
+                    return;
+                }
+
+                var cultureId = enlistment.CurrentLord?.Culture?.StringId;
+                if (string.IsNullOrEmpty(cultureId))
+                {
+                    ModLogger.Error("Equipment", "Master at Arms: Missing culture on current lord");
+                    return;
+                }
+
+                var unlocked = GetUnlockedTroopsForCurrentTier(cultureId, enlistment.EnlistmentTier);
+                if (unlocked.Count == 0)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("No eligible troops found for your rank and culture.").ToString()));
+                    return;
+                }
+
+                var options = new List<InquiryElement>();
+                foreach (var troop in unlocked)
+                {
+                    var hint = BuildTroopLoadoutHint(troop);
+                    var name = troop.Name?.ToString() ?? "Unknown";
+                    var portrait = new ImageIdentifier(CharacterCode.CreateFrom(troop));
+                    options.Add(new InquiryElement(troop, name, portrait, true, hint));
+                }
+
+                var data = new MultiSelectionInquiryData(
+                    "Select equipment to use",
+                    string.Empty,
+                    options,
+                    false,
+                    1,
+                    1,
+                    "Continue",
+                    "Cancel",
+                    selected =>
+                    {
+                        try
+                        {
+                            var chosen = selected?.FirstOrDefault()?.Identifier as CharacterObject;
+                            if (chosen != null)
+                            {
+                                ApplySelectedTroopEquipment(Hero.MainHero, chosen);
+                                _lastSelectedTroopId = chosen.StringId;
+                                if (Campaign.Current?.CurrentMenuContext != null)
+                                {
+                                    GameMenu.ActivateGameMenu("enlisted_status");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Equipment", $"Master at Arms apply failed: {ex.Message}");
+                        }
+                    },
+                    _ =>
+                    {
+                        try
+                        {
+                            if (Campaign.Current?.CurrentMenuContext != null)
+                            {
+                                GameMenu.ActivateGameMenu("enlisted_status");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("TroopSelection", $"Master at Arms cancel failed: {ex.Message}");
+                        }
+                    },
+                    string.Empty);
+
+                MBInformationManager.ShowMultiSelectionInquiry(data);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", $"Master at Arms popup failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Build unlocked troop list for culture across tiers ≤ current tier.
+        /// </summary>
+        private List<CharacterObject> GetUnlockedTroopsForCurrentTier(string cultureId, int currentTier)
+        {
+            try
+            {
+                var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
+                var tree = BuildCultureTroopTree(culture);
+                var troops = tree.Where(t =>
+                        !t.IsHero &&
+                        t.BattleEquipments.Any() &&
+                        SafeGetTier(t) <= currentTier)
+                    .OrderBy(t => SafeGetTier(t))
+                    .ThenBy(t => t.Name?.ToString())
+                    .ToList();
+
+                if (troops.Count == 0 && culture != null)
+                {
+                    var fallback = new List<CharacterObject>();
+                    if (culture.BasicTroop != null)
+                    {
+                        fallback.Add(culture.BasicTroop);
+                    }
+                    if (culture.EliteBasicTroop != null)
+                    {
+                        fallback.Add(culture.EliteBasicTroop);
+                    }
+                    if (culture.MeleeMilitiaTroop != null)
+                    {
+                        fallback.Add(culture.MeleeMilitiaTroop);
+                    }
+                    if (culture.RangedMilitiaTroop != null)
+                    {
+                        fallback.Add(culture.RangedMilitiaTroop);
+                    }
+                    troops = fallback.Where(t => t != null && t.BattleEquipments.Any()).ToList();
+                }
+
+                return troops;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", $"GetUnlockedTroops failed: {ex.Message}");
+                return new List<CharacterObject>();
+            }
+        }
+
+        private int SafeGetTier(CharacterObject troop)
+        {
+            try { return troop.GetBattleTier(); } catch { return 1; }
+        }
+
+        private List<InquiryElement> BuildInquiryElements(List<CharacterObject> troops)
+        {
+            var elements = new List<InquiryElement>();
+            foreach (var troop in troops)
+            {
+                try
+                {
+                    var title = troop?.Name?.ToString() ?? "Unknown";
+                    var element = new InquiryElement(
+                        troop,
+                        title,
+                        null,
+                        true,
+                        null);
+                    elements.Add(element);
+                }
+                catch
+                {
+                    // Best effort; skip this troop if element creation fails
+                }
+            }
+            return elements;
+        }
+
+        private string BuildTroopLoadoutHint(CharacterObject troop)
+        {
+            try
+            {
+                var lines = new List<string>();
+                var best = troop.BattleEquipments?.FirstOrDefault();
+                if (best != null)
+                {
+                    for (EquipmentIndex slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    {
+                        var item = best[slot].Item;
+                        if (item == null)
+                        {
+                            continue;
+                        }
+                        lines.Add(item.Name?.ToString() ?? item.StringId);
+                    }
+                }
+                return string.Join("\n", lines);
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
         /// <summary>
         /// Add troop selection menus for promotion system.
         /// </summary>
@@ -201,13 +400,12 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
-                var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+                var tree = BuildCultureTroopTree(culture);
                 
-                var availableTroops = allTroops.Where(troop => 
-                    troop.Culture == culture && 
-                    troop.GetBattleTier() == tier &&  // CORRECTED: Use GetBattleTier() method
-                    !troop.IsHero &&  // Exclude heroes, get regular troops only
-                    troop.BattleEquipments.Any()).ToList(); // Must have equipment
+                var availableTroops = tree.Where(troop => 
+                    SafeGetTier(troop) == tier &&
+                    !troop.IsHero &&
+                    troop.BattleEquipments.Any()).ToList();
                 
                 // Add culture fallback troops if no specific tier troops found
                 if (availableTroops.Count == 0 && culture != null)
@@ -216,16 +414,28 @@ namespace Enlisted.Features.Equipment.Behaviors
                     
                     // Use guaranteed culture troop templates as fallbacks
                     var fallbackTroops = new List<CharacterObject>();
-                    if (culture.BasicTroop != null) fallbackTroops.Add(culture.BasicTroop);
-                    if (culture.EliteBasicTroop != null) fallbackTroops.Add(culture.EliteBasicTroop);
-                    if (culture.MeleeMilitiaTroop != null) fallbackTroops.Add(culture.MeleeMilitiaTroop);
-                    if (culture.RangedMilitiaTroop != null) fallbackTroops.Add(culture.RangedMilitiaTroop);
+                    if (culture.BasicTroop != null)
+                    {
+                        fallbackTroops.Add(culture.BasicTroop);
+                    }
+                    if (culture.EliteBasicTroop != null)
+                    {
+                        fallbackTroops.Add(culture.EliteBasicTroop);
+                    }
+                    if (culture.MeleeMilitiaTroop != null)
+                    {
+                        fallbackTroops.Add(culture.MeleeMilitiaTroop);
+                    }
+                    if (culture.RangedMilitiaTroop != null)
+                    {
+                        fallbackTroops.Add(culture.RangedMilitiaTroop);
+                    }
                     
                     availableTroops = fallbackTroops.Where(t => t.BattleEquipments.Any()).ToList();
                     ModLogger.Info("TroopSelection", $"Using {availableTroops.Count} culture fallback troops");
                 }
                 
-                ModLogger.Info("TroopSelection", $"Found {availableTroops.Count} troops for {cultureId} tier {tier}");
+                ModLogger.Info("TroopSelection", $"Found {availableTroops.Count} tree troops for {cultureId} tier {tier}");
                 return availableTroops;
             }
             catch (Exception ex)
@@ -233,6 +443,79 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("TroopSelection", "Failed to get troops for culture/tier", ex);
                 return new List<CharacterObject>();
             }
+        }
+
+        /// <summary>
+        /// Build the culture's troop tree by traversing upgrade paths from BasicTroop and EliteBasicTroop.
+        /// </summary>
+        private List<CharacterObject> BuildCultureTroopTree(CultureObject culture)
+        {
+            var results = new List<CharacterObject>();
+            try
+            {
+                if (culture == null)
+                {
+                    return results;
+                }
+
+                var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var queue = new Queue<CharacterObject>();
+
+                void EnqueueIfValid(CharacterObject start)
+                {
+                    if (start == null)
+                    {
+                        return;
+                    }
+                    if (start.Culture != culture)
+                    {
+                        return;
+                    }
+                    if (start.IsHero)
+                    {
+                        return;
+                    }
+                    if (!visited.Add(start.StringId))
+                    {
+                        return;
+                    }
+                    queue.Enqueue(start);
+                }
+
+                EnqueueIfValid(culture.BasicTroop);
+                EnqueueIfValid(culture.EliteBasicTroop);
+
+                while (queue.Count > 0)
+                {
+                    var node = queue.Dequeue();
+                    results.Add(node);
+
+                    try
+                    {
+                        var upgrades = node.UpgradeTargets; // MBReadOnlyList<CharacterObject>
+                        if (upgrades != null)
+                        {
+                            foreach (var next in upgrades)
+                            {
+                                if (next != null && next.Culture == culture && !next.IsHero && !visited.Contains(next.StringId))
+                                {
+                                    visited.Add(next.StringId);
+                                    queue.Enqueue(next);
+                                }
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // best-effort; continue on any API differences
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", $"BuildCultureTroopTree failed: {ex.Message}");
+            }
+            return results;
         }
         
         /// <summary>
@@ -287,13 +570,21 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 // SAS formation detection logic
                 if (troop.IsRanged && troop.IsMounted)
+                {
                     return FormationType.HorseArcher;   // Bow + Horse
+                }
                 else if (troop.IsMounted)
+                {
                     return FormationType.Cavalry;       // Sword + Horse  
+                }
                 else if (troop.IsRanged)
+                {
                     return FormationType.Archer;        // Bow + No Horse
+                }
                 else
+                {
                     return FormationType.Infantry;      // Sword + No Horse (default)
+                }
             }
             catch
             {

@@ -1,0 +1,42 @@
+<Prefab>
+	<Window>
+		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+			<Children>
+				<BrushWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="900" SuggestedHeight="700" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Encyclopedia.Frame">
+					<Children>
+						<RichTextWidget HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="12" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="36" Text="@HeaderText"/>
+						<ScrollablePanel WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="720" SuggestedHeight="420" MarginTop="64" HorizontalAlignment="Center" MouseScrollAxis="Vertical" ClipRect="Clip" InnerPanel="Clip\List">
+							<Children>
+								<Widget Id="Clip" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true" MarginLeft="16" MarginRight="16">
+									<Children>
+										<GridWidget Id="List" DataSource="{Items}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" ColumnCount="1" DefaultCellHeight="56" DefaultCellWidth="700" LayoutImp="GridLayout" MarginTop="8" MarginBottom="8">
+											<ItemTemplate>
+												<Widget DataSource="{.}" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="56" MarginBottom="6">
+													<Children>
+														<ButtonWidget DoNotAcceptEvents="false" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="56" Command.Click="ExecuteSelect" Brush="Encyclopedia.Button">
+															<Children>
+																<HintWidget Text="@HintText"/>
+																<ImageIdentifierWidget DataSource="{Visual}" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="48" SuggestedWidth="48" MarginLeft="8" VerticalAlignment="Center" ImageId="@Id" ImageTypeCode="@ImageTypeCode" DoNotAcceptEvents="true"/>
+																<RichTextWidget MarginLeft="64" VerticalAlignment="Center" Brush="Encyclopedia.Entry.Text" Text="@Name"/>
+															</Children>
+														</ButtonWidget>
+													</Children>
+												</Widget>
+											</ItemTemplate>
+										</GridWidget>
+									</Children>
+								</Widget>
+							</Children>
+						</ScrollablePanel>
+						<ButtonWidget Command.Click="ExecuteConfirm" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="200" SuggestedHeight="48" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="20" Brush="Encyclopedia.Button">
+							<Children>
+								<RichTextWidget Text="Continue" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Encyclopedia.Entry.Text"/>
+							</Children>
+						</ButtonWidget>
+					</Children>
+				</BrushWidget>
+			</Children>
+		</Widget>
+	</Window>
+</Prefab>
+

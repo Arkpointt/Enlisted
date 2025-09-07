@@ -112,11 +112,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 OnArmorVariantsSelected,
                 false, 2);
                 
-            starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_helmets",
-                "Request helmet variants",
-                IsHelmetVariantsAvailable,
-                OnHelmetVariantsSelected,
-                false, 3);
+            // Helmet button removed; helmets are handled under the Armor flow (slot picker)
                 
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_accessories",
                 "Request accessory variants",
@@ -175,7 +171,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                if (selectedTroop == null) return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                if (selectedTroop == null)
+                {
+                    return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                }
                 
                 // Check cache first for performance
                 var cacheKey = selectedTroop.StringId;
@@ -185,6 +184,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 
                 var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
+                var troopCulture = selectedTroop.Culture;
                 
                 // RUNTIME DISCOVERY: Extract all equipment variants from this troop's BattleEquipments
                 foreach (var equipment in selectedTroop.BattleEquipments)
@@ -194,11 +194,20 @@ namespace Enlisted.Features.Equipment.Behaviors
                         var item = equipment[slot].Item;
                         if (item != null)
                         {
+                            // Culture-strict: if item declares a culture, it must match the selected troop's culture
+                            if (troopCulture != null && item.Culture != null && item.Culture != troopCulture)
+                            {
+                                continue;
+                            }
                             if (!variants.ContainsKey(slot))
+                            {
                                 variants[slot] = new List<ItemObject>();
+                            }
                             
                             if (!variants[slot].Contains(item))
+                            {
                                 variants[slot].Add(item);
+                            }
                         }
                     }
                 }
@@ -236,7 +245,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var culture = enlistment.CurrentLord?.Culture;
                 var tier = enlistment.EnlistmentTier;
                 
-                if (culture == null) return null;
+                if (culture == null)
+                {
+                    return null;
+                }
                 
                 // Find a representative troop for this culture/tier/formation combination
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
@@ -271,13 +283,21 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 if (troop.IsRanged && troop.IsMounted)
+                {
                     return FormationType.HorseArcher;
+                }
                 else if (troop.IsMounted)
+                {
                     return FormationType.Cavalry;
+                }
                 else if (troop.IsRanged)
+                {
                     return FormationType.Archer;
+                }
                 else
+                {
                     return FormationType.Infantry;
+                }
             }
             catch
             {
@@ -293,7 +313,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                if (requestedItem == null || currentItem == null) return 0;
+                if (requestedItem == null || currentItem == null)
+                {
+                    return 0;
+                }
                 
                 // Base cost calculation
                 var itemValue = requestedItem.Value;
@@ -536,7 +559,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var cultureItems = cultureSlot.Value;
                     
                     if (!options.ContainsKey(slot))
+                    {
                         options[slot] = new List<ItemObject>();
+                    }
                     
                     // Add culture items not already in troop variants
                     foreach (var item in cultureItems)
@@ -599,7 +624,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                if (culture == null) return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                if (culture == null)
+                {
+                    return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                }
                 
                 var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
@@ -622,10 +650,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                             if (item != null)
                             {
                                 if (!variants.ContainsKey(slot))
+                                {
                                     variants[slot] = new List<ItemObject>();
+                                }
                                 
                                 if (!variants[slot].Contains(item))
+                                {
                                     variants[slot].Add(item);
+                                }
                             }
                         }
                     }
@@ -822,7 +854,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                if (!enlistment?.IsEnlisted == true) return false;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return false;
+                }
                 
                 // Enhanced access if player has quartermaster duties
                 if (duties?.GetCurrentOfficerRole() == "Quartermaster" || 
@@ -847,7 +882,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsWeaponVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null) return false;
+            if (_availableVariants == null)
+            {
+                return false;
+            }
             
             // Check if any weapon slots have variants
             return _availableVariants.Any(kvp => 
@@ -1072,7 +1110,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsArmorVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null) return false;
+            if (_availableVariants == null)
+            {
+                return false;
+            }
             
             return _availableVariants.ContainsKey(EquipmentIndex.Body) &&
                    _availableVariants[EquipmentIndex.Body].Any(opt => !opt.IsCurrent);
@@ -1085,15 +1126,17 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                if (_availableVariants?.ContainsKey(EquipmentIndex.Body) == true)
-                {
-                    ShowEquipmentVariantSelectionDialog(_availableVariants[EquipmentIndex.Body], "armor");
-                }
-                else
+                var armorOptions = BuildArmorOptionsFromCurrentTroop();
+                if (armorOptions.Count == 0)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No armor variants available for your troop type.").ToString()));
+                        new TextObject("No armor variants available for your troop tree.").ToString()));
+                    return;
                 }
+
+                // Flatten all armor sub-slot variants into one list and show a single scrollable grid
+                var combined = armorOptions.SelectMany(kvp => kvp.Value).ToList();
+                ShowEquipmentVariantSelectionDialog(combined, "armor");
             }
             catch (Exception ex)
             {
@@ -1106,10 +1149,247 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsHelmetVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null) return false;
+            if (_availableVariants == null)
+            {
+                return false;
+            }
             
             return _availableVariants.ContainsKey(EquipmentIndex.Head) &&
                    _availableVariants[EquipmentIndex.Head].Any(opt => !opt.IsCurrent);
+        }
+
+        /// <summary>
+        /// Build armor options at runtime from the currently selected troop's BattleEquipments (weapons pattern).
+        /// </summary>
+        private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildArmorOptionsFromCurrentTroop()
+        {
+            var result = new Dictionary<EquipmentIndex, List<EquipmentVariantOption>>();
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return result;
+                }
+
+                var selectedTroop = GetPlayerSelectedTroop();
+                if (selectedTroop == null)
+                {
+                    return result;
+                }
+
+                // Use existing runtime discovery like weapons
+                var allVariants = GetTroopEquipmentVariants(selectedTroop);
+                var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head, EquipmentIndex.Gloves, EquipmentIndex.Leg, EquipmentIndex.Cape };
+                var filtered = allVariants.Where(kvp => armorSlots.Contains(kvp.Key))
+                                          .ToDictionary(k => k.Key, v => v.Value);
+
+                result = BuildVariantOptionsExact(filtered);
+
+                // Keep only slots with choices
+                result = result.Where(kvp => kvp.Value != null && kvp.Value.Count > 0)
+                               .ToDictionary(k => k.Key, v => v.Value);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"BuildArmorOptionsFromCurrentTroop failed: {ex.Message}");
+            }
+            return result;
+        }
+
+        private HashSet<CharacterObject> BuildTroopBranchNodes(CultureObject culture, CharacterObject targetTroop, int maxTier)
+        {
+            var branch = new HashSet<CharacterObject>();
+            try
+            {
+                bool Dfs(CharacterObject node, HashSet<string> seen)
+                {
+                    if (node == null)
+                    {
+                        return false;
+                    }
+                    if (node.IsHero || node.Culture != culture)
+                    {
+                        return false;
+                    }
+                    if (SafeGetTier(node) > maxTier)
+                    {
+                        return false;
+                    }
+                    if (!seen.Add(node.StringId))
+                    {
+                        return false;
+                    }
+
+                    if (node == targetTroop)
+                    {
+                        branch.Add(node);
+                        return true;
+                    }
+
+                    try
+                    {
+                        foreach (var next in node.UpgradeTargets)
+                        {
+                            if (Dfs(next, seen))
+                            {
+                                branch.Add(node);
+                                return true;
+                            }
+                        }
+                    }
+                    catch { }
+                    return false;
+                }
+
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                Dfs(culture.BasicTroop, seen);
+                Dfs(culture.EliteBasicTroop, seen);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"BuildTroopBranchNodes failed: {ex.Message}");
+            }
+            return branch;
+        }
+
+        private Dictionary<EquipmentIndex, List<ItemObject>> CollectArmorVariantsFromNodes(HashSet<CharacterObject> nodes, int exactTier, CultureObject culture)
+        {
+            var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
+            try
+            {
+                var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head, EquipmentIndex.Gloves, EquipmentIndex.Leg, EquipmentIndex.Cape };
+                foreach (var troop in nodes)
+                {
+                    // Only gather from exact tier nodes to reflect the current tier's supply
+                    if (SafeGetTier(troop) != exactTier)
+                    {
+                        continue;
+                    }
+                    foreach (var equipment in troop.BattleEquipments)
+                    {
+                        foreach (var slot in armorSlots)
+                        {
+                            var item = equipment[slot].Item;
+                            if (item == null)
+                            {
+                                continue;
+                            }
+                            // Safety filters: ensure true armor, and culture match when item has culture
+                            if (item.ArmorComponent == null)
+                            {
+                                continue;
+                            }
+                            if (culture != null && item.Culture != null && item.Culture != culture)
+                            {
+                                continue;
+                            }
+                            if (!variants.ContainsKey(slot))
+                            {
+                                variants[slot] = new List<ItemObject>();
+                            }
+                            if (!variants[slot].Contains(item))
+                            {
+                                variants[slot].Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"CollectArmorVariantsFromNodes failed: {ex.Message}");
+            }
+            return variants;
+        }
+
+        private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildVariantOptionsExact(
+            Dictionary<EquipmentIndex, List<ItemObject>> variants)
+        {
+            var finalOptions = new Dictionary<EquipmentIndex, List<EquipmentVariantOption>>();
+            try
+            {
+                var hero = Hero.MainHero;
+                foreach (var slotItems in variants)
+                {
+                    var slot = slotItems.Key;
+                    var items = slotItems.Value;
+                    if (items == null || items.Count <= 1)
+                    {
+                        // need choices
+                        continue;
+                    }
+
+                    var currentItem = hero.BattleEquipment[slot].Item;
+                    var optionList = new List<EquipmentVariantOption>();
+                    foreach (var item in items)
+                    {
+                        var cost = CalculateVariantCost(item, currentItem, slot);
+                        optionList.Add(new EquipmentVariantOption
+                        {
+                            Item = item,
+                            Cost = cost,
+                            IsCurrent = item == currentItem,
+                            CanAfford = hero.Gold >= cost,
+                            Slot = slot,
+                            IsOfficerExclusive = false
+                        });
+                    }
+
+                    optionList = optionList.OrderBy(o => o.IsCurrent ? 0 : 1).ThenBy(o => o.Cost).ToList();
+                    finalOptions[slot] = optionList;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"BuildVariantOptionsExact failed: {ex.Message}");
+            }
+            return finalOptions;
+        }
+
+        private void ShowArmorSlotPicker(Dictionary<EquipmentIndex, List<EquipmentVariantOption>> armorOptions)
+        {
+            try
+            {
+                var elements = new List<InquiryElement>();
+                foreach (var kvp in armorOptions)
+                {
+                    var slot = kvp.Key;
+                    var label = $"{GetSlotDisplayName(slot)} ({kvp.Value.Count})";
+                    elements.Add(new InquiryElement(slot, label, null, true, null));
+                }
+
+                void OnDone(List<InquiryElement> selection)
+                {
+                    if (selection == null || selection.Count == 0)
+                    {
+                        return;
+                    }
+                    var slot = (EquipmentIndex)selection[0].Identifier;
+                    if (armorOptions.TryGetValue(slot, out var variants))
+                    {
+                        ShowEquipmentVariantSelectionDialog(variants, "armor");
+                    }
+                }
+
+                MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
+                    "Select armor slot",
+                    "Choose which armor piece to request",
+                    elements,
+                    false, 1, 1,
+                    "Continue", "Cancel",
+                    OnDone,
+                    _ => { }));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"ShowArmorSlotPicker failed: {ex.Message}");
+            }
+        }
+
+        private int SafeGetTier(CharacterObject troop)
+        {
+            try { return troop.GetBattleTier(); } catch { return 1; }
         }
         
         /// <summary>
@@ -1140,7 +1420,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsAccessoryVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null) return false;
+            if (_availableVariants == null)
+            {
+                return false;
+            }
             
             var accessorySlots = new[] { EquipmentIndex.Gloves, EquipmentIndex.Cape, EquipmentIndex.Leg };
             return accessorySlots.Any(slot => 
@@ -1360,10 +1643,15 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 if (_selectedSlot == EquipmentIndex.None || !_availableVariants.ContainsKey(_selectedSlot))
+                {
                     return false;
+                }
                 
                 var options = _availableVariants[_selectedSlot];
-                if (optionIndex > options.Count) return false;
+                if (optionIndex > options.Count)
+                {
+                    return false;
+                }
                 
                 var option = options[optionIndex - 1]; // Convert to 0-based index
                 
@@ -1388,10 +1676,15 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 if (_selectedSlot == EquipmentIndex.None || !_availableVariants.ContainsKey(_selectedSlot))
+                {
                     return;
+                }
                 
                 var options = _availableVariants[_selectedSlot];
-                if (optionIndex > options.Count) return;
+                if (optionIndex > options.Count)
+                {
+                    return;
+                }
                 
                 var selectedOption = options[optionIndex - 1];
                 

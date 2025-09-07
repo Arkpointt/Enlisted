@@ -106,6 +106,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // SAS EXACT MENU OPTIONS from screenshot
             
+            // Master at Arms (promotion selection / troop equipment selection)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
+                "Master at Arms",
+                IsMasterAtArmsAvailable,
+                OnMasterAtArmsSelected,
+                false, 1);
+
             // Visit Quartermaster (SAS option 1 - Enhanced with equipment variants)
             starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
                 "Visit Quartermaster",
@@ -708,6 +715,31 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         // SAS Menu Option Conditions and Actions
+
+        private bool IsMasterAtArmsAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        private void OnMasterAtArmsSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var manager = Features.Equipment.Behaviors.TroopSelectionManager.Instance;
+                if (manager == null)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("Master at Arms system is temporarily unavailable.").ToString()));
+                    return;
+                }
+
+                manager.ShowMasterAtArmsPopup();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error opening Master at Arms: {ex.Message}");
+            }
+        }
 
         private bool IsQuartermasterAvailable(MenuCallbackArgs args)
         {

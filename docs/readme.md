@@ -21,6 +21,7 @@ Complete military service system where players can:
 - **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
 - **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with keyboard shortcuts and real-time updates
 - **Phase 2B**: Troop Selection & Equipment Replacement - ✅ **COMPLETE** - Quartermaster grid UI with individual equipment selection
+- **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - SAS-style troop selection with portraits and loadout hints
 - **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
 - **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
 - **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
@@ -196,9 +197,10 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system + menu support methods for enhanced display
 - `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
 - `ConfigurationManager.cs` - ✅ **COMPLETE**: Safe JSON loading with schema versioning and validation
-- `TroopSelectionManager.cs` - **NEXT**: SAS-style real troop selection with **equipment REPLACEMENT** (Phase 2B)
-- `EnlistedPartyHealingModel.cs` - **READY**: Custom healing model for enhanced enlisted soldier healing (Phase 2B)
-- `RetirementSystem.cs` - **READY**: 1-year service requirement with equipment choice system (Phase 2B)
+- `TroopSelectionManager.cs` - ✅ **COMPLETE**: Master at Arms system with culture troop tree selection and equipment replacement
+- `QuartermasterManager.cs` - ✅ **COMPLETE**: Equipment variant system with culture-strict armor/weapon selection from troop loadouts
+- `EnlistedPartyHealingModel.cs` - **READY**: Custom healing model for enhanced enlisted soldier healing (Phase 3)
+- `RetirementSystem.cs` - **READY**: 1-year service requirement with equipment choice system (Phase 3)
 
 ## 🎮 Player Experience
 
@@ -213,6 +215,7 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Professional Military Interface**: Rich enlisted status menu with comprehensive information display
 - **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
 - **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
+- **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits and loadout previews
 - **✅ Interactive Menu Management**: Field medical treatment, duties management, equipment access, service records  
 - **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
 - **✅ Proper SAS Behavior**: Menu stays active while following lord, maintains game flow

@@ -136,6 +136,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\Mod.Entry\SubModule.cs" />
     <Compile Include="src\Mod.Core\Config\ModSettings.cs" />
@@ -161,6 +166,8 @@
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs" />
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs" />
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs" />
+    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs" />
+    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs" />
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
   </ItemGroup>
@@ -181,8 +188,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">
     <MakeDir Directories="$(OutputPath)..\..\Debugging" />
+    <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment" />
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\" />
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\discovery.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\api.log" Lines="[Init] Precreated by build" Overwrite="false" />
