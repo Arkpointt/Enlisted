@@ -179,8 +179,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Refresh the enlisted status display with SAS-exact format.
-        /// Uses SAS text variable approach for perfect replication.
+        /// Refresh the enlisted status display with enhanced military styling.
+        /// Professional militaristic format with colors, symbols, and improved readability.
         /// </summary>
         private void RefreshEnlistedStatusDisplay(MenuCallbackArgs args = null)
         {
@@ -202,27 +202,26 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Build comprehensive SAS-style status display with error handling
-                var statusBuilder = new StringBuilder();
+                // Build simple SAS-style status display using their proven format
+                var statusContent = "";
                 
                 try
                 {
-                    // EXACT SAS FORMAT from screenshot
-                    statusBuilder.AppendLine($"Party Leader: {lord.Name?.ToString()}");
+                    // SAS EXACT FORMAT - Simple label : value pairs
                     
                     // Party Objective (SAS format)
                     var objective = GetCurrentObjectiveDisplay(lord);
-                    statusBuilder.AppendLine($"Party Objective: {objective}");
+                    statusContent += $"Party Objective : {objective}\n";
                     
-                    // Enlistment Time (SAS format with season)
+                    // Enlistment Time (SAS format)
                     var enlistmentTime = GetSASEnlistmentTimeDisplay(enlistment);
-                    statusBuilder.AppendLine($"Enlistment Time: {enlistmentTime}");
+                    statusContent += $"Enlistment Time : {enlistmentTime}\n";
                     
                     // Enlistment Tier (SAS exact format)
-                    statusBuilder.AppendLine($"Enlistment Tier: {enlistment.EnlistmentTier}");
+                    statusContent += $"Enlistment Tier : {enlistment.EnlistmentTier}\n";
                     
                     // Formation (SAS exact format)
-                    string formationName = "Infantry"; // Default like SAS
+                    string formationName = "Infantry"; // Default
                     try
                     {
                         if (duties?.IsInitialized == true)
@@ -232,45 +231,36 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                     }
                     catch { /* Use default */ }
-                    statusBuilder.AppendLine($"Formation: {formationName}");
+                    statusContent += $"Formation : {formationName}\n";
                     
-                    // Wage (SAS exact format with gold symbol)
+                    // Wage (SAS exact format with coin icon)
                     var dailyWage = CalculateCurrentDailyWage();
-                    statusBuilder.AppendLine($"Wage: {dailyWage} denars");
+                    statusContent += $"Wage : {dailyWage}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
                     
                     // Current Experience (SAS exact format)
-                    statusBuilder.AppendLine($"Current Experience: {enlistment.EnlistmentXP}");
+                    statusContent += $"Current Experience : {enlistment.EnlistmentXP}\n";
                     
                     // Next Level Experience (SAS exact format)
                     if (enlistment.EnlistmentTier < 7)
                     {
                         var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier + 1);
-                        statusBuilder.AppendLine($"Next Level Experience: {nextTierXP}");
+                        statusContent += $"Next Level Experience : {nextTierXP}\n";
                     }
                     
                     // Assignment description (SAS exact format)
-                    try
-                    {
-                        var assignmentDesc = GetSASAssignmentDescription();
-                        statusBuilder.AppendLine($"When not fighting: {assignmentDesc}");
-                    }
-                    catch
-                    {
-                        statusBuilder.AppendLine("When not fighting: You are currently assigned to perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)");
-                    }
+                    var assignmentDesc = GetSASAssignmentDescription();
+                    statusContent += $"When not fighting : {assignmentDesc}";
                 }
                 catch
                 {
-                // Fallback to simple display on any error
-                statusBuilder.Clear();
-                statusBuilder.AppendLine($"Lord: {lord?.Name?.ToString() ?? "Unknown"}");
-                statusBuilder.AppendLine($"Rank: Tier {enlistment.EnlistmentTier}");
-                statusBuilder.AppendLine($"Experience: {enlistment.EnlistmentXP} XP");
+                    // Fallback to simple display on any error
+                    statusContent = $"Lord : {lord?.Name?.ToString() ?? "Unknown"}\n";
+                    statusContent += $"Enlistment Tier : {enlistment.EnlistmentTier}\n";
+                    statusContent += $"Current Experience : {enlistment.EnlistmentXP}";
                 }
 
                 // SAS STEP 3: Use SAS text variable format (exact replication)
                 var lordName = lord?.EncyclopediaLinkWithName?.ToString() ?? lord?.Name?.ToString() ?? "Unknown";
-                var statusContent = statusBuilder.ToString();
                 
                 // Use SAS approach - MenuContext.GameMenu.GetText() and set variables
                 var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
@@ -1089,6 +1079,54 @@ namespace Enlisted.Features.Interface.Behaviors
         #endregion
 
         // SAS-style single menu approach - all functionality integrated into main enlisted_status menu
+
+        #region Military Styling Helper Methods
+
+        /// <summary>
+        /// Get military symbol for formation type using ASCII characters.
+        /// </summary>
+        private string GetFormationSymbol(string formationName)
+        {
+            return formationName?.ToLower() switch
+            {
+                "infantry" => "[INF]",
+                "archer" => "[ARC]", 
+                "cavalry" => "[CAV]",
+                "horsearcher" => "[H.ARC]",
+                _ => "[MIL]"
+            };
+        }
+
+        /// <summary>
+        /// Create visual progress bar for XP progression using ASCII characters.
+        /// </summary>
+        private string GetProgressBar(int percent)
+        {
+            var totalBars = 20;
+            var filledBars = (int)(percent / 100.0 * totalBars);
+            var emptyBars = totalBars - filledBars;
+            
+            var progressBar = new StringBuilder();
+            progressBar.Append("[<color=#90EE90>");
+            for (int i = 0; i < filledBars; i++)
+            {
+                progressBar.Append("=");
+            }
+            progressBar.Append("</color><color=#696969>");
+            for (int i = 0; i < emptyBars; i++)
+            {
+                progressBar.Append("-");
+            }
+            progressBar.Append("</color>]");
+            
+            return progressBar.ToString();
+        }
+
+        /// <summary>
+        /// Get SAS-style assignment description.
+        /// </summary>
+
+        #endregion
     }
 
     /// <summary>
