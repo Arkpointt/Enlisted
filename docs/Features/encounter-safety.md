@@ -1,7 +1,7 @@
 # Feature Spec: Encounter Safety System
 
 ## Overview
-Prevents the player from triggering map encounters while enlisted by using the game engine's `IsActive` property instead of complex patches.
+Prevents the player from triggering map encounters while enlisted by using the game engine's `IsActive` property instead of complex patches, with enhanced encounter cleanup for temporary leave system.
 
 ## Purpose
 Keep enlisted players from accidentally entering encounters (like bandit raids) that would break military service or cause pathfinding crashes when the game tries to find a player party that shouldn't be on the map.

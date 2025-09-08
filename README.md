@@ -44,10 +44,11 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 ### **Modern Implementation - 100% VERIFIED SAS APPROACH**
 - **Package-by-Feature**: Clean modular design with Blueprint compliance
 - **100% Verified APIs**: ALL critical SAS APIs confirmed in current Bannerlord version
-- **ZERO Essential Patches**: Engine properties handle encounter prevention (vs. original SAS's 37+ patches)  
+- **Minimal Essential Patches**: Engine properties + targeted battle command filtering (vs. original SAS's 37+ patches)  
 - **SAS Real-Time Management**: Continuous state enforcement using verified TickEvent
 - **Enhanced Healing**: Custom PartyHealingModel integration
 - **Configuration-Driven**: No hardcoded values, full JSON customization
+- **Professional UI**: Clean SAS-style menu formatting with proven alignment
 
 ## Debugging layout and outputs
 All logs and discovery artifacts are written to the module’s Debugging folder (one session at a time; cleared on init):

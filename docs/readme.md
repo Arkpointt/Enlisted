@@ -19,10 +19,11 @@ Complete military service system where players can:
 - **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - SAS immediate menu replacement implemented
 - **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
 - **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
-- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with keyboard shortcuts and real-time updates
+- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with SAS-style clean formatting and real-time updates
 - **Phase 2B**: Troop Selection & Equipment Replacement - ✅ **COMPLETE** - Quartermaster grid UI with individual equipment selection
 - **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - SAS-style troop selection with portraits and loadout hints
-- **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system, companion management
+- **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system with encounter fixes
+- **Phase 2E**: Battle Commands Integration - ✅ **COMPLETE** - **NEW** - Automatic formation-based command filtering
 - **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
 - **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
 - **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
@@ -192,11 +193,12 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 
 ### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
 - `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub with enlistment, retirement, and return-from-leave dialogs
-- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: Complete military service with temporary leave system and companion management
-- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Enhanced menu system with My Lord conversations and leave requests
+- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: Complete military service with enhanced leave system, encounter cleanup, and menu restoration
+- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Professional SAS-style menu system with clean formatting and military interface
 - `EnlistedInputHandler.cs` - ✅ **COMPLETE**: Keyboard shortcuts ('P' for promotion, 'N' for status menu) with proper input handling
 - `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system + menu support methods for enhanced display
 - `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
+- `BattleCommandsFilterPatch.cs` - ✅ **COMPLETE**: **NEW** - Automatic formation-based battle command filtering with audio cues
 - `ConfigurationManager.cs` - ✅ **COMPLETE**: Safe JSON loading with schema versioning and validation
 - `TroopSelectionManager.cs` - ✅ **COMPLETE**: Master at Arms system with culture troop tree selection and equipment replacement
 - `QuartermasterManager.cs` - ✅ **COMPLETE**: Equipment variant system with culture-strict armor/weapon selection from troop loadouts
@@ -213,12 +215,12 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 5. **Progression**: Earn promotions and unlock new assignments/equipment
 
 ### Service Management - **ENHANCED MENU SYSTEM COMPLETE**
-- **✅ Professional Military Interface**: Rich enlisted status menu with comprehensive information display
+- **✅ Professional Military Interface**: Clean SAS-style menu with comprehensive information display using proven formatting
 - **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
 - **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
 - **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits and loadout previews
 - **✅ My Lord Conversations**: Talk to nearby lords with portrait selection and faction info
-- **✅ Temporary Leave System**: Request leave with vanilla behavior restoration and dialog return option
+- **✅ Temporary Leave System**: Request leave with enhanced encounter cleanup and automatic menu restoration
 - **✅ Companion Management**: Automatic troop transfer to lord's party; companions restored on retirement
 - **✅ Interactive Menu Management**: Field medical treatment, duties management, equipment access, service records  
 - **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
@@ -229,6 +231,7 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Equipment Economics**: Formation-based pricing framework (Infantry cheapest → Horse Archer most expensive)  
 - **✅ Officer Role Benefits**: Natural skill/perk application display through effective party officer positions
 - **✅ Army Operations**: Real-time army information with hierarchy and operational status display
+- **✅ Automatic Battle Commands**: Formation-based command filtering works seamlessly in background with audio cues
 
 ### Veteran Benefits & Progression
 - **Service History**: Track multiple enlistments and achievements across different factions
@@ -351,29 +354,24 @@ public static class LogPath
 
 ### **Main Menu: enlisted_status** 
 ```
-═══════════════════════════════════════
-         ENLISTED STATUS
-═══════════════════════════════════════
-Lord: [Sir Derthert] (Empire)
-Rank: Sergeant (Tier 4)
-Formation: Legionary (Infantry)
-Service Duration: 47 days (318 days to retirement)
+Party Leader: Rhagaea
 
-Current Duties: Field Medic, Runner
-Next Promotion: 890/1500 XP
-Daily Wage: 145 🪙
-
-Army Status: Following [Derthert's Army]
-═══════════════════════════════════════
+Party Objective : Following army movements
+Enlistment Time : Summer 1, 1084
+Enlistment Tier : 1
+Formation : Infantry
+Wage : 16 [coin]
+Current Experience : 0
+Next Level Experience : 500
+When not fighting : You are currently assigned to perform grunt work.
+Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)
 
 [ Master at Arms ]                       ← Troop selection with portraits
 [ Visit Quartermaster ]                  ← Equipment variants menu
-[ Battle Commands: Player Formation Only ]
 [ My Lord... ]                           ← Talk to nearby lords
 [ Show reputation with factions ]
-[ Ask commander for leave ]              ← Temporary leave system
+[ Ask commander for leave ]              ← Enhanced temporary leave system
 [ Ask for a different assignment ]
-═══════════════════════════════════════
 ```
 
 ### **Equipment Menu: enlisted_equipment** (Multiple Troop Choices)

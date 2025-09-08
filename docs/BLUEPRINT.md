@@ -23,10 +23,12 @@ Next steps
 ## Current implementation snapshot
 
 - Entry wiring in `src/Mod.Entry/SubModule.cs` creates a Harmony instance and registers campaign behaviors:
-  - `Enlisted.Debugging.Discovery.Application.DiscoveryBehavior` – logs menus, settlements, session
-  - `Enlisted.Features.LordDialog.Application.LordDialogBehavior` – dialog entry points
-  - `Enlisted.Debugging.Discovery.Application.ApiDiscoveryBehavior` – dumps API surface on session launch
-- Discovery lives under `src/Debugging` (not under `Features`). Aggregates are written to the module `Debugging` folder.
+  - Core military service behaviors (EnlistmentBehavior, EnlistedDialogManager, EnlistedDutiesBehavior)
+  - Enhanced interface system (EnlistedMenuBehavior, EnlistedInputHandler) 
+  - Equipment and progression system (TroopSelectionManager, EquipmentManager, QuartermasterManager)
+  - Battle integration (BattleCommandsFilterPatch for automatic formation-based command filtering)
+- Harmony patches live in `src/Mod.GameAdapters/Patches/` following Blueprint standards
+- Discovery debugging outputs written to module `Debugging` folder [[memory:7845841]]
 
 ### Debugging outputs (session-scoped)
 
@@ -106,31 +108,28 @@ src/
 ├── Mod.Core/                    # Shared services, policies, logging, DI
 │
 ├── Mod.GameAdapters/            # TaleWorlds APIs, Harmony patches, event bridges
-│   └── Patches/                 # All Harmony patches live here (see 4.2.1)
+│   └── Patches/                 # ✅ COMPLETE: Harmony patches (officer roles + battle command filtering)
 │
 ├── Features/                    # Each feature is self-contained
 │   ├── Enlistment/
 │   │   ├── Core/                # basic rules and validation
-│   │   └── Behaviors/           # main enlistment logic and state
+│   │   └── Behaviors/           # ✅ COMPLETE: main enlistment logic with leave system and encounter safety
 │   ├── Assignments/
-│   │   ├── Core/                # assignment rules and XP calculations  
-│   │   └── Behaviors/           # daily assignment processing
+│   │   ├── Core/                # ✅ COMPLETE: assignment rules and XP calculations  
+│   │   └── Behaviors/           # ✅ COMPLETE: daily assignment processing with formation integration
 │   ├── Equipment/
 │   │   ├── Core/                # gear rules and tier requirements
-│   │   ├── Behaviors/           # equipment management and selection
-│   │   └── UI/                  # custom gear selector (if needed)
+│   │   ├── Behaviors/           # ✅ COMPLETE: equipment management and troop selection
+│   │   └── UI/                  # ✅ COMPLETE: Gauntlet UI ViewModels for grid layouts
 │   ├── Ranks/
 │   │   ├── Core/                # promotion rules and tier logic
-│   │   └── Behaviors/           # rank tracking and wage calculation
+│   │   └── Behaviors/           # ✅ COMPLETE: rank tracking and wage calculation
 │   ├── Conversations/
-│   │   └── Behaviors/           # dialog handling and flows
+│   │   └── Behaviors/           # ✅ COMPLETE: centralized dialog handling and flows
 │   ├── Combat/
 │   │   └── Behaviors/           # battle participation and army following
-│   ├── Interface/
-│   │   └── Behaviors/           # status menus and player interface
-│   └── Equipment/
-│       ├── Behaviors/           # equipment management and Quartermaster logic
-│       └── UI/                  # ✅ NEW: Gauntlet UI ViewModels for grid layouts
+│   └── Interface/
+│       └── Behaviors/           # ✅ COMPLETE: professional SAS-style menu system with clean formatting
 │
 └── Mod.Config/                  # strongly-typed settings & validation
 ```
@@ -419,7 +418,7 @@ Each Harmony patch must include the header described in 4.2.1. Additionally:
 - Note configuration gates (feature flags, settings) and default behavior when disabled.
 - Include a brief performance note if the patch is on a frequent path (tick, per-frame, menu draw).
 
-**Modern example following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/)**:
+**Modern examples following [Bannerlord Modding best practices](https://docs.bannerlordmodding.lt/modding/harmony/)**:
 
 ```csharp
 // Harmony Patch
@@ -432,6 +431,20 @@ Each Harmony patch must include the header described in 4.2.1. Additionally:
 [HarmonyPriority(999)] // High priority - run before other mods
 [HarmonyBefore(new string[] { "other.mod.id" })] // Run before conflicting mods if needed
 public class DutiesEffectiveEngineerPatch
+```
+
+**Battle integration example:**
+
+```csharp
+// Harmony Patch
+// Target: TaleWorlds.MountAndBlade.BehaviorComponent.InformSergeantPlayer()
+// Why: Filter battle commands to only show orders relevant to player's assigned formation type
+// Safety: Campaign-only; checks enlisted state; validates formation assignment; only affects enlisted soldiers
+// Notes: Postfix patch; integrates with existing formation detection system; includes audio cues for immersion
+
+[HarmonyPatch(typeof(BehaviorComponent), "InformSergeantPlayer")]
+[HarmonyPriority(999)] // High priority - run before other mods
+public class BattleCommandsFilterPatch
 {
     static bool Prefix(MobileParty __instance, ref Hero __result)
     {

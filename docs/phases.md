@@ -25,7 +25,8 @@ Military service system for Bannerlord where you can enlist with lords and progr
 ### Phase 2: Equipment & UI ✅ Complete  
 - **Troop Selection**: Pick real troops, get their equipment on promotion
 - **Quartermaster Grid UI**: Individual equipment clicking with images and stats
-- **Menu System**: 'N' key for enlisted status, 'P' for promotions
+- **Menu System**: 'N' key for enlisted status with SAS-style clean formatting, 'P' for promotions
+- **Battle Commands**: Automatic formation-based command filtering with audio cues
 
 ## Major Breakthrough: Grid UI
 
