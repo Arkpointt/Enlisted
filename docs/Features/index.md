@@ -10,6 +10,7 @@ This folder contains functional specifications for major features in the militar
 - **[temporary-leave.md](temporary-leave.md)** - Leave system with companion management
 - **[encounter-safety.md](encounter-safety.md)** - Preventing map encounter crashes with enhanced leave fixes
 - **[duties-system.md](duties-system.md)** - Military roles and assignments
+- **[formation-training.md](formation-training.md)** - **NEW** - Formation-based daily skill XP system
 - **[enlistment.md](enlistment.md)** - Core military service functionality
 - **[battle-commands.md](battle-commands.md)** - **NEW** - Automatic formation-based battle command filtering
 

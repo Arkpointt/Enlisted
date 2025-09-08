@@ -233,6 +233,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     catch { /* Use default */ }
                     statusContent += $"Formation : {formationName}\n";
                     
+                    
                     // Wage (SAS exact format with coin icon)
                     var dailyWage = CalculateCurrentDailyWage();
                     statusContent += $"Wage : {dailyWage}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
@@ -247,9 +248,9 @@ namespace Enlisted.Features.Interface.Behaviors
                         statusContent += $"Next Level Experience : {nextTierXP}\n";
                     }
                     
-                    // Assignment description (SAS exact format)
-                    var assignmentDesc = GetSASAssignmentDescription();
-                    statusContent += $"When not fighting : {assignmentDesc}";
+                    // Formation training description (explains daily skill development)
+                    var formationDesc = GetFormationTrainingDescription();
+                    statusContent += formationDesc;
                 }
                 catch
                 {
@@ -466,30 +467,49 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>
         /// Get SAS-style assignment description (exact format from screenshot).
         /// </summary>
-        private string GetSASAssignmentDescription()
+        private string GetFormationTrainingDescription()
         {
             try
             {
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                // For now, return the exact SAS grunt work description
-                // This can be enhanced later to integrate with our duties system
-                if (duties?.IsInitialized == true)
+                if (duties?.IsInitialized != true)
                 {
-                    var activeDuties = duties.GetActiveDutiesDisplay();
-                    if (activeDuties != "None assigned")
-                    {
-                        // Enhanced description for when duties are active
-                        return $"You are currently assigned to {activeDuties.ToLower()}. (Passive Daily XP from duties)";
-                    }
+                    return "You perform basic military duties and training.";
                 }
                 
-                // Default SAS-style grunt work description (matches screenshot exactly)
-                return "You are currently assigned to perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)";
+                // Get player's formation and build dynamic description with highlighted skills
+                var playerFormation = duties.GetPlayerFormationType();
+                return BuildFormationDescriptionWithHighlights(playerFormation, duties);
             }
-            catch
+            catch (Exception ex)
             {
-                return "You are currently assigned to perform grunt work. Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)";
+                ModLogger.Error("Interface", "Error getting formation training description", ex);
+                return "You perform basic military duties and training.";
+            }
+        }
+        
+        /// <summary>
+        /// Get formation description with manually highlighted skills and XP amounts.
+        /// </summary>
+        private string BuildFormationDescriptionWithHighlights(string formation, EnlistedDutiesBehavior duties)
+        {
+            switch (formation.ToLower())
+            {
+                case "infantry":
+                    return "As an Infantryman, you march in formation, drill the shieldwall, and spar in camp, becoming stronger through Athletics, deadly with One-Handed and Two-Handed blades, disciplined with the Polearm, and practiced in Throwing weapons.";
+                    
+                case "cavalry":
+                    return "Serving as a Cavalryman, you ride endless drills to master Riding, lower your Polearm for the charge, cut close with One-Handed steel, practice Two-Handed arms for brute force, and keep your Athletics sharp when dismounted.";
+                    
+                case "horsearcher":
+                    return "As a Horse Archer, you train daily at mounted archery, honing Riding to control your horse, perfecting the draw of the Bow, casting Throwing weapons at the gallop, keeping a One-Handed sword at your side, and building Athletics on foot.";
+                    
+                case "archer":
+                    return "As an Archer, you loose countless shafts with Bow and Crossbow, strengthen your stride through Athletics, and sharpen your edge with a One-Handed blade for when the line closes.";
+                    
+                default:
+                    return "You perform basic military duties and training as assigned.";
             }
         }
 

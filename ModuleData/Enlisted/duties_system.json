@@ -248,5 +248,50 @@
     "battle_participation": 50,
     "siege_participation": 75,
     "promotion_bonus": 100
+  },
+  "formation_training": {
+    "enabled": true,
+    "description": "Formation-based military training provides daily skill XP based on player's assigned formation",
+    "formations": {
+      "infantry": {
+        "description": "Foot soldiers - focus on ground combat and physical conditioning",
+        "skills": {
+          "Athletics": 50,
+          "OneHanded": 50,
+          "TwoHanded": 50,
+          "Polearm": 50,
+          "Throwing": 25
+        }
+      },
+      "cavalry": {
+        "description": "Mounted warriors - focus on horsemanship and mounted combat",
+        "skills": {
+          "Riding": 50,
+          "OneHanded": 50,
+          "Polearm": 50,
+          "Athletics": 25,
+          "TwoHanded": 25
+        }
+      },
+      "horsearcher": {
+        "description": "Mounted skirmishers - focus on mobility and ranged combat",
+        "skills": {
+          "Riding": 50,
+          "Bow": 50,
+          "Throwing": 50,
+          "Athletics": 25,
+          "OneHanded": 25
+        }
+      },
+      "archer": {
+        "description": "Foot archers - focus on ranged combat and support skills",
+        "skills": {
+          "Bow": 50,
+          "Crossbow": 50,
+          "Athletics": 50,
+          "OneHanded": 25
+        }
+      }
+    }
   }
 }

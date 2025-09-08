@@ -32,6 +32,9 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("xp_sources")]
         public Dictionary<string, int> XpSources { get; set; } = new Dictionary<string, int>();
+        
+        [JsonProperty("formation_training")]
+        public FormationTrainingConfig FormationTraining { get; set; } = new FormationTrainingConfig();
     }
     
     [Serializable]
@@ -120,5 +123,28 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("switching_cost_multiplier")]
         public float SwitchingCostMultiplier { get; set; } = 0.5f;
+    }
+    
+    [Serializable]
+    public class FormationTrainingConfig
+    {
+        [JsonProperty("enabled")]
+        public bool Enabled { get; set; } = true;
+        
+        [JsonProperty("description")]
+        public string Description { get; set; } = "Formation-based military training";
+        
+        [JsonProperty("formations")]
+        public Dictionary<string, FormationSkillConfig> Formations { get; set; } = new Dictionary<string, FormationSkillConfig>();
+    }
+    
+    [Serializable]
+    public class FormationSkillConfig
+    {
+        [JsonProperty("description")]
+        public string Description { get; set; }
+        
+        [JsonProperty("skills")]
+        public Dictionary<string, int> Skills { get; set; } = new Dictionary<string, int>();
     }
 }

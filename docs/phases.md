@@ -27,6 +27,7 @@ Military service system for Bannerlord where you can enlist with lords and progr
 - **Quartermaster Grid UI**: Individual equipment clicking with images and stats
 - **Menu System**: 'N' key for enlisted status with SAS-style clean formatting, 'P' for promotions
 - **Battle Commands**: Automatic formation-based command filtering with audio cues
+- **Formation Training**: Daily skill XP based on military specialization (Infantry, Cavalry, Archer, Horse Archer)
 
 ## Major Breakthrough: Grid UI
 
@@ -41,6 +42,20 @@ We figured out how to create working Gauntlet grid UIs for Bannerlord:
 
 **Result**: Working equipment selection with individual clickable cards, just like SAS had.
 
+## Major Enhancement: Formation Training System
+
+**Date**: 2025-09-08
+
+We implemented a comprehensive formation-based skill training system that surpasses SAS:
+- **JSON configuration** for all formation skill XP amounts (easy balancing)
+- **Modern Bannerlord API** using `Hero.MainHero.AddSkillXp(skill, amount)`
+- **Formation detection** based on chosen troop type, not equipment analysis
+- **Leave integration** - training continues even during temporary leave
+- **Immersive descriptions** explaining why each skill is trained
+- **Build process fix** ensuring `duties_system.json` copies to game folder
+
+**Result**: Authentic military specialization with daily skill progression that feels natural and balanced.
+
 ## Key Technical Decisions
 
 **Real Troops vs Equipment Kits**: Chose real troops because it's more immersive and uses existing game data.
@@ -51,7 +66,9 @@ We figured out how to create working Gauntlet grid UIs for Bannerlord:
 
 **Centralized Dialogs**: One dialog manager instead of scattered conversations prevents conflicts.
 
-**JSON Configuration**: Military duties are configurable without recompiling the mod.
+**JSON Configuration**: Military duties and formation training are configurable without recompiling the mod.
+
+**Formation Training**: Use Hero.AddSkillXp API (not HeroDeveloper) for reliable skill progression matching SAS approach.
 
 ## Future Development Roadmap
 
@@ -112,7 +129,9 @@ We figured out how to create working Gauntlet grid UIs for Bannerlord:
 
 ## Current Status
 
-**Complete**: Core military service system is working and ready for players.
+**Complete**: Full military service system with formation-based skill training is working and ready for players.
+
+**Latest Enhancement**: Formation Training System (Phase 2B) - automatic daily skill XP based on military specialization.
 
 **Next recommended phase**: Phase 3 (Enhanced Battle Integration) - builds on the solid foundation we've established.
 

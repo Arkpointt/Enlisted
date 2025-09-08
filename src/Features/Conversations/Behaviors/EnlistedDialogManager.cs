@@ -216,7 +216,10 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private bool CanRequestEnlistment()
         {
-            if (EnlistmentBehavior.Instance?.IsEnlisted == true)
+            var enlistment = EnlistmentBehavior.Instance;
+            
+            // Don't show initial enlistment if already enlisted or on leave
+            if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
             {
                 return false;
             }
@@ -228,7 +231,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             TextObject reason;
-            return EnlistmentBehavior.Instance?.CanEnlistWithParty(lord, out reason) == true;
+            return enlistment?.CanEnlistWithParty(lord, out reason) == true;
         }
 
         /// <summary>

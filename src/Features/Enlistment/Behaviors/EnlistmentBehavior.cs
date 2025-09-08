@@ -152,6 +152,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Assign initial recruit equipment based on lord's culture
 			AssignInitialEquipment();
 			
+			// Set initial formation for new recruits
+			SetInitialFormation();
+			
 					// ORIGINAL WORKING VERSION: Simple escort setup
 		EncounterGuard.TryAttachOrEscort(lord);
 				var main = MobileParty.MainParty;
@@ -754,6 +757,56 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			catch (Exception ex)
 			{
 				ModLogger.Error("Equipment", "Error assigning initial equipment", ex);
+			}
+		}
+		
+		/// <summary>
+		/// Set initial formation for new recruits based on their assigned equipment.
+		/// </summary>
+		private void SetInitialFormation()
+		{
+			try
+			{
+				if (_enlistedLord?.Culture?.BasicTroop == null)
+				{
+					// Fallback: Set to infantry for all new recruits
+					EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
+					ModLogger.Info("Enlistment", "Set initial formation to infantry (fallback)");
+					return;
+				}
+				
+				// Analyze the basic troop to determine formation
+				var basicTroop = _enlistedLord.Culture.BasicTroop;
+				string initialFormation = "infantry"; // Default for recruits
+				
+				// Most culture basic troops are infantry, but check just in case
+				if (basicTroop.IsRanged && basicTroop.IsMounted)
+				{
+					initialFormation = "horsearcher";
+				}
+				else if (basicTroop.IsMounted)
+				{
+					initialFormation = "cavalry";
+				}
+				else if (basicTroop.IsRanged)
+				{
+					initialFormation = "archer";
+				}
+				else
+				{
+					initialFormation = "infantry";
+				}
+				
+				// Set the formation in duties system
+				EnlistedDutiesBehavior.Instance?.SetPlayerFormation(initialFormation);
+				
+				ModLogger.Info("Enlistment", $"Set initial formation to {initialFormation} based on {basicTroop.Name}");
+			}
+			catch (Exception ex)
+			{
+				// Fallback to infantry on any error
+				ModLogger.Error("Enlistment", "Error setting initial formation", ex);
+				EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
 			}
 		}
 		

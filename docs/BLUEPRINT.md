@@ -23,7 +23,7 @@ Next steps
 ## Current implementation snapshot
 
 - Entry wiring in `src/Mod.Entry/SubModule.cs` creates a Harmony instance and registers campaign behaviors:
-  - Core military service behaviors (EnlistmentBehavior, EnlistedDialogManager, EnlistedDutiesBehavior)
+  - Core military service behaviors (EnlistmentBehavior, EnlistedDialogManager, EnlistedDutiesBehavior with formation training)
   - Enhanced interface system (EnlistedMenuBehavior, EnlistedInputHandler) 
   - Equipment and progression system (TroopSelectionManager, EquipmentManager, QuartermasterManager)
   - Battle integration (BattleCommandsFilterPatch for automatic formation-based command filtering)

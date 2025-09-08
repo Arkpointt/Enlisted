@@ -116,22 +116,20 @@ namespace Enlisted.Features.Assignments.Behaviors
                     return "infantry"; // Default fallback
                 }
                 
-                // SAS formation detection logic
-                if (characterObject.IsRanged && characterObject.IsMounted)
+                // Use Bannerlord's built-in formation classification
+                switch (characterObject.DefaultFormationClass)
                 {
-                    return "horsearcher";   // Bow + Horse
-                }
-                else if (characterObject.IsMounted)
-                {
-                    return "cavalry";       // Sword + Horse  
-                }
-                else if (characterObject.IsRanged)
-                {
-                    return "archer";        // Bow + No Horse
-                }
-                else
-                {
-                    return "infantry";      // Sword + No Horse (default)
+                    case TaleWorlds.Core.FormationClass.Infantry:
+                        return "infantry";
+                    case TaleWorlds.Core.FormationClass.Ranged:
+                        return "archer";
+                    case TaleWorlds.Core.FormationClass.Cavalry:
+                        return "cavalry";
+                    case TaleWorlds.Core.FormationClass.HorseArcher:
+                        return "horsearcher";
+                    case TaleWorlds.Core.FormationClass.Unset:
+                    default:
+                        return "infantry"; // Default if unset
                 }
             }
             catch (Exception ex)
@@ -146,15 +144,33 @@ namespace Enlisted.Features.Assignments.Behaviors
         /// </summary>
         private void OnDailyTick()
         {
-            if (!IsInitialized || !_config.Enabled || EnlistmentBehavior.Instance?.IsEnlisted != true)
+            var enlistment = EnlistmentBehavior.Instance;
+            if (!IsInitialized || !_config.Enabled || enlistment == null)
+            {
+                return;
+            }
+            
+            // Must have valid lord
+            if (enlistment.CurrentLord == null || !enlistment.CurrentLord.IsAlive)
             {
                 return;
             }
                 
             try
             {
-                ProcessDailyDuties();
-                UpdateOfficerRoles();
+                // Process duties only when actively enlisted (not on leave)
+                if (enlistment.IsEnlisted)
+                {
+                    ProcessDailyDuties();
+                    UpdateOfficerRoles();
+                }
+                
+                // Process formation training for both enlisted and leave status
+                // (Military training continues even during temporary leave)
+                if (enlistment.IsEnlisted || enlistment.IsOnLeave)
+                {
+                    ProcessFormationTraining();
+                }
             }
             catch (Exception ex)
             {
@@ -179,13 +195,15 @@ namespace Enlisted.Features.Assignments.Behaviors
                     continue;
                 }
                 
-                // Apply skill XP if specified
+                // Apply skill XP if specified  
                 if (dutyDef.SkillXpDaily > 0 && !string.IsNullOrEmpty(dutyDef.TargetSkill))
                 {
                     var skill = GetSkillFromName(dutyDef.TargetSkill);
                     if (skill != null)
                     {
-                        hero.HeroDeveloper.AddSkillXp(skill, dutyDef.SkillXpDaily);
+                        // Use SAS method for consistency
+                        Hero.MainHero.AddSkillXp(skill, dutyDef.SkillXpDaily);
+                        ModLogger.Info("Duties", $"Applied {dutyDef.SkillXpDaily} duty XP to {dutyDef.TargetSkill}");
                     }
                 }
                 
@@ -195,6 +213,95 @@ namespace Enlisted.Features.Assignments.Behaviors
                     // Add XP through EnlistmentBehavior for proper tier progression tracking
                     EnlistmentBehavior.Instance?.AddEnlistmentXP(dutyXp, $"Duty: {dutyDef.DisplayName}");
                 }
+            }
+        }
+        
+        /// <summary>
+        /// Process formation-based daily skill training.
+        /// Provides automatic skill XP based on player's military formation assignment.
+        /// </summary>
+        private void ProcessFormationTraining()
+        {
+            if (!_config.FormationTraining.Enabled)
+            {
+                return;
+            }
+                
+            try
+            {
+                var playerFormation = GetPlayerFormationType();
+                
+                if (!_config.FormationTraining.Formations.TryGetValue(playerFormation, out var formationConfig))
+                {
+                    ModLogger.Error("Duties", $"No formation training configuration for: {playerFormation}");
+                    return;
+                }
+                
+                var hero = Hero.MainHero;
+                
+                foreach (var skillEntry in formationConfig.Skills)
+                {
+                    var skillName = skillEntry.Key;
+                    var xpAmount = skillEntry.Value;
+                    
+                    var skill = GetSkillFromName(skillName);
+                    if (skill != null)
+                    {
+                        // Use SAS method for skill XP application
+                        Hero.MainHero.AddSkillXp(skill, xpAmount);
+                    }
+                    else
+                    {
+                        ModLogger.Error("Duties", $"Unknown skill in formation training: {skillName}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Duties", "Error processing formation training", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Detect player's formation type using equipment analysis (more reliable than DefaultFormationClass).
+        /// </summary>
+        private string DetectPlayerFormationType()
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                var characterObject = hero?.CharacterObject;
+                
+                if (characterObject == null)
+                {
+                    return "infantry"; // Default fallback
+                }
+                
+                // Equipment-based detection (more reliable than DefaultFormationClass)
+                bool isRanged = characterObject.IsRanged;
+                bool isMounted = characterObject.IsMounted;
+                
+                if (isRanged && isMounted)
+                {
+                    return "horsearcher";   // Bow + Horse
+                }
+                else if (isMounted)
+                {
+                    return "cavalry";       // Horse + Melee  
+                }
+                else if (isRanged)
+                {
+                    return "archer";        // Bow + No Horse
+                }
+                else
+                {
+                    return "infantry";      // Melee + No Horse (default)
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Duties", "Error detecting player formation type", ex);
+                return "infantry";
             }
         }
         
@@ -537,6 +644,7 @@ namespace Enlisted.Features.Assignments.Behaviors
 
         /// <summary>
         /// Get player's formation type for menu display.
+        /// Based on chosen troop type, not current equipment.
         /// </summary>
         public string GetPlayerFormationType()
         {
@@ -575,6 +683,71 @@ namespace Enlisted.Features.Assignments.Behaviors
                 >= 3 => 2, // Mid tiers get 2 slots  
                 _ => 1     // Junior tiers get 1 slot
             };
+        }
+
+        /// <summary>
+        /// Get current formation training information for menu display.
+        /// </summary>
+        public string GetFormationTrainingDisplay()
+        {
+            if (!_config?.FormationTraining?.Enabled == true)
+                return "Formation training disabled";
+
+            try
+            {
+                var playerFormation = GetPlayerFormationType();
+                var formationDisplay = GetFormationDisplayName(playerFormation);
+                
+                if (_config.FormationTraining.Formations.TryGetValue(playerFormation, out var formationConfig))
+                {
+                    var skillList = formationConfig.Skills.Select(kv => $"{kv.Key} (+{kv.Value})").ToArray();
+                    return $"{formationDisplay}: {string.Join(", ", skillList)}";
+                }
+                
+                return $"{formationDisplay}: No training configured";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Duties", "Error getting formation training display", ex);
+                return "Error loading formation training";
+            }
+        }
+
+        /// <summary>
+        /// Get formation training status for current player.
+        /// </summary>
+        public string GetCurrentFormation()
+        {
+            try
+            {
+                var playerFormation = GetPlayerFormationType();
+                return GetFormationDisplayName(playerFormation);
+            }
+            catch
+            {
+                return "Unknown";
+            }
+        }
+        
+        /// <summary>
+        /// Get skill XP configuration for a specific formation.
+        /// Used by menu system for dynamic highlighting.
+        /// </summary>
+        public Dictionary<string, int> GetFormationSkillXP(string formation)
+        {
+            try
+            {
+                if (_config?.FormationTraining?.Formations.TryGetValue(formation, out var formationConfig) == true)
+                {
+                    return formationConfig.Skills;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Duties", "Error getting formation skill XP configuration", ex);
+            }
+            
+            return new Dictionary<string, int>();
         }
 
         #endregion

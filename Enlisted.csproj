@@ -178,6 +178,9 @@
     <Content Include="ModuleData\Enlisted\settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="ModuleData\Enlisted\duties_system.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <!-- Main Documentation -->
@@ -189,8 +192,10 @@
   <Target Name="AfterBuild">
     <MakeDir Directories="$(OutputPath)..\..\Debugging" />
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment" />
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted" />
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\" />
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Enlisted\duties_system.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\discovery.log" Lines="[Init] Precreated by build" Overwrite="false" />
