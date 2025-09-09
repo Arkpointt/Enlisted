@@ -1,6 +1,6 @@
 # Implementation Overview
 
-Last updated: 2025-09-06
+Last updated: 2025-01-26
 
 ## What We Built
 
@@ -23,11 +23,12 @@ Military service system for Bannerlord where you can enlist with lords and progr
 - **Duties System**: JSON-configured military roles with real benefits
 
 ### Phase 2: Equipment & UI ✅ Complete  
-- **Troop Selection**: Pick real troops, get their equipment on promotion
+- **Troop Selection**: Pick real troops, get their equipment on promotion with close button support
 - **Quartermaster Grid UI**: Individual equipment clicking with images and stats
-- **Menu System**: 'N' key for enlisted status with SAS-style clean formatting, 'P' for promotions
+- **Enhanced Menu System**: Professional duty/profession selection with organized sections, detailed descriptions
 - **Battle Commands**: Automatic formation-based command filtering with audio cues
 - **Formation Training**: Daily skill XP based on military specialization (Infantry, Cavalry, Archer, Horse Archer)
+- **Menu Interface Refinements**: Clean section headers, tier-based profession access, streamlined navigation
 
 ## Major Breakthrough: Grid UI
 
@@ -77,10 +78,6 @@ We implemented a comprehensive formation-based skill training system that surpas
 
 **Planned features:**
 - Automatic battle joining when lord fights
-- Formation-specific bonuses during battles  
-- Battle XP bonuses based on military role
-- Army cohesion effects and benefits
-- Advanced officer role benefits in combat
 
 **Technical approach:**
 - Use `MobileParty.ShouldJoinPlayerBattles` for automatic participation
@@ -94,7 +91,6 @@ We implemented a comprehensive formation-based skill training system that surpas
 - Helmet Quartermaster (extend grid UI to helmets)
 - Armor Quartermaster (body armor, gloves, boots)
 - Mount Quartermaster (horses and horse armor)
-- Equipment comparison between variants
 - Enhanced tooltips with detailed stat comparisons
 
 **Technical approach:**
@@ -129,9 +125,9 @@ We implemented a comprehensive formation-based skill training system that surpas
 
 ## Current Status
 
-**Complete**: Full military service system with formation-based skill training is working and ready for players.
+**Complete**: Full military service system with comprehensive menu interface is working and ready for players.
 
-**Latest Enhancement**: Formation Training System (Phase 2B) - automatic daily skill XP based on military specialization.
+**Latest Enhancement**: Professional Menu Interface System (Phase 2C) - organized duty/profession selection with detailed descriptions, tier-based access, and streamlined navigation.
 
 **Next recommended phase**: Phase 3 (Enhanced Battle Integration) - builds on the solid foundation we've established.
 

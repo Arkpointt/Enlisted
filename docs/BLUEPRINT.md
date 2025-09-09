@@ -17,6 +17,8 @@ Build
 - Visual Studio: config "Enlisted EDITOR" → Build
 - CLI: `dotnet build -c "Enlisted EDITOR"`
 
+Note: Build warnings about locked DLL are normal when Bannerlord is running - the build still succeeds.
+
 Next steps
 - Add your features under `src/` and reference them in `Enlisted.csproj`.
 
@@ -24,9 +26,10 @@ Next steps
 
 - Entry wiring in `src/Mod.Entry/SubModule.cs` creates a Harmony instance and registers campaign behaviors:
   - Core military service behaviors (EnlistmentBehavior, EnlistedDialogManager, EnlistedDutiesBehavior with formation training)
-  - Enhanced interface system (EnlistedMenuBehavior, EnlistedInputHandler) 
-  - Equipment and progression system (TroopSelectionManager, EquipmentManager, QuartermasterManager)
+  - Professional interface system (EnlistedMenuBehavior with organized sections, EnlistedInputHandler) 
+  - Equipment and progression system (TroopSelectionManager with close button, EquipmentManager, QuartermasterManager)
   - Battle integration (BattleCommandsFilterPatch for automatic formation-based command filtering)
+  - Menu organization (section headers, tier-based access, detailed descriptions, connected XP processing)
 - Harmony patches live in `src/Mod.GameAdapters/Patches/` following Blueprint standards
 - Discovery debugging outputs written to module `Debugging` folder [[memory:7845841]]
 
@@ -263,9 +266,13 @@ Our military service system follows SAS-proven patterns with immediate menu repl
   - Handle army formation changes gracefully without breaking player experience
 
 #### **Menu Integration**
-- **Purpose**: Rich information display and management interface
+- **Purpose**: Rich information display and comprehensive management interface
 - **Implementation Strategy**:
   - Custom menu shows service status, wages, progression, and army information
+  - Organized duty/profession selection with section headers and detailed descriptions
+  - Tier-based progression with visible but locked options for motivation
+  - Connected daily XP processing linking menu selection to skill training
+  - Professional navigation with close buttons and optimized menu order
   - Menu guards prevent player-initiated encounters while enlisted
   - Settlement following ensures player stays with lord during town visits
   - Time control management maintains proper game flow

@@ -21,6 +21,12 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("duties")]
         public Dictionary<string, DutyDefinition> Duties { get; set; } = new Dictionary<string, DutyDefinition>();
         
+        [JsonProperty("professions")]
+        public Dictionary<string, DutyDefinition> Professions { get; set; } = new Dictionary<string, DutyDefinition>();
+        
+        [JsonProperty("selection_system")]
+        public SelectionSystemConfig SelectionSystem { get; set; } = new SelectionSystemConfig();
+        
         [JsonProperty("duty_slots")]
         public Dictionary<string, int> DutySlots { get; set; } = new Dictionary<string, int>();
         
@@ -35,6 +41,32 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("formation_training")]
         public FormationTrainingConfig FormationTraining { get; set; } = new FormationTrainingConfig();
+    }
+    
+    [Serializable]
+    public class SelectionSystemConfig
+    {
+        [JsonProperty("duty_selection")]
+        public SelectionConfig DutySelection { get; set; } = new SelectionConfig();
+        
+        [JsonProperty("profession_selection")]
+        public SelectionConfig ProfessionSelection { get; set; } = new SelectionConfig();
+    }
+    
+    [Serializable]
+    public class SelectionConfig
+    {
+        [JsonProperty("description")]
+        public string Description { get; set; }
+        
+        [JsonProperty("max_selections")]
+        public int MaxSelections { get; set; } = 1;
+        
+        [JsonProperty("available_from_tier")]
+        public int AvailableFromTier { get; set; } = 1;
+        
+        [JsonProperty("default_selection")]
+        public string DefaultSelection { get; set; }
     }
     
     [Serializable]
@@ -81,6 +113,9 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("unlock_conditions")]
         public UnlockConditions UnlockConditions { get; set; } = new UnlockConditions();
+        
+        [JsonProperty("multi_skill_xp")]
+        public Dictionary<string, int> MultiSkillXp { get; set; } = new Dictionary<string, int>();
     }
     
     [Serializable]

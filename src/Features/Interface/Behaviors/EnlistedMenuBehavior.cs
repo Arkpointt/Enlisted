@@ -121,8 +121,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 "Visit Quartermaster",
                 IsQuartermasterAvailable,
                 OnQuartermasterSelected,
-                false, 1);
-
+                false, 2);
 
             // My Lord... (SAS option 3 - renamed for clarity)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
@@ -131,28 +130,145 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnTalkToSelected,
                 false, 3);
 
-            // Show reputation with factions (SAS option 4)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_reputation",
-                "Show reputation with factions",
-                IsReputationAvailable,
-                OnReputationSelected,
+            // Report for Duty (NEW - duty and profession selection)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
+                "Report for Duty",
+                IsReportDutyAvailable,
+                OnReportDutySelected,
                 false, 4);
 
-            // Ask commander for leave (SAS option 5)
+            // Ask commander for leave (moved to bottom)
             starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
                 "Ask commander for leave",
                 IsAskLeaveAvailable,
                 OnAskLeaveSelected,
                 false, 5);
 
-            // Ask for a different assignment (SAS option 6)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_different_assignment",
-                "Ask for a different assignment",
-                IsDifferentAssignmentAvailable,
-                OnDifferentAssignmentSelected,
-                false, 6);
-
             // No "return to duties" option needed - player IS doing duties by being in this menu
+            
+            // Add duty selection menu
+            AddDutySelectionMenu(starter);
+        }
+        
+        /// <summary>
+        /// Add duty selection menu for choosing duties and professions.
+        /// </summary>
+        private void AddDutySelectionMenu(CampaignGameStarter starter)
+        {
+            // Use same wait menu format as main enlisted menu for consistency
+            starter.AddWaitGameMenu("enlisted_duty_selection", 
+                "Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}",
+                new OnInitDelegate(OnDutySelectionInit),
+                new OnConditionDelegate(OnDutySelectionCondition),
+                null, // No consequence for wait menu
+                new OnTickDelegate(OnDutySelectionTick),
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // Same as main menu
+                GameOverlays.MenuOverlayType.None,
+                0f, // No wait time - immediate display
+                GameMenu.MenuFlags.None,
+                null);
+
+            // BACK OPTION (first, like main menu style)
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_back",
+                "Back to enlisted status",
+                args => true,
+                OnDutyBackSelected,
+                false, 1);
+
+            // DUTIES HEADER
+            starter.AddGameMenuOption("enlisted_duty_selection", "duties_header",
+                "─── DUTIES ───",
+                args => true, // Show but make it a display-only option
+                args => 
+                {
+                    // Show message when clicked to indicate it's just a header
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("This is a section header. Select duties below.").ToString()));
+                },
+                false, 2);
+
+            // DUTY OPTIONS - Dynamic text based on current selection
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_enlisted",
+                "{DUTY_ENLISTED_TEXT}",
+                IsDutyEnlistedAvailable,
+                OnDutyEnlistedSelected,
+                false, 3);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_forager",
+                "{DUTY_FORAGER_TEXT}",
+                IsDutyForagerAvailable,
+                OnDutyForagerSelected,
+                false, 4);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_sentry",
+                "{DUTY_SENTRY_TEXT}",
+                IsDutySentryAvailable,
+                OnDutySentrySelected,
+                false, 5);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_messenger",
+                "{DUTY_MESSENGER_TEXT}",
+                IsDutyMessengerAvailable,
+                OnDutyMessengerSelected,
+                false, 6);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_pioneer",
+                "{DUTY_PIONEER_TEXT}",
+                IsDutyPioneerAvailable,
+                OnDutyPioneerSelected,
+                false, 7);
+
+            // SPACER between duties and professions
+            starter.AddGameMenuOption("enlisted_duty_selection", "section_spacer",
+                " ",
+                args => true, // Show as visible separator
+                args => { }, // No action when clicked
+                true, 8); // Disabled = true makes it gray and non-clickable
+
+            // PROFESSIONS HEADER  
+            starter.AddGameMenuOption("enlisted_duty_selection", "professions_header",
+                "─── PROFESSIONS ───",
+                args => true, // Show but make it a display-only option
+                args => 
+                {
+                    // Show message when clicked to indicate it's just a header
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("This is a section header. Select professions below.").ToString()));
+                },
+                false, 9);
+
+            // PROFESSION OPTIONS (T3+) - Dynamic text based on current selection
+            // Remove "None" profession as requested by user
+            
+            starter.AddGameMenuOption("enlisted_duty_selection", "prof_quarterhand",
+                "{PROF_QUARTERHAND_TEXT}",
+                IsProfQuarterhandAvailable,
+                OnProfQuarterhandSelected,
+                false, 10);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "prof_field_medic",
+                "{PROF_FIELD_MEDIC_TEXT}",
+                IsProfFieldMedicAvailable,
+                OnProfFieldMedicSelected,
+                false, 11);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "prof_siegewright",
+                "{PROF_SIEGEWRIGHT_TEXT}",
+                IsProfSiegewrightAvailable,
+                OnProfSiegewrightSelected,
+                false, 12);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "prof_drillmaster",
+                "{PROF_DRILLMASTER_TEXT}",
+                IsProfDrillmasterAvailable,
+                OnProfDrillmasterSelected,
+                false, 13);
+                
+            starter.AddGameMenuOption("enlisted_duty_selection", "prof_saboteur",
+                "{PROF_SABOTEUR_TEXT}",
+                IsProfSaboteurAvailable,
+                OnProfSaboteurSelected,
+                false, 14);
         }
 
         /// <summary>
@@ -242,7 +358,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     statusContent += $"Current Experience : {enlistment.EnlistmentXP}\n";
                     
                     // Next Level Experience (SAS exact format)
-                    if (enlistment.EnlistmentTier < 7)
+                    if (enlistment.EnlistmentTier < 6)
                     {
                         var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier + 1);
                         statusContent += $"Next Level Experience : {nextTierXP}\n";
@@ -397,8 +513,8 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private int GetNextTierXPRequirement(int currentTier)
         {
-            var requirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 };
-            return currentTier < 7 ? requirements[currentTier] : 18000;
+            var requirements = new int[] { 0, 500, 2000, 5000, 10000, 18000 };
+            return currentTier < 6 ? requirements[currentTier] : 18000;
         }
 
         /// <summary>
@@ -958,17 +1074,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private bool IsReputationAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        private void OnReputationSelected(MenuCallbackArgs args)
-        {
-            // TODO: Implement reputation display
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("Reputation system coming soon.").ToString()));
-        }
 
         private bool IsAskLeaveAvailable(MenuCallbackArgs args)
         {
@@ -1057,17 +1162,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private bool IsDifferentAssignmentAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        private void OnDifferentAssignmentSelected(MenuCallbackArgs args)
-        {
-            // TODO: Implement assignment change dialog
-            InformationManager.DisplayMessage(new InformationMessage(
-                new TextObject("Assignment change system coming soon.").ToString()));
-        }
 
         /// <summary>
         /// SAS-style tick handler for real-time menu updates.
@@ -1096,9 +1190,404 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // Old menu methods removed - replaced with SAS-style options
 
-        #endregion
+        /// <summary>
+        /// Check if Report for Duty option should be available.
+        /// </summary>
+        private bool IsReportDutyAvailable(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            return enlistment?.IsEnlisted == true;
+        }
+        
+        /// <summary>
+        /// Handle Report for Duty selection - open duty selection menu.
+        /// </summary>
+        private void OnReportDutySelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                GameMenu.SwitchToMenu("enlisted_duty_selection");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error opening Report for Duty: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Initialize duty selection menu with consistent SAS-style formatting.
+        /// </summary>
+        private void OnDutySelectionInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                // CRITICAL: Start wait to enable time controls (same as main menu)
+                args.MenuContext.GameMenu.StartWait();
+                
+                // Set time control mode to allow unpausing (same as main menu)
+                Campaign.Current.SetTimeControlModeLock(false);
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                
+                // Initialize dynamic menu text on load
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted == true)
+                {
+                    SetDynamicMenuText(enlistment);
+                }
+                
+                RefreshDutySelectionDisplay();
+                _menuNeedsRefresh = true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error initializing duty selection menu: {ex.Message}");
+            }
+        }
 
-        // SAS-style single menu approach - all functionality integrated into main enlisted_status menu
+        /// <summary>
+        /// Condition check for duty selection menu (same pattern as main menu).
+        /// </summary>
+        private bool OnDutySelectionCondition(MenuCallbackArgs args)
+        {
+            var isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
+            
+            if (isEnlisted)
+            {
+                // Refresh the display when condition is checked
+                RefreshDutySelectionDisplay(args);
+            }
+            
+            return isEnlisted;
+        }
+
+        /// <summary>
+        /// Tick handler for duty selection menu (same pattern as main menu).
+        /// </summary>
+        private void OnDutySelectionTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            try
+            {
+                // Refresh every tick for real-time information (same as main menu)
+                RefreshDutySelectionDisplay(args);
+                
+                // Auto-exit if not enlisted
+                if (!EnlistmentBehavior.Instance?.IsEnlisted == true)
+                {
+                    GameMenu.ExitToLast();
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error during duty selection tick: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Refresh duty selection display with dynamic checkmarks for current selections.
+        /// </summary>
+        private void RefreshDutySelectionDisplay(MenuCallbackArgs args = null)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return;
+                }
+
+                // Build status content using the same clean format as main menu
+                var statusContent = "";
+                
+                // Current assignments with descriptions
+                var currentDuty = GetDutyDisplayName(enlistment.SelectedDuty);
+                var currentProfession = enlistment.SelectedProfession == "none" ? "None" : GetProfessionDisplayName(enlistment.SelectedProfession);
+                
+                statusContent += $"Current Duty : {currentDuty}\n";
+                statusContent += $"Current Profession : {currentProfession}\n\n";
+                
+                // Add detailed descriptions for current assignments
+                var dutyDescription = GetDutyDescription(enlistment.SelectedDuty);
+                var professionDescription = GetProfessionDescription(enlistment.SelectedProfession);
+                
+                statusContent += $"DUTY ASSIGNMENT: {dutyDescription}\n\n";
+                if (enlistment.SelectedProfession != "none")
+                {
+                    statusContent += $"PROFESSION: {professionDescription}\n\n";
+                }
+                
+                // Show the selected profession description instead of instructions
+                if (enlistment.SelectedProfession == "none")
+                {
+                    statusContent += "None";
+                }
+                else
+                {
+                    statusContent += GetProfessionDescription(enlistment.SelectedProfession);
+                }
+
+                // Set dynamic text variables for menu options with correct checkmarks
+                SetDynamicMenuText(enlistment);
+
+                // Use same text variable format as main menu
+                var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
+                if (menuContext != null)
+                {
+                    var text = menuContext.GameMenu.GetText();
+                    text.SetTextVariable("DUTY_STATUS", "Report for Duty");
+                    text.SetTextVariable("DUTY_TEXT", statusContent);
+                }
+                else
+                {
+                    // Fallback for compatibility
+                    MBTextManager.SetTextVariable("DUTY_STATUS", "Report for Duty");
+                    MBTextManager.SetTextVariable("DUTY_TEXT", statusContent);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error refreshing duty selection display", ex);
+                
+                // Error fallback
+                var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
+                if (menuContext != null)
+                {
+                    var text = menuContext.GameMenu.GetText();
+                    text.SetTextVariable("DUTY_STATUS", "Error");
+                    text.SetTextVariable("DUTY_TEXT", "Assignment information unavailable.");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Set dynamic text variables for menu options based on current selections.
+        /// </summary>
+        private void SetDynamicMenuText(EnlistmentBehavior enlistment)
+        {
+            var selectedDuty = enlistment.SelectedDuty;
+            var selectedProfession = enlistment.SelectedProfession;
+
+            // DUTY TEXT VARIABLES - Show checkmark for selected, circle for others (clean names only)
+            MBTextManager.SetTextVariable("DUTY_ENLISTED_TEXT", 
+                selectedDuty == "enlisted" ? "✓ Enlisted" : "○ Enlisted");
+            
+            MBTextManager.SetTextVariable("DUTY_FORAGER_TEXT", 
+                selectedDuty == "forager" ? "✓ Forager" : "○ Forager");
+            
+            MBTextManager.SetTextVariable("DUTY_SENTRY_TEXT", 
+                selectedDuty == "sentry" ? "✓ Sentry" : "○ Sentry");
+            
+            MBTextManager.SetTextVariable("DUTY_MESSENGER_TEXT", 
+                selectedDuty == "messenger" ? "✓ Messenger" : "○ Messenger");
+            
+            MBTextManager.SetTextVariable("DUTY_PIONEER_TEXT", 
+                selectedDuty == "pioneer" ? "✓ Pioneer" : "○ Pioneer");
+
+            // PROFESSION TEXT VARIABLES - Show checkmark for selected, circle for others (clean names only)
+            // "None" is default but invisible, show checkmark only when actual profession selected
+            
+            MBTextManager.SetTextVariable("PROF_QUARTERHAND_TEXT", 
+                selectedProfession == "quarterhand" ? "✓ Quarterhand" : "○ Quarterhand");
+            
+            MBTextManager.SetTextVariable("PROF_FIELD_MEDIC_TEXT", 
+                selectedProfession == "field_medic" ? "✓ Field Medic" : "○ Field Medic");
+            
+            MBTextManager.SetTextVariable("PROF_SIEGEWRIGHT_TEXT", 
+                selectedProfession == "siegewright_aide" ? "✓ Siegewright's Aide" : "○ Siegewright's Aide");
+            
+            MBTextManager.SetTextVariable("PROF_DRILLMASTER_TEXT", 
+                selectedProfession == "drillmaster" ? "✓ Drillmaster" : "○ Drillmaster");
+            
+            MBTextManager.SetTextVariable("PROF_SABOTEUR_TEXT", 
+                selectedProfession == "saboteur" ? "✓ Saboteur" : "○ Saboteur");
+        }
+
+        #region Duty Selection Conditions and Actions
+        
+        // DUTY CONDITIONS (show option as available - ALL duties are always available)
+        private bool IsDutyEnlistedAvailable(MenuCallbackArgs args) => true;
+        private bool IsDutyForagerAvailable(MenuCallbackArgs args) => true;  
+        private bool IsDutySentryAvailable(MenuCallbackArgs args) => true;
+        private bool IsDutyMessengerAvailable(MenuCallbackArgs args) => true;
+        private bool IsDutyPioneerAvailable(MenuCallbackArgs args) => true;
+
+        // PROFESSION CONDITIONS (show option as available - Always visible, tier check in action)
+        // Removed IsProfNoneAvailable as we removed the "None" option
+            
+        private bool IsProfQuarterhandAvailable(MenuCallbackArgs args) => true;
+        private bool IsProfFieldMedicAvailable(MenuCallbackArgs args) => true;
+        private bool IsProfSiegewrightAvailable(MenuCallbackArgs args) => true;
+        private bool IsProfDrillmasterAvailable(MenuCallbackArgs args) => true;
+        private bool IsProfSaboteurAvailable(MenuCallbackArgs args) => true;
+
+        // DUTY ACTIONS
+        private void OnDutyEnlistedSelected(MenuCallbackArgs args) => 
+            SelectDuty("enlisted", "Enlisted");
+            
+        private void OnDutyForagerSelected(MenuCallbackArgs args) => 
+            SelectDuty("forager", "Forager");
+            
+        private void OnDutySentrySelected(MenuCallbackArgs args) => 
+            SelectDuty("sentry", "Sentry");
+            
+        private void OnDutyMessengerSelected(MenuCallbackArgs args) => 
+            SelectDuty("messenger", "Messenger");
+            
+        private void OnDutyPioneerSelected(MenuCallbackArgs args) => 
+            SelectDuty("pioneer", "Pioneer");
+
+        // PROFESSION ACTIONS (with tier checking)
+        // Removed OnProfNoneSelected as we removed the "None" option
+            
+        private void OnProfQuarterhandSelected(MenuCallbackArgs args) => 
+            SelectProfessionWithTierCheck("quarterhand", "Quarterhand");
+            
+        private void OnProfFieldMedicSelected(MenuCallbackArgs args) => 
+            SelectProfessionWithTierCheck("field_medic", "Field Medic");
+            
+        private void OnProfSiegewrightSelected(MenuCallbackArgs args) => 
+            SelectProfessionWithTierCheck("siegewright_aide", "Siegewright's Aide");
+            
+        private void OnProfDrillmasterSelected(MenuCallbackArgs args) => 
+            SelectProfessionWithTierCheck("drillmaster", "Drillmaster");
+            
+        private void OnProfSaboteurSelected(MenuCallbackArgs args) => 
+            SelectProfessionWithTierCheck("saboteur", "Saboteur");
+
+        private void OnDutyBackSelected(MenuCallbackArgs args)
+        {
+            GameMenu.SwitchToMenu("enlisted_status");
+        }
+
+        #endregion
+        
+        #region Duty Selection Helper Methods
+        
+        /// <summary>
+        /// Select a new duty and show confirmation.
+        /// </summary>
+        private void SelectDuty(string dutyId, string dutyName)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted == true)
+            {
+                enlistment.SetSelectedDuty(dutyId);
+                
+                var message = new TextObject("Duty changed to {DUTY}. Your new daily skill training has begun.");
+                message.SetTextVariable("DUTY", dutyName);
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                
+                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
+            }
+        }
+        
+        /// <summary>
+        /// Select a new profession and show confirmation.
+        /// </summary>
+        private void SelectProfession(string professionId, string professionName)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted == true)
+            {
+                enlistment.SetSelectedProfession(professionId);
+                
+                var message = new TextObject("Profession changed to {PROFESSION}. Your specialized training has begun.");
+                message.SetTextVariable("PROFESSION", professionName);
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                
+                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
+            }
+        }
+
+        /// <summary>
+        /// Select profession with tier requirement check.
+        /// </summary>
+        private void SelectProfessionWithTierCheck(string professionId, string professionName)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return;
+            }
+
+            // Check tier requirement
+            if (enlistment.EnlistmentTier < 3)
+            {
+                var message = new TextObject("You must reach Tier 3 before selecting professions. Continue your service to unlock specialized roles.");
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                return;
+            }
+
+            // Tier 3+, allow selection
+            SelectProfession(professionId, professionName);
+        }
+        
+        /// <summary>
+        /// Get display name for duty ID.
+        /// </summary>
+        private string GetDutyDisplayName(string dutyId)
+        {
+            return dutyId switch
+            {
+                "enlisted" => "Enlisted",
+                "forager" => "Forager",
+                "sentry" => "Sentry", 
+                "messenger" => "Messenger",
+                "pioneer" => "Pioneer",
+                _ => "Unknown"
+            };
+        }
+
+        /// <summary>
+        /// Get detailed description for duty ID.
+        /// </summary>
+        private string GetDutyDescription(string dutyId)
+        {
+            return dutyId switch
+            {
+                "enlisted" => "You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)",
+                "forager" => "Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)",
+                "sentry" => "Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)",
+                "messenger" => "Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)",
+                "pioneer" => "Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)",
+                _ => "Military service duties."
+            };
+        }
+        
+        /// <summary>
+        /// Get display name for profession ID.
+        /// </summary>
+        private string GetProfessionDisplayName(string professionId)
+        {
+            return professionId switch
+            {
+                "none" => "None", // Default but invisible in menu
+                "quarterhand" => "Quartermaster's Aide",
+                "field_medic" => "Field Medic",
+                "siegewright_aide" => "Siegewright's Aide",
+                "drillmaster" => "Drillmaster",
+                "saboteur" => "Saboteur",
+                _ => "Unknown"
+            };
+        }
+
+        /// <summary>
+        /// Get detailed description for profession ID.
+        /// </summary>
+        private string GetProfessionDescription(string professionId)
+        {
+            return professionId switch
+            {
+                "none" => "No specialized profession assigned.",
+                "quarterhand" => "Post billet lists, route carts around trenches, book barns/inns, and settle accounts. (Skills: Steward, Trade)",
+                "field_medic" => "Run the aid tent by the stockade; clean and dress wounds, set bones, and keep salves stocked. (Skill: Medicine)",
+                "siegewright_aide" => "Work the siege park; shape beams, lash ladders and gabions, and patch engines between bombardments. (Skills: Engineering, Smithing)",
+                "drillmaster" => "Run morning drill on the parade ground; dress ranks, time volleys, rehearse signals, and sharpen maneuvers. (Skills: Leadership, Tactics)",
+                "saboteur" => "Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)",
+                _ => "Specialized military profession."
+            };
+        }
+
+        #endregion
 
         #region Military Styling Helper Methods
 
@@ -1163,5 +1652,7 @@ namespace Enlisted.Features.Interface.Behaviors
             
             return char.ToUpper(input[0]) + input.Substring(1).ToLower();
         }
+
+        #endregion
     }
 }

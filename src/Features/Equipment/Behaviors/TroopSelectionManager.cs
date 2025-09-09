@@ -104,7 +104,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     "Select equipment to use",
                     string.Empty,
                     options,
-                    false,
+                    true, // Enable close button (X) like lord selection dialog
                     1,
                     1,
                     "Continue",

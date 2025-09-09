@@ -27,7 +27,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         private bool _formationSelectionPending = false;
         
         // 1-year progression system (SAS enhanced)
-        private readonly int[] _tierXPRequirements = { 0, 500, 1500, 3500, 7000, 12000, 18000 };
+        private readonly int[] _tierXPRequirements = { 0, 500, 2000, 5000, 10000, 18000 };
         
         public PromotionBehavior()
         {
@@ -37,7 +37,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
-            CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
         }
         
         public override void SyncData(IDataStore dataStore)
@@ -52,16 +52,11 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
         
         /// <summary>
-        /// Daily tick to check for promotion eligibility.
+        /// Hourly tick to check for promotion eligibility (matches original SAS responsiveness).
         /// </summary>
-        private void OnDailyTick()
+        private void OnHourlyTick()
         {
-            // Only check once per day
-            if (CampaignTime.Now - _lastPromotionCheck < CampaignTime.Days(1))
-            {
-                return;
-            }
-            
+            // Check every hour for immediate promotion response like SAS
             _lastPromotionCheck = CampaignTime.Now;
             CheckForPromotion();
         }
@@ -83,19 +78,31 @@ namespace Enlisted.Features.Ranks.Behaviors
                 var currentTier = enlistment.EnlistmentTier;
                 var currentXP = enlistment.EnlistmentXP;
                 
-                // Check if eligible for next tier
-                if (currentTier < 7 && currentXP >= _tierXPRequirements[currentTier])
+                bool promoted = false;
+                
+                // SAS-style immediate promotion: keep promoting while XP thresholds are met
+                while (currentTier < 6 && currentXP >= _tierXPRequirements[currentTier])
                 {
-                    var newTier = currentTier + 1;
+                    currentTier++;
+                    promoted = true;
                     
+                    // Update enlistment tier immediately
+                    enlistment.SetTier(currentTier);
+                    
+                    ModLogger.Info("Promotion", $"Promoted to Tier {currentTier}");
+                }
+                
+                // Handle promotion notifications
+                if (promoted)
+                {
                     // Special handling for Tier 2 (formation selection)
-                    if (newTier == 2 && !_formationSelectionPending)
+                    if (currentTier == 2 && !_formationSelectionPending)
                     {
-                        TriggerFormationSelection(newTier);
+                        TriggerFormationSelection(currentTier);
                     }
                     else
                     {
-                        TriggerPromotionNotification(newTier);
+                        TriggerPromotionNotification(currentTier);
                     }
                 }
             }
@@ -229,13 +236,12 @@ namespace Enlisted.Features.Ranks.Behaviors
         {
             var rankNames = new Dictionary<int, string>
             {
-                {1, "Recruit"},
-                {2, "Private"}, 
-                {3, "Corporal"},
-                {4, "Sergeant"},
-                {5, "Staff Sergeant"},
-                {6, "Master Sergeant"},
-                {7, "Veteran"}
+                {1, "Levy"},
+                {2, "Footman"}, 
+                {3, "Serjeant"},
+                {4, "Man-at-Arms"},
+                {5, "Banner Sergeant"},
+                {6, "Household Guard"}
             };
             
             return rankNames.ContainsKey(tier) ? rankNames[tier] : $"Tier {tier}";

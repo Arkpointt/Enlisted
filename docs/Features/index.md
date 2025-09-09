@@ -13,6 +13,7 @@ This folder contains functional specifications for major features in the militar
 - **[formation-training.md](formation-training.md)** - **NEW** - Formation-based daily skill XP system
 - **[enlistment.md](enlistment.md)** - Core military service functionality
 - **[battle-commands.md](battle-commands.md)** - **NEW** - Automatic formation-based battle command filtering
+- **[menu-interface.md](menu-interface.md)** - **NEW** - Professional menu system with organized sections and descriptions
 
 ## What Feature Specs Are For
 

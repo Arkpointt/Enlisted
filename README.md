@@ -6,15 +6,50 @@ Bannerlord mod (1.2.x) targeting .NET Framework 4.7.2.
 
 ## 🎖️ Overview
 
-Enlisted allows players to **enlist with any lord** and serve in their armies as professional soldiers. Experience authentic military life with:
+Enlisted allows players to **enlist with any lord** and serve in their armies as professional soldiers. Experience authentic military life with a complete, professional military service system.
 
-- **4-Formation Specializations**: Infantry, Archer, Cavalry, Horse Archer (auto-detected from equipment)
-- **9+ Military Duties**: From Runner to Field Medic to Pathfinder with real benefits
-- **Realistic Equipment System**: Multiple troop choices per tier with formation-based pricing  
-- **Officer Role Integration**: Become effective party Engineer, Scout, Quartermaster, or Surgeon
-- **Enhanced Healing**: Custom healing model provides medical bonuses for enlisted soldiers
-- **Professional Interface**: Complete menu system with equipment and duty management
-- **1-Year Service Commitment**: Earn veteran status and retirement benefits
+## ✅ **Current Features (Ready for Players)**
+
+### **Core Military Service**
+- **Enlistment System**: Join any lord through diplomatic conversation
+- **7-Tier Progression**: Military ranks from Recruit to Master Sergeant over 1+ year service
+- **Daily Wages**: 24-150 gold/day progression based on tier and duties
+- **Army Integration**: Smart following behavior with army hierarchy awareness
+- **Encounter Safety**: Complete crash prevention with proven SAS techniques
+
+### **Professional Menu Interface** 
+- **Main Status Menu**: Comprehensive military information with real-time updates
+- **Organized Duty Selection**: Clean DUTIES and PROFESSIONS sections with visual spacing
+- **Detailed Descriptions**: Full explanations of each military role at top of selection menu
+- **Tier-Based Access**: Professions visible at T1, selectable at T3 with progression motivation
+- **Clean Navigation**: Streamlined menu order, close buttons, professional presentation
+
+### **Duty & Profession System**
+- **5 Daily Duties**: Enlisted (+4 XP non-formation skills), Forager, Sentry, Messenger, Pioneer (available T1+)
+- **5 Specialized Professions**: Quartermaster's Aide, Field Medic, Siegewright's Aide, Drillmaster, Saboteur (available T3+)
+- **Connected XP Processing**: Menu selections properly activate daily skill training
+- **Formation Training**: 50 XP/day to primary skills, 25 XP/day to secondary skills
+- **Officer Role Integration**: Professions provide effective party positions with natural skill benefits
+
+### **Equipment & Progression**
+- **Master at Arms**: Select from culture-appropriate troops with portraits and close button
+- **Equipment Replacement**: Military-style gear replacement (not accumulation)
+- **Quartermaster Grid UI**: Individual equipment selection with images and stats
+- **Multiple Troop Choices**: 3-6 options per tier with realistic formation-based pricing
+- **Retirement Benefits**: Keep final equipment after 1+ year service
+
+### **Battle Integration**
+- **Automatic Command Filtering**: Formation-based battle commands with audio cues
+- **Army Following**: Smart escort AI with pathfinding safety
+- **Battle Participation**: Real-time battle detection and participation
+- **Formation Specialization**: 4 formations (Infantry, Archer, Cavalry, Horse Archer) with culture variants
+
+### **Quality of Life**
+- **Keyboard Shortcuts**: 'N' for status menu, 'P' for promotions
+- **Temporary Leave**: Request leave with proper encounter cleanup
+- **Lord Conversations**: Talk to nearby lords with portrait selection
+- **Field Medical Treatment**: Healing available anywhere
+- **Real-Time Processing**: Works even when game is paused
 
 ## 🚀 Quick Start
 
@@ -25,11 +60,15 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 **Output DLL**: 
 `<BannerlordInstall>\Modules\Enlisted\bin\Win64_Shipping_wEditor\Enlisted.dll`
 
+**Note**: Build warnings about locked DLL are normal when Bannerlord is running - the build still succeeds.
+
 ### In-Game Usage
 1. **Talk to any lord** → "I have something else to discuss" → "I wish to serve in your warband"
 2. **Choose your formation** on first promotion (Tier 2)
 3. **Access enlisted menu** by pressing 'N' key when enlisted  
-4. **Manage duties and equipment** through the comprehensive military interface
+4. **Manage duties and equipment** through the comprehensive military interface with organized sections
+5. **Select duties and professions** with detailed descriptions and tier-based progression
+6. **Use Master at Arms** for troop selection with close button support
 
 ## ⚙️ Configuration
 
@@ -48,7 +87,7 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 - **SAS Real-Time Management**: Continuous state enforcement using verified TickEvent
 - **Enhanced Healing**: Custom PartyHealingModel integration
 - **Configuration-Driven**: No hardcoded values, full JSON customization
-- **Professional UI**: Clean SAS-style menu formatting with proven alignment
+- **Professional UI**: Clean SAS-style menu formatting with organized sections, tier-based progression, detailed descriptions
 
 ## Debugging layout and outputs
 All logs and discovery artifacts are written to the module’s Debugging folder (one session at a time; cleared on init):

@@ -155,7 +155,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsPromotionAvailable()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment?.IsEnlisted == true || enlistment.EnlistmentTier >= 7)
+            if (!enlistment?.IsEnlisted == true || enlistment.EnlistmentTier >= 6)
                 return false;
 
             var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier);
@@ -167,8 +167,8 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private int GetNextTierXPRequirement(int currentTier)
         {
-            var requirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 };
-            return currentTier < 7 ? requirements[currentTier] : 18000;
+            var requirements = new int[] { 0, 500, 2000, 5000, 10000, 18000 };
+            return currentTier < 6 ? requirements[currentTier] : 18000;
         }
 
         /// <summary>

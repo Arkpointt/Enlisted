@@ -43,11 +43,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	// Temporary leave system
 	private bool _isOnLeave = false;
 	private CampaignTime _leaveStartDate = CampaignTime.Zero;
+	
+	// Duty and profession selection (new simplified system)
+	private string _selectedDuty = "enlisted";  // Default to basic enlisted duty
+	private string _selectedProfession = "none";  // Default to no profession
 			public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
 	public bool IsOnLeave => _isOnLeave;
 	public Hero CurrentLord => _enlistedLord;
 	public int EnlistmentTier => _enlistmentTier;
 	public int EnlistmentXP => _enlistmentXP;
+	public string SelectedDuty => _selectedDuty;
+	public string SelectedProfession => _selectedProfession;
 
 		public EnlistmentBehavior()
 		{
@@ -89,6 +95,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
 	dataStore.SyncData("_isOnLeave", ref _isOnLeave);
 	dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
+	dataStore.SyncData("_selectedDuty", ref _selectedDuty);
+	dataStore.SyncData("_selectedProfession", ref _selectedProfession);
 	
 	// Post-load validation
 	if (dataStore.IsLoading)
@@ -145,6 +153,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_enlistmentTier = 1;
 			_enlistmentXP = 0;
 			_enlistmentDate = CampaignTime.Now;
+			_selectedDuty = "enlisted";  // Start with basic enlisted duty
+			_selectedProfession = "none";  // No profession initially
+			
+			// Add default enlisted duty to active duties for daily XP processing
+			var dutiesBehavior = Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
+			if (dutiesBehavior != null)
+			{
+				dutiesBehavior.AssignDuty("enlisted");
+			}
 				
 							// Transfer any existing companions/troops to lord's party (SAS pattern)
 				TransferPlayerTroopsToLord();
@@ -313,8 +330,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var wage = CalculateDailyWage();
 				GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, wage, false);
 				
-				// Daily XP gain (1-year progression system)
-				var dailyXP = 25; // Base XP - duties system can add more
+				// Daily XP gain (military progression) - separate from skill XP
+				// Skill XP comes from formation training (50 XP/day primaries) + duties (15-35 XP/day)
+				var dailyXP = 25; // Base XP for military tier progression
 				AddEnlistmentXP(dailyXP, "Daily Service");
 				
 				ModLogger.Info("DailyService", $"Paid wage: {wage} gold, gained {dailyXP} XP");
@@ -376,12 +394,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private void CheckForPromotion()
 		{
 			// 1-year progression system (SAS enhanced)
-			var tierXPRequirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 };
+			var tierXPRequirements = new int[] { 0, 500, 2000, 5000, 10000, 18000 };
 			
 			bool promoted = false;
 			
 			// Check if player has enough XP for next tier
-			while (_enlistmentTier < 7 && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
+			while (_enlistmentTier < 6 && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
 			{
 				_enlistmentTier++;
 				promoted = true;
@@ -572,6 +590,87 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 
 		/// <summary>
+		/// Set tier directly (called by PromotionBehavior for immediate SAS-style promotion).
+		/// </summary>
+		public void SetTier(int tier)
+		{
+			if (!IsEnlisted || tier < 1 || tier > 6)
+			{
+				return;
+			}
+			
+			_enlistmentTier = tier;
+		}
+
+		/// <summary>
+		/// Change selected duty (called from duty selection menu).
+		/// </summary>
+		public void SetSelectedDuty(string dutyId)
+		{
+			if (!IsEnlisted || string.IsNullOrEmpty(dutyId))
+			{
+				return;
+			}
+			
+			// Remove previous duty if different
+			if (_selectedDuty != dutyId && !string.IsNullOrEmpty(_selectedDuty))
+			{
+				var duties = Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
+				if (duties != null)
+				{
+					duties.RemoveDuty(_selectedDuty);
+				}
+			}
+			
+			_selectedDuty = dutyId;
+			
+			// Add the new duty to active duties for daily XP processing
+			var dutiesBehavior = Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
+			if (dutiesBehavior != null)
+			{
+				dutiesBehavior.AssignDuty(dutyId);
+			}
+			
+			ModLogger.Info("Duties", $"Changed duty to: {dutyId}");
+		}
+
+		/// <summary>
+		/// Change selected profession (called from duty selection menu).
+		/// </summary>
+		public void SetSelectedProfession(string professionId)
+		{
+			if (!IsEnlisted || string.IsNullOrEmpty(professionId))
+			{
+				return;
+			}
+			
+			// Remove previous profession if different and not "none"
+			if (_selectedProfession != professionId && _selectedProfession != "none" && !string.IsNullOrEmpty(_selectedProfession))
+			{
+				var duties = Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
+				if (duties != null)
+				{
+					duties.RemoveDuty(_selectedProfession);
+				}
+			}
+			
+			_selectedProfession = professionId;
+			
+			// Add the new profession to active duties for daily XP processing (skip "none")
+			// "none" remains as default internal value but isn't an active duty
+			if (professionId != "none")
+			{
+				var dutiesBehavior = Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
+				if (dutiesBehavior != null)
+				{
+					dutiesBehavior.AssignDuty(professionId);
+				}
+			}
+			
+			ModLogger.Info("Duties", $"Changed profession to: {professionId}");
+		}
+
+		/// <summary>
 		/// Check if promotion notification should be triggered after XP gain.
 		/// Now integrates with Phase 2B troop selection system.
 		/// </summary>
@@ -580,7 +679,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			try
 			{
 				// 1-year progression system thresholds
-				var tierXPRequirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 };
+				var tierXPRequirements = new int[] { 0, 500, 2000, 5000, 10000, 18000 };
 				
 				// Check if we crossed any promotion threshold
 				for (int tier = _enlistmentTier; tier < 7; tier++)

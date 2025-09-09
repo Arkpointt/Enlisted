@@ -195,24 +195,31 @@ namespace Enlisted.Features.Assignments.Behaviors
                     continue;
                 }
                 
-                // Apply skill XP if specified  
-                if (dutyDef.SkillXpDaily > 0 && !string.IsNullOrEmpty(dutyDef.TargetSkill))
+                // Apply multi-skill XP if specified (new system)
+                if (dutyDef.MultiSkillXp != null && dutyDef.MultiSkillXp.Count > 0)
                 {
+                    foreach (var skillEntry in dutyDef.MultiSkillXp)
+                    {
+                        var skill = GetSkillFromName(skillEntry.Key);
+                        if (skill != null && skillEntry.Value > 0)
+                        {
+                            Hero.MainHero.AddSkillXp(skill, skillEntry.Value);
+                            ModLogger.Info("Duties", $"Applied {skillEntry.Value} duty XP to {skillEntry.Key}");
+                        }
+                    }
+                }
+                else if (dutyDef.SkillXpDaily > 0 && !string.IsNullOrEmpty(dutyDef.TargetSkill))
+                {
+                    // Fallback for old format
                     var skill = GetSkillFromName(dutyDef.TargetSkill);
                     if (skill != null)
                     {
-                        // Use SAS method for consistency
                         Hero.MainHero.AddSkillXp(skill, dutyDef.SkillXpDaily);
                         ModLogger.Info("Duties", $"Applied {dutyDef.SkillXpDaily} duty XP to {dutyDef.TargetSkill}");
                     }
                 }
                 
-                // Apply daily experience bonus
-                if (_config.XpSources.TryGetValue("duty_performance", out var dutyXp))
-                {
-                    // Add XP through EnlistmentBehavior for proper tier progression tracking
-                    EnlistmentBehavior.Instance?.AddEnlistmentXP(dutyXp, $"Duty: {dutyDef.DisplayName}");
-                }
+                // NO MORE military progression XP from duties - only skill XP (SAS style)
             }
         }
         

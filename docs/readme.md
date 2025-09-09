@@ -24,6 +24,7 @@ Complete military service system where players can:
 - **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - SAS-style troop selection with portraits and loadout hints
 - **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system with encounter fixes
 - **Phase 2E**: Battle Commands Integration - ✅ **COMPLETE** - **NEW** - Automatic formation-based command filtering
+- **Phase 2F**: Professional Menu Interface - ✅ **COMPLETE** - **NEW** - Organized duty/profession menus, tier-based access, detailed descriptions
 - **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
 - **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
 - **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
@@ -58,7 +59,8 @@ src/Features/
 ### Military Service System
 - **Enlistment**: Join any lord's service through diplomatic dialog
 - **10 Assignments**: From Grunt Work to Strategist with unique benefits
-- **1-Year Progression**: 7 military tiers over 365 days (18,000 XP total)
+- **Medieval Progression**: 6 military ranks over 3+ Bannerlord years (18,000 XP total for military progression)
+- **Skill Development**: Formation training gives 50 XP/day to primary skills → Level 100+ over 3 years
 - **Realistic Wages**: 24-150 gold/day progression (early game skill-building, not wealth generation)
 - **Army Integration**: Smart following behavior with army hierarchy awareness
 
@@ -85,11 +87,22 @@ src/Features/
 ### Equipment & Progression System
 **Equipment Replacement**: Promotions **replace** equipment (not accumulate) - realistic military service
 **Retirement Benefit**: Players keep **final equipment** permanently after 1+ year service
-**Progression Timeline**: 
-- **Month 1-2**: Basic training (Tiers 1-2) - 24-37 gold/day
-- **Month 3-6**: Veteran service (Tiers 3-4) - 38-81 gold/day  
-- **Month 7-12**: Senior service (Tiers 5-7) - 68-150 gold/day
+**Progression Timeline** (Bannerlord Calendar: 21 days/season, 84 days/year): 
+- **Weeks 1-7**: Basic training (Tiers 1-3) - 24-50 gold/day
+- **Weeks 8-36**: Professional service (Tiers 4-5) - 55-120 gold/day  
+- **Career Soldiers**: Household Guard (Tier 6) - 130-150 gold/day
 **Purpose**: Early game **skill development** and character building (not wealth generation)
+
+### XP System Breakdown
+**Military Progression XP** (for tiers/ranks):
+- 25 XP/day base + 15 XP/day duties = 40 XP/day total
+- Standard 3-year service (252 Bannerlord days) = ~10,000 XP (Banner Sergeant)
+- Household Guard (18,000 XP) requires career soldier re-enlistment (~5.4 Bannerlord years)
+
+**Skill Development XP** (for character abilities):
+- Formation Training: 50 XP/day primary skills, 25 XP/day secondary skills
+- Duty Bonuses: 15-35 XP/day to specific skills
+- **Result**: 120-150 in primary skills, 70-90 in secondaries over 3 years
 
 ### Dialog System Architecture
 **Centralized Management**: All enlisted dialogs managed through single `EnlistedDialogManager.cs`
@@ -218,11 +231,12 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Professional Military Interface**: Clean SAS-style menu with comprehensive information display using proven formatting
 - **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
 - **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
-- **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits and loadout previews
+- **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits, loadout previews, and close button
 - **✅ My Lord Conversations**: Talk to nearby lords with portrait selection and faction info
 - **✅ Temporary Leave System**: Request leave with enhanced encounter cleanup and automatic menu restoration
 - **✅ Companion Management**: Automatic troop transfer to lord's party; companions restored on retirement
-- **✅ Interactive Menu Management**: Field medical treatment, duties management, equipment access, service records  
+- **✅ Organized Duty/Profession Selection**: Clean section headers, tier-based access, detailed descriptions, streamlined navigation
+- **✅ Daily XP Processing**: Connected duty/profession selection to active daily skill training system
 - **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
 - **✅ Proper SAS Behavior**: Menu stays active while following lord, maintains game flow
 - **✅ Multiple Equipment Choices**: Framework ready for 3-6 troop equipment styles per tier with realistic pricing
@@ -232,11 +246,12 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Officer Role Benefits**: Natural skill/perk application display through effective party officer positions
 - **✅ Army Operations**: Real-time army information with hierarchy and operational status display
 - **✅ Automatic Battle Commands**: Formation-based command filtering works seamlessly in background with audio cues
+- **✅ Streamlined Menu Navigation**: Removed redundant features, optimized menu order, professional layout
 
 ### Veteran Benefits & Progression
 - **Service History**: Track multiple enlistments and achievements across different factions
 - **Equipment Choice System**: Choose to keep service equipment or restore personal gear upon retirement
-- **Retirement Eligibility**: 1 full year service requirement with substantial discharge bonuses
+- **Retirement Eligibility**: 3 Bannerlord year service requirement (252 days) with substantial discharge bonuses
 - **Vassalage Offers**: High-reputation veterans (Tier 6+, 2000+ faction reputation) receive kingdom membership offers
 - **Settlement Grants**: Option to receive land grants as reward for exceptional service
 - **Kingdom Integration**: Military service can lead to full lordship and political power
@@ -366,12 +381,39 @@ Next Level Experience : 500
 When not fighting : You are currently assigned to perform grunt work.
 Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)
 
-[ Master at Arms ]                       ← Troop selection with portraits
+[ Master at Arms ]                       ← Troop selection with close button
 [ Visit Quartermaster ]                  ← Equipment variants menu
 [ My Lord... ]                           ← Talk to nearby lords
-[ Show reputation with factions ]
-[ Ask commander for leave ]              ← Enhanced temporary leave system
-[ Ask for a different assignment ]
+[ Report for Duty ]                      ← Organized duty/profession selection
+[ Ask commander for leave ]              ← Enhanced temporary leave system (bottom position)
+```
+
+### **Enhanced Duty Selection Menu: enlisted_duty_selection**
+```
+Current Duty : Enlisted
+Current Profession : None
+
+DUTY ASSIGNMENT: You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)
+
+None
+
+[ Back to enlisted status ]
+
+─── DUTIES ───
+[ ✓ Enlisted ]
+[ ○ Forager ]  
+[ ○ Sentry ]
+[ ○ Messenger ]
+[ ○ Pioneer ]
+
+     (visual spacing)
+
+─── PROFESSIONS ───
+[ ○ Quartermaster's Aide ]         ← Visible T1+, selectable T3+
+[ ○ Field Medic ]                  ← Visible T1+, selectable T3+  
+[ ○ Siegewright's Aide ]           ← Visible T1+, selectable T3+
+[ ○ Drillmaster ]                  ← Visible T1+, selectable T3+
+[ ○ Saboteur ]                     ← Visible T1+, selectable T3+
 ```
 
 ### **Equipment Menu: enlisted_equipment** (Multiple Troop Choices)
