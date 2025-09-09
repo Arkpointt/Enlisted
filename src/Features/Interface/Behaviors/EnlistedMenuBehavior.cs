@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Overlay;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Conversation;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -36,6 +38,12 @@ namespace Enlisted.Features.Interface.Behaviors
         // Menu state tracking
         private string _currentMenuId = "";
         private bool _menuNeedsRefresh = false;
+        
+        // AI ENHANCEMENT: Track when lord enters towns for smarter button visibility
+        private bool _lordJustEnteredSettlement = false;
+        
+        // AI FIX: Track synthetic encounters we create
+        private bool _syntheticOutsideEncounter;
 
         public EnlistedMenuBehavior()
         {
@@ -47,6 +55,9 @@ namespace Enlisted.Features.Interface.Behaviors
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
             CampaignEvents.GameMenuOpened.AddNonSerializedListener(this, OnMenuOpened);
+            
+            // AI ENHANCEMENT: Track lord settlement entry for smarter button visibility
+            CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEnteredForButton);
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -86,6 +97,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private void AddEnhancedEnlistedMenus(CampaignGameStarter starter)
         {
             AddMainEnlistedStatusMenu(starter);
+            AddReturnToArmyCampOptions(starter);
             // SAS-style single menu approach - all functionality in one menu
         }
 
@@ -130,24 +142,113 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnTalkToSelected,
                 false, 3);
 
+            // Visit Settlement (NEW - towns and castles only)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_visit_settlement",
+                "{VISIT_SETTLEMENT_TEXT}",
+                IsVisitSettlementAvailable,
+                OnVisitTownSelected,
+                false, 4);
+
             // Report for Duty (NEW - duty and profession selection)
             starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
                 "Report for Duty",
                 IsReportDutyAvailable,
                 OnReportDutySelected,
-                false, 4);
+                false, 5);
 
             // Ask commander for leave (moved to bottom)
             starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
                 "Ask commander for leave",
                 IsAskLeaveAvailable,
                 OnAskLeaveSelected,
-                false, 5);
+                false, 6);
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
             
             // Add duty selection menu
             AddDutySelectionMenu(starter);
+        }
+        
+        /// <summary>
+        /// Add return to army camp options to all town location menus.
+        /// This follows the SAS pattern of providing seamless navigation back to military service.
+        /// </summary>
+        private void AddReturnToArmyCampOptions(CampaignGameStarter starter)
+        {
+            // List of all possible town location menus where we need return options
+            var settlementMenus = new[]
+            {
+                "town",           // Main town menu
+                "town_center",    // Town center
+                "town_backstreet", // Back alleys
+                "tavern",         // Tavern
+                "town_arena",     // Arena
+                "smithy",         // Weaponsmith/Armorer
+                "town_keep",      // Town lord's hall
+                "town_mercenary", // Mercenary options
+                "town_shop",      // General goods
+                "alley",          // Alley encounters
+                "house",          // Noble houses
+                "prison",         // Prison/dungeon
+                "castle",         // Main castle menu
+                "castle_lords_hall", // Castle lord's hall
+                "castle_dungeon", // Castle dungeon
+                "town_keep_dungeon" // Town dungeon
+            };
+
+            foreach (var menuId in settlementMenus)
+            {
+                // Add return option to each town menu
+                starter.AddGameMenuOption(menuId, "return_to_army_camp",
+                    "Return to Army Camp",
+                    IsReturnToArmyCampAvailable,
+                    OnReturnToArmyCampSelected,
+                    false, -1); // Low priority so it appears at the bottom
+            }
+        }
+
+        /// <summary>
+        /// Check if Return to Army Camp option should be available.
+        /// Only show when player is enlisted and in a town.
+        /// </summary>
+        private bool IsReturnToArmyCampAvailable(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        /// <summary>
+        /// AI ENHANCED: Handle return to army camp with synthetic encounter cleanup.
+        /// </summary>
+        private void OnReturnToArmyCampSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return;
+                }
+
+                // End any town/castle encounter we created
+                if (PlayerEncounter.Current != null)
+                    PlayerEncounter.Finish(true);
+
+                // If we spun up an encounter, we also turned the party active—turn it off again
+                if (_syntheticOutsideEncounter)
+                {
+                    _syntheticOutsideEncounter = false;
+                    MobileParty.MainParty.IsActive = false;   // back to invisible escort state
+                }
+
+                GameMenu.ActivateGameMenu("enlisted_status");
+                ModLogger.Info("Interface", "Returned to army camp.");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error returning to army camp: {ex.Message}");
+                // Fallback - still try to get back to enlisted menu
+                GameMenu.ActivateGameMenu("enlisted_status");
+            }
         }
         
         /// <summary>
@@ -1073,6 +1174,129 @@ namespace Enlisted.Features.Interface.Behaviors
                     new TextObject("Unable to start conversation. Please try again.").ToString()));
             }
         }
+
+        /// <summary>
+        /// Check if Visit Settlement option should be available.
+        /// Supports towns and castles, excludes villages.
+        /// </summary>
+        private bool IsVisitSettlementAvailable(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (!enlistment?.IsEnlisted == true)
+            {
+                return false;
+            }
+
+            var lord = enlistment.CurrentLord;
+            if (lord?.CurrentSettlement == null)
+            {
+                return false;
+            }
+
+            var settlement = lord.CurrentSettlement;
+            var canVisit = (settlement.IsTown || settlement.IsCastle) && _lordJustEnteredSettlement;
+            
+            if (canVisit)
+            {
+                // Set dynamic text based on settlement type
+                var visitText = settlement.IsTown ? "Visit Town" : "Visit Castle";
+                MBTextManager.SetTextVariable("VISIT_SETTLEMENT_TEXT", visitText, false);
+                
+            }
+
+            return canVisit;
+        }
+
+        /// <summary>
+        /// AI ENHANCEMENT: Track when lord enters settlements to enable smarter button visibility.
+        /// </summary>
+        private void OnSettlementEnteredForButton(MobileParty party, Settlement settlement, Hero hero)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted == true &&
+                    party == enlistment.CurrentLord?.PartyBelongedTo &&
+                    (settlement.IsTown || settlement.IsCastle))
+                {
+                    _lordJustEnteredSettlement = true; // Outside menu should now be on the stack
+                    ModLogger.Info("Interface", $"Lord entered settlement, Visit button now available for {settlement.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error in settlement entered tracking: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// AI DROP-IN REPLACEMENT: Create synthetic outside encounter for invisible enlisted party.
+        /// </summary>
+        private void OnVisitTownSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true) return;
+
+                var lord = enlistment.CurrentLord;
+                var settlement = lord?.CurrentSettlement;
+                if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("Your lord is not in a town or castle.").ToString()));
+                    return;
+                }
+
+                // If we're already on an outside menu, just reshow it.
+                var activeId = Campaign.Current.CurrentMenuContext?.GameMenu?.StringId;
+                if (activeId == "town_outside" || activeId == "castle_outside")
+                {
+                    GameMenu.SwitchToMenu(activeId);
+                    return;
+                }
+
+                // If an encounter exists and it's already for this settlement, just switch.
+                if (PlayerEncounter.Current != null &&
+                    PlayerEncounter.EncounterSettlement == settlement)
+                {
+                    GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
+                    return;
+                }
+
+                // Clear our own enlisted wait menu off the stack so the engine can push its menu.
+                int safety = 8;
+                while (safety-- > 0 &&
+                       Campaign.Current.CurrentMenuContext != null &&
+                       Campaign.Current.CurrentMenuContext.GameMenu.StringId.StartsWith("enlisted_"))
+                {
+                    GameMenu.ExitToLast();
+                }
+
+                // Ensure no leftover encounter asserts.
+                if (PlayerEncounter.Current != null)
+                    PlayerEncounter.Finish(true);
+
+                // TEMPORARILY activate the main party so the engine can attach an encounter.
+                bool wasActive = MobileParty.MainParty.IsActive;
+                if (!wasActive) MobileParty.MainParty.IsActive = true;
+
+                // Start a clean outside encounter for the player at the lord's settlement.
+                EncounterManager.StartSettlementEncounter(MobileParty.MainParty, settlement);
+                _syntheticOutsideEncounter = true;
+
+                // The engine will have pushed the outside menu; show it explicitly for safety.
+                GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
+                ModLogger.Info("Interface", $"Started synthetic outside encounter for {settlement.Name}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"VisitTown failed: {ex}");
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("Couldn't open the town interface.").ToString()));
+            }
+        }
+
 
 
         private bool IsAskLeaveAvailable(MenuCallbackArgs args)

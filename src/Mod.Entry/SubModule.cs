@@ -11,6 +11,7 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Ranks.Behaviors;
+using Enlisted.Features.Combat.Behaviors;
 
 namespace Enlisted.Mod.Entry
 {
@@ -65,6 +66,8 @@ namespace Enlisted.Mod.Entry
 					campaignStarter.AddBehavior(new QuartermasterManager());
 					campaignStarter.AddBehavior(new Features.Equipment.UI.QuartermasterEquipmentSelectorBehavior());
 					
+					// Battle integration system
+					campaignStarter.AddBehavior(new EnlistedEncounterBehavior());
 					
 					EncounterGuard.Initialize();
 					ModLogger.Info("Bootstrap", "Military service behaviors registered (with Phase 2B troop selection system)");

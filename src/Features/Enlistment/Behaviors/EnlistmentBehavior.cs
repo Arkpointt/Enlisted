@@ -9,6 +9,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -71,11 +72,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// CRITICAL: Battle participation logic - handle in real-time tick instead of events
 	// Note: MapEvent events may not exist in current version, using real-time detection instead
 	
-	// CRITICAL: Event-driven lord death/army defeat handling (corrected signatures)
+		// CRITICAL: Event-driven lord death/army defeat handling (corrected signatures)
 	CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 	CampaignEvents.CharacterDefeated.AddNonSerializedListener(this, OnCharacterDefeated);
 	CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
 	CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener(this, OnHeroPrisonerTaken);
+	
+	// MINIMAL: Settlement entry detection for menu refresh only
+	CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
 	}
 
 			public override void SyncData(IDataStore dataStore)
@@ -454,13 +458,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			var lordParty = _enlistedLord.PartyBelongedTo;
 			if (lordParty != null)
 			{
-				// CRITICAL: Battle participation detection (real-time)
-				HandleBattleParticipation(main, lordParty);
+				// SAS CRITICAL: Army-aware battle participation detection
+				HandleArmyBattleParticipation(main, lordParty);
 				
-				// SIMPLE: Original working escort logic (no complex army management)
+				// ✅ ORIGINAL WORKING: Simple escort logic (don't change what works!)
 				EncounterGuard.TryAttachOrEscort(_enlistedLord);
 				
-				// Basic state management
+				// Basic state management  
 				main.Position2D = lordParty.Position2D;
 				main.IsVisible = false;
 				TrySetShouldJoinPlayerBattles(main, true);
@@ -1182,6 +1186,138 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			catch (Exception ex)
 			{
 				ModLogger.Error("Enlistment", "Error restoring companions on retirement", ex);
+			}
+		}
+
+		/// <summary>
+		/// SAS ENHANCED: Army-aware battle participation logic.
+		/// Handles both individual lord battles and army battles following SAS patterns.
+		/// </summary>
+		private void HandleArmyBattleParticipation(MobileParty main, MobileParty lordParty)
+		{
+			try
+			{
+				// Check if lord is part of an army
+				var lordArmy = lordParty.Army;
+				var armyLeader = lordArmy?.LeaderParty;
+				
+				// Determine the effective battle party (army leader or individual lord)
+				var battleParty = armyLeader ?? lordParty;
+				var isBattlePartyInCombat = battleParty.MapEvent != null;
+				var isPlayerInBattle = main.MapEvent != null;
+
+				if (isBattlePartyInCombat && !isPlayerInBattle)
+				{
+					// SAS PATTERN: Battle detected, activate player
+					if (lordArmy != null)
+					{
+						ModLogger.Info("Battle", $"Army battle detected - Army Leader: {armyLeader?.LeaderHero?.Name}, Lord: {_enlistedLord.Name}");
+						HandleArmyBattle(main, lordParty, lordArmy);
+					}
+					else
+					{
+						ModLogger.Info("Battle", $"Individual lord battle detected - Lord: {_enlistedLord.Name}");
+						HandleIndividualBattle(main, lordParty);
+					}
+				}
+				else if (!isBattlePartyInCombat && isPlayerInBattle)
+				{
+					// Battle ended, clean up
+					ModLogger.Info("Battle", "Battle ended, returning to enlisted state");
+					HandlePostBattleCleanup(main, lordParty);
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error in army battle participation: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Handle army battle participation following SAFE SAS patterns.
+		/// ✅ SAFE: Simple activation without complex pathfinding calls.
+		/// </summary>
+		private void HandleArmyBattle(MobileParty main, MobileParty lordParty, Army lordArmy)
+		{
+			try
+			{
+				// ✅ SAFE: Simple activation for encounter menu (SAS proven pattern)
+				main.IsActive = true;
+				main.Position2D = lordParty.Position2D; // Position at enlisted lord (safe)
+				main.ShouldJoinPlayerBattles = true;
+				
+				ModLogger.Info("Battle", "Player activated for army battle (safe mode)");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error handling army battle: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Handle individual lord battle participation.
+		/// </summary>
+		private void HandleIndividualBattle(MobileParty main, MobileParty lordParty)
+		{
+			try
+			{
+				// SAS PATTERN: Individual lord battle
+				main.IsActive = true;
+				main.Position2D = lordParty.Position2D;
+				main.ShouldJoinPlayerBattles = true;
+				
+				ModLogger.Info("Battle", "Player activated for individual lord battle");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error handling individual battle: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Clean up after battle ends - SAFE version without army manipulation.
+		/// </summary>
+		private void HandlePostBattleCleanup(MobileParty main, MobileParty lordParty)
+		{
+			try
+			{
+				// ✅ SAFE: Just return to hidden enlisted state
+				// Let Bannerlord handle army membership naturally
+				main.IsActive = false;
+				ModLogger.Info("Battle", "Player returned to enlisted state after battle");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error in post-battle cleanup: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// MINIMAL: Settlement entry detection for menu refresh only.
+		/// Just refreshes the menu when lord enters settlements - no complex logic.
+		/// </summary>
+		private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
+		{
+			try
+			{
+				if (!IsEnlisted || _isOnLeave)
+				{
+					return;
+				}
+
+				// Only react when OUR enlisted lord enters a settlement
+				if (hero == _enlistedLord)
+				{
+					ModLogger.Info("Settlement", $"Lord {hero.Name} entered {settlement.Name} - refreshing menu");
+					
+					// Just refresh the enlisted menu to update "Visit Town" visibility
+					// Don't force any settlement entry or time control changes
+					GameMenu.ActivateGameMenu("enlisted_status");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Settlement", $"Error in settlement entry detection: {ex.Message}");
 			}
 		}
 		

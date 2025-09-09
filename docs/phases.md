@@ -73,16 +73,31 @@ We implemented a comprehensive formation-based skill training system that surpas
 
 ## Future Development Roadmap
 
-### Phase 3: Enhanced Battle Integration
+### Phase 3A: Enhanced Battle Integration ✅ COMPLETE
 **Goal**: Better battle participation and army coordination
 
-**Planned features:**
-- Automatic battle joining when lord fights
+**Implemented features:**
+- ✅ Real-time battle detection and participation
+- ✅ Army-aware battle logic (individual vs army battles)
+- ✅ Battle encounter menu options ("Wait in Reserve", etc.)
 
 **Technical approach:**
-- Use `MobileParty.ShouldJoinPlayerBattles` for automatic participation
-- Battle event handlers for XP and formation bonuses
-- Army status tracking for cohesion benefits
+- ✅ Real-time lordParty.MapEvent monitoring for battle detection
+- ✅ Proper IsActive toggling for encounter menu triggering  
+- ✅ Army hierarchy awareness without complex pathfinding
+
+### Phase 3B: Town Access System ✅ COMPLETE
+**Goal**: Full settlement exploration for enlisted soldiers
+
+**Implemented features:**
+- ✅ Synthetic outside encounter creation for invisible parties
+- ✅ Dynamic settlement access (towns and castles)
+- ✅ Complete encounter state management and cleanup
+
+**Technical approach:**
+- ✅ AI-guided synthetic encounter approach using StartSettlementEncounter
+- ✅ town_outside/castle_outside as safe entry points
+- ✅ Comprehensive state tracking and restoration
 
 ### Phase 4: Extended Equipment System  
 **Goal**: Complete equipment management across all slots
@@ -125,10 +140,14 @@ We implemented a comprehensive formation-based skill training system that surpas
 
 ## Current Status
 
-**Complete**: Full military service system with comprehensive menu interface is working and ready for players.
+**Complete**: Full military service system with comprehensive menu interface, battle integration, and town access is working and ready for players.
 
-**Latest Enhancement**: Professional Menu Interface System (Phase 2C) - organized duty/profession selection with detailed descriptions, tier-based access, and streamlined navigation.
+**Latest Enhancement**: Town Access System (Phase 3B) - synthetic outside encounter solution enabling full settlement exploration without crashes.
 
-**Next recommended phase**: Phase 3 (Enhanced Battle Integration) - builds on the solid foundation we've established.
+**Major Breakthroughs**:
+- **Phase 3A**: Army-aware battle participation with real-time detection
+- **Phase 3B**: AI-guided town access solution solving fundamental encounter type issues
+
+**Next recommended phase**: Phase 4 (Extended Equipment System) - builds on the complete military service foundation.
 
 See `docs/Features/` for detailed feature specifications and implementation guidance.

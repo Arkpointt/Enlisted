@@ -169,6 +169,7 @@
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs" />
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs" />
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -25,8 +25,8 @@ Complete military service system where players can:
 - **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system with encounter fixes
 - **Phase 2E**: Battle Commands Integration - ✅ **COMPLETE** - **NEW** - Automatic formation-based command filtering
 - **Phase 2F**: Professional Menu Interface - ✅ **COMPLETE** - **NEW** - Organized duty/profession menus, tier-based access, detailed descriptions
-- **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
-- **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
+- **Phase 3A**: Enhanced Battle Integration - ✅ **COMPLETE** - **NEW** - Army-aware battle participation with real-time detection
+- **Phase 3B**: Town Access System - ✅ **COMPLETE** - **NEW** - Synthetic outside encounter approach for settlement exploration
 - **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
 - **Phase 6**: Polish & Quality of Life - ⏳ **PLANNED** - animations, edge cases, optimization
 
@@ -247,6 +247,8 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Army Operations**: Real-time army information with hierarchy and operational status display
 - **✅ Automatic Battle Commands**: Formation-based command filtering works seamlessly in background with audio cues
 - **✅ Streamlined Menu Navigation**: Removed redundant features, optimized menu order, professional layout
+- **✅ Town Access System**: Synthetic outside encounter approach enables full settlement exploration without assertion crashes
+- **✅ Army Battle Integration**: Army-aware battle participation with automatic army leader following and proper encounter management
 
 ### Veteran Benefits & Progression
 - **Service History**: Track multiple enlistments and achievements across different factions
@@ -582,6 +584,40 @@ private void HandleBattleParticipation(MobileParty main, MobileParty lordParty) 
 
 #### **Key Learning:**
 **Battle participation requires real-time detection**, not just setting `ShouldJoinPlayerBattles = true`. Must actively monitor `lordParty.MapEvent` and enable player when lord enters combat.
+
+### **🔧 Critical Town Access Solution (AI Analysis Breakthrough):**
+
+#### **✅ Synthetic Outside Encounter Pattern:**
+```csharp
+// PROBLEM: Invisible enlisted party never gets proper settlement encounters
+// SOLUTION: Create temporary synthetic encounter for town access
+
+// 1. Temporarily activate party for encounter creation
+bool wasActive = MobileParty.MainParty.IsActive;
+if (!wasActive) MobileParty.MainParty.IsActive = true;
+
+// 2. Create synthetic outside encounter  
+EncounterManager.StartSettlementEncounter(MobileParty.MainParty, settlement);
+
+// 3. Show outside menu (town_outside/castle_outside)
+GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
+
+// 4. Clean up when returning (track with flag)
+if (_syntheticOutsideEncounter) {
+    MobileParty.MainParty.IsActive = false; // Back to invisible state
+    _syntheticOutsideEncounter = false;
+}
+```
+
+#### **❌ What Doesn't Work:**
+- `GameMenu.ActivateGameMenu("town")` directly (wrong encounter type)
+- `EnterSettlementAction.ApplyForParty()` alone (creates LocationEncounter, not TownEncounter)
+- Manual encounter type creation (engine expects natural flow)
+
+#### **✅ Key Insights:**
+- **Invisible enlisted parties** need synthetic encounters for settlement access
+- **Engine creates proper encounter types** only through StartSettlementEncounter
+- **town_outside/castle_outside menus** are the safe entry points, not interior menus
 
 ### **🔧 Final Architecture Guidelines for Future Development:**
 

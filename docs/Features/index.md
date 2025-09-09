@@ -14,6 +14,7 @@ This folder contains functional specifications for major features in the militar
 - **[enlistment.md](enlistment.md)** - Core military service functionality
 - **[battle-commands.md](battle-commands.md)** - **NEW** - Automatic formation-based battle command filtering
 - **[menu-interface.md](menu-interface.md)** - **NEW** - Professional menu system with organized sections and descriptions
+- **[town-access-system.md](town-access-system.md)** - **NEW** - Synthetic outside encounter approach for settlement exploration
 
 ## What Feature Specs Are For
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## Phase 3B: Town Access System (2025-01-26)
+
+### Critical Breakthrough: Synthetic Outside Encounter Solution
+- **✅ AI Analysis Breakthrough**: Solved fundamental encounter type mismatch errors
+- **✅ Synthetic Outside Encounter**: Enables town access for invisible enlisted parties
+- **✅ Complete State Management**: Proper encounter cleanup and restoration
+- **✅ No Assertion Crashes**: Eliminated "LocationEncounter should be TownEncounter" and "Player encounter must be null!" errors
+
+### Technical Solution
+- **✅ Smart Encounter Detection**: Reuses existing encounters when available
+- **✅ Synthetic Encounter Creation**: Creates proper encounters for invisible parties when needed
+- **✅ Complete Cleanup**: Tracks and properly cleans up synthetic encounters on return
+- **✅ Outside Menu Access**: Uses town_outside/castle_outside as safe entry points
+
+### User Experience
+- **✅ Dynamic Button Text**: "Visit Town" vs "Visit Castle" based on settlement type
+- **✅ Smart Button Visibility**: Only appears after lord actually enters settlement
+- **✅ Full Settlement Access**: All town locations (tavern, arena, trade, smithy) work without crashes
+- **✅ Seamless Return**: "Return to Army Camp" available from all settlement menus with proper state restoration
+
+## Phase 3A: Army-Aware Battle Integration (2025-01-26)
+
+### Enhanced Battle Participation
+- **✅ Real-Time Battle Detection**: Monitors lord's MapEvent status for immediate battle participation
+- **✅ Army-Aware Logic**: Handles both individual lord battles and large army battles
+- **✅ Proper Encounter Management**: Uses existing enlisted encounter logic without complex army manipulation
+- **✅ Battle Menu Integration**: "Wait in Reserve" and military options in encounter menus
+
+### Technical Improvements
+- **✅ Reverted Following Logic**: Restored proven direct lord following (no more back-and-forth movement)
+- **✅ Simplified Battle Logic**: Removed complex army leader following that caused pathfinding crashes
+- **✅ Enhanced Logging**: Comprehensive battle state tracking for debugging
+
 ## Phase 2F: Professional Menu Interface System (2025-01-26)
 
 ### Menu System Enhancements
