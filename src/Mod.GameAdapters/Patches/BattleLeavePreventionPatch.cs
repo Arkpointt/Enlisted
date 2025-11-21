@@ -1,3 +1,5 @@
+using System;
+using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
@@ -12,10 +14,47 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	/// in the encounter menu when the player is enlisted, ensuring enlisted soldiers cannot abandon
 	/// their lord during battles. This complements MissionFightEndPatch which prevents leaving during
 	/// actual combat missions.
+	/// Uses reflection to find MapEventHelper since it may be in an obfuscated namespace.
 	/// </summary>
-	[HarmonyPatch(typeof(MapEventHelper), "CanLeaveBattle")]
+	[HarmonyPatch]
 	public class BattleLeavePreventionPatch
 	{
+		/// <summary>
+		/// Uses reflection to find the MapEventHelper.CanLeaveBattle method for patching.
+		/// This is necessary because MapEventHelper may be in an obfuscated namespace.
+		/// </summary>
+		static MethodBase TargetMethod()
+		{
+			try
+			{
+				// Try to find MapEventHelper class - it may be in different namespaces
+				var mapEventHelperType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.MapEventHelper") ??
+				                         AccessTools.TypeByName("Helpers.MapEventHelper");
+				
+				if (mapEventHelperType == null)
+				{
+					ModLogger.Error("BattleLeave", "Could not find MapEventHelper type");
+					return null;
+				}
+				
+				// Find the CanLeaveBattle method
+				var method = AccessTools.Method(mapEventHelperType, "CanLeaveBattle", new[] { typeof(MobileParty) });
+				if (method == null)
+				{
+					ModLogger.Error("BattleLeave", "Could not find CanLeaveBattle method");
+					return null;
+				}
+				
+				ModLogger.Info("BattleLeave", "Successfully found MapEventHelper.CanLeaveBattle for patching");
+				return method;
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("BattleLeave", $"Exception finding MapEventHelper.CanLeaveBattle: {ex.Message}");
+				return null;
+			}
+		}
+
 		/// <summary>
 		/// Prefix method that runs before MapEventHelper.CanLeaveBattle.
 		/// Prevents enlisted players from leaving battles by returning false when they are enlisted.

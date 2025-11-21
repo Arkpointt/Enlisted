@@ -42,6 +42,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             // ModLogger.Debug("EncounterSuppression", "Encounter suppression disabled - IsActive approach used instead");
             return true; // Allow all encounters - suppression handled by IsActive property
 
+#if false
+            // Original logic (disabled - unreachable code):
             // Check if player is enlisted
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted != true)
@@ -109,6 +111,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             // This prevents random encounters while enlisted while allowing battle participation
             ModLogger.Debug("EncounterSuppression", "Suppressed unwanted encounter involving enlisted player party");
             return false;
+#endif
         }
     }
 }

@@ -1,9 +1,13 @@
+using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
