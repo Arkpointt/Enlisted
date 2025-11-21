@@ -169,7 +169,14 @@
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs" />
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs" />
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\BattleLeavePreventionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\FinalizeBattlePatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\MissionFightEndPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\NoHorseSiegePatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml">
