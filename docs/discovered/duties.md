@@ -1,6 +1,6 @@
-# Duties System API Reference - **UPDATED WITH SAS DECOMPILE ANALYSIS**
+# Duties System API Reference - **UPDATED WITH DECOMPILE ANALYSIS**
 
-**Generated from API verification analysis and SAS decompile findings**
+**Generated from API verification analysis and decompile findings**
 
 ## Core Harmony Patch Targets (VERIFIED AVAILABLE)
 
@@ -260,7 +260,7 @@ var config = serializer.Deserialize(File.OpenRead(xmlPath)) as DutiesConfig;
 
 ## Integration Notes
 
-## Critical Missing SAS Features (NOW COVERED)
+## Critical Missing Features (NOW COVERED)
 
 ### 1. Equipment Backup & Restoration System (VERIFIED APIS)
 ```csharp
@@ -331,7 +331,7 @@ TaleWorlds.CampaignSystem.Actions.ChangeKingdomAction :: ApplyByJoinToKingdom(Cl
 TaleWorlds.CampaignSystem.Actions.ChangeOwnerOfSettlementAction :: ApplyByGift(Settlement settlement, Hero newOwner)
 ```
 
-### Complete SAS Feature Coverage (100%)
+### Complete Feature Coverage (100%)
 - ✅ Officer role substitution via MobileParty patches
 - ✅ Equipment kit application via EquipmentHelper  
 - ✅ Equipment backup & restoration system (CRITICAL - prevents equipment loss)
@@ -345,59 +345,58 @@ TaleWorlds.CampaignSystem.Actions.ChangeOwnerOfSettlementAction :: ApplyByGift(S
 ### Implementation Confidence: 100%
 All critical APIs verified and available in modern Bannerlord build.
 
-## Enlisted Menu System (Enhanced over SAS)
+## Enlisted Menu System
 
-### Menu Information Display (Superior to Original SAS)
+### Menu Information Display
 
-**Based on SAS `updatePartyMenu` analysis, our enhanced display includes:**
+**Enhanced menu display with comprehensive information:**
 
 ```csharp
-// Core SAS Information (Matched)
-Lord: Derthert                           // SAS: ✅ Matched
-Faction: Western Empire                  // SAS: ✅ Matched  
-Enlistment Time: 45 days                 // SAS: ✅ Matched
-Enlistment Tier: 4/7 (Specialist)       // SAS: ✅ Enhanced with tier names
-Formation: Heavy Infantry                // SAS: ✅ Enhanced with specialization
-Wage: 150(+25)💰                       // SAS: ✅ Exact format match
-Current Experience: 2400                 // SAS: ✅ Matched
-Next Level Experience: 3500              // SAS: ✅ Matched
+// Core Information
+Lord: Derthert                           
+Faction: Western Empire                  
+Enlistment Time: 45 days                 
+Enlistment Tier: 4/6 (Specialist)       
+Formation: Heavy Infantry                
+Wage: 150(+25)💰                       
+Current Experience: 2400                 
+Next Level Experience: 5000              
 
-// Enhanced Information (Superior to SAS)
-Army: Imperial Legion (Leader: Lucon)    // SAS: Basic | Our: Enhanced with leader info
-Army Strength: 847 troops                // SAS: Missing | Our: NEW real-time army size
-Army Cohesion: 78%                       // SAS: Missing | Our: NEW cohesion tracking
-Specialization: Imperial Legionary       // SAS: Missing | Our: NEW troop type system
-Active Duties: Field Medic, Runner (2/2) // SAS: Single assignment | Our: Multiple duties
-Officer Roles: Surgeon                   // SAS: Missing | Our: NEW officer role display
+// Enhanced Information
+Army: Imperial Legion (Leader: Lucon)    // Enhanced with leader info
+Army Strength: 847 troops                // Real-time army size
+Army Cohesion: 78%                       // Cohesion tracking
+Specialization: Imperial Legionary       // Troop type system
+Active Duties: Field Medic, Runner (2/2) // Multiple duties
+Officer Roles: Surgeon                   // Officer role display
 
-// Dynamic Objectives (Enhanced)
-Army Objective: Besieging Charas         // SAS: Basic | Our: Enhanced with army hierarchy
-Party Objective: Following Legion        // SAS: Basic | Our: Enhanced with detailed status
+// Dynamic Objectives
+Army Objective: Besieging Charas         // Enhanced with army hierarchy
+Party Objective: Following Legion        // Detailed status
 
 When not fighting: You serve as field medic, treating wounded soldiers and maintaining party health. You also perform runner duties for enhanced party morale.
-// SAS: Single assignment description | Our: Combined duties description
+// Combined duties description
 ```
 
-### Menu Persistence & Behavior (Enhanced over SAS)
+### Menu Persistence & Behavior
 
 ```csharp
-// SAS Behavior: Aggressive menu forcing + harsh settlement auto-exit
-// Our Behavior: Smart menu management + user-friendly settlement handling
+// Smart menu management + user-friendly settlement handling
 
 private void OnHourlyTick()
 {
     if (IsEnlisted && _enlistedLord?.PartyBelongedTo != null)
     {
-        // Ensure enlisted menu active (like SAS)
+        // Ensure enlisted menu active
         if (Campaign.Current.CurrentMenuContext == null)
         {
             GameMenu.ActivateGameMenu("enlisted_status");
         }
         
-        // Smart settlement handling (enhanced over SAS harsh auto-exit)
+        // Smart settlement handling
         HandleSettlementIntegration();
         
-        // Position sync and army hierarchy (enhanced over SAS basic following)
+        // Position sync and army hierarchy
         HandleArmyHierarchy();
         
         // Maintain military formation
@@ -420,7 +419,7 @@ private void HandleSettlementIntegration()
         }
         else
         {
-            // Villages/castles - exit immediately like SAS
+            // Villages/castles - exit immediately
             LeaveSettlementAction.ApplyForParty(MobileParty.MainParty);
             GameMenu.ActivateGameMenu("enlisted_status");
         }
@@ -428,18 +427,15 @@ private void HandleSettlementIntegration()
 }
 ```
 
-### Menu Options (Superior to SAS)
+### Menu Options
 
 ```csharp
-// Our Menu Options vs. SAS
-1. "Manage duties (2/2)" - NEW: Multi-duty system vs. SAS single assignment change
-2. "Specialization: Imperial Legionary" - NEW: Troop type system  
-3. "View current troop assignment" - Enhanced: Shows selected troop identity and authentic equipment
-4. "Request retirement from service" - Enhanced: Equipment choice vs. SAS basic retirement
-5. "Continue" - Matched: Same as SAS
-
-// SAS had: "Ask for different assignment" (basic)
-// We have: "Manage duties" (advanced multi-duty system)
+// Menu Options
+1. "Manage duties (2/2)" - Multi-duty system
+2. "Specialization: Imperial Legionary" - Troop type system  
+3. "View current troop assignment" - Shows selected troop identity and authentic equipment
+4. "Request retirement from service" - Equipment choice on retirement
+5. "Continue" - Standard menu option
 ```
 
 ### Real-Time Updates (Enhanced)
@@ -501,13 +497,13 @@ public override void SyncData(IDataStore dataStore)
 }
 ```
 
-**ALL SAS functionality replicated with 100% API coverage + SAS timing discoveries:**
+**All functionality implemented with 100% API coverage:**
 
-### **🚨 CRITICAL SAS TIMING DISCOVERIES** - **100% VERIFIED**
+### **🚨 CRITICAL TIMING DISCOVERIES** - **100% VERIFIED**
 - **Real-Time Enforcement**: `CampaignEvents.TickEvent` ✅ **VERIFIED EXISTS** - continuous state management
 - **Immediate Menu System**: `AddWaitGameMenu()` ✅ **VERIFIED EXISTS** - zero gap approach  
 - **Engine-Level Prevention**: `MobileParty.IsActive` ✅ **VERIFIED EXISTS** - prevents encounters without patches
 - **Dynamic Army Management**: `new Army()`, `AddPartyToMergedParties()` ✅ **ALL VERIFIED** - battle participation APIs
 - **AI Battle Commands**: `SetMoveEngageParty()` ✅ **VERIFIED EXISTS** - battle engagement control
 
-**Complete SAS approach verified and ready for implementation - ZERO API blockers.**
+**Complete approach verified and ready for implementation - ZERO API blockers.**

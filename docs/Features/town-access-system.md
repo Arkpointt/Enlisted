@@ -140,4 +140,4 @@ GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
 - Manual encounter type creation (engine validation failures)  
 - Mixed pattern approaches (incomplete state management)
 
-This system enables the **exact town access functionality** that made SAS popular while avoiding all the assertion crashes and state conflicts.
+This system enables full town access functionality for enlisted soldiers while avoiding assertion crashes and state conflicts.

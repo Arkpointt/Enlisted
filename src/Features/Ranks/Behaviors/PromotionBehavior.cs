@@ -7,6 +7,7 @@ using TaleWorlds.Localization;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Assignments.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Features.Ranks.Behaviors
@@ -25,9 +26,6 @@ namespace Enlisted.Features.Ranks.Behaviors
         // Promotion tracking
         private CampaignTime _lastPromotionCheck = CampaignTime.Zero;
         private bool _formationSelectionPending = false;
-        
-        // 1-year progression system (SAS enhanced)
-        private readonly int[] _tierXPRequirements = { 0, 500, 2000, 5000, 10000, 18000 };
         
         public PromotionBehavior()
         {
@@ -52,11 +50,14 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
         
         /// <summary>
-        /// Hourly tick to check for promotion eligibility (matches original SAS responsiveness).
+        /// Hourly tick handler that checks for promotion eligibility once per in-game hour.
+        /// This provides responsive promotion detection without checking every frame,
+        /// allowing players to see promotions shortly after reaching XP thresholds.
         /// </summary>
         private void OnHourlyTick()
         {
-            // Check every hour for immediate promotion response like SAS
+            // Check every hour for promotion eligibility
+            // This provides immediate response when XP thresholds are reached
             _lastPromotionCheck = CampaignTime.Now;
             CheckForPromotion();
         }
@@ -80,13 +81,22 @@ namespace Enlisted.Features.Ranks.Behaviors
                 
                 bool promoted = false;
                 
-                // SAS-style immediate promotion: keep promoting while XP thresholds are met
-                while (currentTier < 6 && currentXP >= _tierXPRequirements[currentTier])
+                // Load tier XP requirements from progression_config.json
+                // The requirements array contains XP thresholds needed to promote from each tier to the next
+                var tierXPRequirements = Assignments.Core.ConfigurationManager.GetTierXPRequirements();
+                
+                // Get the maximum tier allowed to prevent promoting beyond tier 6
+                int maxTier = tierXPRequirements.Length > 1 ? tierXPRequirements.Length - 1 : 1;
+                
+                // Check if the player has enough XP for promotion, and continue promoting
+                // if they've accumulated enough XP for multiple tiers at once
+                // This ensures players get all promotions they've earned immediately
+                while (currentTier < maxTier && currentXP >= tierXPRequirements[currentTier])
                 {
                     currentTier++;
                     promoted = true;
                     
-                    // Update enlistment tier immediately
+                    // Update enlistment tier immediately to reflect the promotion
                     enlistment.SetTier(currentTier);
                     
                     ModLogger.Info("Promotion", $"Promoted to Tier {currentTier}");
@@ -205,22 +215,28 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return Equipment.Behaviors.FormationType.Infantry; // Default fallback
                 }
                 
-                // SAS formation detection logic
+                // Detect military formation based on equipment characteristics
+                // The formation type is determined by whether the character uses ranged weapons
+                // and whether they are mounted, creating four distinct categories:
+                // - Horse Archer: Ranged weapon + Mount
+                // - Cavalry: Melee weapon + Mount
+                // - Archer: Ranged weapon + No mount
+                // - Infantry: Melee weapon + No mount (default)
                 if (characterObject.IsRanged && characterObject.IsMounted)
                 {
-                    return Equipment.Behaviors.FormationType.HorseArcher;   // Bow + Horse
+                    return Equipment.Behaviors.FormationType.HorseArcher;
                 }
                 else if (characterObject.IsMounted)
                 {
-                    return Equipment.Behaviors.FormationType.Cavalry;       // Sword + Horse  
+                    return Equipment.Behaviors.FormationType.Cavalry;
                 }
                 else if (characterObject.IsRanged)
                 {
-                    return Equipment.Behaviors.FormationType.Archer;        // Bow + No Horse
+                    return Equipment.Behaviors.FormationType.Archer;
                 }
                 else
                 {
-                    return Equipment.Behaviors.FormationType.Infantry;      // Sword + No Horse (default)
+                    return Equipment.Behaviors.FormationType.Infantry;
                 }
             }
             catch

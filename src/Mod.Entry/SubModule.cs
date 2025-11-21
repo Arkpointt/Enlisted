@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Encounters;
+using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Features.Conversations.Behaviors;
@@ -15,71 +18,211 @@ using Enlisted.Features.Combat.Behaviors;
 
 namespace Enlisted.Mod.Entry
 {
+	/// <summary>
+	/// Defers action execution to the next game frame to prevent race conditions during game state transitions.
+	/// The RGL (Rendering Graphics Library) skeleton system performs time-based updates during encounter exits.
+	/// Executing menu transitions or state changes during these updates can cause assertion failures because
+	/// the system expects a non-zero time delta, but rapid re-entrant calls can create zero-delta situations.
+	/// By deferring actions, we ensure they execute after the critical update phase completes.
+	/// </summary>
+	public static class NextFrameDispatcher
+	{
+		private static readonly Queue<Action> _nextFrame = new();
+		
+		/// <summary>
+		/// Queues an action to execute on the next game frame tick instead of immediately.
+		/// Used for menu activations, encounter finishing, and other state transitions that must occur
+		/// after the current frame's critical updates complete. This prevents timing conflicts with
+		/// the game's internal systems during state transitions.
+		/// </summary>
+		/// <param name="action">The action to execute on the next frame. Null actions are ignored.</param>
+		public static void RunNextFrame(Action action)
+		{
+			if (action != null)
+			{
+				_nextFrame.Enqueue(action);
+			}
+		}
+		
+		/// <summary>
+		/// Executes all queued deferred actions, processing them in order.
+		/// Called automatically by the Harmony patch on Campaign.Tick() after the native tick completes.
+		/// Actions are processed one at a time, with errors isolated so a single failure doesn't prevent
+		/// subsequent actions from executing.
+		/// </summary>
+		public static void ProcessNextFrame()
+		{
+			while (_nextFrame.Count > 0)
+			{
+				try
+				{
+					_nextFrame.Dequeue()?.Invoke();
+				}
+				catch (Exception ex)
+				{
+					ModLogger.Error("NextFrameDispatcher", $"Error processing next frame action: {ex.Message}");
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Checks whether the game is currently processing an encounter or battle event.
+		/// Returns true if a player encounter exists or the main party is in a map event (battle/siege).
+		/// Used to prevent state modifications during critical game events when the system is updating
+		/// encounter state, battle positions, or other time-sensitive game logic.
+		/// </summary>
+		/// <returns>True if the game is busy with encounters or battles, false otherwise.</returns>
+		public static bool Busy()
+		{
+			// The MapEvent property exists on Party, not directly on MobileParty
+			// This is the correct API structure for checking battle state
+			return PlayerEncounter.Current != null || MobileParty.MainParty?.Party.MapEvent != null;
+		}
+	}
+
 	public class SubModule : MBSubModuleBase
 	{
 		private Harmony _harmony;
 		private ModSettings _settings;
 
-		protected override void OnSubModuleLoad()
+		/// <summary>
+	/// Called when the mod module is first loaded by Bannerlord, before any game starts.
+	/// Initializes logging system and applies Harmony patches to game methods.
+	/// This happens once per game session, not per save game.
+	/// </summary>
+	protected override void OnSubModuleLoad()
 		{
 			try
 			{
+				// Initialize logging system before anything else so we can log initialization
 				ModLogger.Initialize();
 				ModLogger.Info("Bootstrap", "SubModule loading");
 
+				// Create Harmony instance with unique identifier to avoid conflicts with other mods
+				// PatchAll() automatically discovers and applies all [HarmonyPatch] attributes in the assembly
 				_harmony = new Harmony("com.enlisted.mod");
 				_harmony.PatchAll();
 				ModLogger.Info("Bootstrap", "Harmony patched");
 			}
 			catch (Exception ex)
 			{
+				// If patching fails, log the error but don't crash the game
+				// The mod may still function partially without patches, and crashing would prevent the player from playing
 				ModLogger.Error("Bootstrap", "Exception during OnSubModuleLoad", ex);
-				// Fail closed: do not crash the game on load; continue without patches.
 			}
 		}
 
-		protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
+		/// <summary>
+	/// Called when a new game starts or when loading a save game.
+	/// Registers all campaign behaviors that manage the military service system throughout the campaign.
+	/// Campaign behaviors receive events from the game (hourly ticks, daily ticks, party encounters, etc.)
+	/// and can modify game state in response. They persist across save/load and are serialized automatically.
+	/// </summary>
+	/// <param name="game">The game instance being started.</param>
+	/// <param name="gameStarterObject">Provides methods to register campaign behaviors and game menus.</param>
+	protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
 		{
 			try
 			{
 				ModLogger.Info("Bootstrap", "Game start");
+				
+				// Load mod settings from JSON configuration file in ModuleData folder
+				// Settings control logging verbosity, encounter suppression, and other mod behaviors
 				_settings = ModSettings.LoadFromModule();
 				ModConfig.Settings = _settings;
 
 				if (gameStarterObject is CampaignGameStarter campaignStarter)
 				{
-					// Core military service behaviors
+					// Core enlistment system: tracks which lord the player serves, manages enlistment state,
+					// handles party following, battle participation, and leave/temporary absence
 					campaignStarter.AddBehavior(new EnlistmentBehavior());
+					
+					// Conversation system: adds dialog options to talk with lords about enlistment,
+					// service status, promotions, and requesting leave
 					campaignStarter.AddBehavior(new EnlistedDialogManager());
+					
+					// Duties system: manages military assignments (duties and professions) that provide
+					// daily skill XP, wage multipliers, and officer role assignments
 					campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
 					
-					// Enhanced menu and input system
+					// Menu system: provides the main enlisted status menu and duty/profession selection interface
+					// Handles menu state transitions, battle detection, and settlement access
 					campaignStarter.AddBehavior(new EnlistedMenuBehavior());
+					
+					// Input handler: manages keyboard shortcuts for accessing menus and checking promotion status
 					campaignStarter.AddBehavior(new EnlistedInputHandler());
 					
-					// Phase 2B: Troop selection and equipment replacement system
+					// Troop selection: allows players to choose which troop type to represent during service,
+					// which determines formation (Infantry/Cavalry/Archer/Horse Archer) and equipment access
 					campaignStarter.AddBehavior(new TroopSelectionManager());
+					
+					// Equipment management: handles equipment backups and restoration when leaving service,
+					// ensures players get their personal gear back when they end their enlistment
 					campaignStarter.AddBehavior(new EquipmentManager());
+					
+					// Promotion system: checks XP thresholds hourly and promotes players through military ranks
+					// Triggers formation selection at tier 2 and handles promotion notifications
 					campaignStarter.AddBehavior(new PromotionBehavior());
 					
-					// Quartermaster system for equipment variant management
+					// Quartermaster system: manages equipment variant selection when players can choose
+					// between different equipment sets at their tier level
 					campaignStarter.AddBehavior(new QuartermasterManager());
+					
+					// Quartermaster UI: provides the grid-based equipment selection interface where players
+					// can click on individual equipment pieces to see stats and select variants
 					campaignStarter.AddBehavior(new Features.Equipment.UI.QuartermasterEquipmentSelectorBehavior());
 					
-					// Battle integration system
+					// Battle encounter system: detects when the lord enters battle and handles player participation,
+					// manages menu transitions during battles, and provides battle wait menu options
 					campaignStarter.AddBehavior(new EnlistedEncounterBehavior());
 					
+					// Encounter guard: utility system for managing player party attachment and encounter transitions
+					// Initializes static helper methods used throughout the enlistment system
 					EncounterGuard.Initialize();
-					ModLogger.Info("Bootstrap", "Military service behaviors registered (with Phase 2B troop selection system)");
+					ModLogger.Info("Bootstrap", "Military service behaviors registered successfully");
 				}
 			}
 			catch (Exception ex)
 			{
+				// If behavior registration fails, log the error but allow the game to continue
+				// Some behaviors may still be registered if the failure occurs partway through
 				ModLogger.Error("Bootstrap", "Exception during OnGameStart", ex);
-				// Fail closed: avoid crashing startup; behaviors may be partially unavailable.
 			}
 		}
 		
+	}
+	
+	/// <summary>
+	/// Harmony patch that hooks into Campaign.Tick() to process deferred actions on the next frame.
+	/// Campaign.Tick() runs every frame of the campaign map and handles all campaign-level updates.
+	/// By executing in Postfix, we run after the native tick completes, ensuring game state is stable.
+	/// </summary>
+	[HarmonyPatch(typeof(Campaign), "Tick")]
+	public static class NextFrameDispatcherPatch
+	{
+		/// <summary>
+		/// Called after Campaign.Tick() completes each frame.
+		/// Processes any actions that were deferred to avoid timing conflicts during game state transitions.
+		/// Does not process deferred actions if a player encounter is currently active, as the encounter
+		/// exit sequence involves time-sensitive skeleton updates that must complete uninterrupted.
+		/// </summary>
+		static void Postfix()
+		{
+			// If the player is currently in an encounter (paying tribute, being attacked, etc.),
+			// the game's encounter exit sequence is updating character positions and animations.
+			// The RGL skeleton system requires a positive time delta for these updates. If we trigger
+			// menu transitions or state changes during this critical update phase, we can create
+			// a zero-delta-time situation that causes assertion failures in the rendering system.
+			// We skip processing during encounters and let the native system finish the encounter exit.
+			// Deferred actions will be processed on the next frame after the encounter fully completes.
+			if (PlayerEncounter.Current != null)
+			{
+				return;
+			}
+			
+			// Safe to process deferred actions now - no active encounter means no timing conflicts
+			NextFrameDispatcher.ProcessNextFrame();
+		}
 	}
 }
 

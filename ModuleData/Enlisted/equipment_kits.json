@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "enabled": false,
-  "_deprecated": "SYSTEM CHANGE: Switched to SAS troop selection approach - custom equipment kits no longer used",
+  "_deprecated": "SYSTEM CHANGE: Switched to troop selection approach using real game troops - custom equipment kits no longer used",
   "_new_system": "Players select from real Bannerlord troops; equipment extracted from CharacterObject.BattleEquipments",
   "troop_selection_system": {
     "_description": "NEW SYSTEM: Players choose from real Bannerlord troops instead of custom kits",

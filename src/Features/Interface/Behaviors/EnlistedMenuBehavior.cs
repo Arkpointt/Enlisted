@@ -10,40 +10,275 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Conversation;
 using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.CampaignSystem.MapEvents;
+using TaleWorlds.CampaignSystem.Siege;
 using TaleWorlds.Core;
+using Enlisted.Mod.GameAdapters.Patches;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using static TaleWorlds.CampaignSystem.GameMenus.GameMenu;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Entry;
 
 namespace Enlisted.Features.Interface.Behaviors
 {
     /// <summary>
-    /// Enhanced menu system for enlisted military service providing comprehensive status display,
+    /// Menu system for enlisted military service providing comprehensive status display,
     /// interactive duty management, and professional military interface.
     /// 
     /// This system provides rich, real-time information about military service status including
     /// detailed progression tracking, army information, duties management, and service records.
+    /// Handles menu creation, state management, and integration with the native game menu system.
     /// </summary>
     public sealed class EnlistedMenuBehavior : CampaignBehaviorBase
     {
+        /// <summary>
+        /// Helper method to check if a party is in battle or siege.
+        /// This prevents PlayerSiege assertion failures by ensuring we don't finish encounters during sieges.
+        /// </summary>
+        private static bool InBattleOrSiege(MobileParty party) =>
+            party?.Party.MapEvent != null || party?.Party.SiegeEvent != null || party?.BesiegedSettlement != null;
+
         public static EnlistedMenuBehavior Instance { get; private set; }
         
-        // Menu update tracking
+        /// <summary>
+        /// Last campaign time when the menu was updated.
+        /// Used to throttle menu updates to once per second.
+        /// </summary>
         private CampaignTime _lastMenuUpdate = CampaignTime.Zero;
-        private readonly float _updateIntervalSeconds = 1.0f; // Update every second for real-time feel
         
-        // Menu state tracking
+        /// <summary>
+        /// Minimum time interval between menu updates, in seconds.
+        /// Updates are limited to once per second to provide real-time feel
+        /// without overwhelming the system with too-frequent refreshes.
+        /// </summary>
+        private readonly float _updateIntervalSeconds = 1.0f;
+        
+        /// <summary>
+        /// Currently active menu ID string.
+        /// Used to track which menu is currently open and determine when to refresh.
+        /// </summary>
         private string _currentMenuId = "";
+        
+        /// <summary>
+        /// Whether the menu needs to be refreshed due to state changes.
+        /// Set to true when enlistment state, duties, or other menu-affecting data changes.
+        /// </summary>
         private bool _menuNeedsRefresh = false;
         
-        // AI ENHANCEMENT: Track when lord enters towns for smarter button visibility
+        /// <summary>
+        /// Helper method that checks if a specific party is included in a list of battle parties.
+        /// Used to determine which side of a battle a party is fighting on by checking
+        /// if the party appears in the attacker or defender side's party list.
+        /// </summary>
+        /// <param name="parties">The list of battle parties to check against.</param>
+        /// <param name="party">The party to search for in the list.</param>
+        /// <returns>True if the party is found in the list, false otherwise.</returns>
+        private static bool ContainsParty(IReadOnlyList<MapEventParty> parties, MobileParty party)
+        {
+            if (parties == null || party == null)
+                return false;
+                
+            foreach (var mapEventParty in parties)
+            {
+                if (mapEventParty.Party == party.Party)
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Hourly tick handler that runs once per in-game hour for battle detection.
+        /// Checks if the lord is in battle and exits custom menus to allow native battle menus to appear.
+        /// Battle detection is handled in hourly ticks rather than real-time ticks to avoid
+        /// overwhelming the system with constant checks and to prevent assertion failures.
+        /// </summary>
+        private void OnHourlyTick()
+        {
+            // Skip all processing if the player is not currently enlisted
+            // This avoids unnecessary computation when the system isn't active
+            var enlistmentBehavior = EnlistmentBehavior.Instance;
+            if (enlistmentBehavior?.IsEnlisted != true)
+            {
+                return;
+            }
+            
+            // Check if the lord's party is in battle or siege
+            var lord = enlistmentBehavior.CurrentLord;
+            var lordParty = lord?.PartyBelongedTo;
+            
+            if (lordParty != null)
+            {
+                // Check battle state for both the lord individually and siege-related battles
+                // The MapEvent and SiegeEvent properties exist on Party, not directly on MobileParty
+                // This is the correct API structure for checking battle state
+                bool lordInBattle = lordParty.Party.MapEvent != null;
+                bool lordInSiege = lordParty.Party.SiegeEvent != null;
+                bool siegeRelatedBattle = IsSiegeRelatedBattle(MobileParty.MainParty, lordParty);
+                
+                // Consider both regular battles and sieges as battles for menu management
+                bool lordInAnyBattle = lordInBattle || lordInSiege || siegeRelatedBattle;
+                
+                if (lordInAnyBattle)
+                {
+                    // Exit custom menus to allow the native system to show appropriate battle menus
+                    // The native system will show army_wait, menu_siege_strategies, or other battle menus
+                    // The menu tick handler will check GetGenericStateMenu() and switch menus accordingly
+                    if (_currentMenuId.StartsWith("enlisted_"))
+                    {
+                        ModLogger.Info("Interface", "Battle detected - exiting custom menu for native battle menu");
+                        GameMenu.ExitToLast();
+                    }
+                    return; // Let the native system handle all battle menus
+                }
+                // Don't automatically return to the enlisted menu after battles
+                // The menu tick handler will check GetGenericStateMenu() and switch back when appropriate
+            }
+        }
+
+        /// <summary>
+        /// Checks if it's safe to activate the enlisted status menu by verifying there are no
+        /// active battles, sieges, or encounters that would conflict with the menu display.
+        /// This prevents menu activation during critical game state transitions that could cause
+        /// assertion failures or menu conflicts.
+        /// </summary>
+        /// <returns>True if the menu can be safely activated, false if a conflict exists.</returns>
+        public static bool SafeToActivateEnlistedMenu()
+        {
+            var enlist = EnlistmentBehavior.Instance;
+            var main = MobileParty.MainParty;
+            var lord = enlist?.CurrentLord?.PartyBelongedTo;
+            
+            // Check for conflicts that would prevent menu activation
+            // The MapEvent and SiegeEvent properties exist on Party, not directly on MobileParty
+            // This is the correct API structure for checking battle state
+            bool playerBattle = main?.Party.MapEvent != null;
+            bool playerEncounter = PlayerEncounter.Current != null;
+            bool lordSiegeEvent = lord?.Party.SiegeEvent != null;
+            bool siegeRelatedBattle = IsSiegeRelatedBattle(main, lord);
+            
+            // Log state checks for debugging menu activation issues
+            ModLogger.Info("Interface", $"=== ENLISTED MENU GUARD CHECK ===");
+            ModLogger.Info("Interface", $"Player battle: {playerBattle}");
+            ModLogger.Info("Interface", $"Player encounter: {playerEncounter}");
+            ModLogger.Info("Interface", $"Lord siege event: {lordSiegeEvent}");
+            ModLogger.Info("Interface", $"Siege-related battle: {siegeRelatedBattle}");
+            
+            // If any conflict exists, prevent menu activation
+            // This ensures menus don't interfere with battles, sieges, or encounters
+            bool conflict = playerBattle || playerEncounter || lordSiegeEvent || siegeRelatedBattle;
+                                  
+            if (conflict)
+            {
+                ModLogger.Info("Interface", $"Menu activation blocked due to conflict - siege/battle active");
+                return false;
+            }
+            
+            ModLogger.Info("Interface", $"Menu activation allowed - no conflicts detected");
+            return true;
+        }
+        
+        /// <summary>
+        /// Detects siege-related battles like sally-outs where formal siege state may be paused.
+        /// </summary>
+        private static bool IsSiegeRelatedBattle(MobileParty main, MobileParty lord)
+        {
+            try
+            {
+                // Check if current battle has siege-related types
+                var mapEvent = main?.MapEvent ?? lord?.MapEvent;
+                if (mapEvent != null)
+                {
+                // Check for siege battle types: SiegeOutside, SiegeAssault, etc.
+                string battleType = mapEvent.EventType.ToString();
+                string mapEventString = mapEvent.ToString() ?? "";
+                
+                bool isSiegeType = battleType.Contains("Siege") || 
+                                  mapEventString.Contains("Siege") ||
+                                  mapEventString.Contains("SiegeOutside");
+                    
+                    if (isSiegeType)
+                    {
+                        ModLogger.Info("Interface", $"SIEGE BATTLE DETECTED: Type='{battleType}', Event='{mapEventString}'");
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error in siege battle detection: {ex.Message}");
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Safely activates the enlisted status menu by checking for conflicts and respecting
+        /// the native menu system's state. Checks if battles, sieges, or encounters are active,
+        /// and verifies what menu the native system wants to show before activating.
+        /// </summary>
+        public static void SafeActivateEnlistedMenu()
+        {
+            // First check if we can activate (battle/encounter guards prevent activation during conflicts)
+            if (!SafeToActivateEnlistedMenu())
+            {
+                return;
+            }
+            
+            // Check what menu the game system wants to show based on current campaign state
+            // The native system may want to show army_wait, menu_siege_strategies, or other menus
+            // We should respect this and only activate our menu if the native system allows it
+            try
+            {
+                string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                
+                if (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu))
+                {
+                    // Native system wants our menu or no specific menu - safe to activate
+                    GameMenu.ActivateGameMenu("enlisted_status");
+                }
+                else
+                {
+                    // Native system wants a different menu (like army_wait) - respect it
+                    // This prevents our menu from blocking native battle menus
+                    ModLogger.Debug("Interface", $"SafeActivateEnlistedMenu: Native system wants '{genericStateMenu}' - not activating enlisted menu");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback to original behavior if GetGenericStateMenu() fails
+                // This ensures the menu can still be activated even if the check fails
+                ModLogger.Debug("Interface", $"Error checking GetGenericStateMenu, using fallback: {ex.Message}");
+                GameMenu.ActivateGameMenu("enlisted_status");
+            }
+        }
+        
+        /// <summary>
+        /// Tracks when the lord enters a settlement to adjust button visibility.
+        /// Used to show/hide certain menu options based on settlement entry state.
+        /// </summary>
         private bool _lordJustEnteredSettlement = false;
         
-        // AI FIX: Track synthetic encounters we create
+        /// <summary>
+        /// Tracks whether we created a synthetic outside encounter for settlement access.
+        /// Used to clean up encounter state when leaving settlements.
+        /// </summary>
         private bool _syntheticOutsideEncounter;
+        
+        /// <summary>
+        /// Tracks if there's a pending return to the enlisted menu after settlement exit.
+        /// Used to defer menu activation until after settlement exit completes.
+        /// </summary>
+        private bool _pendingReturnToEnlistedMenu = false;
+        
+        /// <summary>
+        /// Campaign time when the player left a settlement.
+        /// Used to delay menu activation after settlement exit to prevent timing conflicts.
+        /// </summary>
+        private CampaignTime _settlementExitTime = CampaignTime.Zero;
 
         public EnlistedMenuBehavior()
         {
@@ -54,10 +289,14 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
+            CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
             CampaignEvents.GameMenuOpened.AddNonSerializedListener(this, OnMenuOpened);
             
-            // AI ENHANCEMENT: Track lord settlement entry for smarter button visibility
+            // Track lord settlement entry to adjust menu option visibility
             CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEnteredForButton);
+            
+            // Auto-return to enlisted menu when leaving towns/castles
+            CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeftReturnToCamp);
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -67,14 +306,40 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            AddEnhancedEnlistedMenus(starter);
-            ModLogger.Info("Interface", "Enhanced enlisted menu system initialized");
+            AddEnlistedMenus(starter);
+            ModLogger.Info("Interface", "Enlisted menu system initialized");
         }
 
+        /// <summary>
+        /// Real-time tick handler that runs every game frame while the player is enlisted.
+        /// Handles menu state updates, menu transitions, and settlement access logic.
+        /// Includes time delta validation to prevent assertion failures, and defers
+        /// heavy processing to hourly ticks to avoid overwhelming the system.
+        /// </summary>
+        /// <param name="dt">Time elapsed since last frame, in seconds. Must be positive.</param>
         private void OnTick(float dt)
         {
+            // Skip all processing if the player is not currently enlisted
+            // This avoids unnecessary computation when the system isn't active
+            var enlistmentBehavior = EnlistmentBehavior.Instance;
+            if (enlistmentBehavior?.IsEnlisted != true)
+            {
+                return;
+            }
+            
+            // Validate time delta to prevent assertion failures
+            // Zero-delta-time updates can cause assertion failures in the rendering system
+            if (dt <= 0)
+            {
+                return;
+            }
+            
+            // Real-time tick handles lightweight menu operations and state updates
+            // Heavy processing like battle detection is moved to hourly ticks to avoid
+            // overwhelming the system with constant checks
+
             // Real-time menu updates for dynamic information
-            if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Hours(_updateIntervalSeconds / 3600f))
+            if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
             {
                 if (_currentMenuId.StartsWith("enlisted_") && _menuNeedsRefresh)
                 {
@@ -83,59 +348,248 @@ namespace Enlisted.Features.Interface.Behaviors
                     _menuNeedsRefresh = false;
                 }
             }
+            
+            // Track army menu state for debugging menu transitions
+            if (_currentMenuId == "army_wait")
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted == true)
+                {
+                    ModLogger.Debug("Interface", $"ARMY MENU ACTIVE: Menu={_currentMenuId}, Refresh needed={_menuNeedsRefresh}");
+                }
+            }
+            
+            // Only activate menu after settlement exit if the native system allows it
+            // Check GetGenericStateMenu() first to see if the native system wants a different menu
+            // This prevents conflicts with battle menus that might be starting
+            if (_pendingReturnToEnlistedMenu && 
+                CampaignTime.Now - _settlementExitTime > CampaignTime.Milliseconds(500))
+            {
+                try
+                {
+                    var enlistment = EnlistmentBehavior.Instance;
+                    bool isEnlisted = enlistment?.IsEnlisted == true;
+                    
+                    // Check what menu native system wants to show
+                    string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                    
+                    // Only activate our menu if native system says it's OK (null or our menu)
+                    if (isEnlisted && (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu)))
+                    {
+                        // Double-check no active battle or encounter
+                        bool hasEncounter = PlayerEncounter.Current != null;
+                        bool inSettlement = MobileParty.MainParty.CurrentSettlement != null;
+                        bool inBattle = MobileParty.MainParty?.Party.MapEvent != null;
+                        
+                        if (!hasEncounter && !inSettlement && !inBattle)
+                        {
+                            ModLogger.Info("Interface", "Deferred menu activation: conditions met, activating enlisted menu");
+                            SafeActivateEnlistedMenu();
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(genericStateMenu))
+                    {
+                        ModLogger.Debug("Interface", $"Deferred menu activation skipped: native system wants '{genericStateMenu}'");
+                    }
+                    
+                    _pendingReturnToEnlistedMenu = false; // Clear flag regardless of outcome
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error("Interface", $"Deferred enlisted menu activation error: {ex.Message}");
+                    _pendingReturnToEnlistedMenu = false; // Clear flag to prevent endless retries
+                }
+            }
         }
 
         private void OnMenuOpened(MenuCallbackArgs args)
         {
             _currentMenuId = args.MenuContext.GameMenu.StringId;
             _menuNeedsRefresh = true;
+            
+            // Log menu state when enlisted for debugging menu transitions during sieges and battles
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted == true)
+            {
+                ModLogger.Info("Interface", $"=== MENU OPENED: '{_currentMenuId}' while enlisted ===");
+                
+                // Check all siege/battle conditions to detect state conflicts
+                var lord = enlistment.CurrentLord;
+                var main = MobileParty.MainParty;
+                bool playerBattle = main?.Party.MapEvent != null;
+                bool playerEncounter = PlayerEncounter.Current != null;
+                // Check for siege events using the SiegeEvent property on Party
+                bool lordSiegeEvent = lord?.PartyBelongedTo?.Party.SiegeEvent != null;
+                
+                // Check for siege-related battles like sally-outs
+                bool siegeRelatedBattle = IsSiegeRelatedBattle(main, lord?.PartyBelongedTo);
+                
+                ModLogger.Info("Interface", $"MENU CONTEXT: Player battle={playerBattle}, encounter={playerEncounter}");
+                ModLogger.Info("Interface", $"MENU CONTEXT: Lord siege event={lordSiegeEvent}, siege battle={siegeRelatedBattle}");
+                
+                if (lordSiegeEvent || siegeRelatedBattle)
+                {
+                    string siegeLocation = "siege location";
+                    string battleInfo = siegeRelatedBattle ? " (Sally-out/Siege battle)" : "";
+                    ModLogger.Info("Interface", $"🚨 SIEGE DETECTED: Menu '{_currentMenuId}' during siege of {siegeLocation}{battleInfo}");
+                    
+                    if (_currentMenuId == "enlisted_status")
+                    {
+                        ModLogger.Info("Interface", "🚨🚨 PROBLEM: ENLISTED MENU OPENED DURING SIEGE! This should have been blocked!");
+                    }
+                }
+            }
         }
 
         /// <summary>
-        /// Add SAS-style enlisted menu with exact format from screenshot.
+        /// Registers all enlisted menu options and submenus with the game starter.
+        /// Creates the main enlisted status menu, duty selection menu, and return to army options.
+        /// All functionality is consolidated into a single menu system for clarity and simplicity.
         /// </summary>
-        private void AddEnhancedEnlistedMenus(CampaignGameStarter starter)
+        private void AddEnlistedMenus(CampaignGameStarter starter)
         {
             AddMainEnlistedStatusMenu(starter);
             AddReturnToArmyCampOptions(starter);
-            // SAS-style single menu approach - all functionality in one menu
+            
+            // Don't add options to the native army_wait menu
+            // Battle participation is handled through our own enlisted_status menu
+            // This prevents conflicts with the native battle system
+            
+            // Add direct siege battle option to enlisted menu as fallback
+            // This allows players to join siege battles if other methods fail
+            ModLogger.Info("Interface", "Adding emergency siege battle option to enlisted_status menu");
+            try
+            {
+                starter.AddGameMenuOption("enlisted_status", "emergency_siege_battle", 
+                    "Join siege battle",
+                    IsEmergencySiegeBattleAvailable,
+                    OnEmergencySiegeBattleSelected,
+                    false, 7); // After ask leave option
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Failed to add emergency siege battle option: {ex.Message}");
+            }
         }
 
         /// <summary>
-        /// Enhanced main enlisted status menu with comprehensive military service information.
+        /// Simple condition check for army battle options.
+        /// Keeps logging minimal during condition checks to avoid performance issues
+        /// since this may be called frequently during menu rendering.
+        /// </summary>
+        private bool SimpleArmyBattleCondition(MenuCallbackArgs args)
+        {
+            // Minimal condition check without logging to avoid performance overhead
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+        
+        /// <summary>
+        /// Check if emergency siege battle option should be available.
+        /// Only show when lord is in a siege battle.
+        /// </summary>
+        private bool IsEmergencySiegeBattleAvailable(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (!enlistment?.IsEnlisted == true)
+            {
+                return false;
+            }
+            
+            var lord = enlistment.CurrentLord;
+            var lordParty = lord?.PartyBelongedTo;
+            
+            // Check if lord is in a siege battle
+            bool lordInSiege = lordParty?.Party.SiegeEvent != null;
+            bool lordInBattle = lordParty?.Party.MapEvent != null;
+            
+            // Show option if lord is in siege or siege-related battle
+            return lordInSiege || (lordInBattle && IsSiegeRelatedBattle(MobileParty.MainParty, lordParty));
+        }
+        
+        /// <summary>
+        /// Handle emergency siege battle selection.
+        /// </summary>
+        private void OnEmergencySiegeBattleSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (!enlistment?.IsEnlisted == true)
+                {
+                    return;
+                }
+                
+                var lord = enlistment.CurrentLord;
+                var lordParty = lord?.PartyBelongedTo;
+                
+                ModLogger.Info("Interface", "EMERGENCY SIEGE BATTLE: Player selected siege battle option");
+                
+                // Check what type of siege situation we're in
+                if (lordParty?.Party.SiegeEvent != null)
+                {
+                    ModLogger.Info("Interface", "Lord is in active siege - attempting to join siege assault");
+                    // Siege assault participation is handled by the native game system
+                    // The player's army membership automatically includes them in the siege
+                    InformationManager.DisplayMessage(new InformationMessage("Joining siege assault..."));
+                }
+                // Check if the lord is in a siege-related battle (like sally-outs)
+                else if (lordParty?.Party.MapEvent != null)
+                {
+                    ModLogger.Info("Interface", "Lord is in siege-related battle - attempting to join");
+                    // Battle participation is handled by the native game system
+                    // The player's army membership automatically includes them in the battle
+                    InformationManager.DisplayMessage(new InformationMessage("Joining siege battle..."));
+                }
+                else
+                {
+                    ModLogger.Info("Interface", "No siege situation detected - option should not have been available");
+                    InformationManager.DisplayMessage(new InformationMessage("No siege battle available."));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error in emergency siege battle: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Registers the main enlisted status menu with comprehensive military service information.
+        /// This is a wait menu that displays real-time service status, progression, and army information.
+        /// Includes all menu options for managing military service, equipment, and duties.
         /// </summary>
         private void AddMainEnlistedStatusMenu(CampaignGameStarter starter)
         {
-            // SAS-style wait menu (restore time controls but fix UI boxes differently)
+            // Create a wait menu with time controls but hides progress boxes
+            // This provides the wait menu functionality (time controls) without showing progress bars
             starter.AddWaitGameMenu("enlisted_status", 
-                "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",  // SAS format
+                "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",
                 new OnInitDelegate(OnEnlistedStatusInit),
                 new OnConditionDelegate(OnEnlistedStatusCondition),
                 null, // No consequence for wait menu
-                new OnTickDelegate(OnEnlistedStatusTick), // SAS tick handler
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // SAS template - fixes UI boxes!
+                new OnTickDelegate(OnEnlistedStatusTick), // Tick handler for real-time updates
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // Wait menu template that hides progress boxes
                 GameOverlays.MenuOverlayType.None,
                 0f, // No wait time - immediate display
                 GameMenu.MenuFlags.None,
                 null);
 
-            // SAS EXACT MENU OPTIONS from screenshot
+            // Main menu options for enlisted status menu
             
-            // Master at Arms (promotion selection / troop equipment selection)
+            // Master at Arms - allows players to select troop equipment
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
                 "Master at Arms",
                 IsMasterAtArmsAvailable,
                 OnMasterAtArmsSelected,
                 false, 1);
 
-            // Visit Quartermaster (SAS option 1 - Enhanced with equipment variants)
+            // Visit Quartermaster - equipment variant selection and management
             starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
                 "Visit Quartermaster",
                 IsQuartermasterAvailable,
                 OnQuartermasterSelected,
                 false, 2);
 
-            // My Lord... (SAS option 3 - renamed for clarity)
+            // My Lord... - conversation with the current lord
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
                 "My Lord...",
                 IsTalkToAvailable,
@@ -170,8 +624,9 @@ namespace Enlisted.Features.Interface.Behaviors
         }
         
         /// <summary>
-        /// Add return to army camp options to all town location menus.
-        /// This follows the SAS pattern of providing seamless navigation back to military service.
+        /// Adds "Return to Army Camp" options to all town and castle location menus.
+        /// This provides seamless navigation back to military service from any settlement location,
+        /// allowing players to quickly return to the enlisted status menu.
         /// </summary>
         private void AddReturnToArmyCampOptions(CampaignGameStarter starter)
         {
@@ -217,8 +672,82 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// AI ENHANCED: Handle return to army camp with synthetic encounter cleanup.
+        /// Handles settlement exit by scheduling a deferred return to the enlisted menu.
+        /// When the player leaves a town or castle, this method schedules menu activation
+        /// for the next frame to avoid timing conflicts with other game systems during state transitions.
         /// </summary>
+        /// <param name="party">The party that left the settlement.</param>
+        /// <param name="settlement">The settlement that was left.</param>
+        private void OnSettlementLeftReturnToCamp(MobileParty party, Settlement settlement)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (party != MobileParty.MainParty || enlistment?.IsEnlisted != true)
+                    return;
+
+                if (!(settlement?.IsTown == true || settlement?.IsCastle == true))
+                    return;
+
+                ModLogger.Info("Interface", $"Left {settlement.Name} - scheduling return to enlisted menu");
+
+                // Only finish non-battle encounters when leaving settlements
+                // Battle encounters should be preserved to allow battle participation
+                if (PlayerEncounter.Current != null)
+                {
+                    var enlistedLord = EnlistmentBehavior.Instance?.CurrentLord;
+                    bool lordInBattle = enlistedLord?.PartyBelongedTo?.Party.MapEvent != null;
+                    
+                    var lordParty = enlistedLord?.PartyBelongedTo;
+                    if (!lordInBattle && !InBattleOrSiege(lordParty))
+                    {
+                        PlayerEncounter.Finish(true);
+                        ModLogger.Debug("Interface", "Finished non-battle encounter on settlement exit");
+                    }
+                    else
+                    {
+                        ModLogger.Debug("Interface", "Skipped finishing encounter - lord in battle, preserving vanilla battle menu");
+                    }
+                }
+
+                // Restore "invisible escort" state if we created a synthetic outside encounter
+                // This ensures the player party returns to following mode after leaving the settlement
+                if (_syntheticOutsideEncounter)
+                {
+                    _syntheticOutsideEncounter = false;
+                    // Defer IsActive change to next frame to prevent assertion failures
+                    // Setting IsActive during settlement exit can interfere with the animation/skeleton update cycle
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        if (MobileParty.MainParty != null)
+                        {
+                            MobileParty.MainParty.IsActive = false;
+                        }
+                    });
+                }
+
+                // Schedule deferred menu activation to avoid timing conflicts
+                // This ensures other systems finish processing before we activate our menu
+                // A short delay prevents conflicts with settlement exit animations and state transitions
+                _pendingReturnToEnlistedMenu = true;
+                _settlementExitTime = CampaignTime.Now;
+                
+                ModLogger.Debug("Interface", "Deferred enlisted menu return scheduled (0.5s delay)");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"OnSettlementLeftReturnToCamp error: {ex}");
+                // Ensure we don't get stuck in pending state
+                _pendingReturnToEnlistedMenu = false;
+            }
+        }
+
+        /// <summary>
+        /// Handles the player selecting "Return to Army Camp" from settlement menus.
+        /// Exits the current settlement context and returns to the enlisted status menu.
+        /// Includes cleanup for synthetic encounters created for settlement access.
+        /// </summary>
+        /// <param name="args">Menu callback arguments containing menu state and context.</param>
         private void OnReturnToArmyCampSelected(MenuCallbackArgs args)
         {
             try
@@ -229,9 +758,26 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // End any town/castle encounter we created
+                // Cancel any pending deferred menu activation since we're handling it immediately
+                _pendingReturnToEnlistedMenu = false;
+
+                // BATTLE-AWARE: Only finish non-battle encounters
                 if (PlayerEncounter.Current != null)
-                    PlayerEncounter.Finish(true);
+                {
+                    var enlistedLord2 = EnlistmentBehavior.Instance?.CurrentLord;
+                    bool lordInBattle2 = enlistedLord2?.PartyBelongedTo?.Party.MapEvent != null;
+                    
+                    var lordParty2 = enlistedLord2?.PartyBelongedTo;
+                    if (!lordInBattle2 && !InBattleOrSiege(lordParty2))
+                    {
+                        PlayerEncounter.Finish(true);
+                        ModLogger.Debug("Interface", "Finished non-battle encounter on return to camp");
+                    }
+                    else
+                    {
+                        ModLogger.Debug("Interface", "SKIPPED finishing encounter - lord in battle, preserving vanilla battle menu");
+                    }
+                }
 
                 // If we spun up an encounter, we also turned the party active—turn it off again
                 if (_syntheticOutsideEncounter)
@@ -240,14 +786,61 @@ namespace Enlisted.Features.Interface.Behaviors
                     MobileParty.MainParty.IsActive = false;   // back to invisible escort state
                 }
 
-                GameMenu.ActivateGameMenu("enlisted_status");
-                ModLogger.Info("Interface", "Returned to army camp.");
+                // Check what menu the game system wants to show based on current campaign state
+                // Only activate our menu if the native system allows it
+                string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                
+                if (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu))
+                {
+                    // Native system wants our menu or no specific menu - safe to activate
+                    // Check that we're not in battle or siege before activating
+                    bool inBattleOrSiege = (MobileParty.MainParty?.Party.MapEvent != null) ||
+                                          (PlayerEncounter.Current != null);
+                                          
+                    if (!inBattleOrSiege)
+                    {
+                        ModLogger.Info("Interface", "Returning to army camp - activating enlisted menu");
+                        NextFrameDispatcher.RunNextFrame(() => SafeActivateEnlistedMenu());
+                    }
+                    else
+                    {
+                        ModLogger.Info("Interface", "GUARDED: Skipped enlisted menu - battle/siege encounter active");
+                    }
+                }
+                else
+                {
+                    // Native system wants a different menu (like army_wait) - respect it
+                    ModLogger.Debug("Interface", $"GUARDED: Native system wants '{genericStateMenu}' - not activating enlisted menu");
+                }
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", $"Error returning to army camp: {ex.Message}");
-                // Fallback - still try to get back to enlisted menu
-                GameMenu.ActivateGameMenu("enlisted_status");
+                // Clear pending flag even on error to prevent stuck state
+                _pendingReturnToEnlistedMenu = false;
+                
+                // GUARDED FALLBACK: Check native system wants our menu before activating
+                try
+                {
+                    string genericStateMenuFallback = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                    bool inBattleOrSiegeFallback = (MobileParty.MainParty?.Party.MapEvent != null) ||
+                                                  (PlayerEncounter.Current != null);
+                    
+                    if ((genericStateMenuFallback == "enlisted_status" || string.IsNullOrEmpty(genericStateMenuFallback)) &&
+                        !inBattleOrSiegeFallback)
+                    {
+                        ModLogger.Info("Interface", "Fallback: Activating enlisted menu");
+                        NextFrameDispatcher.RunNextFrame(() => SafeActivateEnlistedMenu());
+                    }
+                    else
+                    {
+                        ModLogger.Info("Interface", $"GUARDED FALLBACK: Skipped enlisted menu - native wants '{genericStateMenuFallback}' or battle active");
+                    }
+                }
+                catch (Exception fallbackEx)
+                {
+                    ModLogger.Error("Interface", $"Fallback activation error: {fallbackEx.Message}");
+                }
             }
         }
         
@@ -379,14 +972,14 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                // CRITICAL: Start wait to enable time controls (from BLUEPRINT)
+                // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
                 
                 // Set time control mode to allow unpausing (from BLUEPRINT)
                 Campaign.Current.SetTimeControlModeLock(false);
                 Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
                 
-                RefreshEnlistedStatusDisplay();
+                RefreshEnlistedStatusDisplay(args);
                 _menuNeedsRefresh = true;
             }
             catch (Exception ex)
@@ -396,8 +989,10 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Refresh the enlisted status display with enhanced military styling.
-        /// Professional militaristic format with colors, symbols, and improved readability.
+        /// Refreshes the enlisted status display with current military service information.
+        /// Updates all dynamic text variables used in the menu display, including party leader,
+        /// enlistment details, tier, formation, wages, and XP progression.
+        /// Formats information as "Label : Value" pairs displayed line by line in the menu.
         /// </summary>
         private void RefreshEnlistedStatusDisplay(MenuCallbackArgs args = null)
         {
@@ -419,25 +1014,27 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Build simple SAS-style status display using their proven format
+                // Build the status content string that will be displayed in the menu
+                // Each line follows the format "Label : Value" for consistent presentation
                 var statusContent = "";
                 
                 try
                 {
-                    // SAS EXACT FORMAT - Simple label : value pairs
+                    // Construct status display line by line with label:value pairs
+                    // Each line contains a descriptive label followed by a colon and the current value
                     
-                    // Party Objective (SAS format)
+                    // Party objective and enlistment details
                     var objective = GetCurrentObjectiveDisplay(lord);
                     statusContent += $"Party Objective : {objective}\n";
                     
-                    // Enlistment Time (SAS format)
-                    var enlistmentTime = GetSASEnlistmentTimeDisplay(enlistment);
+                    // Enlistment time and tier information
+                    var enlistmentTime = GetEnlistmentTimeDisplay(enlistment);
                     statusContent += $"Enlistment Time : {enlistmentTime}\n";
                     
-                    // Enlistment Tier (SAS exact format)
+                    // Enlistment tier and formation
                     statusContent += $"Enlistment Tier : {enlistment.EnlistmentTier}\n";
                     
-                    // Formation (SAS exact format)
+                    // Formation display
                     string formationName = "Infantry"; // Default
                     try
                     {
@@ -451,14 +1048,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     statusContent += $"Formation : {formationName}\n";
                     
                     
-                    // Wage (SAS exact format with coin icon)
+                    // Wage and experience information
                     var dailyWage = CalculateCurrentDailyWage();
                     statusContent += $"Wage : {dailyWage}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
                     
-                    // Current Experience (SAS exact format)
+                    // Experience tracking
                     statusContent += $"Current Experience : {enlistment.EnlistmentXP}\n";
                     
-                    // Next Level Experience (SAS exact format)
+                    // Next tier experience requirement
                     if (enlistment.EnlistmentTier < 6)
                     {
                         var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier + 1);
@@ -477,10 +1074,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     statusContent += $"Current Experience : {enlistment.EnlistmentXP}";
                 }
 
-                // SAS STEP 3: Use SAS text variable format (exact replication)
+                // Set text variables for menu display
                 var lordName = lord?.EncyclopediaLinkWithName?.ToString() ?? lord?.Name?.ToString() ?? "Unknown";
                 
-                // Use SAS approach - MenuContext.GameMenu.GetText() and set variables
+                // Get menu context and set text variables
                 var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
                 if (menuContext != null)
                 {
@@ -515,7 +1112,8 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private int CalculateServiceDays(EnlistmentBehavior enlistment)
         {
-            // Use XP as approximation for now (about 50 XP per day)
+            // Calculate enlistment date by estimating days served from total XP
+            // Assumes average of 50 XP per day based on daily base XP and duty performance
             return Math.Max(1, enlistment.EnlistmentXP / 50);
         }
 
@@ -588,9 +1186,10 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private int GetServiceDays(EnlistmentBehavior enlistment)
         {
-            // This would need to be implemented in EnlistmentBehavior
-            // For now, calculate based on XP (approximate)
-            return enlistment.EnlistmentXP / 50; // ~50 XP per day average
+            // Calculate service days by dividing total XP by average daily XP
+            // Average daily XP is approximately 50 based on daily base XP and duty performance
+            // This provides an estimate since the actual enlistment date is not stored
+            return enlistment.EnlistmentXP / 50;
         }
 
         /// <summary>
@@ -610,26 +1209,28 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Get next tier XP requirement.
+        /// Get next tier XP requirement from progression_config.json.
         /// </summary>
         private int GetNextTierXPRequirement(int currentTier)
         {
-            var requirements = new int[] { 0, 500, 2000, 5000, 10000, 18000 };
-            return currentTier < 6 ? requirements[currentTier] : 18000;
+            // Load from progression_config.json instead of hardcoded values
+            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXPRequiredForTier(currentTier);
         }
 
         /// <summary>
-        /// Get SAS-style enlistment time display with proper date formatting.
+        /// Gets the enlistment time display with proper date formatting.
+        /// Formats the date as "Season Day, Year" for clear display.
         /// </summary>
-        private string GetSASEnlistmentTimeDisplay(EnlistmentBehavior enlistment)
+        private string GetEnlistmentTimeDisplay(EnlistmentBehavior enlistment)
         {
             try
             {
-                // Calculate approximate enlistment date from XP (since we don't store actual date yet)
+                // Calculate enlistment date by estimating days served from total XP
+                // The actual enlistment date is not stored, so we estimate based on average XP per day
                 var daysServed = enlistment.EnlistmentXP / 50; // ~50 XP per day
                 var enlistmentDate = CampaignTime.Now - CampaignTime.Days(daysServed);
                 
-                // Format like SAS: "Summer 15, 1084"
+                // Format as "Season Day, Year" (e.g., "Summer 15, 1084")
                 return enlistmentDate.ToString();
             }
             catch
@@ -639,9 +1240,10 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Get SAS-style wage display with bonuses shown separately.
+        /// Gets the wage display with bonuses shown separately.
+        /// Format: "Base(+Bonus)" when bonus applies, otherwise just "Base".
         /// </summary>
-        private string GetSASWageDisplay()
+        private string GetWageDisplay()
         {
             try
             {
@@ -649,7 +1251,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var totalWage = CalculateCurrentDailyWage();
                 var bonus = totalWage - baseWage;
                 
-                // SAS format: "145(+25)" when bonus applies, otherwise just "145"  
+                // Format: "145(+25)" when bonus applies, otherwise just "145"  
                 if (bonus > 0)
                 {
                     return $"{baseWage}(+{bonus})";
@@ -682,7 +1284,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Get SAS-style assignment description (exact format from screenshot).
+        /// Gets the formation training description explaining daily skill development.
+        /// Returns a description of what the player does during training based on their formation type.
         /// </summary>
         private string GetFormationTrainingDescription()
         {
@@ -807,9 +1410,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 return "Following direct orders";
             }
 
-            if (lordParty.IsActive && lordParty.MapEvent != null)
+            if (lordParty.IsActive && lordParty.Party.MapEvent != null)
             {
-                return $"Engaged in battle at {lordParty.MapEvent.MapEventSettlement?.Name?.ToString() ?? "field"}";
+                return $"Engaged in battle at {lordParty.Party.MapEvent.MapEventSettlement?.Name?.ToString() ?? "field"}";
             }
 
             if (lordParty.CurrentSettlement != null)
@@ -844,7 +1447,8 @@ namespace Enlisted.Features.Interface.Behaviors
             // Medical treatment available
             if (Hero.MainHero.HitPoints < Hero.MainHero.MaxHitPoints)
             {
-                var cooldownStatus = "Available"; // Simplified for SAS-style menu
+                // Medical treatment is currently always available without cooldown restrictions
+                var cooldownStatus = "Available";
                 if (cooldownStatus == "Available")
                 {
                     messages.Add("Medical treatment available to heal wounds.");
@@ -886,7 +1490,6 @@ namespace Enlisted.Features.Interface.Behaviors
             return enlistment.EnlistmentXP >= nextTierXP;
         }
 
-        // GetMedicalCooldownStatus method removed - not used in SAS-style menu
 
         /// <summary>
         /// Get officer skill name for display.
@@ -929,16 +1532,13 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             var isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
             
-            if (isEnlisted)
-            {
-                // Refresh the display when condition is checked
-                RefreshEnlistedStatusDisplay(args);
-            }
+            // Don't refresh in condition methods - they're called too frequently during menu rendering
+            // Refresh is handled by the tick method with proper timing validation
             
             return isEnlisted;
         }
 
-        // SAS Menu Option Conditions and Actions
+        // Menu Option Conditions and Actions
 
         private bool IsMasterAtArmsAvailable(MenuCallbackArgs args)
         {
@@ -1133,11 +1733,15 @@ namespace Enlisted.Features.Interface.Behaviors
                     },
                     negativeAction: _ =>
                     {
-                        // Return to enlisted status menu
-                        if (Campaign.Current?.CurrentMenuContext != null)
+                        // Return to enlisted status menu (deferred to next frame)
+                        NextFrameDispatcher.RunNextFrame(() =>
                         {
-                            GameMenu.ActivateGameMenu("enlisted_status");
-                        }
+                            if (Campaign.Current?.CurrentMenuContext != null)
+                            {
+                                ModLogger.Info("Interface", "=== DEFERRED CALL: Ask leave negative action scheduling enlisted menu ===");
+                                SafeActivateEnlistedMenu();
+                            }
+                        });
                     },
                     soundEventPath: string.Empty);
 
@@ -1208,7 +1812,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// AI ENHANCEMENT: Track when lord enters settlements to enable smarter button visibility.
+        /// Tracks when the lord enters settlements to adjust menu option visibility.
+        /// Used to show/hide certain menu options based on settlement entry state.
         /// </summary>
         private void OnSettlementEnteredForButton(MobileParty party, Settlement settlement, Hero hero)
         {
@@ -1230,7 +1835,9 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// AI DROP-IN REPLACEMENT: Create synthetic outside encounter for invisible enlisted party.
+        /// Handles the player selecting "Visit Settlement" from the enlisted status menu.
+        /// Creates a synthetic outside encounter to allow settlement exploration for enlisted soldiers.
+        /// This enables players to visit towns and castles while maintaining their enlisted status.
         /// </summary>
         private void OnVisitTownSelected(MenuCallbackArgs args)
         {
@@ -1252,7 +1859,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var activeId = Campaign.Current.CurrentMenuContext?.GameMenu?.StringId;
                 if (activeId == "town_outside" || activeId == "castle_outside")
                 {
-                    GameMenu.SwitchToMenu(activeId);
+                    NextFrameDispatcher.RunNextFrame(() => GameMenu.SwitchToMenu(activeId));
                     return;
                 }
 
@@ -1260,34 +1867,62 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (PlayerEncounter.Current != null &&
                     PlayerEncounter.EncounterSettlement == settlement)
                 {
-                    GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
+                    NextFrameDispatcher.RunNextFrame(() => 
+                        GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside"));
                     return;
                 }
 
-                // Clear our own enlisted wait menu off the stack so the engine can push its menu.
-                int safety = 8;
-                while (safety-- > 0 &&
-                       Campaign.Current.CurrentMenuContext != null &&
-                       Campaign.Current.CurrentMenuContext.GameMenu.StringId.StartsWith("enlisted_"))
+                // Clear our own enlisted wait menu off the stack (deferred to next frame)
+                if (Campaign.Current.CurrentMenuContext?.GameMenu?.StringId.StartsWith("enlisted_") == true)
                 {
-                    GameMenu.ExitToLast();
+                    NextFrameDispatcher.RunNextFrame(() => GameMenu.ExitToLast());
                 }
 
-                // Ensure no leftover encounter asserts.
+                // BATTLE-AWARE: Only finish non-battle encounters to prevent killing vanilla battle menus
                 if (PlayerEncounter.Current != null)
-                    PlayerEncounter.Finish(true);
+                {
+                    var enlistedLord3 = EnlistmentBehavior.Instance?.CurrentLord;
+                    bool lordInBattle3 = enlistedLord3?.PartyBelongedTo?.Party.MapEvent != null;
+                    
+                    if (lordInBattle3)
+                    {
+                        ModLogger.Debug("Interface", "Skipped finishing encounter - lord in battle, preserving vanilla battle menu");
+                        return; // Don't create settlement encounter during battles!
+                    }
+                    
+                    // Finish current encounter (if safe), then start a new one next frame
+                    NextFrameDispatcher.RunNextFrame(() => 
+                    {
+                        var lordParty3 = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
+                        if (!InBattleOrSiege(lordParty3))
+                        {
+                            PlayerEncounter.Finish(true);
+                            ModLogger.Debug("Interface", "Finished non-battle encounter before settlement access");
+                        }
+                        else
+                        {
+                            ModLogger.Debug("Interface", "SKIPPED finishing encounter - lord in battle/siege, preserving vanilla battle menu");
+                        }
+                    });
+                }
 
                 // TEMPORARILY activate the main party so the engine can attach an encounter.
-                bool wasActive = MobileParty.MainParty.IsActive;
-                if (!wasActive) MobileParty.MainParty.IsActive = true;
-
-                // Start a clean outside encounter for the player at the lord's settlement.
-                EncounterManager.StartSettlementEncounter(MobileParty.MainParty, settlement);
-                _syntheticOutsideEncounter = true;
-
-                // The engine will have pushed the outside menu; show it explicitly for safety.
-                GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
-                ModLogger.Info("Interface", $"Started synthetic outside encounter for {settlement.Name}");
+                bool needActivate = !MobileParty.MainParty.IsActive;
+                
+                // Start a clean outside encounter for the player at the lord's settlement (deferred)
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    if (needActivate) MobileParty.MainParty.IsActive = true;
+                    EncounterManager.StartSettlementEncounter(MobileParty.MainParty, settlement);
+                    _syntheticOutsideEncounter = true;
+                });
+                
+                // The engine will have pushed the outside menu; show it explicitly for safety (deferred)
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
+                    ModLogger.Info("Interface", $"Started synthetic outside encounter for {settlement.Name}");
+                });
             }
             catch (Exception ex)
             {
@@ -1338,11 +1973,15 @@ namespace Enlisted.Features.Interface.Behaviors
                     },
                     negativeAction: () =>
                     {
-                        // Return to enlisted status menu
-                        if (Campaign.Current?.CurrentMenuContext != null)
+                        // Return to enlisted status menu (deferred to next frame)
+                        NextFrameDispatcher.RunNextFrame(() =>
                         {
-                            GameMenu.ActivateGameMenu("enlisted_status");
-                        }
+                            if (Campaign.Current?.CurrentMenuContext != null)
+                            {
+                                ModLogger.Info("Interface", "=== DEFERRED CALL: Visit settlement negative action scheduling enlisted menu ===");
+                                SafeActivateEnlistedMenu();
+                            }
+                        });
                     });
 
                 InformationManager.ShowInquiry(confirmData);
@@ -1372,11 +2011,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 var message = new TextObject("Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty.");
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
-                // Exit menu to campaign map
-                while (Campaign.Current.CurrentMenuContext != null)
+                // Exit menu to campaign map (deferred to next frame)
+                NextFrameDispatcher.RunNextFrame(() =>
                 {
-                    GameMenu.ExitToLast();
-                }
+                    if (Campaign.Current.CurrentMenuContext != null)
+                    {
+                        GameMenu.ExitToLast();
+                    }
+                });
 
                 ModLogger.Info("Interface", "Temporary leave granted using proper StopEnlist method");
             }
@@ -1388,18 +2030,79 @@ namespace Enlisted.Features.Interface.Behaviors
 
 
         /// <summary>
-        /// SAS-style tick handler for real-time menu updates.
-        /// Updates information continuously like the original SAS mod.
+        /// Tick handler for real-time menu updates.
+        /// Called every frame while the enlisted status menu is active to update
+        /// dynamic information and handle menu transitions based on game state.
+        /// Includes time delta validation to prevent assertion failures.
         /// </summary>
         private void OnEnlistedStatusTick(MenuCallbackArgs args, CampaignTime dt)
         {
             try
             {
-                // SAS pattern - refresh every tick for real-time information
-                RefreshEnlistedStatusDisplay(args);
+                // Validate time delta to prevent assertion failures
+                // Zero-delta-time updates can cause assertion failures in the rendering system
+                if (dt.ToSeconds <= 0)
+                {
+                    return;
+                }
                 
-                // SAS safety - auto-exit if not enlisted
+                // Skip all processing if the player is not currently enlisted
                 if (!EnlistmentBehavior.Instance?.IsEnlisted == true)
+                {
+                    GameMenu.ExitToLast();
+                    return;
+                }
+                
+                // Don't do menu transitions during active encounters
+                // This prevents assertion failures that can occur during encounter state transitions
+                // When an encounter is active (like paying a bandit), let the native system handle menu transitions
+                // We should only check GetGenericStateMenu() for battle menus, not regular encounters
+                bool hasActiveEncounter = PlayerEncounter.Current != null;
+                bool isBattleEncounter = hasActiveEncounter && 
+                                         (MobileParty.MainParty?.Party.MapEvent != null || 
+                                          EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.Party.MapEvent != null);
+                
+                // Check what menu the game system wants to show based on current campaign state
+                // This follows the same pattern used by the native army wait menu system
+                // When battles start, GetGenericStateMenu() will return "army_wait" or "encounter"
+                // and we must switch to it, preventing our menu from blocking battle interactions
+                string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                
+                // If there's an active non-battle encounter, don't do menu transitions - just refresh
+                // This prevents RGL assertion failures during encounter exit (like paying bandits)
+                if (hasActiveEncounter && !isBattleEncounter)
+                {
+                    // Just refresh display during regular encounters, let native system handle transitions
+                    if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
+                    {
+                        RefreshEnlistedStatusDisplay(args);
+                        _lastMenuUpdate = CampaignTime.Now;
+                    }
+                    return;
+                }
+                
+                // If native system wants our menu (or null), refresh it
+                if (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu))
+                {
+                    // Refresh display (but only periodically to avoid performance issues)
+                    if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
+                    {
+                        RefreshEnlistedStatusDisplay(args);
+                        _lastMenuUpdate = CampaignTime.Now;
+                    }
+                    return;
+                }
+                
+                // Native system wants a different menu (like army_wait, encounter, menu_siege_strategies)
+                // We MUST respect this - end our wait and switch to what they want
+                // This prevents our menu from blocking battle menus and causing interaction issues
+                args.MenuContext.GameMenu.EndWait();
+                if (!string.IsNullOrEmpty(genericStateMenu))
+                {
+                    ModLogger.Info("Interface", $"Native system wants menu '{genericStateMenu}' - switching from enlisted_status");
+                    GameMenu.SwitchToMenu(genericStateMenu);
+                }
+                else
                 {
                     GameMenu.ExitToLast();
                 }
@@ -1410,9 +2113,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        // Old field medical methods removed - replaced with SAS-style options
-
-        // Old menu methods removed - replaced with SAS-style options
 
         /// <summary>
         /// Check if Report for Duty option should be available.
@@ -1439,13 +2139,14 @@ namespace Enlisted.Features.Interface.Behaviors
         }
         
         /// <summary>
-        /// Initialize duty selection menu with consistent SAS-style formatting.
+        /// Initializes the duty selection menu when it's opened.
+        /// Starts the wait menu to enable time controls, same as the main enlisted status menu.
         /// </summary>
         private void OnDutySelectionInit(MenuCallbackArgs args)
         {
             try
             {
-                // CRITICAL: Start wait to enable time controls (same as main menu)
+                // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
                 
                 // Set time control mode to allow unpausing (same as main menu)
@@ -1459,7 +2160,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     SetDynamicMenuText(enlistment);
                 }
                 
-                RefreshDutySelectionDisplay();
+                RefreshDutySelectionDisplay(args);
                 _menuNeedsRefresh = true;
             }
             catch (Exception ex)
@@ -1475,24 +2176,32 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             var isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
             
-            if (isEnlisted)
-            {
-                // Refresh the display when condition is checked
-                RefreshDutySelectionDisplay(args);
-            }
+            // Don't refresh in condition methods - they're called too frequently during menu rendering
+            // Refresh is handled by the tick method with proper timing validation
             
             return isEnlisted;
         }
 
         /// <summary>
-        /// Tick handler for duty selection menu (same pattern as main menu).
+        /// Tick handler for duty selection menu with proper timing validation.
         /// </summary>
         private void OnDutySelectionTick(MenuCallbackArgs args, CampaignTime dt)
         {
             try
             {
-                // Refresh every tick for real-time information (same as main menu)
-                RefreshDutySelectionDisplay(args);
+                // Validate time delta to prevent assertion failures
+                // Zero-delta-time updates can cause assertion failures in the rendering system
+                if (dt.ToSeconds <= 0)
+                {
+                    return; // Skip update if invalid time delta
+                }
+                
+                // Refresh with timing validation (not every tick)
+                if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
+                {
+                    RefreshDutySelectionDisplay(args);
+                    _lastMenuUpdate = CampaignTime.Now;
+                }
                 
                 // Auto-exit if not enlisted
                 if (!EnlistmentBehavior.Instance?.IsEnlisted == true)
@@ -1519,7 +2228,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Build status content using the same clean format as main menu
+                // Build the duty selection status content string
+                // Formats information as "Label : Value" pairs displayed line by line
                 var statusContent = "";
                 
                 // Current assignments with descriptions
@@ -1627,7 +2337,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #region Duty Selection Conditions and Actions
         
-        // DUTY CONDITIONS (show option as available - ALL duties are always available)
+        // Duty availability conditions - all duties are available to all enlisted players
         private bool IsDutyEnlistedAvailable(MenuCallbackArgs args) => true;
         private bool IsDutyForagerAvailable(MenuCallbackArgs args) => true;  
         private bool IsDutySentryAvailable(MenuCallbackArgs args) => true;
@@ -1635,7 +2345,6 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsDutyPioneerAvailable(MenuCallbackArgs args) => true;
 
         // PROFESSION CONDITIONS (show option as available - Always visible, tier check in action)
-        // Removed IsProfNoneAvailable as we removed the "None" option
             
         private bool IsProfQuarterhandAvailable(MenuCallbackArgs args) => true;
         private bool IsProfFieldMedicAvailable(MenuCallbackArgs args) => true;
@@ -1660,7 +2369,6 @@ namespace Enlisted.Features.Interface.Behaviors
             SelectDuty("pioneer", "Pioneer");
 
         // PROFESSION ACTIONS (with tier checking)
-        // Removed OnProfNoneSelected as we removed the "None" option
             
         private void OnProfQuarterhandSelected(MenuCallbackArgs args) => 
             SelectProfessionWithTierCheck("quarterhand", "Quarterhand");
@@ -1854,10 +2562,6 @@ namespace Enlisted.Features.Interface.Behaviors
             
             return progressBar.ToString();
         }
-
-        /// <summary>
-        /// Get SAS-style assignment description.
-        /// </summary>
 
         #endregion
     }

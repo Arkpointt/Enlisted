@@ -140,8 +140,8 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("party_effects")]
         public List<string> PartyEffects { get; set; } = new List<string>();
         
-        [JsonProperty("duties")]
-        public List<string> Duties { get; set; } = new List<string>();
+        [JsonProperty("professions")]
+        public List<string> Professions { get; set; } = new List<string>();
     }
     
     [Serializable]

@@ -13,14 +13,14 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Features.Equipment.UI
 {
     /// <summary>
-    /// Equipment selector main ViewModel using VERIFIED current TaleWorlds APIs.
+    /// Equipment selector main ViewModel for grid-based equipment selection.
     /// 
-    /// Provides individual clickable equipment items similar to SAS weaponsmith.
-    /// Based on current ViewModel patterns from BannerEditorVM and InventoryVM.
+    /// Provides individual clickable equipment items displayed in a grid layout.
+    /// Uses TaleWorlds ViewModel patterns for data binding and UI updates.
     /// </summary>
     public class QuartermasterEquipmentSelectorVM : ViewModel
     {
-        // EXACT SAS PATTERN: Row-based organization for ListPanel with ItemTemplate
+        // Row-based organization for ListPanel with ItemTemplate in grid layout
         [DataSourceProperty]
         public MBBindingList<QuartermasterEquipmentRowVM> EquipmentRows { get; private set; }
         
@@ -33,7 +33,7 @@ namespace Enlisted.Features.Equipment.UI
         [DataSourceProperty]
         public string CurrentEquipmentText { get; private set; }
         
-        // VERIFIED: CharacterViewModel usage from BannerEditorVM
+        // CharacterViewModel for displaying character preview with equipment
         [DataSourceProperty]
         public CharacterViewModel UnitCharacter { get; private set; }
         
@@ -44,7 +44,7 @@ namespace Enlisted.Features.Equipment.UI
         
         /// <summary>
         /// Initialize equipment selector with available variants.
-        /// Using VERIFIED constructor pattern from current ViewModels.
+        /// Sets up the ViewModel with equipment data and organizes items into rows for grid display.
         /// </summary>
         public QuartermasterEquipmentSelectorVM(List<EquipmentVariantOption> availableVariants, EquipmentIndex targetSlot, string equipmentType)
         {
@@ -52,16 +52,16 @@ namespace Enlisted.Features.Equipment.UI
             _targetSlot = targetSlot;
             _equipmentType = equipmentType;
             
-            // EXACT SAS PATTERN: Row-based organization (4 cards per row)
+            // Organize equipment items into rows with 4 cards per row for grid display
             EquipmentRows = new MBBindingList<QuartermasterEquipmentRowVM>();
             var currentCards = new MBBindingList<QuartermasterEquipmentItemVM>();
             
-            // Add equipment variants using SAS 4-cards-per-row pattern (no empty slot for Quartermaster)
+            // Add equipment variants organized into rows of 4 cards each
             foreach (var variant in availableVariants.Take(15)) // Reasonable limit for 4 rows
             {
                 currentCards.Add(new QuartermasterEquipmentItemVM(variant, this));
                 
-                // Create new row when we reach 4 cards (EXACT SAS pattern)
+                // Create new row when we reach 4 cards in the current row
                 if (currentCards.Count == 4)
                 {
                     EquipmentRows.Add(new QuartermasterEquipmentRowVM(currentCards));
@@ -69,17 +69,17 @@ namespace Enlisted.Features.Equipment.UI
                 }
             }
             
-            // Add remaining cards as final row (SAS pattern)
+            // Add remaining cards as final row if any remain
             if (currentCards.Count > 0)
             {
                 EquipmentRows.Add(new QuartermasterEquipmentRowVM(currentCards));
             }
             
-            // VERIFIED: CharacterViewModel setup from BannerEditorView.cs
+            // Set up CharacterViewModel for character preview display
             try
             {
                 UnitCharacter = new CharacterViewModel(StanceTypes.None);
-                UnitCharacter.FillFrom(Hero.MainHero.CharacterObject, -1); // VERIFIED method
+                UnitCharacter.FillFrom(Hero.MainHero.CharacterObject, -1); // Fill character model for preview
             }
             catch (Exception ex)
             {
@@ -91,7 +91,7 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
-        /// Refresh all display values - VERIFIED override pattern.
+        /// Refresh all display values when equipment data changes.
         /// </summary>
         public override void RefreshValues()
         {
@@ -107,7 +107,7 @@ namespace Enlisted.Features.Equipment.UI
                 PlayerGoldText = $"Your Gold: {hero.Gold} denars";
                 CurrentEquipmentText = $"Current: {currentItem?.Name?.ToString() ?? "None"}";
                 
-                // Refresh all equipment rows and their cards (EXACT SAS pattern)
+                // Refresh all equipment rows and their cards to update display
                 foreach (var row in EquipmentRows)
                 {
                     foreach (var card in row.Cards)
@@ -159,7 +159,7 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
-        /// Close the equipment selector - VERIFIED command pattern.
+        /// Close the equipment selector when player cancels or completes selection.
         /// </summary>
         public void ExecuteClose()
         {

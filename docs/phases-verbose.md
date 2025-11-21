@@ -4,7 +4,7 @@ Last updated: 2025-09-06
 
 ## Summary
 
-Shows how we built the military service system for the Enlisted mod. We analyzed the original ServeAsSoldier mod and built a better version using current Bannerlord APIs.
+Shows how we built the military service system for the Enlisted mod using current Bannerlord APIs.
 
 **What works:**
 - Military service with lords (enlist, get promoted, earn wages)
@@ -42,7 +42,7 @@ We successfully built a working Gauntlet grid UI for equipment selection that:
 - `QuartermasterEquipmentItemVM.cs` - individual equipment cards
 - 3 XML templates in `GUI/Prefabs/Equipment/`
 
-This gives us the same grid UI that SAS had, but using modern APIs that actually work.
+This gives us a grid UI for equipment selection using modern APIs.
 
 ## What's Implemented
 
@@ -90,7 +90,7 @@ This turned out great - much more authentic than custom equipment kits.
 - Much simpler than patching the encounter system
 - Uses existing game engine property designed for this
 - Less likely to break with game updates
-- SAS analysis showed they use the same approach
+- Uses the same approach with the native game engine property
 
 **How it works:**
 - Player enlists → `MobileParty.MainParty.IsActive = false`
@@ -152,13 +152,13 @@ lordParty.SetPartyEngineer(Hero.MainHero); // Player becomes official engineer
 
 ---
 
-## Original SAS Analysis
+## Design Analysis
 
 ### Enhanced System Features Implemented
 1. **Enlistment System**: Player joins a lord's party as a subordinate with comprehensive state tracking
 2. **Duties System**: 12 configuration-driven military duties with troop type specializations (Infantry/Archer/Cavalry)
 3. **Officer Role Integration**: Player becomes party officer via public APIs (with optional Harmony enhancements for natural skill benefits)
-4. **1-Year Progression System**: 7-tier advancement over **365 days** (18,000 XP total) with **SAS troop selection** for upgrades
+4. **1-Year Progression System**: 7-tier advancement over **365 days** (18,000 XP total) with troop selection for upgrades
 5. **Equipment Replacement System**: Each promotion **replaces** equipment (realistic military service); keep final gear at retirement
 6. **Realistic Wage System**: **24-150 gold/day progression** over 1-year service (skill-building, not wealth generation)
 7. **Diplomatic Integration**: Player inherits lord's faction relationships with suspension/resumption for lord capture
@@ -271,7 +271,7 @@ main.Ai.SetMoveEscortParty(lordParty);  // Crashes when lord in settlement/battl
 **Goal**: Transform minimal EnlistmentBehavior into complete military service with **1-year progression**, **realistic wages**, and **equipment replacement system**
 
 **Exact Implementation Steps**:
-1. **Update `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`** with complete SAS state + equipment backup:
+1. **Update `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`** with complete state + equipment backup:
    ```csharp
    // ADD: Complete state variables including equipment backup system
    private Hero _enlistedLord;
@@ -752,14 +752,14 @@ TaleWorlds.CampaignSystem.CampaignTime :: Days(float days)
 - Assignment system foundation established
 
 ### 1.3 Complete Menu Management System
-**Goal**: Handle all settlement, encounter, and army scenarios like original SAS
+**Goal**: Handle all settlement, encounter, and army scenarios with proper state management
 
 **Tasks**:
-- Enhance existing `Encounter_DoMeetingGuardPatch` with SAS-style immediate encounter finishing
-- **Add SAS Encounter Menu Options** (replaces `EncounterMenuPatch`):
+- Enhance existing `Encounter_DoMeetingGuardPatch` with immediate encounter finishing
+- **Add Encounter Menu Options**:
   - "Wait in Reserve" option (requires 100+ troops in army)
   - "Defect to Other Side" option (with relationship consequences)
-- **Implement Settlement Following** (like original SAS):
+- **Implement Settlement Following**:
   - Force `party_wait` menu when lord enters/exits settlements
   - Handle time control in towns
   - Manage diplomatic inheritance
@@ -820,7 +820,7 @@ private void OnHourlyTick()
     }
 }
 
-// MODERN: Superior army handling vs. original SAS
+// Modern army handling with proper state management
 private void HandleArmyMembership(MobileParty lordParty)
 {
     // VERIFIED: Army property exists on MobileParty.cs:877
@@ -866,7 +866,7 @@ private void HandleArmyMembership(MobileParty lordParty)
 // ✅ CRASH-SAFE: Complete event tracking including lord death/capture (CRITICAL FOR STABILITY)
 public override void RegisterEvents()
 {
-    // SAS CRITICAL: Real-time management for encounter prevention
+    // Real-time management for encounter prevention
     CampaignEvents.TickEvent.AddNonSerializedListener(this, OnRealtimeTick);
     
     // Core enlistment events  
@@ -944,7 +944,7 @@ private void OnPartyRemovedFromArmy(MobileParty party)
     }
 }
 
-// CRITICAL: Lord death/capture handling - SUPERIOR to original SAS
+// Critical: Lord death/capture handling for service termination
 private void OnHeroKilled(Hero victim, Hero killer, KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
 {
     if (IsEnlisted && victim == _enlistedLord)
@@ -1000,7 +1000,7 @@ private void OnCharacterDefeated(Hero defeatedHero, Hero victorHero, bool showNo
     }
 }
 
-// MODERN: Enhanced discharge system vs. original SAS
+// Enhanced discharge system with equipment retention
 private void HandleHonorableDischarge(string reason)
 {
     var message = new TextObject("You have been honorably discharged. You may keep your equipment and have earned veteran status.");
@@ -1011,7 +1011,7 @@ private void HandleHonorableDischarge(string reason)
     _formerLords.Add(_enlistedLord);
     
     // IMPROVEMENT: Equipment retention (keep state-issued gear)
-    // Original SAS: Complex gear swapping
+    // Equipment retention handled through simple state tracking
     // Our approach: Simply keep current equipment as reward
     
     // Restore player autonomy
@@ -1176,7 +1176,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
 
 **Acceptance Criteria**:
 - Player automatically follows lord into/out of settlements with proper menu transitions
-- SAS-specific encounter options available during battles
+- Encounter options available during battles for enlisted soldiers
 - Diplomatic relationships inherited from enlisted lord
 - Time control managed appropriately in different settlement types
 - Battle participation based on army size and lord involvement
@@ -1200,7 +1200,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
 
 3. **✅ COMPLETED: Created `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs`** (main duties behavior):
    - Daily duty processing with skill XP integration
-   - Formation auto-detection using SAS-style logic
+   - Formation auto-detection based on equipment characteristics
    - Officer role management (dual approach: public APIs + optional Harmony patches)
    - Wage multiplier integration with EnlistmentBehavior
 
@@ -1268,7 +1268,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
        
        private void TriggerTroopTypeSelectionMenu()
        {
-           // Detect current formation based on equipment (like original SAS)
+           // Detect current formation based on equipment
            var detectedFormation = DetectPlayerFormation();
            var cultureId = EnlistmentBehavior.Instance.CurrentLord.Culture.StringId;
            
@@ -1279,7 +1279,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
        
        public TroopType DetectPlayerFormation()
        {
-           // VERIFIED: Same logic as original SAS getFormation() method
+           // Formation detection based on equipment characteristics
            var hero = Hero.MainHero.CharacterObject;
            
            if (hero.IsRanged && hero.IsMounted)
@@ -1376,7 +1376,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
                ApplyDailyPassiveEffects(duty);
            }
            
-           // Check for focus point gains (1% chance like SAS)
+           // Check for focus point gains (1% chance per day)
            CheckForFocusPointGains();
        }
        
@@ -1584,7 +1584,7 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
 **Acceptance Criteria**:
 - ✅ Configuration-driven duties system loads from JSON (errors logged if failed)
 - ✅ **4-Formation System**: Infantry, Archer, Cavalry, Horse Archer specializations supported
-- ✅ **Auto-Detection**: Player formation detected like original SAS (`IsRanged && IsMounted` = Horse Archer)
+- ✅ **Auto-Detection**: Player formation detected based on equipment (`IsRanged && IsMounted` = Horse Archer)
 - ✅ **Culture Integration**: Formation names use culture-specific variants (Legionary, Equites Sagittarii, etc.)
 - ✅ Troop type selection triggers on first promotion with 4-option menu
 - ✅ Duties unlock based on tier + troop type + culture (Horse Archer compatible duties included)
@@ -1602,9 +1602,9 @@ TaleWorlds.CampaignSystem.Party.MobileParty :: MapEvent { get; }
 | **Cavalry** | Melee + Horse | Pathfinder, Mounted Messenger | Scout, Quartermaster | Party speed, scouting |
 | **Horse Archer** | Bow + Horse | Pathfinder, Sentry | Scout | Elite speed + vision |
 
-**Auto-Detection Logic** (matches original SAS):
+**Auto-Detection Logic**:
 ```csharp
-// VERIFIED: Exact same logic as original SAS getFormation() method
+// Formation detection logic based on equipment properties
 if (Hero.MainHero.CharacterObject.IsRanged && Hero.MainHero.CharacterObject.IsMounted)
     return TroopType.HorseArcher;   // Bow/Crossbow + Horse
 else if (Hero.MainHero.CharacterObject.IsMounted)
@@ -1735,13 +1735,13 @@ public sealed class EnlistedInputHandler : CampaignBehaviorBase
 - **AddWaitGameMenu**: Verified signature from `HideoutCampaignBehavior.cs:81`
 - **Dialog Structure**: Player-initiated via `AddPlayerLine` → `AddDialogLine` for diplomatic submenu
 - **Menu Delegates**: Proper `OnInitDelegate`/`OnConditionDelegate` wrappers required
-- **SAS Menu Behavior**: Menu stays active while following lord (no exit buttons)
+- **Menu Behavior**: Menu stays active while following lord (no exit buttons)
 
 **✅ CRITICAL IMPLEMENTATION LESSONS**:
 1. **ALWAYS verify APIs using `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\`** - never use outdated docs
 2. **Dialog pattern**: Use player-initiated (`AddPlayerLine`) not lord-initiated (`AddDialogLine`) for entry point
 3. **Field name verification**: Check actual field names before adding new methods to existing behaviors
-4. **SAS menu behavior**: Remove unnecessary exit buttons - being in menu IS doing duties
+4. **Menu behavior**: Remove unnecessary exit buttons - being in menu IS doing duties
 5. **Dialog restoration**: When system breaks, revert to last working pattern and fix incrementally
 
 **✅ BEHAVIOR REGISTRATION** (`SubModule.cs`):
@@ -1782,7 +1782,7 @@ starter.AddPlayerLine("enlisted_diplomatic_entry",  // ✅ PLAYER initiates
 ## Phase 2B: Troop Selection & Equipment Replacement (2 weeks) - NEXT PHASE  
 
 ### 2B.1 Troop Selection System  
-**Goal**: Implement SAS-style troop selection with **real Bannerlord troop templates** and **equipment replacement system**
+**Goal**: Implement troop selection with **real Bannerlord troop templates** and **equipment replacement system**
 
 **Promotion Notification Flow** (Enhanced menu framework ready):
 1. **XP Threshold Reached** → Show notification: *"Promotion available! Press 'P' to advance."* ✅ **IMPLEMENTED**
@@ -1791,7 +1791,7 @@ starter.AddPlayerLine("enlisted_diplomatic_entry",  // ✅ PLAYER initiates
 4. **Player Selects Troop** → Apply equipment from `CharacterObject.BattleEquipments` ✅ **COMPLETE**
 
 **Exact Implementation Steps** (Phase 2B):
-1. **Create `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`** (SAS approach):
+1. **Create `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`**:
    ```csharp
    public void ShowTroopSelectionMenu(int newTier)
    {
@@ -2002,7 +2002,7 @@ public void AssignOfficerRole(string officerRole)
    
    public List<ItemObject> GetAvailableEquipment(CultureObject culture, int tier)
    {
-       // Build equipment index using our documented gear pipeline (docs/sas/gear_pipeline.md)
+       // Build equipment index using documented equipment pipeline
        var availableGear = new List<ItemObject>();
        
        // Step 1-2: Enumerate and filter character templates by culture and tier
@@ -2302,7 +2302,7 @@ public sealed class EquipmentManagerBehavior : CampaignBehaviorBase
         // VERIFIED: High-tier bonus equipment using confirmed API pattern
         if (tier > 6)
         {
-            // VERIFIED: This exact pattern exists in SAS Test.cs:2219 and our decompiled sources
+            // This pattern uses native game APIs for equipment assignment
             var heroRosters = Campaign.Current.Models.EquipmentSelectionModel
                 .GetEquipmentRostersForHeroComeOfAge(_enlistedLord, false);
             foreach (var roster in heroRosters)
@@ -2456,7 +2456,7 @@ TaleWorlds.Library.InformationManager :: AddQuickInformation(TextObject message,
    
    private int CalculateWage()
    {
-       // VERIFIED: Based on SAS formula (Test.cs:210) with improvements
+       // Wage calculation formula with tier and performance bonuses
        // UPDATED: Realistic military wages for early game progression
        var baseWage = Hero.MainHero.Level * 1;           // Reduced hero level impact
        var xpBonus = _enlistmentXP / 200;               // Reduced XP impact  
@@ -2482,16 +2482,16 @@ These could be added if needed, but the core system is complete:
 
 **Army Integration:**
 
-**Original SAS Progression Logic**:
+**Progression Logic Reference**:
 ```csharp
-// SAS hourly progression check
+// Hourly progression check
 while (Test.EnlistTier < 7 && Test.xp > Test.NextlevelXP[Test.EnlistTier])
 {
     Test.EnlistTier++;
     leveledUp = true;
 }
 
-// SAS daily XP gain
+// Daily XP gain
 int XPAmount = SubModule.settings.DailyXP; // Fixed daily amount
 Test.xp += XPAmount;
 this.GetXPForRole(); // Assignment-specific skill XP
@@ -2505,7 +2505,7 @@ private void OnDailyTick()
     if (IsEnlisted && _enlistedLord.IsAlive)
     {
         // Base daily XP (configurable)
-        var baseXP = ModConfig.Settings.SAS.DailyBaseXP;
+        var baseXP = ModConfig.Settings.Encounter.DailyBaseXP; // Load from configuration
         
         // IMPROVEMENT: Performance-based XP bonuses
         var performanceBonus = CalculatePerformanceBonus();
@@ -2515,7 +2515,7 @@ private void OnDailyTick()
         var totalXP = baseXP + performanceBonus + assignmentBonus + armyBonus;
         _enlistmentXP += totalXP;
         
-        // VERIFIED: Wage calculation using SAS formula + improvements
+        // Wage calculation with improvements
         var wage = CalculateModernWage();
         GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, wage, false);
         
@@ -2533,9 +2533,9 @@ private void OnDailyTick()
 
 private int CalculateModernWage()
 {
-    // VERIFIED: Enhanced version of SAS wage formula (Test.cs:210)
+    // Enhanced wage formula with tier multipliers and bonuses
     var baseWage = Hero.MainHero.Level * 2;
-    var xpBonus = _enlistmentXP / ModConfig.Settings.SAS.XPtoWageRatio;
+    var xpBonus = _enlistmentXP / ModConfig.Settings.Encounter.XPtoWageRatio; // Load from configuration
     var tierMultiplier = 1f + (_enlistmentTier * 0.2f);
     var perkBonus = Hero.MainHero.GetPerkValue(DefaultPerks.Polearm.StandardBearer) ? 1.2f : 1f;
     
@@ -2547,7 +2547,7 @@ private int CalculateModernWage()
     
     var totalWage = (int)(Math.Max(0f, 
         perkBonus * tierMultiplier * assignmentMultiplier * armyBonus * 
-        Math.Min(baseWage + xpBonus, ModConfig.Settings.SAS.MaxWage)) + 
+        Math.Min(baseWage + xpBonus, ModConfig.Settings.Encounter.MaxWage)) + // Load from configuration 
         MobileParty.MainParty.TotalWage);
         
     return totalWage;
@@ -2555,14 +2555,14 @@ private int CalculateModernWage()
 
 private void CheckForPromotion()
 {
-    // VERIFIED: Enhanced promotion system based on SAS logic
-    var tierConfigs = ModConfig.Settings.SAS.TierRequirements;
+    // Enhanced promotion system with tier configuration
+    var tierConfigs = ModConfig.Settings.Encounter.TierRequirements; // Load from configuration
     
     while (_enlistmentTier < 7 && _enlistmentXP >= tierConfigs[_enlistmentTier].XPRequired)
     {
         _enlistmentTier++;
         
-        // IMPROVEMENT: Rich promotion ceremony vs. SAS basic notification
+        // Rich promotion ceremony with notifications
         TriggerPromotionCeremony(_enlistmentTier);
         
         // IMPROVEMENT: Unlock new assignments and benefits
@@ -2578,7 +2578,7 @@ private void CheckForPromotion()
 
 private void TriggerPromotionCeremony(int newTier)
 {
-    // SUPERIOR: Rich promotion system vs. SAS simple notification
+    // Rich promotion system with ceremony and notifications
     var tierName = GetTierName(newTier);
     var ceremony = new TextObject("Congratulations! You have been promoted to {TIER}. New privileges and equipment are now available.");
     ceremony.SetTextVariable("TIER", tierName);
@@ -2626,11 +2626,11 @@ private string GetAssignmentWageMultiplier(Assignment assignment)
 - **Tier 7**: Master Sergeant - Full privileges, command authority
 
 ### 3.2 Superior Wage & Reward System
-**Goal**: Advanced compensation system that surpasses original SAS
+**Goal**: Advanced compensation system with performance-based rewards
 
-**Original SAS Wage Formula Analysis**:
+**Wage Formula Analysis**:
 ```csharp
-// SAS wage calculation (Test.cs:208-210)
+// Wage calculation reference
 private int wage()
 {
     return (int)(Math.Max(0f, 
@@ -2640,7 +2640,7 @@ private int wage()
         (float)MobileParty.MainParty.TotalWage);
 }
 
-// SAS retirement bonus system
+// Retirement bonus system
 GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, 25000, false); // Fixed bonus
 ```
 
@@ -2669,11 +2669,11 @@ private int CalculatePerformanceBonus()
 
 private void ProcessAssignmentBenefits()
 {
-    // VERIFIED: Enhanced assignment benefits using SAS patterns + improvements
+    // Enhanced assignment benefits with improvements
     switch (_currentAssignment)
     {
         case Assignment.Foraging:
-            // VERIFIED: SAS pattern (Test.cs:133)
+            // Foraging assignment benefits
             if (_enlistedLord.PartyBelongedTo != null)
             {
                 var grainAmount = MBRandom.RandomInt(3, 8); // IMPROVEMENT: Variable amount
@@ -2684,11 +2684,11 @@ private void ProcessAssignmentBenefits()
             break;
             
         case Assignment.Sergeant:
-            // VERIFIED: SAS pattern (Test.cs:203) + improvements
+            // Training assignment benefits with improvements
             Hero.MainHero.AddSkillXp(DefaultSkills.Leadership, 100f);
             if (_enlistedLord.PartyBelongedTo != null)
             {
-                // IMPROVEMENT: Train multiple troops vs. SAS single troop
+                // Train multiple troops with improved efficiency
                 var trainingTargets = GetTrainableTroops();
                 foreach (var troop in trainingTargets.Take(3))
                 {
@@ -2715,12 +2715,12 @@ private void ProcessAssignmentBenefits()
 
 private void CheckForSpecialPromotions()
 {
-    // VERIFIED: SAS special promotion system + improvements
+    // Special promotion system with improvements
     var factionRelation = GetFactionRelation(_enlistedLord.MapFaction);
     
     // Vassalage offer (enhanced conditions)
     if (!_vassalOffersReceived.Contains(_enlistedLord.MapFaction) &&
-        factionRelation >= ModConfig.Settings.SAS.VassalageRequiredXP &&
+        factionRelation >= ModConfig.Settings.Encounter.VassalageRequiredXP && // Load from configuration
         _enlistmentTier >= 6)
     {
         TriggerVassalageOffer();
@@ -2840,8 +2840,8 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
 - Equipment images and stats display
 - 4K resolution support and responsive design
 
-**Critical Discovery from SAS Decompile**:
-- **SAS activates `party_wait` menu IMMEDIATELY after enlistment** (line 623 in Test.cs Tick)
+**Critical Discovery**:
+- **Menu activation should happen IMMEDIATELY after enlistment** to prevent encounter gaps
 - **Zero menu gap** prevents encounter system from activating during transition
 - **Uses `AddWaitGameMenu()`** which doesn't pause game time (essential for continuous flow)
 
@@ -2859,7 +2859,7 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
        {
            try
            {
-               // SAS CRITICAL: Use AddWaitGameMenu (doesn't pause game) for immediate activation
+               // Use AddWaitGameMenu (doesn't pause game) for immediate activation
                starter.AddWaitGameMenu("enlisted_status",
                    "Enlisted Service Status\n{ENLISTED_STATUS_TEXT}",
                    OnEnlistedStatusInit,
@@ -2885,11 +2885,11 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
        {
            try
            {
-               // VERIFIED: Build status text like SAS (Test.cs:2836-2956)
+               // Build status text for menu display
                var statusText = BuildEnlistedStatusText();
                args.MenuContext.GameMenu.GetText().SetTextVariable("ENLISTED_STATUS_TEXT", statusText);
                
-               // VERIFIED: Set culture background like SAS
+               // Set culture background for menu display
                var culture = EnlistmentBehavior.Instance.CurrentLord?.MapFaction?.Culture;
                if (culture?.EncounterBackgroundMesh != null)
                {
@@ -2917,7 +2917,7 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
                return sb.ToString();
            }
            
-           // EXACT INFO: Match SAS status display
+           // Status display information
            sb.AppendLine($"Lord: {enlistment.CurrentLord.Name}");
            sb.AppendLine($"Faction: {enlistment.CurrentLord.MapFaction.Name}");
            
@@ -2933,12 +2933,12 @@ TaleWorlds.CampaignSystem.Actions.ChangeRelationAction :: ApplyPlayerRelation(He
                sb.AppendLine("Army: Independent Operations");
            }
            
-           // Service details (EXACT SAS format)
+           // Service details display
            sb.AppendLine($"Enlistment Time: {GetServiceDuration()}");
            sb.AppendLine($"Enlistment Tier: {enlistment.EnlistmentTier}/7 ({GetTierName(enlistment.EnlistmentTier)})");
            sb.AppendLine($"Formation: {GetPlayerFormation()}");
            
-           // Wage display (EXACT SAS format)
+           // Wage display information
            var wage = CalculateWage();
            var partyWage = MobileParty.MainParty.TotalWage;
            if (partyWage > 0)
@@ -3402,15 +3402,15 @@ TaleWorlds.CampaignSystem.CampaignEvents :: OnSettlementLeftEvent
 **Goal**: Rich random events during service + advanced equipment selector
 
 **Tasks**:
-- Port key events from original SAS (Town Robber, Bandit Ambush, etc.)
+- Port key events for random encounters (Town Robber, Bandit Ambush, etc.)
 - Implement event consequence system
 - Add event-based progression opportunities
-- **Create Custom Gauntlet Equipment Selector** (like original SAS)
+- **Create Custom Gauntlet Equipment Selector**
 - Implement advanced equipment management UI
 
 **Complete Custom UI Implementation Guide**:
 ```csharp
-// Custom Equipment Selector (like original SAS)
+// Custom Equipment Selector using Gauntlet UI
 public class EnlistedEquipmentSelectorBehavior : CampaignBehaviorBase
 {
     private static GauntletLayer _layer;
@@ -3525,7 +3525,7 @@ TaleWorlds.Library.DataSourceProperty :: [DataSourceProperty]
 - Create context-aware menu options based on status
 - Implement advanced equipment and assignment management
 
-**Key Improvements Over Original SAS**:
+**Key Improvements**:
 1. **Dynamic Status Updates**: Real-time army cohesion, relationship tracking
 2. **Veteran Status System**: Benefits, service history, recruitment bonuses
 3. **Context-Aware Options**: Menu options change based on tier and status
@@ -3533,13 +3533,13 @@ TaleWorlds.Library.DataSourceProperty :: [DataSourceProperty]
 5. **Service Continuity**: Suspension/resumption for lord capture scenarios
 
 ### 5.2 Missing Core Features Implementation
-**Goal**: Add the 4 missing core SAS features identified in gap analysis
+**Goal**: Add missing core features for complete military service system
 
 **Tasks**:
 
 #### **5.2.1 Character Creation Integration**
 ```csharp
-// NEW: Enlisted starting options (like SAS StartingOptions.cs)
+// New: Enlisted starting options for character creation
 public class EnlistedStartingOptions : CampaignBehaviorBase
 {
     public static void AddKingdomSelectionMenu(CharacterCreation characterCreation)
@@ -3573,7 +3573,7 @@ public class EnlistedStartingOptions : CampaignBehaviorBase
 #### **5.2.2 Custom Healing Model** ✅ **VERIFIED AVAILABLE**
 ```csharp
 // VERIFIED: PartyHealingModel interface available in TaleWorlds.CampaignSystem.ComponentInterfaces
-// Enhanced healing when enlisted (like SAS SoldierPartyHealingModel.cs) 
+// Enhanced healing when enlisted with custom healing model 
 public class EnlistedPartyHealingModel : PartyHealingModel
 {
     public override ExplainedNumber GetDailyHealingHpForHeroes(MobileParty party, bool includeDescriptions = false)
@@ -3614,7 +3614,7 @@ public class EnlistedPartyHealingModel : PartyHealingModel
 
 #### **5.2.3 Perk Enhancement System**
 ```csharp
-// NEW: SAS-specific perk bonuses (like ServeAsSoldierPerks.cs)
+// New: Perk bonuses for enlisted soldiers
 public class EnlistedPerkEnhancer : CampaignBehaviorBase
 {
     public override void RegisterEvents()
@@ -3629,7 +3629,7 @@ public class EnlistedPerkEnhancer : CampaignBehaviorBase
     
     private void EnhancePerkDescriptions()
     {
-        // Add SAS-specific benefits to existing perks
+        // Add enlisted-specific benefits to existing perks
         AddPerkDescription(DefaultPerks.Polearm.StandardBearer, 
             "Enlisted Service: Wages increased by 20%");
         AddPerkDescription(DefaultPerks.OneHanded.Duelist, 
@@ -3672,7 +3672,7 @@ public class LordRevivalBehavior : CampaignBehaviorBase
 **Goal**: Comprehensive mod configuration system
 
 **Tasks**:
-- Extend existing ModSettings with SAS configuration
+- Extend existing ModSettings with encounter suppression configuration
 - Add XP requirements, wage rates, and assignment availability settings
 - Implement difficulty scaling options
 - Add feature toggle capabilities
@@ -3690,7 +3690,7 @@ public class LordRevivalBehavior : CampaignBehaviorBase
 
 ### Harmony Patch Analysis & Modern Alternatives
 
-Based on analysis of 37 Harmony patches in the original SAS, here are the critical patches we need and their modern, safer implementations:
+Based on analysis of Harmony patch requirements, here are the critical patches we need and their modern, safer implementations:
 
 #### **Critical Patches Required:**
 
@@ -3767,7 +3767,7 @@ ConversationManager.AddDialogFlow(DialogFlow flow, object relatedObject)
 #### **Patches We Will Implement (Safe, Modern Alternatives):**
 
 **1. Core Functionality Patches:**
-- `Encounter_DoMeetingGuardPatch` (existing) - **Enhanced**: SAS-style immediate encounter finishing when lord not involved
+- `Encounter_DoMeetingGuardPatch` (existing) - **Enhanced**: Immediate encounter finishing when lord not involved
 - `EncounterMenuPatch` → **Replace**: Use `AddGameMenuOption()` for "Wait in Reserve" and "Defect"
 - `HidePartyNamePlatePatch` → **Replace**: Use `MobileParty.IsVisible` + VisualTrackerManager
 - `BattleCommandsPatch` → **Replace**: Custom mission behavior for command notifications
@@ -3835,10 +3835,10 @@ private bool TrySetProperty(object target, string propertyName, object value)
 [HarmonyPatch(typeof(PlayerEncounter), nameof(PlayerEncounter.DoMeeting))]
 internal static class EnlistedEncounterGuardPatch
 {
-    static void Postfix()  // Changed to Postfix - SAS approach
+    static void Postfix()  // Postfix approach for encounter handling
     {
         // Feature gate
-        if (!ModConfig.Settings?.SAS?.SuppressPlayerEncounter == true) return;
+        if (!ModConfig.Settings?.Encounter?.SuppressPlayerEncounter == true) return;
         
         // Null safety
         var enlistment = EnlistmentBehavior.Instance;
@@ -3849,10 +3849,10 @@ internal static class EnlistedEncounterGuardPatch
         var playerEvent = MapEvent.PlayerMapEvent;
         if (playerEvent == null || lordParty == null) return;
         
-        // SAS-proven approach: Allow encounter to process, then finish immediately
+        // Allow encounter to process, then finish immediately to prevent unwanted encounters
         if (!IsLordLeadingBattle(playerEvent, lordParty))
         {
-            PlayerEncounter.Finish(true); // SAS immediate finishing approach
+            PlayerEncounter.Finish(true); // Immediate finishing approach
             return; // Encounter processed and finished
         }
         
@@ -4232,9 +4232,9 @@ Modules/Enlisted/Debugging/
 ## Equipment System Reference
 
 ### Complete Gear API Documentation
-- **`docs/sas/code_gear_sources.md`** - Complete API reference for equipment selection
-- **`docs/sas/gear_pipeline.md`** - 8-step implementation pipeline for equipment system
-- **`docs/sas/code_paths_map.md`** - API source location mapping for verification
+- **`docs/discovered/equipment-apis.md`** - Complete API reference for equipment selection
+- **`docs/discovered/equipment-pipeline.md`** - 8-step implementation pipeline for equipment system
+- **`docs/discovered/api-paths.md`** - API source location mapping for verification
 
 ### Equipment Implementation Pattern
 ```csharp
@@ -4282,7 +4282,7 @@ public List<ItemObject> GetTierAppropriateEquipment(int tier, CultureObject cult
 - Enhanced menu system provides professional military interface
 - Real-time status display with comprehensive information
 - Keyboard shortcuts for quick access ('P' for promotion, 'N' for status)
-- Proper SAS menu behavior maintained (stays active while following lord)
+- Proper menu behavior maintained (stays active while following lord)
 - API signatures corrected using actual TaleWorlds decompiled code
 
 ### Phase 2B Success (NEXT)
@@ -4305,13 +4305,13 @@ public List<ItemObject> GetTierAppropriateEquipment(int tier, CultureObject cult
 - Comprehensive configuration options
 - Stable, optimized performance
 
-## SAS Gap Analysis: Missing Features Identified
+## Feature Gap Analysis: Missing Features Identified
 
 ### **🚫 Missing Core Features We Need to Add:**
 
 #### **1. Character Creation Integration** (Missing from our plan):
 ```csharp
-// MISSING: SAS StartingOptions - Kingdom selection during character creation
+// Missing: StartingOptions - Kingdom selection during character creation
 // Allows player to start already enlisted with chosen faction
 // Implementation needed: CharacterCreationMenu integration
 ```
@@ -4325,8 +4325,8 @@ public List<ItemObject> GetTierAppropriateEquipment(int tier, CultureObject cult
 
 #### **3. Perk System Integration** (Missing from our plan):
 ```csharp
-// MISSING: ServeAsSoldierPerks - Enhances existing perks with SAS bonuses
-// Adds SAS-specific descriptions to vanilla perks
+// Missing: Perk enhancement system - Enhances existing perks with enlisted bonuses
+// Adds enlisted-specific descriptions to vanilla perks
 // Implementation needed: Perk enhancement system
 ```
 
@@ -4371,7 +4371,7 @@ ModuleData/Enlisted/
 ### **Phase 2: Equipment & Officer Integration Files**
 ```
 src/Features/Equipment/Behaviors/
-├── TroopSelectionManager.cs (SAS-style troop selection system)
+├── TroopSelectionManager.cs (troop selection system)
 └── PersonalGear.cs (personal vs service equipment)
 
 src/Mod.GameAdapters/Patches/
@@ -4414,7 +4414,7 @@ src/Features/Combat/Behaviors/
 
 ### **Inventory Integration Options**:
 1. **Built-in Inventory**: `InventoryManager.OpenScreenAsInventoryOf()` for native UI
-2. **Custom Gauntlet UI**: `GauntletLayer` + custom ViewModel for SAS-style selector
+2. **Custom Gauntlet UI**: `GauntletLayer` + custom ViewModel for equipment selector
 3. **Dialog-based**: Multiple `AddPlayerLine()` calls for simple selection
 
 ### **Battle Integration**:
@@ -4577,7 +4577,7 @@ public List<TroopChoice> GetAvailableTroopChoices(string cultureId, int maxTier)
     var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
     var choices = new List<TroopChoice>();
     
-    // VERIFIED: Get all character templates (from docs/sas/gear_pipeline.md)
+    // Get all character templates from game objects
     var allCharacters = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
     var cultureTroops = allCharacters.Where(c => 
         c.Culture == culture && 
@@ -4604,7 +4604,7 @@ public List<TroopChoice> GetAvailableTroopChoices(string cultureId, int maxTier)
     return choices.OrderBy(c => c.Tier).ThenBy(c => c.Cost).ToList();
 }
 
-// Realistic equipment pricing (like SAS system)
+// Realistic equipment pricing based on tier and equipment value
 public int CalculateEquipmentCost(CharacterObject troop)
 {
     var rules = LoadEquipmentPricingConfig();
@@ -4692,13 +4692,13 @@ starter.AddGameMenuOption("enlisted_status", "request_retirement",
 - ✅ **Complete menu navigation** with main menu and sub-menus
 - ✅ **4-formation support** throughout all systems
 
-This comprehensive implementation plan provides **complete guidance** for building a modern, robust SAS system. Every API call, every class structure, and every implementation pattern is documented with exact signatures and usage examples.
+This comprehensive implementation plan provides **complete guidance** for building a modern, robust military service system. Every API call, every class structure, and every implementation pattern is documented with exact signatures and usage examples.
 
 ## 🎯 **IMPLEMENTATION COMPLETION STATUS - UPDATED 2025-09-05**
 
 ### **✅ PHASES COMPLETE:**
 - **Phase 1A**: Centralized Dialog System - ✅ **IMPLEMENTED & TESTED**  
-- **Phase 1B**: Complete SAS Core Implementation - ✅ **IMPLEMENTED & TESTED**
+- **Phase 1B**: Complete Core Implementation - ✅ **IMPLEMENTED & TESTED**
 - **Phase 1C**: Duties System Foundation - ✅ **IMPLEMENTED & TESTED**
 
 ### **🛡️ CRITICAL CRASH ANALYSIS & FIXES:**

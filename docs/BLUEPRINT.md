@@ -132,7 +132,7 @@ src/
 │   ├── Combat/
 │   │   └── Behaviors/           # battle participation and army following
 │   └── Interface/
-│       └── Behaviors/           # ✅ COMPLETE: professional SAS-style menu system with clean formatting
+│       └── Behaviors/           # ✅ COMPLETE: professional menu system with clean formatting
 │
 └── Mod.Config/                  # strongly-typed settings & validation
 ```
@@ -150,7 +150,7 @@ src/
 - Intercept or extend TaleWorlds methods that are sealed, internal/private, or engine-invoked.
 - When critical side effects cannot be reached via public APIs or CampaignBehavior hooks.
 - **Officer Role Substitution**: Can use public APIs (`lordParty.SetPartyX()`) or Harmony patches for enhanced integration - patches provide more natural skill benefits but are optional.
-- **Encounter Management**: Use SAS-proven `IsActive = false` engine property ✅ **VERIFIED** for complete encounter prevention (no patches needed)
+- **Encounter Management**: Use `IsActive = false` engine property for complete encounter prevention (no patches needed)
 - **Real-Time Management**: Use `CampaignEvents.TickEvent` ✅ **VERIFIED** for continuous state enforcement
 - It is acceptable to patch menu/time control, encounter/battle flows, and dispatcher surfaces when required by feature design, provided patches are guarded, observable, and configurable.
 - Examples of engine-invoked surfaces: module load/unload lifecycle, campaign daily/hourly ticks, battle/agent updates, menu open/close, economy/party recalculations.
@@ -159,7 +159,7 @@ src/
 
 - Do not place domain logic in patches; keep orchestration and configuration in feature services.
 - **Prefer public APIs first** for simpler implementation and better compatibility; however, Harmony usage is **perfectly acceptable** when it provides clear benefits or when no public API alternative exists. Document assumptions and gate via settings where appropriate.
-- **Prefer engine properties over patches** when possible - SAS uses `IsActive = false` ✅ **VERIFIED** for encounter prevention vs complex patches
+- **Prefer engine properties over patches** when possible - `IsActive = false` provides encounter prevention without complex patches
 - **Use real-time TickEvent over game-time ticks** ✅ **VERIFIED** for continuous state enforcement during paused encounters
 - **Immediate menu replacement** using `AddWaitGameMenu()` ✅ **VERIFIED** prevents encounter gaps
 
@@ -226,7 +226,7 @@ If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove 
 ## 4.5 Campaign Menu & Time-Control Policy (authoritative)
 
 - Menus created via `CampaignGameStarter.AddGameMenu/ AddWaitGameMenu` must not break map time controls.
-- Pattern to keep the game unpaused while a menu panel is open (Freelancer/SAS-style):
+- Pattern to keep the game unpaused while a menu panel is open (ensures proper time flow during menu interactions):
   1. Finish any active encounter before switching menus: `if (PlayerEncounter.Current != null) PlayerEncounter.Finish(true);`
   2. Drain stray menus: loop `GameMenu.ExitToLast()` a few times until `CurrentMenuContext` is null.
   3. Open your menu via `GameMenu.ActivateGameMenu(id)` or `GameMenu.SwitchToMenu(id)` depending on context.
@@ -235,9 +235,9 @@ If your `.gitignore` mentions `.artifacts/patches/` from earlier drafts, remove 
 - Use `GameOverlays.MenuOverlayType.None` and `GameMenu.MenuFlags.None` unless you intentionally need overlays/flags.
 - This ensures the top-left ribbon (spacebar/arrow time controls) works while the panel is expanded and the panel can be collapsed via the chevron without pausing.
 
-### 4.6 Military Service System Architecture - **ENHANCED WITH SAS DECOMPILE INSIGHTS**
+### 4.6 Military Service System Architecture
 
-Our military service system follows SAS-proven patterns with immediate menu replacement and engine-level encounter control:
+Our military service system uses immediate menu replacement and engine-level encounter control for reliable operation:
 
 #### **Enlistment Feature**
 - **What it does**: Tracks who you're serving and manages the basic service relationship
@@ -411,7 +411,7 @@ var availableGear = GetCultureAppropriateEquipment(lord.Culture, playerTier);
 - ✅ "Players expect this to work like real military service, so we mirror that experience"
 
 **Prohibited:**
-- ❌ References to "SAS" or "ServeAsSoldier mod"
+- ❌ References to other mods by name
 - ❌ "This was changed on [date]" or ticket references
 - ❌ Overly technical jargon without explanation
 - ❌ Comments that just repeat the code
@@ -664,7 +664,7 @@ public class SubModule : MBSubModuleBase
 **NEVER rely on outdated mod source code for method signatures.** Always use decompiled references from the current game version's DLLs.
 
 #### Problem Example
-Using outdated mod references (e.g., "ServeAsSoldier" mod) led to:
+Using references to other mods led to:
 - Incorrect method signatures (static vs instance methods)
 - Wrong parameter types and counts
 - Runtime crashes during patch application

@@ -30,8 +30,8 @@
 
 ### Technical Improvements
 - **✅ Reverted Following Logic**: Restored proven direct lord following (no more back-and-forth movement)
-- **✅ Simplified Battle Logic**: Removed complex army leader following that caused pathfinding crashes
-- **✅ Enhanced Logging**: Comprehensive battle state tracking for debugging
+- **✅ Improved Battle Logic**: Removed complex army leader following that caused pathfinding crashes
+- **✅ Improved Logging**: Battle state tracking for debugging and diagnostics
 
 ## Phase 2F: Professional Menu Interface System (2025-01-26)
 
@@ -73,7 +73,7 @@
 ## Phase 2C: Master at Arms System (2025-01-23)
 
 ### Equipment Selection
-- **✅ SAS-Style Troop Selection**: Choose from culture-appropriate troops with portraits
+- **✅ Troop Selection System**: Choose from culture-appropriate troops with portraits
 - **✅ Loadout Hints**: Preview equipment before selection
 - **✅ Equipment Replacement**: Military-style gear replacement system
 
@@ -88,7 +88,7 @@
 ## Phase 2A: Enhanced Menu System (2025-01-21)
 
 ### Professional Interface
-- **✅ SAS-Style Clean Formatting**: Professional military interface matching proven SAS design
+- **✅ Clean Menu Formatting**: Professional military interface with organized sections and detailed descriptions
 - **✅ Real-Time Updates**: Dynamic information display with continuous refresh
 - **✅ Keyboard Shortcuts**: 'P' for promotion, 'N' for status menu
 

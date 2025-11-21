@@ -2,9 +2,9 @@
 
 **Helper APIs and promotion utilities for the Enlisted military service system**
 
-## 🎯 **SYSTEM CHANGE: SAS Troop Selection Approach**
+## 🎯 **SYSTEM CHANGE: Troop Selection Approach**
 
-**ARCHITECTURAL DECISION** (2025-01-28): **Switched from custom equipment kits to SAS-style troop selection**
+**ARCHITECTURAL DECISION** (2025-01-28): **Switched from custom equipment kits to troop selection using real game troops**
 
 **Why This Change**:
 - ✅ **More Engaging**: Players choose **real Bannerlord troops** ("Imperial Legionary" vs "T3 Infantry Kit")
@@ -17,9 +17,9 @@
 - ✅ Equipment extraction APIs verified and **IMPLEMENTED**  
 - ✅ Culture filtering APIs verified and **IMPLEMENTED**
 - ✅ Equipment assignment APIs verified and **IMPLEMENTED**
-- ✅ **ALL SAS critical APIs verified** in current Bannerlord version and **IN PRODUCTION**
+- ✅ **All critical APIs verified** in current Bannerlord version and **IN PRODUCTION**
 
-**Implementation Status**: Phase 1A/1B complete with **SAS approach 100% compatible** and **battle crash prevention implemented** using comprehensive lord validation.
+**Implementation Status**: Phase 1A/1B complete with **full compatibility** and **battle crash prevention implemented** using comprehensive lord validation.
 
 ## 🛠️ **Troop Selection Helper Methods** 
 
@@ -157,7 +157,7 @@ private bool TrySetBattleParticipation(bool shouldJoin)
 
 ### Formation Detection
 ```csharp
-// Auto-detect player formation based on equipment (matches SAS logic)
+// Auto-detect player formation based on equipment
 public TroopType DetectPlayerFormation()
 {
     var hero = Hero.MainHero.CharacterObject;
@@ -210,7 +210,7 @@ public void CheckForPromotion()
     while (_enlistmentTier < 7 && _enlistmentXP >= tierRequirements[_enlistmentTier + 1])
     {
         _enlistmentTier++;
-        TriggerTroopSelectionMenu(_enlistmentTier); // SAS-style troop selection
+        TriggerTroopSelectionMenu(_enlistmentTier); // Troop selection using real game troops
     }
 }
 

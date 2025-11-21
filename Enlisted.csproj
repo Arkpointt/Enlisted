@@ -153,6 +153,7 @@
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs" />
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs" />
     <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs" />
+    <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs" />
     <Compile Include="src\Features\Assignments\Core\DutyConfiguration.cs" />
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs" />
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs" />

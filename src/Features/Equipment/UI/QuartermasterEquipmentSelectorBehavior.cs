@@ -16,14 +16,14 @@ namespace Enlisted.Features.Equipment.UI
     /// <summary>
     /// Gauntlet equipment selector behavior providing individual clickable equipment selection.
     /// 
-    /// Based on SAS weaponsmith approach but using verified current TaleWorlds APIs.
     /// Creates a custom UI overlay showing equipment variants as clickable buttons.
+    /// Uses TaleWorlds Gauntlet UI system for custom overlay creation and management.
     /// </summary>
     public class QuartermasterEquipmentSelectorBehavior : CampaignBehaviorBase
     {
         public static QuartermasterEquipmentSelectorBehavior Instance { get; private set; }
         
-        // Gauntlet UI components (using VERIFIED current API types)
+        // Gauntlet UI components for custom overlay display
         private static GauntletLayer _gauntletLayer;
         private static IGauntletMovie _gauntletMovie;  // Current API returns interface
         private static QuartermasterEquipmentSelectorVM _selectorViewModel;
@@ -64,17 +64,17 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                // VERIFIED API: Create Gauntlet layer (exact SAS pattern)
+                // Create Gauntlet layer for custom UI overlay
                 _gauntletLayer = new GauntletLayer(1001, "GauntletLayer", false);
                 
-                // Create ViewModel with flat collection (CORRECT modern approach)
+                // Create ViewModel with equipment variant collection
                 _selectorViewModel = new QuartermasterEquipmentSelectorVM(availableVariants, targetSlot, equipmentType);
                 _selectorViewModel.RefreshValues();
                 
                 // FIXED: Load template from official module structure GUI/Prefabs/Equipment/
                 _gauntletMovie = _gauntletLayer.LoadMovie("QuartermasterEquipmentGrid", _selectorViewModel);
                 
-                // EXACT SAS PATTERN: Register hotkeys first, then input restrictions
+                // Register hotkeys and set input restrictions for UI interaction
                 _gauntletLayer.Input.RegisterHotKeyCategory(HotKeyManager.GetCategory("GenericPanelGameKeyCategory"));
                 _gauntletLayer.InputRestrictions.SetInputRestrictions(true, InputUsageMask.All);
                 ScreenManager.TopScreen.AddLayer(_gauntletLayer);
@@ -92,7 +92,7 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
-        /// Fallback to conversation-based selection (proven to work).
+        /// Fallback to conversation-based selection when grid UI is unavailable.
         /// </summary>
         private static void ShowConversationFallback(List<EquipmentVariantOption> availableVariants, string equipmentType)
         {
@@ -113,7 +113,7 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
-        /// Close equipment selector using VERIFIED cleanup pattern.
+        /// Close equipment selector and clean up UI resources.
         /// </summary>
         public static void CloseEquipmentSelector()
         {
@@ -121,7 +121,7 @@ namespace Enlisted.Features.Equipment.UI
             {
                 if (_gauntletLayer != null)
                 {
-                    // VERIFIED API: Cleanup pattern from current TaleWorlds code
+                    // Reset input restrictions and remove focus
                     _gauntletLayer.InputRestrictions.ResetInputRestrictions();
                     _gauntletLayer.IsFocusLayer = false;
                     

@@ -41,13 +41,13 @@ We figured out how to create working Gauntlet grid UIs for Bannerlord:
 - Use `<Widget>` not `<Panel>` (Panel is deprecated)
 - Use center alignment for 4K support, not fixed margins
 
-**Result**: Working equipment selection with individual clickable cards, just like SAS had.
+**Result**: Working equipment selection with individual clickable cards in a grid layout.
 
 ## Major Enhancement: Formation Training System
 
 **Date**: 2025-09-08
 
-We implemented a comprehensive formation-based skill training system that surpasses SAS:
+We implemented a formation-based skill training system that provides automatic daily skill progression:
 - **JSON configuration** for all formation skill XP amounts (easy balancing)
 - **Modern Bannerlord API** using `Hero.MainHero.AddSkillXp(skill, amount)`
 - **Formation detection** based on chosen troop type, not equipment analysis
@@ -69,7 +69,7 @@ We implemented a comprehensive formation-based skill training system that surpas
 
 **JSON Configuration**: Military duties and formation training are configurable without recompiling the mod.
 
-**Formation Training**: Use Hero.AddSkillXp API (not HeroDeveloper) for reliable skill progression matching SAS approach.
+**Formation Training**: Use Hero.AddSkillXp API (not HeroDeveloper) for reliable skill progression that works with the native game systems.
 
 ## Future Development Roadmap
 

@@ -18,7 +18,7 @@ TaleWorlds.Engine.GauntletUI.GauntletLayer :: ReleaseMovie(GauntletMovie movie)
 TaleWorlds.Engine.GauntletUI.GauntletLayer :: IsFocusLayer { get; set; }
 TaleWorlds.Engine.GauntletUI.GauntletLayer :: InputRestrictions { get; }
 
-## VM Command Patterns (from SAS analysis)
+## VM Command Patterns (from decompiled analysis)
 
 Common ViewModel command patterns to mirror:
 - ExecuteDone()
@@ -29,10 +29,10 @@ Common ViewModel command patterns to mirror:
 - ExecuteClose()
 - RefreshValues()
 
-## SAS Custom Equipment Selector Pattern
+## Custom Equipment Selector Pattern
 
 ```csharp
-// How SAS creates custom equipment UI (from EquipmentSelectorBehavior.cs)
+// How to create custom equipment UI (from decompiled patterns)
 public static void CreateVMLayer(List<ItemObject> list, string equipmentType)
 {
     layer = new GauntletLayer(1001, "GauntletLayer", false);
@@ -288,17 +288,17 @@ FontColor="#FAF4DEFF"                     // Standard text color
 
 ---
 
-## 🎮 **SAS CUSTOM EQUIPMENT SELECTOR - DECOMPILED ANALYSIS & VERIFIED CURRENT APIS**
+## 🎮 **CUSTOM EQUIPMENT SELECTOR - DECOMPILED ANALYSIS & VERIFIED CURRENT APIS**
 
 **Research Date**: 2025-01-28  
-**Source**: SAS decompiled code + Current TaleWorlds API verification
-**Warning**: Using ONLY verified current APIs, not SAS-specific outdated references
+**Source**: Decompiled code + Current TaleWorlds API verification
+**Warning**: Using ONLY verified current APIs, not outdated references
 
-### **🏗️ SAS Equipment Selector Architecture (Verified Pattern)**
+### **🏗️ Equipment Selector Architecture (Verified Pattern)**
 
 #### **1. Core Structure**
 
-**SAS Pattern** (adapted with verified APIs):
+**Pattern** (adapted with verified APIs):
 ```csharp
 // VERIFIED API: TaleWorlds.Engine.GauntletUI.GauntletLayer
 public static void CreateEquipmentSelectorLayer(List<ItemObject> availableItems, string equipmentType)
@@ -345,7 +345,7 @@ public static void CloseEquipmentSelectorLayer()
 
 #### **2. ViewModel System (VERIFIED APIs)**
 
-**Main Equipment Selector ViewModel** (adapted from SAS with current APIs):
+**Main Equipment Selector ViewModel** (adapted from decompiled patterns with current APIs):
 ```csharp
 // VERIFIED: ViewModel inheritance pattern from current TaleWorlds code
 public class QuartermasterEquipmentSelectorVM : ViewModel
@@ -370,12 +370,12 @@ public class QuartermasterEquipmentSelectorVM : ViewModel
         Rows = new MBBindingList<QuartermasterEquipmentCardRowVM>(); // ✅ VERIFIED constructor
         var cards = new MBBindingList<QuartermasterEquipmentCardVM>();
         
-        // Create equipment cards (4 per row like SAS)
+        // Create equipment cards (4 per row)
         foreach (var item in availableItems)
         {
             cards.Add(new QuartermasterEquipmentCardVM(item, this, equipmentType));
             
-            if (cards.Count == 4) // SAS row size
+            if (cards.Count == 4) // Row size
             {
                 Rows.Add(new QuartermasterEquipmentCardRowVM(cards));
                 cards = new MBBindingList<QuartermasterEquipmentCardVM>();
@@ -507,7 +507,7 @@ public class QuartermasterEquipmentCardVM : ViewModel
 #### **4. Row Container ViewModel**
 
 ```csharp
-// VERIFIED: Simple container pattern from SAS (no complex APIs needed)
+// VERIFIED: Simple container pattern (no complex APIs needed)
 public class QuartermasterEquipmentCardRowVM : ViewModel
 {
     [DataSourceProperty]
@@ -522,7 +522,7 @@ public class QuartermasterEquipmentCardRowVM : ViewModel
 
 ### **🎯 Key API Verifications from Current TaleWorlds Code**
 
-| **SAS API** | **Current Status** | **Source** |
+| **API** | **Current Status** | **Source** |
 |-------------|-------------------|------------|
 | `new GauntletLayer(priority, name, shouldClear)` | ✅ **VERIFIED** | BannerEditor, InventoryScreen, etc. |
 | `GauntletLayer.LoadMovie(movieName, dataSource)` | ✅ **VERIFIED** | All current Gauntlet screens |

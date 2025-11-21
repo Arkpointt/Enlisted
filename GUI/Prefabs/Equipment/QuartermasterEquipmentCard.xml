@@ -7,7 +7,7 @@
 						<Widget Sprite="frame_9" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="-20" MarginTop="-20" MarginRight="-20" MarginBottom="-20">
 							<Children>
 								
-								<!-- Equipment Icon (EXACT SAS RESPONSIVE PATTERN) -->
+								<!-- Equipment Icon (Responsive layout pattern) -->
 								<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="100" SuggestedWidth="100" MarginTop="35" HorizontalAlignment="Center" Brush="Encyclopedia.SubPage.Element">
 									<Children>
 										<ImageIdentifierWidget DataSource="{Image}" DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="96" SuggestedHeight="96" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="2" MarginLeft="2" AdditionalArgs="@AdditionalArgs" ImageId="@Id" ImageTypeCode="@ImageTypeCode" LoadingIconWidget="LoadingIconWidget">
@@ -24,14 +24,14 @@
 								<!-- Weapon Details (RESPONSIVE STATS DISPLAY) -->
 								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="160" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="12" Text="@WeaponDetails"/>
 
-								<!-- Select Button (SAS RESPONSIVE POSITIONING) -->
+								<!-- Select Button (Responsive positioning) -->
 								<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="40" SuggestedWidth="40" MarginRight="90" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush1" Command.Click="ExecuteSelectItem" MarginBottom="25" IsEnabled="@IsEnabled">
 									<Children>
 										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="20" Text="Select" />
 									</Children>
 								</ButtonWidget>
 
-								<!-- Preview Button (SAS RESPONSIVE POSITIONING) -->
+								<!-- Preview Button (Responsive positioning) -->
 								<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="40" SuggestedWidth="40" MarginLeft="90" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush2" Command.Click="ExecutePreviewItem" MarginBottom="25" IsEnabled="true">
 									<Children>
 										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="20" Text="Preview" />

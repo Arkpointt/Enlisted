@@ -53,13 +53,26 @@ namespace Enlisted.Features.Interface.Behaviors
             ModLogger.Info("Interface", "Enlisted input handler initialized");
         }
 
+        /// <summary>
+        /// Called every game frame to handle keyboard input for enlisted system.
+        /// Checks for hotkey presses and triggers appropriate actions.
+        /// Exits early if the player is not enlisted to avoid unnecessary processing.
+        /// </summary>
+        /// <param name="dt">Time elapsed since last frame, in seconds.</param>
         private void OnTick(float dt)
         {
-            // DISABLED: Hotkeys disabled per user request
-            // Only process input during appropriate game states
+            // Skip all processing if the player is not currently enlisted
+            // This avoids unnecessary computation when the system isn't active
+            var enlistmentBehavior = EnlistmentBehavior.Instance;
+            if (enlistmentBehavior?.IsEnlisted != true)
+            {
+                return;
+            }
+            
+            // Hotkeys are currently disabled per user request
+            // The following code is commented out but can be re-enabled if needed:
             // if (!ShouldProcessInput())
             //     return;
-
             // HandlePromotionHotkey();
             // HandleStatusMenuHotkey();
         }
@@ -134,19 +147,23 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Handle promotion hotkey press. (DISABLED)
+        /// Handles the 'P' key press to open the promotion/advancement menu.
+        /// Currently disabled per user request, but can be re-enabled if needed.
         /// </summary>
         private void OnPromotionHotkeyPressed()
         {
-            // DISABLED: Hotkeys disabled per user request
+            // Hotkeys are currently disabled per user request
+            // This method would open the promotion menu when hotkeys are enabled
         }
 
         /// <summary>
-        /// Handle status menu hotkey press. (DISABLED)
+        /// Handles the 'N' key press to open the enlisted status menu.
+        /// Currently disabled per user request, but can be re-enabled if needed.
         /// </summary>
         private void OnStatusMenuHotkeyPressed()
         {
-            // DISABLED: Hotkeys disabled per user request
+            // Hotkeys are currently disabled per user request
+            // This method would open the enlisted status menu when hotkeys are enabled
         }
 
         /// <summary>
@@ -163,12 +180,12 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Get XP requirement for next tier.
+        /// Get XP requirement for next tier from progression_config.json.
         /// </summary>
         private int GetNextTierXPRequirement(int currentTier)
         {
-            var requirements = new int[] { 0, 500, 2000, 5000, 10000, 18000 };
-            return currentTier < 6 ? requirements[currentTier] : 18000;
+            // Load from progression_config.json instead of hardcoded values
+            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXPRequiredForTier(currentTier);
         }
 
         /// <summary>

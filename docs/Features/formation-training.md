@@ -23,7 +23,7 @@ Give players natural skill progression that matches their military role. Infantr
 **Daily Training Process:**
 1. System detects player's formation (Infantry, Cavalry, Archer, Horse Archer)
 2. Applies configured XP amounts to appropriate skills
-3. Uses SAS-proven `Hero.MainHero.AddSkillXp(skill, amount)` API
+3. Uses `Hero.MainHero.AddSkillXp(skill, amount)` API for reliable skill progression
 4. Continues during temporary leave (training doesn't stop)
 
 **Formation Skill Mapping:**
@@ -51,7 +51,7 @@ Give players natural skill progression that matches their military role. Infantr
 // Formation detection (stored from troop choice)
 string GetPlayerFormationType() => _playerFormation?.ToLower() ?? "infantry";
 
-// XP application (SAS method)
+// Apply skill XP using the native game API
 Hero.MainHero.AddSkillXp(skill, xpAmount);
 
 // Formation assignment (during enlistment/promotion)

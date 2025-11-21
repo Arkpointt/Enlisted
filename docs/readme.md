@@ -16,12 +16,12 @@ Complete military service system where players can:
 
 ### Phase Structure (5 weeks total) - **UPDATED IMPLEMENTATION STATUS**
 - **Phase 1A**: Centralized Dialog System - ✅ **COMPLETE**
-- **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - SAS immediate menu replacement implemented
-- **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
-- **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
-- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with SAS-style clean formatting and real-time updates
+- **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - Immediate menu replacement implemented
+- **Phase 1B**: Complete Core Implementation - ✅ **COMPLETE** - Real-time ticks + IsActive management + dynamic armies + lord safety validation
+- **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - Configuration-driven duties with officer integration + dual approach officer roles
+- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with clean formatting and real-time updates
 - **Phase 2B**: Troop Selection & Equipment Replacement - ✅ **COMPLETE** - Quartermaster grid UI with individual equipment selection
-- **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - SAS-style troop selection with portraits and loadout hints
+- **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - Troop selection with portraits and loadout hints
 - **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system with encounter fixes
 - **Phase 2E**: Battle Commands Integration - ✅ **COMPLETE** - **NEW** - Automatic formation-based command filtering
 - **Phase 2F**: Professional Menu Interface - ✅ **COMPLETE** - **NEW** - Organized duty/profession menus, tier-based access, detailed descriptions
@@ -39,7 +39,7 @@ Package-by-Feature structure keeps related code together:
 src/Features/
 ├── Enlistment/          # Core service state and lord relationship management
 ├── Duties/              # Modern configuration-driven duties system with troop types  
-├── Equipment/           # SAS-style troop selection with equipment REPLACEMENT system
+├── Equipment/           # Troop selection with equipment REPLACEMENT system
 ├── Conversations/       # Dialog system integration for enlistment and duties
 ├── Combat/              # Army following and battle participation with officer roles
 └── Interface/           # ✅ COMPLETE: Enhanced menu system with professional military interface
@@ -120,14 +120,14 @@ We have complete and verified API documentation covering:
 - **Economic Actions**: Wage payments and realistic equipment pricing
 - **Character Development**: Skill XP, progression, and advancement
 - **Localization System**: Professional multi-language support with {=key}fallback format
-- **Formation Detection**: 4-formation auto-detection matching original SAS logic
+- **Formation Detection**: 4-formation auto-detection based on equipment and troop type
 
 ### Safety & Reliability
 - **Defensive Programming**: Every operation validates state before execution
 - **Graceful Recovery**: System recovers from any state corruption or errors
 - **Edge Case Handling**: Comprehensive coverage of lord death, capture, kingdom changes
 - **100% Uptime**: No scenarios can crash or break the enlistment system
-- **SAS-Style Encounter Handling**: Uses proven immediate encounter finishing rather than prevention
+- **Encounter Handling**: Uses immediate encounter finishing rather than prevention
 - **Production Logging**: Comprehensive troubleshooting support for game updates and mod conflicts
 
 ### Logging & Troubleshooting
@@ -184,9 +184,9 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - `ModuleData/Enlisted/README.md` - **ENHANCED**: Complete 7 JSON config guide with validation and fixes
 
 ### Equipment System Documentation
-- `sas/code_gear_sources.md` - Complete equipment API reference
-- `sas/gear_pipeline.md` - 8-step equipment selection implementation guide
-- `sas/code_paths_map.md` - API source location mapping for verification
+- `docs/discovered/equipment-apis.md` - Complete equipment API reference
+- `docs/discovered/equipment-pipeline.md` - 8-step equipment selection implementation guide
+- `docs/discovered/api-paths.md` - API source location mapping for verification
 
 ## 🚀 Getting Started
 
@@ -198,16 +198,16 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 
 ### Implementation Order
 1. ✅ **Phase 1A Complete**: Dialog system updated to use diplomatic submenu with immediate menu activation
-2. ✅ **Phase 1B Complete**: SAS core functionality implemented with lord safety validation and battle crash prevention
+2. ✅ **Phase 1B Complete**: Core functionality implemented with lord safety validation and battle crash prevention
 3. ✅ **Phase 1C Complete**: Modern duties system with troop types, officer roles, and configuration-driven framework
-4. **Phase 2 Next**: SAS-style troop selection with equipment replacement system
+4. **Phase 2 Next**: Troop selection with equipment replacement system
 5. **Follow Phase Structure**: Each phase builds on the previous with clear acceptance criteria
 6. **Test Incrementally**: Verify functionality at each phase completion
 
 ### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
 - `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub with enlistment, retirement, and return-from-leave dialogs
 - `EnlistmentBehavior.cs` - ✅ **COMPLETE**: Complete military service with enhanced leave system, encounter cleanup, and menu restoration
-- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Professional SAS-style menu system with clean formatting and military interface
+- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Professional menu system with clean formatting and military interface
 - `EnlistedInputHandler.cs` - ✅ **COMPLETE**: Keyboard shortcuts ('P' for promotion, 'N' for status menu) with proper input handling
 - `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system + menu support methods for enhanced display
 - `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
@@ -228,7 +228,7 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 5. **Progression**: Earn promotions and unlock new assignments/equipment
 
 ### Service Management - **ENHANCED MENU SYSTEM COMPLETE**
-- **✅ Professional Military Interface**: Clean SAS-style menu with comprehensive information display using proven formatting
+- **✅ Professional Military Interface**: Clean menu with comprehensive information display
 - **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
 - **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
 - **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits, loadout previews, and close button
@@ -238,7 +238,7 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - **✅ Organized Duty/Profession Selection**: Clean section headers, tier-based access, detailed descriptions, streamlined navigation
 - **✅ Daily XP Processing**: Connected duty/profession selection to active daily skill training system
 - **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
-- **✅ Proper SAS Behavior**: Menu stays active while following lord, maintains game flow
+- **✅ Proper Menu Behavior**: Menu stays active while following lord, maintains game flow
 - **✅ Multiple Equipment Choices**: Framework ready for 3-6 troop equipment styles per tier with realistic pricing
 - **✅ Duties Management**: Interactive assignment interface with slot tracking and officer role display
 - **✅ 4-Formation Specialization**: Infantry, Archer, Cavalry, Horse Archer with auto-detection and culture variants
@@ -473,8 +473,8 @@ Campaign Map (Press 'N' when enlisted)
 
 ## 🎯 **Complete Implementation Summary**
 
-### **✅ Enhanced vs. Original SAS**
-| Feature | Original SAS | Our Enhanced System |
+### **✅ Feature Summary**
+| Feature | Comparison | Our Implementation |
 |---------|-------------|-------------------|
 | **Formations** | 4 basic detection | **4 with enhanced specializations & culture variants** |
 | **Equipment** | Single kit per tier | **3-6 troop choices per tier with realistic pricing** |
@@ -484,8 +484,8 @@ Campaign Map (Press 'N' when enlisted)
 | **Localization** | Basic text | **Professional {=key}fallback multi-language support** |
 | **Officer Roles** | 37+ Harmony patches | **4 targeted patches with natural skill integration** |
 
-### **✅ 4-Formation System** (Enhanced from SAS)
-**Auto-Detection Logic** (matches original SAS):
+### **✅ 4-Formation System**
+**Auto-Detection Logic**:
 ```csharp
 if (Hero.MainHero.CharacterObject.IsRanged && Hero.MainHero.CharacterObject.IsMounted)
     return TroopType.HorseArcher;   // Bow + Horse
@@ -536,7 +536,7 @@ private void OnCharacterDefeated(Hero defeatedHero, Hero victorHero) {
 ```
 
 #### **Key Learning:**
-**SAS relied on event-driven safety, not continuous polling.** When armies are defeated, events fire immediately - we must respond instantly to clean up invalid lord references before daily tick tries to access them.
+**The system relies on event-driven safety, not continuous polling.** When armies are defeated, events fire immediately - we must respond instantly to clean up invalid lord references before daily tick tries to access them.
 
 ### **Issue 2: Pathfinding Crash (Introduced During Fix)**
 

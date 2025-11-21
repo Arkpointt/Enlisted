@@ -15,7 +15,7 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 - **7-Tier Progression**: Military ranks from Recruit to Master Sergeant over 1+ year service
 - **Daily Wages**: 24-150 gold/day progression based on tier and duties
 - **Army Integration**: Smart following behavior with army hierarchy awareness
-- **Encounter Safety**: Complete crash prevention with proven SAS techniques
+- **Encounter Safety**: Complete crash prevention with engine-level encounter management
 
 ### **Professional Menu Interface** 
 - **Main Status Menu**: Comprehensive military information with real-time updates
@@ -80,14 +80,14 @@ Enlisted allows players to **enlist with any lord** and serve in their armies as
 
 ## 🔧 Technical Architecture
 
-### **Modern Implementation - 100% VERIFIED SAS APPROACH**
+### **Modern Implementation - Verified APIs and Minimal Patches**
 - **Package-by-Feature**: Clean modular design with Blueprint compliance
-- **100% Verified APIs**: ALL critical SAS APIs confirmed in current Bannerlord version
-- **Minimal Essential Patches**: Engine properties + targeted battle command filtering (vs. original SAS's 37+ patches)  
-- **SAS Real-Time Management**: Continuous state enforcement using verified TickEvent
+- **Verified APIs**: All critical APIs confirmed in current Bannerlord version
+- **Minimal Essential Patches**: Engine properties + targeted battle command filtering for clean implementation  
+- **Real-Time Management**: Continuous state enforcement using verified TickEvent
 - **Enhanced Healing**: Custom PartyHealingModel integration
 - **Configuration-Driven**: No hardcoded values, full JSON customization
-- **Professional UI**: Clean SAS-style menu formatting with organized sections, tier-based progression, detailed descriptions
+- **Professional UI**: Clean menu formatting with organized sections, tier-based progression, detailed descriptions
 
 ## Debugging layout and outputs
 All logs and discovery artifacts are written to the module’s Debugging folder (one session at a time; cleared on init):
@@ -132,7 +132,7 @@ Files created per session:
 - **Professional Localization**: Multi-language support with {=key}fallback format
 - **Custom Healing Model**: Enhanced healing bonuses for enlisted soldiers (+13 HP/day)
 - **4-Formation System**: Complete specialization system with auto-detection
-- **SAS Engine-Level Encounter Prevention**: Uses `IsActive = false` for complete encounter control (no patches)
+- **Engine-Level Encounter Prevention**: Uses `IsActive = false` for complete encounter control (no patches needed)
 - **Realistic Economics**: Formation-based equipment pricing (Infantry 75🪙 → Horse Archer 1,969🪙)
 - **Schema Versioning**: Future-proof configuration with migration support
 

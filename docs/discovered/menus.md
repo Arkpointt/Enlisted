@@ -281,7 +281,7 @@ public static void ShowCustomEnlistedMenu()
 
 ## 🎨 **Custom Gauntlet UI System - Complete Implementation Guide**
 
-**Based on TaleWorlds decompiled sources and SAS analysis**
+**Based on TaleWorlds decompiled sources and implementation analysis**
 
 ### **Custom Gauntlet UI Architecture** (Advanced Alternative)
 
@@ -357,7 +357,7 @@ public class EnlistedMenuVM : ViewModel
     
     private void UpdateEnlistedStatus()
     {
-        // Build status text exactly like SAS
+        // Build status text for menu display
         var sb = new StringBuilder();
         sb.AppendLine($"Party Leader: {LordName}");
         sb.AppendLine($"Party Objective: {ArmyInfo}");
@@ -464,7 +464,7 @@ public static class EnlistedMenuGauntletView
       <!-- Menu options container (vertical list of buttons) -->
       <Widget VerticalAlignment="Bottom" MarginTop="420">
         
-        <!-- SAS-style menu buttons (simple ButtonWidget, no complex widgets) -->
+        <!-- Menu buttons (simple ButtonWidget, no complex widgets) -->
         <ButtonWidget Text="Visit Weaponsmith" 
                       Command.Click="ExecuteVisitWeaponsmith"
                       WidthSizePolicy="Fixed" Width="300"
@@ -631,7 +631,7 @@ using TaleWorlds.Localization;
 
 public class EnlistedMenuVM : ViewModel
 {
-    // Properties for SAS-style data binding (exact screenshot format)
+    // Properties for data binding with menu text variables
     [DataSourceProperty] public string PartyLeader { get; set; }
     [DataSourceProperty] public string PartyObjective { get; set; }  
     [DataSourceProperty] public string EnlistmentTime { get; set; }
@@ -676,7 +676,7 @@ public class EnlistedMenuVM : ViewModel
     <Widget VerticalAlignment="Top" HorizontalAlignment="Left" 
             MarginTop="40" MarginLeft="40" MarginRight="40">
       
-      <!-- SAS-style status text (clean RichTextWidget) -->
+      <!-- Status text display (clean RichTextWidget) -->
       <RichTextWidget WidthSizePolicy="Fixed" Width="500" 
                       HeightSizePolicy="Fixed" Height="300"
                       Brush="Text.Default" FontSize="18">
@@ -697,7 +697,7 @@ When not fighting: @AssignmentDescription]]></Text>
     <Widget VerticalAlignment="Bottom" HorizontalAlignment="Left"
             MarginBottom="40" MarginLeft="40">
       
-      <!-- SAS menu option buttons (simple ButtonWidget stack) -->
+      <!-- Menu option buttons (simple ButtonWidget stack) -->
       <Widget WidthSizePolicy="Fixed" Width="400" HeightSizePolicy="Fixed" Height="300">
         
         <ButtonWidget Text="Visit Weaponsmith" 
@@ -770,7 +770,7 @@ private void OnStatusMenuHotkeyPressed()
 
 #### **✅ Complete Control**:
 - ✅ **No unwanted widgets** - design exactly what you need
-- ✅ **Perfect SAS replication** - can match visual style exactly  
+- ✅ **Clean menu display** - matches standard game menu style  
 - ✅ **No template limitations** - not bound by game menu constraints
 - ✅ **Professional appearance** - full control over layout and styling
 
@@ -795,16 +795,16 @@ private void OnStatusMenuHotkeyPressed()
 
 ## 🎯 **VERIFIED SOLUTION & IMPLEMENTATION PLAN**
 
-### **✅ CONFIRMED**: SAS Approach Still Works in Modern Bannerlord
+### **✅ CONFIRMED**: Party Wait Menu Approach Works in Modern Bannerlord
 
 **From decompile analysis**: 
-- ✅ **SAS used integer `3`** = **Modern `WaitMenuHideProgressAndHoursOption`**
+- ✅ **Integer `3`** = **Modern `WaitMenuHideProgressAndHoursOption`**
 - ✅ **Modern API signature confirmed** in `CampaignGameStarter.cs:96`
 - ✅ **Enum values confirmed** in `GameMenu.cs:477-487`
 
 **Root Cause**: We're using wrong menu template!
 - ❌ **Current**: `WaitMenuShowOnlyProgressOption` (value 2) → Causes UI boxes
-- ✅ **SAS Used**: `WaitMenuHideProgressAndHoursOption` (value 3) → Clean display
+- ✅ **Used**: `WaitMenuHideProgressAndHoursOption` (value 3) → Clean display
 
 ### **🔧 IMMEDIATE IMPLEMENTATION PLAN**
 
@@ -817,11 +817,11 @@ GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption
 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption
 ```
 
-#### **Step 2: Add Real-Time Updates** ⚡ **SAS PATTERN**
+#### **Step 2: Add Real-Time Updates** ⚡
 ```csharp
-// Add tick handler for continuous updates (SAS approach)
+// Add tick handler for continuous updates
 starter.AddWaitGameMenu("enlisted_status", 
-    "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",  // SAS format
+    "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",  // Menu text format
     new OnInitDelegate(OnEnlistedStatusInit),
     new OnConditionDelegate(OnEnlistedStatusCondition),
     null,
@@ -833,10 +833,10 @@ starter.AddWaitGameMenu("enlisted_status",
 // Implement tick handler for real-time updates
 private void OnEnlistedStatusTick(MenuCallbackArgs args, CampaignTime dt)
 {
-    // SAS pattern - refresh every tick for real-time info
+    // Refresh every tick for real-time info
     RefreshEnlistedStatusDisplay();
     
-    // Auto-exit if not enlisted (SAS safety)
+    // Auto-exit if not enlisted (safety check)
     if (!EnlistmentBehavior.Instance?.IsEnlisted == true)
     {
         GameMenu.ExitToLast();
@@ -844,22 +844,22 @@ private void OnEnlistedStatusTick(MenuCallbackArgs args, CampaignTime dt)
 }
 ```
 
-#### **Step 3: Switch to SAS Text Variable Format** ⚡ **EXACT SAS APPROACH**
+#### **Step 3: Switch to Text Variable Format** ⚡
 ```csharp
 // CHANGE FROM current format:
 MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", statusBuilder.ToString());
 
-// CHANGE TO SAS format (uses two variables):
+// Change to format using two variables:
 private void RefreshEnlistedStatusDisplay()
 {
     var enlistment = EnlistmentBehavior.Instance;
     var lord = enlistment.CurrentLord;
     
-    // SAS approach - separate PARTY_LEADER and PARTY_TEXT
+    // Separate PARTY_LEADER and PARTY_TEXT variables
     var lordName = lord?.EncyclopediaLinkWithName ?? "Unknown";
-    var statusContent = BuildSASStatusText();
+    var statusContent = BuildStatusText();
     
-    // Use MenuContext.GameMenu.GetText() like SAS
+    // Use MenuContext.GameMenu.GetText() for dynamic updates
     var args = Campaign.Current.CurrentMenuContext;
     if (args != null)
     {
@@ -873,7 +873,7 @@ private void RefreshEnlistedStatusDisplay()
 ### **🎯 EXPECTED RESULTS**
 
 #### **✅ After Step 1 (Menu Template Fix)**:
-- ✅ **No more UI boxes** - uses SAS's proven clean template
+- ✅ **No more UI boxes** - uses proven clean template
 - ✅ **Time controls preserved** - spacebar pause/unpause works
 - ✅ **Same functionality** - all menu options still work
 
@@ -882,28 +882,28 @@ private void RefreshEnlistedStatusDisplay()
 - ✅ **Real-time wages** - wage changes reflect immediately
 - ✅ **Battle integration** - status updates during combat
 
-#### **✅ After Step 3 (SAS Text Format)**:
-- ✅ **Perfect SAS replication** - identical to original screenshot
-- ✅ **Proper text variables** - follows SAS's proven approach
+#### **✅ After Step 3 (Text Variable Format)**:
+- ✅ **Clean menu display** - matches standard game menu style
+- ✅ **Proper text variables** - follows proven approach
 - ✅ **Background support** - culture-appropriate backgrounds
 
 ### **🚀 IMPLEMENTATION PRIORITY**
 
 #### **Priority 1**: Menu template fix (eliminates UI boxes)
 #### **Priority 2**: Real-time tick handler (dynamic updates)  
-#### **Priority 3**: SAS text variable format (perfect replication)
+#### **Priority 3**: Text variable format (clean menu display)
 
 **Expected Implementation Time**: **30 minutes** for all 3 steps
 
-**Confidence Level**: **95%** - exact SAS approach verified in modern codebase
+**Confidence Level**: **95%** - approach verified in modern codebase
 
-## 🔍 **EXACT SAS IMPLEMENTATION DISCOVERED** (From Decompiled Sources)
+## 🔍 **IMPLEMENTATION PATTERN DISCOVERED** (From Decompiled Sources)
 
-### **SAS Menu System Analysis** (From `C:\Dev\Enlisted\DECOMPILE\serveasasolider\ServeAsSoldier\Test.cs`)
+### **Menu System Analysis** (From decompiled sources)
 
-#### **1. SAS Menu Registration** (Line 862)
+#### **1. Menu Registration** (From decompiled sources)
 ```csharp
-// EXACT SAS CODE - how they avoided UI widget issues
+// Pattern for avoiding UI widget issues
 campaignStarter.AddWaitGameMenu("party_wait", 
     "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}", 
     new OnInitDelegate(this.wait_on_init), 
@@ -913,9 +913,9 @@ campaignStarter.AddWaitGameMenu("party_wait",
     3, 0, 0f, 0, null);  // <-- CRITICAL: Uses integer parameters, NOT enum
 ```
 
-**KEY INSIGHT**: SAS used **integer parameters `3, 0, 0f, 0, null`** instead of `MenuAndOptionType` enum!
+**KEY INSIGHT**: Use **integer parameters `3, 0, 0f, 0, null`** instead of `MenuAndOptionType` enum!
 
-#### **2. SAS Menu Lifecycle** (Lines 2824-2832)
+#### **2. Menu Lifecycle** (From decompiled sources)
 ```csharp
 // Simple condition - always true when following
 private bool wait_on_condition(MenuCallbackArgs args)
@@ -937,9 +937,9 @@ private void wait_on_tick(MenuCallbackArgs args, CampaignTime time)
 }
 ```
 
-#### **3. SAS Content Generation** (Lines 2836-2950+)
+#### **3. Content Generation** (From decompiled sources)
 ```csharp
-// EXACT SAS updatePartyMenu method - how they build the status text
+// UpdatePartyMenu method pattern - how to build the status text
 private void updatePartyMenu(MenuCallbackArgs args)
 {
     // Safety check - exit menu if lord invalid
@@ -999,11 +999,11 @@ private void updatePartyMenu(MenuCallbackArgs args)
 }
 ```
 
-### **SAS Custom Equipment Selector** (From `EquipmentSelectorBehavior.cs`)
+### **Custom Equipment Selector** (From decompiled sources)
 
 #### **Complete Implementation Pattern**:
 ```csharp
-// EXACT SAS custom Gauntlet UI implementation
+// Custom Gauntlet UI implementation pattern
 public static void CreateVMLayer(List<ItemObject> list, string equipmentType)
 {
     if (EquipmentSelectorBehavior.layer == null)  // Singleton pattern
@@ -1049,7 +1049,7 @@ public static void DeleteVMLayer()
 }
 ```
 
-#### **SAS Equipment ViewModel Structure**:
+#### **Equipment ViewModel Structure**:
 ```csharp
 // From SASEquipmentSelectorVM.cs
 public class SASEquipmentSelectorVM : ViewModel
@@ -1096,20 +1096,20 @@ public class SASEquipmentSelectorVM : ViewModel
 }
 ```
 
-### **Key SAS Discoveries**
+### **Key Discoveries**
 
-#### **1. Menu Template Solution**: Use SAS's exact integer parameters
+#### **1. Menu Template Solution**: Use integer parameters for clean display
 ```csharp
 // INSTEAD OF:
 GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption
 
-// USE SAS EXACT:
+// Use exact integer parameters:
 3, 0, 0f, 0, null
 ```
 
-#### **2. Text Variable System**: SAS used simple string concatenation
+#### **2. Text Variable System**: Use simple string concatenation
 ```csharp
-// SAS approach - build one big string
+// Build one comprehensive status string
 string statusContent = BuildStatusString();
 text.SetTextVariable("PARTY_TEXT", statusContent);
 text.SetTextVariable("PARTY_LEADER", lordName);
@@ -1117,7 +1117,7 @@ text.SetTextVariable("PARTY_LEADER", lordName);
 
 #### **3. Real-Time Updates**: Continuous menu refresh in tick handler
 ```csharp
-// SAS updates menu content every tick for real-time information
+// Updates menu content every tick for real-time information
 private void wait_on_tick(MenuCallbackArgs args, CampaignTime time)
 {
     this.updatePartyMenu(args);  // Refresh every frame
@@ -1127,22 +1127,22 @@ private void wait_on_tick(MenuCallbackArgs args, CampaignTime time)
 #### **4. Custom UI**: Separate Gauntlet system for equipment selection only
 - **Main Menu**: Used standard game menu system (no custom UI needed)
 - **Equipment Selection**: Custom Gauntlet UI with grid layout and character preview
-- **Requires**: Custom XML template file "SASEquipmentSelection" 
+- **Requires**: Custom XML template file for equipment selection 
 
 ### **SOLUTION FOR UI BOXES**
 
-**OPTION 1**: Use SAS's exact menu parameters ⭐ **RECOMMENDED**
+**OPTION 1**: Use exact menu parameters ⭐ **RECOMMENDED**
 ```csharp
 // Replace current enum-based approach:
 starter.AddWaitGameMenu("enlisted_status", 
-    "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",  // SAS format
+    "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",  // Menu text format
     new OnInitDelegate(OnEnlistedStatusInit),
     new OnConditionDelegate(OnEnlistedStatusCondition), 
     null,
     new OnTickDelegate(OnEnlistedStatusTick),
-    3, 0, 0f, 0, null);  // <-- SAS EXACT parameters
+    3, 0, 0f, 0, null);  // <-- Exact integer parameters
 ```
 
-**OPTION 2**: Create custom Gauntlet UI for complete control (like SAS equipment selector)
+**OPTION 2**: Create custom Gauntlet UI for complete control (like equipment selector)
 
-**RECOMMENDED**: Try SAS's exact menu parameters first - this should eliminate the UI boxes while preserving time controls since it's their proven working approach!
+**RECOMMENDED**: Try these exact menu parameters first - this should eliminate the UI boxes while preserving time controls!

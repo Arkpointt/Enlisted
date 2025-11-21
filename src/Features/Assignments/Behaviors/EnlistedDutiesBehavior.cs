@@ -95,14 +95,15 @@ namespace Enlisted.Features.Assignments.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Duties", "Failed to initialize duties system", ex);
-                // Create minimal fallback config
+                // Create fallback configuration with default values
                 _config = new DutiesSystemConfig { Enabled = false };
             }
         }
         
         /// <summary>
-        /// Detect player formation from equipment using SAS-style formation detection.
-        /// Matches the original SAS logic for consistency.
+        /// Detects the player's military formation (Infantry/Cavalry/Archer/Horse Archer) based on equipment.
+        /// Analyzes the player's equipped items to determine their military specialization,
+        /// which determines which skills receive daily XP from formation training.
         /// </summary>
         private string DetectPlayerFormation()
         {
@@ -179,6 +180,29 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
         
         /// <summary>
+        /// Helper method to get duty/profession definition from either Duties or Professions dictionaries.
+        /// Fix: Professions are stored separately but need to be processed the same way as duties.
+        /// </summary>
+        private bool TryGetDutyOrProfession(string dutyId, out DutyDefinition dutyDef)
+        {
+            dutyDef = null;
+            
+            // Check Duties first (most common)
+            if (_config.Duties != null && _config.Duties.TryGetValue(dutyId, out dutyDef))
+            {
+                return true;
+            }
+            
+            // Check Professions if not found in Duties
+            if (_config.Professions != null && _config.Professions.TryGetValue(dutyId, out dutyDef))
+            {
+                return true;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
         /// Process daily benefits from active duties.
         /// </summary>
         private void ProcessDailyDuties()
@@ -188,9 +212,10 @@ namespace Enlisted.Features.Assignments.Behaviors
             
             foreach (var dutyId in _activeDuties.ToList()) // ToList to prevent modification during iteration
             {
-                if (!_config.Duties.TryGetValue(dutyId, out var dutyDef))
+                // Fix: Check both Duties and Professions dictionaries
+                if (!TryGetDutyOrProfession(dutyId, out var dutyDef))
                 {
-                    ModLogger.Error("Duties", $"Unknown duty in active duties: {dutyId}");
+                    ModLogger.Error("Duties", $"Unknown duty/profession in active duties: {dutyId}");
                     _activeDuties.Remove(dutyId);
                     continue;
                 }
@@ -210,7 +235,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                 }
                 else if (dutyDef.SkillXpDaily > 0 && !string.IsNullOrEmpty(dutyDef.TargetSkill))
                 {
-                    // Fallback for old format
+                    // Handle legacy configuration format if present
                     var skill = GetSkillFromName(dutyDef.TargetSkill);
                     if (skill != null)
                     {
@@ -219,7 +244,8 @@ namespace Enlisted.Features.Assignments.Behaviors
                     }
                 }
                 
-                // NO MORE military progression XP from duties - only skill XP (SAS style)
+                // Duties provide daily skill XP bonuses, not military tier progression XP
+                // Military tier progression XP comes from daily service (25 XP/day) and battle participation (75 XP)
             }
         }
         
@@ -254,7 +280,8 @@ namespace Enlisted.Features.Assignments.Behaviors
                     var skill = GetSkillFromName(skillName);
                     if (skill != null)
                     {
-                        // Use SAS method for skill XP application
+                        // Apply skill XP bonuses from the duty/profession to the player's skills
+                        // This provides daily skill training based on the player's military assignment
                         Hero.MainHero.AddSkillXp(skill, xpAmount);
                     }
                     else
@@ -339,12 +366,13 @@ namespace Enlisted.Features.Assignments.Behaviors
             try
             {
                 // Clear current assignments first
-                // (We could track previous assignments to restore, but for now keep it simple)
+                // Previous assignments are cleared when assigning new officer roles
                 
                 // Assign based on active duties
                 foreach (var dutyId in _activeDuties)
                 {
-                    if (!_config.Duties.TryGetValue(dutyId, out var dutyDef) || 
+                    // Fix: Check both Duties and Professions dictionaries
+                    if (!TryGetDutyOrProfession(dutyId, out var dutyDef) || 
                         string.IsNullOrEmpty(dutyDef.OfficerRole))
                     {
                         continue;
@@ -375,7 +403,9 @@ namespace Enlisted.Features.Assignments.Behaviors
         
         /// <summary>
         /// Helper method for Harmony patches to check if player has active duty with specific officer role.
-        /// Used by optional enhancement patches in Phase 2.
+        /// Assigns officer roles to the player based on their active duties/professions.
+        /// This method provides a public API that can be used by other systems to assign
+        /// officer roles (Scout, Quartermaster, etc.) based on the player's current assignments.
         /// </summary>
         public bool HasActiveDutyWithRole(string officerRole)
         {
@@ -385,7 +415,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
                 
             return _activeDuties.Any(dutyId => 
-                _config.Duties.TryGetValue(dutyId, out var dutyDef) &&
+                TryGetDutyOrProfession(dutyId, out var dutyDef) &&
                 string.Equals(dutyDef.OfficerRole, officerRole, StringComparison.OrdinalIgnoreCase));
         }
         
@@ -400,9 +430,10 @@ namespace Enlisted.Features.Assignments.Behaviors
                 return false;
             }
             
-            if (!_config.Duties.TryGetValue(dutyId, out var dutyDef))
+            // Fix: Check both Duties and Professions dictionaries
+            if (!TryGetDutyOrProfession(dutyId, out var dutyDef))
             {
-                ModLogger.Error("Duties", $"Unknown duty: {dutyId}");
+                ModLogger.Error("Duties", $"Unknown duty/profession: {dutyId}");
                 return false;
             }
             
@@ -553,8 +584,9 @@ namespace Enlisted.Features.Assignments.Behaviors
             ModLogger.Info("Duties", $"Player formation set to: {formation}");
             
             // Remove any duties that are no longer compatible
+            // Fix: Check both Duties and Professions dictionaries
             var incompatibleDuties = _activeDuties.Where(dutyId => 
-                _config.Duties.TryGetValue(dutyId, out var duty) &&
+                TryGetDutyOrProfession(dutyId, out var duty) &&
                 duty.RequiredFormations.Count > 0 &&
                 !duty.RequiredFormations.Contains(formation)).ToList();
                 
@@ -567,7 +599,9 @@ namespace Enlisted.Features.Assignments.Behaviors
         
         /// <summary>
         /// Calculate wage multiplier from active duties.
-        /// Used by EnlistmentBehavior for enhanced wage calculation.
+        /// Calculates the combined wage multiplier from all active duties and professions.
+        /// Different duties and professions provide different wage bonuses, allowing players
+        /// to earn more gold per day based on their assignments.
         /// </summary>
         public float GetWageMultiplierForActiveDuties()
         {
@@ -584,7 +618,8 @@ namespace Enlisted.Features.Assignments.Behaviors
                 
                 foreach (var dutyId in _activeDuties)
                 {
-                    if (_config.Duties.TryGetValue(dutyId, out var dutyDef))
+                    // Fix: Check both Duties and Professions dictionaries
+                    if (TryGetDutyOrProfession(dutyId, out var dutyDef))
                     {
                         totalMultiplier += dutyDef.WageMultiplier;
                         validDuties++;
@@ -607,7 +642,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         public string GetFormationDisplayName(string formation)
         {
             // This would integrate with enlisted_config.json formations data
-            // For now, return the formation name with proper casing
+            // Return the formation name with proper casing for display
             return formation switch
             {
                 "infantry" => "Infantry",
@@ -628,7 +663,8 @@ namespace Enlisted.Features.Assignments.Behaviors
             if (_activeDuties.Count == 0)
                 return "None assigned";
 
-            var duties = _activeDuties.Select(id => _config?.Duties.ContainsKey(id) == true ? _config.Duties[id].DisplayName : id);
+            // Fix: Check both Duties and Professions dictionaries
+            var duties = _activeDuties.Select(id => TryGetDutyOrProfession(id, out var dutyDef) ? dutyDef.DisplayName : id);
             var maxSlots = GetMaxDutySlots();
             
             return $"{string.Join(", ", duties)} ({_activeDuties.Count}/{maxSlots})";
@@ -641,9 +677,10 @@ namespace Enlisted.Features.Assignments.Behaviors
         {
             foreach (var dutyId in _activeDuties)
             {
-                if (_config?.Duties.ContainsKey(dutyId) == true && !string.IsNullOrEmpty(_config.Duties[dutyId].OfficerRole))
+                // Fix: Check both Duties and Professions dictionaries
+                if (TryGetDutyOrProfession(dutyId, out var dutyDef) && !string.IsNullOrEmpty(dutyDef.OfficerRole))
                 {
-                    return _config.Duties[dutyId].OfficerRole;
+                    return dutyDef.OfficerRole;
                 }
             }
             return "";
@@ -676,7 +713,6 @@ namespace Enlisted.Features.Assignments.Behaviors
             return multiplier;
         }
 
-        // HasActiveDutyWithRole method already exists above - removed duplicate
 
         /// <summary>
         /// Get maximum duty slots based on tier.

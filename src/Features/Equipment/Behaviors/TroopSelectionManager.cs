@@ -11,17 +11,18 @@ using TaleWorlds.ObjectSystem;
 using Helpers;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Features.Equipment.UI;
 
 namespace Enlisted.Features.Equipment.Behaviors
 {
     /// <summary>
-    /// SAS-style troop selection system using real Bannerlord troop templates.
+    /// Troop selection system allowing players to choose from real Bannerlord troop templates.
     /// 
-    /// This system allows players to choose from actual game troops during promotion,
-    /// replacing the equipment kit approach with authentic military progression.
-    /// Equipment is REPLACED (not accumulated) for realistic military service.
+    /// This system allows players to select actual game troops during promotion, providing
+    /// authentic military progression where equipment is replaced (not accumulated) for
+    /// realistic military service. Players can choose troops up to their current tier level.
     /// </summary>
     public sealed class TroopSelectionManager : CampaignBehaviorBase
     {
@@ -120,7 +121,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                                 _lastSelectedTroopId = chosen.StringId;
                                 if (Campaign.Current?.CurrentMenuContext != null)
                                 {
-                                    GameMenu.ActivateGameMenu("enlisted_status");
+                                    EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                                 }
                             }
                         }
@@ -135,7 +136,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         {
                             if (Campaign.Current?.CurrentMenuContext != null)
                             {
-                                GameMenu.ActivateGameMenu("enlisted_status");
+                                EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                             }
                         }
                         catch (Exception ex)
@@ -275,7 +276,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_back",
                 "Return to enlisted status",
                 args => true,
-                args => GameMenu.ActivateGameMenu("enlisted_status"),
+                args => EnlistedMenuBehavior.SafeActivateEnlistedMenu(),
                 true, -1);
         }
         
@@ -378,9 +379,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var formation = DetectTroopFormation(troop);
                     var optionText = $"Select {troop.Name} ({formation.ToString()})";
                     
-                    // Note: Dynamic menu option creation requires different approach
-                    // For now, we'll use a simplified selection through text input
-                    // This can be enhanced later with custom Gauntlet UI
+                    // Troop selection is handled through the popup dialog system
+                    // Players choose from available troops displayed in a selection dialog
                 }
                 
                 ModLogger.Info("TroopSelection", $"Created {Math.Min(_availableTroops.Count, 8)} troop selection options");
@@ -526,7 +526,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // CRITICAL: Equipment REPLACEMENT system (not accumulation)
+                // Equipment is replaced (not accumulated) for realistic military service
+                // This ensures players get the equipment appropriate to their tier and troop type
                 // Player turns in old equipment, receives new equipment
                 var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
                 if (troopEquipment == null)
@@ -562,13 +563,13 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Detect formation type from troop properties.
-        /// Uses SAS-style formation detection logic.
+        /// Detects the player's military formation based on equipment.
         /// </summary>
         private FormationType DetectTroopFormation(CharacterObject troop)
         {
             try
             {
-                // SAS formation detection logic
+                // Detect formation based on equipment characteristics
                 if (troop.IsRanged && troop.IsMounted)
                 {
                     return FormationType.HorseArcher;   // Bow + Horse
@@ -593,9 +594,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Handle troop selection from menu option (simplified approach).
-        /// For now, select first troop of each formation type.
-        /// Can be enhanced later with custom UI.
+        /// Handle troop selection by formation type.
+        /// Selects the first available troop matching the specified formation type.
         /// </summary>
         public void SelectTroopByFormation(FormationType formationType)
         {
@@ -607,7 +607,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     ApplySelectedTroopEquipment(Hero.MainHero, troopOfType);
                     
                     // Return to main enlisted menu
-                    GameMenu.ActivateGameMenu("enlisted_status");
+                    EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                 }
                 else
                 {
