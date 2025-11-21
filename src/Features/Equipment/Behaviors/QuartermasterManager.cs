@@ -15,6 +15,7 @@ using TaleWorlds.ObjectSystem;
 using Helpers;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Features.Equipment.Behaviors
@@ -65,7 +66,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             AddQuartermasterMenus(starter);
-            ModLogger.Info("Quartermaster", "Quartermaster system initialized with runtime equipment discovery - simplified menu approach");
+            ModLogger.Info("Quartermaster", "Quartermaster system initialized with runtime equipment discovery");
         }
         
         /// <summary>
@@ -112,7 +113,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 OnArmorVariantsSelected,
                 false, 2);
                 
-            // Helmet button removed; helmets are handled under the Armor flow (slot picker)
+            // Helmets are handled through the armor slot selection system
                 
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_accessories",
                 "Request accessory variants",
@@ -131,7 +132,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",
                 "Return to enlisted status",
                 args => true,
-                args => GameMenu.ActivateGameMenu("enlisted_status"),
+                args => EnlistedMenuBehavior.SafeActivateEnlistedMenu(),
                 true, -1);
                 
             // Variant selection options (dynamically populated)
@@ -431,8 +432,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Apply the updated equipment
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, newEquipment);
                 
-                // Equipment change notification (using simplified approach for compatibility)
-                // The EquipmentHelper.AssignHeroEquipmentFromEquipment call above handles the visual refresh
+                // Equipment change is applied via EquipmentHelper which handles visual refresh
+                // The hero's equipment is updated immediately and visible in the game world
                 
                 ModLogger.Info("Quartermaster", $"Equipment slot {slot} updated with {newItem.Name}");
             }
@@ -526,7 +527,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Build equipment variant options with pricing and availability.
-        /// Enhanced access for quartermaster officers.
+        /// Provides full equipment variant access for quartermaster officers.
         /// </summary>
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildVariantOptions(
             Dictionary<EquipmentIndex, List<ItemObject>> variants)
@@ -618,7 +619,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Get culture-wide equipment variants for quartermaster officers.
-        /// Provides enhanced equipment access beyond just troop variants.
+        /// Provides equipment variant access beyond standard troop equipment.
         /// </summary>
         private Dictionary<EquipmentIndex, List<ItemObject>> GetCultureEquipmentVariants(CultureObject culture, int maxTier)
         {
@@ -738,7 +739,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     sb.AppendLine("OFFICER PRIVILEGES - QUARTERMASTER");
                     sb.AppendLine("- 15% discount on all equipment requests");
                     sb.AppendLine("- Access to supply management functions"); 
-                    sb.AppendLine("- Enhanced equipment variant discovery");
+                    sb.AppendLine("- Equipment variant discovery and selection");
                     sb.AppendLine("- Party logistics and carry capacity management");
                     sb.AppendLine("-----------------------------------------------------------");
                     sb.AppendLine();
@@ -758,11 +759,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private void CreateEquipmentSlotOptions(MenuCallbackArgs args)
         {
-            // Note: Dynamic menu option creation is complex in Bannerlord
-            // For initial implementation, we'll use a simplified approach with preset options
-            // This can be enhanced later with custom Gauntlet UI
-            
-            // For now, focus on weapon variants (most common and impactful)
+            // Create menu options for equipment slot selection
+            // Focus on weapon variants as they are the most commonly changed equipment
             var weaponVariants = _availableVariants.Where(kvp => 
                 kvp.Key >= EquipmentIndex.Weapon0 && kvp.Key <= EquipmentIndex.Weapon3).ToList();
                 
@@ -859,14 +857,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return false;
                 }
                 
-                // Enhanced access if player has quartermaster duties
+                // Full access granted if player has quartermaster officer role or provisioner duty
                 if (duties?.GetCurrentOfficerRole() == "Quartermaster" || 
                     duties?.ActiveDuties.Contains("provisioner") == true)
                 {
                     return true; // Full access with officer privileges
                 }
                 
-                // Basic access for all enlisted soldiers
+                // Standard access for all enlisted soldiers without special roles
                 return true;
             }
             catch
@@ -925,7 +923,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Show equipment variant selection with individual clickable items (SAS-style approach).
+        /// Show equipment variant selection with individual clickable items using custom Gauntlet UI.
         /// Uses custom Gauntlet UI for professional equipment selection.
         /// </summary>
         private void ShowEquipmentVariantSelectionDialog(List<EquipmentVariantOption> variants, string equipmentType)
@@ -939,14 +937,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
                 
-                // Try to use custom Gauntlet UI for individual item clicking (SAS-style approach)
+                // Attempt to use custom Gauntlet UI for individual item clicking
                 if (TryShowGauntletEquipmentSelector(variants, equipmentType))
                 {
                     ModLogger.Info("Quartermaster", $"Opened Gauntlet equipment selector for {equipmentType} with {variants.Count} variants");
                 }
                 else
                 {
-                    // Fallback to simplified automatic selection
+                    // Fallback to automatic selection if custom UI is unavailable
                     ShowSimplifiedVariantSelection(variants, equipmentType);
                 }
             }
@@ -967,7 +965,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Try custom Gauntlet UI first (SAS-style approach)
+                // Attempt to use custom Gauntlet UI for variant selection
                 var targetSlot = variants.FirstOrDefault()?.Slot ?? EquipmentIndex.Weapon0;
                 UI.QuartermasterEquipmentSelectorBehavior.ShowEquipmentSelector(variants, targetSlot, equipmentType);
                 
@@ -985,7 +983,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Show equipment selection using conversation system for individual item clicking.
-        /// Simplified alternative to complex Gauntlet UI.
+        /// Automatic variant selection when custom Gauntlet UI is unavailable.
+        /// Automatically selects the first affordable variant from the available options.
         /// </summary>
         private void ShowConversationBasedEquipmentSelection(List<EquipmentVariantOption> variants, string equipmentType)
         {
@@ -1031,7 +1030,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 else
                 {
-                    // Use simplified fallback for single variant
+                    // Use automatic selection when only one variant is available
                     ShowSimplifiedVariantSelection(variants, equipmentType);
                 }
             }
@@ -1070,7 +1069,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Simplified variant selection fallback (current working approach).
+        /// Automatic variant selection when custom UI is unavailable.
+        /// Automatically selects the first affordable variant from the available options.
         /// </summary>
         private void ShowSimplifiedVariantSelection(List<EquipmentVariantOption> variants, string equipmentType)
         {

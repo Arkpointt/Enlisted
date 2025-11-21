@@ -8,9 +8,13 @@ This folder contains functional specifications for major features in the militar
 - **[dialog-system.md](dialog-system.md)** - Centralized conversation management  
 - **[troop-selection.md](troop-selection.md)** - Real troop choice system for promotions
 - **[temporary-leave.md](temporary-leave.md)** - Leave system with companion management
-- **[encounter-safety.md](encounter-safety.md)** - Preventing map encounter crashes
+- **[encounter-safety.md](encounter-safety.md)** - Preventing map encounter crashes with enhanced leave fixes
 - **[duties-system.md](duties-system.md)** - Military roles and assignments
+- **[formation-training.md](formation-training.md)** - **NEW** - Formation-based daily skill XP system
 - **[enlistment.md](enlistment.md)** - Core military service functionality
+- **[battle-commands.md](battle-commands.md)** - **NEW** - Automatic formation-based battle command filtering
+- **[menu-interface.md](menu-interface.md)** - **NEW** - Professional menu system with organized sections and descriptions
+- **[town-access-system.md](town-access-system.md)** - **NEW** - Synthetic outside encounter approach for settlement exploration
 
 ## What Feature Specs Are For
 

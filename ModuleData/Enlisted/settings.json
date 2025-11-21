@@ -9,7 +9,7 @@
   "LogApiCalls": true,
   "ApiCallDetail": "summary",
   "dutiesConfig": "duties_system.json",
-  "SAS": {
+  "Encounter": {
     "AttachWhenClose": true,
     "AttachRange": 0.6,
     "TrailDistance": 1.2,

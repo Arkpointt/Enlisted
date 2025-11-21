@@ -7,7 +7,9 @@ using TaleWorlds.Localization;
 using TaleWorlds.Library;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Entry;
 
 namespace Enlisted.Features.Conversations.Behaviors
 {
@@ -18,7 +20,8 @@ namespace Enlisted.Features.Conversations.Behaviors
     /// and maintain consistent conversation flows. Uses the diplomatic submenu for 
     /// professional integration with the game's conversation system.
     /// 
-    /// NOTE: Menu system now handled by EnlistedMenuBehavior.cs for enhanced functionality.
+    /// The menu system is handled by EnlistedMenuBehavior.cs, which provides the main enlisted status menu
+    /// and duty/profession selection interface.
     /// </summary>
     public sealed class EnlistedDialogManager : CampaignBehaviorBase
     {
@@ -42,7 +45,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             AddEnlistedDialogs(starter);
-            // Enhanced menu system now handled by EnlistedMenuBehavior.cs
+            // The menu system is handled by EnlistedMenuBehavior.cs, which provides the main enlisted status menu
         }
 
         /// <summary>
@@ -216,7 +219,10 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private bool CanRequestEnlistment()
         {
-            if (EnlistmentBehavior.Instance?.IsEnlisted == true)
+            var enlistment = EnlistmentBehavior.Instance;
+            
+            // Don't show initial enlistment if already enlisted or on leave
+            if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
             {
                 return false;
             }
@@ -228,7 +234,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             TextObject reason;
-            return EnlistmentBehavior.Instance?.CanEnlistWithParty(lord, out reason) == true;
+            return enlistment?.CanEnlistWithParty(lord, out reason) == true;
         }
 
         /// <summary>
@@ -236,7 +242,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private bool CanRequestRetirement()
         {
-            // For Phase 1A, simple check. Will be enhanced in Phase 1B with service duration requirements
+            // Simple check for now - can be enhanced with service duration requirements if needed
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
@@ -282,16 +288,11 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 EnlistmentBehavior.Instance.StartEnlist(lord);
 
-                // SAS CRITICAL: Immediately clear all menus to prevent encounter gaps
-                while (Campaign.Current.CurrentMenuContext != null)
-                {
-                    GameMenu.ExitToLast();
-                }
-                ModLogger.Debug("DialogSAS", "Cleared all menus after enlistment - preventing encounter gap");
-
-                // SAS CRITICAL: Activate enlisted menu immediately (MISSING STEP!)
-                GameMenu.ActivateGameMenu("enlisted_status");
-                ModLogger.Debug("DialogSAS", "Activated enlisted_status menu - zero gap implementation");
+                // Activate the enlisted status menu, deferred to the next frame to prevent timing conflicts
+                // This ensures the menu activates cleanly after the conversation ends and prevents
+                // any gaps that could cause encounter menus to appear
+                NextFrameDispatcher.RunNextFrame(() => EnlistedMenuBehavior.SafeActivateEnlistedMenu());
+                ModLogger.Debug("DialogManager", "Scheduled enlisted_status menu activation - preventing encounter gap");
 
                 // Professional notification
                 var message = GetLocalizedText("{=enlisted_success_notification}You have enlisted in {LORD_NAME}'s service.");

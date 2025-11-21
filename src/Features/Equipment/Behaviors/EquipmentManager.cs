@@ -255,13 +255,13 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Detect formation type from troop properties.
-        /// Uses SAS-style formation detection logic.
+        /// Detects the player's military formation based on equipment.
         /// </summary>
         private FormationType DetectTroopFormation(CharacterObject troop)
         {
             try
             {
-                // SAS formation detection logic
+                // Detect formation based on equipment characteristics
                 if (troop.IsRanged && troop.IsMounted)
                     return FormationType.HorseArcher;   // Bow + Horse
                 else if (troop.IsMounted)

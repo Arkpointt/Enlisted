@@ -34,7 +34,7 @@ Allows enlisted players to request temporary leave from military service, restor
 
 3) **Return to Service**
    - Dialog option: "I wish to return to service" (appears only when on leave talking to former lord)
-   - Transfers any new companions/troops to lord's party using SAS pattern
+   - Transfers any new companions/troops to lord's party using proper party transfer logic
    - Restores enlistment behavior: invisible, escort, battle participation
 
 4) **Retirement vs Leave**
@@ -47,7 +47,7 @@ Allows enlisted players to request temporary leave from military service, restor
   - Added `_isOnLeave` and `_leaveStartDate` state fields
   - Modified `IsEnlisted` property: `_enlistedLord != null && !_isOnLeave`
   - Added `StartTemporaryLeave()` and `ReturnFromLeave()` methods
-  - Added `TransferPlayerTroopsToLord()` using verified SAS pattern
+  - Added `TransferPlayerTroopsToLord()` using proper party transfer logic
   - Added `RestoreCompanionsToPlayer()` for retirement companion restoration
 
 - `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
@@ -90,7 +90,7 @@ Allows enlisted players to request temporary leave from military service, restor
 4. **Return from Leave**: New companions/troops transfer to lord's party
 5. **Retirement**: Companions return to player, regular troops stay with lord permanently
 
-### SAS-Verified Transfer Pattern
+### Party Transfer Implementation Pattern
 ```csharp
 // Add to lord's party
 lordParty.MemberRoster.AddToCounts(character, number, false, 0, 0, true, -1);

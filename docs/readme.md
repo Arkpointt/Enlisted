@@ -16,15 +16,17 @@ Complete military service system where players can:
 
 ### Phase Structure (5 weeks total) - **UPDATED IMPLEMENTATION STATUS**
 - **Phase 1A**: Centralized Dialog System - ✅ **COMPLETE**
-- **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - SAS immediate menu replacement implemented
-- **Phase 1B**: Complete SAS Core Implementation - ✅ **COMPLETE** - SAS real-time ticks + IsActive management + dynamic armies + lord safety validation
-- **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - configuration-driven duties with SAS officer integration + dual approach officer roles
-- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with keyboard shortcuts and real-time updates
+- **Phase 1A+**: **CRITICAL** - Immediate Menu System - ✅ **COMPLETE** - Immediate menu replacement implemented
+- **Phase 1B**: Complete Core Implementation - ✅ **COMPLETE** - Real-time ticks + IsActive management + dynamic armies + lord safety validation
+- **Phase 1C**: Duties System Foundation - ✅ **COMPLETE** - Configuration-driven duties with officer integration + dual approach officer roles
+- **Phase 2A**: Enhanced Menu System - ✅ **COMPLETE** - Professional military interface with clean formatting and real-time updates
 - **Phase 2B**: Troop Selection & Equipment Replacement - ✅ **COMPLETE** - Quartermaster grid UI with individual equipment selection
-- **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - SAS-style troop selection with portraits and loadout hints
-- **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system, companion management
-- **Phase 3**: Enhanced Battle Integration - ⏳ **PLANNED** - automatic battle joining, formation bonuses
-- **Phase 4**: Extended Equipment System - ⏳ **PLANNED** - helmets, armor, mounts using existing UI patterns
+- **Phase 2C**: Master at Arms Promotion System - ✅ **COMPLETE** - Troop selection with portraits and loadout hints
+- **Phase 2D**: Enhanced Menu Features - ✅ **COMPLETE** - My Lord conversations, temporary leave system with encounter fixes
+- **Phase 2E**: Battle Commands Integration - ✅ **COMPLETE** - **NEW** - Automatic formation-based command filtering
+- **Phase 2F**: Professional Menu Interface - ✅ **COMPLETE** - **NEW** - Organized duty/profession menus, tier-based access, detailed descriptions
+- **Phase 3A**: Enhanced Battle Integration - ✅ **COMPLETE** - **NEW** - Army-aware battle participation with real-time detection
+- **Phase 3B**: Town Access System - ✅ **COMPLETE** - **NEW** - Synthetic outside encounter approach for settlement exploration
 - **Phase 5**: Advanced Military Features - ⏳ **PLANNED** - veteran progression, service records
 - **Phase 6**: Polish & Quality of Life - ⏳ **PLANNED** - animations, edge cases, optimization
 
@@ -37,7 +39,7 @@ Package-by-Feature structure keeps related code together:
 src/Features/
 ├── Enlistment/          # Core service state and lord relationship management
 ├── Duties/              # Modern configuration-driven duties system with troop types  
-├── Equipment/           # SAS-style troop selection with equipment REPLACEMENT system
+├── Equipment/           # Troop selection with equipment REPLACEMENT system
 ├── Conversations/       # Dialog system integration for enlistment and duties
 ├── Combat/              # Army following and battle participation with officer roles
 └── Interface/           # ✅ COMPLETE: Enhanced menu system with professional military interface
@@ -57,7 +59,8 @@ src/Features/
 ### Military Service System
 - **Enlistment**: Join any lord's service through diplomatic dialog
 - **10 Assignments**: From Grunt Work to Strategist with unique benefits
-- **1-Year Progression**: 7 military tiers over 365 days (18,000 XP total)
+- **Medieval Progression**: 6 military ranks over 3+ Bannerlord years (18,000 XP total for military progression)
+- **Skill Development**: Formation training gives 50 XP/day to primary skills → Level 100+ over 3 years
 - **Realistic Wages**: 24-150 gold/day progression (early game skill-building, not wealth generation)
 - **Army Integration**: Smart following behavior with army hierarchy awareness
 
@@ -84,11 +87,22 @@ src/Features/
 ### Equipment & Progression System
 **Equipment Replacement**: Promotions **replace** equipment (not accumulate) - realistic military service
 **Retirement Benefit**: Players keep **final equipment** permanently after 1+ year service
-**Progression Timeline**: 
-- **Month 1-2**: Basic training (Tiers 1-2) - 24-37 gold/day
-- **Month 3-6**: Veteran service (Tiers 3-4) - 38-81 gold/day  
-- **Month 7-12**: Senior service (Tiers 5-7) - 68-150 gold/day
+**Progression Timeline** (Bannerlord Calendar: 21 days/season, 84 days/year): 
+- **Weeks 1-7**: Basic training (Tiers 1-3) - 24-50 gold/day
+- **Weeks 8-36**: Professional service (Tiers 4-5) - 55-120 gold/day  
+- **Career Soldiers**: Household Guard (Tier 6) - 130-150 gold/day
 **Purpose**: Early game **skill development** and character building (not wealth generation)
+
+### XP System Breakdown
+**Military Progression XP** (for tiers/ranks):
+- 25 XP/day base + 15 XP/day duties = 40 XP/day total
+- Standard 3-year service (252 Bannerlord days) = ~10,000 XP (Banner Sergeant)
+- Household Guard (18,000 XP) requires career soldier re-enlistment (~5.4 Bannerlord years)
+
+**Skill Development XP** (for character abilities):
+- Formation Training: 50 XP/day primary skills, 25 XP/day secondary skills
+- Duty Bonuses: 15-35 XP/day to specific skills
+- **Result**: 120-150 in primary skills, 70-90 in secondaries over 3 years
 
 ### Dialog System Architecture
 **Centralized Management**: All enlisted dialogs managed through single `EnlistedDialogManager.cs`
@@ -106,14 +120,14 @@ We have complete and verified API documentation covering:
 - **Economic Actions**: Wage payments and realistic equipment pricing
 - **Character Development**: Skill XP, progression, and advancement
 - **Localization System**: Professional multi-language support with {=key}fallback format
-- **Formation Detection**: 4-formation auto-detection matching original SAS logic
+- **Formation Detection**: 4-formation auto-detection based on equipment and troop type
 
 ### Safety & Reliability
 - **Defensive Programming**: Every operation validates state before execution
 - **Graceful Recovery**: System recovers from any state corruption or errors
 - **Edge Case Handling**: Comprehensive coverage of lord death, capture, kingdom changes
 - **100% Uptime**: No scenarios can crash or break the enlistment system
-- **SAS-Style Encounter Handling**: Uses proven immediate encounter finishing rather than prevention
+- **Encounter Handling**: Uses immediate encounter finishing rather than prevention
 - **Production Logging**: Comprehensive troubleshooting support for game updates and mod conflicts
 
 ### Logging & Troubleshooting
@@ -170,9 +184,9 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 - `ModuleData/Enlisted/README.md` - **ENHANCED**: Complete 7 JSON config guide with validation and fixes
 
 ### Equipment System Documentation
-- `sas/code_gear_sources.md` - Complete equipment API reference
-- `sas/gear_pipeline.md` - 8-step equipment selection implementation guide
-- `sas/code_paths_map.md` - API source location mapping for verification
+- `docs/discovered/equipment-apis.md` - Complete equipment API reference
+- `docs/discovered/equipment-pipeline.md` - 8-step equipment selection implementation guide
+- `docs/discovered/api-paths.md` - API source location mapping for verification
 
 ## 🚀 Getting Started
 
@@ -184,19 +198,20 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 
 ### Implementation Order
 1. ✅ **Phase 1A Complete**: Dialog system updated to use diplomatic submenu with immediate menu activation
-2. ✅ **Phase 1B Complete**: SAS core functionality implemented with lord safety validation and battle crash prevention
+2. ✅ **Phase 1B Complete**: Core functionality implemented with lord safety validation and battle crash prevention
 3. ✅ **Phase 1C Complete**: Modern duties system with troop types, officer roles, and configuration-driven framework
-4. **Phase 2 Next**: SAS-style troop selection with equipment replacement system
+4. **Phase 2 Next**: Troop selection with equipment replacement system
 5. **Follow Phase Structure**: Each phase builds on the previous with clear acceptance criteria
 6. **Test Incrementally**: Verify functionality at each phase completion
 
 ### Key Files to Implement - **UPDATED WITH CURRENT STATUS**
 - `EnlistedDialogManager.cs` - ✅ **COMPLETE**: Centralized dialog hub with enlistment, retirement, and return-from-leave dialogs
-- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: Complete military service with temporary leave system and companion management
-- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Enhanced menu system with My Lord conversations and leave requests
+- `EnlistmentBehavior.cs` - ✅ **COMPLETE**: Complete military service with enhanced leave system, encounter cleanup, and menu restoration
+- `EnlistedMenuBehavior.cs` - ✅ **COMPLETE**: Professional menu system with clean formatting and military interface
 - `EnlistedInputHandler.cs` - ✅ **COMPLETE**: Keyboard shortcuts ('P' for promotion, 'N' for status menu) with proper input handling
 - `EnlistedDutiesBehavior.cs` - ✅ **COMPLETE**: Configuration-driven duties system + menu support methods for enhanced display
 - `DutiesOfficerRolePatches.cs` - ✅ **COMPLETE**: Optional Harmony patches for enhanced officer skill integration
+- `BattleCommandsFilterPatch.cs` - ✅ **COMPLETE**: **NEW** - Automatic formation-based battle command filtering with audio cues
 - `ConfigurationManager.cs` - ✅ **COMPLETE**: Safe JSON loading with schema versioning and validation
 - `TroopSelectionManager.cs` - ✅ **COMPLETE**: Master at Arms system with culture troop tree selection and equipment replacement
 - `QuartermasterManager.cs` - ✅ **COMPLETE**: Equipment variant system with culture-strict armor/weapon selection from troop loadouts
@@ -213,27 +228,32 @@ We figured out how to create working Gauntlet grid UIs using current v1.2.12 API
 5. **Progression**: Earn promotions and unlock new assignments/equipment
 
 ### Service Management - **ENHANCED MENU SYSTEM COMPLETE**
-- **✅ Professional Military Interface**: Rich enlisted status menu with comprehensive information display
+- **✅ Professional Military Interface**: Clean menu with comprehensive information display
 - **✅ Real-Time Updates**: Dynamic army status, wages, progression, duties, and officer role information
 - **✅ Keyboard Shortcuts**: 'P' key for promotion access, 'N' key for status menu
-- **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits and loadout previews
+- **✅ Master at Arms System**: Select any unlocked troop from culture tree with portraits, loadout previews, and close button
 - **✅ My Lord Conversations**: Talk to nearby lords with portrait selection and faction info
-- **✅ Temporary Leave System**: Request leave with vanilla behavior restoration and dialog return option
+- **✅ Temporary Leave System**: Request leave with enhanced encounter cleanup and automatic menu restoration
 - **✅ Companion Management**: Automatic troop transfer to lord's party; companions restored on retirement
-- **✅ Interactive Menu Management**: Field medical treatment, duties management, equipment access, service records  
+- **✅ Organized Duty/Profession Selection**: Clean section headers, tier-based access, detailed descriptions, streamlined navigation
+- **✅ Daily XP Processing**: Connected duty/profession selection to active daily skill training system
 - **✅ Field Medical Treatment**: Healing system available anywhere with proper military interface
-- **✅ Proper SAS Behavior**: Menu stays active while following lord, maintains game flow
+- **✅ Proper Menu Behavior**: Menu stays active while following lord, maintains game flow
 - **✅ Multiple Equipment Choices**: Framework ready for 3-6 troop equipment styles per tier with realistic pricing
 - **✅ Duties Management**: Interactive assignment interface with slot tracking and officer role display
 - **✅ 4-Formation Specialization**: Infantry, Archer, Cavalry, Horse Archer with auto-detection and culture variants
 - **✅ Equipment Economics**: Formation-based pricing framework (Infantry cheapest → Horse Archer most expensive)  
 - **✅ Officer Role Benefits**: Natural skill/perk application display through effective party officer positions
 - **✅ Army Operations**: Real-time army information with hierarchy and operational status display
+- **✅ Automatic Battle Commands**: Formation-based command filtering works seamlessly in background with audio cues
+- **✅ Streamlined Menu Navigation**: Removed redundant features, optimized menu order, professional layout
+- **✅ Town Access System**: Synthetic outside encounter approach enables full settlement exploration without assertion crashes
+- **✅ Army Battle Integration**: Army-aware battle participation with automatic army leader following and proper encounter management
 
 ### Veteran Benefits & Progression
 - **Service History**: Track multiple enlistments and achievements across different factions
 - **Equipment Choice System**: Choose to keep service equipment or restore personal gear upon retirement
-- **Retirement Eligibility**: 1 full year service requirement with substantial discharge bonuses
+- **Retirement Eligibility**: 3 Bannerlord year service requirement (252 days) with substantial discharge bonuses
 - **Vassalage Offers**: High-reputation veterans (Tier 6+, 2000+ faction reputation) receive kingdom membership offers
 - **Settlement Grants**: Option to receive land grants as reward for exceptional service
 - **Kingdom Integration**: Military service can lead to full lordship and political power
@@ -351,29 +371,51 @@ public static class LogPath
 
 ### **Main Menu: enlisted_status** 
 ```
-═══════════════════════════════════════
-         ENLISTED STATUS
-═══════════════════════════════════════
-Lord: [Sir Derthert] (Empire)
-Rank: Sergeant (Tier 4)
-Formation: Legionary (Infantry)
-Service Duration: 47 days (318 days to retirement)
+Party Leader: Rhagaea
 
-Current Duties: Field Medic, Runner
-Next Promotion: 890/1500 XP
-Daily Wage: 145 🪙
+Party Objective : Following army movements
+Enlistment Time : Summer 1, 1084
+Enlistment Tier : 1
+Formation : Infantry
+Wage : 16 [coin]
+Current Experience : 0
+Next Level Experience : 500
+When not fighting : You are currently assigned to perform grunt work.
+Most tasks are unpleasant, tiring or involve menial labor. (Passive Daily Athletics XP)
 
-Army Status: Following [Derthert's Army]
-═══════════════════════════════════════
-
-[ Master at Arms ]                       ← Troop selection with portraits
+[ Master at Arms ]                       ← Troop selection with close button
 [ Visit Quartermaster ]                  ← Equipment variants menu
-[ Battle Commands: Player Formation Only ]
 [ My Lord... ]                           ← Talk to nearby lords
-[ Show reputation with factions ]
-[ Ask commander for leave ]              ← Temporary leave system
-[ Ask for a different assignment ]
-═══════════════════════════════════════
+[ Report for Duty ]                      ← Organized duty/profession selection
+[ Ask commander for leave ]              ← Enhanced temporary leave system (bottom position)
+```
+
+### **Enhanced Duty Selection Menu: enlisted_duty_selection**
+```
+Current Duty : Enlisted
+Current Profession : None
+
+DUTY ASSIGNMENT: You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)
+
+None
+
+[ Back to enlisted status ]
+
+─── DUTIES ───
+[ ✓ Enlisted ]
+[ ○ Forager ]  
+[ ○ Sentry ]
+[ ○ Messenger ]
+[ ○ Pioneer ]
+
+     (visual spacing)
+
+─── PROFESSIONS ───
+[ ○ Quartermaster's Aide ]         ← Visible T1+, selectable T3+
+[ ○ Field Medic ]                  ← Visible T1+, selectable T3+  
+[ ○ Siegewright's Aide ]           ← Visible T1+, selectable T3+
+[ ○ Drillmaster ]                  ← Visible T1+, selectable T3+
+[ ○ Saboteur ]                     ← Visible T1+, selectable T3+
 ```
 
 ### **Equipment Menu: enlisted_equipment** (Multiple Troop Choices)
@@ -431,8 +473,8 @@ Campaign Map (Press 'N' when enlisted)
 
 ## 🎯 **Complete Implementation Summary**
 
-### **✅ Enhanced vs. Original SAS**
-| Feature | Original SAS | Our Enhanced System |
+### **✅ Feature Summary**
+| Feature | Comparison | Our Implementation |
 |---------|-------------|-------------------|
 | **Formations** | 4 basic detection | **4 with enhanced specializations & culture variants** |
 | **Equipment** | Single kit per tier | **3-6 troop choices per tier with realistic pricing** |
@@ -442,8 +484,8 @@ Campaign Map (Press 'N' when enlisted)
 | **Localization** | Basic text | **Professional {=key}fallback multi-language support** |
 | **Officer Roles** | 37+ Harmony patches | **4 targeted patches with natural skill integration** |
 
-### **✅ 4-Formation System** (Enhanced from SAS)
-**Auto-Detection Logic** (matches original SAS):
+### **✅ 4-Formation System**
+**Auto-Detection Logic**:
 ```csharp
 if (Hero.MainHero.CharacterObject.IsRanged && Hero.MainHero.CharacterObject.IsMounted)
     return TroopType.HorseArcher;   // Bow + Horse
@@ -494,7 +536,7 @@ private void OnCharacterDefeated(Hero defeatedHero, Hero victorHero) {
 ```
 
 #### **Key Learning:**
-**SAS relied on event-driven safety, not continuous polling.** When armies are defeated, events fire immediately - we must respond instantly to clean up invalid lord references before daily tick tries to access them.
+**The system relies on event-driven safety, not continuous polling.** When armies are defeated, events fire immediately - we must respond instantly to clean up invalid lord references before daily tick tries to access them.
 
 ### **Issue 2: Pathfinding Crash (Introduced During Fix)**
 
@@ -542,6 +584,40 @@ private void HandleBattleParticipation(MobileParty main, MobileParty lordParty) 
 
 #### **Key Learning:**
 **Battle participation requires real-time detection**, not just setting `ShouldJoinPlayerBattles = true`. Must actively monitor `lordParty.MapEvent` and enable player when lord enters combat.
+
+### **🔧 Critical Town Access Solution (AI Analysis Breakthrough):**
+
+#### **✅ Synthetic Outside Encounter Pattern:**
+```csharp
+// PROBLEM: Invisible enlisted party never gets proper settlement encounters
+// SOLUTION: Create temporary synthetic encounter for town access
+
+// 1. Temporarily activate party for encounter creation
+bool wasActive = MobileParty.MainParty.IsActive;
+if (!wasActive) MobileParty.MainParty.IsActive = true;
+
+// 2. Create synthetic outside encounter  
+EncounterManager.StartSettlementEncounter(MobileParty.MainParty, settlement);
+
+// 3. Show outside menu (town_outside/castle_outside)
+GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
+
+// 4. Clean up when returning (track with flag)
+if (_syntheticOutsideEncounter) {
+    MobileParty.MainParty.IsActive = false; // Back to invisible state
+    _syntheticOutsideEncounter = false;
+}
+```
+
+#### **❌ What Doesn't Work:**
+- `GameMenu.ActivateGameMenu("town")` directly (wrong encounter type)
+- `EnterSettlementAction.ApplyForParty()` alone (creates LocationEncounter, not TownEncounter)
+- Manual encounter type creation (engine expects natural flow)
+
+#### **✅ Key Insights:**
+- **Invisible enlisted parties** need synthetic encounters for settlement access
+- **Engine creates proper encounter types** only through StartSettlementEncounter
+- **town_outside/castle_outside menus** are the safe entry points, not interior menus
 
 ### **🔧 Final Architecture Guidelines for Future Development:**
 

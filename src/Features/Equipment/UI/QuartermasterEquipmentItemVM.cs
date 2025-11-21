@@ -16,11 +16,11 @@ namespace Enlisted.Features.Equipment.UI
     /// Individual equipment item ViewModel for clickable selection.
     /// 
     /// Represents a single equipment variant option with proper data binding.
-    /// Uses VERIFIED current TaleWorlds ViewModel APIs and patterns.
+    /// Uses TaleWorlds ViewModel APIs for data binding and property change notifications.
     /// </summary>
     public class QuartermasterEquipmentItemVM : ViewModel
     {
-        // VERIFIED: DataSourceProperty pattern from current ViewModels
+        // DataSourceProperty attributes enable data binding with the UI layer
         
         [DataSourceProperty] 
         public string CostText { get; private set; }
@@ -51,11 +51,12 @@ namespace Enlisted.Features.Equipment.UI
         private QuartermasterEquipmentSelectorVM _parentSelector;
         
         /// <summary>
-        /// Initialize equipment item with variant data (EXACT SAS PATTERN).
+        /// Initialize equipment item with variant data.
+        /// Sets up the ViewModel with equipment variant information for display and selection.
         /// </summary>
         public QuartermasterEquipmentItemVM(EquipmentVariantOption variant, QuartermasterEquipmentSelectorVM parent)
         {
-            _variant = variant; // Allow null for empty slot (SAS pattern)
+            _variant = variant; // Allow null for empty slot display
             _parentSelector = parent ?? throw new ArgumentNullException(nameof(parent));
             
             // Initialize basic properties
@@ -64,7 +65,7 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
-        /// Refresh display values - VERIFIED override pattern.
+        /// Refresh display values when equipment variant data changes.
         /// </summary>
         public override void RefreshValues()
         {
@@ -78,7 +79,7 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                // EXACT SAS PATTERN: Build rich item details
+                // Build item details for display
                 var item = _variant.Item;
                 
                 // Set item name and basic properties
@@ -87,8 +88,8 @@ namespace Enlisted.Features.Equipment.UI
                 CanAfford = _variant.CanAfford;
                 IsEnabled = !_variant.IsCurrent && _variant.CanAfford;
                 
-                // Set item image (EXACT SAS WORKING PATTERN)
-                Image = new ImageIdentifierVM(item, ""); // ✅ SAS pattern with assembly reference
+                // Set item image using ImageIdentifierVM for proper image display
+                Image = new ImageIdentifierVM(item, "");
                 
                 // Build simplified weapon details
                 WeaponDetails = BuildSimpleWeaponDetails(item);
@@ -110,7 +111,7 @@ namespace Enlisted.Features.Equipment.UI
                     StatusText = "Insufficient Funds";
                 }
                 
-                // VERIFIED: Property change notification (base ViewModel handles this)
+                // Notify UI of property changes for data binding updates
                 OnPropertyChangedWithValue(ItemName, "ItemName");
                 OnPropertyChangedWithValue(CostText, "CostText");
                 OnPropertyChangedWithValue(StatusText, "StatusText");
@@ -134,12 +135,12 @@ namespace Enlisted.Features.Equipment.UI
         {
             if (_variant == null)
             {
-                // Empty slot (SAS pattern)
+                // Empty slot display
                 ItemName = "Empty";
                 CostText = "";
                 StatusText = "Empty Slot";
                 WeaponDetails = "";
-                Image = new ImageIdentifierVM(0); // ✅ VERIFIED empty pattern
+                Image = new ImageIdentifierVM(0); // Empty image identifier
             }
             else
             {
@@ -148,7 +149,7 @@ namespace Enlisted.Features.Equipment.UI
                 CostText = "";
                 StatusText = "Error loading item";
                 WeaponDetails = "";
-                Image = new ImageIdentifierVM(0); // ✅ VERIFIED fallback pattern
+                Image = new ImageIdentifierVM(0); // Empty image identifier for error case
             }
             IsCurrentEquipment = false;
             CanAfford = false;
@@ -157,7 +158,7 @@ namespace Enlisted.Features.Equipment.UI
         
         /// <summary>
         /// Handle clicking on this equipment item (main functionality).
-        /// VERIFIED: Command pattern from current ViewModels.
+        /// Executes when the player clicks on an equipment item in the UI.
         /// </summary>
         public void ExecuteSelectItem()
         {

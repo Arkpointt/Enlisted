@@ -13,7 +13,7 @@ This directory contains **7 JSON configuration files** that control all aspects 
 **Key Settings**:
 - `dutiesConfig`: Specifies which duties file to use
 - Logging configuration for development/debugging
-- SAS behavior settings (attach ranges, IsActive management for encounter prevention)
+- Encounter behavior settings (attach ranges, IsActive management for encounter prevention)
 
 #### **2. `enlisted_config.json`** - Core Military System
 **Purpose**: Base enlistment mechanics and progression  
@@ -54,7 +54,7 @@ This directory contains **7 JSON configuration files** that control all aspects 
 - Medical treatment settings (5-day/2-day cooldowns)
 
 #### **6. `equipment_kits.json`** - DEPRECATED (Troop Selection System)
-**Status**: ❌ **DEPRECATED** - Switched to SAS-style troop selection approach
+**Status**: ❌ **DEPRECATED** - Switched to troop selection approach using real game troops
 **New System**: Players select from real Bannerlord troops; equipment extracted from `CharacterObject.BattleEquipments`  
 **Contains**:
 - Troop selection system configuration
@@ -232,7 +232,7 @@ private static void ValidateConfiguration()
 ### **✅ APIs Verified from Decompile**
 - **Localization System**: `{=key}fallback` format confirmed in `MBTextManager.cs`
 - **Custom Healing Model**: `PartyHealingModel` interface confirmed in `ComponentInterfaces`
-- **Formation Detection**: `IsRanged && IsMounted` logic verified (SAS-compatible)
+- **Formation Detection**: `IsRanged && IsMounted` logic verified and tested
 
 ### **❌ Unverified APIs Removed**
 - **ModuleHelper**: Not found in decompiled code - replaced with safe paths

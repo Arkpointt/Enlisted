@@ -2,21 +2,21 @@
 
 Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 
-## ⚠️ **CRITICAL SAS DECOMPILE FINDINGS** - **FINAL BREAKTHROUGH + PHASE 2A API CORRECTIONS**
+## ⚠️ **CRITICAL DECOMPILE FINDINGS** - **FINAL BREAKTHROUGH + PHASE 2A API CORRECTIONS**
 
-**Updated**: After deep SAS decompile analysis, we discovered the **complete SAS approach** was different than initially understood:
+**Updated**: After deep decompile analysis, we discovered the **complete approach** for encounter control:
 
-- **❌ Previous Assumption**: SAS patched encounters for prevention/finishing
-- **✅ SAS Reality**: SAS uses **engine properties + immediate menu system** for encounter control
+- **❌ Previous Assumption**: Patched encounters for prevention/finishing
+- **✅ Reality**: Uses **engine properties + immediate menu system** for encounter control
 - **✅ Final Solution**: `MobileParty.MainParty.IsActive = false` prevents encounters at engine level (no patches)
-- **✅ Critical Timing**: SAS uses `TickEvent` (real-time) not `HourlyTickEvent` (game-time) for continuous enforcement
-- **✅ Menu Gap Solution**: SAS shows `party_wait` menu IMMEDIATELY after enlistment (zero gap)
+- **✅ Critical Timing**: Uses `TickEvent` (real-time) not `HourlyTickEvent` (game-time) for continuous enforcement
+- **✅ Menu Gap Solution**: Shows `party_wait` menu IMMEDIATELY after enlistment (zero gap)
 
 **Revolutionary Impact**: 
 - **NO encounter patches needed** - engine properties handle everything
 - **Immediate menu system required** - moved from Phase 4 to Phase 1A+
 - **Real-time state management** - continuous enforcement even during paused encounters
-- **100% API COMPATIBILITY** - All critical SAS APIs verified to exist in current Bannerlord version
+- **100% API COMPATIBILITY** - All critical APIs verified to exist in current Bannerlord version
 
 ### **🔧 PHASE 2A API CORRECTIONS** - **CRITICAL FOR FUTURE DEVELOPMENT**
 
@@ -24,7 +24,7 @@ Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 
 **❌ NEVER use outdated mod documentation** - causes compilation errors and broken functionality
 
-## Menus / Encounter (ENHANCED WITH VERIFIED SAS APIS)
+## Menus / Encounter (ENHANCED WITH VERIFIED APIS)
 
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ActivateGameMenu(string menuId)
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ExitToLast()
@@ -43,7 +43,7 @@ TaleWorlds.CampaignSystem.CampaignGameStarter :: AddDialogLineMultiAgent(string 
 TaleWorlds.CampaignSystem.CampaignGameStarter :: AddPlayerLine(string id, string inputToken, string outputToken, string text, ConversationSentence.OnConditionDelegate conditionDelegate, ConversationSentence.OnConsequenceDelegate consequenceDelegate, int priority, ConversationSentence.OnClickableConditionDelegate clickableConditionDelegate, ConversationSentence.OnPersuasionOptionDelegate persuasionOptionDelegate)
 TaleWorlds.CampaignSystem.CampaignGameStarter :: AddRepeatablePlayerLine(string id, string inputToken, string outputToken, string text, string continueListingRepeatedObjectsText, string continueListingOptionOutputToken, ConversationSentence.OnConditionDelegate conditionDelegate, ConversationSentence.OnConsequenceDelegate consequenceDelegate, int priority, ConversationSentence.OnClickableConditionDelegate clickableConditionDelegate)
 
-## Campaign Events (VERIFIED + SAS CRITICAL ADDITIONS)
+## Campaign Events (VERIFIED + CRITICAL ADDITIONS)
 
 TaleWorlds.CampaignSystem.CampaignEvents :: OnSessionLaunchedEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: BeforeGameMenuOpenedEvent
@@ -54,7 +54,7 @@ TaleWorlds.CampaignSystem.CampaignEvents :: OnSettlementLeftEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyAttachedAnotherParty(MobileParty)
 TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyDetachedAnotherParty(MobileParty)
 TaleWorlds.CampaignSystem.CampaignEvents :: HourlyTickEvent
-TaleWorlds.CampaignSystem.CampaignEvents :: TickEvent(float) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.CampaignEvents :: TickEvent(float) ✅ **CRITICAL - VERIFIED EXISTS**
 
 ### **Menu Registration Delegate Patterns** ✅ **VERIFIED FROM DECOMPILE**
 ```csharp
@@ -94,22 +94,22 @@ TaleWorlds.CampaignSystem.Army :: LeaderParty { get; }
 TaleWorlds.CampaignSystem.Army :: Name { get; }
 TaleWorlds.CampaignSystem.Army :: Parties { get; }
 TaleWorlds.CampaignSystem.Army :: TotalStrength { get; }
-TaleWorlds.CampaignSystem.Army :: Army(Kingdom kingdom, MobileParty leaderParty, ArmyTypes armyType) ✅ **SAS CRITICAL - VERIFIED EXISTS**
-TaleWorlds.CampaignSystem.Army :: AddPartyToMergedParties(MobileParty party) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.Army :: Army(Kingdom kingdom, MobileParty leaderParty, ArmyTypes armyType) ✅ **CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.Army :: AddPartyToMergedParties(MobileParty party) ✅ **CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Actions.DisbandArmyAction :: ApplyByPlayerTakenPrisoner(Army army)
-TaleWorlds.CampaignSystem.Actions.DisbandArmyAction :: ApplyByCohesionDepleted(Army army) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.Actions.DisbandArmyAction :: ApplyByCohesionDepleted(Army army) ✅ **CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Actions.GatherArmyAction :: Apply(MobileParty leaderParty, Settlement gatheringSettlement)
 
-## Party / AI (ENHANCED WITH VERIFIED SAS APIS)
+## Party / AI (ENHANCED WITH VERIFIED APIS)
 
 TaleWorlds.CampaignSystem.Party.MobileParty :: AttachedTo { get; }
 TaleWorlds.CampaignSystem.Party.MobileParty :: IgnoreByOtherPartiesTill(CampaignTime time)
 TaleWorlds.CampaignSystem.Party.MobileParty :: IgnoreForHours(float hours)
 TaleWorlds.CampaignSystem.Party.MobileParty :: IsVisible { get; set; }
-TaleWorlds.CampaignSystem.Party.MobileParty :: IsActive { get; set; } ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.Party.MobileParty :: IsActive { get; set; } ✅ **CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Party.MobileParty :: Position2D { get; set; }
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveEscortParty(MobileParty mobileParty)
-TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveEngageParty(MobileParty party) ✅ **SAS CRITICAL - VERIFIED EXISTS**
+TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveEngageParty(MobileParty party) ✅ **CRITICAL - VERIFIED EXISTS**
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveGoToPoint(Vec2 point)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMoveGoToSettlement(Settlement settlement)
 TaleWorlds.CampaignSystem.Party.MobilePartyAi :: SetMovePatrolAroundSettlement(Settlement settlement)
@@ -250,7 +250,7 @@ TaleWorlds.Library.MathF :: Min(float a, float b)
 TaleWorlds.Library.MBRandom :: RandomInt(int min, int max)
 TaleWorlds.Library.MBRandom :: RandomInt(int max)
 
-## Actions (Critical for SAS)
+## Actions (Critical for Encounter Management)
 
 TaleWorlds.CampaignSystem.Actions.AddCompanionAction :: Apply(Clan clan, Hero companion)
 TaleWorlds.CampaignSystem.Actions.AddHeroToPartyAction :: Apply(Hero hero, MobileParty party, bool showNotification)

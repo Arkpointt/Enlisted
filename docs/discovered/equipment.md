@@ -2,9 +2,9 @@
 
 **Equipment system documentation and item categorization for the Enlisted mod**
 
-## 🎯 **SAS Troop Selection System**
+## 🎯 **Troop Selection System**
 
-**SYSTEM CHANGE**: **Switched from custom equipment kits to SAS-style troop selection for better player experience**
+**SYSTEM CHANGE**: **Switched from custom equipment kits to troop selection using real game troops for better player experience**
 
 **How It Works**: 
 1. **Culture Determined by Lord**: When players enlist with a lord, that lord's culture (`EnlistmentBehavior.Instance.CurrentLord.Culture.StringId`) determines which **real Bannerlord troops** are available

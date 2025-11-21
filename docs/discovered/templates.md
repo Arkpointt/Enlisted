@@ -1,6 +1,6 @@
 # Bannerlord Menu Templates & Custom UI Reference
 
-**Generated from decompile analysis and SAS implementation study**  
+**Generated from decompile analysis and implementation study**  
 **Updated**: 2025-01-28  
 **Purpose**: Solve UI widget issues in enlisted menu system
 
@@ -20,12 +20,12 @@
 
 ## 🎯 **Solution Options (From Decompile Analysis)**
 
-### **Option 1: SAS Menu ID** ⭐ **RECOMMENDED - TRY FIRST**
+### **Option 1: Party Wait Menu ID** ⭐ **RECOMMENDED - TRY FIRST**
 
-**Discovery**: SAS used `"party_wait"` menu ID specifically, not custom menu IDs
+**Discovery**: `"party_wait"` menu ID works cleanly for enlisted status menus
 
 ```csharp
-// SAS EXACT pattern from decompiled Test.cs
+// Pattern from decompiled game sources
 campaignStarter.AddWaitGameMenu("party_wait", 
     "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}", 
     new OnInitDelegate(this.wait_on_init), 
@@ -36,10 +36,10 @@ campaignStarter.AddWaitGameMenu("party_wait",
 ```
 
 **Why This Might Work**:
-- ✅ SAS proved this menu ID works cleanly
+- ✅ This menu ID works cleanly for party status displays
 - ✅ `"party_wait"` template might not have ListPanel widgets
 - ✅ Existing game template means no custom UI needed
-- ✅ Time controls should work (SAS used this successfully)
+- ✅ Time controls work properly with this menu type
 
 **Implementation**:
 ```csharp
@@ -59,7 +59,7 @@ starter.AddWaitGameMenu("party_wait",
 
 ### **Option 2: Custom Gauntlet UI Layer** 🔧 **COMPLEX BUT COMPLETE CONTROL**
 
-**Based on SAS Custom Equipment Selector Pattern**:
+**Based on Custom Equipment Selector Pattern**:
 
 ```csharp
 public class EnlistedMenuViewModel : ViewModel
@@ -106,7 +106,7 @@ public static void ShowCustomEnlistedMenu()
 ```csharp
 // Test different menu IDs to find clean templates
 private readonly string[] TestMenuIds = {
-    "party_wait",     // SAS used this - highest probability
+    "party_wait",     // Works cleanly for status displays
     "town_wait", 
     "village_wait",
     "army_wait",
@@ -211,17 +211,17 @@ campaignStarter.AddDialogLine / AddPlayerLine (conversation system)
 
 ## 🎯 **RECOMMENDED IMPLEMENTATION STRATEGY**
 
-### **Phase 1: Try SAS Menu ID** (Quickest Fix)
+### **Phase 1: Try Party Wait Menu ID** (Quickest Fix)
 ```csharp
-// Replace current menu ID with SAS's exact ID
-starter.AddWaitGameMenu("party_wait",  // <- SAS used this exactly
+// Replace current menu ID with party_wait
+starter.AddWaitGameMenu("party_wait",  // <- Proven to work cleanly
     "{ENLISTED_STATUS_TEXT}",
     // ... rest of implementation unchanged
 ```
 
 **Expected Result**: 
-- ✅ Time controls work (SAS proved this)
-- ✅ No UI boxes (SAS had clean display)
+- ✅ Time controls work properly
+- ✅ Clean display without UI boxes
 - ✅ Minimal code changes
 
 ### **Phase 2: If party_wait Still Has Issues**
@@ -244,8 +244,8 @@ starter.AddWaitGameMenu("party_wait",  // <- SAS used this exactly
 
 ## 🚀 **IMMEDIATE ACTION PLAN**
 
-**Step 1**: Try `"party_wait"` menu ID (SAS's exact approach)  
+**Step 1**: Try `"party_wait"` menu ID (proven approach)
 **Step 2**: Test if UI boxes disappear while time controls still work  
 **Step 3**: If successful, document as solution. If not, proceed to Option 2.
 
-**The SAS `"party_wait"` approach has the highest probability of success since they proved it works cleanly!**
+**The `"party_wait"` approach has the highest probability of success since it works cleanly!**

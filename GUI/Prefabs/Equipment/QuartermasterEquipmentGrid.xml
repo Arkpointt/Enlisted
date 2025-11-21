@@ -7,10 +7,10 @@
 		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#000000CC">
 			<Children>
 
-				<!--Background (EXACT SAS PATTERN)-->
+				<!--Background panel for equipment grid-->
 				<BrushWidget Id="QuartermasterPopup" DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Encyclopedia.Frame.Width" SuggestedHeight="!Encyclopedia.Frame.Height" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="35" Brush="Encyclopedia.Frame">
 					<Children>
-						<!--Title (EXACT SAS PATTERN)-->
+						<!--Title text for equipment selector-->
 						<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="720" SuggestedHeight="155" HorizontalAlignment="Center" VerticalAlignment="Top" PositionXOffset="6" PositionYOffset="-18" Sprite="StdAssets\tabbar_popup" IsDisabled="true">
 							<Children>
 								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" PositionYOffset="-25" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="38" IsDisabled="true" Text="@HeaderText" />
@@ -38,7 +38,7 @@
 						<!--Player Gold (4K RESOLUTION FIX: Better positioning)-->
 						<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="820" MarginLeft="50" HorizontalAlignment="Left" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="20" Text="@PlayerGoldText"/>
 
-						<!--Scrollbar (EXACT SAS PATTERN)-->
+						<!--Scrollbar for equipment list navigation-->
 						<ScrollbarWidget HeightSizePolicy="Fixed" WidthSizePolicy="CoverChildren" Id="RightSideScrollbar" MinValue="0" MaxValue="100" MarginRight="20" MarginTop="180" AlignmentAxis="Vertical" HorizontalAlignment="Right" SuggestedHeight="750" Handle="RightSideScrollbarHandle" UpdateChildrenStates="true">
 							<Children>
 								<ImageWidget HeightSizePolicy="StretchToParent" WidthSizePolicy="Fixed" SuggestedWidth="2" VerticalAlignment="Center" Brush="Encyclopedia.Scrollbar.Flat.Bed"/>
@@ -48,7 +48,7 @@
 					</Children>
 				</BrushWidget>
 				
-				<!--Close Button (EXACT SAS PATTERN)-->
+				<!--Close button for equipment selector-->
 				<ButtonWidget Command.Click="ExecuteClose" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="100" SuggestedWidth="100" VerticalAlignment="Center" HorizontalAlignment="Center" PositionYOffset="-465" MarginLeft="1440" Brush="Popup.CloseButton"/>
 
 			</Children>

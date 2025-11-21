@@ -1,7 +1,7 @@
 # Feature Spec: Military Duties System
 
 ## Overview
-JSON-configured military role system where players can take on duties like Quartermaster, Scout, Field Medic, etc. with real gameplay benefits.
+JSON-configured military role system where players can take on duties like Quartermaster, Scout, Field Medic, etc. with real gameplay benefits. Includes automatic formation-based skill training that provides daily XP based on player's military specialization.
 
 ## Purpose
 Add variety and specialization to military service. Different duties provide different benefits (skill bonuses, equipment access, special abilities) and make each playthrough feel different.
@@ -30,8 +30,18 @@ Add variety and specialization to military service. Different duties provide dif
 
 **Daily Processing:**
 - Skill bonuses awarded based on active duties
+- Formation-based skill training applied automatically (Infantry: Athletics, One-Handed, Two-Handed, Polearm, Throwing)
 - Officer role benefits calculated (15% equipment discount, etc.)
 - Duty performance tracked for future advancement
+
+**Formation Training System:**
+- Automatic daily skill XP based on player's military formation
+- Infantry: Athletics (+50), One-Handed (+50), Two-Handed (+50), Polearm (+50), Throwing (+25)
+- Cavalry: Riding (+50), One-Handed (+50), Polearm (+50), Athletics (+25), Two-Handed (+25)
+- Horse Archer: Riding (+50), Bow (+50), Throwing (+50), Athletics (+25), One-Handed (+25)
+- Archer: Bow (+50), Crossbow (+50), Athletics (+50), One-Handed (+25)
+- Continues during temporary leave (training doesn't stop)
+- Uses authentic military training descriptions for immersion
 
 **Formation-Based Filtering:**
 - Infantry: Runner, Quartermaster, Field Medic, Armorer
@@ -42,31 +52,51 @@ Add variety and specialization to military service. Different duties provide dif
 ## Technical Implementation
 
 **Files:**
-- `EnlistedDutiesBehavior.cs` - Core duty management and benefit application
-- `DutyConfiguration.cs` - JSON loading and validation
-- `duties_system.json` - Configuration data
+- `EnlistedDutiesBehavior.cs` - Core duty management, benefit application, and formation training
+- `DutyConfiguration.cs` - JSON loading and validation  
+- `duties_system.json` - Configuration data including formation training settings
+- `EnlistedMenuBehavior.cs` - Formation-specific training descriptions
 
 **Configuration Structure:**
 ```json
 {
-  "availableDuties": [
-    {
+  "duties": {
+    "quartermaster": {
       "id": "quartermaster",
-      "name": "Quartermaster", 
-      "formations": ["infantry", "cavalry"],
-      "benefits": {
-        "skillGain": { "trade": 2, "steward": 1 },
-        "equipmentDiscount": 0.15
+      "display_name": "Quartermaster",
+      "required_formations": ["infantry", "cavalry"],
+      "skill_xp_daily": 25,
+      "officer_role": "Quartermaster",
+      "wage_multiplier": 1.4
+    }
+  },
+  "formation_training": {
+    "enabled": true,
+    "formations": {
+      "infantry": {
+        "skills": {
+          "Athletics": 50,
+          "OneHanded": 50,
+          "TwoHanded": 50,
+          "Polearm": 50,
+          "Throwing": 25
+        }
       }
     }
-  ]
+  }
 }
 ```
 
 **Benefit Application:**
-- Skills: `Hero.MainHero.AddSkillXp(skill, bonusAmount)` 
+- Formation Training: `Hero.MainHero.AddSkillXp(skill, amount)` applied daily for all formation skills
+- Duty Skills: `Hero.MainHero.AddSkillXp(skill, bonusAmount)` for active duty assignments
 - Equipment: Discount multiplier in cost calculation
 - Officer roles: Integration with existing party role system
+
+**Formation Detection:**
+- Uses player's chosen troop type from troop selection system
+- Set during initial enlistment and updated during promotions
+- Stored in `_playerFormation` field for consistency across sessions
 
 ## Edge Cases
 

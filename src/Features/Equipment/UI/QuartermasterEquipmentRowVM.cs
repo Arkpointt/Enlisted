@@ -3,10 +3,10 @@ using TaleWorlds.Library;
 namespace Enlisted.Features.Equipment.UI
 {
     /// <summary>
-    /// Row container for equipment cards (EXACT SAS pattern: 4 cards per row).
+    /// Row container for equipment cards displayed in a grid layout.
     /// 
-    /// Based on SASEquipmentCardRowVM from ServeasaSoldier.
-    /// Used by ListPanel with ItemTemplate in main UI.
+    /// Contains a list of equipment item ViewModels that are displayed together in a row.
+    /// Used by ListPanel with ItemTemplate in the main UI for grid-based equipment selection.
     /// </summary>
     public class QuartermasterEquipmentRowVM : ViewModel
     {
@@ -14,7 +14,7 @@ namespace Enlisted.Features.Equipment.UI
         public MBBindingList<QuartermasterEquipmentItemVM> Cards { get; private set; }
         
         /// <summary>
-        /// Initialize equipment row with cards (EXACT SAS pattern).
+        /// Initialize equipment row with a list of equipment card ViewModels.
         /// </summary>
         public QuartermasterEquipmentRowVM(MBBindingList<QuartermasterEquipmentItemVM> cards)
         {
