@@ -119,6 +119,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private CampaignTime _leaveStartDate = CampaignTime.Zero;
 	
 		/// <summary>
+		/// Campaign time when the desertion grace period ends.
+		/// If current time exceeds this and player hasn't rejoined, desertion penalties apply.
+		/// Set when army is defeated or lord is captured, giving player 14 days to rejoin another lord in the same kingdom.
+		/// </summary>
+		private CampaignTime _desertionGracePeriodEnd = CampaignTime.Zero;
+
+		/// <summary>
+		/// Kingdom that the player needs to rejoin during grace period to avoid desertion.
+		/// Set when army is defeated or lord is captured. Player can rejoin any lord in this kingdom
+		/// during the grace period to avoid penalties.
+		/// </summary>
+		private Kingdom _pendingDesertionKingdom = null;
+	
+		/// <summary>
 		/// Last campaign time when the real-time tick update was processed.
 		/// Used with _realtimeUpdateIntervalSeconds to throttle update frequency.
 		/// </summary>
@@ -159,6 +173,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private bool _wasIndependentClan;
 			public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
 	public bool IsOnLeave => _isOnLeave;
+	
+	/// <summary>
+	/// Whether the player is currently in a desertion grace period.
+	/// During this time, they can rejoin any lord in the same kingdom to avoid desertion penalties.
+	/// </summary>
+	public bool IsInDesertionGracePeriod => 
+		_pendingDesertionKingdom != null && 
+		CampaignTime.Now < _desertionGracePeriodEnd;
+	
+	/// <summary>
+	/// Kingdom that the player needs to rejoin during grace period to avoid desertion.
+	/// Returns null if not in grace period.
+	/// </summary>
+	public Kingdom PendingDesertionKingdom => _pendingDesertionKingdom;
+	
 	public Hero CurrentLord => _enlistedLord;
 	public int EnlistmentTier => _enlistmentTier;
 	public int EnlistmentXP => _enlistmentXP;
@@ -221,6 +250,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// Used to detect when the player enters settlements with their lord and
 			// trigger appropriate menu refreshes or state updates.
 			CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
+			
+			// Edge case handlers for grace period:
+			// Clear grace period if player changes kingdoms or if kingdom is destroyed
+			CampaignEvents.OnClanChangedKingdomEvent.AddNonSerializedListener(this, 
+				new Action<Clan, Kingdom, Kingdom, ChangeKingdomAction.ChangeKingdomActionDetail, bool>(OnClanChangedKingdom));
+			CampaignEvents.KingdomDestroyedEvent.AddNonSerializedListener(this, OnKingdomDestroyed);
 		}
 
 	/// <summary>
@@ -244,6 +279,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
 		dataStore.SyncData("_isOnLeave", ref _isOnLeave);
 		dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
+		dataStore.SyncData("_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
+		dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
 		dataStore.SyncData("_selectedDuty", ref _selectedDuty);
 		dataStore.SyncData("_selectedProfession", ref _selectedProfession);
 		
@@ -337,6 +374,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			try
 			{
+				// Check if rejoining same kingdom during grace period - clear grace period if so
+				var rejoiningKingdom = lord.MapFaction as Kingdom;
+				if (IsInDesertionGracePeriod && rejoiningKingdom == _pendingDesertionKingdom)
+				{
+					ModLogger.Info("Desertion", $"Player rejoined {rejoiningKingdom.Name} during grace period - clearing grace period");
+					ClearDesertionGracePeriod();
+					var message = new TextObject("You have rejoined {KINGDOM}. Your grace period has been cleared.");
+					message.SetTextVariable("KINGDOM", rejoiningKingdom.Name);
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				}
+				
 				// Backup player's personal equipment before service begins
 			// This ensures the player gets their original equipment back when service ends
 			// Equipment is backed up once at the start to prevent losing items during service
@@ -404,24 +452,49 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// New recruits start with basic equipment appropriate to their lord's faction
 			AssignInitialEquipment();
 			
-			// Set initial military formation (Infantry/Cavalry/Archer/Horse Archer) for new recruits
-			// Formation can be manually selected later when the player reaches tier 2
-			SetInitialFormation();
-			
-			// Attach the player's party to the lord's party using position matching
-			// This ensures the player follows the lord during travel
-			EncounterGuard.TryAttachOrEscort(lord);
-			
-			// Configure party state to prevent random encounters while allowing battle participation
-			var main = MobileParty.MainParty;
-			if (main != null)
+		// Set initial military formation (Infantry/Cavalry/Archer/Horse Archer) for new recruits
+		// Formation can be manually selected later when the player reaches tier 2
+		SetInitialFormation();
+		
+		// CRITICAL: Finish any active PlayerEncounter before starting enlistment
+		// This prevents unwanted encounters with the lord's party when we position the player
+		// at the lord's location. If there's an active encounter, finishing it ensures clean state.
+		if (PlayerEncounter.Current != null)
+		{
+			try
 			{
-				// Make the player party invisible on the map (they're part of the lord's force now)
-				main.IsVisible = false;
-				
-				// Disable party activity to prevent random encounters with bandits or other parties
-				// The party will be reactivated automatically when the lord enters battles
-				main.IsActive = false;
+				// If inside a settlement, leave it first before finishing the encounter
+				// This ensures clean encounter state cleanup
+				if (PlayerEncounter.InsideSettlement)
+				{
+					PlayerEncounter.LeaveSettlement();
+				}
+				PlayerEncounter.Finish(true);
+				ModLogger.Debug("Enlistment", "Finished active PlayerEncounter before starting enlistment");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Enlistment", $"Error finishing PlayerEncounter before enlistment: {ex.Message}");
+			}
+		}
+		
+		// Attach the player's party to the lord's party using natural attachment system
+		// This ensures the player follows the lord during travel and integrates with armies
+		// IMPORTANT: Do this AFTER finishing any active encounters to avoid creating
+		// an encounter with the lord's party itself
+		// Expense sharing is prevented by EnlistmentExpenseIsolationPatch
+		EncounterGuard.TryAttachOrEscort(lord);
+		
+		// Configure party state to prevent random encounters while allowing battle participation
+		var main = MobileParty.MainParty;
+		if (main != null)
+		{
+			// Make the player party invisible on the map (they're part of the lord's force now)
+			main.IsVisible = false;
+			
+			// Disable party activity to prevent random encounters with bandits or other parties
+			// The party will be reactivated automatically when the lord enters battles
+			main.IsActive = false;
 				
 				// Enable battle participation so the player joins battles when the lord fights
 				TrySetShouldJoinPlayerBattles(main, true);
@@ -438,11 +511,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 		}
 
-			public void StopEnlist(string reason)
+		/// <summary>
+		/// Discharge the player from enlistment. By default, returns the player to independent status.
+		/// Exception: If honorably discharged after completing full service period (252 days), 
+		/// the player is returned to their original kingdom.
+		/// </summary>
+		/// <param name="reason">Reason for discharge (for logging).</param>
+		/// <param name="isHonorableDischarge">Whether this is an honorable discharge (e.g., lord died). Defaults to false.</param>
+		public void StopEnlist(string reason, bool isHonorableDischarge = false)
 	{
 		try
 		{
-			ModLogger.Info("Enlistment", $"Service ended: {reason}");
+			ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
 			
 			// Finish any active player encounter before ending service
 			// This prevents assertion failures that can occur when ending encounters during
@@ -479,34 +559,82 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// These were transferred to the lord's party when service started
 			RestoreCompanionsToPlayer();
 		
-			// Restore the player's original kingdom/clan state
-		var playerClan = Clan.PlayerClan;
-		if (playerClan != null)
-		{
-			try
+			// Determine if player completed full enlistment period (252 days / 3 Bannerlord years)
+			// This is required for honorable discharge to restore original kingdom
+			bool completedFullService = false;
+			if (_enlistmentDate != CampaignTime.Zero)
 			{
-				if (_wasIndependentClan && playerClan.Kingdom != null)
+				var serviceDuration = CampaignTime.Now - _enlistmentDate;
+				var fullServicePeriod = CampaignTime.Days(252f); // 3 Bannerlord years (from config)
+				completedFullService = serviceDuration >= fullServicePeriod;
+				
+				var daysServed = serviceDuration.ToDays;
+				ModLogger.Info("Enlistment", $"Service duration: {daysServed:F1} days (Full period: 252 days, Completed: {completedFullService})");
+			}
+			
+			// Determine target kingdom based on discharge type
+			// Default: Return to independent status
+			// Exception: Honorably discharged after full service → restore original kingdom
+			var playerClan = Clan.PlayerClan;
+			if (playerClan != null)
+			{
+				try
 				{
-					// Player was independent before - leave current kingdom
-					ChangeKingdomAction.ApplyByLeaveKingdom(playerClan, false);
-					ModLogger.Info("Enlistment", "Restored player clan to independent status");
+					Kingdom targetKingdom = null;
+					
+					// Check if this qualifies for restoration to original kingdom
+					// Must be: honorable discharge AND completed full service period
+					if (isHonorableDischarge && completedFullService && _originalKingdom != null)
+					{
+						// Honorably discharged after full service - restore to original kingdom
+						if (playerClan.Kingdom != _originalKingdom)
+						{
+							targetKingdom = _originalKingdom;
+							ModLogger.Info("Enlistment", $"Honorable discharge after full service - restoring to {_originalKingdom.Name} without penalties");
+						}
+						else
+						{
+							ModLogger.Debug("Enlistment", "Honorable discharge - already in original kingdom");
+						}
+					}
+					else
+					{
+						// Default: Return to independent status (leave current kingdom if in one)
+						if (playerClan.Kingdom != null)
+						{
+							targetKingdom = null; // Independent
+							if (isHonorableDischarge && !completedFullService)
+							{
+								ModLogger.Info("Enlistment", "Honorable discharge but incomplete service - returning to independent status");
+							}
+							else
+							{
+								ModLogger.Info("Enlistment", "Discharge - returning to independent status");
+							}
+						}
+						else
+						{
+							ModLogger.Debug("Enlistment", "Already independent - no kingdom change needed");
+						}
+					}
+
+					// Use helper method to restore kingdom without penalties
+					if (targetKingdom == null && playerClan.Kingdom != null)
+					{
+						// Need to leave kingdom to become independent
+						DischargeHelper.RestoreKingdomWithoutPenalties(playerClan, null);
+					}
+					else if (targetKingdom != null && playerClan.Kingdom != targetKingdom)
+					{
+						// Need to join original kingdom (honorable discharge after full service)
+						DischargeHelper.RestoreKingdomWithoutPenalties(playerClan, targetKingdom);
+					}
 				}
-				else if (_originalKingdom != null && playerClan.Kingdom != _originalKingdom)
+				catch (Exception ex)
 				{
-					// Player was in a different kingdom - restore it
-					ChangeKingdomAction.ApplyByJoinToKingdom(playerClan, _originalKingdom, false);
-					ModLogger.Info("Enlistment", $"Restored player clan to {_originalKingdom.Name}");
-				}
-				else
-				{
-					ModLogger.Debug("Enlistment", "Player clan kingdom unchanged");
+					ModLogger.Error("Enlistment", $"Error restoring kingdom: {ex.Message}");
 				}
 			}
-			catch (Exception ex)
-			{
-				ModLogger.Error("Enlistment", $"Error restoring original kingdom: {ex.Message}");
-			}
-		}
 		
 		// Clear kingdom state tracking
 		_originalKingdom = null;
@@ -530,6 +658,125 @@ namespace Enlisted.Features.Enlistment.Behaviors
 }
 
 		/// <summary>
+		/// Start desertion grace period when army is defeated or lord is captured.
+		/// Player has 14 days to rejoin another lord in the same kingdom before being branded a deserter.
+		/// </summary>
+		/// <param name="kingdom">Kingdom that the player needs to rejoin during grace period.</param>
+		private void StartDesertionGracePeriod(Kingdom kingdom)
+		{
+			try
+			{
+				if (kingdom == null)
+				{
+					ModLogger.Error("Desertion", "Cannot start grace period - kingdom is null");
+					return;
+				}
+
+				_pendingDesertionKingdom = kingdom;
+				_desertionGracePeriodEnd = CampaignTime.Now + CampaignTime.Days(14f);
+				
+				ModLogger.Info("Desertion", $"Started 14-day grace period to rejoin {kingdom.Name}");
+				
+				var message = new TextObject("Your service has ended. You have {DAYS} days to find another lord in {KINGDOM} or be branded a deserter.");
+				message.SetTextVariable("DAYS", 14);
+				message.SetTextVariable("KINGDOM", kingdom.Name);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Desertion", "Error starting grace period", ex);
+			}
+		}
+
+		/// <summary>
+		/// Apply desertion penalties when grace period expires and player hasn't rejoined.
+		/// Applies -50 relation with all lords in kingdom, +50 crime rating, and removes player from kingdom.
+		/// </summary>
+		private void ApplyDesertionPenalties()
+		{
+			try
+			{
+				if (_pendingDesertionKingdom == null)
+				{
+					ModLogger.Debug("Desertion", "No pending desertion kingdom - clearing grace period");
+					_desertionGracePeriodEnd = CampaignTime.Zero;
+					return;
+				}
+
+				ModLogger.Info("Desertion", $"Grace period expired - applying desertion penalties for {_pendingDesertionKingdom.Name}");
+
+				var playerClan = Clan.PlayerClan;
+				if (playerClan == null)
+				{
+					ModLogger.Error("Desertion", "Cannot apply penalties - player clan is null");
+					ClearDesertionGracePeriod();
+					return;
+				}
+
+				// Check if kingdom still exists (edge case: kingdom destroyed during grace period)
+				if (_pendingDesertionKingdom.IsEliminated)
+				{
+					ModLogger.Info("Desertion", $"Kingdom {_pendingDesertionKingdom.Name} was destroyed - clearing grace period without penalties");
+					ClearDesertionGracePeriod();
+					return;
+				}
+
+				// Check if player already left kingdom (edge case: manual kingdom leave)
+				if (playerClan.Kingdom != _pendingDesertionKingdom)
+				{
+					ModLogger.Info("Desertion", "Player already left kingdom - clearing grace period without penalties");
+					ClearDesertionGracePeriod();
+					return;
+				}
+
+				// -50 relation with all lords in kingdom
+				int lordsPenalized = 0;
+				foreach (Clan clan in _pendingDesertionKingdom.Clans)
+				{
+					if (clan.Leader != null && clan.Leader != Hero.MainHero && clan.Leader.IsAlive)
+					{
+						ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50, true, true);
+						lordsPenalized++;
+					}
+				}
+
+				// Apply moderate crime rating (50 points = moderate)
+				ChangeCrimeRatingAction.Apply(_pendingDesertionKingdom, 50f, true);
+
+				// Remove from kingdom (become independent)
+				if (playerClan.Kingdom == _pendingDesertionKingdom)
+				{
+					ChangeKingdomAction.ApplyByLeaveKingdom(playerClan, true);
+				}
+
+				// Display notification
+				var message = new TextObject("You have been branded a deserter. Your relationship with {KINGDOM} has been severely damaged.");
+				message.SetTextVariable("KINGDOM", _pendingDesertionKingdom.Name);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+
+				ModLogger.Info("Desertion", $"Applied desertion penalties: -50 relation with {lordsPenalized} lords, +50 crime rating, removed from kingdom");
+				
+				// Clear grace period state
+				ClearDesertionGracePeriod();
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Desertion", "Error applying desertion penalties", ex);
+				ClearDesertionGracePeriod(); // Always clear state on error
+			}
+		}
+
+		/// <summary>
+		/// Clear desertion grace period state.
+		/// Called when grace period expires (after penalties) or when player rejoins.
+		/// </summary>
+		private void ClearDesertionGracePeriod()
+		{
+			_pendingDesertionKingdom = null;
+			_desertionGracePeriodEnd = CampaignTime.Zero;
+		}
+
+		/// <summary>
 		/// Hourly tick handler that runs once per in-game hour while the player is enlisted.
 		/// Maintains party following, visibility, and encounter prevention state.
 		/// Called automatically by the game every hour.
@@ -546,6 +793,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
+			// Check if grace period expired (even if not enlisted)
+			if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
+			{
+				ApplyDesertionPenalties();
+				return;
+			}
+
 			// Check if the lord's party still exists
 			var counterpartParty = _enlistedLord?.PartyBelongedTo;
 			if (counterpartParty == null)
@@ -555,8 +809,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
-			// Maintain party attachment to the lord's party
-			// This ensures the player continues to follow the lord during travel
+			// Maintain party attachment to the lord's party using natural attachment system
+			// This ensures the player continues to follow the lord during travel and integrates with armies
+			// Expense sharing is prevented by EnlistmentExpenseIsolationPatch
 			EncounterGuard.TryAttachOrEscort(_enlistedLord);
 		
 			// Keep the player party invisible on the map (they're part of the lord's force)
@@ -1182,7 +1437,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var message = new TextObject("Your lord has been killed in battle. You have been honorably discharged.");
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				
-				StopEnlist("Lord killed in battle");
+				StopEnlist("Lord killed in battle", isHonorableDischarge: true);
 			}
 		}
 		
@@ -1204,13 +1459,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				{
 					var message = new TextObject("Your lord has fallen in battle. You have been honorably discharged.");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-					StopEnlist("Lord died in battle");
+					StopEnlist("Lord died in battle", isHonorableDischarge: true);
 				}
 				else if (_enlistedLord.IsPrisoner)
 				{
-					var message = new TextObject("Your lord has been captured. Your service has ended.");
-					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-					StopEnlist("Lord captured in battle");
+					// Start grace period instead of immediate discharge
+					// Player has 14 days to rejoin another lord in the same kingdom
+					var lordKingdom = _enlistedLord.MapFaction as Kingdom;
+					if (lordKingdom != null)
+					{
+						// End enlistment but start grace period
+						StopEnlist("Lord captured in battle", isHonorableDischarge: false);
+						StartDesertionGracePeriod(lordKingdom);
+					}
+					else
+					{
+						// No kingdom - immediate discharge
+						var message = new TextObject("Your lord has been captured. Your service has ended.");
+						InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+						StopEnlist("Lord captured in battle");
+					}
 				}
 			}
 		}
@@ -1228,9 +1496,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Check if lord still exists after army defeat
 				if (_enlistedLord == null || !_enlistedLord.IsAlive || _enlistedLord.PartyBelongedTo == null)
 				{
-					var message = new TextObject("Your lord's army has been defeated. Your service has ended.");
-					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-					StopEnlist("Army defeated - lord lost");
+					// Start grace period instead of immediate discharge
+					// Player has 14 days to rejoin another lord in the same kingdom
+					// Capture kingdom before StopEnlist clears _enlistedLord
+					var lordKingdom = (_enlistedLord?.MapFaction as Kingdom) ?? 
+					                  (army?.LeaderParty?.MapFaction as Kingdom);
+					
+					if (lordKingdom != null)
+					{
+						// End enlistment but start grace period
+						StopEnlist("Army defeated - lord lost", isHonorableDischarge: false);
+						StartDesertionGracePeriod(lordKingdom);
+					}
+					else
+					{
+						// No kingdom - immediate discharge
+						var message = new TextObject("Your lord's army has been defeated. Your service has ended.");
+						InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+						StopEnlist("Army defeated - lord lost");
+					}
 				}
 				else
 				{
@@ -1249,12 +1533,78 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (IsEnlisted && prisoner == _enlistedLord)
 			{
-				ModLogger.Info("EventSafety", $"Lord {prisoner.Name} captured - service ended");
+				ModLogger.Info("EventSafety", $"Lord {prisoner.Name} captured - starting grace period");
 				
-				var message = new TextObject("Your lord has been captured. Your service has ended.");
+				// Start grace period instead of immediate discharge
+				// Player has 14 days to rejoin another lord in the same kingdom
+				var lordKingdom = _enlistedLord.MapFaction as Kingdom;
+				if (lordKingdom != null)
+				{
+					// End enlistment but start grace period
+					StopEnlist("Lord captured", isHonorableDischarge: false);
+					StartDesertionGracePeriod(lordKingdom);
+				}
+				else
+				{
+					// No kingdom - immediate discharge
+					var message = new TextObject("Your lord has been captured. Your service has ended.");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+					StopEnlist("Lord captured");
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Handle player clan changing kingdoms.
+		/// Edge case: If player changes kingdoms during grace period, clear grace period.
+		/// Player can no longer rejoin the original kingdom, so grace period is invalid.
+		/// </summary>
+		private void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom, 
+		                                   ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification)
+		{
+			if (clan != Clan.PlayerClan)
+			{
+				return; // Not the player's clan
+			}
+			
+			// Edge case: If player changes kingdoms during grace period, clear it
+			// Player can only rejoin the pending desertion kingdom during grace period
+			// Any kingdom change (join different kingdom, become independent) invalidates grace period
+			if (IsInDesertionGracePeriod)
+			{
+				// If player left the grace period kingdom (became independent or joined different kingdom), clear grace period
+				if (oldKingdom == _pendingDesertionKingdom && newKingdom != _pendingDesertionKingdom)
+				{
+					if (newKingdom == null)
+					{
+						ModLogger.Info("Desertion", "Player left kingdom during grace period - clearing grace period");
+					}
+					else
+					{
+						ModLogger.Info("Desertion", $"Player changed kingdoms during grace period - clearing grace period (left: {oldKingdom?.Name}, joined: {newKingdom?.Name})");
+					}
+					ClearDesertionGracePeriod();
+				}
+				// If player is joining the grace period kingdom from a different kingdom, that's okay (rejoin during grace period)
+				// This is handled in StartEnlist() which clears the grace period when rejoining
+			}
+		}
+		
+		/// <summary>
+		/// Handle kingdom destruction.
+		/// Edge case: If pending desertion kingdom is destroyed during grace period, clear grace period.
+		/// Player can no longer rejoin a destroyed kingdom, so grace period is invalid.
+		/// </summary>
+		private void OnKingdomDestroyed(Kingdom kingdom)
+		{
+			if (IsInDesertionGracePeriod && kingdom == _pendingDesertionKingdom)
+			{
+				ModLogger.Info("Desertion", $"Kingdom {kingdom.Name} destroyed during grace period - clearing grace period");
+				ClearDesertionGracePeriod();
+				
+				// Notify player that grace period is cancelled due to kingdom destruction
+				var message = new TextObject("The kingdom you served has fallen. Your grace period has been cancelled.");
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-				
-				StopEnlist("Lord captured");
 			}
 		}
 		
@@ -2297,13 +2647,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						main.IgnoreByOtherPartiesTill(CampaignTime.Now); // effectively clear
 						ModLogger.Debug("Battle", "Cleared ignore window for battle collection");
 						
-						// Make sure we're not attached and not escorting
-						if (main.AttachedTo != null) 
-						{
-							main.AttachedTo = null;
-							ModLogger.Debug("Battle", "Cleared attachment for battle participation");
-						}
-						TryReleaseEscort(main);
+					// Keep attachment during battle - it helps with battle collection
+					// Expense isolation is handled by EnlistmentExpenseIsolationPatch
+					// Only release escort AI behavior, not the attachment itself
+					TryReleaseEscort(main);
 						
 						// Position at lord's position (within join radius of 3.0f)
 						main.Position2D = lordParty.Position2D;

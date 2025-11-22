@@ -28,9 +28,16 @@ Next steps
   - Core military service behaviors (EnlistmentBehavior, EnlistedDialogManager, EnlistedDutiesBehavior with formation training)
   - Professional interface system (EnlistedMenuBehavior with organized sections, EnlistedInputHandler) 
   - Equipment and progression system (TroopSelectionManager with close button, EquipmentManager, QuartermasterManager)
-  - Battle integration (BattleCommandsFilterPatch for automatic formation-based command filtering)
+  - Battle integration (EnlistedEncounterBehavior for battle participation, BattleCommandsFilterPatch for automatic formation-based command filtering)
   - Menu organization (section headers, tier-based access, detailed descriptions, connected XP processing)
-- Harmony patches live in `src/Mod.GameAdapters/Patches/` following Blueprint standards
+- Harmony patches live in `src/Mod.GameAdapters/Patches/` following Blueprint standards:
+  - BattleCommandsFilterPatch - Automatic formation-based battle command filtering
+  - BattleLeavePreventionPatch - Prevents leaving battles at encounter menu (uses reflection for obfuscated MapEventHelper)
+  - DutiesOfficerRolePatches - Officer role integration (Scout, Surgeon, Engineer, Quartermaster)
+  - EncounterSuppressionPatch - Intentionally disabled (IsActive = false approach used instead)
+  - FinalizeBattlePatch - Battle end hook (currently no-op, reserved for future enhancements)
+  - MissionFightEndPatch - Prevents leaving battles during actual combat missions
+  - NoHorseSiegePatch - Prevents mounted players from joining sieges
 - Discovery debugging outputs written to module `Debugging` folder [[memory:7845841]]
 
 ### Debugging outputs (session-scoped)
@@ -111,7 +118,7 @@ src/
 ├── Mod.Core/                    # Shared services, policies, logging, DI
 │
 ├── Mod.GameAdapters/            # TaleWorlds APIs, Harmony patches, event bridges
-│   └── Patches/                 # ✅ COMPLETE: Harmony patches (officer roles + battle command filtering)
+│   └── Patches/                 # ✅ COMPLETE: Harmony patches (7 patches - officer roles, battle commands, leave prevention, siege rules)
 │
 ├── Features/                    # Each feature is self-contained
 │   ├── Enlistment/
@@ -130,7 +137,7 @@ src/
 │   ├── Conversations/
 │   │   └── Behaviors/           # ✅ COMPLETE: centralized dialog handling and flows
 │   ├── Combat/
-│   │   └── Behaviors/           # battle participation and army following
+│   │   └── Behaviors/           # ✅ COMPLETE: battle participation, encounter menu extensions, army following (EnlistedEncounterBehavior)
 │   └── Interface/
 │       └── Behaviors/           # ✅ COMPLETE: professional menu system with clean formatting
 │
@@ -152,6 +159,8 @@ src/
 - **Officer Role Substitution**: Can use public APIs (`lordParty.SetPartyX()`) or Harmony patches for enhanced integration - patches provide more natural skill benefits but are optional.
 - **Encounter Management**: Use `IsActive = false` engine property for complete encounter prevention (no patches needed)
 - **Real-Time Management**: Use `CampaignEvents.TickEvent` ✅ **VERIFIED** for continuous state enforcement
+- **Battle Leave Prevention**: Use patches to prevent leaving battles at multiple levels (mission and encounter menu)
+- **Obfuscated APIs**: When APIs may be obfuscated, use `TargetMethod()` reflection pattern instead of direct type references
 - It is acceptable to patch menu/time control, encounter/battle flows, and dispatcher surfaces when required by feature design, provided patches are guarded, observable, and configurable.
 - Examples of engine-invoked surfaces: module load/unload lifecycle, campaign daily/hourly ticks, battle/agent updates, menu open/close, economy/party recalculations.
 
@@ -161,7 +170,8 @@ src/
 - **Prefer public APIs first** for simpler implementation and better compatibility; however, Harmony usage is **perfectly acceptable** when it provides clear benefits or when no public API alternative exists. Document assumptions and gate via settings where appropriate.
 - **Prefer engine properties over patches** when possible - `IsActive = false` provides encounter prevention without complex patches
 - **Use real-time TickEvent over game-time ticks** ✅ **VERIFIED** for continuous state enforcement during paused encounters
-- **Immediate menu replacement** using `AddWaitGameMenu()` ✅ **VERIFIED** prevents encounter gaps
+- **Use NextFrameDispatcher for menu transitions** ✅ **VERIFIED** prevents timing conflicts during encounter exits
+- **For obfuscated APIs** use reflection with `TargetMethod()` pattern - see `BattleLeavePreventionPatch` as reference implementation
 
 **Documentation standard (mandatory)**
 
@@ -260,9 +270,14 @@ Our military service system uses immediate menu replacement and engine-level enc
 #### **Battle Integration**
 - **Purpose**: Seamless participation in lord's military campaigns
 - **Implementation Strategy**:
-  - Use escort AI to follow the enlisted lord: `MobileParty.MainParty.Ai.SetMoveEscortParty(lordParty)`
-  - When lord is in an army, follow the army leader instead for proper hierarchy
-  - Auto-join battles when lord is involved, using reflection with positioning fallback
+  - Use `IsActive = false` engine property to hide player party and prevent unwanted encounters
+  - `EnlistedEncounterBehavior` manages battle participation and encounter menu extensions
+  - Auto-detect lord's battles and automatically join them
+  - **Battle Leave Prevention**: Two-layer protection:
+    - `MissionFightEndPatch` prevents leaving during actual combat missions
+    - `BattleLeavePreventionPatch` prevents leaving at encounter menu level (uses reflection for obfuscated API)
+  - **Battle Commands**: `BattleCommandsFilterPatch` filters commands based on formation specialization
+  - **Siege Rules**: `NoHorseSiegePatch` prevents mounted players from joining sieges
   - Handle army formation changes gracefully without breaking player experience
 
 #### **Menu Integration**
@@ -280,31 +295,27 @@ Our military service system uses immediate menu replacement and engine-level enc
 ### 4.7 Deferred Operations (assert safety)
 
 - Post-load setup is deferred until there is no active menu or encounter, and a short safety timer elapses. Then re-apply:
-  - Escort AI toward commander (or army leader)
+  - Set `MainParty.IsActive = false` to hide player party and prevent encounters
   - Visual tracker registration
-  - Camera follow to commander party
 - Post-battle restore is likewise deferred until encounter/menus clear. Then:
-  - Re-hide and deactivate `MainParty`
-  - Re-apply escort/camera follow
+  - Re-hide and deactivate `MainParty` with `IsActive = false`
   - Optionally re-open the enlisted status menu
+- Use `NextFrameDispatcher.RunNextFrame()` for menu transitions to avoid timing conflicts during encounter exits
+- The `NextFrameDispatcherPatch` hooks into `Campaign.Tick()` to process deferred actions after frame updates complete
 - Emit clear debug markers when deferred vs applied:
   - "PostLoadSetup deferred/applied"
-  - "PendingCameraFollow deferred/applied"
   - "PostBattleRestore deferred/applied"
 
-### 4.8 Camera Follow, Visual Tracking, and Visibility
+### 4.8 Visibility and Encounter Prevention
 
-- Camera follow cadence: reassert follow to `(commanderArmyLeader ?? commander)` frequently to keep camera locked even if the engine resets it.
-- Visuals and tracker
-  - Keep `MobileParty.MainParty.IsVisible = false` while enlisted.
-  - Unregister `MainParty` from `VisualTrackerManager` and register the commander to drive HUD focus; periodically enforce due to engine/UI refreshes.
-  - Nameplate & tracker suppression via small Harmony adapters (see ADR-011), with behavior-level enforcement as backup.
-
-### 4.9 Conditional Ignore AI Safety
-
-- To prevent world AI from targeting the hidden `MainParty`, periodically call:
-  - `MobileParty.MainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f))`
-- Use conditionally: enable while the commander is not in an army; disable when merged into an army to avoid unintended targeting behavior changes.
+- Use `MobileParty.MainParty.IsActive = false` engine property to hide player party and prevent unwanted encounters
+- This is more robust than encounter suppression patches - it works at the engine level
+- `IsActive = false` prevents:
+  - Random encounters with other parties
+  - AI targeting the player party
+  - Unwanted map interactions
+- Visuals and tracking handled automatically by engine when party is inactive
+- No need for separate visibility or ignore AI patches when using `IsActive = false`
 
 ## 5. Development Standards (C# / VS2022)
 
@@ -721,6 +732,10 @@ public static class YourPatch
 - `PlayerArmyWaitBehavior.wait_menu_army_leave_on_condition` → **Instance method**: `bool MethodName(MenuCallbackArgs args)`
 - `VillageHostileActionCampaignBehavior.wait_menu_end_raiding_at_army_by_leaving_on_condition` → **Static method**: `bool MethodName(MenuCallbackArgs args)`
 - `CampaignEventDispatcher.OnMapEventStarted` → **Instance method**: `void MethodName(MapEvent, PartyBase, PartyBase)`
+- `MapEventHelper.CanLeaveBattle` → **Static method**: `bool CanLeaveBattle(MobileParty mobileParty)` (may be obfuscated - use reflection)
+- `MissionFightHandler.OnEndMissionRequest` → **Instance method**: `void OnEndMissionRequest(out bool canPlayerLeave)`
+- `EncounterGameMenuBehavior.game_menu_encounter_attack_on_consequence` → **Instance method**: `void MethodName(MenuCallbackArgs args)`
+- `DefaultCutscenesCampaignBehavior.OnMapEventEnd` → **Instance method**: `void OnMapEventEnd(MapEvent mapEvent)`
 
 #### Verification Checklist
 - [ ] Decompiled current game version DLLs (not mod source)

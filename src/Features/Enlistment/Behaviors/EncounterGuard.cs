@@ -84,15 +84,24 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
-			// Use direct position matching instead of AI escort system
-			// This avoids complications with the AI system and prevents assertion failures
-			// during battle state transitions. Only position the party when not in an active battle.
+			// Use natural attachment system for following behavior
+			// This provides automatic following and proper army integration
+			// Expense sharing is prevented by EnlistmentExpenseIsolationPatch
+			if (main.AttachedTo != target)
+			{
+				// Attach to the lord's party if not already attached
+				// This enables natural following behavior and army integration
+				TryAttach(main, target);
+			}
+
+			// Use direct position matching as a fallback when not in battle
+			// This ensures the player follows the lord during travel
 			if (main.Party.MapEvent == null || main.Party.MapEvent.IsFinalized)
 			{
 				// Match the player's position directly to the lord's position
-				// This ensures the player follows the lord during travel
+				// This works in combination with AttachedTo for reliable following
 				main.Position2D = target.Position2D;
-				ModLogger.Debug("Following", "Direct position matching for following");
+				ModLogger.Debug("Following", "Position matching for following (with attachment)");
 			}
 			else
 			{

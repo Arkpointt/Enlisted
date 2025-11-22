@@ -207,11 +207,47 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         /// Checks if the conversation partner is a valid lord for military service discussions.
         /// This shared condition prevents dialog conflicts and ensures consistency.
+        /// CRITICAL: Prevents enlistment dialog from appearing if player is already enlisted, on leave, or in grace period.
+        /// Player must be fully discharged before they can enlist with another lord/kingdom.
         /// </summary>
         private bool IsValidLordForMilitaryService()
         {
             var lord = Hero.OneToOneConversationHero;
-            return lord != null && lord.IsLord && lord.IsAlive;
+            if (lord == null || !lord.IsLord || !lord.IsAlive)
+            {
+                return false;
+            }
+            
+            var enlistment = EnlistmentBehavior.Instance;
+            
+            // CRITICAL: Prevent enlistment dialog if already enlisted, on leave, or in grace period
+            // Player must be fully discharged before they can enlist with another lord/kingdom
+            if (enlistment?.IsEnlisted == true)
+            {
+                ModLogger.Debug("DialogManager", $"Dialog hidden - player is already enlisted with {enlistment.CurrentLord?.Name}");
+                return false;
+            }
+            
+            if (enlistment?.IsOnLeave == true)
+            {
+                ModLogger.Debug("DialogManager", $"Dialog hidden - player is on temporary leave from {enlistment.CurrentLord?.Name}");
+                return false;
+            }
+            
+            if (enlistment?.IsInDesertionGracePeriod == true)
+            {
+                // During grace period, player can only rejoin the same kingdom they served
+                // Don't show enlistment dialog for different kingdoms
+                var lordKingdom = lord.MapFaction as Kingdom;
+                if (lordKingdom != enlistment.PendingDesertionKingdom)
+                {
+                    ModLogger.Debug("DialogManager", $"Dialog hidden - player in grace period, can only rejoin {enlistment.PendingDesertionKingdom?.Name}");
+                    return false;
+                }
+                // Allow dialog if same kingdom - they can rejoin during grace period
+            }
+            
+            return true;
         }
 
         /// <summary>

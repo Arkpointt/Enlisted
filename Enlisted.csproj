@@ -176,6 +176,9 @@
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\NoHorseSiegePatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\VotingSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml">

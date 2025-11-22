@@ -15,7 +15,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// naturally affect party performance when assigned to officer duties, without changing
     /// the official party officer assignments.
     /// 
-    /// These patches are OPTIONAL - the duties system works fine with just public APIs.
     /// </summary>
     
     // Harmony Patch

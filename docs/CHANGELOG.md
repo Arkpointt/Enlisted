@@ -1,5 +1,26 @@
 # Changelog
 
+## Phase 3C: Battle Leave Prevention & Patch Improvements (2025-01-27)
+
+### Battle Leave Prevention System
+- **✅ Two-Layer Protection**: Prevents enlisted soldiers from leaving battles at both mission and encounter menu levels
+- **✅ BattleLeavePreventionPatch**: New patch prevents leaving battles at encounter menu using reflection for obfuscated MapEventHelper API
+- **✅ MissionFightEndPatch**: Enhanced to prevent leaving during actual combat missions
+- **✅ Comprehensive Coverage**: Enlisted soldiers can no longer abandon their lord during any phase of battle
+
+### Patch Improvements & Fixes
+- **✅ Build Error Fixes**: Resolved namespace and missing reference issues for development branch
+- **✅ NoHorseSiegePatch Null Safety**: Fixed potential null reference bug when accessing Party.MapEvent during siege setup
+- **✅ EncounterSuppressionPatch Documentation**: Added clear comments explaining why patch is intentionally disabled (IsActive = false approach is superior)
+- **✅ Reflection Pattern**: Implemented proper TargetMethod() pattern for obfuscated APIs (BattleLeavePreventionPatch)
+- **✅ Code Quality**: Fixed unreachable code warnings and improved patch documentation
+
+### Technical Improvements
+- **✅ Obfuscated API Handling**: Added reflection-based patching for APIs that may be in obfuscated namespaces
+- **✅ Improved Error Handling**: Better null checks and API access patterns in battle-related patches
+- **✅ Documentation Updates**: Updated BLUEPRINT.md with all current patches and architectural decisions
+- **✅ Branch Synchronization**: Merged main into development to sync branches and maintain consistency
+
 ## Phase 3B: Town Access System (2025-01-26)
 
 ### Critical Breakthrough: Synthetic Outside Encounter Solution
@@ -103,7 +124,8 @@
 
 ---
 
-**Total Implementation Time**: 6 weeks
-**Lines of Code**: ~15,000+ across all features
+**Total Implementation Time**: 7 weeks
+**Lines of Code**: ~15,500+ across all features
+**Harmony Patches**: 7 patches (officer roles, battle commands, leave prevention, siege rules)
 **Configuration Files**: 7 JSON files for complete customization
 **Test Coverage**: Comprehensive edge case handling and error recovery
