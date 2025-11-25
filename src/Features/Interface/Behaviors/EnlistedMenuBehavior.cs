@@ -336,16 +336,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
             }
             
-            // Track army menu state for debugging menu transitions
-            if (_currentMenuId == "army_wait")
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted == true)
-                {
-                    ModLogger.Debug("Interface", $"ARMY MENU ACTIVE: Menu={_currentMenuId}, Refresh needed={_menuNeedsRefresh}");
-                }
-            }
-            
             // Only activate menu after settlement exit if the native system allows it
             // Check GetGenericStateMenu() first to see if the native system wants a different menu
             // This prevents conflicts with battle menus that might be starting
@@ -1335,7 +1325,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool CanPromote()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment?.IsEnlisted == true || enlistment.EnlistmentTier >= 7)
+            if (!enlistment?.IsEnlisted == true || enlistment.EnlistmentTier >= 6)
             {
                 return false;
             }

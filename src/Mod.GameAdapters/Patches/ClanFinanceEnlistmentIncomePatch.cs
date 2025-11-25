@@ -39,7 +39,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				if (enlistment?.TryGetProjectedDailyWage(out var wageAmount) == true && wageAmount > 0)
 				{
 					goldChange.Add(wageAmount, EnlistmentWageText, null);
-					ModLogger.Debug("Finance", $"Added enlistment wages to clan income: {wageAmount}");
+					// Note: Wage amount is visible in game UI - no DEBUG log needed here
+					// This method is called frequently by the finance calculation system
 				}
 			}
 			catch (Exception ex)
