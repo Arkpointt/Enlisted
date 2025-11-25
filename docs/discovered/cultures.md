@@ -102,4 +102,4 @@ The fallback equipment in our original JSON was **incorrect/outdated**:
 
 ---
 
-**For Future AI Reference**: This document contains the **definitive, verified cultural equipment data** for the Enlisted mod. Do NOT use the old fallback equipment assumptions - use only the verified game item IDs listed above.
+**For Future Reference**: This document contains the **definitive, verified cultural equipment data** for the Enlisted mod. Do NOT use the old fallback equipment assumptions - use only the verified game item IDs listed above.
