@@ -11,19 +11,20 @@ Architecture and development standards for the Enlisted military service mod.
 
 ### Current Implementation
 
-**12 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
+**13 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
 1. BattleCommandsFilterPatch - Formation-based battle command filtering
-2. DischargePenaltySuppressionPatch - Prevents relation penalties during discharge
-3. DutiesOfficerRolePatches - Officer role integration (Scout, Surgeon, Engineer, Quartermaster)
-4. EncounterSuppressionPatch - Suppresses encounters with the lord when not in battle
-5. EnlistmentExpenseIsolationPatch - Prevents expense sharing when attached to a lord
-6. HidePartyNamePlatePatch - Hides the enlisted party nameplate while invisible
-7. KingdomDecisionParticipationPatch - Blocks kingdom decision prompts
-8. LootRestrictionPatch - Tier-based loot restrictions
-9. NoHorseSiegePatch - Prevents mounted players from joining sieges
-10. PostDischargeProtectionPatch - Temporary immunity right after discharge
-11. VisibilityEnforcementPatch - Keeps party hidden/active in sync with service state
-12. VotingSuppressionPatch - Prevents voting prompts for enlisted soldiers
+2. ClanFinanceEnlistmentIncomePatch - Adds enlistment wages to daily gold tooltip
+3. DischargePenaltySuppressionPatch - Prevents relation penalties during discharge
+4. DutiesOfficerRolePatches - Officer role integration (Scout, Surgeon, Engineer, Quartermaster)
+5. EncounterSuppressionPatch - Suppresses encounters with the lord when not in battle
+6. EnlistmentExpenseIsolationPatch - Prevents expense sharing when attached to a lord
+7. HidePartyNamePlatePatch - Hides the enlisted party nameplate while invisible
+8. KingdomDecisionParticipationPatch - Blocks kingdom decision prompts
+9. LootRestrictionPatch - Tier-based loot restrictions
+10. NoHorseSiegePatch - Prevents mounted players from joining sieges
+11. PostDischargeProtectionPatch - Temporary immunity right after discharge
+12. VisibilityEnforcementPatch - Keeps party hidden/active in sync with service state
+13. VotingSuppressionPatch - Prevents voting prompts for enlisted soldiers
 
 **Core Behaviors** (`src/Mod.Entry/SubModule.cs`):
 - EnlistmentBehavior - Core service state and lord relationships
@@ -33,7 +34,11 @@ Architecture and development standards for the Enlisted military service mod.
 - EnlistedEncounterBehavior - Battle participation and encounter management
 
 **Debug Logs** (`<BannerlordInstall>\Modules\Enlisted\Debugging\`):
-- `enlisted.log` - Bootstrap and initialization
+- `enlisted.log` - Main mod activity and errors
+- `conflicts.log` - Mod compatibility diagnostics
+- `dialog.log` - Conversation system events
+- `discovery.log` - Troop/equipment discovery
+- `api.log` - API interaction logging
 - Session-scoped (cleared on init)
 
 ## 1. Purpose & Scope
@@ -67,7 +72,7 @@ src/
 ├── Mod.Entry/              # Module entry + Harmony initialization
 ├── Mod.Core/               # Shared services, logging, config
 ├── Mod.GameAdapters/       # TaleWorlds APIs, Harmony patches
-│   └── Patches/            # 12 Harmony patches
+│   └── Patches/            # 13 Harmony patches
 └── Features/               # Each feature is self-contained
     ├── Enlistment/         # Core service state management
     ├── Assignments/        # Duties system and XP calculations
