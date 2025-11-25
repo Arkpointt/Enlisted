@@ -160,7 +160,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", "Error backing up personal equipment", ex);
+                ModLogger.Error("Equipment", $"Error backing up personal equipment: {ex.Message}", ex);
                 throw;
             }
         }
@@ -202,11 +202,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _personalCivilianEquipment = null;
                 _hasBackedUpEquipment = false;
                 
-                ModLogger.Info("Equipment", "Personal equipment restored");
+                ModLogger.Info("Equipment", "Personal equipment restored successfully");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", "Error restoring personal equipment", ex);
+                ModLogger.Error("Equipment", $"Error restoring personal equipment: {ex.Message}", ex);
             }
         }
         

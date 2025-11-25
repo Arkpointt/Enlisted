@@ -159,24 +159,16 @@ namespace Enlisted.Features.Interface.Behaviors
             bool lordSiegeEvent = lord?.Party.SiegeEvent != null;
             bool siegeRelatedBattle = IsSiegeRelatedBattle(main, lord);
             
-            // Log state checks for debugging menu activation issues
-            ModLogger.Info("Interface", $"=== ENLISTED MENU GUARD CHECK ===");
-            ModLogger.Info("Interface", $"Player battle: {playerBattle}");
-            ModLogger.Info("Interface", $"Player encounter: {playerEncounter}");
-            ModLogger.Info("Interface", $"Lord siege event: {lordSiegeEvent}");
-            ModLogger.Info("Interface", $"Siege-related battle: {siegeRelatedBattle}");
-            
             // If any conflict exists, prevent menu activation
             // This ensures menus don't interfere with battles, sieges, or encounters
             bool conflict = playerBattle || playerEncounter || lordSiegeEvent || siegeRelatedBattle;
                                   
             if (conflict)
             {
-                ModLogger.Info("Interface", $"Menu activation blocked due to conflict - siege/battle active");
+                ModLogger.Debug("Interface", $"Menu activation blocked - battle: {playerBattle}, encounter: {playerEncounter}, siege: {lordSiegeEvent}");
                 return false;
             }
             
-            ModLogger.Info("Interface", $"Menu activation allowed - no conflicts detected");
             return true;
         }
         
@@ -411,7 +403,7 @@ namespace Enlisted.Features.Interface.Behaviors
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted == true)
             {
-                ModLogger.Info("Interface", $"=== MENU OPENED: '{_currentMenuId}' while enlisted ===");
+                ModLogger.Debug("Interface", $"Menu opened: {_currentMenuId}");
                 
                 // Check all siege/battle conditions to detect state conflicts
                 var lord = enlistment.CurrentLord;
@@ -1598,7 +1590,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         {
                             if (Campaign.Current?.CurrentMenuContext != null)
                             {
-                                ModLogger.Info("Interface", "=== DEFERRED CALL: Ask leave negative action scheduling enlisted menu ===");
+                                ModLogger.Debug("Interface", "Deferred call: Ask leave negative action");
                                 SafeActivateEnlistedMenu();
                             }
                         });
@@ -1838,7 +1830,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         {
                             if (Campaign.Current?.CurrentMenuContext != null)
                             {
-                                ModLogger.Info("Interface", "=== DEFERRED CALL: Visit settlement negative action scheduling enlisted menu ===");
+                                ModLogger.Debug("Interface", "Deferred call: Visit settlement negative action");
                                 SafeActivateEnlistedMenu();
                             }
                         });
