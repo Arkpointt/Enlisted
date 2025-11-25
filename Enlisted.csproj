@@ -60,6 +60,10 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TaleWorlds.DotNet">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.DotNet.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TaleWorlds.Engine">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.Engine.dll</HintPath>
       <Private>False</Private>
@@ -176,6 +180,8 @@
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs" />
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
+    <Compile Include="src\Features\Combat\Stats\Behaviors\CombatStatsBehavior.cs" />
+    <Compile Include="src\Features\Combat\Stats\Behaviors\CombatStatsMissionBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
@@ -189,6 +195,8 @@
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\KingdomDecisionParticipationPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />

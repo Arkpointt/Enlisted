@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Combat.Stats.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
@@ -17,6 +18,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	internal static class ClanFinanceEnlistmentIncomePatch
 	{
 		private static readonly TextObject EnlistmentWageText = new TextObject("{=enlisted_wage_income}Enlistment Wages");
+		private static readonly TextObject CombatStipendText = new TextObject("{=combat_stipend_pending}Combat Stipend (Pending)");
 
 		static MethodBase TargetMethod()
 		{
@@ -41,6 +43,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					goldChange.Add(wageAmount, EnlistmentWageText, null);
 					// Note: Wage amount is visible in game UI - no DEBUG log needed here
 					// This method is called frequently by the finance calculation system
+				}
+
+				// Add pending kill rewards to tooltip (shows until paid out during daily tick)
+				var combatStats = CombatStatsBehavior.Instance;
+				if (combatStats != null)
+				{
+					var (pendingGold, _) = combatStats.GetPendingKillRewards();
+					if (pendingGold > 0)
+					{
+						goldChange.Add(pendingGold, CombatStipendText, null);
+					}
 				}
 			}
 			catch (Exception ex)
