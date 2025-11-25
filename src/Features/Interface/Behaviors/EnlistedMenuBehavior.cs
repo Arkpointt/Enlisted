@@ -248,11 +248,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
         
-        /// <summary>
-        /// Tracks when the lord enters a settlement to adjust button visibility.
-        /// Used to show/hide certain menu options based on settlement entry state.
-        /// </summary>
-        private bool _lordJustEnteredSettlement = false;
         
         /// <summary>
         /// Tracks whether we created a synthetic outside encounter for settlement access.
@@ -626,13 +621,20 @@ namespace Enlisted.Features.Interface.Behaviors
 				if (enlistment?.IsEnlisted == true)
 				{
 					var lordParty = enlistment.CurrentLord?.PartyBelongedTo;
+					// Refresh menu when lord leaves the settlement (so Visit Town disappears)
 					if (party == lordParty && settlement != null &&
 					    (settlement.IsTown || settlement.IsVillage || settlement.IsCastle))
 					{
-						if (_lordJustEnteredSettlement)
+						// Force full menu re-render by switching to the same menu
+						var menuContext = Campaign.Current?.CurrentMenuContext;
+						var currentMenuId = menuContext?.GameMenu?.StringId;
+						if (currentMenuId == "enlisted_status")
 						{
-							_lordJustEnteredSettlement = false;
-							ModLogger.Debug("Interface", $"Lord left {settlement.Name} - Visit option hidden");
+							GameMenu.SwitchToMenu("enlisted_status");
+						}
+						else if (menuContext?.GameMenu != null)
+						{
+							Campaign.Current.GameMenuManager.RefreshMenuOptions(menuContext);
 						}
 					}
 				}
@@ -1365,10 +1367,11 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                // Trigger menu refresh by updating text variables
-                if (Campaign.Current?.GameMenuManager != null)
+                var menuContext = Campaign.Current?.CurrentMenuContext;
+                if (menuContext?.GameMenu != null)
                 {
-                    // The menu text will be regenerated on next display
+                    // Force menu options to re-evaluate their conditions
+                    Campaign.Current.GameMenuManager.RefreshMenuOptions(menuContext);
                     _menuNeedsRefresh = false;
                 }
             }
@@ -1650,14 +1653,17 @@ namespace Enlisted.Features.Interface.Behaviors
             }
 
             var settlement = lord.CurrentSettlement;
-            var canVisit = (settlement.IsTown || settlement.IsCastle) && _lordJustEnteredSettlement;
+            
+            // Check if lord is in a town or castle AND player is not already inside the settlement
+            // Player is "inside" if they have an active settlement encounter or are in a town/castle menu
+            var playerInSettlement = MobileParty.MainParty?.CurrentSettlement != null;
+            var canVisit = (settlement.IsTown || settlement.IsCastle) && !playerInSettlement;
             
             if (canVisit)
             {
                 // Set dynamic text based on settlement type
                 var visitText = settlement.IsTown ? "Visit Town" : "Visit Castle";
                 MBTextManager.SetTextVariable("VISIT_SETTLEMENT_TEXT", visitText, false);
-                
             }
 
             return canVisit;
@@ -1676,8 +1682,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     party == enlistment.CurrentLord?.PartyBelongedTo &&
                     (settlement.IsTown || settlement.IsCastle))
                 {
-                    _lordJustEnteredSettlement = true; // Outside menu should now be on the stack
-                    ModLogger.Info("Interface", $"Lord entered settlement, Visit button now available for {settlement.Name}");
+                    ModLogger.Debug("Interface", $"Lord entered {settlement.Name} - Visit option available");
                 }
             }
             catch (Exception ex)

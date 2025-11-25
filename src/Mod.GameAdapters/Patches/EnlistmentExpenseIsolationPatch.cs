@@ -112,6 +112,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
 				var enlistment = EnlistmentBehavior.Instance;
 				bool isEnlisted = enlistment?.IsEnlisted == true;
+				bool isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
 				var attachedTo = party.AttachedTo;
 				var mainParty = MobileParty.MainParty;
 				var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
@@ -124,14 +125,22 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					ModLogger.Info("ExpenseIsolation", $"Patch active - AddPartyExpense intercepted (applyWithdrawals={applyWithdrawals})");
 				}
 
+				// Always isolate expenses when player is captured - they shouldn't pay captor's army expenses
+				if (playerCaptured)
+				{
+					__result = 0;
+					ModLogger.Debug("ExpenseIsolation", "Isolated player expenses - player is captured");
+					return false;
+				}
+
 				ModLogger.Debug("ExpenseIsolation",
-					$"Expense check - enlisted={isEnlisted}, attachedTo={(attachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, lordParty={(lordParty?.LeaderHero?.Name?.ToString() ?? "null")}, inSameArmy={sameArmy}, applyWithdrawals={applyWithdrawals}");
+					$"Expense check - enlisted={isEnlisted}, grace={isInGracePeriod}, attachedTo={(attachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, lordParty={(lordParty?.LeaderHero?.Name?.ToString() ?? "null")}, inSameArmy={sameArmy}, applyWithdrawals={applyWithdrawals}");
 				
-				if (isEnlisted && (sameArmy || playerCaptured || (attachedTo != null && attachedTo == lordParty)))
+				if ((isEnlisted || isInGracePeriod) && (sameArmy || (attachedTo != null && attachedTo == lordParty)))
 				{
 					// Isolate expenses - return 0 to prevent expense sharing
 					__result = 0;
-					ModLogger.Info("ExpenseIsolation", "Isolated player expenses from lord's party - returned 0");
+					ModLogger.Debug("ExpenseIsolation", "Isolated player expenses from lord's party");
 					return false;
 				}
 				
