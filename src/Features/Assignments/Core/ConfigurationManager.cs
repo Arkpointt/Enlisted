@@ -86,8 +86,7 @@ namespace Enlisted.Features.Assignments.Core
                     ["tier_3"] = 2,
                     ["tier_4"] = 2,
                     ["tier_5"] = 3,
-                    ["tier_6"] = 3,
-                    ["tier_7"] = 3
+                    ["tier_6"] = 3
                 },
                 XpSources = new System.Collections.Generic.Dictionary<string, int>
                 {

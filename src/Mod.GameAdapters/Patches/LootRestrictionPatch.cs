@@ -149,13 +149,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
 						return;
 					}
 
-					// Officers get reduced loot based on tier
+					// Officers get reduced loot based on tier (max tier is 6)
 					float lootPercentage = tier switch
 					{
 						4 => 0.10f, // Tier 4: 10% of normal loot
 						5 => 0.20f, // Tier 5: 20% of normal loot
-						6 => 0.30f, // Tier 6: 30% of normal loot
-						_ => 0.30f  // Tier 7+ (if exists): treat as tier 6 (30%)
+						>= 6 => 0.30f, // Tier 6 (max): 30% of normal loot
+						_ => 0.30f  // Fallback
 					};
 
 					// Multiply the original loot amount by the tier percentage

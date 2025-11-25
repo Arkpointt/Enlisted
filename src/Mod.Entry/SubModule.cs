@@ -7,8 +7,8 @@ using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
-using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Config;
+using Enlisted.Mod.Core.Logging;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
@@ -130,7 +130,11 @@ namespace Enlisted.Mod.Entry
 		{
 			try
 			{
-				// Initialize logging system before anything else so we can log initialization
+				// Archive the previous session's logs before they get cleared
+				// This creates a timestamped zip in Debugging/ for easy bug reporting
+				SessionArchiver.ArchivePreviousSession();
+				
+				// Initialize logging system - this clears old logs and starts fresh
 				ModLogger.Initialize();
 				ModLogger.Info("Bootstrap", "SubModule loading");
 
@@ -153,6 +157,10 @@ namespace Enlisted.Mod.Entry
 				{
 					ModLogger.Info("Bootstrap", $"Patched method: {method.DeclaringType?.Name}.{method.Name}");
 				}
+				
+				// Run mod conflict diagnostics and write to Debugging/conflicts.log
+				// This helps users identify when other mods interfere with Enlisted
+				ModConflictDiagnostics.RunStartupDiagnostics(_harmony);
 				
 				ModLogger.Info("Bootstrap", "Harmony patched");
 			}

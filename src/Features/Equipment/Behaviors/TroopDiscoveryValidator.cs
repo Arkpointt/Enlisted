@@ -12,9 +12,20 @@ namespace Enlisted.Features.Equipment.Behaviors
     /// 
     /// This utility class tests our troop selection system against all 6 Bannerlord cultures
     /// to identify potential gaps in troop availability and ensure robust faction support.
+    /// 
+    /// IMPORTANT: Uses GetBattleTier() for tier checks to match TroopSelectionManager behavior.
+    /// The Tier property returns raw XML tier, while GetBattleTier() returns calculated battle tier.
     /// </summary>
     public static class TroopDiscoveryValidator
     {
+        /// <summary>
+        /// Safe tier accessor matching TroopSelectionManager implementation.
+        /// Uses GetBattleTier() which returns calculated battle tier, not raw XML tier.
+        /// </summary>
+        private static int SafeGetTier(CharacterObject troop)
+        {
+            try { return troop.GetBattleTier(); } catch { return 1; }
+        }
         /// <summary>
         /// Validate troop availability across all cultures and tiers.
         /// Call this during development to ensure complete coverage.
@@ -57,12 +68,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 ModLogger.Debug("TroopDiscovery", $"Validating {cultureId} culture coverage");
                 
-                // Check each tier (1-7)
-                for (int tier = 1; tier <= 7; tier++)
+                // Check each tier (1-6) - Bannerlord has 6 troop tiers
+                // Uses GetBattleTier() to match TroopSelectionManager behavior
+                for (int tier = 1; tier <= 6; tier++)
                 {
                     var troopsAtTier = allTroops.Where(troop => 
                         troop.Culture == culture && 
-                        troop.Tier == tier &&
+                        SafeGetTier(troop) == tier &&
                         troop.IsSoldier &&
                         troop.BattleEquipments.Any()).ToList();
                     
@@ -171,7 +183,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 var availableTroops = allTroops.Where(troop => 
                     troop.Culture == culture && 
-                    troop.Tier == tier &&
+                    SafeGetTier(troop) == tier &&
                     troop.IsSoldier &&
                     troop.BattleEquipments.Any()).ToList();
                 
@@ -190,10 +202,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     ModLogger.Error("TroopDiscovery", $"❌ FAILURE: NO TROOPS FOUND for {cultureId} T{tier}");
                     
-                    // Debug info
+                    // Debug info - also show raw Tier vs calculated GetBattleTier difference
                     var totalCultureTroops = allTroops.Count(t => t.Culture == culture);
-                    var totalTierTroops = allTroops.Count(t => t.Tier == tier);
+                    var totalTierTroops = allTroops.Count(t => SafeGetTier(t) == tier);
+                    var totalRawTierTroops = allTroops.Count(t => t.Tier == tier);
                     var totalSoldiers = allTroops.Count(t => t.IsSoldier);
+                    
+                    // Log if there's a mismatch between raw Tier and GetBattleTier
+                    if (totalRawTierTroops != totalTierTroops)
+                    {
+                        ModLogger.Info("TroopDiscovery", $"   Note: Raw Tier={totalRawTierTroops} vs GetBattleTier={totalTierTroops} troops at T{tier}");
+                    }
                     
                     ModLogger.Info("TroopDiscovery", $"   Debug: {totalCultureTroops} culture troops, {totalTierTroops} tier troops, {totalSoldiers} soldiers total");
                 }

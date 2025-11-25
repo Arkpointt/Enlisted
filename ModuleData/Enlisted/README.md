@@ -18,7 +18,7 @@ This directory contains **7 JSON configuration files** that control all aspects 
 #### **2. `enlisted_config.json`** - Core Military System
 **Purpose**: Base enlistment mechanics and progression  
 **Contains**:
-- Tier progression XP requirements (T1-T7)
+- Tier progression XP requirements (T1-T6)
 - Wage calculation formulas and multipliers
 - Formation definitions with culture-specific names
 - Retirement requirements (365 days minimum)

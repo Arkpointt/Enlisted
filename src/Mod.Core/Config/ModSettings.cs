@@ -60,6 +60,14 @@ namespace Enlisted.Mod.Core.Config
 		public string ApiCallDetail { get; set; } = "summary";
 
 		/// <summary>
+		/// Whether to run mod conflict diagnostics at startup and write to conflicts.log.
+		/// Useful for diagnosing issues caused by other mods patching the same game methods.
+		/// When disabled, the conflicts.log file will not be generated.
+		/// </summary>
+		[DataMember(Name = "LogModConflicts")]
+		public bool LogModConflicts { get; set; } = true;
+
+		/// <summary>
 		/// Settings for encounter suppression and party attachment behavior.
 		/// Controls when encounters are prevented and how party following works.
 		/// </summary>
