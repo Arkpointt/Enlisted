@@ -10,7 +10,8 @@ This document gives modders a concise view of what the Enlisted project currentl
 | Duties & Ranks | JSON-driven assignments with wage and XP pacing, tier gating, and officer slots that hook into native party roles. |
 | Equipment | Master-at-Arms and Quartermaster menus switch the player to real troop loadouts; equipment is replaced (not duplicated) and restored at discharge. |
 | Battle Integration | Real-time monitoring activates the party when the lord enters battle and hands the encounter back to the native menus. Defeat runs through the vanilla Attack/Surrender flow. |
-| Safety | Capture grace periods, a one-hour post-release “ignore” window, encounter suppression to block duplicate menus, and logging under `Modules/Enlisted/Debugging`. |
+| Safety | Capture grace periods, an auto-cleaned encounter state after surrender, a one-day post-release “ignore” window enforced by the encounter suppression patch, and logging under `Modules/Enlisted/Debugging`. |
+| Grace Re-Enlistment | During the 14-day grace window, the player’s tier, XP, and troop kit are cached so joining another lord in the same kingdom resumes service seamlessly, and the clan stays in the kingdom unless the timer expires. |
 
 ## 2. Architecture Snapshot
 
@@ -43,7 +44,7 @@ Harmony patches live in `src/Mod.GameAdapters/Patches/`. We currently ship twelv
 ### EnlistmentBehavior
 - Tracks `_enlistedLord`, enlistment tier/XP, and grace periods.
 - Uses real-time ticks for encounter suppression and daily ticks for wages.
-- After surrender, we let the vanilla capture happen, start a 14-day grace period, and grant a one-hour ignore window so the player can interact with NPCs safely.
+- After surrender, we let the vanilla capture happen, finish any lingering PlayerEncounter, start a 14-day grace period, and grant a one-day ignore window so the player can interact with NPCs safely.
 
 ### Duties & Equipment
 - Duties are defined via JSON under `ModuleData/Enlisted/` with tier gating and officer slots.

@@ -34,6 +34,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         private int _pendingTier = 1;
         private List<CharacterObject> _availableTroops = new List<CharacterObject>();
         private string _lastSelectedTroopId;
+
+        public string LastSelectedTroopId => _lastSelectedTroopId;
         
         public TroopSelectionManager()
         {
@@ -158,7 +160,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Build unlocked troop list for culture across tiers ≤ current tier.
         /// </summary>
-        private List<CharacterObject> GetUnlockedTroopsForCurrentTier(string cultureId, int currentTier)
+        public List<CharacterObject> GetUnlockedTroopsForCurrentTier(string cultureId, int currentTier)
         {
             try
             {
@@ -555,6 +557,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 // Replace all equipment with new troop's gear
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
+                _lastSelectedTroopId = selectedTroop.StringId;
                 
                 // Update formation based on selected troop
                 var formation = DetectTroopFormation(selectedTroop);

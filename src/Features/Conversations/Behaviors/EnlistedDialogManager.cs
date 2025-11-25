@@ -105,13 +105,24 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddEnlistmentDialogs(CampaignGameStarter starter)
         {
-                // Option to request enlistment
+            var enlistmentText = GetLocalizedText("{=enlisted_request_service}I wish to serve in your warband.");
+            // Option to request enlistment (standard)
             starter.AddPlayerLine(
                 "enlisted_request_service",
                 "enlisted_service_options",
                 "enlisted_enlistment_response",
-                GetLocalizedText("{=enlisted_request_service}I wish to serve in your warband.").ToString(),
-                CanRequestEnlistment,
+                enlistmentText.ToString(),
+                CanRequestStandardEnlistment,
+                null,
+                110);
+
+            // Grace-specific enlistment option
+            starter.AddPlayerLine(
+                "enlisted_request_service_grace",
+                "enlisted_service_options",
+                "enlisted_enlistment_response_grace",
+                GetLocalizedText("{=enlisted_request_service_grace}My previous commander was captured. I wish to continue serving under your banner.").ToString(),
+                CanRequestGraceTransfer,
                 null,
                 110);
 
@@ -141,6 +152,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_enlistment_response",
                 "enlisted_service_terms",
                 GetLocalizedText("{=enlisted_lord_accepts}Very well. You may serve under my command. These are the terms of service...").ToString(),
+                null,
+                null,
+                110);
+
+            // Lord's response to grace re-assignment
+            starter.AddDialogLine(
+                "enlisted_lord_accepts_grace",
+                "enlisted_enlistment_response_grace",
+                "enlisted_service_terms",
+                GetLocalizedText("{=enlisted_lord_accepts_grace}Our kingdom appreciates your resolve. You may join my banner and resume your duties. These are the terms...").ToString(),
                 null,
                 null,
                 110);
@@ -253,14 +274,18 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         /// Checks if the player can request enlistment with the current lord.
         /// </summary>
-        private bool CanRequestEnlistment()
+        private bool CanRequestStandardEnlistment()
         {
             var enlistment = EnlistmentBehavior.Instance;
             
-            // Don't show initial enlistment if already enlisted or on leave
             if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
             {
                 return false;
+            }
+
+            if (enlistment?.IsInDesertionGracePeriod == true)
+            {
+                return false; // hide standard line when in grace period
             }
 
             var lord = Hero.OneToOneConversationHero;
@@ -271,6 +296,30 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             TextObject reason;
             return enlistment?.CanEnlistWithParty(lord, out reason) == true;
+        }
+
+        private bool CanRequestGraceTransfer()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsInDesertionGracePeriod != true || enlistment.IsEnlisted || enlistment.IsOnLeave)
+            {
+                return false;
+            }
+
+            var lord = Hero.OneToOneConversationHero;
+            if (lord == null || !lord.IsLord)
+            {
+                return false;
+            }
+
+            var lordKingdom = lord.MapFaction as Kingdom;
+            if (lordKingdom == null || lordKingdom != enlistment.PendingDesertionKingdom)
+            {
+                return false;
+            }
+
+            TextObject reason;
+            return enlistment.CanEnlistWithParty(lord, out reason);
         }
 
         /// <summary>

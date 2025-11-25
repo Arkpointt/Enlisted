@@ -21,6 +21,8 @@ using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
+using Enlisted.Features.Equipment.Behaviors;
+using TaleWorlds.ObjectSystem;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
@@ -132,12 +134,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// during the grace period to avoid penalties.
 		/// </summary>
 		private Kingdom _pendingDesertionKingdom = null;
+		private int _savedGraceTier = -1;
+		private int _savedGraceXP = 0;
+		private string _savedGraceTroopId;
+		private CampaignTime _savedGraceEnlistmentDate = CampaignTime.Zero;
 	
 		/// <summary>
 		/// Last campaign time when the real-time tick update was processed.
 		/// Used with _realtimeUpdateIntervalSeconds to throttle update frequency.
 		/// </summary>
 		private CampaignTime _lastRealtimeUpdate = CampaignTime.Zero;
+		private CampaignTime _graceProtectionEnds = CampaignTime.Zero;
 		
 		/// <summary>
 		/// Last campaign time when a siege PlayerEncounter was created.
@@ -351,7 +358,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		dataStore.SyncData("_isOnLeave", ref _isOnLeave);
 		dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
 		dataStore.SyncData("_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
-		dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
+			dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
+			dataStore.SyncData("_savedGraceTier", ref _savedGraceTier);
+			dataStore.SyncData("_savedGraceXP", ref _savedGraceXP);
+			dataStore.SyncData("_savedGraceTroopId", ref _savedGraceTroopId);
+			dataStore.SyncData("_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
+			dataStore.SyncData("_graceProtectionEnds", ref _graceProtectionEnds);
 		dataStore.SyncData("_selectedDuty", ref _selectedDuty);
 		dataStore.SyncData("_selectedProfession", ref _selectedProfession);
 		
@@ -438,6 +450,36 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				reason = new TextObject("No main party found.");
 				return false;
 			}
+
+			// Prevent players on leave from transferring to other lords
+			if (_isOnLeave)
+			{
+				if (_enlistedLord != null && lord != _enlistedLord)
+				{
+					reason = new TextObject("You are currently on leave from {LORD}. You must return to {LORD} before serving another commander.");
+					reason.SetTextVariable("LORD", _enlistedLord.Name ?? TextObject.Empty);
+					return false;
+				}
+
+				if (_enlistedLord == null)
+				{
+					reason = new TextObject("You are on leave and cannot enlist elsewhere until you report back.");
+					return false;
+				}
+			}
+
+			// During grace period, enforce kingdom loyalty
+			if (IsInDesertionGracePeriod && _pendingDesertionKingdom != null)
+			{
+				var lordKingdom = lord.MapFaction as Kingdom;
+				if (lordKingdom != _pendingDesertionKingdom)
+				{
+					reason = new TextObject("You are still bound to {KINGDOM} by your grace orders. Other lords cannot enlist you until the grace period ends.");
+					reason.SetTextVariable("KINGDOM", _pendingDesertionKingdom.Name ?? TextObject.Empty);
+					return false;
+				}
+			}
+
 			var counterpartParty = MobileParty.ConversationParty ?? lord.PartyBelongedTo;
 			if (counterpartParty == null)
 			{
@@ -446,6 +488,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 			return true;
 		}
+
+		public bool HasActiveGraceProtection => CampaignTime.Now < _graceProtectionEnds;
 
 		public void StartEnlist(Hero lord)
 		{
@@ -456,16 +500,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			try
 			{
-				// Check if rejoining same kingdom during grace period - clear grace period if so
 				var rejoiningKingdom = lord.MapFaction as Kingdom;
-				if (IsInDesertionGracePeriod && rejoiningKingdom == _pendingDesertionKingdom)
-				{
-					ModLogger.Info("Desertion", $"Player rejoined {rejoiningKingdom.Name} during grace period - clearing grace period");
-					ClearDesertionGracePeriod();
-					var message = new TextObject("You have rejoined {KINGDOM}. Your grace period has been cleared.");
-					message.SetTextVariable("KINGDOM", rejoiningKingdom.Name);
-					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-				}
+				_graceProtectionEnds = CampaignTime.Zero;
+				bool resumingGraceService = IsInDesertionGracePeriod && rejoiningKingdom == _pendingDesertionKingdom && _savedGraceTier > 0;
+				int graceTier = _savedGraceTier;
+				int graceXP = _savedGraceXP;
+				string graceTroopId = _savedGraceTroopId;
 				
 				// Backup player's personal equipment before service begins
 			// This ensures the player gets their original equipment back when service ends
@@ -478,9 +518,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				
 			// Initialize enlistment state with default values
 			_enlistedLord = lord;
-			_enlistmentTier = 1;  // Start at the lowest tier (recruit/levy)
-			_enlistmentXP = 0;  // Start with zero XP
-			_enlistmentDate = CampaignTime.Now;  // Record when service started
+			bool resumedFromGrace = resumingGraceService;
+			if (resumedFromGrace)
+			{
+				_enlistmentTier = Math.Max(1, graceTier);
+				_enlistmentXP = Math.Max(0, graceXP);
+			}
+			else
+			{
+				_enlistmentTier = 1;  // Start at the lowest tier (recruit/levy)
+				_enlistmentXP = 0;  // Start with zero XP
+			}
+			_enlistmentDate = resumedFromGrace && _savedGraceEnlistmentDate != CampaignTime.Zero
+				? _savedGraceEnlistmentDate
+				: CampaignTime.Now;  // Record when service started (or resume previous enlistment date)
 			_selectedDuty = "enlisted";  // Default to basic enlisted duty for daily XP
 			_selectedProfession = "none";  // No profession initially (unlocks at tier 3)
 			
@@ -530,13 +581,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// now part of the lord's military force. Troops will be restored when service ends.
 			TransferPlayerTroopsToLord();
 				
-			// Assign initial recruit equipment based on the lord's culture and tier 1 rank
-			// New recruits start with basic equipment appropriate to their lord's faction
-			AssignInitialEquipment();
+			bool appliedGraceEquipment = TryApplyGraceEquipment(resumedFromGrace, graceTroopId);
+			if (!appliedGraceEquipment)
+			{
+				AssignInitialEquipment();
+				SetInitialFormation();
+			}
+			else
+			{
+				ModLogger.Info("Enlistment", "Grace enlistment equipment restored for new service");
+			}
 			
-		// Set initial military formation (Infantry/Cavalry/Archer/Horse Archer) for new recruits
-		// Formation can be manually selected later when the player reaches tier 2
-		SetInitialFormation();
+			if (resumedFromGrace)
+			{
+				var message = new TextObject("You have rejoined {KINGDOM}. Your grace period has been cleared.");
+				var kingdomName = rejoiningKingdom?.Name ?? new TextObject("your kingdom");
+				message.SetTextVariable("KINGDOM", kingdomName);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				ClearDesertionGracePeriod();
+			}
 		
 		// CRITICAL: Finish any active PlayerEncounter before starting enlistment
 		// This prevents unwanted encounters with the lord's party when we position the player
@@ -600,14 +663,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// </summary>
 		/// <param name="reason">Reason for discharge (for logging).</param>
 		/// <param name="isHonorableDischarge">Whether this is an honorable discharge (e.g., lord died). Defaults to false.</param>
-		public void StopEnlist(string reason, bool isHonorableDischarge = false)
+		public void StopEnlist(string reason, bool isHonorableDischarge = false, bool retainKingdomDuringGrace = false)
 	{
 		try
 		{
 			ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
 			
 			var main = MobileParty.MainParty;
-			
+			bool playerInBattleState = false;
+
 			// CRITICAL: Clean up all battle-related state BEFORE finishing encounters or making party active
 			// This prevents crashes when the player is still in a MapEvent or Army after army defeat
 			if (main != null)
@@ -644,7 +708,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// is in a surrender menu - activating while in an encounter causes assertion failures
 				bool playerInMapEvent = main.Party.MapEvent != null;
 				bool playerInEncounter = PlayerEncounter.Current != null;
-				bool playerInBattleState = playerInMapEvent || playerInEncounter;
+				playerInBattleState = playerInMapEvent || playerInEncounter;
 				
 				if (playerInBattleState)
 				{
@@ -700,6 +764,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				try
 				{
 					Kingdom targetKingdom = null;
+					bool keepCurrentKingdom = false;
 					
 					// Check if this qualifies for restoration to original kingdom
 					// Must be: honorable discharge AND completed full service period
@@ -721,14 +786,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						// Default: Return to independent status (leave current kingdom if in one)
 						if (playerClan.Kingdom != null)
 						{
-							targetKingdom = null; // Independent
-							if (isHonorableDischarge && !completedFullService)
+							if (retainKingdomDuringGrace)
 							{
-								ModLogger.Info("Enlistment", "Honorable discharge but incomplete service - returning to independent status");
+								keepCurrentKingdom = true;
+								ModLogger.Info("Enlistment", $"Grace discharge - retaining membership in {playerClan.Kingdom.Name}");
 							}
 							else
 							{
-								ModLogger.Info("Enlistment", "Discharge - returning to independent status");
+								targetKingdom = null; // Independent
+								if (isHonorableDischarge && !completedFullService)
+								{
+									ModLogger.Info("Enlistment", "Honorable discharge but incomplete service - returning to independent status");
+								}
+								else
+								{
+									ModLogger.Info("Enlistment", "Discharge - returning to independent status");
+								}
 							}
 						}
 						else
@@ -738,7 +811,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 
 					// Use helper method to restore kingdom without penalties
-					if (targetKingdom == null && playerClan.Kingdom != null)
+					if (keepCurrentKingdom)
+					{
+						ModLogger.Debug("Enlistment", "Skipped kingdom change due to active grace period");
+					}
+					else if (targetKingdom == null && playerClan.Kingdom != null)
 					{
 						// Need to leave kingdom to become independent
 						DischargeHelper.RestoreKingdomWithoutPenalties(playerClan, null);
@@ -758,6 +835,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		// Clear kingdom state tracking
 		_originalKingdom = null;
 		_wasIndependentClan = false;
+		if (!retainKingdomDuringGrace)
+		{
+			_graceProtectionEnds = CampaignTime.Zero;
+		}
 		
 		// Clear enlistment state
 		_enlistedLord = null;
@@ -765,6 +846,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		_enlistmentXP = 0;
 		_enlistmentDate = CampaignTime.Zero;
 		_disbandArmyAfterBattle = false; // Clear any pending army operations
+		if (!playerInBattleState)
+		{
+			ForceFinishLingeringEncounter("StopEnlist");
+		}
+		else
+		{
+			ModLogger.Debug("EncounterCleanup", "Skipping encounter force-finish because player is still in battle state");
+		}
 	}
 	catch (Exception ex)
 	{
@@ -793,6 +882,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				_pendingDesertionKingdom = kingdom;
 				_desertionGracePeriodEnd = CampaignTime.Now + CampaignTime.Days(14f);
+				_savedGraceTier = _enlistmentTier;
+				_savedGraceXP = _enlistmentXP;
+				_savedGraceTroopId = TroopSelectionManager.Instance?.LastSelectedTroopId;
+				_savedGraceEnlistmentDate = _enlistmentDate;
 				
 				ModLogger.Info("Desertion", $"Started 14-day grace period to rejoin {kingdom.Name}");
 				
@@ -893,6 +986,58 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			_pendingDesertionKingdom = null;
 			_desertionGracePeriodEnd = CampaignTime.Zero;
+			_savedGraceTier = -1;
+			_savedGraceXP = 0;
+			_savedGraceTroopId = null;
+			_savedGraceEnlistmentDate = CampaignTime.Zero;
+			_graceProtectionEnds = CampaignTime.Zero;
+		}
+
+		private bool TryApplyGraceEquipment(bool resumedFromGrace, string preferredTroopId)
+		{
+			if (!resumedFromGrace || _enlistedLord?.Culture == null)
+			{
+				return false;
+			}
+
+			var manager = TroopSelectionManager.Instance;
+			if (manager == null)
+			{
+				ModLogger.Error("Enlistment", "TroopSelectionManager unavailable - cannot restore saved equipment");
+				return false;
+			}
+
+			CharacterObject selectedTroop = null;
+			if (!string.IsNullOrEmpty(preferredTroopId))
+			{
+				try
+				{
+					selectedTroop = MBObjectManager.Instance.GetObject<CharacterObject>(preferredTroopId);
+					if (selectedTroop != null && selectedTroop.Culture != _enlistedLord.Culture)
+					{
+						selectedTroop = null;
+					}
+				}
+				catch
+				{
+					selectedTroop = null;
+				}
+			}
+
+			if (selectedTroop == null)
+			{
+				var unlocked = manager.GetUnlockedTroopsForCurrentTier(_enlistedLord.Culture.StringId, _enlistmentTier);
+				selectedTroop = unlocked?.FirstOrDefault();
+			}
+
+			if (selectedTroop == null)
+			{
+				ModLogger.Info("Enlistment", "Grace enlistment could not find matching troop; using default kit");
+				return false;
+			}
+
+			manager.ApplySelectedTroopEquipment(Hero.MainHero, selectedTroop);
+			return true;
 		}
 
 		/// <summary>
@@ -1822,7 +1967,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					if (lordKingdom != null)
 					{
 						// End enlistment but start grace period
-						StopEnlist("Lord captured in battle", isHonorableDischarge: false);
+						StopEnlist("Lord captured in battle", isHonorableDischarge: false, retainKingdomDuringGrace: true);
 						StartDesertionGracePeriod(lordKingdom);
 					}
 					else
@@ -1858,7 +2003,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					if (lordKingdom != null)
 					{
 						// End enlistment but start grace period
-						StopEnlist("Army defeated - lord lost", isHonorableDischarge: false);
+						StopEnlist("Army defeated - lord lost", isHonorableDischarge: false, retainKingdomDuringGrace: true);
 						StartDesertionGracePeriod(lordKingdom);
 					}
 					else
@@ -1933,7 +2078,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 					else
 					{
-						StopEnlist("Lord captured", isHonorableDischarge: false);
+						StopEnlist("Lord captured", isHonorableDischarge: false, retainKingdomDuringGrace: true);
 						StartDesertionGracePeriod(lordKingdom);
 					}
 				}
@@ -3353,14 +3498,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			if (kingdom != null)
 			{
-				StopEnlist(reason, isHonorableDischarge: false);
+				StopEnlist(reason, isHonorableDischarge: false, retainKingdomDuringGrace: true);
 				StartDesertionGracePeriod(kingdom);
 				GrantGracePeriodInteractionWindow();
+				ForceFinishLingeringEncounter("CaptureCleanup");
 			}
 			else
 			{
 				StopEnlist("Player captured (No Kingdom)");
 				GrantGracePeriodInteractionWindow();
+				ForceFinishLingeringEncounter("CaptureCleanup");
 			}
 		}
 
@@ -3381,12 +3528,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Skip if the game still has an encounter/battle running
 				if (main.Party?.MapEvent != null || PlayerEncounter.Current != null)
 				{
-					ModLogger.Debug("GraceProtection", "Delayed interaction window - still in encounter/battle");
+					ModLogger.Debug("GraceProtection", "Delaying interaction window - still in encounter/battle state");
+					NextFrameDispatcher.RunNextFrame(GrantGracePeriodInteractionWindow, true);
 					return;
 				}
 
-				var protectionUntil = CampaignTime.Now + CampaignTime.Hours(1f);
+				var protectionUntil = CampaignTime.Now + CampaignTime.Days(1f);
 				main.IgnoreByOtherPartiesTill(protectionUntil);
+				_graceProtectionEnds = protectionUntil;
 
 				if (!main.IsActive)
 				{
@@ -3394,7 +3543,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				main.IsVisible = true;
-				ModLogger.Info("GraceProtection", $"Granted 1-hour protection window after discharge (ignored until {protectionUntil})");
+				ModLogger.Info("GraceProtection", $"Granted 1-day protection window after discharge (ignored until {protectionUntil})");
+				ForceFinishLingeringEncounter("GraceProtection");
 			}
 			catch (Exception ex)
 			{
@@ -3432,6 +3582,37 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			catch (Exception ex)
 			{
 				ModLogger.Error("Battle", $"Error restoring campaign flow after battle: {ex.Message}");
+			}
+		}
+
+		private void ForceFinishLingeringEncounter(string context)
+		{
+			try
+			{
+				if (PlayerEncounter.Current == null)
+				{
+					return;
+				}
+
+				PlayerEncounter.LeaveEncounter = true;
+
+				if (PlayerEncounter.InsideSettlement)
+				{
+					PlayerEncounter.LeaveSettlement();
+				}
+
+				var menuContext = Campaign.Current?.CurrentMenuContext;
+				var currentMenuId = menuContext?.GameMenu?.StringId;
+				if (!string.IsNullOrEmpty(currentMenuId) && currentMenuId.Contains("encounter"))
+				{
+					GameMenu.ExitToLast();
+				}
+
+				ModLogger.Info("EncounterCleanup", $"Requested encounter exit after {context}");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("EncounterCleanup", $"Failed to finish lingering PlayerEncounter after {context}: {ex.Message}");
 			}
 		}
 		

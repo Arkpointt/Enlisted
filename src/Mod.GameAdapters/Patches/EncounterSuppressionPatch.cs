@@ -43,6 +43,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var enlistment = EnlistmentBehavior.Instance;
                 bool isEnlisted = enlistment?.IsEnlisted == true;
                 bool isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
+                bool hasGraceProtection = enlistment?.HasActiveGraceProtection == true;
                 
                 // CRITICAL: Also suppress encounters if player just ended enlistment and is still in a MapEvent OR PlayerEncounter
                 // This prevents crashes when player becomes "attackable" right after army defeat
@@ -72,6 +73,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     ModLogger.Info("EncounterSuppression", $"Suppressed encounter - enlistment just ended and player still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
                     return false; // Prevent encounter until battle state clears
+                }
+
+                if (hasGraceProtection)
+                {
+                    ModLogger.Info("EncounterSuppression", "Suppressed encounter - grace protection window active");
+                    return false;
                 }
                 
                 // If not enlisted and not in grace period, allow normal encounters

@@ -40,6 +40,9 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Continuous checking of lord status (alive, army membership, etc.)
 - Automatic handling of army disbandment or lord capture
 - Emergency retirement if lord dies or becomes unavailable
+- During the 14-day grace period we remember the player’s rank XP and their last troop kit so service resumes seamlessly with another lord from the same kingdom.
+- The player clan stays inside the kingdom throughout the grace window; we only force independence if the 14 days expire without re-enlisting.
+- While on leave or grace, enlistment requests from foreign lords are automatically declined so the player can only report back to the rightful commander or kingdom.
 
 ## Technical Implementation
 
@@ -69,7 +72,7 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 - Graceful service termination on lord death/capture  
 - Army disbandment detection and handling
 - Settlement/battle state awareness
-- **Grace Period Window**: After defeat we rely on the native capture flow, then grant a short ignore window so the player can interact with NPCs safely.
+- **Grace Period Shield**: After defeat we finish any lingering encounter state, grant a one-day ignore window, and the encounter suppression patch honors that shield so enemies cannot re-engage immediately.
 
 ## Edge Cases
 
@@ -93,6 +96,10 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 - Loss is resolved through the vanilla Attack/Surrender menu; once captured we defer teardown until the encounter closes.
 - Enlistment enters a 14-day grace period instead of immediate discharge.
 - If captivity lasts more than 3 in-game days, the mod forces `EndCaptivityAction.ApplyByEscape` so the player can use the grace period.
+- Rejoining another lord from the same kingdom during this window restores the saved tier, XP, and troop equipment.
+- Once captivity resolves we explicitly finish any leftover encounter before enabling the player, then apply the one-day grace shield so the enemy army cannot re-open the surrender menu.
+- The clan remains a vassal of the grace-period kingdom; only missing the deadline applies the deserter penalties and removes the clan from the realm.
+- During grace, conversations with lords from the pending kingdom expose a dedicated transfer line so the dialog acknowledges that the player is resuming service rather than enlisting fresh.
 
 **Save/Load During Service:**
 - Enlistment state persists correctly
