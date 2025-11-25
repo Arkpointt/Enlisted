@@ -1241,10 +1241,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			try
 			{
-				// Calculate and pay daily wage based on tier, level, and duties
-				// Wage increases with tier progression and includes bonuses from duties
+				// Calculate daily wage (now reported through the native clan finance tick)
 				var wage = CalculateDailyWage();
-				GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, wage, false);
 				
 				// Award daily XP for military tier progression
 				// This is separate from skill XP, which is handled by formation training and duties
@@ -1252,7 +1250,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var dailyXP = 25;
 				AddEnlistmentXP(dailyXP, "Daily Service");
 				
-				ModLogger.Info("DailyService", $"Paid wage: {wage} gold, gained {dailyXP} XP");
+				ModLogger.Debug("DailyService", $"Queued wage payout via clan finance tick: {wage} gold, gained {dailyXP} XP");
 			}
 			catch (Exception ex)
 			{
@@ -1279,6 +1277,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// Apply multipliers and cap
 			var finalWage = Math.Min((int)(baseWage * armyMultiplier * dutiesMultiplier), 150);
 			return Math.Max(finalWage, 24); // Minimum 24 gold/day
+		}
+
+		internal bool TryGetProjectedDailyWage(out int wage)
+		{
+			wage = 0;
+
+			if (!IsEnlisted || _enlistedLord?.IsAlive != true)
+			{
+				return false;
+			}
+
+			wage = CalculateDailyWage();
+			return wage > 0;
 		}
 		
 		/// <summary>
