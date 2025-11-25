@@ -157,6 +157,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// Prevents the watchdog from reapplying visibility/activation every frame while time is paused.
 		/// </summary>
 		private bool _isSiegePreparationLatched = false;
+		private bool _pendingVisibilityRestore;
 		
 		/// <summary>
 		/// Settlement for which the siege watchdog last latched preparation logic.
@@ -379,7 +380,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	// Validate tier and XP values after loading
 	if (dataStore.IsLoading)
 	{
+		ModLogger.Info("SaveLoad", $"Loading enlistment state - Lord: {_enlistedLord?.Name?.ToString() ?? "null"}, Tier: {_enlistmentTier}, XP: {_enlistmentXP}, OnLeave: {_isOnLeave}, GracePeriod: {IsInDesertionGracePeriod}");
 		ValidateLoadedState();
+		ModLogger.Info("SaveLoad", "Enlistment state validated and restored");
+	}
+	else
+	{
+		ModLogger.Debug("SaveLoad", $"Saving enlistment state - Lord: {_enlistedLord?.Name?.ToString() ?? "null"}, Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
 	}
 	
 	// Restore proper party activity state (for both new games and loaded games)
@@ -646,11 +653,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 				
 				
-				ModLogger.Info("Enlistment", $"Successfully enlisted with {lord.Name} - Tier 1 recruit");
+				ModLogger.Info("Enlistment", $"Successfully enlisted with {lord.Name} - Tier {_enlistmentTier}, XP: {_enlistmentXP}, Kingdom: {lord.MapFaction?.Name?.ToString() ?? "Independent"}, Culture: {lord.Culture?.StringId ?? "unknown"}");
+			ModLogger.Info("Enlistment", $"Enlistment date: {_enlistmentDate}, Equipment backed up: {_hasBackedUpEquipment}, Grace resume: {resumedFromGrace}");
 			}
 			catch (Exception ex)
 			{
-				ModLogger.Error("Enlistment", "Failed to start enlistment", ex);
+				ModLogger.Error("Enlistment", $"Failed to start enlistment with {lord?.Name?.ToString() ?? "null"} - {ex.Message}", ex);
 				// Restore equipment if backup was created
 				if (_hasBackedUpEquipment) { RestorePersonalEquipment(); }
 			}
@@ -720,6 +728,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					// Don't finish PlayerEncounter or MapEvent yet - wait for them to end naturally
 					// The OnMapEventEnded handler will handle cleanup when battle ends
 					// This prevents crashes when clicking "Surrender" while in invalid state
+					SchedulePostEncounterVisibilityRestore();
 				}
 				else
 				{
@@ -2180,10 +2189,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (!IsEnlisted || tier < 1 || tier > 6)
 			{
+				ModLogger.Debug("Enlistment", $"SetTier rejected - Enlisted: {IsEnlisted}, Tier: {tier}");
 				return;
 			}
 			
+			var previousTier = _enlistmentTier;
 			_enlistmentTier = tier;
+			ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP})");
 		}
 
 		/// <summary>
@@ -3332,7 +3344,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			try
 			{
-				ModLogger.Info("Battle", $"=== PLAYER BATTLE END ===");
+				ModLogger.Info("Battle", "Player battle ended");
 				ModLogger.Info("Battle", $"Battle Type: {mapEvent?.EventType}, Was Siege: {mapEvent?.IsSiegeAssault}");
 				ModLogger.Info("Battle", $"Player was in army: {(MobileParty.MainParty?.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")}");
 				ModLogger.Info("Battle", $"PlayerEncounter state: Active={PlayerEncounter.IsActive}, Current={PlayerEncounter.Current != null}");
@@ -3387,7 +3399,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					return; // Skip if called too recently
 				}
 				
-				ModLogger.Info("Siege", $"=== SIEGE WATCHDOG: Siege forming at {(lordParty.BesiegedSettlement?.Name?.ToString() ?? "unknown")} ===");
+				ModLogger.Info("Siege", $"Siege detected at {lordParty.BesiegedSettlement?.Name?.ToString() ?? "unknown"}");
 				LogPartyState("SiegeWatchdog-Triggered");
 				
 				// Prepare for vanilla to collect us
@@ -3452,6 +3464,53 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Error("Battle", $"Error mirroring capture after lord capture: {ex.Message}");
 				return false;
 			}
+		}
+
+		private void SchedulePostEncounterVisibilityRestore()
+		{
+			if (_pendingVisibilityRestore)
+			{
+				return;
+			}
+
+			_pendingVisibilityRestore = true;
+			NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
+		}
+
+		private void RestoreVisibilityAfterEncounter()
+		{
+			if (!_pendingVisibilityRestore)
+			{
+				return;
+			}
+
+			var mainParty = MobileParty.MainParty;
+			if (mainParty == null)
+			{
+				_pendingVisibilityRestore = false;
+				return;
+			}
+
+			if (PlayerEncounter.Current != null || mainParty.Party?.MapEvent != null)
+			{
+				NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
+				return;
+			}
+
+			_pendingVisibilityRestore = false;
+
+			if (!mainParty.IsActive)
+			{
+				mainParty.IsActive = true;
+			}
+
+			if (!mainParty.IsVisible)
+			{
+				mainParty.IsVisible = true;
+			}
+
+			ModLogger.Info("Enlistment", "Party visibility restored after encounter cleanup");
+			ForceFinishLingeringEncounter("VisibilityRestore");
 		}
 
 		private void SchedulePlayerCaptureCleanup(Kingdom lordKingdom)
@@ -3667,6 +3726,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			return false;
 		}
 
+		/// <summary>
+		/// Log party state for diagnostics (Debug level only - not verbose in production).
+		/// Only logs on critical state transitions, not every frame.
+		/// </summary>
 		private void LogPartyState(string context)
 		{
 			try
@@ -3675,16 +3738,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var lordParty = _enlistedLord?.PartyBelongedTo;
 				if (main == null)
 				{
-					ModLogger.Info("Diagnostics", $"{context}: Main party null");
+					ModLogger.Debug("Diagnostics", $"{context}: Main party null");
 					return;
 				}
 
+				// Lightweight state summary - only key flags, not full details
 				var info =
-					$"{context}: Visible={main.IsVisible}, Active={main.IsActive}, AttachedTo={(main.AttachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, " +
-					$"Army={(main.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")}, MapEvent={(main.Party.MapEvent != null)}, SiegeEvent={(main.Party.SiegeEvent != null)}, " +
-					$"HasEncounter={PlayerEncounter.Current != null}, LordMapEvent={(lordParty?.Party.MapEvent != null)}, LordSiege={(lordParty?.Party.SiegeEvent != null)}, " +
-					$"LordArmy={(lordParty?.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")}";
-				ModLogger.Info("Diagnostics", info);
+					$"{context}: Active={main.IsActive}, Visible={main.IsVisible}, " +
+					$"InBattle={main.Party.MapEvent != null}, InSiege={main.Party.SiegeEvent != null}, " +
+					$"LordInBattle={lordParty?.Party.MapEvent != null}";
+				ModLogger.Debug("Diagnostics", info);
 			}
 			catch (Exception ex)
 			{

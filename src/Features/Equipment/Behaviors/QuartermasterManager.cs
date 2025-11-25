@@ -400,6 +400,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 var hero = Hero.MainHero;
                 var currentItem = hero.BattleEquipment[slot].Item;
+                var previousItemName = currentItem?.Name?.ToString() ?? "empty";
                 var cost = CalculateVariantCost(requestedItem, currentItem, slot);
                 
                 // Check if player can afford the variant
@@ -423,11 +424,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 successMessage.SetTextVariable("COST", cost.ToString());
                 InformationManager.DisplayMessage(new InformationMessage(successMessage.ToString()));
                 
-                ModLogger.Info("Quartermaster", $"Equipment variant applied: {requestedItem.Name} to slot {slot} for {cost} denars");
+                ModLogger.Info("Quartermaster", $"Equipment variant applied: {requestedItem.Name} to slot {slot} for {cost} denars (replaced {previousItemName})");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Error processing equipment variant request", ex);
+                ModLogger.Error("Quartermaster", $"Error processing equipment variant request for {requestedItem?.Name?.ToString() ?? "null"} in slot {slot}: {ex.Message}", ex);
             }
         }
         

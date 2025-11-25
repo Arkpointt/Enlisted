@@ -120,6 +120,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                             var chosen = selected?.FirstOrDefault()?.Identifier as CharacterObject;
                             if (chosen != null)
                             {
+                                                ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
                                 ApplySelectedTroopEquipment(Hero.MainHero, chosen);
                                 _lastSelectedTroopId = chosen.StringId;
                                 if (Campaign.Current?.CurrentMenuContext != null)
@@ -130,7 +131,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Equipment", $"Master at Arms apply failed: {ex.Message}");
+                            ModLogger.Error("Equipment", $"Master at Arms apply failed: {ex.Message}", ex);
                         }
                     },
                     _ =>
@@ -573,11 +574,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _promotionPending = false;
                 _availableTroops.Clear();
                 
-                ModLogger.Info("TroopSelection", $"Equipment replaced with {selectedTroop.Name} gear");
+                ModLogger.Info("TroopSelection", $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation})");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", "Failed to apply selected troop equipment", ex);
+                ModLogger.Error("TroopSelection", $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}: {ex.Message}", ex);
             }
         }
         

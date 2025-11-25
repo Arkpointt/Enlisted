@@ -23,7 +23,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                ModLogger.Info("TroopDiscovery", "=== FACTION TROOP COVERAGE VALIDATION ===");
+                ModLogger.Debug("TroopDiscovery", "Validating faction troop coverage");
                 
                 var cultures = new[] { "empire", "aserai", "khuzait", "vlandia", "sturgia", "battania" };
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
@@ -33,7 +33,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     ValidateCultureCoverage(cultureId, allTroops);
                 }
                 
-                ModLogger.Info("TroopDiscovery", "=== VALIDATION COMPLETE ===");
+                ModLogger.Debug("TroopDiscovery", "Troop coverage validation complete");
             }
             catch (Exception ex)
             {
@@ -55,7 +55,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
                 
-                ModLogger.Info("TroopDiscovery", $"=== {cultureId.ToUpper()} CULTURE VALIDATION ===");
+                ModLogger.Debug("TroopDiscovery", $"Validating {cultureId} culture coverage");
                 
                 // Check each tier (1-7)
                 for (int tier = 1; tier <= 7; tier++)
@@ -164,7 +164,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                ModLogger.Info("TroopDiscovery", $"=== TESTING {cultureId.ToUpper()} TIER {tier} ===");
+                ModLogger.Debug("TroopDiscovery", $"Testing {cultureId} tier {tier} coverage");
                 
                 var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();

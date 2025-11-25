@@ -116,6 +116,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				var mainParty = MobileParty.MainParty;
 				var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
 				bool sameArmy = mainParty?.Army != null && lordParty?.Army != null && mainParty.Army == lordParty.Army;
+				bool playerCaptured = Hero.MainHero?.IsPrisoner == true;
 				
 				if (!_loggedFirstInvocation)
 				{
@@ -126,12 +127,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				ModLogger.Debug("ExpenseIsolation",
 					$"Expense check - enlisted={isEnlisted}, attachedTo={(attachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, lordParty={(lordParty?.LeaderHero?.Name?.ToString() ?? "null")}, inSameArmy={sameArmy}, applyWithdrawals={applyWithdrawals}");
 				
-				if (isEnlisted && (sameArmy || (attachedTo != null && attachedTo == lordParty)))
+				if (isEnlisted && (sameArmy || playerCaptured || (attachedTo != null && attachedTo == lordParty)))
 				{
 					// Isolate expenses - return 0 to prevent expense sharing
 					__result = 0;
 					ModLogger.Info("ExpenseIsolation", "Isolated player expenses from lord's party - returned 0");
-					return false; // Skip original method
+					return false;
 				}
 				
 				ModLogger.Debug("ExpenseIsolation", "Allowed normal expense calculation (not embedded with lord)");

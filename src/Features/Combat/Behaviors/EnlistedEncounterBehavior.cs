@@ -36,14 +36,11 @@ namespace Enlisted.Features.Combat.Behaviors
         public EnlistedEncounterBehavior()
         {
             Instance = this;
-            ModLogger.Info("Combat", "=== ENLISTED ENCOUNTER BEHAVIOR CONSTRUCTOR CALLED ===");
         }
 
         public override void RegisterEvents()
         {
-            ModLogger.Info("Combat", "=== ENLISTED ENCOUNTER BEHAVIOR - REGISTERING EVENTS ===");
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
-            ModLogger.Debug("Combat", "OnSessionLaunched event listener registered");
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -56,9 +53,7 @@ namespace Enlisted.Features.Combat.Behaviors
             try
             {
                 AddEnlistedEncounterOptions(campaignStarter);
-                ModLogger.Info("Combat", "=== ENLISTED ENCOUNTER BEHAVIOR INITIALIZED ===");
-                ModLogger.Info("Combat", "Menu options registered for: encounter (Wait in Reserve)");
-                ModLogger.Debug("Combat", "Combat behavior ready for battle participation - native system handles sieges");
+                ModLogger.Info("Combat", "Encounter behavior initialized - battle participation ready");
             }
             catch (Exception ex)
             {
