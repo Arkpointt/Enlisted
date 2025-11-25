@@ -17,6 +17,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Entry;
 
 namespace Enlisted.Features.Equipment.Behaviors
 {
@@ -132,7 +133,22 @@ namespace Enlisted.Features.Equipment.Behaviors
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",
                 "Return to enlisted status",
                 args => true,
-                args => EnlistedMenuBehavior.SafeActivateEnlistedMenu(),
+                args =>
+                {
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        try
+                        {
+                            GameMenu.SwitchToMenu("enlisted_status");
+                            ModLogger.Info("Quartermaster", "Returned from quartermaster to enlisted status menu");
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Quartermaster", $"Failed to switch back to enlisted status: {ex.Message}");
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                        }
+                    });
+                },
                 true, -1);
                 
             // Variant selection options (dynamically populated)

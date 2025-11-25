@@ -159,7 +159,7 @@ src/
 ### **Mod Compatibility**
 - Compatible with most campaign mods
 - Safe save/load - all data persists correctly
-- Defensive programming prevents conflicts with other mods
+- Defensive programming minimizes integration conflicts
 - See logs in `Debugging\` folder if issues occur
 
 ## 📖 Documentation
@@ -212,7 +212,7 @@ All debug outputs are written to `<BannerlordInstall>\Modules\Enlisted\Debugging
 - **Multi-Language Support**: Professional localization with `{=key}fallback` format
 - **Enhanced Healing Model**: Custom PartyHealingModel provides +13 HP/day for enlisted soldiers
 - **Schema Versioning**: Future-proof configuration with automatic migration support
-- **Mod Conflict Detection**: Monitoring and logging for interference from other mods
+- **Compatibility Monitoring**: Logging catches unexpected changes in campaign behavior
 - **Game Update Detection**: Automatic API validation to detect breaking changes
 
 ### **Current Status**

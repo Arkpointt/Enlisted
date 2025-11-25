@@ -438,6 +438,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         ModLogger.Info("Interface", "🚨🚨 PROBLEM: ENLISTED MENU OPENED DURING SIEGE! This should have been blocked!");
                     }
                 }
+                
             }
         }
 
@@ -449,11 +450,6 @@ namespace Enlisted.Features.Interface.Behaviors
         private void AddEnlistedMenus(CampaignGameStarter starter)
         {
             AddMainEnlistedStatusMenu(starter);
-            AddReturnToArmyCampOptions(starter);
-            
-            // Don't add options to the native army_wait menu
-            // Battle participation is handled through our own enlisted_status menu
-            // This prevents conflicts with the native battle system
             
             // Add direct siege battle option to enlisted menu as fallback
             // This allows players to join siege battles if other methods fail
@@ -624,54 +620,6 @@ namespace Enlisted.Features.Interface.Behaviors
         }
         
         /// <summary>
-        /// Adds "Return to Army Camp" options to all town and castle location menus.
-        /// This provides seamless navigation back to military service from any settlement location,
-        /// allowing players to quickly return to the enlisted status menu.
-        /// </summary>
-        private void AddReturnToArmyCampOptions(CampaignGameStarter starter)
-        {
-            // List of all possible town location menus where we need return options
-            var settlementMenus = new[]
-            {
-                "town",           // Main town menu
-                "town_center",    // Town center
-                "town_backstreet", // Back alleys
-                "tavern",         // Tavern
-                "town_arena",     // Arena
-                "smithy",         // Weaponsmith/Armorer
-                "town_keep",      // Town lord's hall
-                "town_mercenary", // Mercenary options
-                "town_shop",      // General goods
-                "alley",          // Alley encounters
-                "house",          // Noble houses
-                "prison",         // Prison/dungeon
-                "castle",         // Main castle menu
-                "castle_lords_hall", // Castle lord's hall
-                "castle_dungeon", // Castle dungeon
-                "town_keep_dungeon" // Town dungeon
-            };
-
-            foreach (var menuId in settlementMenus)
-            {
-                // Add return option to each town menu
-                starter.AddGameMenuOption(menuId, "return_to_army_camp",
-                    "Return to Army Camp",
-                    IsReturnToArmyCampAvailable,
-                    OnReturnToArmyCampSelected,
-                    false, -1); // Low priority so it appears at the bottom
-            }
-        }
-
-        /// <summary>
-        /// Check if Return to Army Camp option should be available.
-        /// Only show when player is enlisted and in a town.
-        /// </summary>
-        private bool IsReturnToArmyCampAvailable(MenuCallbackArgs args)
-        {
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        /// <summary>
         /// Handles settlement exit by scheduling a deferred return to the enlisted menu.
         /// When the player leaves a town or castle, this method schedules menu activation
         /// for the next frame to avoid timing conflicts with other game systems during state transitions.
@@ -682,9 +630,23 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (party != MobileParty.MainParty || enlistment?.IsEnlisted != true)
-                    return;
+				var enlistment = EnlistmentBehavior.Instance;
+				if (enlistment?.IsEnlisted == true)
+				{
+					var lordParty = enlistment.CurrentLord?.PartyBelongedTo;
+					if (party == lordParty && settlement != null &&
+					    (settlement.IsTown || settlement.IsVillage || settlement.IsCastle))
+					{
+						if (_lordJustEnteredSettlement)
+						{
+							_lordJustEnteredSettlement = false;
+							ModLogger.Debug("Interface", $"Lord left {settlement.Name} - Visit option hidden");
+						}
+					}
+				}
+
+				if (party != MobileParty.MainParty || enlistment?.IsEnlisted != true)
+					return;
 
                 if (!(settlement?.IsTown == true || settlement?.IsCastle == true))
                     return;
@@ -742,108 +704,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        /// <summary>
-        /// Handles the player selecting "Return to Army Camp" from settlement menus.
-        /// Exits the current settlement context and returns to the enlisted status menu.
-        /// Includes cleanup for synthetic encounters created for settlement access.
-        /// </summary>
-        /// <param name="args">Menu callback arguments containing menu state and context.</param>
-        private void OnReturnToArmyCampSelected(MenuCallbackArgs args)
-        {
-            try
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
-                {
-                    return;
-                }
-
-                // Cancel any pending deferred menu activation since we're handling it immediately
-                _pendingReturnToEnlistedMenu = false;
-
-                // BATTLE-AWARE: Only finish non-battle encounters
-                if (PlayerEncounter.Current != null)
-                {
-                    var enlistedLord2 = EnlistmentBehavior.Instance?.CurrentLord;
-                    bool lordInBattle2 = enlistedLord2?.PartyBelongedTo?.Party.MapEvent != null;
-                    
-                    var lordParty2 = enlistedLord2?.PartyBelongedTo;
-                    if (!lordInBattle2 && !InBattleOrSiege(lordParty2))
-                    {
-                        PlayerEncounter.Finish(true);
-                        ModLogger.Debug("Interface", "Finished non-battle encounter on return to camp");
-                    }
-                    else
-                    {
-                        ModLogger.Debug("Interface", "SKIPPED finishing encounter - lord in battle, preserving vanilla battle menu");
-                    }
-                }
-
-                // If we spun up an encounter, we also turned the party active—turn it off again
-                if (_syntheticOutsideEncounter)
-                {
-                    _syntheticOutsideEncounter = false;
-                    MobileParty.MainParty.IsActive = false;   // back to invisible escort state
-                }
-
-                // Check what menu the game system wants to show based on current campaign state
-                // Only activate our menu if the native system allows it
-                string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
-                
-                if (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu))
-                {
-                    // Native system wants our menu or no specific menu - safe to activate
-                    // Check that we're not in battle or siege before activating
-                    bool inBattleOrSiege = (MobileParty.MainParty?.Party.MapEvent != null) ||
-                                          (PlayerEncounter.Current != null);
-                                          
-                    if (!inBattleOrSiege)
-                    {
-                        ModLogger.Info("Interface", "Returning to army camp - activating enlisted menu");
-                        NextFrameDispatcher.RunNextFrame(() => SafeActivateEnlistedMenu());
-                    }
-                    else
-                    {
-                        ModLogger.Info("Interface", "GUARDED: Skipped enlisted menu - battle/siege encounter active");
-                    }
-                }
-                else
-                {
-                    // Native system wants a different menu (like army_wait) - respect it
-                    ModLogger.Debug("Interface", $"GUARDED: Native system wants '{genericStateMenu}' - not activating enlisted menu");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", $"Error returning to army camp: {ex.Message}");
-                // Clear pending flag even on error to prevent stuck state
-                _pendingReturnToEnlistedMenu = false;
-                
-                // GUARDED FALLBACK: Check native system wants our menu before activating
-                try
-                {
-                    string genericStateMenuFallback = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
-                    bool inBattleOrSiegeFallback = (MobileParty.MainParty?.Party.MapEvent != null) ||
-                                                  (PlayerEncounter.Current != null);
-                    
-                    if ((genericStateMenuFallback == "enlisted_status" || string.IsNullOrEmpty(genericStateMenuFallback)) &&
-                        !inBattleOrSiegeFallback)
-                    {
-                        ModLogger.Info("Interface", "Fallback: Activating enlisted menu");
-                        NextFrameDispatcher.RunNextFrame(() => SafeActivateEnlistedMenu());
-                    }
-                    else
-                    {
-                        ModLogger.Info("Interface", $"GUARDED FALLBACK: Skipped enlisted menu - native wants '{genericStateMenuFallback}' or battle active");
-                    }
-                }
-                catch (Exception fallbackEx)
-                {
-                    ModLogger.Error("Interface", $"Fallback activation error: {fallbackEx.Message}");
-                }
-            }
-        }
-        
         /// <summary>
         /// Add duty selection menu for choosing duties and professions.
         /// </summary>
@@ -2058,21 +1918,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 // When an encounter is active (like paying a bandit), let the native system handle menu transitions
                 // We should only check GetGenericStateMenu() for battle menus, not regular encounters
                 bool hasActiveEncounter = PlayerEncounter.Current != null;
-                bool isBattleEncounter = hasActiveEncounter && 
-                                         (MobileParty.MainParty?.Party.MapEvent != null || 
-                                          EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo?.Party.MapEvent != null);
                 
-                // Check what menu the game system wants to show based on current campaign state
-                // This follows the same pattern used by the native army wait menu system
-                // When battles start, GetGenericStateMenu() will return "army_wait" or "encounter"
-                // and we must switch to it, preventing our menu from blocking battle interactions
-                string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
-                
-                // If there's an active non-battle encounter, don't do menu transitions - just refresh
-                // This prevents RGL assertion failures during encounter exit (like paying bandits)
-                if (hasActiveEncounter && !isBattleEncounter)
+                // If an encounter is active, leave transitions to the native system.
+                // We simply keep the menu data fresh so the player still sees updated info.
+                if (hasActiveEncounter)
                 {
-                    // Just refresh display during regular encounters, let native system handle transitions
                     if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
                     {
                         RefreshEnlistedStatusDisplay(args);
@@ -2080,31 +1930,12 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                     return;
                 }
-                
-                // If native system wants our menu (or null), refresh it
-                if (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu))
+
+                // No encounter in progress - just refresh the display periodically.
+                if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
                 {
-                    // Refresh display (but only periodically to avoid performance issues)
-                    if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
-                    {
-                        RefreshEnlistedStatusDisplay(args);
-                        _lastMenuUpdate = CampaignTime.Now;
-                    }
-                    return;
-                }
-                
-                // Native system wants a different menu (like army_wait, encounter, menu_siege_strategies)
-                // We MUST respect this - end our wait and switch to what they want
-                // This prevents our menu from blocking battle menus and causing interaction issues
-                args.MenuContext.GameMenu.EndWait();
-                if (!string.IsNullOrEmpty(genericStateMenu))
-                {
-                    ModLogger.Info("Interface", $"Native system wants menu '{genericStateMenu}' - switching from enlisted_status");
-                    GameMenu.SwitchToMenu(genericStateMenu);
-                }
-                else
-                {
-                    GameMenu.ExitToLast();
+                    RefreshEnlistedStatusDisplay(args);
+                    _lastMenuUpdate = CampaignTime.Now;
                 }
             }
             catch (Exception ex)

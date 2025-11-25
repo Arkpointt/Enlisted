@@ -29,12 +29,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	[HarmonyPatch(typeof(ChangeRelationAction), "ApplyRelationChangeBetweenHeroes")]
 	public class DischargeRelationPenaltyPatch
 	{
-		static bool Prefix(Hero hero1, Hero hero2, int relationChange, bool affectRelatives)
+		static bool Prefix(Hero hero, Hero gainedRelationWith, int relationChange, bool showQuickNotification)
 		{
 			try
 			{
 				// Only suppress negative relation changes for the player during discharge
-				if (hero1 != Hero.MainHero && hero2 != Hero.MainHero)
+				if (hero != Hero.MainHero && gainedRelationWith != Hero.MainHero)
 				{
 					return true; // Not involving the player - allow normal behavior
 				}
@@ -47,7 +47,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					// This prevents the -20 penalty that would normally apply when leaving a kingdom
 					// The flag is set in DischargeHelper.RestoreKingdomWithoutPenalties before calling
 					// ChangeKingdomAction methods, so any relation changes during that time are suppressed
-					ModLogger.Info("Discharge", $"Suppressed relation penalty of {relationChange} during discharge (Hero: {hero2?.Name ?? hero1?.Name})");
+					var otherHero = hero == Hero.MainHero ? gainedRelationWith : hero;
+					ModLogger.Info("Discharge", $"Suppressed relation penalty of {relationChange} during discharge (OtherHero: {otherHero?.Name?.ToString() ?? "null"})");
 					return false; // Suppress the penalty
 				}
 

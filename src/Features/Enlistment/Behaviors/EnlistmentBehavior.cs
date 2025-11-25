@@ -54,6 +54,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// The lord the player is currently serving under, or null if not enlisted.
 		/// </summary>
 		private Hero _enlistedLord;
+		private MapEvent _cachedLordMapEvent;
 		
 		/// <summary>
 		/// Current military rank tier (1-6), where 1 is the lowest rank and 6 is the highest.
@@ -139,6 +140,24 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private CampaignTime _lastRealtimeUpdate = CampaignTime.Zero;
 		
 		/// <summary>
+		/// Last campaign time when a siege PlayerEncounter was created.
+		/// Used to prevent rapid recreation of encounters that causes zero-delta-time assertion failures.
+		/// </summary>
+		private CampaignTime _lastSiegeEncounterCreation = CampaignTime.Zero;
+		
+		/// <summary>
+		/// Tracks whether the siege watchdog already prepared the player for the current siege.
+		/// Prevents the watchdog from reapplying visibility/activation every frame while time is paused.
+		/// </summary>
+		private bool _isSiegePreparationLatched = false;
+		
+		/// <summary>
+		/// Settlement for which the siege watchdog last latched preparation logic.
+		/// Used to determine when a new siege begins so the latch can be reset.
+		/// </summary>
+		private Settlement _latchedSiegeSettlement;
+		
+		/// <summary>
 		/// Minimum time interval between real-time tick updates, in seconds.
 		/// Updates are throttled to every 100ms to prevent overwhelming the game's
 		/// rendering system with too-frequent state changes, which can cause assertion failures.
@@ -171,6 +190,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// when service ends.
 		/// </summary>
 		private bool _wasIndependentClan;
+		
+		/// <summary>
+		/// Tracks pending capture cleanup when the player is taken prisoner during an encounter.
+		/// We defer enlistment teardown until the surrender/encounter menus fully close.
+		/// </summary>
+		private Kingdom _pendingPlayerCaptureKingdom;
+		private string _pendingPlayerCaptureReason;
+		private bool _playerCaptureCleanupScheduled;
 			public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
 	public bool IsOnLeave => _isOnLeave;
 	
@@ -202,6 +229,50 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		public EnlistmentBehavior()
 		{
 			Instance = this;
+		}
+
+		private void EnsurePlayerSharesArmy(MobileParty lordParty)
+		{
+			var main = MobileParty.MainParty;
+			if (lordParty?.Army == null || main == null)
+			{
+				return;
+			}
+
+			if (main.Army == lordParty.Army)
+			{
+				return;
+			}
+
+			try
+			{
+				lordParty.Army.AddPartyToMergedParties(main);
+				main.Army = lordParty.Army;
+				ModLogger.Debug("Battle", $"Player added to lord army for native encounter (Leader: {lordParty.Army.LeaderParty?.LeaderHero?.Name})");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error joining lord army: {ex.Message}");
+			}
+		}
+
+		private void PreparePartyForNativeBattle(MobileParty main)
+		{
+			if (main == null)
+			{
+				return;
+			}
+
+			if (!main.IsActive)
+			{
+				main.IsActive = true;
+			}
+
+			main.IsVisible = false;
+			main.IgnoreByOtherPartiesTill(CampaignTime.Now);
+			main.ShouldJoinPlayerBattles = true;
+			main.Party.SetAsCameraFollowParty();
+			TrySetShouldJoinPlayerBattles(main, true);
 		}
 
 		/// <summary>
@@ -246,10 +317,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// Used for tracking battle completion and handling post-battle state transitions.
 			CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnPlayerBattleEnd);
 	
-			// Settlement entry event fires when the player enters a town or castle.
-			// Used to detect when the player enters settlements with their lord and
-			// trigger appropriate menu refreshes or state updates.
+			// Settlement entry/exit events fire when parties enter or leave settlements.
+			// We monitor both to keep the enlisted party hidden except during menus.
 			CampaignEvents.SettlementEntered.AddNonSerializedListener(this, OnSettlementEntered);
+			CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);
 			
 			// Edge case handlers for grace period:
 			// Clear grace period if player changes kingdoms or if kingdom is destroyed
@@ -288,53 +359,64 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		dataStore.SyncData("_originalKingdom", ref _originalKingdom);
 		dataStore.SyncData("_wasIndependentClan", ref _wasIndependentClan);
 	
-		// After loading, validate state and restore proper party activity
-		// This is important because the save system doesn't preserve IsActive state,
-		// and we need to ensure enlisted players start inactive to prevent random encounters
-		if (dataStore.IsLoading)
+	// CRITICAL: Ensure proper party activity state for both new games and loaded games
+	// This is important because the save system doesn't preserve IsActive state,
+	// and we need to ensure enlisted players start inactive to prevent random encounters
+	// For new campaigns, non-enlisted players must be active to allow normal gameplay
+	
+	// Validate tier and XP values after loading
+	if (dataStore.IsLoading)
+	{
+		ValidateLoadedState();
+	}
+	
+	// Restore proper party activity state (for both new games and loaded games)
+	// Non-enlisted players should always be active to allow normal gameplay
+	if (!IsEnlisted && !Hero.MainHero.IsPrisoner)
+	{
+		var main = MobileParty.MainParty;
+		if (main != null)
 		{
-			// Validate tier and XP values are within acceptable ranges
-			ValidateLoadedState();
+			main.IsActive = true;
+			main.IsVisible = true;
+			ModLogger.Debug("SaveLoad", "Party activated - not enlisted");
+		}
+	}
+	else if (IsEnlisted)
+	{
+		// Enlisted players start inactive to prevent random encounters
+		// The real-time tick will activate them if the lord enters battle
+		var main = MobileParty.MainParty;
+		if (main != null)
+		{
+			main.IsActive = false;
+			ModLogger.Debug("SaveLoad", $"Party kept inactive - enlisted state (Lord: {_enlistedLord?.Name}, Army: {_enlistedLord?.PartyBelongedTo?.Army != null})");
 		
-			// Restore proper party activity state after loading
-			// Non-enlisted players should be active to allow normal gameplay
-			if (!IsEnlisted && !Hero.MainHero.IsPrisoner)
+			// Ensure the party can join battles when the lord fights
+			TrySetShouldJoinPlayerBattles(main, true);
+		
+			// Check if we're loading into a save where a battle is already in progress
+			// If so, activate the party immediately so they can participate
+			if (_enlistedLord?.PartyBelongedTo != null)
 			{
-				MobileParty.MainParty.IsActive = true;
-				ModLogger.Debug("SaveLoad", "Party activated - not enlisted");
-			}
-			else if (IsEnlisted)
-			{
-				// Enlisted players start inactive to prevent random encounters
-				// The real-time tick will activate them if the lord enters battle
-				MobileParty.MainParty.IsActive = false;
-				ModLogger.Debug("SaveLoad", $"Party kept inactive - enlisted state (Lord: {_enlistedLord?.Name}, Army: {_enlistedLord?.PartyBelongedTo?.Army != null})");
-			
-				// Ensure the party can join battles when the lord fights
-				TrySetShouldJoinPlayerBattles(MobileParty.MainParty, true);
-			
-				// Check if we're loading into a save where a battle is already in progress
-				// If so, activate the party immediately so they can participate
-				if (_enlistedLord?.PartyBelongedTo != null)
-				{
-					var lordParty = _enlistedLord.PartyBelongedTo;
-					var lordArmy = lordParty.Army;
-					
-					// The MapEvent property exists on Party, not directly on MobileParty
-					// This is the correct API structure for checking battle state
-					bool lordInBattle = lordParty.Party.MapEvent != null;
-					bool armyInBattle = lordArmy?.LeaderParty?.Party.MapEvent != null;
+				var lordParty = _enlistedLord.PartyBelongedTo;
+				var lordArmy = lordParty.Army;
 				
-					if (lordInBattle || armyInBattle)
-					{
-						ModLogger.Info("SaveLoad", $"Loaded into active battle! Lord battle: {lordInBattle}, Army battle: {armyInBattle}");
-						// Immediately activate for battle participation
-						MobileParty.MainParty.IsActive = true;
-						ModLogger.Info("SaveLoad", "Party activated immediately due to ongoing battle");
-					}
+				// The MapEvent property exists on Party, not directly on MobileParty
+				// This is the correct API structure for checking battle state
+				bool lordInBattle = lordParty.Party.MapEvent != null;
+				bool armyInBattle = lordArmy?.LeaderParty?.Party.MapEvent != null;
+			
+				if (lordInBattle || armyInBattle)
+				{
+					ModLogger.Info("SaveLoad", $"Loaded into active battle! Lord battle: {lordInBattle}, Army battle: {armyInBattle}");
+					// Immediately activate for battle participation
+					main.IsActive = true;
+					ModLogger.Info("SaveLoad", "Party activated immediately due to ongoing battle (visibility remains suppressed)");
 				}
 			}
 		}
+	}
 	}
 
 		public bool CanEnlistWithParty(Hero lord, out TextObject reason)
@@ -524,28 +606,65 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
 			
-			// Finish any active player encounter before ending service
-			// This prevents assertion failures that can occur when ending encounters during
-			// settlement entry/exit or other state transitions
-			if (PlayerEncounter.Current != null)
-			{
-				// If inside a settlement, leave it first before finishing the encounter
-				// This ensures clean encounter state cleanup
-				if (PlayerEncounter.InsideSettlement)
-				{
-					PlayerEncounter.LeaveSettlement();
-				}
-				PlayerEncounter.Finish(true);
-			}
-
-			// Restore normal party state now that service is ending
 			var main = MobileParty.MainParty;
+			
+			// CRITICAL: Clean up all battle-related state BEFORE finishing encounters or making party active
+			// This prevents crashes when the player is still in a MapEvent or Army after army defeat
 			if (main != null)
 			{
-				main.IsVisible = true;  // Make the party visible on the map again
-				main.IsActive = true;  // Re-enable party activity to allow normal encounters
-				TrySetShouldJoinPlayerBattles(main, false);  // Disable automatic battle joining
-				TryReleaseEscort(main);  // Release attachment to the lord's party
+				// Remove from army if still in one (army might be dispersed but party still references it)
+				if (main.Army != null)
+				{
+					try
+					{
+						ModLogger.Info("Enlistment", $"Removing player from army before ending service (Army: {main.Army.LeaderParty?.LeaderHero?.Name})");
+						// Clear army reference - the army may already be dispersed
+						main.Army = null;
+						// Note: We can't call RemovePartyFromMergedParties on a dispersed army, so just clear the reference
+					}
+					catch (Exception ex)
+					{
+						ModLogger.Error("Enlistment", $"Error removing player from army: {ex.Message}");
+						// Force clear army reference even if removal fails
+						main.Army = null;
+					}
+				}
+				
+				// Release attachment to lord's party BEFORE finishing encounters
+				// CRITICAL: Clear attachment (clearAttachment = true) to prevent player from being
+				// considered part of defeated force, avoiding immediate "Attack or Surrender" encounters
+				TryReleaseEscort(main, clearAttachment: true);
+				
+				// Disable battle joining BEFORE state changes
+				TrySetShouldJoinPlayerBattles(main, false);
+				
+				// CRITICAL: Check if player is still in a MapEvent OR PlayerEncounter
+				// If the player is in either state, we must NOT activate to prevent crashes
+				// This is especially important when the lord is captured/defeated while the player
+				// is in a surrender menu - activating while in an encounter causes assertion failures
+				bool playerInMapEvent = main.Party.MapEvent != null;
+				bool playerInEncounter = PlayerEncounter.Current != null;
+				bool playerInBattleState = playerInMapEvent || playerInEncounter;
+				
+				if (playerInBattleState)
+				{
+					ModLogger.Info("Enlistment", $"Player still in battle state when ending service (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter}) - deactivating to prevent crashes");
+					// CRITICAL: Deactivate party to prevent them from becoming "attackable" 
+					// while still in battle/encounter state - this prevents crashes when clicking "Surrender"
+					main.IsActive = false;
+					main.IsVisible = false;
+					// Don't finish PlayerEncounter or MapEvent yet - wait for them to end naturally
+					// The OnMapEventEnded handler will handle cleanup when battle ends
+					// This prevents crashes when clicking "Surrender" while in invalid state
+				}
+				else
+				{
+					// No active MapEvent or PlayerEncounter - safe to activate
+					// Restore normal party state now that service is ending
+					main.IsVisible = true;  // Make the party visible on the map again
+					main.IsActive = true;  // Re-enable party activity to allow normal encounters
+					ModLogger.Info("Enlistment", "Party activated and made visible (no active battle state)");
+				}
 			}
 			
 			// Restore the player's personal equipment that was backed up at enlistment start
@@ -788,9 +907,36 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				return;
 			}
+			
+			// CRITICAL: Ensure non-enlisted players always stay visible and active
+			// This is a fallback check in case the realtime tick misses something
+			// Hourly tick runs once per in-game hour, providing periodic enforcement
 			if (!IsEnlisted)
 			{
-				return;
+				if (!Hero.MainHero.IsPrisoner)
+				{
+					// Enforce visibility and activity for non-enlisted players as a fallback
+					// This catches any cases where realtime tick might have missed something
+					bool needsActivation = !main.IsActive;
+					bool needsVisibility = !main.IsVisible;
+					
+					if (needsActivation || needsVisibility)
+					{
+						// Log when we're fixing visibility/activity to help diagnose issues
+						if (needsVisibility)
+						{
+							ModLogger.Info("Hourly", $"Enforcing visibility for non-enlisted player (was invisible - hourly fallback check)");
+						}
+						if (needsActivation)
+						{
+							ModLogger.Info("Hourly", $"Enforcing activity for non-enlisted player (was inactive - hourly fallback check)");
+						}
+						
+						main.IsActive = true;
+						main.IsVisible = true;
+					}
+				}
+				return; // Skip enlistment logic for non-enlisted players
 			}
 
 			// Check if grace period expired (even if not enlisted)
@@ -839,19 +985,48 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			EncounterGuard.TryAttachOrEscort(lord);
 		}
 
-		internal static void TryReleaseEscort(MobileParty main)
+	internal static void TryReleaseEscort(MobileParty main)
+	{
+		TryReleaseEscort(main, clearAttachment: false);
+	}
+	
+	/// <summary>
+	/// Releases escort AI behavior and optionally clears party attachment.
+	/// </summary>
+	/// <param name="main">The party to release escort for.</param>
+	/// <param name="clearAttachment">If true, clears AttachedTo to fully release attachment. 
+	/// If false, only releases escort AI but keeps attachment for battle collection.</param>
+	internal static void TryReleaseEscort(MobileParty main, bool clearAttachment)
+	{
+		try
 		{
-			try
+			// CRITICAL: Clear AttachedTo if requested (typically during discharge)
+			// This prevents the player from being considered part of the defeated force
+			// when the lord's army is defeated, avoiding immediate "Attack or Surrender" encounters
+			// During battles, we keep attachment for battle collection (clearAttachment = false)
+			if (clearAttachment && main.AttachedTo != null)
 			{
-				var ai = main.Ai;
-				var hold = ai.GetType().GetMethod("SetMoveModeHold", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-				hold?.Invoke(ai, null);
+				main.AttachedTo = null;
+				ModLogger.Debug("Following", "Cleared AttachedTo to release attachment");
 			}
-			catch
+			
+			// Set AI to hold mode to stop following behavior
+			// This releases escort AI while optionally keeping attachment
+			var ai = main.Ai;
+			var hold = ai.GetType().GetMethod("SetMoveModeHold", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+			hold?.Invoke(ai, null);
+		}
+		catch (Exception ex)
+		{
+			ModLogger.Error("Following", $"Error releasing escort: {ex.Message}");
+			// Force clear AttachedTo if requested, even if hold fails
+			if (clearAttachment && main.AttachedTo != null)
 			{
-				// If the hold method cannot be found, the party will continue with its current movement state
+				main.AttachedTo = null;
+				ModLogger.Debug("Following", "Force-cleared AttachedTo after error");
 			}
 		}
+	}
 
 		/// <summary>
 		/// Sets the ShouldJoinPlayerBattles property on a party, using direct access first
@@ -902,6 +1077,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// </summary>
 		private void OnDailyTick()
 		{
+			// Always check for captivity escape during grace period, even if not currently listed as 'active' enlisted
+			CheckPlayerCaptivityDuration();
+
 			if (!IsEnlisted || _enlistedLord?.IsAlive != true)
 			{
 				return;
@@ -1022,6 +1200,48 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 		
 		/// <summary>
+		/// Checks if the player has been a prisoner for too long while in enlistment grace period.
+		/// If captured > 3 days, we force an escape/release so the player can actually use their grace period.
+		/// </summary>
+		private void CheckPlayerCaptivityDuration()
+		{
+			if (Hero.MainHero.IsPrisoner && IsInDesertionGracePeriod)
+			{
+				// Check duration
+				float daysInCaptivity = (float)(CampaignTime.Now - Hero.MainHero.CaptivityStartTime).ToDays;
+				if (daysInCaptivity > 3f)
+				{
+					ModLogger.Info("EventSafety", $"Player held prisoner for {daysInCaptivity:F1} days during enlistment grace period - forcing release");
+					
+					// Attempt to force release/escape
+					// Use EndCaptivityAction via reflection since it's internal or we just use the public static ApplyByEscape
+					// Public API: EndCaptivityAction.ApplyByEscape(Hero character, Hero facilitator = null)
+					try
+					{
+						// TaleWorlds.CampaignSystem.Actions.EndCaptivityAction
+						var endCaptivityType = typeof(TaleWorlds.CampaignSystem.Actions.EndCaptivityAction);
+						var applyMethod = endCaptivityType.GetMethod("ApplyByEscape", BindingFlags.Static | BindingFlags.Public);
+						
+						if (applyMethod != null)
+						{
+							applyMethod.Invoke(null, new object[] { Hero.MainHero, null });
+							InformationManager.DisplayMessage(new InformationMessage("You have managed to escape captivity! Return to your kingdom quickly!"));
+						}
+						else
+						{
+							// Fallback if method not found (unlikely)
+							ModLogger.Error("EventSafety", "Could not find EndCaptivityAction.ApplyByEscape");
+						}
+					}
+					catch (Exception ex)
+					{
+						ModLogger.Error("EventSafety", $"Error forcing player escape: {ex.Message}");
+					}
+				}
+			}
+		}
+
+		/// <summary>
 		/// Real-time tick handler that runs every game frame while the player is enlisted.
 		/// Manages party state (active/inactive), battle participation, army membership,
 		/// and position following in real-time to ensure smooth gameplay.
@@ -1032,11 +1252,38 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// <param name="deltaTime">Time elapsed since last frame, in seconds. Must be positive.</param>
 		private void OnRealtimeTick(float deltaTime)
 		{
-			// Skip all processing if the player is not currently enlisted
-			// This avoids unnecessary computation when the system isn't active
+			// CRITICAL: Ensure non-enlisted players always stay visible and active
+			// Native game systems might change visibility (e.g., night events or scripted encounters)
+			// This check runs BEFORE throttling to ensure it's checked every frame
+			// We need to enforce visibility for non-enlisted players during gameplay
 			if (!IsEnlisted)
 			{
-				return;
+				var mainParty = MobileParty.MainParty;
+				if (mainParty != null && !Hero.MainHero.IsPrisoner)
+				{
+					// Enforce visibility and activity for non-enlisted players
+					// This ensures the player remains visible even if native systems switch it off
+					// Check both IsActive and IsVisible to catch any state changes
+					bool needsActivation = !mainParty.IsActive;
+					bool needsVisibility = !mainParty.IsVisible;
+					
+					if (needsActivation || needsVisibility)
+					{
+						// Log when we're fixing visibility/activity to help diagnose issues
+						if (needsVisibility)
+						{
+							ModLogger.Info("Realtime", $"Enforcing visibility for non-enlisted player (was invisible - possibly native night visibility)");
+						}
+						if (needsActivation)
+						{
+							ModLogger.Info("Realtime", $"Enforcing activity for non-enlisted player (was inactive)");
+						}
+						
+						mainParty.IsActive = true;
+						mainParty.IsVisible = true;
+					}
+				}
+				return; // Skip enlistment logic for non-enlisted players
 			}
 			
 			// Validate that deltaTime is positive to prevent zero-delta-time updates
@@ -1059,6 +1306,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			var main = MobileParty.MainParty;
 			if (main == null) { return; }
+			
+			// If the player is inside any settlement, let native menus handle state.
+			// Keep the party active/visible temporarily for UI, but skip enlistment logic.
+			if (main.CurrentSettlement != null)
+			{
+				if (!main.IsActive)
+				{
+					main.IsActive = true;
+				}
+				
+				return;
+			}
 			
 			// Skip all enlistment logic when on leave - let vanilla behavior take over
 			if (_isOnLeave)
@@ -1084,48 +1343,88 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					var mainParty = MobileParty.MainParty;
 					bool lordHasMapEvent = lordParty.Party.MapEvent != null;
 					bool playerHasMapEvent = mainParty?.Party.MapEvent != null;
-					bool lordHasBesiegedSettlement = lordParty.BesiegedSettlement != null;
 					bool playerInArmy = mainParty?.Army != null;
 					bool lordInArmy = lordParty.Army != null;
+					bool lordInSiege = IsPartyInActiveSiege(lordParty);
+					bool playerInSiege = IsPartyInActiveSiege(mainParty);
+
+					if (!playerInSiege && mainParty.BesiegerCamp != null)
+					{
+						mainParty.BesiegerCamp = null;
+						ModLogger.Debug("Siege", "Cleared stale player besieger camp reference (no active siege detected)");
+					}
 					
 					// Ensure the player is in the lord's army when the lord is in an army
-					// The game's battle collection system requires parties to be in the army
-					// before the MapEvent is created, so we add the player proactively
-					// This ensures the player will be collected into battles automatically
+					// CRITICAL FIX: Only join the army if:
+					// 1. A battle/siege is actually active (immediate need)
+					// 2. OR we are physically close enough to the army (arrived at destination)
+					// This prevents teleporting the player across the map when the lord first "joins" a distant army
 					if (lordInArmy && (mainParty.Army == null || mainParty.Army != lordParty.Army))
 					{
-						try
+						// Check distance to army leader
+						float distanceToArmy = 9999f;
+						if (lordParty.Army.LeaderParty != null)
 						{
-							// Add the player's party to the lord's army
-							lordParty.Army.AddPartyToMergedParties(mainParty);
-							mainParty.Army = lordParty.Army;
-							ModLogger.Debug("Battle", $"Ensured player is in lord's army (Army Leader: {lordParty.Army.LeaderParty?.LeaderHero?.Name})");
+							distanceToArmy = mainParty.Position2D.Distance(lordParty.Army.LeaderParty.Position2D);
 						}
-						catch (Exception ex)
+
+						// Condition 1: Battle is happening NOW (Must join to fight)
+						// CRITICAL FIX: Only consider it urgent if the Lord is actually AT the battle location
+						// If the Army is fighting but our Lord is still traveling to them (miles away),
+						// joining the army now would teleport us into the battle prematurely.
+						// We check if we are reasonably close to the Army Leader (General) before joining.
+						bool isCloseToLeader = distanceToArmy < 50.0f; // Generous radius to catch "nearby" battles
+						bool urgentBattleNeed = (lordHasMapEvent || lordInSiege) && isCloseToLeader;
+						
+						// Condition 2: We are close enough (Standard join radius is ~3.5f)
+						bool arrivedAtArmy = distanceToArmy < 5.0f;
+
+						if (urgentBattleNeed || arrivedAtArmy)
 						{
-							ModLogger.Error("Battle", $"Error ensuring player is in army: {ex.Message}");
+							try
+							{
+						var targetArmy = lordParty.Army;
+						var armyLeader = targetArmy?.LeaderParty;
+						if (targetArmy == null || armyLeader == null)
+						{
+							ModLogger.Debug("Battle", "Lord army reference invalid (null leader) - skipping automatic join this tick");
+						}
+						else
+						{
+							targetArmy.AddPartyToMergedParties(mainParty);
+							mainParty.Army = targetArmy;
+							
+							// If the army is currently besieging, align the player's besieger camp so PlayerSiege sees us properly.
+							TrySyncBesiegerCamp(mainParty, lordParty);
+							
+							if (urgentBattleNeed)
+							{
+								ModLogger.Info("Battle", $"URGENT: Joined army for active battle/siege (Army: {targetArmy.LeaderParty?.LeaderHero?.Name})");
+							}
+							else
+							{
+								ModLogger.Debug("Battle", $"Arrived at army - joining merged parties (Dist: {distanceToArmy:F1})");
+							}
+						}
+							}
+							catch (Exception ex)
+							{
+								ModLogger.Error("Battle", $"Error ensuring player is in army: {ex.Message}");
+							}
+						}
+						else
+						{
+							// Debug log occasionally to show we are traveling but not joined yet
+							if (CampaignTime.Now.ToHours %
+							 24 < 1) // Approx once a day or so in logs
+							{
+								ModLogger.Debug("Battle", $"Traveling to army - waiting to join (Dist: {distanceToArmy:F1})");
+							}
 						}
 					}
 					
-					// Log battle state changes when significant events occur
-					// This helps debug battle participation issues and track state transitions
-					if (lordHasMapEvent || lordHasBesiegedSettlement || playerInArmy != (mainParty?.Army == lordParty?.Army))
-					{
-						ModLogger.Info("Battle", $"=== BATTLE STATE CHANGE ===");
-						ModLogger.Info("Battle", $"Lord: {_enlistedLord.Name}");
-						ModLogger.Info("Battle", $"Lord MapEvent: {lordHasMapEvent}, Player MapEvent: {playerHasMapEvent}");
-						ModLogger.Info("Battle", $"Lord Besieging: {(lordParty.BesiegedSettlement?.Name?.ToString() ?? "null")}");
-						ModLogger.Info("Battle", $"Player in Army: {playerInArmy} (Army: {(mainParty?.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")})");
-						ModLogger.Info("Battle", $"Lord in Army: {lordInArmy} (Army Leader: {(lordParty.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")})");
-						ModLogger.Info("Battle", $"Current Menu: {Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "null"}");
-						ModLogger.Info("Battle", $"PlayerEncounter: Active={PlayerEncounter.IsActive}, Current={PlayerEncounter.Current != null}");
-					}
-					
-					// Verify player is already in the correct army for automatic battle participation
-					if (playerInArmy && mainParty?.Army == lordParty?.Army)
-					{
-						ModLogger.Info("Battle", $"ARMY STATUS: Player already in lord's army - should participate automatically");
-					}
+					// NOTE: Removed spammy battle state logging that was causing infinite loop during sieges
+					// These logs were firing every tick, flooding the log and causing freezes
 					
 					// Monitor siege state and prepare party for siege encounter creation
 					// This ensures the player can participate in sieges properly
@@ -1163,7 +1462,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 								
 								// Ensure the lord has an army (create one if needed)
 								// The player needs to join an army to participate in battles
-								if (lordParty.Army == null)
+								// CRITICAL: Do NOT create an army if the lord is already in a MapEvent (battle/siege)
+								// Creating an army for a party already in battle causes assertion failures (MapEvent == null)
+								if (lordParty.Army == null && !lordHasMapEvent && !lordInSiege)
 								{
 									ModLogger.Info("Battle", $"Creating army for {lordParty.LeaderHero.Name}");
 									var kingdom = lordParty.ActualClan?.Kingdom;
@@ -1188,20 +1489,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 									// Activate the player's party so they can participate
 									mainParty.IsActive = true;
 									
-									// Position the player's party at the lord's location
-									// Using direct position assignment avoids AI escort complications
-									// and ensures the player is in the right place for battle
-									mainParty.Position2D = lordParty.Position2D;
-								
-									// Make the player visible and enable battle participation
-									mainParty.IsVisible = true;
+									// CRITICAL: Keep party INVISIBLE when joining army - attachment handles following
+									// Making it visible causes party icon/banner to appear on the map
+									// The attachment system (AttachedTo) handles position syncing naturally
+									mainParty.IsVisible = false;
 									mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
-									
+								
 									// Set additional properties to ensure battle participation
 									mainParty.Party.SetAsCameraFollowParty();
 									mainParty.ShouldJoinPlayerBattles = true;
 								
-									ModLogger.Info("Battle", $"SUCCESS: Player now in army - Army Leader: {mainParty.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null"}");
+									ModLogger.Info("Battle", $"SUCCESS: Player now in army (invisible) - Army Leader: {mainParty.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null"}");
 								}
 								else
 								{
@@ -1233,13 +1531,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Check for siege state (both BesiegedSettlement and SiegeEvent)
 				// During sieges, the player needs to be active/visible even before the assault starts
 				// to allow siege menus to appear
-				bool lordInSiege = lordHasBesiegedSettlement || lordParty.Party.SiegeEvent != null;
-				bool playerInSiege = mainParty?.BesiegedSettlement != null || mainParty?.Party.SiegeEvent != null;
 				
 				// Keep the player's party position matched to the lord's position
 				// This ensures the player follows the lord during travel
-				// Using direct position assignment avoids AI escort complications
-				mainParty.Position2D = lordParty.Position2D;
+				// REMOVED: mainParty.Position2D = lordParty.Position2D; - Handled by AttachedTo
 				
 				// Determine if the player needs to be active for battle participation
 				// The player should be activated when a battle is starting but they haven't joined yet
@@ -1249,12 +1544,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// During sieges, keep the player active and visible so siege menus can appear
 				if (lordInSiege || playerInSiege)
 				{
-					// Siege active - keep player active and visible for siege menus
-					if (!mainParty.IsActive)
+					// CRITICAL: Only activate party if an assault (MapEvent) is actually in progress.
+					// If we activate during the "waiting" phase (siege prep/camp), the native engine
+					// constantly triggers the "Settlement is under siege" menu loop.
+					// As an enlisted soldier, we only need to act when the Lord attacks/defends (Assault).
+					bool isAssault = (lordParty.Party.MapEvent != null || mainParty.Party.MapEvent != null);
+
+					if (isAssault)
 					{
-						mainParty.IsActive = true;
+						// Assault in progress - activate so we can join the battle/encounter
+						if (!mainParty.IsActive)
+						{
+							mainParty.IsActive = true;
+							ModLogger.Debug("Siege", "Assault started - activating player for battle participation");
+						}
 					}
-					mainParty.IsVisible = true;
+					else
+					{
+						// No assault yet (just siege prep/waiting) - keep inactive to prevent menu loops
+						if (mainParty.IsActive)
+						{
+							mainParty.IsActive = false;
+							ModLogger.Debug("Siege", "Siege waiting phase - deactivating player to prevent menu loop");
+						}
+					}
+					
+					// Player banner should stay hidden even during siege prep
+					mainParty.IsVisible = false;
 					
 					// Ensure player is in the army if lord is in an army (for siege menus)
 					if (lordParty.Army != null && (mainParty.Army == null || mainParty.Army != lordParty.Army))
@@ -1290,65 +1606,57 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						}
 					}
 					
-					// Create a PlayerEncounter for sieges if one doesn't exist yet
-					// This allows siege menus to appear and the player to participate in sieges
-					// Don't create encounters while inside a settlement, as this causes assertion failures
-					// Check both InsideSettlement and CurrentSettlement to be safe
-					if (PlayerEncounter.Current == null && lordInSiege && 
-					    mainParty?.CurrentSettlement == null && !PlayerEncounter.InsideSettlement)
-					{
-						try
-						{
-							var encounteredParty = lordParty.Army?.LeaderParty?.Party ?? lordParty.Party;
-							EncounterManager.StartPartyEncounter(mainParty.Party, encounteredParty);
-							ModLogger.Info("Siege", $"Created PlayerEncounter for siege menu (Encountered: {encounteredParty?.MobileParty?.LeaderHero?.Name})");
-						}
-						catch (Exception ex)
-						{
-							ModLogger.Error("Siege", $"Error creating PlayerEncounter for siege: {ex.Message}");
-						}
-					}
-					else if (mainParty?.CurrentSettlement != null)
-					{
-						ModLogger.Debug("Siege", "Skipped PlayerEncounter creation - player inside settlement");
-					}
-					
-					ModLogger.Debug("Siege", $"Player active/visible for siege at {(lordParty.BesiegedSettlement?.Name?.ToString() ?? "unknown")}");
+					// CRITICAL: Do NOT create PlayerEncounter in realtime tick - let the native system handle it
+					// Creating encounters in realtime tick causes rapid loops and zero-delta-time assertion failures
+					// The OnMapEventStarted handler will create the encounter when the siege battle starts
+					// For siege menus before assault, the native system creates encounters naturally
+				// We only need to ensure the party is active/visible, which we already did above
+				// NOTE: Removed spammy debug log here that fired every tick
 				}
 				else if (!playerNeedsToBeActiveForBattle)
 				{
 					// No battle active, or player already in battle
 					if (playerInBattle)
 					{
-						// Player already in battle - ensure visible/active but don't change state
-						mainParty.IsVisible = true;
-						ModLogger.Debug("Battle", "Player already in battle - maintaining active state");
+						// Player already in battle - keep invisible (banner should be hidden during enlisted service)
+						// Visibility only needed for battle UI menus before joining, not during active battle
+						mainParty.IsVisible = false;
+						ModLogger.Debug("Battle", "Player already in battle - keeping invisible (enlisted service)");
 					}
 					else
 					{
-						// When the lord is in an army, the player must be active to be collected into battles
-						// The game's battle collection system checks for active parties before or during MapEvent creation
-						// If the player is inactive, they won't be included in the battle even if they're in the army
-						// Army membership prevents random encounters, but the player needs to be active for battle collection
-						if (lordInArmy && mainParty.Army == lordParty.Army)
+					// When the lord is in an army, the player must be active to be collected into battles
+					// The game's battle collection system checks for active parties before or during MapEvent creation
+					// If the player is inactive, they won't be included in the battle even if they're in the army
+					// Army membership prevents random encounters, but the player needs to be active for battle collection
+					// CRITICAL: Keep party INVISIBLE even when active - attachment (AttachedTo) prevents icon rendering
+					// Making it visible causes party icon to appear with troop count and map marker issues
+					// Battle collection uses IsActive, not IsVisible - visibility only needed for UI menus (already handled separately)
+					if (lordInArmy && mainParty.Army == lordParty.Army)
+					{
+						// Lord is in an army and the player is in the same army
+						// Keep the player active for battle collection, but INVISIBLE to prevent icon appearing
+						// Being attached (AttachedTo) is enough for the game to collect them into battles
+						// Visibility is already handled separately for sieges (line 1335) and battles (line 1447)
+						if (!mainParty.IsActive)
 						{
-							// Lord is in an army and the player is in the same army
-							// Keep the player active and visible so they can be collected into battles
-							// This ensures the native system can collect the player when battles start
-							if (!mainParty.IsActive)
-							{
-								mainParty.IsActive = true;
-								mainParty.IsVisible = true;
-								mainParty.Party.SetAsCameraFollowParty();
-								TrySetShouldJoinPlayerBattles(mainParty, true);
-								ModLogger.Debug("Battle", $"Activated player party for battle collection (lord in army, player in same army)");
-							}
-							else if (!mainParty.IsVisible)
-							{
-								// Already active, just ensure visible
-								mainParty.IsVisible = true;
-							}
+							mainParty.IsActive = true;
+							// CRITICAL: Keep invisible - attachment allows battle collection without visibility
+							// This prevents party icon from appearing with troop count and map marker issues
+							mainParty.IsVisible = false;
+							mainParty.Party.SetAsCameraFollowParty();
+							TrySetShouldJoinPlayerBattles(mainParty, true);
+							ModLogger.Debug("Battle", $"Activated player party (invisible) for battle collection (lord in army, player in same army)");
 						}
+						// CRITICAL: Ensure party stays invisible when lord is in army (not in battle)
+						// This prevents banner/icon from appearing on the map during normal travel
+						// Visibility is only needed for UI menus (sieges/battles) which are handled in other code paths
+						if (mainParty.IsVisible)
+						{
+							mainParty.IsVisible = false;
+							ModLogger.Debug("Battle", "Forced visibility to false - lord in army, not in battle");
+						}
+					}
 						else
 						{
 							// Lord is not in an army - deactivate the player to prevent random encounters
@@ -1366,8 +1674,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					// Lord is in battle but the player hasn't joined yet
 					// Activate the player so the native system can collect them into the battle
 					// This works whether the player is in an army or just following the lord
-					mainParty.IsVisible = true;
-					
 					// Ensure the player is in the army if the lord is in an army
 					// The native system needs the player to be in the army to show the "join battle" option
 					if (lordParty.Army != null && (mainParty.Army == null || mainParty.Army != lordParty.Army))
@@ -1395,6 +1701,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						TrySetShouldJoinPlayerBattles(mainParty, true);
 						ModLogger.Debug("Battle", $"Activated party for battle collection (lord in battle, player in army: {playerInArmy})");
 					}
+					
+					// CRITICAL: After battle UI is shown, reset visibility to false if player joined the battle
+					// This ensures banner doesn't remain visible after battle participation
+					if (playerInBattle)
+					{
+						mainParty.IsVisible = false;
+						ModLogger.Debug("Battle", "Reset visibility to false - player joined battle");
+					}
 				}
 			
 				// Configure party ignoring behavior to prevent unwanted encounters
@@ -1404,9 +1718,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				bool lordHasEvent = lordParty?.Party.MapEvent != null || lordParty?.Army?.LeaderParty?.Party.MapEvent != null;
 				if (!lordHasEvent)
 				{
-					// No battle active - ignore other parties for 0.5 hours to prevent random encounters
-					mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f));
-					ModLogger.Debug("Realtime", "Ignoring other parties - no lord battles active");
+				// No battle active - ignore other parties for 0.5 hours to prevent random encounters
+				mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f));
+				// NOTE: Removed spammy debug log here that fired every tick
 				}
 				else
 				{
@@ -1415,7 +1729,46 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 			}
 		}
-	}
+		}
+
+		private void TrySyncBesiegerCamp(MobileParty mainParty, MobileParty lordParty)
+		{
+			try
+			{
+				var siegeEvent = lordParty?.Party?.SiegeEvent
+					?? lordParty?.BesiegedSettlement?.SiegeEvent
+					?? lordParty?.Army?.LeaderParty?.Party?.SiegeEvent;
+
+				var targetCamp = siegeEvent?.BesiegerCamp ?? lordParty?.BesiegedSettlement?.SiegeEvent?.BesiegerCamp;
+
+				if (targetCamp == null)
+				{
+					if (mainParty?.BesiegerCamp != null)
+					{
+						ModLogger.Debug("Battle", "Clearing player besieger camp - no active siege event detected");
+						mainParty.BesiegerCamp = null;
+					}
+					else
+					{
+						ModLogger.Debug("Battle", "No siege event/camp available while joining army (safe)");
+					}
+					return;
+				}
+
+				if (mainParty?.BesiegerCamp == targetCamp)
+				{
+					ModLogger.Debug("Battle", $"Player besieger camp already synced ({targetCamp.SiegeEvent?.BesiegedSettlement?.Name?.ToString() ?? "unknown"})");
+					return;
+				}
+
+				mainParty.BesiegerCamp = targetCamp;
+				ModLogger.Info("Battle", $"Synced player besieger camp with lord's siege at {targetCamp.SiegeEvent?.BesiegedSettlement?.Name?.ToString() ?? "unknown"}");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Failed to sync besieger camp: {ex.Message}");
+			}
+		}
 		
 		#region Event Handlers for Lord Status Changes
 		
@@ -1526,30 +1879,77 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 		
 			/// <summary>
-	/// Handle lord capture scenarios.
-	/// Called when lord is taken prisoner.
+	/// Handle lord or player capture scenarios.
+	/// Called when lord or player is taken prisoner.
 	/// </summary>
 	private void OnHeroPrisonerTaken(PartyBase capturingParty, Hero prisoner)
 		{
-			if (IsEnlisted && prisoner == _enlistedLord)
+			if (!IsEnlisted)
+			{
+				return;
+			}
+
+			// Case 1: Player captured
+			if (prisoner == Hero.MainHero)
+			{
+				ModLogger.Info("EventSafety", "Player captured - deferring enlistment teardown until encounter closes");
+
+				var lordKingdom = _enlistedLord?.MapFaction as Kingdom;
+				if (lordKingdom != null)
+				{
+					var message = new TextObject("You have been taken prisoner. You have 14 days after escape to rejoin your kingdom.");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				}
+				else
+				{
+					var message = new TextObject("You have been taken prisoner. Your service has ended.");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				}
+
+				SchedulePlayerCaptureCleanup(lordKingdom);
+				return;
+			}
+
+			// Case 2: Lord captured
+			if (prisoner == _enlistedLord)
 			{
 				ModLogger.Info("EventSafety", $"Lord {prisoner.Name} captured - starting grace period");
+
+				bool playerCapturedWithLord = TryCapturePlayerAlongsideLord(capturingParty);
+				if (playerCapturedWithLord)
+				{
+					ModLogger.Info("Battle", "Player captured alongside lord due to mirrored capture logic");
+				}
 				
 				// Start grace period instead of immediate discharge
 				// Player has 14 days to rejoin another lord in the same kingdom
 				var lordKingdom = _enlistedLord.MapFaction as Kingdom;
 				if (lordKingdom != null)
 				{
-					// End enlistment but start grace period
-					StopEnlist("Lord captured", isHonorableDischarge: false);
-					StartDesertionGracePeriod(lordKingdom);
+					if (playerCapturedWithLord || _playerCaptureCleanupScheduled)
+					{
+						ModLogger.Info("EventSafety", "Deferring lord capture discharge because player capture cleanup is pending");
+						SchedulePlayerCaptureCleanup(lordKingdom);
+					}
+					else
+					{
+						StopEnlist("Lord captured", isHonorableDischarge: false);
+						StartDesertionGracePeriod(lordKingdom);
+					}
 				}
 				else
 				{
 					// No kingdom - immediate discharge
 					var message = new TextObject("Your lord has been captured. Your service has ended.");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-					StopEnlist("Lord captured");
+					if (playerCapturedWithLord || _playerCaptureCleanupScheduled)
+					{
+						SchedulePlayerCaptureCleanup(null);
+					}
+					else
+					{
+						StopEnlist("Lord captured");
+					}
 				}
 			}
 		}
@@ -1981,7 +2381,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					main.IsActive = true;  // This should trigger encounter menu
 					
 					// Try to force battle participation through positioning
-					main.Position2D = lordParty.Position2D;
+					// REMOVED: main.Position2D = lordParty.Position2D; - Handled by AttachedTo
 					
 					var message = new TextObject("Following your lord into battle!");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -2295,7 +2695,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Battle", "Army battle detected, player participates through army membership");
 				
 				// Ensure player is positioned with army for battle camera/interface
-				main.Position2D = lordParty.Position2D;
+				// REMOVED: main.Position2D = lordParty.Position2D; - Handled by AttachedTo
 			}
 			catch (Exception ex)
 			{
@@ -2326,7 +2726,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 				
 				// Keep player positioned with lord
-				main.Position2D = lordParty.Position2D;
+				// REMOVED: main.Position2D = lordParty.Position2D; - Handled by AttachedTo
 			}
 			catch (Exception ex)
 			{
@@ -2376,63 +2776,133 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					return;
 				}
 
-		// Only react when OUR enlisted lord enters a settlement
-		if (hero == _enlistedLord)
-		{
-			ModLogger.Info("Settlement", $"Lord {hero.Name} entered {settlement.Name} ({settlement.StringId})");
-			
-			// CRITICAL: Finish any active PlayerEncounter before entering settlement
-			// This prevents InsideSettlement assertion failures when the army enters a settlement
-			// Party encounters cannot exist while inside settlements
-			// According to API: StartPartyEncounter cannot be called when InsideSettlement is true
-			// We should finish party encounters when entering settlements to prevent assertion at line 2080
-			var mainParty = MobileParty.MainParty;
-			if (PlayerEncounter.Current != null && !PlayerEncounter.InsideSettlement)
-			{
-				// Settlement entry event means we're entering - finish party encounter immediately
-				// This prevents the assertion that checks InsideSettlement at PlayerEncounter.cs:2080
-				try
+				var mainParty = MobileParty.MainParty;
+				if (party == mainParty)
 				{
-					ModLogger.Info("Settlement", "Finishing PlayerEncounter before entering settlement to prevent InsideSettlement assertion");
-					PlayerEncounter.Finish(true);
+					ModLogger.Info("Settlement", $"Player entered {settlement?.Name?.ToString() ?? "unknown"} ({settlement?.StringId ?? "unknown"})");
+					
+					if (PlayerEncounter.Current != null && !PlayerEncounter.InsideSettlement)
+					{
+						try
+						{
+							ModLogger.Info("Settlement", "Finishing PlayerEncounter before entering settlement to prevent InsideSettlement assertion");
+							PlayerEncounter.Finish(true);
+						}
+						catch (Exception ex)
+						{
+							ModLogger.Error("Settlement", $"Error finishing PlayerEncounter before settlement entry: {ex.Message}");
+						}
+					}
+
+					if (mainParty != null)
+					{
+						if (!mainParty.IsActive)
+						{
+							mainParty.IsActive = true;
+						}
+						mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
+					}
+					
+					return;
 				}
-				catch (Exception ex)
+
+				// Only react when OUR enlisted lord enters a settlement
+				if (hero == _enlistedLord)
 				{
-					ModLogger.Error("Settlement", $"Error finishing PlayerEncounter before settlement entry: {ex.Message}");
+					ModLogger.Info("Settlement", $"Lord {hero.Name} entered {settlement.Name} ({settlement.StringId})");
+					
+					// CRITICAL: Finish any active PlayerEncounter before entering settlement
+					// This prevents InsideSettlement assertion failures when the army enters a settlement
+					// Party encounters cannot exist while inside settlements
+					// According to API: StartPartyEncounter cannot be called when InsideSettlement is true
+					// We should finish party encounters when entering settlements to prevent assertion at line 2080
+					if (PlayerEncounter.Current != null && !PlayerEncounter.InsideSettlement)
+					{
+						try
+						{
+							ModLogger.Info("Settlement", "Finishing PlayerEncounter before entering settlement to prevent InsideSettlement assertion");
+							PlayerEncounter.Finish(true);
+						}
+						catch (Exception ex)
+						{
+							ModLogger.Error("Settlement", $"Error finishing PlayerEncounter before settlement entry: {ex.Message}");
+						}
+					}
+					
+					// Only pause/activate menu for towns and castles, not villages
+					// Villages should allow continuous time flow while following the lord
+					if (settlement.IsTown || settlement.IsCastle)
+					{
+						// CRITICAL GUARD: Don't interfere with battle/siege encounter menus
+						// CORRECT API: Use Party.MapEvent (not direct on MobileParty)
+						bool inBattleOrSiege = (mainParty?.Party.MapEvent != null) ||
+						                      (PlayerEncounter.Current != null) ||
+						                      (_enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null);
+						
+						if (!inBattleOrSiege)
+						{
+							// Safe to show enlisted menu - no battles/sieges active
+							EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+							ModLogger.Debug("Settlement", $"Activated enlisted menu for {settlement.Name} (town/castle)");
+						}
+						else
+						{
+							ModLogger.Info("Settlement", $"GUARDED: Skipped enlisted menu activation - battle/siege active ({settlement.Name})");
+						}
+					}
+					else
+					{
+						// Villages: just log but don't pause or activate menu
+						ModLogger.Debug("Settlement", $"Lord entered village {settlement.Name} - continuing time flow");
+					}
 				}
-			}
-			
-			// Only pause/activate menu for towns and castles, not villages
-			// Villages should allow continuous time flow while following the lord
-			if (settlement.IsTown || settlement.IsCastle)
-			{
-			// CRITICAL GUARD: Don't interfere with battle/siege encounter menus
-			// CORRECT API: Use Party.MapEvent (not direct on MobileParty)
-			bool inBattleOrSiege = (MobileParty.MainParty?.Party.MapEvent != null) ||
-			                      (PlayerEncounter.Current != null) ||
-			                      (_enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null);
-				                      
-				if (!inBattleOrSiege)
-				{
-					// Safe to show enlisted menu - no battles/sieges active
-					EnlistedMenuBehavior.SafeActivateEnlistedMenu();
-					ModLogger.Debug("Settlement", $"Activated enlisted menu for {settlement.Name} (town/castle)");
-				}
-				else
-				{
-					ModLogger.Info("Settlement", $"GUARDED: Skipped enlisted menu activation - battle/siege active ({settlement.Name})");
-				}
-			}
-			else
-			{
-				// Villages: just log but don't pause or activate menu
-				ModLogger.Debug("Settlement", $"Lord entered village {settlement.Name} - continuing time flow");
-			}
-		}
 			}
 			catch (Exception ex)
 			{
 				ModLogger.Error("Settlement", $"Error in settlement entry detection: {ex.Message}");
+			}
+		}
+
+		private void OnSettlementLeft(MobileParty party, Settlement settlement)
+		{
+			try
+			{
+				if (!IsEnlisted || _isOnLeave)
+				{
+					return;
+				}
+
+				var mainParty = MobileParty.MainParty;
+				if (party == mainParty)
+				{
+					ModLogger.Info("Settlement", $"Player left {settlement?.Name?.ToString() ?? "unknown"} ({settlement?.StringId ?? "unknown"})");
+
+					// Re-hide the party if we're not immediately entering a battle or siege.
+					bool inBattle = mainParty?.Party.MapEvent != null;
+					bool inSiege = IsPartyInActiveSiege(mainParty);
+					if (!inBattle && !inSiege)
+					{
+						mainParty.IsVisible = false;
+						mainParty.IsActive = false;
+						mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(0.5f));
+					}
+
+					if (_enlistedLord != null)
+					{
+						EncounterGuard.TryAttachOrEscort(_enlistedLord);
+					}
+					
+					return;
+				}
+
+				if (party == _enlistedLord?.PartyBelongedTo)
+				{
+					ModLogger.Debug("Settlement", $"Lord {_enlistedLord.Name} left {settlement?.Name?.ToString() ?? "unknown"}");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Settlement", $"Error in settlement exit detection: {ex.Message}");
 			}
 		}
 		
@@ -2448,239 +2918,78 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				{
 					return;
 				}
-				
+
 				var lordParty = _enlistedLord.PartyBelongedTo;
-				if (lordParty == null)
+				if (lordParty == null || mapEvent == null)
 				{
 					return;
 				}
-				
-				// DEBUG: Log battle details to understand detection failure
-				ModLogger.Debug("Battle", $"BattleStarted - Attacker: {attackerParty?.MobileParty?.LeaderHero?.Name}, Defender: {defenderParty?.MobileParty?.LeaderHero?.Name}");
-				ModLogger.Debug("Battle", $"Our Lord: {_enlistedLord?.Name}, Lord Party: {lordParty?.LeaderHero?.Name}");
-				ModLogger.Debug("Battle", $"Lord Army: {lordParty?.Army?.LeaderParty?.LeaderHero?.Name}, Army Size: {lordParty?.Army?.Parties?.Count ?? 0}");
-				
-				// Check if our lord is involved in this battle
-				// Use Party property for comparison (PartyBase.MobileParty vs MobileParty)
+
+				var main = MobileParty.MainParty;
+				if (main == null)
+				{
+					return;
+				}
+
+				// Determine whether this event matters to our enlisted service
 				bool lordIsAttacker = attackerParty?.MobileParty == lordParty || attackerParty == lordParty?.Party;
 				bool lordIsDefender = defenderParty?.MobileParty == lordParty || defenderParty == lordParty?.Party;
-				
-				// ENHANCED: Comprehensive army detection for all scenarios
-				bool lordInArmy = false;
-				if (lordParty.Army != null)
+				bool sameArmy = lordParty.Army != null && main.Army == lordParty.Army;
+				bool armyLeaderInvolved = lordParty.Army?.LeaderParty?.Party == attackerParty ||
+				                          lordParty.Army?.LeaderParty?.Party == defenderParty;
+				bool isRelevantBattle = lordIsAttacker || lordIsDefender || sameArmy || armyLeaderInvolved;
+
+				if (!isRelevantBattle)
 				{
-					var army = lordParty.Army;
-					var armyLeader = army.LeaderParty;
-					
-					// Check 1: Is our army leader involved as attacker or defender?
-					bool armyLeaderInvolved = (attackerParty?.MobileParty == armyLeader) || (defenderParty?.MobileParty == armyLeader) ||
-					                          (attackerParty == armyLeader?.Party) || (defenderParty == armyLeader?.Party);
-					
-					// Check 2: Is our lord directly involved (even if not army leader)?  
-					bool lordDirectlyInvolved = (attackerParty?.MobileParty == lordParty) || (defenderParty?.MobileParty == lordParty) ||
-					                            (attackerParty == lordParty?.Party) || (defenderParty == lordParty?.Party);
-					
-					// Check 3: Are any army members involved?
-					bool anyArmyMemberInvolved = false;
-					if (army.Parties != null)
-					{
-						foreach (var armyParty in army.Parties)
-						{
-							if (armyParty == attackerParty?.MobileParty || armyParty == defenderParty?.MobileParty ||
-							    armyParty?.Party == attackerParty || armyParty?.Party == defenderParty)
-							{
-								anyArmyMemberInvolved = true;
-								break;
-							}
-						}
-					}
-					
-					// Check 4: Check MapEvent parties directly (most reliable)
-					if (mapEvent != null)
-					{
-						try
-						{
-							// Use PartiesOnSide method which is more reliable
-							var attackerParties = mapEvent.PartiesOnSide(BattleSideEnum.Attacker);
-							var defenderParties = mapEvent.PartiesOnSide(BattleSideEnum.Defender);
-							
-							if (attackerParties != null)
-							{
-								foreach (var eventParty in attackerParties)
-								{
-									if (eventParty?.Party?.MobileParty == lordParty || eventParty?.Party == lordParty?.Party)
-									{
-										anyArmyMemberInvolved = true;
-										break;
-									}
-								}
-							}
-							if (!anyArmyMemberInvolved && defenderParties != null)
-							{
-								foreach (var eventParty in defenderParties)
-								{
-									if (eventParty?.Party?.MobileParty == lordParty || eventParty?.Party == lordParty?.Party)
-									{
-										anyArmyMemberInvolved = true;
-										break;
-									}
-								}
-							}
-						}
-						catch (Exception ex)
-						{
-							ModLogger.Debug("Battle", $"Error checking MapEvent parties: {ex.Message}");
-						}
-					}
-					
-					lordInArmy = armyLeaderInvolved || lordDirectlyInvolved || anyArmyMemberInvolved;
-					
-					ModLogger.Debug("Battle", $"Army analysis - Army Leader: {armyLeader?.LeaderHero?.Name}");
-					ModLogger.Debug("Battle", $"Army checks - Leader involved: {armyLeaderInvolved}, Lord direct: {lordDirectlyInvolved}, Any member: {anyArmyMemberInvolved}");
-					ModLogger.Debug("Battle", $"Final army result: {lordInArmy}");
+					ModLogger.Debug("Battle", "MapEventStarted ignored - unrelated engagement");
+					return;
 				}
-				
-				// CRITICAL: Check if this is a siege battle
-				bool isSiegeBattle = mapEvent?.IsSiegeAssault == true || mapEvent?.EventType == MapEvent.BattleTypes.Siege;
-				
-				// CRITICAL: Check if this is a village raid (player shouldn't join these, just observe)
-				// Village raids have special encounter handling and shouldn't get PlayerEncounter created
-				bool isVillageRaid = mapEvent?.EventType == MapEvent.BattleTypes.Raid || 
-				                     (mapEvent?.EventType != null && mapEvent.EventType.ToString().Contains("Raid"));
-				
-				ModLogger.Debug("Battle", $"Detection results - Attacker: {lordIsAttacker}, Defender: {lordIsDefender}, Army: {lordInArmy}, Siege: {isSiegeBattle}, VillageRaid: {isVillageRaid}");
-				
-				// CRITICAL: Skip village raids - they have their own encounter system and shouldn't be interfered with
-				if (isVillageRaid)
+
+				bool isSiegeBattle = mapEvent.IsSiegeAssault || mapEvent.EventType == MapEvent.BattleTypes.Siege;
+
+				ModLogger.Info("Battle", $"Native battle detected (Siege: {isSiegeBattle}, SameArmy: {sameArmy}) - preparing player for vanilla flow");
+
+				// Exit custom enlisted menus so the native system can push its own encounter/army menus
+				var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
+				if (!string.IsNullOrEmpty(currentMenu) && currentMenu.StartsWith("enlisted_") && !isSiegeBattle)
 				{
-					ModLogger.Info("Battle", "Village raid detected - skipping PlayerEncounter creation (native system handles village raid encounters)");
-					return; // Let native system handle village raids completely
-				}
-				
-				if (lordIsAttacker || lordIsDefender || lordInArmy)
-				{
-					ModLogger.Info("Battle", $"MAPEVENTS PATTERN: Lord battle starting, preparing player for collection (Attacker: {lordIsAttacker}, Defender: {lordIsDefender}, Army: {lordInArmy}, Siege: {isSiegeBattle})");
-					
-					// CRITICAL: Exit custom menus so native army_wait/siege menu can appear
-					// This must happen BEFORE we configure the party
-					// BUT: Don't exit siege menus - let the native system handle siege menu transitions
-					var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
-					if (currentMenu != null && currentMenu.StartsWith("enlisted_"))
+					var encounterMenuModel = Campaign.Current?.Models?.EncounterGameMenuModel;
+					var desiredMenu = encounterMenuModel?.GetGenericStateMenu();
+
+					if (!string.IsNullOrEmpty(desiredMenu) && desiredMenu != currentMenu)
 					{
-						// Only exit custom menus, not native siege menus
-						if (!currentMenu.Contains("siege") && !isSiegeBattle)
-						{
-							ModLogger.Info("Battle", "Exiting custom menu to allow native army_wait menu");
-							try
-							{
-								GameMenu.ExitToLast();
-							}
-							catch (Exception ex)
-							{
-								ModLogger.Debug("Battle", $"Error exiting menu: {ex.Message}");
-							}
-						}
-						else
-						{
-							ModLogger.Debug("Battle", "Preserving siege menu - not exiting custom menu");
-						}
-					}
-					
-					var main = MobileParty.MainParty;
-					if (main != null)
-					{
-						// CRITICAL: Handle both army and non-army cases
-						// If lord has an army: add player to army (for army_wait menu)
-						// If lord has NO army: still activate player so native system can collect them into battle
-						var targetArmy = lordParty.Army;
-						if (targetArmy != null && (main.Army == null || main.Army != targetArmy))
-						{
-							ModLogger.Info("Battle", "Adding player to lord's army for battle menu");
-							try
-							{
-								targetArmy.AddPartyToMergedParties(main);
-								main.Army = targetArmy;
-								ModLogger.Debug("Battle", $"Player added to army for battle menu (Army Leader: {targetArmy.LeaderParty?.LeaderHero?.Name})");
-							}
-							catch (Exception ex)
-							{
-								ModLogger.Error("Battle", $"Error adding player to army: {ex.Message}");
-							}
-						}
-						else if (targetArmy == null)
-						{
-							// Lord has no army - player is just following
-							// Still need to activate so native battle collection can pull them in
-							ModLogger.Info("Battle", "Lord has no army - activating player for direct battle collection");
-						}
-						
-						// CRITICAL: Create PlayerEncounter so GetGenericStateMenu() can detect the battle
-						// This allows the "encounter" menu (with "join battle" option) to appear instead of just "army_wait"
-						// This works for both regular battles and siege battles
-						// CRITICAL: Don't create encounters while inside a settlement (causes assertion failures)
-						// Check both InsideSettlement and CurrentSettlement to be safe
-						if (PlayerEncounter.Current == null && mapEvent != null && 
-						    main?.CurrentSettlement == null && !PlayerEncounter.InsideSettlement)
+						ModLogger.Info("Battle", $"Switching from enlisted menu to native menu '{desiredMenu}' for battle");
+						NextFrameDispatcher.RunNextFrame(() =>
 						{
 							try
 							{
-								// Determine the encountered party: army leader if in army, otherwise the lord
-								var encounteredParty = targetArmy?.LeaderParty?.Party ?? lordParty.Party;
-								
-								// Create PlayerEncounter with the army leader/lord as encountered party
-								// When that party has a MapEvent, PlayerEncounter.EncounteredBattle will return it
-								// This allows DefaultEncounterGameMenuModel.GetGenericStateMenu() to detect the battle
-								EncounterManager.StartPartyEncounter(main.Party, encounteredParty);
-								ModLogger.Info("Battle", $"Created PlayerEncounter for {(isSiegeBattle ? "siege" : "army")} battle menu (Encountered: {encounteredParty?.MobileParty?.LeaderHero?.Name})");
+								GameMenu.SwitchToMenu(desiredMenu);
 							}
 							catch (Exception ex)
 							{
-								ModLogger.Error("Battle", $"Error creating PlayerEncounter: {ex.Message}");
+								ModLogger.Error("Battle", $"Failed to switch to native menu '{desiredMenu}': {ex.Message}");
 							}
-						}
-						else if (main?.CurrentSettlement != null)
-						{
-							ModLogger.Debug("Battle", "Skipped PlayerEncounter creation - player inside settlement");
-						}
-						
-						// Cancel any ignore window so we can be collected by the battle sweep
-						main.IgnoreByOtherPartiesTill(CampaignTime.Now); // effectively clear
-						ModLogger.Debug("Battle", "Cleared ignore window for battle collection");
-						
-					// Keep attachment during battle - it helps with battle collection
-					// Expense isolation is handled by EnlistmentExpenseIsolationPatch
-					// Only release escort AI behavior, not the attachment itself
-					TryReleaseEscort(main);
-						
-						// Position at lord's position (within join radius of 3.0f)
-						main.Position2D = lordParty.Position2D;
-						main.IsVisible = true;
-						
-						// CRITICAL: Only activate if player party doesn't have MapEvent yet (safe to activate)
-						// This allows native system to show army_wait menu
-						// Setting IsActive while MapEvent exists causes MobilePartyAi assertion failures
-						if (main.Party.MapEvent == null && !main.IsActive)
-						{
-							main.IsActive = true;
-							ModLogger.Debug("Battle", "Activated party for battle menu (no MapEvent yet, safe to activate)");
-						}
-						else if (main.Party.MapEvent != null)
-						{
-							ModLogger.Debug("Battle", "Party already has MapEvent - skipping activation to prevent assertion");
-						}
-						
-						// Ensure battle participation flags are set
-						main.Party.SetAsCameraFollowParty();
-						TrySetShouldJoinPlayerBattles(main, true);
-						
-						ModLogger.Debug("Battle", $"Positioned at lord party, made visible and active for battle menu");
-						ModLogger.Info("Battle", "MAPEVENTS TIMING: Player party prepared for battle participation and menu");
+						});
+					}
+					else
+					{
+						ModLogger.Debug("Battle", "Native battle menu not ready yet - keeping enlisted menu until engine pushes one");
 					}
 				}
-				else
-				{
-					ModLogger.Debug("Battle", "Not our lord's battle, ignoring");
-				}
+
+				EnsurePlayerSharesArmy(lordParty);
+				PreparePartyForNativeBattle(main);
+
+				// Keep escort behaviour hooked so we stay attached to the lord while the encounter progresses
+				EncounterGuard.TryAttachOrEscort(_enlistedLord);
+				TryReleaseEscort(main);
+
+			if (mapEvent != null)
+			{
+				_cachedLordMapEvent = mapEvent;
+			}
+
+			LogPartyState("OnMapEventStarted");
 			}
 			catch (Exception ex)
 			{
@@ -2691,50 +3000,185 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// <summary>
 		/// Handle battle end events to return player to hidden state.
 		/// </summary>
-		private void OnMapEventEnded(MapEvent mapEvent)
+	private void OnMapEventEnded(MapEvent mapEvent)
+	{
+		try
 		{
-			try
+			var main = MobileParty.MainParty;
+			LogPartyState("OnMapEventEnded-Start");
+
+			if (mapEvent != null)
 			{
-				if (!IsEnlisted || _isOnLeave || _enlistedLord == null)
+				_cachedLordMapEvent = mapEvent;
+			}
+
+			var effectiveMapEvent = mapEvent ?? _cachedLordMapEvent;
+
+			var lordParty = _enlistedLord?.PartyBelongedTo;
+
+			bool playerParticipated = main?.Party.MapEvent == mapEvent ||
+			                          effectiveMapEvent?.InvolvedParties?.Any(p => p?.MobileParty == main) == true;
+
+			bool lordParticipated = false;
+			if (lordParty != null && effectiveMapEvent?.InvolvedParties != null)
+			{
+				lordParticipated = effectiveMapEvent.InvolvedParties.Any(p => p?.MobileParty == lordParty);
+
+				if (!lordParticipated && lordParty.Army != null)
 				{
-					return;
+					var army = lordParty.Army;
+					lordParticipated = effectiveMapEvent.InvolvedParties.Any(p =>
+						p?.MobileParty == army.LeaderParty ||
+						(army.Parties != null && army.Parties.Contains(p?.MobileParty)));
 				}
-				
-				var lordParty = _enlistedLord.PartyBelongedTo;
-				if (lordParty == null)
+			}
+
+			bool attachedToLord = lordParty != null && main?.AttachedTo == lordParty;
+			bool shareArmyWithLord = lordParty?.Army != null && main?.Army == lordParty.Army;
+
+			if (!playerParticipated && !lordParticipated)
+			{
+				_cachedLordMapEvent = null;
+				ModLogger.Info("Battle", "Skipping MapEventEnded - neither player nor lord participated");
+				return;
+			}
+			
+				// CRITICAL: Check if enlistment ended during the battle (lord captured/army defeated)
+				// Don't activate immediately - keep party inactive to prevent new encounters
+				if (!IsEnlisted || _isOnLeave)
 				{
-					return;
-				}
-				
-				// NULL-SAFE: Check if this was our lord's battle that ended
-				if (mapEvent?.InvolvedParties != null && 
-					mapEvent.InvolvedParties.Any(p => p?.MobileParty == lordParty ||
-						(p?.MobileParty?.Army != null && p.MobileParty.Army == lordParty.Army)))
-				{
-					ModLogger.Info("Battle", "Lord battle ended, returning to hidden state");
+					ModLogger.Info("Battle", $"OnMapEventEnded early exit: IsEnlisted={IsEnlisted}, OnLeave={_isOnLeave}, main.HasMapEvent={main?.Party.MapEvent != null}, lordHasMapEvent={lordParty?.Party.MapEvent != null}, MapEventHasWinner={mapEvent?.HasWinner}");
 					
-					// Return to hidden enlisted state
-					var main = MobileParty.MainParty;
-					main.IsActive = false;
-					main.IsVisible = false;
-					
-					// Disband temporary army if we created one
-					if (_disbandArmyAfterBattle && lordParty.Army != null)
+					// Enlistment ended during battle - cleanup only, DO NOT activate
+					// Activation will happen naturally when safe (no encounters will be created)
+					if (main != null)
 					{
-						var army = lordParty.Army;
-						DisbandArmyAction.ApplyByUnknownReason(army);
-						_disbandArmyAfterBattle = false;
-						ModLogger.Debug("Battle", "Disbanded temporary army");
+						// Clean up any remaining battle state
+						if (main.Army != null)
+						{
+							main.Army = null; // Clear army reference
+						}
+
+						main.IsActive = false;
+						main.IsVisible = false;
 					}
 					
-					ModLogger.Info("Battle", "Player returned to hidden enlisted state");
+					if (PlayerEncounter.Current != null)
+					{
+						try
+						{
+							if (PlayerEncounter.InsideSettlement)
+							{
+								PlayerEncounter.LeaveSettlement();
+							}
+							PlayerEncounter.Finish(true);
+							ModLogger.Info("Battle", "Finished PlayerEncounter after enlistment ended");
+						}
+						catch (Exception ex)
+						{
+							ModLogger.Error("Battle", $"Error finishing PlayerEncounter after enlistment ended: {ex.Message}");
+						}
+					}
+					
+					ResetSiegePreparationLatch();
+					_cachedLordMapEvent = null;
+					if (effectiveMapEvent != null)
+					{
+						RestoreCampaignFlowAfterBattle();
+					}
+					LogPartyState("OnMapEventEnded-EarlyExit");
+					return;
 				}
-			}
-			catch (Exception ex)
+			
+			if (_enlistedLord == null)
 			{
-				ModLogger.Error("Battle", $"Error in MapEvent end handler: {ex.Message}");
+				return;
+			}
+			
+			LogPartyState("OnMapEventEnded-After");
+			
+			lordParty = _enlistedLord.PartyBelongedTo;
+			if (lordParty == null)
+			{
+				return;
+			}
+			
+			// NULL-SAFE: Check if this was our lord's battle that ended
+			if (effectiveMapEvent?.InvolvedParties != null && 
+				effectiveMapEvent.InvolvedParties.Any(p => p?.MobileParty == lordParty ||
+					(p?.MobileParty?.Army != null && p.MobileParty.Army == lordParty.Army)))
+			{
+				ModLogger.Info("Battle", "Lord battle ended, returning to hidden state");
+				_cachedLordMapEvent = null;
+				
+				// CRITICAL: Clear siege encounter creation timestamp when battle ends
+				// This allows new encounters to be created if needed after the battle
+				_lastSiegeEncounterCreation = CampaignTime.Zero;
+				
+				// CRITICAL: Defer finishing PlayerEncounter to next frame to avoid timing issues
+				// The game may still be using the encounter for score screens or settlement entry
+				// Finishing immediately after battle ends can cause crashes
+				if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+				{
+					NextFrameDispatcher.RunNextFrame(() =>
+					{
+						try
+						{
+							if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+							{
+								if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.InsideSettlement)
+								{
+									TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
+								}
+								TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish(true);
+								ModLogger.Info("Battle", "Finished PlayerEncounter after battle ended (deferred to next frame)");
+							}
+							
+							// Return to hidden enlisted state after encounter is finished
+							var mainParty = MobileParty.MainParty;
+							if (mainParty != null && IsEnlisted)
+							{
+								mainParty.IsActive = false;
+								mainParty.IsVisible = false;
+								ModLogger.Info("Battle", "Player returned to hidden enlisted state after encounter cleanup");
+							}
+								
+								ResetSiegePreparationLatch();
+								RestoreCampaignFlowAfterBattle();
+						}
+						catch (Exception ex)
+						{
+							ModLogger.Error("Battle", $"Error finishing PlayerEncounter after battle: {ex.Message}");
+						}
+					});
+				}
+				else
+				{
+					// No encounter to finish - return to hidden enlisted state immediately
+					main.IsActive = false;
+					main.IsVisible = false;
+					ModLogger.Info("Battle", "Player returned to hidden enlisted state (no encounter to finish)");
+					ResetSiegePreparationLatch();
+					RestoreCampaignFlowAfterBattle();
+				}
+				
+				// Disband temporary army if we created one
+				if (_disbandArmyAfterBattle && lordParty.Army != null)
+				{
+					var army = lordParty.Army;
+					DisbandArmyAction.ApplyByUnknownReason(army);
+					_disbandArmyAfterBattle = false;
+					ModLogger.Debug("Battle", "Disbanded temporary army");
+				}
+				
+				ModLogger.Info("Battle", "Player returned to hidden enlisted state");
 			}
 		}
+		catch (Exception ex)
+		{
+			ModLogger.Error("Battle", $"Error in MapEvent end handler: {ex.Message}");
+		}
+	}
 		
 		/// <summary>
 		/// Debug tracking for PlayerBattleEnd events.
@@ -2762,25 +3206,60 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			try
 			{
-				if (mainParty == null || lordParty == null) return;
+				if (mainParty == null || lordParty == null)
+				{
+					return;
+				}
 				
 				// This is the pre-assault state: arriving / laying siege
-				bool siegeForming = lordParty.BesiegedSettlement != null || lordParty.Party.SiegeEvent != null;
+				var currentSiegeSettlement = lordParty.BesiegedSettlement ?? lordParty.Party.SiegeEvent?.BesiegedSettlement;
+				bool siegeForming = currentSiegeSettlement != null;
 				
-				if (!siegeForming) return;
+				if (!siegeForming)
+				{
+					ResetSiegePreparationLatch();
+					return;
+				}
 				
 				// If we're already in an encounter/menu, do nothing
-				if (PlayerEncounter.Current != null || mainParty.Party.MapEvent != null) return;
+				if (PlayerEncounter.Current != null || mainParty.Party.MapEvent != null)
+				{
+					return;
+				}
+				
+				// If we've already prepared for this siege target, skip further work until the siege state changes.
+				if (_isSiegePreparationLatched && _latchedSiegeSettlement == currentSiegeSettlement)
+				{
+					return;
+				}
+				
+				// CRITICAL: Throttle this watchdog to prevent rapid execution that causes zero-delta-time assertions
+				// The realtime tick runs every frame, so we need to limit how often this runs
+				// Only run once per 2 seconds to prevent assertion failures (increased from 1 second)
+				bool enoughTimePassed = CampaignTime.Now - _lastSiegeEncounterCreation >= CampaignTime.Seconds(2L);
+				if (!enoughTimePassed)
+				{
+					return; // Skip if called too recently
+				}
 				
 				ModLogger.Info("Siege", $"=== SIEGE WATCHDOG: Siege forming at {(lordParty.BesiegedSettlement?.Name?.ToString() ?? "unknown")} ===");
+				LogPartyState("SiegeWatchdog-Triggered");
 				
 				// Prepare for vanilla to collect us
 				TryReleaseEscort(mainParty);
 				mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);    // clear ignore window
-				mainParty.Position2D = lordParty.Position2D;             // be in radius
-				mainParty.IsVisible = true;
-				mainParty.IsActive = true;
+				// CRITICAL: Do NOT set position directly - causes teleportation and assertion failures
+				// The AttachedTo system handles position syncing naturally
+				// mainParty.Position2D = lordParty.Position2D;  // REMOVED - causes teleportation
+				
+				// Note: IsVisible and IsActive are already set by the siege handling code above
+				// We just need to ensure the party can be encountered by vanilla
 				TrySetShouldJoinPlayerBattles(mainParty, true);
+				
+				// Update timestamp to prevent rapid execution
+				_lastSiegeEncounterCreation = CampaignTime.Now;
+				_isSiegePreparationLatched = true;
+				_latchedSiegeSettlement = currentSiegeSettlement;
 				
 				// IMPORTANT: do NOT push our own menu here. Let vanilla push army_wait / siege menu.
 				ModLogger.Info("Siege", "Prepared player for siege encounter (active/visible & co-located) - vanilla should create encounter menu");
@@ -2791,6 +3270,247 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 		}
 		
+		private void ResetSiegePreparationLatch()
+		{
+			_isSiegePreparationLatched = false;
+			_latchedSiegeSettlement = null;
+		}
+
+		private bool TryCapturePlayerAlongsideLord(PartyBase capturingParty)
+		{
+			if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
+			{
+				return false;
+			}
+
+			if (capturingParty == null)
+			{
+				ModLogger.Info("Battle", "Lord capture detected but no captor party was provided to mirror capture for player");
+				return false;
+			}
+
+			if (PlayerEncounter.Current != null)
+			{
+				// Player is already in an encounter (e.g., choosing Surrender). Native flow will capture them.
+				ModLogger.Info("Battle", "Encounter active during lord capture - letting native surrender capture handle the player.");
+				return false;
+			}
+
+			try
+			{
+				TakePrisonerAction.Apply(capturingParty, Hero.MainHero);
+				ModLogger.Info("Battle", $"Mirrored player capture after lord capture - captor: {capturingParty.Name}");
+				return true;
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error mirroring capture after lord capture: {ex.Message}");
+				return false;
+			}
+		}
+
+		private void SchedulePlayerCaptureCleanup(Kingdom lordKingdom)
+		{
+			_pendingPlayerCaptureKingdom = lordKingdom;
+			_pendingPlayerCaptureReason = lordKingdom != null ? "Player captured" : "Player captured (No Kingdom)";
+
+			if (_playerCaptureCleanupScheduled)
+			{
+				return;
+			}
+
+			_playerCaptureCleanupScheduled = true;
+			NextFrameDispatcher.RunNextFrame(FinalizePlayerCaptureCleanup, true);
+		}
+
+		private void FinalizePlayerCaptureCleanup()
+		{
+			if (!_playerCaptureCleanupScheduled)
+			{
+				return;
+			}
+
+			var mainParty = MobileParty.MainParty;
+			if (PlayerEncounter.Current != null || mainParty?.Party?.MapEvent != null)
+			{
+				NextFrameDispatcher.RunNextFrame(FinalizePlayerCaptureCleanup, true);
+				return;
+			}
+
+			_playerCaptureCleanupScheduled = false;
+
+			var reason = _pendingPlayerCaptureReason ?? "Player captured";
+			var kingdom = _pendingPlayerCaptureKingdom;
+			_pendingPlayerCaptureReason = null;
+			_pendingPlayerCaptureKingdom = null;
+
+			if (!IsEnlisted && !_isOnLeave && !IsInDesertionGracePeriod)
+			{
+				return;
+			}
+
+			ModLogger.Info("EventSafety", "Finalizing deferred capture cleanup for player");
+
+			if (kingdom != null)
+			{
+				StopEnlist(reason, isHonorableDischarge: false);
+				StartDesertionGracePeriod(kingdom);
+				GrantGracePeriodInteractionWindow();
+			}
+			else
+			{
+				StopEnlist("Player captured (No Kingdom)");
+				GrantGracePeriodInteractionWindow();
+			}
+		}
+
+		/// <summary>
+		/// Gives the player a short invulnerability window after discharge/capture so they can interact with NPCs.
+		/// Keeps the party active/visible but ignored by hostile AI for one in-game hour.
+		/// </summary>
+		private void GrantGracePeriodInteractionWindow()
+		{
+			try
+			{
+				var main = MobileParty.MainParty;
+				if (main == null)
+				{
+					return;
+				}
+
+				// Skip if the game still has an encounter/battle running
+				if (main.Party?.MapEvent != null || PlayerEncounter.Current != null)
+				{
+					ModLogger.Debug("GraceProtection", "Delayed interaction window - still in encounter/battle");
+					return;
+				}
+
+				var protectionUntil = CampaignTime.Now + CampaignTime.Hours(1f);
+				main.IgnoreByOtherPartiesTill(protectionUntil);
+
+				if (!main.IsActive)
+				{
+					main.IsActive = true;
+				}
+
+				main.IsVisible = true;
+				ModLogger.Info("GraceProtection", $"Granted 1-hour protection window after discharge (ignored until {protectionUntil})");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("GraceProtection", $"Failed to grant grace period interaction window: {ex.Message}");
+			}
+		}
+		
+		private void RestoreCampaignFlowAfterBattle()
+		{
+			try
+			{
+				var campaign = Campaign.Current;
+				if (campaign == null)
+				{
+					return;
+				}
+				
+				if (campaign.TimeControlMode == CampaignTimeControlMode.Stop)
+				{
+					campaign.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+					ModLogger.Debug("Battle", "Restored campaign time control to StoppablePlay");
+				}
+				
+				var menuContext = campaign.CurrentMenuContext;
+				var currentMenuId = menuContext?.GameMenu?.StringId;
+				if (!string.IsNullOrEmpty(currentMenuId) &&
+					(currentMenuId == "army_wait" ||
+					 currentMenuId.Contains("siege") ||
+					 currentMenuId.Contains("encounter")))
+				{
+					GameMenu.ExitToLast();
+					ModLogger.Debug("Battle", $"Exited lingering menu after battle ({currentMenuId})");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error restoring campaign flow after battle: {ex.Message}");
+			}
+		}
+		
+		#endregion
+
+		#region Diagnostics
+
+		public bool IsEmbeddedWithLord()
+		{
+			var main = MobileParty.MainParty;
+			var lordParty = _enlistedLord?.PartyBelongedTo;
+			if (main == null || lordParty == null)
+			{
+				return false;
+			}
+
+			bool sameArmy = main.Army != null && lordParty.Army != null && main.Army == lordParty.Army;
+			bool attached = main.AttachedTo == lordParty;
+			return sameArmy || attached;
+		}
+
+		public bool IsPartyInActiveSiege(MobileParty party)
+		{
+			if (party == null)
+			{
+				return false;
+			}
+
+			try
+			{
+				if (party.Party?.SiegeEvent != null)
+				{
+					return true;
+				}
+
+				if (party.BesiegerCamp != null && party.BesiegerCamp.SiegeEvent != null)
+				{
+					return true;
+				}
+
+				var siegeEvent = party.BesiegedSettlement?.SiegeEvent;
+				if (siegeEvent != null && party.Party != null)
+				{
+					return siegeEvent.IsPartyInvolved(party.Party);
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Diagnostics", $"Error evaluating siege state for {party?.LeaderHero?.Name?.ToString() ?? "unknown"}: {ex.Message}");
+			}
+
+			return false;
+		}
+
+		private void LogPartyState(string context)
+		{
+			try
+			{
+				var main = MobileParty.MainParty;
+				var lordParty = _enlistedLord?.PartyBelongedTo;
+				if (main == null)
+				{
+					ModLogger.Info("Diagnostics", $"{context}: Main party null");
+					return;
+				}
+
+				var info =
+					$"{context}: Visible={main.IsVisible}, Active={main.IsActive}, AttachedTo={(main.AttachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, " +
+					$"Army={(main.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")}, MapEvent={(main.Party.MapEvent != null)}, SiegeEvent={(main.Party.SiegeEvent != null)}, " +
+					$"HasEncounter={PlayerEncounter.Current != null}, LordMapEvent={(lordParty?.Party.MapEvent != null)}, LordSiege={(lordParty?.Party.SiegeEvent != null)}, " +
+					$"LordArmy={(lordParty?.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")}";
+				ModLogger.Info("Diagnostics", info);
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Diagnostics", $"Error logging party state: {ex.Message}");
+			}
+		}
+
 		#endregion
 	}
 }

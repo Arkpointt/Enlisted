@@ -1012,11 +1012,11 @@ public static void CreateVMLayer(List<ItemObject> list, string equipmentType)
         EquipmentSelectorBehavior.layer = new GauntletLayer(1001, "GauntletLayer", false);
         
         // Create custom ViewModel
-        EquipmentSelectorBehavior.equipmentSelectorVM = new SASEquipmentSelectorVM(list, equipmentType);
+        EquipmentSelectorBehavior.equipmentSelectorVM = new CustomEquipmentSelectorVM(list, equipmentType);
         EquipmentSelectorBehavior.equipmentSelectorVM.RefreshValues();
         
         // Load custom movie (REQUIRES CUSTOM XML TEMPLATE)
-        EquipmentSelectorBehavior.gauntletMovie = (GauntletMovie)EquipmentSelectorBehavior.layer.LoadMovie("SASEquipmentSelection", EquipmentSelectorBehavior.equipmentSelectorVM);
+        EquipmentSelectorBehavior.gauntletMovie = (GauntletMovie)EquipmentSelectorBehavior.layer.LoadMovie("CustomEquipmentSelection", EquipmentSelectorBehavior.equipmentSelectorVM);
         
         // Configure input and focus
         EquipmentSelectorBehavior.layer.InputRestrictions.SetInputRestrictions(true, 7);
@@ -1051,11 +1051,11 @@ public static void DeleteVMLayer()
 
 #### **Equipment ViewModel Structure**:
 ```csharp
-// From SASEquipmentSelectorVM.cs
-public class SASEquipmentSelectorVM : ViewModel
+// Example ViewModel
+public class CustomEquipmentSelectorVM : ViewModel
 {
     [DataSourceProperty]
-    public MBBindingList<SASEquipmentCardRowVM> Rows { get; set; }
+    public MBBindingList<CustomEquipmentCardRowVM> Rows { get; set; }
     
     [DataSourceProperty]
     public MBBindingList<BindingListStringItem> Name { get; set; }
@@ -1069,19 +1069,19 @@ public class SASEquipmentSelectorVM : ViewModel
     [DataSourceProperty]
     public MBBindingList<CharacterEquipmentItemVM> WeaponsList { get; set; }
     
-    public SASEquipmentSelectorVM(List<ItemObject> items, string equipmentType)
+    public CustomEquipmentSelectorVM(List<ItemObject> items, string equipmentType)
     {
         // Creates grid of equipment cards (4 items per row)
-        this.Cards = new MBBindingList<SASEquipmentCardVM>();
-        this.Rows = new MBBindingList<SASEquipmentCardRowVM>();
+        this.Cards = new MBBindingList<CustomEquipmentCardVM>();
+        this.Rows = new MBBindingList<CustomEquipmentCardRowVM>();
         
         foreach (ItemObject item in items)
         {
-            this.Cards.Add(new SASEquipmentCardVM(item, this, equipmentType));
+            this.Cards.Add(new CustomEquipmentCardVM(item, this, equipmentType));
             if (this.Cards.Count == 4)  // 4 cards per row
             {
-                this.Rows.Add(new SASEquipmentCardRowVM(this.Cards));
-                this.Cards = new MBBindingList<SASEquipmentCardVM>();
+                this.Rows.Add(new CustomEquipmentCardRowVM(this.Cards));
+                this.Cards = new MBBindingList<CustomEquipmentCardVM>();
             }
         }
         

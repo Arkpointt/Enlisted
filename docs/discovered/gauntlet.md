@@ -36,9 +36,9 @@ Common ViewModel command patterns to mirror:
 public static void CreateVMLayer(List<ItemObject> list, string equipmentType)
 {
     layer = new GauntletLayer(1001, "GauntletLayer", false);
-    equipmentSelectorVM = new SASEquipmentSelectorVM(list, equipmentType);
+    equipmentSelectorVM = new CustomEquipmentSelectorVM(list, equipmentType);
     equipmentSelectorVM.RefreshValues();
-    gauntletMovie = layer.LoadMovie("SASEquipmentSelection", equipmentSelectorVM);
+    gauntletMovie = layer.LoadMovie("CustomEquipmentSelection", equipmentSelectorVM);
     layer.InputRestrictions.SetInputRestrictions(true, 7);
     ScreenManager.TopScreen.AddLayer(layer);
     layer.IsFocusLayer = true;

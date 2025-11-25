@@ -8,6 +8,7 @@ using TaleWorlds.Library;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Entry;
 using Enlisted.Mod.Core.Logging;
+using System.Reflection;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
@@ -31,7 +32,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private static Hero enlistCurrentLord()
 		{
 			var inst = EnlistmentBehavior.Instance;
-			var field = typeof(EnlistmentBehavior).GetField("_enlistedLord", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+			var field = typeof(EnlistmentBehavior).GetField("_enlistedLord", BindingFlags.NonPublic | BindingFlags.Instance);
 			return field?.GetValue(inst) as Hero;
 		}
 
@@ -59,7 +60,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					
 					// Defer menu activation to the next frame after encounter exit completes
 					// This ensures the menu activates cleanly after state transitions
-					NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("enlisted_status"));
+					NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("enlisted_status"), true);
 				}
 			}
 			catch
@@ -84,28 +85,74 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
+			var offset = main.Position2D - target.Position2D;
+			var distance = offset.Length;
+			var attachmentName = main.AttachedTo?.LeaderHero?.Name?.ToString() ?? main.AttachedTo?.Name?.ToString() ?? "none";
+			var targetName = target.LeaderHero?.Name?.ToString() ?? target.Name?.ToString() ?? "unknown";
+			
+			// Log only if state changes to reduce spam
+			if (main.AttachedTo != target)
+			{
+				ModLogger.Debug("Following", $"AttachOrEscort check -> target={targetName}, distance={distance:F2}, attachedTo={attachmentName}, mapEvent={(main.Party.MapEvent != null)}");
+			}
+
 			// Use natural attachment system for following behavior
 			// This provides automatic following and proper army integration
-			// Expense sharing is prevented by EnlistmentExpenseIsolationPatch
 			if (main.AttachedTo != target)
 			{
 				// Attach to the lord's party if not already attached
 				// This enables natural following behavior and army integration
 				TryAttach(main, target);
+				
+				if (main.AttachedTo == target)
+				{
+					ModLogger.Info("Following", $"Attached player party to {targetName} via engine attachment");
+					
+					// Clear any previous move orders/clicks to remove the yellow cursor/visuals
+					try
+					{
+						main.Ai.SetMoveModeHold();
+					}
+					catch { /* Best effort */ }
+					
+					// CRITICAL: Set camera to follow the lord's party, since we are attached to them
+					// The player party is invisible, so following the lord makes more sense visually
+					try
+					{
+						target.Party.SetAsCameraFollowParty();
+					}
+					catch { /* Best effort */ }
+					
+					// CRITICAL: Once attached, do NOT issue further move commands.
+					return;
+				}
+			}
+			
+			// If we are already attached, we don't need to do anything else.
+			if (main.AttachedTo == target)
+			{
+				// Ensure camera stays on lord during attachment
+				if (main.Party.MapEvent == null)
+				{
+					target.Party.SetAsCameraFollowParty();
+				}
+				return; 
 			}
 
-			// Use direct position matching as a fallback when not in battle
-			// This ensures the player follows the lord during travel
+			// Fallback: If attachment failed (reflection issue?), use standard Escort AI.
+			// We do NOT use SetMoveGoToPoint (manual trailing) anymore as it causes visual cursor clicking artifacts.
 			if (main.Party.MapEvent == null || main.Party.MapEvent.IsFinalized)
 			{
-				// Match the player's position directly to the lord's position
-				// This works in combination with AttachedTo for reliable following
-				main.Position2D = target.Position2D;
-				ModLogger.Debug("Following", "Position matching for following (with attachment)");
+				// Use standard Escort AI as fallback
+				if (main.TargetParty != target)
+				{
+					ModLogger.Debug("Following", "Fallback: Setting standard Escort AI (Attachment failed)");
+					main.Ai.SetMoveEscortParty(target);
+				}
 			}
 			else
 			{
-				ModLogger.Debug("Following", "Skipping position matching - player is in active battle");
+				ModLogger.Debug("Following", "Skipping follow command - player is in active battle");
 			}
 		}
 
@@ -118,33 +165,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				{
 					return;
 				}
-				var attach = typeof(MobileParty).GetMethod("AttachTo", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+				var attach = typeof(MobileParty).GetMethod("AttachTo", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 				if (attach != null)
 				{
 					attach.Invoke(main, new object[] { target });
+					ModLogger.Debug("Following", $"Reflection attach invoked -> target={target.LeaderHero?.Name?.ToString() ?? target.Name?.ToString() ?? "unknown"}");
+					return;
 				}
+
+				// If reflection fails, we fall back to Escort AI in the calling method
+				ModLogger.Debug("Following", "AttachTo reflection method not found");
 			}
-			catch
+			catch (Exception ex)
 			{
-				// Fallback is escort (handled by caller).
+				ModLogger.Error("Following", $"Attach attempt failed: {ex.Message}");
 			}
 		}
 
-		private static void ApplyTrailingOffset(MobileParty main, MobileParty target, float trailDistance)
-		{
-			try
-			{
-				// Simple rear offset behind target's forward vector.
-				var toMain = (main.Position2D - target.Position2D).Normalized();
-				var desired = target.Position2D - toMain * trailDistance;
-				main.Ai.SetMoveGoToPoint(desired);
-			}
-			catch
-			{
-				// Best-effort positioning; if unavailable, escort alone is fine.
-			}
-		}
+		// Removed ApplyTrailingOffset to prevent "clicking" artifacts on the map
 	}
 }
-
-

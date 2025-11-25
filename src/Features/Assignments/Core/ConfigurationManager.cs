@@ -176,7 +176,7 @@ namespace Enlisted.Features.Assignments.Core
                 }
                 
                 _cachedProgressionConfig = config;
-                ModLogger.Info("Config", $"Progression config loaded successfully: {config.TierProgression.Requirements.Count} tiers");
+                ModLogger.Info("Config", $"Progression config loaded from {configPath} ({config.TierProgression.Requirements.Count} tiers)");
                 return config;
             }
             catch (JsonException ex)

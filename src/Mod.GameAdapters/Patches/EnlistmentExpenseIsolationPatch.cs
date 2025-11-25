@@ -21,6 +21,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	[HarmonyPatch]
 	public class EnlistmentExpenseIsolationPatch
 	{
+		private static bool _loggedFirstInvocation;
+
 		/// <summary>
 		/// Finds the AddPartyExpense method in DefaultClanFinanceModel to patch.
 		/// Uses reflection because the method is private.
@@ -109,25 +111,30 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				}
 
 				var enlistment = EnlistmentBehavior.Instance;
+				bool isEnlisted = enlistment?.IsEnlisted == true;
+				var attachedTo = party.AttachedTo;
+				var mainParty = MobileParty.MainParty;
+				var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+				bool sameArmy = mainParty?.Army != null && lordParty?.Army != null && mainParty.Army == lordParty.Army;
 				
-				// If enlisted and attached to a lord's party, isolate expenses
-				// The player receives wages from the enlistment system, so they shouldn't
-				// pay expenses based on the lord's financial situation
-				if (enlistment?.IsEnlisted == true && party.AttachedTo != null)
+				if (!_loggedFirstInvocation)
 				{
-					// Check if attached to the enlisted lord's party
-					var lordParty = enlistment.CurrentLord?.PartyBelongedTo;
-					if (lordParty != null && party.AttachedTo == lordParty)
-					{
-						// Isolate expenses - return 0 to prevent expense sharing
-						// The player's expenses are handled separately (they're inactive and get wages)
-						// This prevents the lord's financial situation from affecting player's daily gold
-						__result = 0;
-						ModLogger.Debug("ExpenseIsolation", "Isolated player expenses from lord's party - returned 0");
-						return false; // Skip original method
-					}
+					_loggedFirstInvocation = true;
+					ModLogger.Info("ExpenseIsolation", $"Patch active - AddPartyExpense intercepted (applyWithdrawals={applyWithdrawals})");
+				}
+
+				ModLogger.Debug("ExpenseIsolation",
+					$"Expense check - enlisted={isEnlisted}, attachedTo={(attachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, lordParty={(lordParty?.LeaderHero?.Name?.ToString() ?? "null")}, inSameArmy={sameArmy}, applyWithdrawals={applyWithdrawals}");
+				
+				if (isEnlisted && (sameArmy || (attachedTo != null && attachedTo == lordParty)))
+				{
+					// Isolate expenses - return 0 to prevent expense sharing
+					__result = 0;
+					ModLogger.Info("ExpenseIsolation", "Isolated player expenses from lord's party - returned 0");
+					return false; // Skip original method
 				}
 				
+				ModLogger.Debug("ExpenseIsolation", "Allowed normal expense calculation (not embedded with lord)");
 				return true; // Allow normal expense calculation
 			}
 			catch (Exception ex)

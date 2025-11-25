@@ -14,6 +14,7 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Features.Equipment.UI;
+using Enlisted.Mod.Entry;
 
 namespace Enlisted.Features.Equipment.Behaviors
 {
@@ -276,7 +277,23 @@ namespace Enlisted.Features.Equipment.Behaviors
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_back",
                 "Return to enlisted status",
                 args => true,
-                args => EnlistedMenuBehavior.SafeActivateEnlistedMenu(),
+                args =>
+                {
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        try
+                        {
+                            GameMenu.SwitchToMenu("enlisted_status");
+                            ModLogger.Info("TroopSelection", "Returned from troop selection to enlisted status menu");
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("TroopSelection", $"Failed to switch back to enlisted status: {ex.Message}");
+                            // Fallback to safe activation if direct switch failed
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                        }
+                    });
+                },
                 true, -1);
         }
         

@@ -2,11 +2,11 @@
 <Module>
     <Name value="Enlisted" />
     <Id value="Enlisted" />
-    <Version value="v2.1.0" />
+    <Version value="v0.1.0" />
     <SingleplayerModule value="true" />
     <Official value="false" />
     <DependedModules>
-        <!-- Base game modules -->
+        <!-- Base game modules - no version specified to avoid mismatch warnings -->
         <DependedModule Id="Native" />
         <DependedModule Id="SandBoxCore" />
         <DependedModule Id="Sandbox" />

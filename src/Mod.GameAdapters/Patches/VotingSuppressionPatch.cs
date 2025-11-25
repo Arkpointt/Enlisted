@@ -3,109 +3,35 @@ using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Election;
 using TaleWorlds.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
-	/// <summary>
+		/// <summary>
 	/// Harmony patches that prevent enlisted soldiers from being prompted to vote on kingdom decisions.
 	/// Enlisted soldiers are not vassals and should not participate in kingdom politics.
 	/// </summary>
 	public static class VotingSuppressionPatches
 	{
-		/// <summary>
-		/// Patch to suppress voting prompts when the player is enlisted.
-		/// Targets the method that checks if a clan should be asked to vote on kingdom decisions.
-		/// </summary>
-		[HarmonyPatch]
-		public class KingdomDecisionVotingPatch
+		private static bool ShouldSuppressPrompts()
 		{
-			static MethodBase TargetMethod()
+			try
 			{
-				try
-				{
-					// Try to find the method that determines voting eligibility
-					// This could be in KingdomDecision class or related types
-					var kingdomDecisionType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.Kingdom.KingdomDecision");
-					if (kingdomDecisionType == null)
-					{
-						// Try alternative namespace
-						kingdomDecisionType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.KingdomDecision");
-					}
-
-					if (kingdomDecisionType != null)
-					{
-						// Try common method names that check voting eligibility
-						var method = AccessTools.Method(kingdomDecisionType, "IsSupportOptionApplicableForClan", new[] { typeof(Clan) });
-						if (method != null)
-						{
-							ModLogger.Info("Voting", "Found IsSupportOptionApplicableForClan method for patching");
-							return method;
-						}
-
-						method = AccessTools.Method(kingdomDecisionType, "CanBeAskedToVote", new[] { typeof(Clan) });
-						if (method != null)
-						{
-							ModLogger.Info("Voting", "Found CanBeAskedToVote method for patching");
-							return method;
-						}
-					}
-
-					// Try to find menu methods that trigger voting prompts
-					var menuBehaviorType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.CampaignBehaviors.DefaultKingdomDecisionCampaignBehavior");
-					if (menuBehaviorType != null)
-					{
-						var method = AccessTools.Method(menuBehaviorType, "OnClanChangedKingdom");
-						if (method != null)
-						{
-							ModLogger.Info("Voting", "Found OnClanChangedKingdom method for patching");
-							return method;
-						}
-					}
-
-					ModLogger.Error("Voting", "Could not find kingdom decision voting method to patch");
-					return null;
-				}
-				catch (Exception ex)
-				{
-					ModLogger.Error("Voting", $"Exception finding kingdom decision voting method: {ex.Message}");
-					return null;
-				}
+				var enlistment = EnlistmentBehavior.Instance;
+				return enlistment?.IsEmbeddedWithLord() == true;
 			}
-
-			static bool Prefix(Clan clan, ref bool __result)
+			catch (Exception ex)
 			{
-				__result = true; // Default: allow voting
-
-				try
-				{
-					// Check if the player's clan is being asked to vote
-					if (clan != Clan.PlayerClan)
-					{
-						return true; // Not the player's clan - allow normal behavior
-					}
-
-					// Check if the player is enlisted
-					var enlistment = EnlistmentBehavior.Instance;
-					if (enlistment?.IsEnlisted != true)
-					{
-						return true; // Not enlisted - allow normal voting
-					}
-
-					// Player is enlisted - suppress voting
-					__result = false;
-					ModLogger.Debug("Voting", "Suppressed voting prompt for enlisted player");
-					return false; // Skip original method
-				}
-				catch (Exception ex)
-				{
-					ModLogger.Error("Voting", $"Error in voting suppression patch: {ex.Message}");
-					return true; // Fail open - allow voting on error
-				}
+				ModLogger.Error("Voting", $"Error evaluating suppression state: {ex.Message}");
+				return false;
 			}
 		}
+
+		// Legacy kingdom decision participation patch removed in Bannerlord 1.2.12; participation is now suppressed
+		// via KingdomDecisionParticipationPatch (see separate file).
 
 		/// <summary>
 		/// Patch to suppress the faction join menu that appears when joining a kingdom while enlisted.
@@ -173,16 +99,25 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			{
 				try
 				{
-					// Check if the player is enlisted
-					var enlistment = EnlistmentBehavior.Instance;
-					if (enlistment?.IsEnlisted != true)
+					if (!ShouldSuppressPrompts())
 					{
-						return true; // Not enlisted - allow all menus
+						return true; // Not enlisted or not attached/with army - allow menus
 					}
 
-					// Suppress kingdom decision menus for enlisted soldiers
+					// Suppress kingdom decision menus for enlisted soldiers who are embedded with their lord
 					if (!string.IsNullOrEmpty(menuId))
 					{
+						// Suppress loot menu for low-tier enlisted soldiers
+						if (menuId == "encounter_loot")
+						{
+							var enlistment = EnlistmentBehavior.Instance;
+							if (enlistment?.IsEnlisted == true && enlistment.EnlistmentTier < 4)
+							{
+								ModLogger.Debug("LootRestriction", $"Blocked loot menu for enlisted tier {enlistment.EnlistmentTier}");
+								return false;
+							}
+						}
+
 						// Common kingdom decision menu IDs
 						if (menuId.Contains("kingdom_decision") || 
 						    menuId.Contains("kingdom_policy") ||
@@ -292,18 +227,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
 						return true; // Not the player's clan - allow normal behavior
 					}
 
-					// Check if the player is enlisted
-					var enlistment = EnlistmentBehavior.Instance;
-					if (enlistment?.IsEnlisted != true)
+					if (!ShouldSuppressPrompts())
 					{
-						return true; // Not enlisted - allow normal behavior
+						return true;
 					}
 
-					// Player is enlisted and joining a kingdom - suppress join kingdom scene notification
-					// This prevents the cutscene/menu that appears when joining a kingdom
 					string kingdomName = newKingdom?.Name?.ToString() ?? "kingdom";
-					ModLogger.Info("Voting", $"Suppressed join kingdom scene notification for enlisted player joining {kingdomName}");
-					return false; // Skip original method to prevent scene notification
+					ModLogger.Info("Voting", $"Suppressed join kingdom scene notification for embedded enlisted player joining {kingdomName}");
+					return false;
 				}
 				catch (Exception ex)
 				{
@@ -324,21 +255,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			{
 				try
 				{
-					// Check if the player is enlisted
-					var enlistment = EnlistmentBehavior.Instance;
-					if (enlistment?.IsEnlisted != true)
+					if (!ShouldSuppressPrompts())
 					{
-						return true; // Not enlisted - allow all notifications
+						return true;
 					}
 
-					// Check if this is a KingdomDecisionMapNotification
 					if (informationData != null)
 					{
 						var notificationType = informationData.GetType();
 						if (notificationType.Name == "KingdomDecisionMapNotification" || 
 						    notificationType.FullName?.Contains("KingdomDecisionMapNotification") == true)
 						{
-							ModLogger.Debug("Voting", "Suppressed kingdom decision map notification for enlisted player");
+							ModLogger.Debug("Voting", "Suppressed kingdom decision map notification for embedded enlisted player");
 							return false; // Prevent notification from being added
 						}
 					}

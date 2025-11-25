@@ -172,13 +172,17 @@
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\BattleLeavePreventionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\NoHorseSiegePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VotingSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\LootRestrictionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\KingdomDecisionParticipationPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml">
@@ -188,6 +192,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="ModuleData\Enlisted\duties_system.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ModuleData\Enlisted\progression_config.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -205,6 +212,7 @@
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\" />
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="ModuleData\Enlisted\duties_system.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Enlisted\progression_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\discovery.log" Lines="[Init] Precreated by build" Overwrite="false" />

@@ -15,11 +15,11 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Real-time monitoring of lord and army status
 
 **Outputs:**
-- Player party hidden from map (`IsActive = false`)
+- Player party hidden from map (`IsActive = false`, Nameplate hidden)
 - Player follows enlisted lord's movements  
 - Daily wage payments and XP progression
 - Participation in lord's battles and army activities
-- Safe handling of service interruption (lord death, army defeat)
+- Safe handling of service interruption (lord death, army defeat, capture)
 
 ## Behavior
 
@@ -27,12 +27,12 @@ Provide the foundation for military service - join a lord's forces, follow them 
 1. Talk to lord → Express interest in military service
 2. Lord evaluates player (relationship, faction status)
 3. Player confirms → Immediate enlistment with safety measures
-4. Player party becomes invisible to encounter system
+4. Player party becomes invisible (Nameplate removed via Patch) and inactive (`IsActive = false`)
 5. Begin following lord and receiving military benefits
 
 **Daily Service:**
 - Follow enlisted lord's army movements
-- Participate in battles when lord fights
+- Participate in battles when lord fights (Direct join, bypassing "Help or Leave")
 - Receive daily wages based on tier and performance
 - Earn XP through military activities and time in service
 
@@ -44,8 +44,9 @@ Provide the foundation for military service - join a lord's forces, follow them 
 ## Technical Implementation
 
 **Files:**
-- `EnlistmentBehavior.cs` - Core enlistment logic and state management
+- `EnlistmentBehavior.cs` - Core enlistment logic, state management, and battle handling
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
+- `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 
 **Key Mechanisms:**
 ```csharp
@@ -68,6 +69,7 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 - Graceful service termination on lord death/capture  
 - Army disbandment detection and handling
 - Settlement/battle state awareness
+- **Grace Period Window**: After defeat we rely on the native capture flow, then grant a short ignore window so the player can interact with NPCs safely.
 
 ## Edge Cases
 
@@ -83,9 +85,14 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 - Maintain player safety during chaotic situations
 
 **Lord Captured/Imprisoned:**
-- Temporary service suspension while lord imprisoned
-- Resume service if lord escapes/released
+- Service suspended, player enters "Desertion Grace Period" (14 days)
+- Resume service if lord escapes/released or join another lord in same faction
 - Retirement option if imprisonment extends too long
+
+**Player Captured (Defeat):**
+- Loss is resolved through the vanilla Attack/Surrender menu; once captured we defer teardown until the encounter closes.
+- Enlistment enters a 14-day grace period instead of immediate discharge.
+- If captivity lasts more than 3 in-game days, the mod forces `EndCaptivityAction.ApplyByEscape` so the player can use the grace period.
 
 **Save/Load During Service:**
 - Enlistment state persists correctly
@@ -100,13 +107,15 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 ## Acceptance Criteria
 
 - ✅ Can enlist with any lord that accepts player
-- ✅ Player party safely hidden from encounter system during service
+- ✅ Player party safely hidden from encounter system during service (UI Nameplate hidden)
 - ✅ Daily wage payments and XP progression work correctly
 - ✅ Lord death/capture handled gracefully without crashes
 - ✅ Army disbandment detected and handled appropriately  
 - ✅ Service state persists through save/load cycles
 - ✅ Emergency retirement works when lord becomes unavailable
 - ✅ No pathfinding crashes or encounter system conflicts
+- ✅ **Battle Defeat**: Native capture completes without duplicating roster entries; grace period starts afterward.
+- ✅ **Battle Joining**: Correct "Encounter" menu appears, not "Help or Leave".
 
 ## Debugging
 
@@ -119,6 +128,7 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 **Log Categories:**
 - "Enlistment" - Core service state and lord tracking
 - "EncounterGuard" - Encounter state management
+- "Battle" - Battle participation and capture logic
 - Look for daily/tick processing in main enlisted log
 
 **Testing:**
@@ -126,3 +136,4 @@ CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
 - Kill enlisted lord in console, verify graceful retirement  
 - Save during service, reload, verify service resumes
 - Try encounters while enlisted (should not trigger)
+- **Defeat Test**: Join battle, lose intentionally, verify capture and grace period start.

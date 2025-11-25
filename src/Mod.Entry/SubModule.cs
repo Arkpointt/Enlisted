@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
@@ -27,7 +28,19 @@ namespace Enlisted.Mod.Entry
 	/// </summary>
 	public static class NextFrameDispatcher
 	{
-		private static readonly Queue<Action> _nextFrame = new();
+		private sealed class DeferredAction
+		{
+			public DeferredAction(Action action, bool requireNoEncounter)
+			{
+				Action = action;
+				RequireNoEncounter = requireNoEncounter;
+			}
+
+			public Action Action { get; }
+			public bool RequireNoEncounter { get; }
+		}
+
+		private static readonly Queue<DeferredAction> _nextFrame = new();
 		
 		/// <summary>
 		/// Queues an action to execute on the next game frame tick instead of immediately.
@@ -36,27 +49,50 @@ namespace Enlisted.Mod.Entry
 		/// the game's internal systems during state transitions.
 		/// </summary>
 		/// <param name="action">The action to execute on the next frame. Null actions are ignored.</param>
-		public static void RunNextFrame(Action action)
+		/// <param name="requireNoEncounter">
+		/// When true, the action will be deferred until no player encounter is active.
+		/// This allows callers to delay sensitive transitions (like menu activation) until
+		/// the encounter lifecycle has fully completed.
+		/// </param>
+		public static void RunNextFrame(Action action, bool requireNoEncounter = false)
 		{
 			if (action != null)
 			{
-				_nextFrame.Enqueue(action);
+				_nextFrame.Enqueue(new DeferredAction(action, requireNoEncounter));
 			}
 		}
 		
 		/// <summary>
-		/// Executes all queued deferred actions, processing them in order.
+		/// Executes queued deferred actions, processing them in FIFO order.
 		/// Called automatically by the Harmony patch on Campaign.Tick() after the native tick completes.
-		/// Actions are processed one at a time, with errors isolated so a single failure doesn't prevent
-		/// subsequent actions from executing.
+		/// Actions that request "no encounter" will be re-queued until PlayerEncounter.Current is null.
 		/// </summary>
 		public static void ProcessNextFrame()
 		{
-			while (_nextFrame.Count > 0)
+			if (_nextFrame.Count == 0)
 			{
+				return;
+			}
+
+			var itemsToProcess = _nextFrame.Count;
+			while (itemsToProcess-- > 0 && _nextFrame.Count > 0)
+			{
+				var deferred = _nextFrame.Dequeue();
+				if (deferred?.Action == null)
+				{
+					continue;
+				}
+
+				if (deferred.RequireNoEncounter && PlayerEncounter.Current != null)
+				{
+					// Re-queue until the encounter fully finishes
+					_nextFrame.Enqueue(deferred);
+					continue;
+				}
+
 				try
 				{
-					_nextFrame.Dequeue()?.Invoke();
+					deferred.Action();
 				}
 				catch (Exception ex)
 				{
@@ -98,10 +134,26 @@ namespace Enlisted.Mod.Entry
 				ModLogger.Initialize();
 				ModLogger.Info("Bootstrap", "SubModule loading");
 
-				// Create Harmony instance with unique identifier to avoid conflicts with other mods
+				// Create Harmony instance with a unique identifier to avoid patch collisions
 				// PatchAll() automatically discovers and applies all [HarmonyPatch] attributes in the assembly
 				_harmony = new Harmony("com.enlisted.mod");
-				_harmony.PatchAll();
+				
+				try
+				{
+					_harmony.PatchAll();
+				}
+				catch (Exception ex)
+				{
+					ModLogger.Error("Bootstrap", $"Harmony PatchAll failed: {ex.Message}\n{ex.StackTrace}");
+				}
+				
+				// Log all patched methods for debugging
+				var patchedMethods = _harmony.GetPatchedMethods();
+				foreach (var method in patchedMethods)
+				{
+					ModLogger.Info("Bootstrap", $"Patched method: {method.DeclaringType?.Name}.{method.Name}");
+				}
+				
 				ModLogger.Info("Bootstrap", "Harmony patched");
 			}
 			catch (Exception ex)
@@ -127,7 +179,7 @@ namespace Enlisted.Mod.Entry
 				ModLogger.Info("Bootstrap", "Game start");
 				
 				// Load mod settings from JSON configuration file in ModuleData folder
-				// Settings control logging verbosity, encounter suppression, and other mod behaviors
+				// Settings control logging verbosity, encounter suppression, and feature toggles
 				_settings = ModSettings.LoadFromModule();
 				ModConfig.Settings = _settings;
 
@@ -208,19 +260,6 @@ namespace Enlisted.Mod.Entry
 		/// </summary>
 		static void Postfix()
 		{
-			// If the player is currently in an encounter (paying tribute, being attacked, etc.),
-			// the game's encounter exit sequence is updating character positions and animations.
-			// The RGL skeleton system requires a positive time delta for these updates. If we trigger
-			// menu transitions or state changes during this critical update phase, we can create
-			// a zero-delta-time situation that causes assertion failures in the rendering system.
-			// We skip processing during encounters and let the native system finish the encounter exit.
-			// Deferred actions will be processed on the next frame after the encounter fully completes.
-			if (PlayerEncounter.Current != null)
-			{
-				return;
-			}
-			
-			// Safe to process deferred actions now - no active encounter means no timing conflicts
 			NextFrameDispatcher.ProcessNextFrame();
 		}
 	}
