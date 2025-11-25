@@ -3,7 +3,7 @@
 `Enlisted` replaces the typical “raise an army on day one” start with a professional military career. You enlist under any AI lord, follow their army, draw wages, and climb through seven ranks before earning an honorable discharge. Everything—from duties to equipment kits—is configuration driven and logged for troubleshooting.
 
 ## 1. Requirements
-- Mount & Blade II: Bannerlord v1.2.x
+- Mount & Blade II: Bannerlord v1.2.12.77991
 - Bannerlord.Harmony (required dependency)
 - Windows with .NET Framework 4.7.2 (for building)
 
