@@ -222,14 +222,29 @@ namespace Enlisted.Mod.Core.Logging
                 foreach (var method in ourMethods)
                 {
                     var patchInfo = Harmony.GetPatchInfo(method);
-                    if (patchInfo == null) continue;
+                    if (patchInfo == null)
+                    {
+                        continue;
+                    }
 
                     // Gather all mod owners that touch this method
                     var owners = new HashSet<string>();
-                    foreach (var p in patchInfo.Prefixes) owners.Add(p.owner);
-                    foreach (var p in patchInfo.Postfixes) owners.Add(p.owner);
-                    foreach (var p in patchInfo.Transpilers) owners.Add(p.owner);
-                    foreach (var p in patchInfo.Finalizers) owners.Add(p.owner);
+                    foreach (var p in patchInfo.Prefixes)
+                    {
+                        owners.Add(p.owner);
+                    }
+                    foreach (var p in patchInfo.Postfixes)
+                    {
+                        owners.Add(p.owner);
+                    }
+                    foreach (var p in patchInfo.Transpilers)
+                    {
+                        owners.Add(p.owner);
+                    }
+                    foreach (var p in patchInfo.Finalizers)
+                    {
+                        owners.Add(p.owner);
+                    }
 
                     // If more than just Enlisted patches this method, we have a potential conflict
                     if (owners.Count > 1)
@@ -289,10 +304,16 @@ namespace Enlisted.Mod.Core.Logging
             foreach (var method in ourMethods)
             {
                 var patchInfo = Harmony.GetPatchInfo(method);
-                if (patchInfo == null) continue;
+                if (patchInfo == null)
+                {
+                    continue;
+                }
                 
                 var methodName = $"{method.DeclaringType?.Name}.{method.Name}";
-                if (!conflicts.Any(c => c.method == methodName)) continue;
+                if (!conflicts.Any(c => c.method == methodName))
+                {
+                    continue;
+                }
                 
                 WriteLine($"  {methodName}:");
                 

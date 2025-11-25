@@ -138,9 +138,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" />
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" />
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" />
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -190,18 +191,14 @@
     <Compile Include="src\Mod.GameAdapters\Patches\KingdomDecisionParticipationPatch.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="SubModule.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ModuleData\Enlisted\settings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ModuleData\Enlisted\duties_system.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ModuleData\Enlisted\progression_config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Content Include="SubModule.xml" />
+    <Content Include="ModuleData\Enlisted\settings.json" />
+    <Content Include="ModuleData\Enlisted\duties_system.json" />
+    <Content Include="ModuleData\Enlisted\progression_config.json" />
+    <Content Include="ModuleData\Enlisted\enlisted_config.json" />
+    <Content Include="ModuleData\Enlisted\equipment_kits.json" />
+    <Content Include="ModuleData\Enlisted\equipment_pricing.json" />
+    <Content Include="ModuleData\Enlisted\menu_config.json" />
   </ItemGroup>
   <ItemGroup>
     <!-- Main Documentation -->
@@ -218,7 +215,14 @@
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="ModuleData\Enlisted\duties_system.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="ModuleData\Enlisted\progression_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Enlisted\enlisted_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\discovery.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\api.log" Lines="[Init] Precreated by build" Overwrite="false" />
