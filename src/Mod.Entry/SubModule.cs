@@ -216,10 +216,6 @@ namespace Enlisted.Mod.Entry
 					// which determines formation (Infantry/Cavalry/Archer/Horse Archer) and equipment access
 					campaignStarter.AddBehavior(new TroopSelectionManager());
 					
-					// Combat statistics: tracks kill counts and manages combat reward payouts
-					// Total kills persist across enlistments, rewards paid during daily wage tick
-					campaignStarter.AddBehavior(new Enlisted.Features.Combat.Stats.Behaviors.CombatStatsBehavior());
-					
 					// Equipment management: handles equipment backups and restoration when leaving service,
 					// ensures players get their personal gear back when they end their enlistment
 					campaignStarter.AddBehavior(new EquipmentManager());

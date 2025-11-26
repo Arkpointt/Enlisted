@@ -13,13 +13,11 @@ using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.CampaignSystem.Siege;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
-using TaleWorlds.MountAndBlade;
 using Enlisted.Mod.GameAdapters.Patches;
 using TaleWorlds.Localization;
 using Helpers;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Assignments.Core;
-using Enlisted.Features.Combat.Stats.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -1252,31 +1250,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var dailyXP = 25;
 				AddEnlistmentXP(dailyXP, "Daily Service");
 				
-				// Process kill-based rewards (15 gold + 5 XP per kill)
-				var combatStats = CombatStatsBehavior.Instance;
-				if (combatStats != null)
-				{
-					var (goldReward, xpReward) = combatStats.GetPendingKillRewards();
-					if (goldReward > 0 || xpReward > 0)
-					{
-						// Award gold
-						if (goldReward > 0)
-						{
-							GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, goldReward, false);
-							// Silent success - no logging for normal operation
-						}
-						
-						// Award XP
-						if (xpReward > 0)
-						{
-							AddEnlistmentXP(xpReward, "Combat Kills");
-						}
-						
-						// Clear unrewarded kills after payment
-						combatStats.PayOutKillRewards();
-					}
-				}
-				
 				ModLogger.Debug("DailyService", $"Queued wage payout via clan finance tick: {wage} gold, gained {dailyXP} XP");
 			}
 			catch (Exception ex)
@@ -1575,53 +1548,29 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						{
 							try
 							{
-								// Defensive null checks - army state can change between checks
-								// Check all required references before attempting to join army
-								if (mainParty == null)
-								{
-									ModLogger.Debug("Battle", "Main party is null - skipping automatic join this tick");
-								}
-								else
-								{
-									var targetArmy = lordParty?.Army;
-									if (targetArmy == null)
-									{
-										ModLogger.Debug("Battle", "Lord army reference invalid (null army) - skipping automatic join this tick");
-									}
-									else
-									{
-										var armyLeader = targetArmy.LeaderParty;
-										if (armyLeader == null)
-										{
-											ModLogger.Debug("Battle", "Lord army reference invalid (null leader) - skipping automatic join this tick");
-										}
-										else
-										{
-											// Double-check mainParty is still valid before adding to army
-											if (MobileParty.MainParty == null)
-											{
-												ModLogger.Debug("Battle", "Main party became null during processing - skipping automatic join this tick");
-											}
-											else
-											{
-												targetArmy.AddPartyToMergedParties(mainParty);
-												mainParty.Army = targetArmy;
-												
-												// If the army is currently besieging, align the player's besieger camp so PlayerSiege sees us properly.
-												TrySyncBesiegerCamp(mainParty, lordParty);
-												
-												if (urgentBattleNeed)
-												{
-													ModLogger.Info("Battle", $"URGENT: Joined army for active battle/siege (Army: {targetArmy.LeaderParty?.LeaderHero?.Name})");
-												}
-												else
-												{
-													ModLogger.Debug("Battle", $"Arrived at army - joining merged parties (Dist: {distanceToArmy:F1})");
-												}
-											}
-										}
-									}
-								}
+						var targetArmy = lordParty.Army;
+						var armyLeader = targetArmy?.LeaderParty;
+						if (targetArmy == null || armyLeader == null)
+						{
+							ModLogger.Debug("Battle", "Lord army reference invalid (null leader) - skipping automatic join this tick");
+						}
+						else
+						{
+							targetArmy.AddPartyToMergedParties(mainParty);
+							mainParty.Army = targetArmy;
+							
+							// If the army is currently besieging, align the player's besieger camp so PlayerSiege sees us properly.
+							TrySyncBesiegerCamp(mainParty, lordParty);
+							
+							if (urgentBattleNeed)
+							{
+								ModLogger.Info("Battle", $"URGENT: Joined army for active battle/siege (Army: {targetArmy.LeaderParty?.LeaderHero?.Name})");
+							}
+							else
+							{
+								ModLogger.Debug("Battle", $"Arrived at army - joining merged parties (Dist: {distanceToArmy:F1})");
+							}
+						}
 							}
 							catch (Exception ex)
 							{
@@ -2913,9 +2862,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// The player participates through being part of the lord's army, not as independent party
 				ModLogger.Info("Battle", "Army battle detected, player participates through army membership");
 				
-				// Start kill tracking for this battle
-				StartKillTracking();
-				
 				// Ensure player is positioned with army for battle camera/interface
 				// REMOVED: main.Position2D = lordParty.Position2D; - Handled by AttachedTo
 			}
@@ -2946,9 +2892,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						ModLogger.Debug("Battle", "Temporary army created for battle participation");
 					}
 				}
-				
-				// Start kill tracking for this battle
-				StartKillTracking();
 				
 				// Keep player positioned with lord
 				// REMOVED: main.Position2D = lordParty.Position2D; - Handled by AttachedTo
@@ -3215,10 +3158,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 
 			LogPartyState("OnMapEventStarted");
-			
-			// Start kill tracking when battle begins
-			// Defer to next frame to ensure Mission.Current is available
-			NextFrameDispatcher.RunNextFrame(() => StartKillTracking());
 			}
 			catch (Exception ex)
 			{
@@ -3427,46 +3366,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 		}
 		
-		/// <summary>
-		/// Starts kill tracking for the current battle.
-		/// Adds CombatStatsMissionBehavior to the mission if it doesn't exist and starts tracking.
-		/// </summary>
-		private void StartKillTracking()
-		{
-			try
-			{
-				// Mission.Current is only available during the actual 3D battle mission
-				if (Mission.Current == null)
-				{
-					// Mission not started yet - will be called again when mission begins
-					return;
-				}
-
-				// Check if player is enlisted before tracking
-				if (!IsEnlisted)
-				{
-					return;
-				}
-
-				// Get or create the mission behavior
-				var statsBehavior = Mission.Current.GetMissionBehavior<CombatStatsMissionBehavior>();
-				if (statsBehavior == null)
-				{
-					// Create and add the behavior
-					statsBehavior = new CombatStatsMissionBehavior();
-					Mission.Current.AddMissionBehavior(statsBehavior);
-					// Silent success - no logging for normal operation
-				}
-
-				// Start tracking kills for this battle
-				statsBehavior.StartTracking();
-			}
-			catch (Exception ex)
-			{
-				ModLogger.Error("CombatStats", $"Error starting kill tracking: {ex.Message}");
-			}
-		}
-
 		/// <summary>
 		/// Siege watchdog to prepare party for vanilla encounter creation when siege begins.
 		/// This is the missing piece - making party encounter-eligible so vanilla siege menus can appear.

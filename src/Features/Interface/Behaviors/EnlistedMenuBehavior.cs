@@ -19,7 +19,6 @@ using TaleWorlds.Localization;
 using static TaleWorlds.CampaignSystem.GameMenus.GameMenu;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
-using Enlisted.Features.Combat.Stats.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 
@@ -896,21 +895,6 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Wage and experience information
                     var dailyWage = CalculateCurrentDailyWage();
                     statusContent += $"Wage : {dailyWage}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
-                    
-                    // Head Ransoms (kill count)
-                    try
-                    {
-                        var combatStats = CombatStatsBehavior.Instance;
-                        if (combatStats != null)
-                        {
-                            var totalKills = combatStats.TotalKills;
-                            statusContent += $"Head Ransoms : {totalKills}\n";
-                        }
-                    }
-                    catch
-                    {
-                        // Combat stats not available - skip display
-                    }
                     
                     // Experience tracking
                     statusContent += $"Current Experience : {enlistment.EnlistmentXP}\n";
