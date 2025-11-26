@@ -110,6 +110,12 @@ namespace Enlisted.Mod.Entry
 		/// <returns>True if the game is busy with encounters or battles, false otherwise.</returns>
 		public static bool Busy()
 		{
+			// Skip during character creation when campaign isn't initialized
+			if (Campaign.Current == null || MobileParty.MainParty == null)
+			{
+				return false;
+			}
+			
 			// The MapEvent property exists on Party, not directly on MobileParty
 			// This is the correct API structure for checking battle state
 			return PlayerEncounter.Current != null || MobileParty.MainParty?.Party.MapEvent != null;
@@ -144,7 +150,47 @@ namespace Enlisted.Mod.Entry
 				
 				try
 				{
-					_harmony.PatchAll();
+					// HidePartyNamePlatePatch uses manual patching to avoid type resolution issues
+					// Skip it in auto-patching, apply manually after
+					var manualPatches = new HashSet<string>
+					{
+						"HidePartyNamePlatePatch",  // Uses manual patching via ApplyManualPatches()
+					};
+					
+					var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+					var patchTypes = assembly.GetTypes()
+						.Where(t => t.GetCustomAttributes(typeof(HarmonyPatch), true).Length > 0 ||
+						           t.GetNestedTypes().Any(n => n.GetCustomAttributes(typeof(HarmonyPatch), true).Length > 0));
+					
+					int enabledCount = 0;
+					int skippedCount = 0;
+					
+					foreach (var type in patchTypes)
+					{
+						// Skip patches that use manual patching
+						if (manualPatches.Contains(type.Name))
+						{
+							ModLogger.Info("Bootstrap", $"Skipping {type.Name} (uses manual patching)");
+							skippedCount++;
+							continue;
+						}
+						
+						try
+						{
+							_harmony.CreateClassProcessor(type).Patch();
+							enabledCount++;
+						}
+						catch (Exception patchEx)
+						{
+							ModLogger.Error("Bootstrap", $"Failed to patch {type.Name}: {patchEx.Message}");
+						}
+					}
+					
+					// HidePartyNamePlatePatch will be applied later when campaign starts
+					// Applying during SubModule load causes issues with character creation
+					ModLogger.Info("Bootstrap", "HidePartyNamePlatePatch deferred until campaign start");
+					
+					ModLogger.Info("Bootstrap", $"Harmony patches: {enabledCount} auto, {skippedCount} manual");
 				}
 				catch (Exception ex)
 				{
@@ -186,10 +232,16 @@ namespace Enlisted.Mod.Entry
 			{
 				ModLogger.Info("Bootstrap", "Game start");
 				
+				// Log startup diagnostics once per session for troubleshooting
+				Mod.Core.Logging.SessionDiagnostics.LogStartupDiagnostics();
+				
 				// Load mod settings from JSON configuration file in ModuleData folder
 				// Settings control logging verbosity, encounter suppression, and feature toggles
 				_settings = ModSettings.LoadFromModule();
 				ModConfig.Settings = _settings;
+				
+				// Log configuration values for verification
+				Mod.Core.Logging.SessionDiagnostics.LogConfigurationValues();
 
 				if (gameStarterObject is CampaignGameStarter campaignStarter)
 				{
@@ -260,14 +312,31 @@ namespace Enlisted.Mod.Entry
 	[HarmonyPatch(typeof(Campaign), "Tick")]
 	public static class NextFrameDispatcherPatch
 	{
+		private static bool _deferredPatchesApplied = false;
+		
 		/// <summary>
 		/// Called after Campaign.Tick() completes each frame.
 		/// Processes any actions that were deferred to avoid timing conflicts during game state transitions.
-		/// Does not process deferred actions if a player encounter is currently active, as the encounter
-		/// exit sequence involves time-sensitive skeleton updates that must complete uninterrupted.
+		/// Also applies deferred patches on first tick (after character creation is complete).
 		/// </summary>
 		static void Postfix()
 		{
+			// Apply deferred patches on first campaign tick (after char creation)
+			if (!_deferredPatchesApplied)
+			{
+				_deferredPatchesApplied = true;
+				try
+				{
+					var harmony = new Harmony("com.enlisted.mod.deferred");
+					Mod.GameAdapters.Patches.HidePartyNamePlatePatch.ApplyManualPatches(harmony);
+					ModLogger.Info("Bootstrap", "Deferred HidePartyNamePlatePatch applied on first campaign tick");
+				}
+				catch (Exception ex)
+				{
+					ModLogger.Error("Bootstrap", $"Failed to apply deferred patches: {ex.Message}");
+				}
+			}
+			
 			NextFrameDispatcher.ProcessNextFrame();
 		}
 	}

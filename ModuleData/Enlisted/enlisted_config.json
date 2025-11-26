@@ -3,8 +3,8 @@
   "enabled": true,
   "system_info": {
     "config_version": "1.0",
-    "compatible_game_versions": ["1.2.12", "1.2.13"],
-    "mod_version": "1.0.0"
+    "compatible_game_versions": ["1.3.5"],
+    "mod_version": "0.3.0"
   },
   "enlistment": {
     "tier_requirements": [0, 500, 2000, 5000, 10000, 18000],
@@ -35,6 +35,10 @@
       "faction_reputation_bonus": 25
     }
   },
+  "gameplay": {
+    "reserve_troop_threshold": 100,
+    "desertion_grace_period_days": 14
+  },
   "formations": {
     "infantry": {
       "display_names": {
@@ -43,7 +47,9 @@
         "khuzait": "Spearman",
         "vlandia": "Man-at-Arms",
         "sturgia": "Warrior",
-        "battania": "Clansman"
+        "battania": "Clansman",
+        "nord": "Huskarl",
+        "darshi": "Desert Warrior"
       },
       "equipment_focus": "melee_heavy_armor",
       "passive_bonuses": {
@@ -58,7 +64,9 @@
         "khuzait": "Hunter",
         "vlandia": "Crossbowman",
         "sturgia": "Bowman",
-        "battania": "Skirmisher"
+        "battania": "Skirmisher",
+        "nord": "Nordic Bowman",
+        "darshi": "Desert Archer"
       },
       "equipment_focus": "ranged_light_armor",
       "passive_bonuses": {
@@ -73,7 +81,9 @@
         "khuzait": "Lancer",
         "vlandia": "Knight",
         "sturgia": "Druzhnik",
-        "battania": "Mounted Warrior"
+        "battania": "Mounted Warrior",
+        "nord": "Nordic Rider",
+        "darshi": "Darshi Horseman"
       },
       "equipment_focus": "melee_horse_heavy_armor",
       "passive_bonuses": {
@@ -88,7 +98,9 @@
         "khuzait": "Horse Archer", 
         "vlandia": "Mounted Crossbowman",
         "sturgia": "Mounted Archer",
-        "battania": "Mounted Skirmisher"  
+        "battania": "Mounted Skirmisher",
+        "nord": "Nordic Mounted Archer",
+        "darshi": "Darshi Horse Archer"
       },
       "equipment_focus": "ranged_horse_light_armor",
       "passive_bonuses": {
@@ -112,7 +124,9 @@
       "khuzait": 0.8,
       "vlandia": 1.2,
       "sturgia": 0.9,
-      "battania": 0.8
+      "battania": 0.8,
+      "nord": 0.9,
+      "darshi": 0.9
     },
     "elite_multiplier": 1.5,
     "personal_equipment_restore_cost": 0
@@ -124,5 +138,16 @@
     "field_medic_healing_percentage": 1.0,
     "minimum_heal_amount": 20,
     "treatment_time_hours": 1
+  },
+  "finance": {
+    "show_in_clan_tooltip": true,
+    "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
+    "wage_formula": {
+      "base_wage": 10,
+      "level_multiplier": 1,
+      "tier_multiplier": 5,
+      "xp_divisor": 200,
+      "army_bonus_multiplier": 1.2
+    }
   }
 }

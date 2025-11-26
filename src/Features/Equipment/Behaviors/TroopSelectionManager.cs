@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Overlay;
 using TaleWorlds.Core;
+using TaleWorlds.Core.ImageIdentifiers; // 1.3.4 API: ImageIdentifier moved here
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
@@ -100,7 +100,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     var hint = BuildTroopLoadoutHint(troop);
                     var name = troop.Name?.ToString() ?? "Unknown";
-                    var portrait = new ImageIdentifier(CharacterCode.CreateFrom(troop));
+                    // 1.3.4 API: ImageIdentifier is now abstract, use CharacterImageIdentifier
+                    var portrait = new CharacterImageIdentifier(CharacterCode.CreateFrom(troop));
                     options.Add(new InquiryElement(troop, name, portrait, true, hint));
                 }
 
@@ -267,10 +268,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void AddTroopSelectionMenus(CampaignGameStarter starter)
         {
             // Main troop selection menu
+            // 1.3.4+: Use Encounter overlay for proper background
             starter.AddGameMenu("enlisted_troop_selection",
                 "Military Advancement\n{TROOP_SELECTION_TEXT}",
                 OnTroopSelectionInit,
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,
                 GameMenu.MenuFlags.None,
                 null);
                 
@@ -347,6 +349,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // 1.3.4+: Set proper menu background to avoid assertion failure
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                var enlistment = EnlistmentBehavior.Instance;
+                
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
                 if (!_promotionPending || _availableTroops.Count == 0)
                 {
                     // Initialize menu context

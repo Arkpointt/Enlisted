@@ -22,6 +22,8 @@ This directory contains **7 JSON configuration files** that control all aspects 
 - Wage calculation formulas and multipliers
 - Formation definitions with culture-specific names
 - Retirement requirements (365 days minimum)
+- **Finance settings** for tooltip display and wage formula configuration
+- **Gameplay settings** for combat reserves and desertion mechanics
 
 ### **⚔️ Military Service Configuration**
 
@@ -49,7 +51,8 @@ This directory contains **7 JSON configuration files** that control all aspects 
 **Purpose**: Realistic military equipment economics  
 **Contains**:
 - Formation-based pricing multipliers (Infantry 1.0× → Horse Archer 2.5×)
-- Culture economic modifiers (Khuzait 0.8× → Vlandia 1.2×)
+- Culture economic modifiers for all 8 cultures (Khuzait 0.8× → Vlandia 1.2×)
+- Nord and Darshi cultures (added in Bannerlord 1.3.4)
 - Elite troop cost overrides for special units
 - Medical treatment settings (5-day/2-day cooldowns)
 
@@ -124,6 +127,33 @@ var duties = LoadConfig<DutiesConfig>(settings.DutiesConfig); // Dynamic loading
   "special_abilities": ["reduced_medical_cooldown", "enhanced_healing"]
 }
 ```
+
+### **Finance Configuration** (enlisted_config.json)
+```json
+"finance": {
+  "show_in_clan_tooltip": true,
+  "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
+  "wage_formula": {
+    "base_wage": 10,
+    "level_multiplier": 1,
+    "tier_multiplier": 5,
+    "xp_divisor": 200,
+    "army_bonus_multiplier": 1.2
+  }
+}
+```
+- `show_in_clan_tooltip`: Display wages in the native Daily Gold Change tooltip
+- `wage_formula`: Customize calculation: `(base + level×level_mult + tier×tier_mult + xp/xp_div) × army_bonus`
+
+### **Gameplay Configuration** (enlisted_config.json)
+```json
+"gameplay": {
+  "reserve_troop_threshold": 100,
+  "desertion_grace_period_days": 14
+}
+```
+- `reserve_troop_threshold`: Minimum troops required to enable "Wait in Reserve" option (valid: 20-500)
+- `desertion_grace_period_days`: Days player has to find new lord after discharge (valid: 1-90)
 
 ### **Menu Localization** (menu_config.json)
 ```json
@@ -212,32 +242,21 @@ private static void ValidateConfiguration()
     // Officer roles valid
     var validOfficerRoles = new[] {"Engineer", "Scout", "Quartermaster", "Surgeon", null};
     
-    // Culture IDs verified (empire, aserai, sturgia, vlandia, khuzait, battania)
-    var validCultures = new[] {"empire", "aserai", "sturgia", "vlandia", "khuzait", "battania"};
+    // Culture IDs verified (empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi)
+    // Nord and Darshi added in Bannerlord 1.3.4 - they use Sturgian and Aserai troops respectively
+    var validCultures = new[] {"empire", "aserai", "sturgia", "vlandia", "khuzait", "battania", "nord", "darshi"};
     
     // Pricing multipliers positive (no negatives)
     // Wage multipliers in valid range (0.0-10.0)
 }
 ```
 
-## 📊 **Configuration Fixes Applied**
+## 📊 **Version Info**
 
-### **✅ Critical Issues Fixed**
-1. **Schema Versioning**: Added to ALL 7 configuration files for future migration support
-2. **File Precedence**: Removed duplicate `duties_config_enhanced.json`, specified `duties_system.json` in settings
-3. **Safe Loading**: Replaced unverified `ModuleHelper` API with Blueprint-compliant relative paths
-4. **Localization Format**: Restored verified `{=key}fallback` format from decompile analysis
-5. **Validation Logic**: Added comprehensive configuration validation with error handling
-
-### **✅ APIs Verified from Decompile**
-- **Localization System**: `{=key}fallback` format confirmed in `MBTextManager.cs`
-- **Custom Healing Model**: `PartyHealingModel` interface confirmed in `ComponentInterfaces`
-- **Formation Detection**: `IsRanged && IsMounted` logic verified and tested
-
-### **❌ Unverified APIs Removed**
-- **ModuleHelper**: Not found in decompiled code - replaced with safe paths
-- **Complex Localization**: Simplified to verified format only
+**Mod Version**: 0.3.0  
+**Compatible with**: Bannerlord 1.3.5  
+**Supported Cultures**: empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
 
 ---
 
-**This configuration system provides complete control over the military service experience while maintaining game balance and mod compatibility.**
+This configuration system provides complete control over the military service experience while maintaining game balance and mod compatibility.

@@ -5,12 +5,12 @@ using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Overlay;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 using TaleWorlds.Library;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
+using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using Enlisted.Mod.GameAdapters.Patches;
@@ -86,6 +86,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
             // Add a custom "wait in reserve" menu for battles
             // This menu shows while the player is waiting in reserve and allows them to rejoin
+            // 1.3.4+: Use Encounter overlay for proper background
             starter.AddWaitGameMenu("enlisted_battle_wait", 
                 "Waiting in Reserve: {BATTLE_STATUS}",
                 OnBattleWaitInit,
@@ -93,7 +94,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 null,
                 OnBattleWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption,
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,  // 1.3.4+: Use Encounter overlay for proper background
                 0f,
                 GameMenu.MenuFlags.None,
                 null);
@@ -157,10 +158,11 @@ namespace Enlisted.Features.Combat.Behaviors
             var lordSide = isOnAttackerSide ? battle.AttackerSide : battle.DefenderSide;
             var troopCount = lordSide?.TroopCount ?? 0;
 
-            if (troopCount < 100)
+            var threshold = EnlistedConfig.LoadGameplayConfig().ReserveTroopThreshold;
+            if (troopCount < threshold)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("You can't wait in reserve if there are less than 100 healthy troops in the army");
+                args.Tooltip = new TextObject($"You can't wait in reserve if there are less than {threshold} healthy troops in the army");
                 return false;
             }
 
@@ -218,16 +220,25 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             try
             {
+                // 1.3.4+: Set proper menu background - MUST be set before anything else
+                // to avoid "temp background" assertion failure
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                var lord = EnlistmentBehavior.Instance?.CurrentLord;
+                
+                if (lord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = lord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (lord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = lord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
                 // StartWait() automatically enables time progression for WaitMenuHideProgressAndHoursOption menus
                 // Time will continue at normal speed, and player can pause/unpause with spacebar
                 args.MenuContext.GameMenu.StartWait();
-                
-                // Set background from lord's culture
-                var lord = EnlistmentBehavior.Instance?.CurrentLord;
-                if (lord?.MapFaction?.Culture?.EncounterBackgroundMesh != null)
-                {
-                    args.MenuContext.SetBackgroundMeshName(lord.MapFaction.Culture.EncounterBackgroundMesh);
-                }
                 
                 ModLogger.Info("Battle", "Started wait in reserve - time will continue at normal speed (can pause with spacebar)");
             }
@@ -357,7 +368,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 else
                 {
                     // Check troop count to see if we should auto-rejoin the battle
-                    // When troop count drops below 100, there aren't enough troops for a reserve
+                    // When troop count drops below threshold, there aren't enough troops for a reserve
                     // and the player should automatically rejoin to help
                     var battle = lordParty.MapEvent;
                     
@@ -366,8 +377,9 @@ namespace Enlisted.Features.Combat.Behaviors
                     bool isOnAttackerSide = ContainsParty(battle.PartiesOnSide(BattleSideEnum.Attacker), lordParty);
                     var lordSide = isOnAttackerSide ? battle.AttackerSide : battle.DefenderSide;
                     var troopCount = lordSide?.TroopCount ?? 0;
-
-                    if (troopCount < 100)
+                    
+                    var threshold = EnlistedConfig.LoadGameplayConfig().ReserveTroopThreshold;
+                    if (troopCount < threshold)
                     {
                         // Not enough troops left for a reserve - automatically rejoin the battle
                         // Defer the menu transition to the next frame to avoid timing conflicts

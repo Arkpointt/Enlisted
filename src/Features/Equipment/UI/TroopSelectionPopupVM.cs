@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TaleWorlds.Core.ViewModelCollection;
+using TaleWorlds.Core.ViewModelCollection.ImageIdentifiers;
 using TaleWorlds.Library;
 using TaleWorlds.Core;
 using TaleWorlds.CampaignSystem;
@@ -87,13 +88,13 @@ namespace Enlisted.Features.Equipment.UI
 			HintText = hint;
 			Payload = payload;
 			
-			// Add character portrait using current TaleWorlds pattern
+			// Add character portrait using TaleWorlds 1.3.4 API pattern
 			try
 			{
 				var troop = payload as CharacterObject;
 				if (troop != null)
 				{
-					Visual = new ImageIdentifierVM(SandBox.ViewModelCollection.SandBoxUIHelper.GetCharacterCode(troop, false));
+					Visual = new CharacterImageIdentifierVM(SandBox.ViewModelCollection.SandBoxUIHelper.GetCharacterCode(troop, false));
 				}
 			}
 			catch

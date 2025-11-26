@@ -6,14 +6,14 @@
     <SingleplayerModule value="true" />
     <Official value="false" />
     <DependedModules>
-        <!-- Base game modules - pinned to official v1.2.12.77991 build -->
-        <DependedModule Id="Native" DependentVersion="v1.2.12.77991" />
-        <DependedModule Id="SandBoxCore" DependentVersion="v1.2.12.77991" />
-        <DependedModule Id="Sandbox" DependentVersion="v1.2.12.77991" />
-        <DependedModule Id="StoryMode" Optional="true" DependentVersion="v1.2.12.77991" />
-        <DependedModule Id="CustomBattle" Optional="true" DependentVersion="v1.2.12.77991" />
+        <!-- Base game modules - compatible with v1.3.5+ -->
+        <DependedModule Id="Native" DependentVersion="v1.3.5" />
+        <DependedModule Id="SandBoxCore" DependentVersion="v1.3.5" />
+        <DependedModule Id="Sandbox" DependentVersion="v1.3.5" />
+        <DependedModule Id="StoryMode" Optional="true" DependentVersion="v1.3.5" />
+        <DependedModule Id="CustomBattle" Optional="true" DependentVersion="v1.3.5" />
         <!-- Ensure Harmony is loaded before this mod -->
-        <DependedModule Id="Bannerlord.Harmony" DependentVersion="v2.3.6.220" />
+        <DependedModule Id="Bannerlord.Harmony" DependentVersion="v2.3.6" />
     </DependedModules>
     <SubModules>
         <SubModule>

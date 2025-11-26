@@ -3,7 +3,7 @@
 `Enlisted` replaces the typical “raise an army on day one” start with a professional military career. You enlist under any AI lord, follow their army, draw wages, and climb through seven ranks before earning an honorable discharge. Everything—from duties to equipment kits—is configuration driven and logged for troubleshooting.
 
 ## 1. Requirements
-- Mount & Blade II: Bannerlord v1.2.12.77991
+- Mount & Blade II: Bannerlord v1.3.5 or later
 - Bannerlord.Harmony (required dependency)
 - Windows with .NET Framework 4.7.2 (for building)
 
@@ -86,6 +86,6 @@ MIT License. See `LICENSE` for details.
 ## 10. Supporting Documentation
 - `docs/BLUEPRINT.md` – architecture standards and Harmony policy.
 - `docs/Features/*.md` – detailed specs for enlistment, duties, troop selection, temporary leave, etc.
-- `docs/discovered/*.md` – API references verified against Bannerlord v1.2.12.
+- `docs/discovered/*.md` – API references verified against Bannerlord v1.3.5.
 
 Enlisted delivers a structured, professional soldiering experience inside Bannerlord. Start as a recruit, follow your commander, earn your promotions, and return home as a decorated veteran once the 252-day tour is complete.

@@ -5,6 +5,7 @@ using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -24,8 +25,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Skip during character creation - use safe guard to prevent crashes
+                if (!CampaignSafetyGuard.IsCampaignReady)
+                {
+                    return true; // Allow normal skill assignment
+                }
+                
                 // Only suppress for the main hero when enlisted
-                if (__instance?.Hero != Hero.MainHero)
+                var mainHero = CampaignSafetyGuard.SafeMainHero;
+                if (__instance?.Hero != mainHero || mainHero == null)
                 {
                     return true; // Not the player - allow normal behavior
                 }

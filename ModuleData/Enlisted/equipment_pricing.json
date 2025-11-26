@@ -16,7 +16,9 @@
       "khuzait": 0.8,
       "vlandia": 1.2,
       "sturgia": 0.9,
-      "battania": 0.8
+      "battania": 0.8,
+      "nord": 0.9,
+      "darshi": 0.9
     }
   },
   "troop_overrides": {

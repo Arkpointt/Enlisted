@@ -5,7 +5,6 @@ using System.Text;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Overlay;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Roster;
 using TaleWorlds.Core;
@@ -86,18 +85,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void AddQuartermasterMenus(CampaignGameStarter starter)
         {
             // Main quartermaster equipment menu
+            // 1.3.4+: Use Encounter overlay for proper background
             starter.AddGameMenu("quartermaster_equipment",
                 "Army Quartermaster\n{QUARTERMASTER_TEXT}",
                 OnQuartermasterEquipmentInit,
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,
                 GameMenu.MenuFlags.None,
                 null);
                 
             // Equipment variant selection submenu
+            // 1.3.4+: Use Encounter overlay for proper background
             starter.AddGameMenu("quartermaster_variants",
                 "Equipment Variants\n{VARIANT_TEXT}",
                 OnQuartermasterVariantsInit,
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,
                 GameMenu.MenuFlags.None,
                 null);
                 
@@ -467,8 +468,22 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Validate enlisted state first
+                // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
+                // Validate enlisted state
                 if (!enlistment?.IsEnlisted == true)
                 {
                     MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", 
@@ -802,6 +817,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // 1.3.4+: Set proper menu background to avoid assertion failure
+                var enlistment = EnlistmentBehavior.Instance;
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
                 if (_selectedSlot == EquipmentIndex.None || !_availableVariants.ContainsKey(_selectedSlot))
                 {
                     MBTextManager.SetTextVariable("VARIANT_TEXT", "No equipment variants available for the selected slot.");
@@ -1509,10 +1539,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void AddSupplyManagementMenu(CampaignGameStarter starter)
         {
             // Supply management menu for quartermaster officers
+            // 1.3.4+: Use Encounter overlay for proper background
             starter.AddGameMenu("quartermaster_supplies",
                 "Supply Management\n{SUPPLY_TEXT}",
                 OnSupplyManagementInit,
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,
                 GameMenu.MenuFlags.None,
                 null);
                 
@@ -1551,6 +1582,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // 1.3.4+: Set proper menu background to avoid assertion failure
+                var enlistment = EnlistmentBehavior.Instance;
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
                 var sb = new StringBuilder();
                 var party = MobileParty.MainParty;
                 var duties = EnlistedDutiesBehavior.Instance;
@@ -1559,8 +1605,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine("---------------------------------------");
                 sb.AppendLine();
                 
-                // Current supply status
-                sb.AppendLine($"Current Inventory: {party.ItemRoster.TotalWeight:F1}/{party.InventoryCapacity:F1} capacity");
+                // Current supply status (1.3.4 API: TotalWeight moved from ItemRoster to MobileParty.TotalWeightCarried)
+                sb.AppendLine($"Current Inventory: {party.TotalWeightCarried:F1}/{party.InventoryCapacity:F1} capacity");
                 sb.AppendLine($"Food Supplies: {party.Food:F1} (consumption: {party.FoodChange:F2}/day)");
                 sb.AppendLine($"Morale: {party.Morale:F1}/100");
                 sb.AppendLine();
@@ -1611,7 +1657,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         private bool IsInventoryManagementAvailable(MenuCallbackArgs args)
         {
             var party = MobileParty.MainParty;
-            return party?.ItemRoster.TotalWeight > party.InventoryCapacity * 0.8f; // Over 80% capacity
+            // 1.3.4 API: TotalWeight moved from ItemRoster to MobileParty.TotalWeightCarried
+            return party?.TotalWeightCarried > party.InventoryCapacity * 0.8f; // Over 80% capacity
         }
         
         private void OnInventoryManagementSelected(MenuCallbackArgs args)

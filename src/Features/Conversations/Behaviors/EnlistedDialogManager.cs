@@ -241,18 +241,29 @@ namespace Enlisted.Features.Conversations.Behaviors
             
             var enlistment = EnlistmentBehavior.Instance;
             
-            // CRITICAL: Prevent enlistment dialog if already enlisted, on leave, or in grace period
+            // CRITICAL: Prevent enlistment dialog if already enlisted (and not on leave)
             // Player must be fully discharged before they can enlist with another lord/kingdom
-            if (enlistment?.IsEnlisted == true)
+            if (enlistment?.IsEnlisted == true && enlistment?.IsOnLeave != true)
             {
-                ModLogger.Debug("DialogManager", $"Dialog hidden - player is already enlisted with {enlistment.CurrentLord?.Name}");
+                ModLogger.Debug("DialogManager", $"Dialog hidden - player is actively enlisted with {enlistment.CurrentLord?.Name}");
                 return false;
             }
             
+            // When on leave, ALLOW dialog only if talking to the same lord (to return from leave)
             if (enlistment?.IsOnLeave == true)
             {
-                ModLogger.Debug("DialogManager", $"Dialog hidden - player is on temporary leave from {enlistment.CurrentLord?.Name}");
-                return false;
+                if (enlistment.CurrentLord == lord)
+                {
+                    // Allow - player can return from leave with this lord
+                    ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, talking to their lord {lord.Name}");
+                    return true;
+                }
+                else
+                {
+                    // Block - player can't enlist with different lord while on leave
+                    ModLogger.Debug("DialogManager", $"Dialog hidden - player is on leave from {enlistment.CurrentLord?.Name}, talking to different lord");
+                    return false;
+                }
             }
             
             if (enlistment?.IsInDesertionGracePeriod == true)

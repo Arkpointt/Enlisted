@@ -61,7 +61,7 @@ Allows enlisted players to request temporary leave from military service, restor
   - Added lord response and return consequence handler
   - Added `CanReturnFromLeave()` condition checking
 
-### APIs Used (Verified against 1.2.12 decompile)
+### APIs Used (Verified against 1.3.4 decompile)
 - `PlayerEncounter.Current`, `PlayerEncounter.Finish(true)`, `PlayerEncounter.InsideSettlement`, `PlayerEncounter.LeaveSettlement()`
 - `MemberRoster.AddToCounts(character, number, false, 0, 0, true, -1)` for troop transfers
 - `CampaignMapConversation.OpenConversation()` for lord conversations

@@ -4,6 +4,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -30,6 +31,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Skip during character creation - use safe guard to prevent crashes
+                if (!CampaignSafetyGuard.IsCampaignReady)
+                {
+                    return true;
+                }
+                
                 // Guard: Verify all required objects exist
                 if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
                     __instance == null || 
@@ -45,7 +52,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 
                 // Substitute player as effective engineer
-                __result = Hero.MainHero;
+                __result = CampaignSafetyGuard.SafeMainHero;
                 return false; // Skip original method - player's Engineering skill now affects party
             }
             catch (Exception ex)
@@ -69,6 +76,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Skip during character creation - use safe guard to prevent crashes
+                if (!CampaignSafetyGuard.IsCampaignReady)
+                {
+                    return true;
+                }
+                
                 if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
                     __instance == null || 
                     EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo != __instance)
@@ -81,7 +94,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true; // Use original behavior
                 }
                 
-                __result = Hero.MainHero;
+                __result = CampaignSafetyGuard.SafeMainHero;
                 return false; // Player's Scouting skill drives party speed/detection
             }
             catch (Exception ex)
@@ -105,6 +118,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Skip during character creation - use safe guard to prevent crashes
+                if (!CampaignSafetyGuard.IsCampaignReady)
+                {
+                    return true;
+                }
+                
                 if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
                     __instance == null || 
                     EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo != __instance)
@@ -117,7 +136,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true; // Use original behavior
                 }
                 
-                __result = Hero.MainHero;
+                __result = CampaignSafetyGuard.SafeMainHero;
                 return false; // Player's Steward skill drives carry capacity/efficiency
             }
             catch (Exception ex)
@@ -141,6 +160,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Skip during character creation - use safe guard to prevent crashes
+                if (!CampaignSafetyGuard.IsCampaignReady)
+                {
+                    return true;
+                }
+                
                 if (EnlistmentBehavior.Instance?.IsEnlisted != true || 
                     __instance == null || 
                     EnlistmentBehavior.Instance.CurrentLord?.PartyBelongedTo != __instance)
@@ -153,7 +178,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true; // Use original behavior
                 }
                 
-                __result = Hero.MainHero;
+                __result = CampaignSafetyGuard.SafeMainHero;
                 return false; // Player's Medicine skill drives party healing
             }
             catch (Exception ex)

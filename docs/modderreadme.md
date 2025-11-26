@@ -72,7 +72,7 @@ Each session prints a GUID for correlation. Enable debug logging via `ModConfig.
 | `docs/BLUEPRINT.md` | Architecture standards, Harmony policy, build notes. |
 | `docs/Features/*.md` | Specs for enlistment, encounter safety, duties, menu interface, town access, etc. |
 | `docs/ModuleData/Enlisted/README.md` | Configuration schema and examples. |
-| `docs/discovered/*` | API references verified against the official v1.2.12 documentation. |
+| `docs/discovered/*` | API references verified against the official v1.3.5 documentation. |
 
 Read the relevant feature spec before modifying behavior; update the spec when the implementation changes.
 

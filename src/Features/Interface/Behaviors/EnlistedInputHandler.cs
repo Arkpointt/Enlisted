@@ -8,6 +8,7 @@ using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using Enlisted.Features.Enlistment.Behaviors;
+using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Features.Interface.Behaviors
@@ -211,22 +212,12 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Get rank name for tier.
+        /// Get rank name for tier from configuration.
+        /// Uses tier_names from enlisted_config.json via progression config.
         /// </summary>
         private string GetRankName(int tier)
         {
-            var rankNames = new Dictionary<int, string>
-            {
-                {1, "Recruit"},
-                {2, "Private"}, 
-                {3, "Corporal"},
-                {4, "Sergeant"},
-                {5, "Staff Sergeant"},
-                {6, "Master Sergeant"},
-                {7, "Veteran"}
-            };
-            
-            return rankNames.ContainsKey(tier) ? rankNames[tier] : $"Tier {tier}";
+            return EnlistedConfig.GetTierName(tier);
         }
 
         /// <summary>

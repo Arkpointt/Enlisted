@@ -90,13 +90,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
 						ChangeKingdomAction.ApplyByLeaveKingdom(clan, false);
 						ModLogger.Info("Discharge", "Restored player clan to independent status without penalties");
 					}
-					else if (currentKingdom != targetKingdom && targetKingdom != null)
-					{
-						// Join a different kingdom
-						ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, false);
-						string kingdomName = targetKingdom.Name?.ToString() ?? "kingdom";
-						ModLogger.Info("Discharge", $"Restored player clan to {kingdomName} without penalties");
-					}
+				else if (currentKingdom != targetKingdom && targetKingdom != null)
+				{
+					// Join a different kingdom (1.3.4 API: added CampaignTime parameter)
+					ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, default(CampaignTime), false);
+					string kingdomName = targetKingdom.Name?.ToString() ?? "kingdom";
+					ModLogger.Info("Discharge", $"Restored player clan to {kingdomName} without penalties");
+				}
 					// If kingdoms match, no action needed
 				}
 				finally

@@ -16,6 +16,8 @@ namespace Enlisted.Features.Assignments.Core
     {
         private static DutiesSystemConfig _cachedDutiesConfig;
         private static ProgressionConfig _cachedProgressionConfig;
+        private static FinanceConfig _cachedFinanceConfig;
+        private static GameplayConfig _cachedGameplayConfig;
         
         /// <summary>
         /// Load duties system configuration with comprehensive error handling and schema validation.
@@ -292,12 +294,209 @@ namespace Enlisted.Features.Assignments.Core
         }
         
         /// <summary>
+        /// Get the display name for a specific tier from progression config.
+        /// </summary>
+        public static string GetTierName(int tier)
+        {
+            var config = LoadProgressionConfig();
+            var requirement = config?.TierProgression?.Requirements?.Find(r => r.Tier == tier);
+            return requirement?.Name ?? $"Tier {tier}";
+        }
+        
+        /// <summary>
         /// Clear cached configuration. Used for testing or config reloading.
         /// </summary>
         public static void ClearCache()
         {
             _cachedDutiesConfig = null;
             _cachedProgressionConfig = null;
+            _cachedFinanceConfig = null;
+            _cachedGameplayConfig = null;
         }
+        
+        /// <summary>
+        /// Load finance configuration from enlisted_config.json.
+        /// Returns cached config or loads from file on first call.
+        /// </summary>
+        public static FinanceConfig LoadFinanceConfig()
+        {
+            if (_cachedFinanceConfig != null)
+                return _cachedFinanceConfig;
+                
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    return CreateDefaultFinanceConfig();
+                }
+                
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+                
+                if (fullConfig?.Finance == null)
+                {
+                    ModLogger.Info("Config", "No finance section in enlisted_config.json, using defaults");
+                    return CreateDefaultFinanceConfig();
+                }
+                
+                _cachedFinanceConfig = fullConfig.Finance;
+                ModLogger.Info("Config", "Finance config loaded successfully");
+                return _cachedFinanceConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", "Error loading finance config", ex);
+                return CreateDefaultFinanceConfig();
+            }
+        }
+        
+        /// <summary>
+        /// Create default finance configuration when JSON loading fails.
+        /// </summary>
+        private static FinanceConfig CreateDefaultFinanceConfig()
+        {
+            return new FinanceConfig
+            {
+                ShowInClanTooltip = true,
+                TooltipLabel = "{=enlisted_wage_income}Enlistment Wages",
+                WageFormula = new WageFormulaConfig
+                {
+                    BaseWage = 10,
+                    LevelMultiplier = 1,
+                    TierMultiplier = 5,
+                    XpDivisor = 200,
+                    ArmyBonusMultiplier = 1.2f
+                }
+            };
+        }
+        
+        /// <summary>
+        /// Load gameplay configuration from enlisted_config.json.
+        /// Returns cached config or loads from file on first call.
+        /// </summary>
+        public static GameplayConfig LoadGameplayConfig()
+        {
+            if (_cachedGameplayConfig != null)
+                return _cachedGameplayConfig;
+                
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    return CreateDefaultGameplayConfig();
+                }
+                
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+                
+                if (fullConfig?.Gameplay == null)
+                {
+                    ModLogger.Info("Config", "No gameplay section in enlisted_config.json, using defaults");
+                    return CreateDefaultGameplayConfig();
+                }
+                
+                // Validate reserve threshold is within safe bounds
+                var config = fullConfig.Gameplay;
+                if (config.ReserveTroopThreshold < 20)
+                    config.ReserveTroopThreshold = 20;
+                else if (config.ReserveTroopThreshold > 500)
+                    config.ReserveTroopThreshold = 500;
+                    
+                // Validate desertion grace period is within safe bounds
+                if (config.DesertionGracePeriodDays < 1)
+                    config.DesertionGracePeriodDays = 1;
+                else if (config.DesertionGracePeriodDays > 90)
+                    config.DesertionGracePeriodDays = 90;
+                
+                _cachedGameplayConfig = config;
+                ModLogger.Info("Config", "Gameplay config loaded successfully");
+                return _cachedGameplayConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", "Error loading gameplay config", ex);
+                return CreateDefaultGameplayConfig();
+            }
+        }
+        
+        /// <summary>
+        /// Create default gameplay configuration when JSON loading fails.
+        /// </summary>
+        private static GameplayConfig CreateDefaultGameplayConfig()
+        {
+            return new GameplayConfig
+            {
+                ReserveTroopThreshold = 100,
+                DesertionGracePeriodDays = 14
+            };
+        }
+    }
+    
+    /// <summary>
+    /// Root config object for enlisted_config.json parsing.
+    /// </summary>
+    public class EnlistedFullConfig
+    {
+        [JsonProperty("finance")]
+        public FinanceConfig Finance { get; set; }
+        
+        [JsonProperty("gameplay")]
+        public GameplayConfig Gameplay { get; set; }
+    }
+    
+    /// <summary>
+    /// Finance configuration for wage calculation and display.
+    /// Loaded from enlisted_config.json finance section.
+    /// </summary>
+    public class FinanceConfig
+    {
+        [JsonProperty("show_in_clan_tooltip")]
+        public bool ShowInClanTooltip { get; set; } = true;
+        
+        [JsonProperty("tooltip_label")]
+        public string TooltipLabel { get; set; } = "{=enlisted_wage_income}Enlistment Wages";
+        
+        [JsonProperty("wage_formula")]
+        public WageFormulaConfig WageFormula { get; set; } = new WageFormulaConfig();
+    }
+    
+    /// <summary>
+    /// Wage calculation formula configuration.
+    /// Formula: (base + level*levelMult + tier*tierMult + xp/xpDiv) * armyBonus
+    /// </summary>
+    public class WageFormulaConfig
+    {
+        [JsonProperty("base_wage")]
+        public int BaseWage { get; set; } = 10;
+        
+        [JsonProperty("level_multiplier")]
+        public int LevelMultiplier { get; set; } = 1;
+        
+        [JsonProperty("tier_multiplier")]
+        public int TierMultiplier { get; set; } = 5;
+        
+        [JsonProperty("xp_divisor")]
+        public int XpDivisor { get; set; } = 200;
+        
+        [JsonProperty("army_bonus_multiplier")]
+        public float ArmyBonusMultiplier { get; set; } = 1.2f;
+    }
+    
+    /// <summary>
+    /// Gameplay tuning configuration for combat and service mechanics.
+    /// </summary>
+    public class GameplayConfig
+    {
+        [JsonProperty("reserve_troop_threshold")]
+        public int ReserveTroopThreshold { get; set; } = 100;
+        
+        [JsonProperty("desertion_grace_period_days")]
+        public int DesertionGracePeriodDays { get; set; } = 14;
     }
 }

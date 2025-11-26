@@ -16,6 +16,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
     {
         private static bool ShouldSuppressParticipation()
         {
+            // Skip during character creation when campaign isn't initialized
+            if (Campaign.Current == null)
+            {
+                return false;
+            }
+            
             var enlistment = EnlistmentBehavior.Instance;
             return enlistment?.IsEmbeddedWithLord() == true && enlistment?.IsOnLeave != true;
         }
@@ -39,6 +45,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
             private static void Postfix(ref IEnumerable<Supporter> __result)
             {
                 if (!ShouldSuppressParticipation() || __result == null)
+                {
+                    return;
+                }
+                
+                // Skip during character creation when player clan isn't initialized
+                if (Clan.PlayerClan == null)
                 {
                     return;
                 }

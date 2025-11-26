@@ -8,7 +8,7 @@
     "equipment_policy": {
       "_important": "EQUIPMENT REPLACEMENT SYSTEM - Player does NOT accumulate all equipment",
       "promotion_behavior": "Equipment REPLACED with new troop's gear (not added to inventory)",
-      "retirement_benefit": "Player keeps FINAL equipment only (Tier 7 veteran gear)",
+      "retirement_benefit": "Player keeps FINAL equipment only (Tier 6 veteran gear)",
       "rationale": "Realistic military service - turn in old equipment, receive new equipment"
     },
     "promotion_notification": {
@@ -273,6 +273,22 @@
       "horse_prefix": "noble_horse_",
       "tier_names": ["volunteer", "clansman", "trained", "veteran", "hero", "fian", "champion"],
       "_verified_items": ["battania_axe_2_t4", "battania_axe_3_t5", "battania_2haxe_1_t2", "battania_noble_sword_1_t5"]
+    },
+    "nord": {
+      "_note": "Nord culture uses Sturgian troops - added in Bannerlord 1.3.4",
+      "weapon_prefix": "sturgia_",
+      "armor_prefix": "sturgia_",
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["recruit", "warrior", "trained", "veteran", "huscarl", "ulfhednar", "hero"],
+      "_uses_troops_from": "sturgia"
+    },
+    "darshi": {
+      "_note": "Darshi culture uses Aserai troops - added in Bannerlord 1.3.4",
+      "weapon_prefix": "aserai_",
+      "armor_prefix": "aserai_",
+      "horse_prefix": "noble_horse_",
+      "tier_names": ["tribesman", "basic", "warrior", "veteran", "noble", "faris", "elite"],
+      "_uses_troops_from": "aserai"
     }
   },
   "fallback_equipment": {
@@ -317,6 +333,20 @@
       "basic_cavalry": "noble_horse_khamseen",
       "basic_armor": "reinforced_suede_armor",
       "_note": "Verified Battania prefix weapons, shared equipment for armor/horses"
+    },
+    "nord": {
+      "basic_infantry": "sturgia_axe_4_t4",
+      "basic_archer": "reinforced_suede_armor",
+      "basic_cavalry": "noble_horse_khamseen",
+      "basic_armor": "khuzait_civil_coat",
+      "_note": "Nord uses Sturgian equipment - culture added in 1.3.4"
+    },
+    "darshi": {
+      "basic_infantry": "aserai_sword_1_t2",
+      "basic_archer": "desert_robe",
+      "basic_cavalry": "noble_horse_khamseen",
+      "basic_armor": "long_desert_robe",
+      "_note": "Darshi uses Aserai equipment - culture added in 1.3.4"
     }
   },
   "item_validation": {

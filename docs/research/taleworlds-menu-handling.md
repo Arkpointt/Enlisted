@@ -300,7 +300,7 @@ starter.AddGameMenuOption(
 
 ## References
 
-- Official API: https://apidoc.bannerlord.com/v/1.2.12/
+- Official API: https://apidoc.bannerlord.com/v/1.3.4/
 - Decompiled Sources: `C:\Dev\Enlisted\DECOMPILE\`
 - Menu Documentation: `docs/discovered/menus.md`
 - API Discovery: `docs/discovered/api.json`

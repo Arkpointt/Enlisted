@@ -5,7 +5,6 @@ using System.Text;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Overlay;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Conversation;
@@ -13,6 +12,7 @@ using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Siege;
 using TaleWorlds.Core;
+using TaleWorlds.Core.ImageIdentifiers; // 1.3.4 API: ImageIdentifier moved here
 using Enlisted.Mod.GameAdapters.Patches;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -125,11 +125,28 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     // Exit custom menus to allow the native system to show appropriate battle menus
                     // The native system will show army_wait, menu_siege_strategies, or other battle menus
-                    // The menu tick handler will check GetGenericStateMenu() and switch menus accordingly
-                    if (_currentMenuId.StartsWith("enlisted_"))
+                    // CRITICAL: Only exit if we have a valid menu context and it's our custom menu
+                    if (_currentMenuId.StartsWith("enlisted_") && Campaign.Current?.CurrentMenuContext != null)
                     {
-                        ModLogger.Info("Interface", "Battle detected - exiting custom menu for native battle menu");
-                        GameMenu.ExitToLast();
+                        try
+                        {
+                            // Try to let the native encounter system take over
+                            var desiredMenu = Campaign.Current.Models?.EncounterGameMenuModel?.GetGenericStateMenu();
+                            if (!string.IsNullOrEmpty(desiredMenu))
+                            {
+                                ModLogger.Info("Interface", $"Battle detected - switching to native menu '{desiredMenu}'");
+                                GameMenu.SwitchToMenu(desiredMenu);
+                            }
+                            else
+                            {
+                                // No specific menu - just return and let native system push its menu
+                                ModLogger.Info("Interface", "Battle detected - letting native system handle menu (no specific menu)");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Interface", $"Error handling battle menu transition: {ex.Message}");
+                        }
                     }
                     return; // Let the native system handle all battle menus
                 }
@@ -443,6 +460,90 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error("Interface", $"Failed to add emergency siege battle option: {ex.Message}");
             }
+            
+            // Add "Return to camp" options to native town/castle menus for enlisted players
+            AddReturnToCampOptions(starter);
+        }
+        
+        /// <summary>
+        /// Adds "Return to camp" options to native town and castle menus.
+        /// These allow enlisted players to return to the enlisted status menu from settlements.
+        /// </summary>
+        private void AddReturnToCampOptions(CampaignGameStarter starter)
+        {
+            try
+            {
+                // Town menu (inside town)
+                starter.AddGameMenuOption("town", "enlisted_return_to_camp",
+                    "Return to camp",
+                    IsReturnToCampAvailable,
+                    OnReturnToCampSelected,
+                    true, 100); // Leave type, high priority to show near bottom
+                    
+                // Town outside menu
+                starter.AddGameMenuOption("town_outside", "enlisted_return_to_camp",
+                    "Return to camp",
+                    IsReturnToCampAvailable,
+                    OnReturnToCampSelected,
+                    true, 100);
+                    
+                // Castle outside menu
+                starter.AddGameMenuOption("castle_outside", "enlisted_return_to_camp",
+                    "Return to camp",
+                    IsReturnToCampAvailable,
+                    OnReturnToCampSelected,
+                    true, 100);
+                    
+                ModLogger.Info("Interface", "Added 'Return to camp' options to town/castle menus");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Failed to add Return to camp options: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Checks if the "Return to camp" option should be available.
+        /// Only shows when player is enlisted.
+        /// </summary>
+        private bool IsReturnToCampAvailable(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+                return false;
+                
+            args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+            return true;
+        }
+        
+        /// <summary>
+        /// Handles returning to the enlisted camp from a settlement.
+        /// </summary>
+        private void OnReturnToCampSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                // Leave the settlement encounter
+                if (PlayerEncounter.Current != null)
+                {
+                    if (PlayerEncounter.InsideSettlement)
+                    {
+                        PlayerEncounter.LeaveSettlement();
+                    }
+                    PlayerEncounter.Finish(true);
+                }
+                
+                // Return to enlisted status menu
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    SafeActivateEnlistedMenu();
+                    ModLogger.Info("Interface", "Returned to camp from settlement");
+                });
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error returning to camp: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -534,6 +635,7 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             // Create a wait menu with time controls but hides progress boxes
             // This provides the wait menu functionality (time controls) without showing progress bars
+            // In 1.3.4+, menus need a proper background - use "encounter" as related menu
             starter.AddWaitGameMenu("enlisted_status", 
                 "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",
                 new OnInitDelegate(OnEnlistedStatusInit),
@@ -541,10 +643,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 null, // No consequence for wait menu
                 new OnTickDelegate(OnEnlistedStatusTick), // Tick handler for real-time updates
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // Wait menu template that hides progress boxes
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,  // 1.3.4+: Use Encounter overlay for proper background
                 0f, // No wait time - immediate display
                 GameMenu.MenuFlags.None,
-                null);
+                "encounter");  // 1.3.4+: Inherit background from "encounter" menu
 
             // Main menu options for enlisted status menu
             
@@ -634,6 +736,15 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 if (!(settlement?.IsTown == true || settlement?.IsCastle == true))
                     return;
+                    
+                // CRITICAL: If lord is still in this settlement, don't schedule enlisted menu return
+                // With escort AI, the player will be pulled right back in - let them stay in native town menu
+                var lordPartyCheck = enlistment.CurrentLord?.PartyBelongedTo;
+                if (lordPartyCheck?.CurrentSettlement == settlement)
+                {
+                    ModLogger.Debug("Interface", "Lord still in settlement - skipping enlisted menu return, using native town menu");
+                    return;
+                }
 
                 ModLogger.Info("Interface", $"Left {settlement.Name} - scheduling return to enlisted menu");
 
@@ -694,6 +805,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private void AddDutySelectionMenu(CampaignGameStarter starter)
         {
             // Use same wait menu format as main enlisted menu for consistency
+            // 1.3.4+: Use Encounter overlay for proper background
             starter.AddWaitGameMenu("enlisted_duty_selection", 
                 "Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}",
                 new OnInitDelegate(OnDutySelectionInit),
@@ -701,7 +813,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 null, // No consequence for wait menu
                 new OnTickDelegate(OnDutySelectionTick),
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // Same as main menu
-                GameOverlays.MenuOverlayType.None,
+                GameMenu.MenuOverlayType.Encounter,  // 1.3.4+: Use Encounter overlay for proper background
                 0f, // No wait time - immediate display
                 GameMenu.MenuFlags.None,
                 null);
@@ -816,6 +928,22 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // 1.3.4+: Set proper menu background to avoid assertion failure
+                // Use the lord's kingdom culture background, or fallback to generic encounter mesh
+                var enlistment = EnlistmentBehavior.Instance;
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
                 // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
                 
@@ -1231,7 +1359,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
             var army = lordParty.Army;
             var leaderName = army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "Unknown";
-            var totalStrength = army.TotalStrength;
+            // 1.3.4 API: TotalStrength replaced with EstimatedStrength
+            var totalStrength = army.EstimatedStrength;
             var cohesion = (int)(army.Cohesion * 100);
 
             return $"Following [{army.Name}] (Leader: {leaderName})\n" +
@@ -1507,7 +1636,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
 
                     // Check if party is close enough for conversation (same position or very close)
-                    var distance = mainParty.Position2D.Distance(party.Position2D);
+                    // 1.3.4 API: Position2D is now GetPosition2D property
+                    var distance = mainParty.GetPosition2D.Distance(party.GetPosition2D);
                     if (distance > 2.0f) // Reasonable conversation distance
                     {
                         continue;
@@ -1546,7 +1676,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 foreach (var lord in lords)
                 {
                     var name = lord.Name?.ToString() ?? "Unknown Lord";
-                    var portrait = new ImageIdentifier(CharacterCode.CreateFrom(lord.CharacterObject));
+                    // 1.3.4 API: ImageIdentifier is now abstract, use CharacterImageIdentifier
+                    var portrait = new CharacterImageIdentifier(CharacterCode.CreateFrom(lord.CharacterObject));
                     var description = $"{lord.Clan?.Name?.ToString() ?? "Unknown Clan"}\n{lord.MapFaction?.Name?.ToString() ?? "Unknown Faction"}";
                     
                     options.Add(new InquiryElement(lord, name, portrait, true, description));
@@ -1964,6 +2095,21 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // 1.3.4+: Set proper menu background to avoid assertion failure
+                var enlistment = EnlistmentBehavior.Instance;
+                string backgroundMesh = "encounter_looter"; // Safe fallback
+                
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+                
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+                
                 // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
                 
@@ -1972,7 +2118,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
                 
                 // Initialize dynamic menu text on load
-                var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted == true)
                 {
                     SetDynamicMenuText(enlistment);
