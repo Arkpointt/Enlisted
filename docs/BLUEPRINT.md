@@ -49,6 +49,9 @@ _harmony.PatchAll();
 - EnlistedMenuBehavior - Professional menu interface with "Return to Camp" options
 - EnlistedEncounterBehavior - Battle participation and encounter management
 
+**Mission Behaviors** (registered via `SubModule.OnMissionBehaviorInitialize`):
+- EnlistedKillTrackerBehavior - Tracks player kills during combat missions for XP and faction records
+
 **Debug Logs** (`<BannerlordInstall>\Modules\Enlisted\Debugging\`):
 - `enlisted.log` - Main mod activity and errors
 - `conflicts.log` - Mod compatibility diagnostics

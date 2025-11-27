@@ -17,10 +17,13 @@ Provide the foundation for military service - join a lord's forces, follow them 
 **Outputs:**
 - Player party hidden from map (`IsVisible = false`, Nameplate hidden)
 - Player follows enlisted lord's movements  
-- Daily wage payments and XP progression (+25 XP daily, +25 XP per battle)
+- Daily wage payments with detailed tooltip breakdown
+- XP progression: +25 daily, +25 per battle, +1 per kill
 - Participation in lord's battles and army activities
+- Kill tracking per faction (persists across re-enlistments)
 - Safe handling of service interruption (lord death, army defeat, capture)
 - Veteran retirement system with per-faction tracking
+- Complete financial isolation from lord's clan finances
 
 ## Behavior
 
@@ -34,9 +37,18 @@ Provide the foundation for military service - join a lord's forces, follow them 
 **Daily Service:**
 - Follow enlisted lord's army movements
 - Participate in battles when lord fights (Direct join, bypassing "Help or Leave")
-- Receive daily wages based on tier and performance
-- Earn +25 XP daily for service, +25 XP per battle participation
+- Receive daily wages (detailed breakdown shown in clan finance tooltip)
+- Earn XP: +25 daily, +25 per battle, +1 per enemy killed
+- Kills tracked per faction and term (persists on re-enlistment)
 - Check retirement eligibility and term completion
+
+**Wage Breakdown (shown in tooltip):**
+- Soldier's Pay: Base wage from config (default 10)
+- Combat Experience: +1 per player level
+- Rank Pay: +5 per tier
+- Service Seniority: +1 per 200 XP accumulated
+- Army Campaign Bonus: +20% when lord is in army
+- Duty Assignment: Varies by active duty (0.8x to 1.6x)
 
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
@@ -65,6 +77,14 @@ Provide the foundation for military service - join a lord's forces, follow them 
 **Per-Faction Tracking:**
 - `FactionVeteranRecord` class stores: FirstTermCompleted, PreservedTier, TotalKills, CooldownEnds, CurrentTermEnd, IsInRenewalTerm
 - Each faction tracked separately - starting fresh with new factions
+- TotalKills accumulated across all service terms with that faction
+- Kill count preserved on re-enlistment after cooldown
+
+**Kill Tracking:**
+- `EnlistedKillTrackerBehavior` tracks kills during missions
+- Registered via `SubModule.OnMissionBehaviorInitialize`
+- Kills added to `_currentTermKills` after each battle
+- On retirement, term kills transfer to faction's TotalKills
 
 ## Technical Implementation
 
@@ -73,6 +93,8 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 - `EnlistedDialogManager.cs` - Retirement and re-enlistment dialogs
+- `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
+- `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 
 **Key Mechanisms:**
 ```csharp
@@ -81,10 +103,10 @@ private Hero _enlistedLord;
 private int _enlistmentTier;
 private int _enlistmentXP;
 private CampaignTime _enlistmentDate;
+private int _currentTermKills;  // Kills this service term
 
-// Veteran retirement system
+// Veteran retirement system (per-faction)
 private Dictionary<string, FactionVeteranRecord> _veteranRecords;
-private CampaignTime _currentTermEndDate;
 
 // Real-time monitoring (runs every frame)
 CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
@@ -92,8 +114,15 @@ CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
 // Daily progression (runs once per game day)  
 CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
 
-// Battle XP
-AwardBattleXP(participated); // +25 XP per battle
+// Battle end - awards XP and tracks kills
+CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnPlayerBattleEnd);
+
+// Battle XP (in OnPlayerBattleEnd)
+AwardBattleXP(kills);  // +25 participation + kills*1 XP
+_currentTermKills += kills;  // Track for faction record
+
+// Wage breakdown (in ClanFinanceEnlistmentIncomePatch)
+// Shows: Base Pay, Level Bonus, Tier Bonus, Service Seniority, Army Bonus, Duty Bonus
 ```
 
 **Safety Systems:**
@@ -144,14 +173,16 @@ AwardBattleXP(participated); // +25 XP per battle
 
 - ✅ Can enlist with any lord that accepts player
 - ✅ Player party safely hidden from map during service (UI Nameplate hidden)
-- ✅ Daily wage payments (+10 base + tier bonuses)
+- ✅ Daily wage payments with detailed tooltip breakdown
 - ✅ Daily XP progression (+25 per day)
-- ✅ Battle XP (+25 per battle)
+- ✅ Battle XP (+25 per battle, +1 per kill)
+- ✅ Kill tracking per faction (persists across terms)
+- ✅ Clan finances completely isolated (no lord income/expenses shown)
 - ✅ Lord death/capture triggers 14-day grace period (not immediate discharge)
 - ✅ Army disbandment detected and grace period started
 - ✅ Service state persists through save/load cycles
 - ✅ Veteran retirement at 252 days with full benefits
-- ✅ Re-enlistment with preserved tier
+- ✅ Re-enlistment with preserved tier and kill count
 - ✅ Per-faction veteran tracking
 - ✅ No pathfinding crashes or encounter system conflicts
 

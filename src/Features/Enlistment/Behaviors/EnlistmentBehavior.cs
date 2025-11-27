@@ -22,12 +22,47 @@ using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Mod.Core;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
+	/// <summary>
+	/// Detailed breakdown of daily wage components for tooltip display.
+	/// Each field represents a separate line item in the finance tooltip.
+	/// </summary>
+	public class WageBreakdown
+	{
+		/// <summary>Base soldier's pay (from config base_wage).</summary>
+		public int BasePay { get; set; }
+		
+		/// <summary>Bonus from player's character level.</summary>
+		public int LevelBonus { get; set; }
+		
+		/// <summary>Bonus from military rank/tier.</summary>
+		public int TierBonus { get; set; }
+		
+		/// <summary>Bonus from accumulated service time (XP-based seniority).</summary>
+		public int ServiceBonus { get; set; }
+		
+		/// <summary>Bonus for serving in an active army campaign.</summary>
+		public int ArmyBonus { get; set; }
+		
+		/// <summary>Bonus from active duty assignment.</summary>
+		public int DutyBonus { get; set; }
+		
+		/// <summary>Whether currently in an army.</summary>
+		public bool IsInArmy { get; set; }
+		
+		/// <summary>Name of active duty for display (null if none).</summary>
+		public string ActiveDuty { get; set; }
+		
+		/// <summary>Final total wage after all bonuses and caps.</summary>
+		public int Total { get; set; }
+	}
+	
 	/// <summary>
 	/// Core behavior managing the player's enlistment in a lord's military service.
 	/// 
@@ -1560,6 +1595,129 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			wage = CalculateDailyWage();
 			return wage > 0;
+		}
+		
+		/// <summary>
+		/// Gets a detailed breakdown of daily wage components for tooltip display.
+		/// Returns individual amounts for base pay, tier bonus, army bonus, duty bonus, etc.
+		/// </summary>
+		internal WageBreakdown GetWageBreakdown()
+		{
+			var breakdown = new WageBreakdown();
+			
+			if (!IsEnlisted || _enlistedLord?.IsAlive != true)
+			{
+				return breakdown;
+			}
+			
+			try
+			{
+				var financeConfig = EnlistedConfig.LoadFinanceConfig();
+				var formula = financeConfig.WageFormula;
+				
+				// Base soldier's pay
+				breakdown.BasePay = formula.BaseWage;
+				
+				// Level bonus (experience as a fighter)
+				breakdown.LevelBonus = Hero.MainHero.Level * formula.LevelMultiplier;
+				
+				// Rank/tier bonus (military rank pay increase)
+				breakdown.TierBonus = _enlistmentTier * formula.TierMultiplier;
+				
+				// Service bonus (XP accumulated = seniority)
+				var xpDivisor = formula.XpDivisor > 0 ? formula.XpDivisor : 200;
+				breakdown.ServiceBonus = _enlistmentXP / xpDivisor;
+				
+				// Calculate subtotal before multipliers
+				int subtotal = breakdown.BasePay + breakdown.LevelBonus + breakdown.TierBonus + breakdown.ServiceBonus;
+				
+				// Army campaign bonus (+20% when in active army)
+				var lordParty = _enlistedLord?.PartyBelongedTo;
+				bool inArmy = lordParty?.Army != null;
+				if (inArmy)
+				{
+					breakdown.ArmyBonus = (int)(subtotal * (formula.ArmyBonusMultiplier - 1.0f));
+					breakdown.IsInArmy = true;
+				}
+				
+				// Duty assignment bonus
+				var dutiesMultiplier = GetDutiesWageMultiplier();
+				if (dutiesMultiplier > 1.0f)
+				{
+					int afterArmy = subtotal + breakdown.ArmyBonus;
+					breakdown.DutyBonus = (int)(afterArmy * (dutiesMultiplier - 1.0f));
+					breakdown.ActiveDuty = GetActiveDutyName();
+				}
+				
+				// Calculate total (with cap)
+				breakdown.Total = Math.Min(
+					breakdown.BasePay + breakdown.LevelBonus + breakdown.TierBonus + 
+					breakdown.ServiceBonus + breakdown.ArmyBonus + breakdown.DutyBonus, 
+					150);
+				breakdown.Total = Math.Max(breakdown.Total, 24); // Minimum wage
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Wage", $"Failed to calculate wage breakdown: {ex.Message}");
+				breakdown.BasePay = 24;
+				breakdown.Total = 24;
+			}
+			
+			return breakdown;
+		}
+		
+		/// <summary>
+		/// Gets the display name of the current active duty for wage tooltip.
+		/// </summary>
+		private string GetActiveDutyName()
+		{
+			try
+			{
+				var dutiesBehavior = EnlistedDutiesBehavior.Instance;
+				if (dutiesBehavior?.IsInitialized != true)
+				{
+					return null;
+				}
+				
+				// Get the primary active duty name
+				var activeDuties = dutiesBehavior.ActiveDuties;
+				if (activeDuties != null && activeDuties.Count > 0)
+				{
+					// Return the first duty that has a wage modifier
+					foreach (var duty in activeDuties)
+					{
+						if (duty != "enlisted") // Skip default duty
+						{
+							return FormatDutyName(duty);
+						}
+					}
+				}
+				
+				return null;
+			}
+			catch
+			{
+				return null;
+			}
+		}
+		
+		/// <summary>
+		/// Formats a duty ID into a display-friendly name.
+		/// </summary>
+		private string FormatDutyName(string dutyId)
+		{
+			if (string.IsNullOrEmpty(dutyId)) return null;
+			
+			// Convert snake_case to Title Case
+			var words = dutyId.Split('_');
+			for (int i = 0; i < words.Length; i++)
+			{
+				if (words[i].Length > 0)
+				{
+					words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLower();
+				}
+			}
+			return string.Join(" ", words);
 		}
 		
 		/// <summary>
@@ -4269,7 +4427,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	}
 		
 		/// <summary>
-		/// Debug tracking for PlayerBattleEnd events.
+		/// Handles battle completion - awards battle XP, tracks kills, and updates term kill count.
+		/// This is the primary integration point for the kill tracker system.
 		/// </summary>
 		private void OnPlayerBattleEnd(MapEvent mapEvent)
 		{
@@ -4277,12 +4436,81 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				ModLogger.Info("Battle", "Player battle ended");
 				ModLogger.Info("Battle", $"Battle Type: {mapEvent?.EventType}, Was Siege: {mapEvent?.IsSiegeAssault}");
-				ModLogger.Info("Battle", $"Player was in army: {(MobileParty.MainParty?.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null")}");
-				ModLogger.Info("Battle", $"PlayerEncounter state: Active={PlayerEncounter.IsActive}, Current={PlayerEncounter.Current != null}");
+				
+				// Only process if enlisted
+				if (!IsEnlisted || _isOnLeave)
+				{
+					ModLogger.Debug("Battle", "Skipping battle rewards - not enlisted or on leave");
+					return;
+				}
+				
+				// Get kill count from tracker (if available)
+				int killsThisBattle = 0;
+				bool participated = false;
+				
+				var killTracker = EnlistedKillTrackerBehavior.Instance;
+				if (killTracker != null)
+				{
+					killsThisBattle = killTracker.GetAndResetKillCount();
+					participated = killTracker.GetAndResetParticipation();
+					ModLogger.Info("Battle", $"Kill tracker: {killsThisBattle} kills, participated: {participated}");
+				}
+				else
+				{
+					// Fallback: assume participation if we got to this event
+					participated = true;
+					ModLogger.Debug("Battle", "Kill tracker not available - assuming participation");
+				}
+				
+				// Award battle XP if player participated
+				if (participated)
+				{
+					AwardBattleXP(killsThisBattle);
+				}
+				
+				// Add kills to current term total (persists to faction record on retirement)
+				if (killsThisBattle > 0)
+				{
+					_currentTermKills += killsThisBattle;
+					ModLogger.Info("Battle", $"Term kills updated: +{killsThisBattle} = {_currentTermKills} total this term");
+				}
 			}
 			catch (Exception ex)
 			{
 				ModLogger.Error("Battle", $"Error in OnPlayerBattleEnd: {ex.Message}");
+			}
+		}
+		
+		/// <summary>
+		/// Awards XP for battle participation and kills.
+		/// XP values are loaded from progression_config.json.
+		/// </summary>
+		private void AwardBattleXP(int kills)
+		{
+			try
+			{
+				// Load XP values from config
+				int battleParticipationXP = EnlistedConfig.GetBattleParticipationXP();
+				int xpPerKill = EnlistedConfig.GetXpPerKill();
+				
+				// Award participation XP (flat bonus for being in battle)
+				if (battleParticipationXP > 0)
+				{
+					AddEnlistmentXP(battleParticipationXP, "Battle Participation");
+				}
+				
+				// Award kill XP (bonus per enemy killed)
+				int killXP = kills * xpPerKill;
+				if (killXP > 0)
+				{
+					AddEnlistmentXP(killXP, $"Combat Kills ({kills})");
+				}
+				
+				ModLogger.Info("Battle", $"Battle XP awarded: {battleParticipationXP} (participation) + {killXP} (kills) = {battleParticipationXP + killXP} total");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error awarding battle XP: {ex.Message}");
 			}
 		}
 		

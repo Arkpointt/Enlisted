@@ -131,13 +131,14 @@ var retirement = EnlistedConfig.LoadRetirementConfig(); // Retirement-specific
 ### **XP Sources** (progression_config.json)
 ```json
 "xp_sources": {
-  "daily_service_xp": 25,
-  "battle_participation_xp": 25,
-  "duty_performance_xp": 15,
-  "kill_xp_per_kill": 1
+  "daily_base": 25,
+  "battle_participation": 25,
+  "xp_per_kill": 1
 }
 ```
-Note: Kill XP tracking is currently disabled due to technical limitations.
+- `daily_base`: XP awarded each day of service
+- `battle_participation`: XP awarded for each battle
+- `xp_per_kill`: XP per enemy killed (tracked via mission behavior)
 
 ### **Grace Period** (enlisted_config.json)
 ```json
@@ -284,18 +285,9 @@ private static void ValidateConfiguration()
 
 ## 📊 **Version Info**
 
-**Mod Version**: 0.4.0  
+**Mod Version**: 0.3.0  
 **Compatible with**: Bannerlord 1.3.5  
 **Supported Cultures**: empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
-
-## 📝 **Recent Changes (v0.4.0)**
-
-- Added comprehensive veteran retirement system with configurable bonuses
-- Unified grace period system (lord killed/captured, army defeated, leave expired)
-- Battle participation XP (+25 per battle)
-- Leave system with 14-day timer and desertion penalties
-- Per-faction veteran record tracking
-- Re-enlistment with tier preservation
 
 ---
 

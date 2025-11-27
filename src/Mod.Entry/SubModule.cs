@@ -302,6 +302,40 @@ namespace Enlisted.Mod.Entry
 			}
 		}
 		
+		/// <summary>
+		/// Called when a mission (battle, siege, etc.) initializes its behaviors.
+		/// This is the proper place to add mission-specific behaviors like kill tracking.
+		/// Unlike dynamic addition during AfterMissionStarted, this runs before mission lifecycle begins.
+		/// </summary>
+		/// <param name="mission">The mission being initialized.</param>
+		public override void OnMissionBehaviorInitialize(Mission mission)
+		{
+			try
+			{
+				base.OnMissionBehaviorInitialize(mission);
+				
+				// Only add kill tracker to combat missions when player is enlisted
+				var enlistment = EnlistmentBehavior.Instance;
+				if (enlistment?.IsEnlisted != true)
+				{
+					return;
+				}
+				
+				// Check if this is a combat mission (field battle, siege, hideout, etc.)
+				// Skip non-combat missions like conversations, tournaments, arenas
+				if (mission.Mode == MissionMode.Battle || 
+				    mission.Mode == MissionMode.Stealth ||
+				    mission.Mode == MissionMode.Deployment)
+				{
+					mission.AddMissionBehavior(new EnlistedKillTrackerBehavior());
+					ModLogger.Debug("KillTracker", $"Kill tracker added to mission (Mode: {mission.Mode})");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Bootstrap", $"Error adding kill tracker to mission: {ex.Message}");
+			}
+		}
 	}
 	
 	/// <summary>

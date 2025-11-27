@@ -56,7 +56,8 @@ During grace, you can speak with any lord in your faction to continue service. Y
 
 ### Battle Flow
 - The mod activates your hidden party when your commander enters a battle and deactivates it when the battle ends.
-- You receive +25 XP for each battle you participate in.
+- You receive +25 XP for each battle you participate in, plus +1 XP per enemy you kill.
+- Kills are tracked per faction and preserved when you re-enlist after cooldown.
 - Command filtering ensures you only receive the orders relevant to your formation.
 - All encounter transitions (sieges, prisoner menus, grace windows) are deferred via the `NextFrameDispatcher` to avoid timing conflicts.
 
@@ -72,8 +73,9 @@ During grace, you can speak with any lord in your faction to continue service. Y
 - Return to your lord via dialogue to resume service
 
 ## 5. Feature Summary
-- **Career Progression**: Six tiers, wages that scale with rank, battle participation XP (+25 per battle), and officer professions that tie directly into native party roles.
-- **Veteran Retirement**: Full benefits after 252 days including gold, relations, and re-enlistment bonuses. Per-faction veteran tracking with preserved ranks.
+- **Career Progression**: Six tiers, wages that scale with rank (detailed breakdown in tooltip), battle XP (+25 per battle, +1 per kill), and officer professions that tie directly into native party roles.
+- **Veteran Retirement**: Full benefits after 252 days including gold, relations, and re-enlistment bonuses. Per-faction veteran tracking with preserved ranks and kill counts.
+- **Financial Isolation**: While enlisted, clan finances show only your military wages - no lord/army income or expenses leak through.
 - **Battle Integration**: Automatic participation in both lord battles and army actions, menu suppression for invalid encounters, and army-aware siege handling.
 - **Grace Period System**: 14-day windows for lord death/capture/army defeat, with preserved progress and faction loyalty requirements.
 - **Duty & Profession System**: JSON-driven duties (T1+) and professions (T3+) that award targeted XP, wages, and officer assignments.

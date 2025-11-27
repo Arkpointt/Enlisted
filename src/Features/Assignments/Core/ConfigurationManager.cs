@@ -443,6 +443,12 @@ namespace Enlisted.Features.Assignments.Core
                 else if (config.DesertionGracePeriodDays > 90)
                     config.DesertionGracePeriodDays = 90;
                 
+                // Validate leave max days is within safe bounds (1-30 days)
+                if (config.LeaveMaxDays < 1)
+                    config.LeaveMaxDays = 1;
+                else if (config.LeaveMaxDays > 30)
+                    config.LeaveMaxDays = 30;
+                
                 _cachedGameplayConfig = config;
                 ModLogger.Info("Config", "Gameplay config loaded successfully");
                 return _cachedGameplayConfig;
@@ -462,7 +468,8 @@ namespace Enlisted.Features.Assignments.Core
             return new GameplayConfig
             {
                 ReserveTroopThreshold = 100,
-                DesertionGracePeriodDays = 14
+                DesertionGracePeriodDays = 14,
+                LeaveMaxDays = 14
             };
         }
         
