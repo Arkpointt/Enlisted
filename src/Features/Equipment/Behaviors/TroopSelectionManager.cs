@@ -87,7 +87,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
-                var unlocked = GetUnlockedTroopsForCurrentTier(cultureId, enlistment.EnlistmentTier);
+                // Use pending tier if promotion is active, otherwise current tier
+                var effectiveTier = _promotionPending ? _pendingTier : enlistment.EnlistmentTier;
+                var unlocked = GetUnlockedTroopsForCurrentTier(cultureId, effectiveTier);
                 if (unlocked.Count == 0)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
@@ -270,17 +272,36 @@ namespace Enlisted.Features.Equipment.Behaviors
             // Main troop selection menu
             // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("enlisted_troop_selection",
-                "Military Advancement\n{TROOP_SELECTION_TEXT}",
+                "Master at Arms\n{TROOP_SELECTION_TEXT}",
                 OnTroopSelectionInit,
                 GameMenu.MenuOverlayType.None,
                 GameMenu.MenuFlags.None,
                 null);
                 
-            // Dynamic troop options will be added based on available troops
+            // "Collect equipment now" button - opens Master at Arms popup for troop selection
+            starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_collect_now",
+                "Collect equipment now",
+                args => _promotionPending && _availableTroops.Count > 0,
+                args =>
+                {
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        try
+                        {
+                            ShowMasterAtArmsPopup();
+                            ModLogger.Info("TroopSelection", "Player chose to collect equipment now - opening Master at Arms");
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("TroopSelection", $"Failed to open Master at Arms popup: {ex.Message}");
+                        }
+                    });
+                },
+                false, 0);
             
-            // Back to enlisted status option
+            // "Return to camp" button - player declines immediate equipment collection
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_back",
-                "Return to enlisted status",
+                "Return to camp",
                 args => true,
                 args =>
                 {
@@ -289,7 +310,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         try
                         {
                             GameMenu.SwitchToMenu("enlisted_status");
-                            ModLogger.Info("TroopSelection", "Returned from troop selection to enlisted status menu");
+                            ModLogger.Info("TroopSelection", "Player declined equipment - returned to camp");
                         }
                         catch (Exception ex)
                         {
@@ -371,21 +392,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
-                // Build troop selection display
-                var statusText = $"Promotion to Tier {_pendingTier} Available!\n\n";
-                statusText += $"Select your military specialization from {_availableTroops.Count} available troops:\n\n";
+                // Build roleplay-friendly promotion display
+                var enlistmentRef = EnlistmentBehavior.Instance;
+                var rankName = enlistmentRef?.GetRankName(_pendingTier) ?? $"Tier {_pendingTier}";
                 
-                // Add troop information display
-                foreach (var troop in _availableTroops.Take(6)) // Limit display for readability
-                {
-                    var formation = DetectTroopFormation(troop);
-                    statusText += $"• {troop.Name} ({formation.ToString()})\n";
-                }
-                
-                if (_availableTroops.Count > 6)
-                {
-                    statusText += $"... and {_availableTroops.Count - 6} more options\n";
-                }
+                var statusText = "You've been summoned before the Master at Arms.\n\n";
+                statusText += $"\"Soldier, your service has not gone unnoticed. You've earned promotion to {rankName}.\"\n\n";
+                statusText += "Do you want to complete the paperwork and collect your new equipment now, or later?\n\n";
+                statusText += $"({_availableTroops.Count} troop specializations available)";
                 
                 MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", statusText);
                 

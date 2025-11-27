@@ -27,7 +27,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			if (BasePay == null)
 			{
 				BasePay = new TextObject("{=enlisted_base_pay}Soldier's Pay");
-				LevelBonus = new TextObject("{=enlisted_level_bonus}Combat Experience");
+				LevelBonus = new TextObject("{=enlisted_level_bonus}Combat Exp");
 				TierBonus = new TextObject("{=enlisted_tier_bonus}Rank Pay");
 				ServiceBonus = new TextObject("{=enlisted_service_bonus}Service Seniority");
 				ArmyBonus = new TextObject("{=enlisted_army_bonus}Army Campaign Bonus");

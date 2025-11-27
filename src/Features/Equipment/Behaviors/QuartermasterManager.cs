@@ -1157,13 +1157,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsArmorVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null)
+            try
+            {
+                // Check if armor variants are available from the troop branch
+                // This uses the same collection logic as OnArmorVariantsSelected
+                var armorOptions = BuildArmorOptionsFromCurrentTroop();
+                
+                // Available if there are any armor slots with at least one non-current option
+                return armorOptions.Any(kvp => 
+                    kvp.Value != null && 
+                    kvp.Value.Any(opt => !opt.IsCurrent));
+            }
+            catch
             {
                 return false;
             }
-            
-            return _availableVariants.ContainsKey(EquipmentIndex.Body) &&
-                   _availableVariants[EquipmentIndex.Body].Any(opt => !opt.IsCurrent);
         }
         
         /// <summary>
@@ -1196,17 +1204,22 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsHelmetVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null)
+            try
+            {
+                // Helmets are part of armor collection
+                var armorOptions = BuildArmorOptionsFromCurrentTroop();
+                return armorOptions.ContainsKey(EquipmentIndex.Head) &&
+                       armorOptions[EquipmentIndex.Head].Any(opt => !opt.IsCurrent);
+            }
+            catch
             {
                 return false;
             }
-            
-            return _availableVariants.ContainsKey(EquipmentIndex.Head) &&
-                   _availableVariants[EquipmentIndex.Head].Any(opt => !opt.IsCurrent);
         }
 
         /// <summary>
-        /// Build armor options at runtime from the currently selected troop's BattleEquipments (weapons pattern).
+        /// Build armor options at runtime from the troop's upgrade branch (all troops leading to selected troop).
+        /// This expands armor choices beyond just the current troop's single BattleEquipment loadout.
         /// </summary>
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildArmorOptionsFromCurrentTroop()
         {
@@ -1225,13 +1238,37 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return result;
                 }
 
-                // Use existing runtime discovery like weapons
-                var allVariants = GetTroopEquipmentVariants(selectedTroop);
-                var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head, EquipmentIndex.Gloves, EquipmentIndex.Leg, EquipmentIndex.Cape };
-                var filtered = allVariants.Where(kvp => armorSlots.Contains(kvp.Key))
-                                          .ToDictionary(k => k.Key, v => v.Value);
+                var culture = selectedTroop.Culture;
+                var tier = enlistment.EnlistmentTier;
 
-                result = BuildVariantOptionsExact(filtered);
+                // Build the troop branch (all troops leading to the selected troop)
+                var branchNodes = BuildTroopBranchNodes(culture, selectedTroop, tier);
+                
+                // If no branch found, fall back to just the selected troop
+                if (branchNodes.Count == 0)
+                {
+                    branchNodes.Add(selectedTroop);
+                }
+
+                // Collect armor variants from ALL troops in the branch (at player's tier)
+                var armorVariants = CollectArmorVariantsFromNodes(branchNodes, tier, culture);
+
+                // If no variants found at exact tier, try including lower tiers
+                if (armorVariants.Count == 0 || armorVariants.All(kvp => kvp.Value.Count == 0))
+                {
+                    ModLogger.Debug("Quartermaster", $"No armor at tier {tier}, expanding to all branch tiers");
+                    armorVariants = CollectArmorVariantsFromAllTiers(branchNodes, culture);
+                }
+
+                ModLogger.Info("Quartermaster", $"Collected armor variants from {branchNodes.Count} branch troops: " +
+                    $"Body={GetSlotCount(armorVariants, EquipmentIndex.Body)}, " +
+                    $"Head={GetSlotCount(armorVariants, EquipmentIndex.Head)}, " +
+                    $"Gloves={GetSlotCount(armorVariants, EquipmentIndex.Gloves)}, " +
+                    $"Leg={GetSlotCount(armorVariants, EquipmentIndex.Leg)}, " +
+                    $"Cape={GetSlotCount(armorVariants, EquipmentIndex.Cape)}");
+
+                // Convert to variant options (this version allows single items too)
+                result = BuildVariantOptionsForArmor(armorVariants);
 
                 // Keep only slots with choices
                 result = result.Where(kvp => kvp.Value != null && kvp.Value.Count > 0)
@@ -1242,6 +1279,99 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("Quartermaster", $"BuildArmorOptionsFromCurrentTroop failed: {ex.Message}");
             }
             return result;
+        }
+
+        /// <summary>
+        /// Collect armor variants from all tiers in the branch (fallback when exact tier has no variants).
+        /// </summary>
+        private Dictionary<EquipmentIndex, List<ItemObject>> CollectArmorVariantsFromAllTiers(HashSet<CharacterObject> nodes, CultureObject culture)
+        {
+            var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
+            try
+            {
+                var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head, EquipmentIndex.Gloves, EquipmentIndex.Leg, EquipmentIndex.Cape };
+                foreach (var troop in nodes)
+                {
+                    foreach (var equipment in troop.BattleEquipments)
+                    {
+                        foreach (var slot in armorSlots)
+                        {
+                            var item = equipment[slot].Item;
+                            if (item == null)
+                            {
+                                continue;
+                            }
+                            if (item.ArmorComponent == null)
+                            {
+                                continue;
+                            }
+                            if (culture != null && item.Culture != null && item.Culture != culture)
+                            {
+                                continue;
+                            }
+                            if (!variants.ContainsKey(slot))
+                            {
+                                variants[slot] = new List<ItemObject>();
+                            }
+                            if (!variants[slot].Contains(item))
+                            {
+                                variants[slot].Add(item);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"CollectArmorVariantsFromAllTiers failed: {ex.Message}");
+            }
+            return variants;
+        }
+
+        /// <summary>
+        /// Build variant options for armor - allows even single items to show (so player can see current equipment).
+        /// </summary>
+        private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildVariantOptionsForArmor(
+            Dictionary<EquipmentIndex, List<ItemObject>> variants)
+        {
+            var finalOptions = new Dictionary<EquipmentIndex, List<EquipmentVariantOption>>();
+            try
+            {
+                var hero = Hero.MainHero;
+                foreach (var slotItems in variants)
+                {
+                    var slot = slotItems.Key;
+                    var items = slotItems.Value;
+                    if (items == null || items.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var currentItem = hero.BattleEquipment[slot].Item;
+                    var optionList = new List<EquipmentVariantOption>();
+                    foreach (var item in items)
+                    {
+                        var cost = CalculateVariantCost(item, currentItem, slot);
+                        optionList.Add(new EquipmentVariantOption
+                        {
+                            Item = item,
+                            Cost = cost,
+                            IsCurrent = item == currentItem,
+                            CanAfford = hero.Gold >= cost,
+                            Slot = slot,
+                            IsOfficerExclusive = false
+                        });
+                    }
+
+                    optionList = optionList.OrderBy(o => o.IsCurrent ? 0 : 1).ThenBy(o => o.Cost).ToList();
+                    finalOptions[slot] = optionList;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", $"BuildVariantOptionsForArmor failed: {ex.Message}");
+            }
+            return finalOptions;
         }
 
         private HashSet<CharacterObject> BuildTroopBranchNodes(CultureObject culture, CharacterObject targetTroop, int maxTier)
@@ -1438,6 +1568,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try { return troop.GetBattleTier(); } catch { return 1; }
         }
+
+        private int GetSlotCount(Dictionary<EquipmentIndex, List<ItemObject>> dict, EquipmentIndex slot)
+        {
+            return dict.TryGetValue(slot, out var list) ? list?.Count ?? 0 : 0;
+        }
         
         /// <summary>
         /// Handle helmet variant selection.
@@ -1446,9 +1581,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                if (_availableVariants?.ContainsKey(EquipmentIndex.Head) == true)
+                var armorOptions = BuildArmorOptionsFromCurrentTroop();
+                if (armorOptions.ContainsKey(EquipmentIndex.Head) && armorOptions[EquipmentIndex.Head].Count > 0)
                 {
-                    ShowEquipmentVariantSelectionDialog(_availableVariants[EquipmentIndex.Head], "helmet");
+                    ShowEquipmentVariantSelectionDialog(armorOptions[EquipmentIndex.Head], "helmet");
                 }
                 else
                 {
@@ -1467,15 +1603,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private bool IsAccessoryVariantsAvailable(MenuCallbackArgs args)
         {
-            if (_availableVariants == null)
+            try
+            {
+                // Accessories are part of armor collection, so use the same branch-based lookup
+                var armorOptions = BuildArmorOptionsFromCurrentTroop();
+                var accessorySlots = new[] { EquipmentIndex.Gloves, EquipmentIndex.Cape, EquipmentIndex.Leg };
+                
+                return accessorySlots.Any(slot => 
+                    armorOptions.ContainsKey(slot) &&
+                    armorOptions[slot].Any(opt => !opt.IsCurrent));
+            }
+            catch
             {
                 return false;
             }
-            
-            var accessorySlots = new[] { EquipmentIndex.Gloves, EquipmentIndex.Cape, EquipmentIndex.Leg };
-            return accessorySlots.Any(slot => 
-                _availableVariants.ContainsKey(slot) &&
-                _availableVariants[slot].Any(opt => !opt.IsCurrent));
         }
         
         /// <summary>
@@ -1485,16 +1626,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Find first accessory slot with variants
+                // Get accessories from branch-based armor collection
+                var armorOptions = BuildArmorOptionsFromCurrentTroop();
                 var accessorySlots = new[] { EquipmentIndex.Gloves, EquipmentIndex.Cape, EquipmentIndex.Leg };
-                var availableSlot = accessorySlots.FirstOrDefault(slot => 
-                    _availableVariants.ContainsKey(slot) &&
-                    _availableVariants[slot].Any(opt => !opt.IsCurrent));
                 
-                if (availableSlot != EquipmentIndex.None)
+                // Filter to only accessory slots
+                var accessoryOptions = armorOptions
+                    .Where(kvp => accessorySlots.Contains(kvp.Key))
+                    .ToDictionary(k => k.Key, v => v.Value);
+                
+                if (accessoryOptions.Any(kvp => kvp.Value.Any(opt => !opt.IsCurrent)))
                 {
-                    _selectedSlot = availableSlot;
-                    GameMenu.ActivateGameMenu("quartermaster_variants");
+                    // Flatten all accessory variants into one list
+                    var combined = accessoryOptions.SelectMany(kvp => kvp.Value).ToList();
+                    ShowEquipmentVariantSelectionDialog(combined, "accessories");
                 }
                 else
                 {

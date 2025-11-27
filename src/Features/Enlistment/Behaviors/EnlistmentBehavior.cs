@@ -483,7 +483,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			main.IsVisible = false;
 			main.IgnoreByOtherPartiesTill(CampaignTime.Now);
 			main.ShouldJoinPlayerBattles = true;
-			main.Party.SetAsCameraFollowParty();
+			
+			// CRITICAL: Follow the LORD's party with the camera, not the player's invisible party
+			// This prevents the game from pausing when the lord enters battle while waiting for
+			// the player's party (camera target) to arrive at the battle location
+			var lordParty = _enlistedLord?.PartyBelongedTo;
+			if (lordParty != null)
+			{
+				lordParty.Party.SetAsCameraFollowParty();
+			}
+			
 			TrySetShouldJoinPlayerBattles(main, true);
 		}
 
@@ -1476,20 +1485,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			try
 			{
 				// Try direct property access first (modern API in current Bannerlord versions)
+				// Note: No debug logging here as this is called frequently during normal operation
 				party.ShouldJoinPlayerBattles = value;
-				ModLogger.Debug("Battle", $"ShouldJoinPlayerBattles set to {value} via direct property access");
 			}
 			catch (Exception ex1)
 			{
 				try
 				{
 					// Use reflection for game versions where the property is not directly accessible
-					// might not be directly accessible
 					var prop = party.GetType().GetProperty("ShouldJoinPlayerBattles", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 					if (prop != null)
 					{
 						prop.SetValue(party, value, null);
-						ModLogger.Debug("Battle", $"ShouldJoinPlayerBattles set to {value} via reflection");
 					}
 					else
 					{
@@ -2538,7 +2545,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 									mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
 								
 									// Set additional properties to ensure battle participation
-									mainParty.Party.SetAsCameraFollowParty();
+									// Follow the LORD's party with camera to prevent pausing when lord enters battle
+									lordParty.Party.SetAsCameraFollowParty();
 									mainParty.ShouldJoinPlayerBattles = true;
 								
 									ModLogger.Info("Battle", $"SUCCESS: Player now in army (invisible) - Army Leader: {mainParty.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null"}");
@@ -2733,16 +2741,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						if (!mainParty.IsActive)
 						{
 							mainParty.IsActive = true;
+							// Only set escort AI and battle flags when activating (not every frame)
+							mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
+							lordParty.Party.SetAsCameraFollowParty();
+							TrySetShouldJoinPlayerBattles(mainParty, true);
 							ModLogger.Debug("Battle", $"Activated player party for army following");
 						}
 						
 						// Keep invisible to prevent banner/icon appearing
-							mainParty.IsVisible = false;
-						
-						// Set escort AI to follow the lord (army leader handles army movement)
-						mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
-						lordParty.Party.SetAsCameraFollowParty();
-							TrySetShouldJoinPlayerBattles(mainParty, true);
+						mainParty.IsVisible = false;
 					}
 						else
 						{
@@ -2793,7 +2800,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					{
 						mainParty.IsActive = true;
 						// Ensure battle participation flags are set so the player can join battles
-						mainParty.Party.SetAsCameraFollowParty();
+						// Follow the LORD's party with camera to prevent pausing when lord enters battle
+						lordParty.Party.SetAsCameraFollowParty();
 						TrySetShouldJoinPlayerBattles(mainParty, true);
 						ModLogger.Debug("Battle", $"Activated party for battle collection (lord in battle, player in army: {playerInArmy})");
 					}
@@ -3361,9 +3369,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 
 		/// <summary>
-		/// Get rank name for tier.
+		/// Get rank name for tier. Used for display in UI and notifications.
 		/// </summary>
-		private string GetRankName(int tier)
+		public string GetRankName(int tier)
 		{
 			var rankNames = new Dictionary<int, string>
 			{
@@ -4890,6 +4898,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					GameMenu.ExitToLast();
 					ModLogger.Debug("Battle", $"Exited lingering menu after battle ({currentMenuId})");
 				}
+				
+				// Return to enlisted menu after battle ends
+				// Use NextFrameDispatcher to avoid race conditions with menu state
+				NextFrameDispatcher.RunNextFrame(() =>
+				{
+					if (IsEnlisted && !_isOnLeave)
+					{
+						Enlisted.Features.Interface.Behaviors.EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+						ModLogger.Debug("Battle", "Activated enlisted_status menu after battle");
+					}
+				});
 			}
 			catch (Exception ex)
 			{

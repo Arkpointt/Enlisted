@@ -139,7 +139,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 // Otherwise we're still tucked inside the lord's escort, keep the party hidden.
-                ModLogger.Debug("VisibilityEnforcement", "Blocked visibility change - player remains embedded with lord");
+                // Note: This fires frequently so we don't log it to avoid spam
                 return false;
             }
             catch (Exception ex)

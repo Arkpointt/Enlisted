@@ -76,7 +76,7 @@ namespace Enlisted.Features.Equipment.UI
 		public string HintText { get; private set; }
 
 		[DataSourceProperty]
-		public ImageIdentifierVM Visual { get; private set; }
+		public CharacterImageIdentifierVM Visual { get; private set; }
 
 		public object Payload { get; }
 

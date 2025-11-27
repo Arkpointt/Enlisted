@@ -39,7 +39,7 @@ namespace Enlisted.Features.Equipment.UI
         public bool IsEnabled { get; private set; }
         
         [DataSourceProperty]
-        public ImageIdentifierVM Image { get; private set; }
+        public ItemImageIdentifierVM Image { get; private set; }
         
         [DataSourceProperty]
         public string ItemName { get; private set; }
@@ -91,6 +91,9 @@ namespace Enlisted.Features.Equipment.UI
                 
                 // Set item image using ItemImageIdentifierVM for proper image display (1.3.4 API)
                 Image = new ItemImageIdentifierVM(item, "");
+                
+                // Debug logging to diagnose image loading issues
+                ModLogger.Debug("QuartermasterUI", $"Item image created - Name: {item.Name}, StringId: {item.StringId}, Image.Id: {Image.Id}, Image.TextureProviderName: {Image.TextureProviderName}");
                 
                 // Build simplified weapon details
                 WeaponDetails = BuildSimpleWeaponDetails(item);
