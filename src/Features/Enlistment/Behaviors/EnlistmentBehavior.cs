@@ -4261,27 +4261,30 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				
 				bool lordIsAttacker = attackerParty?.MobileParty == lordParty || attackerParty == lordParty?.Party;
 				bool lordIsDefender = defenderParty?.MobileParty == lordParty || defenderParty == lordParty?.Party;
-				bool sameArmy = lordParty.Army != null && main.Army == lordParty.Army;
+				bool inArmy = lordParty.Army != null && main.Army == lordParty.Army;
 				bool armyLeaderInvolved = lordParty.Army?.LeaderParty?.Party == attackerParty ||
 				                          lordParty.Army?.LeaderParty?.Party == defenderParty;
 				
-				// Also check if lord is in the MapEvent's involved parties (more reliable)
+				// Check if lord is in the MapEvent's involved parties (most reliable check)
 				bool lordInvolvedInMapEvent = mapEvent.InvolvedParties?.Any(p => p?.MobileParty == lordParty) == true;
 				
-				bool isRelevantBattle = lordIsAttacker || lordIsDefender || sameArmy || armyLeaderInvolved || lordInvolvedInMapEvent;
+				// FIX: Only consider battle relevant if our LORD is actually involved, not just army members
+				// Being in the same army doesn't mean we should join every random skirmish around us
+				// During sieges, many small battles happen (looters vs villagers) that we should ignore
+				bool isRelevantBattle = lordIsAttacker || lordIsDefender || armyLeaderInvolved || lordInvolvedInMapEvent;
 				
-				ModLogger.Info("Battle", $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, sameArmy={sameArmy}, armyLeaderInvolved={armyLeaderInvolved}, lordInvolvedInMapEvent={lordInvolvedInMapEvent}");
+				ModLogger.Info("Battle", $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, inArmy={inArmy}, armyLeaderInvolved={armyLeaderInvolved}, lordInvolvedInMapEvent={lordInvolvedInMapEvent}");
 				ModLogger.Info("Battle", $"isRelevantBattle={isRelevantBattle}");
 
 				if (!isRelevantBattle)
 				{
-					ModLogger.Debug("Battle", "MapEventStarted ignored - unrelated engagement");
+					ModLogger.Debug("Battle", "MapEventStarted ignored - unrelated engagement (lord not involved)");
 					return;
 				}
 
 				bool isSiegeBattle = mapEvent.IsSiegeAssault || mapEvent.EventType == MapEvent.BattleTypes.Siege;
 
-				ModLogger.Info("Battle", $"Native battle detected (Siege: {isSiegeBattle}, SameArmy: {sameArmy}) - preparing player for vanilla flow");
+				ModLogger.Info("Battle", $"Native battle detected (Siege: {isSiegeBattle}, InArmy: {inArmy}) - preparing player for vanilla flow");
 
 				// Exit custom enlisted menus so the native system can push its own encounter/army menus
 				var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;

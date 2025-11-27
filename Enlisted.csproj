@@ -199,6 +199,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\KingdomDecisionParticipationPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />

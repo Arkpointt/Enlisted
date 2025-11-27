@@ -1,7 +1,9 @@
 using System;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.Core;
+using TaleWorlds.Library;
 using Enlisted.Mod.Core.Logging;
+using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -118,11 +120,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Increment kill counter
                 KillCount++;
                 
-                // Log every 5 kills to avoid spam
-                if (KillCount % 5 == 0 || KillCount == 1)
-                {
-                    ModLogger.Debug("KillTracker", $"Player kill count: {KillCount}");
-                }
+                // Get XP per kill from config for accurate display
+                int xpPerKill = EnlistedConfig.GetXpPerKill();
+                
+                // Show in-game notification for each kill
+                string victimName = affectedAgent.Character?.Name?.ToString() ?? "Enemy";
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Kill: {victimName} (+{xpPerKill} XP)", 
+                    Colors.Green));
+                
+                ModLogger.Debug("KillTracker", $"Player killed {victimName} - Kill #{KillCount} (+{xpPerKill} XP)");
             }
             catch (Exception ex)
             {
