@@ -57,6 +57,12 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - The player clan stays inside the kingdom throughout the grace window
 - While on leave or grace, enlistment requests from foreign lords are automatically declined
 
+**Service Transfer (Leave/Grace):**
+- While on leave or in grace period, player can talk to other lords in the same faction
+- Dialog option: "I wish to transfer my service to your command"
+- Transfer preserves all progression (tier, XP, kills, service date)
+- Immediately resumes active service with the new lord
+
 ## Veteran Retirement System
 
 **First Term (252 days / 3 game years):**
@@ -89,10 +95,10 @@ Provide the foundation for military service - join a lord's forces, follow them 
 ## Technical Implementation
 
 **Files:**
-- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement
+- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
-- `EnlistedDialogManager.cs` - Retirement and re-enlistment dialogs
+- `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 
@@ -184,6 +190,7 @@ _currentTermKills += kills;  // Track for faction record
 - ✅ Veteran retirement at 252 days with full benefits
 - ✅ Re-enlistment with preserved tier and kill count
 - ✅ Per-faction veteran tracking
+- ✅ Service transfer to different lord while on leave/grace (preserves all progression)
 - ✅ No pathfinding crashes or encounter system conflicts
 
 ## Debugging

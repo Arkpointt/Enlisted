@@ -49,6 +49,13 @@ Allows enlisted players to request temporary leave from military service, restor
 - Restores enlistment behavior: invisible, escort, battle participation
 - Clears leave state: `_isOnLeave = false`, `_leaveStartDate` reset
 
+### Transfer Service (While on Leave)
+- Dialog option: "I wish to transfer my service to your command" (appears when talking to different lord in same faction)
+- Preserves all progression: tier, XP, kills, service date
+- Transfers companions/troops to new lord's party
+- Clears leave state and begins active service with new lord
+- Notification: "You have transferred your service to [Lord]. Your rank and experience have been preserved."
+
 ### Desertion Penalties (Leave Expiration)
 - Service terminated with dishonorable discharge
 - Relation penalty with former lord
@@ -66,6 +73,7 @@ Allows enlisted players to request temporary leave from military service, restor
   - Added `_isOnLeave` and `_leaveStartDate` state fields
   - Modified `IsEnlisted` property: `_enlistedLord != null && !_isOnLeave`
   - Added `StartTemporaryLeave()` and `ReturnFromLeave()` methods
+  - Added `TransferServiceToLord(Hero newLord)` for same-faction transfers
   - Added `CheckLeaveExpiration()` in OnDailyTick
   - Added `TransferPlayerTroopsToLord()` using proper party transfer logic
 
@@ -75,8 +83,10 @@ Allows enlisted players to request temporary leave from military service, restor
 
 - `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs`
   - Leave request dialog with lord
-  - Return to service dialog option
-  - Leave status condition checking
+  - Return to service dialog option (with original lord)
+  - Service transfer dialog option (with different same-faction lord)
+  - `CanRequestServiceTransfer()` condition for transfer dialog
+  - `OnAcceptServiceTransfer()` consequence handler
 
 - `ModuleData/Enlisted/enlisted_config.json`
   - Added `gameplay.leave_max_days: 14`
@@ -117,9 +127,11 @@ private void CheckLeaveExpiration()
 ## Edge Cases
 - **Encounter cleanup**: Proper `PlayerEncounter` state clearing on leave start
 - **Save during leave**: Leave state and start date persist correctly
-- **Lord death during leave**: Grace period started, player can re-enlist
+- **Lord death during leave**: Grace period started, player can re-enlist or transfer
 - **Leave expires in combat**: Checked only in OnDailyTick, not during active battles
 - **Menu display**: Remaining days shown when viewing status while on leave
+- **Service transfer during leave**: Player can transfer to different lord in same faction, preserving all progression
+- **Transfer to different faction**: Not allowed - transfer dialog only shows for same-faction lords
 
 ## Acceptance Criteria
 - ✅ Player can request leave via dialog with lord
@@ -127,9 +139,10 @@ private void CheckLeaveExpiration()
 - ✅ 14-day timer enforced with daily warnings at 7 days or less
 - ✅ Desertion penalties applied if timer expires
 - ✅ Dialog option to return appears when talking to former lord while on leave
-- ✅ Service data (tier, XP, lord relationship) preserved during leave
+- ✅ Service transfer option appears when talking to different lord in same faction
+- ✅ Service data (tier, XP, lord relationship) preserved during leave and transfer
 - ✅ Remaining leave days displayed in status menu
-- ✅ No crashes when entering settlements after leave/return
+- ✅ No crashes when entering settlements after leave/return/transfer
 
 ## Companion and Troop Management
 
