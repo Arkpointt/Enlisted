@@ -3671,6 +3671,97 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Error("Enlistment", "Error returning from leave", ex);
 			}
 		}
+
+		/// <summary>
+		/// Transfer service to a different lord in the same faction.
+		/// Preserves all progression (tier, XP, kills, service date).
+		/// Used when player is on leave or in grace period and wants to serve under a new commander.
+		/// </summary>
+		/// <param name="newLord">The new lord to serve under (must be in same faction).</param>
+		public void TransferServiceToLord(Hero newLord)
+		{
+			if (newLord == null)
+			{
+				ModLogger.Error("Enlistment", "TransferServiceToLord called with null lord");
+				return;
+			}
+			
+			try
+			{
+				var previousLord = _enlistedLord;
+				var previousLordName = previousLord?.Name?.ToString() ?? "Unknown";
+				var newLordName = newLord.Name?.ToString() ?? "Unknown";
+				
+				ModLogger.Info("Enlistment", $"Transferring service from {previousLordName} to {newLordName}");
+				ModLogger.Info("Enlistment", $"Preserving: Tier={_enlistmentTier}, XP={_enlistmentXP}, Kills={_currentTermKills}, Date={_enlistmentDate}");
+				
+				// Clear leave state if on leave
+				if (_isOnLeave)
+				{
+					_isOnLeave = false;
+					_leaveStartDate = CampaignTime.Zero;
+					ModLogger.Debug("Enlistment", "Cleared leave state for transfer");
+				}
+				
+				// Clear grace period if in grace (this is also a valid transfer path)
+				if (IsInDesertionGracePeriod)
+				{
+					ClearDesertionGracePeriod();
+					ModLogger.Debug("Enlistment", "Cleared grace period for transfer");
+				}
+				
+				// Update the enlisted lord (progression stays the same)
+				_enlistedLord = newLord;
+				
+				// Transfer any companions/troops to new lord's party
+				TransferPlayerTroopsToLord();
+				
+				// Finish any active encounter first
+				if (PlayerEncounter.Current != null)
+				{
+					if (PlayerEncounter.InsideSettlement)
+					{
+						PlayerEncounter.LeaveSettlement();
+					}
+					PlayerEncounter.Finish(true);
+				}
+				
+				// Re-attach to new lord's party
+				EncounterGuard.TryAttachOrEscort(newLord);
+				
+				// Configure party state for enlistment
+				var main = MobileParty.MainParty;
+				var newLordParty = newLord.PartyBelongedTo;
+				if (main != null)
+				{
+					main.IsVisible = false;
+					main.IsActive = true;
+					main.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Days(365f));
+					
+					if (newLordParty != null)
+					{
+						main.SetMoveEscortParty(newLordParty, MobileParty.NavigationType.Default, false);
+						newLordParty.Party.SetAsCameraFollowParty();
+						ModLogger.Debug("Enlistment", $"Set escort AI to follow {newLordName}");
+					}
+					
+					TrySetShouldJoinPlayerBattles(main, true);
+				}
+				
+				// Activate enlisted status menu
+				Enlisted.Features.Interface.Behaviors.EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+				
+				ModLogger.Info("Enlistment", $"Service transfer complete: {previousLordName} -> {newLordName}");
+				
+				// Log state for diagnostics
+				Mod.Core.Logging.SessionDiagnostics.LogStateTransition("Enlistment", "OnLeave/Grace", "Enlisted",
+					$"Transfer from {previousLordName} to {newLordName}, Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Enlistment", $"Error transferring service to {newLord?.Name}: {ex.Message}", ex);
+			}
+		}
 		
 		/// <summary>
 		/// Transfer player companions and troops to lord's party.

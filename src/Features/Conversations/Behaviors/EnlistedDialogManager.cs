@@ -146,6 +146,26 @@ namespace Enlisted.Features.Conversations.Behaviors
                 OnReturnFromLeave,
                 111);
 
+            // Option to transfer service to a different lord (while on leave or grace period)
+            starter.AddPlayerLine(
+                "enlisted_request_transfer",
+                "enlisted_service_options",
+                "enlisted_transfer_response",
+                GetLocalizedText("{=enlisted_request_transfer}I wish to transfer my service to your command.").ToString(),
+                CanRequestServiceTransfer,
+                null,
+                112);
+
+            // Lord's response to service transfer request
+            starter.AddDialogLine(
+                "enlisted_transfer_accepted",
+                "enlisted_transfer_response",
+                "close_window",
+                GetLocalizedText("{=enlisted_transfer_accepted}Very well. Your prior commander will be informed. Report for duty immediately.").ToString(),
+                null,
+                OnAcceptServiceTransfer,
+                112);
+
             // Lord's response to enlistment request
             starter.AddDialogLine(
                 "enlisted_lord_accepts",
@@ -429,7 +449,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return false;
             }
             
-            // When on leave, ALLOW dialog only if talking to the same lord (to return from leave)
+            // When on leave, ALLOW dialog with same lord (return from leave) OR same-faction lords (transfer service)
             if (enlistment?.IsOnLeave == true)
             {
                 if (enlistment.CurrentLord == lord)
@@ -438,12 +458,19 @@ namespace Enlisted.Features.Conversations.Behaviors
                     ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, talking to their lord {lord.Name}");
                     return true;
                 }
-                else
+                
+                // Allow dialog with other lords in the same faction for service transfer
+                var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
+                var targetLordKingdom = lord.MapFaction as Kingdom;
+                if (currentLordKingdom != null && targetLordKingdom == currentLordKingdom)
                 {
-                    // Block - player can't enlist with different lord while on leave
-                    ModLogger.Debug("DialogManager", $"Dialog hidden - player is on leave from {enlistment.CurrentLord?.Name}, talking to different lord");
-                    return false;
+                    ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, can transfer to {lord.Name} (same faction)");
+                    return true;
                 }
+                
+                // Block - player can't enlist with different faction lord while on leave
+                ModLogger.Debug("DialogManager", $"Dialog hidden - player is on leave from {enlistment.CurrentLord?.Name}, talking to different faction lord");
+                return false;
             }
             
             if (enlistment?.IsInDesertionGracePeriod == true)
@@ -586,6 +613,64 @@ namespace Enlisted.Features.Conversations.Behaviors
             // Must be on leave and talking to the same lord you served
             return enlistment?.IsOnLeave == true && 
                    enlistment.CurrentLord == lord;
+        }
+
+        /// <summary>
+        /// Checks if the player can request to transfer service to a different lord.
+        /// Available when on leave or in grace period, talking to a different lord in the same faction.
+        /// </summary>
+        private bool CanRequestServiceTransfer()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            if (lord == null || !lord.IsLord || !lord.IsAlive)
+            {
+                return false;
+            }
+            
+            // Check if player is on leave - can transfer to different lord in same faction
+            if (enlistment?.IsOnLeave == true)
+            {
+                // Must be talking to a DIFFERENT lord (not current lord - that's "return from leave")
+                if (enlistment.CurrentLord == lord)
+                {
+                    return false;
+                }
+                
+                // Must be same faction/kingdom
+                var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
+                var targetLordKingdom = lord.MapFaction as Kingdom;
+                
+                if (currentLordKingdom != null && targetLordKingdom == currentLordKingdom)
+                {
+                    // Check if the lord can accept service
+                    TextObject reason;
+                    if (enlistment.CanEnlistWithParty(lord, out reason))
+                    {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            // Check if player is in grace period - can also transfer to any lord in the pending kingdom
+            if (enlistment?.IsInDesertionGracePeriod == true && !enlistment.IsEnlisted)
+            {
+                var lordKingdom = lord.MapFaction as Kingdom;
+                if (lordKingdom != null && lordKingdom == enlistment.PendingDesertionKingdom)
+                {
+                    // Check if the lord can accept service
+                    TextObject reason;
+                    if (enlistment.CanEnlistWithParty(lord, out reason))
+                    {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
         }
 
         #endregion
@@ -771,6 +856,42 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("DialogManager", "Error during return from leave", ex);
+            }
+        }
+
+        /// <summary>
+        /// Handles the consequence of transferring service to a new lord.
+        /// Called when player accepts transfer while on leave or in grace period.
+        /// </summary>
+        private void OnAcceptServiceTransfer()
+        {
+            try
+            {
+                var newLord = Hero.OneToOneConversationHero;
+                var enlistment = EnlistmentBehavior.Instance;
+                
+                if (newLord == null || enlistment == null)
+                {
+                    ModLogger.Error("DialogManager", "Cannot transfer service - missing lord or enlistment instance");
+                    return;
+                }
+                
+                var previousLordName = enlistment.CurrentLord?.Name?.ToString() ?? "your previous commander";
+                var newLordName = newLord.Name?.ToString() ?? "Unknown Lord";
+                
+                ModLogger.Info("DialogManager", $"Player transferring service from {previousLordName} to {newLordName}");
+                
+                // Perform the transfer
+                enlistment.TransferServiceToLord(newLord);
+                
+                // Professional notification
+                var message = GetLocalizedText("{=enlisted_transfer_notification}You have transferred your service to {LORD_NAME}. Your rank and experience have been preserved.");
+                message.SetTextVariable("LORD_NAME", newLord.Name);
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during service transfer", ex);
             }
         }
 
