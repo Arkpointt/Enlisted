@@ -2,14 +2,13 @@
   "schemaVersion": 1,
   "enabled": true,
   "tier_progression": {
-    "_comment": "UPDATED: 3 Bannerlord years service (252 days × 40 XP avg = ~10,000 XP). Household Guard requires career soldier re-enlistment.",
     "requirements": [
-      { "tier": 1, "xp_required": 0, "name": "Levy", "duration": "Starting rank - basic militia service" },
-      { "tier": 2, "xp_required": 500, "name": "Footman", "duration": "~2 weeks - trained foot soldier" },
-      { "tier": 3, "xp_required": 2000, "name": "Serjeant", "duration": "~7 weeks - non-commissioned leader" },
-      { "tier": 4, "xp_required": 5000, "name": "Man-at-Arms", "duration": "~18 weeks (1.3 Bannerlord years) - professional warrior" },
-      { "tier": 5, "xp_required": 10000, "name": "Banner Sergeant", "duration": "~36 weeks (3 Bannerlord years) - standard bearer & lance leader" },
-      { "tier": 6, "xp_required": 18000, "name": "Household Guard", "duration": "~64 weeks (5.4 Bannerlord years) - lord's elite retinue" }
+      { "tier": 1, "xp_required": 0, "name": "Levy" },
+      { "tier": 2, "xp_required": 500, "name": "Footman" },
+      { "tier": 3, "xp_required": 2000, "name": "Serjeant" },
+      { "tier": 4, "xp_required": 5000, "name": "Man-at-Arms" },
+      { "tier": 5, "xp_required": 10000, "name": "Banner Sergeant" },
+      { "tier": 6, "xp_required": 18000, "name": "Household Guard" }
     ],
     "formation_selection": {
       "trigger_tier": 2,
@@ -19,7 +18,6 @@
     }
   },
   "wage_system": {
-    "_comment": "UPDATED: Realistic military wages for early game progression, not wealth generation",
     "base_formula": {
       "daily_base": 10,
       "tier_bonus_per_level": 5,
@@ -39,99 +37,31 @@
       "sergeant": 1.5,
       "strategist": 1.6
     },
-    "performance_bonuses": {
-      "relationship_bonus_per_10": 5,
-      "battle_victory_bonus": 25,
-      "siege_success_bonus": 50,
-      "assignment_excellence_bonus": 10
-    },
     "army_bonuses": {
-      "in_army": 1.2,
-      "army_leader": 1.5,
-      "siege_operations": 1.3
+      "in_army": 1.2
     }
   },
   "xp_sources": {
-    "_comment": "Balanced for realistic Bannerlord progression: 3 years (252 days) with formation training (50 XP/day primary skills) = 12,600 XP → Level 100. With duties + battle XP, players reach 120-150 in primaries, 70-90 in secondaries.",
     "daily_base": 25,
-    "duty_performance": 15,
-    "battle_participation": 75,
-    "battle_victory": 25,
-    "siege_participation": 100,
-    "siege_success": 50,
-    "assignment_completion": 20,
-    "lord_conversation": 5,
-    "special_events": 50
-  },
-  "relationship_progression": {
-    "daily_service": 1,
-    "battle_together": 3,
-    "siege_together": 5,
-    "excellent_duty_performance": 2,
-    "save_lord_in_battle": 15,
-    "capture_enemies": 1,
-    "veteran_service_bonus": 10
-  },
-  "faction_reputation": {
-    "daily_service": 1,
-    "battle_victory": 5,
-    "siege_success": 10,
-    "prisoner_capture": 2,
-    "dishonor_penalty": -20,
-    "desertion_penalty": -100
+    "battle_participation": 25,
+    "xp_per_kill": 1
   },
   "promotion_benefits": {
     "tier_2": {
       "formation_selection": true,
-      "duty_slots": 1,
       "equipment_access": ["t1", "t2"]
     },
     "tier_3": {
-      "duty_slots": 2,
-      "officer_roles": ["Surgeon", "Engineer"],
       "equipment_access": ["t1", "t2", "t3"]
     },
     "tier_4": {
-      "duty_slots": 2,
-      "veteran_status": true,
       "equipment_access": ["t1", "t2", "t3", "t4"]
     },
     "tier_5": {
-      "duty_slots": 3,
-      "officer_roles": ["Scout", "Quartermaster"],
-      "leadership_duties": true,
-      "banner_sergeant": true,
-      "vassalage_consideration": true,
       "equipment_access": ["t1", "t2", "t3", "t4", "t5"]
     },
     "tier_6": {
-      "duty_slots": 3,
-      "household_guard": true,
-      "equipment_retention_earned": true,
       "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
     }
-  },
-  "veteran_system": {
-    "minimum_service_days": 252,
-    "veteran_benefits": {
-      "equipment_choice": true,
-      "relationship_bonus": 15,
-      "faction_reputation": 25,
-      "discharge_bonus": 5000,
-      "rehire_bonus": true
-    },
-    "vassalage_offers": {
-      "minimum_tier": 6,
-      "minimum_faction_reputation": 200,
-      "minimum_relationship": 80,
-      "offer_chance_daily": 0.01
-    }
-  },
-  "special_events": {
-    "capture_lord_bonus": 100,
-    "save_lord_bonus": 150,
-    "siege_breakthrough": 75,
-    "battle_heroics": 50,
-    "assignment_excellence": 25
   }
 }

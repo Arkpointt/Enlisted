@@ -18,6 +18,7 @@ namespace Enlisted.Features.Assignments.Core
         private static ProgressionConfig _cachedProgressionConfig;
         private static FinanceConfig _cachedFinanceConfig;
         private static GameplayConfig _cachedGameplayConfig;
+        private static RetirementConfig _cachedRetirementConfig;
         
         /// <summary>
         /// Load duties system configuration with comprehensive error handling and schema validation.
@@ -304,6 +305,33 @@ namespace Enlisted.Features.Assignments.Core
         }
         
         /// <summary>
+        /// Get XP awarded for battle participation from progression config.
+        /// </summary>
+        public static int GetBattleParticipationXP()
+        {
+            var config = LoadProgressionConfig();
+            return config?.XpSources?.BattleParticipation ?? 25;
+        }
+        
+        /// <summary>
+        /// Get XP awarded per enemy kill from progression config.
+        /// </summary>
+        public static int GetXpPerKill()
+        {
+            var config = LoadProgressionConfig();
+            return config?.XpSources?.XpPerKill ?? 1;
+        }
+        
+        /// <summary>
+        /// Get daily base XP from progression config.
+        /// </summary>
+        public static int GetDailyBaseXP()
+        {
+            var config = LoadProgressionConfig();
+            return config?.XpSources?.DailyBase ?? 25;
+        }
+        
+        /// <summary>
         /// Clear cached configuration. Used for testing or config reloading.
         /// </summary>
         public static void ClearCache()
@@ -312,6 +340,7 @@ namespace Enlisted.Features.Assignments.Core
             _cachedProgressionConfig = null;
             _cachedFinanceConfig = null;
             _cachedGameplayConfig = null;
+            _cachedRetirementConfig = null;
         }
         
         /// <summary>
@@ -436,6 +465,63 @@ namespace Enlisted.Features.Assignments.Core
                 DesertionGracePeriodDays = 14
             };
         }
+        
+        /// <summary>
+        /// Load retirement configuration from enlisted_config.json.
+        /// Returns cached config or loads from file on first call.
+        /// </summary>
+        public static RetirementConfig LoadRetirementConfig()
+        {
+            if (_cachedRetirementConfig != null)
+                return _cachedRetirementConfig;
+                
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    return CreateDefaultRetirementConfig();
+                }
+                
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+                
+                if (fullConfig?.Retirement == null)
+                {
+                    ModLogger.Info("Config", "No retirement section in enlisted_config.json, using defaults");
+                    return CreateDefaultRetirementConfig();
+                }
+                
+                var config = fullConfig.Retirement;
+                
+                // Validate config values
+                if (config.FirstTermDays < 84)
+                    config.FirstTermDays = 84;
+                if (config.RenewalTermDays < 28)
+                    config.RenewalTermDays = 28;
+                if (config.CooldownDays < 14)
+                    config.CooldownDays = 14;
+                
+                _cachedRetirementConfig = config;
+                ModLogger.Info("Config", "Retirement config loaded successfully");
+                return _cachedRetirementConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", "Error loading retirement config", ex);
+                return CreateDefaultRetirementConfig();
+            }
+        }
+        
+        /// <summary>
+        /// Create default retirement configuration when JSON loading fails.
+        /// </summary>
+        private static RetirementConfig CreateDefaultRetirementConfig()
+        {
+            return new RetirementConfig();
+        }
     }
     
     /// <summary>
@@ -448,6 +534,9 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("gameplay")]
         public GameplayConfig Gameplay { get; set; }
+        
+        [JsonProperty("retirement")]
+        public RetirementConfig Retirement { get; set; }
     }
     
     /// <summary>
@@ -498,5 +587,47 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("desertion_grace_period_days")]
         public int DesertionGracePeriodDays { get; set; } = 14;
+        
+        [JsonProperty("leave_max_days")]
+        public int LeaveMaxDays { get; set; } = 14;
+    }
+    
+    /// <summary>
+    /// Retirement system configuration for veteran benefits and term tracking.
+    /// </summary>
+    public class RetirementConfig
+    {
+        [JsonProperty("first_term_days")]
+        public int FirstTermDays { get; set; } = 252;
+        
+        [JsonProperty("renewal_term_days")]
+        public int RenewalTermDays { get; set; } = 84;
+        
+        [JsonProperty("cooldown_days")]
+        public int CooldownDays { get; set; } = 42;
+        
+        [JsonProperty("first_term_gold")]
+        public int FirstTermGold { get; set; } = 10000;
+        
+        [JsonProperty("first_term_reenlist_bonus")]
+        public int FirstTermReenlistBonus { get; set; } = 20000;
+        
+        [JsonProperty("renewal_discharge_gold")]
+        public int RenewalDischargeGold { get; set; } = 5000;
+        
+        [JsonProperty("renewal_continue_bonus")]
+        public int RenewalContinueBonus { get; set; } = 5000;
+        
+        [JsonProperty("lord_relation_bonus")]
+        public int LordRelationBonus { get; set; } = 30;
+        
+        [JsonProperty("faction_reputation_bonus")]
+        public int FactionReputationBonus { get; set; } = 30;
+        
+        [JsonProperty("other_lords_relation_bonus")]
+        public int OtherLordsRelationBonus { get; set; } = 15;
+        
+        [JsonProperty("other_lords_min_relation")]
+        public int OtherLordsMinRelation { get; set; } = 50;
     }
 }

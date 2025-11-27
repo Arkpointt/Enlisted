@@ -118,6 +118,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private bool _isOnLeave = false;
 		
 		/// <summary>
+		/// Flag to indicate party state needs to be restored after save loading.
+		/// We can't set IsActive during SyncData because the game asserts !IsActive during load.
+		/// This flag triggers restoration on the first campaign tick after loading.
+		/// </summary>
+		private bool _needsPostLoadStateRestore = false;
+		
+		/// <summary>
+		/// Flag to block all IsActive modifications until post-load initialization is complete.
+		/// This prevents the realtime tick from setting IsActive during the loading process.
+		/// Defaults to false (safe) - set true only after proper initialization.
+		/// </summary>
+		private bool _isPartyStateInitialized = false;
+		
+		/// <summary>
+		/// Counter to skip initial ticks during loading. The game's save system runs
+		/// before our tick handler is ready, so we wait a few ticks for it to settle.
+		/// </summary>
+		private int _initializationTicksRemaining = 5;
+		
+		/// <summary>
 		/// Campaign time when the player started their current leave period.
 		/// Used for tracking leave duration.
 		/// </summary>
@@ -147,6 +167,28 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// </summary>
 		private CampaignTime _lastRealtimeUpdate = CampaignTime.Zero;
 		private CampaignTime _graceProtectionEnds = CampaignTime.Zero;
+		
+		#region Veteran Retirement System
+		
+		/// <summary>
+		/// Per-faction veteran service records. Tracks service history, cooldowns, and preserved tier.
+		/// Dictionary keyed by Kingdom string ID for save/load compatibility.
+		/// </summary>
+		private Dictionary<string, FactionVeteranRecord> _veteranRecords = new Dictionary<string, FactionVeteranRecord>();
+		
+		/// <summary>
+		/// Whether the player has been notified about retirement eligibility for this term.
+		/// Resets when starting new term.
+		/// </summary>
+		private bool _retirementNotificationShown = false;
+		
+		/// <summary>
+		/// Total kills accumulated during current service term.
+		/// Added to faction's TotalKills on retirement/re-enlistment.
+		/// </summary>
+		private int _currentTermKills = 0;
+		
+		#endregion
 		
 		/// <summary>
 		/// Last campaign time when a siege PlayerEncounter was created.
@@ -230,6 +272,86 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	public int EnlistmentXP => _enlistmentXP;
 	public string SelectedDuty => _selectedDuty;
 	public string SelectedProfession => _selectedProfession;
+	
+	#region Veteran System Properties
+	
+	/// <summary>
+	/// Days served in current enlistment term.
+	/// </summary>
+	public float DaysServed => _enlistmentDate != CampaignTime.Zero 
+		? (float)(CampaignTime.Now - _enlistmentDate).ToDays 
+		: 0f;
+	
+	/// <summary>
+	/// Whether the player has served the minimum 252 days (3 years) required for first-term retirement.
+	/// </summary>
+	public bool IsEligibleForRetirement => IsEnlisted && DaysServed >= 252f && !IsInRenewalTerm;
+	
+	/// <summary>
+	/// Whether the player is currently in a renewal term (post-first-term).
+	/// </summary>
+	public bool IsInRenewalTerm
+	{
+		get
+		{
+			if (_enlistedLord == null) return false;
+			var record = GetFactionVeteranRecord(_enlistedLord.MapFaction as Kingdom);
+			return record?.IsInRenewalTerm ?? false;
+		}
+	}
+	
+	/// <summary>
+	/// Whether the current renewal term has expired and player can retire/continue.
+	/// </summary>
+	public bool IsRenewalTermComplete
+	{
+		get
+		{
+			if (_enlistedLord == null || !IsInRenewalTerm) return false;
+			var record = GetFactionVeteranRecord(_enlistedLord.MapFaction as Kingdom);
+			return record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd;
+		}
+	}
+	
+	/// <summary>
+	/// Gets the veteran record for a kingdom. Creates new record if none exists.
+	/// </summary>
+	public FactionVeteranRecord GetFactionVeteranRecord(Kingdom kingdom)
+	{
+		if (kingdom == null) return null;
+		
+		var kingdomId = kingdom.StringId;
+		if (!_veteranRecords.ContainsKey(kingdomId))
+		{
+			_veteranRecords[kingdomId] = new FactionVeteranRecord();
+		}
+		return _veteranRecords[kingdomId];
+	}
+	
+	/// <summary>
+	/// Checks if the player is in cooldown period for a faction.
+	/// </summary>
+	public bool IsInFactionCooldown(Kingdom kingdom)
+	{
+		if (kingdom == null) return false;
+		var record = GetFactionVeteranRecord(kingdom);
+		return record.CooldownEnds != CampaignTime.Zero && CampaignTime.Now < record.CooldownEnds;
+	}
+	
+	/// <summary>
+	/// Checks if the player can re-enlist with a faction after cooldown.
+	/// </summary>
+	public bool CanReEnlistAfterCooldown(Kingdom kingdom)
+	{
+		if (kingdom == null) return false;
+		var record = GetFactionVeteranRecord(kingdom);
+		// Must have completed first term and be past cooldown
+		return record.FirstTermCompleted && 
+		       record.CooldownEnds != CampaignTime.Zero && 
+		       CampaignTime.Now >= record.CooldownEnds;
+	}
+	
+	#endregion
 
 		/// <summary>
 		/// Initializes the enlistment behavior and sets up singleton access.
@@ -267,20 +389,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// If lord has an army, join it
 			if (lordParty.Army != null)
 			{
-				if (main.Army == lordParty.Army)
-				{
+			if (main.Army == lordParty.Army)
+			{
 					ModLogger.Debug("Battle", "Already in lord's army - no action needed");
 					return; // Already in the same army
-				}
+			}
 
-				try
-				{
-					lordParty.Army.AddPartyToMergedParties(main);
-					main.Army = lordParty.Army;
+			try
+			{
+				lordParty.Army.AddPartyToMergedParties(main);
+				main.Army = lordParty.Army;
 					ModLogger.Info("Battle", $"SUCCESS: Player added to lord army (Leader: {lordParty.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "unknown"})");
-				}
-				catch (Exception ex)
-				{
+			}
+			catch (Exception ex)
+			{
 					ModLogger.Error("Battle", $"FAILED to join lord army: {ex.Message}");
 				}
 				return;
@@ -422,6 +544,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		// Serialize kingdom state so we can restore the player's original kingdom/clan status
 		dataStore.SyncData("_originalKingdom", ref _originalKingdom);
 		dataStore.SyncData("_wasIndependentClan", ref _wasIndependentClan);
+		
+		// Veteran retirement system state - manual serialization for dictionary
+		// Bannerlord's save system can't serialize custom class dictionaries directly
+		dataStore.SyncData("_retirementNotificationShown", ref _retirementNotificationShown);
+		dataStore.SyncData("_currentTermKills", ref _currentTermKills);
+		
+		// Manual serialization of _veteranRecords dictionary
+		SerializeVeteranRecords(dataStore);
 	
 	// CRITICAL: Ensure proper party activity state for both new games and loaded games
 	// This is important because the save system doesn't preserve IsActive state,
@@ -440,53 +570,105 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		ModLogger.Debug("SaveLoad", $"Saving enlistment state - Lord: {_enlistedLord?.Name?.ToString() ?? "null"}, Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
 	}
 	
-	// Restore proper party activity state (for both new games and loaded games)
-	// Non-enlisted players should always be active to allow normal gameplay
-	if (!IsEnlisted && !Hero.MainHero.IsPrisoner)
+	// IMPORTANT: Do NOT set IsActive here during SyncData!
+	// The game asserts that IsActive must be false during save load process.
+	// Party state will be restored on the first campaign tick via _needsPostLoadStateRestore flag.
+	if (dataStore.IsLoading)
 	{
-		var main = MobileParty.MainParty;
-		if (main != null)
-		{
-			main.IsActive = true;
-			main.IsVisible = true;
-			ModLogger.Debug("SaveLoad", "Party activated - not enlisted");
-		}
+		_needsPostLoadStateRestore = true;
+		_isPartyStateInitialized = false; // Block all IsActive modifications until post-load
+		_initializationTicksRemaining = 10; // Reset countdown to ensure we wait for load completion
+		ModLogger.Debug("SaveLoad", "Deferred party state restoration to first campaign tick");
 	}
-	else if (IsEnlisted)
+	}
+	
+	/// <summary>
+	/// Manually serialize/deserialize veteran records since Bannerlord can't handle custom class dictionaries.
+	/// Uses a simple count + individual field approach for maximum compatibility.
+	/// </summary>
+	private void SerializeVeteranRecords(IDataStore dataStore)
 	{
-		// Enlisted players start inactive to prevent random encounters
-		// The real-time tick will activate them if the lord enters battle
-		var main = MobileParty.MainParty;
-		if (main != null)
+		try
 		{
-			main.IsActive = false;
-			ModLogger.Debug("SaveLoad", $"Party kept inactive - enlisted state (Lord: {_enlistedLord?.Name}, Army: {_enlistedLord?.PartyBelongedTo?.Army != null})");
-		
-			// Ensure the party can join battles when the lord fights
-			TrySetShouldJoinPlayerBattles(main, true);
-		
-			// Check if we're loading into a save where a battle is already in progress
-			// If so, activate the party immediately so they can participate
-			if (_enlistedLord?.PartyBelongedTo != null)
-			{
-				var lordParty = _enlistedLord.PartyBelongedTo;
-				var lordArmy = lordParty.Army;
-				
-				// The MapEvent property exists on Party, not directly on MobileParty
-				// This is the correct API structure for checking battle state
-				bool lordInBattle = lordParty.Party.MapEvent != null;
-				bool armyInBattle = lordArmy?.LeaderParty?.Party.MapEvent != null;
+			// Store/load the count first
+			int recordCount = _veteranRecords?.Count ?? 0;
+			dataStore.SyncData("_vetRec_count", ref recordCount);
 			
-				if (lordInBattle || armyInBattle)
+			if (!dataStore.IsLoading)
+			{
+				// Saving: serialize each record individually
+				int index = 0;
+				foreach (var kvp in _veteranRecords)
 				{
-					ModLogger.Info("SaveLoad", $"Loaded into active battle! Lord battle: {lordInBattle}, Army battle: {armyInBattle}");
-					// Immediately activate for battle participation
-					main.IsActive = true;
-					ModLogger.Info("SaveLoad", "Party activated immediately due to ongoing battle (visibility remains suppressed)");
+					string kingdomId = kvp.Key;
+					bool firstTerm = kvp.Value.FirstTermCompleted;
+					int tier = kvp.Value.PreservedTier;
+					int kills = kvp.Value.TotalKills;
+					CampaignTime cooldown = kvp.Value.CooldownEnds;
+					CampaignTime termEnd = kvp.Value.CurrentTermEnd;
+					bool renewal = kvp.Value.IsInRenewalTerm;
+					int renewalCount = kvp.Value.RenewalTermsCompleted;
+					
+					dataStore.SyncData($"_vetRec_{index}_id", ref kingdomId);
+					dataStore.SyncData($"_vetRec_{index}_firstTerm", ref firstTerm);
+					dataStore.SyncData($"_vetRec_{index}_tier", ref tier);
+					dataStore.SyncData($"_vetRec_{index}_kills", ref kills);
+					dataStore.SyncData($"_vetRec_{index}_cooldown", ref cooldown);
+					dataStore.SyncData($"_vetRec_{index}_termEnd", ref termEnd);
+					dataStore.SyncData($"_vetRec_{index}_renewal", ref renewal);
+					dataStore.SyncData($"_vetRec_{index}_renewalCount", ref renewalCount);
+					index++;
 				}
 			}
+			else
+			{
+				// Loading: reconstruct dictionary from individual fields
+				_veteranRecords = new Dictionary<string, FactionVeteranRecord>();
+				
+				for (int i = 0; i < recordCount; i++)
+				{
+					string kingdomId = "";
+					bool firstTerm = false;
+					int tier = 1;
+					int kills = 0;
+					CampaignTime cooldown = CampaignTime.Zero;
+					CampaignTime termEnd = CampaignTime.Zero;
+					bool renewal = false;
+					int renewalCount = 0;
+					
+					dataStore.SyncData($"_vetRec_{i}_id", ref kingdomId);
+					dataStore.SyncData($"_vetRec_{i}_firstTerm", ref firstTerm);
+					dataStore.SyncData($"_vetRec_{i}_tier", ref tier);
+					dataStore.SyncData($"_vetRec_{i}_kills", ref kills);
+					dataStore.SyncData($"_vetRec_{i}_cooldown", ref cooldown);
+					dataStore.SyncData($"_vetRec_{i}_termEnd", ref termEnd);
+					dataStore.SyncData($"_vetRec_{i}_renewal", ref renewal);
+					dataStore.SyncData($"_vetRec_{i}_renewalCount", ref renewalCount);
+					
+					if (!string.IsNullOrEmpty(kingdomId))
+					{
+						_veteranRecords[kingdomId] = new FactionVeteranRecord
+						{
+							FirstTermCompleted = firstTerm,
+							PreservedTier = tier,
+							TotalKills = kills,
+							CooldownEnds = cooldown,
+							CurrentTermEnd = termEnd,
+							IsInRenewalTerm = renewal,
+							RenewalTermsCompleted = renewalCount
+						};
+					}
+				}
+				ModLogger.Debug("SaveLoad", $"Loaded {_veteranRecords.Count} veteran records");
+			}
 		}
-	}
+		catch (Exception ex)
+		{
+			ModLogger.Error("SaveLoad", $"Error serializing veteran records: {ex.Message}");
+			// Ensure dictionary exists even on error
+			if (_veteranRecords == null)
+				_veteranRecords = new Dictionary<string, FactionVeteranRecord>();
+		}
 	}
 
 		public bool CanEnlistWithParty(Hero lord, out TextObject reason)
@@ -697,9 +879,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		var lordParty = lord.PartyBelongedTo;
 		if (main != null)
 		{
-		// Make the player party invisible on the map (they're part of the lord's force now)
-		main.IsVisible = false;
-		
+			// Make the player party invisible on the map (they're part of the lord's force now)
+			main.IsVisible = false;
+			
 		// Also hide the 3D visual entity (separate from nameplate VM)
 		EncounterGuard.HidePlayerPartyVisual();
 		
@@ -717,9 +899,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Debug("Enlistment", $"Set escort AI to follow {lord.Name}");
 			}
 				
-			// Enable battle participation so the player joins battles when the lord fights
-			TrySetShouldJoinPlayerBattles(main, true);
-		}
+				// Enable battle participation so the player joins battles when the lord fights
+				TrySetShouldJoinPlayerBattles(main, true);
+			}
 				
 				
 				ModLogger.Info("Enlistment", $"Successfully enlisted with {lord.Name} - Tier {_enlistmentTier}, XP: {_enlistmentXP}, Kingdom: {lord.MapFaction?.Name?.ToString() ?? "Independent"}, Culture: {lord.Culture?.StringId ?? "unknown"}");
@@ -1290,11 +1472,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// Processes daily military service benefits: wages and XP progression.
 		/// Called once per in-game day while the player is enlisted.
 		/// Integrates with the duties system to provide additional wage multipliers.
+		/// Also checks for leave expiration and grace period expiration.
 		/// </summary>
 		private void OnDailyTick()
 		{
 			// Always check for captivity escape during grace period, even if not currently listed as 'active' enlisted
 			CheckPlayerCaptivityDuration();
+			
+			// Check for leave expiration (14 days max)
+			// This runs even when "not enlisted" because IsOnLeave makes IsEnlisted return false
+			CheckLeaveExpiration();
 
 			if (!IsEnlisted || _enlistedLord?.IsAlive != true)
 			{
@@ -1303,8 +1490,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			try
 			{
-				// Calculate daily wage (now reported through the native clan finance tick)
+				// Calculate daily wage based on tier, level, and duties
 				var wage = CalculateDailyWage();
+				
+				// Actually pay the wage to the player
+				if (wage > 0)
+				{
+					GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, wage, true);
+					ModLogger.Info("DailyService", $"Paid daily wage: {wage} gold");
+				}
 				
 				// Award daily XP for military tier progression
 				// This is separate from skill XP, which is handled by formation training and duties
@@ -1312,7 +1506,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var dailyXP = 25;
 				AddEnlistmentXP(dailyXP, "Daily Service");
 				
-				ModLogger.Debug("DailyService", $"Queued wage payout via clan finance tick: {wage} gold, gained {dailyXP} XP");
+				ModLogger.Debug("DailyService", $"Daily service completed: {wage} gold paid, {dailyXP} XP gained");
+				
+				// Check for retirement eligibility notification (first term complete)
+				CheckRetirementEligibility();
+				
+				// Check for renewal term completion
+				CheckRenewalTermCompletion();
 			}
 			catch (Exception ex)
 			{
@@ -1435,6 +1635,77 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 		
 		/// <summary>
+		/// Restores proper party activity state after a save is loaded.
+		/// Called from the first campaign tick after loading, NOT from SyncData.
+		/// The game asserts !IsActive during save load, so we must defer this.
+		/// </summary>
+		private void RestorePartyStateAfterLoad()
+		{
+			try
+			{
+				var main = MobileParty.MainParty;
+				if (main == null)
+				{
+					ModLogger.Debug("SaveLoad", "RestorePartyStateAfterLoad: MainParty is null, skipping");
+					return;
+				}
+				
+				if (!IsEnlisted && !Hero.MainHero.IsPrisoner)
+				{
+					// Non-enlisted players should be active and visible
+					main.IsActive = true;
+					main.IsVisible = true;
+					ModLogger.Info("SaveLoad", "Post-load: Party activated - not enlisted");
+				}
+				else if (IsEnlisted)
+				{
+					// Enlisted players: check if lord is in battle
+					ModLogger.Info("SaveLoad", $"Post-load: Restoring enlisted state (Lord: {_enlistedLord?.Name}, OnLeave: {_isOnLeave})");
+					
+					// Ensure the party can join battles when the lord fights
+					TrySetShouldJoinPlayerBattles(main, true);
+					
+					// Check if we're loading into a save where a battle is already in progress
+					if (_enlistedLord?.PartyBelongedTo != null)
+					{
+						var lordParty = _enlistedLord.PartyBelongedTo;
+						var lordArmy = lordParty.Army;
+						
+						bool lordInBattle = lordParty.Party.MapEvent != null;
+						bool armyInBattle = lordArmy?.LeaderParty?.Party.MapEvent != null;
+						
+						if (lordInBattle || armyInBattle)
+						{
+							ModLogger.Info("SaveLoad", $"Post-load: Loaded into active battle! Lord battle: {lordInBattle}, Army battle: {armyInBattle}");
+							main.IsActive = true;
+							main.IsVisible = true;
+						}
+						else
+						{
+							// Not in battle - keep hidden but active for escort AI
+							main.IsActive = true;
+							main.IsVisible = false;
+							main.IgnoreByOtherPartiesTill(CampaignTime.Now + CampaignTime.Hours(1f));
+							main.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
+							ModLogger.Info("SaveLoad", "Post-load: Escort AI restored for enlisted player");
+						}
+					}
+					else
+					{
+						// No lord party - might be in grace period or error state
+						main.IsActive = true;
+						main.IsVisible = true;
+						ModLogger.Info("SaveLoad", "Post-load: Lord party not found, keeping player visible");
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("SaveLoad", $"Error in RestorePartyStateAfterLoad: {ex.Message}");
+			}
+		}
+		
+		/// <summary>
 		/// Checks if the player has been a prisoner for too long while in enlistment grace period.
 		/// If captured > 3 days, we force an escape/release so the player can actually use their grace period.
 		/// </summary>
@@ -1475,6 +1746,346 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 			}
 		}
+		
+		/// <summary>
+		/// Checks if the player's leave has expired and applies desertion penalties if so.
+		/// Also displays a daily reminder of remaining leave days.
+		/// Leave duration is configurable via enlisted_config.json gameplay.leave_max_days.
+		/// </summary>
+		private void CheckLeaveExpiration()
+		{
+			// Only check if actually on leave with a valid start date
+			if (!_isOnLeave || _leaveStartDate == CampaignTime.Zero || _enlistedLord == null)
+			{
+				return;
+			}
+			
+			var daysOnLeave = (CampaignTime.Now - _leaveStartDate).ToDays;
+			var maxLeaveDays = EnlistedConfig.LoadGameplayConfig().LeaveMaxDays;
+			var remainingDays = maxLeaveDays - (int)daysOnLeave;
+			
+			if (daysOnLeave > maxLeaveDays)
+			{
+				ModLogger.Info("Leave", $"Leave expired after {daysOnLeave:F1} days - applying desertion penalties");
+				
+				// Get the kingdom for desertion penalties
+				var lordKingdom = _enlistedLord.MapFaction as Kingdom;
+				
+				// Clear leave state first
+				_isOnLeave = false;
+				_leaveStartDate = CampaignTime.Zero;
+				
+				// Apply desertion penalties if player was in a kingdom
+				if (lordKingdom != null)
+				{
+					// Set pending desertion kingdom so ApplyDesertionPenalties knows which kingdom to penalize
+					_pendingDesertionKingdom = lordKingdom;
+					ApplyDesertionPenalties();
+				}
+				
+				StopEnlist("Leave expired - desertion", isHonorableDischarge: false);
+				
+				var message = new TextObject("Your leave has expired. You have been branded a deserter.");
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+			}
+			else if (remainingDays <= 7 && remainingDays > 0)
+			{
+				// Daily warning when leave is running out
+				var message = new TextObject("Leave: {DAYS} days remaining before desertion.");
+				message.SetTextVariable("DAYS", remainingDays);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+			}
+		}
+		
+		#region Veteran Retirement System Methods
+		
+		/// <summary>
+		/// Checks if the player has reached first-term retirement eligibility (252 days).
+		/// Shows a one-time notification when first eligible.
+		/// </summary>
+		private void CheckRetirementEligibility()
+		{
+			if (_retirementNotificationShown || !IsEnlisted || IsInRenewalTerm)
+			{
+				return;
+			}
+			
+			var config = EnlistedConfig.LoadRetirementConfig();
+			if (DaysServed >= config.FirstTermDays)
+			{
+				_retirementNotificationShown = true;
+				
+				var message = new TextObject("You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment.");
+				message.SetTextVariable("LORD", _enlistedLord.Name);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+				
+				ModLogger.Info("Retirement", $"Player eligible for retirement after {DaysServed:F1} days");
+			}
+		}
+		
+		/// <summary>
+		/// Checks if the current renewal term has completed.
+		/// Shows notification when term expires.
+		/// </summary>
+		private void CheckRenewalTermCompletion()
+		{
+			if (!IsEnlisted || !IsInRenewalTerm)
+			{
+				return;
+			}
+			
+			var kingdom = _enlistedLord.MapFaction as Kingdom;
+			var record = GetFactionVeteranRecord(kingdom);
+			
+			if (record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd)
+			{
+				var message = new TextObject("Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service.");
+				message.SetTextVariable("LORD", _enlistedLord.Name);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+				
+				ModLogger.Info("Retirement", "Renewal term complete - player should speak with lord");
+			}
+		}
+		
+		/// <summary>
+		/// Process first-term retirement: apply full benefits and start cooldown.
+		/// Called when player chooses to retire after first term.
+		/// </summary>
+		public void ProcessFirstTermRetirement()
+		{
+			if (!IsEnlisted || !IsEligibleForRetirement)
+			{
+				ModLogger.Error("Retirement", "Cannot process first-term retirement - not eligible");
+				return;
+			}
+			
+			var config = EnlistedConfig.LoadRetirementConfig();
+			var kingdom = _enlistedLord.MapFaction as Kingdom;
+			var record = GetFactionVeteranRecord(kingdom);
+			
+			// Mark first term as completed
+			record.FirstTermCompleted = true;
+			record.PreservedTier = _enlistmentTier;
+			record.TotalKills += _currentTermKills;
+			
+			// Start 6-month cooldown (42 days)
+			record.CooldownEnds = CampaignTime.Now + CampaignTime.Days(config.CooldownDays);
+			
+			// Award retirement gold
+			GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, config.FirstTermGold, true);
+			
+			// Apply relation bonuses
+			ApplyVeteranRelationBonuses(config);
+			
+			// End enlistment
+			StopEnlist("Honorable retirement - first term", isHonorableDischarge: true);
+			
+			var message = new TextObject("You have retired with honor. {GOLD} gold received. You may re-enlist with {KINGDOM} after the cooldown period.");
+			message.SetTextVariable("GOLD", config.FirstTermGold);
+			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("this faction"));
+			InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+			
+			ModLogger.Info("Retirement", $"First term retirement processed: {config.FirstTermGold}g, cooldown ends {record.CooldownEnds}");
+		}
+		
+		/// <summary>
+		/// Process renewal term retirement: award discharge gold and start cooldown.
+		/// Called when player chooses to retire after a renewal term.
+		/// </summary>
+		public void ProcessRenewalRetirement()
+		{
+			if (!IsEnlisted || !IsInRenewalTerm)
+			{
+				ModLogger.Error("Retirement", "Cannot process renewal retirement - not in renewal term");
+				return;
+			}
+			
+			var config = EnlistedConfig.LoadRetirementConfig();
+			var kingdom = _enlistedLord.MapFaction as Kingdom;
+			var record = GetFactionVeteranRecord(kingdom);
+			
+			// Update record
+			record.PreservedTier = _enlistmentTier;
+			record.TotalKills += _currentTermKills;
+			record.IsInRenewalTerm = false;
+			record.RenewalTermsCompleted++;
+			
+			// Start cooldown
+			record.CooldownEnds = CampaignTime.Now + CampaignTime.Days(config.CooldownDays);
+			
+			// Award discharge gold
+			GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, config.RenewalDischargeGold, true);
+			
+			// End enlistment
+			StopEnlist("Honorable discharge - renewal term", isHonorableDischarge: true);
+			
+			var message = new TextObject("You have been discharged. {GOLD} gold received. You may re-enlist with {KINGDOM} after {DAYS} days.");
+			message.SetTextVariable("GOLD", config.RenewalDischargeGold);
+			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("this faction"));
+			message.SetTextVariable("DAYS", config.CooldownDays);
+			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+			
+			ModLogger.Info("Retirement", $"Renewal term discharge: {config.RenewalDischargeGold}g, cooldown {config.CooldownDays} days");
+		}
+		
+		/// <summary>
+		/// Start a renewal term with bonus payment.
+		/// Called when player chooses to continue service.
+		/// </summary>
+		public void StartRenewalTerm(int bonus)
+		{
+			if (!IsEnlisted)
+			{
+				ModLogger.Error("Retirement", "Cannot start renewal term - not enlisted");
+				return;
+			}
+			
+			var config = EnlistedConfig.LoadRetirementConfig();
+			var kingdom = _enlistedLord.MapFaction as Kingdom;
+			var record = GetFactionVeteranRecord(kingdom);
+			
+			// Update record for renewal
+			if (!record.FirstTermCompleted)
+			{
+				record.FirstTermCompleted = true;
+			}
+			record.IsInRenewalTerm = true;
+			record.CurrentTermEnd = CampaignTime.Now + CampaignTime.Days(config.RenewalTermDays);
+			
+			// Pay the bonus
+			if (bonus > 0)
+			{
+				GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, bonus, true);
+			}
+			
+			// Reset notification flag for this term
+			_retirementNotificationShown = true; // Don't show first-term notification again
+			
+			var message = new TextObject("You have re-enlisted for another term. {GOLD} gold bonus received. Term ends in {DAYS} days.");
+			message.SetTextVariable("GOLD", bonus);
+			message.SetTextVariable("DAYS", config.RenewalTermDays);
+			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+			
+			ModLogger.Info("Retirement", $"Renewal term started: {bonus}g bonus, ends in {config.RenewalTermDays} days");
+		}
+		
+		/// <summary>
+		/// Re-enlist with a faction after cooldown period.
+		/// Restores preserved tier and starts new 1-year term.
+		/// </summary>
+		public void ReEnlistAfterCooldown(Hero lord)
+		{
+			var kingdom = lord.MapFaction as Kingdom;
+			if (kingdom == null || !CanReEnlistAfterCooldown(kingdom))
+			{
+				ModLogger.Error("Retirement", "Cannot re-enlist - not eligible or wrong faction");
+				return;
+			}
+			
+			var config = EnlistedConfig.LoadRetirementConfig();
+			var record = GetFactionVeteranRecord(kingdom);
+			
+			// Restore tier from record
+			var preservedTier = record.PreservedTier;
+			
+			// Clear cooldown
+			record.CooldownEnds = CampaignTime.Zero;
+			
+			// Start enlistment normally
+			StartEnlist(lord);
+			
+			// Restore tier
+			_enlistmentTier = preservedTier;
+			_enlistmentXP = GetMinXPForTier(preservedTier);
+			
+			// Start in renewal mode
+			record.IsInRenewalTerm = true;
+			record.CurrentTermEnd = CampaignTime.Now + CampaignTime.Days(config.RenewalTermDays);
+			
+			_retirementNotificationShown = true;
+			_currentTermKills = 0;
+			
+			var message = new TextObject("You have re-enlisted with {KINGDOM}. Your rank of Tier {TIER} has been restored. Term: {DAYS} days.");
+			message.SetTextVariable("KINGDOM", kingdom.Name);
+			message.SetTextVariable("TIER", preservedTier);
+			message.SetTextVariable("DAYS", config.RenewalTermDays);
+			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+			
+			ModLogger.Info("Retirement", $"Re-enlisted after cooldown: tier {preservedTier} restored, {config.RenewalTermDays} day term");
+		}
+		
+		/// <summary>
+		/// Get the minimum XP required for a given tier.
+		/// </summary>
+		private int GetMinXPForTier(int tier)
+		{
+			var requirements = EnlistedConfig.GetTierXPRequirements();
+			if (tier > 0 && tier <= requirements.Length)
+			{
+				return requirements[tier - 1];
+			}
+			return 0;
+		}
+		
+		/// <summary>
+		/// Apply veteran relation bonuses for first-term retirement.
+		/// +30 with current lord, +30 with faction, +15 with other lords (if rep > 50).
+		/// </summary>
+		private void ApplyVeteranRelationBonuses(Enlisted.Features.Assignments.Core.RetirementConfig config)
+		{
+			try
+			{
+				var kingdom = _enlistedLord?.MapFaction as Kingdom;
+				if (kingdom == null)
+				{
+					ModLogger.Error("Retirement", "Cannot apply relation bonuses - no kingdom");
+					return;
+				}
+				
+				// +30 with current lord
+				if (_enlistedLord != null)
+				{
+					ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, config.LordRelationBonus, true, true);
+					ModLogger.Info("Retirement", $"+{config.LordRelationBonus} relation with {_enlistedLord.Name}");
+				}
+				
+				// +30 with faction (clan reputation affects kingdom standing)
+				// Use leader as proxy for faction reputation
+				if (kingdom.Leader != null && kingdom.Leader != _enlistedLord)
+				{
+					ChangeRelationAction.ApplyPlayerRelation(kingdom.Leader, config.FactionReputationBonus, true, true);
+					ModLogger.Info("Retirement", $"+{config.FactionReputationBonus} relation with {kingdom.Name} (via leader)");
+				}
+				
+				// +15 with other lords in faction IF player has > 50 relation with them
+				foreach (var clan in kingdom.Clans)
+				{
+					if (clan == Clan.PlayerClan) continue;
+					
+					foreach (var hero in clan.Heroes)
+					{
+						// Only apply to lords (not companions)
+						if (!hero.IsLord || hero == _enlistedLord || hero == kingdom.Leader || !hero.IsAlive)
+							continue;
+						
+						var currentRelation = Hero.MainHero.GetRelation(hero);
+						if (currentRelation > config.OtherLordsMinRelation)
+						{
+							ChangeRelationAction.ApplyPlayerRelation(hero, config.OtherLordsRelationBonus, true, false);
+							ModLogger.Debug("Retirement", $"+{config.OtherLordsRelationBonus} relation with {hero.Name} (had {currentRelation})");
+						}
+					}
+				}
+				
+				ModLogger.Info("Retirement", "Veteran relation bonuses applied");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Retirement", $"Error applying relation bonuses: {ex.Message}");
+			}
+		}
+		
+		#endregion
 
 		/// <summary>
 		/// Real-time tick handler that runs every game frame while the player is enlisted.
@@ -1494,15 +2105,44 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 			
+		// Wait for game initialization to complete before modifying party state
+		// This prevents assertion failures during save loading when IsActive must be false
+		if (_initializationTicksRemaining > 0)
+		{
+			_initializationTicksRemaining--;
+			return;
+		}
+		
+		// Handle party state initialization after the startup delay
+		// For loaded games: restore after SyncData sets _needsPostLoadStateRestore
+		// For new games: just enable modifications once campaign is ready
+		if (!_isPartyStateInitialized)
+		{
+			if (_needsPostLoadStateRestore)
+			{
+				// Loaded game - do the full restoration
+				_needsPostLoadStateRestore = false;
+				RestorePartyStateAfterLoad();
+				_isPartyStateInitialized = true;
+				ModLogger.Info("SaveLoad", "Loaded game: Party state initialized after restore");
+			}
+			else
+			{
+				// New game or already restored - just enable modifications
+				_isPartyStateInitialized = true;
+				ModLogger.Info("SaveLoad", "New game: Party state initialized");
+			}
+		}
+		
 			// CRITICAL: Ensure non-enlisted players always stay visible and active
 			// Native game systems might change visibility (e.g., night events or scripted encounters)
 			// This check runs BEFORE throttling to ensure it's checked every frame
 			// We need to enforce visibility for non-enlisted players during gameplay
 			if (!IsEnlisted)
 			{
-				var mainParty = CampaignSafetyGuard.SafeMainParty;
-				var mainHero = CampaignSafetyGuard.SafeMainHero;
-				if (mainParty != null && mainHero != null && !mainHero.IsPrisoner)
+			var mainParty = CampaignSafetyGuard.SafeMainParty;
+			var mainHero = CampaignSafetyGuard.SafeMainHero;
+			if (mainParty != null && mainHero != null && !mainHero.IsPrisoner)
 				{
 					// Enforce visibility and activity for non-enlisted players
 					// This ensures the player remains visible even if native systems switch it off
@@ -1939,12 +2579,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						}
 						
 						// Keep invisible to prevent banner/icon appearing
-						mainParty.IsVisible = false;
+							mainParty.IsVisible = false;
 						
 						// Set escort AI to follow the lord (army leader handles army movement)
 						mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
 						lordParty.Party.SetAsCameraFollowParty();
-						TrySetShouldJoinPlayerBattles(mainParty, true);
+							TrySetShouldJoinPlayerBattles(mainParty, true);
 					}
 						else
 						{
@@ -2072,7 +2712,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		
 		/// <summary>
 		/// Handles the case when the enlisted lord is killed in battle or other circumstances.
-		/// Automatically discharges the player from service and restores their normal state.
+		/// Starts a 14-day grace period to re-enlist with another lord in the same faction.
 		/// Called by the game when any hero is killed.
 		/// </summary>
 		/// <param name="victim">The hero that was killed.</param>
@@ -2083,12 +2723,27 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			if (IsEnlisted && victim == _enlistedLord)
 			{
-				ModLogger.Info("EventSafety", $"Lord {victim.Name} killed - automatic discharge");
+				ModLogger.Info("EventSafety", $"Lord {victim.Name} killed - starting grace period");
 				
-				var message = new TextObject("Your lord has been killed in battle. You have been honorably discharged.");
-				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-				
-				StopEnlist("Lord killed in battle", isHonorableDischarge: true);
+				// Start grace period instead of immediate discharge
+				// Player has 14 days to re-enlist with another lord in the same faction
+				var lordKingdom = _enlistedLord.MapFaction as Kingdom;
+				if (lordKingdom != null)
+				{
+					var message = new TextObject("Your lord has fallen. You have 14 days to find a new commander in {KINGDOM} or face desertion penalties.");
+					message.SetTextVariable("KINGDOM", lordKingdom.Name);
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+					
+					StopEnlist("Lord killed in battle", isHonorableDischarge: false, retainKingdomDuringGrace: true);
+					StartDesertionGracePeriod(lordKingdom);
+				}
+				else
+				{
+					// No kingdom - immediate discharge without penalties
+					var message = new TextObject("Your lord has fallen. Your service has ended.");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+					StopEnlist("Lord killed - no kingdom", isHonorableDischarge: true);
+				}
 			}
 		}
 		
@@ -2324,6 +2979,48 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			// Check if we crossed a promotion threshold
 			CheckPromotionNotification(previousXP, _enlistmentXP);
+		}
+		
+		/// <summary>
+		/// Awards battle participation XP after a battle ends.
+		/// Reads values from progression_config.json for configurability.
+		/// Note: Kill XP is disabled due to mission behavior crashes. May be re-enabled
+		/// with native kill tracking in a future update.
+		/// </summary>
+		/// <param name="participated">Whether the player actively participated in the battle.</param>
+		private void AwardBattleXP(bool participated)
+		{
+			try
+			{
+				if (!IsEnlisted)
+				{
+					return;
+				}
+				
+				if (!participated)
+				{
+					ModLogger.Debug("Battle", "No battle XP awarded - player did not participate");
+					return;
+				}
+				
+				// Get XP values from config
+				int battleXP = Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXP();
+				
+				if (battleXP > 0)
+				{
+					AddEnlistmentXP(battleXP, "Battle Participation");
+					
+					// Show notification to player
+					var message = $"Battle completed! +{battleXP} XP";
+					InformationManager.DisplayMessage(new InformationMessage(message));
+					
+					ModLogger.Info("Battle", $"Battle XP awarded: {battleXP} (participation)");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Battle", $"Error awarding battle XP: {ex.Message}");
+			}
 		}
 
 		/// <summary>
@@ -2751,7 +3448,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				_isOnLeave = true;
 				_leaveStartDate = CampaignTime.Now;
 				
-				ModLogger.Info("Enlistment", "Temporary leave started - player restored to vanilla behavior");
+				// Notify player of leave timer
+				var maxLeaveDays = EnlistedConfig.LoadGameplayConfig().LeaveMaxDays;
+				var message = new TextObject("Leave granted. You have {DAYS} days to return to your lord or face desertion penalties.");
+				message.SetTextVariable("DAYS", maxLeaveDays);
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				
+				ModLogger.Info("Enlistment", $"Temporary leave started - {maxLeaveDays} days before desertion");
 			}
 			catch (Exception ex)
 			{
@@ -3493,6 +4196,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Battle", "Lord battle ended, returning to hidden state");
 				_cachedLordMapEvent = null;
 				
+				// Award battle XP if player participated
+				AwardBattleXP(playerParticipated);
+				
 				// CRITICAL: Clear siege encounter creation timestamp when battle ends
 				// This allows new encounters to be created if needed after the battle
 				_lastSiegeEncounterCreation = CampaignTime.Zero;
@@ -3989,39 +4695,81 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 		
 		/// <summary>
-		/// Called after a mission (battle) starts. Adds our formation assignment behavior
-		/// so enlisted players get sorted into their designated formation (Infantry/Archer/etc).
+		/// Called after a mission (battle) starts. 
+		/// Note: We no longer add mission behaviors dynamically as this can cause crashes.
+		/// Kill tracking is now handled via campaign events instead.
 		/// </summary>
 		private void OnAfterMissionStarted(IMission mission)
 		{
 			try
 			{
-				// Only add behavior if player is enlisted and not on leave
+				// Only process if player is enlisted and not on leave
 				if (!IsEnlisted || _isOnLeave)
 				{
 					return;
 				}
 				
-				// Check if this is a battle mission (has Mission.Current)
-				var currentMission = Mission.Current;
-				if (currentMission == null)
-				{
-					return;
-				}
+				// DISABLED: Adding MissionBehaviors dynamically during AfterMissionStarted
+				// causes crashes because the mission lifecycle methods get called in an unstable state.
+				// Instead, we track participation via campaign events (OnMapEventEnded, OnPlayerBattleEnd).
+				// Kill XP is calculated based on the native kill counter when available.
 				
-				// Add our formation assignment behavior to the mission
-				var formationBehavior = new Combat.Behaviors.EnlistedFormationAssignmentBehavior();
-				currentMission.AddMissionBehavior(formationBehavior);
-				
-				ModLogger.Info("Battle", "Added EnlistedFormationAssignmentBehavior to mission");
+				ModLogger.Debug("Battle", "Mission started while enlisted - using campaign event tracking");
 			}
 			catch (Exception ex)
 			{
-				ModLogger.Error("Battle", $"Error adding formation assignment behavior: {ex.Message}");
+				ModLogger.Error("Battle", $"Error in OnAfterMissionStarted: {ex.Message}");
 			}
 		}
 
 		#endregion
+	}
+	
+	/// <summary>
+	/// Tracks veteran service history for a specific kingdom/faction.
+	/// Persists across multiple enlistment terms and cooldown periods.
+	/// </summary>
+	[Serializable]
+	public class FactionVeteranRecord
+	{
+		/// <summary>
+		/// Whether the player has completed the initial 3-year (252 day) term with this faction.
+		/// First term completion unlocks full retirement benefits.
+		/// </summary>
+		public bool FirstTermCompleted { get; set; } = false;
+		
+		/// <summary>
+		/// Preserved military tier from last service. Restored on re-enlistment after cooldown.
+		/// </summary>
+		public int PreservedTier { get; set; } = 1;
+		
+		/// <summary>
+		/// Total kills accumulated across all service terms with this faction.
+		/// </summary>
+		public int TotalKills { get; set; } = 0;
+		
+		/// <summary>
+		/// Campaign time when the 6-month cooldown period ends.
+		/// Player can re-enlist after this time.
+		/// </summary>
+		public CampaignTime CooldownEnds { get; set; } = CampaignTime.Zero;
+		
+		/// <summary>
+		/// Campaign time when the current service term ends.
+		/// For first term: 252 days. For renewal terms: 84 days (1 Bannerlord year).
+		/// </summary>
+		public CampaignTime CurrentTermEnd { get; set; } = CampaignTime.Zero;
+		
+		/// <summary>
+		/// Whether the player is currently in a renewal term (post-first-term service).
+		/// Renewal terms are 1 Bannerlord year (84 days) and offer 5,000g bonus/discharge.
+		/// </summary>
+		public bool IsInRenewalTerm { get; set; } = false;
+		
+		/// <summary>
+		/// Number of completed renewal terms after the first full term.
+		/// </summary>
+		public int RenewalTermsCompleted { get; set; } = 0;
 	}
 }
 

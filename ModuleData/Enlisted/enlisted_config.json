@@ -13,8 +13,6 @@
       "Man-at-Arms", "Banner Sergeant", "Household Guard"
     ],
     "daily_base_xp": 25,
-    "daily_base_wage": 8,
-    "wage_tier_bonus": 4,
     "assignment_wage_multipliers": {
       "grunt_work": 0.8,
       "guard_duty": 0.9, 
@@ -26,18 +24,24 @@
       "scout": 1.1,
       "sergeant": 1.5,
       "strategist": 1.6
-    },
-    "retirement": {
-      "minimum_service_days": 365,
-      "honorable_discharge_bonus": 5000,
-      "equipment_retention_tier_requirement": 5,
-      "veteran_relationship_bonus": 15,
-      "faction_reputation_bonus": 25
     }
   },
   "gameplay": {
-    "reserve_troop_threshold": 100,
-    "desertion_grace_period_days": 14
+    "desertion_grace_period_days": 14,
+    "leave_max_days": 14
+  },
+  "retirement": {
+    "first_term_days": 252,
+    "renewal_term_days": 84,
+    "cooldown_days": 42,
+    "first_term_gold": 10000,
+    "first_term_reenlist_bonus": 20000,
+    "renewal_discharge_gold": 5000,
+    "renewal_continue_bonus": 5000,
+    "lord_relation_bonus": 30,
+    "faction_reputation_bonus": 30,
+    "other_lords_relation_bonus": 15,
+    "other_lords_min_relation": 50
   },
   "formations": {
     "infantry": {
@@ -50,11 +54,6 @@
         "battania": "Clansman",
         "nord": "Huskarl",
         "darshi": "Desert Warrior"
-      },
-      "equipment_focus": "melee_heavy_armor",
-      "passive_bonuses": {
-        "party_morale": 3,
-        "melee_damage": 5
       }
     },
     "archer": {
@@ -67,11 +66,6 @@
         "battania": "Skirmisher",
         "nord": "Nordic Bowman",
         "darshi": "Desert Archer"
-      },
-      "equipment_focus": "ranged_light_armor",
-      "passive_bonuses": {
-        "party_vision": 5,
-        "ranged_damage": 5
       }
     },
     "cavalry": {
@@ -84,11 +78,6 @@
         "battania": "Mounted Warrior",
         "nord": "Nordic Rider",
         "darshi": "Darshi Horseman"
-      },
-      "equipment_focus": "melee_horse_heavy_armor",
-      "passive_bonuses": {
-        "party_speed": 5,
-        "charge_damage": 10
       }
     },
     "horsearcher": {
@@ -101,12 +90,6 @@
         "battania": "Mounted Skirmisher",
         "nord": "Nordic Mounted Archer",
         "darshi": "Darshi Horse Archer"
-      },
-      "equipment_focus": "ranged_horse_light_armor",
-      "passive_bonuses": {
-        "party_speed": 3,
-        "party_vision": 8,
-        "ranged_damage": 3
       }
     }
   },
@@ -130,14 +113,6 @@
     },
     "elite_multiplier": 1.5,
     "personal_equipment_restore_cost": 0
-  },
-  "medical_treatment": {
-    "standard_cooldown_days": 5,
-    "field_medic_cooldown_days": 2,
-    "base_healing_percentage": 0.8,
-    "field_medic_healing_percentage": 1.0,
-    "minimum_heal_amount": 20,
-    "treatment_time_hours": 1
   },
   "finance": {
     "show_in_clan_tooltip": true,

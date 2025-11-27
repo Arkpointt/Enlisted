@@ -635,7 +635,7 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             // Create a wait menu with time controls but hides progress boxes
             // This provides the wait menu functionality (time controls) without showing progress bars
-            // In 1.3.4+, menus need a proper background - use "encounter" as related menu
+            // NOTE: Use MenuOverlayType.None to avoid showing the empty battle bar when not in combat
             starter.AddWaitGameMenu("enlisted_status", 
                 "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",
                 new OnInitDelegate(OnEnlistedStatusInit),
@@ -643,10 +643,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 null, // No consequence for wait menu
                 new OnTickDelegate(OnEnlistedStatusTick), // Tick handler for real-time updates
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // Wait menu template that hides progress boxes
-                GameMenu.MenuOverlayType.Encounter,  // 1.3.4+: Use Encounter overlay for proper background
+                GameMenu.MenuOverlayType.None,  // No overlay - avoids showing empty battle bar
                 0f, // No wait time - immediate display
                 GameMenu.MenuFlags.None,
-                "encounter");  // 1.3.4+: Inherit background from "encounter" menu
+                null);  // No related menu needed
 
             // Main menu options for enlisted status menu
             
@@ -805,7 +805,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private void AddDutySelectionMenu(CampaignGameStarter starter)
         {
             // Use same wait menu format as main enlisted menu for consistency
-            // 1.3.4+: Use Encounter overlay for proper background
+            // NOTE: Use MenuOverlayType.None to avoid showing the empty battle bar
             starter.AddWaitGameMenu("enlisted_duty_selection", 
                 "Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}",
                 new OnInitDelegate(OnDutySelectionInit),
@@ -813,7 +813,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 null, // No consequence for wait menu
                 new OnTickDelegate(OnDutySelectionTick),
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption, // Same as main menu
-                GameMenu.MenuOverlayType.Encounter,  // 1.3.4+: Use Encounter overlay for proper background
+                GameMenu.MenuOverlayType.None,  // No overlay - avoids showing empty battle bar
                 0f, // No wait time - immediate display
                 GameMenu.MenuFlags.None,
                 null);
@@ -1030,7 +1030,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Next tier experience requirement
                     if (enlistment.EnlistmentTier < 6)
                     {
-                        var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier + 1);
+                        // GetNextTierXPRequirement returns XP needed to promote FROM current tier
+                        // So pass current tier, not tier + 1
+                        var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier);
                         statusContent += $"Next Level Experience : {nextTierXP}\n";
                     }
                     

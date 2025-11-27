@@ -183,6 +183,7 @@
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs" />
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />

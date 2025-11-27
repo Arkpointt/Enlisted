@@ -268,11 +268,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void AddTroopSelectionMenus(CampaignGameStarter starter)
         {
             // Main troop selection menu
-            // 1.3.4+: Use Encounter overlay for proper background
+            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("enlisted_troop_selection",
                 "Military Advancement\n{TROOP_SELECTION_TEXT}",
                 OnTroopSelectionInit,
-                GameMenu.MenuOverlayType.Encounter,
+                GameMenu.MenuOverlayType.None,
                 GameMenu.MenuFlags.None,
                 null);
                 

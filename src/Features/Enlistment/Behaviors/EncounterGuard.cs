@@ -103,11 +103,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				main.SetMoveEscortParty(target, MobileParty.NavigationType.Default, false);
 				
 				// Set camera to follow the lord's party for better visual experience
-				try
-				{
-					target.Party.SetAsCameraFollowParty();
-				}
-				catch { /* Best effort */ }
+					try
+					{
+						target.Party.SetAsCameraFollowParty();
+					}
+					catch { /* Best effort */ }
 			}
 			else
 			{
@@ -147,7 +147,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			var wasVisible = mainParty.IsVisible;
 			mainParty.IsVisible = true;
 			ModLogger.Info("EncounterGuard", $"ShowPlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
-		}
+			}
 		
 		#endregion
 	}

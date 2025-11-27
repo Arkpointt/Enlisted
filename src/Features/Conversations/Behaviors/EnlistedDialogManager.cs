@@ -116,12 +116,12 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 110);
 
-            // Grace-specific enlistment option
+            // Grace-specific enlistment option (covers lord killed, captured, or army defeated)
             starter.AddPlayerLine(
                 "enlisted_request_service_grace",
                 "enlisted_service_options",
                 "enlisted_enlistment_response_grace",
-                GetLocalizedText("{=enlisted_request_service_grace}My previous commander was captured. I wish to continue serving under your banner.").ToString(),
+                GetLocalizedText("{=enlisted_request_service_grace}My previous commander is no longer available. I wish to continue serving under your banner.").ToString(),
                 CanRequestGraceTransfer,
                 null,
                 110);
@@ -198,28 +198,208 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        /// Add retirement conversation flow.
+        /// Add retirement conversation flow with full benefits explanation.
         /// </summary>
         private void AddRetirementDialogs(CampaignGameStarter starter)
         {
-            // Request retirement option
+            // First-term retirement discussion (available after 252 days)
             starter.AddPlayerLine(
-                "enlisted_request_retirement",
+                "enlisted_discuss_retirement",
                 "enlisted_service_options",
-                "enlisted_retirement_response",
-                GetLocalizedText("{=enlisted_request_retirement}I wish to request discharge from service.").ToString(),
-                CanRequestRetirement,
+                "enlisted_retirement_benefits",
+                GetLocalizedText("{=enlisted_discuss_retirement}I've served my term. I wish to discuss my retirement.").ToString(),
+                CanDiscussFirstTermRetirement,
+                null,
+                109); // Higher priority than regular retirement
+            
+            // Lord explains benefits
+            starter.AddDialogLine(
+                "enlisted_retirement_benefits_explanation",
+                "enlisted_retirement_benefits",
+                "enlisted_retirement_choice",
+                GetLocalizedText("{=enlisted_retirement_benefits_explanation}You've served with honor. You may retire with full benefits:\n- 10,000 gold severance\n- My personal recommendation (+30 relation)\n- Recognition from our kingdom (+30 reputation)\n- Letters to my fellow lords (+15 with those who respect you)\n\nAlternatively, I can offer 20,000 gold to extend your service one more year.").ToString(),
+                null,
                 null,
                 110);
-
-            // Lord's response to retirement request
-            starter.AddDialogLine(
-                "enlisted_retirement_granted",
-                "enlisted_retirement_response",
-                "close_window",
-                GetLocalizedText("{=enlisted_retirement_granted}Your service has been honorable. You are discharged with our gratitude.").ToString(),
+            
+            // Player accepts retirement with benefits
+            starter.AddPlayerLine(
+                "enlisted_accept_retirement",
+                "enlisted_retirement_choice",
+                "enlisted_retirement_farewell",
+                GetLocalizedText("{=enlisted_accept_retirement}I accept retirement with benefits.").ToString(),
                 null,
-                OnGrantRetirement,
+                OnAcceptFirstTermRetirement,
+                110);
+            
+            // Player accepts re-enlistment bonus
+            starter.AddPlayerLine(
+                "enlisted_accept_reenlist_bonus",
+                "enlisted_retirement_choice",
+                "enlisted_reenlist_confirmed",
+                GetLocalizedText("{=enlisted_accept_reenlist_bonus}I'll take the 20,000 gold bonus and continue serving.").ToString(),
+                null,
+                OnAcceptFirstTermReenlistBonus,
+                110);
+            
+            // Player needs time to decide
+            starter.AddPlayerLine(
+                "enlisted_retirement_later",
+                "enlisted_retirement_choice",
+                "close_window",
+                GetLocalizedText("{=enlisted_retirement_later}I need more time to decide.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Lord's farewell on retirement
+            starter.AddDialogLine(
+                "enlisted_retirement_farewell_text",
+                "enlisted_retirement_farewell",
+                "close_window",
+                GetLocalizedText("{=enlisted_retirement_farewell}Farewell, soldier. You've earned your rest. May we meet again in better times.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Lord confirms re-enlistment
+            starter.AddDialogLine(
+                "enlisted_reenlist_bonus_confirmed",
+                "enlisted_reenlist_confirmed",
+                "close_window",
+                GetLocalizedText("{=enlisted_reenlist_bonus_confirmed}Excellent! Your loyalty is noted. Report back in one year for your discharge bonus, or speak with me to continue further.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Renewal term complete dialog (after 1-year renewal)
+            starter.AddPlayerLine(
+                "enlisted_renewal_complete",
+                "enlisted_service_options",
+                "enlisted_renewal_options",
+                GetLocalizedText("{=enlisted_renewal_complete}My term has ended. I wish to discuss my options.").ToString(),
+                CanDiscussRenewalTermEnd,
+                null,
+                108);
+            
+            // Lord explains renewal options
+            starter.AddDialogLine(
+                "enlisted_renewal_options_explanation",
+                "enlisted_renewal_options",
+                "enlisted_renewal_choice",
+                GetLocalizedText("{=enlisted_renewal_options}Your term is complete. You may:\n- Retire with 5,000 gold discharge bonus\n- Continue serving with a 5,000 gold re-enlistment bonus for another year").ToString(),
+                null,
+                null,
+                110);
+            
+            // Player accepts renewal discharge
+            starter.AddPlayerLine(
+                "enlisted_accept_renewal_discharge",
+                "enlisted_renewal_choice",
+                "enlisted_renewal_farewell",
+                GetLocalizedText("{=enlisted_renewal_discharge}I'll take the discharge and my 5,000 gold.").ToString(),
+                null,
+                OnAcceptRenewalDischarge,
+                110);
+            
+            // Player continues service
+            starter.AddPlayerLine(
+                "enlisted_continue_service",
+                "enlisted_renewal_choice",
+                "enlisted_continue_confirmed",
+                GetLocalizedText("{=enlisted_continue_service}I'll continue serving for another year and take the 5,000 gold bonus.").ToString(),
+                null,
+                OnContinueService,
+                110);
+            
+            // Lord's farewell on renewal discharge
+            starter.AddDialogLine(
+                "enlisted_renewal_farewell_text",
+                "enlisted_renewal_farewell",
+                "close_window",
+                GetLocalizedText("{=enlisted_renewal_farewell}Very well. Your service has been valued. You may return after a period of rest if you wish to serve again.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Lord confirms continued service
+            starter.AddDialogLine(
+                "enlisted_continue_service_confirmed",
+                "enlisted_continue_confirmed",
+                "close_window",
+                GetLocalizedText("{=enlisted_continue_confirmed}Your dedication is admirable. See you in a year, or speak with me again when your term ends.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Post-cooldown re-enlistment option
+            starter.AddPlayerLine(
+                "enlisted_reenlist_after_cooldown",
+                "enlisted_service_options",
+                "enlisted_veteran_welcome",
+                GetLocalizedText("{=enlisted_reenlist_cooldown}I wish to return to service. I've served this kingdom before.").ToString(),
+                CanReEnlistAfterCooldown,
+                null,
+                107);
+            
+            // Lord welcomes back veteran
+            starter.AddDialogLine(
+                "enlisted_veteran_welcome_back",
+                "enlisted_veteran_welcome",
+                "enlisted_veteran_confirm",
+                GetLocalizedText("{=enlisted_veteran_welcome}Ah, a veteran returns! Your rank will be restored, though you'll need to select your troop type again. Your term will be one year, with 5,000 gold discharge at the end.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Veteran confirms re-enlistment
+            starter.AddPlayerLine(
+                "enlisted_veteran_accept",
+                "enlisted_veteran_confirm",
+                "enlisted_veteran_accepted",
+                GetLocalizedText("{=enlisted_veteran_accept}I'm ready to serve again.").ToString(),
+                null,
+                OnVeteranReEnlist,
+                110);
+            
+            // Veteran decides not to re-enlist
+            starter.AddPlayerLine(
+                "enlisted_veteran_decline",
+                "enlisted_veteran_confirm",
+                "close_window",
+                GetLocalizedText("{=enlisted_veteran_decline}On second thought, not yet.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Lord confirms veteran re-enlistment
+            starter.AddDialogLine(
+                "enlisted_veteran_accepted_text",
+                "enlisted_veteran_accepted",
+                "close_window",
+                GetLocalizedText("{=enlisted_veteran_accepted}Welcome back, soldier. Select your troop type at the Master at Arms and report for duty.").ToString(),
+                null,
+                null,
+                110);
+            
+            // Simple early discharge (for those not eligible for full retirement)
+            starter.AddPlayerLine(
+                "enlisted_request_early_discharge",
+                "enlisted_service_options",
+                "enlisted_early_discharge_response",
+                GetLocalizedText("{=enlisted_early_discharge}I wish to request discharge from service.").ToString(),
+                CanRequestEarlyDischarge,
+                null,
+                115); // Lower priority - shows when not eligible for full retirement
+            
+            // Lord grants early discharge (no benefits)
+            starter.AddDialogLine(
+                "enlisted_early_discharge_granted",
+                "enlisted_early_discharge_response",
+                "close_window",
+                GetLocalizedText("{=enlisted_early_discharge_granted}Your service ends today. You leave without the benefits of a full term, but you are free to go.").ToString(),
+                null,
+                OnGrantEarlyDischarge,
                 110);
         }
 
@@ -334,12 +514,65 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        /// Checks if the player can request retirement from current service.
+        /// Checks if the player can discuss first-term retirement (after 252 days).
+        /// Must be enlisted with current lord and have completed minimum service.
         /// </summary>
-        private bool CanRequestRetirement()
+        private bool CanDiscussFirstTermRetirement()
         {
-            // Simple check for now - can be enhanced with service duration requirements if needed
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            // Must be enlisted with this specific lord and eligible for retirement
+            return enlistment?.IsEnlisted == true && 
+                   enlistment.CurrentLord == lord &&
+                   enlistment.IsEligibleForRetirement;
+        }
+        
+        /// <summary>
+        /// Checks if the player can discuss renewal term completion.
+        /// </summary>
+        private bool CanDiscussRenewalTermEnd()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            return enlistment?.IsEnlisted == true && 
+                   enlistment.CurrentLord == lord &&
+                   enlistment.IsInRenewalTerm &&
+                   enlistment.IsRenewalTermComplete;
+        }
+        
+        /// <summary>
+        /// Checks if the player can re-enlist after cooldown (veteran return).
+        /// </summary>
+        private bool CanReEnlistAfterCooldown()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
+            {
+                return false;
+            }
+            
+            var kingdom = lord?.MapFaction as Kingdom;
+            return kingdom != null && enlistment.CanReEnlistAfterCooldown(kingdom);
+        }
+        
+        /// <summary>
+        /// Checks if the player can request early discharge (before full term).
+        /// Shows only when not eligible for full retirement benefits.
+        /// </summary>
+        private bool CanRequestEarlyDischarge()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            // Must be enlisted with this lord but NOT eligible for full retirement
+            return enlistment?.IsEnlisted == true && 
+                   enlistment.CurrentLord == lord &&
+                   !enlistment.IsEligibleForRetirement &&
+                   !enlistment.IsRenewalTermComplete;
         }
 
         /// <summary>
@@ -403,28 +636,115 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        /// Handles the consequence of granted retirement.
-        /// Centralized to ensure proper cleanup and notifications.
+        /// Handles first-term retirement with full benefits.
         /// </summary>
-        private void OnGrantRetirement()
+        private void OnAcceptFirstTermRetirement()
+        {
+            try
+            {
+                EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
+                ModLogger.Info("DialogManager", "First-term retirement processed");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during first-term retirement", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Handles first-term re-enlistment with 20,000 gold bonus.
+        /// </summary>
+        private void OnAcceptFirstTermReenlistBonus()
+        {
+            try
+            {
+                var config = Enlisted.Features.Assignments.Core.ConfigurationManager.LoadRetirementConfig();
+                EnlistmentBehavior.Instance?.StartRenewalTerm(config.FirstTermReenlistBonus);
+                ModLogger.Info("DialogManager", $"First-term re-enlistment with {config.FirstTermReenlistBonus}g bonus");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during first-term re-enlistment", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Handles renewal term discharge with 5,000 gold.
+        /// </summary>
+        private void OnAcceptRenewalDischarge()
+        {
+            try
+            {
+                EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
+                ModLogger.Info("DialogManager", "Renewal discharge processed");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during renewal discharge", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Handles continuing service with 5,000 gold bonus.
+        /// </summary>
+        private void OnContinueService()
+        {
+            try
+            {
+                var config = Enlisted.Features.Assignments.Core.ConfigurationManager.LoadRetirementConfig();
+                EnlistmentBehavior.Instance?.StartRenewalTerm(config.RenewalContinueBonus);
+                ModLogger.Info("DialogManager", $"Service continued with {config.RenewalContinueBonus}g bonus");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error continuing service", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Handles veteran re-enlistment after cooldown.
+        /// </summary>
+        private void OnVeteranReEnlist()
+        {
+            try
+            {
+                var lord = Hero.OneToOneConversationHero;
+                if (lord != null)
+                {
+                    EnlistmentBehavior.Instance?.ReEnlistAfterCooldown(lord);
+                    
+                    // Redirect to troop selection
+                    NextFrameDispatcher.RunNextFrame(() => EnlistedMenuBehavior.SafeActivateEnlistedMenu());
+                }
+                ModLogger.Info("DialogManager", "Veteran re-enlistment processed");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during veteran re-enlistment", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Handles early discharge (before full term, no benefits).
+        /// </summary>
+        private void OnGrantEarlyDischarge()
         {
             try
             {
                 if (EnlistmentBehavior.Instance?.IsEnlisted == true)
                 {
                     var lordName = EnlistmentBehavior.Instance.CurrentLord?.Name?.ToString() ?? "Unknown Lord";
-                    ModLogger.Info("DialogManager", $"Player retiring from service with: {lordName}");
+                    ModLogger.Info("DialogManager", $"Player early discharge from service with: {lordName}");
 
-                    EnlistmentBehavior.Instance.StopEnlist("Retired through dialog");
+                    EnlistmentBehavior.Instance.StopEnlist("Early discharge through dialog", isHonorableDischarge: false);
 
-                    // Professional notification
-                    var retireMessage = GetLocalizedText("{=enlisted_retirement_notification}You have been honorably discharged from military service.");
-                    InformationManager.DisplayMessage(new InformationMessage(retireMessage.ToString()));
+                    var message = GetLocalizedText("{=enlisted_early_discharge_notification}You have been discharged from service without full benefits.");
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("DialogManager", "Error during retirement processing", ex);
+                ModLogger.Error("DialogManager", "Error during early discharge", ex);
             }
         }
 

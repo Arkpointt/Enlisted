@@ -23,11 +23,19 @@ namespace Enlisted.Features.Combat.Behaviors
         /// <summary>
         /// Called after the mission starts. We try to assign formation here,
         /// but the player agent might not exist yet.
+        /// Note: This may not fire if we're added after mission start.
         /// </summary>
         public override void AfterStart()
         {
-            base.AfterStart();
-            TryAssignPlayerToFormation("AfterStart");
+            try
+            {
+                base.AfterStart();
+                TryAssignPlayerToFormation("AfterStart");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", $"Error in AfterStart: {ex.Message}");
+            }
         }
         
         /// <summary>
@@ -36,8 +44,15 @@ namespace Enlisted.Features.Combat.Behaviors
         /// </summary>
         public override void OnDeploymentFinished()
         {
-            base.OnDeploymentFinished();
-            TryAssignPlayerToFormation("OnDeploymentFinished");
+            try
+            {
+                base.OnDeploymentFinished();
+                TryAssignPlayerToFormation("OnDeploymentFinished");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", $"Error in OnDeploymentFinished: {ex.Message}");
+            }
         }
         
         /// <summary>
@@ -46,12 +61,24 @@ namespace Enlisted.Features.Combat.Behaviors
         /// </summary>
         public override void OnMissionTick(float dt)
         {
-            base.OnMissionTick(dt);
-            
-            // Only try once per mission
-            if (!_hasAssignedFormation)
+            try
             {
-                TryAssignPlayerToFormation("OnMissionTick");
+                base.OnMissionTick(dt);
+                
+                // Only try once per mission
+                if (!_hasAssignedFormation)
+                {
+                    TryAssignPlayerToFormation("OnMissionTick");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Only log once to avoid spam
+                if (!_hasAssignedFormation)
+                {
+                    ModLogger.Error("FormationAssignment", $"Error in OnMissionTick: {ex.Message}");
+                    _hasAssignedFormation = true; // Stop trying
+                }
             }
         }
         
@@ -76,11 +103,31 @@ namespace Enlisted.Features.Combat.Behaviors
                 return;
             }
             
+            // Ensure mission is valid
+            if (Mission.Current == null)
+            {
+                return;
+            }
+            
             // Get the player agent
             var playerAgent = Agent.Main;
-            if (playerAgent == null || !playerAgent.IsActive())
+            if (playerAgent == null)
             {
                 // Player not spawned yet - will try again
+                return;
+            }
+            
+            // Check if agent is active (with null safety)
+            try
+            {
+                if (!playerAgent.IsActive())
+                {
+                    return;
+                }
+            }
+            catch
+            {
+                // Agent might be in invalid state - skip
                 return;
             }
             
@@ -148,8 +195,15 @@ namespace Enlisted.Features.Combat.Behaviors
         
         protected override void OnEndMission()
         {
-            base.OnEndMission();
-            _hasAssignedFormation = false; // Reset for next mission
+            try
+            {
+                base.OnEndMission();
+                _hasAssignedFormation = false; // Reset for next mission
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", $"Error in OnEndMission: {ex.Message}");
+            }
         }
     }
 }

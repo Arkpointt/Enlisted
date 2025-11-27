@@ -43,12 +43,11 @@ _harmony.PatchAll();
 15. VotingSuppressionPatch - Prevents voting prompts for enlisted soldiers
 
 **Core Behaviors** (`src/Mod.Entry/SubModule.cs`):
-- EnlistmentBehavior - Core service state, lord following, battle/settlement participation
-- EnlistedDialogManager - Centralized dialog handling (enlist, leave, return to service)
+- EnlistmentBehavior - Core service state, lord following, battle participation, veteran retirement system
+- EnlistedDialogManager - Centralized dialog handling (enlist, leave, retirement, re-enlistment)
 - EnlistedDutiesBehavior - Duties system with formation training
 - EnlistedMenuBehavior - Professional menu interface with "Return to Camp" options
 - EnlistedEncounterBehavior - Battle participation and encounter management
-- EnlistedFormationAssignmentBehavior - Auto-assigns player to correct formation in battles
 
 **Debug Logs** (`<BannerlordInstall>\Modules\Enlisted\Debugging\`):
 - `enlisted.log` - Main mod activity and errors
@@ -91,11 +90,11 @@ src/
 ├── Mod.GameAdapters/       # TaleWorlds APIs, Harmony patches
 │   └── Patches/            # 15 Harmony patches
 └── Features/               # Each feature is self-contained
-    ├── Enlistment/         # Core service state management
+    ├── Enlistment/         # Core service state management + veteran retirement
     ├── Assignments/        # Duties system and XP calculations
     ├── Equipment/          # Equipment management and troop selection
     ├── Ranks/              # Promotion tracking and wage calculation
-    ├── Conversations/      # Dialog handling
+    ├── Conversations/      # Dialog handling (including retirement dialogs)
     ├── Combat/             # Battle participation
     └── Interface/          # Menu system
 ```
@@ -147,7 +146,20 @@ Modules/Enlisted/
 
 ### 4.4 Military Service Architecture
 
-**Enlistment**: Tracks lord service relationship and basic state (`src/Features/Enlistment/Behaviors/`)
+**Enlistment**: Tracks lord service relationship, veteran status, and grace periods (`src/Features/Enlistment/Behaviors/`)
+
+**Veteran Retirement System**: Per-faction service tracking with:
+- `FactionVeteranRecord` class storing tier, kills, cooldowns, term status
+- First term (252 days) with full benefits
+- Renewal terms (84 days) with discharge/continue bonuses
+- 6-month (42 day) faction cooldown after retirement
+- Tier preservation for re-enlistment
+
+**Grace Period System**: Unified 14-day grace for:
+- Lord killed
+- Lord captured
+- Army defeated
+- Leave expired
 
 **Assignments**: Handles daily duties and benefits (`src/Features/Assignments/Behaviors/`)
 
@@ -157,9 +169,11 @@ Modules/Enlisted/
 - Uses escort AI (`SetMoveEscortParty`) for following lord on the map
 - `MobileParty.IsVisible = false` hides 3D party model while following
 - Player joins battles via `MapEventSide` assignment when lord engages
-- `EnlistedFormationAssignmentBehavior` auto-assigns player to correct formation
+- +25 XP awarded per battle participation
 - Autosim defeats fall back to vanilla behavior (player chooses Attack/Surrender)
 - Formation-based command filtering via `BattleCommandsFilterPatch`
+
+**Note**: Dynamic mission behavior addition (EnlistedKillTrackerBehavior, EnlistedFormationAssignmentBehavior) is disabled due to crash issues when adding behaviors to running missions.
 
 **Settlement Integration**:
 - Player automatically follows lord into settlements via native escort behavior
@@ -168,6 +182,7 @@ Modules/Enlisted/
 
 **Menu Integration**:
 - Custom menu with service status, wages, progression
+- Retirement dialog flow with benefits explanation
 - Organized duty/profession selection
 - Tier-based access with detailed descriptions
 
@@ -190,6 +205,7 @@ Modules/Enlisted/
 - Prefer public APIs when available
 - Use `IsActive = false` engine property for encounter prevention (no patches needed)
 - Keep domain logic in features, not patches
+- **Avoid** adding MissionBehaviors dynamically during missions (causes crashes)
 
 ### 5.4 Documentation Standard
 
@@ -301,6 +317,18 @@ GameMenu.MenuOverlayType.None
 var subModules = Module.CurrentModule.CollectSubModules();
 ```
 
+### 6.9 Relation Changes
+
+```csharp
+ChangeRelationAction.ApplyPlayerRelation(hero, relationChange, affectRelatives, showNotification);
+```
+
+### 6.10 Gold Actions
+
+```csharp
+GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, amount, true);
+```
+
 ## 7. Development Standards
 
 ### 7.1 Code Style
@@ -312,7 +340,7 @@ var subModules = Module.CurrentModule.CollectSubModules();
 
 ### 7.2 Logging
 
-**Categories**: Enlistment, Duties, Equipment, Patches, Config, Progression, Combat, Compatibility, Performance
+**Categories**: Enlistment, Duties, Equipment, Patches, Config, Progression, Combat, Compatibility, Performance, Retirement, Leave, SaveLoad
 
 **Levels**:
 - **Error**: Critical failures only (primary use)
@@ -374,8 +402,18 @@ if (_enlistedLord?.IsAlive == true) { ProcessWages(); }
 |---------|---------|-------------|---------|
 | `gameplay.reserve_troop_threshold` | 100 | 20-500 | Minimum troops for "Wait in Reserve" |
 | `gameplay.desertion_grace_period_days` | 14 | 1-90 | Days to find new lord after discharge |
+| `gameplay.leave_max_days` | 14 | 1-90 | Maximum days on leave before desertion |
 | `finance.show_in_clan_tooltip` | true | bool | Show wages in Daily Gold tooltip |
-| `enlistment.retirement.minimum_service_days` | 365 | - | Days required before retirement |
+| `retirement.first_term_days` | 252 | - | Days required for first-term retirement |
+| `retirement.renewal_term_days` | 84 | - | Duration of renewal terms |
+| `retirement.cooldown_days` | 42 | - | Faction cooldown after retirement |
+| `retirement.first_term_gold` | 10000 | - | Gold bonus for first-term retirement |
+| `retirement.first_term_reenlist_bonus` | 20000 | - | Gold bonus for re-enlisting after first term |
+| `retirement.renewal_discharge_gold` | 5000 | - | Gold for renewal term discharge |
+| `retirement.lord_relation_bonus` | 30 | - | Relation gain with retiring lord |
+| `retirement.faction_reputation_bonus` | 30 | - | Faction reputation gain |
+| `retirement.other_lords_relation_bonus` | 15 | - | Relation gain with other faction lords |
+| `retirement.other_lords_min_relation` | 50 | - | Minimum relation required for bonus |
 
 ### Supported Cultures
 
@@ -391,6 +429,24 @@ Configuration files support all eight cultures.
 - **Load order**: Declare dependencies in `SubModule.xml`
 - **Save-game**: Never remove serialized fields without migration plan
 - **Localization**: Store strings in `ModuleData/localization/`
+
+### Save System Considerations
+
+Custom classes cannot be serialized directly via `dataStore.SyncData()`. Use manual serialization:
+
+```csharp
+// Instead of: dataStore.SyncData("_records", ref _records);
+// Use indexed primitive fields:
+int count = _records.Count;
+dataStore.SyncData("_records_count", ref count);
+for (int i = 0; i < count; i++)
+{
+    string id = _records[i].Id;
+    int value = _records[i].Value;
+    dataStore.SyncData($"_records_{i}_id", ref id);
+    dataStore.SyncData($"_records_{i}_value", ref value);
+}
+```
 
 ## 12. Critical Patterns
 
@@ -428,6 +484,11 @@ Returns null instead of throwing during character creation or uninitialized stat
 ### Manual Harmony Patching
 For patches that reference types not available during character creation (like `PartyNameplateVM`),
 use manual patching via `harmony.Patch()` deferred until after campaign initialization.
+
+### Mission Behavior Warning
+**Do NOT add MissionBehaviors dynamically** during `AfterMissionStarted` or similar events.
+This causes crashes because lifecycle methods get called in unstable states.
+Use campaign events instead (OnMapEventEnded, OnPlayerBattleEnd) for battle tracking.
 
 ### API Verification
 

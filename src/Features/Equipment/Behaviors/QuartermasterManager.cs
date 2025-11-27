@@ -85,20 +85,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void AddQuartermasterMenus(CampaignGameStarter starter)
         {
             // Main quartermaster equipment menu
-            // 1.3.4+: Use Encounter overlay for proper background
+            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("quartermaster_equipment",
                 "Army Quartermaster\n{QUARTERMASTER_TEXT}",
                 OnQuartermasterEquipmentInit,
-                GameMenu.MenuOverlayType.Encounter,
+                GameMenu.MenuOverlayType.None,
                 GameMenu.MenuFlags.None,
                 null);
                 
             // Equipment variant selection submenu
-            // 1.3.4+: Use Encounter overlay for proper background
+            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("quartermaster_variants",
                 "Equipment Variants\n{VARIANT_TEXT}",
                 OnQuartermasterVariantsInit,
-                GameMenu.MenuOverlayType.Encounter,
+                GameMenu.MenuOverlayType.None,
                 GameMenu.MenuFlags.None,
                 null);
                 
@@ -1539,11 +1539,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         private void AddSupplyManagementMenu(CampaignGameStarter starter)
         {
             // Supply management menu for quartermaster officers
-            // 1.3.4+: Use Encounter overlay for proper background
+            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("quartermaster_supplies",
                 "Supply Management\n{SUPPLY_TEXT}",
                 OnSupplyManagementInit,
-                GameMenu.MenuOverlayType.Encounter,
+                GameMenu.MenuOverlayType.None,
                 GameMenu.MenuFlags.None,
                 null);
                 

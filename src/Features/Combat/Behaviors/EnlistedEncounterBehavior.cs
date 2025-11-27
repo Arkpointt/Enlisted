@@ -86,7 +86,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
             // Add a custom "wait in reserve" menu for battles
             // This menu shows while the player is waiting in reserve and allows them to rejoin
-            // 1.3.4+: Use Encounter overlay for proper background
+            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar when not in active combat
             starter.AddWaitGameMenu("enlisted_battle_wait", 
                 "Waiting in Reserve: {BATTLE_STATUS}",
                 OnBattleWaitInit,
@@ -94,7 +94,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 null,
                 OnBattleWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption,
-                GameMenu.MenuOverlayType.Encounter,  // 1.3.4+: Use Encounter overlay for proper background
+                GameMenu.MenuOverlayType.None,  // No overlay - battle status shown in menu text instead
                 0f,
                 GameMenu.MenuFlags.None,
                 null);
