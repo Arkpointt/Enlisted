@@ -443,11 +443,12 @@ namespace Enlisted.Features.Assignments.Core
                 else if (config.DesertionGracePeriodDays > 90)
                     config.DesertionGracePeriodDays = 90;
                 
-                // Validate leave max days is within safe bounds (1-30 days)
+                // Validate leave max days is within safe bounds (1-14 days)
+                // 14 days is the documented design limit for leave before desertion penalties
                 if (config.LeaveMaxDays < 1)
                     config.LeaveMaxDays = 1;
-                else if (config.LeaveMaxDays > 30)
-                    config.LeaveMaxDays = 30;
+                else if (config.LeaveMaxDays > 14)
+                    config.LeaveMaxDays = 14;
                 
                 _cachedGameplayConfig = config;
                 ModLogger.Info("Config", "Gameplay config loaded successfully");
