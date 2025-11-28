@@ -261,9 +261,6 @@ namespace Enlisted.Mod.Entry
 					// Handles menu state transitions, battle detection, and settlement access
 					campaignStarter.AddBehavior(new EnlistedMenuBehavior());
 					
-					// Input handler: manages keyboard shortcuts for accessing menus and checking promotion status
-					campaignStarter.AddBehavior(new EnlistedInputHandler());
-					
 					// Troop selection: allows players to choose which troop type to represent during service,
 					// which determines formation (Infantry/Cavalry/Archer/Horse Archer) and equipment access
 					campaignStarter.AddBehavior(new TroopSelectionManager());

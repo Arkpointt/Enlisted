@@ -4,11 +4,11 @@
   "tier_progression": {
     "requirements": [
       { "tier": 1, "xp_required": 0, "name": "Levy" },
-      { "tier": 2, "xp_required": 500, "name": "Footman" },
-      { "tier": 3, "xp_required": 2000, "name": "Serjeant" },
-      { "tier": 4, "xp_required": 5000, "name": "Man-at-Arms" },
-      { "tier": 5, "xp_required": 10000, "name": "Banner Sergeant" },
-      { "tier": 6, "xp_required": 18000, "name": "Household Guard" }
+      { "tier": 2, "xp_required": 800, "name": "Footman" },
+      { "tier": 3, "xp_required": 3000, "name": "Serjeant" },
+      { "tier": 4, "xp_required": 6000, "name": "Man-at-Arms" },
+      { "tier": 5, "xp_required": 11000, "name": "Banner Sergeant" },
+      { "tier": 6, "xp_required": 19000, "name": "Household Guard" }
     ],
     "formation_selection": {
       "trigger_tier": 2,
@@ -61,7 +61,7 @@
       "equipment_access": ["t1", "t2", "t3", "t4", "t5"]
     },
     "tier_6": {
-      "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
+      "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6" , "t7"]
     }
   }
 }

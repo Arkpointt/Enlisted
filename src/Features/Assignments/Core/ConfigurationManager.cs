@@ -27,7 +27,9 @@ namespace Enlisted.Features.Assignments.Core
         public static DutiesSystemConfig LoadDutiesConfig()
         {
             if (_cachedDutiesConfig != null)
+            {
                 return _cachedDutiesConfig;
+            }
                 
             try
             {
@@ -148,7 +150,9 @@ namespace Enlisted.Features.Assignments.Core
         public static ProgressionConfig LoadProgressionConfig()
         {
             if (_cachedProgressionConfig != null)
+            {
                 return _cachedProgressionConfig;
+            }
                 
             try
             {
@@ -208,11 +212,11 @@ namespace Enlisted.Features.Assignments.Core
                     Requirements = new System.Collections.Generic.List<TierRequirement>
                     {
                         new TierRequirement { Tier = 1, XpRequired = 0, Name = "Levy" },
-                        new TierRequirement { Tier = 2, XpRequired = 500, Name = "Footman" },
-                        new TierRequirement { Tier = 3, XpRequired = 2000, Name = "Serjeant" },
-                        new TierRequirement { Tier = 4, XpRequired = 5000, Name = "Man-at-Arms" },
-                        new TierRequirement { Tier = 5, XpRequired = 10000, Name = "Banner Sergeant" },
-                        new TierRequirement { Tier = 6, XpRequired = 18000, Name = "Household Guard" }
+                        new TierRequirement { Tier = 2, XpRequired = 800, Name = "Footman" },
+                        new TierRequirement { Tier = 3, XpRequired = 3000, Name = "Serjeant" },
+                        new TierRequirement { Tier = 4, XpRequired = 6000, Name = "Man-at-Arms" },
+                        new TierRequirement { Tier = 5, XpRequired = 11000, Name = "Banner Sergeant" },
+                        new TierRequirement { Tier = 6, XpRequired = 19000, Name = "Household Guard" }
                     }
                 }
             };
@@ -225,8 +229,8 @@ namespace Enlisted.Features.Assignments.Core
         /// Get tier XP requirements array from progression config.
         /// Returns array where index matches tier number (1-based).
         /// Array[0] is unused, Array[tier] contains the XP threshold needed to promote FROM that tier.
-        /// Fix: JSON stores cumulative XP (tier 1=0, tier 2=500), but we need promotion thresholds.
-        /// So Array[1] should be 500 (XP needed to go from tier 1→2), Array[2] should be 2000 (tier 2→3), etc.
+        /// Fix: JSON stores cumulative XP (tier 1=0, tier 2=800), but we need promotion thresholds.
+        /// So Array[1] should be 800 (XP needed to go from tier 1→2), Array[2] should be 3000 (tier 2→3), etc.
         /// </summary>
         public static int[] GetTierXPRequirements()
         {
@@ -234,10 +238,10 @@ namespace Enlisted.Features.Assignments.Core
             if (config?.TierProgression?.Requirements == null || config.TierProgression.Requirements.Count == 0)
             {
                 // Fix: Fallback array should map current tier to next tier's requirement
-                // Array[1]=500 (need 500 XP to promote from tier 1 to tier 2)
-                // Array[2]=2000 (need 2000 XP to promote from tier 2 to tier 3), etc.
+                // Array[1]=800 (need 800 XP to promote from tier 1 to tier 2)
+                // Array[2]=3000 (need 3000 XP to promote from tier 2 to tier 3), etc.
                 // Last element repeats max tier requirement to prevent out-of-bounds
-                return new int[] { 0, 500, 2000, 5000, 10000, 18000, 18000 };
+                return new int[] { 0, 800, 3000, 6000, 11000, 19000, 19000 };
             }
             
             // Sort by tier and extract XP requirements
@@ -350,7 +354,9 @@ namespace Enlisted.Features.Assignments.Core
         public static FinanceConfig LoadFinanceConfig()
         {
             if (_cachedFinanceConfig != null)
+            {
                 return _cachedFinanceConfig;
+            }
                 
             try
             {
@@ -409,7 +415,9 @@ namespace Enlisted.Features.Assignments.Core
         public static GameplayConfig LoadGameplayConfig()
         {
             if (_cachedGameplayConfig != null)
+            {
                 return _cachedGameplayConfig;
+            }
                 
             try
             {
@@ -433,22 +441,34 @@ namespace Enlisted.Features.Assignments.Core
                 // Validate reserve threshold is within safe bounds
                 var config = fullConfig.Gameplay;
                 if (config.ReserveTroopThreshold < 20)
+                {
                     config.ReserveTroopThreshold = 20;
+                }
                 else if (config.ReserveTroopThreshold > 500)
+                {
                     config.ReserveTroopThreshold = 500;
+                }
                     
                 // Validate desertion grace period is within safe bounds
                 if (config.DesertionGracePeriodDays < 1)
+                {
                     config.DesertionGracePeriodDays = 1;
+                }
                 else if (config.DesertionGracePeriodDays > 90)
+                {
                     config.DesertionGracePeriodDays = 90;
+                }
                 
                 // Validate leave max days is within safe bounds (1-14 days)
                 // 14 days is the documented design limit for leave before desertion penalties
                 if (config.LeaveMaxDays < 1)
+                {
                     config.LeaveMaxDays = 1;
+                }
                 else if (config.LeaveMaxDays > 14)
+                {
                     config.LeaveMaxDays = 14;
+                }
                 
                 _cachedGameplayConfig = config;
                 ModLogger.Info("Config", "Gameplay config loaded successfully");
@@ -481,7 +501,9 @@ namespace Enlisted.Features.Assignments.Core
         public static RetirementConfig LoadRetirementConfig()
         {
             if (_cachedRetirementConfig != null)
+            {
                 return _cachedRetirementConfig;
+            }
                 
             try
             {
@@ -504,13 +526,36 @@ namespace Enlisted.Features.Assignments.Core
                 
                 var config = fullConfig.Retirement;
                 
-                // Validate config values
+                // Validate config values with min/max bounds (matches LoadGameplayConfig pattern)
+                // FirstTermDays: 84-365 days (3-12 Bannerlord months)
                 if (config.FirstTermDays < 84)
+                {
                     config.FirstTermDays = 84;
+                }
+                else if (config.FirstTermDays > 365)
+                {
+                    config.FirstTermDays = 365;
+                }
+                    
+                // RenewalTermDays: 28-168 days (1-6 Bannerlord months)
                 if (config.RenewalTermDays < 28)
+                {
                     config.RenewalTermDays = 28;
+                }
+                else if (config.RenewalTermDays > 168)
+                {
+                    config.RenewalTermDays = 168;
+                }
+                    
+                // CooldownDays: 14-90 days (0.5-3 Bannerlord months)
                 if (config.CooldownDays < 14)
+                {
                     config.CooldownDays = 14;
+                }
+                else if (config.CooldownDays > 90)
+                {
+                    config.CooldownDays = 90;
+                }
                 
                 _cachedRetirementConfig = config;
                 ModLogger.Info("Config", "Retirement config loaded successfully");

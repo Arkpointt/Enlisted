@@ -735,14 +735,28 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return false;
 			}
 
-			// Prevent players on leave from transferring to other lords
+			// Handle players on leave - allow same-faction transfers but block cross-faction enlistment
 			if (_isOnLeave)
 			{
 				if (_enlistedLord != null && lord != _enlistedLord)
 				{
-					reason = new TextObject("You are currently on leave from {LORD}. You must return to {LORD} before serving another commander.");
-					reason.SetTextVariable("LORD", _enlistedLord.Name ?? TextObject.GetEmpty()); // 1.3.4 API
-					return false;
+					// Allow transfer to other lords in the SAME faction/kingdom
+					var currentLordKingdom = _enlistedLord.MapFaction as Kingdom;
+					var targetLordKingdom = lord.MapFaction as Kingdom;
+					
+					if (currentLordKingdom != null && targetLordKingdom == currentLordKingdom)
+					{
+						// Same faction - allow transfer (handled by TransferServiceToLord)
+						ModLogger.Debug("Enlistment", $"Allowing same-faction transfer check from {_enlistedLord.Name} to {lord.Name}");
+						// Continue to other checks (party validity, etc.)
+					}
+					else
+					{
+						// Different faction - block
+						reason = new TextObject("You are currently on leave from {LORD}. You cannot join a different faction while on leave.");
+						reason.SetTextVariable("LORD", _enlistedLord.Name ?? TextObject.GetEmpty());
+						return false;
+					}
 				}
 
 				if (_enlistedLord == null)
@@ -2403,71 +2417,51 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 					
 					// Ensure the player is in the lord's army when the lord is in an army
-					// CRITICAL FIX: Only join the army if:
-					// 1. A battle/siege is actually active (immediate need)
-					// 2. OR we are physically close enough to the army (arrived at destination)
-					// This prevents teleporting the player across the map when the lord first "joins" a distant army
+					// Join seamlessly when the LORD physically merges with the army (not when first assigned)
+					// This prevents teleporting the player across the map - we wait for our lord to arrive first
 					if (lordInArmy && (mainParty.Army == null || mainParty.Army != lordParty.Army))
 					{
-						// Check distance to army leader
-						float distanceToArmy = 9999f;
-						if (lordParty.Army.LeaderParty != null)
-						{
-							// 1.3.4 API: Position2D is now GetPosition2D property
-							distanceToArmy = mainParty.GetPosition2D.Distance(lordParty.Army.LeaderParty.GetPosition2D);
-						}
-
-						// Condition 1: Battle is happening NOW (Must join to fight)
-						// CRITICAL FIX: Only consider it urgent if the Lord is actually AT the battle location
-						// If the Army is fighting but our Lord is still traveling to them (miles away),
-						// joining the army now would teleport us into the battle prematurely.
-						// We check if we are reasonably close to the Army Leader (General) before joining.
-						bool isCloseToLeader = distanceToArmy < 50.0f; // Generous radius to catch "nearby" battles
-						bool urgentBattleNeed = (lordHasMapEvent || lordInSiege) && isCloseToLeader;
-						
-						// Condition 2: We are close enough (Standard join radius is ~3.5f)
-						bool arrivedAtArmy = distanceToArmy < 5.0f;
-
-						if (urgentBattleNeed || arrivedAtArmy)
-						{
-							try
-							{
 						var targetArmy = lordParty.Army;
 						var armyLeader = targetArmy?.LeaderParty;
+						
 						if (targetArmy == null || armyLeader == null)
 						{
 							ModLogger.Debug("Battle", "Lord army reference invalid (null leader) - skipping automatic join this tick");
 						}
 						else
 						{
-							targetArmy.AddPartyToMergedParties(mainParty);
-							mainParty.Army = targetArmy;
+							// Check if LORD has physically merged with the army
+							// Lord is merged when: they ARE the leader, OR they're very close to the leader
+							bool lordIsArmyLeader = lordParty == armyLeader;
+							float lordDistanceToLeader = lordIsArmyLeader ? 0f : lordParty.GetPosition2D.Distance(armyLeader.GetPosition2D);
+							bool lordHasMerged = lordIsArmyLeader || lordDistanceToLeader < 3.0f;
 							
-							// If the army is currently besieging, align the player's besieger camp so PlayerSiege sees us properly.
-							TrySyncBesiegerCamp(mainParty, lordParty);
+							// Also allow immediate join for urgent battles if lord is reasonably close
+							bool urgentBattleNeed = (lordHasMapEvent || lordInSiege) && lordDistanceToLeader < 50.0f;
 							
-							if (urgentBattleNeed)
+							if (lordHasMerged || urgentBattleNeed)
 							{
-								ModLogger.Info("Battle", $"URGENT: Joined army for active battle/siege (Army: {targetArmy.LeaderParty?.LeaderHero?.Name})");
-							}
-							else
-							{
-								ModLogger.Debug("Battle", $"Arrived at army - joining merged parties (Dist: {distanceToArmy:F1})");
-							}
-						}
-							}
-							catch (Exception ex)
-							{
-								ModLogger.Error("Battle", $"Error ensuring player is in army: {ex.Message}");
-							}
-						}
-						else
-						{
-							// Debug log occasionally to show we are traveling but not joined yet
-							if (CampaignTime.Now.ToHours %
-							 24 < 1) // Approx once a day or so in logs
-							{
-								ModLogger.Debug("Battle", $"Traveling to army - waiting to join (Dist: {distanceToArmy:F1})");
+								try
+								{
+									targetArmy.AddPartyToMergedParties(mainParty);
+									mainParty.Army = targetArmy;
+									
+									// If the army is currently besieging, align the player's besieger camp
+									TrySyncBesiegerCamp(mainParty, lordParty);
+									
+									if (urgentBattleNeed && !lordHasMerged)
+									{
+										ModLogger.Info("Battle", $"URGENT: Joined army for active battle/siege (Army: {armyLeader?.LeaderHero?.Name})");
+									}
+									else
+									{
+										ModLogger.Info("Battle", $"Lord merged with army - player joining (Army: {armyLeader?.LeaderHero?.Name})");
+									}
+								}
+								catch (Exception ex)
+								{
+									ModLogger.Error("Battle", $"Error joining lord's army: {ex.Message}");
+								}
 							}
 						}
 					}
@@ -3369,22 +3363,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 
 		/// <summary>
-		/// Get rank name for tier. Used for display in UI and notifications.
+		/// Get rank name for tier. Uses names from progression_config.json.
 		/// </summary>
 		public string GetRankName(int tier)
 		{
-			var rankNames = new Dictionary<int, string>
-			{
-				{1, "Recruit"},
-				{2, "Private"}, 
-				{3, "Corporal"},
-				{4, "Sergeant"},
-				{5, "Staff Sergeant"},
-				{6, "Master Sergeant"},
-				{7, "Veteran"}
-			};
-			
-			return rankNames.ContainsKey(tier) ? rankNames[tier] : $"Tier {tier}";
+			// Use configured tier names from progression_config.json
+			return Features.Assignments.Core.ConfigurationManager.GetTierName(tier);
 		}
 		
 		/// <summary>
@@ -4322,12 +4306,29 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 				}
 
+				// CRITICAL: Teleport player party to lord's position IMMEDIATELY so encounter triggers instantly
+				// Without this, the player's invisible party has to "travel" to the battle, causing a pause
+				// while the game waits for the party to arrive before showing the encounter menu
+				if (main.Position != lordParty.Position)
+				{
+					var oldPos = main.GetPosition2D;
+					main.Position = lordParty.Position;
+					ModLogger.Info("Battle", $"Teleported player party to battle location (from {oldPos} to {lordParty.GetPosition2D})");
+				}
+
 				EnsurePlayerSharesArmy(lordParty);
 				PreparePartyForNativeBattle(main);
 
 				// Keep escort behaviour hooked so we stay attached to the lord while the encounter progresses
 				EncounterGuard.TryAttachOrEscort(_enlistedLord);
 				TryReleaseEscort(main);
+				
+				// Force unpause the game so encounter appears immediately without manual intervention
+				if (Campaign.Current?.TimeControlMode == CampaignTimeControlMode.Stop)
+				{
+					Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+					ModLogger.Debug("Battle", "Auto-unpaused game for seamless battle entry");
+				}
 
 			if (mapEvent != null)
 			{

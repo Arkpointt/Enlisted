@@ -205,7 +205,7 @@ public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop
 // Updated: Realistic 1-year military service progression
 public void CheckForPromotion()
 {
-    var tierRequirements = new int[] { 0, 500, 1500, 3500, 7000, 12000, 18000 }; // 365-day progression
+    var tierRequirements = new int[] { 0, 800, 3000, 6000, 11000, 19000 }; // Configurable via progression_config.json
     
     while (_enlistmentTier < 7 && _enlistmentXP >= tierRequirements[_enlistmentTier + 1])
     {

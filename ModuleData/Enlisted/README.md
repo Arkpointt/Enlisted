@@ -40,8 +40,9 @@ This directory contains **7 JSON configuration files** that control all aspects 
 #### **4. `progression_config.json`** - Advancement System
 **Purpose**: Tier progression, XP sources, and wage calculation  
 **Contains**:
-- Tier XP requirements (100, 300, 600, 1000, 2000 for T2-T6)
-- **XP sources**: daily service (25), battle participation (25), duty performance (15)
+- Tier XP requirements (800, 3000, 6000, 11000, 19000 for T2-T6)
+- Tier names: Levy, Footman, Serjeant, Man-at-Arms, Banner Sergeant, Household Guard
+- **XP sources**: daily service (25), battle participation (25), per kill (1)
 - Wage calculation with base wages and tier multipliers
 
 ### **🛡️ Equipment System Configuration**
@@ -286,7 +287,7 @@ private static void ValidateConfiguration()
 ## 📊 **Version Info**
 
 **Mod Version**: 0.3.0  
-**Compatible with**: Bannerlord 1.3.5  
+**Compatible with**: Bannerlord 1.3.6+  
 **Supported Cultures**: empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
 
 ---

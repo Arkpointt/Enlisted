@@ -3,7 +3,7 @@
 `Enlisted` replaces the typical "raise an army on day one" start with a professional military career. You enlist under any AI lord, follow their army, draw wages, and climb through six ranks before earning an honorable discharge. Everything—from duties to equipment kits—is configuration driven and logged for troubleshooting.
 
 ## 1. Requirements
-- Mount & Blade II: Bannerlord v1.3.5 or later
+- Mount & Blade II: Bannerlord v1.3.6 or later
 - Bannerlord.Harmony (required dependency)
 - Windows with .NET Framework 4.7.2 (for building)
 
@@ -23,7 +23,7 @@
 1. **Locate any lord** on the campaign map.
 2. Start a conversation → "I have something else to discuss" → "I wish to serve in your warband."
 3. Accept enlistment and your clan will hide on the map (no party management required).
-4. Press `N` for the Enlisted Status menu and `P` to check promotion eligibility.
+4. The Enlisted Status menu appears automatically while following your lord.
 5. On promotion to Tier 2 choose a formation (Infantry, Archer, Cavalry, Horse Archer). Culture-appropriate equipment unlocks after each promotion at the quartermaster menu.
 6. Use the Duties tab to pick a daily assignment (Enlisted, Forager, Messenger, Sentry, Pioneer). At Tier 3 and higher you can select professions (Quartermaster's Aide, Field Medic, etc.) that grant officer roles inside the lord's party.
 7. Request temporary leave through dialogue with your lord if you need to travel independently. You have 14 days to return or face desertion penalties.
@@ -73,13 +73,14 @@ During grace, you can speak with any lord in your faction to continue service. Y
 - Return to your lord via dialogue to resume service
 
 ## 5. Feature Summary
-- **Career Progression**: Six tiers, wages that scale with rank (detailed breakdown in tooltip), battle XP (+25 per battle, +1 per kill), and officer professions that tie directly into native party roles.
+- **Career Progression**: Six tiers (Levy → Household Guard), wages that scale with rank (detailed breakdown in tooltip), battle XP (+25 per battle, +1 per kill), and officer professions that tie directly into native party roles.
 - **Veteran Retirement**: Full benefits after 252 days including gold, relations, and re-enlistment bonuses. Per-faction veteran tracking with preserved ranks and kill counts.
 - **Financial Isolation**: While enlisted, clan finances show only your military wages - no lord/army income or expenses leak through.
 - **Battle Integration**: Automatic participation in both lord battles and army actions, menu suppression for invalid encounters, and army-aware siege handling.
+- **Soldier Experience**: No personal loot (spoils go to lord), no starvation (lord provides food), no native Leave button in settlements.
 - **Grace Period System**: 14-day windows for lord death/capture/army defeat, with preserved progress and faction loyalty requirements.
 - **Duty & Profession System**: JSON-driven duties (T1+) and professions (T3+) that award targeted XP, wages, and officer assignments.
-- **Equipment Management**: Master-at-Arms promotion menus, Quartermaster UI, culture-aware kits, and realistic pricing.
+- **Equipment Management**: Master-at-Arms promotion menus, Quartermaster UI, culture-aware kits, and realistic pricing. Personal equipment backed up and restored on service end.
 - **Leave System**: 14-day leave timer with daily warnings and desertion penalties for overstaying.
 - **Logging & Diagnostics**: Session logs (`enlisted.log`, `discovery.log`, `dialog.log`, `api.log`) plus discovery artifacts. Logs live under `<BannerlordInstall>\Modules\Enlisted\Debugging\`.
 
@@ -117,6 +118,6 @@ MIT License. See `LICENSE` for details.
 ## 10. Supporting Documentation
 - `docs/BLUEPRINT.md` – architecture standards and Harmony policy.
 - `docs/Features/*.md` – detailed specs for enlistment, duties, troop selection, temporary leave, etc.
-- `docs/discovered/*.md` – API references verified against Bannerlord v1.3.5.
+- `docs/discovered/*.md` – API references verified against Bannerlord v1.3.6.
 
 Enlisted delivers a structured, professional soldiering experience inside Bannerlord. Start as a recruit, follow your commander, earn your promotions, and return home as a decorated veteran once your service is complete.

@@ -4,7 +4,7 @@
 Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits.
 
 ## Purpose
-Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through tiers, and handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.).
+Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through six tiers, and handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.).
 
 ## Inputs/Outputs
 
@@ -24,6 +24,8 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Safe handling of service interruption (lord death, army defeat, capture)
 - Veteran retirement system with per-faction tracking
 - Complete financial isolation from lord's clan finances
+- No loot access (spoils go to the lord)
+- No starvation (lord provides food)
 
 ## Behavior
 
@@ -44,11 +46,23 @@ Provide the foundation for military service - join a lord's forces, follow them 
 
 **Wage Breakdown (shown in tooltip):**
 - Soldier's Pay: Base wage from config (default 10)
-- Combat Experience: +1 per player level
+- Combat Exp: +1 per player level
 - Rank Pay: +5 per tier
 - Service Seniority: +1 per 200 XP accumulated
 - Army Campaign Bonus: +20% when lord is in army
 - Duty Assignment: Varies by active duty (0.8x to 1.6x)
+
+**Tier Progression (XP thresholds from progression_config.json):**
+| Tier | Rank Name | XP Required |
+|------|-----------|-------------|
+| 1 | Levy | 0 |
+| 2 | Footman | 800 |
+| 3 | Serjeant | 3,000 |
+| 4 | Man-at-Arms | 6,000 |
+| 5 | Banner Sergeant | 11,000 |
+| 6 | Household Guard | 19,000 |
+
+Rank names are configurable in `progression_config.json`.
 
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
@@ -101,6 +115,10 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
+- `StarvationSuppressionPatch.cs` - Prevents starvation while enlisted (lord provides food)
+- `LootRestrictionPatch.cs` - Blocks all loot access for enlisted soldiers
+- `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
+- `InfluenceMessageSuppressionPatch.cs` - Suppresses "gained 0 influence" messages
 
 **Key Mechanisms:**
 ```csharp

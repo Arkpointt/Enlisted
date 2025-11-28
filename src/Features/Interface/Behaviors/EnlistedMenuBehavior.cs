@@ -1092,22 +1092,12 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Get rank name for display based on tier and formation.
+        /// Get rank name for display based on tier. Uses names from progression_config.json.
         /// </summary>
         private string GetRankName(int tier)
         {
-            var rankNames = new Dictionary<int, string>
-            {
-                {1, "Recruit"},
-                {2, "Private"}, 
-                {3, "Corporal"},
-                {4, "Sergeant"},
-                {5, "Staff Sergeant"},
-                {6, "Master Sergeant"},
-                {7, "Veteran"}
-            };
-            
-            return rankNames.ContainsKey(tier) ? rankNames[tier] : $"Tier {tier}";
+            // Use configured tier names from progression_config.json
+            return Features.Assignments.Core.ConfigurationManager.GetTierName(tier);
         }
 
         /// <summary>

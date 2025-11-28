@@ -25,7 +25,7 @@ _harmony.PatchAll();
 
 ### Current Implementation
 
-**15 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
+**18 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
 1. BattleCommandsFilterPatch - Formation-based battle command filtering
 2. ClanFinanceEnlistmentIncomePatch - Adds enlistment wages to daily gold tooltip
 3. DischargePenaltySuppressionPatch - Prevents relation penalties during discharge
@@ -33,14 +33,17 @@ _harmony.PatchAll();
 5. EncounterSuppressionPatch - Suppresses encounters with the lord when not in battle
 6. EnlistmentExpenseIsolationPatch - Prevents expense sharing while enlisted
 7. HidePartyNamePlatePatch - Hides player nameplate by nulling `PlayerNameplate` on `PartyNameplatesVM`
-8. KingdomDecisionParticipationPatch - Blocks kingdom decision prompts
-9. LootRestrictionPatch - Tier-based loot restrictions (non-officers blocked from loot)
-10. NoHorseSiegePatch - Prevents mounted players from joining sieges
-11. OrderOfBattleSuppressionPatch - Skips deployment screen for enlisted soldiers
-12. PostDischargeProtectionPatch - Temporary immunity right after discharge
-13. SkillSuppressionPatch - Blocks tactics/leadership XP during battles
-14. VisibilityEnforcementPatch - Controls party visibility during battles and settlement transitions
-15. VotingSuppressionPatch - Prevents voting prompts for enlisted soldiers
+8. InfluenceMessageSuppressionPatch - Suppresses "gained 0 influence" messages after battles
+9. KingdomDecisionParticipationPatch - Blocks kingdom decision prompts
+10. LootRestrictionPatch - Blocks all loot access for enlisted soldiers (spoils go to lord)
+11. MercenaryIncomeSuppressionPatch - Suppresses mercenary income display when enlisted
+12. OrderOfBattleSuppressionPatch - Skips deployment screen for enlisted soldiers
+13. PostDischargeProtectionPatch - Temporary immunity right after discharge
+14. SkillSuppressionPatch - Blocks tactics/leadership XP during battles
+15. StarvationSuppressionPatch - Prevents starvation while enlisted (lord provides food)
+16. TownLeaveButtonPatch - Hides native Leave button in town/castle menus when enlisted
+17. VisibilityEnforcementPatch - Controls party visibility during battles and settlement transitions
+18. VotingSuppressionPatch - Prevents voting prompts for enlisted soldiers
 
 **Core Behaviors** (`src/Mod.Entry/SubModule.cs`):
 - EnlistmentBehavior - Core service state, lord following, battle participation, veteran retirement system
@@ -91,7 +94,7 @@ src/
 ├── Mod.Entry/              # Module entry + Harmony initialization
 ├── Mod.Core/               # Shared services, logging, config
 ├── Mod.GameAdapters/       # TaleWorlds APIs, Harmony patches
-│   └── Patches/            # 15 Harmony patches
+│   └── Patches/            # 18 Harmony patches
 └── Features/               # Each feature is self-contained
     ├── Enlistment/         # Core service state management + veteran retirement
     ├── Assignments/        # Duties system and XP calculations

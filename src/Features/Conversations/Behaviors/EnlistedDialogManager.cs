@@ -84,17 +84,27 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_diplomatic_entry",
                 "lord_talk_speak_diplomacy_2",
                 "enlisted_main_hub",
-                GetLocalizedText("{=enlisted_diplomatic_entry}I wish to discuss military service.").ToString(),
+                GetLocalizedText("{=enlisted_diplomatic_entry}My lord, I seek to speak with you about bearing arms in your service.").ToString(),
                 IsValidLordForMilitaryService,
                 null,
                 110);
 
-            // Lord responds to player's request
+            // Lord recognizes player serves another faction (roleplay rejection)
+            starter.AddDialogLine(
+                "enlisted_different_faction_rejection",
+                "enlisted_main_hub",
+                "close_window",
+                GetLocalizedText("{=enlisted_different_faction_rejection}Hold a moment... I recognize your bearing. You serve another lord, do you not? A soldier cannot serve two masters. Return to your commander, or settle your affairs with them first before approaching me.").ToString(),
+                IsOnLeaveWithDifferentFaction,
+                null,
+                120); // Higher priority - check this FIRST
+
+            // Lord responds to player's request (normal flow)
             starter.AddDialogLine(
                 "enlisted_main_hub_response",
                 "enlisted_main_hub",
                 "enlisted_service_options",
-                GetLocalizedText("{=enlisted_main_hub_response}What military matters do you wish to discuss?").ToString(),
+                GetLocalizedText("{=enlisted_main_hub_response}Speak freely. What brings a warrior to my hall?").ToString(),
                 null,
                 null,
                 110);
@@ -105,7 +115,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddEnlistmentDialogs(CampaignGameStarter starter)
         {
-            var enlistmentText = GetLocalizedText("{=enlisted_request_service}I wish to serve in your warband.");
+            var enlistmentText = GetLocalizedText("{=enlisted_request_service}I offer you my sword and my loyalty, my lord. Will you have me in your ranks?");
             // Option to request enlistment (standard)
             starter.AddPlayerLine(
                 "enlisted_request_service",
@@ -121,7 +131,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_request_service_grace",
                 "enlisted_service_options",
                 "enlisted_enlistment_response_grace",
-                GetLocalizedText("{=enlisted_request_service_grace}My previous commander is no longer available. I wish to continue serving under your banner.").ToString(),
+                GetLocalizedText("{=enlisted_request_service_grace}My lord, fate has taken my commander from me. I am a soldier without a banner, but my oath to this kingdom remains. Will you take me under your command?").ToString(),
                 CanRequestGraceTransfer,
                 null,
                 110);
@@ -131,7 +141,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_return_from_leave",
                 "enlisted_service_options",
                 "enlisted_return_response",
-                GetLocalizedText("{=enlisted_return_from_leave}I wish to return to service.").ToString(),
+                GetLocalizedText("{=enlisted_return_from_leave}I have rested enough, my lord. My blade grows restless. I am ready to return to the front.").ToString(),
                 CanReturnFromLeave,
                 null,
                 111);
@@ -141,7 +151,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_return_accepted",
                 "enlisted_return_response",
                 "close_window",
-                GetLocalizedText("{=enlisted_return_accepted}Welcome back to service. Resume your duties.").ToString(),
+                GetLocalizedText("{=enlisted_return_accepted}Good to see you standing tall again. The men will be glad to have you back. Fall in with your company.").ToString(),
                 null,
                 OnReturnFromLeave,
                 111);
@@ -151,7 +161,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_request_transfer",
                 "enlisted_service_options",
                 "enlisted_transfer_response",
-                GetLocalizedText("{=enlisted_request_transfer}I wish to transfer my service to your command.").ToString(),
+                GetLocalizedText("{=enlisted_request_transfer}My lord, I currently serve another of this realm, but I believe my talents would be better suited under your banner. Would you accept my transfer?").ToString(),
                 CanRequestServiceTransfer,
                 null,
                 112);
@@ -161,7 +171,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_transfer_accepted",
                 "enlisted_transfer_response",
                 "close_window",
-                GetLocalizedText("{=enlisted_transfer_accepted}Very well. Your prior commander will be informed. Report for duty immediately.").ToString(),
+                GetLocalizedText("{=enlisted_transfer_accepted}A soldier who knows his worth. Very well, I shall send word to your former commander. From this day, you march with me.").ToString(),
                 null,
                 OnAcceptServiceTransfer,
                 112);
@@ -171,7 +181,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_lord_accepts",
                 "enlisted_enlistment_response",
                 "enlisted_service_terms",
-                GetLocalizedText("{=enlisted_lord_accepts}Very well. You may serve under my command. These are the terms of service...").ToString(),
+                GetLocalizedText("{=enlisted_lord_accepts}I see the steel in your eyes. You'll do. But know this - I expect loyalty, discipline, and courage. Here are my terms...").ToString(),
                 null,
                 null,
                 110);
@@ -181,17 +191,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_lord_accepts_grace",
                 "enlisted_enlistment_response_grace",
                 "enlisted_service_terms",
-                GetLocalizedText("{=enlisted_lord_accepts_grace}Our kingdom appreciates your resolve. You may join my banner and resume your duties. These are the terms...").ToString(),
+                GetLocalizedText("{=enlisted_lord_accepts_grace}A soldier who seeks a new banner rather than deserting? That speaks well of your character. I welcome you to my company. These are my terms...").ToString(),
                 null,
                 null,
                 110);
 
-            // Service terms and confirmation
+            // Service terms and confirmation (3-year initial term as per user request)
             starter.AddDialogLine(
                 "enlisted_service_terms_details",
                 "enlisted_service_terms",
                 "enlisted_confirm_service",
-                GetLocalizedText("{=enlisted_service_terms_details}You will follow my orders, share in our victories, and receive daily wages. Do you accept these terms?").ToString(),
+                GetLocalizedText("{=enlisted_service_terms_details}You will march when I say march, fight when I say fight, and hold the line when all seems lost. Your term is three years. In return, you shall have daily wages and a place by the fire. Do we have an accord?").ToString(),
                 null,
                 null,
                 110);
@@ -201,7 +211,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_accept_service",
                 "enlisted_confirm_service",
                 "close_window",
-                GetLocalizedText("{=enlisted_accept_service}I accept. We march together.").ToString(),
+                GetLocalizedText("{=enlisted_accept_service}You have my oath, my lord. Point me at the enemy.").ToString(),
                 null,
                 OnAcceptEnlistment,
                 110);
@@ -211,7 +221,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_decline_service",
                 "enlisted_confirm_service",
                 "lord_pretalk",
-                GetLocalizedText("{=enlisted_decline_service}I need more time to consider.").ToString(),
+                GetLocalizedText("{=enlisted_decline_service}Your offer is generous, my lord, but I must think on it. Perhaps another time.").ToString(),
                 null,
                 null,
                 110);
@@ -222,22 +232,22 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddRetirementDialogs(CampaignGameStarter starter)
         {
-            // First-term retirement discussion (available after 252 days)
+            // First-term retirement discussion (available after 3 years)
             starter.AddPlayerLine(
                 "enlisted_discuss_retirement",
                 "enlisted_service_options",
                 "enlisted_retirement_benefits",
-                GetLocalizedText("{=enlisted_discuss_retirement}I've served my term. I wish to discuss my retirement.").ToString(),
+                GetLocalizedText("{=enlisted_discuss_retirement}My lord, I have served faithfully these many months. The time has come to discuss my future.").ToString(),
                 CanDiscussFirstTermRetirement,
                 null,
                 109); // Higher priority than regular retirement
             
-            // Lord explains benefits
+            // Lord explains benefits (mentions 1-year re-enlistment term)
             starter.AddDialogLine(
                 "enlisted_retirement_benefits_explanation",
                 "enlisted_retirement_benefits",
                 "enlisted_retirement_choice",
-                GetLocalizedText("{=enlisted_retirement_benefits_explanation}You've served with honor. You may retire with full benefits:\n- 10,000 gold severance\n- My personal recommendation (+30 relation)\n- Recognition from our kingdom (+30 reputation)\n- Letters to my fellow lords (+15 with those who respect you)\n\nAlternatively, I can offer 20,000 gold to extend your service one more year.").ToString(),
+                GetLocalizedText("{=enlisted_retirement_benefits_explanation}You have served with honor, and I do not forget loyalty. Retire now and you leave with gold in your pocket, my personal letter of recommendation, and the respect of this kingdom. Or... stay another year, and I shall double your severance. The choice is yours.").ToString(),
                 null,
                 null,
                 110);
@@ -247,17 +257,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_accept_retirement",
                 "enlisted_retirement_choice",
                 "enlisted_retirement_farewell",
-                GetLocalizedText("{=enlisted_accept_retirement}I accept retirement with benefits.").ToString(),
+                GetLocalizedText("{=enlisted_accept_retirement}I thank you for everything, my lord. It has been an honor to serve under your banner.").ToString(),
                 null,
                 OnAcceptFirstTermRetirement,
                 110);
             
-            // Player accepts re-enlistment bonus
+            // Player accepts re-enlistment bonus (1-year term)
             starter.AddPlayerLine(
                 "enlisted_accept_reenlist_bonus",
                 "enlisted_retirement_choice",
                 "enlisted_reenlist_confirmed",
-                GetLocalizedText("{=enlisted_accept_reenlist_bonus}I'll take the 20,000 gold bonus and continue serving.").ToString(),
+                GetLocalizedText("{=enlisted_accept_reenlist_bonus}The battlefield is the only home I know, my lord. I shall stay and earn that gold.").ToString(),
                 null,
                 OnAcceptFirstTermReenlistBonus,
                 110);
@@ -267,7 +277,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_retirement_later",
                 "enlisted_retirement_choice",
                 "close_window",
-                GetLocalizedText("{=enlisted_retirement_later}I need more time to decide.").ToString(),
+                GetLocalizedText("{=enlisted_retirement_later}This is not a decision to make lightly. Give me time to consider, my lord.").ToString(),
                 null,
                 null,
                 110);
@@ -277,17 +287,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_retirement_farewell_text",
                 "enlisted_retirement_farewell",
                 "close_window",
-                GetLocalizedText("{=enlisted_retirement_farewell}Farewell, soldier. You've earned your rest. May we meet again in better times.").ToString(),
+                GetLocalizedText("{=enlisted_retirement_farewell}Go well, soldier. You have earned your peace. Should you ever wish to return, my door remains open.").ToString(),
                 null,
                 null,
                 110);
             
-            // Lord confirms re-enlistment
+            // Lord confirms re-enlistment (1-year term)
             starter.AddDialogLine(
                 "enlisted_reenlist_bonus_confirmed",
                 "enlisted_reenlist_confirmed",
                 "close_window",
-                GetLocalizedText("{=enlisted_reenlist_bonus_confirmed}Excellent! Your loyalty is noted. Report back in one year for your discharge bonus, or speak with me to continue further.").ToString(),
+                GetLocalizedText("{=enlisted_reenlist_bonus_confirmed}Ha! I knew you had more fight in you. Your gold will be waiting when the year is done. Now get back to your post.").ToString(),
                 null,
                 null,
                 110);
@@ -297,17 +307,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_renewal_complete",
                 "enlisted_service_options",
                 "enlisted_renewal_options",
-                GetLocalizedText("{=enlisted_renewal_complete}My term has ended. I wish to discuss my options.").ToString(),
+                GetLocalizedText("{=enlisted_renewal_complete}My lord, another year has passed. What becomes of me now?").ToString(),
                 CanDiscussRenewalTermEnd,
                 null,
                 108);
             
-            // Lord explains renewal options
+            // Lord explains renewal options (1-year terms)
             starter.AddDialogLine(
                 "enlisted_renewal_options_explanation",
                 "enlisted_renewal_options",
                 "enlisted_renewal_choice",
-                GetLocalizedText("{=enlisted_renewal_options}Your term is complete. You may:\n- Retire with 5,000 gold discharge bonus\n- Continue serving with a 5,000 gold re-enlistment bonus for another year").ToString(),
+                GetLocalizedText("{=enlisted_renewal_options}You have proven yourself time and again. Take your discharge with five thousand gold and my blessing, or stay another year with a bonus to match. What say you?").ToString(),
                 null,
                 null,
                 110);
@@ -317,17 +327,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_accept_renewal_discharge",
                 "enlisted_renewal_choice",
                 "enlisted_renewal_farewell",
-                GetLocalizedText("{=enlisted_renewal_discharge}I'll take the discharge and my 5,000 gold.").ToString(),
+                GetLocalizedText("{=enlisted_renewal_discharge}It is time I sought my own path, my lord. I thank you for the opportunity.").ToString(),
                 null,
                 OnAcceptRenewalDischarge,
                 110);
             
-            // Player continues service
+            // Player continues service (another 1-year term)
             starter.AddPlayerLine(
                 "enlisted_continue_service",
                 "enlisted_renewal_choice",
                 "enlisted_continue_confirmed",
-                GetLocalizedText("{=enlisted_continue_service}I'll continue serving for another year and take the 5,000 gold bonus.").ToString(),
+                GetLocalizedText("{=enlisted_continue_service}Why would I leave now? We have enemies yet to crush. Count me in for another year.").ToString(),
                 null,
                 OnContinueService,
                 110);
@@ -337,7 +347,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_renewal_farewell_text",
                 "enlisted_renewal_farewell",
                 "close_window",
-                GetLocalizedText("{=enlisted_renewal_farewell}Very well. Your service has been valued. You may return after a period of rest if you wish to serve again.").ToString(),
+                GetLocalizedText("{=enlisted_renewal_farewell}Then this is farewell, for now. You have been a fine soldier. May the winds carry you to fortune.").ToString(),
                 null,
                 null,
                 110);
@@ -347,27 +357,27 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_continue_service_confirmed",
                 "enlisted_continue_confirmed",
                 "close_window",
-                GetLocalizedText("{=enlisted_continue_confirmed}Your dedication is admirable. See you in a year, or speak with me again when your term ends.").ToString(),
+                GetLocalizedText("{=enlisted_continue_confirmed}Ha! That's the spirit! I knew I could count on you. Another year, then. Try not to get yourself killed.").ToString(),
                 null,
                 null,
                 110);
             
-            // Post-cooldown re-enlistment option
+            // Post-cooldown re-enlistment option (veteran returning)
             starter.AddPlayerLine(
                 "enlisted_reenlist_after_cooldown",
                 "enlisted_service_options",
                 "enlisted_veteran_welcome",
-                GetLocalizedText("{=enlisted_reenlist_cooldown}I wish to return to service. I've served this kingdom before.").ToString(),
+                GetLocalizedText("{=enlisted_reenlist_cooldown}My lord, you may remember me - I served this realm before. The quiet life does not suit me. Will you have me back?").ToString(),
                 CanReEnlistAfterCooldown,
                 null,
                 107);
             
-            // Lord welcomes back veteran
+            // Lord welcomes back veteran (1-year term for veterans)
             starter.AddDialogLine(
                 "enlisted_veteran_welcome_back",
                 "enlisted_veteran_welcome",
                 "enlisted_veteran_confirm",
-                GetLocalizedText("{=enlisted_veteran_welcome}Ah, a veteran returns! Your rank will be restored, though you'll need to select your troop type again. Your term will be one year, with 5,000 gold discharge at the end.").ToString(),
+                GetLocalizedText("{=enlisted_veteran_welcome}I remember you! A good soldier returns to the fold. Your old rank awaits, though you will need to choose your specialty anew. Serve one year and you leave with gold in hand.").ToString(),
                 null,
                 null,
                 110);
@@ -377,7 +387,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_veteran_accept",
                 "enlisted_veteran_confirm",
                 "enlisted_veteran_accepted",
-                GetLocalizedText("{=enlisted_veteran_accept}I'm ready to serve again.").ToString(),
+                GetLocalizedText("{=enlisted_veteran_accept}My sword arm is strong as ever, my lord. Where do you need me?").ToString(),
                 null,
                 OnVeteranReEnlist,
                 110);
@@ -387,7 +397,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_veteran_decline",
                 "enlisted_veteran_confirm",
                 "close_window",
-                GetLocalizedText("{=enlisted_veteran_decline}On second thought, not yet.").ToString(),
+                GetLocalizedText("{=enlisted_veteran_decline}Forgive me, my lord. The call to arms is strong, but I am not yet ready. Perhaps another day.").ToString(),
                 null,
                 null,
                 110);
@@ -397,7 +407,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_veteran_accepted_text",
                 "enlisted_veteran_accepted",
                 "close_window",
-                GetLocalizedText("{=enlisted_veteran_accepted}Welcome back, soldier. Select your troop type at the Master at Arms and report for duty.").ToString(),
+                GetLocalizedText("{=enlisted_veteran_accepted}Good to have you back in the ranks. Report to the Master at Arms to choose your role, then find your company.").ToString(),
                 null,
                 null,
                 110);
@@ -407,7 +417,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_request_early_discharge",
                 "enlisted_service_options",
                 "enlisted_early_discharge_response",
-                GetLocalizedText("{=enlisted_early_discharge}I wish to request discharge from service.").ToString(),
+                GetLocalizedText("{=enlisted_early_discharge}My lord, I must ask to be released from my oath. I cannot continue.").ToString(),
                 CanRequestEarlyDischarge,
                 null,
                 115); // Lower priority - shows when not eligible for full retirement
@@ -417,13 +427,47 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_early_discharge_granted",
                 "enlisted_early_discharge_response",
                 "close_window",
-                GetLocalizedText("{=enlisted_early_discharge_granted}Your service ends today. You leave without the benefits of a full term, but you are free to go.").ToString(),
+                GetLocalizedText("{=enlisted_early_discharge_granted}I release you from your oath. You leave without the honors of a full term, but you are free. Go, and think carefully before you take up arms again.").ToString(),
                 null,
                 OnGrantEarlyDischarge,
                 110);
         }
 
         #region Shared Dialog Conditions
+
+        /// <summary>
+        /// Checks if the player is on leave and talking to a lord from a DIFFERENT faction.
+        /// Used to trigger the roleplay rejection dialog ("You cannot serve two masters").
+        /// </summary>
+        private bool IsOnLeaveWithDifferentFaction()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+            
+            if (enlistment?.IsOnLeave != true || lord == null)
+            {
+                return false;
+            }
+            
+            // If talking to current lord, this is "return from leave" - not a rejection
+            if (enlistment.CurrentLord == lord)
+            {
+                return false;
+            }
+            
+            // Check if different faction
+            var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
+            var targetLordKingdom = lord.MapFaction as Kingdom;
+            
+            // Different faction (or one has no kingdom) = rejection
+            if (currentLordKingdom == null || targetLordKingdom != currentLordKingdom)
+            {
+                ModLogger.Debug("DialogManager", $"Triggering faction rejection - on leave from {enlistment.CurrentLord?.Name}, talking to {lord.Name} (different faction)");
+                return true;
+            }
+            
+            return false;
+        }
 
         /// <summary>
         /// Checks if the conversation partner is a valid lord for military service discussions.
@@ -449,7 +493,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return false;
             }
             
-            // When on leave, ALLOW dialog with same lord (return from leave) OR same-faction lords (transfer service)
+            // When on leave, ALLOW dialog with all lords - we handle same vs different faction in the dialog itself
+            // Same faction lords can accept transfers, different faction lords give roleplay rejection
             if (enlistment?.IsOnLeave == true)
             {
                 if (enlistment.CurrentLord == lord)
@@ -459,18 +504,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                     return true;
                 }
                 
-                // Allow dialog with other lords in the same faction for service transfer
-                var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
-                var targetLordKingdom = lord.MapFaction as Kingdom;
-                if (currentLordKingdom != null && targetLordKingdom == currentLordKingdom)
-                {
-                    ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, can transfer to {lord.Name} (same faction)");
-                    return true;
-                }
-                
-                // Block - player can't enlist with different faction lord while on leave
-                ModLogger.Debug("DialogManager", $"Dialog hidden - player is on leave from {enlistment.CurrentLord?.Name}, talking to different faction lord");
-                return false;
+                // Allow dialog with ALL lords when on leave - rejection handled in dialog flow
+                // This prevents "Missing dialog state" and gives roleplay rejection for different factions
+                ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, talking to {lord.Name} (will check faction in dialog)");
+                return true;
             }
             
             if (enlistment?.IsInDesertionGracePeriod == true)

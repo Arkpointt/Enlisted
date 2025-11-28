@@ -169,7 +169,6 @@
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs" />
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs" />
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs" />
-    <Compile Include="src\Features\Interface\Behaviors\EnlistedInputHandler.cs" />
     <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs" />
     <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs" />
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs" />
@@ -200,6 +199,10 @@
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\StarvationSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\LootAssignmentBlockPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />

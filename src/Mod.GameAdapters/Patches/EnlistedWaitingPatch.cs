@@ -1,0 +1,50 @@
+using HarmonyLib;
+using TaleWorlds.CampaignSystem.Party;
+using Enlisted.Features.Enlistment.Behaviors;
+
+namespace Enlisted.Mod.GameAdapters.Patches
+{
+    /// <summary>
+    /// Prevents the game from treating the enlisted player as "waiting" when following their lord.
+    /// 
+    /// Problem: When the player's party is set to EscortParty behavior (following the lord),
+    /// and the lord enters battle, MobileParty.ComputeIsWaiting() returns true because the
+    /// escort target is "busy". This sets Campaign.IsMainPartyWaiting = true, which:
+    /// - Prevents time from flowing even when the player tries to unpause
+    /// - Causes a delay before the encounter menu appears
+    /// - Results in the player joining battles late
+    /// 
+    /// Solution: Override ComputeIsWaiting() to return false when the player is enlisted,
+    /// allowing time to flow normally and encounters to process immediately.
+    /// </summary>
+    [HarmonyPatch(typeof(MobileParty), nameof(MobileParty.ComputeIsWaiting))]
+    public static class EnlistedWaitingPatch
+    {
+        /// <summary>
+        /// Postfix patch that overrides the waiting state for enlisted players.
+        /// When enlisted (not on leave), the player should never be considered "waiting"
+        /// so that battles can start immediately when the lord engages.
+        /// </summary>
+        static void Postfix(MobileParty __instance, ref bool __result)
+        {
+            // Only affect the main party - don't interfere with AI parties
+            if (__instance != MobileParty.MainParty)
+                return;
+            
+            // Check if player is enlisted and actively serving (not on leave)
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true || enlistment.IsOnLeave)
+                return;
+            
+            // If the native code said we're waiting, override it
+            // This allows time to flow and encounters to trigger immediately
+            if (__result)
+            {
+                __result = false;
+                // Only log occasionally to avoid spam - this fires every frame
+                // ModLogger.Debug("Battle", "Overrode waiting state for enlisted player");
+            }
+        }
+    }
+}
+
