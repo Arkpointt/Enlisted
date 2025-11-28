@@ -27,6 +27,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     // Player is enlisted - skip Order of Battle screen
                     // They should spawn directly into battle as a regular soldier
                     __result = false;
+                    ModLogger.LogOnce("oob_suppressed", "Battle", "Order of Battle screen suppressed - enlisted soldiers spawn directly into battle");
                     return false; // Skip original method
                 }
 

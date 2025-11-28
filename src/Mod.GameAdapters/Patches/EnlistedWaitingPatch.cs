@@ -1,6 +1,7 @@
 using HarmonyLib;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -41,8 +42,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             if (__result)
             {
                 __result = false;
-                // Only log occasionally to avoid spam - this fires every frame
-                // ModLogger.Debug("Battle", "Overrode waiting state for enlisted player");
+                // Log once per session that we're overriding waiting state
+                ModLogger.LogOnce("waiting_override", "Patch", "Overriding 'waiting' state for enlisted player - allows time flow during battles");
             }
         }
     }

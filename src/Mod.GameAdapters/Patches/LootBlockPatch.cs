@@ -34,6 +34,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
         private static TroopRoster _dummyMemberRoster = TroopRoster.CreateDummyTroopRoster();
         private static TroopRoster _dummyPrisonerRoster = TroopRoster.CreateDummyTroopRoster();
         
+        // Track loot blocked for summary logging
+        private static int _lootBlockedCount = 0;
+        
         private static bool ShouldBlockLoot()
         {
             var enlistment = EnlistmentBehavior.Instance;
@@ -49,6 +52,16 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             
             return true; // Actively serving - block loot
+        }
+        
+        /// <summary>
+        /// Log that loot was blocked and track the count for summary reporting.
+        /// </summary>
+        private static void LogLootBlocked(string lootType)
+        {
+            _lootBlockedCount++;
+            ModLogger.IncrementSummary("loot_blocked", 1);
+            ModLogger.Trace("Gold", $"Blocked {lootType} loot - enlisted soldiers don't receive personal loot");
         }
         
         /// <summary>
@@ -92,6 +105,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 
                 // Return empty dummy roster instead of null to prevent crashes
                 __result = _dummyItemRoster;
+                LogLootBlocked("item");
                 return false;
             }
         }
@@ -117,6 +131,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 
                 // Return empty dummy roster instead of null to prevent crashes
                 __result = _dummyMemberRoster;
+                LogLootBlocked("member");
                 return false;
             }
         }
@@ -142,6 +157,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 
                 // Return empty dummy roster instead of null to prevent crashes
                 __result = _dummyPrisonerRoster;
+                LogLootBlocked("prisoner");
                 return false;
             }
         }

@@ -54,6 +54,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     if (Mission.Current != null)
                     {
                         // Suppress command skill XP during battles - return false to skip original method
+                        ModLogger.LogOnce("skill_suppression_active", "XP", $"Suppressing {skill.Name} XP during battles - enlisted soldiers don't gain command skills from combat");
                         return false;
                     }
                     // Not in a mission - this is likely from duties/professions, allow it

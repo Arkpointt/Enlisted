@@ -1576,8 +1576,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Actually pay the wage to the player
 				if (wage > 0)
 				{
+					var goldBefore = Hero.MainHero.Gold;
 					GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, wage, true);
-					ModLogger.Info("DailyService", $"Paid daily wage: {wage} gold");
+					
+					// Log wage payment with breakdown context
+					var breakdown = GetWageBreakdown();
+					ModLogger.Info("Gold", $"Wage paid: {wage} denars (base {breakdown.BasePay} + tier {breakdown.TierBonus} + level {breakdown.LevelBonus} + service {breakdown.ServiceBonus} + army {breakdown.ArmyBonus} + duty {breakdown.DutyBonus})");
+					
+					// Track total wages for summary
+					ModLogger.IncrementSummary("wages_earned", 1, wage);
 				}
 				
 				// Award daily XP for military tier progression
@@ -1586,7 +1593,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var dailyXP = 25;
 				AddEnlistmentXP(dailyXP, "Daily Service");
 				
-				ModLogger.Debug("DailyService", $"Daily service completed: {wage} gold paid, {dailyXP} XP gained");
+				ModLogger.Debug("Enlistment", $"Daily service completed: {wage} gold paid, {dailyXP} XP gained");
 				
 				// Check for retirement eligibility notification (first term complete)
 				CheckRetirementEligibility();
@@ -1596,7 +1603,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 			catch (Exception ex)
 			{
-				ModLogger.Error("DailyService", "Daily service processing failed", ex);
+				ModLogger.Error("Enlistment", "Daily service processing failed", ex);
 			}
 		}
 		
@@ -2076,6 +2083,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			// Award retirement gold
 			GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, config.FirstTermGold, true);
+			ModLogger.Info("Gold", $"Retirement bonus: {config.FirstTermGold} denars (first term completion)");
 			
 			// Apply relation bonuses
 			ApplyVeteranRelationBonuses(config);
@@ -2088,7 +2096,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("this faction"));
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
 			
-			ModLogger.Info("Retirement", $"First term retirement processed: {config.FirstTermGold}g, cooldown ends {record.CooldownEnds}");
+			ModLogger.Info("Enlistment", $"First term retirement processed: {config.FirstTermGold}g, cooldown ends {record.CooldownEnds}");
 		}
 		
 		/// <summary>
@@ -2118,6 +2126,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			// Award discharge gold
 			GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, config.RenewalDischargeGold, true);
+			ModLogger.Info("Gold", $"Discharge bonus: {config.RenewalDischargeGold} denars (renewal term completion)");
 			
 			// End enlistment
 			StopEnlist("Honorable discharge - renewal term", isHonorableDischarge: true);
@@ -2128,7 +2137,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			message.SetTextVariable("DAYS", config.CooldownDays);
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 			
-			ModLogger.Info("Retirement", $"Renewal term discharge: {config.RenewalDischargeGold}g, cooldown {config.CooldownDays} days");
+			ModLogger.Info("Enlistment", $"Renewal term discharge: {config.RenewalDischargeGold}g, cooldown {config.CooldownDays} days");
 		}
 		
 		/// <summary>
@@ -3105,7 +3114,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			
 			var previousXP = _enlistmentXP;
 			_enlistmentXP += xp;
-			ModLogger.Info("XP", $"+{xp} from {source} (Total: {_enlistmentXP})");
+			
+			// Get tier requirements to show progress
+			var tierXP = Features.Assignments.Core.ConfigurationManager.GetTierXPRequirements();
+			var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
+			var progressPercent = nextTierXP > 0 ? (int)((_enlistmentXP * 100) / nextTierXP) : 100;
+			
+			ModLogger.Info("XP", $"+{xp} XP from {source} | Total: {_enlistmentXP}/{nextTierXP} ({progressPercent}% to Tier {_enlistmentTier + 1})");
+			
+			// Track XP for summary
+			ModLogger.IncrementSummary("xp_earned", 1, xp);
 			
 			// Check if we crossed a promotion threshold
 			CheckPromotionNotification(previousXP, _enlistmentXP);

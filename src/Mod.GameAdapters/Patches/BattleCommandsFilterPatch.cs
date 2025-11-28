@@ -37,6 +37,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return; // Not enlisted - let original behavior handle it
                 }
                 
+                // Log initialization once per session
+                ModLogger.LogOnce("battle_commands_init", "Patch", "Battle commands filter active - showing formation-relevant orders only");
+                
                 // Guard: Must have valid formation assignment
                 var playerFormation = EnlistedDutiesBehavior.Instance?.PlayerFormation;
                 if (string.IsNullOrEmpty(playerFormation))

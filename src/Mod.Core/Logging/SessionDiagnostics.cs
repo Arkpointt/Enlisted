@@ -106,20 +106,6 @@ namespace Enlisted.Mod.Core.Logging
             ModLogger.Debug(system, message);
         }
         
-        /// <summary>
-        /// Log API usage for 1.3.4 migration verification.
-        /// Call this once per API pattern to verify new APIs are working.
-        /// </summary>
-        public static void LogApiUsage(string apiName, bool success, string details = null)
-        {
-            var status = success ? "OK" : "FAILED";
-            var message = $"API [{apiName}]: {status}";
-            if (!string.IsNullOrEmpty(details))
-            {
-                message += $" | {details}";
-            }
-            ModLogger.Api(success ? "DEBUG" : "ERROR", message);
-        }
     }
 }
 

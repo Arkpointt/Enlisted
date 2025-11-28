@@ -46,7 +46,9 @@ namespace Enlisted.Features.Combat.Behaviors
                 KillCount = 0;
                 DidParticipate = false;
                 
-                ModLogger.Debug("KillTracker", "Kill tracker initialized for new mission");
+                // Log battle start with mission mode
+                var missionMode = Mission?.Mode.ToString() ?? "Unknown";
+                ModLogger.Info("Battle", $"Battle started (Mode: {missionMode}) - kill tracking active");
             }
             catch (Exception ex)
             {
@@ -129,7 +131,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     $"Kill: {victimName} (+{xpPerKill} XP)", 
                     Colors.Green));
                 
-                ModLogger.Debug("KillTracker", $"Player killed {victimName} - Kill #{KillCount} (+{xpPerKill} XP)");
+                // Log kill with XP value
+                ModLogger.Debug("Combat", $"Kill #{KillCount}: {victimName} (+{xpPerKill} XP pending)");
             }
             catch (Exception ex)
             {
@@ -143,9 +146,16 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 base.OnEndMission();
                 
+                // Log battle summary
                 if (DidParticipate)
                 {
-                    ModLogger.Info("KillTracker", $"Mission ended - Player kills: {KillCount}, Participated: {DidParticipate}");
+                    int xpPerKill = EnlistedConfig.GetXpPerKill();
+                    int estimatedXp = KillCount * xpPerKill;
+                    ModLogger.Info("Battle", $"Battle ended - Kills: {KillCount}, Estimated bonus XP: {estimatedXp}");
+                }
+                else
+                {
+                    ModLogger.Info("Battle", "Battle ended - Player did not participate");
                 }
                 
                 // Note: Don't reset here - EnlistmentBehavior will read and then reset via GetAndResetKillCount()

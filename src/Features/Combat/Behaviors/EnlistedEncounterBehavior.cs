@@ -53,7 +53,7 @@ namespace Enlisted.Features.Combat.Behaviors
             try
             {
                 AddEnlistedEncounterOptions(campaignStarter);
-                ModLogger.Info("Combat", "Encounter behavior initialized - battle participation ready");
+                ModLogger.LogOnce("encounter_behavior_init", "Combat", "Encounter behavior initialized - battle wait menu and reserve options ready");
             }
             catch (Exception ex)
             {
@@ -144,6 +144,7 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 args.IsEnabled = false;
                 args.Tooltip = new TextObject("Wait in reserve is not available during siege battles");
+                ModLogger.Debug("Siege", "Wait in reserve disabled - siege battle detected");
                 return false;
             }
 
@@ -205,7 +206,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 // Switch to the battle wait menu where the player can monitor the battle
                 GameMenu.ActivateGameMenu("enlisted_battle_wait");
-                ModLogger.Info("Battle", "Player waiting in reserve");
+                ModLogger.StateChange("Battle", "Fighting", "Reserve", "Player chose to wait in reserve during large battle");
             }
             catch (Exception ex)
             {

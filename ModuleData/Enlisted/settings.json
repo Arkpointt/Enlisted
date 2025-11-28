@@ -2,12 +2,30 @@
   "schemaVersion": 1,
   "enabled": true,
   "LogMenus": true,
-  "LogDialogs": true,
   "LogCampaignEvents": true,
-  "DiscoveryStackTraces": false,
-  "DiscoveryPlayerOnly": true,
-  "LogApiCalls": true,
-  "ApiCallDetail": "summary",
+  "LogModConflicts": true,
+  "LogThrottleSeconds": 5,
+  "LogLevels": {
+    "Default": "Info",
+    "Battle": "Info",
+    "Siege": "Info",
+    "Combat": "Info",
+    "Equipment": "Info",
+    "Gold": "Info",
+    "XP": "Info",
+    "Menu": "Warn",
+    "Encounter": "Warn",
+    "Promotion": "Info",
+    "Duties": "Info",
+    "TroopSelection": "Info",
+    "KillTracker": "Info",
+    "Enlistment": "Info",
+    "Patch": "Warn",
+    "Interface": "Warn",
+    "Bootstrap": "Info",
+    "Session": "Info",
+    "Config": "Info"
+  },
   "dutiesConfig": "duties_system.json",
   "Encounter": {
     "AttachWhenClose": true,
@@ -16,5 +34,3 @@
     "SuppressPlayerEncounter": true
   }
 }
-
-

@@ -254,7 +254,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (isBattleMenu)
                 {
                     // Native system wants a battle/encounter menu - respect it
-                    ModLogger.Debug("Interface", $"SafeActivateEnlistedMenu: Respecting battle menu '{genericStateMenu}'");
+                    ModLogger.Debug("Menu", $"Respecting battle menu '{genericStateMenu}'");
                     return;
                 }
                 
@@ -262,9 +262,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 // This ensures enlisted players always see their status menu when not in combat
                 if (!string.IsNullOrEmpty(genericStateMenu) && genericStateMenu != "enlisted_status")
                 {
-                    ModLogger.Debug("Interface", $"SafeActivateEnlistedMenu: Overriding '{genericStateMenu}' with enlisted_status");
+                    ModLogger.Debug("Menu", $"Overriding '{genericStateMenu}' with enlisted_status");
                 }
                 
+                ModLogger.Info("Menu", "Activating enlisted status menu");
                 GameMenu.ActivateGameMenu("enlisted_status");
             }
             catch (Exception ex)
@@ -409,14 +410,19 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnMenuOpened(MenuCallbackArgs args)
         {
+            var previousMenu = _currentMenuId;
             _currentMenuId = args.MenuContext.GameMenu.StringId;
             _menuNeedsRefresh = true;
             
-            // Log menu state when enlisted for debugging menu transitions during sieges and battles
+            // Log menu state transition when enlisted for debugging menu transitions
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted == true)
             {
-                ModLogger.Debug("Interface", $"Menu opened: {_currentMenuId}");
+                // Log state transition with previous menu info
+                ModLogger.StateChange("Menu", 
+                    string.IsNullOrEmpty(previousMenu) ? "None" : previousMenu, 
+                    _currentMenuId, 
+                    null);
                 
                 // Check all siege/battle conditions to detect state conflicts
                 var lord = enlistment.CurrentLord;
@@ -429,18 +435,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Check for siege-related battles like sally-outs
                 bool siegeRelatedBattle = IsSiegeRelatedBattle(main, lord?.PartyBelongedTo);
                 
-                ModLogger.Info("Interface", $"MENU CONTEXT: Player battle={playerBattle}, encounter={playerEncounter}");
-                ModLogger.Info("Interface", $"MENU CONTEXT: Lord siege event={lordSiegeEvent}, siege battle={siegeRelatedBattle}");
+                ModLogger.Trace("Menu", $"Context: battle={playerBattle}, encounter={playerEncounter}, siege={lordSiegeEvent}");
                 
                 if (lordSiegeEvent || siegeRelatedBattle)
                 {
-                    string siegeLocation = "siege location";
-                    string battleInfo = siegeRelatedBattle ? " (Sally-out/Siege battle)" : "";
-                    ModLogger.Info("Interface", $"🚨 SIEGE DETECTED: Menu '{_currentMenuId}' during siege of {siegeLocation}{battleInfo}");
+                    string battleInfo = siegeRelatedBattle ? " (sally-out)" : "";
+                    ModLogger.Debug("Siege", $"Menu '{_currentMenuId}' opened during siege{battleInfo}");
                     
                     if (_currentMenuId == "enlisted_status")
                     {
-                        ModLogger.Info("Interface", "🚨🚨 PROBLEM: ENLISTED MENU OPENED DURING SIEGE! This should have been blocked!");
+                        ModLogger.Warn("Menu", "Enlisted menu opened during siege - should have been blocked");
                     }
                 }
                 

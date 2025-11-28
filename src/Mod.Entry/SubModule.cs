@@ -136,10 +136,6 @@ namespace Enlisted.Mod.Entry
 		{
 			try
 			{
-				// Archive the previous session's logs before they get cleared
-				// This creates a timestamped zip in Debugging/ for easy bug reporting
-				SessionArchiver.ArchivePreviousSession();
-				
 				// Initialize logging system - this clears old logs and starts fresh
 				ModLogger.Initialize();
 				ModLogger.Info("Bootstrap", "SubModule loading");
@@ -239,6 +235,10 @@ namespace Enlisted.Mod.Entry
 				// Settings control logging verbosity, encounter suppression, and feature toggles
 				_settings = ModSettings.LoadFromModule();
 				ModConfig.Settings = _settings;
+				
+				// Apply log level configuration from settings
+				// This enables per-category verbosity control and message throttling
+				_settings.ApplyLogLevels();
 				
 				// Log configuration values for verification
 				Mod.Core.Logging.SessionDiagnostics.LogConfigurationValues();
