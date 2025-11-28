@@ -61,7 +61,7 @@
       "equipment_access": ["t1", "t2", "t3", "t4", "t5"]
     },
     "tier_6": {
-      "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6" , "t7"]
+      "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
     }
   }
 }

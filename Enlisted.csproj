@@ -186,11 +186,10 @@
     <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\NoHorseSiegePatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\VotingSuppressionPatch.cs" />
+    <!-- Disabled: Native game handles siege dismounting -->
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\LootRestrictionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
@@ -202,7 +201,6 @@
     <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\StarvationSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\LootAssignmentBlockPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />
