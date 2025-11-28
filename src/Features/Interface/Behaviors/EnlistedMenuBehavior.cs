@@ -1161,7 +1161,9 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private string GetRetirementCountdown(int serviceDays)
         {
-            const int retirementDays = 365;
+            // Load from config instead of hardcoded value
+            var retirementConfig = Enlisted.Features.Assignments.Core.ConfigurationManager.LoadRetirementConfig();
+            int retirementDays = retirementConfig.FirstTermDays;
             var remaining = retirementDays - serviceDays;
             
             if (remaining <= 0)

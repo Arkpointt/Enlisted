@@ -74,14 +74,18 @@ All patches live in `src/Mod.GameAdapters/Patches/`. Each patch has a single res
 | `DischargePenaltySuppressionPatch` | Prevents relation penalties on discharge |
 | `DutiesOfficerRolePatches` | Officer role integration |
 | `EncounterSuppressionPatch` | Suppresses encounters with lord |
+| `EnlistedWaitingPatch` | Prevents game pausing when lord enters battle |
 | `EnlistmentExpenseIsolationPatch` | Prevents expense sharing with lord |
 | `HidePartyNamePlatePatch` | Hides party nameplate while enlisted |
+| `InfluenceMessageSuppressionPatch` | Suppresses "gained 0 influence" messages |
 | `KingdomDecisionParticipationPatch` | Blocks kingdom decision prompts |
-| `LootRestrictionPatch` | Tier-based loot access |
-| `NoHorseSiegePatch` | Prevents mounted siege participation |
-| `PostDischargeProtectionPatch` | Temporary immunity after discharge |
-| `VisibilityEnforcementPatch` | Keeps party hidden while enlisted |
-| `VotingSuppressionPatch` | Blocks kingdom votes |
+| `LootBlockPatch` | Blocks loot access for enlisted soldiers |
+| `MercenaryIncomeSuppressionPatch` | Suppresses mercenary income display |
+| `OrderOfBattleSuppressionPatch` | Skips deployment screen for enlisted |
+| `SkillSuppressionPatch` | Blocks tactics/leadership XP during battles |
+| `StarvationSuppressionPatch` | Prevents starvation while enlisted |
+| `TownLeaveButtonPatch` | Hides native Leave button in settlements |
+| `VisibilityEnforcementPatch` | Controls party visibility during service |
 
 ## Guidelines
 

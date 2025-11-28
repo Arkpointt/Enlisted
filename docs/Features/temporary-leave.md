@@ -118,7 +118,7 @@ private void CheckLeaveExpiration()
 }
 ```
 
-### APIs Used (Verified against 1.3.5 decompile)
+### APIs Used (Verified against 1.3.6 decompile)
 - `PlayerEncounter.Current`, `PlayerEncounter.Finish(true)`
 - `CampaignTime.Now`, `CampaignTime.ToDays`
 - `MemberRoster.AddToCounts()` for troop transfers

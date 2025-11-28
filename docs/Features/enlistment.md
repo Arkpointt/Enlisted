@@ -116,9 +116,10 @@ Rank names are configurable in `progression_config.json`.
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 - `StarvationSuppressionPatch.cs` - Prevents starvation while enlisted (lord provides food)
-- `LootRestrictionPatch.cs` - Blocks all loot access for enlisted soldiers
+- `LootBlockPatch.cs` - Blocks all loot assignment and loot screens for enlisted soldiers
 - `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
 - `InfluenceMessageSuppressionPatch.cs` - Suppresses "gained 0 influence" messages
+- `EnlistedWaitingPatch.cs` - Prevents game pausing when lord enters battle
 
 **Key Mechanisms:**
 ```csharp

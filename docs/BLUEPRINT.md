@@ -25,25 +25,24 @@ _harmony.PatchAll();
 
 ### Current Implementation
 
-**18 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
+**17 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
 1. BattleCommandsFilterPatch - Formation-based battle command filtering
 2. ClanFinanceEnlistmentIncomePatch - Adds enlistment wages to daily gold tooltip
 3. DischargePenaltySuppressionPatch - Prevents relation penalties during discharge
 4. DutiesOfficerRolePatches - Officer role integration (Scout, Surgeon, Engineer, Quartermaster)
 5. EncounterSuppressionPatch - Suppresses encounters with the lord when not in battle
-6. EnlistmentExpenseIsolationPatch - Prevents expense sharing while enlisted
-7. HidePartyNamePlatePatch - Hides player nameplate by nulling `PlayerNameplate` on `PartyNameplatesVM`
-8. InfluenceMessageSuppressionPatch - Suppresses "gained 0 influence" messages after battles
-9. KingdomDecisionParticipationPatch - Blocks kingdom decision prompts
-10. LootRestrictionPatch - Blocks all loot access for enlisted soldiers (spoils go to lord)
-11. MercenaryIncomeSuppressionPatch - Suppresses mercenary income display when enlisted
-12. OrderOfBattleSuppressionPatch - Skips deployment screen for enlisted soldiers
-13. PostDischargeProtectionPatch - Temporary immunity right after discharge
+6. EnlistedWaitingPatch - Prevents game pausing when lord enters battle (overrides ComputeIsWaiting)
+7. EnlistmentExpenseIsolationPatch - Prevents expense sharing while enlisted
+8. HidePartyNamePlatePatch - Hides player nameplate by nulling `PlayerNameplate` on `PartyNameplatesVM`
+9. InfluenceMessageSuppressionPatch - Suppresses "gained 0 influence" messages after battles
+10. KingdomDecisionParticipationPatch - Blocks kingdom decisions and voting prompts for enlisted soldiers
+11. LootBlockPatch - Blocks all loot access and assignment for enlisted soldiers (spoils go to lord)
+12. MercenaryIncomeSuppressionPatch - Suppresses mercenary income display when enlisted
+13. OrderOfBattleSuppressionPatch - Skips deployment screen for enlisted soldiers
 14. SkillSuppressionPatch - Blocks tactics/leadership XP during battles
 15. StarvationSuppressionPatch - Prevents starvation while enlisted (lord provides food)
 16. TownLeaveButtonPatch - Hides native Leave button in town/castle menus when enlisted
 17. VisibilityEnforcementPatch - Controls party visibility during battles and settlement transitions
-18. VotingSuppressionPatch - Prevents voting prompts for enlisted soldiers
 
 **Core Behaviors** (`src/Mod.Entry/SubModule.cs`):
 - EnlistmentBehavior - Core service state, lord following, battle participation, veteran retirement system
@@ -94,7 +93,7 @@ src/
 ├── Mod.Entry/              # Module entry + Harmony initialization
 ├── Mod.Core/               # Shared services, logging, config
 ├── Mod.GameAdapters/       # TaleWorlds APIs, Harmony patches
-│   └── Patches/            # 18 Harmony patches
+│   └── Patches/            # 17 Harmony patches
 └── Features/               # Each feature is self-contained
     ├── Enlistment/         # Core service state management + veteran retirement
     ├── Assignments/        # Duties system and XP calculations
@@ -204,7 +203,7 @@ Modules/Enlisted/
 
 - Intercept sealed, internal/private, or engine-invoked methods
 - Critical side effects unreachable via public APIs
-- Examples: Loot restrictions, expense isolation, voting suppression, visibility/nameplate enforcement
+- Examples: Loot blocking, expense isolation, kingdom decision suppression, visibility/nameplate enforcement
 
 ### 5.3 When NOT to Use Harmony
 
@@ -259,7 +258,7 @@ public class YourPatch
 
 ## 6. TaleWorlds API Patterns
 
-**Official API**: https://apidoc.bannerlord.com/v/1.3.5/
+**Official API**: https://apidoc.bannerlord.com/v/1.3.6/
 
 **Decompiled Reference**: `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\`
 
