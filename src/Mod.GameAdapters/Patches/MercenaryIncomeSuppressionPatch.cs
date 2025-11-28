@@ -23,7 +23,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Removes any mercenary income entries from the result when enlisted.
         /// </summary>
         [HarmonyPostfix]
-        [HarmonyPriority(Priority.High)] // Run before our wage patch
         private static void Postfix(Clan clan, ref ExplainedNumber __result)
         {
             try

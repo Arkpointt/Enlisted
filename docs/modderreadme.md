@@ -93,6 +93,73 @@ party.SetMoveEscortParty(lord, NavigationType.Default, false);
 party.IsVisible = false;
 ```
 
+## Mod Integration
+
+Other mods can hook into Enlisted's systems via public events and properties.
+
+### Events
+
+Subscribe in your `OnGameStart` or `OnCampaignStart`:
+
+```csharp
+using Enlisted.Features.Enlistment.Behaviors;
+
+// Subscribe to enlistment events
+EnlistmentBehavior.OnEnlisted += (lord) => {
+    // Player enlisted with lord
+};
+
+EnlistmentBehavior.OnDischarged += (reason) => {
+    // Player discharged (reason: "Retirement", "Leave expired", etc.)
+};
+
+EnlistmentBehavior.OnPromoted += (tier) => {
+    // Player promoted to tier (1-6)
+};
+
+EnlistmentBehavior.OnXPGained += (xp, source) => {
+    // XP gained (source: "Daily Service", "Battle", "Kill", etc.)
+};
+
+EnlistmentBehavior.OnWagePaid += (amount) => {
+    // Daily wage paid
+};
+
+EnlistmentBehavior.OnLeaveStarted += () => {
+    // Player started temporary leave
+};
+
+EnlistmentBehavior.OnLeaveEnded += () => {
+    // Leave ended (returned or deserted)
+};
+
+EnlistmentBehavior.OnGracePeriodStarted += () => {
+    // Grace period started (lord died, army defeated)
+};
+```
+
+### Public Properties
+
+```csharp
+var eb = EnlistmentBehavior.Instance;
+if (eb?.IsEnlisted == true)
+{
+    Hero lord = eb.CurrentLord;           // Serving lord
+    int tier = eb.EnlistmentTier;         // 1-6
+    int xp = eb.EnlistmentXP;             // Total XP
+    string duty = eb.SelectedDuty;        // Current duty
+    string prof = eb.SelectedProfession;  // Profession track
+    bool onLeave = eb.IsOnLeave;          // On leave?
+    bool inGrace = eb.IsInDesertionGracePeriod;
+}
+```
+
+### Harmony Compatibility
+
+All Enlisted patches use default priority (400). If your mod patches the same methods, use:
+- Priority.Low (200) to run after Enlisted
+- Priority.High (600) to run before Enlisted
+
 ## Docs
 
 | Doc | Purpose |

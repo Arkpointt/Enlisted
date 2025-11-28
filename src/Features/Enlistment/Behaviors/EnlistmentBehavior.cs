@@ -87,12 +87,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private static bool InBattleOrSiege(MobileParty party) =>
 			party?.Party.MapEvent != null || party?.Party.SiegeEvent != null || party?.BesiegedSettlement != null;
 
-		public static EnlistmentBehavior Instance { get; private set; }
+	/// <summary>
+	/// Singleton instance for accessing enlistment state from other mods.
+	/// Available after campaign starts. Safe to check in any CampaignBehavior.
+	/// </summary>
+	public static EnlistmentBehavior Instance { get; private set; }
 
-			/// <summary>
-		/// The lord the player is currently serving under, or null if not enlisted.
-		/// </summary>
-		private Hero _enlistedLord;
+		/// <summary>
+	/// The lord the player is currently serving under, or null if not enlisted.
+	/// </summary>
+	private Hero _enlistedLord;
 		private MapEvent _cachedLordMapEvent;
 		
 		/// <summary>
@@ -289,10 +293,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// Tracks pending capture cleanup when the player is taken prisoner during an encounter.
 		/// We defer enlistment teardown until the surrender/encounter menus fully close.
 		/// </summary>
-		private Kingdom _pendingPlayerCaptureKingdom;
-		private string _pendingPlayerCaptureReason;
-		private bool _playerCaptureCleanupScheduled;
-			public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
+	private Kingdom _pendingPlayerCaptureKingdom;
+	private string _pendingPlayerCaptureReason;
+	private bool _playerCaptureCleanupScheduled;
+	
+	/// <summary>
+	/// True if player is actively enlisted and not on leave.
+	/// Use this to check if enlistment mechanics should apply.
+	/// </summary>
+	public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
+	
+	/// <summary>
+	/// True if player is on temporary leave from service.
+	/// While on leave, IsEnlisted returns false but enlistment state is preserved.
+	/// </summary>
 	public bool IsOnLeave => _isOnLeave;
 	
 	/// <summary>
@@ -309,11 +323,75 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	/// </summary>
 	public Kingdom PendingDesertionKingdom => _pendingDesertionKingdom;
 	
+	/// <summary>
+	/// The lord the player is currently serving under.
+	/// Returns null if not enlisted.
+	/// </summary>
 	public Hero CurrentLord => _enlistedLord;
+	
+	/// <summary>
+	/// Current military rank tier (1-6). Higher tiers unlock better equipment and duties.
+	/// </summary>
 	public int EnlistmentTier => _enlistmentTier;
+	
+	/// <summary>
+	/// Total XP accumulated in current service. Used for promotion calculations.
+	/// </summary>
 	public int EnlistmentXP => _enlistmentXP;
+	
+	/// <summary>
+	/// Currently assigned duty (e.g., "enlisted", "pathfinder", "field_medic").
+	/// </summary>
 	public string SelectedDuty => _selectedDuty;
+	
+	/// <summary>
+	/// Currently selected profession track (e.g., "infantry", "cavalry"). "none" if not selected.
+	/// </summary>
 	public string SelectedProfession => _selectedProfession;
+	
+	#region Public Events (for mod integration)
+	
+	/// <summary>
+	/// Fired when player enlists with a lord. Passes the lord Hero.
+	/// </summary>
+	public static event Action<Hero> OnEnlisted;
+	
+	/// <summary>
+	/// Fired when player is discharged. Passes the reason string.
+	/// </summary>
+	public static event Action<string> OnDischarged;
+	
+	/// <summary>
+	/// Fired when player is promoted. Passes the new tier number.
+	/// </summary>
+	public static event Action<int> OnPromoted;
+	
+	/// <summary>
+	/// Fired when player starts temporary leave.
+	/// </summary>
+	public static event Action OnLeaveStarted;
+	
+	/// <summary>
+	/// Fired when leave ends (either by returning or desertion).
+	/// </summary>
+	public static event Action OnLeaveEnded;
+	
+	/// <summary>
+	/// Fired when grace period begins (lord death, capture, army defeat).
+	/// </summary>
+	public static event Action OnGracePeriodStarted;
+	
+	/// <summary>
+	/// Fired when XP is gained. Passes amount and source description.
+	/// </summary>
+	public static event Action<int, string> OnXPGained;
+	
+	/// <summary>
+	/// Fired when daily wage is paid. Passes the wage amount.
+	/// </summary>
+	public static event Action<int> OnWagePaid;
+	
+	#endregion
 	
 	#region Veteran System Properties
 	
@@ -955,10 +1033,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 				
 				
-				ModLogger.Info("Enlistment", $"Successfully enlisted with {lord.Name} - Tier {_enlistmentTier}, XP: {_enlistmentXP}, Kingdom: {lord.MapFaction?.Name?.ToString() ?? "Independent"}, Culture: {lord.Culture?.StringId ?? "unknown"}");
-			ModLogger.Info("Enlistment", $"Enlistment date: {_enlistmentDate}, Equipment backed up: {_hasBackedUpEquipment}, Grace resume: {resumedFromGrace}");
-			}
-			catch (Exception ex)
+			ModLogger.Info("Enlistment", $"Successfully enlisted with {lord.Name} - Tier {_enlistmentTier}, XP: {_enlistmentXP}, Kingdom: {lord.MapFaction?.Name?.ToString() ?? "Independent"}, Culture: {lord.Culture?.StringId ?? "unknown"}");
+		ModLogger.Info("Enlistment", $"Enlistment date: {_enlistmentDate}, Equipment backed up: {_hasBackedUpEquipment}, Grace resume: {resumedFromGrace}");
+		
+		// Fire event for other mods
+		OnEnlisted?.Invoke(lord);
+		}
+		catch (Exception ex)
 			{
 				ModLogger.Error("Enlistment", $"Failed to start enlistment with {lord?.Name?.ToString() ?? "null"} - {ex.Message}", ex);
 				// Restore equipment if backup was created
@@ -1192,6 +1273,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		// Log discharge for diagnostics
 		Mod.Core.Logging.SessionDiagnostics.LogStateTransition("Enlistment", "Enlisted", "Civilian",
 			$"Reason: {reason}, Honorable: {isHonorableDischarge}");
+		
+		// Fire event for other mods
+		OnDischarged?.Invoke(reason);
 	}
 	catch (Exception ex)
 	{
@@ -1244,6 +1328,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				message.SetTextVariable("DAYS", graceDays);
 				message.SetTextVariable("KINGDOM", kingdom.Name);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				
+				// Fire event for other mods
+				OnGracePeriodStarted?.Invoke();
 			}
 			catch (Exception ex)
 			{
@@ -1585,6 +1672,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					
 					// Track total wages for summary
 					ModLogger.IncrementSummary("wages_earned", 1, wage);
+					
+					// Fire event for other mods
+					OnWagePaid?.Invoke(wage);
 				}
 				
 				// Award daily XP for military tier progression
@@ -1992,6 +2082,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					_pendingDesertionKingdom = lordKingdom;
 					ApplyDesertionPenalties();
 				}
+				
+				// Fire event for other mods (before StopEnlist clears state)
+				OnLeaveEnded?.Invoke();
 				
 				StopEnlist("Leave expired - desertion", isHonorableDischarge: false);
 				
@@ -3125,6 +3218,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// Track XP for summary
 			ModLogger.IncrementSummary("xp_earned", 1, xp);
 			
+			// Fire event for other mods
+			OnXPGained?.Invoke(xp, source);
+			
 			// Check if we crossed a promotion threshold
 			CheckPromotionNotification(previousXP, _enlistmentXP);
 		}
@@ -3331,6 +3427,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				
 				ModLogger.Info("Promotion", $"Basic promotion applied to {rankName} (Tier {newTier})");
+				
+				// Fire event for other mods
+				OnPromoted?.Invoke(newTier);
 			}
 			catch (Exception ex)
 			{
@@ -3600,6 +3699,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				
 				ModLogger.Info("Enlistment", $"Temporary leave started - {maxLeaveDays} days before desertion");
+				
+				// Fire event for other mods
+				OnLeaveStarted?.Invoke();
 			}
 			catch (Exception ex)
 			{
@@ -3652,6 +3754,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Activate enlisted status menu immediately to prevent encounter gaps
 				Enlisted.Features.Interface.Behaviors.EnlistedMenuBehavior.SafeActivateEnlistedMenu();
 				ModLogger.Info("Enlistment", "Service resumed - attempted enlisted status menu activation (with global guard)");
+				
+				// Fire event for other mods
+				OnLeaveEnded?.Invoke();
 			}
 			catch (Exception ex)
 			{
