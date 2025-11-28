@@ -2443,8 +2443,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 							{
 								try
 								{
-									targetArmy.AddPartyToMergedParties(mainParty);
+									// CRITICAL: Set Army property FIRST, then call AddPartyToMergedParties
+									// Native code does it in this order - the UI update in AddPartyToMergedParties
+									// reads MainParty.Army to show the Army HUD, so it must be set first
 									mainParty.Army = targetArmy;
+									targetArmy.AddPartyToMergedParties(mainParty);
 									
 									// If the army is currently besieging, align the player's besieger camp
 									TrySyncBesiegerCamp(mainParty, lordParty);
