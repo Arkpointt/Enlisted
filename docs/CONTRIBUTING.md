@@ -82,6 +82,7 @@ All patches live in `src/Mod.GameAdapters/Patches/`. Each patch has a single res
 | `LootBlockPatch` | Blocks loot access for enlisted soldiers |
 | `MercenaryIncomeSuppressionPatch` | Suppresses mercenary income display |
 | `OrderOfBattleSuppressionPatch` | Skips deployment screen for enlisted |
+| `PostDischargeProtectionPatch` | Prevents engagement during grace period |
 | `SkillSuppressionPatch` | Blocks tactics/leadership XP during battles |
 | `StarvationSuppressionPatch` | Prevents starvation while enlisted |
 | `TownLeaveButtonPatch` | Hides native Leave button in settlements |

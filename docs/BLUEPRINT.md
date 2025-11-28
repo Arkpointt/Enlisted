@@ -25,7 +25,7 @@ _harmony.PatchAll();
 
 ### Current Implementation
 
-**17 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
+**18 Harmony Patches** (`src/Mod.GameAdapters/Patches/`):
 1. BattleCommandsFilterPatch - Formation-based battle command filtering
 2. ClanFinanceEnlistmentIncomePatch - Adds enlistment wages to daily gold tooltip
 3. DischargePenaltySuppressionPatch - Prevents relation penalties during discharge
@@ -39,10 +39,11 @@ _harmony.PatchAll();
 11. LootBlockPatch - Blocks all loot access and assignment for enlisted soldiers (spoils go to lord)
 12. MercenaryIncomeSuppressionPatch - Suppresses mercenary income display when enlisted
 13. OrderOfBattleSuppressionPatch - Skips deployment screen for enlisted soldiers
-14. SkillSuppressionPatch - Blocks tactics/leadership XP during battles
-15. StarvationSuppressionPatch - Prevents starvation while enlisted (lord provides food)
-16. TownLeaveButtonPatch - Hides native Leave button in town/castle menus when enlisted
-17. VisibilityEnforcementPatch - Controls party visibility during battles and settlement transitions
+14. PostDischargeProtectionPatch - Prevents engagement during grace period discharge
+15. SkillSuppressionPatch - Blocks tactics/leadership XP during battles
+16. StarvationSuppressionPatch - Prevents starvation while enlisted (lord provides food)
+17. TownLeaveButtonPatch - Hides native Leave button in town/castle menus when enlisted
+18. VisibilityEnforcementPatch - Controls party visibility during battles and settlement transitions
 
 **Core Behaviors** (`src/Mod.Entry/SubModule.cs`):
 - EnlistmentBehavior - Core service state, lord following, battle participation, veteran retirement system
