@@ -36,10 +36,10 @@ _harmony.PatchAll();
 8. HidePartyNamePlatePatch - Hides player nameplate by nulling `PlayerNameplate` on `PartyNameplatesVM`
 9. InfluenceMessageSuppressionPatch - Suppresses "gained 0 influence" messages after battles
 10. KingdomDecisionParticipationPatch - Blocks kingdom decisions and voting prompts for enlisted soldiers
-11. LootBlockPatch - Blocks all loot access and assignment for enlisted soldiers (spoils go to lord)
+11. LootBlockPatch - Blocks loot using empty dummy rosters (prevents crash from null rosters)
 12. MercenaryIncomeSuppressionPatch - Suppresses mercenary income display when enlisted
 13. OrderOfBattleSuppressionPatch - Skips deployment screen for enlisted soldiers
-14. PostDischargeProtectionPatch - Prevents engagement during grace period discharge
+14. PostDischargeProtectionPatch - Blocks party activation during grace protection window after discharge
 15. SkillSuppressionPatch - Blocks tactics/leadership XP during battles
 16. StarvationSuppressionPatch - Prevents starvation while enlisted (lord provides food)
 17. TownLeaveButtonPatch - Hides native Leave button in town/castle menus when enlisted
@@ -94,7 +94,7 @@ src/
 ├── Mod.Entry/              # Module entry + Harmony initialization
 ├── Mod.Core/               # Shared services, logging, config
 ├── Mod.GameAdapters/       # TaleWorlds APIs, Harmony patches
-│   └── Patches/            # 17 Harmony patches
+│   └── Patches/            # 18 Harmony patches
 └── Features/               # Each feature is self-contained
     ├── Enlistment/         # Core service state management + veteran retirement
     ├── Assignments/        # Duties system and XP calculations
@@ -175,7 +175,8 @@ Modules/Enlisted/
 - Uses escort AI (`SetMoveEscortParty`) for following lord on the map
 - `MobileParty.IsVisible = false` hides 3D party model while following
 - Player joins battles via `MapEventSide` assignment when lord engages
-- +25 XP awarded per battle participation
+- +25 XP awarded per battle participation (tracked via `_battleXPAwardedThisBattle` to prevent double awards)
+- "Wait in Reserve" option stays active until lord's MapEvent ends (prevents menu loop)
 - Autosim defeats fall back to vanilla behavior (player chooses Attack/Surrender)
 - Formation-based command filtering via `BattleCommandsFilterPatch`
 
@@ -463,6 +464,14 @@ Keep `IsActive = true` but use `IgnoreByOtherPartiesTill()` to prevent random en
 ### Party Visibility
 Set `MobileParty.IsVisible = false` to hide the 3D party model on the campaign map.
 The native `MobilePartyVisual` system handles fading automatically.
+
+### Grace Period Protection
+After discharge (lord captured, army defeated), apply `IgnoreByOtherPartiesTill` BEFORE restoring visibility.
+This prevents enemies attacking during the tiny window between visibility restore and protection application.
+
+### Siege Handling
+Siege watchdog sets `_isSiegePreparationLatched = true` when preparing for siege.
+Realtime tick must check this latch before deactivating player to prevent race conditions that cause `!IsActive` crashes.
 
 ### Nameplate Hiding
 Patch `PartyNameplatesVM.Update()` postfix to call `PlayerNameplate.Clear()` and set `PlayerNameplate = null`.

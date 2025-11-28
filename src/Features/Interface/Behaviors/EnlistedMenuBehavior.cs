@@ -238,23 +238,34 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             
             // Check what menu the game system wants to show based on current campaign state
-            // The native system may want to show army_wait, menu_siege_strategies, or other menus
-            // We should respect this and only activate our menu if the native system allows it
+            // We override army_wait (we provide our own army controls), but respect battle/encounter menus
             try
             {
                 string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
                 
-                if (genericStateMenu == "enlisted_status" || string.IsNullOrEmpty(genericStateMenu))
+                // Menus we should NOT override - these are active battle/encounter states
+                bool isBattleMenu = !string.IsNullOrEmpty(genericStateMenu) &&
+                    (genericStateMenu.Contains("encounter") ||
+                     genericStateMenu.Contains("siege") ||
+                     genericStateMenu.Contains("battle") ||
+                     genericStateMenu.Contains("prisoner") ||
+                     genericStateMenu.Contains("captured"));
+                
+                if (isBattleMenu)
                 {
-                    // Native system wants our menu or no specific menu - safe to activate
-                    GameMenu.ActivateGameMenu("enlisted_status");
+                    // Native system wants a battle/encounter menu - respect it
+                    ModLogger.Debug("Interface", $"SafeActivateEnlistedMenu: Respecting battle menu '{genericStateMenu}'");
+                    return;
                 }
-                else
+                
+                // Override army_wait and other non-battle menus with our enlisted menu
+                // This ensures enlisted players always see their status menu when not in combat
+                if (!string.IsNullOrEmpty(genericStateMenu) && genericStateMenu != "enlisted_status")
                 {
-                    // Native system wants a different menu (like army_wait) - respect it
-                    // This prevents our menu from blocking native battle menus
-                    ModLogger.Debug("Interface", $"SafeActivateEnlistedMenu: Native system wants '{genericStateMenu}' - not activating enlisted menu");
+                    ModLogger.Debug("Interface", $"SafeActivateEnlistedMenu: Overriding '{genericStateMenu}' with enlisted_status");
                 }
+                
+                GameMenu.ActivateGameMenu("enlisted_status");
             }
             catch (Exception ex)
             {
@@ -433,6 +444,24 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
                 
+                // Override army_wait and army_wait_at_settlement menus when enlisted
+                // These are native army menus that appear when the lord leaves settlements or during army operations
+                // Enlisted soldiers should see their custom menu instead, unless in combat/siege
+                if (_currentMenuId == "army_wait" || _currentMenuId == "army_wait_at_settlement")
+                {
+                    // Don't override during battles or sieges
+                    if (!playerBattle && !playerEncounter && !lordSiegeEvent && !siegeRelatedBattle)
+                    {
+                        // Defer the override to next frame to avoid conflicts with the native menu system
+                        NextFrameDispatcher.RunNextFrame(() =>
+                        {
+                            if (enlistment?.IsEnlisted == true)
+                            {
+                                SafeActivateEnlistedMenu();
+                            }
+                        });
+                    }
+                }
             }
         }
 

@@ -79,10 +79,10 @@ All patches live in `src/Mod.GameAdapters/Patches/`. Each patch has a single res
 | `HidePartyNamePlatePatch` | Hides party nameplate while enlisted |
 | `InfluenceMessageSuppressionPatch` | Suppresses "gained 0 influence" messages |
 | `KingdomDecisionParticipationPatch` | Blocks kingdom decision prompts |
-| `LootBlockPatch` | Blocks loot access for enlisted soldiers |
+| `LootBlockPatch` | Blocks loot using empty dummy rosters (prevents crash) |
 | `MercenaryIncomeSuppressionPatch` | Suppresses mercenary income display |
 | `OrderOfBattleSuppressionPatch` | Skips deployment screen for enlisted |
-| `PostDischargeProtectionPatch` | Prevents engagement during grace period |
+| `PostDischargeProtectionPatch` | Blocks party activation during grace protection |
 | `SkillSuppressionPatch` | Blocks tactics/leadership XP during battles |
 | `StarvationSuppressionPatch` | Prevents starvation while enlisted |
 | `TownLeaveButtonPatch` | Hides native Leave button in settlements |

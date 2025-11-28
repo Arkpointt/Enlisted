@@ -327,25 +327,26 @@ namespace Enlisted.Features.Combat.Behaviors
                 // BUT: Only check once per battle state change, not every tick
                 string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
                 
-                // CRITICAL: Only switch if the native menu is different AND it's not just "encounter" (which might be a loop)
-                // The "encounter" menu might be what the native system wants, but switching to it can cause loops
-                // Only switch to specific battle menus like "army_wait", not generic encounter menus
+                // CRITICAL: During battle, STAY in enlisted_battle_wait - don't switch to ANY menu
+                // The native game will try to push us to army_wait or encounter, but switching
+                // causes a loop where the game pushes back to encounter because the battle is still active
+                // Only allow menu switching when the battle has actually ended (no MapEvent)
+                bool lordStillInBattle = lordParty?.Party.MapEvent != null;
+                
+                if (lordStillInBattle)
+                {
+                    // Lord is still in battle - stay in reserve, don't switch menus
+                    // Switching to army_wait or encounter will cause the game to loop back
+                    ModLogger.Debug("Battle", "Staying in reserve - lord still in battle");
+                    return;
+                }
+                
+                // Battle has ended - now we can switch to whatever menu the native system wants
                 if (!string.IsNullOrEmpty(genericStateMenu) && 
                     genericStateMenu != "enlisted_battle_wait")
                 {
-                    bool nativeWantsEncounter = genericStateMenu == "encounter";
-                    bool encounterReady = PlayerEncounter.Current != null;
-
-                    if (nativeWantsEncounter && !encounterReady)
-                    {
-                        // According to TaleWorlds.CampaignSystem.Encounters.PlayerEncounter docs,
-                        // simulated assaults can show the encounter screen without initializing PlayerEncounter.Current first.
-                        // Yield immediately to avoid rglSkeleton assertion loops, but log for diagnostics.
-                        ModLogger.Info("Battle", "Native requested encounter without PlayerEncounter - yielding to prevent UI stall");
-                    }
-
                     args.MenuContext.GameMenu.EndWait();
-                    ModLogger.Info("Battle", $"Native system wants menu '{genericStateMenu}' - switching from enlisted_battle_wait");
+                    ModLogger.Info("Battle", $"Battle ended - switching to native menu '{genericStateMenu}'");
                     GameMenu.SwitchToMenu(genericStateMenu);
                     return;
                 }

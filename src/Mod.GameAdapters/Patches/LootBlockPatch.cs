@@ -18,13 +18,22 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// All spoils of war go to the lord. The soldier is compensated through wages instead.
     /// 
     /// Uses a two-layer approach:
-    /// 1. Data level: Blocks loot assignment to player's inventory during battle processing
+    /// 1. Data level: Redirects loot to empty/dummy rosters during battle processing
     /// 2. UI level: Skips the loot screen entirely
     /// 
     /// Loot IS allowed during leave or grace periods when operating independently.
+    /// 
+    /// CRITICAL: We return EMPTY rosters, not null. Returning null causes crashes in
+    /// MapEvent.LootDefeatedPartyItems() which doesn't handle null rosters gracefully.
     /// </summary>
     public static class LootBlockPatch
     {
+        // Dummy rosters that receive loot but are never used
+        // These prevent crashes while still blocking loot from going to player
+        private static ItemRoster _dummyItemRoster = new ItemRoster();
+        private static TroopRoster _dummyMemberRoster = TroopRoster.CreateDummyTroopRoster();
+        private static TroopRoster _dummyPrisonerRoster = TroopRoster.CreateDummyTroopRoster();
+        
         private static bool ShouldBlockLoot()
         {
             var enlistment = EnlistmentBehavior.Instance;
@@ -41,11 +50,30 @@ namespace Enlisted.Mod.GameAdapters.Patches
             
             return true; // Actively serving - block loot
         }
+        
+        /// <summary>
+        /// Clears the dummy rosters periodically to prevent memory buildup.
+        /// Called after battles complete.
+        /// </summary>
+        public static void ClearDummyRosters()
+        {
+            try
+            {
+                _dummyItemRoster?.Clear();
+                _dummyMemberRoster?.Clear();
+                _dummyPrisonerRoster?.Clear();
+            }
+            catch
+            {
+                // Ignore errors during cleanup
+            }
+        }
 
         #region Data Level - Block Loot Assignment
 
         /// <summary>
-        /// Returns null for item roster, preventing item loot assignment.
+        /// Returns empty item roster, preventing item loot from reaching player.
+        /// CRITICAL: Returns empty roster, not null - null causes crashes in LootDefeatedPartyItems.
         /// </summary>
         [HarmonyPatch(typeof(MapEventParty), nameof(MapEventParty.RosterToReceiveLootItems), MethodType.Getter)]
         public static class ItemLootPatch
@@ -62,13 +90,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
                 
-                __result = null;
+                // Return empty dummy roster instead of null to prevent crashes
+                __result = _dummyItemRoster;
                 return false;
             }
         }
 
         /// <summary>
-        /// Returns null for troop roster, preventing troop loot assignment.
+        /// Returns empty troop roster, preventing troop loot from reaching player.
+        /// CRITICAL: Returns empty roster, not null - null causes crashes in LootDefeatedPartyItems.
         /// </summary>
         [HarmonyPatch(typeof(MapEventParty), nameof(MapEventParty.RosterToReceiveLootMembers), MethodType.Getter)]
         public static class MemberLootPatch
@@ -85,13 +115,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
                 
-                __result = null;
+                // Return empty dummy roster instead of null to prevent crashes
+                __result = _dummyMemberRoster;
                 return false;
             }
         }
 
         /// <summary>
-        /// Returns null for prisoner roster, preventing prisoner loot assignment.
+        /// Returns empty prisoner roster, preventing prisoner loot from reaching player.
+        /// CRITICAL: Returns empty roster, not null - null causes crashes in LootDefeatedPartyItems.
         /// </summary>
         [HarmonyPatch(typeof(MapEventParty), nameof(MapEventParty.RosterToReceiveLootPrisoners), MethodType.Getter)]
         public static class PrisonerLootPatch
@@ -108,7 +140,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
                 
-                __result = null;
+                // Return empty dummy roster instead of null to prevent crashes
+                __result = _dummyPrisonerRoster;
                 return false;
             }
         }
@@ -120,6 +153,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// <summary>
         /// Skips the loot screen and jumps directly to End state.
         /// This prevents crashes from banner/figurehead loot screens.
+        /// Also clears dummy rosters to prevent memory buildup.
         /// </summary>
         [HarmonyPatch(typeof(PlayerEncounter), "DoLootParty")]
         public static class LootScreenPatch
@@ -134,6 +168,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
 
                     ModLogger.Info("LootBlock", "Skipping loot screen - enlisted soldiers don't receive personal loot");
+                    
+                    // Clear dummy rosters to prevent memory buildup
+                    ClearDummyRosters();
                     
                     // Skip ALL loot states (party, inventory, ships/figureheads) and go directly to End
                     var mapEventStateField = typeof(PlayerEncounter).GetField("_mapEventState",
@@ -155,4 +192,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         #endregion
     }
 }
-

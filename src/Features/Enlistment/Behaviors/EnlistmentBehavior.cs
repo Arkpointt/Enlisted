@@ -140,6 +140,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private bool _disbandArmyAfterBattle = false;
 		
 		/// <summary>
+		/// Tracks whether battle XP has been awarded for the current battle.
+		/// Prevents double XP awards when both OnPlayerBattleEnd and OnMapEventEnded fire.
+		/// Reset when a new battle starts.
+		/// </summary>
+		private bool _battleXPAwardedThisBattle = false;
+		
+		/// <summary>
 		/// Campaign time when the player first enlisted with the current lord.
 		/// Used for calculating service duration and veteran status.
 		/// </summary>
@@ -1040,10 +1047,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 			
 			// Restore the player's personal equipment that was backed up at enlistment start
-			if (_hasBackedUpEquipment)
+			// EXCEPTION: During grace period (retainKingdomDuringGrace=true), keep enlisted equipment
+			// Player is still considered a soldier on temporary leave/grace, not fully discharged
+			if (_hasBackedUpEquipment && !retainKingdomDuringGrace)
 			{
 				RestorePersonalEquipment();
 				_hasBackedUpEquipment = false;
+				ModLogger.Info("Equipment", "Personal equipment restored - full discharge");
+			}
+			else if (retainKingdomDuringGrace)
+			{
+				ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
 			}
 		
 			// Restore companions and troops to the player's party
@@ -2640,7 +2654,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					else
 					{
 						// No assault yet (just siege prep/waiting) - keep inactive to prevent menu loops
-						if (mainParty.IsActive)
+						// EXCEPTION: If the siege watchdog just prepared the player (latch is set),
+						// don't deactivate - the watchdog expects the player to stay active for vanilla to create encounters
+						if (mainParty.IsActive && !_isSiegePreparationLatched)
 						{
 							mainParty.IsActive = false;
 							ModLogger.Debug("Siege", "Siege waiting phase - deactivating player to prevent menu loop");
@@ -3096,10 +3112,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 		
 		/// <summary>
-		/// Awards battle participation XP after a battle ends.
+		/// Awards battle participation XP after a battle ends (called from OnMapEventEnded).
 		/// Reads values from progression_config.json for configurability.
-		/// Note: Kill XP is disabled due to mission behavior crashes. May be re-enabled
-		/// with native kill tracking in a future update.
+		/// Note: This is a fallback - OnPlayerBattleEnd awards XP first if it fires.
 		/// </summary>
 		/// <param name="participated">Whether the player actively participated in the battle.</param>
 		private void AwardBattleXP(bool participated)
@@ -3108,6 +3123,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				if (!IsEnlisted)
 				{
+					return;
+				}
+				
+				// Prevent double XP awards - OnPlayerBattleEnd may have already awarded XP
+				if (_battleXPAwardedThisBattle)
+				{
+					ModLogger.Debug("Battle", "Skipping XP award - already awarded via OnPlayerBattleEnd");
 					return;
 				}
 				
@@ -3123,12 +3145,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				if (battleXP > 0)
 				{
 					AddEnlistmentXP(battleXP, "Battle Participation");
+					_battleXPAwardedThisBattle = true;
 					
 					// Show notification to player
 					var message = $"Battle completed! +{battleXP} XP";
 					InformationManager.DisplayMessage(new InformationMessage(message));
 					
-					ModLogger.Info("Battle", $"Battle XP awarded: {battleXP} (participation)");
+					ModLogger.Info("Battle", $"Battle XP awarded: {battleXP} (participation) via OnMapEventEnded");
 				}
 			}
 			catch (Exception ex)
@@ -3670,6 +3693,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				
 				// Update the enlisted lord (progression stays the same)
 				_enlistedLord = newLord;
+				
+				// Handle equipment for transfer
+				// During grace period, player keeps their enlisted equipment (already backed up)
+				// Only need to handle case where equipment wasn't backed up (shouldn't happen normally)
+				if (!_hasBackedUpEquipment)
+				{
+					// Edge case: equipment not backed up - back it up now
+					BackupPlayerEquipment();
+					_hasBackedUpEquipment = true;
+					ModLogger.Info("Enlistment", "Backed up personal equipment during service transfer");
+					
+					// Apply enlisted equipment for new lord
+					bool appliedGraceEquipment = TryApplyGraceEquipment(true, _savedGraceTroopId);
+					if (!appliedGraceEquipment)
+					{
+						AssignInitialEquipment();
+						SetInitialFormation();
+						ModLogger.Info("Enlistment", "Applied enlisted equipment during service transfer");
+					}
+				}
+				else
+				{
+					// Normal case: player already has enlisted equipment from grace period
+					// Keep current equipment - they're still a soldier in the same kingdom
+					ModLogger.Info("Enlistment", "Keeping enlisted equipment during service transfer (same kingdom)");
+				}
 				
 				// Transfer any companions/troops to new lord's party
 				TransferPlayerTroopsToLord();
@@ -4237,6 +4286,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Battle", $"Attacker: {attackerParty?.MobileParty?.LeaderHero?.Name?.ToString() ?? attackerParty?.Name?.ToString() ?? "unknown"}");
 				ModLogger.Info("Battle", $"Defender: {defenderParty?.MobileParty?.LeaderHero?.Name?.ToString() ?? defenderParty?.Name?.ToString() ?? "unknown"}");
 				ModLogger.Debug("Battle", $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, inArmy={inArmy}, armyLeaderInvolved={armyLeaderInvolved}");
+				
+				// Reset XP tracking flag for new battle
+				_battleXPAwardedThisBattle = false;
 
 				bool isSiegeBattle = mapEvent.IsSiegeAssault || mapEvent.EventType == MapEvent.BattleTypes.Siege;
 
@@ -4498,6 +4550,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// <summary>
 		/// Handles battle completion - awards battle XP, tracks kills, and updates term kill count.
 		/// This is the primary integration point for the kill tracker system.
+		/// CRITICAL: Only awards XP when battle actually ends with a winner - not when entering reserve mode.
 		/// </summary>
 		private void OnPlayerBattleEnd(MapEvent mapEvent)
 		{
@@ -4505,6 +4558,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				ModLogger.Info("Battle", "Player battle ended");
 				ModLogger.Info("Battle", $"Battle Type: {mapEvent?.EventType}, Was Siege: {mapEvent?.IsSiegeAssault}");
+				
+				// CRITICAL: Don't award XP if battle hasn't actually finished (no winner yet)
+				// This prevents XP from being awarded when player clicks "Wait in Reserve"
+				// which calls PlayerEncounter.Finish() but the battle is still ongoing
+				if (mapEvent != null && !mapEvent.HasWinner)
+				{
+					ModLogger.Debug("Battle", "Skipping battle rewards - battle still ongoing (no winner yet)");
+					return;
+				}
 				
 				// Only process if enlisted
 				if (!IsEnlisted || _isOnLeave)
@@ -4551,13 +4613,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 		
 		/// <summary>
-		/// Awards XP for battle participation and kills.
+		/// Awards XP for battle participation and kills (called from OnPlayerBattleEnd).
 		/// XP values are loaded from progression_config.json.
 		/// </summary>
 		private void AwardBattleXP(int kills)
 		{
 			try
 			{
+				// Prevent double XP awards
+				if (_battleXPAwardedThisBattle)
+				{
+					ModLogger.Debug("Battle", "Skipping XP award - already awarded this battle");
+					return;
+				}
+				
 				// Load XP values from config
 				int battleParticipationXP = EnlistedConfig.GetBattleParticipationXP();
 				int xpPerKill = EnlistedConfig.GetXpPerKill();
@@ -4574,6 +4643,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				{
 					AddEnlistmentXP(killXP, $"Combat Kills ({kills})");
 				}
+				
+				// Mark XP as awarded to prevent double awards from OnMapEventEnded
+				_battleXPAwardedThisBattle = true;
 				
 				ModLogger.Info("Battle", $"Battle XP awarded: {battleParticipationXP} (participation) + {killXP} (kills) = {battleParticipationXP + killXP} total");
 			}
@@ -4726,6 +4798,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 
 			_pendingVisibilityRestore = false;
+
+			// CRITICAL: If in grace period, apply protection BEFORE making visible
+			// This prevents enemies from immediately attacking the player after discharge
+			if (IsInDesertionGracePeriod)
+			{
+				var protectionUntil = CampaignTime.Now + CampaignTime.Days(1f);
+				mainParty.IgnoreByOtherPartiesTill(protectionUntil);
+				_graceProtectionEnds = protectionUntil;
+				ModLogger.Info("Enlistment", $"Applied grace protection during visibility restore (until {protectionUntil})");
+			}
 
 			if (!mainParty.IsActive)
 			{
