@@ -4,6 +4,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Core.ViewModelCollection;
 using TaleWorlds.Core.ViewModelCollection.Generic;
+using TaleWorlds.Core.ViewModelCollection.ImageIdentifiers;
 using TaleWorlds.Core.ViewModelCollection.Information;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -38,7 +39,7 @@ namespace Enlisted.Features.Equipment.UI
         public bool IsEnabled { get; private set; }
         
         [DataSourceProperty]
-        public ImageIdentifierVM Image { get; private set; }
+        public ItemImageIdentifierVM Image { get; private set; }
         
         [DataSourceProperty]
         public string ItemName { get; private set; }
@@ -88,8 +89,11 @@ namespace Enlisted.Features.Equipment.UI
                 CanAfford = _variant.CanAfford;
                 IsEnabled = !_variant.IsCurrent && _variant.CanAfford;
                 
-                // Set item image using ImageIdentifierVM for proper image display
-                Image = new ImageIdentifierVM(item, "");
+                // Set item image using ItemImageIdentifierVM for proper image display (1.3.4 API)
+                Image = new ItemImageIdentifierVM(item, "");
+                
+                // Debug logging to diagnose image loading issues
+                ModLogger.Debug("QuartermasterUI", $"Item image created - Name: {item.Name}, StringId: {item.StringId}, Image.Id: {Image.Id}, Image.TextureProviderName: {Image.TextureProviderName}");
                 
                 // Build simplified weapon details
                 WeaponDetails = BuildSimpleWeaponDetails(item);
@@ -140,7 +144,7 @@ namespace Enlisted.Features.Equipment.UI
                 CostText = "";
                 StatusText = "Empty Slot";
                 WeaponDetails = "";
-                Image = new ImageIdentifierVM(0); // Empty image identifier
+                Image = new ItemImageIdentifierVM(null, ""); // Empty image identifier (1.3.4 API)
             }
             else
             {
@@ -149,7 +153,7 @@ namespace Enlisted.Features.Equipment.UI
                 CostText = "";
                 StatusText = "Error loading item";
                 WeaponDetails = "";
-                Image = new ImageIdentifierVM(0); // Empty image identifier for error case
+                Image = new ItemImageIdentifierVM(null, ""); // Empty image identifier for error case (1.3.4 API)
             }
             IsCurrentEquipment = false;
             CanAfford = false;

@@ -4,6 +4,7 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 // ExplainedNumber is in TaleWorlds.CampaignSystem namespace, not TaleWorlds.Localization
@@ -104,8 +105,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		{
 			try
 			{
+				// Skip during character creation - use safe guard to prevent crashes
+				var mainParty = CampaignSafetyGuard.SafeMainParty;
+				if (mainParty == null)
+				{
+					return true;
+				}
+				
 				// Only intercept for the player's main party
-				if (party != MobileParty.MainParty)
+				if (party != mainParty)
 				{
 					return true; // Allow normal expense calculation for other parties
 				}
@@ -113,11 +121,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				var enlistment = EnlistmentBehavior.Instance;
 				bool isEnlisted = enlistment?.IsEnlisted == true;
 				bool isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
-				var attachedTo = party.AttachedTo;
-				var mainParty = MobileParty.MainParty;
-				var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
-				bool sameArmy = mainParty?.Army != null && lordParty?.Army != null && mainParty.Army == lordParty.Army;
-				bool playerCaptured = Hero.MainHero?.IsPrisoner == true;
+				bool isOnLeave = enlistment?.IsOnLeave == true;
+				var mainHero = CampaignSafetyGuard.SafeMainHero;
+				bool playerCaptured = mainHero?.IsPrisoner == true;
 				
 				if (!_loggedFirstInvocation)
 				{
@@ -133,19 +139,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					return false;
 				}
 
-				ModLogger.Debug("ExpenseIsolation",
-					$"Expense check - enlisted={isEnlisted}, grace={isInGracePeriod}, attachedTo={(attachedTo?.LeaderHero?.Name?.ToString() ?? "null")}, lordParty={(lordParty?.LeaderHero?.Name?.ToString() ?? "null")}, inSameArmy={sameArmy}, applyWithdrawals={applyWithdrawals}");
-				
-				if ((isEnlisted || isInGracePeriod) && (sameArmy || (attachedTo != null && attachedTo == lordParty)))
+				// CRITICAL: When enlisted (and not on leave), ALWAYS isolate expenses
+				// The lord pays for everything - player gets wages instead
+				// This applies regardless of AttachedTo status since we now use escort AI
+				if ((isEnlisted && !isOnLeave) || isInGracePeriod)
 				{
-					// Isolate expenses - return 0 to prevent expense sharing
 					__result = 0;
-					ModLogger.Debug("ExpenseIsolation", "Isolated player expenses from lord's party");
+					ModLogger.Debug("ExpenseIsolation", "Isolated player expenses - enlisted with lord");
 					return false;
 				}
 				
-				ModLogger.Debug("ExpenseIsolation", "Allowed normal expense calculation (not embedded with lord)");
-				return true; // Allow normal expense calculation
+				return true; // Allow normal expense calculation when not enlisted
 			}
 			catch (Exception ex)
 			{

@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
+using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.Core.Config
 {
@@ -20,44 +22,10 @@ namespace Enlisted.Mod.Core.Config
 		public bool LogMenus { get; set; } = true;
 
 		/// <summary>
-		/// Whether to log dialog/conversation events for debugging.
-		/// </summary>
-		[DataMember(Name = "LogDialogs")]
-		public bool LogDialogs { get; set; } = true;
-
-		/// <summary>
 		/// Whether to log campaign events (hourly/daily ticks, etc.) for debugging.
 		/// </summary>
 		[DataMember(Name = "LogCampaignEvents")]
 		public bool LogCampaignEvents { get; set; } = true;
-		
-		/// <summary>
-		/// Whether discovery logging should only track player-related events.
-		/// When true, only logs events involving the player party.
-		/// </summary>
-		[DataMember(Name = "DiscoveryPlayerOnly")]
-		public bool DiscoveryPlayerOnly { get; set; } = true;
-
-		/// <summary>
-		/// Whether discovery logging should include stack traces for detailed debugging.
-		/// When true, includes full stack traces which can be very verbose.
-		/// </summary>
-		[DataMember(Name = "DiscoveryStackTraces")]
-		public bool DiscoveryStackTraces { get; set; } = false;
-
-		/// <summary>
-		/// Whether to log API calls for debugging Bannerlord API usage.
-		/// When true, logs method calls and parameters to the API log file.
-		/// </summary>
-		[DataMember(Name = "LogApiCalls")]
-		public bool LogApiCalls { get; set; } = false;
-
-		/// <summary>
-		/// API call detail level. Supported: "summary" or "verbose" (case-insensitive).
-		/// Summary provides basic call information, verbose includes detailed parameters.
-		/// </summary>
-		[DataMember(Name = "ApiCallDetail")]
-		public string ApiCallDetail { get; set; } = "summary";
 
 		/// <summary>
 		/// Whether to run mod conflict diagnostics at startup and write to conflicts.log.
@@ -68,11 +36,163 @@ namespace Enlisted.Mod.Core.Config
 		public bool LogModConflicts { get; set; } = true;
 
 		/// <summary>
+		/// Seconds to suppress repeated identical log messages (0 to disable throttling).
+		/// Prevents log spam when the same message would be written many times.
+		/// </summary>
+		[DataMember(Name = "LogThrottleSeconds")]
+		public int LogThrottleSeconds { get; set; } = 5;
+
+		/// <summary>
+		/// Per-category log level configuration.
+		/// Allows fine-grained control over which categories log at what verbosity.
+		/// </summary>
+		[DataMember(Name = "LogLevels")]
+		public LogLevelSettings LogLevels { get; set; } = new LogLevelSettings();
+
+		/// <summary>
 		/// Settings for encounter suppression and party attachment behavior.
 		/// Controls when encounters are prevented and how party following works.
 		/// </summary>
 		[DataMember(Name = "Encounter")]
 		public EncounterSettings Encounter { get; set; } = new EncounterSettings();
+
+		/// <summary>
+		/// Per-category log level configuration.
+		/// Each property maps to a logging category and controls its verbosity.
+		/// Valid values: "Off", "Error", "Warn", "Info", "Debug", "Trace"
+		/// </summary>
+		[DataContract]
+		public sealed class LogLevelSettings
+		{
+			/// <summary>Default log level for categories not explicitly configured.</summary>
+			[DataMember(Name = "Default")]
+			public string Default { get; set; } = "Info";
+
+			/// <summary>Battle system logging (combat, victory/defeat, damage).</summary>
+			[DataMember(Name = "Battle")]
+			public string Battle { get; set; } = "Info";
+
+			/// <summary>Siege system logging (assault, defense, sally-outs).</summary>
+			[DataMember(Name = "Siege")]
+			public string Siege { get; set; } = "Info";
+
+			/// <summary>Combat tracking (kill counts, participation).</summary>
+			[DataMember(Name = "Combat")]
+			public string Combat { get; set; } = "Info";
+
+			/// <summary>Equipment system logging (backup, restore, changes).</summary>
+			[DataMember(Name = "Equipment")]
+			public string Equipment { get; set; } = "Info";
+
+			/// <summary>Gold transaction logging (wages, purchases, costs).</summary>
+			[DataMember(Name = "Gold")]
+			public string Gold { get; set; } = "Info";
+
+			/// <summary>XP system logging (awards, progression).</summary>
+			[DataMember(Name = "XP")]
+			public string XP { get; set; } = "Info";
+
+			/// <summary>Menu system logging (state transitions, activation).</summary>
+			[DataMember(Name = "Menu")]
+			public string Menu { get; set; } = "Warn";
+
+			/// <summary>Encounter system logging (suppression, party following).</summary>
+			[DataMember(Name = "Encounter")]
+			public string Encounter { get; set; } = "Warn";
+
+			/// <summary>Promotion system logging (tier changes, notifications).</summary>
+			[DataMember(Name = "Promotion")]
+			public string Promotion { get; set; } = "Info";
+
+			/// <summary>Duties system logging (assignments, training).</summary>
+			[DataMember(Name = "Duties")]
+			public string Duties { get; set; } = "Info";
+
+			/// <summary>Troop selection logging (equipment choices).</summary>
+			[DataMember(Name = "TroopSelection")]
+			public string TroopSelection { get; set; } = "Info";
+
+			/// <summary>Kill tracker logging (per-mission tracking).</summary>
+			[DataMember(Name = "KillTracker")]
+			public string KillTracker { get; set; } = "Info";
+
+			/// <summary>Enlistment core logging (join, leave, state changes).</summary>
+			[DataMember(Name = "Enlistment")]
+			public string Enlistment { get; set; } = "Info";
+
+			/// <summary>Patch system logging (Harmony patches).</summary>
+			[DataMember(Name = "Patch")]
+			public string Patch { get; set; } = "Warn";
+
+			/// <summary>Interface/UI logging.</summary>
+			[DataMember(Name = "Interface")]
+			public string Interface { get; set; } = "Warn";
+
+			/// <summary>Bootstrap/initialization logging.</summary>
+			[DataMember(Name = "Bootstrap")]
+			public string Bootstrap { get; set; } = "Info";
+
+			/// <summary>Session diagnostics logging.</summary>
+			[DataMember(Name = "Session")]
+			public string Session { get; set; } = "Info";
+
+			/// <summary>Configuration loading logging.</summary>
+			[DataMember(Name = "Config")]
+			public string Config { get; set; } = "Info";
+
+			/// <summary>
+			/// Convert settings to a dictionary for ModLogger.ConfigureLevels().
+			/// </summary>
+			public Dictionary<string, LogLevel> ToDictionary()
+			{
+				var dict = new Dictionary<string, LogLevel>(StringComparer.OrdinalIgnoreCase);
+				
+				AddLevel(dict, "Battle", Battle);
+				AddLevel(dict, "Siege", Siege);
+				AddLevel(dict, "Combat", Combat);
+				AddLevel(dict, "Equipment", Equipment);
+				AddLevel(dict, "Gold", Gold);
+				AddLevel(dict, "XP", XP);
+				AddLevel(dict, "Menu", Menu);
+				AddLevel(dict, "Encounter", Encounter);
+				AddLevel(dict, "Promotion", Promotion);
+				AddLevel(dict, "Duties", Duties);
+				AddLevel(dict, "TroopSelection", TroopSelection);
+				AddLevel(dict, "KillTracker", KillTracker);
+				AddLevel(dict, "Enlistment", Enlistment);
+				AddLevel(dict, "Patch", Patch);
+				AddLevel(dict, "Interface", Interface);
+				AddLevel(dict, "Bootstrap", Bootstrap);
+				AddLevel(dict, "Session", Session);
+				AddLevel(dict, "Config", Config);
+				
+				return dict;
+			}
+
+			/// <summary>
+			/// Get the default log level parsed from the Default string.
+			/// </summary>
+			public LogLevel GetDefaultLevel()
+			{
+				return ParseLevel(Default);
+			}
+
+			private void AddLevel(Dictionary<string, LogLevel> dict, string category, string levelStr)
+			{
+				dict[category] = ParseLevel(levelStr);
+			}
+
+			private LogLevel ParseLevel(string levelStr)
+			{
+				if (string.IsNullOrEmpty(levelStr))
+					return LogLevel.Info;
+
+				if (Enum.TryParse<LogLevel>(levelStr, true, out var level))
+					return level;
+
+				return LogLevel.Info;
+			}
+		}
 
 		/// <summary>
 		/// Settings for encounter suppression and party attachment behavior.
@@ -140,6 +260,24 @@ namespace Enlisted.Mod.Core.Config
 		}
 
 		/// <summary>
+		/// Apply log level settings to ModLogger.
+		/// Call this after loading settings to configure logging verbosity.
+		/// </summary>
+		public void ApplyLogLevels()
+		{
+			try
+			{
+				var levels = LogLevels?.ToDictionary() ?? new Dictionary<string, LogLevel>();
+				var defaultLevel = LogLevels?.GetDefaultLevel() ?? LogLevel.Info;
+				ModLogger.ConfigureLevels(levels, defaultLevel, LogThrottleSeconds);
+			}
+			catch
+			{
+				// Don't crash if log configuration fails
+			}
+		}
+
+		/// <summary>
 		/// Resolves absolute path to ModuleData/Enlisted/settings.json from the executing assembly location.
 		/// </summary>
 		private static string ResolveSettingsPath()
@@ -162,5 +300,3 @@ namespace Enlisted.Mod.Core.Config
 		}
 	}
 }
-
-

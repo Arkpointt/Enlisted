@@ -1,14 +1,9 @@
-using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.Library;
-using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Entry;
 using Enlisted.Mod.Core.Logging;
-using System.Reflection;
 
 namespace Enlisted.Features.Enlistment.Behaviors
 {
@@ -31,9 +26,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 		private static Hero enlistCurrentLord()
 		{
-			var inst = EnlistmentBehavior.Instance;
-			var field = typeof(EnlistmentBehavior).GetField("_enlistedLord", BindingFlags.NonPublic | BindingFlags.Instance);
-			return field?.GetValue(inst) as Hero;
+			// Use public property instead of reflection - no processing cost
+			return EnlistmentBehavior.Instance?.CurrentLord;
 		}
 
 		/// <summary>
@@ -85,7 +79,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
-			var offset = main.Position2D - target.Position2D;
+			// 1.3.4 API: Position2D is now GetPosition2D property
+			var offset = main.GetPosition2D - target.GetPosition2D;
 			var distance = offset.Length;
 			var attachmentName = main.AttachedTo?.LeaderHero?.Name?.ToString() ?? main.AttachedTo?.Name?.ToString() ?? "none";
 			var targetName = target.LeaderHero?.Name?.ToString() ?? target.Name?.ToString() ?? "unknown";
@@ -96,59 +91,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Debug("Following", $"AttachOrEscort check -> target={targetName}, distance={distance:F2}, attachedTo={attachmentName}, mapEvent={(main.Party.MapEvent != null)}");
 			}
 
-			// Use natural attachment system for following behavior
-			// This provides automatic following and proper army integration
-			if (main.AttachedTo != target)
+			// Use Escort AI for following behavior
+			// NOTE: We CANNOT use AttachedTo property - the game assumes attached parties are in an army
+			// and GetGenericStateMenu() will crash with null reference on mainParty.Army if AttachedTo != null
+			// Escort AI provides smooth following without the army requirement
+			if (main.Party.MapEvent == null || main.Party.MapEvent.IsFinalized)
 			{
-				// Attach to the lord's party if not already attached
-				// This enables natural following behavior and army integration
-				TryAttach(main, target);
+				// ALWAYS set escort AI - TargetParty may be set but movement mode might be "hold"
+				// after TryReleaseEscort() is called. Re-applying ensures movement continues.
+				// 1.3.4 API: SetMoveEscortParty is on MobileParty directly
+				main.SetMoveEscortParty(target, MobileParty.NavigationType.Default, false);
 				
-				if (main.AttachedTo == target)
-				{
-					ModLogger.Info("Following", $"Attached player party to {targetName} via engine attachment");
-					
-					// Clear any previous move orders/clicks to remove the yellow cursor/visuals
-					try
-					{
-						main.Ai.SetMoveModeHold();
-					}
-					catch { /* Best effort */ }
-					
-					// CRITICAL: Set camera to follow the lord's party, since we are attached to them
-					// The player party is invisible, so following the lord makes more sense visually
+				// Set camera to follow the lord's party for better visual experience
 					try
 					{
 						target.Party.SetAsCameraFollowParty();
 					}
 					catch { /* Best effort */ }
-					
-					// CRITICAL: Once attached, do NOT issue further move commands.
-					return;
-				}
-			}
-			
-			// If we are already attached, we don't need to do anything else.
-			if (main.AttachedTo == target)
-			{
-				// Ensure camera stays on lord during attachment
-				if (main.Party.MapEvent == null)
-				{
-					target.Party.SetAsCameraFollowParty();
-				}
-				return; 
-			}
-
-			// Fallback: If attachment failed (reflection issue?), use standard Escort AI.
-			// We do NOT use SetMoveGoToPoint (manual trailing) anymore as it causes visual cursor clicking artifacts.
-			if (main.Party.MapEvent == null || main.Party.MapEvent.IsFinalized)
-			{
-				// Use standard Escort AI as fallback
-				if (main.TargetParty != target)
-				{
-					ModLogger.Debug("Following", "Fallback: Setting standard Escort AI (Attachment failed)");
-					main.Ai.SetMoveEscortParty(target);
-				}
 			}
 			else
 			{
@@ -156,32 +115,40 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 		}
 
-		private static void TryAttach(MobileParty main, MobileParty target)
+		// NOTE: TryAttach method was removed because setting AttachedTo property
+		// causes GetGenericStateMenu() to crash - it assumes attached parties are in an army
+		// and dereferences mainParty.Army which is null for enlisted players
+		
+		#region Party Visual Hiding
+		
+		/// <summary>
+		/// Hides the player's party visual (3D model on map) using the native IsVisible property.
+		/// The native MobilePartyVisual system automatically fades out when IsVisible = false.
+		/// NOTE: This does NOT hide the player nameplate - the Harmony patch handles that separately.
+		/// </summary>
+		public static void HidePlayerPartyVisual()
 		{
-			try
-			{
-				// Use engine attach API if available via reflection.
-				if (main.AttachedTo == target)
-				{
-					return;
-				}
-				var attach = typeof(MobileParty).GetMethod("AttachTo", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-				if (attach != null)
-				{
-					attach.Invoke(main, new object[] { target });
-					ModLogger.Debug("Following", $"Reflection attach invoked -> target={target.LeaderHero?.Name?.ToString() ?? target.Name?.ToString() ?? "unknown"}");
-					return;
-				}
-
-				// If reflection fails, we fall back to Escort AI in the calling method
-				ModLogger.Debug("Following", "AttachTo reflection method not found");
-			}
-			catch (Exception ex)
-			{
-				ModLogger.Error("Following", $"Attach attempt failed: {ex.Message}");
-			}
+			var mainParty = MobileParty.MainParty;
+			if (mainParty == null) return;
+			
+			var wasVisible = mainParty.IsVisible;
+			mainParty.IsVisible = false;
+			ModLogger.Info("EncounterGuard", $"HidePlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
 		}
-
-		// Removed ApplyTrailingOffset to prevent "clicking" artifacts on the map
+		
+		/// <summary>
+		/// Shows the player's party visual (3D model on map) using the native IsVisible property.
+		/// </summary>
+		public static void ShowPlayerPartyVisual()
+		{
+			var mainParty = MobileParty.MainParty;
+			if (mainParty == null) return;
+			
+			var wasVisible = mainParty.IsVisible;
+			mainParty.IsVisible = true;
+			ModLogger.Info("EncounterGuard", $"ShowPlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
+			}
+		
+		#endregion
 	}
 }

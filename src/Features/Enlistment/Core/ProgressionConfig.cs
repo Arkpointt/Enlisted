@@ -19,6 +19,22 @@ namespace Enlisted.Features.Enlistment.Core
 		
 		[JsonProperty("tier_progression")]
 		public TierProgressionConfig TierProgression { get; set; } = new TierProgressionConfig();
+		
+		[JsonProperty("xp_sources")]
+		public XpSourcesConfig XpSources { get; set; } = new XpSourcesConfig();
+	}
+	
+	[Serializable]
+	public class XpSourcesConfig
+	{
+		[JsonProperty("daily_base")]
+		public int DailyBase { get; set; } = 25;
+		
+		[JsonProperty("battle_participation")]
+		public int BattleParticipation { get; set; } = 25;
+		
+		[JsonProperty("xp_per_kill")]
+		public int XpPerKill { get; set; } = 1;
 	}
 	
 	[Serializable]

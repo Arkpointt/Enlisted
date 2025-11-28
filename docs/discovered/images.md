@@ -1,6 +1,6 @@
 # TaleWorlds.PlayerServices API Research
 
-## **Key Findings from Decompiled PlayerServices v1.2.12**
+## **Key Findings from Decompiled PlayerServices v1.3.4**
 
 ### **PlayerId Structure** (Critical for ImageIdentifierVM)
 ```csharp
@@ -107,6 +107,6 @@ The **current modern API** is fully implemented:
 - ✅ Proper assembly reference (`TaleWorlds.PlayerServices`)
 - ✅ Correct constructor usage (`new ImageIdentifierVM(item, "")`)
 - ✅ Proper template binding (`DataSource="{Image}"`)
-- ✅ All current v1.2.12 API compatibility
+- ✅ All current v1.3.4 API compatibility
 
 **Equipment images should now load correctly** using the official current Bannerlord image system.

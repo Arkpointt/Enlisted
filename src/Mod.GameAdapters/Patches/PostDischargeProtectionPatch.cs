@@ -26,6 +26,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Skip during character creation when campaign isn't fully initialized
+                if (Campaign.Current == null)
+                {
+                    return true;
+                }
+                
                 var campaign = Campaign.Current;
                 var mainPartyMobile = campaign?.MainParty;
 

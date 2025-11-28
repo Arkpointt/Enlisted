@@ -16,12 +16,15 @@ This directory contains **7 JSON configuration files** that control all aspects 
 - Encounter behavior settings (attach ranges, IsActive management for encounter prevention)
 
 #### **2. `enlisted_config.json`** - Core Military System
-**Purpose**: Base enlistment mechanics and progression  
+**Purpose**: Base enlistment mechanics, progression, and retirement  
 **Contains**:
 - Tier progression XP requirements (T1-T6)
 - Wage calculation formulas and multipliers
 - Formation definitions with culture-specific names
-- Retirement requirements (365 days minimum)
+- **Retirement system**: First term (252 days), renewal terms (84 days), cooldowns (42 days)
+- **Grace period settings**: 14 days for various service interruptions
+- **Finance settings** for tooltip display and wage formula configuration
+- **Gameplay settings** for combat reserves and desertion mechanics
 
 ### **⚔️ Military Service Configuration**
 
@@ -35,13 +38,12 @@ This directory contains **7 JSON configuration files** that control all aspects 
 - Unlock conditions and skill requirements
 
 #### **4. `progression_config.json`** - Advancement System
-**Purpose**: Tier progression and advancement mechanics  
+**Purpose**: Tier progression, XP sources, and wage calculation  
 **Contains**:
-- Detailed tier requirements and benefits
-- Wage calculation with bonuses and multipliers
-- Formation selection mechanics (triggers at Tier 2)
-- Veteran system requirements and benefits
-- Special event XP rewards
+- Tier XP requirements (800, 3000, 6000, 11000, 19000 for T2-T6)
+- Tier names: Levy, Footman, Serjeant, Man-at-Arms, Banner Sergeant, Household Guard
+- **XP sources**: daily service (25), battle participation (25), per kill (1)
+- Wage calculation with base wages and tier multipliers
 
 ### **🛡️ Equipment System Configuration**
 
@@ -49,18 +51,16 @@ This directory contains **7 JSON configuration files** that control all aspects 
 **Purpose**: Realistic military equipment economics  
 **Contains**:
 - Formation-based pricing multipliers (Infantry 1.0× → Horse Archer 2.5×)
-- Culture economic modifiers (Khuzait 0.8× → Vlandia 1.2×)
-- Elite troop cost overrides for special units
-- Medical treatment settings (5-day/2-day cooldowns)
+- Culture economic modifiers for all 8 cultures (Khuzait 0.8× → Vlandia 1.2×)
+- Nord and Darshi cultures (added in Bannerlord 1.3.4)
 
-#### **6. `equipment_kits.json`** - DEPRECATED (Troop Selection System)
-**Status**: ❌ **DEPRECATED** - Switched to troop selection approach using real game troops
-**New System**: Players select from real Bannerlord troops; equipment extracted from `CharacterObject.BattleEquipments`  
+#### **6. `equipment_kits.json`** - Troop Selection System
+**Purpose**: Real troop templates for equipment extraction  
 **Contains**:
 - Troop selection system configuration
 - Promotion notification settings  
 - Formation detection rules
-- Legacy equipment kits (preserved for reference)
+- Equipment is extracted from `CharacterObject.BattleEquipments`
 
 ### **🎮 User Interface Configuration**
 
@@ -79,7 +79,7 @@ settings.json (Master)
     ↓ Specifies dutiesConfig
 duties_system.json (Military Framework)
     ↓ References formations
-enlisted_config.json (Formation Definitions)
+enlisted_config.json (Formation Definitions + Retirement)
     ↓ References equipment
 equipment_pricing.json + troop_selection_system (Real Troop Templates)
     ↓ Used by menus
@@ -94,6 +94,7 @@ menu_config.json + progression_config.json (UI & Progression)
 var settings = LoadConfig<Settings>("settings.json");
 var enlisted = LoadConfig<EnlistedConfig>("enlisted_config.json");
 var duties = LoadConfig<DutiesConfig>(settings.DutiesConfig); // Dynamic loading
+var retirement = EnlistedConfig.LoadRetirementConfig(); // Retirement-specific
 ```
 
 ### **Key Features**
@@ -101,17 +102,64 @@ var duties = LoadConfig<DutiesConfig>(settings.DutiesConfig); // Dynamic loading
 - **Validation**: Comprehensive error checking and safe fallbacks  
 - **Localization**: Multi-language support with {=key}fallback format
 - **Modularity**: Each file handles a specific concern
-- **Override System**: Elite troop pricing and special configurations
 
 ## ⚙️ **Configuration Examples**
+
+### **Retirement System** (enlisted_config.json)
+```json
+"retirement": {
+  "first_term_days": 252,
+  "renewal_term_days": 84,
+  "cooldown_days": 42,
+  "first_term_gold": 10000,
+  "first_term_reenlist_bonus": 20000,
+  "renewal_discharge_gold": 5000,
+  "renewal_continue_bonus": 5000,
+  "lord_relation_bonus": 30,
+  "faction_reputation_bonus": 30,
+  "other_lords_relation_bonus": 15,
+  "other_lords_min_relation": 50
+}
+```
+- `first_term_days`: Service required for first retirement (252 = 3 game years)
+- `renewal_term_days`: Duration of re-enlistment terms (84 = 1 game year)
+- `cooldown_days`: Time before veteran can re-enlist (42 = 6 months)
+- `first_term_gold`: Gold bonus for first retirement
+- `first_term_reenlist_bonus`: Gold bonus for extending after first term
+- `renewal_discharge_gold`: Gold when leaving after renewal term
+- Relation bonuses for lord, faction, and other lords
+
+### **XP Sources** (progression_config.json)
+```json
+"xp_sources": {
+  "daily_base": 25,
+  "battle_participation": 25,
+  "xp_per_kill": 1
+}
+```
+- `daily_base`: XP awarded each day of service
+- `battle_participation`: XP awarded for each battle
+- `xp_per_kill`: XP per enemy killed (tracked via mission behavior)
+
+### **Grace Period** (enlisted_config.json)
+```json
+"gameplay": {
+  "reserve_troop_threshold": 100,
+  "desertion_grace_period_days": 14,
+  "leave_max_days": 14
+}
+```
+- `reserve_troop_threshold`: Minimum troops to enable "Wait in Reserve" (20-500)
+- `desertion_grace_period_days`: Days to find new lord after discharge (1-90)
+- `leave_max_days`: Maximum days on leave before desertion penalties
 
 ### **Formation Pricing** (equipment_pricing.json)
 ```json
 "formation_multipliers": {
-  "infantry": 1.0,      // Base cost
-  "archer": 1.3,        // +30% (ranged weapons)
-  "cavalry": 2.0,       // +100% (horse equipment)
-  "horsearcher": 2.5    // +150% (horse + ranged premium)
+  "infantry": 1.0,
+  "archer": 1.3,
+  "cavalry": 2.0,
+  "horsearcher": 2.5
 }
 ```
 
@@ -124,6 +172,23 @@ var duties = LoadConfig<DutiesConfig>(settings.DutiesConfig); // Dynamic loading
   "special_abilities": ["reduced_medical_cooldown", "enhanced_healing"]
 }
 ```
+
+### **Finance Configuration** (enlisted_config.json)
+```json
+"finance": {
+  "show_in_clan_tooltip": true,
+  "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
+  "wage_formula": {
+    "base_wage": 10,
+    "level_multiplier": 1,
+    "tier_multiplier": 5,
+    "xp_divisor": 200,
+    "army_bonus_multiplier": 1.2
+  }
+}
+```
+- `show_in_clan_tooltip`: Display wages in native Daily Gold Change tooltip
+- `wage_formula`: Customize calculation: `(base + level×level_mult + tier×tier_mult + xp/xp_div) × army_bonus`
 
 ### **Menu Localization** (menu_config.json)
 ```json
@@ -139,7 +204,7 @@ var duties = LoadConfig<DutiesConfig>(settings.DutiesConfig); // Dynamic loading
 - Adjust pricing without recompilation
 - Add new duties and formations
 - Modify progression requirements  
-- Customize culture-specific elements
+- Customize retirement bonuses and timers
 - Change UI text and localization
 
 **Edit any JSON file and restart the campaign to see changes.**
@@ -158,7 +223,6 @@ All configuration files include version control for future compatibility:
 
 ### **Safe Configuration Loading** (Blueprint-Compliant)
 ```csharp
-// No unverified APIs - uses relative paths only
 public static class ConfigManager
 {
     private static string GetConfigPath(string filename)
@@ -212,32 +276,20 @@ private static void ValidateConfiguration()
     // Officer roles valid
     var validOfficerRoles = new[] {"Engineer", "Scout", "Quartermaster", "Surgeon", null};
     
-    // Culture IDs verified (empire, aserai, sturgia, vlandia, khuzait, battania)
-    var validCultures = new[] {"empire", "aserai", "sturgia", "vlandia", "khuzait", "battania"};
+    // Culture IDs verified
+    var validCultures = new[] {"empire", "aserai", "sturgia", "vlandia", "khuzait", "battania", "nord", "darshi"};
     
-    // Pricing multipliers positive (no negatives)
-    // Wage multipliers in valid range (0.0-10.0)
+    // Retirement days positive
+    // Grace period in valid range (1-90)
 }
 ```
 
-## 📊 **Configuration Fixes Applied**
+## 📊 **Version Info**
 
-### **✅ Critical Issues Fixed**
-1. **Schema Versioning**: Added to ALL 7 configuration files for future migration support
-2. **File Precedence**: Removed duplicate `duties_config_enhanced.json`, specified `duties_system.json` in settings
-3. **Safe Loading**: Replaced unverified `ModuleHelper` API with Blueprint-compliant relative paths
-4. **Localization Format**: Restored verified `{=key}fallback` format from decompile analysis
-5. **Validation Logic**: Added comprehensive configuration validation with error handling
-
-### **✅ APIs Verified from Decompile**
-- **Localization System**: `{=key}fallback` format confirmed in `MBTextManager.cs`
-- **Custom Healing Model**: `PartyHealingModel` interface confirmed in `ComponentInterfaces`
-- **Formation Detection**: `IsRanged && IsMounted` logic verified and tested
-
-### **❌ Unverified APIs Removed**
-- **ModuleHelper**: Not found in decompiled code - replaced with safe paths
-- **Complex Localization**: Simplified to verified format only
+**Mod Version**: 0.3.0  
+**Compatible with**: Bannerlord 1.3.6+  
+**Supported Cultures**: empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
 
 ---
 
-**This configuration system provides complete control over the military service experience while maintaining game balance and mod compatibility.**
+This configuration system provides complete control over the military service experience while maintaining game balance and mod compatibility.

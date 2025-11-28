@@ -4,7 +4,6 @@ using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Engine.GauntletUI;
-using TaleWorlds.GauntletUI.Data;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.ScreenSystem;
@@ -25,7 +24,8 @@ namespace Enlisted.Features.Equipment.UI
         
         // Gauntlet UI components for custom overlay display
         private static GauntletLayer _gauntletLayer;
-        private static IGauntletMovie _gauntletMovie;  // Current API returns interface
+        // 1.3.4 API: LoadMovie now returns GauntletMovieIdentifier instead of IGauntletMovie
+        private static GauntletMovieIdentifier _gauntletMovie;
         private static QuartermasterEquipmentSelectorVM _selectorViewModel;
         
         public QuartermasterEquipmentSelectorBehavior()
@@ -65,7 +65,8 @@ namespace Enlisted.Features.Equipment.UI
                 }
                 
                 // Create Gauntlet layer for custom UI overlay
-                _gauntletLayer = new GauntletLayer(1001, "GauntletLayer", false);
+                // 1.3.4 API: GauntletLayer constructor params reordered to (string name, int localOrder, bool shouldClear)
+                _gauntletLayer = new GauntletLayer("QuartermasterEquipmentGrid", 1001, false);
                 
                 // Create ViewModel with equipment variant collection
                 _selectorViewModel = new QuartermasterEquipmentSelectorVM(availableVariants, targetSlot, equipmentType);

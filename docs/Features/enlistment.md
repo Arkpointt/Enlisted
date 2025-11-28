@@ -1,10 +1,10 @@
 # Feature Spec: Enlistment System
 
 ## Overview
-Core military service functionality that lets players enlist with any lord, follow their armies, and participate in military life while safely handling edge cases.
+Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits.
 
 ## Purpose
-Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, and handle all the complex edge cases that can break this (lord death, army defeat, etc.).
+Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through six tiers, and handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.).
 
 ## Inputs/Outputs
 
@@ -15,11 +15,17 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Real-time monitoring of lord and army status
 
 **Outputs:**
-- Player party hidden from map (`IsActive = false`, Nameplate hidden)
+- Player party hidden from map (`IsVisible = false`, Nameplate hidden)
 - Player follows enlisted lord's movements  
-- Daily wage payments and XP progression
+- Daily wage payments with detailed tooltip breakdown
+- XP progression: +25 daily, +25 per battle, +1 per kill
 - Participation in lord's battles and army activities
+- Kill tracking per faction (persists across re-enlistments)
 - Safe handling of service interruption (lord death, army defeat, capture)
+- Veteran retirement system with per-faction tracking
+- Complete financial isolation from lord's clan finances
+- No loot access (spoils go to the lord)
+- No starvation (lord provides food)
 
 ## Behavior
 
@@ -27,35 +33,105 @@ Provide the foundation for military service - join a lord's forces, follow them 
 1. Talk to lord → Express interest in military service
 2. Lord evaluates player (relationship, faction status)
 3. Player confirms → Immediate enlistment with safety measures
-4. Player party becomes invisible (Nameplate removed via Patch) and inactive (`IsActive = false`)
+4. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 5. Begin following lord and receiving military benefits
 
 **Daily Service:**
 - Follow enlisted lord's army movements
 - Participate in battles when lord fights (Direct join, bypassing "Help or Leave")
-- Receive daily wages based on tier and performance
-- Earn XP through military activities and time in service
+- Receive daily wages (detailed breakdown shown in clan finance tooltip)
+- Earn XP: +25 daily, +25 per battle, +1 per enemy killed
+- Kills tracked per faction and term (persists on re-enlistment)
+- Check retirement eligibility and term completion
+
+**Wage Breakdown (shown in tooltip):**
+- Soldier's Pay: Base wage from config (default 10)
+- Combat Exp: +1 per player level
+- Rank Pay: +5 per tier
+- Service Seniority: +1 per 200 XP accumulated
+- Army Campaign Bonus: +20% when lord is in army
+- Duty Assignment: Varies by active duty (0.8x to 1.6x)
+
+**Tier Progression (XP thresholds from progression_config.json):**
+| Tier | Rank Name | XP Required |
+|------|-----------|-------------|
+| 1 | Levy | 0 |
+| 2 | Footman | 800 |
+| 3 | Serjeant | 3,000 |
+| 4 | Man-at-Arms | 6,000 |
+| 5 | Banner Sergeant | 11,000 |
+| 6 | Household Guard | 19,000 |
+
+Rank names are configurable in `progression_config.json`.
 
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
 - Automatic handling of army disbandment or lord capture
-- Emergency retirement if lord dies or becomes unavailable
-- During the 14-day grace period we remember the player’s rank XP and their last troop kit so service resumes seamlessly with another lord from the same kingdom.
-- The player clan stays inside the kingdom throughout the grace window; we only force independence if the 14 days expire without re-enlisting.
-- While on leave or grace, enlistment requests from foreign lords are automatically declined so the player can only report back to the rightful commander or kingdom.
+- 14-day grace period if lord dies, is captured, or army defeated
+- The player clan stays inside the kingdom throughout the grace window
+- While on leave or grace, enlistment requests from foreign lords are automatically declined
+
+**Service Transfer (Leave/Grace):**
+- While on leave or in grace period, player can talk to other lords in the same faction
+- Dialog option: "I wish to transfer my service to your command"
+- Transfer preserves all progression (tier, XP, kills, service date)
+- Immediately resumes active service with the new lord
+
+## Veteran Retirement System
+
+**First Term (252 days / 3 game years):**
+- Notification when eligible for retirement
+- Must speak with current lord to discuss options
+- **Retirement benefits**: 10,000 gold, +30 relation with lord, +30 faction reputation, +15 with other lords (if respected)
+- **Re-enlistment option**: 20,000 gold bonus for 1 additional year (84 days)
+
+**Renewal Terms (84 days / 1 game year):**
+- **Discharge**: 5,000 gold + 6-month (42 day) faction cooldown
+- **Continue**: 5,000 gold bonus + another 1-year term
+
+**After Cooldown:**
+- Can re-enlist with same faction
+- Tier/rank preserved, must re-select troop type
+- 1-year term with 5,000 gold discharge at end
+
+**Per-Faction Tracking:**
+- `FactionVeteranRecord` class stores: FirstTermCompleted, PreservedTier, TotalKills, CooldownEnds, CurrentTermEnd, IsInRenewalTerm
+- Each faction tracked separately - starting fresh with new factions
+- TotalKills accumulated across all service terms with that faction
+- Kill count preserved on re-enlistment after cooldown
+
+**Kill Tracking:**
+- `EnlistedKillTrackerBehavior` tracks kills during missions
+- Registered via `SubModule.OnMissionBehaviorInitialize`
+- Kills added to `_currentTermKills` after each battle
+- On retirement, term kills transfer to faction's TotalKills
 
 ## Technical Implementation
 
 **Files:**
-- `EnlistmentBehavior.cs` - Core enlistment logic, state management, and battle handling
+- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
+- `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
+- `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
+- `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
+- `StarvationSuppressionPatch.cs` - Prevents starvation while enlisted (lord provides food)
+- `LootBlockPatch.cs` - Blocks all loot assignment and loot screens for enlisted soldiers
+- `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
+- `InfluenceMessageSuppressionPatch.cs` - Suppresses "gained 0 influence" messages
+- `EnlistedWaitingPatch.cs` - Prevents game pausing when lord enters battle
 
 **Key Mechanisms:**
 ```csharp
 // Core enlistment tracking
 private Hero _enlistedLord;
-private bool _isEnlisted;
+private int _enlistmentTier;
+private int _enlistmentXP;
+private CampaignTime _enlistmentDate;
+private int _currentTermKills;  // Kills this service term
+
+// Veteran retirement system (per-faction)
+private Dictionary<string, FactionVeteranRecord> _veteranRecords;
 
 // Real-time monitoring (runs every frame)
 CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
@@ -63,84 +139,95 @@ CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
 // Daily progression (runs once per game day)  
 CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
 
-// Emergency handlers for lord death/capture
-CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
+// Battle end - awards XP and tracks kills
+CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnPlayerBattleEnd);
+
+// Battle XP (in OnPlayerBattleEnd)
+AwardBattleXP(kills);  // +25 participation + kills*1 XP
+_currentTermKills += kills;  // Track for faction record
+
+// Wage breakdown (in ClanFinanceEnlistmentIncomePatch)
+// Shows: Base Pay, Level Bonus, Tier Bonus, Service Seniority, Army Bonus, Duty Bonus
 ```
 
 **Safety Systems:**
 - Lord status validation before any operations
-- Graceful service termination on lord death/capture  
+- Graceful service termination on lord death/capture → 14-day grace period
 - Army disbandment detection and handling
 - Settlement/battle state awareness
-- **Grace Period Shield**: After defeat we finish any lingering encounter state, grant a one-day ignore window, and the encounter suppression patch honors that shield so enemies cannot re-engage immediately.
+- **Grace Period Shield**: After defeat, one-day ignore window prevents re-engagement
 
 ## Edge Cases
 
 **Lord Dies During Service:**
-- Immediate service termination with emergency retirement
-- Player party re-enabled for normal map interaction
-- Equipment retention choice offered to player
-- Graceful transition back to independent status
+- 14-day grace period initiated (not immediate discharge)
+- Player can re-enlist with another lord in same faction
+- Progress (tier, XP) preserved during grace
+- Failing to re-enlist triggers desertion penalties
 
 **Army Defeated/Disbanded:**
-- Detect army loss through event system
-- Handle service interruption appropriately  
-- Maintain player safety during chaotic situations
+- 14-day grace period initiated
+- Player can find new lord in same faction
+- Progress preserved
 
 **Lord Captured/Imprisoned:**
-- Service suspended, player enters "Desertion Grace Period" (14 days)
-- Resume service if lord escapes/released or join another lord in same faction
-- Retirement option if imprisonment extends too long
+- Service suspended, 14-day grace period
+- Resume with another lord or wait for release
 
 **Player Captured (Defeat):**
-- Loss is resolved through the vanilla Attack/Surrender menu; once captured we defer teardown until the encounter closes.
-- Enlistment enters a 14-day grace period instead of immediate discharge.
-- If captivity lasts more than 3 in-game days, the mod forces `EndCaptivityAction.ApplyByEscape` so the player can use the grace period.
-- Rejoining another lord from the same kingdom during this window restores the saved tier, XP, and troop equipment.
-- Once captivity resolves we explicitly finish any leftover encounter before enabling the player, then apply the one-day grace shield so the enemy army cannot re-open the surrender menu.
-- The clan remains a vassal of the grace-period kingdom; only missing the deadline applies the deserter penalties and removes the clan from the realm.
-- During grace, conversations with lords from the pending kingdom expose a dedicated transfer line so the dialog acknowledges that the player is resuming service rather than enlisting fresh.
+- Native capture flow completes
+- Grace period starts after captivity
+- One-day protection shield after release
+
+**Leave Expires:**
+- If player exceeds 14-day leave limit
+- Desertion penalties applied
+- Service terminated
 
 **Save/Load During Service:**
-- Enlistment state persists correctly
+- All enlistment state persists correctly
+- Veteran records saved via indexed primitive fields
 - Lord references restored properly on load
-- Service resumption if save occurred during active service
 
-**Player in Settlement When Lord Leaves:**
-- Detect separation and provide catch-up options
-- Rejoin army automatically or through player choice
-- Prevent getting permanently separated from enlisted lord
+**Retirement During Service:**
+- Player must speak with current lord
+- Dialog explains benefits and options
+- Can accept retirement, re-enlist, or decide later
 
 ## Acceptance Criteria
 
 - ✅ Can enlist with any lord that accepts player
-- ✅ Player party safely hidden from encounter system during service (UI Nameplate hidden)
-- ✅ Daily wage payments and XP progression work correctly
-- ✅ Lord death/capture handled gracefully without crashes
-- ✅ Army disbandment detected and handled appropriately  
+- ✅ Player party safely hidden from map during service (UI Nameplate hidden)
+- ✅ Daily wage payments with detailed tooltip breakdown
+- ✅ Daily XP progression (+25 per day)
+- ✅ Battle XP (+25 per battle, +1 per kill)
+- ✅ Kill tracking per faction (persists across terms)
+- ✅ Clan finances completely isolated (no lord income/expenses shown)
+- ✅ Lord death/capture triggers 14-day grace period (not immediate discharge)
+- ✅ Army disbandment detected and grace period started
 - ✅ Service state persists through save/load cycles
-- ✅ Emergency retirement works when lord becomes unavailable
+- ✅ Veteran retirement at 252 days with full benefits
+- ✅ Re-enlistment with preserved tier and kill count
+- ✅ Per-faction veteran tracking
+- ✅ Service transfer to different lord while on leave/grace (preserves all progression)
 - ✅ No pathfinding crashes or encounter system conflicts
-- ✅ **Battle Defeat**: Native capture completes without duplicating roster entries; grace period starts afterward.
-- ✅ **Battle Joining**: Correct "Encounter" menu appears, not "Help or Leave".
 
 ## Debugging
 
 **Common Issues:**
-- **Encounters still triggering**: Check `MobileParty.MainParty.IsActive` is false
-- **Not following lord**: Verify army attachment and escort logic  
-- **Crashes on lord death**: Check emergency retirement handlers are registered
-- **Service not resuming after load**: Verify lord references restore correctly
+- **Encounters still triggering**: Check `MobileParty.MainParty.IsVisible` is false
+- **Not following lord**: Verify escort AI and army attachment
+- **Crashes on battle entry**: Mission behaviors are disabled for stability
+- **Save fails**: Veteran records use manual serialization (not dictionary sync)
 
 **Log Categories:**
 - "Enlistment" - Core service state and lord tracking
-- "EncounterGuard" - Encounter state management
-- "Battle" - Battle participation and capture logic
-- Look for daily/tick processing in main enlisted log
+- "Battle" - Battle participation and XP awards
+- "Retirement" - Veteran system and term tracking
+- "SaveLoad" - Save/load operations
 
 **Testing:**
-- Enlist with lord, check `IsActive` property in debugger
-- Kill enlisted lord in console, verify graceful retirement  
-- Save during service, reload, verify service resumes
-- Try encounters while enlisted (should not trigger)
-- **Defeat Test**: Join battle, lose intentionally, verify capture and grace period start.
+- Enlist with lord, check `IsVisible` property
+- Serve 252+ days, verify retirement notification
+- Save during grace period, reload, verify state preserved
+- Test re-enlistment after cooldown

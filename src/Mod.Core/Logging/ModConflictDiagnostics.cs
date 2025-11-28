@@ -16,7 +16,7 @@ namespace Enlisted.Mod.Core.Logging
     public static class ModConflictDiagnostics
     {
         private const string EnlistedHarmonyId = "com.enlisted.mod";
-        private const string EnlistedVersion = "v0.2.1";
+        private const string EnlistedVersion = "v0.3.0";
         
         private static readonly object Sync = new object();
         private static string _conflictLogPath;
@@ -176,7 +176,8 @@ namespace Enlisted.Mod.Core.Logging
             
             try
             {
-                var subModules = Module.CurrentModule?.SubModules;
+                // 1.3.4 API: SubModules property replaced with CollectSubModules() method
+                var subModules = Module.CurrentModule?.CollectSubModules();
                 if (subModules == null || subModules.Count == 0)
                 {
                     WriteLine("  (No modules detected - early load stage)");
