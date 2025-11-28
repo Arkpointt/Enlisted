@@ -46,8 +46,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.IO.Compression" />
-    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="Newtonsoft.Json">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
@@ -136,6 +134,10 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.PlayerServices.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TaleWorlds.DotNet">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_wEditor\TaleWorlds.DotNet.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" />
@@ -149,11 +151,9 @@
     <Compile Include="src\Mod.Core\Config\ModSettings.cs" />
     <Compile Include="src\Mod.Core\Config\ModConfig.cs" />
     <Compile Include="src\Mod.Core\Logging\ModLogger.cs" />
-    <Compile Include="src\Mod.Core\Logging\ApiLog.cs" />
-    <Compile Include="src\Mod.Core\Logging\ApiSurfaceDumper.cs" />
-    <Compile Include="src\Mod.Core\Logging\DiscoveryAggregator.cs" />
     <Compile Include="src\Mod.Core\Logging\ModConflictDiagnostics.cs" />
-    <Compile Include="src\Mod.Core\Logging\SessionArchiver.cs" />
+    <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs" />
+    <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs" />
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs" />
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs" />
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs" />
@@ -163,7 +163,6 @@
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs" />
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs" />
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs" />
-    <Compile Include="src\Features\Interface\Behaviors\EnlistedInputHandler.cs" />
     <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs" />
     <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs" />
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs" />
@@ -176,19 +175,26 @@
     <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs" />
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs" />
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\NoHorseSiegePatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\VotingSuppressionPatch.cs" />
+    <!-- Disabled: Native game handles siege dismounting -->
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\LootRestrictionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\KingdomDecisionParticipationPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\StarvationSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />
@@ -224,9 +230,6 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\discovery.log" Lines="[Init] Precreated by build" Overwrite="false" />
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\api.log" Lines="[Init] Precreated by build" Overwrite="false" />
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\dialog.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false" />
   </Target>
   

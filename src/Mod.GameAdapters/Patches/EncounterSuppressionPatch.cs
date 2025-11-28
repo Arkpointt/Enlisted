@@ -71,13 +71,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // This prevents crashes when clicking "Surrender" after army defeat
                 if (justEndedEnlistment)
                 {
-                    ModLogger.Info("EncounterSuppression", $"Suppressed encounter - enlistment just ended and player still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
+                    ModLogger.Warn("Encounter", $"Suppressed encounter - enlistment just ended and player still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
                     return false; // Prevent encounter until battle state clears
                 }
 
                 if (hasGraceProtection)
                 {
-                    ModLogger.Info("EncounterSuppression", "Suppressed encounter - grace protection window active");
+                    ModLogger.Debug("Encounter", "Suppressed encounter - grace protection window active");
                     return false;
                 }
                 

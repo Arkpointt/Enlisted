@@ -6,12 +6,13 @@ This document gives modders a concise view of what the Enlisted project currentl
 
 | Area | Current Behavior |
 | --- | --- |
-| Enlistment | Player joins any lord via dialog, attaches to the lord’s party, stays hidden on the map, and follows army orders. |
-| Duties & Ranks | JSON-driven assignments with wage and XP pacing, tier gating, and officer slots that hook into native party roles. |
+| Enlistment | Player joins any lord via dialog, attaches to the lord's party, stays hidden on the map, and follows army orders. Financial isolation ensures only enlistment wages appear in clan finances. |
+| Veteran Retirement | After 252 days (first term), players can retire with gold bonuses, relation gains, and faction reputation. Re-enlistment options with preserved tier and kill tracking per faction. |
+| Duties & Ranks | JSON-driven assignments with wage and XP pacing, tier gating (T1-T6), and officer slots that hook into native party roles. |
 | Equipment | Master-at-Arms and Quartermaster menus switch the player to real troop loadouts; equipment is replaced (not duplicated) and restored at discharge. |
-| Battle Integration | Real-time monitoring activates the party when the lord enters battle and hands the encounter back to the native menus. Defeat runs through the vanilla Attack/Surrender flow. |
-| Safety | Capture grace periods, an auto-cleaned encounter state after surrender, a one-day post-release “ignore” window enforced by the encounter suppression patch, and logging under `Modules/Enlisted/Debugging`. |
-| Grace Re-Enlistment | During the 14-day grace window, the player’s tier, XP, and troop kit are cached so joining another lord in the same kingdom resumes service seamlessly, and the clan stays in the kingdom unless the timer expires. |
+| Battle Integration | Real-time monitoring joins the player to battles seamlessly when the lord engages. +25 XP per battle, +1 XP per kill. No loot (spoils go to lord), no starvation (lord provides food). |
+| Safety | 14-day grace periods for lord death/capture/army defeat, auto-cleaned encounter states, one-day post-release ignore window, and logging under `Modules/Enlisted/Debugging`. |
+| Service Transfer | During leave or grace, players can transfer service to another lord in the same faction while preserving all progression. |
 
 ## 2. Architecture Snapshot
 
@@ -21,15 +22,15 @@ src/
 ├─ Mod.Core/             # Logging, settings, helpers
 ├─ Mod.GameAdapters/     # Harmony patches (visibility, expenses, voting, etc.)
 └─ Features/
-   ├─ Enlistment/        # Service state, battle participation, grace logic
+   ├─ Enlistment/        # Service state, battle participation, grace logic, veteran retirement
    ├─ Assignments/       # Duties system + officer hooks
    ├─ Equipment/         # Troop selection + gear replacement
-   ├─ Combat/            # Battle wait menus, commander follow rules
-   ├─ Interface/         # Status menus, input handler
-   └─ Conversations/     # Dialog flow for enlist / leave
+   ├─ Combat/            # Battle participation, kill tracking, formation assignment
+   ├─ Interface/         # Status menus, enlisted menu system
+   └─ Conversations/     # Dialog flow for enlist / leave / retirement / transfer
 ```
 
-Harmony patches live in `src/Mod.GameAdapters/Patches/`. We currently ship twelve targeted patches (battle command filtering, discharge/voting suppression, encounter suppression, expense isolation, hide nameplate, kingdom decision suppression, loot restriction, no-horse siege gate, post-discharge activation guard, visibility enforcement, officer duty helpers, and voting suppression). Each patch has a narrow purpose and fails open on errors.
+Harmony patches live in `src/Mod.GameAdapters/Patches/`. We currently ship seventeen targeted patches covering battle commands, discharge penalties, encounter suppression, expense isolation, loot blocking, starvation suppression, waiting state override, kingdom decisions, influence messages, visibility/nameplate control, town leave button hiding, order of battle suppression, and officer duty integration. Each patch has a narrow purpose and fails open on errors.
 
 ## 3. Development Guidelines
 
@@ -42,9 +43,11 @@ Harmony patches live in `src/Mod.GameAdapters/Patches/`. We currently ship twelv
 ## 4. System Notes
 
 ### EnlistmentBehavior
-- Tracks `_enlistedLord`, enlistment tier/XP, and grace periods.
-- Uses real-time ticks for encounter suppression and daily ticks for wages.
-- After surrender, we let the vanilla capture happen, finish any lingering PlayerEncounter, start a 14-day grace period, and grant a one-day ignore window so the player can interact with NPCs safely.
+- Tracks `_enlistedLord`, enlistment tier/XP, kill counts, and grace periods.
+- Uses real-time ticks for lord following and daily ticks for wages/XP.
+- Veteran retirement system: 252-day first term, 84-day renewals, per-faction tracking.
+- Battle XP: +25 per battle, +1 per kill (tracked via EnlistedKillTrackerBehavior).
+- After surrender, vanilla capture flows naturally, then a 14-day grace period starts with a one-day ignore window for safe NPC interaction.
 
 ### Duties & Equipment
 - Duties are defined via JSON under `ModuleData/Enlisted/` with tier gating and officer slots.
@@ -54,7 +57,7 @@ Harmony patches live in `src/Mod.GameAdapters/Patches/`. We currently ship twelv
 ### Interface & Settlement Access
 - Menus live in `EnlistedMenuBehavior` and Gauntlet prefabs under `GUI/Prefabs/`.
 - Town access uses a synthetic outside encounter so invisible parties can enter settlements without assertions.
-- Shortcut keys (`N` for status, `P` for promotion) route through `EnlistedInputHandler`.
+- Custom menus appear automatically when enlisted; status menu shows after battles.
 
 ## 5. Logging & Diagnostics
 
@@ -72,7 +75,7 @@ Each session prints a GUID for correlation. Enable debug logging via `ModConfig.
 | `docs/BLUEPRINT.md` | Architecture standards, Harmony policy, build notes. |
 | `docs/Features/*.md` | Specs for enlistment, encounter safety, duties, menu interface, town access, etc. |
 | `docs/ModuleData/Enlisted/README.md` | Configuration schema and examples. |
-| `docs/discovered/*` | API references verified against the official v1.2.12 documentation. |
+| `docs/discovered/*` | API references verified against the official v1.3.6 documentation. |
 
 Read the relevant feature spec before modifying behavior; update the spec when the implementation changes.
 
@@ -84,4 +87,4 @@ Read the relevant feature spec before modifying behavior; update the spec when t
 4. Verify the debugging folder logs the new behavior.
 5. Document any risky change in `docs/BLUEPRINT.md` or the relevant feature page.
 
-That is the current state of Enlisted: a focused enlistment experience with clear docs and minimal logging so other modders can understand and extend it quickly.***
+That is the current state of Enlisted: a focused enlistment experience with clear docs and minimal logging so other modders can understand and extend it quickly.

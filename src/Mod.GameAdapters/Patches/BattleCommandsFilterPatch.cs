@@ -37,6 +37,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return; // Not enlisted - let original behavior handle it
                 }
                 
+                // Log initialization once per session
+                ModLogger.LogOnce("battle_commands_init", "Patch", "Battle commands filter active - showing formation-relevant orders only");
+                
                 // Guard: Must have valid formation assignment
                 var playerFormation = EnlistedDutiesBehavior.Instance?.PlayerFormation;
                 if (string.IsNullOrEmpty(playerFormation))
@@ -74,10 +77,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         var commandText = $"{formationName} {behaviorString.ToString().ToLower()}";
                         
                         // Display command with lord's portrait
+                        // 1.3.4 API: Added Equipment parameter (4th param)
                         MBInformationManager.AddQuickInformation(
                             new TextObject(commandText, null), 
                             4000, 
                             enlistedLord?.CharacterObject, 
+                            null,  // Equipment parameter (1.3.4 API)
                             ""
                         );
                         

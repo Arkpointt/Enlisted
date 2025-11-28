@@ -10,8 +10,8 @@ namespace Enlisted.Features.Equipment.Behaviors
     /// <summary>
     /// Validates troop discovery across all cultures to ensure complete faction coverage.
     /// 
-    /// This utility class tests our troop selection system against all 6 Bannerlord cultures
-    /// to identify potential gaps in troop availability and ensure robust faction support.
+    /// This utility class tests our troop selection system against all 8 Bannerlord cultures
+    /// (including Nord and Darshi added in 1.3.4) to identify potential gaps in troop availability.
     /// 
     /// IMPORTANT: Uses GetBattleTier() for tier checks to match TroopSelectionManager behavior.
     /// The Tier property returns raw XML tier, while GetBattleTier() returns calculated battle tier.
@@ -34,9 +34,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                ModLogger.Debug("TroopDiscovery", "Validating faction troop coverage");
+                ModLogger.Debug("TroopDiscovery", "Validating faction troop coverage (all 8 cultures)");
                 
-                var cultures = new[] { "empire", "aserai", "khuzait", "vlandia", "sturgia", "battania" };
+                // All 8 cultures: 6 main + nord and darshi (added in 1.3.4)
+                var cultures = new[] { "empire", "aserai", "khuzait", "vlandia", "sturgia", "battania", "nord", "darshi" };
                 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
                 
                 foreach (var cultureId in cultures)
@@ -54,6 +55,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Validate troop coverage for a specific culture.
+        /// Note: Nord uses Sturgian troops, Darshi uses Aserai troops (as of 1.3.4)
         /// </summary>
         private static void ValidateCultureCoverage(string cultureId, IEnumerable<CharacterObject> allTroops)
         {
@@ -62,11 +64,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
                 if (culture == null)
                 {
-                    ModLogger.Error("TroopDiscovery", $"❌ CULTURE MISSING: {cultureId} not found");
+                    // Nord and Darshi are secondary cultures - they may share troops with parent cultures
+                    ModLogger.Error("TroopDiscovery", $"❌ CULTURE MISSING: {cultureId} not found (may use parent culture troops)");
                     return;
                 }
                 
-                ModLogger.Debug("TroopDiscovery", $"Validating {cultureId} culture coverage");
+                // Log if this is a secondary culture that shares troops
+                var isSecondaryCulture = cultureId == "nord" || cultureId == "darshi";
+                var parentNote = cultureId == "nord" ? " (uses Sturgian troops)" : 
+                                 cultureId == "darshi" ? " (uses Aserai troops)" : "";
+                
+                ModLogger.Debug("TroopDiscovery", $"Validating {cultureId} culture coverage{parentNote}");
                 
                 // Check each tier (1-6) - Bannerlord has 6 troop tiers
                 // Uses GetBattleTier() to match TroopSelectionManager behavior

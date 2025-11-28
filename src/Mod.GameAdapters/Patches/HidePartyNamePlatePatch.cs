@@ -1,87 +1,135 @@
 using System;
 using HarmonyLib;
-using SandBox.ViewModelCollection.Nameplate;
-using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using System.Reflection;
-using TaleWorlds.CampaignSystem;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
     /// Prevents the player's party nameplate from appearing when enlisted.
-    /// Also suppresses the movement cursor (yellow arrow) when following the lord.
+    /// Works by nulling out the PlayerNameplate on PartyNameplatesVM, which is the same
+    /// mechanism the game uses when the player enters a settlement.
+    /// 
+    /// Uses manual patching to avoid type resolution issues during character creation.
+    /// This class is NOT auto-patched by Harmony - it's applied manually in SubModule.
     /// </summary>
-    [HarmonyPatch]
-    public class HidePartyNamePlatePatch
+    public static class HidePartyNamePlatePatch
     {
-        private static FieldInfo _isVisibleOnMapBindField;
+        // Cached references for PlayerNameplate management
+        private static Type _partyNameplatesVMType;
+        private static PropertyInfo _playerNameplateProperty;
+        private static MethodInfo _playerNameplateClearMethod;
+        private static bool _isNameplateHidden = false;
+        private static int _updateCallCount = 0;
         
-        // Patch DetermineIsVisibleOnMap to intercept visibility calculation
-        [HarmonyPatch(typeof(PartyNameplateVM), "DetermineIsVisibleOnMap")]
-        [HarmonyPostfix]
-        static void DetermineIsVisiblePostfix(PartyNameplateVM __instance)
+        /// <summary>
+        /// Manually applies the patch to PartyNameplatesVM.Update().
+        /// Call this from SubModule instead of using HarmonyPatchAll.
+        /// </summary>
+        public static void ApplyManualPatches(Harmony harmony)
         {
             try
             {
-                if (__instance.Party == MobileParty.MainParty)
+                ModLogger.Info("HidePartyNamePlatePatch", "Applying nameplate hiding patch...");
+                
+                // Find PartyNameplatesVM - this is the VM that manages all nameplates on the map
+                _partyNameplatesVMType = AccessTools.TypeByName("SandBox.ViewModelCollection.Nameplate.PartyNameplatesVM");
+                if (_partyNameplatesVMType == null)
                 {
-                    bool isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
+                    ModLogger.Info("HidePartyNamePlatePatch", "PartyNameplatesVM type not found - skipping patch");
+                    return;
+                }
+                
+                // Cache the PlayerNameplate property - this is what we'll set to null
+                _playerNameplateProperty = _partyNameplatesVMType.GetProperty("PlayerNameplate");
+                if (_playerNameplateProperty == null)
+                {
+                    ModLogger.Info("HidePartyNamePlatePatch", "PlayerNameplate property not found - skipping patch");
+                    return;
+                }
+                
+                // Cache the Clear method on PartyPlayerNameplateVM for proper cleanup
+                var playerNameplateVMType = AccessTools.TypeByName("SandBox.ViewModelCollection.Nameplate.PartyPlayerNameplateVM");
+                if (playerNameplateVMType != null)
+                {
+                    _playerNameplateClearMethod = playerNameplateVMType.GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
+                }
+                
+                // Patch the Update method - this runs every frame and manages nameplate state
+                var updateMethod = _partyNameplatesVMType.GetMethod("Update", BindingFlags.Instance | BindingFlags.Public);
+                if (updateMethod != null)
+                {
+                    var postfix = typeof(HidePartyNamePlatePatch).GetMethod(nameof(UpdatePostfix),
+                        BindingFlags.Static | BindingFlags.NonPublic);
+                    harmony.Patch(updateMethod, postfix: new HarmonyMethod(postfix));
+                    ModLogger.Info("HidePartyNamePlatePatch", "SUCCESS: Patched PartyNameplatesVM.Update");
+                }
+                else
+                {
+                    ModLogger.Info("HidePartyNamePlatePatch", "PartyNameplatesVM.Update method not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("HidePartyNamePlatePatch", $"Failed to apply patch: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// After the game's Update() processes nameplates, we hide the player's nameplate
+        /// by clearing it and setting it to null - exactly what the game does when entering a settlement.
+        /// </summary>
+        static void UpdatePostfix(object __instance)
+        {
+            _updateCallCount++;
+            
+            try
+            {
+                if (!CampaignSafetyGuard.IsCampaignReady)
+                {
+                    return;
+                }
+                
+                bool isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
+                bool isOnLeave = EnlistmentBehavior.Instance?.IsOnLeave == true;
+                bool hasLord = EnlistmentBehavior.Instance?.CurrentLord != null;
+                bool shouldHide = isEnlisted || (hasLord && !isOnLeave);
+                
+                if (shouldHide)
+                {
+                    var currentNameplate = _playerNameplateProperty?.GetValue(__instance);
                     
-                    if (isEnlisted)
+                    if (currentNameplate != null)
                     {
-                        if (_isVisibleOnMapBindField == null)
-                            _isVisibleOnMapBindField = AccessTools.Field(typeof(PartyNameplateVM), "_isVisibleOnMapBind");
-
-                        _isVisibleOnMapBindField?.SetValue(__instance, false);
+                        if (!_isNameplateHidden)
+                        {
+                            ModLogger.Info("HidePartyNamePlatePatch", "Hiding player nameplate");
+                        }
+                        
+                        // Clear and null - same as game's OnSettlementEntered behavior
+                        _playerNameplateClearMethod?.Invoke(currentNameplate, null);
+                        _playerNameplateProperty?.SetValue(__instance, null);
+                        
+                        _isNameplateHidden = true;
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("HidePartyNamePlatePatch", $"Error in DetermineIsVisible: {ex.Message}");
-            }
-        }
-
-        // Patch RefreshBinding to enforce visibility properties
-        [HarmonyPatch(typeof(PartyNameplateVM), "RefreshBinding")]
-        [HarmonyPostfix]
-        static void RefreshBindingPostfix(PartyNameplateVM __instance)
-        {
-            try
-            {
-                if (__instance.Party == MobileParty.MainParty)
+                else if (_isNameplateHidden)
                 {
-                    if (EnlistmentBehavior.Instance?.IsEnlisted == true)
-                    {
-                        __instance.IsVisibleOnMap = false;
-                        __instance.IsMainParty = false;
-                    }
+                    // Player no longer enlisted - game will recreate nameplate naturally
+                    ModLogger.Info("HidePartyNamePlatePatch", "Allowing nameplate recreation");
+                    _isNameplateHidden = false;
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("HidePartyNamePlatePatch", $"Error in RefreshBinding: {ex.Message}");
+                // Only log errors occasionally to avoid spam
+                if (_updateCallCount % 1000 == 1)
+                {
+                    ModLogger.Error("HidePartyNamePlatePatch", $"Error: {ex.Message}");
+                }
             }
         }
-
-        // Patch to hide the movement cursor click effect when following the lord
-        // The game creates a "map_click" entity when you move. We suppress it if the player is enlisted.
-        // This is handled by the MapScreen, but we can intercept the cursor creation in Campaign.
-        // A common place this visual is triggered is via Campaign.SetTargetEvent or similar,
-        // but often it's handled by the UI layer directly.
-        // 
-        // Since we can't easily patch the UI layer click handler without specific knowledge of the method,
-        // we can try to ensure the party doesn't emit "I am moving" events that trigger the visual.
-        
-        // However, the yellow cursor is usually purely client-side visual feedback.
-        // If it persists, it's because the game thinks the player clicked to move.
-        // When "Following", we are technically moving.
-        
-        // IMPORTANT: The "Attached" state should naturally suppress the move cursor because you aren't clicking.
-        // If you are seeing it, it might be from the initial click to follow.
-        // Or are you seeing it continuously?
-        // If it's the movement target circle, that usually only appears for player-initiated movement.
     }
 }

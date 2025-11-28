@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using TaleWorlds.Engine.GauntletUI;
-using TaleWorlds.GauntletUI.Data;
 using TaleWorlds.InputSystem;
 using TaleWorlds.ScreenSystem;
 using Enlisted.Mod.Core.Logging;
@@ -15,7 +14,8 @@ namespace Enlisted.Features.Equipment.UI
 	public class TroopSelectionPopupBehavior
 	{
 		private static GauntletLayer _layer;
-		private static IGauntletMovie _movie;
+		// 1.3.4 API: LoadMovie now returns GauntletMovieIdentifier instead of IGauntletMovie
+		private static GauntletMovieIdentifier _movie;
 		private static TroopSelectionPopupVM _vm;
 
 		public static void Show(List<TroopSelectionItemVM> items, Action<TroopSelectionItemVM> onSelect, Action onCancel)
@@ -28,7 +28,8 @@ namespace Enlisted.Features.Equipment.UI
 				_vm = new TroopSelectionPopupVM(items, onSelect, OnRequestClose);
 				ModLogger.Info("TroopSelection", $"DEBUG: VM created, Items count: {_vm.Items.Count}");
 				_vm.RefreshValues();
-				_layer = new GauntletLayer(1002, "GauntletLayer", false);
+				// 1.3.4 API: GauntletLayer constructor params reordered to (string name, int localOrder, bool shouldClear)
+			_layer = new GauntletLayer("TroopSelectionPopup", 1002, false);
 				ModLogger.Info("TroopSelection", $"DEBUG: Loading movie TroopSelectionPopup");
 				_movie = _layer.LoadMovie("TroopSelectionPopup", _vm);
 				ModLogger.Info("TroopSelection", $"DEBUG: Movie loaded successfully");

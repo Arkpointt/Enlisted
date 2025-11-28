@@ -307,8 +307,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                     
                     if (Hero.MainHero.Gold >= cost)
                     {
+                        var goldBefore = Hero.MainHero.Gold;
                         GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost, false);
                         troopSelectionManager?.ApplySelectedTroopEquipment(Hero.MainHero, selectedTroop);
+                        
+                        // Log equipment purchase
+                        ModLogger.Info("Gold", $"Equipment purchased: {selectedTroop.Name} for {cost} denars (had {goldBefore}, now {Hero.MainHero.Gold})");
+                        ModLogger.IncrementSummary("equipment_purchases", 1, cost);
                         
                         var message = new TextObject("Equipment upgraded to {TROOP_NAME} for {COST} denars.");
                         message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
@@ -317,6 +322,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     }
                     else
                     {
+                        ModLogger.Warn("Gold", $"Insufficient funds for equipment: need {cost} denars, have {Hero.MainHero.Gold}");
                         var message = new TextObject("Insufficient funds. Need {COST} denars for equipment upgrade.");
                         message.SetTextVariable("COST", cost.ToString());
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
