@@ -421,25 +421,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Battle", $"Lord MapEvent Type: {lordMapEvent.EventType}, Attacker: {lordMapEvent.AttackerSide?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "unknown"}, Defender: {lordMapEvent.DefenderSide?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "unknown"}");
 			}
 
-			// If lord has an army, join it
-			if (lordParty.Army != null)
+			// Army joining is now handled in OnRealtimeTick when lord merges with army
+			// If already in army, the native encounter system handles battle participation
+			if (lordParty.Army != null && main.Army == lordParty.Army)
 			{
-			if (main.Army == lordParty.Army)
-			{
-					ModLogger.Debug("Battle", "Already in lord's army - no action needed");
-					return; // Already in the same army
-			}
-
-			try
-			{
-				lordParty.Army.AddPartyToMergedParties(main);
-				main.Army = lordParty.Army;
-					ModLogger.Info("Battle", $"SUCCESS: Player added to lord army (Leader: {lordParty.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "unknown"})");
-			}
-			catch (Exception ex)
-			{
-					ModLogger.Error("Battle", $"FAILED to join lord army: {ex.Message}");
-				}
+				ModLogger.Debug("Battle", "Already in lord's army - native encounter system handles participation");
 				return;
 			}
 
@@ -1162,6 +1148,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_graceProtectionEnds = CampaignTime.Zero;
 		}
 		
+		// If retaining kingdom for grace period, save progression state BEFORE clearing it
+		// This preserves tier/XP so player can resume at their previous rank when re-enlisting
+		// CRITICAL: Must happen before _enlistmentTier and _enlistmentXP are reset below
+		if (retainKingdomDuringGrace && _enlistedLord != null)
+		{
+			_savedGraceTier = _enlistmentTier;
+			_savedGraceXP = _enlistmentXP;
+			_savedGraceTroopId = TroopSelectionManager.Instance?.LastSelectedTroopId;
+			_savedGraceEnlistmentDate = _enlistmentDate;
+			ModLogger.Info("Enlistment", $"Saved grace progression state: Tier={_savedGraceTier}, XP={_savedGraceXP}");
+		}
+		
 		// Clear enlistment state
 		_enlistedLord = null;
 		_enlistmentTier = 1;
@@ -1209,10 +1207,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				_pendingDesertionKingdom = kingdom;
 				var graceDays = EnlistedConfig.LoadGameplayConfig().DesertionGracePeriodDays;
 				_desertionGracePeriodEnd = CampaignTime.Now + CampaignTime.Days(graceDays);
-				_savedGraceTier = _enlistmentTier;
-				_savedGraceXP = _enlistmentXP;
-				_savedGraceTroopId = TroopSelectionManager.Instance?.LastSelectedTroopId;
-				_savedGraceEnlistmentDate = _enlistmentDate;
+				
+				// Only save progression state if not already saved by StopEnlist()
+				// StopEnlist saves these values when retainKingdomDuringGrace=true, before clearing
+				// If _savedGraceTier is already > 0, the values were pre-saved and shouldn't be overwritten
+				if (_savedGraceTier <= 0)
+				{
+					_savedGraceTier = _enlistmentTier;
+					_savedGraceXP = _enlistmentXP;
+					_savedGraceTroopId = TroopSelectionManager.Instance?.LastSelectedTroopId;
+					_savedGraceEnlistmentDate = _enlistmentDate;
+					ModLogger.Debug("Desertion", $"Saved grace state in StartDesertionGracePeriod: Tier={_savedGraceTier}, XP={_savedGraceXP}");
+				}
+				else
+				{
+					ModLogger.Debug("Desertion", $"Using pre-saved grace state: Tier={_savedGraceTier}, XP={_savedGraceXP}");
+				}
 				
 				ModLogger.Info("Desertion", $"Started {graceDays}-day grace period to rejoin {kingdom.Name}");
 				
@@ -2506,49 +2516,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 									}
 								}
 								
-								// Ensure the lord has an army (create one if needed)
-								// The player needs to join an army to participate in battles
-								// CRITICAL: Do NOT create an army if the lord is already in a MapEvent (battle/siege)
-								// Creating an army for a party already in battle causes assertion failures (MapEvent == null)
-								if (lordParty.Army == null && !lordHasMapEvent && !lordInSiege)
+								// Army joining is now handled in OnRealtimeTick when lord merges with army
+								// If already in lord's army, just ensure battle participation flags are set
+								if (lordParty.Army != null && mainParty.Army == lordParty.Army)
 								{
-									ModLogger.Info("Battle", $"Creating army for {lordParty.LeaderHero.Name}");
-									var kingdom = lordParty.ActualClan?.Kingdom;
-									if (kingdom != null)
-									{
-										kingdom.CreateArmy(lordParty.LeaderHero, Hero.MainHero.HomeSettlement, Army.ArmyTypes.Patrolling);
-										ModLogger.Info("Battle", $"Army created for {lordParty.LeaderHero.Name}");
-									}
-								}
-								
-								// Add the player to the lord's army so they can participate in battles
-								if (lordParty.Army != null)
-								{
-									ModLogger.Info("Battle", $"Adding player to lord's army for battle participation");
-									ModLogger.Info("Battle", $"Lord's army: {lordParty.Army.LeaderParty.LeaderHero.Name}");
-								
-									// Add the player's party to the army's merged parties list
-									// This makes the player part of the army for battle purposes
-									lordParty.Army.AddPartyToMergedParties(mainParty);
-									mainParty.Army = lordParty.Army;
-									
-									// Activate the player's party so they can participate
+									ModLogger.Debug("Battle", "Already in lord's army - setting battle participation flags");
 									mainParty.IsActive = true;
-									
-									// CRITICAL: Keep party INVISIBLE when joining army - Escort AI handles following
-									// Making it visible causes party icon/banner to appear on the map
-									// Escort AI (SetMoveEscortParty) handles position syncing
 									mainParty.IsVisible = false;
 									mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
-								
-									// Set additional properties to ensure battle participation
-									// Follow the LORD's party with camera to prevent pausing when lord enters battle
 									lordParty.Party.SetAsCameraFollowParty();
 									mainParty.ShouldJoinPlayerBattles = true;
-								
-									ModLogger.Info("Battle", $"SUCCESS: Player now in army (invisible) - Army Leader: {mainParty.Army?.LeaderParty?.LeaderHero?.Name?.ToString() ?? "null"}");
 								}
-								else
+								else if (lordParty.Army == null)
 								{
 									// Lord has no army but is in battle - create a PlayerEncounter to join directly
 									// PlayerEncounter.Init() will automatically join the existing MapEvent
@@ -2671,20 +2650,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					// Player banner should stay hidden even during siege prep
 					mainParty.IsVisible = false;
 					
-					// Ensure player is in the army if lord is in an army (for siege menus)
-					if (lordParty.Army != null && (mainParty.Army == null || mainParty.Army != lordParty.Army))
-					{
-						try
-						{
-							lordParty.Army.AddPartyToMergedParties(mainParty);
-							mainParty.Army = lordParty.Army;
-							ModLogger.Debug("Siege", $"Added player to army for siege participation (Army Leader: {lordParty.Army.LeaderParty?.LeaderHero?.Name})");
-						}
-						catch (Exception ex)
-						{
-							ModLogger.Error("Siege", $"Error adding player to army during siege: {ex.Message}");
-						}
-					}
+					// Army joining is now handled in OnRealtimeTick when lord merges
+					// If in lord's army, siege menus work automatically
 					
 					// If the player enters a settlement while having an active PlayerEncounter, finish it immediately
 					// This prevents assertion failures that can occur when encounters persist after settlement entry
@@ -2772,23 +2739,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				else
 				{
 					// Lord is in battle but the player hasn't joined yet
-					// Activate the player so the native system can collect them into the battle
-					// This works whether the player is in an army or just following the lord
-					// Ensure the player is in the army if the lord is in an army
-					// The native system needs the player to be in the army to show the "join battle" option
-					if (lordParty.Army != null && (mainParty.Army == null || mainParty.Army != lordParty.Army))
-					{
-						try
-						{
-							lordParty.Army.AddPartyToMergedParties(mainParty);
-							mainParty.Army = lordParty.Army;
-							ModLogger.Debug("Battle", $"Added player to army for battle participation (Army Leader: {lordParty.Army.LeaderParty?.LeaderHero?.Name})");
-						}
-						catch (Exception ex)
-						{
-							ModLogger.Error("Battle", $"Error adding player to army in realtime tick: {ex.Message}");
-						}
-					}
+					// Army joining is now handled when lord merges - just activate for battle collection
 					
 					// Only activate if the party doesn't already have a MapEvent (safe to activate)
 					// The MapEvent property exists on Party, not directly on MobileParty
@@ -3687,6 +3638,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var previousLordName = previousLord?.Name?.ToString() ?? "Unknown";
 				var newLordName = newLord.Name?.ToString() ?? "Unknown";
 				
+				// If transferring from grace period, restore saved progression values first
+				// During grace, StopEnlist() clears _enlistmentTier/_enlistmentXP but saves them to grace state
+				if (IsInDesertionGracePeriod && _savedGraceTier > 0)
+				{
+					_enlistmentTier = _savedGraceTier;
+					_enlistmentXP = _savedGraceXP;
+					_enlistmentDate = _savedGraceEnlistmentDate != CampaignTime.Zero 
+						? _savedGraceEnlistmentDate 
+						: CampaignTime.Now;
+					ModLogger.Info("Enlistment", $"Restored grace progression for transfer: Tier={_enlistmentTier}, XP={_enlistmentXP}");
+				}
+				
 				ModLogger.Info("Enlistment", $"Transferring service from {previousLordName} to {newLordName}");
 				ModLogger.Info("Enlistment", $"Preserving: Tier={_enlistmentTier}, XP={_enlistmentXP}, Kills={_currentTermKills}, Date={_enlistmentDate}");
 				
@@ -4248,12 +4211,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				// Determine whether this event matters to our enlisted service
-				// Log all parties involved for diagnostics
-				ModLogger.Info("Battle", $"=== MapEventStarted CHECK ===");
-				ModLogger.Info("Battle", $"Lord: {lordParty.LeaderHero?.Name?.ToString() ?? "unknown"}, LordParty ID: {lordParty.StringId}");
-				ModLogger.Info("Battle", $"Attacker: {attackerParty?.MobileParty?.LeaderHero?.Name?.ToString() ?? attackerParty?.Name?.ToString() ?? "unknown"}, AttackerParty ID: {attackerParty?.MobileParty?.StringId ?? "null"}");
-				ModLogger.Info("Battle", $"Defender: {defenderParty?.MobileParty?.LeaderHero?.Name?.ToString() ?? defenderParty?.Name?.ToString() ?? "unknown"}, DefenderParty ID: {defenderParty?.MobileParty?.StringId ?? "null"}");
-				
 				bool lordIsAttacker = attackerParty?.MobileParty == lordParty || attackerParty == lordParty?.Party;
 				bool lordIsDefender = defenderParty?.MobileParty == lordParty || defenderParty == lordParty?.Party;
 				bool inArmy = lordParty.Army != null && main.Army == lordParty.Army;
@@ -4267,15 +4224,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Being in the same army doesn't mean we should join every random skirmish around us
 				// During sieges, many small battles happen (looters vs villagers) that we should ignore
 				bool isRelevantBattle = lordIsAttacker || lordIsDefender || armyLeaderInvolved || lordInvolvedInMapEvent;
-				
-				ModLogger.Info("Battle", $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, inArmy={inArmy}, armyLeaderInvolved={armyLeaderInvolved}, lordInvolvedInMapEvent={lordInvolvedInMapEvent}");
-				ModLogger.Info("Battle", $"isRelevantBattle={isRelevantBattle}");
 
+				// Early exit for unrelated battles - don't log to avoid spam from all map battles
 				if (!isRelevantBattle)
 				{
-					ModLogger.Debug("Battle", "MapEventStarted ignored - unrelated engagement (lord not involved)");
 					return;
 				}
+				
+				// Only log detailed info for battles that actually involve our lord
+				ModLogger.Info("Battle", $"=== MapEventStarted - LORD INVOLVED ===");
+				ModLogger.Info("Battle", $"Lord: {lordParty.LeaderHero?.Name?.ToString() ?? "unknown"}, LordParty ID: {lordParty.StringId}");
+				ModLogger.Info("Battle", $"Attacker: {attackerParty?.MobileParty?.LeaderHero?.Name?.ToString() ?? attackerParty?.Name?.ToString() ?? "unknown"}");
+				ModLogger.Info("Battle", $"Defender: {defenderParty?.MobileParty?.LeaderHero?.Name?.ToString() ?? defenderParty?.Name?.ToString() ?? "unknown"}");
+				ModLogger.Debug("Battle", $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, inArmy={inArmy}, armyLeaderInvolved={armyLeaderInvolved}");
 
 				bool isSiegeBattle = mapEvent.IsSiegeAssault || mapEvent.EventType == MapEvent.BattleTypes.Siege;
 
@@ -4354,7 +4315,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		try
 		{
 			var main = MobileParty.MainParty;
-			LogPartyState("OnMapEventEnded-Start");
 
 			if (mapEvent != null)
 			{
@@ -4385,12 +4345,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			bool attachedToLord = lordParty != null && main?.AttachedTo == lordParty;
 			bool shareArmyWithLord = lordParty?.Army != null && main?.Army == lordParty.Army;
 
+			// Early exit for unrelated battles - don't log to avoid spam from all map battles
 			if (!playerParticipated && !lordParticipated)
 			{
 				_cachedLordMapEvent = null;
-				ModLogger.Info("Battle", "Skipping MapEventEnded - neither player nor lord participated");
 				return;
 			}
+			
+			// Only log diagnostics for battles that actually involved us
+			LogPartyState("OnMapEventEnded-Start");
 			
 				// CRITICAL: Check if enlistment ended during the battle (lord captured/army defeated)
 				// Don't activate immediately - keep party inactive to prevent new encounters

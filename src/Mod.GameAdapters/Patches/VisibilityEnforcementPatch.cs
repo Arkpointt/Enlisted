@@ -95,9 +95,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 bool inGrace = enlistment?.IsInDesertionGracePeriod == true;
 
                 // Fresh campaigns, leave, or grace periods should behave like vanilla.
+                // Note: This check fires very frequently (every visibility set attempt) so we don't log it
                 if (!isEnlisted || onLeave || inGrace)
                 {
-                    ModLogger.Debug("VisibilityEnforcement", "Allowing visibility - service paused (not enlisted / on leave / grace period)");
                     return true;
                 }
 
