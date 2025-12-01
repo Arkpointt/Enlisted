@@ -30,17 +30,25 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - Return before time expires or face desertion penalties
 - If your lord dies or is captured, you have 14 days to find a new commander in the same faction
 
+### Desertion
+- Choose "Desert the Army" from the camp menu to voluntarily leave service
+- Keep your current equipment but face severe penalties:
+  - -50 relations with all lords in the kingdom
+  - +50 crime rating
+- After deserting, you can enlist with other factions normally
+
 ### Retire
 After 252 days (3 Bannerlord years):
 - **Retire**: 10,000 gold + relations with your lord and faction
 - **Re-enlist**: 20,000 gold bonus, extend service 1 year
 
 ## What Changes While Enlisted
+- You join the lord's kingdom as a mercenary (no native mercenary pay - only mod wages)
 - No personal loot (spoils go to your lord)
 - No starvation (lord provides food)
 - No clan expenses shown (only your wages)
-- No kingdom voting participation
 - No Order of Battle screen
+- Naval support: Follow your lord onto ships (Naval War Expansion compatible)
 
 ## Troubleshooting
 Logs are in `<Bannerlord>\Modules\Enlisted\Debugging\`:

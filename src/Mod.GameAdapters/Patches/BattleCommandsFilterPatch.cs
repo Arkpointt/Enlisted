@@ -24,7 +24,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     // Safety: Campaign-only; checks enlisted state; validates formation assignment; only affects enlisted soldiers
     // Notes: Postfix patch; works with the existing formation detection system; includes audio cues for immersion
     [HarmonyPatch(typeof(BehaviorComponent), "InformSergeantPlayer")]
-    [HarmonyPriority(999)] // Run before other Harmony layers
     public class BattleCommandsFilterPatch
     {
         static void Postfix(BehaviorComponent __instance)
