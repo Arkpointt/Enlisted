@@ -1,3 +1,4 @@
+using System;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
@@ -39,27 +40,38 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			try
 			{
-				if (PlayerEncounter.Current != null)
+				var hasEncounter = PlayerEncounter.Current != null;
+				ModLogger.Debug("EncounterGuard", $"TryLeaveEncounter called: hasEncounter={hasEncounter}");
+
+				if (hasEncounter)
 				{
 					// Defer encounter finishing to the next frame to avoid timing conflicts
 					// This prevents assertion failures that can occur during encounter exit
 					NextFrameDispatcher.RunNextFrame(() =>
 					{
-						if (PlayerEncounter.Current != null)
+						var stillHasEncounter = PlayerEncounter.Current != null;
+						ModLogger.Debug("EncounterGuard", $"Deferred encounter finish: stillHasEncounter={stillHasEncounter}");
+
+						if (stillHasEncounter)
 						{
 							PlayerEncounter.LeaveEncounter = true;
 							PlayerEncounter.Finish(true);
+							ModLogger.Debug("EncounterGuard", "PlayerEncounter finished successfully");
 						}
 					});
-					
+
 					// Defer menu activation to the next frame after encounter exit completes
 					// This ensures the menu activates cleanly after state transitions
-					NextFrameDispatcher.RunNextFrame(() => GameMenu.ActivateGameMenu("enlisted_status"), true);
+					NextFrameDispatcher.RunNextFrame(() =>
+					{
+						ModLogger.Debug("EncounterGuard", "Activating enlisted_status menu after encounter exit");
+						GameMenu.ActivateGameMenu("enlisted_status");
+					}, true);
 				}
 			}
-			catch
+			catch (Exception ex)
 			{
-				// Best-effort: if encounter handling fails, the engine will handle cleanup
+				ModLogger.Error("EncounterGuard", $"Error in TryLeaveEncounter: {ex.Message}");
 			}
 		}
 
@@ -84,7 +96,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			var distance = offset.Length;
 			var attachmentName = main.AttachedTo?.LeaderHero?.Name?.ToString() ?? main.AttachedTo?.Name?.ToString() ?? "none";
 			var targetName = target.LeaderHero?.Name?.ToString() ?? target.Name?.ToString() ?? "unknown";
-			
+
 			// Log only if state changes to reduce spam
 			if (main.AttachedTo != target)
 			{
@@ -101,7 +113,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// after TryReleaseEscort() is called. Re-applying ensures movement continues.
 				// 1.3.4 API: SetMoveEscortParty is on MobileParty directly
 				main.SetMoveEscortParty(target, MobileParty.NavigationType.Default, false);
-				
+
 				// Set camera to follow the lord's party for better visual experience
 					try
 					{
@@ -118,9 +130,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		// NOTE: TryAttach method was removed because setting AttachedTo property
 		// causes GetGenericStateMenu() to crash - it assumes attached parties are in an army
 		// and dereferences mainParty.Army which is null for enlisted players
-		
+
 		#region Party Visual Hiding
-		
+
 		/// <summary>
 		/// Hides the player's party visual (3D model on map) using the native IsVisible property.
 		/// The native MobilePartyVisual system automatically fades out when IsVisible = false.
@@ -130,12 +142,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			var mainParty = MobileParty.MainParty;
 			if (mainParty == null) return;
-			
+
 			var wasVisible = mainParty.IsVisible;
 			mainParty.IsVisible = false;
 			ModLogger.Info("EncounterGuard", $"HidePlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
 		}
-		
+
 		/// <summary>
 		/// Shows the player's party visual (3D model on map) using the native IsVisible property.
 		/// </summary>
@@ -143,12 +155,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			var mainParty = MobileParty.MainParty;
 			if (mainParty == null) return;
-			
+
 			var wasVisible = mainParty.IsVisible;
 			mainParty.IsVisible = true;
 			ModLogger.Info("EncounterGuard", $"ShowPlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
 			}
-		
+
 		#endregion
 	}
 }

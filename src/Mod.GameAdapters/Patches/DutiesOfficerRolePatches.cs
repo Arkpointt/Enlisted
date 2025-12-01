@@ -24,7 +24,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     // Safety: Campaign-only; checks enlistment state; validates duty assignment; only affects enlisted lord's party
     // Notes: Property getter patch; high priority to ensure our substitution runs first; part of duties system officer role integration
     [HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]
-    [HarmonyPriority(999)] // Run before other Harmony layers
     public class DutiesEffectiveEngineerPatch
     {
         static bool Prefix(MobileParty __instance, ref Hero __result)
@@ -70,7 +69,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     // Safety: Campaign-only; checks enlistment state; validates duty assignment; only affects enlisted lord's party
     // Notes: Property getter patch; high priority so the substitution happens before downstream code
     [HarmonyPatch(typeof(MobileParty), "EffectiveScout", MethodType.Getter)]
-    [HarmonyPriority(999)]
     public class DutiesEffectiveScoutPatch
     {
         static bool Prefix(MobileParty __instance, ref Hero __result)
@@ -113,7 +111,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     // Safety: Campaign-only; checks enlistment state; validates duty assignment; only affects enlisted lord's party  
     // Notes: Property getter patch; priority keeps the player's steward role in place before other logic checks the value
     [HarmonyPatch(typeof(MobileParty), "EffectiveQuartermaster", MethodType.Getter)]
-    [HarmonyPriority(999)]
     public class DutiesEffectiveQuartermasterPatch
     {
         static bool Prefix(MobileParty __instance, ref Hero __result)
@@ -156,7 +153,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     // Safety: Campaign-only; checks enlistment state; validates duty assignment; only affects enlisted lord's party
     // Notes: Property getter patch; priority ensures the player's medicine skill is used whenever this getter runs
     [HarmonyPatch(typeof(MobileParty), "EffectiveSurgeon", MethodType.Getter)]
-    [HarmonyPriority(999)]
     public class DutiesEffectiveSurgeonPatch
     {
         static bool Prefix(MobileParty __instance, ref Hero __result)

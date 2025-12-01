@@ -43,15 +43,15 @@ src/
 | EncounterSuppressionPatch | Prevents unwanted encounters |
 | EnlistedWaitingPatch | Prevents game pause when lord battles |
 | EnlistmentExpenseIsolationPatch | Hides expenses while enlisted |
+| FoodConsumptionSuppressionPatch | Skips food consumption when enlisted (lord provides food) |
 | HidePartyNamePlatePatch | Hides player nameplate |
 | InfluenceMessageSuppressionPatch | Suppresses "0 influence" messages |
-| KingdomDecisionParticipationPatch | Blocks kingdom voting |
 | LootBlockPatch | Prevents personal loot |
-| MercenaryIncomeSuppressionPatch | Hides mercenary income |
+| MercenaryIncomeSuppressionPatch | Suppresses native mercenary income (players receive mod wages only) |
 | OrderOfBattleSuppressionPatch | Skips deployment screen |
 | PostDischargeProtectionPatch | Protects after discharge |
 | SkillSuppressionPatch | Blocks tactics/leadership XP |
-| StarvationSuppressionPatch | Prevents starvation |
+| StarvationSuppressionPatch | Prevents starvation (backup for FoodConsumptionSuppressionPatch) |
 | TownLeaveButtonPatch | Hides Leave button |
 | VisibilityEnforcementPatch | Controls party visibility |
 
@@ -61,7 +61,34 @@ Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 - `enlisted.log` - Main activity
 - `conflicts.log` - Mod compatibility
 
-Categories controlled via `settings.json`. Default level: Info. Throttling prevents spam.
+### Log Levels
+- **Error** - Critical failures requiring attention
+- **Warn** - Unexpected conditions handled gracefully
+- **Info** - Important state changes and events
+- **Debug** - Detailed diagnostic information
+- **Trace** - Very verbose, for deep debugging
+
+### Debug Categories
+| Category | What It Logs |
+|----------|--------------|
+| Enlistment | Core service state: enlist, discharge, kingdom join/leave |
+| Battle | Battle participation, army joining, MapEvent handling |
+| Discharge | Kingdom restoration, relation penalty suppression |
+| Finance | Mercenary income suppression, wage calculations |
+| Food | Food consumption suppression, starvation checks |
+| Desertion | Grace period management, desertion penalties |
+| SaveLoad | Save/load operations, state restoration |
+| Following | Escort AI, position sync, naval following |
+| Naval | Sea state sync, naval position updates |
+| Siege | Siege state detection, besieger camp sync |
+| EncounterGuard | Encounter transitions, menu activation |
+| EncounterCleanup | Post-battle cleanup, visibility restoration |
+| Equipment | Equipment backup/restore, kit assignment |
+| Diagnostics | Party state dumps, debug info |
+| Session | Startup diagnostics, version info |
+| Config | Configuration loading |
+
+Categories controlled via `settings.json`. Default level: Info. Throttling prevents spam (5s default).
 
 ## Key Patterns
 
