@@ -21,7 +21,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		public static TextObject ServiceBonus;
 		public static TextObject ArmyBonus;
 		public static TextObject DutyBonus;
-		
+
 		public static void EnsureInitialized()
 		{
 			if (BasePay == null)
@@ -34,7 +34,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				DutyBonus = new TextObject("{=enlisted_duty_bonus}Duty Assignment");
 			}
 		}
-		
+
 		public static void ClearCache()
 		{
 			BasePay = null;
@@ -45,7 +45,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			DutyBonus = null;
 		}
 	}
-	
+
 	/// <summary>
 	/// Completely isolates the player clan's income calculation when enlisted.
 	/// When enlisted, the player should ONLY see their enlistment wages, not any
@@ -72,7 +72,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				{
 					return true; // Run native
 				}
-				
+
 				// Only intercept for player clan
 				if (clan != Clan.PlayerClan)
 				{
@@ -82,14 +82,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				var enlistment = EnlistmentBehavior.Instance;
 				bool isEnlisted = enlistment?.IsEnlisted == true;
 				bool isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
+				var mainHero = Hero.MainHero;
+				bool playerCaptured = mainHero?.IsPrisoner == true;
 
-				// Only isolate finances when actively enlisted (not on leave)
-				if (!isEnlisted && !isInGracePeriod)
+				// Only isolate finances when actively enlisted (not on leave) or captured
+				if (!isEnlisted && !isInGracePeriod && !playerCaptured)
 				{
 					return true; // Run native when not enlisted
 				}
 
 				// CRITICAL: Create a fresh ExplainedNumber with ONLY enlistment wages
+				// If captured or in grace period, this starts at 0 and stays at 0 (no wages added)
 				__result = new ExplainedNumber(0f, includeDescriptions, null);
 
 				// Add detailed wage breakdown
@@ -106,7 +109,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				return true; // Fail open
 			}
 		}
-		
+
 		/// <summary>
 		/// Adds each wage component as a separate line in the tooltip.
 		/// </summary>
@@ -114,35 +117,35 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		{
 			var breakdown = enlistment.GetWageBreakdown();
 			if (breakdown.Total <= 0) return;
-			
+
 			WageTooltipLabels.EnsureInitialized();
-			
+
 			// Add each component as a separate tooltip line
 			if (breakdown.BasePay > 0)
 			{
 				result.Add(breakdown.BasePay, WageTooltipLabels.BasePay, null);
 			}
-			
+
 			if (breakdown.LevelBonus > 0)
 			{
 				result.Add(breakdown.LevelBonus, WageTooltipLabels.LevelBonus, null);
 			}
-			
+
 			if (breakdown.TierBonus > 0)
 			{
 				result.Add(breakdown.TierBonus, WageTooltipLabels.TierBonus, null);
 			}
-			
+
 			if (breakdown.ServiceBonus > 0)
 			{
 				result.Add(breakdown.ServiceBonus, WageTooltipLabels.ServiceBonus, null);
 			}
-			
+
 			if (breakdown.ArmyBonus > 0)
 			{
 				result.Add(breakdown.ArmyBonus, WageTooltipLabels.ArmyBonus, null);
 			}
-			
+
 			if (breakdown.DutyBonus > 0)
 			{
 				// Show duty name if available
@@ -157,14 +160,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					result.Add(breakdown.DutyBonus, WageTooltipLabels.DutyBonus, null);
 				}
 			}
-			
+
 			if (!_hasLoggedFirstWage)
 			{
 				_hasLoggedFirstWage = true;
 				ModLogger.Info("Finance", $"Wage breakdown - Base:{breakdown.BasePay} Level:{breakdown.LevelBonus} Tier:{breakdown.TierBonus} Service:{breakdown.ServiceBonus} Army:{breakdown.ArmyBonus} Duty:{breakdown.DutyBonus} = {breakdown.Total}");
 			}
 		}
-		
+
 		/// <summary>
 		/// Clear cached tooltip labels when config is reloaded.
 		/// </summary>
@@ -173,7 +176,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			WageTooltipLabels.ClearCache();
 		}
 	}
-	
+
 	/// <summary>
 	/// Completely isolates the player clan's expense calculation when enlisted.
 	/// When enlisted, the player should have ZERO expenses - the lord pays for everything.
@@ -197,7 +200,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				{
 					return true; // Run native
 				}
-				
+
 				// Only intercept for player clan
 				if (clan != Clan.PlayerClan)
 				{
@@ -232,72 +235,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			{
 				ModLogger.Error("Finance", $"Error in expense isolation prefix: {ex.Message}");
 				return true; // Fail open
-			}
-		}
-	}
-	
-	/// <summary>
-	/// Isolates the combined gold change calculation (income - expenses) when enlisted.
-	/// This is the main method called by the UI to show daily gold change.
-	/// Shows a detailed breakdown of all wage components.
-	/// </summary>
-	[HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanGoldChange))]
-	internal static class ClanFinanceEnlistmentGoldChangePatch
-	{
-		private static bool _hasLoggedFirst = false;
-
-		/// <summary>
-		/// PREFIX: Intercept gold change calculation BEFORE native code runs.
-		/// When enlisted, show detailed wage breakdown with zero expenses.
-		/// </summary>
-		private static bool Prefix(Clan clan, bool includeDescriptions, ref ExplainedNumber __result)
-		{
-			try
-			{
-				// Skip during character creation
-				if (Campaign.Current == null || Clan.PlayerClan == null)
-				{
-					return true;
-				}
-				
-				if (clan != Clan.PlayerClan)
-				{
-					return true;
-				}
-
-				var enlistment = EnlistmentBehavior.Instance;
-				bool isEnlisted = enlistment?.IsEnlisted == true;
-				bool isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
-				var mainHero = Hero.MainHero;
-				bool playerCaptured = mainHero?.IsPrisoner == true;
-
-				if (!isEnlisted && !isInGracePeriod && !playerCaptured)
-				{
-					return true;
-				}
-
-				// Create fresh result - we'll add detailed breakdown
-				__result = new ExplainedNumber(0f, includeDescriptions, null);
-
-				// Add detailed wage breakdown when enlisted (not when just captured)
-				if (isEnlisted)
-				{
-					ClanFinanceEnlistmentIncomePatch.AddWageBreakdownToResult(enlistment, ref __result);
-				}
-
-				if (!_hasLoggedFirst)
-				{
-					_hasLoggedFirst = true;
-					string status = isEnlisted ? "enlisted" : (isInGracePeriod ? "grace period" : "captured");
-					ModLogger.Info("Finance", $"Gold change isolated ({status}) - showing detailed wage breakdown");
-				}
-
-				return false;
-			}
-			catch (Exception ex)
-			{
-				ModLogger.Error("Finance", $"Error in gold change isolation prefix: {ex.Message}");
-				return true;
 			}
 		}
 	}
