@@ -850,9 +850,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 
 			var counterpartParty = MobileParty.ConversationParty ?? lord.PartyBelongedTo;
+
+			// Fallback: If in a settlement, PartyBelongedTo might be null even if the lord has a party.
+			// Attempt to find the lord's party via clan components.
+			if (counterpartParty == null && lord.Clan != null)
+			{
+				foreach (var component in lord.Clan.WarPartyComponents)
+				{
+					if (component.MobileParty != null && component.MobileParty.LeaderHero == lord)
+					{
+						counterpartParty = component.MobileParty;
+						break;
+					}
+				}
+			}
+
 			if (counterpartParty == null)
 			{
 				reason = new TextObject("The lord has no party at present.");
+				ModLogger.Debug("Enlistment", $"CanEnlistWithParty: {lord.Name} has no party");
 				return false;
 			}
 			return true;
