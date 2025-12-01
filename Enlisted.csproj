@@ -185,7 +185,9 @@
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\FoodConsumptionSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
@@ -209,9 +211,7 @@
   </ItemGroup>
   <ItemGroup>
     <!-- Main Documentation -->
-    <None Include="docs\ARCHITECTURE.md" />
     <None Include="docs\BLUEPRINT.md" />
-    <None Include="docs\TESTING.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterBuild">

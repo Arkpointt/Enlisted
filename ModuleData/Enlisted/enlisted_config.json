@@ -4,18 +4,18 @@
   "system_info": {
     "config_version": "1.0",
     "compatible_game_versions": ["1.3.6"],
-    "mod_version": "0.3.0"
+    "mod_version": "0.4.1"
   },
   "enlistment": {
     "tier_requirements": [0, 800, 3000, 6000, 11000, 19000],
     "tier_names": [
-      "Levy", "Footman", "Serjeant", 
+      "Levy", "Footman", "Serjeant",
       "Man-at-Arms", "Banner Sergeant", "Household Guard"
     ],
     "daily_base_xp": 25,
     "assignment_wage_multipliers": {
       "grunt_work": 0.8,
-      "guard_duty": 0.9, 
+      "guard_duty": 0.9,
       "cook": 0.9,
       "foraging": 1.0,
       "surgeon": 1.3,
@@ -47,7 +47,7 @@
     "infantry": {
       "display_names": {
         "empire": "Legionary",
-        "aserai": "Footman", 
+        "aserai": "Footman",
         "khuzait": "Spearman",
         "vlandia": "Man-at-Arms",
         "sturgia": "Warrior",
@@ -58,7 +58,7 @@
     },
     "archer": {
       "display_names": {
-        "empire": "Sagittarius", 
+        "empire": "Sagittarius",
         "aserai": "Marksman",
         "khuzait": "Hunter",
         "vlandia": "Crossbowman",
@@ -71,7 +71,7 @@
     "cavalry": {
       "display_names": {
         "empire": "Equites",
-        "aserai": "Mameluke", 
+        "aserai": "Mameluke",
         "khuzait": "Lancer",
         "vlandia": "Knight",
         "sturgia": "Druzhnik",
@@ -84,7 +84,7 @@
       "display_names": {
         "empire": "Equites Sagittarii",
         "aserai": "Desert Horse Archer",
-        "khuzait": "Horse Archer", 
+        "khuzait": "Horse Archer",
         "vlandia": "Mounted Crossbowman",
         "sturgia": "Mounted Archer",
         "battania": "Mounted Skirmisher",
@@ -98,7 +98,7 @@
     "formation_multipliers": {
       "infantry": 1.0,
       "archer": 1.3,
-      "cavalry": 2.0, 
+      "cavalry": 2.0,
       "horsearcher": 2.5
     },
     "culture_modifiers": {
