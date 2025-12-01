@@ -4710,10 +4710,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						{
 							// Trigger settlement entered event for player (MainParty) to activate perks
 							// This allows perks like "Show Your Scars" to trigger automatically when the lord enters a town
-							if (CampaignEventDispatcher.Instance != null && mainParty != null && Hero.MainHero != null)
+							if (MobileParty.MainParty != null && Hero.MainHero != null && CampaignEventDispatcher.Instance != null)
 							{
-								CampaignEventDispatcher.Instance.OnSettlementEntered(mainParty, settlement, Hero.MainHero);
-								ModLogger.Info("Settlement", $"Triggered synthetic SettlementEntered for {settlement.Name} to activate perks");
+								try
+								{
+									CampaignEventDispatcher.Instance.OnSettlementEntered(MobileParty.MainParty, settlement, Hero.MainHero);
+									ModLogger.Info("Settlement", $"Triggered synthetic SettlementEntered for {settlement.Name} to activate perks");
+								}
+								catch (Exception ex)
+								{
+									// Safely ignore errors from native listeners (e.g. due to unusual enlisted party state)
+									ModLogger.Warn("Settlement", $"Synthetic perk trigger suppressed error: {ex.Message}");
+								}
 							}
 
 							// Safe to show enlisted menu - no battles/sieges active
