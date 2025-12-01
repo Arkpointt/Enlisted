@@ -189,6 +189,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />
