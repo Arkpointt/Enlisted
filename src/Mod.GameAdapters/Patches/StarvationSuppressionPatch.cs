@@ -37,9 +37,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 var enlistment = EnlistmentBehavior.Instance;
-                
+
                 // When enlisted (not on leave), suppress starvation - lord provides food
-                if (enlistment?.IsEnlisted == true && !enlistment.IsOnLeave)
+                // Note: IsEnlisted already returns false when on leave, so no need to check IsOnLeave separately
+                if (enlistment?.IsEnlisted == true)
                 {
                     __result = false;
                     // Only log occasionally to avoid spam
