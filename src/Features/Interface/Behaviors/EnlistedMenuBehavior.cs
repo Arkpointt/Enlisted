@@ -1273,13 +1273,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                // Calculate enlistment date by estimating days served from total XP
-                // The actual enlistment date is not stored, so we estimate based on average XP per day
-                var daysServed = enlistment.EnlistmentXP / 50; // ~50 XP per day
-                var enlistmentDate = CampaignTime.Now - CampaignTime.Days(daysServed);
-
-                // Format as "Season Day, Year" (e.g., "Summer 15, 1084")
-                return enlistmentDate.ToString();
+                // Use the actual stored enlistment date instead of estimating from XP
+                // This ensures the date remains consistent regardless of XP gain rate
+                return enlistment.EnlistmentDate.ToString();
             }
             catch
             {

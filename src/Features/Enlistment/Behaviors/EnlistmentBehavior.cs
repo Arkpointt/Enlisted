@@ -396,6 +396,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	#region Veteran System Properties
 
 	/// <summary>
+	/// Date when the current enlistment started.
+	/// </summary>
+	public CampaignTime EnlistmentDate => _enlistmentDate;
+
+	/// <summary>
 	/// Days served in current enlistment term.
 	/// </summary>
 	public float DaysServed => _enlistmentDate != CampaignTime.Zero
@@ -5040,6 +5045,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Don't activate immediately - keep party inactive to prevent new encounters
 				if (!IsEnlisted || _isOnLeave)
 				{
+					// FIX: Only perform cleanup if we were actually enlisted when the battle started (tracked by _cachedLordMapEvent)
+					// If _cachedLordMapEvent is null, it means we were never enlisted for this battle (normal player scenario),
+					// so we must NOT interfere with the native encounter flow.
+					if (_cachedLordMapEvent == null)
+					{
+						return;
+					}
+
 					ModLogger.Info("Battle", $"OnMapEventEnded early exit: IsEnlisted={IsEnlisted}, OnLeave={_isOnLeave}, main.HasMapEvent={main?.Party.MapEvent != null}, lordHasMapEvent={lordParty?.Party.MapEvent != null}, MapEventHasWinner={mapEvent?.HasWinner}");
 
 					// Enlistment ended during battle - cleanup only, DO NOT activate
