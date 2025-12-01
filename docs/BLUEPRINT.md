@@ -21,7 +21,7 @@ src/
 ├── Mod.Entry/              # SubModule + Harmony init
 ├── Mod.Core/               # Logging, config, helpers
 ├── Mod.GameAdapters/       # Harmony patches
-│   └── Patches/            # 18 patches
+│   └── Patches/            # 19 patches
 └── Features/
     ├── Enlistment/         # Core service state, retirement
     ├── Assignments/        # Duties system
@@ -32,10 +32,11 @@ src/
     └── Interface/          # Menus
 ```
 
-## Harmony Patches (18)
+## Harmony Patches (19)
 
 | Patch | Purpose |
 |-------|---------|
+| ArmyCohesionExclusionPatch | Compensates for enlisted player's cohesion impact |
 | BattleCommandsFilterPatch | Formation-based command filtering |
 | ClanFinanceEnlistmentIncomePatch | Adds wages to tooltip |
 | DischargePenaltySuppressionPatch | Prevents relation loss on discharge |
@@ -71,6 +72,7 @@ Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 ### Debug Categories
 | Category | What It Logs |
 |----------|--------------|
+| Cohesion | Army cohesion compensation for enlisted player |
 | Enlistment | Core service state: enlist, discharge, kingdom join/leave |
 | Battle | Battle participation, army joining, MapEvent handling |
 | Discharge | Kingdom restoration, relation penalty suppression |
