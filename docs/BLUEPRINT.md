@@ -32,7 +32,7 @@ src/
     └── Interface/          # Menus
 ```
 
-## Harmony Patches (19)
+## Harmony Patches (20)
 
 | Patch | Purpose |
 |-------|---------|
@@ -46,6 +46,7 @@ src/
 | EnlistmentExpenseIsolationPatch | Hides expenses while enlisted |
 | FoodConsumptionSuppressionPatch | Skips food consumption when enlisted (lord provides food) |
 | HidePartyNamePlatePatch | Hides player nameplate |
+| IncidentsSuppressionPatch | Suppresses random incidents (DLC/Naval) |
 | InfluenceMessageSuppressionPatch | Suppresses "0 influence" messages |
 | LootBlockPatch | Prevents personal loot |
 | MercenaryIncomeSuppressionPatch | Suppresses native mercenary income (players receive mod wages only) |

@@ -16,8 +16,8 @@ namespace Enlisted.Mod.Core.Logging
     public static class ModConflictDiagnostics
     {
         private const string EnlistedHarmonyId = "com.enlisted.mod";
-        private const string EnlistedVersion = "v0.3.0";
-        
+        private const string EnlistedVersion = "v0.4.1";
+
         private static readonly object Sync = new object();
         private static string _conflictLogPath;
 
@@ -32,14 +32,14 @@ namespace Enlisted.Mod.Core.Logging
             {
                 InitializeLogPath();
                 ClearPreviousLog();
-                
+
                 WriteHeader();
                 WriteEnvironmentInfo();
                 WriteLoadedModules();
                 WritePatchConflicts(harmony);
                 WriteEnlistedPatchList(harmony);
                 WriteFooter();
-                
+
                 // Log a summary to main log so users know where to find conflict info
                 ModLogger.Info("Diagnostics", $"Conflict diagnostics written to: {_conflictLogPath}");
             }
@@ -59,15 +59,15 @@ namespace Enlisted.Mod.Core.Logging
                 var dllDir = Path.GetDirectoryName(typeof(ModConflictDiagnostics).Assembly.Location);
                 var binDir = Directory.GetParent(dllDir);
                 var enlistedRoot = binDir?.Parent;
-                var debugDir = enlistedRoot != null 
-                    ? Path.Combine(enlistedRoot.FullName, "Debugging") 
+                var debugDir = enlistedRoot != null
+                    ? Path.Combine(enlistedRoot.FullName, "Debugging")
                     : "Debugging";
-                
+
                 if (!Directory.Exists(debugDir))
                 {
                     Directory.CreateDirectory(debugDir);
                 }
-                
+
                 _conflictLogPath = Path.Combine(debugDir, "conflicts.log");
             }
             catch
@@ -148,7 +148,7 @@ namespace Enlisted.Mod.Core.Logging
             WriteLine();
             WriteLine("-- ENVIRONMENT --");
             WriteLine();
-            
+
             string gameVersion;
             try
             {
@@ -173,7 +173,7 @@ namespace Enlisted.Mod.Core.Logging
             WriteLine();
             WriteLine("-- LOADED MODULES --");
             WriteLine();
-            
+
             try
             {
                 // 1.3.4 API: SubModules property replaced with CollectSubModules() method
@@ -186,7 +186,7 @@ namespace Enlisted.Mod.Core.Logging
 
                 WriteLine($"  Total: {subModules.Count} modules");
                 WriteLine();
-                
+
                 int index = 1;
                 foreach (var subModule in subModules)
                 {
@@ -211,13 +211,13 @@ namespace Enlisted.Mod.Core.Logging
             WriteLine();
             WriteLine("-- HARMONY PATCH CONFLICT ANALYSIS --");
             WriteLine();
-            
+
             try
             {
                 var ourMethods = harmony.GetPatchedMethods().ToList();
                 WriteLine($"  Enlisted patches: {ourMethods.Count} methods");
                 WriteLine();
-                
+
                 var conflicts = new List<(string method, List<string> otherMods)>();
 
                 foreach (var method in ourMethods)
@@ -271,14 +271,14 @@ namespace Enlisted.Mod.Core.Logging
                     WriteLine("  The following methods are patched by both Enlisted and other mods.");
                     WriteLine("  This doesn't always cause problems, but may explain unexpected behavior.");
                     WriteLine();
-                    
+
                     foreach (var (methodName, otherMods) in conflicts)
                     {
                         WriteLine($"  Method: {methodName}");
                         WriteLine($"    Also patched by: {string.Join(", ", otherMods)}");
                         WriteLine();
                     }
-                    
+
                     // Write detailed patch order for conflicts
                     WritePatchExecutionOrder(harmony, ourMethods, conflicts);
                 }
@@ -293,7 +293,7 @@ namespace Enlisted.Mod.Core.Logging
         /// Logs the execution order of patches on conflicting methods to understand who runs first.
         /// Patch order matters: prefixes can skip the original method, postfixes can modify results.
         /// </summary>
-        private static void WritePatchExecutionOrder(Harmony harmony, List<System.Reflection.MethodBase> ourMethods, 
+        private static void WritePatchExecutionOrder(Harmony harmony, List<System.Reflection.MethodBase> ourMethods,
             List<(string method, List<string> otherMods)> conflicts)
         {
             WriteLine("  -- Patch Execution Order --");
@@ -301,7 +301,7 @@ namespace Enlisted.Mod.Core.Logging
             WriteLine("  (Higher priority prefixes run first and can skip original method)");
             WriteLine("  (Lower priority postfixes run first after the original method)");
             WriteLine();
-            
+
             foreach (var method in ourMethods)
             {
                 var patchInfo = Harmony.GetPatchInfo(method);
@@ -309,15 +309,15 @@ namespace Enlisted.Mod.Core.Logging
                 {
                     continue;
                 }
-                
+
                 var methodName = $"{method.DeclaringType?.Name}.{method.Name}";
                 if (!conflicts.Any(c => c.method == methodName))
                 {
                     continue;
                 }
-                
+
                 WriteLine($"  {methodName}:");
-                
+
                 if (patchInfo.Prefixes.Count > 0)
                 {
                     WriteLine("    Prefixes (run before original, highest priority first):");
@@ -327,7 +327,7 @@ namespace Enlisted.Mod.Core.Logging
                         WriteLine($"      {marker} [{p.priority,4}] {p.owner}");
                     }
                 }
-                
+
                 if (patchInfo.Postfixes.Count > 0)
                 {
                     WriteLine("    Postfixes (run after original, lowest priority first):");
@@ -337,7 +337,7 @@ namespace Enlisted.Mod.Core.Logging
                         WriteLine($"      {marker} [{p.priority,4}] {p.owner}");
                     }
                 }
-                
+
                 if (patchInfo.Transpilers.Count > 0)
                 {
                     WriteLine("    Transpilers (modify IL code):");
@@ -347,7 +347,7 @@ namespace Enlisted.Mod.Core.Logging
                         WriteLine($"      {marker} {p.owner}");
                     }
                 }
-                
+
                 WriteLine();
             }
         }
@@ -363,7 +363,7 @@ namespace Enlisted.Mod.Core.Logging
             WriteLine();
             WriteLine("  Methods patched by Enlisted (for reference):");
             WriteLine();
-            
+
             try
             {
                 var patchedMethods = harmony.GetPatchedMethods().ToList();

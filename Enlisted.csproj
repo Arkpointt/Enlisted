@@ -187,6 +187,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\FoodConsumptionSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
