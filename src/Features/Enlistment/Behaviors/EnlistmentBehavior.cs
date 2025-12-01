@@ -3525,6 +3525,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					{
 						ModLogger.Warn("Naval", $"Cannot re-sync after army disband: mainParty={mainParty != null}, lordParty={lordParty != null}");
 					}
+
+					// Restore enlisted menu interaction after army disperses
+					EnlistedMenuBehavior.SafeActivateEnlistedMenu();
 				}
 			}
 		}
