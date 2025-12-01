@@ -22,7 +22,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         // This is set after forced settlement exit to prevent race conditions
         private static bool _forceHidden = false;
         private static float _forceHiddenUntil = 0f;
-        
+
         /// <summary>
         /// Call this immediately BEFORE forcing player out of a settlement.
         /// Ensures visibility is blocked even during the transition frames.
@@ -34,7 +34,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             _forceHiddenUntil = Campaign.CurrentTime + (2f / 24f / 60f); // 2 seconds in campaign time
             ModLogger.Debug("VisibilityEnforcement", "Force hidden mode ENABLED for settlement exit");
         }
-        
+
         /// <summary>
         /// Call this after hiding is complete and escort is re-established.
         /// </summary>
@@ -43,7 +43,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             _forceHidden = false;
             ModLogger.Debug("VisibilityEnforcement", "Force hidden mode DISABLED");
         }
-        
+
         /// <summary>
         /// Prefix that prevents visibility from being set to true for enlisted players.
         /// Returns false to block the setter, true to allow normal visibility.
@@ -58,19 +58,70 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     return true;
                 }
-                
+
+                var enlistment = EnlistmentBehavior.Instance;
+
                 // Only check for main party
                 if (__instance != mainParty)
                 {
+                    // Fix for "Lord disappearing" issue:
+                    // If the party being modified is the Lord's party we are enlisted with,
+                    // we must ensure it stays visible on the map even if game mechanics (forests/ambush) try to hide it.
+                    // The player "shares" the lord's vision, so the lord should never be hidden from the player.
+                    var enlistedLord = enlistment?.CurrentLord;
+                    bool isLordParty = false;
+
+                    if (enlistedLord != null)
+                    {
+                        // Check both PartyBelongedTo and LeaderHero for robustness
+                        if (__instance == enlistedLord.PartyBelongedTo)
+                        {
+                            isLordParty = true;
+                        }
+                        else if (__instance.LeaderHero == enlistedLord)
+                        {
+                            isLordParty = true;
+                        }
+                    }
+
+                    if (isLordParty)
+                    {
+                        // If trying to hide (value == false) and the lord is on the map (not in settlement)
+                        if (!value && __instance.CurrentSettlement == null && __instance.IsActive)
+                        {
+                            bool isEnlistedCheck = enlistment?.IsEnlisted == true;
+                            bool onLeaveCheck = enlistment?.IsOnLeave == true;
+
+                            // If enlisted and not on leave, force visibility (block hiding)
+                            if (isEnlistedCheck && !onLeaveCheck)
+                            {
+                                ModLogger.Info("VisibilityEnforcement", "Blocking Lord visibility hide (forest/ambush protection)");
+                                return false;
+                            }
+                            else
+                            {
+                                // Debug logging to diagnose why blocking failed
+                                if (onLeaveCheck)
+                                {
+                                    ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: IsOnLeave=true");
+                                }
+                                else if (!isEnlistedCheck)
+                                {
+                                    ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: IsEnlisted=false");
+                                }
+                            }
+                        }
+                    }
+
                     return true; // Allow normal visibility for other parties
                 }
-                
+
                 // Only check when trying to make visible (value = true)
                 if (!value)
                 {
                     return true; // Always allow making invisible
                 }
-                
+
                 // FORCE HIDDEN CHECK: Overrides everything during settlement exit transition
                 // This prevents race conditions where CurrentSettlement/PlayerEncounter aren't cleared yet
                 if (_forceHidden)
@@ -87,9 +138,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         return false;
                     }
                 }
-                
-                var enlistment = EnlistmentBehavior.Instance;
-                
+
                 bool isEnlisted = enlistment?.IsEnlisted == true;
                 bool onLeave = enlistment?.IsOnLeave == true;
                 bool inGrace = enlistment?.IsInDesertionGracePeriod == true;
@@ -104,14 +153,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 bool playerEncounter = PlayerEncounter.Current != null;
                 bool playerBattle = mainParty.Party?.MapEvent != null || mainParty.Party?.SiegeEvent != null;
                 bool embeddedWithLord = enlistment.IsEmbeddedWithLord();
-                
+
                 // Check if lord or their army is in battle - if so, we MUST allow visibility for encounter system
                 var lordParty = enlistment.CurrentLord?.PartyBelongedTo;
                 bool lordInBattle = lordParty?.Party?.MapEvent != null || lordParty?.Party?.SiegeEvent != null;
                 // Army battles: the army leader's party holds the MapEvent, not necessarily each member's party
                 bool armyInBattle = lordParty?.Army?.LeaderParty?.Party?.MapEvent != null || lordParty?.Army?.LeaderParty?.Party?.SiegeEvent != null;
                 bool anyBattleActive = lordInBattle || armyInBattle;
-                
+
                 // Check if player is in a settlement - if so, allow visibility for town/castle menus
                 bool playerInSettlement = mainParty.CurrentSettlement != null;
 
@@ -119,7 +168,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // otherwise the encounter system loops and eventually asserts (rglSkeleton.cpp:1197).
                 // CRITICAL: Also allow visibility when LORD or ARMY is in battle - native needs player visible to show encounter menu
                 // NOTE: We removed "!embeddedWithLord" check because IsEmbeddedWithLord() can return false temporarily
-                // during transitions (e.g., after settlement exit before TargetParty is set). 
+                // during transitions (e.g., after settlement exit before TargetParty is set).
                 // If enlisted and not in battle/encounter/settlement, ALWAYS block visibility.
                 if (playerEncounter || playerBattle || anyBattleActive || playerInSettlement)
                 {
