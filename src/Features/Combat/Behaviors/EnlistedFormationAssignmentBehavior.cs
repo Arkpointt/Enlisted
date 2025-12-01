@@ -205,6 +205,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 if (playerAgent.Team == null) return;
 
                 bool captaincyStripped = false;
+                bool roleStripped = false;
                 string commandTransferredTo = null;
 
                 // 1. Strip Captaincy
@@ -214,7 +215,16 @@ namespace Enlisted.Features.Combat.Behaviors
                     captaincyStripped = true;
                 }
 
-                // 2. Strip Generalship (OrderController Owner)
+                // 2. Strip Generalship Role (Force AI Control on all formations)
+                // This ensures the game logic knows the player is not the general.
+                if (playerAgent.Team.IsPlayerGeneral || playerAgent.Team.IsPlayerSergeant)
+                {
+                    playerAgent.Team.SetPlayerRole(false, false);
+                    roleStripped = true;
+                }
+
+                // 3. Strip Generalship (OrderController Owner)
+                // We also explicitly transfer the controller ownership to ensure UI/Keys don't target the player.
                 if (playerAgent.Team.PlayerOrderController?.Owner == playerAgent)
                 {
                      // Try to find the Lord to give command to
@@ -273,18 +283,19 @@ namespace Enlisted.Features.Combat.Behaviors
                      }
                 }
 
-                // 3. Verification & Logging
+                // 4. Verification & Logging
                 bool isStillCaptain = playerAgent.Formation?.Captain == playerAgent;
                 bool isStillGeneral = playerAgent.Team.PlayerOrderController?.Owner == playerAgent;
+                bool isStillRoleGeneral = playerAgent.Team.IsPlayerGeneral;
 
-                if (captaincyStripped || commandTransferredTo != null)
+                if (captaincyStripped || roleStripped || commandTransferredTo != null)
                 {
-                    ModLogger.Info("FormationAssignment", $"Command Suppression: Captaincy Stripped={captaincyStripped}, Command Transferred To={commandTransferredTo ?? "None"}");
+                    ModLogger.Info("FormationAssignment", $"Command Suppression: Captaincy Stripped={captaincyStripped}, Role Stripped={roleStripped}, Command Transferred To={commandTransferredTo ?? "None"}");
                 }
 
-                if (isStillCaptain || isStillGeneral)
+                if (isStillCaptain || isStillGeneral || isStillRoleGeneral)
                 {
-                    ModLogger.Warn("FormationAssignment", $"Command Suppression Incomplete! Player is still: {(isStillCaptain ? "Captain " : "")}{(isStillGeneral ? "General" : "")}");
+                    ModLogger.Warn("FormationAssignment", $"Command Suppression Incomplete! Player is still: {(isStillCaptain ? "Captain " : "")}{(isStillGeneral ? "OrderControllerOwner " : "")}{(isStillRoleGeneral ? "GeneralRole" : "")}");
                 }
             }
             catch (Exception ex)
