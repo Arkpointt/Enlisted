@@ -34,10 +34,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			try
 			{
 				// Only suppress negative relation changes for the player during discharge
-				if (hero != Hero.MainHero && gainedRelationWith != Hero.MainHero)
+				bool involvesPlayer = hero == Hero.MainHero || gainedRelationWith == Hero.MainHero;
+
+				if (!involvesPlayer)
 				{
 					return true; // Not involving the player - allow normal behavior
 				}
+
+				var otherHero = hero == Hero.MainHero ? gainedRelationWith : hero;
+				var otherHeroName = otherHero?.Name?.ToString() ?? "null";
+
+				ModLogger.Debug("Discharge", $"RelationChange intercepted: player<->{otherHeroName}, change={relationChange}, isDischarging={DischargeState.IsDischarging}, showNotification={showQuickNotification}");
 
 				// Check if we're discharging and this is a negative relation change
 				// The typical penalty when leaving a kingdom is -20 per clan leader
@@ -47,8 +54,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 					// This prevents the -20 penalty that would normally apply when leaving a kingdom
 					// The flag is set in DischargeHelper.RestoreKingdomWithoutPenalties before calling
 					// ChangeKingdomAction methods, so any relation changes during that time are suppressed
-					var otherHero = hero == Hero.MainHero ? gainedRelationWith : hero;
-					ModLogger.Info("Discharge", $"Suppressed relation penalty of {relationChange} during discharge (OtherHero: {otherHero?.Name?.ToString() ?? "null"})");
+					ModLogger.Info("Discharge", $"Suppressed relation penalty of {relationChange} during discharge (OtherHero: {otherHeroName})");
 					return false; // Suppress the penalty
 				}
 
@@ -74,41 +80,54 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		/// </summary>
 		public static void RestoreKingdomWithoutPenalties(Clan clan, Kingdom targetKingdom)
 		{
+			var clanName = clan?.Name?.ToString() ?? "null";
+			var currentKingdomName = clan?.Kingdom?.Name?.ToString() ?? "independent";
+			var targetKingdomName = targetKingdom?.Name?.ToString() ?? "independent";
+
+			ModLogger.Debug("Discharge", $"RestoreKingdomWithoutPenalties called: clan={clanName}, current={currentKingdomName}, target={targetKingdomName}");
+
 			try
 			{
 				// Mark that we're discharging to suppress penalties
 				DischargeState.IsDischarging = true;
-				ModLogger.Debug("Discharge", "Beginning discharge operation - relation penalties will be suppressed");
+				ModLogger.Debug("Discharge", "DischargeState.IsDischarging set to TRUE - relation penalties will be suppressed");
 
 				try
 				{
 					var currentKingdom = clan.Kingdom;
+					var isMercenary = clan.IsUnderMercenaryService;
+
+					ModLogger.Debug("Discharge", $"Current state: currentKingdom={currentKingdom?.Name?.ToString() ?? "null"}, isMercenary={isMercenary}");
 
 					if (currentKingdom != null && targetKingdom == null)
 					{
-						// Leave kingdom to become independent
-						ChangeKingdomAction.ApplyByLeaveKingdom(clan, false);
+						// Leave kingdom to become independent (use mercenary leave since we joined as mercenary)
+						ModLogger.Debug("Discharge", "Executing ApplyByLeaveKingdomAsMercenary to become independent");
+						ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(clan, false);
 						ModLogger.Info("Discharge", "Restored player clan to independent status without penalties");
 					}
-				else if (currentKingdom != targetKingdom && targetKingdom != null)
-				{
-					// Join a different kingdom (1.3.4 API: added CampaignTime parameter)
-					ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, default(CampaignTime), false);
-					string kingdomName = targetKingdom.Name?.ToString() ?? "kingdom";
-					ModLogger.Info("Discharge", $"Restored player clan to {kingdomName} without penalties");
-				}
-					// If kingdoms match, no action needed
+					else if (currentKingdom != targetKingdom && targetKingdom != null)
+					{
+						// Join a different kingdom (1.3.4 API: added CampaignTime parameter)
+						ModLogger.Debug("Discharge", $"Executing ApplyByJoinToKingdom to join {targetKingdomName}");
+						ChangeKingdomAction.ApplyByJoinToKingdom(clan, targetKingdom, default(CampaignTime), false);
+						ModLogger.Info("Discharge", $"Restored player clan to {targetKingdomName} without penalties");
+					}
+					else
+					{
+						ModLogger.Debug("Discharge", "No kingdom change needed - current matches target");
+					}
 				}
 				finally
 				{
 					// Always clear the discharge flag, even if an error occurs
 					DischargeState.IsDischarging = false;
-					ModLogger.Debug("Discharge", "Discharge operation complete - relation penalties restored");
+					ModLogger.Debug("Discharge", "DischargeState.IsDischarging set to FALSE - relation penalties restored to normal");
 				}
 			}
 			catch (Exception ex)
 			{
-				ModLogger.Error("Discharge", $"Error restoring kingdom without penalties: {ex.Message}");
+				ModLogger.Error("Discharge", $"Error restoring kingdom without penalties: {ex.Message}", ex);
 				DischargeState.IsDischarging = false; // Ensure flag is cleared
 				throw; // Re-throw to allow error handling in caller
 			}

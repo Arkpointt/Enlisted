@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
@@ -9,49 +10,107 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Suppresses the vanilla mercenary income display when the player is enlisted.
-    /// When enlisted, we join the kingdom as a vassal, but the native game sometimes
-    /// still shows mercenary payment in the daily income breakdown. This patch removes
-    /// any mercenary-related income entries when the player is enlisted since our
-    /// wage system handles compensation separately.
+    /// Suppresses native mercenary income when the player is enlisted.
+    ///
+    /// When enlisting, players join a kingdom as mercenaries (using ApplyByJoinFactionAsMercenary)
+    /// with awardMultiplier=0 to prevent native mercenary wages. However, the game recalculates
+    /// MercenaryAwardMultiplier every 30 days in ClanVariablesCampaignBehavior.DailyTickClan,
+    /// which would restore native mercenary income.
+    ///
+    /// This patch intercepts the AddMercenaryIncome method to completely suppress mercenary
+    /// income when enlisted, ensuring players only receive wages from the mod's system.
     /// </summary>
-    [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanIncome))]
+    [HarmonyPatch(typeof(DefaultClanFinanceModel), "AddMercenaryIncome")]
     internal static class MercenaryIncomeSuppressionPatch
     {
         /// <summary>
-        /// Runs BEFORE the ClanFinanceEnlistmentIncomePatch postfix (lower priority).
-        /// Removes any mercenary income entries from the result when enlisted.
+        /// Prefix patch that skips native mercenary income calculation when the player is enlisted.
+        /// Returns false to skip the original method entirely when enlisted.
         /// </summary>
-        [HarmonyPostfix]
-        private static void Postfix(Clan clan, ref ExplainedNumber __result)
+        [HarmonyPrefix]
+        private static bool Prefix(Clan clan, ref ExplainedNumber goldChange, bool applyWithdrawals)
         {
             try
             {
-                // Only process for player clan
+                // Only intercept for player clan
                 if (Campaign.Current == null || Clan.PlayerClan == null || clan != Clan.PlayerClan)
                 {
-                    return;
+                    return true; // Allow normal processing for other clans
                 }
 
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted != true)
+                var isEnlisted = enlistment?.IsEnlisted == true;
+                var isUnderMercenaryService = Clan.PlayerClan.IsUnderMercenaryService;
+                var awardMultiplier = Clan.PlayerClan.MercenaryAwardMultiplier;
+
+                ModLogger.Debug("Finance", $"MercenaryIncome check: isEnlisted={isEnlisted}, isMercenary={isUnderMercenaryService}, awardMultiplier={awardMultiplier}, applyWithdrawals={applyWithdrawals}");
+
+                if (!isEnlisted)
                 {
-                    return;
+                    return true; // Not enlisted - allow normal mercenary income
                 }
 
-                // Clear any mercenary contract that might exist
-                // When enlisted, we're a soldier not a mercenary
-                var playerClan = Clan.PlayerClan;
-                if (playerClan.IsUnderMercenaryService)
-                {
-                    // The clan has a mercenary contract - we need to end it
-                    // This shouldn't happen if we join properly, but handle it defensively
-                    ModLogger.Info("Finance", "Detected mercenary contract while enlisted - this may cause income display issues");
-                }
+                // Player is enlisted - suppress native mercenary income entirely
+                // The mod's wage system (OnDailyTick in EnlistmentBehavior) handles compensation
+                ModLogger.Debug("Finance", "Suppressed native mercenary income - enlisted soldiers receive mod wages only");
+                return false; // Skip the original AddMercenaryIncome method
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Finance", $"Error in mercenary income suppression: {ex.Message}");
+                return true; // Fail open - allow normal behavior on error
+            }
+        }
+    }
+
+    /// <summary>
+    /// Additional patch to prevent the MercenaryAwardMultiplier from being recalculated
+    /// every 30 days while enlisted. This ensures the multiplier stays at 0.
+    ///
+    /// Without this patch, ClanVariablesCampaignBehavior.DailyTickClan would recalculate
+    /// the multiplier based on clan strength, potentially giving non-zero values.
+    /// </summary>
+    [HarmonyPatch(typeof(Clan), nameof(Clan.MercenaryAwardMultiplier), MethodType.Setter)]
+    internal static class MercenaryAwardMultiplierSuppressionPatch
+    {
+        /// <summary>
+        /// Prefix patch that prevents setting MercenaryAwardMultiplier to non-zero values
+        /// when the player clan is enlisted.
+        /// </summary>
+        [HarmonyPrefix]
+        private static bool Prefix(Clan __instance, ref int value)
+        {
+            try
+            {
+                // Only intercept for player clan
+                if (__instance != Clan.PlayerClan)
+                {
+                    return true; // Allow normal processing for other clans
+                }
+
+                var enlistment = EnlistmentBehavior.Instance;
+                var isEnlisted = enlistment?.IsEnlisted == true;
+                var currentMultiplier = __instance.MercenaryAwardMultiplier;
+
+                ModLogger.Debug("Finance", $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, currentValue={currentMultiplier}, newValue={value}");
+
+                if (!isEnlisted)
+                {
+                    return true; // Not enlisted - allow normal multiplier changes
+                }
+
+                // Player is enlisted - force multiplier to 0
+                if (value != 0)
+                {
+                    ModLogger.Debug("Finance", $"Blocked MercenaryAwardMultiplier change from {currentMultiplier} to {value} while enlisted - forcing to 0");
+                    value = 0;
+                }
+                return true; // Continue with the (now zeroed) value
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Finance", $"Error in mercenary multiplier suppression: {ex.Message}");
+                return true; // Fail open - allow normal behavior on error
             }
         }
     }

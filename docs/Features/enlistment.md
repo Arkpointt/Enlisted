@@ -15,9 +15,10 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Real-time monitoring of lord and army status
 
 **Outputs:**
+- Player joins lord's kingdom as mercenary (native mercenary income suppressed)
 - Player party hidden from map (`IsVisible = false`, Nameplate hidden)
-- Player follows enlisted lord's movements  
-- Daily wage payments with detailed tooltip breakdown
+- Player follows enlisted lord's movements (including naval travel)
+- Daily wage payments with detailed tooltip breakdown (mod wages only)
 - XP progression: +25 daily, +25 per battle, +1 per kill
 - Participation in lord's battles and army activities
 - Kill tracking per faction (persists across re-enlistments)
@@ -109,12 +110,13 @@ Rank names are configurable in `progression_config.json`.
 ## Technical Implementation
 
 **Files:**
-- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer
+- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer, naval position sync
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 - `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
+- `MercenaryIncomeSuppressionPatch.cs` - Suppresses native mercenary income (players receive mod wages only)
 - `StarvationSuppressionPatch.cs` - Prevents starvation while enlisted (lord provides food)
 - `LootBlockPatch.cs` - Blocks all loot assignment and loot screens for enlisted soldiers
 - `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
@@ -136,7 +138,7 @@ private Dictionary<string, FactionVeteranRecord> _veteranRecords;
 // Real-time monitoring (runs every frame)
 CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
 
-// Daily progression (runs once per game day)  
+// Daily progression (runs once per game day)
 CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
 
 // Battle end - awards XP and tracks kills
@@ -193,6 +195,12 @@ _currentTermKills += kills;  // Track for faction record
 - Player must speak with current lord
 - Dialog explains benefits and options
 - Can accept retirement, re-enlist, or decide later
+
+**Naval Travel (Naval War Expansion):**
+- When lord boards a ship, player position syncs automatically
+- `TrySyncNavalPosition` handles sea state and position matching
+- Escort AI doesn't work across land/sea boundaries, so direct position sync is used
+- Player's `IsCurrentlyAtSea` state synced with lord's state
 
 ## Acceptance Criteria
 

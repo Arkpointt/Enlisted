@@ -36,11 +36,12 @@ After 252 days (3 Bannerlord years):
 - **Re-enlist**: 20,000 gold bonus, extend service 1 year
 
 ## What Changes While Enlisted
+- You join the lord's kingdom as a mercenary (no native mercenary pay - only mod wages)
 - No personal loot (spoils go to your lord)
 - No starvation (lord provides food)
 - No clan expenses shown (only your wages)
-- No kingdom voting participation
 - No Order of Battle screen
+- Naval support: Follow your lord onto ships (Naval War Expansion compatible)
 
 ## Troubleshooting
 Logs are in `<Bannerlord>\Modules\Enlisted\Debugging\`:

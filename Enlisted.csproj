@@ -188,7 +188,6 @@
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\KingdomDecisionParticipationPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs" />
@@ -232,5 +231,5 @@
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false" />
   </Target>
-  
+
 </Project>
