@@ -1,0 +1,124 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<base xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" type="string">
+  <tags>
+    <tag language="English" />
+  </tags>
+  <strings>
+    <!-- Promotion Messages -->
+    <string id="Enlisted_Promotion_Available" text="Promotion available! You can advance to {RANK} (Tier {TIER}). Press 'P' to choose your advancement!" />
+    <string id="enlisted_wage_income" text="Enlistment Wages" />
+
+    <!-- Ranks -->
+    <string id="Enlisted_Rank_Levy" text="Levy" />
+    <string id="Enlisted_Rank_Footman" text="Footman" />
+    <string id="Enlisted_Rank_Serjeant" text="Serjeant" />
+    <string id="Enlisted_Rank_ManAtArms" text="Man-at-Arms" />
+    <string id="Enlisted_Rank_BannerSergeant" text="Banner Sergeant" />
+    <string id="Enlisted_Rank_HouseholdGuard" text="Household Guard" />
+
+    <!-- Enlistment Messages -->
+    <string id="Enlisted_Message_AlreadyInService" text="You are already in service." />
+    <string id="Enlisted_Message_MustSpeakToNoble" text="We must speak to a noble to enlist." />
+    <string id="Enlisted_Message_NoMainParty" text="No main party found." />
+    <string id="Enlisted_Message_OnLeaveCannotJoin" text="You are currently on leave from {LORD}. You cannot join a different faction without resigning first." />
+    <string id="Enlisted_Message_OnLeaveReportBack" text="You are on leave and cannot enlist elsewhere until you report back." />
+    <string id="Enlisted_Message_BoundByGrace" text="You are still bound to {KINGDOM} by your grace orders. Other lords cannot enlist you yet." />
+    <string id="Enlisted_Message_LordNoParty" text="The lord has no party at present." />
+    <string id="Enlisted_Message_RejoinedKingdom" text="You have rejoined {KINGDOM}. Your grace period has been cleared." />
+    <string id="Enlisted_Term_YourKingdom" text="your kingdom" />
+    <string id="Enlisted_Message_ServiceEndedGrace" text="Your service has ended. You have {DAYS} days to find another lord in {KINGDOM} before you are branded a deserter." />
+    <string id="Enlisted_Message_BrandedDeserter" text="You have been branded a deserter. Your relationship with {KINGDOM} has suffered." />
+    <string id="Enlisted_Message_DesertedFromKingdom" text="You have deserted from {KINGDOM}. You are now branded a deserter and your relations have suffered." />
+    <string id="Enlisted_Term_TheArmy" text="the army" />
+    <string id="Enlisted_Message_PromotionAchieved" text="Promotion achieved! Your service and dedication have been recognized. You are now a {RANK}." />
+    <string id="Enlisted_Message_LeaveExpiredDeserter" text="Your leave has expired. You have been branded a deserter." />
+    <string id="Enlisted_Message_LeaveRemaining" text="Leave: {DAYS} days remaining before desertion." />
+    <string id="Enlisted_Message_TermCompleted" text="You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment." />
+    <string id="Enlisted_Message_TermEndedDischarge" text="Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service." />
+    <string id="Enlisted_Message_RetiredHonor" text="You have retired with honor. {GOLD} gold received. You may re-enlist with {KINGDOM} after the cooldown period." />
+    <string id="Enlisted_Term_ThisFaction" text="this faction" />
+    <string id="Enlisted_Message_Discharged" text="You have been discharged. {GOLD} gold received. You may re-enlist with {KINGDOM} after {DAYS} days." />
+    <string id="Enlisted_Message_ReEnlistedBonus" text="You have re-enlisted for another term. {GOLD} gold bonus received. Term ends in {DAYS} days." />
+    <string id="Enlisted_Message_ReEnlistedRank" text="You have re-enlisted with {KINGDOM}. Your rank of Tier {TIER} has been restored. Term: {DAYS} days." />
+    <string id="Enlisted_Message_WashedAshore" text="You have washed ashore near {SETTLEMENT}." />
+    <string id="Enlisted_Message_MadeItToShore" text="You have made it to shore." />
+    <string id="Enlisted_Message_LordFallenGrace" text="Your lord has fallen. You have 14 days to find a new commander in {KINGDOM} before desertion." />
+    <string id="Enlisted_Message_LordFallenEnded" text="Your lord has fallen. Your service has ended." />
+    <string id="Enlisted_Message_LordFallenDischarged" text="Your lord has fallen in battle. You have been honorably discharged." />
+
+    <!-- Menu Options -->
+    <string id="Enlisted_Menu_ReturnToCamp" text="Return to camp" />
+    <string id="Enlisted_Menu_JoinSiege" text="Join siege battle" />
+    <string id="Enlisted_Menu_MasterAtArms" text="Master at Arms" />
+    <string id="Enlisted_Menu_VisitQuartermaster" text="Visit Quartermaster" />
+    <string id="Enlisted_Menu_TalkToLord" text="My Lord..." />
+    <string id="Enlisted_Menu_ReportDuty" text="Report for Duty" />
+    <string id="Enlisted_Menu_AskLeave" text="Ask commander for leave" />
+    <string id="Enlisted_Menu_DesertArmy" text="Desert the Army" />
+    <string id="Enlisted_Menu_BackToStatus" text="Back to enlisted status" />
+    <string id="Enlisted_Menu_Header_Duties" text="─── DUTIES ───" />
+    <string id="Enlisted_Menu_Header_Professions" text="─── PROFESSIONS ───" />
+    <string id="Enlisted_Message_HeaderInfo_Duties" text="This is a section header. Select duties below." />
+    <string id="Enlisted_Message_HeaderInfo_Professions" text="This is a section header. Select professions below." />
+
+    <!-- Menu Titles & Status -->
+    <string id="Enlisted_Menu_Status_Title" text="Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}" />
+    <string id="Enlisted_Menu_Duty_Title" text="Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}" />
+    <string id="Enlisted_Status_NotEnlisted" text="You are not currently enlisted." />
+    <string id="Enlisted_Status_ErrorNoLord" text="Error: No enlisted lord found." />
+
+    <!-- Objectives & Status Lines -->
+    <string id="Enlisted_Objective_Label" text="Party Objective : {OBJECTIVE}" />
+    <string id="Enlisted_Objective_DirectOrders" text="Following direct orders" />
+    <string id="Enlisted_Objective_Battle" text="Engaged in battle at {LOCATION}" />
+    <string id="Enlisted_Objective_Stationed" text="Stationed at {SETTLEMENT}" />
+    <string id="Enlisted_Objective_Army" text="Army operations" />
+    <string id="Enlisted_Objective_Patrol" text="Patrol duties" />
+    <string id="Enlisted_Status_TermRemaining" text="Term Remaining : {TIME}" />
+    <string id="Enlisted_Status_Tier" text="Enlistment Tier : {TIER}" />
+    <string id="Enlisted_Status_Formation" text="Formation : {FORMATION}" />
+    <string id="Enlisted_Status_Wage" text="Wage : {WAGE}" />
+    <string id="Enlisted_Status_XP" text="Current Experience : {XP}" />
+    <string id="Enlisted_Status_NextXP" text="Next Level Experience : {XP}" />
+    <string id="Enlisted_Status_PromotionAvailable" text="Promotion available! Press 'P' to advance your rank." />
+    <string id="Enlisted_Status_MedicalAvailable" text="Medical treatment available to heal wounds." />
+    <string id="Enlisted_Status_MedicalRestocking" text="Medical supplies restocking ({STATUS})." />
+    <string id="Enlisted_Status_OfficerRole" text="Serving as party {ROLE} - your {SKILL} skill affects the party." />
+    <string id="Enlisted_Status_RetirementEligible" text="Eligible for honorable retirement with veteran benefits." />
+
+    <!-- Menu Symbols & Duties -->
+    <string id="Enlisted_Symbol_Selected" text="✓ {NAME}" />
+    <string id="Enlisted_Symbol_Unselected" text="○ {NAME}" />
+    <string id="Enlisted_Duty_Name_Enlisted" text="Enlisted" />
+    <string id="Enlisted_Duty_Name_Forager" text="Forager" />
+    <string id="Enlisted_Duty_Name_Sentry" text="Sentry" />
+    <string id="Enlisted_Duty_Name_Messenger" text="Messenger" />
+    <string id="Enlisted_Duty_Name_Pioneer" text="Pioneer" />
+    <string id="Enlisted_Prof_Name_Quarterhand" text="Quarterhand" />
+    <string id="Enlisted_Prof_Name_FieldMedic" text="Field Medic" />
+    <string id="Enlisted_Prof_Name_SiegewrightAide" text="Siegewright's Aide" />
+    <string id="Enlisted_Prof_Name_Drillmaster" text="Drillmaster" />
+    <string id="Enlisted_Prof_Name_Saboteur" text="Saboteur" />
+
+    <!-- Selection Messages -->
+    <string id="Enlisted_Message_DutyChanged" text="Duty changed to {DUTY}. Your new daily skill training has begun." />
+    <string id="Enlisted_Message_ProfessionChanged" text="Profession changed to {PROFESSION}. Your specialized training has begun." />
+    <string id="Enlisted_Message_Tier3Required" text="You must reach Tier 3 before selecting professions. Continue your service to unlock specialized roles." />
+
+    <!-- Duty Descriptions -->
+    <string id="Enlisted_Duty_Desc_Enlisted" text="You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)" />
+    <string id="Enlisted_Duty_Desc_Forager" text="Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)" />
+    <string id="Enlisted_Duty_Desc_Sentry" text="Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)" />
+    <string id="Enlisted_Duty_Desc_Messenger" text="Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)" />
+    <string id="Enlisted_Duty_Desc_Pioneer" text="Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)" />
+
+    <!-- Profession Descriptions -->
+    <string id="Enlisted_Prof_Desc_Quarterhand" text="Post billet lists, route carts around trenches, book barns/inns, and settle accounts. (Skills: Steward, Trade)" />
+    <string id="Enlisted_Prof_Desc_FieldMedic" text="Run the aid tent by the stockade; clean and dress wounds, set bones, and keep salves stocked. (Skill: Medicine)" />
+    <string id="Enlisted_Prof_Desc_Siegewright" text="Work the siege park; shape beams, lash ladders and gabions, and patch engines between bombardments. (Skills: Engineering, Smithing)" />
+    <string id="Enlisted_Prof_Desc_Drillmaster" text="Run morning drill on the parade ground; dress ranks, time volleys, rehearse signals, and sharpen maneuvers. (Skills: Leadership, Tactics)" />
+    <string id="Enlisted_Prof_Desc_Saboteur" text="Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)" />
+    <string id="Enlisted_Prof_Desc_None" text="No specialized profession assigned." />
+    <string id="Enlisted_Prof_Desc_Unknown" text="Specialized military profession." />
+  </strings>
+</base>

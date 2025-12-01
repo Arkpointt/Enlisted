@@ -801,18 +801,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			reason = TextObject.GetEmpty(); // 1.3.4 API: Empty is now GetEmpty() method
 			if (IsEnlisted)
 			{
-				reason = new TextObject("You are already in service.");
+				reason = new TextObject("{=Enlisted_Message_AlreadyInService}You are already in service.");
 				return false;
 			}
 			if (lord == null || !lord.IsLord)
 			{
-				reason = new TextObject("We must speak to a noble to enlist.");
+				reason = new TextObject("{=Enlisted_Message_MustSpeakToNoble}We must speak to a noble to enlist.");
 				return false;
 			}
 			var main = MobileParty.MainParty;
 			if (main == null)
 			{
-				reason = new TextObject("No main party found.");
+				reason = new TextObject("{=Enlisted_Message_NoMainParty}No main party found.");
 				return false;
 			}
 
@@ -834,7 +834,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					else
 					{
 						// Different faction - block
-						reason = new TextObject("You are currently on leave from {LORD}. You cannot join a different faction while on leave.");
+						reason = new TextObject("{=Enlisted_Message_OnLeaveCannotJoin}You are currently on leave from {LORD}. You cannot join a different faction without resigning first.");
 						reason.SetTextVariable("LORD", _enlistedLord.Name ?? TextObject.GetEmpty());
 						return false;
 					}
@@ -842,7 +842,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				if (_enlistedLord == null)
 				{
-					reason = new TextObject("You are on leave and cannot enlist elsewhere until you report back.");
+					reason = new TextObject("{=Enlisted_Message_OnLeaveReportBack}You are on leave and cannot enlist elsewhere until you report back.");
 					return false;
 				}
 			}
@@ -853,7 +853,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var lordKingdom = lord.MapFaction as Kingdom;
 				if (lordKingdom != _pendingDesertionKingdom)
 				{
-					reason = new TextObject("You are still bound to {KINGDOM} by your grace orders. Other lords cannot enlist you until the grace period ends.");
+					reason = new TextObject("{=Enlisted_Message_BoundByGrace}You are still bound to {KINGDOM} by your grace orders. Other lords cannot enlist you yet.");
 					reason.SetTextVariable("KINGDOM", _pendingDesertionKingdom.Name ?? TextObject.GetEmpty()); // 1.3.4 API
 					return false;
 				}
@@ -877,7 +877,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			if (counterpartParty == null)
 			{
-				reason = new TextObject("The lord has no party at present.");
+				reason = new TextObject("{=Enlisted_Message_LordNoParty}The lord has no party at present.");
 				ModLogger.Debug("Enlistment", $"CanEnlistWithParty: {lord.Name} has no party");
 				return false;
 			}
@@ -994,8 +994,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			if (resumedFromGrace)
 			{
-				var message = new TextObject("You have rejoined {KINGDOM}. Your grace period has been cleared.");
-				var kingdomName = rejoiningKingdom?.Name ?? new TextObject("your kingdom");
+				var message = new TextObject("{=Enlisted_Message_RejoinedKingdom}You have rejoined {KINGDOM}. Your grace period has been cleared.");
+				var kingdomName = rejoiningKingdom?.Name ?? new TextObject("{=Enlisted_Term_YourKingdom}your kingdom");
 				message.SetTextVariable("KINGDOM", kingdomName);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				ClearDesertionGracePeriod();
@@ -1360,7 +1360,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				ModLogger.Info("Desertion", $"Started {graceDays}-day grace period to rejoin {kingdom.Name}");
 
-				var message = new TextObject("Your service has ended. You have {DAYS} days to find another lord in {KINGDOM} or be branded a deserter.");
+ 			var message = new TextObject("{=Enlisted_Message_ServiceEndedGrace}Your service has ended. You have {DAYS} days to find another lord in {KINGDOM} before you are branded a deserter.");
 				message.SetTextVariable("DAYS", graceDays);
 				message.SetTextVariable("KINGDOM", kingdom.Name);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -1436,7 +1436,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				// Display notification
-				var message = new TextObject("You have been branded a deserter. Your relationship with {KINGDOM} has been severely damaged.");
+				var message = new TextObject("{=Enlisted_Message_BrandedDeserter}You have been branded a deserter. Your relationship with {KINGDOM} has suffered.");
 				message.SetTextVariable("KINGDOM", _pendingDesertionKingdom.Name);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
@@ -2091,7 +2091,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// Show promotion notification
 			if (promoted)
 			{
-				var message = new TextObject("Promotion achieved! Your service and dedication have been recognized.");
+				var rankNameStr = GetRankName(_enlistmentTier);
+				var rankName = new TextObject(rankNameStr);
+
+				var message = new TextObject("{=Enlisted_Message_PromotionAchieved}Promotion achieved! Your service and dedication have been recognized. You are now a {RANK}.");
+				message.SetTextVariable("RANK", rankName);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 			}
 		}
@@ -2282,13 +2286,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				StopEnlist("Leave expired - desertion", isHonorableDischarge: false);
 
-				var message = new TextObject("Your leave has expired. You have been branded a deserter.");
+				var message = new TextObject("{=Enlisted_Message_LeaveExpiredDeserter}Your leave has expired. You have been branded a deserter.");
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 			}
 			else if (remainingDays <= 7 && remainingDays > 0)
 			{
 				// Daily warning when leave is running out
-				var message = new TextObject("Leave: {DAYS} days remaining before desertion.");
+				var message = new TextObject("{=Enlisted_Message_LeaveRemaining}Leave: {DAYS} days remaining before desertion.");
 				message.SetTextVariable("DAYS", remainingDays);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 			}
@@ -2312,7 +2316,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				_retirementNotificationShown = true;
 
-				var message = new TextObject("You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment.");
+				var message = new TextObject("{=Enlisted_Message_TermCompleted}You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment.");
 				message.SetTextVariable("LORD", _enlistedLord.Name);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
 
@@ -2336,7 +2340,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			if (record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd)
 			{
-				var message = new TextObject("Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service.");
+				var message = new TextObject("{=Enlisted_Message_TermEndedDischarge}Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service.");
 				message.SetTextVariable("LORD", _enlistedLord.Name);
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
 
@@ -2378,9 +2382,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// End enlistment
 			StopEnlist("Honorable retirement - first term", isHonorableDischarge: true);
 
-			var message = new TextObject("You have retired with honor. {GOLD} gold received. You may re-enlist with {KINGDOM} after the cooldown period.");
+			var message = new TextObject("{=Enlisted_Message_RetiredHonor}You have retired with honor. {GOLD} gold received. You may re-enlist with {KINGDOM} after the cooldown period.");
 			message.SetTextVariable("GOLD", config.FirstTermGold);
-			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("this faction"));
+			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction"));
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
 
 			ModLogger.Info("Enlistment", $"First term retirement processed: {config.FirstTermGold}g, cooldown ends {record.CooldownEnds}");
@@ -2418,9 +2422,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// End enlistment
 			StopEnlist("Honorable discharge - renewal term", isHonorableDischarge: true);
 
-			var message = new TextObject("You have been discharged. {GOLD} gold received. You may re-enlist with {KINGDOM} after {DAYS} days.");
+			var message = new TextObject("{=Enlisted_Message_Discharged}You have been discharged. {GOLD} gold received. You may re-enlist with {KINGDOM} after {DAYS} days.");
 			message.SetTextVariable("GOLD", config.RenewalDischargeGold);
-			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("this faction"));
+			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction"));
 			message.SetTextVariable("DAYS", config.CooldownDays);
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
@@ -2460,7 +2464,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// Reset notification flag for this term
 			_retirementNotificationShown = true; // Don't show first-term notification again
 
-			var message = new TextObject("You have re-enlisted for another term. {GOLD} gold bonus received. Term ends in {DAYS} days.");
+			var message = new TextObject("{=Enlisted_Message_ReEnlistedBonus}You have re-enlisted for another term. {GOLD} gold bonus received. Term ends in {DAYS} days.");
 			message.SetTextVariable("GOLD", bonus);
 			message.SetTextVariable("DAYS", config.RenewalTermDays);
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -2504,7 +2508,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_retirementNotificationShown = true;
 			_currentTermKills = 0;
 
-			var message = new TextObject("You have re-enlisted with {KINGDOM}. Your rank of Tier {TIER} has been restored. Term: {DAYS} days.");
+			var message = new TextObject("{=Enlisted_Message_ReEnlistedRank}You have re-enlisted with {KINGDOM}. Your rank of Tier {TIER} has been restored. Term: {DAYS} days.");
 			message.SetTextVariable("KINGDOM", kingdom.Name);
 			message.SetTextVariable("TIER", preservedTier);
 			message.SetTextVariable("DAYS", config.RenewalTermDays);
@@ -3368,7 +3372,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					// Set hold mode so player can decide where to go
 					mainParty.SetMoveModeHold();
 
-					var message = new TextObject("You have washed ashore near {SETTLEMENT}.");
+					var message = new TextObject("{=Enlisted_Message_WashedAshore}You have washed ashore near {SETTLEMENT}.");
 					message.SetTextVariable("SETTLEMENT", nearestPort.Name);
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
@@ -3383,7 +3387,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 					ModLogger.Warn("Naval", "No port found - cleared sea state but player may still be in water");
 
-					var message = new TextObject("You have made it to shore.");
+					var message = new TextObject("{=Enlisted_Message_MadeItToShore}You have made it to shore.");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				}
 			}
@@ -3428,7 +3432,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				var lordKingdom = _enlistedLord.MapFaction as Kingdom;
 				if (lordKingdom != null)
 				{
-					var message = new TextObject("Your lord has fallen. You have 14 days to find a new commander in {KINGDOM} or face desertion penalties.");
+					var message = new TextObject("{=Enlisted_Message_LordFallenGrace}Your lord has fallen. You have 14 days to find a new commander in {KINGDOM} before desertion.");
 					message.SetTextVariable("KINGDOM", lordKingdom.Name);
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
@@ -3438,7 +3442,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				else
 				{
 					// No kingdom - immediate discharge without penalties
-					var message = new TextObject("Your lord has fallen. Your service has ended.");
+					var message = new TextObject("{=Enlisted_Message_LordFallenEnded}Your lord has fallen. Your service has ended.");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 					StopEnlist("Lord killed - no kingdom", isHonorableDischarge: true);
 				}
@@ -3461,7 +3465,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Check lord status after defeat
 				if (!_enlistedLord.IsAlive)
 				{
-					var message = new TextObject("Your lord has fallen in battle. You have been honorably discharged.");
+					var message = new TextObject("{=Enlisted_Message_LordFallenDischarged}Your lord has fallen in battle. You have been honorably discharged.");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 					StopEnlist("Lord died in battle", isHonorableDischarge: true);
 				}
@@ -3952,8 +3956,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			try
 			{
-				var rankName = GetRankName(availableTier);
-				var message = new TextObject($"Promotion available! You can advance to {rankName} (Tier {availableTier}). Press 'P' to choose your advancement!");
+				var rankNameStr = GetRankName(availableTier);
+				var rankName = new TextObject(rankNameStr);
+
+				var message = new TextObject("{=Enlisted_Promotion_Available}Promotion available! You can advance to {RANK} (Tier {TIER}). Press 'P' to choose your advancement!");
+				message.SetTextVariable("RANK", rankName);
+				message.SetTextVariable("TIER", availableTier);
 
 				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				ModLogger.Info("Progression", $"Promotion notification shown for Tier {availableTier}");

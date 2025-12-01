@@ -484,7 +484,7 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 starter.AddGameMenuOption("enlisted_status", "emergency_siege_battle",
-                    "Join siege battle",
+                    "{=Enlisted_Menu_JoinSiege}Join siege battle",
                     IsEmergencySiegeBattleAvailable,
                     OnEmergencySiegeBattleSelected,
                     false, 7); // After ask leave option
@@ -510,28 +510,28 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Town menu (inside town)
                 starter.AddGameMenuOption("town", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100); // Leave type, high priority to show near bottom
 
                 // Town outside menu
                 starter.AddGameMenuOption("town_outside", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
 
                 // Castle outside menu
                 starter.AddGameMenuOption("castle_outside", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
 
                 // Castle menu (inside castle)
                 starter.AddGameMenuOption("castle", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
@@ -539,7 +539,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Castle guard menu (when approaching castle gates)
                 // This menu's native "Back" button uses game_menu_leave_on_condition which we patch
                 starter.AddGameMenuOption("castle_guard", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
@@ -547,21 +547,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Castle bribe menu (when guards require bribe to enter)
                 // This menu's native "Leave" button uses game_menu_leave_on_condition which we patch
                 starter.AddGameMenuOption("castle_enter_bribe", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
 
                 // Town guard menu (when approaching town gates)
                 starter.AddGameMenuOption("town_guard", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
 
                 // Town keep bribe menu (when guards require bribe to enter keep)
                 starter.AddGameMenuOption("town_keep_bribe", "enlisted_return_to_camp",
-                    "Return to camp",
+                    "{=Enlisted_Menu_ReturnToCamp}Return to camp",
                     IsReturnToCampAvailable,
                     OnReturnToCampSelected,
                     true, 100);
@@ -709,7 +709,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // This provides the wait menu functionality (time controls) without showing progress bars
             // NOTE: Use MenuOverlayType.None to avoid showing the empty battle bar when not in combat
             starter.AddWaitGameMenu("enlisted_status",
-                "Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",
+                "{=Enlisted_Menu_Status_Title}Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",
                 new OnInitDelegate(OnEnlistedStatusInit),
                 new OnConditionDelegate(OnEnlistedStatusCondition),
                 null, // No consequence for wait menu
@@ -724,21 +724,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Master at Arms - allows players to select troop equipment
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
-                "Master at Arms",
+                "{=Enlisted_Menu_MasterAtArms}Master at Arms",
                 IsMasterAtArmsAvailable,
                 OnMasterAtArmsSelected,
                 false, 1);
 
             // Visit Quartermaster - equipment variant selection and management
             starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
-                "Visit Quartermaster",
+                "{=Enlisted_Menu_VisitQuartermaster}Visit Quartermaster",
                 IsQuartermasterAvailable,
                 OnQuartermasterSelected,
                 false, 2);
 
             // My Lord... - conversation with the current lord
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
-                "My Lord...",
+                "{=Enlisted_Menu_TalkToLord}My Lord...",
                 IsTalkToAvailable,
                 OnTalkToSelected,
                 false, 3);
@@ -752,21 +752,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Report for Duty (NEW - duty and profession selection)
             starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
-                "Report for Duty",
+                "{=Enlisted_Menu_ReportDuty}Report for Duty",
                 IsReportDutyAvailable,
                 OnReportDutySelected,
                 false, 5);
 
             // Ask commander for leave (moved to bottom)
             starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
-                "Ask commander for leave",
+                "{=Enlisted_Menu_AskLeave}Ask commander for leave",
                 IsAskLeaveAvailable,
                 OnAskLeaveSelected,
                 false, 6);
 
             // Desert Army option - allows player to voluntarily leave with penalties
             starter.AddGameMenuOption("enlisted_status", "enlisted_desert_army",
-                "Desert the Army",
+                "{=Enlisted_Menu_DesertArmy}Desert the Army",
                 IsDesertArmyAvailable,
                 OnDesertArmySelected,
                 false, 7);
@@ -889,7 +889,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // Use same wait menu format as main enlisted menu for consistency
             // NOTE: Use MenuOverlayType.None to avoid showing the empty battle bar
             starter.AddWaitGameMenu("enlisted_duty_selection",
-                "Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}",
+                "{=Enlisted_Menu_Duty_Title}Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}",
                 new OnInitDelegate(OnDutySelectionInit),
                 new OnConditionDelegate(OnDutySelectionCondition),
                 null, // No consequence for wait menu
@@ -902,20 +902,20 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // BACK OPTION (first, like main menu style)
             starter.AddGameMenuOption("enlisted_duty_selection", "duty_back",
-                "Back to enlisted status",
+                "{=Enlisted_Menu_BackToStatus}Back to enlisted status",
                 args => true,
                 OnDutyBackSelected,
                 false, 1);
 
             // DUTIES HEADER
             starter.AddGameMenuOption("enlisted_duty_selection", "duties_header",
-                "─── DUTIES ───",
+                "{=Enlisted_Menu_Header_Duties}─── DUTIES ───",
                 args => true, // Show but make it a display-only option
                 args =>
                 {
                     // Show message when clicked to indicate it's just a header
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("This is a section header. Select duties below.").ToString()));
+                        new TextObject("{=Enlisted_Message_HeaderInfo_Duties}This is a section header. Select duties below.").ToString()));
                 },
                 false, 2);
 
@@ -959,13 +959,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // PROFESSIONS HEADER
             starter.AddGameMenuOption("enlisted_duty_selection", "professions_header",
-                "─── PROFESSIONS ───",
+                "{=Enlisted_Menu_Header_Professions}─── PROFESSIONS ───",
                 args => true, // Show but make it a display-only option
                 args =>
                 {
                     // Show message when clicked to indicate it's just a header
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("This is a section header. Select professions below.").ToString()));
+                        new TextObject("{=Enlisted_Message_HeaderInfo_Professions}This is a section header. Select professions below.").ToString()));
                 },
                 false, 9);
 
@@ -1055,7 +1055,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (!enlistment?.IsEnlisted == true)
                 {
-                    MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", "You are not currently enlisted.");
+                    MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", new TextObject("{=Enlisted_Status_NotEnlisted}You are not currently enlisted."));
                     return;
                 }
 
@@ -1064,7 +1064,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 if (lord == null)
                 {
-                    MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", "Error: No enlisted lord found.");
+                    MBTextManager.SetTextVariable("ENLISTED_STATUS_TEXT", new TextObject("{=Enlisted_Status_ErrorNoLord}Error: No enlisted lord found."));
                     return;
                 }
 
@@ -1079,14 +1079,20 @@ namespace Enlisted.Features.Interface.Behaviors
 
                     // Party objective and enlistment details
                     var objective = GetCurrentObjectiveDisplay(lord);
-                    statusContent += $"Party Objective : {objective}\n";
+                    var objectiveLine = new TextObject("{=Enlisted_Objective_Label}Party Objective : {OBJECTIVE}");
+                    objectiveLine.SetTextVariable("OBJECTIVE", objective);
+                    statusContent += objectiveLine.ToString() + "\n";
 
                     // Enlistment time and tier information
                     var enlistmentTime = GetEnlistmentTimeDisplay(enlistment);
-                    statusContent += $"Term Remaining : {enlistmentTime}\n";
+                    var timeLine = new TextObject("{=Enlisted_Status_TermRemaining}Term Remaining : {TIME}");
+                    timeLine.SetTextVariable("TIME", enlistmentTime);
+                    statusContent += timeLine.ToString() + "\n";
 
                     // Enlistment tier and formation
-                    statusContent += $"Enlistment Tier : {enlistment.EnlistmentTier}\n";
+                    var tierLine = new TextObject("{=Enlisted_Status_Tier}Enlistment Tier : {TIER}");
+                    tierLine.SetTextVariable("TIER", enlistment.EnlistmentTier);
+                    statusContent += tierLine.ToString() + "\n";
 
                     // Formation display
                     string formationName = "Infantry"; // Default
@@ -1099,15 +1105,21 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                     }
                     catch { /* Use default */ }
-                    statusContent += $"Formation : {formationName}\n";
 
+                    var formationLine = new TextObject("{=Enlisted_Status_Formation}Formation : {FORMATION}");
+                    formationLine.SetTextVariable("FORMATION", formationName);
+                    statusContent += formationLine.ToString() + "\n";
 
                     // Wage and experience information
                     var dailyWage = CalculateCurrentDailyWage();
-                    statusContent += $"Wage : {dailyWage}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
+                    var wageLine = new TextObject("{=Enlisted_Status_Wage}Wage : {WAGE}");
+                    wageLine.SetTextVariable("WAGE", dailyWage);
+                    statusContent += wageLine.ToString() + "<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
 
                     // Experience tracking
-                    statusContent += $"Current Experience : {enlistment.EnlistmentXP}\n";
+                    var xpLine = new TextObject("{=Enlisted_Status_XP}Current Experience : {XP}");
+                    xpLine.SetTextVariable("XP", enlistment.EnlistmentXP);
+                    statusContent += xpLine.ToString() + "\n";
 
                     // Next tier experience requirement
                     if (enlistment.EnlistmentTier < 6)
@@ -1115,7 +1127,9 @@ namespace Enlisted.Features.Interface.Behaviors
                         // GetNextTierXPRequirement returns XP needed to promote FROM current tier
                         // So pass current tier, not tier + 1
                         var nextTierXP = GetNextTierXPRequirement(enlistment.EnlistmentTier);
-                        statusContent += $"Next Level Experience : {nextTierXP}\n";
+                        var nextXpLine = new TextObject("{=Enlisted_Status_NextXP}Next Level Experience : {XP}");
+                        nextXpLine.SetTextVariable("XP", nextTierXP);
+                        statusContent += nextXpLine.ToString() + "\n";
                     }
 
                     // Formation training description (explains daily skill development)
@@ -1477,26 +1491,30 @@ namespace Enlisted.Features.Interface.Behaviors
 
             if (lordParty.Ai.DoNotMakeNewDecisions)
             {
-                return "Following direct orders";
+                return new TextObject("{=Enlisted_Objective_DirectOrders}Following direct orders").ToString();
             }
 
             if (lordParty.IsActive && lordParty.Party.MapEvent != null)
             {
-                return $"Engaged in battle at {lordParty.Party.MapEvent.MapEventSettlement?.Name?.ToString() ?? "field"}";
+                var text = new TextObject("{=Enlisted_Objective_Battle}Engaged in battle at {LOCATION}");
+                text.SetTextVariable("LOCATION", lordParty.Party.MapEvent.MapEventSettlement?.Name ?? new TextObject("field"));
+                return text.ToString();
             }
 
             if (lordParty.CurrentSettlement != null)
             {
                 var settlement = lordParty.CurrentSettlement;
-                return $"Stationed at {settlement.Name}";
+                var text = new TextObject("{=Enlisted_Objective_Stationed}Stationed at {SETTLEMENT}");
+                text.SetTextVariable("SETTLEMENT", settlement.Name);
+                return text.ToString();
             }
 
             if (lordParty.Army != null)
             {
-                return "Army operations";
+                return new TextObject("{=Enlisted_Objective_Army}Army operations").ToString();
             }
 
-            return "Patrol duties";
+            return new TextObject("{=Enlisted_Objective_Patrol}Patrol duties").ToString();
         }
 
         /// <summary>
@@ -1511,7 +1529,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // Promotion available
             if (CanPromote())
             {
-                messages.Add("Promotion available! Press 'P' to advance your rank.");
+                messages.Add(new TextObject("{=Enlisted_Status_PromotionAvailable}Promotion available! Press 'P' to advance your rank.").ToString());
             }
 
             // Medical treatment available
@@ -1521,11 +1539,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 var cooldownStatus = "Available";
                 if (cooldownStatus == "Available")
                 {
-                    messages.Add("Medical treatment available to heal wounds.");
+                    messages.Add(new TextObject("{=Enlisted_Status_MedicalAvailable}Medical treatment available to heal wounds.").ToString());
                 }
                 else
                 {
-                    messages.Add($"Medical supplies restocking ({cooldownStatus}).");
+                    var text = new TextObject("{=Enlisted_Status_MedicalRestocking}Medical supplies restocking ({STATUS}).");
+                    text.SetTextVariable("STATUS", cooldownStatus);
+                    messages.Add(text.ToString());
                 }
             }
 
@@ -1533,13 +1553,16 @@ namespace Enlisted.Features.Interface.Behaviors
             var officerRole = duties?.GetCurrentOfficerRole();
             if (!string.IsNullOrEmpty(officerRole))
             {
-                messages.Add($"Serving as party {officerRole.ToLower()} - your {GetOfficerSkillName(officerRole)} skill affects the party.");
+                var text = new TextObject("{=Enlisted_Status_OfficerRole}Serving as party {ROLE} - your {SKILL} skill affects the party.");
+                text.SetTextVariable("ROLE", officerRole);
+                text.SetTextVariable("SKILL", GetOfficerSkillName(officerRole));
+                messages.Add(text.ToString());
             }
 
             // Retirement eligibility
             if (GetServiceDays(enlistment) >= 365)
             {
-                messages.Add("Eligible for honorable retirement with veteran benefits.");
+                messages.Add(new TextObject("{=Enlisted_Status_RetirementEligible}Eligible for honorable retirement with veteran benefits.").ToString());
             }
 
             return messages;
@@ -1564,15 +1587,15 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>
         /// Get officer skill name for display.
         /// </summary>
-        private string GetOfficerSkillName(string officerRole)
+        private TextObject GetOfficerSkillName(string officerRole)
         {
             return officerRole switch
             {
-                "Engineer" => "Engineering",
-                "Scout" => "Scouting",
-                "Quartermaster" => "Steward",
-                "Surgeon" => "Medicine",
-                _ => "Unknown"
+                "Engineer" => DefaultSkills.Engineering.Name,
+                "Scout" => DefaultSkills.Scouting.Name,
+                "Quartermaster" => DefaultSkills.Steward.Name,
+                "Surgeon" => DefaultSkills.Medicine.Name,
+                _ => new TextObject("Unknown")
             };
         }
 
@@ -2515,39 +2538,46 @@ namespace Enlisted.Features.Interface.Behaviors
             var selectedDuty = enlistment.SelectedDuty;
             var selectedProfession = enlistment.SelectedProfession;
 
-            // DUTY TEXT VARIABLES - Show checkmark for selected, circle for others (clean names only)
+            // Helper to format option text
+            TextObject FormatOption(string id, string nameText, string currentId)
+            {
+                var name = new TextObject(nameText);
+                var symbol = new TextObject(id == currentId ? "{=Enlisted_Symbol_Selected}✓ {NAME}" : "{=Enlisted_Symbol_Unselected}○ {NAME}");
+                symbol.SetTextVariable("NAME", name);
+                return symbol;
+            }
+
+            // DUTY TEXT VARIABLES
             MBTextManager.SetTextVariable("DUTY_ENLISTED_TEXT",
-                selectedDuty == "enlisted" ? "✓ Enlisted" : "○ Enlisted");
+                FormatOption("enlisted", "{=Enlisted_Duty_Name_Enlisted}Enlisted", selectedDuty));
 
             MBTextManager.SetTextVariable("DUTY_FORAGER_TEXT",
-                selectedDuty == "forager" ? "✓ Forager" : "○ Forager");
+                FormatOption("forager", "{=Enlisted_Duty_Name_Forager}Forager", selectedDuty));
 
             MBTextManager.SetTextVariable("DUTY_SENTRY_TEXT",
-                selectedDuty == "sentry" ? "✓ Sentry" : "○ Sentry");
+                FormatOption("sentry", "{=Enlisted_Duty_Name_Sentry}Sentry", selectedDuty));
 
             MBTextManager.SetTextVariable("DUTY_MESSENGER_TEXT",
-                selectedDuty == "messenger" ? "✓ Messenger" : "○ Messenger");
+                FormatOption("messenger", "{=Enlisted_Duty_Name_Messenger}Messenger", selectedDuty));
 
             MBTextManager.SetTextVariable("DUTY_PIONEER_TEXT",
-                selectedDuty == "pioneer" ? "✓ Pioneer" : "○ Pioneer");
+                FormatOption("pioneer", "{=Enlisted_Duty_Name_Pioneer}Pioneer", selectedDuty));
 
-            // PROFESSION TEXT VARIABLES - Show checkmark for selected, circle for others (clean names only)
-            // "None" is default but invisible, show checkmark only when actual profession selected
-
+            // PROFESSION TEXT VARIABLES
             MBTextManager.SetTextVariable("PROF_QUARTERHAND_TEXT",
-                selectedProfession == "quarterhand" ? "✓ Quarterhand" : "○ Quarterhand");
+                FormatOption("quarterhand", "{=Enlisted_Prof_Name_Quarterhand}Quarterhand", selectedProfession));
 
             MBTextManager.SetTextVariable("PROF_FIELD_MEDIC_TEXT",
-                selectedProfession == "field_medic" ? "✓ Field Medic" : "○ Field Medic");
+                FormatOption("field_medic", "{=Enlisted_Prof_Name_FieldMedic}Field Medic", selectedProfession));
 
             MBTextManager.SetTextVariable("PROF_SIEGEWRIGHT_TEXT",
-                selectedProfession == "siegewright_aide" ? "✓ Siegewright's Aide" : "○ Siegewright's Aide");
+                FormatOption("siegewright_aide", "{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide", selectedProfession));
 
             MBTextManager.SetTextVariable("PROF_DRILLMASTER_TEXT",
-                selectedProfession == "drillmaster" ? "✓ Drillmaster" : "○ Drillmaster");
+                FormatOption("drillmaster", "{=Enlisted_Prof_Name_Drillmaster}Drillmaster", selectedProfession));
 
             MBTextManager.SetTextVariable("PROF_SABOTEUR_TEXT",
-                selectedProfession == "saboteur" ? "✓ Saboteur" : "○ Saboteur");
+                FormatOption("saboteur", "{=Enlisted_Prof_Name_Saboteur}Saboteur", selectedProfession));
         }
 
         #region Duty Selection Conditions and Actions
@@ -2569,36 +2599,36 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // DUTY ACTIONS
         private void OnDutyEnlistedSelected(MenuCallbackArgs args) =>
-            SelectDuty("enlisted", "Enlisted");
+            SelectDuty("enlisted", "{=Enlisted_Duty_Name_Enlisted}Enlisted");
 
         private void OnDutyForagerSelected(MenuCallbackArgs args) =>
-            SelectDuty("forager", "Forager");
+            SelectDuty("forager", "{=Enlisted_Duty_Name_Forager}Forager");
 
         private void OnDutySentrySelected(MenuCallbackArgs args) =>
-            SelectDuty("sentry", "Sentry");
+            SelectDuty("sentry", "{=Enlisted_Duty_Name_Sentry}Sentry");
 
         private void OnDutyMessengerSelected(MenuCallbackArgs args) =>
-            SelectDuty("messenger", "Messenger");
+            SelectDuty("messenger", "{=Enlisted_Duty_Name_Messenger}Messenger");
 
         private void OnDutyPioneerSelected(MenuCallbackArgs args) =>
-            SelectDuty("pioneer", "Pioneer");
+            SelectDuty("pioneer", "{=Enlisted_Duty_Name_Pioneer}Pioneer");
 
         // PROFESSION ACTIONS (with tier checking)
 
         private void OnProfQuarterhandSelected(MenuCallbackArgs args) =>
-            SelectProfessionWithTierCheck("quarterhand", "Quarterhand");
+            SelectProfessionWithTierCheck("quarterhand", "{=Enlisted_Prof_Name_Quarterhand}Quarterhand");
 
         private void OnProfFieldMedicSelected(MenuCallbackArgs args) =>
-            SelectProfessionWithTierCheck("field_medic", "Field Medic");
+            SelectProfessionWithTierCheck("field_medic", "{=Enlisted_Prof_Name_FieldMedic}Field Medic");
 
         private void OnProfSiegewrightSelected(MenuCallbackArgs args) =>
-            SelectProfessionWithTierCheck("siegewright_aide", "Siegewright's Aide");
+            SelectProfessionWithTierCheck("siegewright_aide", "{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide");
 
         private void OnProfDrillmasterSelected(MenuCallbackArgs args) =>
-            SelectProfessionWithTierCheck("drillmaster", "Drillmaster");
+            SelectProfessionWithTierCheck("drillmaster", "{=Enlisted_Prof_Name_Drillmaster}Drillmaster");
 
         private void OnProfSaboteurSelected(MenuCallbackArgs args) =>
-            SelectProfessionWithTierCheck("saboteur", "Saboteur");
+            SelectProfessionWithTierCheck("saboteur", "{=Enlisted_Prof_Name_Saboteur}Saboteur");
 
         private void OnDutyBackSelected(MenuCallbackArgs args)
         {
@@ -2619,8 +2649,8 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 enlistment.SetSelectedDuty(dutyId);
 
-                var message = new TextObject("Duty changed to {DUTY}. Your new daily skill training has begun.");
-                message.SetTextVariable("DUTY", dutyName);
+                var message = new TextObject("{=Enlisted_Message_DutyChanged}Duty changed to {DUTY}. Your new daily skill training has begun.");
+                message.SetTextVariable("DUTY", new TextObject(dutyName));
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                 GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
@@ -2637,8 +2667,8 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 enlistment.SetSelectedProfession(professionId);
 
-                var message = new TextObject("Profession changed to {PROFESSION}. Your specialized training has begun.");
-                message.SetTextVariable("PROFESSION", professionName);
+                var message = new TextObject("{=Enlisted_Message_ProfessionChanged}Profession changed to {PROFESSION}. Your specialized training has begun.");
+                message.SetTextVariable("PROFESSION", new TextObject(professionName));
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                 GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
@@ -2659,7 +2689,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // Check tier requirement
             if (enlistment.EnlistmentTier < 3)
             {
-                var message = new TextObject("You must reach Tier 3 before selecting professions. Continue your service to unlock specialized roles.");
+                var message = new TextObject("{=Enlisted_Message_Tier3Required}You must reach Tier 3 before selecting professions. Continue your service to unlock specialized roles.");
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 return;
             }
@@ -2675,11 +2705,11 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             return dutyId switch
             {
-                "enlisted" => "Enlisted",
-                "forager" => "Forager",
-                "sentry" => "Sentry",
-                "messenger" => "Messenger",
-                "pioneer" => "Pioneer",
+                "enlisted" => new TextObject("{=Enlisted_Duty_Name_Enlisted}Enlisted").ToString(),
+                "forager" => new TextObject("{=Enlisted_Duty_Name_Forager}Forager").ToString(),
+                "sentry" => new TextObject("{=Enlisted_Duty_Name_Sentry}Sentry").ToString(),
+                "messenger" => new TextObject("{=Enlisted_Duty_Name_Messenger}Messenger").ToString(),
+                "pioneer" => new TextObject("{=Enlisted_Duty_Name_Pioneer}Pioneer").ToString(),
                 _ => "Unknown"
             };
         }
@@ -2691,11 +2721,11 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             return dutyId switch
             {
-                "enlisted" => "You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)",
-                "forager" => "Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)",
-                "sentry" => "Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)",
-                "messenger" => "Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)",
-                "pioneer" => "Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)",
+                "enlisted" => new TextObject("{=Enlisted_Duty_Desc_Enlisted}You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)").ToString(),
+                "forager" => new TextObject("{=Enlisted_Duty_Desc_Forager}Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)").ToString(),
+                "sentry" => new TextObject("{=Enlisted_Duty_Desc_Sentry}Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)").ToString(),
+                "messenger" => new TextObject("{=Enlisted_Duty_Desc_Messenger}Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)").ToString(),
+                "pioneer" => new TextObject("{=Enlisted_Duty_Desc_Pioneer}Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)").ToString(),
                 _ => "Military service duties."
             };
         }
@@ -2708,11 +2738,11 @@ namespace Enlisted.Features.Interface.Behaviors
             return professionId switch
             {
                 "none" => "None", // Default but invisible in menu
-                "quarterhand" => "Quartermaster's Aide",
-                "field_medic" => "Field Medic",
-                "siegewright_aide" => "Siegewright's Aide",
-                "drillmaster" => "Drillmaster",
-                "saboteur" => "Saboteur",
+                "quarterhand" => new TextObject("{=Enlisted_Prof_Name_Quarterhand}Quarterhand").ToString(),
+                "field_medic" => new TextObject("{=Enlisted_Prof_Name_FieldMedic}Field Medic").ToString(),
+                "siegewright_aide" => new TextObject("{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide").ToString(),
+                "drillmaster" => new TextObject("{=Enlisted_Prof_Name_Drillmaster}Drillmaster").ToString(),
+                "saboteur" => new TextObject("{=Enlisted_Prof_Name_Saboteur}Saboteur").ToString(),
                 _ => "Unknown"
             };
         }
@@ -2724,13 +2754,13 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             return professionId switch
             {
-                "none" => "No specialized profession assigned.",
-                "quarterhand" => "Post billet lists, route carts around trenches, book barns/inns, and settle accounts. (Skills: Steward, Trade)",
-                "field_medic" => "Run the aid tent by the stockade; clean and dress wounds, set bones, and keep salves stocked. (Skill: Medicine)",
-                "siegewright_aide" => "Work the siege park; shape beams, lash ladders and gabions, and patch engines between bombardments. (Skills: Engineering, Smithing)",
-                "drillmaster" => "Run morning drill on the parade ground; dress ranks, time volleys, rehearse signals, and sharpen maneuvers. (Skills: Leadership, Tactics)",
-                "saboteur" => "Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)",
-                _ => "Specialized military profession."
+                "none" => new TextObject("{=Enlisted_Prof_Desc_None}No specialized profession assigned.").ToString(),
+                "quarterhand" => new TextObject("{=Enlisted_Prof_Desc_Quarterhand}Post billet lists, route carts around trenches, book barns/inns, and settle accounts. (Skills: Steward, Trade)").ToString(),
+                "field_medic" => new TextObject("{=Enlisted_Prof_Desc_FieldMedic}Run the aid tent by the stockade; clean and dress wounds, set bones, and keep salves stocked. (Skill: Medicine)").ToString(),
+                "siegewright_aide" => new TextObject("{=Enlisted_Prof_Desc_Siegewright}Work the siege park; shape beams, lash ladders and gabions, and patch engines between bombardments. (Skills: Engineering, Smithing)").ToString(),
+                "drillmaster" => new TextObject("{=Enlisted_Prof_Desc_Drillmaster}Run morning drill on the parade ground; dress ranks, time volleys, rehearse signals, and sharpen maneuvers. (Skills: Leadership, Tactics)").ToString(),
+                "saboteur" => new TextObject("{=Enlisted_Prof_Desc_Saboteur}Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)").ToString(),
+                _ => new TextObject("{=Enlisted_Prof_Desc_Unknown}Specialized military profession.").ToString()
             };
         }
 
