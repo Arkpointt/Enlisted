@@ -185,10 +185,13 @@
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\FoodConsumptionSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\FoodSystemPatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\MoraleSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\VirtualFoodLinkPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />

@@ -303,6 +303,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	/// </summary>
 	public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
 
+	/// <summary>
+	/// The lord the player is currently serving under.
+	/// </summary>
+	public Hero EnlistedLord => _enlistedLord;
+
 		/// <summary>
 		/// True if player is on temporary leave from service.
 		/// While on leave, IsEnlisted returns false but enlistment state is preserved.
@@ -1177,9 +1182,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
 			}
 
-			// Remove the synced food (grain) so the player isn't overburdened with the lord's supplies
-			RemoveSyncedFood();
-
 			// Restore companions and troops to the player's party
 			// These were transferred to the lord's party when service started
 			RestoreCompanionsToPlayer();
@@ -1529,9 +1531,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					EncounterGuard.ShowPlayerPartyVisual();
 				}
 
-				// Remove synced food (grain)
-				RemoveSyncedFood();
-
 				// Restore companions (but NOT equipment - player keeps enlisted gear)
 				RestoreCompanionsToPlayer();
 
@@ -1857,9 +1856,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			try
 			{
-				// Sync player's food supply with lord/army (enlisted soldiers share provisions)
-				TrySyncFoodWithLord();
-
 				// Calculate daily wage based on tier, level, and duties
 				var wage = CalculateDailyWage();
 
@@ -3278,104 +3274,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 		}
 
-		/// <summary>
-		/// Syncs the player's food supply with the lord's party or army leader's party.
-		/// When enlisted, the player conceptually shares the lord's provisions, so their
-		/// food count should reflect the lord's/army's food supply rather than being 0.
-		/// This is called daily to keep the food display accurate.
-		/// </summary>
-		private void TrySyncFoodWithLord()
-		{
-			try
-			{
-				var mainParty = MobileParty.MainParty;
-				var lordParty = _enlistedLord?.PartyBelongedTo;
-
-				if (mainParty == null || lordParty == null)
-					return;
-
-				// Determine the food source: army leader if in army, otherwise the lord directly
-				MobileParty foodSourceParty = lordParty;
-				if (lordParty.Army != null && lordParty.Army.LeaderParty != null)
-				{
-					// In an army - use the army leader's food supply as reference
-					foodSourceParty = lordParty.Army.LeaderParty;
-				}
-
-				int sourceFoodCount = foodSourceParty.TotalFoodAtInventory;
-				int playerFoodCount = mainParty.TotalFoodAtInventory;
-
-				// Only sync if there's a difference
-				if (playerFoodCount == sourceFoodCount)
-					return;
-
-				// Calculate the difference needed
-				int foodDifference = sourceFoodCount - playerFoodCount;
-
-				// Use grain as the standard food item for syncing
-				var grainItem = DefaultItems.Grain;
-				if (grainItem == null)
-				{
-					ModLogger.Warn("Food", "DefaultItems.Grain not available - cannot sync food");
-					return;
-				}
-
-				// Adjust the player's food inventory
-				if (foodDifference > 0)
-				{
-					// Need to add food
-					mainParty.ItemRoster.AddToCounts(grainItem, foodDifference);
-				}
-				else if (foodDifference < 0)
-				{
-					// Need to remove food - but don't go below 0
-					int currentGrain = mainParty.ItemRoster.GetItemNumber(grainItem);
-					int toRemove = Math.Min(currentGrain, -foodDifference);
-					if (toRemove > 0)
-					{
-						mainParty.ItemRoster.AddToCounts(grainItem, -toRemove);
-					}
-
-					// If we still have excess food from other food items, clear them too
-					// to get closer to the target (but this is a best-effort sync)
-				}
-
-				ModLogger.Debug("Food", $"Synced player food to {sourceFoodCount} (was {playerFoodCount}, source: {foodSourceParty.LeaderHero?.Name?.ToString() ?? "unknown"})");
-			}
-			catch (Exception ex)
-			{
-				ModLogger.Error("Food", $"Failed to sync food with lord: {ex.Message}");
-			}
-		}
-
-		/// <summary>
-		/// Removes the synced food (grain) from the player's inventory when service ends or is suspended.
-		/// This prevents the player from keeping the massive food stores shared by the lord's army.
-		/// </summary>
-		private void RemoveSyncedFood()
-		{
-			try
-			{
-				var main = MobileParty.MainParty;
-				if (main == null)
-					return;
-
-				var grainItem = DefaultItems.Grain;
-				if (grainItem == null)
-					return;
-
-				int currentGrain = main.ItemRoster.GetItemNumber(grainItem);
-				if (currentGrain > 0)
-				{
-					main.ItemRoster.AddToCounts(grainItem, -currentGrain);
-					ModLogger.Info("Food", $"Removed {currentGrain} grain from inventory (cleaning up synced lord food)");
-				}
-			}
-			catch (Exception ex)
-			{
-				ModLogger.Error("Food", "Error removing synced food", ex);
-			}
-		}
 
 		/// <summary>
 		/// Teleports the player to the nearest settlement with a port when stranded at sea.
@@ -4258,9 +4156,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					main.IsActive = true;
 					TrySetShouldJoinPlayerBattles(main, false);
 					TryReleaseEscort(main);
-
-					// Remove synced food to prevent overburdening during leave
-					RemoveSyncedFood();
 				}
 
 				// Set leave state (preserve all service data)
