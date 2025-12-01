@@ -1083,7 +1083,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                     // Enlistment time and tier information
                     var enlistmentTime = GetEnlistmentTimeDisplay(enlistment);
-                    statusContent += $"Enlistment Time : {enlistmentTime}\n";
+                    statusContent += $"Term Remaining : {enlistmentTime}\n";
 
                     // Enlistment tier and formation
                     statusContent += $"Enlistment Tier : {enlistment.EnlistmentTier}\n";
@@ -1266,16 +1266,41 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Gets the enlistment time display with proper date formatting.
-        /// Formats the date as "Season Day, Year" for clear display.
+        /// Gets the enlistment time display showing remaining days in the current term.
+        /// Displays countdown for first term or renewal terms.
         /// </summary>
         private string GetEnlistmentTimeDisplay(EnlistmentBehavior enlistment)
         {
             try
             {
-                // Use the actual stored enlistment date instead of estimating from XP
-                // This ensures the date remains consistent regardless of XP gain rate
-                return enlistment.EnlistmentDate.ToString();
+                int remainingDays = 0;
+                var kingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
+                bool isRenewal = false;
+
+                if (kingdom != null)
+                {
+                    var record = enlistment.GetFactionVeteranRecord(kingdom);
+                    if (record != null && record.IsInRenewalTerm && record.CurrentTermEnd != CampaignTime.Zero)
+                    {
+                        isRenewal = true;
+                        remainingDays = (int)(record.CurrentTermEnd - CampaignTime.Now).ToDays;
+                    }
+                }
+
+                if (!isRenewal)
+                {
+                    // First term calculation
+                    var retirementConfig = Enlisted.Features.Assignments.Core.ConfigurationManager.LoadRetirementConfig();
+                    var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
+                    remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
+                }
+
+                if (remainingDays <= 0)
+                {
+                    return "Term Expired";
+                }
+
+                return $"{remainingDays} Days";
             }
             catch
             {

@@ -6,14 +6,14 @@
 
 **SYSTEM CHANGE**: **Switched from custom equipment kits to troop selection using real game troops for better player experience**
 
-**How It Works**: 
+**How It Works**:
 1. **Culture Determined by Lord**: When players enlist with a lord, that lord's culture (`EnlistmentBehavior.Instance.CurrentLord.Culture.StringId`) determines which **real Bannerlord troops** are available
-2. **Promotion Notifications**: When XP threshold reached → *"Promotion available! Press 'P' to advance."*  
-3. **Real Troop Selection**: Player chooses from actual game troops (*"Imperial Legionary", "Aserai Mameluke", etc.*) 
+2. **Promotion Notifications**: When XP threshold reached → *"Promotion!" popup notification*
+3. **Real Troop Selection**: Player chooses from actual game troops (*"Imperial Legionary", "Aserai Mameluke", etc.*)
 4. **Authentic Equipment**: Equipment extracted directly from `CharacterObject.BattleEquipments[0]`
 
 **Why This Is Better**:
-- ✅ **More Fun**: Real troop identity vs abstract progression  
+- ✅ **More Fun**: Real troop identity vs abstract progression
 - ✅ **Immersive**: Players recognize troops from battles
 - ✅ **Authentic**: Uses actual game equipment (no custom maintenance)
 - ✅ **Cultural**: Each faction's troops feel unique and flavorful
@@ -24,12 +24,12 @@
 
 **✅ RESEARCH CONFIRMED**: **Troops DO have multiple equipment variants per troop type!**
 
-**Research Date**: 2025-01-28  
+**Research Date**: 2025-01-28
 **Source**: Decompiled analysis of `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\CharacterObject.cs` and `TaleWorlds.Core\BasicCharacterObject.cs`
 
 ### **⚠️ CRITICAL VERIFICATION NEEDED: ACTUAL FACTION DATA**
 
-**API CONFIRMED**: Multiple equipment sets per troop are technically supported ✅  
+**API CONFIRMED**: Multiple equipment sets per troop are technically supported ✅
 **ACTUAL DATA**: **NOT YET VERIFIED** across all factions ⚠️
 
 **Equipment Loading Logic Found** (BasicCharacterObject.cs lines 487-496):
@@ -43,7 +43,7 @@ else if (xmlNode4.Name == "EquipmentSet" || xmlNode4.Name == "equipmentSet")
 }
 ```
 
-**What This Means**: 
+**What This Means**:
 - ✅ **API supports** multiple EquipmentSet entries per troop
 - ❓ **Unknown**: Do actual faction troops USE multiple equipment sets in practice?
 - ❓ **Unknown**: Which factions have equipment variants vs. single equipment sets?
@@ -52,8 +52,8 @@ else if (xmlNode4.Name == "EquipmentSet" || xmlNode4.Name == "equipmentSet")
 
 ### **🎯 CRITICAL FINDINGS FROM MODULE DATA EXAMINATION**
 
-**Research Date**: 2025-01-28  
-**Sources**: 
+**Research Date**: 2025-01-28
+**Sources**:
 - Game Data: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\`
 - Decompile: `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\` and `TaleWorlds.Core\`
 
@@ -157,7 +157,7 @@ else if (xmlNode4.Name == "EquipmentSet" || xmlNode4.Name == "equipmentSet")
 - **Armor Variants**: Different imperial armor combinations
 - **Weapon Variants**: Spear variants, crossbow variations
 
-### **🏜️ ASERAI FACTION** (verified from spnpccharacters.xml)  
+### **🏜️ ASERAI FACTION** (verified from spnpccharacters.xml)
 **Military Troops Found**: `aserai_recruit`, `aserai_tribesman`, `aserai_footman`, `aserai_skirmisher`, `aserai_archer`, `aserai_master_archer`, `aserai_infantry`, `aserai_veteran_infantry`, `aserai_mameluke_soldier`, `aserai_mameluke_regular`, `aserai_mameluke_cavalry`, `aserai_mameluke_heavy_cavalry`, `aserai_mameluke_axeman`, `aserai_mameluke_guard`, `aserai_faris`, `aserai_veteran_faris`, `aserai_vanguard_faris`
 
 **Equipment Variants Confirmed**:
@@ -186,7 +186,7 @@ else if (xmlNode4.Name == "EquipmentSet" || xmlNode4.Name == "equipmentSet")
 **Military Troops Expected**: Based on command output structure, likely `vlandian_recruit`, `vlandian_spearman`, `vlandian_billman`, `vlandian_swordsman`, etc.
 
 **Equipment Variants Pattern**:
-- **Spear Variants**: `western_spear_1_t2` vs `western_spear_3_t3` 
+- **Spear Variants**: `western_spear_1_t2` vs `western_spear_3_t3`
 - **Helmet Variants**: Different coif and helmet combinations
 - **Armor Variants**: Aketon vs padded coat variations
 
@@ -205,7 +205,7 @@ else if (xmlNode4.Name == "EquipmentSet" || xmlNode4.Name == "equipmentSet")
 ### **Equipment Variant Patterns Confirmed**
 
 **🏛️ EMPIRE**: 16+ troop types - Helmet variants, armor progression, spear/crossbow variants
-**🏜️ ASERAI**: 17+ troop types - Extensive sword/mace/axe variants, 2H weapon variants  
+**🏜️ ASERAI**: 17+ troop types - Extensive sword/mace/axe variants, 2H weapon variants
 **🏹 KHUZAIT**: 19+ troop types - Sword/mace variants, lance/polearm variants, noble weapons
 **⚔️ BATTANIA**: 3+ confirmed troop types - 4 weapon variants per low-tier troop
 **🛡️ VLANDIA**: Confirmed present (seen in search results) - Spear/helmet/armor variants
@@ -262,7 +262,7 @@ else if (xmlNode4.Name == "EquipmentSet" || xmlNode4.Name == "equipmentSet")
 public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(CharacterObject selectedTroop)
 {
     var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
-    
+
     // CONFIRMED: This will return multiple equipment sets
     foreach (var equipment in selectedTroop.BattleEquipments)  // 1-3+ sets per troop
     {
@@ -273,7 +273,7 @@ public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(Ch
                 variants[slot].Add(item);
         }
     }
-    
+
     return variants;  // Result: Some slots will have 1 item, others 2-3+ variants
 }
 ```
@@ -319,24 +319,24 @@ public void VerifyEquipmentVariantsForAllFactions()
 {
     var cultures = new[] { "empire", "aserai", "khuzait", "vlandia", "sturgia", "battania" };
     var testResults = new Dictionary<string, Dictionary<int, List<EquipmentVariantData>>>();
-    
+
     foreach (var cultureId in cultures)
     {
         var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
         var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
-        
-        var cultureTroops = allTroops.Where(t => 
-            t.Culture == culture && 
-            !t.IsHero && 
+
+        var cultureTroops = allTroops.Where(t =>
+            t.Culture == culture &&
+            !t.IsHero &&
             t.BattleEquipments.Any()).ToList();
-            
+
         foreach (var troop in cultureTroops.Take(5)) // Test first 5 troops per culture
         {
             var variantCount = troop.BattleEquipments.Count();
             var variants = GetTroopEquipmentVariants(troop);
-            
+
             Log($"{cultureId} - {troop.Name}: {variantCount} equipment sets");
-            
+
             // Check which slots have multiple options
             foreach (var slot in variants)
             {
@@ -354,7 +354,7 @@ public void VerifyEquipmentVariantsForAllFactions()
 
 **Hypothesis** (needs verification):
 - **Empire**: Likely has sword/spear/pilum variants for legionaries ✓
-- **Vlandia**: May have crossbow/sword variants for infantry ✓  
+- **Vlandia**: May have crossbow/sword variants for infantry ✓
 - **Khuzait**: Horse archers might have bow/lance/sword variants ✓
 - **Aserai**: Desert troops may have varied weapon combinations ✓
 - **Sturgia**: Nordic troops might have axe/sword/spear variants ✓
@@ -374,7 +374,7 @@ public List<ItemObject> GetCultureEquipmentForTier(CultureObject culture, int ti
 {
     var allTroops = GetAllTroopsForCulture(culture);
     var tierAppropriate = allTroops.Where(t => t.GetBattleTier() <= tier);
-    
+
     // Collect ALL items from ALL troops at/below this tier
     var availableItems = new HashSet<ItemObject>();
     foreach (var troop in tierAppropriate)
@@ -385,7 +385,7 @@ public List<ItemObject> GetCultureEquipmentForTier(CultureObject culture, int ti
             if (item != null) availableItems.Add(item);
         }
     }
-    
+
     return availableItems.ToList();
     // Result: All swords/spears/axes available to this culture at this tier
 }
@@ -399,7 +399,7 @@ public List<ItemObject> GetCultureEquipmentForTier(CultureObject culture, int ti
 ### **Critical Discovery: Multiple Equipment Sets Confirmed**
 
 ```csharp
-// VERIFIED: CharacterObject.cs lines 192-202  
+// VERIFIED: CharacterObject.cs lines 192-202
 public IEnumerable<Equipment> BattleEquipments
 {
     get
@@ -459,7 +459,7 @@ public virtual MBReadOnlyList<Equipment> AllEquipments
 public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(CharacterObject selectedTroop)
 {
     var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
-    
+
     // CONFIRMED API: selectedTroop.BattleEquipments contains multiple Equipment sets
     foreach (var equipment in selectedTroop.BattleEquipments)
     {
@@ -470,13 +470,13 @@ public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(Ch
             {
                 if (!variants.ContainsKey(slot))
                     variants[slot] = new List<ItemObject>();
-                
+
                 if (!variants[slot].Contains(item))
                     variants[slot].Add(item);  // Collect unique items per slot
             }
         }
     }
-    
+
     return variants;  // Result: Weapon0 -> [sword, spear, axe], Shield -> [round, tower]
 }
 ```
@@ -487,13 +487,13 @@ public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(Ch
 public void ShowQuartermasterVariantsMenu(CharacterObject currentTroop)
 {
     var variants = GetTroopEquipmentVariants(currentTroop);
-    
+
     // Build menu showing equipment variants for each slot
     foreach (var slotVariants in variants)
     {
         var slot = slotVariants.Key;
         var items = slotVariants.Value;
-        
+
         if (items.Count > 1)  // Only show slots with multiple options
         {
             // Menu section: "Available Weapons:" or "Available Shields:"
@@ -511,7 +511,7 @@ public void ShowQuartermasterVariantsMenu(CharacterObject currentTroop)
 ### **🎯 VERIFIED QUARTERMASTER CAPABILITIES**
 
 **✅ CONFIRMED POSSIBLE FEATURES**:
-- **Single-Slot Replacement**: Replace only weapon, keep armor/horse unchanged  
+- **Single-Slot Replacement**: Replace only weapon, keep armor/horse unchanged
 - **Legal Variants Only**: Show only items this specific troop can spawn with
 - **Automatic Tier Compliance**: All variants are tier-appropriate (same troop source)
 - **Cultural Authenticity**: All variants belong to selected troop's culture
@@ -542,7 +542,7 @@ Available Shield Variants for this Troop:
 
 ═══════════════════════════════════════════════════════════
 [ Request selected variant ]
-[ Keep current equipment ]  
+[ Keep current equipment ]
 [ Back to enlisted status ]
 ═══════════════════════════════════════════════════════════
 ```
@@ -551,7 +551,7 @@ Available Shield Variants for this Troop:
 
 **✅ ALL REQUIRED APIS VERIFIED**:
 - `CharacterObject.BattleEquipments` → Multiple equipment sets ✅
-- `MBEquipmentRoster.AllEquipments` → Equipment variant storage ✅  
+- `MBEquipmentRoster.AllEquipments` → Equipment variant storage ✅
 - `Equipment.Clone()` → Safe equipment modification ✅
 - `EquipmentHelper.AssignHeroEquipmentFromEquipment()` → Equipment application ✅
 
@@ -571,15 +571,15 @@ Available Shield Variants for this Troop:
 
 ```csharp
 // Example: Imperial Heavy Horseman equipment variants
-public class EmpireEquipmentVariants 
+public class EmpireEquipmentVariants
 {
     // CONFIRMED: imperial_heavy_horseman has helmet variants
     Item0: "western_spear_4_t4" (consistent)
-    Item1: "heavy_horsemans_kite_shield" (consistent)  
+    Item1: "heavy_horsemans_kite_shield" (consistent)
     Item2: "empire_sword_2_t3" (consistent)
     Head: ["leatherlame_feathered_spangenhelm_over_mail", "feathered_spangenhelm_over_imperial_coif"]
     Body: "empire_horseman_armor" (consistent)
-    
+
     // Quartermaster Options for Imperial Heavy Horseman:
     // ○ Request different helmet (25🪙) - swap between 2 helmet variants
 }
@@ -595,13 +595,13 @@ public class AseraiEquipmentVariants
     Weapons: [
         "aserai_sword_1_t2", "aserai_sword_3_t3", "aserai_sword_4_t4", "aserai_sword_5_t4", "aserai_sword_6_t4",
         "aserai_mace_1_t2", "aserai_mace_2_t2", "aserai_mace_3_t3", "aserai_mace_4_t4",
-        "aserai_axe_1_t2", "aserai_axe_2_t2", 
+        "aserai_axe_1_t2", "aserai_axe_2_t2",
         "aserai_2haxe_1_t3", "aserai_2haxe_2_t4"
     ]
-    
+
     // Quartermaster Options for Aserai Troops:
     // ○ Request sword variant (35🪙) - aserai_sword_3_t3 → aserai_sword_4_t4
-    // ○ Request mace variant (40🪙) - sword → mace for different combat style  
+    // ○ Request mace variant (40🪙) - sword → mace for different combat style
     // ○ Request 2H axe variant (50🪙) - single-hand → two-handed weapon style
 }
 ```
@@ -619,7 +619,7 @@ public class KhuzaitEquipmentVariants
         "khuzait_polearm_1_t4", "khuzait_lance_1_t3", "khuzait_lance_2_t4",
         "khuzait_noble_sword_1_t5"  // Elite noble weapons
     ]
-    
+
     // Quartermaster Options for Khuzait Horse Archer:
     // ○ Request lance variant (60🪙) - sword → lance for mounted charge
     // ○ Request mace variant (45🪙) - sword → mace for anti-armor
@@ -630,18 +630,18 @@ public class KhuzaitEquipmentVariants
 #### **⚔️ BATTANIA FACTION EQUIPMENT VARIANTS**
 
 ```csharp
-// Example: Battanian Volunteer with 4 distinct weapon variants  
+// Example: Battanian Volunteer with 4 distinct weapon variants
 public class BattaniaEquipmentVariants
 {
     // CONFIRMED: battanian_volunteer has 4 different weapon loadouts
     WeaponVariants: [
         "peasant_maul_t1_2",     // Blunt weapon variant
-        "peasant_hatchet_1_t1",  // Axe weapon variant  
+        "peasant_hatchet_1_t1",  // Axe weapon variant
         "battania_mace_2_t2",    // Mace weapon variant
         "peasant_pickaxe_1_t1"   // Tool weapon variant
     ]
     BackupWeapons: ["battania_sword_1_t2", "battania_axe_1_t2"]  // Item2 slot variants
-    
+
     // Quartermaster Options for Battanian Volunteer:
     // ○ Request hatchet (20🪙) - maul → hatchet for slashing damage
     // ○ Request mace (25🪙) - maul → mace for armor penetration
@@ -695,7 +695,7 @@ Available Weapon Variants for this Troop:
 #### **Khuzait Quartermaster** (Focus: Mounted Combat Options)
 ```
 ════════════════════════════════════════════════════════════
-                 STEPPE QUARTERMASTER  
+                 STEPPE QUARTERMASTER
 ════════════════════════════════════════════════════════════
 Current Equipment: Khuzait Horse Archer (Tier 4)
 Your Gold: 1,150🪙
@@ -760,8 +760,8 @@ Available Weapon Variants for this Troop:
 // 1. Get all character templates for culture and tier
 var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
 var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
-var availableTroops = allTroops.Where(troop => 
-    troop.Culture == culture && 
+var availableTroops = allTroops.Where(troop =>
+    troop.Culture == culture &&
     troop.GetBattleTier() == tier &&  // CORRECTED: Use GetBattleTier() method
     !troop.IsHero &&  // Exclude heroes
     troop.BattleEquipments.Any()).ToList();  // Must have equipment variants
@@ -780,7 +780,7 @@ var availableVariants = GetTroopEquipmentVariants(selectedTroop);
 
 **Benefits**:
 - ✅ **No custom item maintenance**: Uses game's existing equipment data
-- ✅ **Always accurate**: Equipment matches what that troop actually uses in battles  
+- ✅ **Always accurate**: Equipment matches what that troop actually uses in battles
 - ✅ **Cultural authenticity**: Each culture's troops have their unique gear styles
 
 ## ⚔️ **Equipment Replacement System**
@@ -807,7 +807,7 @@ EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, newTroopEquipment);
 
 **Example Equipment Flow**:
 1. **Enlist**: Get Imperial Recruit gear (basic sword, leather armor)
-2. **Tier 2 Promotion**: **REPLACE** with Imperial Legionary gear (better sword, scale armor) 
+2. **Tier 2 Promotion**: **REPLACE** with Imperial Legionary gear (better sword, scale armor)
 3. **Tier 5 Promotion**: **REPLACE** with Imperial Cataphract gear (elite cavalry equipment)
 4. **Retire**: **KEEP** final Cataphract gear permanently
 
@@ -832,7 +832,7 @@ Equipment rosters define character loadouts with culture-specific gear:
 
 ### Weapons (by ItemType)
 - **OneHandedWeapon** (0) - Swords, maces, axes
-- **TwoHandedWeapon** (1) - Two-handed swords, axes, maces  
+- **TwoHandedWeapon** (1) - Two-handed swords, axes, maces
 - **Polearm** (2) - Spears, glaives, pikes
 - **Bow** (3) - Bows and hunting bows
 - **Crossbow** (4) - Crossbows and siege crossbows
@@ -876,7 +876,7 @@ var allCharacters = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>(
 
 **Step 2**: Filter by Culture and Tier
 ```csharp
-var cultureTemplates = allCharacters.Where(c => 
+var cultureTemplates = allCharacters.Where(c =>
     c.Culture == targetCulture && c.Tier <= maxTier);
 ```
 
@@ -917,7 +917,7 @@ if (playerTier > 6)
 
 ### By Tier Level
 - **T1-T2**: Basic equipment for low-tier soldiers
-- **T3-T4**: Standard equipment for mid-tier soldiers  
+- **T3-T4**: Standard equipment for mid-tier soldiers
 - **T5-T6**: Elite equipment for high-tier soldiers
 - **T7**: Legendary/Noble equipment for master veterans
 
@@ -937,7 +937,7 @@ public List<ItemObject> GetHighTierEquipment(Hero hero, EquipmentIndex slot)
 {
     var equipmentRosters = Campaign.Current.Models.EquipmentSelectionModel
         .GetEquipmentRostersForHeroComeOfAge(hero, false);
-        
+
     var availableItems = new List<ItemObject>();
     foreach (var roster in equipmentRosters)
     {
@@ -945,7 +945,7 @@ public List<ItemObject> GetHighTierEquipment(Hero hero, EquipmentIndex slot)
         if (item != null && !availableItems.Contains(item))
             availableItems.Add(item);
     }
-    
+
     return availableItems;
 }
 
@@ -954,17 +954,17 @@ public List<ItemObject> GetAvailableItemsByTier(CultureObject culture, int maxTi
 {
     var availableItems = new List<ItemObject>();
     var allItems = MBObjectManager.Instance.GetObjectTypeList<ItemObject>();
-    
+
     foreach (var item in allItems)
     {
-        if (item.Culture == culture && 
-            GetItemTier(item) <= maxTier && 
+        if (item.Culture == culture &&
+            GetItemTier(item) <= maxTier &&
             IsItemForSlot(item, slot))
         {
             availableItems.Add(item);
         }
     }
-    
+
     return availableItems;
 }
 ```
@@ -990,7 +990,7 @@ public List<ItemObject> GetAvailableItemsByTier(CultureObject culture, int maxTi
 
 ### **✅ RESEARCH COMPLETE - ALL QUESTIONS ANSWERED**
 
-**Date**: 2025-01-28  
+**Date**: 2025-01-28
 **Status**: ✅ **QUARTERMASTER FEATURE CONFIRMED VIABLE**
 
 ### **Key Questions → Verified Answers**
@@ -1008,7 +1008,7 @@ public List<ItemObject> GetAvailableItemsByTier(CultureObject culture, int maxTi
 **✅ CONFIRMED TECHNICAL FEASIBILITY**:
 - API structure supports equipment variants ✅
 - **50+ actual military troops analyzed across all factions** ✅ **CONFIRMED**
-- **Multiple EquipmentRoster entries per troop** ✅ **CONFIRMED**  
+- **Multiple EquipmentRoster entries per troop** ✅ **CONFIRMED**
 - **Weapon variants in ALL factions** ✅ **CONFIRMED**
 - **All factions have extensive troop trees** ✅ **CONFIRMED**
 - Decompiled loading logic confirmed ✅

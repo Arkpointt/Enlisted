@@ -16,15 +16,15 @@ Provide authentic military progression where you become actual troop types (Impe
 
 **Outputs:**
 - Equipment completely replaced with selected troop's gear
-- Player gains identity of chosen troop type  
+- Player gains identity of chosen troop type
 - Visual feedback showing equipment changes
 - Progression message confirming new rank
 
 ## Behavior
 
-1. **Promotion Trigger**: Player reaches XP threshold → "Promotion available! Press 'P'"
+1. **Promotion Trigger**: Player reaches XP threshold → "Promotion!" popup notification
 2. **Troop Menu**: Shows real troops filtered by culture and tier
-3. **Selection**: Player picks troop (Imperial Legionary, Battanian Fian, etc.)  
+3. **Selection**: Player picks troop (Imperial Legionary, Battanian Fian, etc.)
 4. **Equipment Copy**: Player gets exact equipment from `CharacterObject.BattleEquipments[0]`
 5. **Application**: Uses `EquipmentHelper.AssignHeroEquipmentFromEquipment()` to apply safely
 6. **Feedback**: Character model updates immediately, confirmation message shown
@@ -42,7 +42,7 @@ var availableTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject
 
 **Files:**
 - `TroopSelectionManager.cs` - Handles troop filtering and selection UI
-- `EquipmentManager.cs` - Applies equipment from selected troops  
+- `EquipmentManager.cs` - Applies equipment from selected troops
 - `PromotionBehavior.cs` - Triggers selection on tier advancement
 
 **Key APIs:**
@@ -57,7 +57,7 @@ var availableTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject
 - Fallback to basic equipment if no troops found
 - Log warning but don't crash
 
-**Equipment Assignment Fails:**  
+**Equipment Assignment Fails:**
 - Rollback to previous equipment state
 - Show error message to player
 - Log details for debugging
@@ -74,7 +74,7 @@ var availableTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject
 
 - ✅ Players see real troop names in promotion menu
 - ✅ Equipment comes from actual game troops, not custom kits
-- ✅ Filtering works correctly by culture and tier  
+- ✅ Filtering works correctly by culture and tier
 - ✅ Equipment applies immediately with visual update
 - ✅ No crashes during equipment assignment
 - ✅ Works for all cultures (Empire, Aserai, Khuzait, Vlandia, Sturgia, Battania)

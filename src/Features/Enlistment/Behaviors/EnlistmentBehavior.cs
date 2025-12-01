@@ -303,11 +303,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 	/// </summary>
 	public bool IsEnlisted => _enlistedLord != null && !_isOnLeave;
 
-	/// <summary>
-	/// True if player is on temporary leave from service.
-	/// While on leave, IsEnlisted returns false but enlistment state is preserved.
-	/// </summary>
-	public bool IsOnLeave => _isOnLeave;
+		/// <summary>
+		/// True if player is on temporary leave from service.
+		/// While on leave, IsEnlisted returns false but enlistment state is preserved.
+		/// </summary>
+		public bool IsOnLeave => _isOnLeave;
+
+		/// <summary>
+		/// Campaign time when the current leave started.
+		/// </summary>
+		public CampaignTime LeaveStartDate => _leaveStartDate;
 
 	/// <summary>
 	/// Whether the player is currently in a desertion grace period.

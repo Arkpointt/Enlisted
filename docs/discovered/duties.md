@@ -11,7 +11,7 @@
 ```csharp
 // MobileParty officer properties - Lines 1090-1142 in MobileParty.cs
 TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveEngineer { get; }
-TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveQuartermaster { get; }  
+TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveQuartermaster { get; }
 TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveScout { get; }
 TaleWorlds.CampaignSystem.Party.MobileParty :: EffectiveSurgeon { get; }
 
@@ -76,7 +76,7 @@ public class DutiesEffectiveScoutPatch
     }
 }
 
-// QUARTERMASTER ROLE PATCH  
+// QUARTERMASTER ROLE PATCH
 [HarmonyPatch(typeof(MobileParty), "EffectiveQuartermaster", MethodType.Getter)]
 [HarmonyPriority(999)]
 public class DutiesEffectiveQuartermasterPatch
@@ -138,7 +138,7 @@ TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: AddSkillXp(Skill
 
 **Implementation Pattern (Proper Overload Specification)**:
 ```csharp
-// Harmony Patch  
+// Harmony Patch
 // Target: TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper.AddSkillXp(SkillObject, float, bool, bool)
 // Why: Share lord's skill XP with player for dynamic duty-based progression
 // Safety: Campaign-only; validates enlistment; null checks; postfix doesn't affect original behavior
@@ -159,7 +159,7 @@ public class DutiesXpSharingPatch
             {
                 return; // No sharing needed
             }
-            
+
             // Calculate and apply XP share
             var shareAmount = DutiesBehavior.Instance?.GetSkillXpShare(skill, rawXp) ?? 0f;
             if (shareAmount > 0f)
@@ -212,7 +212,7 @@ Hero.MainHero.BattleEquipment[EquipmentIndex.Weapon0] = new EquipmentElement(ite
 ```csharp
 // Character classification for troop type determination
 TaleWorlds.CampaignSystem.CharacterObject :: IsMounted { get; }  // Cavalry detection
-TaleWorlds.CampaignSystem.CharacterObject :: IsRanged { get; }   // Archer detection  
+TaleWorlds.CampaignSystem.CharacterObject :: IsRanged { get; }   // Archer detection
 TaleWorlds.CampaignSystem.CharacterObject :: IsInfantry { get; } // Infantry detection
 TaleWorlds.CampaignSystem.CharacterObject :: Culture { get; }    // Culture filtering
 TaleWorlds.CampaignSystem.CharacterObject :: Tier { get; }       // Tier gating
@@ -220,10 +220,10 @@ TaleWorlds.CampaignSystem.CharacterObject :: Tier { get; }       // Tier gating
 // Usage for troop type determination:
 if (Hero.MainHero.CharacterObject.IsMounted && Hero.MainHero.CharacterObject.IsRanged)
     troopType = "Horse Archer";
-else if (Hero.MainHero.CharacterObject.IsMounted)  
+else if (Hero.MainHero.CharacterObject.IsMounted)
     troopType = "Cavalry";
 else if (Hero.MainHero.CharacterObject.IsRanged)
-    troopType = "Archer"; 
+    troopType = "Archer";
 else
     troopType = "Infantry";
 ```
@@ -279,13 +279,13 @@ TaleWorlds.Core.ItemFlags :: NonTransferable
 TaleWorlds.CampaignSystem.CharacterDevelopment.HeroDeveloper :: UpdateHeroEquipment()
 TaleWorlds.CampaignSystem.CampaignEventDispatcher :: OnHeroEquipmentChanged(Hero hero)
 
-// Quest-safe implementation pattern  
+// Quest-safe implementation pattern
 private void BackupPlayerEquipment()
 {
     // Backup equipment
     _personalBattleEquipment = Hero.MainHero.BattleEquipment.Clone(false);
     _personalCivilianEquipment = Hero.MainHero.CivilianEquipment.Clone(false);
-    
+
     // CRITICAL: Quest-safe inventory backup
     var itemsToBackup = new List<ItemRosterElement>();
     foreach (var elem in MobileParty.MainParty.ItemRoster)
@@ -294,10 +294,10 @@ private void BackupPlayerEquipment()
         if (elem.EquipmentElement.IsQuestItem) continue;
         if (elem.EquipmentElement.Item?.ItemFlags.HasAnyFlag(ItemFlags.NotUsableByPlayer | ItemFlags.NonTransferable) == true)
             continue;
-            
+
         itemsToBackup.Add(elem);
     }
-    
+
     // Backup safe items only (quest items remain with player)
     foreach (var elem in itemsToBackup)
     {
@@ -309,10 +309,10 @@ private void BackupPlayerEquipment()
 private void RestorePersonalEquipment()
 {
     EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
-    
+
     foreach (var item in _personalInventory)
         MobileParty.MainParty.ItemRoster.AddToCounts(item.EquipmentElement, item.Amount);
-        
+
     // CRITICAL: Refresh equipment visuals
     Hero.MainHero.HeroDeveloper?.UpdateHeroEquipment();
     CampaignEventDispatcher.Instance.OnHeroEquipmentChanged(Hero.MainHero);
@@ -333,7 +333,7 @@ TaleWorlds.CampaignSystem.Actions.ChangeOwnerOfSettlementAction :: ApplyByGift(S
 
 ### Complete Feature Coverage (100%)
 - ✅ Officer role substitution via MobileParty patches
-- ✅ Equipment kit application via EquipmentHelper  
+- ✅ Equipment kit application via EquipmentHelper
 - ✅ Equipment backup & restoration system (CRITICAL - prevents equipment loss)
 - ✅ Retirement dialog system with equipment choices (CRITICAL - proper service completion)
 - ✅ Vassalage progression system (OPTIONAL - veteran rewards)
@@ -353,14 +353,14 @@ All critical APIs verified and available in modern Bannerlord build.
 
 ```csharp
 // Core Information
-Lord: Derthert                           
-Faction: Western Empire                  
-Enlistment Time: 45 days                 
-Enlistment Tier: 4/6 (Specialist)       
-Formation: Heavy Infantry                
-Wage: 150(+25)💰                       
-Current Experience: 2400                 
-Next Level Experience: 5000              
+Lord: Derthert
+Faction: Western Empire
+Term Remaining: 45 days
+Enlistment Tier: 4/6 (Specialist)
+Formation: Heavy Infantry
+Wage: 150(+25)💰
+Current Experience: 2400
+Next Level Experience: 5000
 
 // Enhanced Information
 Army: Imperial Legion (Leader: Lucon)    // Enhanced with leader info
@@ -392,13 +392,13 @@ private void OnHourlyTick()
         {
             GameMenu.ActivateGameMenu("enlisted_status");
         }
-        
+
         // Smart settlement handling
         HandleSettlementIntegration();
-        
+
         // Position sync and army hierarchy
         HandleArmyHierarchy();
-        
+
         // Maintain military formation
         MobileParty.MainParty.Position2D = _enlistedLord.PartyBelongedTo.Position2D;
         MobileParty.MainParty.IsVisible = false;
@@ -409,7 +409,7 @@ private void HandleSettlementIntegration()
 {
     var settlement = MobileParty.MainParty.CurrentSettlement;
     var lordParty = _enlistedLord.PartyBelongedTo;
-    
+
     if (settlement != null && lordParty?.CurrentSettlement != settlement)
     {
         if (settlement.IsTown)
@@ -432,7 +432,7 @@ private void HandleSettlementIntegration()
 ```csharp
 // Menu Options
 1. "Manage duties (2/2)" - Multi-duty system
-2. "Specialization: Imperial Legionary" - Troop type system  
+2. "Specialization: Imperial Legionary" - Troop type system
 3. "View current troop assignment" - Shows selected troop identity and authentic equipment
 4. "Request retirement from service" - Equipment choice on retirement
 5. "Continue" - Standard menu option
@@ -453,10 +453,10 @@ private void UpdateMenuDisplay(MenuCallbackArgs args)
     {
         UpdatePartyInformation(); // Independent operations
     }
-    
-    // Duty information updates automatically  
+
+    // Duty information updates automatically
     UpdateDutiesDisplay(); // Current duties and officer roles
-    
+
     // Equipment status updates automatically
     UpdateEquipmentDisplay(); // Current kit and retention status
 }
@@ -464,13 +464,13 @@ private void UpdateMenuDisplay(MenuCallbackArgs args)
 
 ## Save System Compliance (VERIFIED COMPATIBLE)
 
-### No Custom SaveDefiner Required 
+### No Custom SaveDefiner Required
 **VERIFIED: All our types already supported by core Bannerlord save system**
 
 ```csharp
 // From SaveableCampaignTypeDefiner.cs - our exact types already defined:
 Dictionary<Hero, int>           // ✅ Line 516 - core supported
-Dictionary<IFaction, int>       // ✅ Line 522 - core supported  
+Dictionary<IFaction, int>       // ✅ Line 522 - core supported
 List<Hero>                      // ✅ Line 400 - core supported
 List<IFaction>                  // ✅ Line 415 - core supported
 
@@ -491,7 +491,7 @@ public override void SyncData(IDataStore dataStore)
     dataStore.SyncData("_vassalageOffersReceived", ref _vassalageOffersReceived); // List<IFaction> ✅
     dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment); // Equipment ✅
     dataStore.SyncData("_personalInventory", ref _personalInventory);     // ItemRoster ✅
-    
+
     // Post-load validation separate from SyncData (best practice)
     if (dataStore.IsLoading) ValidateLoadedState();
 }
@@ -501,7 +501,7 @@ public override void SyncData(IDataStore dataStore)
 
 ### **🚨 CRITICAL TIMING DISCOVERIES** - **100% VERIFIED**
 - **Real-Time Enforcement**: `CampaignEvents.TickEvent` ✅ **VERIFIED EXISTS** - continuous state management
-- **Immediate Menu System**: `AddWaitGameMenu()` ✅ **VERIFIED EXISTS** - zero gap approach  
+- **Immediate Menu System**: `AddWaitGameMenu()` ✅ **VERIFIED EXISTS** - zero gap approach
 - **Engine-Level Prevention**: `MobileParty.IsActive` ✅ **VERIFIED EXISTS** - prevents encounters without patches
 - **Dynamic Army Management**: `new Army()`, `AddPartyToMergedParties()` ✅ **ALL VERIFIED** - battle participation APIs
 - **AI Battle Commands**: `SetMoveEngageParty()` ✅ **VERIFIED EXISTS** - battle engagement control
