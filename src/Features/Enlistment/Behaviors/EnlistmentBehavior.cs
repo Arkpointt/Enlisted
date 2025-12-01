@@ -1670,6 +1670,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
+			// Check if grace period expired (even if not enlisted)
+			if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
+			{
+				ApplyDesertionPenalties();
+				return;
+			}
+
 			// CRITICAL: Ensure non-enlisted players always stay visible and active
 			// This is a fallback check in case the realtime tick misses something
 			// Hourly tick runs once per in-game hour, providing periodic enforcement
@@ -1701,19 +1708,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return; // Skip enlistment logic for non-enlisted players
 			}
 
-			// Check if grace period expired (even if not enlisted)
-			if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
-			{
-				ApplyDesertionPenalties();
-				return;
-			}
-
 			// Check if the lord's party still exists
 			var counterpartParty = _enlistedLord?.PartyBelongedTo;
 			if (counterpartParty == null)
 			{
-				// The lord's party no longer exists - automatically end service
-				StopEnlist("Target party invalid");
+				// The lord's party no longer exists
+				// Check if the lord is still alive and in a faction (e.g., joined a garrison, changed kingdoms)
+				// This prevents XP/Rank reset when the lord moves to a garrison or changes realms
+				if (_enlistedLord != null && _enlistedLord.IsAlive && _enlistedLord.MapFaction is Kingdom lordKingdom)
+				{
+					ModLogger.Info("Enlistment", $"Lord's party disbanded (Lord: {_enlistedLord.Name}, Kingdom: {lordKingdom.Name}) - starting grace period");
+
+					// Stop enlistment but retain state for grace period
+					// This saves the current tier/XP to _savedGraceTier/_savedGraceXP
+					StopEnlist("Party disbanded - awaiting transfer", retainKingdomDuringGrace: true);
+
+					// Start grace period for the lord's CURRENT kingdom
+					StartDesertionGracePeriod(lordKingdom);
+
+					// Notify player specifically about the disbanding
+					var message = new TextObject("{=Enlisted_Message_PartyDisbanded}Your commander's party has disbanded. Locate them to resume service.");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				}
+				else
+				{
+					// The lord's party no longer exists - automatically end service
+					StopEnlist("Target party invalid");
+				}
 				return;
 			}
 
