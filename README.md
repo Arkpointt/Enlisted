@@ -3,7 +3,7 @@
 Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
 
 ## Requirements
-- Mount & Blade II: Bannerlord v1.3.6+
+- Mount & Blade II: Bannerlord v1.3.8
 - Bannerlord.Harmony mod
 
 ## Installation
