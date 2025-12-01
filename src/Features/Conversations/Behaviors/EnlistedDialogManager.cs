@@ -15,11 +15,11 @@ namespace Enlisted.Features.Conversations.Behaviors
 {
     /// <summary>
     /// Centralized dialog manager for all enlisted military service conversations.
-    /// 
+    ///
     /// This system provides a single hub for all enlisted dialogs to prevent conflicts
-    /// and maintain consistent conversation flows. Uses the diplomatic submenu for 
+    /// and maintain consistent conversation flows. Uses the diplomatic submenu for
     /// professional integration with the game's conversation system.
-    /// 
+    ///
     /// The menu system is handled by EnlistedMenuBehavior.cs, which provides the main enlisted status menu
     /// and duty/profession selection interface.
     /// </summary>
@@ -58,13 +58,13 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Professional entry point through diplomatic channels
                 AddMainEnlistedEntry(starter);
-                
+
                 // Enlistment conversation flow
                 AddEnlistmentDialogs(starter);
-                
+
                 // Retirement conversation flow
                 AddRetirementDialogs(starter);
-                
+
                 ModLogger.Info("DialogManager", "All enlisted dialog flows registered successfully - enlistment dialogs should appear in lord conversations");
             }
             catch (Exception ex)
@@ -241,7 +241,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanDiscussFirstTermRetirement,
                 null,
                 109); // Higher priority than regular retirement
-            
+
             // Lord explains benefits (mentions 1-year re-enlistment term)
             starter.AddDialogLine(
                 "enlisted_retirement_benefits_explanation",
@@ -251,7 +251,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Player accepts retirement with benefits
             starter.AddPlayerLine(
                 "enlisted_accept_retirement",
@@ -261,7 +261,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnAcceptFirstTermRetirement,
                 110);
-            
+
             // Player accepts re-enlistment bonus (1-year term)
             starter.AddPlayerLine(
                 "enlisted_accept_reenlist_bonus",
@@ -271,7 +271,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnAcceptFirstTermReenlistBonus,
                 110);
-            
+
             // Player needs time to decide
             starter.AddPlayerLine(
                 "enlisted_retirement_later",
@@ -281,7 +281,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Lord's farewell on retirement
             starter.AddDialogLine(
                 "enlisted_retirement_farewell_text",
@@ -291,7 +291,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Lord confirms re-enlistment (1-year term)
             starter.AddDialogLine(
                 "enlisted_reenlist_bonus_confirmed",
@@ -301,7 +301,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Renewal term complete dialog (after 1-year renewal)
             starter.AddPlayerLine(
                 "enlisted_renewal_complete",
@@ -311,7 +311,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanDiscussRenewalTermEnd,
                 null,
                 108);
-            
+
             // Lord explains renewal options (1-year terms)
             starter.AddDialogLine(
                 "enlisted_renewal_options_explanation",
@@ -321,7 +321,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Player accepts renewal discharge
             starter.AddPlayerLine(
                 "enlisted_accept_renewal_discharge",
@@ -331,7 +331,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnAcceptRenewalDischarge,
                 110);
-            
+
             // Player continues service (another 1-year term)
             starter.AddPlayerLine(
                 "enlisted_continue_service",
@@ -341,7 +341,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnContinueService,
                 110);
-            
+
             // Lord's farewell on renewal discharge
             starter.AddDialogLine(
                 "enlisted_renewal_farewell_text",
@@ -351,7 +351,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Lord confirms continued service
             starter.AddDialogLine(
                 "enlisted_continue_service_confirmed",
@@ -361,7 +361,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Post-cooldown re-enlistment option (veteran returning)
             starter.AddPlayerLine(
                 "enlisted_reenlist_after_cooldown",
@@ -371,7 +371,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanReEnlistAfterCooldown,
                 null,
                 107);
-            
+
             // Lord welcomes back veteran (1-year term for veterans)
             starter.AddDialogLine(
                 "enlisted_veteran_welcome_back",
@@ -381,7 +381,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Veteran confirms re-enlistment
             starter.AddPlayerLine(
                 "enlisted_veteran_accept",
@@ -391,7 +391,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnVeteranReEnlist,
                 110);
-            
+
             // Veteran decides not to re-enlist
             starter.AddPlayerLine(
                 "enlisted_veteran_decline",
@@ -401,7 +401,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Lord confirms veteran re-enlistment
             starter.AddDialogLine(
                 "enlisted_veteran_accepted_text",
@@ -411,7 +411,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null,
                 110);
-            
+
             // Simple early discharge (for those not eligible for full retirement)
             starter.AddPlayerLine(
                 "enlisted_request_early_discharge",
@@ -421,7 +421,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanRequestEarlyDischarge,
                 null,
                 115); // Lower priority - shows when not eligible for full retirement
-            
+
             // Lord grants early discharge (no benefits)
             starter.AddDialogLine(
                 "enlisted_early_discharge_granted",
@@ -431,6 +431,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnGrantEarlyDischarge,
                 110);
+
+            // Exit option - always available as fallback from service options
+            starter.AddPlayerLine(
+                "enlisted_service_nevermind",
+                "enlisted_service_options",
+                "close_window",
+                GetLocalizedText("{=enlisted_service_nevermind}Forgive me, my lord. I spoke out of turn. I have nothing to discuss at this time.").ToString(),
+                null,
+                null,
+                100); // Lowest priority - shows last, always available
         }
 
         #region Shared Dialog Conditions
@@ -443,29 +453,29 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
+
             if (enlistment?.IsOnLeave != true || lord == null)
             {
                 return false;
             }
-            
+
             // If talking to current lord, this is "return from leave" - not a rejection
             if (enlistment.CurrentLord == lord)
             {
                 return false;
             }
-            
+
             // Check if different faction
             var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
             var targetLordKingdom = lord.MapFaction as Kingdom;
-            
+
             // Different faction (or one has no kingdom) = rejection
             if (currentLordKingdom == null || targetLordKingdom != currentLordKingdom)
             {
                 ModLogger.Debug("DialogManager", $"Triggering faction rejection - on leave from {enlistment.CurrentLord?.Name}, talking to {lord.Name} (different faction)");
                 return true;
             }
-            
+
             return false;
         }
 
@@ -482,9 +492,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 return false;
             }
-            
+
             var enlistment = EnlistmentBehavior.Instance;
-            
+
             // CRITICAL: Prevent enlistment dialog if already enlisted (and not on leave)
             // Player must be fully discharged before they can enlist with another lord/kingdom
             if (enlistment?.IsEnlisted == true && enlistment?.IsOnLeave != true)
@@ -492,7 +502,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Debug("DialogManager", $"Dialog hidden - player is actively enlisted with {enlistment.CurrentLord?.Name}");
                 return false;
             }
-            
+
             // When on leave, ALLOW dialog with all lords - we handle same vs different faction in the dialog itself
             // Same faction lords can accept transfers, different faction lords give roleplay rejection
             if (enlistment?.IsOnLeave == true)
@@ -503,13 +513,13 @@ namespace Enlisted.Features.Conversations.Behaviors
                     ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, talking to their lord {lord.Name}");
                     return true;
                 }
-                
+
                 // Allow dialog with ALL lords when on leave - rejection handled in dialog flow
                 // This prevents "Missing dialog state" and gives roleplay rejection for different factions
                 ModLogger.Debug("DialogManager", $"Dialog shown - player on leave, talking to {lord.Name} (will check faction in dialog)");
                 return true;
             }
-            
+
             if (enlistment?.IsInDesertionGracePeriod == true)
             {
                 // During grace period, player can only rejoin the same kingdom they served
@@ -522,7 +532,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 }
                 // Allow dialog if same kingdom - they can rejoin during grace period
             }
-            
+
             return true;
         }
 
@@ -532,7 +542,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private bool CanRequestStandardEnlistment()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            
+
             if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
             {
                 return false;
@@ -579,19 +589,22 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         /// Checks if the player can discuss first-term retirement (after 252 days).
-        /// Must be enlisted with current lord and have completed minimum service.
+        /// Must be enlisted with current lord, have completed minimum service,
+        /// and not be in a grace period or already in a renewal term.
         /// </summary>
         private bool CanDiscussFirstTermRetirement()
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
+
             // Must be enlisted with this specific lord and eligible for retirement
-            return enlistment?.IsEnlisted == true && 
+            // Also explicitly exclude grace period for clarity (IsEnlisted is false during grace anyway)
+            return enlistment?.IsEnlisted == true &&
                    enlistment.CurrentLord == lord &&
-                   enlistment.IsEligibleForRetirement;
+                   enlistment.IsEligibleForRetirement &&
+                   !enlistment.IsInDesertionGracePeriod;
         }
-        
+
         /// <summary>
         /// Checks if the player can discuss renewal term completion.
         /// </summary>
@@ -599,13 +612,13 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
-            return enlistment?.IsEnlisted == true && 
+
+            return enlistment?.IsEnlisted == true &&
                    enlistment.CurrentLord == lord &&
                    enlistment.IsInRenewalTerm &&
                    enlistment.IsRenewalTermComplete;
         }
-        
+
         /// <summary>
         /// Checks if the player can re-enlist after cooldown (veteran return).
         /// </summary>
@@ -613,16 +626,16 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
+
             if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
             {
                 return false;
             }
-            
+
             var kingdom = lord?.MapFaction as Kingdom;
             return kingdom != null && enlistment.CanReEnlistAfterCooldown(kingdom);
         }
-        
+
         /// <summary>
         /// Checks if the player can request early discharge (before full term).
         /// Shows only when not eligible for full retirement benefits.
@@ -631,9 +644,9 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
+
             // Must be enlisted with this lord but NOT eligible for full retirement
-            return enlistment?.IsEnlisted == true && 
+            return enlistment?.IsEnlisted == true &&
                    enlistment.CurrentLord == lord &&
                    !enlistment.IsEligibleForRetirement &&
                    !enlistment.IsRenewalTermComplete;
@@ -646,68 +659,52 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
+
             // Must be on leave and talking to the same lord you served
-            return enlistment?.IsOnLeave == true && 
+            return enlistment?.IsOnLeave == true &&
                    enlistment.CurrentLord == lord;
         }
 
         /// <summary>
         /// Checks if the player can request to transfer service to a different lord.
-        /// Available when on leave or in grace period, talking to a different lord in the same faction.
+        /// Available ONLY when on leave, talking to a different lord in the same faction.
+        /// Note: Grace period transfers are handled separately by CanRequestGraceTransfer().
         /// </summary>
         private bool CanRequestServiceTransfer()
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
-            
+
             if (lord == null || !lord.IsLord || !lord.IsAlive)
             {
                 return false;
             }
-            
-            // Check if player is on leave - can transfer to different lord in same faction
-            if (enlistment?.IsOnLeave == true)
+
+            // Only show this dialog when on leave (NOT in grace period)
+            // Grace period has its own dedicated dialog via CanRequestGraceTransfer()
+            if (enlistment?.IsOnLeave != true)
             {
-                // Must be talking to a DIFFERENT lord (not current lord - that's "return from leave")
-                if (enlistment.CurrentLord == lord)
-                {
-                    return false;
-                }
-                
-                // Must be same faction/kingdom
-                var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
-                var targetLordKingdom = lord.MapFaction as Kingdom;
-                
-                if (currentLordKingdom != null && targetLordKingdom == currentLordKingdom)
-                {
-                    // Check if the lord can accept service
-                    TextObject reason;
-                    if (enlistment.CanEnlistWithParty(lord, out reason))
-                    {
-                        return true;
-                    }
-                }
-                
                 return false;
             }
-            
-            // Check if player is in grace period - can also transfer to any lord in the pending kingdom
-            if (enlistment?.IsInDesertionGracePeriod == true && !enlistment.IsEnlisted)
+
+            // Must be talking to a DIFFERENT lord (not current lord - that's "return from leave")
+            if (enlistment.CurrentLord == lord)
             {
-                var lordKingdom = lord.MapFaction as Kingdom;
-                if (lordKingdom != null && lordKingdom == enlistment.PendingDesertionKingdom)
-                {
-                    // Check if the lord can accept service
-                    TextObject reason;
-                    if (enlistment.CanEnlistWithParty(lord, out reason))
-                    {
-                        return true;
-                    }
-                }
+                return false;
             }
-            
-            return false;
+
+            // Must be same faction/kingdom
+            var currentLordKingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
+            var targetLordKingdom = lord.MapFaction as Kingdom;
+
+            if (currentLordKingdom == null || targetLordKingdom != currentLordKingdom)
+            {
+                return false;
+            }
+
+            // Check if the lord can accept service
+            TextObject reason;
+            return enlistment.CanEnlistWithParty(lord, out reason);
         }
 
         #endregion
@@ -772,7 +769,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during first-term retirement", ex);
             }
         }
-        
+
         /// <summary>
         /// Handles first-term re-enlistment with 20,000 gold bonus.
         /// </summary>
@@ -789,7 +786,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during first-term re-enlistment", ex);
             }
         }
-        
+
         /// <summary>
         /// Handles renewal term discharge with 5,000 gold.
         /// </summary>
@@ -805,7 +802,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during renewal discharge", ex);
             }
         }
-        
+
         /// <summary>
         /// Handles continuing service with 5,000 gold bonus.
         /// </summary>
@@ -822,7 +819,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error continuing service", ex);
             }
         }
-        
+
         /// <summary>
         /// Handles veteran re-enlistment after cooldown.
         /// </summary>
@@ -834,7 +831,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 if (lord != null)
                 {
                     EnlistmentBehavior.Instance?.ReEnlistAfterCooldown(lord);
-                    
+
                     // Redirect to troop selection
                     NextFrameDispatcher.RunNextFrame(() => EnlistedMenuBehavior.SafeActivateEnlistedMenu());
                 }
@@ -845,7 +842,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during veteran re-enlistment", ex);
             }
         }
-        
+
         /// <summary>
         /// Handles early discharge (before full term, no benefits).
         /// </summary>
@@ -906,21 +903,21 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 var newLord = Hero.OneToOneConversationHero;
                 var enlistment = EnlistmentBehavior.Instance;
-                
+
                 if (newLord == null || enlistment == null)
                 {
                     ModLogger.Error("DialogManager", "Cannot transfer service - missing lord or enlistment instance");
                     return;
                 }
-                
+
                 var previousLordName = enlistment.CurrentLord?.Name?.ToString() ?? "your previous commander";
                 var newLordName = newLord.Name?.ToString() ?? "Unknown Lord";
-                
+
                 ModLogger.Info("DialogManager", $"Player transferring service from {previousLordName} to {newLordName}");
-                
+
                 // Perform the transfer
                 enlistment.TransferServiceToLord(newLord);
-                
+
                 // Professional notification
                 var message = GetLocalizedText("{=enlisted_transfer_notification}You have transferred your service to {LORD_NAME}. Your rank and experience have been preserved.");
                 message.SetTextVariable("LORD_NAME", newLord.Name);

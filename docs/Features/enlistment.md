@@ -78,6 +78,16 @@ Rank names are configurable in `progression_config.json`.
 - Transfer preserves all progression (tier, XP, kills, service date)
 - Immediately resumes active service with the new lord
 
+**Army Cohesion Compensation:**
+- Enlisted player's party doesn't negatively affect army cohesion
+- Native game counts each party in army, causing cohesion penalties:
+  - -1 cohesion/day per party
+  - Additional penalty for parties with ≤10 healthy members
+  - Additional penalty for parties with morale ≤25
+- `ArmyCohesionExclusionPatch` adds compensating bonus to offset these penalties
+- Compensation shown in cohesion tooltip as "Enlisted soldier (embedded)"
+- Thematically correct: enlisted soldiers are embedded with their lord, not a separate party
+
 ## Veteran Retirement System
 
 **First Term (252 days / 3 game years):**
@@ -123,6 +133,7 @@ Rank names are configurable in `progression_config.json`.
 - `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
 - `InfluenceMessageSuppressionPatch.cs` - Suppresses "gained 0 influence" messages
 - `EnlistedWaitingPatch.cs` - Prevents game pausing when lord enters battle
+- `ArmyCohesionExclusionPatch.cs` - Compensates for enlisted player's cohesion impact on army
 
 **Key Mechanisms:**
 ```csharp
