@@ -5002,11 +5002,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			var main = MobileParty.MainParty;
 
-			if (mapEvent != null)
-			{
-				_cachedLordMapEvent = mapEvent;
-			}
-
 			var effectiveMapEvent = mapEvent ?? _cachedLordMapEvent;
 
 			var lordParty = _enlistedLord?.PartyBelongedTo;
