@@ -5193,8 +5193,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				else
 				{
 					// Fallback: assume participation if we got to this event
-					participated = true;
-					ModLogger.Debug("Battle", "Kill tracker not available - assuming participation");
+					// BUGFIX: Don't assume participation if morale is too low to fight (prevents XP spam loop)
+					if (MobileParty.MainParty.Morale <= 1f)
+					{
+						participated = false;
+						ModLogger.Debug("Battle", "Player morale too low for combat - participation denied");
+					}
+					else
+					{
+						participated = true;
+						ModLogger.Debug("Battle", "Kill tracker not available - assuming participation");
+					}
 				}
 
 				// Award battle XP if player participated
