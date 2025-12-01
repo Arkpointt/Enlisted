@@ -1126,6 +1126,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 					ModLogger.Info("Enlistment", "Party activated and made visible (no active battle state)");
 				}
+
+				// NAVAL FIX: Handle sea stranding - if player is at sea without naval capability, teleport to nearest port
+				// This can happen when the army disbands at sea and service ends (e.g., lord captured at sea)
+				// Without this fix, the player becomes permanently stranded on the water
+				if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability && !retainKingdomDuringGrace)
+				{
+					ModLogger.Info("Naval", "Player stranded at sea after service ended - teleporting to nearest port");
+					TryTeleportToNearestPort(main);
+				}
 			}
 
 			// Restore the player's personal equipment that was backed up at enlistment start
@@ -1432,6 +1441,143 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_graceProtectionEnds = CampaignTime.Zero;
 		}
 
+		/// <summary>
+		/// Voluntarily desert from the army. The player keeps their current equipment but
+		/// receives desertion penalties: -50 relation with all lords in the kingdom and
+		/// +50 crime rating. After deserting, the player is free to enlist with other factions.
+		/// </summary>
+		public void DesertArmy()
+		{
+			try
+			{
+				if (!IsEnlisted)
+				{
+					ModLogger.Warn("Desertion", "Cannot desert - not currently enlisted");
+					return;
+				}
+
+				var enlistedKingdom = _enlistedLord?.MapFaction as Kingdom;
+				var kingdomName = enlistedKingdom?.Name?.ToString() ?? "the army";
+
+				ModLogger.Info("Desertion", $"Player voluntarily deserting from {kingdomName}");
+
+				var playerClan = Clan.PlayerClan;
+				if (playerClan == null)
+				{
+					ModLogger.Error("Desertion", "Cannot desert - player clan is null");
+					return;
+				}
+
+				// Store kingdom reference before clearing enlistment state
+				var targetKingdom = enlistedKingdom;
+
+				// === STEP 1: End enlistment WITHOUT restoring equipment ===
+				// Player keeps their enlisted gear as "stolen" equipment
+				var main = MobileParty.MainParty;
+				if (main != null)
+				{
+					// Remove from army if in one
+					if (main.Army != null)
+					{
+						try
+						{
+							main.Army = null;
+						}
+						catch (Exception ex)
+						{
+							ModLogger.Error("Desertion", $"Error removing from army: {ex.Message}");
+							main.Army = null;
+						}
+					}
+
+					// Release escort
+					TryReleaseEscort(main, clearAttachment: true);
+					TrySetShouldJoinPlayerBattles(main, false);
+
+					// Restore party visibility
+					main.IsVisible = true;
+					main.IsActive = true;
+					EncounterGuard.ShowPlayerPartyVisual();
+				}
+
+				// Restore companions (but NOT equipment - player keeps enlisted gear)
+				RestoreCompanionsToPlayer();
+
+				// Clear the equipment backup flag WITHOUT restoring - player keeps their gear
+				// This effectively "forfeits" the backed up equipment
+				_hasBackedUpEquipment = false;
+				ModLogger.Info("Desertion", "Equipment backup cleared - player keeps enlisted gear");
+
+				// Clear enlistment state
+				var previousLord = _enlistedLord;
+				_enlistedLord = null;
+				_enlistmentTier = 1;
+				_enlistmentXP = 0;
+				_enlistmentDate = CampaignTime.Zero;
+				_disbandArmyAfterBattle = false;
+
+				// Clear any active grace period state
+				ClearDesertionGracePeriod();
+
+				// === STEP 2: Apply desertion penalties ===
+				if (targetKingdom != null && !targetKingdom.IsEliminated)
+				{
+					// -50 relation with all lords in kingdom
+					int lordsPenalized = 0;
+					foreach (Clan clan in targetKingdom.Clans)
+					{
+						if (clan.Leader != null && clan.Leader != Hero.MainHero && clan.Leader.IsAlive)
+						{
+							ChangeRelationAction.ApplyPlayerRelation(clan.Leader, -50, true, true);
+							lordsPenalized++;
+						}
+					}
+
+					// Apply crime rating (+50)
+					ChangeCrimeRatingAction.Apply(targetKingdom, 50f, true);
+
+					ModLogger.Info("Desertion", $"Applied desertion penalties: -50 relation with {lordsPenalized} lords, +50 crime rating");
+				}
+
+				// === STEP 3: Leave the kingdom ===
+				if (playerClan.Kingdom != null)
+				{
+					try
+					{
+						ChangeKingdomAction.ApplyByLeaveKingdomAsMercenary(playerClan, true);
+						ModLogger.Info("Desertion", "Left kingdom as deserter");
+					}
+					catch (Exception ex)
+					{
+						ModLogger.Error("Desertion", $"Error leaving kingdom: {ex.Message}");
+					}
+				}
+
+				// Clear kingdom tracking
+				_originalKingdom = null;
+				_wasIndependentClan = false;
+
+				// Display notification
+				var message = new TextObject("You have deserted from {KINGDOM}. You are now branded a deserter and your reputation has suffered greatly.");
+				message.SetTextVariable("KINGDOM", targetKingdom?.Name ?? new TextObject("the army"));
+				InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+
+				// Log state transition
+				Mod.Core.Logging.SessionDiagnostics.LogStateTransition("Enlistment", "Enlisted", "Deserted",
+					$"Kingdom: {kingdomName}, Lord: {previousLord?.Name?.ToString() ?? "unknown"}");
+
+				// Fire discharge event
+				OnDischarged?.Invoke("Voluntary desertion");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Desertion", "Error during voluntary desertion", ex);
+				// Ensure critical state is cleared
+				_enlistedLord = null;
+				_hasBackedUpEquipment = false;
+			}
+		}
+
 		private bool TryApplyGraceEquipment(bool resumedFromGrace, string preferredTroopId)
 		{
 			if (!resumedFromGrace || _enlistedLord?.Culture == null)
@@ -1651,13 +1797,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// This runs even when "not enlisted" because IsOnLeave makes IsEnlisted return false
 			CheckLeaveExpiration();
 
-			if (!IsEnlisted || _enlistedLord?.IsAlive != true)
+ 		if (!IsEnlisted || _enlistedLord?.IsAlive != true)
 			{
 				return;
 			}
 
 			try
 			{
+				// Sync player's food supply with lord/army (enlisted soldiers share provisions)
+				TrySyncFoodWithLord();
+
 				// Calculate daily wage based on tier, level, and duties
 				var wage = CalculateDailyWage();
 
@@ -2009,6 +2158,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// <summary>
 		/// Checks if the player has been a prisoner for too long while in enlistment grace period.
 		/// If captured > 3 days, we force an escape/release so the player can actually use their grace period.
+		///
+		/// NAVAL SAFETY: Does NOT force escape if the captor party is currently at sea.
+		/// The native EndCaptivityInternal only teleports the player if the captor is on land.
+		/// Forcing escape at sea would strand the player without a ship. We wait until the
+		/// captor returns to land before triggering the escape.
 		/// </summary>
 		private void CheckPlayerCaptivityDuration()
 		{
@@ -2018,6 +2172,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				float daysInCaptivity = (float)(CampaignTime.Now - Hero.MainHero.CaptivityStartTime).ToDays;
 				if (daysInCaptivity > 3f)
 				{
+					// NAVAL SAFETY: Check if captor party is at sea
+					// If at sea, do NOT force escape - player would be stranded without a ship
+					// The native EndCaptivityInternal checks IsCurrentlyAtSea before teleporting,
+					// but if we trigger escape while at sea, player ends up at the captor's sea position
+					// with no way to move. Wait until captor reaches land.
+					var captorParty = Hero.MainHero.PartyBelongedToAsPrisoner?.MobileParty;
+					if (captorParty != null && captorParty.IsCurrentlyAtSea)
+					{
+						// Log only occasionally to avoid spam (check if we haven't logged recently)
+						ModLogger.Debug("EventSafety", $"Player held prisoner for {daysInCaptivity:F1} days but captor is at sea - waiting for land before forcing escape");
+						return;
+					}
+
 					ModLogger.Info("EventSafety", $"Player held prisoner for {daysInCaptivity:F1} days during enlistment grace period - forcing release");
 
 					// Attempt to force release/escape
@@ -2605,7 +2772,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 					// Handle battle participation when the lord enters battle but the player hasn't yet
 					// This ensures the player joins the battle even if they weren't initially collected
-					if (lordHasMapEvent && !playerHasMapEvent)
+					// CRITICAL: Skip if player is deliberately waiting in reserve - don't interrupt that menu
+					string currentMenuId = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
+					bool isWaitingInReserve = currentMenuId == "enlisted_battle_wait";
+
+					if (lordHasMapEvent && !playerHasMapEvent && !isWaitingInReserve)
 					{
 						// Only attempt to add the player to the army if they're not already in it
 						// If they're already in the correct army, the native system should collect them automatically
@@ -2660,30 +2831,56 @@ namespace Enlisted.Features.Enlistment.Behaviors
 										// Check if we can join on the lord's side
 										if (lordMapEvent.CanPartyJoinBattle(mainParty.Party, lordSide))
 										{
-											ModLogger.Info("Battle", $"Can join battle on lord's side ({lordSide}) - joining MapEvent directly");
+ 										ModLogger.Info("Battle", $"Can join battle on lord's side ({lordSide}) - preparing for battle participation");
 
-											// Make the player visible and active for the encounter
+											// Make the player active for the encounter but keep them INVISIBLE
+											// CRITICAL: If IsVisible = true, the native system creates a "Help [Party]" encounter menu
+											// instead of directly joining the lord's battle. Keeping invisible ensures seamless battle entry.
 											mainParty.IsActive = true;
-											mainParty.IsVisible = true;
+											mainParty.IsVisible = false;
 											mainParty.ShouldJoinPlayerBattles = true;
 
 											// Clear any ignore window so we can be collected
 											mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
 
-											// CRITICAL: Join the MapEvent directly by setting MapEventSide
-											// This is what actually adds us to the battle
-											var targetSide = lordSide == BattleSideEnum.Attacker
-												? lordMapEvent.AttackerSide
-												: lordMapEvent.DefenderSide;
-											mainParty.Party.MapEventSide = targetSide;
+											// NAVAL BATTLE FIX: Check if this is a naval battle
+											// Naval battles require ships - enlisted players have no ships (they're passengers on lord's ship)
+											// Skip direct MapEvent join for naval battles to prevent spawn crashes
+											// The player will still participate via PlayerEncounter as crew member on lord's ship
+											bool isNavalBattle = lordMapEvent.IsNavalMapEvent;
 
-											ModLogger.Info("Battle", $"Joined MapEvent on {lordSide} side. Player MapEvent: {mainParty.Party.MapEvent != null}");
+											if (isNavalBattle)
+											{
+												ModLogger.Info("Naval", "Naval battle detected - skipping direct MapEvent join (enlisted player has no ships). Will participate via PlayerEncounter as crew member.");
+											}
+											else
+											{
+												// CRITICAL FIX: Only set MapEventSide if player party has troops
+												// Setting MapEventSide on a party with no troops causes NullReferenceException
+												// in MapEventSide.ApplySimulatedHitRewardToSelectedTroop during battle simulation
+												// because SelectRandomSimulationTroop() returns invalid descriptor for empty parties.
+												// Enlisted players have no troops (transferred to lord), so we must NOT join
+												// the MapEvent directly - let native handle it through PlayerEncounter alone.
+												int partyTroopCount = mainParty.Party.NumberOfHealthyMembers;
+												if (partyTroopCount > 0)
+												{
+													var targetSide = lordSide == BattleSideEnum.Attacker
+														? lordMapEvent.AttackerSide
+														: lordMapEvent.DefenderSide;
+													mainParty.Party.MapEventSide = targetSide;
+													ModLogger.Info("Battle", $"Joined MapEvent on {lordSide} side (troops: {partyTroopCount}). Player MapEvent: {mainParty.Party.MapEvent != null}");
+												}
+												else
+												{
+													ModLogger.Info("Battle", $"Skipping direct MapEvent join - player has no troops (enlisted). Will participate via PlayerEncounter only.");
+												}
+											}
 
 											// CRITICAL: Create a PlayerEncounter - the native menu system requires this
 											// The EncounterGameMenuBehavior asserts that PlayerEncounter.Current != null
 											// when initializing the encounter menu.
 											// NOTE: Do NOT call JoinBattle() - that caused NullReferenceExceptions.
-											// Just Start() is sufficient since we already set MapEventSide.
+											// PlayerEncounter allows the hero to participate in battle even without troops.
 											if (PlayerEncounter.Current == null)
 											{
 												PlayerEncounter.Start();
@@ -2828,10 +3025,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 							ModLogger.Debug("Battle", $"Activated player party for army following");
 						}
 
-						// Check if lord is at sea - use direct position sync instead of escort AI
+ 					// Check if lord is at sea - use direct position sync instead of escort AI
 						// Naval War Expansion: Escort AI doesn't work when target is at sea without ships
 						if (!TrySyncNavalPosition(mainParty, lordParty))
 						{
+							// Lord is on land - sync player's sea state if they're still at sea (disembark)
+							if (mainParty.IsCurrentlyAtSea && !lordParty.IsCurrentlyAtSea)
+							{
+								mainParty.IsCurrentlyAtSea = false;
+								mainParty.Position = lordParty.Position;
+								ModLogger.Debug("Naval", "Synced player sea state to land (disembarked with lord in army)");
+							}
+
 							// Lord is on land - use normal escort AI
 							mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
 							lordParty.Party.SetAsCameraFollowParty();
@@ -2859,6 +3064,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 							// Naval War Expansion: Escort AI doesn't work when target is at sea without ships
 							if (!TrySyncNavalPosition(mainParty, lordParty))
 							{
+								// Lord is on land - sync player's sea state if they're still at sea (disembark)
+								if (mainParty.IsCurrentlyAtSea && !lordParty.IsCurrentlyAtSea)
+								{
+									mainParty.IsCurrentlyAtSea = false;
+									mainParty.Position = lordParty.Position;
+									ModLogger.Debug("Naval", "Synced player sea state to land (disembarked with lord)");
+								}
+
 								// Lord is on land - use normal escort AI
 								mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
 								lordParty.Party.SetAsCameraFollowParty();
@@ -3001,10 +3214,169 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				return true;
 			}
-			catch (Exception ex)
+ 		catch (Exception ex)
 			{
 				ModLogger.Error("Naval", $"Failed to sync naval position: {ex.Message}");
 				return false;
+			}
+		}
+
+		/// <summary>
+		/// Syncs the player's food supply with the lord's party or army leader's party.
+		/// When enlisted, the player conceptually shares the lord's provisions, so their
+		/// food count should reflect the lord's/army's food supply rather than being 0.
+		/// This is called daily to keep the food display accurate.
+		/// </summary>
+		private void TrySyncFoodWithLord()
+		{
+			try
+			{
+				var mainParty = MobileParty.MainParty;
+				var lordParty = _enlistedLord?.PartyBelongedTo;
+
+				if (mainParty == null || lordParty == null)
+					return;
+
+				// Determine the food source: army leader if in army, otherwise the lord directly
+				MobileParty foodSourceParty = lordParty;
+				if (lordParty.Army != null && lordParty.Army.LeaderParty != null)
+				{
+					// In an army - use the army leader's food supply as reference
+					foodSourceParty = lordParty.Army.LeaderParty;
+				}
+
+				int sourceFoodCount = foodSourceParty.TotalFoodAtInventory;
+				int playerFoodCount = mainParty.TotalFoodAtInventory;
+
+				// Only sync if there's a difference
+				if (playerFoodCount == sourceFoodCount)
+					return;
+
+				// Calculate the difference needed
+				int foodDifference = sourceFoodCount - playerFoodCount;
+
+				// Use grain as the standard food item for syncing
+				var grainItem = DefaultItems.Grain;
+				if (grainItem == null)
+				{
+					ModLogger.Warn("Food", "DefaultItems.Grain not available - cannot sync food");
+					return;
+				}
+
+				// Adjust the player's food inventory
+				if (foodDifference > 0)
+				{
+					// Need to add food
+					mainParty.ItemRoster.AddToCounts(grainItem, foodDifference);
+				}
+				else if (foodDifference < 0)
+				{
+					// Need to remove food - but don't go below 0
+					int currentGrain = mainParty.ItemRoster.GetItemNumber(grainItem);
+					int toRemove = Math.Min(currentGrain, -foodDifference);
+					if (toRemove > 0)
+					{
+						mainParty.ItemRoster.AddToCounts(grainItem, -toRemove);
+					}
+
+					// If we still have excess food from other food items, clear them too
+					// to get closer to the target (but this is a best-effort sync)
+				}
+
+				ModLogger.Debug("Food", $"Synced player food to {sourceFoodCount} (was {playerFoodCount}, source: {foodSourceParty.LeaderHero?.Name?.ToString() ?? "unknown"})");
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Food", $"Failed to sync food with lord: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Teleports the player to the nearest settlement with a port when stranded at sea.
+		/// Called when service ends and player has no naval navigation capability.
+		/// This prevents players from being permanently stranded on the water.
+		/// </summary>
+		/// <param name="mainParty">The player's party to teleport.</param>
+		private void TryTeleportToNearestPort(MobileParty mainParty)
+		{
+			try
+			{
+				if (mainParty == null)
+				{
+					ModLogger.Warn("Naval", "TryTeleportToNearestPort called with null party");
+					return;
+				}
+
+				var playerPosition = mainParty.Position;
+				Settlement nearestPort = null;
+				float nearestDistance = float.MaxValue;
+
+				ModLogger.Debug("Naval", $"Searching for nearest port from player position");
+
+				// Find the nearest settlement with a port
+				foreach (var settlement in Settlement.All)
+				{
+					if (settlement == null || settlement.IsHideout)
+						continue;
+
+					// Check if settlement has a port (towns with ports, coastal castles)
+					if (!settlement.HasPort)
+						continue;
+
+					var portPosition = settlement.PortPosition;
+					var distance = playerPosition.Distance(portPosition);
+
+					if (distance < nearestDistance)
+					{
+						nearestDistance = distance;
+						nearestPort = settlement;
+					}
+				}
+
+				if (nearestPort != null)
+				{
+					// Clear sea state and teleport to the settlement's gate position (on land)
+					mainParty.IsCurrentlyAtSea = false;
+					mainParty.Position = nearestPort.GatePosition;
+
+					// Set hold mode so player can decide where to go
+					mainParty.SetMoveModeHold();
+
+					var message = new TextObject("You have washed ashore near {SETTLEMENT}.");
+					message.SetTextVariable("SETTLEMENT", nearestPort.Name);
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+
+					ModLogger.Info("Naval", $"Teleported stranded player to {nearestPort.Name} (distance was {nearestDistance:F2})");
+				}
+				else
+				{
+					// Fallback: just clear sea state and hope for the best
+					// This shouldn't happen as there should always be ports in the game
+					mainParty.IsCurrentlyAtSea = false;
+					mainParty.SetMoveModeHold();
+
+					ModLogger.Warn("Naval", "No port found - cleared sea state but player may still be in water");
+
+					var message = new TextObject("You have made it to shore.");
+					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Naval", $"Failed to teleport stranded player: {ex.Message}");
+
+				// Emergency fallback - at least try to clear sea state
+				try
+				{
+					if (mainParty != null)
+					{
+						mainParty.IsCurrentlyAtSea = false;
+					}
+				}
+				catch
+				{
+					// Ignore - we tried our best
+				}
 			}
 		}
 
@@ -3122,11 +3494,53 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						StopEnlist("Army defeated - lord lost");
 					}
 				}
-				else
+ 			else
 				{
 					var message = new TextObject("Your lord's army has been dispersed. Continuing service.");
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-					// Continue service with individual lord
+
+					// NAVAL FIX: Re-establish following when army disbands at sea
+					// Without this fix, players get stranded because DisperseInternal skips
+					// repositioning for parties without naval navigation capability
+					var mainParty = MobileParty.MainParty;
+					var lordParty = _enlistedLord.PartyBelongedTo;
+
+					if (mainParty != null && lordParty != null)
+					{
+						// Check if lord is at sea - need to re-sync position
+						if (lordParty.IsCurrentlyAtSea)
+						{
+							ModLogger.Info("Naval", $"Army disbanded at sea - re-syncing player position with lord {_enlistedLord.Name}");
+
+							// Sync sea state and position
+							bool wasAtSea = mainParty.IsCurrentlyAtSea;
+							mainParty.IsCurrentlyAtSea = lordParty.IsCurrentlyAtSea;
+							mainParty.Position = lordParty.Position;
+
+							// Set hold mode to prevent AI from trying to pathfind on water
+							mainParty.SetMoveModeHold();
+
+							// Camera should follow the lord
+							lordParty.Party.SetAsCameraFollowParty();
+
+							var navalMessage = new TextObject("You remain aboard with {LORD}'s party.");
+							navalMessage.SetTextVariable("LORD", _enlistedLord.Name);
+							InformationManager.DisplayMessage(new InformationMessage(navalMessage.ToString()));
+
+							ModLogger.Debug("Naval", $"Naval sync complete: wasAtSea={wasAtSea}, nowAtSea={mainParty.IsCurrentlyAtSea}, position synced to lord");
+						}
+						else
+						{
+							// Lord is on land - use normal escort AI
+							ModLogger.Debug("Naval", "Army disbanded on land - setting up normal escort AI");
+							mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
+							lordParty.Party.SetAsCameraFollowParty();
+						}
+					}
+					else
+					{
+						ModLogger.Warn("Naval", $"Cannot re-sync after army disband: mainParty={mainParty != null}, lordParty={lordParty != null}");
+					}
 				}
 			}
 		}
@@ -4214,7 +4628,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 		}
 
-		/// <summary>
+ 	/// <summary>
 		/// MINIMAL: Settlement entry detection for menu refresh only.
 		/// Just refreshes the menu when lord enters settlements - no complex logic.
 		/// </summary>
@@ -4222,8 +4636,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			try
 			{
-				if (!IsEnlisted || _isOnLeave)
+				// CRITICAL: Skip all processing when player is a prisoner
+				// The native PlayerCaptivity system handles everything during captivity
+				// Interfering with party state or menus while captured causes crashes
+				// (e.g., when captor enters a settlement with the player as prisoner)
+				if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
 				{
+					if (Hero.MainHero.IsPrisoner && IsEnlisted)
+					{
+						ModLogger.Debug("Settlement", $"Skipping settlement entry handling - player is prisoner (captor entering {settlement?.Name})");
+					}
 					return;
 				}
 

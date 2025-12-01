@@ -26,7 +26,7 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Veteran retirement system with per-faction tracking
 - Complete financial isolation from lord's clan finances
 - No loot access (spoils go to the lord)
-- No starvation (lord provides food)
+- No food consumption (lord provides food - party skips food calculations entirely)
 
 ## Behavior
 
@@ -117,7 +117,8 @@ Rank names are configurable in `progression_config.json`.
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 - `MercenaryIncomeSuppressionPatch.cs` - Suppresses native mercenary income (players receive mod wages only)
-- `StarvationSuppressionPatch.cs` - Prevents starvation while enlisted (lord provides food)
+- `FoodConsumptionSuppressionPatch.cs` - Skips food consumption entirely when enlisted (lord provides food)
+- `StarvationSuppressionPatch.cs` - Prevents starvation flag (backup for FoodConsumptionSuppressionPatch)
 - `LootBlockPatch.cs` - Blocks all loot assignment and loot screens for enlisted soldiers
 - `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
 - `InfluenceMessageSuppressionPatch.cs` - Suppresses "gained 0 influence" messages
@@ -180,11 +181,31 @@ _currentTermKills += kills;  // Track for faction record
 - Native capture flow completes
 - Grace period starts after captivity
 - One-day protection shield after release
+- When captor enters a settlement, mod skips all settlement handling (`IsPrisoner` check)
+- Native `PlayerCaptivity` system controls all state during captivity
+
+**Player Captured at Sea (Naval War Expansion):**
+- Native `PlayerCaptivity` system handles sea captures correctly
+- Player follows captor ship via camera until captor reaches land
+- The mod's 3-day forced escape (during grace period) checks `IsCurrentlyAtSea`
+- If captor is at sea, forced escape is delayed until captor reaches land
+- This prevents the player from being stranded at sea after escape
+- Once captor reaches port/land, the forced escape triggers normally
 
 **Leave Expires:**
 - If player exceeds 14-day leave limit
 - Desertion penalties applied
 - Service terminated
+
+**Voluntary Desertion:**
+- Player can choose to desert at any time via the "Desert the Army" menu option
+- Opens confirmation menu with roleplay explanation of consequences
+- If confirmed:
+  - Player keeps their current enlisted equipment (not restored to original gear)
+  - -50 relation with ALL lords in the kingdom
+  - +50 crime rating with the kingdom
+  - Removed from kingdom (becomes independent)
+  - Free to enlist with other factions afterward
 
 **Save/Load During Service:**
 - All enlistment state persists correctly
@@ -202,6 +223,27 @@ _currentTermKills += kills;  // Track for faction record
 - Escort AI doesn't work across land/sea boundaries, so direct position sync is used
 - Player's `IsCurrentlyAtSea` state synced with lord's state
 
+**Army Disbanded at Sea:**
+- When army disbands while at sea, player position re-syncs with lord immediately
+- `OnArmyDispersed` detects naval state and teleports player to lord's position
+- Player remains aboard with lord's party (not stranded)
+- If service ends while at sea (e.g., lord captured), player teleported to nearest port
+- `TryTeleportToNearestPort` finds closest settlement with a port and moves player there
+
+**Naval Battles (Naval War Expansion):**
+- When lord enters a naval battle, enlisted player participates as crew member
+- `IsNavalMapEvent` check prevents direct `MapEventSide` join (which would crash - enlisted players have no ships)
+- Player joins via `PlayerEncounter` only, spawning on lord's ship as crew
+- Native Naval DLC's `GetSuitablePlayerShip()` fallback assigns players without ships to allied party ships
+- No crashes when entering sea battles while enlisted
+
+**Settlement Access (Castle/Town Menus):**
+- Native Leave buttons are hidden in settlement menus while enlisted (via `TownLeaveButtonPatch`)
+- "Return to camp" option added to all settlement menus to ensure player always has an exit
+- Covers: `town`, `town_outside`, `castle`, `castle_outside`, `castle_guard`, `castle_enter_bribe`, `town_guard`, `town_keep_bribe`
+- Prevents players from getting stuck in bribe menus (e.g., "bribe to enter keep" with no money)
+- Works correctly when enlisted with minor clan parties in castles/towns
+
 ## Acceptance Criteria
 
 - ✅ Can enlist with any lord that accepts player
@@ -218,6 +260,7 @@ _currentTermKills += kills;  // Track for faction record
 - ✅ Re-enlistment with preserved tier and kill count
 - ✅ Per-faction veteran tracking
 - ✅ Service transfer to different lord while on leave/grace (preserves all progression)
+- ✅ Voluntary desertion with confirmation menu and penalties
 - ✅ No pathfinding crashes or encounter system conflicts
 
 ## Debugging

@@ -32,7 +32,7 @@ src/
     └── Interface/          # Menus
 ```
 
-## Harmony Patches (17)
+## Harmony Patches (18)
 
 | Patch | Purpose |
 |-------|---------|
@@ -43,6 +43,7 @@ src/
 | EncounterSuppressionPatch | Prevents unwanted encounters |
 | EnlistedWaitingPatch | Prevents game pause when lord battles |
 | EnlistmentExpenseIsolationPatch | Hides expenses while enlisted |
+| FoodConsumptionSuppressionPatch | Skips food consumption when enlisted (lord provides food) |
 | HidePartyNamePlatePatch | Hides player nameplate |
 | InfluenceMessageSuppressionPatch | Suppresses "0 influence" messages |
 | LootBlockPatch | Prevents personal loot |
@@ -50,7 +51,7 @@ src/
 | OrderOfBattleSuppressionPatch | Skips deployment screen |
 | PostDischargeProtectionPatch | Protects after discharge |
 | SkillSuppressionPatch | Blocks tactics/leadership XP |
-| StarvationSuppressionPatch | Prevents starvation |
+| StarvationSuppressionPatch | Prevents starvation (backup for FoodConsumptionSuppressionPatch) |
 | TownLeaveButtonPatch | Hides Leave button |
 | VisibilityEnforcementPatch | Controls party visibility |
 
@@ -74,6 +75,7 @@ Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 | Battle | Battle participation, army joining, MapEvent handling |
 | Discharge | Kingdom restoration, relation penalty suppression |
 | Finance | Mercenary income suppression, wage calculations |
+| Food | Food consumption suppression, starvation checks |
 | Desertion | Grace period management, desertion penalties |
 | SaveLoad | Save/load operations, state restoration |
 | Following | Escort AI, position sync, naval following |
