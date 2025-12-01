@@ -127,8 +127,7 @@ Rank names are configurable in `progression_config.json`.
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 - `MercenaryIncomeSuppressionPatch.cs` - Suppresses native mercenary income (players receive mod wages only)
-- `FoodConsumptionSuppressionPatch.cs` - Skips food consumption entirely when enlisted (lord provides food)
-- `StarvationSuppressionPatch.cs` - Prevents starvation flag (backup for FoodConsumptionSuppressionPatch)
+- `FoodSystemPatches.cs` - Consolidated food handling: suppresses food consumption and prevents starvation when enlisted (lord provides food)
 - `LootBlockPatch.cs` - Blocks all loot assignment and loot screens for enlisted soldiers
 - `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
 - `InfluenceMessageSuppressionPatch.cs` - Suppresses "gained 0 influence" messages
@@ -143,6 +142,13 @@ private int _enlistmentTier;
 private int _enlistmentXP;
 private CampaignTime _enlistmentDate;
 private int _currentTermKills;  // Kills this service term
+
+// Public properties for external access
+public bool IsEnlisted { get; }           // True if actively enlisted (not on leave)
+public bool IsOnLeave { get; }            // True if on temporary leave
+public Hero EnlistedLord { get; }         // The lord the player is serving under
+public CampaignTime EnlistmentDate { get; }  // When current enlistment started
+public CampaignTime LeaveStartDate { get; }  // When current leave started
 
 // Veteran retirement system (per-faction)
 private Dictionary<string, FactionVeteranRecord> _veteranRecords;
