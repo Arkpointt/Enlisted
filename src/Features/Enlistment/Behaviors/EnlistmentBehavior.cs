@@ -1177,6 +1177,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
 			}
 
+			// Remove the synced food (grain) so the player isn't overburdened with the lord's supplies
+			RemoveSyncedFood();
+
 			// Restore companions and troops to the player's party
 			// These were transferred to the lord's party when service started
 			RestoreCompanionsToPlayer();
@@ -1520,11 +1523,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					TryReleaseEscort(main, clearAttachment: true);
 					TrySetShouldJoinPlayerBattles(main, false);
 
-					// Restore party visibility
+ 				// Restore party visibility
 					main.IsVisible = true;
 					main.IsActive = true;
 					EncounterGuard.ShowPlayerPartyVisual();
 				}
+
+				// Remove synced food (grain)
+				RemoveSyncedFood();
 
 				// Restore companions (but NOT equipment - player keeps enlisted gear)
 				RestoreCompanionsToPlayer();
@@ -3322,6 +3328,35 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 
 		/// <summary>
+		/// Removes the synced food (grain) from the player's inventory when service ends or is suspended.
+		/// This prevents the player from keeping the massive food stores shared by the lord's army.
+		/// </summary>
+		private void RemoveSyncedFood()
+		{
+			try
+			{
+				var main = MobileParty.MainParty;
+				if (main == null)
+					return;
+
+				var grainItem = DefaultItems.Grain;
+				if (grainItem == null)
+					return;
+
+				int currentGrain = main.ItemRoster.GetItemNumber(grainItem);
+				if (currentGrain > 0)
+				{
+					main.ItemRoster.AddToCounts(grainItem, -currentGrain);
+					ModLogger.Info("Food", $"Removed {currentGrain} grain from inventory (cleaning up synced lord food)");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Food", "Error removing synced food", ex);
+			}
+		}
+
+		/// <summary>
 		/// Teleports the player to the nearest settlement with a port when stranded at sea.
 		/// Called when service ends and player has no naval navigation capability.
 		/// This prevents players from being permanently stranded on the water.
@@ -4202,6 +4237,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					main.IsActive = true;
 					TrySetShouldJoinPlayerBattles(main, false);
 					TryReleaseEscort(main);
+
+					// Remove synced food to prevent overburdening during leave
+					RemoveSyncedFood();
 				}
 
 				// Set leave state (preserve all service data)
