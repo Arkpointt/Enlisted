@@ -502,7 +502,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Get a number of duty slots available for a tier.
+        /// Get the number of duty slots available for a tier.
         /// </summary>
         private int GetDutySlotsForTier(int tier)
         {
