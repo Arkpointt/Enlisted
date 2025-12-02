@@ -372,7 +372,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Assign duty to a player if requirements are met.
+        /// Assign duty to the player if requirements are met.
         /// </summary>
         public bool AssignDuty(string dutyId)
         {
