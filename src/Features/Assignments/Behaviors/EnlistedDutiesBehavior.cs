@@ -642,7 +642,7 @@ namespace Enlisted.Features.Assignments.Behaviors
 
         /// <summary>
         /// Get the player's formation type for menu display.
-        /// Based on a chosen troop type, not current equipment.
+        /// Based on the chosen troop type, not current equipment.
         /// </summary>
         public string GetPlayerFormationType()
         {
