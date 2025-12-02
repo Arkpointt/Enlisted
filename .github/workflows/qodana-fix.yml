@@ -1,0 +1,51 @@
+name: Qodana Fix
+
+on:
+  # Allows manual triggering of the workflow from the GitHub UI
+  workflow_dispatch:
+  
+  # Runs when a Pull Request is opened or synchronized
+  pull_request:
+    # Restrict PR checks to only those targeting 'main' or 'master'
+    branches: [main, master]
+
+jobs:
+  qodana:
+    runs-on: ubuntu-latest
+
+    
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+
+    permissions:
+      contents: write       # Required for Qodana to push fix commits
+      pull-requests: write  # Required for Qodana to update the PR
+      checks: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          # Robust Ref Selection: 
+          # 1. Prioritizes the PR head SHA (for PRs)
+          # 2. Falls back to the current branch/tag ref (github.ref)
+          # 3. Finally falls back to the commit SHA (github.sha)
+          ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || github.ref || github.sha }}
+          fetch-depth: 0
+
+      - name: Qodana Scan and Fix
+        # Uses the consistent version previously identified
+        uses: JetBrains/qodana-action@v2025.2
+        
+        env:
+          # Use the repository-specific secret name
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_772579591 }}
+          # Use the consistent cloud endpoint
+          QODANA_ENDPOINT: 'https://qodana.cloud' 
+          # GitHub token for interacting with the PR/repository
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+        with:
+          # Tells Qodana to apply the fixes it finds
+          args: --apply-fixes
+          # Pushes the fixes as a new commit back to the Pull Request branch
+          push-fixes: pull-request
