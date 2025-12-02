@@ -1,0 +1,34 @@
+name: Qodana Fix
+
+on:
+  workflow_dispatch:      # Allows manual trigger
+  pull_request:           # Runs on every PR
+    branches: [main, master]
+
+jobs:
+  qodana:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write       # Required to push code
+      pull-requests: write  # Required to make PRs
+      checks: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Use PR head commit when available, else fallback to dispatch ref/sha
+          ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || github.ref || github.sha }}
+          fetch-depth: 0
+
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@v2025.2
+        env:
+          # This connects to the secret
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_772579591 }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # This connects to your qodana.yaml configuration
+          args: --apply-fixes
+          push-fixes: pull-request
