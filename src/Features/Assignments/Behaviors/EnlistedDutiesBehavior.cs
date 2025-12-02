@@ -389,7 +389,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                 return false;
             }
 
-            // Check if a player meets requirements
+            // Check if the player meets requirements
             if (!CanPlayerPerformDuty(dutyDef))
             {
                 return false;
