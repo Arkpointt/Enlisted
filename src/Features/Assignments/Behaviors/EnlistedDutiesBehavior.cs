@@ -460,7 +460,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Check if a player can perform a specific duty.
+        /// Check if the player can perform a specific duty.
         /// </summary>
         private bool CanPlayerPerformDuty(DutyDefinition duty)
         {
