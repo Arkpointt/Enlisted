@@ -354,7 +354,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Helper method for Harmony patches to check if a player has active duty with a specific officer role.
+        /// Helper method for Harmony patches to check if the player has active duty with a specific officer role.
         /// Assigns officer roles to the player based on their active duties/professions.
         /// This method provides a public API that can be used by other systems to assign
         /// officer roles (Scout, Quartermaster, etc.) based on the player's current assignments.
