@@ -25,7 +25,8 @@ jobs:
         uses: JetBrains/qodana-action@v2025.2
         env:
           # This connects to the secret
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_772579591 }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # This connects to your qodana.yaml configuration
