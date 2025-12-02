@@ -17,8 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Fallback to workflow ref when not running on a PR
-          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          # Use PR head commit when available, else fallback to dispatch ref/sha
+          ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || github.ref || github.sha }}
           fetch-depth: 0
 
       - name: Qodana Scan
