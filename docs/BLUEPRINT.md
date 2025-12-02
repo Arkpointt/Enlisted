@@ -29,7 +29,7 @@ src/
     ├── Ranks/              # Promotions
     ├── Conversations/      # Dialog
     ├── Combat/             # Battle participation
-    └── Interface/          # Menus
+    └── Interface/          # Menu
 ```
 
 ## Harmony Patches (20)
