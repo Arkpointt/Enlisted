@@ -152,6 +152,7 @@ public CampaignTime LeaveStartDate { get; }  // When current leave started
 
 // Veteran retirement system (per-faction)
 private Dictionary<string, FactionVeteranRecord> _veteranRecords;
+private Hero _savedGraceLord;  // Tracks lord during grace period for map marker cleanup
 
 // Real-time monitoring (runs every frame)
 CampaignEvents.TickEvent.AddNonSerializedListener(this, OnTick);
@@ -176,6 +177,8 @@ _currentTermKills += kills;  // Track for faction record
 - Army disbandment detection and handling
 - Settlement/battle state awareness
 - **Grace Period Shield**: After defeat, one-day ignore window prevents re-engagement
+- **Visual Map Tracking**: Lord's party automatically tracked on map when enlisted, removed on discharge/leave
+- **Minor Faction Support**: Veteran system now supports both Kingdoms and Clans (minor factions)
 
 ## Edge Cases
 

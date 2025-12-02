@@ -1288,12 +1288,12 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 int remainingDays = 0;
-                var kingdom = enlistment.CurrentLord?.MapFaction as Kingdom;
+                var faction = enlistment.CurrentLord?.MapFaction;
                 bool isRenewal = false;
 
-                if (kingdom != null)
+                if (faction != null)
                 {
-                    var record = enlistment.GetFactionVeteranRecord(kingdom);
+                    var record = enlistment.GetFactionVeteranRecord(faction);
                     if (record != null && record.IsInRenewalTerm && record.CurrentTermEnd != CampaignTime.Zero)
                     {
                         isRenewal = true;

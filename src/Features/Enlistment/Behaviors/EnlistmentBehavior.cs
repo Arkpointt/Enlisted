@@ -206,6 +206,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private int _savedGraceXP = 0;
 		private string _savedGraceTroopId;
 		private CampaignTime _savedGraceEnlistmentDate = CampaignTime.Zero;
+		private Hero _savedGraceLord;
 
 		/// <summary>
 		/// Last campaign time when the real-time tick update was processed.
@@ -430,7 +431,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		get
 		{
 			if (_enlistedLord == null) return false;
-			var record = GetFactionVeteranRecord(_enlistedLord.MapFaction as Kingdom);
+			var record = GetFactionVeteranRecord(_enlistedLord.MapFaction);
 			return record?.IsInRenewalTerm ?? false;
 		}
 	}
@@ -443,43 +444,44 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		get
 		{
 			if (_enlistedLord == null || !IsInRenewalTerm) return false;
-			var record = GetFactionVeteranRecord(_enlistedLord.MapFaction as Kingdom);
+			var record = GetFactionVeteranRecord(_enlistedLord.MapFaction);
 			return record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd;
 		}
 	}
 
 	/// <summary>
-	/// Gets the veteran record for a kingdom. Creates new record if none exists.
+	/// Gets the veteran record for a faction. Creates new record if none exists.
+	/// Supports both Kingdoms and Clans (minor factions).
 	/// </summary>
-	public FactionVeteranRecord GetFactionVeteranRecord(Kingdom kingdom)
+	public FactionVeteranRecord GetFactionVeteranRecord(IFaction faction)
 	{
-		if (kingdom == null) return null;
+		if (faction == null) return null;
 
-		var kingdomId = kingdom.StringId;
-		if (!_veteranRecords.ContainsKey(kingdomId))
+		var factionId = faction.StringId;
+		if (!_veteranRecords.ContainsKey(factionId))
 		{
-			_veteranRecords[kingdomId] = new FactionVeteranRecord();
+			_veteranRecords[factionId] = new FactionVeteranRecord();
 		}
-		return _veteranRecords[kingdomId];
+		return _veteranRecords[factionId];
 	}
 
 	/// <summary>
 	/// Checks if the player is in cooldown period for a faction.
 	/// </summary>
-	public bool IsInFactionCooldown(Kingdom kingdom)
+	public bool IsInFactionCooldown(IFaction faction)
 	{
-		if (kingdom == null) return false;
-		var record = GetFactionVeteranRecord(kingdom);
+		if (faction == null) return false;
+		var record = GetFactionVeteranRecord(faction);
 		return record.CooldownEnds != CampaignTime.Zero && CampaignTime.Now < record.CooldownEnds;
 	}
 
 	/// <summary>
 	/// Checks if the player can re-enlist with a faction after cooldown.
 	/// </summary>
-	public bool CanReEnlistAfterCooldown(Kingdom kingdom)
+	public bool CanReEnlistAfterCooldown(IFaction faction)
 	{
-		if (kingdom == null) return false;
-		var record = GetFactionVeteranRecord(kingdom);
+		if (faction == null) return false;
+		var record = GetFactionVeteranRecord(faction);
 		// Must have completed first term and be past cooldown
 		return record.FirstTermCompleted &&
 		       record.CooldownEnds != CampaignTime.Zero &&
@@ -664,6 +666,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		dataStore.SyncData("_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
 			dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
 			dataStore.SyncData("_savedGraceTier", ref _savedGraceTier);
+			dataStore.SyncData("_savedGraceLord", ref _savedGraceLord);
 			dataStore.SyncData("_savedGraceXP", ref _savedGraceXP);
 			dataStore.SyncData("_savedGraceTroopId", ref _savedGraceTroopId);
 			dataStore.SyncData("_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
@@ -918,6 +921,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			// Initialize enlistment state with default values
 			_enlistedLord = lord;
+			if (_enlistedLord.PartyBelongedTo != null)
+			{
+				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord.PartyBelongedTo);
+			}
 			bool resumedFromGrace = resumingGraceService;
 			if (resumedFromGrace)
 			{
@@ -1297,6 +1304,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 
 		// Clear enlistment state
+		if (_enlistedLord?.PartyBelongedTo != null)
+		{
+			if (retainKingdomDuringGrace)
+			{
+				_savedGraceLord = _enlistedLord;
+				ModLogger.Debug("Enlistment", "Keeping map tracker for grace period");
+			}
+			else
+			{
+				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord.PartyBelongedTo);
+			}
+		}
 		_enlistedLord = null;
 		_enlistmentTier = 1;
 		_enlistmentXP = 0;
@@ -1465,6 +1484,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			_pendingDesertionKingdom = null;
 			_desertionGracePeriodEnd = CampaignTime.Zero;
+
+			if (_savedGraceLord?.PartyBelongedTo != null)
+			{
+				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_savedGraceLord.PartyBelongedTo);
+			}
+			_savedGraceLord = null;
+
 			_savedGraceTier = -1;
 			_savedGraceXP = 0;
 			_savedGraceTroopId = null;
@@ -2358,8 +2384,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				return;
 			}
 
-			var kingdom = _enlistedLord.MapFaction as Kingdom;
-			var record = GetFactionVeteranRecord(kingdom);
+			var faction = _enlistedLord.MapFaction;
+			var record = GetFactionVeteranRecord(faction);
 
 			if (record?.CurrentTermEnd != CampaignTime.Zero && CampaignTime.Now >= record.CurrentTermEnd)
 			{
@@ -2384,8 +2410,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 
 			var config = EnlistedConfig.LoadRetirementConfig();
-			var kingdom = _enlistedLord.MapFaction as Kingdom;
-			var record = GetFactionVeteranRecord(kingdom);
+			var faction = _enlistedLord.MapFaction;
+			var record = GetFactionVeteranRecord(faction);
 
 			// Mark first term as completed
 			record.FirstTermCompleted = true;
@@ -2407,7 +2433,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			var message = new TextObject("{=Enlisted_Message_RetiredHonor}You have retired with honor. {GOLD} gold received. You may re-enlist with {KINGDOM} after the cooldown period.");
 			message.SetTextVariable("GOLD", config.FirstTermGold);
-			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction"));
+			message.SetTextVariable("KINGDOM", faction?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction"));
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
 
 			ModLogger.Info("Enlistment", $"First term retirement processed: {config.FirstTermGold}g, cooldown ends {record.CooldownEnds}");
@@ -2426,8 +2452,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 
 			var config = EnlistedConfig.LoadRetirementConfig();
-			var kingdom = _enlistedLord.MapFaction as Kingdom;
-			var record = GetFactionVeteranRecord(kingdom);
+			var faction = _enlistedLord.MapFaction;
+			var record = GetFactionVeteranRecord(faction);
 
 			// Update record
 			record.PreservedTier = _enlistmentTier;
@@ -2447,7 +2473,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			var message = new TextObject("{=Enlisted_Message_Discharged}You have been discharged. {GOLD} gold received. You may re-enlist with {KINGDOM} after {DAYS} days.");
 			message.SetTextVariable("GOLD", config.RenewalDischargeGold);
-			message.SetTextVariable("KINGDOM", kingdom?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction"));
+			message.SetTextVariable("KINGDOM", faction?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction"));
 			message.SetTextVariable("DAYS", config.CooldownDays);
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
@@ -2467,8 +2493,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			}
 
 			var config = EnlistedConfig.LoadRetirementConfig();
-			var kingdom = _enlistedLord.MapFaction as Kingdom;
-			var record = GetFactionVeteranRecord(kingdom);
+			var faction = _enlistedLord.MapFaction;
+			var record = GetFactionVeteranRecord(faction);
 
 			// Update record for renewal
 			if (!record.FirstTermCompleted)
@@ -2501,15 +2527,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// </summary>
 		public void ReEnlistAfterCooldown(Hero lord)
 		{
-			var kingdom = lord.MapFaction as Kingdom;
-			if (kingdom == null || !CanReEnlistAfterCooldown(kingdom))
+			var faction = lord.MapFaction;
+			if (faction == null || !CanReEnlistAfterCooldown(faction))
 			{
 				ModLogger.Error("Retirement", "Cannot re-enlist - not eligible or wrong faction");
 				return;
 			}
 
 			var config = EnlistedConfig.LoadRetirementConfig();
-			var record = GetFactionVeteranRecord(kingdom);
+			var record = GetFactionVeteranRecord(faction);
 
 			// Restore tier from record
 			var preservedTier = record.PreservedTier;
@@ -2532,7 +2558,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_currentTermKills = 0;
 
 			var message = new TextObject("{=Enlisted_Message_ReEnlistedRank}You have re-enlisted with {KINGDOM}. Your rank of Tier {TIER} has been restored. Term: {DAYS} days.");
-			message.SetTextVariable("KINGDOM", kingdom.Name);
+			message.SetTextVariable("KINGDOM", faction.Name);
 			message.SetTextVariable("TIER", preservedTier);
 			message.SetTextVariable("DAYS", config.RenewalTermDays);
 			InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -2561,10 +2587,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		{
 			try
 			{
-				var kingdom = _enlistedLord?.MapFaction as Kingdom;
-				if (kingdom == null)
+				var faction = _enlistedLord?.MapFaction;
+				if (faction == null)
 				{
-					ModLogger.Error("Retirement", "Cannot apply relation bonuses - no kingdom");
+					ModLogger.Error("Retirement", "Cannot apply relation bonuses - no faction");
 					return;
 				}
 
@@ -2577,21 +2603,40 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				// +30 with faction (clan reputation affects kingdom standing)
 				// Use leader as proxy for faction reputation
-				if (kingdom.Leader != null && kingdom.Leader != _enlistedLord)
+				if (faction.Leader != null && faction.Leader != _enlistedLord)
 				{
-					ChangeRelationAction.ApplyPlayerRelation(kingdom.Leader, config.FactionReputationBonus, true, true);
-					ModLogger.Info("Retirement", $"+{config.FactionReputationBonus} relation with {kingdom.Name} (via leader)");
+					ChangeRelationAction.ApplyPlayerRelation(faction.Leader, config.FactionReputationBonus, true, true);
+					ModLogger.Info("Retirement", $"+{config.FactionReputationBonus} relation with {faction.Name} (via leader)");
 				}
 
 				// +15 with other lords in faction IF player has > 50 relation with them
-				foreach (var clan in kingdom.Clans)
+				if (faction is Kingdom kingdom)
 				{
-					if (clan == Clan.PlayerClan) continue;
+					foreach (var clan in kingdom.Clans)
+					{
+						if (clan == Clan.PlayerClan) continue;
 
+						foreach (var hero in clan.Heroes)
+						{
+							// Only apply to lords (not companions)
+							if (!hero.IsLord || hero == _enlistedLord || hero == kingdom.Leader || !hero.IsAlive)
+								continue;
+
+							var currentRelation = Hero.MainHero.GetRelation(hero);
+							if (currentRelation > config.OtherLordsMinRelation)
+							{
+								ChangeRelationAction.ApplyPlayerRelation(hero, config.OtherLordsRelationBonus, true, false);
+								ModLogger.Debug("Retirement", $"+{config.OtherLordsRelationBonus} relation with {hero.Name} (had {currentRelation})");
+							}
+						}
+					}
+				}
+				else if (faction is Clan clan)
+				{
+					// Minor faction handling
 					foreach (var hero in clan.Heroes)
 					{
-						// Only apply to lords (not companions)
-						if (!hero.IsLord || hero == _enlistedLord || hero == kingdom.Leader || !hero.IsAlive)
+						if (!hero.IsLord || hero == _enlistedLord || hero == clan.Leader || !hero.IsAlive)
 							continue;
 
 						var currentRelation = Hero.MainHero.GetRelation(hero);
@@ -3560,6 +3605,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				}
 
+				if (_enlistedLord?.PartyBelongedTo != null)
+				{
+					Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord.PartyBelongedTo);
+					var trackerMsg = new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
+					InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
+				}
+
 				SchedulePlayerCaptureCleanup(lordKingdom);
 				return;
 			}
@@ -4173,6 +4225,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				ModLogger.Info("Enlistment", $"Temporary leave started - {maxLeaveDays} days before desertion");
 
+				if (_enlistedLord?.PartyBelongedTo != null)
+				{
+					Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord.PartyBelongedTo);
+					var trackerMsg = new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
+					InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
+				}
+
 				// Fire event for other mods
 				OnLeaveStarted?.Invoke();
 			}
@@ -4195,6 +4254,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				ModLogger.Info("Enlistment", "Returning from temporary leave - resuming service");
+
+				if (_enlistedLord?.PartyBelongedTo != null)
+				{
+					Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord.PartyBelongedTo);
+				}
 
 				// Clear leave state
 				_isOnLeave = false;
@@ -4275,6 +4339,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Clear leave state if on leave
 				if (_isOnLeave)
 				{
+					if (previousLord?.PartyBelongedTo != null)
+					{
+						Campaign.Current.VisualTrackerManager.RemoveTrackedObject(previousLord.PartyBelongedTo);
+					}
 					_isOnLeave = false;
 					_leaveStartDate = CampaignTime.Zero;
 					ModLogger.Debug("Enlistment", "Cleared leave state for transfer");
