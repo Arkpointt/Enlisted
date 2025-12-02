@@ -83,7 +83,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 // Load tier XP requirements from progression_config.json
                 // The requirements array contains XP thresholds needed to promote from each tier to the next
-                var tierXPRequirements = Assignments.Core.ConfigurationManager.GetTierXPRequirements();
+                var tierXPRequirements = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
 
                 // Get the maximum tier allowed to prevent promoting beyond tier 6
                 int maxTier = tierXPRequirements.Length > 1 ? tierXPRequirements.Length - 1 : 1;

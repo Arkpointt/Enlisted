@@ -65,7 +65,7 @@ namespace Enlisted.Mod.Core.Logging
                 sb.AppendLine($"[Finance] army_bonus_multiplier: {finance.WageFormula.ArmyBonusMultiplier}");
 
                 // Tier progression
-                var tierXP = ConfigurationManager.GetTierXPRequirements();
+                var tierXP = ConfigurationManager.GetTierXpRequirements();
                 sb.AppendLine($"[Progression] tier_count: {tierXP.Length}");
                 sb.AppendLine($"[Progression] max_tier_xp: {(tierXP.Length > 0 ? tierXP[tierXP.Length - 1].ToString() : "N/A")}");
 

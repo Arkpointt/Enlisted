@@ -1276,7 +1276,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private int GetNextTierXPRequirement(int currentTier)
         {
             // Load from progression_config.json instead of hardcoded values
-            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXPRequiredForTier(currentTier);
+            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(currentTier);
         }
 
         /// <summary>

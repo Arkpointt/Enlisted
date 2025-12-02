@@ -75,7 +75,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create minimal working default configuration when JSON loading fails.
+        /// Create a minimal working default configuration when JSON loading fails.
         /// Ensures the mod remains functional even with missing or corrupt config files.
         /// </summary>
         private static DutiesSystemConfig CreateDefaultDutiesConfig()
@@ -112,7 +112,7 @@ namespace Enlisted.Features.Assignments.Core
                 TargetSkill = "Athletics",
                 SkillXpDaily = 15,
                 WageMultiplier = 0.8f,
-                RequiredFormations = new System.Collections.Generic.List<string> { "infantry", "archer" }
+                RequiredFormations = [ "infantry", "archer" ]
             };
 
             ModLogger.Info("Config", "Using fallback duties configuration");
@@ -122,25 +122,26 @@ namespace Enlisted.Features.Assignments.Core
         /// <summary>
         /// Get the full path to a ModuleData configuration file.
         /// Works with any Bannerlord installation location.
-        /// Returns null if path cannot be determined, allowing callers to handle fallback.
+        /// Always returns a non-null path; falls back to AppContext.BaseDirectory if needed.
         /// </summary>
         private static string GetModuleDataPath(string fileName)
         {
             try
             {
-                // Get the assembly location (bin folder) and go up to module root
+                // Get the assembly location (bin folder) and go up to the module root
                 var assemblyPath = Assembly.GetExecutingAssembly().Location;
                 var binFolder = Path.GetDirectoryName(assemblyPath); // bin
                 var binParent = Path.GetDirectoryName(binFolder); // Win64_Shipping_wEditor or similar
                 var moduleFolder = Path.GetDirectoryName(binParent); // Module root
-                var moduleDataPath = Path.Combine(moduleFolder, "ModuleData", "Enlisted", fileName);
-
+                var baseFolder = moduleFolder ?? binParent ?? binFolder ?? AppContext.BaseDirectory;
+                var moduleDataPath = Path.Combine(baseFolder, "ModuleData", "Enlisted", fileName);
                 return moduleDataPath;
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Config", $"Error determining config path for {fileName}", ex);
-                return null;
+                // Fallback to a safe non-null default under application base directory
+                return Path.Combine(AppContext.BaseDirectory, "ModuleData", "Enlisted", fileName);
             }
         }
 
@@ -148,7 +149,7 @@ namespace Enlisted.Features.Assignments.Core
         /// Load progression configuration with comprehensive error handling and schema validation.
         /// Falls back to embedded defaults if file loading fails.
         /// </summary>
-        public static ProgressionConfig LoadProgressionConfig()
+        private static ProgressionConfig LoadProgressionConfig()
         {
             if (_cachedProgressionConfig != null)
             {
@@ -199,7 +200,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create minimal working default configuration when JSON loading fails.
+        /// Create a minimal working default configuration when JSON loading fails.
         /// Uses values from progression_config.json as defaults.
         /// </summary>
         private static ProgressionConfig CreateDefaultProgressionConfig()
@@ -210,15 +211,15 @@ namespace Enlisted.Features.Assignments.Core
                 Enabled = true,
                 TierProgression = new TierProgressionConfig
                 {
-                    Requirements = new System.Collections.Generic.List<TierRequirement>
-                    {
+                    Requirements =
+                    [
                         new TierRequirement { Tier = 1, XpRequired = 0, Name = "Levy" },
                         new TierRequirement { Tier = 2, XpRequired = 800, Name = "Footman" },
                         new TierRequirement { Tier = 3, XpRequired = 3000, Name = "Serjeant" },
                         new TierRequirement { Tier = 4, XpRequired = 6000, Name = "Man-at-Arms" },
                         new TierRequirement { Tier = 5, XpRequired = 11000, Name = "Banner Sergeant" },
                         new TierRequirement { Tier = 6, XpRequired = 19000, Name = "Household Guard" }
-                    }
+                    ]
                 }
             };
 
@@ -228,21 +229,21 @@ namespace Enlisted.Features.Assignments.Core
 
         /// <summary>
         /// Get tier XP requirements array from progression config.
-        /// Returns array where index matches tier number (1-based).
+        /// Returns array where the index matches tier number (1-based).
         /// Array[0] is unused, Array[tier] contains the XP threshold needed to promote FROM that tier.
         /// Fix: JSON stores cumulative XP (tier 1=0, tier 2=800), but we need promotion thresholds.
         /// So Array[1] should be 800 (XP needed to go from tier 1→2), Array[2] should be 3000 (tier 2→3), etc.
         /// </summary>
-        public static int[] GetTierXPRequirements()
+        public static int[] GetTierXpRequirements()
         {
             var config = LoadProgressionConfig();
             if (config?.TierProgression?.Requirements == null || config.TierProgression.Requirements.Count == 0)
             {
-                // Fix: Fallback array should map current tier to next tier's requirement
+                // Fix: The fallback array should map current tier to next tier's requirement
                 // Array[1]=800 (need 800 XP to promote from tier 1 to tier 2)
                 // Array[2]=3000 (need 3000 XP to promote from tier 2 to tier 3), etc.
                 // Last element repeats max tier requirement to prevent out-of-bounds
-                return new int[] { 0, 800, 3000, 6000, 11000, 19000, 19000 };
+                return [ 0, 800, 3000, 6000, 11000, 19000, 19000 ];
             }
 
             // Sort by tier and extract XP requirements
@@ -251,11 +252,11 @@ namespace Enlisted.Features.Assignments.Core
                 .ToList();
 
             var maxTier = sorted.Max(r => r.Tier);
-            // Create array with 1-based indexing: [0] unused, [1..maxTier] contain promotion thresholds
+            // Create the array with 1-based indexing: [0] unused, [1..maxTier] contain promotion thresholds
             // Fix: Use NEXT tier's requirement as the promotion threshold for current tier
             var requirements = new int[maxTier + 2]; // +2 to include maxTier+1 for safety
 
-            for (int i = 0; i < sorted.Count; i++)
+            for (var i = 0; i < sorted.Count; i++)
             {
                 var currentReq = sorted[i];
                 if (currentReq.Tier >= 1 && currentReq.Tier <= maxTier)
@@ -276,7 +277,7 @@ namespace Enlisted.Features.Assignments.Core
 
             // Fill remaining elements with max tier requirement to prevent promotion beyond max
             var maxRequirement = sorted.Last().XpRequired;
-            for (int i = maxTier + 1; i < requirements.Length; i++)
+            for (var i = maxTier + 1; i < requirements.Length; i++)
             {
                 requirements[i] = maxRequirement;
             }
@@ -287,9 +288,9 @@ namespace Enlisted.Features.Assignments.Core
         /// <summary>
         /// Get XP required for a specific tier from progression config.
         /// </summary>
-        public static int GetXPRequiredForTier(int tier)
+        public static int GetXpRequiredForTier(int tier)
         {
-            var requirements = GetTierXPRequirements();
+            var requirements = GetTierXpRequirements();
             if (tier >= 0 && tier < requirements.Length)
             {
                 return requirements[tier];
@@ -312,7 +313,7 @@ namespace Enlisted.Features.Assignments.Core
         /// <summary>
         /// Get XP awarded for battle participation from progression config.
         /// </summary>
-        public static int GetBattleParticipationXP()
+        public static int GetBattleParticipationXp()
         {
             var config = LoadProgressionConfig();
             return config?.XpSources?.BattleParticipation ?? 25;
@@ -330,7 +331,7 @@ namespace Enlisted.Features.Assignments.Core
         /// <summary>
         /// Get daily base XP from progression config.
         /// </summary>
-        public static int GetDailyBaseXP()
+        public static int GetDailyBaseXp()
         {
             var config = LoadProgressionConfig();
             return config?.XpSources?.DailyBase ?? 25;
@@ -528,7 +529,7 @@ namespace Enlisted.Features.Assignments.Core
                 var config = fullConfig.Retirement;
 
                 // Validate config values with min/max bounds (matches LoadGameplayConfig pattern)
-                // FirstTermDays: 84-365 days (3-12 Bannerlord months)
+                // FirstTermDays: 84-365 days (3-12 Banner-lord months)
                 if (config.FirstTermDays < 84)
                 {
                     config.FirstTermDays = 84;

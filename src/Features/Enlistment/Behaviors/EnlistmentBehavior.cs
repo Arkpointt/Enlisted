@@ -2153,7 +2153,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private void CheckForPromotion()
 		{
 			// Load tier XP requirements from progression_config.json
-			var tierXPRequirements = EnlistedConfig.GetTierXPRequirements();
+   var tierXPRequirements = EnlistedConfig.GetTierXpRequirements();
 
 			// Get max tier from config (array uses 1-based indexing, so Length - 1 = max tier)
 			// With 6 tiers configured, array size is 7 (indices 0-6), max tier is 6
@@ -2163,7 +2163,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			// Check if player has enough XP for next tier
 			// Fix: Prevent promoting beyond max tier (6) enforced in SetTier
-			while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
+   while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
 			{
 				_enlistmentTier++;
 				promoted = true;
@@ -2604,7 +2604,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// </summary>
 		private int GetMinXPForTier(int tier)
 		{
-			var requirements = EnlistedConfig.GetTierXPRequirements();
+   var requirements = EnlistedConfig.GetTierXpRequirements();
 			if (tier > 0 && tier <= requirements.Length)
 			{
 				return requirements[tier - 1];
@@ -3756,7 +3756,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_enlistmentXP += xp;
 
 			// Get tier requirements to show progress
-			var tierXP = Features.Assignments.Core.ConfigurationManager.GetTierXPRequirements();
+   var tierXP = Features.Assignments.Core.ConfigurationManager.GetTierXpRequirements();
 			var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
 			var progressPercent = nextTierXP > 0 ? (int)((_enlistmentXP * 100) / nextTierXP) : 100;
 
@@ -3801,7 +3801,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				// Get XP values from config
-				int battleXP = Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXP();
+    int battleXP = Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXp();
 
 				if (battleXP > 0)
 				{
@@ -3914,7 +3914,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			try
 			{
 				// Load tier XP requirements from progression_config.json
-				var tierXPRequirements = EnlistedConfig.GetTierXPRequirements();
+    var tierXPRequirements = EnlistedConfig.GetTierXpRequirements();
 
 				// Bounds check: ensure we don't go beyond array limits
 				if (_enlistmentTier < 0 || _enlistmentTier >= tierXPRequirements.Length)
@@ -5354,7 +5354,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				// Load XP values from config
-				int battleParticipationXP = EnlistedConfig.GetBattleParticipationXP();
+    int battleParticipationXP = EnlistedConfig.GetBattleParticipationXp();
 				int xpPerKill = EnlistedConfig.GetXpPerKill();
 
 				// Award participation XP (flat bonus for being in battle)
