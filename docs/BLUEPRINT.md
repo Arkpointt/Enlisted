@@ -32,7 +32,7 @@ src/
     └── Interface/          # Menus
 ```
 
-## Harmony Patches (20)
+## Harmony Patches (21)
 
 | Patch | Purpose |
 |-------|---------|
@@ -50,6 +50,7 @@ src/
 | InfluenceMessageSuppressionPatch | Suppresses "0 influence" messages |
 | LootBlockPatch | Prevents personal loot |
 | MercenaryIncomeSuppressionPatch | Suppresses native mercenary income (players receive mod wages only) |
+| NavalShipExclusionPatch | Prevents lord from using enlisted player's ships for sea travel |
 | OrderOfBattleSuppressionPatch | Skips deployment screen |
 | PostDischargeProtectionPatch | Protects after discharge |
 | SkillSuppressionPatch | Blocks tactics/leadership XP |
