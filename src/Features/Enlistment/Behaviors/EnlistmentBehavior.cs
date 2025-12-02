@@ -1919,12 +1919,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Calculate daily wage based on tier, level, and duties
 				var wage = CalculateDailyWage();
 
-				// Actually pay the wage to the player
+				// Wage payment is handled by ClanFinanceEnlistmentIncomePatch + ClanFinanceEnlistmentGoldChangePatch
+				// which feed into the native daily gold change system.
+				// We only log and track stats here to avoid double payment.
 				if (wage > 0)
 				{
-					var goldBefore = Hero.MainHero.Gold;
-					GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, wage, true);
-
 					// Log wage payment with breakdown context
 					var breakdown = GetWageBreakdown();
 					ModLogger.Info("Gold", $"Wage paid: {wage} denars (base {breakdown.BasePay} + tier {breakdown.TierBonus} + level {breakdown.LevelBonus} + service {breakdown.ServiceBonus} + army {breakdown.ArmyBonus} + duty {breakdown.DutyBonus})");

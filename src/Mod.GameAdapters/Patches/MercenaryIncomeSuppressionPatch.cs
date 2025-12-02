@@ -1,9 +1,7 @@
 using System;
-using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
-using TaleWorlds.Localization;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
@@ -43,7 +41,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var isUnderMercenaryService = Clan.PlayerClan.IsUnderMercenaryService;
                 var awardMultiplier = Clan.PlayerClan.MercenaryAwardMultiplier;
 
-                ModLogger.Debug("Finance", $"MercenaryIncome check: isEnlisted={isEnlisted}, isMercenary={isUnderMercenaryService}, awardMultiplier={awardMultiplier}, applyWithdrawals={applyWithdrawals}");
+                if (ModLogger.IsEnabled("Finance", LogLevel.Debug))
+                {
+                    ModLogger.Debug("Finance", $"MercenaryIncome check: isEnlisted={isEnlisted}, isMercenary={isUnderMercenaryService}, awardMultiplier={awardMultiplier}, applyWithdrawals={applyWithdrawals}, currentGold={goldChange.ResultNumber}");
+                }
 
                 if (!isEnlisted)
                 {
@@ -51,13 +52,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 // Player is enlisted - suppress native mercenary income entirely
-                // The mod's wage system (OnDailyTick in EnlistmentBehavior) handles compensation
+                // The mod's wage system (ClanFinanceEnlistmentIncomePatch) handles compensation
                 ModLogger.Debug("Finance", "Suppressed native mercenary income - enlisted soldiers receive mod wages only");
                 return false; // Skip the original AddMercenaryIncome method
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Finance", $"Error in mercenary income suppression: {ex.Message}");
+                ModLogger.Error("Finance", "Error in mercenary income suppression", ex);
                 return true; // Fail open - allow normal behavior on error
             }
         }
@@ -105,7 +106,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 var isEnlisted = enlistment.IsEnlisted;
 
-                ModLogger.Debug("Finance", $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, newValue={value}");
+                if (ModLogger.IsEnabled("Finance", LogLevel.Debug))
+                {
+                    ModLogger.Debug("Finance", $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, newValue={value}");
+                }
 
                 if (!isEnlisted)
                 {
@@ -115,14 +119,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Player is enlisted - force multiplier to 0
                 if (value != 0)
                 {
-                    ModLogger.Debug("Finance", $"Blocked MercenaryAwardMultiplier change to {value} while enlisted - forcing to 0");
+                    if (ModLogger.IsEnabled("Finance", LogLevel.Debug))
+                    {
+                        ModLogger.Debug("Finance", $"Blocked MercenaryAwardMultiplier change to {value} while enlisted - forcing to 0");
+                    }
                     value = 0;
                 }
                 return true; // Continue with the (now zeroed) value
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Finance", $"Error in mercenary multiplier suppression: {ex.Message}");
+                ModLogger.Error("Finance", "Error in mercenary multiplier suppression", ex);
                 return true; // Fail open - allow normal behavior on error
             }
         }
