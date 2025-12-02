@@ -208,6 +208,7 @@
     <Content Include="ModuleData\Enlisted\equipment_kits.json" />
     <Content Include="ModuleData\Enlisted\equipment_pricing.json" />
     <Content Include="ModuleData\Enlisted\menu_config.json" />
+    <Content Include="ModuleData\Languages\enlisted_strings.xml" />
   </ItemGroup>
   <ItemGroup>
     <!-- Main Documentation -->
@@ -218,6 +219,7 @@
     <MakeDir Directories="$(OutputPath)..\..\Debugging" />
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment" />
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted" />
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages" />
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\" />
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="ModuleData\Enlisted\duties_system.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
@@ -226,6 +228,7 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
+    <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
