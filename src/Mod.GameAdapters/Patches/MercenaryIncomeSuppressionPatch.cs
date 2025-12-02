@@ -82,23 +82,30 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
-                // Safety check for Campaign.Current
+                // Safety checks for early game initialization
+                // Campaign.Current and Clan.PlayerClan can be null during load
                 if (Campaign.Current == null)
                 {
                     return true;
                 }
 
-                // Only intercept for player clan
-                if (__instance != Clan.PlayerClan)
+                // PlayerClan can be null during early initialization
+                var playerClan = Clan.PlayerClan;
+                if (playerClan == null || __instance != playerClan)
                 {
-                    return true; // Allow normal processing for other clans
+                    return true; // Allow normal processing for other clans or during init
                 }
 
+                // EnlistmentBehavior may not be registered yet during game load
                 var enlistment = EnlistmentBehavior.Instance;
-                var isEnlisted = enlistment?.IsEnlisted == true;
-                var currentMultiplier = __instance.MercenaryAwardMultiplier;
+                if (enlistment == null)
+                {
+                    return true; // Behavior not ready yet
+                }
 
-                ModLogger.Debug("Finance", $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, currentValue={currentMultiplier}, newValue={value}");
+                var isEnlisted = enlistment.IsEnlisted;
+
+                ModLogger.Debug("Finance", $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, newValue={value}");
 
                 if (!isEnlisted)
                 {
@@ -108,7 +115,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Player is enlisted - force multiplier to 0
                 if (value != 0)
                 {
-                    ModLogger.Debug("Finance", $"Blocked MercenaryAwardMultiplier change from {currentMultiplier} to {value} while enlisted - forcing to 0");
+                    ModLogger.Debug("Finance", $"Blocked MercenaryAwardMultiplier change to {value} while enlisted - forcing to 0");
                     value = 0;
                 }
                 return true; // Continue with the (now zeroed) value
