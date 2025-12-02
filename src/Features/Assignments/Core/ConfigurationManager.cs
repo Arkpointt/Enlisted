@@ -19,7 +19,7 @@ namespace Enlisted.Features.Assignments.Core
         private static FinanceConfig _cachedFinanceConfig;
         private static GameplayConfig _cachedGameplayConfig;
         private static RetirementConfig _cachedRetirementConfig;
-        
+
         /// <summary>
         /// Load duties system configuration with comprehensive error handling and schema validation.
         /// Falls back to embedded defaults if file loading fails.
@@ -30,34 +30,34 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return _cachedDutiesConfig;
             }
-                
+
             try
             {
                 var configPath = GetModuleDataPath("duties_system.json");
-                
+
                 if (!File.Exists(configPath))
                 {
                     ModLogger.Error("Config", $"Duties config not found at: {configPath}");
                     return CreateDefaultDutiesConfig();
                 }
-                
+
                 var jsonContent = File.ReadAllText(configPath);
                 var config = JsonConvert.DeserializeObject<DutiesSystemConfig>(jsonContent);
-                
+
                 // Schema validation
                 if (config?.SchemaVersion != 1)
                 {
                     ModLogger.Error("Config", $"Unsupported duties config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultDutiesConfig();
                 }
-                
+
                 // Validate configuration structure and required fields
                 if (config.Duties == null || config.Duties.Count == 0)
                 {
                     ModLogger.Error("Config", "Duties config contains no duty definitions");
                     return CreateDefaultDutiesConfig();
                 }
-                
+
                 _cachedDutiesConfig = config;
                 ModLogger.Info("Config", $"Duties config loaded successfully: {config.Duties.Count} duties");
                 return config;
@@ -73,7 +73,7 @@ namespace Enlisted.Features.Assignments.Core
                 return CreateDefaultDutiesConfig();
             }
         }
-        
+
         /// <summary>
         /// Create minimal working default configuration when JSON loading fails.
         /// Ensures the mod remains functional even with missing or corrupt config files.
@@ -100,7 +100,7 @@ namespace Enlisted.Features.Assignments.Core
                     ["battle_participation"] = 50
                 }
             };
-            
+
             // Add basic runner duty as fallback
             defaultConfig.Duties["runner"] = new DutyDefinition
             {
@@ -109,19 +109,20 @@ namespace Enlisted.Features.Assignments.Core
                 Description = "Carry messages and supplies around the camp",
                 MinTier = 1,
                 MaxConcurrent = 3,
-                TargetSkill = "Athletics", 
+                TargetSkill = "Athletics",
                 SkillXpDaily = 15,
                 WageMultiplier = 0.8f,
                 RequiredFormations = new System.Collections.Generic.List<string> { "infantry", "archer" }
             };
-            
+
             ModLogger.Info("Config", "Using fallback duties configuration");
             return defaultConfig;
         }
-        
+
         /// <summary>
         /// Get the full path to a ModuleData configuration file.
         /// Works with any Bannerlord installation location.
+        /// Returns null if path cannot be determined, allowing callers to handle fallback.
         /// </summary>
         private static string GetModuleDataPath(string fileName)
         {
@@ -133,16 +134,16 @@ namespace Enlisted.Features.Assignments.Core
                 var binParent = Path.GetDirectoryName(binFolder); // Win64_Shipping_wEditor or similar
                 var moduleFolder = Path.GetDirectoryName(binParent); // Module root
                 var moduleDataPath = Path.Combine(moduleFolder, "ModuleData", "Enlisted", fileName);
-                
+
                 return moduleDataPath;
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Config", $"Error determining config path for {fileName}", ex);
-                return fileName; // Fallback to relative path
+                return null;
             }
         }
-        
+
         /// <summary>
         /// Load progression configuration with comprehensive error handling and schema validation.
         /// Falls back to embedded defaults if file loading fails.
@@ -153,34 +154,34 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return _cachedProgressionConfig;
             }
-                
+
             try
             {
                 var configPath = GetModuleDataPath("progression_config.json");
-                
+
                 if (!File.Exists(configPath))
                 {
                     ModLogger.Error("Config", $"Progression config not found at: {configPath}");
                     return CreateDefaultProgressionConfig();
                 }
-                
+
                 var jsonContent = File.ReadAllText(configPath);
                 var config = JsonConvert.DeserializeObject<ProgressionConfig>(jsonContent);
-                
+
                 // Schema validation
                 if (config?.SchemaVersion != 1)
                 {
                     ModLogger.Error("Config", $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultProgressionConfig();
                 }
-                
+
                 // Basic validation
                 if (config.TierProgression?.Requirements == null || config.TierProgression.Requirements.Count == 0)
                 {
                     ModLogger.Error("Config", "Progression config contains no tier requirements");
                     return CreateDefaultProgressionConfig();
                 }
-                
+
                 _cachedProgressionConfig = config;
                 ModLogger.Info("Config", $"Progression config loaded from {configPath} ({config.TierProgression.Requirements.Count} tiers)");
                 return config;
@@ -196,7 +197,7 @@ namespace Enlisted.Features.Assignments.Core
                 return CreateDefaultProgressionConfig();
             }
         }
-        
+
         /// <summary>
         /// Create minimal working default configuration when JSON loading fails.
         /// Uses values from progression_config.json as defaults.
@@ -220,11 +221,11 @@ namespace Enlisted.Features.Assignments.Core
                     }
                 }
             };
-            
+
             ModLogger.Info("Config", "Using fallback progression configuration");
             return defaultConfig;
         }
-        
+
         /// <summary>
         /// Get tier XP requirements array from progression config.
         /// Returns array where index matches tier number (1-based).
@@ -243,17 +244,17 @@ namespace Enlisted.Features.Assignments.Core
                 // Last element repeats max tier requirement to prevent out-of-bounds
                 return new int[] { 0, 800, 3000, 6000, 11000, 19000, 19000 };
             }
-            
+
             // Sort by tier and extract XP requirements
             var sorted = config.TierProgression.Requirements
                 .OrderBy(r => r.Tier)
                 .ToList();
-            
+
             var maxTier = sorted.Max(r => r.Tier);
             // Create array with 1-based indexing: [0] unused, [1..maxTier] contain promotion thresholds
             // Fix: Use NEXT tier's requirement as the promotion threshold for current tier
             var requirements = new int[maxTier + 2]; // +2 to include maxTier+1 for safety
-            
+
             for (int i = 0; i < sorted.Count; i++)
             {
                 var currentReq = sorted[i];
@@ -272,17 +273,17 @@ namespace Enlisted.Features.Assignments.Core
                     }
                 }
             }
-            
+
             // Fill remaining elements with max tier requirement to prevent promotion beyond max
             var maxRequirement = sorted.Last().XpRequired;
             for (int i = maxTier + 1; i < requirements.Length; i++)
             {
                 requirements[i] = maxRequirement;
             }
-            
+
             return requirements;
         }
-        
+
         /// <summary>
         /// Get XP required for a specific tier from progression config.
         /// </summary>
@@ -293,11 +294,11 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return requirements[tier];
             }
-            
+
             // Return last tier's requirement if tier is out of range
             return requirements.Length > 0 ? requirements[requirements.Length - 1] : 0;
         }
-        
+
         /// <summary>
         /// Get the display name for a specific tier from progression config.
         /// </summary>
@@ -307,7 +308,7 @@ namespace Enlisted.Features.Assignments.Core
             var requirement = config?.TierProgression?.Requirements?.Find(r => r.Tier == tier);
             return requirement?.Name ?? $"Tier {tier}";
         }
-        
+
         /// <summary>
         /// Get XP awarded for battle participation from progression config.
         /// </summary>
@@ -316,7 +317,7 @@ namespace Enlisted.Features.Assignments.Core
             var config = LoadProgressionConfig();
             return config?.XpSources?.BattleParticipation ?? 25;
         }
-        
+
         /// <summary>
         /// Get XP awarded per enemy kill from progression config.
         /// </summary>
@@ -325,7 +326,7 @@ namespace Enlisted.Features.Assignments.Core
             var config = LoadProgressionConfig();
             return config?.XpSources?.XpPerKill ?? 1;
         }
-        
+
         /// <summary>
         /// Get daily base XP from progression config.
         /// </summary>
@@ -334,7 +335,7 @@ namespace Enlisted.Features.Assignments.Core
             var config = LoadProgressionConfig();
             return config?.XpSources?.DailyBase ?? 25;
         }
-        
+
         /// <summary>
         /// Clear cached configuration. Used for testing or config reloading.
         /// </summary>
@@ -346,7 +347,7 @@ namespace Enlisted.Features.Assignments.Core
             _cachedGameplayConfig = null;
             _cachedRetirementConfig = null;
         }
-        
+
         /// <summary>
         /// Load finance configuration from enlisted_config.json.
         /// Returns cached config or loads from file on first call.
@@ -357,26 +358,26 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return _cachedFinanceConfig;
             }
-                
+
             try
             {
                 var configPath = GetModuleDataPath("enlisted_config.json");
-                
+
                 if (!File.Exists(configPath))
                 {
                     ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultFinanceConfig();
                 }
-                
+
                 var jsonContent = File.ReadAllText(configPath);
                 var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
-                
+
                 if (fullConfig?.Finance == null)
                 {
                     ModLogger.Info("Config", "No finance section in enlisted_config.json, using defaults");
                     return CreateDefaultFinanceConfig();
                 }
-                
+
                 _cachedFinanceConfig = fullConfig.Finance;
                 ModLogger.Info("Config", "Finance config loaded successfully");
                 return _cachedFinanceConfig;
@@ -387,7 +388,7 @@ namespace Enlisted.Features.Assignments.Core
                 return CreateDefaultFinanceConfig();
             }
         }
-        
+
         /// <summary>
         /// Create default finance configuration when JSON loading fails.
         /// </summary>
@@ -407,7 +408,7 @@ namespace Enlisted.Features.Assignments.Core
                 }
             };
         }
-        
+
         /// <summary>
         /// Load gameplay configuration from enlisted_config.json.
         /// Returns cached config or loads from file on first call.
@@ -418,26 +419,26 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return _cachedGameplayConfig;
             }
-                
+
             try
             {
                 var configPath = GetModuleDataPath("enlisted_config.json");
-                
+
                 if (!File.Exists(configPath))
                 {
                     ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultGameplayConfig();
                 }
-                
+
                 var jsonContent = File.ReadAllText(configPath);
                 var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
-                
+
                 if (fullConfig?.Gameplay == null)
                 {
                     ModLogger.Info("Config", "No gameplay section in enlisted_config.json, using defaults");
                     return CreateDefaultGameplayConfig();
                 }
-                
+
                 // Validate reserve threshold is within safe bounds
                 var config = fullConfig.Gameplay;
                 if (config.ReserveTroopThreshold < 20)
@@ -448,7 +449,7 @@ namespace Enlisted.Features.Assignments.Core
                 {
                     config.ReserveTroopThreshold = 500;
                 }
-                    
+
                 // Validate desertion grace period is within safe bounds
                 if (config.DesertionGracePeriodDays < 1)
                 {
@@ -458,7 +459,7 @@ namespace Enlisted.Features.Assignments.Core
                 {
                     config.DesertionGracePeriodDays = 90;
                 }
-                
+
                 // Validate leave max days is within safe bounds (1-14 days)
                 // 14 days is the documented design limit for leave before desertion penalties
                 if (config.LeaveMaxDays < 1)
@@ -469,7 +470,7 @@ namespace Enlisted.Features.Assignments.Core
                 {
                     config.LeaveMaxDays = 14;
                 }
-                
+
                 _cachedGameplayConfig = config;
                 ModLogger.Info("Config", "Gameplay config loaded successfully");
                 return _cachedGameplayConfig;
@@ -480,7 +481,7 @@ namespace Enlisted.Features.Assignments.Core
                 return CreateDefaultGameplayConfig();
             }
         }
-        
+
         /// <summary>
         /// Create default gameplay configuration when JSON loading fails.
         /// </summary>
@@ -493,7 +494,7 @@ namespace Enlisted.Features.Assignments.Core
                 LeaveMaxDays = 14
             };
         }
-        
+
         /// <summary>
         /// Load retirement configuration from enlisted_config.json.
         /// Returns cached config or loads from file on first call.
@@ -504,28 +505,28 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return _cachedRetirementConfig;
             }
-                
+
             try
             {
                 var configPath = GetModuleDataPath("enlisted_config.json");
-                
+
                 if (!File.Exists(configPath))
                 {
                     ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultRetirementConfig();
                 }
-                
+
                 var jsonContent = File.ReadAllText(configPath);
                 var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
-                
+
                 if (fullConfig?.Retirement == null)
                 {
                     ModLogger.Info("Config", "No retirement section in enlisted_config.json, using defaults");
                     return CreateDefaultRetirementConfig();
                 }
-                
+
                 var config = fullConfig.Retirement;
-                
+
                 // Validate config values with min/max bounds (matches LoadGameplayConfig pattern)
                 // FirstTermDays: 84-365 days (3-12 Bannerlord months)
                 if (config.FirstTermDays < 84)
@@ -536,7 +537,7 @@ namespace Enlisted.Features.Assignments.Core
                 {
                     config.FirstTermDays = 365;
                 }
-                    
+
                 // RenewalTermDays: 28-168 days (1-6 Bannerlord months)
                 if (config.RenewalTermDays < 28)
                 {
@@ -546,7 +547,7 @@ namespace Enlisted.Features.Assignments.Core
                 {
                     config.RenewalTermDays = 168;
                 }
-                    
+
                 // CooldownDays: 14-90 days (0.5-3 Bannerlord months)
                 if (config.CooldownDays < 14)
                 {
@@ -556,7 +557,7 @@ namespace Enlisted.Features.Assignments.Core
                 {
                     config.CooldownDays = 90;
                 }
-                
+
                 _cachedRetirementConfig = config;
                 ModLogger.Info("Config", "Retirement config loaded successfully");
                 return _cachedRetirementConfig;
@@ -567,7 +568,7 @@ namespace Enlisted.Features.Assignments.Core
                 return CreateDefaultRetirementConfig();
             }
         }
-        
+
         /// <summary>
         /// Create default retirement configuration when JSON loading fails.
         /// </summary>
@@ -576,7 +577,7 @@ namespace Enlisted.Features.Assignments.Core
             return new RetirementConfig();
         }
     }
-    
+
     /// <summary>
     /// Root config object for enlisted_config.json parsing.
     /// </summary>
@@ -584,14 +585,14 @@ namespace Enlisted.Features.Assignments.Core
     {
         [JsonProperty("finance")]
         public FinanceConfig Finance { get; set; }
-        
+
         [JsonProperty("gameplay")]
         public GameplayConfig Gameplay { get; set; }
-        
+
         [JsonProperty("retirement")]
         public RetirementConfig Retirement { get; set; }
     }
-    
+
     /// <summary>
     /// Finance configuration for wage calculation and display.
     /// Loaded from enlisted_config.json finance section.
@@ -600,14 +601,14 @@ namespace Enlisted.Features.Assignments.Core
     {
         [JsonProperty("show_in_clan_tooltip")]
         public bool ShowInClanTooltip { get; set; } = true;
-        
+
         [JsonProperty("tooltip_label")]
         public string TooltipLabel { get; set; } = "{=enlisted_wage_income}Enlistment Wages";
-        
+
         [JsonProperty("wage_formula")]
         public WageFormulaConfig WageFormula { get; set; } = new WageFormulaConfig();
     }
-    
+
     /// <summary>
     /// Wage calculation formula configuration.
     /// Formula: (base + level*levelMult + tier*tierMult + xp/xpDiv) * armyBonus
@@ -616,20 +617,20 @@ namespace Enlisted.Features.Assignments.Core
     {
         [JsonProperty("base_wage")]
         public int BaseWage { get; set; } = 10;
-        
+
         [JsonProperty("level_multiplier")]
         public int LevelMultiplier { get; set; } = 1;
-        
+
         [JsonProperty("tier_multiplier")]
         public int TierMultiplier { get; set; } = 5;
-        
+
         [JsonProperty("xp_divisor")]
         public int XpDivisor { get; set; } = 200;
-        
+
         [JsonProperty("army_bonus_multiplier")]
         public float ArmyBonusMultiplier { get; set; } = 1.2f;
     }
-    
+
     /// <summary>
     /// Gameplay tuning configuration for combat and service mechanics.
     /// </summary>
@@ -637,14 +638,14 @@ namespace Enlisted.Features.Assignments.Core
     {
         [JsonProperty("reserve_troop_threshold")]
         public int ReserveTroopThreshold { get; set; } = 100;
-        
+
         [JsonProperty("desertion_grace_period_days")]
         public int DesertionGracePeriodDays { get; set; } = 14;
-        
+
         [JsonProperty("leave_max_days")]
         public int LeaveMaxDays { get; set; } = 14;
     }
-    
+
     /// <summary>
     /// Retirement system configuration for veteran benefits and term tracking.
     /// </summary>
@@ -652,34 +653,34 @@ namespace Enlisted.Features.Assignments.Core
     {
         [JsonProperty("first_term_days")]
         public int FirstTermDays { get; set; } = 252;
-        
+
         [JsonProperty("renewal_term_days")]
         public int RenewalTermDays { get; set; } = 84;
-        
+
         [JsonProperty("cooldown_days")]
         public int CooldownDays { get; set; } = 42;
-        
+
         [JsonProperty("first_term_gold")]
         public int FirstTermGold { get; set; } = 10000;
-        
+
         [JsonProperty("first_term_reenlist_bonus")]
         public int FirstTermReenlistBonus { get; set; } = 20000;
-        
+
         [JsonProperty("renewal_discharge_gold")]
         public int RenewalDischargeGold { get; set; } = 5000;
-        
+
         [JsonProperty("renewal_continue_bonus")]
         public int RenewalContinueBonus { get; set; } = 5000;
-        
+
         [JsonProperty("lord_relation_bonus")]
         public int LordRelationBonus { get; set; } = 30;
-        
+
         [JsonProperty("faction_reputation_bonus")]
         public int FactionReputationBonus { get; set; } = 30;
-        
+
         [JsonProperty("other_lords_relation_bonus")]
         public int OtherLordsRelationBonus { get; set; } = 15;
-        
+
         [JsonProperty("other_lords_min_relation")]
         public int OtherLordsMinRelation { get; set; } = 50;
     }

@@ -53,6 +53,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // Player is enlisted - suppress native mercenary income entirely
                 // The mod's wage system (ClanFinanceEnlistmentIncomePatch) handles compensation
+                // We intentionally don't modify goldChange (leaving it as is), because we want to prevent
+                // the native calculation from adding anything. By returning false, we skip the original method.
                 ModLogger.Debug("Finance", "Suppressed native mercenary income - enlisted soldiers receive mod wages only");
                 return false; // Skip the original AddMercenaryIncome method
             }
