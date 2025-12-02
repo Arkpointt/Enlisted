@@ -82,6 +82,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Safety check for Campaign.Current
+                if (Campaign.Current == null)
+                {
+                    return true;
+                }
+
                 // Only intercept for player clan
                 if (__instance != Clan.PlayerClan)
                 {

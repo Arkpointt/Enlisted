@@ -921,9 +921,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 			// Initialize enlistment state with default values
 			_enlistedLord = lord;
-			if (_enlistedLord.PartyBelongedTo != null)
+			if (_enlistedLord != null)
 			{
-				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord.PartyBelongedTo);
+				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
 			}
 			bool resumedFromGrace = resumingGraceService;
 			if (resumedFromGrace)
@@ -1304,16 +1304,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		}
 
 		// Clear enlistment state
-		if (_enlistedLord?.PartyBelongedTo != null)
+		if (_enlistedLord != null)
 		{
 			if (retainKingdomDuringGrace)
 			{
 				_savedGraceLord = _enlistedLord;
-				ModLogger.Debug("Enlistment", "Keeping map tracker for grace period");
+				Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord);
+				var trackerMsg = new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
+				InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
+				ModLogger.Debug("Enlistment", "Added map tracker for grace period");
 			}
 			else
 			{
-				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord.PartyBelongedTo);
+				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
 			}
 		}
 		_enlistedLord = null;
@@ -1485,9 +1488,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_pendingDesertionKingdom = null;
 			_desertionGracePeriodEnd = CampaignTime.Zero;
 
-			if (_savedGraceLord?.PartyBelongedTo != null)
+			if (_savedGraceLord != null)
 			{
-				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_savedGraceLord.PartyBelongedTo);
+				Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_savedGraceLord);
 			}
 			_savedGraceLord = null;
 
@@ -1700,6 +1703,37 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			{
 				ApplyDesertionPenalties();
 				return;
+			}
+
+			// CRITICAL: Enforce map tracker persistence
+			// VisualTrackerManager can sometimes lose tracking state (e.g. after load or party changes)
+			// We re-apply it here to ensure the user can always find their lord during leave/grace
+			if (_isOnLeave && _enlistedLord != null && _enlistedLord.IsAlive)
+			{
+				if (!Campaign.Current.VisualTrackerManager.CheckTracked(_enlistedLord))
+				{
+					Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord);
+					ModLogger.Info("Tracker", "Re-applied map tracker for on-leave lord (was missing)");
+				}
+
+				var lordParty = _enlistedLord.PartyBelongedTo;
+				if (lordParty != null)
+				{
+					// Backup: Ensure the party is physically visible
+					if (!lordParty.IsVisible)
+					{
+						lordParty.IsVisible = true;
+						ModLogger.Info("Tracker", "Forced Lord party to be visible (was hidden) - Hourly Check");
+					}
+				}
+			}
+			else if (IsInDesertionGracePeriod && _savedGraceLord != null && _savedGraceLord.IsAlive)
+			{
+				if (!Campaign.Current.VisualTrackerManager.CheckTracked(_savedGraceLord))
+				{
+					Campaign.Current.VisualTrackerManager.RegisterObject(_savedGraceLord);
+					ModLogger.Info("Tracker", "Re-applied map tracker for grace period lord (was missing)");
+				}
 			}
 
 			// CRITICAL: Ensure non-enlisted players always stay visible and active
@@ -3605,13 +3639,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 				}
 
-				if (_enlistedLord?.PartyBelongedTo != null)
-				{
-					Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord.PartyBelongedTo);
-					var trackerMsg = new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
-					InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
-				}
-
 				SchedulePlayerCaptureCleanup(lordKingdom);
 				return;
 			}
@@ -4225,9 +4252,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				ModLogger.Info("Enlistment", $"Temporary leave started - {maxLeaveDays} days before desertion");
 
-				if (_enlistedLord?.PartyBelongedTo != null)
+				if (_enlistedLord != null)
 				{
-					Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord.PartyBelongedTo);
+					Campaign.Current.VisualTrackerManager.RegisterObject(_enlistedLord);
 					var trackerMsg = new TextObject("{=Enlisted_Message_LordTracked}Your lord has been marked on the map.");
 					InformationManager.DisplayMessage(new InformationMessage(trackerMsg.ToString()));
 				}
@@ -4255,9 +4282,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 				ModLogger.Info("Enlistment", "Returning from temporary leave - resuming service");
 
-				if (_enlistedLord?.PartyBelongedTo != null)
+				if (_enlistedLord != null)
 				{
-					Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord.PartyBelongedTo);
+					Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
 				}
 
 				// Clear leave state
@@ -4339,9 +4366,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				// Clear leave state if on leave
 				if (_isOnLeave)
 				{
-					if (previousLord?.PartyBelongedTo != null)
+					if (previousLord != null)
 					{
-						Campaign.Current.VisualTrackerManager.RemoveTrackedObject(previousLord.PartyBelongedTo);
+						Campaign.Current.VisualTrackerManager.RemoveTrackedObject(previousLord);
 					}
 					_isOnLeave = false;
 					_leaveStartDate = CampaignTime.Zero;

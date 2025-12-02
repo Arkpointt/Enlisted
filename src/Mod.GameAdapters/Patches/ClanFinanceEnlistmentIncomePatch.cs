@@ -60,10 +60,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
 		/// <summary>
 		/// PREFIX: Intercept income calculation BEFORE native code runs.
-		/// When enlisted, we completely replace the result with a detailed wage breakdown.
-		/// This prevents the lord's castle income and other finances from appearing.
+		/// Matches signature: public override ExplainedNumber CalculateClanIncome(Clan clan, bool includeDescriptions = false, bool applyWithdrawals = false, bool includeDetails = false)
 		/// </summary>
-		private static bool Prefix(Clan clan, bool includeDescriptions, ref ExplainedNumber __result)
+		private static bool Prefix(Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails, ref ExplainedNumber __result)
 		{
 			try
 			{
@@ -189,23 +188,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
 		/// <summary>
 		/// PREFIX: Intercept expense calculation BEFORE native code runs.
-		/// When enlisted, return zero expenses.
+		/// Matches signature: public override ExplainedNumber CalculateClanExpenses(Clan clan, bool includeDescriptions = false, bool applyWithdrawals = false, bool includeDetails = false)
 		/// </summary>
-		private static bool Prefix(Clan clan, bool includeDescriptions, ref ExplainedNumber __result)
+		private static bool Prefix(Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails, ref ExplainedNumber __result)
 		{
 			try
 			{
-				// Skip during character creation
-				if (Campaign.Current == null || Clan.PlayerClan == null)
-				{
-					return true; // Run native
-				}
-
-				// Only intercept for player clan
-				if (clan != Clan.PlayerClan)
-				{
-					return true; // Run native for other clans
-				}
+				if (Campaign.Current == null || Clan.PlayerClan == null) return true;
+				if (clan != Clan.PlayerClan) return true;
 
 				var enlistment = EnlistmentBehavior.Instance;
 				bool isEnlisted = enlistment?.IsEnlisted == true;
@@ -216,11 +206,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				// Isolate expenses when enlisted, in grace period, or captured
 				if (!isEnlisted && !isInGracePeriod && !playerCaptured)
 				{
-					return true; // Run native when not enlisted
+					return true;
 				}
 
 				// CRITICAL: Return zero expenses when enlisted
-				// The lord pays for food, troops, and all other expenses
 				__result = new ExplainedNumber(0f, includeDescriptions, null);
 
 				if (!_hasLoggedFirst)
@@ -234,6 +223,79 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			catch (Exception ex)
 			{
 				ModLogger.Error("Finance", $"Error in expense isolation prefix: {ex.Message}");
+				return true;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Forces the daily gold change calculation to use the public CalculateClanIncome/Expenses methods
+	/// instead of the private Internal methods. This is required because:
+	/// 1. Native CalculateClanGoldChange bypasses public overrides (calling Internal directly), which ignores our Income/Expense patches.
+	/// 2. We need to combine Income + Expenses manually to preserve the detailed wage breakdown tooltips from Income.
+	///
+	/// This patch ensures both functionality (wage appears) and compatibility (other mods patching Income/Expenses will work).
+	/// </summary>
+	[HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanGoldChange))]
+	internal static class ClanFinanceEnlistmentGoldChangePatch
+	{
+		private static bool _hasLoggedFirst = false;
+		private static TextObject _expensesText;
+
+		private static void EnsureInitialized()
+		{
+			if (_expensesText == null)
+			{
+				_expensesText = GameTexts.FindText("str_expenses", null);
+			}
+		}
+
+		private static bool Prefix(DefaultClanFinanceModel __instance, Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails, ref ExplainedNumber __result)
+		{
+			try
+			{
+				if (Campaign.Current == null || Clan.PlayerClan == null) return true;
+				if (clan != Clan.PlayerClan) return true;
+
+				var enlistment = EnlistmentBehavior.Instance;
+				bool isEnlisted = enlistment?.IsEnlisted == true;
+
+				// Only redirect when enlisted. When not enlisted, use native logic.
+				if (!isEnlisted)
+				{
+					return true;
+				}
+
+				// 1. Calculate Income using the PUBLIC method (triggers our patch and others)
+				// This returns an ExplainedNumber with the full wage breakdown (if enlisted)
+				ExplainedNumber income = __instance.CalculateClanIncome(clan, includeDescriptions, applyWithdrawals, includeDetails);
+
+				// 2. Calculate Expenses using the PUBLIC method (triggers our patch and others)
+				// This returns 0 (if enlisted)
+				ExplainedNumber expenses = __instance.CalculateClanExpenses(clan, includeDescriptions, applyWithdrawals, includeDetails);
+
+				// 3. Combine them
+				// We start with Income to preserve its tooltips.
+				__result = income;
+
+				// Add expenses (if any) to the result.
+				if (Math.Abs(expenses.ResultNumber) > 0.001f)
+				{
+					EnsureInitialized();
+					__result.Add(expenses.ResultNumber, _expensesText, null);
+				}
+
+				if (!_hasLoggedFirst)
+				{
+					_hasLoggedFirst = true;
+					ModLogger.Info("Finance", $"GoldChange redirected - Income:{income.ResultNumber} Expenses:{expenses.ResultNumber}");
+				}
+
+				return false; // Skip native implementation (which calls Internal)
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Finance", $"Error in GoldChange redirection: {ex.Message}");
 				return true; // Fail open
 			}
 		}

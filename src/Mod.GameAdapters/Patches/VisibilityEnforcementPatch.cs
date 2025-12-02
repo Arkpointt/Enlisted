@@ -92,23 +92,30 @@ namespace Enlisted.Mod.GameAdapters.Patches
                             bool isEnlistedCheck = enlistment?.IsEnlisted == true;
                             bool onLeaveCheck = enlistment?.IsOnLeave == true;
 
-                            // If enlisted and not on leave, force visibility (block hiding)
-                            if (isEnlistedCheck && !onLeaveCheck)
+                            // If enlisted OR on leave, force visibility (block hiding)
+                            if (isEnlistedCheck || onLeaveCheck)
                             {
-                                ModLogger.Info("VisibilityEnforcement", "Blocking Lord visibility hide (forest/ambush protection)");
+                                // CRITICAL FIX: If the party is ALREADY invisible, blocking the "hide" call won't help.
+                                // We must force it to be visible.
+                                if (!__instance.IsVisible)
+                                {
+                                    ModLogger.Info("VisibilityEnforcement", "Lord party was invisible during hide attempt - Forcing IsVisible=true");
+                                    // This will trigger the setter again with value=true.
+                                    // Our Prefix allows value=true when OnLeave/Enlisted (see logic below), so this is safe.
+                                    __instance.IsVisible = true;
+                                }
+                                else
+                                {
+                                    // Only log occasionally to avoid spam when it's working correctly
+                                    // ModLogger.Debug("VisibilityEnforcement", "Blocking Lord visibility hide (party is already visible)");
+                                }
+
                                 return false;
                             }
                             else
                             {
                                 // Debug logging to diagnose why blocking failed
-                                if (onLeaveCheck)
-                                {
-                                    ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: IsOnLeave=true");
-                                }
-                                else if (!isEnlistedCheck)
-                                {
-                                    ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: IsEnlisted=false");
-                                }
+                                ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: Enlisted=false, Leave=false");
                             }
                         }
                     }
