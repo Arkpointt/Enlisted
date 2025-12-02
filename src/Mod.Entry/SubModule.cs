@@ -41,7 +41,7 @@ namespace Enlisted.Mod.Entry
 		}
 
 		private static readonly Queue<DeferredAction> _nextFrame = new();
-		
+
 		/// <summary>
 		/// Queues an action to execute on the next game frame tick instead of immediately.
 		/// Used for menu activations, encounter finishing, and other state transitions that must occur
@@ -61,7 +61,7 @@ namespace Enlisted.Mod.Entry
 				_nextFrame.Enqueue(new DeferredAction(action, requireNoEncounter));
 			}
 		}
-		
+
 		/// <summary>
 		/// Executes queued deferred actions, processing them in FIFO order.
 		/// Called automatically by the Harmony patch on Campaign.Tick() after the native tick completes.
@@ -100,7 +100,7 @@ namespace Enlisted.Mod.Entry
 				}
 			}
 		}
-		
+
 		/// <summary>
 		/// Checks whether the game is currently processing an encounter or battle event.
 		/// Returns true if a player encounter exists or the main party is in a map event (battle/siege).
@@ -115,7 +115,7 @@ namespace Enlisted.Mod.Entry
 			{
 				return false;
 			}
-			
+
 			// The MapEvent property exists on Party, not directly on MobileParty
 			// This is the correct API structure for checking battle state
 			return PlayerEncounter.Current != null || MobileParty.MainParty?.Party.MapEvent != null;
@@ -143,7 +143,7 @@ namespace Enlisted.Mod.Entry
 				// Create Harmony instance with a unique identifier to avoid patch collisions
 				// PatchAll() automatically discovers and applies all [HarmonyPatch] attributes in the assembly
 				_harmony = new Harmony("com.enlisted.mod");
-				
+
 				try
 				{
 					// HidePartyNamePlatePatch uses manual patching to avoid type resolution issues
@@ -152,15 +152,15 @@ namespace Enlisted.Mod.Entry
 					{
 						"HidePartyNamePlatePatch",  // Uses manual patching via ApplyManualPatches()
 					};
-					
+
 					var assembly = System.Reflection.Assembly.GetExecutingAssembly();
 					var patchTypes = assembly.GetTypes()
 						.Where(t => t.GetCustomAttributes(typeof(HarmonyPatch), true).Length > 0 ||
 						           t.GetNestedTypes().Any(n => n.GetCustomAttributes(typeof(HarmonyPatch), true).Length > 0));
-					
+
 					int enabledCount = 0;
 					int skippedCount = 0;
-					
+
 					foreach (var type in patchTypes)
 					{
 						// Skip patches that use manual patching
@@ -170,7 +170,7 @@ namespace Enlisted.Mod.Entry
 							skippedCount++;
 							continue;
 						}
-						
+
 						try
 						{
 							_harmony.CreateClassProcessor(type).Patch();
@@ -181,29 +181,29 @@ namespace Enlisted.Mod.Entry
 							ModLogger.Error("Bootstrap", $"Failed to patch {type.Name}: {patchEx.Message}");
 						}
 					}
-					
+
 					// HidePartyNamePlatePatch will be applied later when campaign starts
 					// Applying during SubModule load causes issues with character creation
 					ModLogger.Info("Bootstrap", "HidePartyNamePlatePatch deferred until campaign start");
-					
+
 					ModLogger.Info("Bootstrap", $"Harmony patches: {enabledCount} auto, {skippedCount} manual");
 				}
 				catch (Exception ex)
 				{
 					ModLogger.Error("Bootstrap", $"Harmony PatchAll failed: {ex.Message}\n{ex.StackTrace}");
 				}
-				
+
 				// Log all patched methods for debugging
 				var patchedMethods = _harmony.GetPatchedMethods();
 				foreach (var method in patchedMethods)
 				{
 					ModLogger.Info("Bootstrap", $"Patched method: {method.DeclaringType?.Name}.{method.Name}");
 				}
-				
+
 				// Run mod conflict diagnostics and write to Debugging/conflicts.log
 				// This helps users identify when other mods interfere with Enlisted
 				ModConflictDiagnostics.RunStartupDiagnostics(_harmony);
-				
+
 				ModLogger.Info("Bootstrap", "Harmony patched");
 			}
 			catch (Exception ex)
@@ -227,19 +227,19 @@ namespace Enlisted.Mod.Entry
 			try
 			{
 				ModLogger.Info("Bootstrap", "Game start");
-				
+
 				// Log startup diagnostics once per session for troubleshooting
 				Mod.Core.Logging.SessionDiagnostics.LogStartupDiagnostics();
-				
+
 				// Load mod settings from JSON configuration file in ModuleData folder
 				// Settings control logging verbosity, encounter suppression, and feature toggles
 				_settings = ModSettings.LoadFromModule();
 				ModConfig.Settings = _settings;
-				
+
 				// Apply log level configuration from settings
 				// This enables per-category verbosity control and message throttling
 				_settings.ApplyLogLevels();
-				
+
 				// Log configuration values for verification
 				Mod.Core.Logging.SessionDiagnostics.LogConfigurationValues();
 
@@ -248,43 +248,43 @@ namespace Enlisted.Mod.Entry
 					// Core enlistment system: tracks which lord the player serves, manages enlistment state,
 					// handles party following, battle participation, and leave/temporary absence
 					campaignStarter.AddBehavior(new EnlistmentBehavior());
-					
+
 					// Conversation system: adds dialog options to talk with lords about enlistment,
 					// service status, promotions, and requesting leave
 					campaignStarter.AddBehavior(new EnlistedDialogManager());
-					
+
 					// Duties system: manages military assignments (duties and professions) that provide
 					// daily skill XP, wage multipliers, and officer role assignments
 					campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
-					
+
 					// Menu system: provides the main enlisted status menu and duty/profession selection interface
 					// Handles menu state transitions, battle detection, and settlement access
 					campaignStarter.AddBehavior(new EnlistedMenuBehavior());
-					
+
 					// Troop selection: allows players to choose which troop type to represent during service,
 					// which determines formation (Infantry/Cavalry/Archer/Horse Archer) and equipment access
 					campaignStarter.AddBehavior(new TroopSelectionManager());
-					
+
 					// Equipment management: handles equipment backups and restoration when leaving service,
 					// ensures players get their personal gear back when they end their enlistment
 					campaignStarter.AddBehavior(new EquipmentManager());
-					
+
 					// Promotion system: checks XP thresholds hourly and promotes players through military ranks
 					// Triggers formation selection at tier 2 and handles promotion notifications
 					campaignStarter.AddBehavior(new PromotionBehavior());
-					
+
 					// Quartermaster system: manages equipment variant selection when players can choose
 					// between different equipment sets at their tier level
 					campaignStarter.AddBehavior(new QuartermasterManager());
-					
+
 					// Quartermaster UI: provides the grid-based equipment selection interface where players
 					// can click on individual equipment pieces to see stats and select variants
 					campaignStarter.AddBehavior(new Features.Equipment.UI.QuartermasterEquipmentSelectorBehavior());
-					
+
 					// Battle encounter system: detects when the lord enters battle and handles player participation,
 					// manages menu transitions during battles, and provides battle wait menu options
 					campaignStarter.AddBehavior(new EnlistedEncounterBehavior());
-					
+
 					// Encounter guard: utility system for managing player party attachment and encounter transitions
 					// Initializes static helper methods used throughout the enlistment system
 					EncounterGuard.Initialize();
@@ -298,7 +298,7 @@ namespace Enlisted.Mod.Entry
 				ModLogger.Error("Bootstrap", "Exception during OnGameStart", ex);
 			}
 		}
-		
+
 		/// <summary>
 		/// Called when a mission (battle, siege, etc.) initializes its behaviors.
 		/// This is the proper place to add mission-specific behaviors like kill tracking.
@@ -310,22 +310,23 @@ namespace Enlisted.Mod.Entry
 			try
 			{
 				base.OnMissionBehaviorInitialize(mission);
-				
+
 				// Only add kill tracker to combat missions when player is enlisted
 				var enlistment = EnlistmentBehavior.Instance;
 				if (enlistment?.IsEnlisted != true)
 				{
 					return;
 				}
-				
+
 				// Check if this is a combat mission (field battle, siege, hideout, etc.)
 				// Skip non-combat missions like conversations, tournaments, arenas
-				if (mission.Mode == MissionMode.Battle || 
+				if (mission.Mode == MissionMode.Battle ||
 				    mission.Mode == MissionMode.Stealth ||
 				    mission.Mode == MissionMode.Deployment)
 				{
 					mission.AddMissionBehavior(new EnlistedKillTrackerBehavior());
-					ModLogger.Debug("KillTracker", $"Kill tracker added to mission (Mode: {mission.Mode})");
+					mission.AddMissionBehavior(new EnlistedFormationAssignmentBehavior());
+					ModLogger.Debug("Mission", $"Enlisted behaviors added to mission (Mode: {mission.Mode})");
 				}
 			}
 			catch (Exception ex)
@@ -334,7 +335,7 @@ namespace Enlisted.Mod.Entry
 			}
 		}
 	}
-	
+
 	/// <summary>
 	/// Harmony patch that hooks into Campaign.Tick() to process deferred actions on the next frame.
 	/// Campaign.Tick() runs every frame of the campaign map and handles all campaign-level updates.
@@ -344,7 +345,7 @@ namespace Enlisted.Mod.Entry
 	public static class NextFrameDispatcherPatch
 	{
 		private static bool _deferredPatchesApplied = false;
-		
+
 		/// <summary>
 		/// Called after Campaign.Tick() completes each frame.
 		/// Processes any actions that were deferred to avoid timing conflicts during game state transitions.
@@ -367,7 +368,7 @@ namespace Enlisted.Mod.Entry
 					ModLogger.Error("Bootstrap", $"Failed to apply deferred patches: {ex.Message}");
 				}
 			}
-			
+
 			NextFrameDispatcher.ProcessNextFrame();
 		}
 	}

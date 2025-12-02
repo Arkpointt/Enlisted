@@ -11,6 +11,7 @@ using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.CampaignSystem.Siege;
+using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using Enlisted.Mod.GameAdapters.Patches;
@@ -910,7 +911,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				int graceXP = _savedGraceXP;
 				string graceTroopId = _savedGraceTroopId;
 
-				// Backup player's personal equipment before service begins
+ 			// Backup player's personal equipment before service begins
 			// This ensures the player gets their original equipment back when service ends
 			// Equipment is backed up once at the start to prevent losing items during service
 			if (!_hasBackedUpEquipment)
@@ -918,6 +919,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				BackupPlayerEquipment();
 				_hasBackedUpEquipment = true;
 			}
+
+			// Protect player's ships from damage during enlistment
+			// Ships remain with the player but cannot take damage while serving under a lord
+			SetPlayerShipsInvulnerable();
 
 			// Initialize enlistment state with default values
 			_enlistedLord = lord;
@@ -1175,7 +1180,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 			}
 
-			// Restore the player's personal equipment that was backed up at enlistment start
+ 		// Restore the player's personal equipment that was backed up at enlistment start
 			// EXCEPTION: During grace period (retainKingdomDuringGrace=true), keep enlisted equipment
 			// Player is still considered a soldier on temporary leave/grace, not fully discharged
 			if (_hasBackedUpEquipment && !retainKingdomDuringGrace)
@@ -1187,6 +1192,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			else if (retainKingdomDuringGrace)
 			{
 				ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
+			}
+
+			// Restore player's ships to normal vulnerability after full discharge
+			// During grace period, ships remain protected in case player re-enlists
+			if (!retainKingdomDuringGrace)
+			{
+				RestorePlayerShipsVulnerability();
+			}
+			else
+			{
+				ModLogger.Debug("Naval", "Keeping ships protected during grace period");
 			}
 
 			// Restore companions and troops to the player's party
@@ -2223,6 +2239,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				{
 					// Enlisted players: check if lord is in battle
 					ModLogger.Info("SaveLoad", $"Post-load: Restoring enlisted state (Lord: {_enlistedLord?.Name}, OnLeave: {_isOnLeave})");
+
+					// Re-apply ship protection after loading a save while enlisted
+					// This ensures ships remain invulnerable even if the flag wasn't persisted
+					SetPlayerShipsInvulnerable();
 
 					// Ensure the party can join battles when the lord fights
 					TrySetShouldJoinPlayerBattles(main, true);
@@ -4073,11 +4093,86 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 				}
 
-				ModLogger.Info("Equipment", "Personal equipment restored");
+ 			ModLogger.Info("Equipment", "Personal equipment restored");
 			}
 			catch (Exception ex)
 			{
 				ModLogger.Error("Equipment", "Error restoring equipment", ex);
+			}
+		}
+
+		/// <summary>
+		/// Make player's ships invulnerable to prevent damage while enlisted.
+		/// Ships remain with the player but cannot take damage during military service.
+		/// This protects player investment in ships while serving under a lord.
+		/// </summary>
+		private void SetPlayerShipsInvulnerable()
+		{
+			try
+			{
+				var mainParty = MobileParty.MainParty;
+				if (mainParty?.Party?.Ships == null)
+				{
+					ModLogger.Debug("Naval", "No ships to protect - player has no ships");
+					return;
+				}
+
+				int protectedCount = 0;
+				foreach (Ship ship in mainParty.Party.Ships)
+				{
+					if (ship != null && !ship.IsInvulnerable)
+					{
+						ship.IsInvulnerable = true;
+						protectedCount++;
+						ModLogger.Debug("Naval", $"Protected ship: {ship.Name} (HP: {ship.HitPoints}/{ship.MaxHitPoints})");
+					}
+				}
+
+				if (protectedCount > 0)
+				{
+					ModLogger.Info("Naval", $"Protected {protectedCount} player ship(s) from damage during enlistment");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Naval", "Error protecting player ships", ex);
+			}
+		}
+
+		/// <summary>
+		/// Restore player's ships to normal vulnerability after discharge.
+		/// Called when player is fully discharged (not during grace period).
+		/// </summary>
+		private void RestorePlayerShipsVulnerability()
+		{
+			try
+			{
+				var mainParty = MobileParty.MainParty;
+				if (mainParty?.Party?.Ships == null)
+				{
+					ModLogger.Debug("Naval", "No ships to restore - player has no ships");
+					return;
+				}
+
+				int restoredCount = 0;
+				foreach (Ship ship in mainParty.Party.Ships)
+				{
+					if (ship != null && ship.IsInvulnerable)
+					{
+						ship.IsInvulnerable = false;
+						restoredCount++;
+						ModLogger.Debug("Naval", $"Restored ship vulnerability: {ship.Name} (HP: {ship.HitPoints}/{ship.MaxHitPoints})");
+					}
+				}
+
+				if (restoredCount > 0)
+				{
+					ModLogger.Info("Naval", $"Restored vulnerability to {restoredCount} player ship(s) after discharge");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Naval", "Error restoring ship vulnerability", ex);
 			}
 		}
 
@@ -5276,12 +5371,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Battle", "Player battle ended");
 				ModLogger.Info("Battle", $"Battle Type: {mapEvent?.EventType}, Was Siege: {mapEvent?.IsSiegeAssault}");
 
-				// CRITICAL: Don't award XP if battle hasn't actually finished (no winner yet)
+ 			// CRITICAL: Don't award XP if battle hasn't actually finished (no winner yet)
 				// This prevents XP from being awarded when player clicks "Wait in Reserve"
 				// which calls PlayerEncounter.Finish() but the battle is still ongoing
 				if (mapEvent != null && !mapEvent.HasWinner)
 				{
 					ModLogger.Debug("Battle", "Skipping battle rewards - battle still ongoing (no winner yet)");
+					return;
+				}
+
+				// CRITICAL: Don't award XP if player is entering "Wait in Reserve" mode
+				// PlayerEncounter.Finish() triggers this event, but we're just entering reserve, not ending battle
+				if (Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+				{
+					ModLogger.Debug("Battle", "Skipping battle rewards - player is entering reserve mode, not ending battle");
 					return;
 				}
 

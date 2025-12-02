@@ -9,12 +9,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// Prevents the Order of Battle deployment screen from appearing when the player is enlisted.
     /// As an enlisted soldier, the player should not have deployment control and should spawn
     /// automatically without the deployment screen, just like a regular soldier in an army.
+    /// This patches CanPlayerSideDeployWithOrderOfBattle which is called by
+    /// AssignPlayerRoleInTeamMissionController.OnPlayerTeamDeployed() to decide whether to show the OOB screen.
     /// </summary>
-    [HarmonyPatch(typeof(SandBox.GameComponents.SandboxBattleInitializationModel), "CanPlayerSideDeployWithOrderOfBattleAux")]
+    [HarmonyPatch(typeof(SandBox.GameComponents.SandboxBattleInitializationModel), "CanPlayerSideDeployWithOrderOfBattle")]
     public class OrderOfBattleSuppressionPatch
     {
         /// <summary>
-        /// Prefix that runs before CanPlayerSideDeployWithOrderOfBattleAux.
+        /// Prefix that runs before CanPlayerSideDeployWithOrderOfBattle.
         /// Returns false to prevent Order of Battle screen when player is enlisted.
         /// </summary>
         static bool Prefix(ref bool __result)
