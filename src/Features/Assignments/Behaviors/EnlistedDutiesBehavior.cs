@@ -528,7 +528,7 @@ namespace Enlisted.Features.Assignments.Behaviors
 
         /// <summary>
         /// Set player formation and update available duties.
-        /// Called when a player chooses formation at Tier 2.
+        /// Called when the player chooses formation at Tier 2.
         /// </summary>
         public void SetPlayerFormation(string formation)
         {
