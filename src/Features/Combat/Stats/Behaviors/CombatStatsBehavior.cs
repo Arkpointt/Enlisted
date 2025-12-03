@@ -1,6 +1,6 @@
-using System;
-using TaleWorlds.CampaignSystem;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Mod.Core.Logging;
+using TaleWorlds.CampaignSystem;
 
 namespace Enlisted.Features.Combat.Stats.Behaviors
 {
@@ -13,9 +13,8 @@ namespace Enlisted.Features.Combat.Stats.Behaviors
     {
         public static CombatStatsBehavior Instance { get; private set; }
 
-        // Kill tracking data
-        private int _totalKills = 0;              // Lifetime total (persists across enlistments)
-        private int _unrewardedKills = 0;        // Accumulates until paid during daily tick
+        private int _totalKills;
+        private int _unrewardedKills;
 
         public int TotalKills => _totalKills;
         public int UnrewardedKills => _unrewardedKills;
@@ -56,7 +55,7 @@ namespace Enlisted.Features.Combat.Stats.Behaviors
             _totalKills += killCount;
             _unrewardedKills += killCount;
 
-            // Silent success - no logging for normal operation
+            ServiceRecordManager.Instance?.OnKillsRecorded(killCount);
         }
 
         /// <summary>

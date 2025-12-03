@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using TaleWorlds.CampaignSystem.AgentOrigins;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
 
@@ -19,6 +23,8 @@ namespace Enlisted.Features.Combat.Behaviors
     public class EnlistedFormationAssignmentBehavior : MissionBehavior
     {
         private const int MaxPositionFixAttempts = 30; // Try for about 0.5 seconds at 60fps
+        private const int MaxPartyAssignmentAttempts = 60; // Try for about 1 second at 60fps for party assignment
+        
         private Agent _assignedAgent;
 
         // Track if we've logged the behavior initialization
@@ -28,6 +34,13 @@ namespace Enlisted.Features.Combat.Behaviors
         // This handles the case where the player spawned late or in wrong position
         private bool _needsPositionFix;
         private int _positionFixAttempts;
+        
+        // Track player party (companions + retinue) formation assignment
+        // This ensures all player party members fight together as a unified squad
+        private bool _needsPartyAssignment;
+        private bool _partyAssignmentComplete;
+        private int _partyAssignmentAttempts;
+        private Formation _playerSquadFormation;
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
@@ -116,6 +129,15 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     _positionFixAttempts++;
                     TryTeleportPlayerToFormationPosition();
+                }
+                
+                // Phase 7: Handle player party (companions + retinue) formation assignment
+                // Agents may not all be spawned in the first few ticks, so we keep trying
+                if (_needsPartyAssignment && !_partyAssignmentComplete && 
+                    _partyAssignmentAttempts < MaxPartyAssignmentAttempts)
+                {
+                    _partyAssignmentAttempts++;
+                    TryAssignPlayerPartyToFormation();
                 }
             }
             catch (Exception ex)
@@ -231,6 +253,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     $"[{caller}] Player already in {formationClass} formation - will still check position");
                 SuppressPlayerCommand(playerAgent);
                 _assignedAgent = playerAgent;
+                _playerSquadFormation = targetFormation;
 
                 // FIX: Still need to check position even if already in correct formation
                 // The game may have auto-assigned the player but spawned them in wrong location
@@ -238,6 +261,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     _needsPositionFix = true;
                     _positionFixAttempts = 0;
+                }
+                
+                // Phase 7: At Tier 4+, still need to assign party members even if player already assigned
+                var tier = enlistment.EnlistmentTier;
+                if (tier >= RetinueManager.LanceTier && !_partyAssignmentComplete)
+                {
+                    _needsPartyAssignment = true;
+                    _partyAssignmentAttempts = 0;
+                    ModLogger.Debug("FormationAssignment", 
+                        $"Tier {tier} player already in formation - will still assign party members");
                 }
 
                 return;
@@ -249,12 +282,28 @@ namespace Enlisted.Features.Combat.Behaviors
                 playerAgent.Formation = targetFormation;
                 SuppressPlayerCommand(playerAgent);
                 _assignedAgent = playerAgent;
+                
+                // Store the player's formation for party assignment
+                _playerSquadFormation = targetFormation;
 
                 // FIX: Mark that we need to teleport the player to their formation position
                 // This handles cases where the player spawned late or in wrong location
                 // because their map party was slightly behind the lord when battle started
                 _needsPositionFix = true;
                 _positionFixAttempts = 0;
+                
+                // Phase 7: At Tier 4+, player has companions and retinue soldiers
+                // Mark that we need to assign all player party members to the same formation
+                var enlistmentTier = enlistment.EnlistmentTier;
+                if (enlistmentTier >= RetinueManager.LanceTier)
+                {
+                    _needsPartyAssignment = true;
+                    _partyAssignmentAttempts = 0;
+                    _partyAssignmentComplete = false;
+                    
+                    ModLogger.Info("FormationAssignment",
+                        $"[{caller}] Tier {enlistmentTier} player - will assign party (companions + retinue) to {formationClass} squad");
+                }
 
                 ModLogger.Info("FormationAssignment",
                     $"[{caller}] Assigned enlisted player to {formationClass} formation (index: {targetFormation.Index}) - will attempt position fix");
@@ -356,8 +405,163 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
+        ///     Phase 7: Assigns all agents from the player's party (companions + retinue) to the same formation.
+        ///     At Tier 4+, the player commands a unified squad of their personal troops.
+        ///     This ensures companions and retinue soldiers fight together with the player.
+        /// </summary>
+        private void TryAssignPlayerPartyToFormation()
+        {
+            try
+            {
+                var playerAgent = Agent.Main;
+                if (playerAgent == null || !playerAgent.IsMainAgent || !playerAgent.IsActive())
+                {
+                    return;
+                }
+
+                // Verify we have a valid formation to assign to
+                if (_playerSquadFormation == null)
+                {
+                    ModLogger.Debug("FormationAssignment", "Party assignment skipped: no player formation set");
+                    return;
+                }
+
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true || enlistment.IsOnLeave)
+                {
+                    _needsPartyAssignment = false;
+                    return;
+                }
+
+                // Check tier requirement
+                if (enlistment.EnlistmentTier < RetinueManager.LanceTier)
+                {
+                    _needsPartyAssignment = false;
+                    return;
+                }
+
+                var team = playerAgent.Team;
+                if (team == null || team.ActiveAgents == null)
+                {
+                    return;
+                }
+
+                // Get player's main party for comparison
+                var mainParty = PartyBase.MainParty;
+                if (mainParty == null)
+                {
+                    ModLogger.Debug("FormationAssignment", "Party assignment skipped: MainParty is null");
+                    return;
+                }
+
+                // Track assignment statistics for logging
+                var assignedCompanions = 0;
+                var assignedRetinue = 0;
+                var alreadyAssigned = 0;
+                var agentsChecked = 0;
+                var partyAgentsFound = 0;
+
+                // Create a snapshot of agents to iterate (avoids collection modification issues)
+                var agentSnapshot = new List<Agent>(team.ActiveAgents);
+                
+                foreach (var agent in agentSnapshot)
+                {
+                    // Skip the player themselves
+                    if (agent == playerAgent)
+                    {
+                        continue;
+                    }
+
+                    // Skip dead or invalid agents
+                    if (agent == null || !agent.IsActive())
+                    {
+                        continue;
+                    }
+
+                    agentsChecked++;
+
+                    // Check if this agent originated from the player's main party
+                    // PartyGroupAgentOrigin is the standard origin type for campaign battle agents
+                    if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
+                    {
+                        partyAgentsFound++;
+                        
+                        // Check if already in the correct formation
+                        if (agent.Formation == _playerSquadFormation)
+                        {
+                            alreadyAssigned++;
+                            continue;
+                        }
+
+                        // Assign to player's squad formation
+                        agent.Formation = _playerSquadFormation;
+
+                        // Track what type of agent was assigned for logging
+                        if (agent.Character?.IsHero == true)
+                        {
+                            assignedCompanions++;
+                            ModLogger.Debug("FormationAssignment",
+                                $"Assigned companion {agent.Character.Name} to player's squad");
+                        }
+                        else
+                        {
+                            assignedRetinue++;
+                            var troopName = agent.Character?.Name?.ToString() ?? "unknown";
+                            ModLogger.Debug("FormationAssignment",
+                                $"Assigned retinue soldier {troopName} to player's squad");
+                        }
+                    }
+                }
+
+                // Set player as owner of the formation for squad command UI
+                // This allows the player to issue orders (move, charge, hold) to their squad
+                if (_playerSquadFormation.PlayerOwner != playerAgent)
+                {
+                    _playerSquadFormation.PlayerOwner = playerAgent;
+                    ModLogger.Debug("FormationAssignment", "Set player as PlayerOwner of squad formation");
+                }
+
+                // Set player as sergeant (can command own formation only, not other formations)
+                // This is done via SuppressPlayerCommand but we reinforce it here
+                if (team.IsPlayerGeneral || !team.IsPlayerSergeant)
+                {
+                    team.SetPlayerRole(isPlayerGeneral: false, isPlayerSergeant: true);
+                    ModLogger.Debug("FormationAssignment", "Set player role to Sergeant (squad commands only)");
+                }
+
+                // Log summary if we assigned anyone
+                var totalAssigned = assignedCompanions + assignedRetinue;
+                if (totalAssigned > 0 || partyAgentsFound > 0)
+                {
+                    ModLogger.Info("FormationAssignment",
+                        $"Player party assignment: checked={agentsChecked}, found={partyAgentsFound}, " +
+                        $"companions={assignedCompanions}, retinue={assignedRetinue}, already={alreadyAssigned}");
+                }
+
+                // Mark complete when we've either assigned agents or done enough attempts
+                // We keep trying for a while because agents may spawn in waves (reinforcements)
+                if (partyAgentsFound > 0 || _partyAssignmentAttempts >= MaxPartyAssignmentAttempts / 2)
+                {
+                    _partyAssignmentComplete = true;
+                    
+                    if (partyAgentsFound > 0)
+                    {
+                        ModLogger.Info("FormationAssignment",
+                            $"=== UNIFIED SQUAD FORMED === {partyAgentsFound} party members in {_playerSquadFormation.PhysicalClass} formation");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", $"Error assigning player party to formation: {ex.Message}");
+                _partyAssignmentComplete = true; // Stop trying on error
+            }
+        }
+
+        /// <summary>
         ///     Strips command authority from the enlisted player.
-        ///     Prevents them from being captain or general.
+        ///     At Tier 4+, player becomes a sergeant (can command own squad only).
+        ///     Below Tier 4, player has no command authority at all.
         /// </summary>
         private void SuppressPlayerCommand(Agent playerAgent)
         {
@@ -373,23 +577,42 @@ namespace Enlisted.Features.Combat.Behaviors
                     return;
                 }
 
+                var enlistment = EnlistmentBehavior.Instance;
+                var isTier4Plus = enlistment.EnlistmentTier >= RetinueManager.LanceTier;
+                
                 var captaincyStripped = false;
                 var roleStripped = false;
                 string commandTransferredTo = null;
 
-                // 1. Strip Captaincy
+                // 1. Strip Captaincy of other formations
+                // At Tier 4+, player should only control their own squad, not be captain of standard formations
                 if (playerAgent.Formation != null && playerAgent.Formation.Captain == playerAgent)
                 {
                     playerAgent.Formation.Captain = null;
                     captaincyStripped = true;
                 }
 
-                // 2. Strip Generalship Role (Force AI Control on all formations)
-                // This ensures the game logic knows the player is not the general.
-                if (playerAgent.Team.IsPlayerGeneral || playerAgent.Team.IsPlayerSergeant)
+                // 2. Set appropriate role based on tier
+                // Tier 4+: Sergeant role - can command own formation/squad only
+                // Below Tier 4: No command authority at all
+                if (isTier4Plus)
                 {
-                    playerAgent.Team.SetPlayerRole(false, false);
-                    roleStripped = true;
+                    // Sergeant: can issue orders to own formation but not other formations
+                    if (playerAgent.Team.IsPlayerGeneral || !playerAgent.Team.IsPlayerSergeant)
+                    {
+                        playerAgent.Team.SetPlayerRole(isPlayerGeneral: false, isPlayerSergeant: true);
+                        roleStripped = true;
+                        ModLogger.Debug("FormationAssignment", "Set player role: Sergeant (squad commands enabled)");
+                    }
+                }
+                else
+                {
+                    // No command authority for lower tier enlisted soldiers
+                    if (playerAgent.Team.IsPlayerGeneral || playerAgent.Team.IsPlayerSergeant)
+                    {
+                        playerAgent.Team.SetPlayerRole(isPlayerGeneral: false, isPlayerSergeant: false);
+                        roleStripped = true;
+                    }
                 }
 
                 // 3. Strip Generalship (OrderController Owner)
@@ -497,9 +720,17 @@ namespace Enlisted.Features.Combat.Behaviors
             try
             {
                 base.OnEndMission();
-                _assignedAgent = null; // Reset for next mission
+                
+                // Reset player assignment state
+                _assignedAgent = null;
                 _needsPositionFix = false;
                 _positionFixAttempts = 0;
+                
+                // Reset player party assignment state
+                _needsPartyAssignment = false;
+                _partyAssignmentComplete = false;
+                _partyAssignmentAttempts = 0;
+                _playerSquadFormation = null;
             }
             catch (Exception ex)
             {

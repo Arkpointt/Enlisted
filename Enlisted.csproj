@@ -165,6 +165,17 @@
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
+    <Compile Include="src\Features\Combat\Stats\Behaviors\CombatStatsBehavior.cs"/>
+    <Compile Include="src\Features\Combat\Stats\Behaviors\CombatStatsMissionBehavior.cs"/>
+    <Compile Include="src\Features\CommandTent\Data\FactionServiceRecord.cs"/>
+    <Compile Include="src\Features\CommandTent\Data\LifetimeServiceRecord.cs"/>
+    <Compile Include="src\Features\CommandTent\Data\RetinueState.cs"/>
+    <Compile Include="src\Features\CommandTent\Core\ServiceRecordManager.cs"/>
+    <Compile Include="src\Features\CommandTent\Core\RetinueManager.cs"/>
+    <Compile Include="src\Features\CommandTent\Core\RetinueLifecycleHandler.cs"/>
+    <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
+    <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
+    <Compile Include="src\Features\CommandTent\UI\CommandTentMenuHandler.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs"/>
@@ -199,6 +210,7 @@
     <Content Include="ModuleData\Enlisted\equipment_kits.json"/>
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
+    <Content Include="ModuleData\Enlisted\command_tent_config.json"/>
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
   </ItemGroup>
   <ItemGroup>
@@ -228,6 +240,7 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\command_tent_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>

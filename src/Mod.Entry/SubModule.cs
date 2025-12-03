@@ -4,6 +4,9 @@ using System.Linq;
 using System.Reflection;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.CommandTent.Core;
+using Enlisted.Features.CommandTent.Systems;
+using Enlisted.Features.CommandTent.UI;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -335,6 +338,22 @@ namespace Enlisted.Mod.Entry
                     // Battle encounter system: detects when the lord enters battle and handles player participation,
                     // manages menu transitions during battles, and provides battle wait menu options
                     campaignStarter.AddBehavior(new EnlistedEncounterBehavior());
+
+                    // Service records: tracks faction-specific and lifetime statistics
+                    campaignStarter.AddBehavior(new ServiceRecordManager());
+
+                    // Command Tent UI: provides menus for viewing service records (current posting,
+                    // faction history, lifetime summary) and future retinue management
+                    campaignStarter.AddBehavior(new CommandTentMenuHandler());
+
+                    // Retinue trickle system: adds free soldiers over time (every 2-3 days)
+                    campaignStarter.AddBehavior(new RetinueTrickleSystem());
+
+                    // Retinue lifecycle handler: clears retinue on capture, discharge, lord death, army defeat
+                    campaignStarter.AddBehavior(new RetinueLifecycleHandler());
+
+                    // Retinue casualty tracker: reconciles troop counts after battles
+                    campaignStarter.AddBehavior(new RetinueCasualtyTracker());
 
                     // Encounter guard: utility system for managing player party attachment and encounter transitions
                     // Initializes static helper methods used throughout the enlistment system

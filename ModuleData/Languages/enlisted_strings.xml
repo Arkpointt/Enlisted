@@ -126,5 +126,145 @@
     <string id="enlisted_request_service_army_leader" text="My lord, I offer you my sword and my loyalty. Will you have me in your ranks?" />
     <string id="enlisted_army_leader_rejection" text="Hold, friend. I see you already command men of your own. A general cannot become a foot soldier while lords still march beneath his banner. Disband your army first, then we may speak of service." />
     <string id="enlisted_army_leader_acknowledge" text="I understand, my lord. I shall see to my army's affairs first." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Main Menu -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_menu_enter" text="Enter the Command Tent" />
+    <string id="ct_menu_intro" text="The canvas flaps in the breeze. Maps and tallies cover a makeshift table. Your small corner of the army's camp." />
+    <string id="ct_option_records" text="Review service records" />
+    <string id="ct_option_retinue" text="Muster personal retinue" />
+    <string id="ct_option_companions" text="Companion assignments" />
+    <string id="ct_option_back" text="Return to camp" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Service Records Menu -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_records_intro" text="Your service history and military records are catalogued here." />
+    <string id="ct_option_current" text="Current Posting" />
+    <string id="ct_option_faction" text="Faction Records" />
+    <string id="ct_option_lifetime" text="Lifetime Summary" />
+    <string id="ct_back_tent" text="Back to Command Tent" />
+    <string id="ct_back_records" text="Back to Service Records" />
+    <string id="ct_back_factions" text="Back to Faction Records" />
+    <string id="ct_not_enlisted" text="You are not currently enlisted." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Warnings & Tier Requirements -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_warn_tier_locked" text="You must reach Tier 4 to command soldiers." />
+    <string id="ct_warn_party_full" text="Your party is full. Dismiss troops or increase party size." />
+    <string id="ct_warn_party_limited" text="Party size limits your retinue to {COUNT} soldiers." />
+    <string id="ct_warn_cannot_afford" text="You cannot afford this ({COST} denars required)." />
+    <string id="ct_warn_faction_unavailable" text="{FACTION_NAME} does not field mounted archers." />
+    <string id="ct_warn_full_retinue" text="Your retinue is at full strength." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Leadership Notification (Tier 4) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_leadership_title" text="Promotion to Leadership" />
+    <string id="ct_leadership_message" text="Your service has not gone unnoticed. You've been granted the authority to command a small lance of soldiers in battle.\n\nVisit the Command Tent to request men be assigned to your command. Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep." />
+    <string id="ct_leadership_acknowledge" text="Understood" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Retinue Management -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_retinue_title" text="Personal Retinue" />
+    <string id="ct_retinue_intro" text="As a {RANK_NAME}, you may command a {UNIT_NAME} of men." />
+    <string id="ct_retinue_muster" text="Current Muster: {CURRENT}/{CAPACITY} soldiers" />
+    <string id="ct_retinue_upkeep" text="Daily Upkeep: {COST} denars" />
+    <string id="ct_retinue_none" text="No soldiers mustered. Choose a type to begin." />
+    <string id="ct_unit_lance" text="lance of five" />
+    <string id="ct_unit_squad" text="squad of ten" />
+    <string id="ct_unit_retinue" text="retinue of twenty" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Soldier Types -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_type_infantry" text="Men-at-Arms" />
+    <string id="ct_type_infantry_desc" text="Foot soldiers with sword and shield. Steady in the line." />
+    <string id="ct_type_archers" text="Bowmen" />
+    <string id="ct_type_archers_desc" text="Skilled archers to loose volleys upon your command." />
+    <string id="ct_type_cavalry" text="Mounted Lancers" />
+    <string id="ct_type_cavalry_desc" text="Horsemen with lance and sword. Swift and deadly." />
+    <string id="ct_type_horse_archers" text="Mounted Bowmen" />
+    <string id="ct_type_horse_archers_desc" text="Riders who loose arrows from the saddle." />
+    <string id="ct_type_crossbowmen" text="Crossbowmen" />
+    <string id="ct_type_crossbowmen_desc" text="Armored crossbowmen with deadly bolts." />
+    <string id="ct_type_fians" text="Fian Archers" />
+    <string id="ct_type_fians_desc" text="Legendary woodland archers of Battania." />
+    <string id="ct_type_khuzait_ha" text="Steppe Riders" />
+    <string id="ct_type_mameluke" text="Mameluke Cavalry" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Companions Retained (Tier 4+) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_companions_retained" text="Your {COUNT} companion(s) remain under your direct command." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Retinue Lifecycle Events -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_capture_retinue_lost" text="Your retinue has scattered. Your soldiers fled when you were captured." />
+    <string id="ct_desert_retinue_lost" text="Your retinue has abandoned you. Deserters cannot command men." />
+    <string id="ct_enlist_end_retinue" text="Your soldiers have returned to the army ranks. Serve again to command new men." />
+    <string id="ct_defeat_retinue_lost" text="In the chaos of defeat, your retinue has scattered." />
+    <string id="ct_lord_died_retinue" text="With your lord fallen, your retinue has scattered to the winds." />
+    <string id="ct_type_change_dismiss" text="Your current soldiers have been dismissed to make way for new recruits." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Replenishment -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_trickle_added" text="A new soldier has reported for duty." />
+    <string id="ct_requisition_success" text="{COUNT} soldiers have reported for duty." />
+    <string id="ct_requisition_cooldown" text="Cooldown: {DAYS} days remaining" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Upkeep & Desertion -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_upkeep_charged" text="Retinue upkeep: {COST} denars deducted." />
+    <string id="ct_upkeep_desertion" text="Unable to pay upkeep. A soldier has deserted." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Retinue Menu (Phase 4) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_retinue_current_muster" text="Current Muster" />
+    <string id="ct_retinue_purchase" text="Purchase Soldiers" />
+    <string id="ct_retinue_dismiss" text="Dismiss Soldiers" />
+    <string id="ct_retinue_no_soldiers" text="You have no soldiers mustered." />
+    <string id="ct_back_retinue" text="Back to Retinue" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Purchase Confirmation -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_purchase_confirm_title" text="Confirm Purchase" />
+    <string id="ct_purchase_confirm_msg" text="Purchase {COUNT} {TYPE_NAME} for {COST} denars?\n\nDaily upkeep: {UPKEEP} denars" />
+    <string id="ct_confirm_yes" text="Purchase" />
+    <string id="ct_confirm_no" text="Cancel" />
+    <string id="ct_purchase_success" text="{COUNT} soldiers have been mustered to your retinue." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Type Change Confirmation -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_type_change_title" text="Change Soldier Type" />
+    <string id="ct_type_change_msg" text="You currently have {COUNT} soldiers. Changing type will dismiss them. Continue?" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Dismiss Confirmation -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_dismiss_confirm_btn" text="Dismiss all soldiers" />
+    <string id="ct_dismiss_cancel" text="Keep my soldiers" />
+    <string id="ct_dismiss_success" text="Your soldiers have been dismissed." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Battle Casualty Tracking -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_battle_casualties" text="Battle casualties: {COUNT} soldiers lost." />
+    <string id="ct_battle_no_casualties" text="Your retinue survived the battle intact." />
+    <string id="ct_battle_wiped" text="Your entire retinue has been lost in battle." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Future Feature Placeholders -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_companions_future" text="Companion assignments will be available in a future update." />
   </strings>
 </base>

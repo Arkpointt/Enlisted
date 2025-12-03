@@ -4946,6 +4946,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Transfer player companions and troops to lord's party.
         ///     Called when returning from leave or initial enlistment.
+        ///     At Tier 4+, companions stay with the player to form their retinue squad.
         /// </summary>
         private void TransferPlayerTroopsToLord()
         {
@@ -4959,16 +4960,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                // At Tier 4+, companions stay with player to form the retinue squad
+                // This enables the Command Tent's Personal Retinue system
+                var keepCompanions = _enlistmentTier >= 4;
+
                 var transferCount = 0;
                 var companionCount = 0;
+                var companionsKept = 0;
 
-                // Transfer all non-player troops to lord's party
+                // Transfer non-player troops to lord's party (with tier-based companion exception)
                 var troopsToTransfer = new List<TroopRosterElement>();
                 foreach (var troop in main.MemberRoster.GetTroopRoster())
                 {
                     // Skip the player character
                     if (troop.Character == CharacterObject.PlayerCharacter)
                     {
+                        continue;
+                    }
+
+                    // At Tier 4+, keep companions with player for retinue system
+                    if (keepCompanions && troop.Character.IsHero &&
+                        troop.Character.HeroObject?.IsPlayerCompanion == true)
+                    {
+                        companionsKept++;
+                        ModLogger.Debug("Enlistment",
+                            $"Keeping companion {troop.Character.Name} with player (Tier {_enlistmentTier}+)");
                         continue;
                     }
 
@@ -4992,18 +5008,30 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     main.MemberRoster.AddToCounts(troop.Character, -1 * troop.Number, false, 0, 0, true, -1);
                 }
 
-                if (transferCount > 0)
+                if (transferCount > 0 || companionsKept > 0)
                 {
-                    var message =
-                        new TextObject(
-                            "Your {TROOP_COUNT} troops{COMPANION_INFO} have joined your lord's party for the duration of service.");
-                    message.SetTextVariable("TROOP_COUNT", transferCount.ToString());
-                    message.SetTextVariable("COMPANION_INFO",
-                        companionCount > 0 ? $" (including {companionCount} companions)" : "");
-                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    if (transferCount > 0)
+                    {
+                        var message =
+                            new TextObject(
+                                "Your {TROOP_COUNT} troops{COMPANION_INFO} have joined your lord's party for the duration of service.");
+                        message.SetTextVariable("TROOP_COUNT", transferCount.ToString());
+                        message.SetTextVariable("COMPANION_INFO",
+                            companionCount > 0 ? $" (including {companionCount} companions)" : "");
+                        InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    }
+
+                    if (companionsKept > 0)
+                    {
+                        var keptMessage = new TextObject(
+                            "{=ct_companions_retained}Your {COUNT} companion(s) remain under your direct command.");
+                        keptMessage.SetTextVariable("COUNT", companionsKept.ToString());
+                        InformationManager.DisplayMessage(new InformationMessage(keptMessage.ToString()));
+                    }
 
                     ModLogger.Info("Enlistment",
-                        $"Transferred {transferCount} troops ({companionCount} companions) to lord's party");
+                        $"Transfer complete: {transferCount} troops ({companionCount} companions) to lord, " +
+                        $"{companionsKept} companions kept with player (Tier {_enlistmentTier})");
                 }
             }
             catch (Exception ex)
