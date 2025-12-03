@@ -311,7 +311,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Assigning officer roles through public APIs (as per Option A in the design) is a straightforward and dependable method, though the player will be presented as an "official" officer.
+        /// Simple and reliable, but player shows as 'official' officer.
         /// </summary>
         private void AssignOfficerRolesViaPublicApi(MobileParty lordParty, Hero playerHero)
         {
