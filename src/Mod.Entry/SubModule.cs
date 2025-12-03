@@ -41,7 +41,6 @@ namespace Enlisted.Mod.Entry
 		}
 
 		private static readonly Queue<DeferredAction> _nextFrame = new();
-
 		/// <summary>
 		/// Queues an action to execute on the next game frame tick instead of immediately.
 		/// Used for menu activations, encounter finishing, and other state transitions that must occur
