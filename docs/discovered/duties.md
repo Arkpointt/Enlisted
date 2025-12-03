@@ -2,6 +2,19 @@
 
 **Generated from API verification analysis and decompile findings**
 
+## Index
+
+- [Core Harmony Patch Targets (VERIFIED AVAILABLE)](#core-harmony-patch-targets-verified-available)
+- [Troop Selection Application (100% VERIFIED)](#troop-selection-application-100-verified)
+- [Troop Type Detection (100% VERIFIED)](#troop-type-detection-100-verified)
+- [Configuration System (JSON Support VERIFIED)](#configuration-system-json-support-verified)
+- [Integration Notes](#integration-notes)
+- [Critical Missing Features (NOW COVERED)](#critical-missing-features-now-covered)
+- [Enlisted Menu System](#enlisted-menu-system)
+- [Save System Compliance (VERIFIED COMPATIBLE)](#save-system-compliance-verified-compatible)
+
+---
+
 ## Core Harmony Patch Targets (VERIFIED AVAILABLE)
 
 ### Officer Role Substitution (Essential for Duties System)

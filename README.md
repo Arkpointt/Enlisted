@@ -7,12 +7,14 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 ### 🛡️ Enlistment
 - Talk to any lord: "I wish to serve in your warband."
 - You join their party as a regular soldier.
+- **Army Leader Restriction**: Cannot enlist while leading your own army (must disband first).
 - **No Personal Loot/Prisoners**: Spoils go to your lord.
 - **No Starvation**: Your lord provides food.
 - **Wages**: Paid daily based on your rank.
 
 ### ⚔️ Battle System
 - **Automatic Deployment**: You spawn in your assigned formation (Infantry, Archer, Cavalry, etc.).
+- **Auto-Join Battles**: Automatically join your lord's side when they enter combat - no menu interruptions.
 - **Strict Command Structure**:
   - You are a soldier, not a general.
   - You cannot issue orders (F1-F9 disabled).
@@ -20,7 +22,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - **No Order of Battle**: The deployment screen is suppressed for immersion.
 
 ### 🎖️ Rank & Progression
-- **7 Tiers**: From Levy to Household Guard.
+- **6 Tiers**: Levy → Footman → Serjeant → Man-at-Arms → Banner Serjeant → Household Guard.
 - **Promotions**: Earn XP from battles and kills to reach the next tier.
 - **Rewards**: Higher daily wages and access to better equipment.
 
@@ -39,6 +41,8 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 ### ⚓ Naval Support
 - Fully compatible with naval mods.
 - Your party follows the lord onto ships seamlessly.
+- **Ship Protection**: Your ships are protected from damage while enlisted.
+- **Naval Exclusion**: Lords cannot use your ships for navigation.
 
 ### 🚪 Retirement
 - **Term of Service**: 252 days (3 years).
@@ -50,7 +54,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 
 1. **Requirements**:
    - Mount & Blade II: Bannerlord v1.3.9
-   - Bannerlord.Harmony
+   - Bannerlord.Harmony v2.3.6+
 
 2. **Setup**:
    - Extract the `Enlisted` folder to `<Bannerlord>\Modules\`.
@@ -69,3 +73,4 @@ Customize the mod via JSON files in `Modules\Enlisted\ModuleData\Enlisted\`:
 Logs are located in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 - `enlisted.log`: General mod activity.
 - `conflicts.log`: Diagnostics for mod conflicts.
+- `dialogue.log`: Conversation system events.

@@ -1,5 +1,30 @@
 # Temporary Leave System
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Purpose](#purpose)
+- [Inputs/Outputs](#inputsoutputs)
+- [Behavior](#behavior)
+  - [Request Leave](#request-leave)
+  - [Leave State](#leave-state)
+  - [Leave Timer](#leave-timer)
+  - [Return to Service](#return-to-service)
+  - [Transfer Service (While on Leave)](#transfer-service-while-on-leave)
+  - [Desertion Penalties (Leave Expiration)](#desertion-penalties-leave-expiration)
+  - [Retirement vs Leave](#retirement-vs-leave)
+- [Technical Implementation](#technical-implementation)
+  - [Files Modified](#files-modified)
+  - [Leave Expiration Check (OnDailyTick)](#leave-expiration-check-ondailytick)
+  - [APIs Used](#apis-used-verified-against-136-decompile)
+- [Edge Cases](#edge-cases)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Companion and Troop Management](#companion-and-troop-management)
+  - [Leave Flow](#leave-flow)
+  - [Party Transfer Pattern](#party-transfer-pattern)
+
+---
+
 ## Overview
 Allows enlisted players to request temporary leave from military service, restoring vanilla gameplay while preserving service data for later return. Leave has a 14-day time limit after which desertion penalties apply.
 

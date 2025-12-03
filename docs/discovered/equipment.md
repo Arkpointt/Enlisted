@@ -2,6 +2,26 @@
 
 **Equipment system documentation and item categorization for the Enlisted mod**
 
+## Index
+
+- [Troop Selection System](#-troop-selection-system)
+- [EQUIPMENT VARIANT SYSTEM - DECOMPILE RESEARCH RESULTS](#-equipment-variant-system---decompile-research-results)
+- [ACTUAL GAME DATA ANALYSIS - COMPLETED](#-actual-game-data-analysis---completed)
+- [COMPREHENSIVE FACTION EQUIPMENT VARIANT ANALYSIS](#-comprehensive-faction-equipment-variant-analysis)
+- [QUARTERMASTER FEATURE IMPLEMENTATION GUIDE](#-quartermaster-feature-implementation-guide)
+- [Troop Discovery Pipeline](#-troop-discovery-pipeline)
+- [Equipment Replacement System](#-equipment-replacement-system)
+- [Equipment Roster Structure](#-equipment-roster-structure)
+- [Item Categories](#-item-categories)
+- [Equipment Slot Mapping](#-equipment-slot-mapping)
+- [Equipment Discovery Pipeline](#-equipment-discovery-pipeline)
+- [Equipment Categories by Tier & Culture](#-equipment-categories-by-tier--culture)
+- [Implementation Usage](#-implementation-usage)
+- [Equipment Filtering](#-equipment-filtering)
+- [FINAL QUARTERMASTER RESEARCH SUMMARY](#-final-quartermaster-research-summary)
+
+---
+
 ## 🎯 **Troop Selection System**
 
 **SYSTEM CHANGE**: **Switched from custom equipment kits to troop selection using real game troops for better player experience**

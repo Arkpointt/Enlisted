@@ -2,9 +2,9 @@
 
 ## Build
 ```bash
-dotnet build -c "Enlisted EDITOR"
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
-Output: `<Bannerlord>/Modules/Enlisted/`
+Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/`
 
 ## Structure
 
@@ -50,9 +50,22 @@ Logs in `Modules/Enlisted/Debugging/`:
 - `enlisted.log` - Main activity
 - `conflicts.log` - Mod compatibility
 
+## API Reference
+
+When working with Bannerlord APIs, refer to the discovered documentation:
+- `docs/discovered/engine.md` - Core API signatures (v1.3.4 verified)
+- `docs/discovered/menus.md` - Menu system APIs
+- `docs/discovered/gauntlet.md` - UI system reference
+- `docs/discovered/images.md` - Image system (v1.3.4)
+- `docs/discovered/equipment.md` - Equipment APIs
+- `docs/discovered/helpers.md` - Helper methods
+
+All discovered docs are updated for Bannerlord v1.3.4 compatibility.
+
 ## Guidelines
 
 - Fix lint warnings, don't suppress
 - Comments explain *why*, not *what*
 - Use Harmony only when needed
 - Keep changes small and focused
+- Verify APIs against v1.3.4 decompile in `C:\Dev\Enlisted\DECOMPILE\`

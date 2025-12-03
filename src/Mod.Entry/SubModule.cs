@@ -186,11 +186,16 @@ namespace Enlisted.Mod.Entry
                     _ = nameof(IncidentsSuppressionPatch.Prefix);
                     _ = nameof(InfluenceMessageSuppressionPatch.Prefix);
 
-                    // HidePartyNamePlatePatch uses manual patching to avoid type resolution issues
-                    // Skip it in auto-patching, apply manually after
+                    // These patches are deferred until first Campaign.Tick() to avoid TypeInitializationException.
+                    // Their target classes (DefaultArmyManagementCalculationModel, EncounterGameMenuBehavior)
+                    // have static fields that call GameTexts.FindText() before the localization system is ready.
+                    // This causes crashes on Proton/Linux and potential issues on Windows under some conditions.
                     var manualPatches = new HashSet<string>
                     {
-                        "HidePartyNamePlatePatch" // Uses manual patching via ApplyManualPatches()
+                        "HidePartyNamePlatePatch",           // Uses manual patching via ApplyManualPatches()
+                        "ArmyCohesionExclusionPatch",        // Target: DefaultArmyManagementCalculationModel
+                        "SettlementOutsideLeaveButtonPatch", // Target: EncounterGameMenuBehavior
+                        "JoinEncounterAutoSelectPatch"       // Target: EncounterGameMenuBehavior
                     };
 
                     var assembly = Assembly.GetExecutingAssembly();
@@ -228,9 +233,9 @@ namespace Enlisted.Mod.Entry
                         }
                     }
 
-                    // HidePartyNamePlatePatch will be applied later when campaign starts
-                    // Applying during SubModule load causes issues with character creation
-                    ModLogger.Info("Bootstrap", "HidePartyNamePlatePatch deferred until campaign start");
+                    // Deferred patches will be applied later when campaign starts
+                    // Applying during SubModule load causes TypeInitializationException on Proton/Linux
+                    ModLogger.Info("Bootstrap", $"{skippedCount} patches deferred until campaign start");
 
                     ModLogger.Info("Bootstrap", $"Harmony patches: {enabledCount} auto, {skippedCount} manual");
                 }
@@ -422,7 +427,16 @@ namespace Enlisted.Mod.Entry
                 {
                     var harmony = new Harmony("com.enlisted.mod.deferred");
                     HidePartyNamePlatePatch.ApplyManualPatches(harmony);
-                    ModLogger.Info("Bootstrap", "Deferred HidePartyNamePlatePatch applied on first campaign tick");
+                    
+                    // Apply patches that target types with early static initialization.
+                    // These fail on Proton/Linux if applied during OnSubModuleLoad because
+                    // their target classes call GameTexts.FindText() in static field initializers.
+                    // By deferring until now, the localization system is fully initialized.
+                    harmony.CreateClassProcessor(typeof(ArmyCohesionExclusionPatch)).Patch();
+                    harmony.CreateClassProcessor(typeof(SettlementOutsideLeaveButtonPatch)).Patch();
+                    harmony.CreateClassProcessor(typeof(JoinEncounterAutoSelectPatch)).Patch();
+                    
+                    ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
                 }
                 catch (Exception ex)
                 {

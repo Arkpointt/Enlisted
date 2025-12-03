@@ -2,9 +2,59 @@
 
 Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 
+## Index
+
+- [CRITICAL DECOMPILE FINDINGS](#-critical-decompile-findings---final-breakthrough--phase-2a-api-corrections)
+- [Menus / Encounter (v1.3.4 VERIFIED APIS)](#menus--encounter-v134-verified-apis)
+- [Dialog Surfaces](#dialog-surfaces)
+- [Campaign Events (VERIFIED + CRITICAL ADDITIONS)](#campaign-events-verified--critical-additions)
+- [Army Management](#army-management)
+- [Party / AI (ENHANCED WITH VERIFIED APIS)](#party--ai-enhanced-with-verified-apis)
+- [Party Officer Roles (VERIFIED FOR DUTIES SYSTEM)](#party-officer-roles-verified-for-duties-system)
+- [Settlement Entry](#settlement-entry)
+- [Map Events](#map-events)
+- [Hero / Clan / Kingdom](#hero--clan--kingdom)
+- [Party Properties](#party-properties)
+- [Structs Used In Signatures (Time/Math)](#structs-used-in-signatures-timemath)
+- [Localization](#localization)
+- [Localization System (VERIFIED AVAILABLE)](#localization-system-verified-available)
+- [Custom Game Models (VERIFIED AVAILABLE)](#custom-game-models-verified-available)
+- [API Verification Results (From Decompile Analysis)](#api-verification-results-from-decompile-analysis)
+- [Library](#library)
+- [Actions (Critical for Encounter Management)](#actions-critical-for-encounter-management)
+- [Character Development](#character-development)
+- [Equipment Management](#equipment-management)
+- [Notifications & UI](#notifications--ui)
+- [Sound System](#sound-system)
+- [Text Helpers](#text-helpers)
+- [Campaign Time & Control](#campaign-time--control)
+- [Visual Tracking](#visual-tracking)
+- [Equipment & Items (Core)](#equipment--items-core)
+- [Gear Assignment & Rosters (CampaignSystem)](#gear-assignment--rosters-campaignsystem)
+- [Custom UI (Gauntlet)](#custom-ui-gauntlet)
+- [Inventory UI (SandBox & View)](#inventory-ui-sandbox--view)
+- [Inventory ViewModels (SandBox.ViewModelCollection)](#inventory-viewmodels-sandboxviewmodelcollection)
+- [Conversation Behaviors (SandBox)](#conversation-behaviors-sandbox)
+- [Settlement / Town ViewModels (optional)](#settlement--town-viewmodels-optional)
+- [Culture / Items / Equipment (Core)](#culture--items--equipment-core)
+- [Hero / Character / Roster (CampaignSystem)](#hero--character--roster-campaignsystem)
+- [Equipment Selection Models (GameComponents)](#equipment-selection-models-gamecomponents)
+- [Object Lookup (ObjectSystem)](#object-lookup-objectsystem)
+- [XML Data Access Patterns](#xml-data-access-patterns)
+- [Gauntlet / Screen System (for custom selector)](#gauntlet--screen-system-for-custom-selector)
+- [UI Utilities (optional)](#ui-utilities-optional)
+- [Configuration & JSON Support (VERIFIED AVAILABLE)](#configuration--json-support-verified-available)
+- [Character Type Detection (for Troop Types)](#character-type-detection-for-troop-types)
+- [Equipment Backup & Restoration (VERIFIED FOR CRITICAL MISSING FEATURES)](#equipment-backup--restoration-verified-for-critical-missing-features)
+- [Kingdom Integration (VERIFIED FOR VASSALAGE SYSTEM)](#kingdom-integration-verified-for-vassalage-system)
+- [Save System (VERIFIED - NO CUSTOM SAVEDEFINER NEEDED)](#save-system-verified---no-custom-savedefiner-needed)
+
+---
+
 ## ⚠️ **CRITICAL DECOMPILE FINDINGS** - **FINAL BREAKTHROUGH + PHASE 2A API CORRECTIONS**
 
-**Updated**: After deep decompile analysis, we discovered the **complete approach** for encounter control:
+**Updated**: 2025-01-28 (v1.3.4 compatibility)  
+**Source**: After deep decompile analysis, we discovered the **complete approach** for encounter control:
 
 - **❌ Previous Assumption**: Patched encounters for prevention/finishing
 - **✅ Reality**: Uses **engine properties + immediate menu system** for encounter control
@@ -24,12 +74,12 @@ Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 00:46:58 UTC
 
 **❌ NEVER use outdated mod documentation** - causes compilation errors and broken functionality
 
-## Menus / Encounter (ENHANCED WITH VERIFIED APIS)
+## Menus / Encounter (v1.3.4 VERIFIED APIS)
 
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ActivateGameMenu(string menuId)
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: ExitToLast()
 TaleWorlds.CampaignSystem.GameMenus.GameMenu :: SwitchToMenu(string menuId)
-TaleWorlds.CampaignSystem.CampaignGameStarter :: AddWaitGameMenu(string menuId, string menuText, OnInitDelegate onInit, OnConditionDelegate condition, OnConsequenceDelegate consequence, OnTickDelegate onTick, MenuAndOptionType menuType, MenuOverlayType overlay, float targetWaitHours, MenuFlags flags, object relatedObject) ✅ **VERIFIED SIGNATURE FROM HIDEOUTCAMPAIGNBEHAVIOR.CS:81**
+TaleWorlds.CampaignSystem.CampaignGameStarter :: AddWaitGameMenu(string idString, string text, OnInitDelegate initDelegate, OnConditionDelegate condition, OnConsequenceDelegate consequence, OnTickDelegate tick, GameMenu.MenuAndOptionType type, GameMenu.MenuOverlayType overlay, float targetWaitHours, GameMenu.MenuFlags flags, object relatedObject) ✅ **VERIFIED v1.3.4 FROM CAMPAIGNGAMESTARTER.CS:95**
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: DoMeeting()
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: Finish(bool forcePlayerOutFromSettlement)
 TaleWorlds.CampaignSystem.Encounters.PlayerEncounter :: LeaveEncounter { get; set; }
@@ -56,13 +106,17 @@ TaleWorlds.CampaignSystem.CampaignEvents :: OnPartyDetachedAnotherParty(MobilePa
 TaleWorlds.CampaignSystem.CampaignEvents :: HourlyTickEvent
 TaleWorlds.CampaignSystem.CampaignEvents :: TickEvent(float) ✅ **CRITICAL - VERIFIED EXISTS**
 
-### **Menu Registration Delegate Patterns** ✅ **VERIFIED FROM DECOMPILE**
+### **Menu Registration Delegate Patterns** ✅ **VERIFIED v1.3.4 FROM DECOMPILE**
 ```csharp
-// Correct delegate wrappers (from HideoutCampaignBehavior.cs):
+// Correct delegate wrappers (from PlayerArmyWaitBehavior.cs and others):
 new OnInitDelegate(OnEnlistedStatusInit)        // Menu initialization  
 new OnConditionDelegate(OnEnlistedStatusCondition)  // Menu availability condition
 new OnConsequenceDelegate(consequence)          // Menu consequence (optional)
 new OnTickDelegate(onTick)                     // Menu tick handler (optional)
+
+// Note: OnConditionDelegate and OnConsequenceDelegate are now in namespace:
+// TaleWorlds.CampaignSystem.GameMenus.OnConditionDelegate
+// TaleWorlds.CampaignSystem.GameMenus.OnConsequenceDelegate
 ```
 
 ### **Dialog Registration Patterns** ✅ **VERIFIED WORKING STRUCTURE**

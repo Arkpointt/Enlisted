@@ -2,6 +2,28 @@
 
 **Professional military menu interface with organized duty/profession selection**
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Purpose](#purpose)
+- [Key Features](#key-features)
+  - [Main Enlisted Status Menu](#main-enlisted-status-menu)
+  - [Duty Selection Interface](#duty-selection-interface)
+- [Technical Implementation](#technical-implementation)
+  - [Menu Structure](#menu-structure)
+  - [Key Behaviors](#key-behaviors)
+  - [Files](#files)
+- [User Experience](#user-experience)
+  - [At Tier 1-2](#at-tier-1-2)
+  - [At Tier 3+](#at-tier-3)
+  - [Description System](#description-system)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Debugging](#debugging)
+  - [Common Issues](#common-issues)
+  - [Verification](#verification)
+
+---
+
 ## Overview
 
 Enhanced menu system providing comprehensive military service management with clean section organization, detailed descriptions, and tier-based progression.

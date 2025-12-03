@@ -24,9 +24,14 @@ Prevent dialog conflicts, simplify maintenance, and provide consistent conversat
 
 **Enlistment Flow:**
 1. Talk to any lord → "I have something else to discuss" → "I wish to serve in your warband"
-2. Lord responds based on relationship and faction status
-3. Player confirms → Immediate enlistment with `IsActive = false` and menu switch
-4. No encounter gaps - player goes straight to enlisted status menu
+2. **Army Leader Check**: If player is leading their own army, special dialog appears:
+   - Player: "My lord, I offer you my sword and my loyalty. Will you have me in your ranks?"
+   - Lord: "Hold, friend. I see you already command men of your own. A general cannot become a foot soldier while lords still march beneath his banner. Disband your army first, then we may speak of service."
+   - Player: "I understand, my lord. I shall see to my army's affairs first."
+   - Conversation ends (player cannot proceed with enlistment)
+3. Lord responds based on relationship and faction status
+4. Player confirms → Immediate enlistment with `IsActive = false` and menu switch
+5. No encounter gaps - player goes straight to enlisted status menu
 
 **Status Dialogs:**
 - Centralized conditions check enlistment state
@@ -72,6 +77,7 @@ private void OnSessionLaunched(CampaignGameStarter starter)
 
 **Invalid Enlistment Attempts:**
 - Already enlisted with different lord
+- Player is leading their own army (shows roleplay rejection dialog)
 - Lord not available for service
 - Player in incompatible state (prisoner, etc.)
 

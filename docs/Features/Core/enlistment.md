@@ -1,5 +1,19 @@
 # Feature Spec: Enlistment System
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Purpose](#purpose)
+- [Inputs/Outputs](#inputsoutputs)
+- [Behavior](#behavior)
+- [Veteran Retirement System](#veteran-retirement-system)
+- [Technical Implementation](#technical-implementation)
+- [Edge Cases](#edge-cases)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Debugging](#debugging)
+
+---
+
 ## Overview
 Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits.
 
@@ -33,9 +47,10 @@ Provide the foundation for military service - join a lord's forces, follow them 
 **Enlistment Process:**
 1. Talk to lord → Express interest in military service
 2. Lord evaluates player (relationship, faction status)
-3. Player confirms → Immediate enlistment with safety measures
-4. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
-5. Begin following lord and receiving military benefits
+3. **Army Leader Restriction**: If player is leading their own army, lord will refuse with roleplay dialog explaining they must disband their army first
+4. Player confirms → Immediate enlistment with safety measures
+5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
+6. Begin following lord and receiving military benefits
 
 **Daily Service:**
 - Follow enlisted lord's army movements
@@ -234,6 +249,13 @@ _currentTermKills += kills;  // Track for faction record
   - Removed from kingdom (becomes independent)
   - Free to enlist with other factions afterward
 
+**Player Leading Own Army:**
+- If player is leading their own army, enlistment is blocked to prevent crashes
+- Special roleplay dialog appears when attempting to enlist:
+  - Lord explains that a general cannot become a foot soldier while lords still march beneath their banner
+  - Player must disband their army first before enlisting
+- Prevents undefined state where army members would be left without a leader
+
 **Save/Load During Service:**
 - All enlistment state persists correctly
 - Veteran records saved via indexed primitive fields
@@ -274,6 +296,7 @@ _currentTermKills += kills;  // Track for faction record
 ## Acceptance Criteria
 
 - ✅ Can enlist with any lord that accepts player
+- ✅ Army leader restriction prevents crash and shows roleplay dialog
 - ✅ Player party safely hidden from map during service (UI Nameplate hidden)
 - ✅ Daily wage payments with detailed tooltip breakdown
 - ✅ Daily XP progression (+25 per day)

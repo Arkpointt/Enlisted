@@ -1,5 +1,19 @@
 # Feature Spec: Town Access System
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Purpose](#purpose)
+- [Inputs/Outputs](#inputsoutputs)
+- [Behavior](#behavior)
+- [Technical Implementation](#technical-implementation)
+- [Edge Cases](#edge-cases)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Debugging](#debugging)
+- [Key Insights](#key-insights)
+
+---
+
 ## Overview
 Synthetic outside encounter system that enables full settlement exploration for invisible enlisted parties without encounter type assertion crashes.
 

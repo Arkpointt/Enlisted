@@ -4,6 +4,24 @@
 **Purpose**: Create clean enlisted menu without UI widget issues  
 **Updated**: 2025-01-28
 
+## Index
+
+- [UI Widget Problem Analysis](#-ui-widget-problem-analysis)
+- [TaleWorlds Menu Types (From Decompiled Sources)](#-taleworlds-menu-types-from-decompiled-sources)
+- [SOLUTION: Use TaleWorlds-Proven Clean Templates](#-solution-use-taleworlds-proven-clean-templates)
+- [Complete MenuAndOptionType Analysis](#-complete-menuandoptiontype-analysis)
+- [Additional TaleWorlds Menu APIs](#-additional-taleworlds-menu-apis)
+- [IMMEDIATE IMPLEMENTATION FIX](#-immediate-implementation-fix)
+- [Alternative Clean Menu Options](#-alternative-clean-menu-options)
+- [Custom Gauntlet UI Alternative (Advanced)](#-custom-gauntlet-ui-alternative-advanced)
+- [RECOMMENDED IMMEDIATE ACTION](#-recommended-immediate-action)
+- [Implementation Priority](#-implementation-priority)
+- [Custom Gauntlet UI System - Complete Implementation Guide](#-custom-gauntlet-ui-system---complete-implementation-guide)
+- [VERIFIED SOLUTION & IMPLEMENTATION PLAN](#-verified-solution--implementation-plan)
+- [IMPLEMENTATION PATTERN DISCOVERED (From Decompiled Sources)](#-implementation-pattern-discovered-from-decompiled-sources)
+
+---
+
 ## 🚨 **UI Widget Problem Analysis**
 
 ### **Root Cause**: MenuAndOptionType Controls UI Widget Template
@@ -76,41 +94,44 @@ GameMenu.MenuAndOptionType.WaitMenuShowOnlyProgressOption  // <-- Causes UI boxe
 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption  // <-- TaleWorlds clean template
 ```
 
-**Full Implementation**:
+**Full Implementation** (v1.3.4):
 ```csharp
-starter.AddWaitGameMenu("enlisted_status", 
+// From TaleWorlds.CampaignSystem.CampaignGameStarter.cs
+starter.AddWaitGameMenu(
+    "enlisted_status", 
     "{ENLISTED_STATUS_TEXT}",
     new OnInitDelegate(OnEnlistedStatusInit),
     new OnConditionDelegate(OnEnlistedStatusCondition),
-    null,
-    null, // Can add tick delegate later
-    GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption,  // <-- FIXED
-    GameOverlays.MenuOverlayType.None,
-    0f,
+    null, // OnConsequenceDelegate (optional)
+    null, // OnTickDelegate (can add later)
+    GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption,  // <-- FIXED (Value: 3)
+    GameMenu.MenuOverlayType.None,  // Note: Changed from GameOverlays.MenuOverlayType
+    0f,  // targetWaitHours
     GameMenu.MenuFlags.None,
-    null);
+    null  // relatedObject
+);
 ```
 
 ## 📊 **Complete MenuAndOptionType Analysis**
 
-### **Available Types** (from TaleWorlds.CampaignSystem.GameMenus.GameMenu.cs):
+### **Available Types** (from TaleWorlds.CampaignSystem.GameMenus.GameMenu.cs - v1.3.4):
 ```csharp
 public enum MenuAndOptionType
 {
-    RegularGameMenu,                      // Basic menu (pauses game)
-    WaitMenuHideProgressAndHoursOption,   // ✅ CLEAN - Army wait style
-    WaitMenuShowProgressAndHoursOption,   // May have progress widgets
-    WaitMenuShowOnlyProgressOption        // ❌ PROBLEMATIC - List widgets
+    RegularMenuOption,                    // Basic menu (pauses game) - Value: 0
+    WaitMenuShowProgressAndHoursOption,   // Progress + hours display - Value: 1
+    WaitMenuShowOnlyProgressOption,       // Progress only - Value: 2
+    WaitMenuHideProgressAndHoursOption    // ✅ CLEAN - Army wait style - Value: 3
 }
 ```
 
-### **Widget Behavior by Type**:
-| **Type** | **UI Widgets** | **Time Controls** | **TaleWorlds Usage** |
-|----------|----------------|-------------------|---------------------|
-| **RegularGameMenu** | None | ❌ Pauses game | Basic text menus |
-| **WaitMenuHideProgressAndHoursOption** | ✅ Clean text only | ✅ Works | Army wait, settlement wait |
-| **WaitMenuShowProgressAndHoursOption** | Progress bar | ✅ Works | Time-based activities |
-| **WaitMenuShowOnlyProgressOption** | ❌ Progress + Lists | ✅ Works | Complex menus with data |
+### **Widget Behavior by Type** (v1.3.4):
+| **Type** | **Value** | **UI Widgets** | **Time Controls** | **TaleWorlds Usage** |
+|----------|-----------|----------------|-------------------|---------------------|
+| **RegularMenuOption** | 0 | None | ❌ Pauses game | Basic text menus |
+| **WaitMenuShowProgressAndHoursOption** | 1 | Progress bar + hours | ✅ Works | Time-based activities |
+| **WaitMenuShowOnlyProgressOption** | 2 | Progress only | ✅ Works | Complex menus with data |
+| **WaitMenuHideProgressAndHoursOption** | 3 | ✅ Clean text only | ✅ Works | Army wait, settlement wait |
 
 ## 🔧 **Additional TaleWorlds Menu APIs**
 

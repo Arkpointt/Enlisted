@@ -2,6 +2,17 @@
 
 **Based on decompiled TaleWorlds.SaveSystem analysis for our duties system implementation**
 
+## Index
+
+- [GOOD NEWS: Most Types Already Supported](#-good-news-most-types-already-supported)
+- [What This Means for Our Implementation](#-what-this-means-for-our-implementation)
+- [Save System Best Practices (From Decompiled Examples)](#-save-system-best-practices-from-decompiled-examples)
+- [When You DO Need Custom SaveDefiner](#-when-you-do-need-custom-savedefiner)
+- [CORRECTED Implementation Strategy](#-corrected-implementation-strategy)
+- [Final Recommendation](#-final-recommendation)
+
+---
+
 ## ✅ GOOD NEWS: Most Types Already Supported
 
 ### Core Container Types Already Defined

@@ -202,9 +202,17 @@
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
   </ItemGroup>
   <ItemGroup>
-    <!-- Main Documentation -->
-    <None Include="docs\BLUEPRINT.md"/>
+    <!-- Documentation - All markdown files in docs folder and subfolders -->
+    <None Include="docs\**\*.md"/>
     <None Include="packages.config"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Language/Localization files -->
+    <None Include="ModuleData\Languages\*.xml"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Module configuration -->
+    <None Include="ModuleData\Enlisted\README.md"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
   <Target Name="AfterBuild">

@@ -1,5 +1,18 @@
 # Feature Spec: Encounter Safety System
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Purpose](#purpose)
+- [Inputs/Outputs](#inputsoutputs)
+- [Behavior](#behavior)
+- [Technical Implementation](#technical-implementation)
+- [Edge Cases](#edge-cases)
+- [Acceptance Criteria](#acceptance-criteria)
+- [Debugging](#debugging)
+
+---
+
 ## Overview
 Prevents the player from triggering map encounters while enlisted by using the game engine's `IsActive` property and Harmony patches, with enhanced battle participation and cleanup logic.
 
