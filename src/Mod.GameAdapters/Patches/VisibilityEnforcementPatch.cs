@@ -77,8 +77,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                     if (enlistedLord != null)
                     {
-                    // Check both PartyBelongedTo and LeaderHero for robustness
-                    isLordParty = __instance == enlistedLord.PartyBelongedTo || __instance.LeaderHero == enlistedLord;
+                        // Check both PartyBelongedTo and LeaderHero for robustness
+                        isLordParty = __instance == enlistedLord.PartyBelongedTo || __instance.LeaderHero == enlistedLord;
                     }
 
                     if (isLordParty)
