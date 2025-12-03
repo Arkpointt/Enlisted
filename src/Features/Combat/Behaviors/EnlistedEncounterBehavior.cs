@@ -58,6 +58,10 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             try
             {
+                // Reset static state from previous session to prevent stale flag issues
+                // If player quit while in reserve mode, flag would persist across save loads
+                IsWaitingInReserve = false;
+
                 AddEnlistedEncounterOptions(campaignStarter);
                 ModLogger.LogOnce("encounter_behavior_init", "Combat", "Encounter behavior initialized - battle wait menu and reserve options ready");
             }
