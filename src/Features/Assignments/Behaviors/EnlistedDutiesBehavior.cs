@@ -1,10 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
-using TaleWorlds.ObjectSystem;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -12,33 +8,33 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Features.Assignments.Behaviors
 {
     /// <summary>
-    /// Modern configuration-driven duties system with formation specializations and officer role integration.
-    ///
-    /// This system provides meaningful military assignments that affect both player progression
-    /// and party effectiveness. Officer duties integrate with the party's effective roles,
-    /// while basic duties provide skill training and experience.
+    ///     Modern configuration-driven duties system with formation specializations and officer role integration.
+    ///     This system provides meaningful military assignments that affect both player progression
+    ///     and party effectiveness. Officer duties integrate with the party's effective roles,
+    ///     while basic duties provide skill training and experience.
     /// </summary>
     public sealed class EnlistedDutiesBehavior : CampaignBehaviorBase
     {
-        public static EnlistedDutiesBehavior Instance { get; private set; }
+        private List<string> _activeDuties = new();
 
         private DutiesSystemConfig _config;
-        private List<string> _activeDuties = new List<string>();
-        private string _playerFormation;
-        private Dictionary<string, CampaignTime> _dutyStartTimes = new Dictionary<string, CampaignTime>();
-        private int _saveVersion = 1;
+        private Dictionary<string, CampaignTime> _dutyStartTimes = new();
 
         // Officer role state for Harmony patches (optional enhancement)
         private bool _officerRolesEnabled = true;
-
-        public bool IsInitialized => _config != null;
-        public List<string> ActiveDuties => [.. _activeDuties];
-        public string PlayerFormation => _playerFormation;
+        private string _playerFormation;
+        private int _saveVersion = 1;
 
         public EnlistedDutiesBehavior()
         {
             Instance = this;
         }
+
+        public static EnlistedDutiesBehavior Instance { get; private set; }
+
+        public bool IsInitialized => _config != null;
+        public List<string> ActiveDuties => [.. _activeDuties];
+        public string PlayerFormation => _playerFormation;
 
         public override void RegisterEvents()
         {
@@ -67,7 +63,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Initialize duties system configuration with comprehensive error handling.
+        ///     Initialize duties system configuration with comprehensive error handling.
         /// </summary>
         private void InitializeConfig()
         {
@@ -99,9 +95,9 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Detects the player's military formation (Infantry/Cavalry/Archer/Horse Archer) based on equipment.
-        /// Analyzes the player's equipped items to determine their military specialization,
-        /// which determines which skills receive daily XP from formation training.
+        ///     Detects the player's military formation (Infantry/Cavalry/Archer/Horse Archer) based on equipment.
+        ///     Analyzes the player's equipped items to determine their military specialization,
+        ///     which determines which skills receive daily XP from formation training.
         /// </summary>
         private string DetectPlayerFormation()
         {
@@ -139,7 +135,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Process daily duties: skill XP, wage bonuses, and officer role management.
+        ///     Process daily duties: skill XP, wage bonuses, and officer role management.
         /// </summary>
         private void OnDailyTick()
         {
@@ -178,8 +174,8 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Helper method to get duty/profession definition from either Duties or Professions dictionaries.
-        /// Fix: Professions are stored separately but need to be processed the same way as duties.
+        ///     Helper method to get duty/profession definition from either Duties or Professions dictionaries.
+        ///     Fix: Professions are stored separately but need to be processed the same way as duties.
         /// </summary>
         private bool TryGetDutyOrProfession(string dutyId, out DutyDefinition dutyDef)
         {
@@ -201,7 +197,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Process daily benefits from active duties.
+        ///     Process daily benefits from active duties.
         /// </summary>
         private void ProcessDailyDuties()
         {
@@ -247,8 +243,8 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Process formation-based daily skill training.
-        /// Provides automatic skill XP based on the player's military formation assignment.
+        ///     Process formation-based daily skill training.
+        ///     Provides automatic skill XP based on the player's military formation assignment.
         /// </summary>
         private void ProcessFormationTraining()
         {
@@ -293,8 +289,8 @@ namespace Enlisted.Features.Assignments.Behaviors
 
 
         /// <summary>
-        /// Update officer roles based on active duties.
-        /// This manages both public API assignments and prepares data for optional Harmony patches.
+        ///     Update officer roles based on active duties.
+        ///     This manages both public API assignments and prepares data for optional Harmony patches.
         /// </summary>
         private void UpdateOfficerRoles()
         {
@@ -311,7 +307,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Simple and reliable, but player shows as 'official' officer.
+        ///     Simple and reliable, but player shows as 'official' officer.
         /// </summary>
         private void AssignOfficerRolesViaPublicApi(MobileParty lordParty, Hero playerHero)
         {
@@ -354,10 +350,10 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Helper method for Harmony patches to check if the player has active duty with a specific officer role.
-        /// Assigns officer roles to the player based on their active duties/professions.
-        /// This method provides a public API that can be used by other systems to assign
-        /// officer roles (Scout, Quartermaster, etc.) based on the player's current assignments.
+        ///     Helper method for Harmony patches to check if the player has active duty with a specific officer role.
+        ///     Assigns officer roles to the player based on their active duties/professions.
+        ///     This method provides a public API that can be used by other systems to assign
+        ///     officer roles (Scout, Quartermaster, etc.) based on the player's current assignments.
         /// </summary>
         public bool HasActiveDutyWithRole(string officerRole)
         {
@@ -372,7 +368,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Assign duty to the player if requirements are met.
+        ///     Assign duty to the player if requirements are met.
         /// </summary>
         public bool AssignDuty(string dutyId)
         {
@@ -401,7 +397,8 @@ namespace Enlisted.Features.Assignments.Behaviors
 
             if (_activeDuties.Count >= maxSlots)
             {
-                ModLogger.Info("Duties", $"Cannot assign duty {dutyId}: duty slot limit reached ({_activeDuties.Count}/{maxSlots})");
+                ModLogger.Info("Duties",
+                    $"Cannot assign duty {dutyId}: duty slot limit reached ({_activeDuties.Count}/{maxSlots})");
                 return false;
             }
 
@@ -414,7 +411,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Remove duty from the player.
+        ///     Remove duty from the player.
         /// </summary>
         public bool RemoveDuty(string dutyId)
         {
@@ -428,13 +425,15 @@ namespace Enlisted.Features.Assignments.Behaviors
                 {
                     UpdateOfficerRoles();
                 }
+
                 return true;
             }
+
             return false;
         }
 
         /// <summary>
-        /// Get available duties for the current player state.
+        ///     Get available duties for the current player state.
         /// </summary>
         public List<DutyDefinition> GetAvailableDuties()
         {
@@ -460,7 +459,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Check if the player can perform a specific duty.
+        ///     Check if the player can perform a specific duty.
         /// </summary>
         private bool CanPlayerPerformDuty(DutyDefinition duty)
         {
@@ -480,8 +479,9 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
 
             // Check relationship requirement
-            var lordRelation = EnlistmentBehavior.Instance?.CurrentLord != null ?
-                Hero.MainHero.GetRelation(EnlistmentBehavior.Instance.CurrentLord) : 0;
+            var lordRelation = EnlistmentBehavior.Instance?.CurrentLord != null
+                ? Hero.MainHero.GetRelation(EnlistmentBehavior.Instance.CurrentLord)
+                : 0;
 
             if (duty.UnlockConditions.RelationshipRequired > lordRelation)
             {
@@ -502,7 +502,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Get the number of duty slots available for a tier.
+        ///     Get the number of duty slots available for a tier.
         /// </summary>
         private int GetDutySlotsForTier(int tier)
         {
@@ -511,7 +511,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Convert skill name string to SkillObject.
+        ///     Convert skill name string to SkillObject.
         /// </summary>
         private SkillObject GetSkillFromName(string skillName)
         {
@@ -527,8 +527,8 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Set player formation and update available duties.
-        /// Called when the player chooses formation at Tier 2.
+        ///     Set player formation and update available duties.
+        ///     Called when the player chooses formation at Tier 2.
         /// </summary>
         public void SetPlayerFormation(string formation)
         {
@@ -550,10 +550,10 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Calculate wage multiplier from active duties.
-        /// Calculates the combined wage multiplier from all active duties and professions.
-        /// Different duties and professions provide different wage bonuses, allowing players
-        /// to earn more gold per day based on their assignments.
+        ///     Calculate wage multiplier from active duties.
+        ///     Calculates the combined wage multiplier from all active duties and professions.
+        ///     Different duties and professions provide different wage bonuses, allowing players
+        ///     to earn more gold per day based on their assignments.
         /// </summary>
         public float GetWageMultiplierForActiveDuties()
         {
@@ -588,8 +588,8 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Get formation display name for the current culture.
-        /// Used for UI display in formation selection.
+        ///     Get formation display name for the current culture.
+        ///     Used for UI display in formation selection.
         /// </summary>
         private string GetFormationDisplayName(string formation)
         {
@@ -608,7 +608,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         #region Menu Support Methods
 
         /// <summary>
-        /// Get formatted display text for active duties.
+        ///     Get formatted display text for active duties.
         /// </summary>
         public string GetActiveDutiesDisplay()
         {
@@ -618,14 +618,15 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
 
             // Fix: Check both Duties and Professions dictionaries
-            var duties = _activeDuties.Select(id => TryGetDutyOrProfession(id, out var dutyDef) ? dutyDef.DisplayName : id);
+            var duties =
+                _activeDuties.Select(id => TryGetDutyOrProfession(id, out var dutyDef) ? dutyDef.DisplayName : id);
             var maxSlots = GetMaxDutySlots();
 
             return $"{string.Join(", ", duties)} ({_activeDuties.Count}/{maxSlots})";
         }
 
         /// <summary>
-        /// Get the current officer role for menu display.
+        ///     Get the current officer role for menu display.
         /// </summary>
         public string GetCurrentOfficerRole()
         {
@@ -637,12 +638,13 @@ namespace Enlisted.Features.Assignments.Behaviors
                     return dutyDef.OfficerRole;
                 }
             }
+
             return "";
         }
 
         /// <summary>
-        /// Get the player's formation type for menu display.
-        /// Based on the chosen troop type, not current equipment.
+        ///     Get the player's formation type for menu display.
+        ///     Based on the chosen troop type, not current equipment.
         /// </summary>
         public string GetPlayerFormationType()
         {
@@ -650,7 +652,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Get current wage multiplier from active duties.
+        ///     Get current wage multiplier from active duties.
         /// </summary>
         public float GetCurrentWageMultiplier()
         {
@@ -669,7 +671,7 @@ namespace Enlisted.Features.Assignments.Behaviors
 
 
         /// <summary>
-        /// Get maximum duty slots based on tier.
+        ///     Get maximum duty slots based on tier.
         /// </summary>
         private int GetMaxDutySlots()
         {
@@ -678,12 +680,12 @@ namespace Enlisted.Features.Assignments.Behaviors
             {
                 >= 5 => 3, // Senior tiers get 3 slots
                 >= 3 => 2, // Mid tiers get 2 slots
-                _ => 1     // Junior tiers get 1 slot
+                _ => 1 // Junior tiers get 1 slot
             };
         }
 
         /// <summary>
-        /// Get current formation training information for menu display.
+        ///     Get current formation training information for menu display.
         /// </summary>
         public string GetFormationTrainingDisplay()
         {
@@ -714,7 +716,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Get formation training status for the current player.
+        ///     Get formation training status for the current player.
         /// </summary>
         public string GetCurrentFormation()
         {
@@ -730,8 +732,8 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Get skill XP configuration for a specific formation.
-        /// Used by the menu system for dynamic highlighting.
+        ///     Get skill XP configuration for a specific formation.
+        ///     Used by the menu system for dynamic highlighting.
         /// </summary>
         public Dictionary<string, int> GetFormationSkillXp(string formation)
         {
