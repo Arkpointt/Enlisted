@@ -16,8 +16,8 @@ namespace Enlisted.Mod.Core.Logging
         /// <summary>
         /// Mod version for diagnostics. Update this when releasing new versions.
         /// </summary>
-        public const string ModVersion = "0.4.1";
-        public const string TargetGameVersion = "1.3.5";
+        public const string ModVersion = "0.4.3";
+        public const string TargetGameVersion = "1.3.9";
 
         /// <summary>
         /// Log startup diagnostics once when the game session begins.
@@ -65,7 +65,7 @@ namespace Enlisted.Mod.Core.Logging
                 sb.AppendLine($"[Finance] army_bonus_multiplier: {finance.WageFormula.ArmyBonusMultiplier}");
 
                 // Tier progression
-                var tierXP = ConfigurationManager.GetTierXPRequirements();
+                var tierXP = ConfigurationManager.GetTierXpRequirements();
                 sb.AppendLine($"[Progression] tier_count: {tierXP.Length}");
                 sb.AppendLine($"[Progression] max_tier_xp: {(tierXP.Length > 0 ? tierXP[tierXP.Length - 1].ToString() : "N/A")}");
 

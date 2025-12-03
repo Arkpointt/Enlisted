@@ -33,6 +33,12 @@ namespace Enlisted.Features.Combat.Behaviors
 
         public static EnlistedEncounterBehavior Instance { get; private set; }
 
+        /// <summary>
+        /// Tracks whether the player is currently waiting in reserve during a battle.
+        /// Used to prevent XP awards when entering reserve mode (OnPlayerBattleEnd fires but battle isn't actually over).
+        /// </summary>
+        public static bool IsWaitingInReserve { get; private set; }
+
         public EnlistedEncounterBehavior()
         {
             Instance = this;
@@ -52,6 +58,10 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             try
             {
+                // Reset static state from previous session to prevent stale flag issues
+                // If player quit while in reserve mode, flag would persist across save loads
+                IsWaitingInReserve = false;
+
                 AddEnlistedEncounterOptions(campaignStarter);
                 ModLogger.LogOnce("encounter_behavior_init", "Combat", "Encounter behavior initialized - battle wait menu and reserve options ready");
             }
@@ -190,6 +200,10 @@ namespace Enlisted.Features.Combat.Behaviors
                         new TextObject("Wait in reserve is not available during siege battles.").ToString()));
                     return; // Don't switch menus during sieges
                 }
+
+                // CRITICAL: Set waiting in reserve flag BEFORE PlayerEncounter.Finish()
+                // This prevents OnPlayerBattleEnd from awarding XP when we're just entering reserve mode
+                IsWaitingInReserve = true;
 
                 // Exit the current encounter and switch to the wait menu
                 // This allows the player to wait out the battle without participating
@@ -340,6 +354,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 if (!string.IsNullOrEmpty(genericStateMenu) &&
                     genericStateMenu != "enlisted_battle_wait")
                 {
+                    // Clear the waiting in reserve flag - battle has ended
+                    IsWaitingInReserve = false;
                     args.MenuContext.GameMenu.EndWait();
                     ModLogger.Info("Battle", $"Battle ended - switching to native menu '{genericStateMenu}'");
                     GameMenu.SwitchToMenu(genericStateMenu);
@@ -355,6 +371,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 // This is the correct API structure for checking battle state
                 if (lordParty?.Party.MapEvent == null && string.IsNullOrEmpty(genericStateMenu))
                 {
+                    // Clear the waiting in reserve flag - battle has ended
+                    IsWaitingInReserve = false;
                     // Battle ended and native system doesn't want a specific menu
                     // Exit and let the menu tick handler or native system decide the next menu
                     args.MenuContext.GameMenu.EndWait();
@@ -375,6 +393,9 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             try
             {
+                // Clear the waiting in reserve flag - player is rejoining battle
+                IsWaitingInReserve = false;
+
                 args.MenuContext.GameMenu.EndWait();
 
                 NextFrameDispatcher.RunNextFrame(() =>

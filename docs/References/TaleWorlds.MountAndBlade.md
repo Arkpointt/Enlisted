@@ -30,7 +30,7 @@ This assembly handles all 3D mission/battle mechanics - the actual combat you ex
 
 | Class | Purpose | Enlisted Usage |
 |-------|---------|----------------|
-| `BehaviorComponent` | Base for formation AI behaviors | Patch for battle commands filter |
+| `BehaviorComponent` | Base for formation AI behaviors | Understanding formation behaviors |
 | `BehaviorCharge` | Charge attack behavior | Understanding AI orders |
 | `BehaviorDefend` | Defensive behavior | Understanding defensive stances |
 | `BehaviorRetreat` | Retreat behavior | Understanding withdrawal |

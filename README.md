@@ -49,7 +49,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 ## Installation
 
 1. **Requirements**:
-   - Mount & Blade II: Bannerlord v1.3.8
+   - Mount & Blade II: Bannerlord v1.3.9
    - Bannerlord.Harmony
 
 2. **Setup**:

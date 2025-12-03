@@ -12,7 +12,6 @@ Detailed documentation for each major feature.
 - [encounter-safety.md](encounter-safety.md) - Map encounter crash prevention
 - [duties-system.md](duties-system.md) - Military roles and assignments
 - [formation-training.md](formation-training.md) - Formation-based skill XP
-- [battle-commands.md](battle-commands.md) - Formation-based command filtering
 - [menu-interface.md](menu-interface.md) - Menu system
 - [town-access-system.md](town-access-system.md) - Settlement exploration
 

@@ -11,6 +11,7 @@ using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.CampaignSystem.Siege;
+using TaleWorlds.CampaignSystem.Naval;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using Enlisted.Mod.GameAdapters.Patches;
@@ -910,7 +911,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				int graceXP = _savedGraceXP;
 				string graceTroopId = _savedGraceTroopId;
 
-				// Backup player's personal equipment before service begins
+ 			// Backup player's personal equipment before service begins
 			// This ensures the player gets their original equipment back when service ends
 			// Equipment is backed up once at the start to prevent losing items during service
 			if (!_hasBackedUpEquipment)
@@ -918,6 +919,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				BackupPlayerEquipment();
 				_hasBackedUpEquipment = true;
 			}
+
+			// Protect player's ships from damage during enlistment
+			// Ships remain with the player but cannot take damage while serving under a lord
+			SetPlayerShipsInvulnerable();
 
 			// Initialize enlistment state with default values
 			_enlistedLord = lord;
@@ -1175,7 +1180,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 			}
 
-			// Restore the player's personal equipment that was backed up at enlistment start
+ 		// Restore the player's personal equipment that was backed up at enlistment start
 			// EXCEPTION: During grace period (retainKingdomDuringGrace=true), keep enlisted equipment
 			// Player is still considered a soldier on temporary leave/grace, not fully discharged
 			if (_hasBackedUpEquipment && !retainKingdomDuringGrace)
@@ -1187,6 +1192,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			else if (retainKingdomDuringGrace)
 			{
 				ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
+			}
+
+			// Restore player's ships to normal vulnerability after full discharge
+			// During grace period, ships remain protected in case player re-enlists
+			if (!retainKingdomDuringGrace)
+			{
+				RestorePlayerShipsVulnerability();
+			}
+			else
+			{
+				ModLogger.Debug("Naval", "Keeping ships protected during grace period");
 			}
 
 			// Restore companions and troops to the player's party
@@ -2153,17 +2169,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		private void CheckForPromotion()
 		{
 			// Load tier XP requirements from progression_config.json
-			var tierXPRequirements = EnlistedConfig.GetTierXPRequirements();
+   var tierXPRequirements = EnlistedConfig.GetTierXpRequirements();
 
-			// Get max tier from config (array uses 1-based indexing, so Length - 1 = max tier)
-			// With 6 tiers configured, array size is 7 (indices 0-6), max tier is 6
-			int maxTier = tierXPRequirements.Length > 1 ? tierXPRequirements.Length - 1 : 1;
+			// Get actual max tier from config (e.g., 6 for tiers 1-6)
+			int maxTier = EnlistedConfig.GetMaxTier();
 
 			bool promoted = false;
 
-			// Check if player has enough XP for next tier
-			// Fix: Prevent promoting beyond max tier (6) enforced in SetTier
-			while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
+			// Check if player has enough XP for next tier (up to max tier)
+   while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
 			{
 				_enlistmentTier++;
 				promoted = true;
@@ -2223,6 +2237,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				{
 					// Enlisted players: check if lord is in battle
 					ModLogger.Info("SaveLoad", $"Post-load: Restoring enlisted state (Lord: {_enlistedLord?.Name}, OnLeave: {_isOnLeave})");
+
+					// Re-apply ship protection after loading a save while enlisted
+					// This ensures ships remain invulnerable even if the flag wasn't persisted
+					SetPlayerShipsInvulnerable();
 
 					// Ensure the party can join battles when the lord fights
 					TrySetShouldJoinPlayerBattles(main, true);
@@ -2604,7 +2622,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// </summary>
 		private int GetMinXPForTier(int tier)
 		{
-			var requirements = EnlistedConfig.GetTierXPRequirements();
+   var requirements = EnlistedConfig.GetTierXpRequirements();
 			if (tier > 0 && tier <= requirements.Length)
 			{
 				return requirements[tier - 1];
@@ -3171,6 +3189,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 							// Lord is on land - use normal escort AI
 							mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
 							lordParty.Party.SetAsCameraFollowParty();
+
+							// FIX: Aggressive position sync when player is lagging behind
+							// This prevents the issue where the player spawns behind their formation in battle
+							// because their map party was slightly behind the lord when battle started
+							TryAggressivePositionSync(mainParty, lordParty, "army");
 						}
 
 						// Keep invisible to prevent banner/icon appearing
@@ -3206,6 +3229,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 								// Lord is on land - use normal escort AI
 								mainParty.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
 								lordParty.Party.SetAsCameraFollowParty();
+
+								// FIX: Aggressive position sync when player is lagging behind
+								// This prevents the issue where the player spawns behind their formation in battle
+								// because their map party was slightly behind the lord when battle started
+								TryAggressivePositionSync(mainParty, lordParty, "solo");
 							}
 						}
 					}
@@ -3293,6 +3321,118 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			catch (Exception ex)
 			{
 				ModLogger.Error("Battle", $"Failed to sync besieger camp: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Aggressively syncs the player's position with the lord's position to ensure the player
+		/// is always at the battle location when combat starts.
+		///
+		/// This fixes the issue where players spawn behind their formation in battle because
+		/// their map party was slightly behind the lord when the battle MapEvent was created.
+		///
+		/// The sync happens when:
+		/// - Player is more than 3 units behind the lord (normal lag)
+		/// - Lord is approaching an enemy party (pre-battle sync)
+		/// - Lord's army is about to engage (army battle sync)
+		/// </summary>
+		/// <param name="mainParty">The player's party.</param>
+		/// <param name="lordParty">The lord's party that the player is following.</param>
+		/// <param name="context">Context string for logging (e.g., "army", "solo").</param>
+		private void TryAggressivePositionSync(MobileParty mainParty, MobileParty lordParty, string context)
+		{
+			try
+			{
+				if (mainParty == null || lordParty == null) return;
+
+				// Skip if player is in a settlement (handled separately)
+				if (mainParty.CurrentSettlement != null) return;
+
+				var playerPos = mainParty.GetPosition2D;
+				var lordPos = lordParty.GetPosition2D;
+				var distance = playerPos.Distance(lordPos);
+
+				// Always sync if player is more than 3 units behind
+				// This is aggressive to ensure player is ALWAYS at lord's location for battle spawning
+				const float MaxAllowedDistance = 3f;
+
+				// Also check if lord is near an enemy (potential combat) - be even more aggressive
+				bool lordNearEnemy = IsLordNearEnemy(lordParty);
+				float syncDistance = lordNearEnemy ? 1f : MaxAllowedDistance; // Even tighter sync near combat
+
+				if (distance > syncDistance)
+				{
+					mainParty.Position = lordParty.Position;
+
+					// Only log when the distance was significant (to avoid log spam)
+					if (distance > 5f || lordNearEnemy)
+					{
+						ModLogger.Debug("PositionSync",
+							$"[{context}] Synced player position to lord (was {distance:F1} units behind" +
+							(lordNearEnemy ? ", lord near enemy)" : ")"));
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("PositionSync", $"Error in aggressive position sync: {ex.Message}");
+			}
+		}
+
+		/// <summary>
+		/// Checks if the lord's party is near an enemy party that could result in battle.
+		/// Used to trigger more aggressive position syncing before combat.
+		/// </summary>
+		/// <param name="lordParty">The lord's party to check.</param>
+		/// <returns>True if the lord is near an enemy and combat is likely.</returns>
+		private bool IsLordNearEnemy(MobileParty lordParty)
+		{
+			try
+			{
+				if (lordParty == null) return false;
+
+				// Check if lord is already in battle (most obvious case)
+				if (lordParty.Party.MapEvent != null) return true;
+
+				// Check if lord's army is in battle
+				if (lordParty.Army?.LeaderParty?.Party.MapEvent != null) return true;
+
+				// Check for nearby hostile parties using the lord's current target
+				var targetParty = lordParty.TargetParty;
+				if (targetParty != null)
+				{
+					// Check if targeting a hostile party
+					bool isHostile = FactionManager.IsAtWarAgainstFaction(lordParty.MapFaction, targetParty.MapFaction);
+					if (isHostile)
+					{
+						float distanceToTarget = lordParty.GetPosition2D.Distance(targetParty.GetPosition2D);
+						// If within 10 units of an enemy, combat is imminent
+						return distanceToTarget < 10f;
+					}
+				}
+
+				// Check if lord is in an army that's targeting something
+				var armyTarget = lordParty.Army?.AiBehaviorObject;
+				if (armyTarget != null && armyTarget is MobileParty armyTargetParty)
+				{
+					bool isHostile = FactionManager.IsAtWarAgainstFaction(lordParty.MapFaction, armyTargetParty.MapFaction);
+					if (isHostile)
+					{
+						var armyLeader = lordParty.Army.LeaderParty;
+						if (armyLeader != null)
+						{
+							float distanceToTarget = armyLeader.GetPosition2D.Distance(armyTargetParty.GetPosition2D);
+							return distanceToTarget < 15f; // Slightly larger radius for army engagements
+						}
+					}
+				}
+
+				return false;
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Debug("PositionSync", $"Error checking if lord near enemy: {ex.Message}");
+				return false;
 			}
 		}
 
@@ -3604,8 +3744,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						ModLogger.Warn("Naval", $"Cannot re-sync after army disband: mainParty={mainParty != null}, lordParty={lordParty != null}");
 					}
 
-					// Restore enlisted menu interaction after army disperses
-					EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+					// Menu restoration is now handled by ArmyDispersedMenuPatch which intercepts
+					// the native army_dispersed menu's "Continue" button to show enlisted_status
 				}
 			}
 		}
@@ -3756,7 +3896,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			_enlistmentXP += xp;
 
 			// Get tier requirements to show progress
-			var tierXP = Features.Assignments.Core.ConfigurationManager.GetTierXPRequirements();
+   var tierXP = Features.Assignments.Core.ConfigurationManager.GetTierXpRequirements();
 			var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
 			var progressPercent = nextTierXP > 0 ? (int)((_enlistmentXP * 100) / nextTierXP) : 100;
 
@@ -3801,7 +3941,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				// Get XP values from config
-				int battleXP = Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXP();
+    int battleXP = Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXp();
 
 				if (battleXP > 0)
 				{
@@ -3914,20 +4054,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			try
 			{
 				// Load tier XP requirements from progression_config.json
-				var tierXPRequirements = EnlistedConfig.GetTierXPRequirements();
+    var tierXPRequirements = EnlistedConfig.GetTierXpRequirements();
+
+				// Get actual max tier from config (e.g., 6 for tiers 1-6)
+				int maxTier = EnlistedConfig.GetMaxTier();
 
 				// Bounds check: ensure we don't go beyond array limits
-				if (_enlistmentTier < 0 || _enlistmentTier >= tierXPRequirements.Length)
+				if (_enlistmentTier < 0 || _enlistmentTier > maxTier)
 				{
-					ModLogger.Debug("Progression", $"Skipping promotion check - tier {_enlistmentTier} out of bounds");
+					ModLogger.Debug("Progression", $"Skipping promotion check - tier {_enlistmentTier} out of bounds (max: {maxTier})");
 					return;
 				}
 
-				// Get max tier from config to prevent exceeding maximum
-				int maxTier = tierXPRequirements.Length > 1 ? tierXPRequirements.Length - 1 : 1;
-
-				// Check if we crossed any promotion threshold
-				// Fix: Prevent checking beyond max tier to maintain consistency with SetTier validation
+				// Check if we crossed any promotion threshold up to max tier
 				for (int tier = _enlistmentTier; tier < maxTier && tier >= 0; tier++)
 				{
 					var requiredXP = tierXPRequirements[tier];
@@ -4073,11 +4212,86 @@ namespace Enlisted.Features.Enlistment.Behaviors
 					}
 				}
 
-				ModLogger.Info("Equipment", "Personal equipment restored");
+ 			ModLogger.Info("Equipment", "Personal equipment restored");
 			}
 			catch (Exception ex)
 			{
 				ModLogger.Error("Equipment", "Error restoring equipment", ex);
+			}
+		}
+
+		/// <summary>
+		/// Make player's ships invulnerable to prevent damage while enlisted.
+		/// Ships remain with the player but cannot take damage during military service.
+		/// This protects player investment in ships while serving under a lord.
+		/// </summary>
+		private void SetPlayerShipsInvulnerable()
+		{
+			try
+			{
+				var mainParty = MobileParty.MainParty;
+				if (mainParty?.Party?.Ships == null)
+				{
+					ModLogger.Debug("Naval", "No ships to protect - player has no ships");
+					return;
+				}
+
+				int protectedCount = 0;
+				foreach (Ship ship in mainParty.Party.Ships)
+				{
+					if (ship != null && !ship.IsInvulnerable)
+					{
+						ship.IsInvulnerable = true;
+						protectedCount++;
+						ModLogger.Debug("Naval", $"Protected ship: {ship.Name} (HP: {ship.HitPoints}/{ship.MaxHitPoints})");
+					}
+				}
+
+				if (protectedCount > 0)
+				{
+					ModLogger.Info("Naval", $"Protected {protectedCount} player ship(s) from damage during enlistment");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Naval", "Error protecting player ships", ex);
+			}
+		}
+
+		/// <summary>
+		/// Restore player's ships to normal vulnerability after discharge.
+		/// Called when player is fully discharged (not during grace period).
+		/// </summary>
+		private void RestorePlayerShipsVulnerability()
+		{
+			try
+			{
+				var mainParty = MobileParty.MainParty;
+				if (mainParty?.Party?.Ships == null)
+				{
+					ModLogger.Debug("Naval", "No ships to restore - player has no ships");
+					return;
+				}
+
+				int restoredCount = 0;
+				foreach (Ship ship in mainParty.Party.Ships)
+				{
+					if (ship != null && ship.IsInvulnerable)
+					{
+						ship.IsInvulnerable = false;
+						restoredCount++;
+						ModLogger.Debug("Naval", $"Restored ship vulnerability: {ship.Name} (HP: {ship.HitPoints}/{ship.MaxHitPoints})");
+					}
+				}
+
+				if (restoredCount > 0)
+				{
+					ModLogger.Info("Naval", $"Restored vulnerability to {restoredCount} player ship(s) after discharge");
+				}
+			}
+			catch (Exception ex)
+			{
+				ModLogger.Error("Naval", "Error restoring ship vulnerability", ex);
 			}
 		}
 
@@ -5276,12 +5490,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				ModLogger.Info("Battle", "Player battle ended");
 				ModLogger.Info("Battle", $"Battle Type: {mapEvent?.EventType}, Was Siege: {mapEvent?.IsSiegeAssault}");
 
-				// CRITICAL: Don't award XP if battle hasn't actually finished (no winner yet)
+ 			// CRITICAL: Don't award XP if battle hasn't actually finished (no winner yet)
 				// This prevents XP from being awarded when player clicks "Wait in Reserve"
 				// which calls PlayerEncounter.Finish() but the battle is still ongoing
 				if (mapEvent != null && !mapEvent.HasWinner)
 				{
 					ModLogger.Debug("Battle", "Skipping battle rewards - battle still ongoing (no winner yet)");
+					return;
+				}
+
+				// CRITICAL: Don't award XP if player is entering "Wait in Reserve" mode
+				// PlayerEncounter.Finish() triggers this event, but we're just entering reserve, not ending battle
+				if (Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+				{
+					ModLogger.Debug("Battle", "Skipping battle rewards - player is entering reserve mode, not ending battle");
 					return;
 				}
 
@@ -5354,7 +5576,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 				}
 
 				// Load XP values from config
-				int battleParticipationXP = EnlistedConfig.GetBattleParticipationXP();
+    int battleParticipationXP = EnlistedConfig.GetBattleParticipationXp();
 				int xpPerKill = EnlistedConfig.GetXpPerKill();
 
 				// Award participation XP (flat bonus for being in battle)
