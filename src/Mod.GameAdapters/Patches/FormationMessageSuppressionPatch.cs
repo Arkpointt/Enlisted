@@ -1,6 +1,4 @@
 using Enlisted.Features.Enlistment.Behaviors;
-using HarmonyLib;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {

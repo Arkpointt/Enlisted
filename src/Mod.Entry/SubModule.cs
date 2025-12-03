@@ -13,12 +13,6 @@ using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.GameAdapters.Patches;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.Entry
 {
@@ -224,6 +218,7 @@ namespace Enlisted.Mod.Entry
                             {
                                 ModLogger.Error("Bootstrap", $"  Inner exception: {patchEx.InnerException.Message}");
                             }
+
                             ModLogger.Debug("Bootstrap", $"  Stack trace: {patchEx.StackTrace}");
                         }
                     }

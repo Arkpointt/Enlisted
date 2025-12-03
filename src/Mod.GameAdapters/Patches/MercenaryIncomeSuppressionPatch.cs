@@ -1,33 +1,29 @@
 using System;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.GameComponents;
+using System.Diagnostics.CodeAnalysis;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Suppresses native mercenary income when the player is enlisted.
-    ///
-    /// When enlisting, players join a kingdom as mercenaries (using ApplyByJoinFactionAsMercenary)
-    /// with awardMultiplier=0 to prevent native mercenary wages. However, the game recalculates
-    /// MercenaryAwardMultiplier every 30 days in ClanVariablesCampaignBehavior.DailyTickClan,
-    /// which would restore native mercenary income.
-    ///
-    /// This patch intercepts the AddMercenaryIncome method to completely suppress mercenary
-    /// income when enlisted, ensuring players only receive wages from the mod's system.
+    ///     Suppresses native mercenary income when the player is enlisted.
+    ///     When enlisting, players join a kingdom as mercenaries (using ApplyByJoinFactionAsMercenary)
+    ///     with awardMultiplier=0 to prevent native mercenary wages. However, the game recalculates
+    ///     MercenaryAwardMultiplier every 30 days in ClanVariablesCampaignBehavior.DailyTickClan,
+    ///     which would restore native mercenary income.
+    ///     This patch intercepts the AddMercenaryIncome method to completely suppress mercenary
+    ///     income when enlisted, ensuring players only receive wages from the mod's system.
     /// </summary>
     // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), "AddMercenaryIncome")]
     internal static class MercenaryIncomeSuppressionPatch
     {
         /// <summary>
-        /// Prefix patch that skips native mercenary income calculation when the player is enlisted.
-        /// Returns false to skip the original method entirely when enlisted.
+        ///     Prefix patch that skips native mercenary income calculation when the player is enlisted.
+        ///     Returns false to skip the original method entirely when enlisted.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
         [HarmonyPrefix]
         private static bool Prefix(Clan clan, ref ExplainedNumber goldChange, bool applyWithdrawals)
         {
@@ -46,7 +42,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 if (ModLogger.IsEnabled("Finance", LogLevel.Debug))
                 {
-                    ModLogger.Debug("Finance", $"MercenaryIncome check: isEnlisted={isEnlisted}, isMercenary={isUnderMercenaryService}, awardMultiplier={awardMultiplier}, applyWithdrawals={applyWithdrawals}, currentGold={goldChange.ResultNumber}");
+                    ModLogger.Debug("Finance",
+                        $"MercenaryIncome check: isEnlisted={isEnlisted}, isMercenary={isUnderMercenaryService}, awardMultiplier={awardMultiplier}, applyWithdrawals={applyWithdrawals}, currentGold={goldChange.ResultNumber}");
                 }
 
                 if (!isEnlisted)
@@ -58,7 +55,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // The mod's wage system (ClanFinanceEnlistmentIncomePatch) handles compensation
                 // We intentionally don't modify goldChange (leaving it as is), because we want to prevent
                 // the native calculation from adding anything. By returning false, we skip the original method.
-                ModLogger.Debug("Finance", "Suppressed native mercenary income - enlisted soldiers receive mod wages only");
+                ModLogger.Debug("Finance",
+                    "Suppressed native mercenary income - enlisted soldiers receive mod wages only");
                 return false; // Skip the original AddMercenaryIncome method
             }
             catch (Exception ex)
@@ -70,23 +68,23 @@ namespace Enlisted.Mod.GameAdapters.Patches
     }
 
     /// <summary>
-    /// Additional patch to prevent the MercenaryAwardMultiplier from being recalculated
-    /// every 30 days while enlisted. This ensures the multiplier stays at 0.
-    ///
-    /// Without this patch, ClanVariablesCampaignBehavior.DailyTickClan would recalculate
-    /// the multiplier based on clan strength, potentially giving non-zero values.
+    ///     Additional patch to prevent the MercenaryAwardMultiplier from being recalculated
+    ///     every 30 days while enlisted. This ensures the multiplier stays at 0.
+    ///     Without this patch, ClanVariablesCampaignBehavior.DailyTickClan would recalculate
+    ///     the multiplier based on clan strength, potentially giving non-zero values.
     /// </summary>
     // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(Clan), nameof(Clan.MercenaryAwardMultiplier), MethodType.Setter)]
     internal static class MercenaryAwardMultiplierSuppressionPatch
     {
         /// <summary>
-        /// Prefix patch that prevents setting MercenaryAwardMultiplier to non-zero values
-        /// when the player clan is enlisted.
+        ///     Prefix patch that prevents setting MercenaryAwardMultiplier to non-zero values
+        ///     when the player clan is enlisted.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __instance is a special injected parameter")]
         [HarmonyPrefix]
         private static bool Prefix(Clan __instance, ref int value)
         {
@@ -117,7 +115,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 if (ModLogger.IsEnabled("Finance", LogLevel.Debug))
                 {
-                    ModLogger.Debug("Finance", $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, newValue={value}");
+                    ModLogger.Debug("Finance",
+                        $"MercenaryAwardMultiplier setter: isEnlisted={isEnlisted}, newValue={value}");
                 }
 
                 if (!isEnlisted)
@@ -130,10 +129,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     if (ModLogger.IsEnabled("Finance", LogLevel.Debug))
                     {
-                        ModLogger.Debug("Finance", $"Blocked MercenaryAwardMultiplier change to {value} while enlisted - forcing to 0");
+                        ModLogger.Debug("Finance",
+                            $"Blocked MercenaryAwardMultiplier change to {value} while enlisted - forcing to 0");
                     }
+
                     value = 0;
                 }
+
                 return true; // Continue with the (now zeroed) value
             }
             catch (Exception ex)
@@ -144,4 +146,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-

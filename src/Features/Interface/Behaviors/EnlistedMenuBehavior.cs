@@ -1,22 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Conversation;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Settlements;
-using TaleWorlds.Core;
-using TaleWorlds.Core.ImageIdentifiers;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
+
 // 1.3.4 API: ImageIdentifier moved here
 
 namespace Enlisted.Features.Interface.Behaviors
@@ -697,7 +688,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnEnlistedStatusCondition,
                 null, // No consequence for wait menu
                 OnEnlistedStatusTick, // Tick handler for real-time updates
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption); // Wait menu template that hides progress boxes
+                GameMenu.MenuAndOptionType
+                    .WaitMenuHideProgressAndHoursOption); // Wait menu template that hides progress boxes
 
             // Main menu options for enlisted status menu
 
@@ -1176,7 +1168,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private int GetNextTierXpRequirement(int currentTier)
         {
             // Load from progression_config.json instead of hardcoded values
-            return Assignments.Core.ConfigurationManager.GetXpRequiredForTier(currentTier);
+            return ConfigurationManager.GetXpRequiredForTier(currentTier);
         }
 
         /// <summary>
@@ -1204,7 +1196,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (!isRenewal)
                 {
                     // First term calculation
-                    var retirementConfig = Assignments.Core.ConfigurationManager.LoadRetirementConfig();
+                    var retirementConfig = ConfigurationManager.LoadRetirementConfig();
                     var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
                     remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
                 }

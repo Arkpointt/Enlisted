@@ -1,37 +1,35 @@
 ﻿using System;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem.CampaignBehaviors;
-using TaleWorlds.CampaignSystem.Party;
+using System.Diagnostics.CodeAnalysis;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Contains patches to handle the "Virtual Food Link" system.
-    /// This system allows the enlisted player to share the Lord's food supply without
-    /// physically duplicating items into the player's inventory (which caused exploits).
+    ///     Contains patches to handle the "Virtual Food Link" system.
+    ///     This system allows the enlisted player to share the Lord's food supply without
+    ///     physically duplicating items into the player's inventory (which caused exploits).
     /// </summary>
     public static class FoodSystemPatches
     {
         /// <summary>
-        /// Patch 1: Virtual Food Link (UI/Getter)
-        /// Links the player's food count to the lord's party when enlisted.
-        ///
-        /// Purpose:
-        /// - Ensures UI displays the correct "shared" food amount.
-        /// - Satisfies Morale checks that read TotalFoodAtInventory.
-        /// - Prevents the "Sell to Lord" exploit by keeping the actual ItemRoster empty.
+        ///     Patch 1: Virtual Food Link (UI/Getter)
+        ///     Links the player's food count to the lord's party when enlisted.
+        ///     Purpose:
+        ///     - Ensures UI displays the correct "shared" food amount.
+        ///     - Satisfies Morale checks that read TotalFoodAtInventory.
+        ///     - Prevents the "Sell to Lord" exploit by keeping the actual ItemRoster empty.
         /// </summary>
         [HarmonyPatch(typeof(MobileParty), "TotalFoodAtInventory", MethodType.Getter)]
         public static class VirtualFoodLinkPatch
         {
             /// <summary>
-            /// Postfix method that runs after MobileParty.TotalFoodAtInventory getter.
-            /// Called by Harmony via reflection.
+            ///     Postfix method that runs after MobileParty.TotalFoodAtInventory getter.
+            ///     Called by Harmony via reflection.
             /// </summary>
             [HarmonyPostfix]
-            [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+            [SuppressMessage("ReSharper", "InconsistentNaming",
+                Justification = "Harmony convention: __instance and __result are special injected parameters")]
             public static void Postfix(MobileParty __instance, ref int __result)
             {
                 try
@@ -72,20 +70,19 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
 
         /// <summary>
-        /// Patch 2: Shared Food Consumption (Logic)
-        /// Intercepts the daily food consumption logic to allow the player to "eat" from the Lord's supply.
-        ///
-        /// Purpose:
-        /// - Prevents the "Starvation" state when the player has no items in their own inventory.
-        /// - Vanilla code iterates the ItemRoster to find food; since ours is empty, it would default to starvation.
-        /// - This patch checks the Lord's supply and, if available, marks the player as "Fed" (RemainingFoodPercentage = 100).
+        ///     Patch 2: Shared Food Consumption (Logic)
+        ///     Intercepts the daily food consumption logic to allow the player to "eat" from the Lord's supply.
+        ///     Purpose:
+        ///     - Prevents the "Starvation" state when the player has no items in their own inventory.
+        ///     - Vanilla code iterates the ItemRoster to find food; since ours is empty, it would default to starvation.
+        ///     - This patch checks the Lord's supply and, if available, marks the player as "Fed" (RemainingFoodPercentage = 100).
         /// </summary>
         [HarmonyPatch(typeof(FoodConsumptionBehavior), "PartyConsumeFood")]
         public static class SharedFoodConsumptionPatch
         {
             /// <summary>
-            /// Prefix method that runs before FoodConsumptionBehavior.PartyConsumeFood.
-            /// Called by Harmony via reflection.
+            ///     Prefix method that runs before FoodConsumptionBehavior.PartyConsumeFood.
+            ///     Called by Harmony via reflection.
             /// </summary>
             [HarmonyPrefix]
             public static bool Prefix(MobileParty mobileParty)

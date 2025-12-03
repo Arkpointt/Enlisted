@@ -4,9 +4,6 @@ using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Conversations.Behaviors
 {

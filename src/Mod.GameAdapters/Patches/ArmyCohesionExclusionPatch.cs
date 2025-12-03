@@ -1,30 +1,22 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.GameComponents;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Localization;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Compensates for the enlisted player's negative impact on army cohesion.
-    ///
-    /// When enlisted, the player's party is counted as a separate party in the army,
-    /// which causes cohesion penalties:
-    /// - Each party in army: -1 cohesion/day
-    /// - Low member parties (≤10): additional penalty
-    /// - Low morale parties (≤25): additional penalty
-    ///
-    /// Since the enlisted player is conceptually embedded with their lord (not a separate
-    /// party), these penalties are not thematically appropriate. This patch adds a
-    /// compensating bonus to offset the penalties the player's party causes.
-    ///
-    /// Uses Postfix approach for maximum compatibility - doesn't block or modify the
-    /// native calculation, just adds a compensating modifier afterward.
+    ///     Compensates for the enlisted player's negative impact on army cohesion.
+    ///     When enlisted, the player's party is counted as a separate party in the army,
+    ///     which causes cohesion penalties:
+    ///     - Each party in army: -1 cohesion/day
+    ///     - Low member parties (≤10): additional penalty
+    ///     - Low morale parties (≤25): additional penalty
+    ///     Since the enlisted player is conceptually embedded with their lord (not a separate
+    ///     party), these penalties are not thematically appropriate. This patch adds a
+    ///     compensating bonus to offset the penalties the player's party causes.
+    ///     Uses Postfix approach for maximum compatibility - doesn't block or modify the
+    ///     native calculation, just adds a compensating modifier afterward.
     /// </summary>
     [HarmonyPatch(typeof(DefaultArmyManagementCalculationModel),
         nameof(DefaultArmyManagementCalculationModel.CalculateDailyCohesionChange))]
@@ -34,10 +26,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
             new TextObject("{=enlisted_cohesion}Enlisted soldier (embedded)");
 
         /// <summary>
-        /// Postfix that adds a compensating cohesion bonus to offset the enlisted player's
-        /// negative impact on army cohesion. The player is embedded with their lord, so they
-        /// shouldn't count as a separate party for cohesion purposes.
-        /// Called by Harmony via reflection.
+        ///     Postfix that adds a compensating cohesion bonus to offset the enlisted player's
+        ///     negative impact on army cohesion. The player is embedded with their lord, so they
+        ///     shouldn't count as a separate party for cohesion purposes.
+        ///     Called by Harmony via reflection.
         /// </summary>
         [HarmonyPostfix]
         [SuppressMessage("ReSharper", "InconsistentNaming")]
