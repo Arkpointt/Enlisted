@@ -1,16 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Newtonsoft.Json;
-using Enlisted.Mod.Core.Logging;
 using Enlisted.Features.Enlistment.Core;
+using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Features.Assignments.Core
 {
     /// <summary>
-    /// Safe configuration loading with schema versioning and validation.
-    /// Provides robust JSON loading following Blueprint standards for fail-safe operation.
+    ///     Safe configuration loading with schema versioning and validation.
+    ///     Provides robust JSON loading following Blueprint standards for fail-safe operation.
     /// </summary>
     public static class ConfigurationManager
     {
@@ -21,8 +21,8 @@ namespace Enlisted.Features.Assignments.Core
         private static RetirementConfig _cachedRetirementConfig;
 
         /// <summary>
-        /// Load duties system configuration with comprehensive error handling and schema validation.
-        /// Falls back to embedded defaults if file loading fails.
+        ///     Load duties system configuration with comprehensive error handling and schema validation.
+        ///     Falls back to embedded defaults if file loading fails.
         /// </summary>
         public static DutiesSystemConfig LoadDutiesConfig()
         {
@@ -47,7 +47,8 @@ namespace Enlisted.Features.Assignments.Core
                 // Schema validation
                 if (config?.SchemaVersion != 1)
                 {
-                    ModLogger.Error("Config", $"Unsupported duties config schema version: {config?.SchemaVersion}. Expected: 1");
+                    ModLogger.Error("Config",
+                        $"Unsupported duties config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultDutiesConfig();
                 }
 
@@ -75,8 +76,8 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create a minimal working default configuration when JSON loading fails.
-        /// Ensures the mod remains functional even with missing or corrupt config files.
+        ///     Create a minimal working default configuration when JSON loading fails.
+        ///     Ensures the mod remains functional even with missing or corrupt config files.
         /// </summary>
         private static DutiesSystemConfig CreateDefaultDutiesConfig()
         {
@@ -84,7 +85,7 @@ namespace Enlisted.Features.Assignments.Core
             {
                 SchemaVersion = 1,
                 Enabled = true,
-                DutySlots = new System.Collections.Generic.Dictionary<string, int>
+                DutySlots = new Dictionary<string, int>
                 {
                     ["tier_1"] = 1,
                     ["tier_2"] = 1,
@@ -93,11 +94,9 @@ namespace Enlisted.Features.Assignments.Core
                     ["tier_5"] = 3,
                     ["tier_6"] = 3
                 },
-                XpSources = new System.Collections.Generic.Dictionary<string, int>
+                XpSources = new Dictionary<string, int>
                 {
-                    ["daily_service"] = 25,
-                    ["duty_performance"] = 15,
-                    ["battle_participation"] = 50
+                    ["daily_service"] = 25, ["duty_performance"] = 15, ["battle_participation"] = 50
                 }
             };
 
@@ -112,7 +111,7 @@ namespace Enlisted.Features.Assignments.Core
                 TargetSkill = "Athletics",
                 SkillXpDaily = 15,
                 WageMultiplier = 0.8f,
-                RequiredFormations = [ "infantry", "archer" ]
+                RequiredFormations = ["infantry", "archer"]
             };
 
             ModLogger.Info("Config", "Using fallback duties configuration");
@@ -120,9 +119,9 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get the full path to a ModuleData configuration file.
-        /// Works with any Bannerlord installation location.
-        /// Always returns a non-null path; falls back to AppContext.BaseDirectory if needed.
+        ///     Get the full path to a ModuleData configuration file.
+        ///     Works with any Bannerlord installation location.
+        ///     Always returns a non-null path; falls back to AppContext.BaseDirectory if needed.
         /// </summary>
         private static string GetModuleDataPath(string fileName)
         {
@@ -146,8 +145,8 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Load progression configuration with comprehensive error handling and schema validation.
-        /// Falls back to embedded defaults if file loading fails.
+        ///     Load progression configuration with comprehensive error handling and schema validation.
+        ///     Falls back to embedded defaults if file loading fails.
         /// </summary>
         private static ProgressionConfig LoadProgressionConfig()
         {
@@ -172,7 +171,8 @@ namespace Enlisted.Features.Assignments.Core
                 // Schema validation
                 if (config?.SchemaVersion != 1)
                 {
-                    ModLogger.Error("Config", $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1");
+                    ModLogger.Error("Config",
+                        $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultProgressionConfig();
                 }
 
@@ -184,7 +184,8 @@ namespace Enlisted.Features.Assignments.Core
                 }
 
                 _cachedProgressionConfig = config;
-                ModLogger.Info("Config", $"Progression config loaded from {configPath} ({config.TierProgression.Requirements.Count} tiers)");
+                ModLogger.Info("Config",
+                    $"Progression config loaded from {configPath} ({config.TierProgression.Requirements.Count} tiers)");
                 return config;
             }
             catch (JsonException ex)
@@ -200,8 +201,8 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create a minimal working default configuration when JSON loading fails.
-        /// Uses values from progression_config.json as defaults.
+        ///     Create a minimal working default configuration when JSON loading fails.
+        ///     Uses values from progression_config.json as defaults.
         /// </summary>
         private static ProgressionConfig CreateDefaultProgressionConfig()
         {
@@ -228,11 +229,11 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get tier XP requirements array from progression config.
-        /// Returns array where the index matches tier number (1-based).
-        /// Array[0] is unused, Array[tier] contains the XP threshold needed to promote FROM that tier.
-        /// Fix: JSON stores cumulative XP (tier 1=0, tier 2=800), but we need promotion thresholds.
-        /// So Array[1] should be 800 (XP needed to go from tier 1→2), Array[2] should be 3000 (tier 2→3), etc.
+        ///     Get tier XP requirements array from progression config.
+        ///     Returns array where the index matches tier number (1-based).
+        ///     Array[0] is unused, Array[tier] contains the XP threshold needed to promote FROM that tier.
+        ///     Fix: JSON stores cumulative XP (tier 1=0, tier 2=800), but we need promotion thresholds.
+        ///     So Array[1] should be 800 (XP needed to go from tier 1→2), Array[2] should be 3000 (tier 2→3), etc.
         /// </summary>
         public static int[] GetTierXpRequirements()
         {
@@ -243,7 +244,7 @@ namespace Enlisted.Features.Assignments.Core
                 // Array[1]=800 (need 800 XP to promote from tier 1 to tier 2)
                 // Array[2]=3000 (need 3000 XP to promote from tier 2 to tier 3), etc.
                 // Last element repeats max tier requirement to prevent out-of-bounds
-                return [ 0, 800, 3000, 6000, 11000, 19000, 19000 ];
+                return [0, 800, 3000, 6000, 11000, 19000, 19000];
             }
 
             // Sort by tier and extract XP requirements
@@ -286,8 +287,8 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get the maximum tier defined in progression config.
-        /// Returns the actual tier count (e.g., 6 for tiers 1-6), not the array length.
+        ///     Get the maximum tier defined in progression config.
+        ///     Returns the actual tier count (e.g., 6 for tiers 1-6), not the array length.
         /// </summary>
         public static int GetMaxTier()
         {
@@ -296,11 +297,12 @@ namespace Enlisted.Features.Assignments.Core
             {
                 return 6; // Default fallback matching progression_config.json
             }
+
             return config.TierProgression.Requirements.Max(r => r.Tier);
         }
 
         /// <summary>
-        /// Get XP required for a specific tier from progression config.
+        ///     Get XP required for a specific tier from progression config.
         /// </summary>
         public static int GetXpRequiredForTier(int tier)
         {
@@ -315,7 +317,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get the display name for a specific tier from progression config.
+        ///     Get the display name for a specific tier from progression config.
         /// </summary>
         public static string GetTierName(int tier)
         {
@@ -325,7 +327,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get XP awarded for battle participation from progression config.
+        ///     Get XP awarded for battle participation from progression config.
         /// </summary>
         public static int GetBattleParticipationXp()
         {
@@ -334,7 +336,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get XP awarded per enemy kill from progression config.
+        ///     Get XP awarded per enemy kill from progression config.
         /// </summary>
         public static int GetXpPerKill()
         {
@@ -343,7 +345,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Get daily base XP from progression config.
+        ///     Get daily base XP from progression config.
         /// </summary>
         public static int GetDailyBaseXp()
         {
@@ -352,7 +354,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Clear cached configuration. Used for testing or config reloading.
+        ///     Clear cached configuration. Used for testing or config reloading.
         /// </summary>
         public static void ClearCache()
         {
@@ -364,8 +366,8 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Load finance configuration from enlisted_config.json.
-        /// Returns cached config or loads from file on first call.
+        ///     Load finance configuration from enlisted_config.json.
+        ///     Returns cached config or loads from file on first call.
         /// </summary>
         public static FinanceConfig LoadFinanceConfig()
         {
@@ -405,7 +407,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create default finance configuration when JSON loading fails.
+        ///     Create default finance configuration when JSON loading fails.
         /// </summary>
         private static FinanceConfig CreateDefaultFinanceConfig()
         {
@@ -425,8 +427,8 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Load gameplay configuration from enlisted_config.json.
-        /// Returns cached config or loads from file on first call.
+        ///     Load gameplay configuration from enlisted_config.json.
+        ///     Returns cached config or loads from file on first call.
         /// </summary>
         public static GameplayConfig LoadGameplayConfig()
         {
@@ -498,21 +500,16 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create default gameplay configuration when JSON loading fails.
+        ///     Create default gameplay configuration when JSON loading fails.
         /// </summary>
         private static GameplayConfig CreateDefaultGameplayConfig()
         {
-            return new GameplayConfig
-            {
-                ReserveTroopThreshold = 100,
-                DesertionGracePeriodDays = 14,
-                LeaveMaxDays = 14
-            };
+            return new GameplayConfig { ReserveTroopThreshold = 100, DesertionGracePeriodDays = 14, LeaveMaxDays = 14 };
         }
 
         /// <summary>
-        /// Load retirement configuration from enlisted_config.json.
-        /// Returns cached config or loads from file on first call.
+        ///     Load retirement configuration from enlisted_config.json.
+        ///     Returns cached config or loads from file on first call.
         /// </summary>
         public static RetirementConfig LoadRetirementConfig()
         {
@@ -585,7 +582,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Create default retirement configuration when JSON loading fails.
+        ///     Create default retirement configuration when JSON loading fails.
         /// </summary>
         private static RetirementConfig CreateDefaultRetirementConfig()
         {
@@ -594,60 +591,51 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    /// Root config object for enlisted_config.json parsing.
+    ///     Root config object for enlisted_config.json parsing.
     /// </summary>
     public class EnlistedFullConfig
     {
-        [JsonProperty("finance")]
-        public FinanceConfig Finance { get; set; }
+        [JsonProperty("finance")] public FinanceConfig Finance { get; set; }
 
-        [JsonProperty("gameplay")]
-        public GameplayConfig Gameplay { get; set; }
+        [JsonProperty("gameplay")] public GameplayConfig Gameplay { get; set; }
 
-        [JsonProperty("retirement")]
-        public RetirementConfig Retirement { get; set; }
+        [JsonProperty("retirement")] public RetirementConfig Retirement { get; set; }
     }
 
     /// <summary>
-    /// Finance configuration for wage calculation and display.
-    /// Loaded from enlisted_config.json finance section.
+    ///     Finance configuration for wage calculation and display.
+    ///     Loaded from enlisted_config.json finance section.
     /// </summary>
     public class FinanceConfig
     {
-        [JsonProperty("show_in_clan_tooltip")]
-        public bool ShowInClanTooltip { get; set; } = true;
+        [JsonProperty("show_in_clan_tooltip")] public bool ShowInClanTooltip { get; set; } = true;
 
         [JsonProperty("tooltip_label")]
         public string TooltipLabel { get; set; } = "{=enlisted_wage_income}Enlistment Wages";
 
-        [JsonProperty("wage_formula")]
-        public WageFormulaConfig WageFormula { get; set; } = new WageFormulaConfig();
+        [JsonProperty("wage_formula")] public WageFormulaConfig WageFormula { get; set; } = new();
     }
 
     /// <summary>
-    /// Wage calculation formula configuration.
-    /// Formula: (base + level*levelMult + tier*tierMult + xp/xpDiv) * armyBonus
+    ///     Wage calculation formula configuration.
+    ///     Formula: (base + level*levelMult + tier*tierMult + xp/xpDiv) * armyBonus
     /// </summary>
     public class WageFormulaConfig
     {
-        [JsonProperty("base_wage")]
-        public int BaseWage { get; set; } = 10;
+        [JsonProperty("base_wage")] public int BaseWage { get; set; } = 10;
 
-        [JsonProperty("level_multiplier")]
-        public int LevelMultiplier { get; set; } = 1;
+        [JsonProperty("level_multiplier")] public int LevelMultiplier { get; set; } = 1;
 
-        [JsonProperty("tier_multiplier")]
-        public int TierMultiplier { get; set; } = 5;
+        [JsonProperty("tier_multiplier")] public int TierMultiplier { get; set; } = 5;
 
-        [JsonProperty("xp_divisor")]
-        public int XpDivisor { get; set; } = 200;
+        [JsonProperty("xp_divisor")] public int XpDivisor { get; set; } = 200;
 
         [JsonProperty("army_bonus_multiplier")]
         public float ArmyBonusMultiplier { get; set; } = 1.2f;
     }
 
     /// <summary>
-    /// Gameplay tuning configuration for combat and service mechanics.
+    ///     Gameplay tuning configuration for combat and service mechanics.
     /// </summary>
     public class GameplayConfig
     {
@@ -657,26 +645,21 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("desertion_grace_period_days")]
         public int DesertionGracePeriodDays { get; set; } = 14;
 
-        [JsonProperty("leave_max_days")]
-        public int LeaveMaxDays { get; set; } = 14;
+        [JsonProperty("leave_max_days")] public int LeaveMaxDays { get; set; } = 14;
     }
 
     /// <summary>
-    /// Retirement system configuration for veteran benefits and term tracking.
+    ///     Retirement system configuration for veteran benefits and term tracking.
     /// </summary>
     public class RetirementConfig
     {
-        [JsonProperty("first_term_days")]
-        public int FirstTermDays { get; set; } = 252;
+        [JsonProperty("first_term_days")] public int FirstTermDays { get; set; } = 252;
 
-        [JsonProperty("renewal_term_days")]
-        public int RenewalTermDays { get; set; } = 84;
+        [JsonProperty("renewal_term_days")] public int RenewalTermDays { get; set; } = 84;
 
-        [JsonProperty("cooldown_days")]
-        public int CooldownDays { get; set; } = 42;
+        [JsonProperty("cooldown_days")] public int CooldownDays { get; set; } = 42;
 
-        [JsonProperty("first_term_gold")]
-        public int FirstTermGold { get; set; } = 10000;
+        [JsonProperty("first_term_gold")] public int FirstTermGold { get; set; } = 10000;
 
         [JsonProperty("first_term_reenlist_bonus")]
         public int FirstTermReenlistBonus { get; set; } = 20000;
@@ -687,8 +670,7 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("renewal_continue_bonus")]
         public int RenewalContinueBonus { get; set; } = 5000;
 
-        [JsonProperty("lord_relation_bonus")]
-        public int LordRelationBonus { get; set; } = 30;
+        [JsonProperty("lord_relation_bonus")] public int LordRelationBonus { get; set; } = 30;
 
         [JsonProperty("faction_reputation_bonus")]
         public int FactionReputationBonus { get; set; } = 30;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Enlisted RETAIL</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
@@ -31,15 +31,15 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Bannerlord.Harmony\bin\Win64_Shipping_Client\0Harmony.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System"/>
+    <Reference Include="System.Core"/>
+    <Reference Include="System.Xml.Linq"/>
+    <Reference Include="System.Runtime.Serialization"/>
+    <Reference Include="System.Data.DataSetExtensions"/>
+    <Reference Include="Microsoft.CSharp"/>
+    <Reference Include="System.Data"/>
+    <Reference Include="System.Net.Http"/>
+    <Reference Include="System.Xml"/>
     <Reference Include="Newtonsoft.Json">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
@@ -130,112 +130,112 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" />
-    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" />
-    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" />
-    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" />
+    <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
+    <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="src\Mod.Entry\SubModule.cs" />
-    <Compile Include="src\Mod.Core\Config\ModSettings.cs" />
-    <Compile Include="src\Mod.Core\Config\ModConfig.cs" />
-    <Compile Include="src\Mod.Core\Logging\ModLogger.cs" />
-    <Compile Include="src\Mod.Core\Logging\ModConflictDiagnostics.cs" />
-    <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs" />
-    <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs" />
-    <Compile Include="src\Mod.Core\Util\PlayerContext.cs" />
-    <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs" />
-    <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs" />
-    <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs" />
-    <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs" />
-    <Compile Include="src\Features\Assignments\Core\DutyConfiguration.cs" />
-    <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs" />
-    <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs" />
-    <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs" />
-    <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs" />
-    <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs" />
-    <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs" />
-    <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs" />
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs" />
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs" />
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs" />
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs" />
-    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs" />
-    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs" />
-    <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs" />
-    <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs" />
-    <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs" />
-    <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs"/>
+    <Compile Include="src\Mod.Entry\SubModule.cs"/>
+    <Compile Include="src\Mod.Core\Config\ModSettings.cs"/>
+    <Compile Include="src\Mod.Core\Config\ModConfig.cs"/>
+    <Compile Include="src\Mod.Core\Logging\ModLogger.cs"/>
+    <Compile Include="src\Mod.Core\Logging\ModConflictDiagnostics.cs"/>
+    <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs"/>
+    <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
+    <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
+    <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
+    <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs"/>
+    <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs"/>
+    <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs"/>
+    <Compile Include="src\Features\Assignments\Core\DutyConfiguration.cs"/>
+    <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs"/>
+    <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs"/>
+    <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
+    <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs"/>
+    <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs"/>
+    <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs"/>
+    <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs"/>
+    <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
+    <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs"/>
     <!-- Disabled: Native game handles siege dismounting -->
-    <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\FoodSystemPatches.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\FoodSystemPatches.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="SubModule.xml" />
-    <Content Include="ModuleData\Enlisted\settings.json" />
-    <Content Include="ModuleData\Enlisted\duties_system.json" />
-    <Content Include="ModuleData\Enlisted\progression_config.json" />
-    <Content Include="ModuleData\Enlisted\enlisted_config.json" />
-    <Content Include="ModuleData\Enlisted\equipment_kits.json" />
-    <Content Include="ModuleData\Enlisted\equipment_pricing.json" />
-    <Content Include="ModuleData\Enlisted\menu_config.json" />
-    <Content Include="ModuleData\Languages\enlisted_strings.xml" />
+    <Content Include="SubModule.xml"/>
+    <Content Include="ModuleData\Enlisted\settings.json"/>
+    <Content Include="ModuleData\Enlisted\duties_system.json"/>
+    <Content Include="ModuleData\Enlisted\progression_config.json"/>
+    <Content Include="ModuleData\Enlisted\enlisted_config.json"/>
+    <Content Include="ModuleData\Enlisted\equipment_kits.json"/>
+    <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
+    <Content Include="ModuleData\Enlisted\menu_config.json"/>
+    <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Main Documentation -->
-    <None Include="docs\BLUEPRINT.md" />
-    <None Include="packages.config" />
+    <None Include="docs\BLUEPRINT.md"/>
+    <None Include="packages.config"/>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
   <Target Name="AfterBuild">
-    <MakeDir Directories="$(OutputPath)..\..\Debugging" />
-    <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment" />
-    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted" />
-    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages" />
-    <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\" />
-    <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Enlisted\duties_system.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Enlisted\progression_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Enlisted\enlisted_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\" />
-    <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\" />
-    <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
-    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
-    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
-    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\" />
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false" />
-    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false" />
+    <MakeDir Directories="$(OutputPath)..\..\Debugging"/>
+    <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
+    <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\duties_system.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\progression_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\enlisted_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>
+    <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false"/>
   </Target>
-  <Import Project="packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets" Condition="Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets')" />
+  <Import Project="packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets" Condition="Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets')"/>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them. For more information, see http://go.microsoft.com/fwlink/?LinkID=322105.The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets'))" />
+    <Error Condition="!Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.NETFramework.ReferenceAssemblies.net472.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net472.targets'))"/>
   </Target>
 
 </Project>
