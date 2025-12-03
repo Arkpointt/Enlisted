@@ -1,44 +1,38 @@
 using System;
-using TaleWorlds.MountAndBlade;
-using TaleWorlds.Core;
-using TaleWorlds.Engine;
-using TaleWorlds.Library;
-using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
     /// <summary>
-    /// Mission behavior that automatically assigns enlisted players to their designated formation
-    /// (Infantry, Archer, Cavalry, Horse Archer) when a battle starts.
-    ///
-    /// Without this, the player would float as an independent agent without being part of any formation,
-    /// missing out on formation orders and not being sorted with their fellow soldiers.
-    ///
-    /// FIX: Also teleports the player to the correct position within their formation to handle
-    /// cases where the player's map party was slightly behind the lord when battle started,
-    /// causing them to spawn in the wrong position (behind the formation instead of in it).
+    ///     Mission behavior that automatically assigns enlisted players to their designated formation
+    ///     (Infantry, Archer, Cavalry, Horse Archer) when a battle starts.
+    ///     Without this, the player would float as an independent agent without being part of any formation,
+    ///     missing out on formation orders and not being sorted with their fellow soldiers.
+    ///     FIX: Also teleports the player to the correct position within their formation to handle
+    ///     cases where the player's map party was slightly behind the lord when battle started,
+    ///     causing them to spawn in the wrong position (behind the formation instead of in it).
     /// </summary>
     public class EnlistedFormationAssignmentBehavior : MissionBehavior
     {
+        private const int MaxPositionFixAttempts = 30; // Try for about 0.5 seconds at 60fps
         private Agent _assignedAgent = null;
+
+        // Track if we've logged the behavior initialization
+        private bool _hasLoggedInit;
 
         // Track whether we need to teleport the player to their formation position
         // This handles the case where the player spawned late or in wrong position
-        private bool _needsPositionFix = false;
-        private int _positionFixAttempts = 0;
-        private const int MaxPositionFixAttempts = 30; // Try for about 0.5 seconds at 60fps
-
-        // Track if we've logged the behavior initialization
-        private bool _hasLoggedInit = false;
+        private bool _needsPositionFix;
+        private int _positionFixAttempts;
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
         /// <summary>
-        /// Called after the mission starts. We try to assign formation here,
-        /// but the player agent might not exist yet.
-        /// Note: This may not fire if we're added after mission start.
+        ///     Called after the mission starts. We try to assign formation here,
+        ///     but the player agent might not exist yet.
+        ///     Note: This may not fire if we're added after mission start.
         /// </summary>
         public override void AfterStart()
         {
@@ -66,8 +60,8 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Called when deployment finishes. This is a reliable point where
-        /// the player agent should exist.
+        ///     Called when deployment finishes. This is a reliable point where
+        ///     the player agent should exist.
         /// </summary>
         public override void OnDeploymentFinished()
         {
@@ -83,8 +77,8 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Called when an agent is built.
-        /// This catches late joins, respawns, and reinforcements immediately.
+        ///     Called when an agent is built.
+        ///     This catches late joins, respawns, and reinforcements immediately.
         /// </summary>
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
@@ -103,9 +97,9 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Called each mission tick. We use this as a fallback in case
-        /// the player agent wasn't available in earlier callbacks.
-        /// Also handles delayed position correction for players who spawned late.
+        ///     Called each mission tick. We use this as a fallback in case
+        ///     the player agent wasn't available in earlier callbacks.
+        ///     Also handles delayed position correction for players who spawned late.
         /// </summary>
         public override void OnMissionTick(float dt)
         {
@@ -124,13 +118,14 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.LogOnce("formation_tick_error", "FormationAssignment", $"Error in OnMissionTick: {ex.Message}");
+                ModLogger.LogOnce("formation_tick_error", "FormationAssignment",
+                    $"Error in OnMissionTick: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Attempts to assign the player to their designated formation.
-        /// Safe to call multiple times - will only assign once per agent instance.
+        ///     Attempts to assign the player to their designated formation.
+        ///     Safe to call multiple times - will only assign once per agent instance.
         /// </summary>
         private void TryAssignPlayerToFormation(string caller, Agent specificAgent = null)
         {
@@ -143,8 +138,10 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Only log once per callback to avoid spam
                 if (caller == "AfterStart" || caller == "OnDeploymentFinished")
                 {
-                    ModLogger.Debug("FormationAssignment", $"[{caller}] No player agent yet (null: {playerAgent == null})");
+                    ModLogger.Debug("FormationAssignment",
+                        $"[{caller}] No player agent yet (null: {playerAgent == null})");
                 }
+
                 return;
             }
 
@@ -220,17 +217,19 @@ namespace Enlisted.Features.Combat.Behaviors
             var targetFormation = playerTeam.GetFormation(formationClass);
             if (targetFormation == null)
             {
-                ModLogger.Debug("FormationAssignment", $"[{caller}] Could not get {formationClass} formation from team");
+                ModLogger.Debug("FormationAssignment",
+                    $"[{caller}] Could not get {formationClass} formation from team");
                 return;
             }
 
             // Check if player is already in this formation
             if (playerAgent.Formation == targetFormation)
             {
-                ModLogger.Info("FormationAssignment", $"[{caller}] Player already in {formationClass} formation - will still check position");
+                ModLogger.Info("FormationAssignment",
+                    $"[{caller}] Player already in {formationClass} formation - will still check position");
                 SuppressPlayerCommand(playerAgent);
                 _assignedAgent = playerAgent;
-                
+
                 // FIX: Still need to check position even if already in correct formation
                 // The game may have auto-assigned the player but spawned them in wrong location
                 if (!_needsPositionFix)
@@ -238,6 +237,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     _needsPositionFix = true;
                     _positionFixAttempts = 0;
                 }
+
                 return;
             }
 
@@ -254,23 +254,24 @@ namespace Enlisted.Features.Combat.Behaviors
                 _needsPositionFix = true;
                 _positionFixAttempts = 0;
 
-                ModLogger.Info("FormationAssignment", $"[{caller}] Assigned enlisted player to {formationClass} formation (index: {targetFormation.Index}) - will attempt position fix");
+                ModLogger.Info("FormationAssignment",
+                    $"[{caller}] Assigned enlisted player to {formationClass} formation (index: {targetFormation.Index}) - will attempt position fix");
             }
             catch (Exception ex)
             {
-                ModLogger.LogOnce($"assign_error_{playerAgent.Index}", "FormationAssignment", $"[{caller}] Failed to assign player to formation: {ex.Message}");
+                ModLogger.LogOnce($"assign_error_{playerAgent.Index}", "FormationAssignment",
+                    $"[{caller}] Failed to assign player to formation: {ex.Message}");
                 // Mark as assigned to prevent spamming this error for this agent
                 _assignedAgent = playerAgent;
             }
         }
 
         /// <summary>
-        /// Attempts to teleport the player to the correct position within their assigned formation.
-        /// This fixes the issue where players spawn behind their formation when their map party
-        /// was slightly behind the lord when battle started.
-        ///
-        /// The teleport only happens once, after formation assignment, and only if the player
-        /// is significantly far from their formation's position.
+        ///     Attempts to teleport the player to the correct position within their assigned formation.
+        ///     This fixes the issue where players spawn behind their formation when their map party
+        ///     was slightly behind the lord when battle started.
+        ///     The teleport only happens once, after formation assignment, and only if the player
+        ///     is significantly far from their formation's position.
         /// </summary>
         private void TryTeleportPlayerToFormationPosition()
         {
@@ -322,7 +323,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     // This is where the formation actually IS right now in battle,
                     // not the deployment spawn frame which may be far behind
                     playerAgent.TeleportToPosition(targetPosition);
-                    
+
                     // Try to face the same direction as the formation
                     if (formation.Direction.IsValid)
                     {
@@ -353,19 +354,25 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Strips command authority from the enlisted player.
-        /// Prevents them from being captain or general.
+        ///     Strips command authority from the enlisted player.
+        ///     Prevents them from being captain or general.
         /// </summary>
         private void SuppressPlayerCommand(Agent playerAgent)
         {
-            if (playerAgent == null || EnlistmentBehavior.Instance?.IsEnlisted != true) return;
+            if (playerAgent == null || EnlistmentBehavior.Instance?.IsEnlisted != true)
+            {
+                return;
+            }
 
             try
             {
-                if (playerAgent.Team == null) return;
+                if (playerAgent.Team == null)
+                {
+                    return;
+                }
 
-                bool captaincyStripped = false;
-                bool roleStripped = false;
+                var captaincyStripped = false;
+                var roleStripped = false;
                 string commandTransferredTo = null;
 
                 // 1. Strip Captaincy
@@ -387,60 +394,60 @@ namespace Enlisted.Features.Combat.Behaviors
                 // We also explicitly transfer the controller ownership to ensure UI/Keys don't target the player.
                 if (playerAgent.Team.PlayerOrderController?.Owner == playerAgent)
                 {
-                     // Try to find the Lord to give command to
-                     var lord = EnlistmentBehavior.Instance.CurrentLord;
-                     Agent lordAgent = null;
+                    // Try to find the Lord to give command to
+                    var lord = EnlistmentBehavior.Instance.CurrentLord;
+                    Agent lordAgent = null;
 
-                     if (lord != null && playerAgent.Team.ActiveAgents != null)
-                     {
-                         // Find the lord agent in the team
-                         foreach (var agent in playerAgent.Team.ActiveAgents)
-                         {
-                             if (agent.Character == lord.CharacterObject)
-                             {
-                                 lordAgent = agent;
-                                 break;
-                             }
-                         }
-                     }
+                    if (lord != null && playerAgent.Team.ActiveAgents != null)
+                    {
+                        // Find the lord agent in the team
+                        foreach (var agent in playerAgent.Team.ActiveAgents)
+                        {
+                            if (agent.Character == lord.CharacterObject)
+                            {
+                                lordAgent = agent;
+                                break;
+                            }
+                        }
+                    }
 
-                     if (lordAgent != null)
-                     {
-                         playerAgent.Team.PlayerOrderController.Owner = lordAgent;
-                         commandTransferredTo = $"Lord {lord.Name}";
-                     }
-                     else
-                     {
-                         // If Lord not found, try to transfer to the Team General (if not player)
-                         var general = playerAgent.Team.GeneralAgent;
-                         if (general != null && general != playerAgent)
-                         {
-                             playerAgent.Team.PlayerOrderController.Owner = general;
-                             commandTransferredTo = "Team General";
-                         }
-                         else
-                         {
-                             // Fallback: Find any other hero or agent to take command
-                             Agent otherAgent = null;
-                             if (playerAgent.Team.ActiveAgents != null)
-                             {
-                                 foreach (var agent in playerAgent.Team.ActiveAgents)
-                                 {
-                                     if (agent != playerAgent && agent.IsHero)
-                                     {
-                                         otherAgent = agent;
-                                         break;
-                                     }
-                                 }
-                             }
+                    if (lordAgent != null)
+                    {
+                        playerAgent.Team.PlayerOrderController.Owner = lordAgent;
+                        commandTransferredTo = $"Lord {lord.Name}";
+                    }
+                    else
+                    {
+                        // If Lord not found, try to transfer to the Team General (if not player)
+                        var general = playerAgent.Team.GeneralAgent;
+                        if (general != null && general != playerAgent)
+                        {
+                            playerAgent.Team.PlayerOrderController.Owner = general;
+                            commandTransferredTo = "Team General";
+                        }
+                        else
+                        {
+                            // Fallback: Find any other hero or agent to take command
+                            Agent otherAgent = null;
+                            if (playerAgent.Team.ActiveAgents != null)
+                            {
+                                foreach (var agent in playerAgent.Team.ActiveAgents)
+                                {
+                                    if (agent != playerAgent && agent.IsHero)
+                                    {
+                                        otherAgent = agent;
+                                        break;
+                                    }
+                                }
+                            }
 
-                             if (otherAgent != null)
-                             {
-                                  playerAgent.Team.PlayerOrderController.Owner = otherAgent;
-                                  commandTransferredTo = "Other Hero";
-                             }
-                         }
-                     }
+                            if (otherAgent != null)
+                            {
+                                playerAgent.Team.PlayerOrderController.Owner = otherAgent;
+                                commandTransferredTo = "Other Hero";
+                            }
+                        }
+                    }
                 }
 
                 // 4. Verification & Logging
@@ -450,12 +457,14 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 if (captaincyStripped || roleStripped || commandTransferredTo != null)
                 {
-                    ModLogger.Info("FormationAssignment", $"Command Suppression: Captaincy Stripped={captaincyStripped}, Role Stripped={roleStripped}, Command Transferred To={commandTransferredTo ?? "None"}");
+                    ModLogger.Info("FormationAssignment",
+                        $"Command Suppression: Captaincy Stripped={captaincyStripped}, Role Stripped={roleStripped}, Command Transferred To={commandTransferredTo ?? "None"}");
                 }
 
                 if (isStillCaptain || isStillGeneral || isStillRoleGeneral)
                 {
-                    ModLogger.Warn("FormationAssignment", $"Command Suppression Incomplete! Player is still: {(isStillCaptain ? "Captain " : "")}{(isStillGeneral ? "OrderControllerOwner " : "")}{(isStillRoleGeneral ? "GeneralRole" : "")}");
+                    ModLogger.Warn("FormationAssignment",
+                        $"Command Suppression Incomplete! Player is still: {(isStillCaptain ? "Captain " : "")}{(isStillGeneral ? "OrderControllerOwner " : "")}{(isStillRoleGeneral ? "GeneralRole" : "")}");
                 }
             }
             catch (Exception ex)
@@ -465,7 +474,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Converts our formation string (from duties system) to a FormationClass enum.
+        ///     Converts our formation string (from duties system) to a FormationClass enum.
         /// </summary>
         private FormationClass GetFormationClassFromString(string formation)
         {
@@ -497,4 +506,3 @@ namespace Enlisted.Features.Combat.Behaviors
         }
     }
 }
-

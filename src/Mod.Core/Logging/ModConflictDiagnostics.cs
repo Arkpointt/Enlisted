@@ -2,28 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-using HarmonyLib;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.Core.Logging
 {
     /// <summary>
-    /// Centralized diagnostics for detecting mod conflicts and logging environment info.
-    /// Writes to a dedicated conflicts.log file in the Debugging folder for easy user access.
-    /// Called once at startup from SubModule - no changes needed to patches or behaviors.
+    ///     Centralized diagnostics for detecting mod conflicts and logging environment info.
+    ///     Writes to a dedicated conflicts.log file in the Debugging folder for easy user access.
+    ///     Called once at startup from SubModule - no changes needed to patches or behaviors.
     /// </summary>
     public static class ModConflictDiagnostics
     {
         private const string EnlistedHarmonyId = "com.enlisted.mod";
         private const string EnlistedVersion = "v0.4.3";
 
-        private static readonly object Sync = new object();
+        private static readonly object Sync = new();
         private static string _conflictLogPath;
 
         /// <summary>
-        /// Runs all startup diagnostics and writes to Debugging/conflicts.log.
-        /// Call this once from OnSubModuleLoad after Harmony.PatchAll().
+        ///     Runs all startup diagnostics and writes to Debugging/conflicts.log.
+        ///     Call this once from OnSubModuleLoad after Harmony.PatchAll().
         /// </summary>
         /// <param name="harmony">The Harmony instance used by Enlisted</param>
         public static void RunStartupDiagnostics(Harmony harmony)
@@ -50,7 +49,7 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Resolves the path to conflicts.log in the Debugging folder alongside the module.
+        ///     Resolves the path to conflicts.log in the Debugging folder alongside the module.
         /// </summary>
         private static void InitializeLogPath()
         {
@@ -81,7 +80,7 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Clears the previous session's conflict log so only current session data is present.
+        ///     Clears the previous session's conflict log so only current session data is present.
         /// </summary>
         private static void ClearPreviousLog()
         {
@@ -99,7 +98,7 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Writes a line to the conflicts.log file.
+        ///     Writes a line to the conflicts.log file.
         /// </summary>
         private static void WriteLine(string text = "")
         {
@@ -141,7 +140,7 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Logs game version, mod version, and runtime info for support tickets.
+        ///     Logs game version, mod version, and runtime info for support tickets.
         /// </summary>
         private static void WriteEnvironmentInfo()
         {
@@ -166,7 +165,7 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Logs all loaded submodules so we know what mods were active when an issue occurred.
+        ///     Logs all loaded submodules so we know what mods were active when an issue occurred.
         /// </summary>
         private static void WriteLoadedModules()
         {
@@ -187,7 +186,7 @@ namespace Enlisted.Mod.Core.Logging
                 WriteLine($"  Total: {subModules.Count} modules");
                 WriteLine();
 
-                int index = 1;
+                var index = 1;
                 foreach (var subModule in subModules)
                 {
                     var typeName = subModule?.GetType().FullName ?? "Unknown";
@@ -203,8 +202,8 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Detects when other mods patch the same methods as Enlisted and logs potential conflicts.
-        /// This is the key diagnostic for mod interference issues.
+        ///     Detects when other mods patch the same methods as Enlisted and logs potential conflicts.
+        ///     This is the key diagnostic for mod interference issues.
         /// </summary>
         private static void WritePatchConflicts(Harmony harmony)
         {
@@ -234,14 +233,17 @@ namespace Enlisted.Mod.Core.Logging
                     {
                         owners.Add(p.owner);
                     }
+
                     foreach (var p in patchInfo.Postfixes)
                     {
                         owners.Add(p.owner);
                     }
+
                     foreach (var p in patchInfo.Transpilers)
                     {
                         owners.Add(p.owner);
                     }
+
                     foreach (var p in patchInfo.Finalizers)
                     {
                         owners.Add(p.owner);
@@ -290,10 +292,10 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Logs the execution order of patches on conflicting methods to understand who runs first.
-        /// Patch order matters: prefixes can skip the original method, postfixes can modify results.
+        ///     Logs the execution order of patches on conflicting methods to understand who runs first.
+        ///     Patch order matters: prefixes can skip the original method, postfixes can modify results.
         /// </summary>
-        private static void WritePatchExecutionOrder(Harmony harmony, List<System.Reflection.MethodBase> ourMethods,
+        private static void WritePatchExecutionOrder(Harmony harmony, List<MethodBase> ourMethods,
             List<(string method, List<string> otherMods)> conflicts)
         {
             WriteLine("  -- Patch Execution Order --");
@@ -353,8 +355,8 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Lists all methods that Enlisted patches for reference.
-        /// Useful for users to understand what game behavior the mod touches.
+        ///     Lists all methods that Enlisted patches for reference.
+        ///     Useful for users to understand what game behavior the mod touches.
         /// </summary>
         private static void WriteEnlistedPatchList(Harmony harmony)
         {
@@ -380,4 +382,3 @@ namespace Enlisted.Mod.Core.Logging
         }
     }
 }
-

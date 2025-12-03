@@ -1,32 +1,25 @@
 using System;
-using System.Linq;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Harmony patch that automatically joins enlisted players to their lord's battle,
-    /// bypassing the native "join_encounter" menu that asks "Help X's Party / Don't get involved".
-    /// 
-    /// When an enlisted soldier's lord attacks enemies (like looters) without being in an army,
-    /// the native game shows a choice menu. This patch intercepts that menu and automatically
-    /// joins the battle on the lord's side, then shows the standard encounter menu with
-    /// Attack/Send Troops/Wait options instead.
+    ///     Harmony patch that automatically joins enlisted players to their lord's battle,
+    ///     bypassing the native "join_encounter" menu that asks "Help X's Party / Don't get involved".
+    ///     When an enlisted soldier's lord attacks enemies (like looters) without being in an army,
+    ///     the native game shows a choice menu. This patch intercepts that menu and automatically
+    ///     joins the battle on the lord's side, then shows the standard encounter menu with
+    ///     Attack/Send Troops/Wait options instead.
     /// </summary>
-    [HarmonyPatch(typeof(TaleWorlds.CampaignSystem.CampaignBehaviors.EncounterGameMenuBehavior), "game_menu_join_encounter_on_init")]
+    [HarmonyPatch(typeof(TaleWorlds.CampaignSystem.CampaignBehaviors.EncounterGameMenuBehavior),
+        "game_menu_join_encounter_on_init")]
     public static class JoinEncounterAutoSelectPatch
     {
         /// <summary>
-        /// Prefix patch for game_menu_join_encounter_on_init.
-        /// Intercepts the "join_encounter" menu initialization and auto-joins for enlisted players.
-        /// Returns false to skip native on_init when auto-joining (player never sees the menu).
+        ///     Prefix patch for game_menu_join_encounter_on_init.
+        ///     Intercepts the "join_encounter" menu initialization and auto-joins for enlisted players.
+        ///     Returns false to skip native on_init when auto-joining (player never sees the menu).
         /// </summary>
         [HarmonyPrefix]
         private static bool Prefix(MenuCallbackArgs args)
@@ -75,12 +68,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Check if we can actually join on the lord's side
                 if (!battle.CanPartyJoinBattle(PartyBase.MainParty, lordSide))
                 {
-                    ModLogger.Warn("JoinEncounter", $"Cannot join battle on lord's side ({lordSide}) - allowing native menu");
+                    ModLogger.Warn("JoinEncounter",
+                        $"Cannot join battle on lord's side ({lordSide}) - allowing native menu");
                     return true;
                 }
 
                 // Auto-join the battle on the lord's side
-                ModLogger.Info("JoinEncounter", $"Auto-joining lord's battle as {lordSide} (Lord: {lord.Name}, Battle: {battle.EventType})");
+                ModLogger.Info("JoinEncounter",
+                    $"Auto-joining lord's battle as {lordSide} (Lord: {lord.Name}, Battle: {battle.EventType})");
 
                 try
                 {
@@ -135,4 +130,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-
