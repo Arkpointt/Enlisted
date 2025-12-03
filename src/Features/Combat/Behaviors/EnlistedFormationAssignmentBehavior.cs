@@ -2,6 +2,8 @@ using System;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using TaleWorlds.Core;
+using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -17,7 +19,7 @@ namespace Enlisted.Features.Combat.Behaviors
     public class EnlistedFormationAssignmentBehavior : MissionBehavior
     {
         private const int MaxPositionFixAttempts = 30; // Try for about 0.5 seconds at 60fps
-        private Agent _assignedAgent = null;
+        private Agent _assignedAgent;
 
         // Track if we've logged the behavior initialization
         private bool _hasLoggedInit;
@@ -311,13 +313,13 @@ namespace Enlisted.Features.Combat.Behaviors
                 var targetPosition = formationPosition.GetGroundVec3();
 
                 // Calculate distance to formation center
-                float distanceToFormation = playerPosition.Distance(targetPosition);
+                var distanceToFormation = playerPosition.Distance(targetPosition);
 
                 // Only teleport if player is significantly far from formation (more than 15 meters)
                 // This prevents unnecessary teleports for players who spawned correctly
-                const float MinTeleportDistance = 15f;
+                const float minTeleportDistance = 15f;
 
-                if (distanceToFormation > MinTeleportDistance)
+                if (distanceToFormation > minTeleportDistance)
                 {
                     // PRIMARY: Teleport to formation's CURRENT median position
                     // This is where the formation actually IS right now in battle,
@@ -451,9 +453,9 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
 
                 // 4. Verification & Logging
-                bool isStillCaptain = playerAgent.Formation?.Captain == playerAgent;
-                bool isStillGeneral = playerAgent.Team.PlayerOrderController?.Owner == playerAgent;
-                bool isStillRoleGeneral = playerAgent.Team.IsPlayerGeneral;
+                var isStillCaptain = playerAgent.Formation?.Captain == playerAgent;
+                var isStillGeneral = playerAgent.Team.PlayerOrderController?.Owner == playerAgent;
+                var isStillRoleGeneral = playerAgent.Team.IsPlayerGeneral;
 
                 if (captaincyStripped || roleStripped || commandTransferredTo != null)
                 {

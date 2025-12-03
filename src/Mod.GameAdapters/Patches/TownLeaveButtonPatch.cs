@@ -12,6 +12,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// is actively enlisted. This prevents accidental departure from settlements.
     /// The button remains visible during grace periods or when on temporary leave.
     /// </summary>
+    // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(PlayerTownVisitCampaignBehavior), "game_menu_town_town_leave_on_condition")]
     public static class TownLeaveButtonPatch
     {
@@ -20,7 +22,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Hides the Leave button if player is actively enlisted (not on leave, not in grace period).
         /// This covers "town", "castle", and "village" main menus.
         /// </summary>
-        static void Postfix(ref bool __result, MenuCallbackArgs args)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Harmony requires matching method signature")]
+        private static void Postfix(ref bool __result, MenuCallbackArgs args)
         {
             try
             {
@@ -53,13 +58,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// Additional patch for the "outside" settlement menus (castle_outside, town_outside).
     /// These use a different condition method from EncounterGameMenuBehavior.
     /// </summary>
+    // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(EncounterGameMenuBehavior), "game_menu_leave_on_condition")]
     public static class SettlementOutsideLeaveButtonPatch
     {
         /// <summary>
         /// Postfix that hides the Leave button in outside settlement menus when enlisted.
         /// </summary>
-        static void Postfix(ref bool __result, MenuCallbackArgs args)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Harmony requires matching method signature")]
+        private static void Postfix(ref bool __result, MenuCallbackArgs args)
         {
             try
             {

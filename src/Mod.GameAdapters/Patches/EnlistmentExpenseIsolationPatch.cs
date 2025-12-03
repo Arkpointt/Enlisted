@@ -2,14 +2,11 @@ using System;
 using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
-
-// ExplainedNumber is in TaleWorlds.CampaignSystem namespace, not TaleWorlds.Localization
-// Confirmed from decompiled DefaultClanFinanceModel.cs line 655:
-// private int AddPartyExpense(MobileParty party, Clan clan, ExplainedNumber goldChange, bool applyWithdrawals)
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -18,6 +15,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	/// This allows natural attachment behavior (AttachedTo) while isolating financial expenses.
 	/// When enlisted, the player receives wages from the enlistment system and doesn't pay expenses
 	/// based on the lord's financial situation.
+	/// 
+	/// Target method signature (from decompiled DefaultClanFinanceModel.cs):
+	/// private int AddPartyExpense(MobileParty party, Clan clan, ExplainedNumber goldChange, bool applyWithdrawals)
 	/// </summary>
 	[HarmonyPatch]
 	public class EnlistmentExpenseIsolationPatch
@@ -26,59 +26,24 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
 		/// <summary>
 		/// Finds the AddPartyExpense method in DefaultClanFinanceModel to patch.
-		/// Uses reflection because the method is private.
+		/// Uses AccessTools.Method with direct type references for reliable method resolution.
 		/// </summary>
-		static MethodBase TargetMethod()
+		[HarmonyTargetMethod]
+		public static MethodBase TargetMethod()
 		{
 			try
 			{
-				// Find DefaultClanFinanceModel class
-				var modelType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.GameComponents.DefaultClanFinanceModel");
-				if (modelType == null)
+				// Use direct type references - more reliable than string-based lookup
+				var method = AccessTools.Method(
+					typeof(DefaultClanFinanceModel), 
+					"AddPartyExpense",
+					new[] { typeof(MobileParty), typeof(Clan), typeof(ExplainedNumber), typeof(bool) }
+				);
+				
+				if (method != null)
 				{
-					ModLogger.Error("ExpenseIsolation", "Could not find DefaultClanFinanceModel type");
-					return null;
-				}
-
-				// Find ExplainedNumber type from TaleWorlds.CampaignSystem
-				// ExplainedNumber is a struct in TaleWorlds.CampaignSystem namespace
-				// Based on decompiled DefaultClanFinanceModel.AddPartyExpense signature:
-				// private int AddPartyExpense(MobileParty party, Clan clan, ExplainedNumber goldChange, bool applyWithdrawals)
-				var explainedNumberType = AccessTools.TypeByName("TaleWorlds.CampaignSystem.ExplainedNumber");
-				if (explainedNumberType == null)
-				{
-					// Fallback: Try to find in CampaignSystem assembly
-					explainedNumberType = typeof(Clan).Assembly.GetType("TaleWorlds.CampaignSystem.ExplainedNumber");
-				}
-
-				if (explainedNumberType != null)
-				{
-					// Find the AddPartyExpense method with signature:
-					// private int AddPartyExpense(MobileParty party, Clan clan, ExplainedNumber goldChange, bool applyWithdrawals)
-					var method = AccessTools.Method(modelType, "AddPartyExpense", 
-						new[] { typeof(MobileParty), typeof(Clan), explainedNumberType, typeof(bool) });
-					if (method != null)
-					{
-						ModLogger.Info("ExpenseIsolation", "Found AddPartyExpense method for patching");
-						return method;
-					}
-				}
-
-				// Fallback: Try to find by name only (less reliable but more compatible)
-				var allMethods = AccessTools.GetDeclaredMethods(modelType);
-				foreach (var method in allMethods)
-				{
-					if (method.Name == "AddPartyExpense" && method.GetParameters().Length == 4)
-					{
-						var parameters = method.GetParameters();
-						if (parameters[0].ParameterType == typeof(MobileParty) &&
-						    parameters[1].ParameterType == typeof(Clan) &&
-						    parameters[3].ParameterType == typeof(bool))
-						{
-							ModLogger.Info("ExpenseIsolation", "Found AddPartyExpense method (by name) for patching");
-							return method;
-						}
-					}
+					ModLogger.Info("ExpenseIsolation", $"Found AddPartyExpense method for patching: {method.DeclaringType?.Name}.{method.Name}");
+					return method;
 				}
 
 				ModLogger.Error("ExpenseIsolation", "Could not find AddPartyExpense method to patch");
@@ -98,10 +63,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		/// </summary>
 		/// <param name="party">The mobile party to calculate expenses for.</param>
 		/// <param name="clan">The clan that owns the party.</param>
-		/// <param name="goldChange">The explained number tracking gold changes (ExplainedNumber type).</param>
+		/// <param name="goldChange">The explained number tracking gold changes.</param>
 		/// <param name="applyWithdrawals">Whether to actually withdraw gold or just calculate.</param>
 		/// <param name="__result">The result expense amount to return.</param>
-		static bool Prefix(MobileParty party, Clan clan, object goldChange, bool applyWithdrawals, ref int __result)
+		/// <returns>True to run original method, false to skip it.</returns>
+		[HarmonyPrefix]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Global", Justification = "Harmony requires matching method signature")]
+		public static bool Prefix(MobileParty party, Clan clan, ExplainedNumber goldChange, bool applyWithdrawals, ref int __result)
 		{
 			try
 			{
@@ -119,11 +88,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				}
 
 				var enlistment = EnlistmentBehavior.Instance;
-				bool isEnlisted = enlistment?.IsEnlisted == true;
-				bool isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
-				bool isOnLeave = enlistment?.IsOnLeave == true;
+				var isEnlisted = enlistment?.IsEnlisted == true;
+				var isInGracePeriod = enlistment?.IsInDesertionGracePeriod == true;
+				var isOnLeave = enlistment?.IsOnLeave == true;
 				var mainHero = CampaignSafetyGuard.SafeMainHero;
-				bool playerCaptured = mainHero?.IsPrisoner == true;
+				var playerCaptured = mainHero?.IsPrisoner == true;
 				
 				if (!_loggedFirstInvocation)
 				{

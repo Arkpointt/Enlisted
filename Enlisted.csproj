@@ -130,7 +130,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="GUI\Prefabs\Equipment\TroopSelectionPopup.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
@@ -145,6 +144,7 @@
     <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs"/>
     <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
+    <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs"/>
@@ -158,11 +158,9 @@
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\QuartermasterManager.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorBehavior.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVM.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVM.cs"/>
-    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVM.cs"/>
-    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupVM.cs"/>
-    <Compile Include="src\Features\Equipment\UI\TroopSelectionPopupBehavior.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVm.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVm.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVm.cs"/>
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
@@ -223,7 +221,6 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
-    <Copy SourceFiles="GUI\Prefabs\Equipment\TroopSelectionPopup.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>

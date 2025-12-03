@@ -16,13 +16,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// to skip the method entirely when the player is enlisted.
     /// </summary>
     [HarmonyPatch(typeof(GainKingdomInfluenceAction), nameof(GainKingdomInfluenceAction.ApplyForBattle))]
-    internal static class InfluenceMessageSuppressionPatch
+    public static class InfluenceMessageSuppressionPatch
     {
         /// <summary>
         /// Skip influence notification when player is enlisted as a soldier.
         /// Soldiers don't gain political influence from battles - that goes to their lord.
+        /// Called by Harmony via reflection.
         /// </summary>
-        static bool Prefix(Hero hero, float value)
+        [HarmonyPrefix]
+        public static bool Prefix(Hero hero, float value)
         {
             try
             {

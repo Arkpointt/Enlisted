@@ -18,6 +18,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// This patch intercepts the AddMercenaryIncome method to completely suppress mercenary
     /// income when enlisted, ensuring players only receive wages from the mod's system.
     /// </summary>
+    // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), "AddMercenaryIncome")]
     internal static class MercenaryIncomeSuppressionPatch
     {
@@ -25,6 +27,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Prefix patch that skips native mercenary income calculation when the player is enlisted.
         /// Returns false to skip the original method entirely when enlisted.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
         [HarmonyPrefix]
         private static bool Prefix(Clan clan, ref ExplainedNumber goldChange, bool applyWithdrawals)
         {
@@ -73,6 +76,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// Without this patch, ClanVariablesCampaignBehavior.DailyTickClan would recalculate
     /// the multiplier based on clan strength, potentially giving non-zero values.
     /// </summary>
+    // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(Clan), nameof(Clan.MercenaryAwardMultiplier), MethodType.Setter)]
     internal static class MercenaryAwardMultiplierSuppressionPatch
     {
@@ -80,6 +85,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Prefix patch that prevents setting MercenaryAwardMultiplier to non-zero values
         /// when the player clan is enlisted.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
         [HarmonyPrefix]
         private static bool Prefix(Clan __instance, ref int value)
         {

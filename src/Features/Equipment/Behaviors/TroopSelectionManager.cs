@@ -13,7 +13,6 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using Enlisted.Features.Equipment.UI;
 using Enlisted.Mod.Entry;
 
 namespace Enlisted.Features.Equipment.Behaviors
@@ -73,14 +72,14 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("You must be enlisted to use Master at Arms.").ToString()));
                     return;
                 }
 
-                var cultureId = enlistment.CurrentLord?.Culture?.StringId;
+                var cultureId = enlistment?.CurrentLord?.Culture?.StringId;
                 if (string.IsNullOrEmpty(cultureId))
                 {
                     ModLogger.Error("Equipment", "Master at Arms: Missing culture on current lord");
@@ -281,8 +280,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             // "Collect equipment now" button - opens Master at Arms popup for troop selection
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_collect_now",
                 "Collect equipment now",
-                args => _promotionPending && _availableTroops.Count > 0,
-                args =>
+                _ => _promotionPending && _availableTroops.Count > 0,
+                _ =>
                 {
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
@@ -302,8 +301,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             // "Return to camp" button - player declines immediate equipment collection
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_back",
                 "Return to camp",
-                args => true,
-                args =>
+                _ => true,
+                _ =>
                 {
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
@@ -332,13 +331,18 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
                     ModLogger.Error("TroopSelection", "Cannot show troop selection - player not enlisted");
                     return;
                 }
 
-                var cultureId = enlistment.CurrentLord.Culture.StringId;
+                var cultureId = enlistment.CurrentLord?.Culture?.StringId;
+                if (string.IsNullOrEmpty(cultureId))
+                {
+                    ModLogger.Error("TroopSelection", "Cannot show troop selection - missing culture on current lord");
+                    return;
+                }
                 _availableTroops = GetTroopsForCultureAndTier(cultureId, newTier);
                 _pendingTier = newTier;
                 _promotionPending = true;
@@ -421,14 +425,13 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 // Clear any existing troop options
-                var currentMenu = args.MenuContext.GameMenu;
+                // Note: Menu context available via args.MenuContext.GameMenu if needed
                 
                 // Add option for each available troop (limit to first 8 for UI reasons)
                 for (int i = 0; i < Math.Min(_availableTroops.Count, 8); i++)
                 {
                     var troop = _availableTroops[i];
-                    var formation = DetectTroopFormation(troop);
-                    var optionText = $"Select {troop.Name} ({formation.ToString()})";
+                    // Note: Formation detection and option text would be set dynamically if needed
                     
                     // Troop selection is handled through the popup dialog system
                     // Players choose from available troops displayed in a selection dialog

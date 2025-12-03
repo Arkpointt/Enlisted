@@ -1,6 +1,12 @@
 using System;
+using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using HarmonyLib;
+using TaleWorlds.CampaignSystem.Encounters;
+using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -20,9 +26,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Prefix patch for game_menu_join_encounter_on_init.
         ///     Intercepts the "join_encounter" menu initialization and auto-joins for enlisted players.
         ///     Returns false to skip native on_init when auto-joining (player never sees the menu).
+        ///     Called by Harmony via reflection.
         /// </summary>
         [HarmonyPrefix]
-        private static bool Prefix(MenuCallbackArgs args)
+        public static bool Prefix()
         {
             try
             {
@@ -51,8 +58,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 // Check if our lord is involved in this battle
-                bool lordIsAttacker = battle.AttackerSide.Parties.Any(p => p.Party == lordParty);
-                bool lordIsDefender = battle.DefenderSide.Parties.Any(p => p.Party == lordParty);
+                var lordIsAttacker = battle.AttackerSide.Parties.Any(p => p.Party == lordParty);
+                var lordIsDefender = battle.DefenderSide.Parties.Any(p => p.Party == lordParty);
 
                 if (!lordIsAttacker && !lordIsDefender)
                 {
@@ -63,7 +70,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 // Determine which side to join (same side as our lord)
-                BattleSideEnum lordSide = lordIsAttacker ? BattleSideEnum.Attacker : BattleSideEnum.Defender;
+                var lordSide = lordIsAttacker ? BattleSideEnum.Attacker : BattleSideEnum.Defender;
 
                 // Check if we can actually join on the lord's side
                 if (!battle.CanPartyJoinBattle(PartyBase.MainParty, lordSide))
@@ -96,21 +103,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     else
                     {
                         // No enemies left (battle already won) - handle like native does
-                        if (MobileParty.MainParty.Army != null)
-                        {
-                            if (MobileParty.MainParty.Army.LeaderParty != MobileParty.MainParty)
-                            {
-                                GameMenu.SwitchToMenu("army_wait");
-                            }
-                            else
-                            {
-                                GameMenu.SwitchToMenu("encounter");
-                            }
-                        }
-                        else
-                        {
-                            GameMenu.SwitchToMenu("encounter");
-                        }
+                        GameMenu.SwitchToMenu(
+                            MobileParty.MainParty.Army != null &&
+                            MobileParty.MainParty.Army.LeaderParty != MobileParty.MainParty
+                                ? "army_wait"
+                                : "encounter");
                     }
 
                     ModLogger.Info("JoinEncounter", "Successfully auto-joined battle and switched to encounter menu");

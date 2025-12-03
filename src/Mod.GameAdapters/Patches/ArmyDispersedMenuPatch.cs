@@ -1,6 +1,10 @@
 using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using HarmonyLib;
+using TaleWorlds.CampaignSystem.CampaignBehaviors;
+using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Party;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -18,10 +22,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// <summary>
         ///     Prefix that runs before the native consequence handler.
         ///     For enlisted players not in a settlement, activates the enlisted menu instead.
+        ///     Called by Harmony via reflection.
         /// </summary>
-        /// <param name="args">Menu callback arguments from the native system.</param>
         /// <returns>True to run native code, false to skip it.</returns>
-        private static bool Prefix(MenuCallbackArgs args)
+        [HarmonyPrefix]
+        public static bool Prefix()
         {
             try
             {

@@ -1,6 +1,8 @@
 using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using HarmonyLib;
+using TaleWorlds.MountAndBlade.ComponentInterfaces;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {

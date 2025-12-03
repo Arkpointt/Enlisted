@@ -26,6 +26,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         [HarmonyPatch(typeof(MobileParty), "TotalFoodAtInventory", MethodType.Getter)]
         public static class VirtualFoodLinkPatch
         {
+            /// <summary>
+            /// Postfix method that runs after MobileParty.TotalFoodAtInventory getter.
+            /// Called by Harmony via reflection.
+            /// </summary>
+            [HarmonyPostfix]
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
             public static void Postfix(MobileParty __instance, ref int __result)
             {
                 try
@@ -52,11 +58,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                     // Determine the food source: Army Leader or direct Lord
                     // Soldiers feed from the Army stocks if available
-                    MobileParty foodSource = lordParty;
-                    if (lordParty.Army != null && lordParty.Army.LeaderParty != null)
-                    {
-                        foodSource = lordParty.Army.LeaderParty;
-                    }
+                    var foodSource = lordParty.Army?.LeaderParty ?? lordParty;
 
                     // Return the food count of the source party
                     // This acts as a "view" of the lord's supplies
@@ -81,6 +83,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         [HarmonyPatch(typeof(FoodConsumptionBehavior), "PartyConsumeFood")]
         public static class SharedFoodConsumptionPatch
         {
+            /// <summary>
+            /// Prefix method that runs before FoodConsumptionBehavior.PartyConsumeFood.
+            /// Called by Harmony via reflection.
+            /// </summary>
+            [HarmonyPrefix]
             public static bool Prefix(MobileParty mobileParty)
             {
                 try
@@ -108,11 +115,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                     // Check if Lord (or Army) has food available
                     // We use TotalFoodAtInventory which aggregates all food items
-                    MobileParty foodSource = lordParty;
-                    if (lordParty.Army != null && lordParty.Army.LeaderParty != null)
-                    {
-                        foodSource = lordParty.Army.LeaderParty;
-                    }
+                    var foodSource = lordParty.Army?.LeaderParty ?? lordParty;
 
                     if (foodSource.TotalFoodAtInventory > 0)
                     {

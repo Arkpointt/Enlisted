@@ -1,9 +1,12 @@
 using System;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
+using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Conversations.Behaviors
 {
@@ -491,6 +494,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 110);
 
             // Exit option - always available as fallback from service options
+            // Lowest priority (default 100) - shows last, always available
             starter.AddPlayerLine(
                 "enlisted_service_nevermind",
                 "enlisted_service_options",
@@ -499,8 +503,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         "{=enlisted_service_nevermind}Forgive me, my lord. I spoke out of turn. I have nothing to discuss at this time.")
                     .ToString(),
                 null,
-                null,
-                100); // Lowest priority - shows last, always available
+                null);
         }
 
         #region Utility Methods
@@ -572,10 +575,10 @@ namespace Enlisted.Features.Conversations.Behaviors
             // Block dialog with OTHER lords when actively enlisted - player can't enlist elsewhere
             if (enlistment?.IsEnlisted == true && enlistment?.IsOnLeave != true)
             {
-                if (enlistment.CurrentLord != lord)
+                if (enlistment?.CurrentLord != lord)
                 {
                     ModLogger.Debug("DialogManager",
-                        $"Dialog hidden - player is actively enlisted with {enlistment.CurrentLord?.Name}");
+                        $"Dialog hidden - player is actively enlisted with {enlistment?.CurrentLord?.Name}");
                     return false;
                 }
 
@@ -643,8 +646,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return false;
             }
 
-            TextObject reason;
-            return enlistment?.CanEnlistWithParty(lord, out reason) == true;
+            return enlistment?.CanEnlistWithParty(lord, out _) == true;
         }
 
         private bool CanRequestGraceTransfer()
@@ -667,8 +669,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return false;
             }
 
-            TextObject reason;
-            return enlistment.CanEnlistWithParty(lord, out reason);
+            return enlistment.CanEnlistWithParty(lord, out _);
         }
 
         /// <summary>
@@ -717,7 +718,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             var kingdom = lord?.MapFaction as Kingdom;
-            return kingdom != null && enlistment.CanReEnlistAfterCooldown(kingdom);
+            return kingdom != null && enlistment?.CanReEnlistAfterCooldown(kingdom) == true;
         }
 
         /// <summary>
@@ -787,8 +788,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             // Check if the lord can accept service
-            TextObject reason;
-            return enlistment.CanEnlistWithParty(lord, out reason);
+            return enlistment.CanEnlistWithParty(lord, out _);
         }
 
         #endregion
@@ -823,7 +823,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // Activate the enlisted status menu, deferred to the next frame to prevent timing conflicts
                 // This ensures the menu activates cleanly after the conversation ends and prevents
                 // any gaps that could cause encounter menus to appear
-                NextFrameDispatcher.RunNextFrame(() => EnlistedMenuBehavior.SafeActivateEnlistedMenu());
+                NextFrameDispatcher.RunNextFrame(EnlistedMenuBehavior.SafeActivateEnlistedMenu);
                 ModLogger.Debug("DialogManager",
                     "Scheduled enlisted_status menu activation - preventing encounter gap");
 
@@ -862,7 +862,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
-                var config = ConfigurationManager.LoadRetirementConfig();
+                var config = AssignmentsConfig.LoadRetirementConfig();
                 EnlistmentBehavior.Instance?.StartRenewalTerm(config.FirstTermReenlistBonus);
                 ModLogger.Info("DialogManager",
                     $"First-term re-enlistment with {config.FirstTermReenlistBonus}g bonus");
@@ -896,7 +896,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         {
             try
             {
-                var config = ConfigurationManager.LoadRetirementConfig();
+                var config = AssignmentsConfig.LoadRetirementConfig();
                 EnlistmentBehavior.Instance?.StartRenewalTerm(config.RenewalContinueBonus);
                 ModLogger.Info("DialogManager", $"Service continued with {config.RenewalContinueBonus}g bonus");
             }
@@ -919,7 +919,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     EnlistmentBehavior.Instance?.ReEnlistAfterCooldown(lord);
 
                     // Redirect to troop selection
-                    NextFrameDispatcher.RunNextFrame(() => EnlistedMenuBehavior.SafeActivateEnlistedMenu());
+                    NextFrameDispatcher.RunNextFrame(EnlistedMenuBehavior.SafeActivateEnlistedMenu);
                 }
 
                 ModLogger.Info("DialogManager", "Veteran re-enlistment processed");
@@ -942,7 +942,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     var lordName = EnlistmentBehavior.Instance.CurrentLord?.Name?.ToString() ?? "Unknown Lord";
                     ModLogger.Info("DialogManager", $"Player early discharge from service with: {lordName}");
 
-                    EnlistmentBehavior.Instance.StopEnlist("Early discharge through dialog", false);
+                    // Early discharge is not honorable (default false)
+                    EnlistmentBehavior.Instance.StopEnlist("Early discharge through dialog");
 
                     var message =
                         GetLocalizedText(

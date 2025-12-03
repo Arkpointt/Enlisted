@@ -11,6 +11,20 @@ using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using Enlisted.Mod.GameAdapters.Patches;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.Encounters;
+using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.MapEvents;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Roster;
+using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.CampaignSystem.Naval;
+using TaleWorlds.CampaignSystem.Settlements.Workshops;
+using TaleWorlds.Core;
+using TaleWorlds.Library;
+using TaleWorlds.Localization;
+using TaleWorlds.ObjectSystem;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
 namespace Enlisted.Features.Enlistment.Behaviors
@@ -4120,7 +4134,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _enlistmentXP += xp;
 
             // Get tier requirements to show progress
-            var tierXP = ConfigurationManager.GetTierXpRequirements();
+            var tierXP = Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierXpRequirements();
             var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
             var progressPercent = nextTierXP > 0 ? _enlistmentXP * 100 / nextTierXP : 100;
 
@@ -4166,7 +4180,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // Get XP values from config
-                var battleXP = ConfigurationManager.GetBattleParticipationXp();
+                var battleXP = Enlisted.Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXp();
 
                 if (battleXP > 0)
                 {
@@ -4383,7 +4397,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public string GetRankName(int tier)
         {
             // Use configured tier names from progression_config.json
-            return ConfigurationManager.GetTierName(tier);
+            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierName(tier);
         }
 
         /// <summary>
@@ -4435,7 +4449,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Fallback: Basic restoration if equipment manager not available
                     if (_personalBattleEquipment != null)
                     {
-                        EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
+                        Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
                     }
 
                     if (_personalCivilianEquipment != null)
@@ -4544,7 +4558,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Use lord's culture basic troop equipment
                 var basicTroopEquipment = _enlistedLord.Culture.BasicTroop.Equipment;
-                EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
+                Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
 
                 ModLogger.Info("Equipment", $"Assigned initial {_enlistedLord.Culture.Name} recruit equipment");
             }

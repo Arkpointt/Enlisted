@@ -22,12 +22,12 @@ namespace Enlisted.Features.Combat.Behaviors
         /// <summary>
         /// Number of enemies killed by the player in the current mission.
         /// </summary>
-        public int KillCount { get; private set; } = 0;
+        public int KillCount { get; private set; }
         
         /// <summary>
         /// Whether the player participated in this battle (was present and active).
         /// </summary>
-        public bool DidParticipate { get; private set; } = false;
+        public bool DidParticipate { get; private set; }
         
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
         
@@ -123,10 +123,10 @@ namespace Enlisted.Features.Combat.Behaviors
                 KillCount++;
                 
                 // Get XP per kill from config for accurate display
-                int xpPerKill = EnlistedConfig.GetXpPerKill();
+                var xpPerKill = EnlistedConfig.GetXpPerKill();
                 
                 // Show in-game notification for each kill
-                string victimName = affectedAgent.Character?.Name?.ToString() ?? "Enemy";
+                var victimName = affectedAgent.Character?.Name?.ToString() ?? "Enemy";
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"Kill: {victimName} (+{xpPerKill} XP)", 
                     Colors.Green));
@@ -149,8 +149,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Log battle summary
                 if (DidParticipate)
                 {
-                    int xpPerKill = EnlistedConfig.GetXpPerKill();
-                    int estimatedXp = KillCount * xpPerKill;
+                    var xpPerKill = EnlistedConfig.GetXpPerKill();
+                    var estimatedXp = KillCount * xpPerKill;
                     ModLogger.Info("Battle", $"Battle ended - Kills: {KillCount}, Estimated bonus XP: {estimatedXp}");
                 }
                 else

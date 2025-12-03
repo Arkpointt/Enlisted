@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Enlisted.Features.Assignments.Behaviors;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Ranks.Behaviors
 {
@@ -65,7 +67,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         private void CheckForPromotion()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment?.IsEnlisted == true)
+            if (enlistment?.IsEnlisted != true)
             {
                 return;
             }
@@ -73,21 +75,21 @@ namespace Enlisted.Features.Ranks.Behaviors
             try
             {
                 var currentTier = enlistment.EnlistmentTier;
-                var currentXP = enlistment.EnlistmentXP;
+                var currentXp = enlistment.EnlistmentXP;
 
                 var promoted = false;
 
                 // Load tier XP requirements from progression_config.json
                 // The requirements array contains XP thresholds needed to promote from each tier to the next
-                var tierXPRequirements = ConfigurationManager.GetTierXpRequirements();
+                var tierXpRequirements = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
 
                 // Get actual max tier from config (e.g., 6 for tiers 1-6)
-                var maxTier = ConfigurationManager.GetMaxTier();
+                var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
 
                 // Check if the player has enough XP for promotion, and continue promoting
                 // if they've accumulated enough XP for multiple tiers at once
                 // This ensures players get all promotions they've earned immediately
-                while (currentTier < maxTier && currentXP >= tierXPRequirements[currentTier])
+                while (currentTier < maxTier && currentXp >= tierXpRequirements[currentTier])
                 {
                     currentTier++;
                     promoted = true;
@@ -282,7 +284,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 { 6, "Household Guard" }
             };
 
-            return rankNames.ContainsKey(tier) ? rankNames[tier] : $"Tier {tier}";
+            return rankNames.TryGetValue(tier, out var rankName) ? rankName : $"Tier {tier}";
         }
 
         /// <summary>

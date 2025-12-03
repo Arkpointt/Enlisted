@@ -1,4 +1,6 @@
 using Enlisted.Features.Enlistment.Behaviors;
+using HarmonyLib;
+using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -25,8 +27,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Prefix that skips the behavior activation notifications when player is enlisted.
         ///     Enlisted soldiers are regular troops - they don't need formation command messages
         ///     that are meant for players commanding formations.
+        ///     Called by Harmony via reflection.
         /// </summary>
-        private static bool Prefix()
+        [HarmonyPrefix]
+        public static bool Prefix()
         {
             // Enlisted soldiers are regular troops - suppress formation behavior messages
             if (EnlistmentBehavior.Instance?.IsEnlisted == true)

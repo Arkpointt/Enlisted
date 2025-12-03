@@ -28,7 +28,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// </summary>
     [HarmonyPatch(typeof(DefaultArmyManagementCalculationModel),
         nameof(DefaultArmyManagementCalculationModel.CalculateDailyCohesionChange))]
-    internal static class ArmyCohesionExclusionPatch
+    public static class ArmyCohesionExclusionPatch
     {
         private static readonly TextObject CohesionCompensationText =
             new TextObject("{=enlisted_cohesion}Enlisted soldier (embedded)");
@@ -37,37 +37,43 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Postfix that adds a compensating cohesion bonus to offset the enlisted player's
         /// negative impact on army cohesion. The player is embedded with their lord, so they
         /// shouldn't count as a separate party for cohesion purposes.
+        /// Called by Harmony via reflection.
         /// </summary>
         [HarmonyPostfix]
-        [SuppressMessage("ReSharper", "UnusedMember.Local")]
         [SuppressMessage("ReSharper", "InconsistentNaming")]
-        private static void Postfix(Army army, ref ExplainedNumber __result)
+        public static void Postfix(Army army, ref ExplainedNumber __result)
         {
             try
             {
                 // Check if player is enlisted
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
+                {
                     return;
+                }
 
                 var mainParty = MobileParty.MainParty;
                 if (mainParty == null)
+                {
                     return;
+                }
 
                 // Check if player is in this specific army
                 if (mainParty.Army != army)
+                {
                     return;
+                }
 
                 // Player is enlisted and in this army - calculate compensation
                 // These values mirror the penalties in CalculateCohesionChangeInternal
 
                 // 1. Compensate for party count penalty (-1 per party in army)
-                float partyCountCompensation = 1f;
+                var partyCountCompensation = 1f;
 
                 // 2. Compensate for low member count penalty if applicable
                 // Native applies: -((num3 + 1) / 2) where num3 = count of parties with ≤10 members
                 // For a single party, that's -(1 + 1) / 2 = -1, but then halved again = -0.5
-                float lowMemberCompensation = 0f;
+                var lowMemberCompensation = 0f;
                 if (mainParty.Party.NumberOfHealthyMembers <= 10)
                 {
                     lowMemberCompensation = 0.5f;
@@ -76,13 +82,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // 3. Compensate for low morale penalty if applicable
                 // Native applies: -((num2 + 1) / 2) where num2 = count of parties with morale ≤25
                 // For a single party, that's -(1 + 1) / 2 = -1, but then halved again = -0.5
-                float lowMoraleCompensation = 0f;
+                var lowMoraleCompensation = 0f;
                 if (mainParty.Morale <= 25.0)
                 {
                     lowMoraleCompensation = 0.5f;
                 }
 
-                float totalCompensation = partyCountCompensation + lowMemberCompensation + lowMoraleCompensation;
+                var totalCompensation = partyCountCompensation + lowMemberCompensation + lowMoraleCompensation;
 
                 // Apply AI multiplier if this is not the player's own army
                 // Native code applies 0.25x multiplier to AI armies

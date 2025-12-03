@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Enlisted.Features.Enlistment.Core;
 using Enlisted.Mod.Core.Logging;
+using Newtonsoft.Json;
 
 namespace Enlisted.Features.Assignments.Core
 {

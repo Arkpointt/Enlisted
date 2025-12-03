@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using HarmonyLib;
 
 namespace Enlisted.Mod.Core.Logging
 {
@@ -55,9 +56,28 @@ namespace Enlisted.Mod.Core.Logging
         {
             try
             {
-                var dllDir = Path.GetDirectoryName(typeof(ModConflictDiagnostics).Assembly.Location);
+                var assembly = typeof(ModConflictDiagnostics).Assembly;
+                var assemblyLocation = assembly.Location;
+                
+                // Assembly.Location can be null or empty in some scenarios
+                if (string.IsNullOrWhiteSpace(assemblyLocation))
+                {
+                    throw new InvalidOperationException("Assembly.Location is null or empty");
+                }
+                
+                var dllDir = Path.GetDirectoryName(assemblyLocation);
+                if (string.IsNullOrWhiteSpace(dllDir))
+                {
+                    throw new InvalidOperationException("Could not get directory from assembly location");
+                }
+                
                 var binDir = Directory.GetParent(dllDir);
-                var enlistedRoot = binDir?.Parent;
+                if (binDir == null)
+                {
+                    throw new InvalidOperationException("Could not get parent directory");
+                }
+                
+                var enlistedRoot = binDir.Parent;
                 var debugDir = enlistedRoot != null
                     ? Path.Combine(enlistedRoot.FullName, "Debugging")
                     : "Debugging";
@@ -69,13 +89,28 @@ namespace Enlisted.Mod.Core.Logging
 
                 _conflictLogPath = Path.Combine(debugDir, "conflicts.log");
             }
-            catch
+            catch (Exception ex)
             {
                 // Fallback to Documents if module path resolution fails
-                var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-                var fallbackDir = Path.Combine(docs, "Mount and Blade II Bannerlord", "Logs", "Enlisted");
-                Directory.CreateDirectory(fallbackDir);
-                _conflictLogPath = Path.Combine(fallbackDir, "conflicts.log");
+                try
+                {
+                    var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                    var fallbackDir = Path.Combine(docs, "Mount and Blade II Bannerlord", "Logs", "Enlisted");
+                    Directory.CreateDirectory(fallbackDir);
+                    _conflictLogPath = Path.Combine(fallbackDir, "conflicts.log");
+                    System.Diagnostics.Debug.WriteLine($"[Enlisted] Conflict log using Documents fallback (Error: {ex.Message})");
+                }
+                catch (Exception fallbackEx)
+                {
+                    // Last resort: use a temp path
+                    _conflictLogPath = Path.Combine(Path.GetTempPath(), "Enlisted", "conflicts.log");
+                    var tempDir = Path.GetDirectoryName(_conflictLogPath);
+                    if (tempDir != null && !Directory.Exists(tempDir))
+                    {
+                        Directory.CreateDirectory(tempDir);
+                    }
+                    System.Diagnostics.Debug.WriteLine($"[Enlisted] Conflict log using temp fallback (Error: {fallbackEx.Message})");
+                }
             }
         }
 
@@ -176,7 +211,7 @@ namespace Enlisted.Mod.Core.Logging
             try
             {
                 // 1.3.4 API: SubModules property replaced with CollectSubModules() method
-                var subModules = Module.CurrentModule?.CollectSubModules();
+                var subModules = TaleWorlds.MountAndBlade.Module.CurrentModule?.CollectSubModules();
                 if (subModules == null || subModules.Count == 0)
                 {
                     WriteLine("  (No modules detected - early load stage)");
@@ -295,7 +330,7 @@ namespace Enlisted.Mod.Core.Logging
         ///     Logs the execution order of patches on conflicting methods to understand who runs first.
         ///     Patch order matters: prefixes can skip the original method, postfixes can modify results.
         /// </summary>
-        private static void WritePatchExecutionOrder(Harmony harmony, List<MethodBase> ourMethods,
+        private static void WritePatchExecutionOrder(Harmony _, List<MethodBase> ourMethods,
             List<(string method, List<string> otherMods)> conflicts)
         {
             WriteLine("  -- Patch Execution Order --");

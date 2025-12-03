@@ -1,6 +1,11 @@
 using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using HarmonyLib;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.GameComponents;
+using TaleWorlds.Core;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -52,6 +57,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     Workshop income is processed separately as it's a personal asset that should
     ///     continue generating income regardless of enlistment status.
     /// </summary>
+    // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanIncome))]
     internal static class ClanFinanceEnlistmentIncomePatch
     {
@@ -63,6 +70,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Matches signature: public override ExplainedNumber CalculateClanIncome(Clan clan, bool includeDescriptions = false,
         ///     bool applyWithdrawals = false, bool includeDetails = false)
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
         private static bool Prefix(Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails,
             ref ExplainedNumber __result)
         {
@@ -94,7 +104,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // CRITICAL: Create a fresh ExplainedNumber with ONLY enlistment wages
                 // If captured or in grace period, this starts at 0 and stays at 0 (no wages added)
-                __result = new ExplainedNumber(0f, includeDescriptions, null);
+                __result = new ExplainedNumber(0f, includeDescriptions);
 
                 // Add detailed wage breakdown when actively enlisted
                 if (isEnlisted)
@@ -137,10 +147,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
             var totalWorkshopIncome = 0;
 
-            foreach (Workshop workshop in ownedWorkshops)
+            foreach (var workshop in ownedWorkshops)
             {
                 // Calculate income using the native model method
-                int incomeFromWorkshop =
+                var incomeFromWorkshop =
                     Campaign.Current.Models.ClanFinanceModel.CalculateOwnerIncomeFromWorkshop(workshop);
                 totalWorkshopIncome += incomeFromWorkshop;
 
@@ -159,7 +169,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             if (totalWorkshopIncome > 0)
             {
                 WageTooltipLabels.EnsureInitialized();
-                result.Add(totalWorkshopIncome, WageTooltipLabels.WorkshopIncome, null);
+                result.Add(totalWorkshopIncome, WageTooltipLabels.WorkshopIncome);
 
                 if (!_hasLoggedFirstWorkshop)
                 {
@@ -186,27 +196,27 @@ namespace Enlisted.Mod.GameAdapters.Patches
             // Add each component as a separate tooltip line
             if (breakdown.BasePay > 0)
             {
-                result.Add(breakdown.BasePay, WageTooltipLabels.BasePay, null);
+                result.Add(breakdown.BasePay, WageTooltipLabels.BasePay);
             }
 
             if (breakdown.LevelBonus > 0)
             {
-                result.Add(breakdown.LevelBonus, WageTooltipLabels.LevelBonus, null);
+                result.Add(breakdown.LevelBonus, WageTooltipLabels.LevelBonus);
             }
 
             if (breakdown.TierBonus > 0)
             {
-                result.Add(breakdown.TierBonus, WageTooltipLabels.TierBonus, null);
+                result.Add(breakdown.TierBonus, WageTooltipLabels.TierBonus);
             }
 
             if (breakdown.ServiceBonus > 0)
             {
-                result.Add(breakdown.ServiceBonus, WageTooltipLabels.ServiceBonus, null);
+                result.Add(breakdown.ServiceBonus, WageTooltipLabels.ServiceBonus);
             }
 
             if (breakdown.ArmyBonus > 0)
             {
-                result.Add(breakdown.ArmyBonus, WageTooltipLabels.ArmyBonus, null);
+                result.Add(breakdown.ArmyBonus, WageTooltipLabels.ArmyBonus);
             }
 
             if (breakdown.DutyBonus > 0)
@@ -216,11 +226,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     var dutyLabel = new TextObject("{=enlisted_duty_bonus_named}{DUTY} Bonus");
                     dutyLabel.SetTextVariable("DUTY", breakdown.ActiveDuty);
-                    result.Add(breakdown.DutyBonus, dutyLabel, null);
+                    result.Add(breakdown.DutyBonus, dutyLabel);
                 }
                 else
                 {
-                    result.Add(breakdown.DutyBonus, WageTooltipLabels.DutyBonus, null);
+                    result.Add(breakdown.DutyBonus, WageTooltipLabels.DutyBonus);
                 }
             }
 
@@ -235,6 +245,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// <summary>
         ///     Clear cached tooltip labels when config is reloaded.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called for configuration reloading")]
         internal static void ClearCache()
         {
             WageTooltipLabels.ClearCache();
@@ -246,6 +257,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     When enlisted, the player should have ZERO expenses - the lord pays for everything.
     ///     This prevents any army/party/garrison expenses from appearing in the player's finances.
     /// </summary>
+    // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanExpenses))]
     internal static class ClanFinanceEnlistmentExpensePatch
     {
@@ -256,6 +269,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Matches signature: public override ExplainedNumber CalculateClanExpenses(Clan clan, bool includeDescriptions =
         ///     false, bool applyWithdrawals = false, bool includeDetails = false)
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
         private static bool Prefix(Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails,
             ref ExplainedNumber __result)
         {
@@ -284,7 +300,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 // CRITICAL: Return zero expenses when enlisted
-                __result = new ExplainedNumber(0f, includeDescriptions, null);
+                __result = new ExplainedNumber(0f, includeDescriptions);
 
                 if (!_hasLoggedFirst)
                 {
@@ -311,6 +327,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     This patch ensures both functionality (wage appears) and compatibility (other mods patching Income/Expenses will
     ///     work).
     /// </summary>
+    // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanGoldChange))]
     internal static class ClanFinanceEnlistmentGoldChangePatch
     {
@@ -321,10 +339,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             if (_expensesText == null)
             {
-                _expensesText = GameTexts.FindText("str_expenses", null);
+                _expensesText = GameTexts.FindText("str_expenses");
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
         private static bool Prefix(DefaultClanFinanceModel __instance, Clan clan, bool includeDescriptions,
             bool applyWithdrawals, bool includeDetails, ref ExplainedNumber __result)
         {
@@ -351,12 +372,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // 1. Calculate Income using the PUBLIC method (triggers our patch and others)
                 // This returns an ExplainedNumber with the full wage breakdown (if enlisted)
-                ExplainedNumber income =
+                var income =
                     __instance.CalculateClanIncome(clan, includeDescriptions, applyWithdrawals, includeDetails);
 
                 // 2. Calculate Expenses using the PUBLIC method (triggers our patch and others)
                 // This returns 0 (if enlisted)
-                ExplainedNumber expenses =
+                var expenses =
                     __instance.CalculateClanExpenses(clan, includeDescriptions, applyWithdrawals, includeDetails);
 
                 // 3. Combine them
@@ -367,7 +388,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 if (Math.Abs(expenses.ResultNumber) > 0.001f)
                 {
                     EnsureInitialized();
-                    __result.Add(expenses.ResultNumber, _expensesText, null);
+                    __result.Add(expenses.ResultNumber, _expensesText);
                 }
 
                 if (!_hasLoggedFirst)

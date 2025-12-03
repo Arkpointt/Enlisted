@@ -25,17 +25,24 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Postfix patch that overrides the waiting state for enlisted players.
         /// When enlisted (not on leave), the player should never be considered "waiting"
         /// so that battles can start immediately when the lord engages.
+        /// Called by Harmony via reflection.
         /// </summary>
-        static void Postfix(MobileParty __instance, ref bool __result)
+        [HarmonyPostfix]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+        public static void Postfix(MobileParty __instance, ref bool __result)
         {
             // Only affect the main party - don't interfere with AI parties
             if (__instance != MobileParty.MainParty)
+            {
                 return;
+            }
             
             // Check if player is enlisted and actively serving (not on leave)
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted != true || enlistment.IsOnLeave)
+            {
                 return;
+            }
             
             // If the native code said we're waiting, override it
             // This allows time to flow and encounters to trigger immediately

@@ -1,6 +1,5 @@
 using System;
 using HarmonyLib;
-using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
@@ -15,13 +14,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// As regular soldiers, enlisted players should not gain command/leadership experience from battle participation
     /// since they are not making tactical decisions or leading troops - that's the commander's role.
     /// </summary>
-    [HarmonyPatch(typeof(HeroDeveloper), "AddSkillXp", new Type[] { typeof(SkillObject), typeof(float), typeof(bool), typeof(bool) })]
+    // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
+    [HarmonyPatch(typeof(HeroDeveloper), nameof(HeroDeveloper.AddSkillXp), typeof(SkillObject), typeof(float), typeof(bool), typeof(bool))]
     public class SkillSuppressionPatch
     {
         /// <summary>
         /// Prefix that runs before AddSkillXp. Returns false to prevent tactics and leadership skill XP when player is enlisted.
         /// </summary>
-        static bool Prefix(HeroDeveloper __instance, SkillObject skill, float rawXp, bool isAffectedByFocusFactor, bool shouldNotify)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
+        private static bool Prefix(HeroDeveloper __instance, SkillObject skill, float rawXp, bool isAffectedByFocusFactor, bool shouldNotify)
         {
             try
             {

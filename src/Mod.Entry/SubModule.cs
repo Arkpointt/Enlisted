@@ -13,6 +13,12 @@ using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.GameAdapters.Patches;
+using HarmonyLib;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Encounters;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
+using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.Entry
 {
@@ -143,6 +149,43 @@ namespace Enlisted.Mod.Entry
 
                 try
                 {
+                    // Reference patch types and methods to satisfy static analysis (ReSharper)
+                    // These are discovered via reflection by Harmony.PatchAll()
+                    _ = typeof(ArmyDispersedMenuPatch);
+                    _ = typeof(JoinEncounterAutoSelectPatch);
+                    _ = typeof(EncounterSuppressionPatch);
+                    _ = typeof(ArmyCohesionExclusionPatch);
+                    _ = typeof(DischargeRelationPenaltyPatch);
+                    _ = typeof(DutiesEffectiveEngineerPatch);
+                    _ = typeof(DutiesEffectiveScoutPatch);
+                    _ = typeof(DutiesEffectiveQuartermasterPatch);
+                    _ = typeof(DutiesEffectiveSurgeonPatch);
+                    _ = typeof(EnlistedWaitingPatch);
+                    _ = typeof(EnlistmentExpenseIsolationPatch);
+                    _ = typeof(FoodSystemPatches);
+                    _ = typeof(FoodSystemPatches.VirtualFoodLinkPatch);
+                    _ = typeof(FoodSystemPatches.SharedFoodConsumptionPatch);
+                    _ = typeof(FormationMessageSuppressionPatch);
+                    _ = typeof(IncidentsSuppressionPatch);
+                    _ = typeof(InfluenceMessageSuppressionPatch);
+                    _ = nameof(ArmyDispersedMenuPatch.Prefix);
+                    _ = nameof(JoinEncounterAutoSelectPatch.Prefix);
+                    _ = nameof(EncounterSuppressionPatch.Prefix);
+                    _ = nameof(ArmyCohesionExclusionPatch.Postfix);
+                    _ = nameof(DischargeRelationPenaltyPatch.Prefix);
+                    _ = nameof(DutiesEffectiveEngineerPatch.Prefix);
+                    _ = nameof(DutiesEffectiveScoutPatch.Prefix);
+                    _ = nameof(DutiesEffectiveQuartermasterPatch.Prefix);
+                    _ = nameof(DutiesEffectiveSurgeonPatch.Prefix);
+                    _ = nameof(EnlistedWaitingPatch.Postfix);
+                    _ = nameof(EnlistmentExpenseIsolationPatch.TargetMethod);
+                    _ = nameof(EnlistmentExpenseIsolationPatch.Prefix);
+                    _ = nameof(FoodSystemPatches.VirtualFoodLinkPatch.Postfix);
+                    _ = nameof(FoodSystemPatches.SharedFoodConsumptionPatch.Prefix);
+                    _ = nameof(FormationMessageSuppressionPatch.Prefix);
+                    _ = nameof(IncidentsSuppressionPatch.Prefix);
+                    _ = nameof(InfluenceMessageSuppressionPatch.Prefix);
+
                     // HidePartyNamePlatePatch uses manual patching to avoid type resolution issues
                     // Skip it in auto-patching, apply manually after
                     var manualPatches = new HashSet<string>
@@ -177,6 +220,11 @@ namespace Enlisted.Mod.Entry
                         catch (Exception patchEx)
                         {
                             ModLogger.Error("Bootstrap", $"Failed to patch {type.Name}: {patchEx.Message}");
+                            if (patchEx.InnerException != null)
+                            {
+                                ModLogger.Error("Bootstrap", $"  Inner exception: {patchEx.InnerException.Message}");
+                            }
+                            ModLogger.Debug("Bootstrap", $"  Stack trace: {patchEx.StackTrace}");
                         }
                     }
 

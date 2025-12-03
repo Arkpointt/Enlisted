@@ -30,7 +30,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private TaleWorlds.Core.Equipment _personalBattleEquipment;
         private TaleWorlds.Core.Equipment _personalCivilianEquipment;
         private ItemRoster _personalInventory = new ItemRoster();
-        private bool _hasBackedUpEquipment = false;
+        private bool _hasBackedUpEquipment;
         
         // Equipment pricing configuration
         private Dictionary<FormationType, float> _formationPriceMultipliers;
@@ -123,8 +123,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var hero = Hero.MainHero;
                 
                 // Backup equipment using verified APIs
-                _personalBattleEquipment = hero.BattleEquipment.Clone(false);
-                _personalCivilianEquipment = hero.CivilianEquipment.Clone(false);
+                _personalBattleEquipment = hero.BattleEquipment.Clone(); // Default cloneWithoutWeapons=false is sufficient
+                _personalCivilianEquipment = hero.CivilianEquipment.Clone(); // Default cloneWithoutWeapons=false is sufficient
                 
                 // CRITICAL: Quest-safe inventory backup (prevents quest item loss)
                 var itemsToBackup = new List<ItemRosterElement>();
@@ -214,6 +214,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Get culture-appropriate equipment for a specific tier and formation.
         /// Used for equipment pricing and availability calculations.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be used for future equipment selection features")]
         public List<ItemObject> GetCultureAppropriateEquipment(CultureObject culture, int tier, FormationType formation)
         {
             try
@@ -233,7 +234,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     foreach (var equipment in character.BattleEquipments)
                     {
-                        for (EquipmentIndex slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
                         {
                             var item = equipment[slot].Item;
                             if (item != null && !availableGear.Contains(item))
@@ -263,13 +264,21 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 // Detect formation based on equipment characteristics
                 if (troop.IsRanged && troop.IsMounted)
+                {
                     return FormationType.HorseArcher;   // Bow + Horse
+                }
                 else if (troop.IsMounted)
+                {
                     return FormationType.Cavalry;       // Sword + Horse  
+                }
                 else if (troop.IsRanged)
+                {
                     return FormationType.Archer;        // Bow + No Horse
+                }
                 else
+                {
                     return FormationType.Infantry;      // Sword + No Horse (default)
+                }
             }
             catch
             {
@@ -280,35 +289,47 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Process equipment request from weaponsmith menu option.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called from menu system")]
         public void ProcessEquipmentRequest(FormationType requestedFormation)
         {
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment == null || !enlistment.IsEnlisted)
                 {
                     return;
                 }
                 
-                var culture = enlistment.CurrentLord.Culture;
+                var currentLord = enlistment.CurrentLord;
+                if (currentLord == null)
+                {
+                    ModLogger.Warn("Equipment", "Cannot process equipment request - no current lord");
+                    return;
+                }
+                
+                var culture = currentLord.Culture;
                 var currentTier = enlistment.EnlistmentTier;
                 
                 // Get troops of requested formation at current tier
-                    var troopSelectionManager = TroopSelectionManager.Instance;
-                    var availableTroops = troopSelectionManager?.GetTroopsForCultureAndTier(culture.StringId, currentTier)
+                var troopSelectionManager = TroopSelectionManager.Instance;
+                var availableTroops = troopSelectionManager?.GetTroopsForCultureAndTier(culture.StringId, currentTier)
                     .Where(t => DetectTroopFormation(t) == requestedFormation).ToList();
                     
-                if (availableTroops.Count > 0)
+                if (availableTroops is { Count: > 0 })
                 {
                     // For now, select first available troop
                     // Can be enhanced with choice menu later
-                    var selectedTroop = availableTroops.First();
+                    var selectedTroop = availableTroops.FirstOrDefault();
+                    if (selectedTroop == null)
+                    {
+                        return;
+                    }
                     var cost = CalculateEquipmentCost(selectedTroop, requestedFormation);
                     
                     if (Hero.MainHero.Gold >= cost)
                     {
                         var goldBefore = Hero.MainHero.Gold;
-                        GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost, false);
+                        GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost); // Default disableNotification=false is sufficient
                         troopSelectionManager?.ApplySelectedTroopEquipment(Hero.MainHero, selectedTroop);
                         
                         // Log equipment purchase
@@ -336,3 +357,4 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
     }
 }
+

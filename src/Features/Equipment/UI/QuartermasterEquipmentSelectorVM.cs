@@ -6,7 +6,6 @@ using TaleWorlds.Core;
 using TaleWorlds.Core.ViewModelCollection;
 using static TaleWorlds.Core.ViewModelCollection.CharacterViewModel;
 using TaleWorlds.Library;
-using TaleWorlds.Localization;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
@@ -18,11 +17,11 @@ namespace Enlisted.Features.Equipment.UI
     /// Provides individual clickable equipment items displayed in a grid layout.
     /// Uses TaleWorlds ViewModel patterns for data binding and UI updates.
     /// </summary>
-    public class QuartermasterEquipmentSelectorVM : ViewModel
+    public class QuartermasterEquipmentSelectorVm : ViewModel
     {
         // Row-based organization for ListPanel with ItemTemplate in grid layout
         [DataSourceProperty]
-        public MBBindingList<QuartermasterEquipmentRowVM> EquipmentRows { get; private set; }
+        public MBBindingList<QuartermasterEquipmentRowVm> EquipmentRows { get; }
         
         [DataSourceProperty]
         public string HeaderText { get; private set; }
@@ -33,61 +32,64 @@ namespace Enlisted.Features.Equipment.UI
         [DataSourceProperty]
         public string CurrentEquipmentText { get; private set; }
         
-        // CharacterViewModel for displaying character preview with equipment
+        // CharacterViewModel for displaying character preview with equipment (set only during construction)
         [DataSourceProperty]
-        public CharacterViewModel UnitCharacter { get; private set; }
+        public CharacterViewModel UnitCharacter { get; }
         
-        // Internal state
-        private EquipmentIndex _targetSlot;
-        private string _equipmentType;
-        private List<EquipmentVariantOption> _availableVariants;
+        // Internal state (readonly as set only in constructor)
+        private readonly EquipmentIndex _targetSlot;
         
         /// <summary>
         /// Initialize equipment selector with available variants.
         /// Sets up the ViewModel with equipment data and organizes items into rows for grid display.
         /// </summary>
-        public QuartermasterEquipmentSelectorVM(List<EquipmentVariantOption> availableVariants, EquipmentIndex targetSlot, string equipmentType)
+        public QuartermasterEquipmentSelectorVm(List<EquipmentVariantOption> availableVariants, EquipmentIndex targetSlot, string equipmentType)
         {
-            _availableVariants = availableVariants ?? throw new ArgumentNullException(nameof(availableVariants));
+            if (availableVariants == null)
+            {
+                throw new ArgumentNullException(nameof(availableVariants));
+            }
             _targetSlot = targetSlot;
-            _equipmentType = equipmentType;
+            // Discard equipmentType - kept for API compatibility and future use (e.g. header customization)
+            _ = equipmentType;
             
             // Organize equipment items into rows with 4 cards per row for grid display
-            EquipmentRows = new MBBindingList<QuartermasterEquipmentRowVM>();
-            var currentCards = new MBBindingList<QuartermasterEquipmentItemVM>();
+            EquipmentRows = new MBBindingList<QuartermasterEquipmentRowVm>();
+            var currentCards = new MBBindingList<QuartermasterEquipmentItemVm>();
             
             // Add equipment variants organized into rows of 4 cards each
             foreach (var variant in availableVariants.Take(15)) // Reasonable limit for 4 rows
             {
-                currentCards.Add(new QuartermasterEquipmentItemVM(variant, this));
+                currentCards.Add(new QuartermasterEquipmentItemVm(variant, this));
                 
                 // Create new row when we reach 4 cards in the current row
                 if (currentCards.Count == 4)
                 {
-                    EquipmentRows.Add(new QuartermasterEquipmentRowVM(currentCards));
-                    currentCards = new MBBindingList<QuartermasterEquipmentItemVM>();
+                    EquipmentRows.Add(new QuartermasterEquipmentRowVm(currentCards));
+                    currentCards = new MBBindingList<QuartermasterEquipmentItemVm>();
                 }
             }
             
             // Add remaining cards as final row if any remain
             if (currentCards.Count > 0)
             {
-                EquipmentRows.Add(new QuartermasterEquipmentRowVM(currentCards));
+                EquipmentRows.Add(new QuartermasterEquipmentRowVm(currentCards));
             }
             
             // Set up CharacterViewModel for character preview display
+            CharacterViewModel unitCharacter = null;
             try
             {
-                UnitCharacter = new CharacterViewModel(StanceTypes.None);
-                UnitCharacter.FillFrom(Hero.MainHero.CharacterObject, -1); // Fill character model for preview
+                unitCharacter = new CharacterViewModel(StanceTypes.None);
+                unitCharacter.FillFrom(Hero.MainHero.CharacterObject); // Fill character model for preview, omit default seed param
             }
             catch (Exception ex)
             {
                 ModLogger.Error("QuartermasterUI", "Error setting up character view model", ex);
-                UnitCharacter = null; // Safe fallback
             }
+            UnitCharacter = unitCharacter;
             
-            RefreshValues();
+            // Note: RefreshValues() deferred until after construction to avoid virtual member call in constructor
         }
         
         /// <summary>
@@ -150,7 +152,7 @@ namespace Enlisted.Features.Equipment.UI
                 // Close the selector
                 ExecuteClose();
                 
-                ModLogger.Info("QuartermasterUI", $"Applied equipment variant: {selectedVariant.Item.Name?.ToString()}");
+                ModLogger.Info("QuartermasterUI", $"Applied equipment variant: {selectedVariant.Item.Name}");
             }
             catch (Exception ex)
             {
@@ -173,26 +175,7 @@ namespace Enlisted.Features.Equipment.UI
             }
         }
         
-        /// <summary>
-        /// Get display name for equipment slot.
-        /// </summary>
-        private string GetSlotDisplayName(EquipmentIndex slot)
-        {
-            return slot switch
-            {
-                EquipmentIndex.Weapon0 => "Primary Weapon",
-                EquipmentIndex.Weapon1 => "Secondary Weapon",
-                EquipmentIndex.Weapon2 => "Shield/Backup",
-                EquipmentIndex.Weapon3 => "Throwing Weapon",
-                EquipmentIndex.Head => "Helmet",
-                EquipmentIndex.Body => "Armor",
-                EquipmentIndex.Leg => "Boots",
-                EquipmentIndex.Gloves => "Gloves",
-                EquipmentIndex.Cape => "Cape/Shoulders",
-                EquipmentIndex.Horse => "Mount",
-                EquipmentIndex.HorseHarness => "Horse Armor",
-                _ => "Equipment"
-            };
-        }
+        // Note: GetSlotDisplayName method removed as it was unused.
+        // If needed in future, add it to a shared utility class for slot name formatting.
     }
 }
