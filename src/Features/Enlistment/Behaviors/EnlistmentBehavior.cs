@@ -11,19 +11,6 @@ using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using Enlisted.Mod.GameAdapters.Patches;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Roster;
-using TaleWorlds.CampaignSystem.Settlements;
-using TaleWorlds.CampaignSystem.Naval;
-using TaleWorlds.Core;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
-using TaleWorlds.ObjectSystem;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
 namespace Enlisted.Features.Enlistment.Behaviors
@@ -699,7 +686,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // This prevents crashes from army members being left in an undefined state
             if (main.Army != null && main.Army.LeaderParty == main)
             {
-                reason = new TextObject("{=Enlisted_Message_MustDisbandArmy}You are leading an army. Disband your army before enlisting in another lord's service.");
+                reason = new TextObject(
+                    "{=Enlisted_Message_MustDisbandArmy}You are leading an army. Disband your army before enlisting in another lord's service.");
                 return false;
             }
 
@@ -4141,7 +4129,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _enlistmentXP += xp;
 
             // Get tier requirements to show progress
-            var tierXP = Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var tierXP = ConfigurationManager.GetTierXpRequirements();
             var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
             var progressPercent = nextTierXP > 0 ? _enlistmentXP * 100 / nextTierXP : 100;
 
@@ -4187,7 +4175,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // Get XP values from config
-                var battleXP = Enlisted.Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXp();
+                var battleXP = ConfigurationManager.GetBattleParticipationXp();
 
                 if (battleXP > 0)
                 {
@@ -4404,7 +4392,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public string GetRankName(int tier)
         {
             // Use configured tier names from progression_config.json
-            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierName(tier);
+            return ConfigurationManager.GetTierName(tier);
         }
 
         /// <summary>
@@ -4456,7 +4444,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Fallback: Basic restoration if equipment manager not available
                     if (_personalBattleEquipment != null)
                     {
-                        Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, _personalBattleEquipment);
+                        Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero,
+                            _personalBattleEquipment);
                     }
 
                     if (_personalCivilianEquipment != null)

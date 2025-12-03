@@ -2,8 +2,6 @@ using System;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.Core;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {

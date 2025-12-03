@@ -1,12 +1,6 @@
 using System;
-using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {

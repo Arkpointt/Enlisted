@@ -1,10 +1,8 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem.Naval;
-using TaleWorlds.CampaignSystem.Party;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -16,7 +14,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     This method is called by SeaDamageCampaignBehavior.HourlyTickParty for each ship.
     /// </summary>
     // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch]
     public class NavalShipDamageProtectionPatch
     {
@@ -29,8 +27,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// </summary>
         [HarmonyPatch("NavalDLC.GameComponents.NavalDLCCampaignShipDamageModel", "GetHourlyShipDamage")]
         [HarmonyPrefix]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __result is a special injected parameter")]
         private static bool Prefix(MobileParty owner, Ship ship, ref int __result)
         {
             try
@@ -89,7 +88,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Reset the logging flag when a new campaign starts or loads.
         ///     Called from SubModule or EnlistmentBehavior on campaign start.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called for session reset")]
+        [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called for session reset")]
         public static void ResetSessionLogging()
         {
             _hasLoggedProtectionDetails = false;

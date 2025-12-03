@@ -1,8 +1,5 @@
 using System;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Encounters;
+using System.Diagnostics.CodeAnalysis;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
@@ -10,13 +7,13 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Prevents the native game from making the player party visible when enlisted.
-    /// When other NPCs approach, the game sets IsVisible = true for encounters,
-    /// but enlisted players should stay invisible (except during battles/sieges).
-    /// This patch intercepts visibility changes and blocks them for enlisted players.
+    ///     Prevents the native game from making the player party visible when enlisted.
+    ///     When other NPCs approach, the game sets IsVisible = true for encounters,
+    ///     but enlisted players should stay invisible (except during battles/sieges).
+    ///     This patch intercepts visibility changes and blocks them for enlisted players.
     /// </summary>
     // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(MobileParty), "IsVisible", MethodType.Setter)]
     public class VisibilityEnforcementPatch
     {
@@ -26,19 +23,19 @@ namespace Enlisted.Mod.GameAdapters.Patches
         private static float _forceHiddenUntil;
 
         /// <summary>
-        /// Call this immediately BEFORE forcing player out of a settlement.
-        /// Ensures visibility is blocked even during the transition frames.
+        ///     Call this immediately BEFORE forcing player out of a settlement.
+        ///     Ensures visibility is blocked even during the transition frames.
         /// </summary>
         public static void BeginForceHidden()
         {
             _forceHidden = true;
             // Force hidden for 2 seconds to cover any transition delays
-            _forceHiddenUntil = Campaign.CurrentTime + (2f / 24f / 60f); // 2 seconds in campaign time
+            _forceHiddenUntil = Campaign.CurrentTime + 2f / 24f / 60f; // 2 seconds in campaign time
             ModLogger.Debug("VisibilityEnforcement", "Force hidden mode ENABLED for settlement exit");
         }
 
         /// <summary>
-        /// Call this after hiding is complete and escort is re-established.
+        ///     Call this after hiding is complete and escort is re-established.
         /// </summary>
         public static void EndForceHidden()
         {
@@ -47,11 +44,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
 
         /// <summary>
-        /// Prefix that prevents visibility from being set to true for enlisted players.
-        /// Returns false to block the setter, true to allow normal visibility.
+        ///     Prefix that prevents visibility from being set to true for enlisted players.
+        ///     Returns false to block the setter, true to allow normal visibility.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __instance is a special injected parameter")]
         private static bool Prefix(MobileParty __instance, bool value)
         {
             try
@@ -78,7 +76,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     if (enlistedLord != null)
                     {
                         // Check both PartyBelongedTo and LeaderHero for robustness
-                        isLordParty = __instance == enlistedLord.PartyBelongedTo || __instance.LeaderHero == enlistedLord;
+                        isLordParty = __instance == enlistedLord.PartyBelongedTo ||
+                                      __instance.LeaderHero == enlistedLord;
                     }
 
                     if (isLordParty)
@@ -96,24 +95,20 @@ namespace Enlisted.Mod.GameAdapters.Patches
                                 // We must force it to be visible.
                                 if (!__instance.IsVisible)
                                 {
-                                    ModLogger.Info("VisibilityEnforcement", "Lord party was invisible during hide attempt - Forcing IsVisible=true");
+                                    ModLogger.Info("VisibilityEnforcement",
+                                        "Lord party was invisible during hide attempt - Forcing IsVisible=true");
                                     // This will trigger the setter again with value=true.
                                     // Our Prefix allows value=true when OnLeave/Enlisted (see logic below), so this is safe.
                                     __instance.IsVisible = true;
                                 }
-                                else
-                                {
-                                    // Only log occasionally to avoid spam when it's working correctly
-                                    // ModLogger.Debug("VisibilityEnforcement", "Blocking Lord visibility hide (party is already visible)");
-                                }
 
+                                // Only log occasionally to avoid spam when it's working correctly
+                                // ModLogger.Debug("VisibilityEnforcement", "Blocking Lord visibility hide (party is already visible)");
                                 return false;
                             }
-                            else
-                            {
-                                // Debug logging to diagnose why blocking failed
-                                ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: Enlisted=false, Leave=false");
-                            }
+
+                            // Debug logging to diagnose why blocking failed
+                            ModLogger.Debug("VisibilityEnforcement", "Allowed Lord hide: Enlisted=false, Leave=false");
                         }
                     }
 
@@ -138,7 +133,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
                     else
                     {
-                        ModLogger.Debug("VisibilityEnforcement", "BLOCKED by force hidden mode (settlement exit in progress)");
+                        ModLogger.Debug("VisibilityEnforcement",
+                            "BLOCKED by force hidden mode (settlement exit in progress)");
                         return false;
                     }
                 }
@@ -161,7 +157,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
                 var lordInBattle = lordParty?.Party?.MapEvent != null || lordParty?.Party?.SiegeEvent != null;
                 // Army battles: the army leader's party holds the MapEvent, not necessarily each member's party
-                var armyInBattle = lordParty?.Army?.LeaderParty?.Party?.MapEvent != null || lordParty?.Army?.LeaderParty?.Party?.SiegeEvent != null;
+                var armyInBattle = lordParty?.Army?.LeaderParty?.Party?.MapEvent != null ||
+                                   lordParty?.Army?.LeaderParty?.Party?.SiegeEvent != null;
                 var anyBattleActive = lordInBattle || armyInBattle;
 
                 // Check if player is in a settlement - if so, allow visibility for town/castle menus
@@ -177,7 +174,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     if (anyBattleActive && !playerBattle)
                     {
-                        ModLogger.Debug("VisibilityEnforcement", $"Allowing visibility - battle active (lord:{lordInBattle}, army:{armyInBattle}), player needs encounter menu");
+                        ModLogger.Debug("VisibilityEnforcement",
+                            $"Allowing visibility - battle active (lord:{lordInBattle}, army:{armyInBattle}), player needs encounter menu");
                     }
                     else if (playerInSettlement)
                     {
@@ -185,8 +183,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
                     else
                     {
-                        ModLogger.Debug("VisibilityEnforcement", "Allowing visibility - native encounter/battle requires it");
+                        ModLogger.Debug("VisibilityEnforcement",
+                            "Allowing visibility - native encounter/battle requires it");
                     }
+
                     return true;
                 }
 
@@ -202,4 +202,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-

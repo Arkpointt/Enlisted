@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using HarmonyLib;
 
 namespace Enlisted.Mod.Core.Logging
 {
@@ -58,25 +58,25 @@ namespace Enlisted.Mod.Core.Logging
             {
                 var assembly = typeof(ModConflictDiagnostics).Assembly;
                 var assemblyLocation = assembly.Location;
-                
+
                 // Assembly.Location can be null or empty in some scenarios
                 if (string.IsNullOrWhiteSpace(assemblyLocation))
                 {
                     throw new InvalidOperationException("Assembly.Location is null or empty");
                 }
-                
+
                 var dllDir = Path.GetDirectoryName(assemblyLocation);
                 if (string.IsNullOrWhiteSpace(dllDir))
                 {
                     throw new InvalidOperationException("Could not get directory from assembly location");
                 }
-                
+
                 var binDir = Directory.GetParent(dllDir);
                 if (binDir == null)
                 {
                     throw new InvalidOperationException("Could not get parent directory");
                 }
-                
+
                 var enlistedRoot = binDir.Parent;
                 var debugDir = enlistedRoot != null
                     ? Path.Combine(enlistedRoot.FullName, "Debugging")
@@ -98,7 +98,7 @@ namespace Enlisted.Mod.Core.Logging
                     var fallbackDir = Path.Combine(docs, "Mount and Blade II Bannerlord", "Logs", "Enlisted");
                     Directory.CreateDirectory(fallbackDir);
                     _conflictLogPath = Path.Combine(fallbackDir, "conflicts.log");
-                    System.Diagnostics.Debug.WriteLine($"[Enlisted] Conflict log using Documents fallback (Error: {ex.Message})");
+                    Debug.WriteLine($"[Enlisted] Conflict log using Documents fallback (Error: {ex.Message})");
                 }
                 catch (Exception fallbackEx)
                 {
@@ -109,7 +109,8 @@ namespace Enlisted.Mod.Core.Logging
                     {
                         Directory.CreateDirectory(tempDir);
                     }
-                    System.Diagnostics.Debug.WriteLine($"[Enlisted] Conflict log using temp fallback (Error: {fallbackEx.Message})");
+
+                    Debug.WriteLine($"[Enlisted] Conflict log using temp fallback (Error: {fallbackEx.Message})");
                 }
             }
         }

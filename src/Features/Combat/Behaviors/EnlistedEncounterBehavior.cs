@@ -2,13 +2,6 @@ using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -418,7 +411,5 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("Battle", $"Error rejoining battle: {ex.Message}");
             }
         }
-
-
     }
 }

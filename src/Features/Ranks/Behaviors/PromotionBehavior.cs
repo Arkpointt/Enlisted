@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Ranks.Behaviors
 {
@@ -81,10 +79,10 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 // Load tier XP requirements from progression_config.json
                 // The requirements array contains XP thresholds needed to promote from each tier to the next
-                var tierXpRequirements = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+                var tierXpRequirements = ConfigurationManager.GetTierXpRequirements();
 
                 // Get actual max tier from config (e.g., 6 for tiers 1-6)
-                var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+                var maxTier = ConfigurationManager.GetMaxTier();
 
                 // Check if the player has enough XP for promotion, and continue promoting
                 // if they've accumulated enough XP for multiple tiers at once
