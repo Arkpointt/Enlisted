@@ -494,7 +494,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 110);
 
             // Exit option - always available as fallback from service options
-            // Lowest priority (default 100) - shows last, always available
+            // Uses default priority (100) - shows last among service options (others use 110-115)
             starter.AddPlayerLine(
                 "enlisted_service_nevermind",
                 "enlisted_service_options",
