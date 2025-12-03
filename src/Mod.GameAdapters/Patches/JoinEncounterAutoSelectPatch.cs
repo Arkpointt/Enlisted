@@ -89,13 +89,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                     // Switch to the standard encounter menu (Attack/Send Troops/Wait options)
                     // This replaces the "join_encounter" menu with the actual battle options
-                    if (battle.DefenderSide.TroopCount > 0)
+                    
+                    // Check enemy troop count to determine if battle is still ongoing
+                    // Enemy side is opposite of lord's side - if lord attacks, enemies are defenders and vice versa
+                    var enemySide = lordSide == BattleSideEnum.Attacker ? battle.DefenderSide : battle.AttackerSide;
+                    
+                    if (enemySide.TroopCount > 0)
                     {
                         GameMenu.SwitchToMenu("encounter");
                     }
                     else
                     {
-                        // No defenders left (battle already won) - handle like native does
+                        // No enemies left (battle already won) - handle like native does
                         if (MobileParty.MainParty.Army != null)
                         {
                             if (MobileParty.MainParty.Army.LeaderParty != MobileParty.MainParty)
