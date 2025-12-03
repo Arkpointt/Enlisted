@@ -5,6 +5,7 @@ using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
@@ -128,6 +129,43 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanRequestStandardEnlistment,
                 null,
                 110);
+
+            // Army leader attempting to enlist - shows when player commands their own army
+            // Higher priority (109) so it appears when condition is met, blocking standard enlistment
+            starter.AddPlayerLine(
+                "enlisted_request_service_army_leader",
+                "enlisted_service_options",
+                "enlisted_army_leader_rejection",
+                GetLocalizedText(
+                        "{=enlisted_request_service_army_leader}My lord, I offer you my sword and my loyalty. Will you have me in your ranks?")
+                    .ToString(),
+                IsPlayerLeadingArmy,
+                null,
+                109);
+
+            // Lord's response to army leader - cannot enlist while commanding an army
+            starter.AddDialogLine(
+                "enlisted_army_leader_rejection_response",
+                "enlisted_army_leader_rejection",
+                "enlisted_army_leader_acknowledge",
+                GetLocalizedText(
+                        "{=enlisted_army_leader_rejection}Hold, friend. I see you already command men of your own. A general cannot become a foot soldier while lords still march beneath his banner. Disband your army first, then we may speak of service.")
+                    .ToString(),
+                null,
+                null,
+                109);
+
+            // Player acknowledges they must disband army first
+            starter.AddPlayerLine(
+                "enlisted_army_leader_acknowledge",
+                "enlisted_army_leader_acknowledge",
+                "lord_pretalk",
+                GetLocalizedText(
+                        "{=enlisted_army_leader_acknowledge}I understand, my lord. I shall see to my army's affairs first.")
+                    .ToString(),
+                null,
+                null,
+                109);
 
             // Grace-specific enlistment option (covers lord killed, captured, or army defeated)
             starter.AddPlayerLine(
@@ -670,6 +708,37 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             return enlistment.CanEnlistWithParty(lord, out _);
+        }
+
+        /// <summary>
+        ///     Checks if the player is currently leading their own army.
+        ///     Used to show army leader rejection dialog instead of standard enlistment.
+        /// </summary>
+        private bool IsPlayerLeadingArmy()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+
+            // Don't show if already enlisted or on leave
+            if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
+            {
+                return false;
+            }
+
+            // Don't show during grace period (different dialog flow)
+            if (enlistment?.IsInDesertionGracePeriod == true)
+            {
+                return false;
+            }
+
+            var lord = Hero.OneToOneConversationHero;
+            if (lord == null || !lord.IsLord)
+            {
+                return false;
+            }
+
+            // Check if player is leading their own army
+            var main = MobileParty.MainParty;
+            return main?.Army != null && main.Army.LeaderParty == main;
         }
 
         /// <summary>

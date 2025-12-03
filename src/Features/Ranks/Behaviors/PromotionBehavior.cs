@@ -280,7 +280,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 { 2, "Footman" },
                 { 3, "Serjeant" },
                 { 4, "Man-at-Arms" },
-                { 5, "Banner Sergeant" },
+                { 5, "Banner Serjeant" },
                 { 6, "Household Guard" }
             };
 

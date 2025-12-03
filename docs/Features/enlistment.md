@@ -60,7 +60,7 @@ Provide the foundation for military service - join a lord's forces, follow them 
 | 2 | Footman | 800 |
 | 3 | Serjeant | 3,000 |
 | 4 | Man-at-Arms | 6,000 |
-| 5 | Banner Sergeant | 11,000 |
+| 5 | Banner Serjeant | 11,000 |
 | 6 | Household Guard | 19,000 |
 
 Rank names are configurable in `progression_config.json`.

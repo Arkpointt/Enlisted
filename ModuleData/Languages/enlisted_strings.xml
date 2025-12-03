@@ -13,7 +13,7 @@
     <string id="Enlisted_Rank_Footman" text="Footman" />
     <string id="Enlisted_Rank_Serjeant" text="Serjeant" />
     <string id="Enlisted_Rank_ManAtArms" text="Man-at-Arms" />
-    <string id="Enlisted_Rank_BannerSergeant" text="Banner Sergeant" />
+    <string id="Enlisted_Rank_BannerSergeant" text="Banner Serjeant" />
     <string id="Enlisted_Rank_HouseholdGuard" text="Household Guard" />
 
     <!-- Enlistment Messages -->
@@ -24,6 +24,7 @@
     <string id="Enlisted_Message_OnLeaveReportBack" text="You are on leave and cannot enlist elsewhere until you report back." />
     <string id="Enlisted_Message_BoundByGrace" text="You are still bound to {KINGDOM} by your grace orders. Other lords cannot enlist you yet." />
     <string id="Enlisted_Message_LordNoParty" text="The lord has no party at present." />
+    <string id="Enlisted_Message_MustDisbandArmy" text="You are leading an army. Disband your army before enlisting in another lord's service." />
     <string id="Enlisted_Message_RejoinedKingdom" text="You have rejoined {KINGDOM}. Your grace period has been cleared." />
     <string id="Enlisted_Term_YourKingdom" text="your kingdom" />
     <string id="Enlisted_Message_ServiceEndedGrace" text="Your service has ended. You have {DAYS} days to find another lord in {KINGDOM} before you are branded a deserter." />
@@ -120,5 +121,10 @@
     <string id="Enlisted_Prof_Desc_Saboteur" text="Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)" />
     <string id="Enlisted_Prof_Desc_None" text="No specialized profession assigned." />
     <string id="Enlisted_Prof_Desc_Unknown" text="Specialized military profession." />
+
+    <!-- Army Leader Dialog (when player tries to enlist while leading an army) -->
+    <string id="enlisted_request_service_army_leader" text="My lord, I offer you my sword and my loyalty. Will you have me in your ranks?" />
+    <string id="enlisted_army_leader_rejection" text="Hold, friend. I see you already command men of your own. A general cannot become a foot soldier while lords still march beneath his banner. Disband your army first, then we may speak of service." />
+    <string id="enlisted_army_leader_acknowledge" text="I understand, my lord. I shall see to my army's affairs first." />
   </strings>
 </base>

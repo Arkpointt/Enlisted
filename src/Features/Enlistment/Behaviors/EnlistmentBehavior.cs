@@ -695,6 +695,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return false;
             }
 
+            // Block enlistment if player is leading their own army - army must be disbanded first
+            // This prevents crashes from army members being left in an undefined state
+            if (main.Army != null && main.Army.LeaderParty == main)
+            {
+                reason = new TextObject("{=Enlisted_Message_MustDisbandArmy}You are leading an army. Disband your army before enlisting in another lord's service.");
+                return false;
+            }
+
             // Handle players on leave - allow same-faction transfers but block cross-faction enlistment
             if (_isOnLeave)
             {

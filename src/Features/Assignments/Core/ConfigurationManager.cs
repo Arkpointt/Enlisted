@@ -219,7 +219,7 @@ namespace Enlisted.Features.Assignments.Core
                         new TierRequirement { Tier = 2, XpRequired = 800, Name = "Footman" },
                         new TierRequirement { Tier = 3, XpRequired = 3000, Name = "Serjeant" },
                         new TierRequirement { Tier = 4, XpRequired = 6000, Name = "Man-at-Arms" },
-                        new TierRequirement { Tier = 5, XpRequired = 11000, Name = "Banner Sergeant" },
+                        new TierRequirement { Tier = 5, XpRequired = 11000, Name = "Banner Serjeant" },
                         new TierRequirement { Tier = 6, XpRequired = 19000, Name = "Household Guard" }
                     ]
                 }
