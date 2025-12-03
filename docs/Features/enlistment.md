@@ -113,9 +113,15 @@ Rank names are configurable in `progression_config.json`.
 
 **Kill Tracking:**
 - `EnlistedKillTrackerBehavior` tracks kills during missions
-- Registered via `SubModule.OnMissionBehaviorInitialize`
+- Registered via `SubModule.OnMissionBehaviorInitialize` for combat missions
 - Kills added to `_currentTermKills` after each battle
 - On retirement, term kills transfer to faction's TotalKills
+
+**Formation Assignment:**
+- `EnlistedFormationAssignmentBehavior` assigns player to their designated formation (Infantry, Archer, etc.)
+- Teleports player to correct position within formation if they spawned late or in wrong location
+- Handles mission modes: StartUp, Battle, Stealth, Deployment (sieges start in StartUp mode)
+- Skipped in naval battles - Naval DLC has its own ship-based spawn system
 
 ## Technical Implementation
 
@@ -125,6 +131,7 @@ Rank names are configurable in `progression_config.json`.
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 - `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
+- `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player to their formation and teleports them to correct position (skipped in naval battles)
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 - `MercenaryIncomeSuppressionPatch.cs` - Suppresses native mercenary income (players receive mod wages only)
 - `FoodSystemPatches.cs` - Consolidated food handling: suppresses food consumption and prevents starvation when enlisted (lord provides food)

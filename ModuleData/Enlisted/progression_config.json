@@ -44,7 +44,7 @@
   "xp_sources": {
     "daily_base": 25,
     "battle_participation": 25,
-    "xp_per_kill": 1
+    "xp_per_kill": 2
   },
   "promotion_benefits": {
     "tier_2": {

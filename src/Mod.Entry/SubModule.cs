@@ -311,27 +311,41 @@ namespace Enlisted.Mod.Entry
 			{
 				base.OnMissionBehaviorInitialize(mission);
 
-				// Only add kill tracker to combat missions when player is enlisted
+				// DIAGNOSTIC: Log that we entered the method
+				ModLogger.Info("Mission", $"OnMissionBehaviorInitialize called (Mode: {mission.Mode})");
+
 				var enlistment = EnlistmentBehavior.Instance;
+
+				// DIAGNOSTIC: Log enlistment state before checking
+				ModLogger.Info("Mission", $"Enlistment check - Instance: {enlistment != null}, IsEnlisted: {enlistment?.IsEnlisted}, OnLeave: {enlistment?.IsOnLeave}");
+
 				if (enlistment?.IsEnlisted != true)
 				{
+					ModLogger.Info("Mission", "Skipping behavior add - not enlisted");
 					return;
 				}
 
 				// Check if this is a combat mission (field battle, siege, hideout, etc.)
 				// Skip non-combat missions like conversations, tournaments, arenas
+				// NOTE: Siege battles start in StartUp mode and transition to Battle mode later,
+				// so we must include StartUp to catch them at initialization time.
 				if (mission.Mode == MissionMode.Battle ||
+				    mission.Mode == MissionMode.StartUp ||
 				    mission.Mode == MissionMode.Stealth ||
 				    mission.Mode == MissionMode.Deployment)
 				{
 					mission.AddMissionBehavior(new EnlistedKillTrackerBehavior());
 					mission.AddMissionBehavior(new EnlistedFormationAssignmentBehavior());
-					ModLogger.Debug("Mission", $"Enlisted behaviors added to mission (Mode: {mission.Mode})");
+					ModLogger.Info("Mission", $"Enlisted behaviors added to mission (Mode: {mission.Mode})");
+				}
+				else
+				{
+					ModLogger.Info("Mission", $"Skipped behaviors - mode {mission.Mode} not a combat mission");
 				}
 			}
 			catch (Exception ex)
 			{
-				ModLogger.Error("Bootstrap", $"Error adding kill tracker to mission: {ex.Message}");
+				ModLogger.Error("Bootstrap", $"Error in OnMissionBehaviorInitialize: {ex.Message}");
 			}
 		}
 	}

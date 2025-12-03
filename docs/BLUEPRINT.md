@@ -3,9 +3,9 @@
 Architecture and standards for the Enlisted mod.
 
 ## Build
-- Visual Studio: config "Enlisted EDITOR" → Build
-- CLI: `dotnet build -c "Enlisted EDITOR"`
-- Output: `<Bannerlord>/Modules/Enlisted/`
+- Visual Studio: config "Enlisted RETAIL" → Build
+- CLI: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
+- Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/`
 
 ## Dependencies
 ```xml
@@ -21,7 +21,7 @@ src/
 ├── Mod.Entry/              # SubModule + Harmony init
 ├── Mod.Core/               # Logging, config, helpers
 ├── Mod.GameAdapters/       # Harmony patches
-│   └── Patches/            # 19 patches
+│   └── Patches/            # 23 patches
 └── Features/
     ├── Enlistment/         # Core service state, retirement
     ├── Assignments/        # Duties system
@@ -32,29 +32,31 @@ src/
     └── Interface/          # Menus
 ```
 
-## Harmony Patches (21)
+## Harmony Patches (23)
 
 | Patch | Purpose |
 |-------|---------|
 | ArmyCohesionExclusionPatch | Compensates for enlisted player's cohesion impact |
-| BattleCommandsFilterPatch | Formation-based command filtering |
+| ArmyDispersedMenuPatch | Handles army dispersal menu for enlisted players |
 | ClanFinanceEnlistmentIncomePatch | Adds wages to tooltip |
 | DischargePenaltySuppressionPatch | Prevents relation loss on discharge |
 | DutiesOfficerRolePatches | Officer role integration |
 | EncounterSuppressionPatch | Prevents unwanted encounters |
 | EnlistedWaitingPatch | Prevents game pause when lord battles |
 | EnlistmentExpenseIsolationPatch | Hides expenses while enlisted |
-| FoodConsumptionSuppressionPatch | Skips food consumption when enlisted (lord provides food) |
+| FoodSystemPatches | Skips food consumption when enlisted (lord provides food) |
+| FormationMessageSuppressionPatch | Suppresses formation command messages |
 | HidePartyNamePlatePatch | Hides player nameplate |
 | IncidentsSuppressionPatch | Suppresses random incidents (DLC/Naval) |
 | InfluenceMessageSuppressionPatch | Suppresses "0 influence" messages |
+| JoinEncounterAutoSelectPatch | Auto-joins lord's battle, bypasses "Help or Don't get involved" menu |
 | LootBlockPatch | Prevents personal loot |
 | MercenaryIncomeSuppressionPatch | Suppresses native mercenary income (players receive mod wages only) |
 | NavalShipExclusionPatch | Prevents lord from using enlisted player's ships for sea travel |
 | OrderOfBattleSuppressionPatch | Skips deployment screen |
 | PostDischargeProtectionPatch | Protects after discharge |
+| ReturnToArmySuppressionPatch | Suppresses return to army messages |
 | SkillSuppressionPatch | Blocks tactics/leadership XP |
-| StarvationSuppressionPatch | Prevents starvation (backup for FoodConsumptionSuppressionPatch) |
 | TownLeaveButtonPatch | Hides Leave button |
 | VisibilityEnforcementPatch | Controls party visibility |
 
@@ -85,6 +87,8 @@ Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 | Following | Escort AI, position sync, naval following |
 | Naval | Sea state sync, naval position updates |
 | Siege | Siege state detection, besieger camp sync |
+| Mission | Mission behavior initialization, mode detection |
+| FormationAssignment | Player formation assignment, position teleporting |
 | EncounterGuard | Encounter transitions, menu activation |
 | EncounterCleanup | Post-battle cleanup, visibility restoration |
 | Equipment | Equipment backup/restore, kit assignment |

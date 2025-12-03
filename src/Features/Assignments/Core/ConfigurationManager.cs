@@ -286,6 +286,20 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
+        /// Get the maximum tier defined in progression config.
+        /// Returns the actual tier count (e.g., 6 for tiers 1-6), not the array length.
+        /// </summary>
+        public static int GetMaxTier()
+        {
+            var config = LoadProgressionConfig();
+            if (config?.TierProgression?.Requirements == null || config.TierProgression.Requirements.Count == 0)
+            {
+                return 6; // Default fallback matching progression_config.json
+            }
+            return config.TierProgression.Requirements.Max(r => r.Tier);
+        }
+
+        /// <summary>
         /// Get XP required for a specific tier from progression config.
         /// </summary>
         public static int GetXpRequiredForTier(int tier)

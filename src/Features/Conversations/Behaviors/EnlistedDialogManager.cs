@@ -495,12 +495,18 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             var enlistment = EnlistmentBehavior.Instance;
 
-            // CRITICAL: Prevent enlistment dialog if already enlisted (and not on leave)
-            // Player must be fully discharged before they can enlist with another lord/kingdom
+            // Allow dialog when talking to current lord (for retirement, duties discussion, etc.)
+            // Block dialog with OTHER lords when actively enlisted - player can't enlist elsewhere
             if (enlistment?.IsEnlisted == true && enlistment?.IsOnLeave != true)
             {
-                ModLogger.Debug("DialogManager", $"Dialog hidden - player is actively enlisted with {enlistment.CurrentLord?.Name}");
-                return false;
+                if (enlistment.CurrentLord != lord)
+                {
+                    ModLogger.Debug("DialogManager", $"Dialog hidden - player is actively enlisted with {enlistment.CurrentLord?.Name}");
+                    return false;
+                }
+                // Allow - player talking to their own lord (retirement, early discharge, etc.)
+                ModLogger.Debug("DialogManager", $"Dialog shown - player talking to their enlisted lord {lord.Name}");
+                return true;
             }
 
             // When on leave, ALLOW dialog with all lords - we handle same vs different faction in the dialog itself

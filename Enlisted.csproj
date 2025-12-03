@@ -168,7 +168,7 @@
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs" />
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs" />
-    <Compile Include="src\Mod.GameAdapters\Patches\BattleCommandsFilterPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs" />
     <!-- Disabled: Native game handles siege dismounting -->
@@ -186,9 +186,11 @@
     <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\InfluenceMessageSuppressionPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs" />
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs" />
+    <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml" />

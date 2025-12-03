@@ -85,8 +85,8 @@ namespace Enlisted.Features.Ranks.Behaviors
                 // The requirements array contains XP thresholds needed to promote from each tier to the next
                 var tierXPRequirements = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
 
-                // Get the maximum tier allowed to prevent promoting beyond tier 6
-                int maxTier = tierXPRequirements.Length > 1 ? tierXPRequirements.Length - 1 : 1;
+                // Get actual max tier from config (e.g., 6 for tiers 1-6)
+                int maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
 
                 // Check if the player has enough XP for promotion, and continue promoting
                 // if they've accumulated enough XP for multiple tiers at once

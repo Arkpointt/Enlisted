@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Naval;
@@ -11,62 +9,87 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Prevents lords from using enlisted player's ships for sea travel.
-    /// When a player is enlisted, their ships should not contribute to the lord's
-    /// naval navigation capability - preventing unwanted ship damage and repair costs.
+    /// Protects enlisted player's ships from sea damage while serving under a lord.
+    /// When sailing at sea, ships normally take attrition damage over time. Since the player
+    /// is just a soldier, their personal ships shouldn't degrade from the lord's voyage.
+    /// 
+    /// Target: NavalDLC.GameComponents.NavalDLCCampaignShipDamageModel.GetHourlyShipDamage
+    /// This method is called by SeaDamageCampaignBehavior.HourlyTickParty for each ship.
     /// </summary>
     [HarmonyPatch]
-    public class NavalShipExclusionPatch
+    public class NavalShipDamageProtectionPatch
     {
+        // Track if we've logged protection details this session (for diagnostic purposes)
+        private static bool _hasLoggedProtectionDetails = false;
+
         /// <summary>
-        /// Target the NavalPartyNavigationModel.HasNavalNavigationCapability method.
-        /// This requires targeting by name since it's in an external DLC assembly.
+        /// Intercept ship damage calculation before it runs.
+        /// Returns 0 damage for player's ships when enlisted.
         /// </summary>
-        [HarmonyPatch("NavalDLC.GameComponents.NavalPartyNavigationModel", "HasNavalNavigationCapability")]
-        [HarmonyPostfix]
-        static void Postfix(MobileParty mobileParty, ref bool __result)
+        [HarmonyPatch("NavalDLC.GameComponents.NavalDLCCampaignShipDamageModel", "GetHourlyShipDamage")]
+        [HarmonyPrefix]
+        static bool Prefix(MobileParty owner, Ship ship, ref int __result)
         {
             try
             {
+                // Early exit if campaign not ready - let original method run
                 if (!CampaignSafetyGuard.IsCampaignReady)
-                    return;
+                {
+                    return true;
+                }
 
+                // Check enlistment state
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
-                    return;
-
-                // If checking the lord's party and result is true due to attached parties
-                var lordParty = enlistment.EnlistedLord?.PartyBelongedTo;
-                if (lordParty == null || mobileParty != lordParty)
-                    return;
-
-                // Check if the lord's own party has ships (not from attached parties)
-                if (((List<Ship>)lordParty.Ships).Count > 0)
-                    return; // Lord has own ships - keep result as true
-
-                // Lord has no ships but result is true - must be from attached parties
-                // Check if it's ONLY from the player's ships
-                var mainParty = MobileParty.MainParty;
-                if (mainParty == null || ((List<Ship>)mainParty.Ships).Count == 0)
-                    return; // Player has no ships - not the cause
-
-                // Check if any OTHER attached party has ships
-                bool otherPartyHasShips = lordParty.AttachedParties
-                    .Where(p => p != mainParty)
-                    .Any(p => ((List<Ship>)p.Ships).Count > 0);
-
-                if (!otherPartyHasShips)
                 {
-                    // Only player has ships - prevent lord from using them
-                    __result = false;
-                    ModLogger.LogOnce("naval_ship_exclusion", "Naval",
-                        "Prevented lord from using enlisted player's ships for sea travel");
+                    return true; // Not enlisted, normal damage applies
                 }
+
+                // Check if this is the player's party
+                if (owner == null || owner != MobileParty.MainParty)
+                {
+                    return true; // Not player's party, normal damage applies
+                }
+
+                // Player is enlisted and this is their ship - prevent damage
+                __result = 0;
+
+                // Log protection activation once per session with diagnostic details
+                if (!_hasLoggedProtectionDetails)
+                {
+                    _hasLoggedProtectionDetails = true;
+                    
+                    var shipCount = MobileParty.MainParty?.Ships?.Count ?? 0;
+                    var lordName = enlistment.EnlistedLord?.Name?.ToString() ?? "Unknown";
+                    
+                    ModLogger.Info("Naval", 
+                        $"Ship damage protection active - Player ships ({shipCount}) protected while serving under {lordName}");
+                }
+
+                // Debug-level logging for detailed diagnostics (only when debug enabled)
+                ModLogger.Debug("Naval", 
+                    $"Protected ship '{ship?.ShipHull?.Name?.ToString() ?? "Unknown"}' from sea attrition damage");
+
+                return false; // Skip original method - we've set result to 0
             }
             catch (Exception ex)
             {
-                ModLogger.Error("NavalShipExclusion", $"Error in naval ship exclusion patch: {ex.Message}");
+                // Log full exception for troubleshooting, but don't break the game
+                ModLogger.Error("NavalShipDamageProtection", 
+                    $"Error in ship damage protection patch: {ex.Message}\nStack: {ex.StackTrace}");
+                
+                return true; // Fail-safe: let original method run on error
             }
+        }
+
+        /// <summary>
+        /// Reset the logging flag when a new campaign starts or loads.
+        /// Called from SubModule or EnlistmentBehavior on campaign start.
+        /// </summary>
+        public static void ResetSessionLogging()
+        {
+            _hasLoggedProtectionDetails = false;
+            ModLogger.Debug("Naval", "Ship damage protection session logging reset");
         }
     }
 }

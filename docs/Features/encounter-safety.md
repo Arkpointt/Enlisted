@@ -33,8 +33,9 @@ Keep enlisted players from accidentally entering encounters (like bandit raids) 
 1. Lord enters battle (`MapEvent` detected)
 2. `EnlistmentBehavior` activates player party (`IsActive = true`) while keeping it visually hidden
 3. Player party is kept in the same army/attachment so the vanilla encounter stack automatically collects it
-4. Native encounter menus handle the rest (no manual `PlayerEncounter` creation)
-5. Player participates in battle
+4. **JoinEncounterAutoSelectPatch** intercepts the "join_encounter" menu and automatically joins the battle on the lord's side
+5. Player sees the standard encounter menu (Attack/Send Troops/Wait) instead of "Help X's Party / Don't get involved"
+6. Player participates in battle
 
 **Autosim vs Manual Battle Handling:**
 - **Manual Battle**: Player's troops participate directly in combat
@@ -52,6 +53,7 @@ Keep enlisted players from accidentally entering encounters (like bandit raids) 
 - `EncounterGuard.cs` - Static utility class for encounter state management
 - `EnlistmentBehavior.cs` - Active battle monitoring and participation logic
 - `HidePartyNamePlatePatch.cs` - UI suppression
+- `JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle, bypasses choice menu
 
 **Core Methods:**
 ```csharp
@@ -106,7 +108,7 @@ public static void EnableEncounters()
 **Common Issues:**
 - **Encounters still happening**: Check `IsActive` is actually false
 - **Not joining battles**: Check `MapEvent` detection logic in `EnlistmentBehavior`
-- **"Help or Leave" menu**: Usually indicates the player party was inactive or not attached to the lord when the battle started
+- **"Help or Leave" menu**: Fixed by `JoinEncounterAutoSelectPatch` - if still appearing, check patch is registered in logs
 - **"Attack or Surrender" after autosim defeat**: Expected outcome when the lord loses. The player should resolve the encounter manually (Attack/Surrender) to match native behavior.
 
 **Log Categories:**  

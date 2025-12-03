@@ -5,6 +5,7 @@ using Enlisted.Features.Assignments.Core;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameComponents;
+using TaleWorlds.CampaignSystem.Settlements.Workshops;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 
@@ -21,6 +22,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		public static TextObject ServiceBonus;
 		public static TextObject ArmyBonus;
 		public static TextObject DutyBonus;
+		public static TextObject WorkshopIncome;
 
 		public static void EnsureInitialized()
 		{
@@ -32,6 +34,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				ServiceBonus = new TextObject("{=enlisted_service_bonus}Service Seniority");
 				ArmyBonus = new TextObject("{=enlisted_army_bonus}Army Campaign Bonus");
 				DutyBonus = new TextObject("{=enlisted_duty_bonus}Duty Assignment");
+				WorkshopIncome = new TextObject("{=enlisted_workshop_income}Workshop Income");
 			}
 		}
 
@@ -43,6 +46,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			ServiceBonus = null;
 			ArmyBonus = null;
 			DutyBonus = null;
+			WorkshopIncome = null;
 		}
 	}
 
@@ -52,11 +56,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	/// settlement income, party income, or other clan-based income that might leak
 	/// from the lord's/army's finances due to party attachment.
 	/// Shows a detailed breakdown of wage components in the tooltip.
+	/// 
+	/// Workshop income is processed separately as it's a personal asset that should
+	/// continue generating income regardless of enlistment status.
 	/// </summary>
 	[HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanIncome))]
 	internal static class ClanFinanceEnlistmentIncomePatch
 	{
 		private static bool _hasLoggedFirstWage = false;
+		private static bool _hasLoggedFirstWorkshop = false;
 
 		/// <summary>
 		/// PREFIX: Intercept income calculation BEFORE native code runs.
@@ -94,11 +102,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
 				// If captured or in grace period, this starts at 0 and stays at 0 (no wages added)
 				__result = new ExplainedNumber(0f, includeDescriptions, null);
 
-				// Add detailed wage breakdown
+				// Add detailed wage breakdown when actively enlisted
 				if (isEnlisted)
 				{
 					AddWageBreakdownToResult(enlistment, ref __result);
 				}
+
+				// Always process workshop income - workshops are personal assets that should
+				// generate income regardless of enlistment or prisoner status
+				AddWorkshopIncomeToResult(mainHero, ref __result, applyWithdrawals);
 
 				return false; // Skip native
 			}
@@ -106,6 +118,54 @@ namespace Enlisted.Mod.GameAdapters.Patches
 			{
 				ModLogger.Error("Finance", $"Error in income isolation prefix: {ex.Message}");
 				return true; // Fail open
+			}
+		}
+
+		/// <summary>
+		/// Calculates and adds workshop income to the result.
+		/// When applyWithdrawals is true, also withdraws profits from workshop capital
+		/// to prevent accumulation/buffering of workshop income.
+		/// 
+		/// This mirrors the native CalculateHeroIncomeFromWorkshops logic but works
+		/// within our isolated income calculation.
+		/// </summary>
+		private static void AddWorkshopIncomeToResult(Hero hero, ref ExplainedNumber result, bool applyWithdrawals)
+		{
+			if (hero == null) return;
+
+			var ownedWorkshops = hero.OwnedWorkshops;
+			if (ownedWorkshops == null || ownedWorkshops.Count == 0) return;
+
+			int totalWorkshopIncome = 0;
+
+			foreach (Workshop workshop in ownedWorkshops)
+			{
+				// Calculate income using the native model method
+				int incomeFromWorkshop = Campaign.Current.Models.ClanFinanceModel.CalculateOwnerIncomeFromWorkshop(workshop);
+				totalWorkshopIncome += incomeFromWorkshop;
+
+				// When applyWithdrawals is true, withdraw from workshop capital to player
+				// This is the critical fix - prevents workshop income from buffering
+				if (applyWithdrawals && incomeFromWorkshop > 0)
+				{
+					workshop.ChangeGold(-incomeFromWorkshop);
+					// Fire the event so other systems know the player earned gold from workshop
+					CampaignEventDispatcher.Instance.OnPlayerEarnedGoldFromAsset(
+						DefaultClanFinanceModel.AssetIncomeType.Workshop, incomeFromWorkshop);
+				}
+			}
+
+			// Add workshop income to the tooltip as a separate line item
+			if (totalWorkshopIncome > 0)
+			{
+				WageTooltipLabels.EnsureInitialized();
+				result.Add(totalWorkshopIncome, WageTooltipLabels.WorkshopIncome, null);
+
+				if (!_hasLoggedFirstWorkshop)
+				{
+					_hasLoggedFirstWorkshop = true;
+					ModLogger.Info("Finance", $"Workshop income processed while enlisted: {totalWorkshopIncome} from {ownedWorkshops.Count} workshop(s)");
+				}
 			}
 		}
 

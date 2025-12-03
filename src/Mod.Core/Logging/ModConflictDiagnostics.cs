@@ -16,7 +16,7 @@ namespace Enlisted.Mod.Core.Logging
     public static class ModConflictDiagnostics
     {
         private const string EnlistedHarmonyId = "com.enlisted.mod";
-        private const string EnlistedVersion = "v0.4.1";
+        private const string EnlistedVersion = "v0.4.3";
 
         private static readonly object Sync = new object();
         private static string _conflictLogPath;
