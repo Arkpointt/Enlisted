@@ -44,8 +44,13 @@ src/
 ## Logging
 
 Logs in `Modules/Enlisted/Debugging/`:
-- `enlisted.log` - Main log
-- `conflicts.log` - Mod compatibility
+- `enlisted.log` - Main log with category-based verbosity control
+- `conflicts.log` - Mod conflict diagnostics:
+  - Harmony patch conflict detection (identifies mods sharing patches)
+  - Patch execution order analysis
+  - Registered behaviors list
+  - Environment and module information
+  - Categorized patch inventory
 
 Configure levels in `settings.json`:
 ```json

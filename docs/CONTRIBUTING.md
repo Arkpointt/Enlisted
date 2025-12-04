@@ -47,8 +47,15 @@ All in `ModuleData/Enlisted/`:
 ## Debugging
 
 Logs in `Modules/Enlisted/Debugging/`:
-- `enlisted.log` - Main activity
-- `conflicts.log` - Mod compatibility
+- `enlisted.log` - Main activity log with category-based levels
+- `conflicts.log` - Comprehensive mod conflict diagnostics:
+  - Detects Harmony patch conflicts (other mods patching same methods)
+  - Shows patch execution order and priorities
+  - Lists all registered campaign behaviors
+  - Environment info (game version, mod version, OS, runtime)
+  - Loaded modules enumeration
+  - Categorized patch list (Army/Party, Encounter, Finance, UI/Menu, Combat, etc.)
+  - Tracks both main and deferred Harmony instances
 
 ## API Reference
 

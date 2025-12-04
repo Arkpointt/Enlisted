@@ -363,6 +363,28 @@ namespace Enlisted.Mod.Entry
                     // Initializes static helper methods used throughout the enlistment system
                     EncounterGuard.Initialize();
                     ModLogger.Info("Bootstrap", "Military service behaviors registered successfully");
+                    
+                    // Log registered behaviors for conflict diagnostics
+                    // This helps troubleshoot issues by showing exactly what was registered
+                    ModConflictDiagnostics.LogRegisteredBehaviors(new[]
+                    {
+                        nameof(EnlistmentBehavior),
+                        nameof(EnlistedDialogManager),
+                        nameof(EnlistedDutiesBehavior),
+                        nameof(EnlistedMenuBehavior),
+                        nameof(TroopSelectionManager),
+                        nameof(EquipmentManager),
+                        nameof(PromotionBehavior),
+                        nameof(QuartermasterManager),
+                        nameof(QuartermasterEquipmentSelectorBehavior),
+                        nameof(EnlistedEncounterBehavior),
+                        nameof(ServiceRecordManager),
+                        nameof(CommandTentMenuHandler),
+                        nameof(RetinueTrickleSystem),
+                        nameof(RetinueLifecycleHandler),
+                        nameof(RetinueCasualtyTracker),
+                        nameof(CompanionAssignmentManager)
+                    });
                 }
             }
             catch (Exception ex)
@@ -460,6 +482,10 @@ namespace Enlisted.Mod.Entry
                     harmony.CreateClassProcessor(typeof(JoinEncounterAutoSelectPatch)).Patch();
                     
                     ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
+                    
+                    // Update conflict diagnostics with deferred patch info
+                    // This appends to the existing conflicts.log so users can see all patches
+                    ModConflictDiagnostics.RefreshDeferredPatches(harmony);
                 }
                 catch (Exception ex)
                 {

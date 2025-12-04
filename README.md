@@ -72,5 +72,13 @@ Customize the mod via JSON files in `Modules\Enlisted\ModuleData\Enlisted\`:
 
 Logs are located in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 - `enlisted.log`: General mod activity.
-- `conflicts.log`: Diagnostics for mod conflicts.
+- `conflicts.log`: Comprehensive mod conflict diagnostics including:
+  - Harmony patch conflicts (which mods patch the same methods)
+  - Patch execution order and priorities
+  - Registered campaign behaviors
+  - Environment info (game version, mod version, OS)
+  - Loaded modules list
+  - Categorized patch list by purpose (Army/Party, Encounter, Finance, etc.)
 - `dialogue.log`: Conversation system events.
+
+**Note**: The `conflicts.log` is generated at startup and updated when the campaign starts (deferred patches). If you're experiencing issues, share this file when reporting bugs.

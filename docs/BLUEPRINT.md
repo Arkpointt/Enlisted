@@ -66,8 +66,16 @@ src/
 
 Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 
-- `enlisted.log` - Main activity
-- `conflicts.log` - Mod compatibility
+- `enlisted.log` - Main activity log with throttling and category-based levels
+- `conflicts.log` - Comprehensive mod conflict diagnostics:
+  - Harmony patch conflict detection (identifies which mods patch the same methods)
+  - Patch execution order and priority analysis
+  - Registered campaign behaviors inventory
+  - Environment info (game version, mod version, OS, CLR version)
+  - Loaded modules enumeration
+  - Categorized patch list by purpose (Army/Party, Encounter, Kingdom/Clan, Finance, UI/Menu, Combat, Other)
+  - Tracks both main Harmony instance (startup patches) and deferred instance (campaign-start patches)
+  - Combined conflict summary across all patches
 
 ### Log Levels
 
