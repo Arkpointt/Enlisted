@@ -82,16 +82,26 @@ namespace Enlisted.Features.CommandTent.Core
 
         /// <summary>
         /// Handles enlistment ending for any reason. Determines appropriate retinue fate.
+        /// Also clears companion assignments on full discharge (not grace period).
         /// </summary>
         private void OnEnlistmentEnded(string reason)
         {
+            var enlistment = EnlistmentBehavior.Instance;
+            var isFullDischarge = enlistment?.IsInDesertionGracePeriod != true;
+
+            // Clear companion assignments on full discharge only
+            if (isFullDischarge)
+            {
+                CompanionAssignmentManager.Instance?.ClearAllSettings();
+                ModLogger.Debug(LogCategory, "Cleared companion assignments on full discharge");
+            }
+
             var manager = RetinueManager.Instance;
             if (manager == null || !manager.State.HasRetinue)
             {
                 return;
             }
 
-            // Determine the lifecycle event type from the discharge reason
             var lifecycleReason = DetermineLifecycleReason(reason);
 
             ModLogger.Info(LogCategory,

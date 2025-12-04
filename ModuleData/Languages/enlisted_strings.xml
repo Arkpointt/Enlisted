@@ -217,6 +217,8 @@
     <string id="ct_trickle_added" text="A new soldier has reported for duty." />
     <string id="ct_requisition_success" text="{COUNT} soldiers have reported for duty." />
     <string id="ct_requisition_cooldown" text="Cooldown: {DAYS} days remaining" />
+    <string id="ct_requisition_no_type" text="You must select a soldier type first." />
+    <string id="ct_requisition_cancel" text="Return without requisition" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- COMMAND TENT - Upkeep & Desertion -->
@@ -273,11 +275,15 @@
     <!-- COMMAND TENT - Companion Assignments (Phase 8) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="ct_companions_title" text="Companion Assignments" />
+    <string id="ct_companion_intro" text="Determine which companions will stand beside you in battle." />
     <string id="ct_companions_tier_locked" text="You must reach Tier 4 to manage companion assignments." />
     <string id="ct_companions_none" text="No companions in your command." />
     <string id="ct_companion_fight" text="Will fight alongside you" />
     <string id="ct_companion_stay_back" text="Will guard the camp" />
+    <string id="ct_companion_save" text="Save Assignments" />
+    <string id="ct_companion_saved" text="Companion assignments updated." />
     <string id="ct_companion_toggled" text="{COMPANION_NAME} set to: {STATUS}" />
+    <string id="ct_companion_low_tier" text="At higher ranks, companions will join your personal squad." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DEBUG - Temporary Testing Options (remove before release) -->
