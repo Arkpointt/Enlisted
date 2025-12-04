@@ -49,6 +49,7 @@ Special mission types available to enlisted players.
 Low-level systems that ensure stability and prevent issues.
 
 - **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention and safety measures
+- **[Formation Assignment](Technical/formation-assignment.md)** - Battle formation assignment and position teleportation to lord's deployment
 
 ---
 
@@ -79,4 +80,4 @@ Each feature specification follows this structure:
 - **Interaction**: Dialog System, Menu Interface, Town Access, Command Tent
 - **Equipment**: Quartermaster
 - **Special**: Temporary Leave, Recon Mission
-- **Safety**: Encounter Safety
+- **Technical/Safety**: Encounter Safety, Formation Assignment
