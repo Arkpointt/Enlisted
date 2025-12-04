@@ -44,7 +44,7 @@ Allows enlisted players to request temporary leave from military service, restor
   - Suspended service: `_isOnLeave = true`, `_leaveStartDate` recorded
   - Vanilla behavior: normal encounters, movement, visibility restored
   - Daily countdown: warnings at 7 days and below
-  - Troop transfers: companions/recruits join lord's party on return
+  - Troop retention: troops recruited during leave stay with player on return
   - Dialog integration: return option appears in lord conversations
 
 ## Behavior
@@ -70,7 +70,7 @@ Allows enlisted players to request temporary leave from military service, restor
 
 ### Return to Service
 - Dialog option: "I wish to return to service" (appears when on leave talking to former lord)
-- Transfers any new companions/troops to lord's party
+- Troops stay with player: any soldiers recruited during leave remain in your party
 - Restores enlistment behavior: invisible, escort, battle participation
 - Clears leave state: `_isOnLeave = false`, `_leaveStartDate` reset
 
@@ -157,6 +157,7 @@ private void CheckLeaveExpiration()
 - **Menu display**: Remaining days shown when viewing status while on leave
 - **Service transfer during leave**: Player can transfer to different lord in same faction, preserving all progression
 - **Transfer to different faction**: Not allowed - transfer dialog only shows for same-faction lords
+- **Becomes vassal/mercenary during leave**: If player joins same kingdom as vassal or mercenary while on leave, leave expiration ends service honorably without desertion penalties (player elevated their service rather than deserted)
 
 ## Acceptance Criteria
 - ✅ Player can request leave via dialog with lord
@@ -168,13 +169,14 @@ private void CheckLeaveExpiration()
 - ✅ Service data (tier, XP, lord relationship) preserved during leave and transfer
 - ✅ Remaining leave days displayed in status menu
 - ✅ No crashes when entering settlements after leave/return/transfer
+- ✅ No desertion penalties if player becomes vassal/mercenary of same faction during leave
 
 ## Companion and Troop Management
 
 ### Leave Flow
 1. **Request Leave**: Player party restored to vanilla state
 2. **During Leave**: Player can recruit freely with vanilla behavior
-3. **Return from Leave**: New companions/troops transfer to lord's party
+3. **Return from Leave**: Troops stay with player (you earned them during leave)
 4. **Leave Expires**: Desertion - companions return to player, troops stay with lord
 
 ### Party Transfer Pattern

@@ -71,6 +71,7 @@
     <string id="Enlisted_Term_TheArmy" text="the army" />
     <string id="Enlisted_Message_PromotionAchieved" text="Promotion achieved! Your service and dedication have been recognized. You are now a {RANK}." />
     <string id="Enlisted_Message_LeaveExpiredDeserter" text="Your leave has expired. You have been branded a deserter." />
+    <string id="Enlisted_Message_LeaveExpiredVassal" text="Your leave has expired, but as a member of {KINGDOM}, your service ends honorably." />
     <string id="Enlisted_Message_LeaveRemaining" text="Leave: {DAYS} days remaining before desertion." />
     <string id="Enlisted_Message_TermCompleted" text="You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment." />
     <string id="Enlisted_Message_TermEndedDischarge" text="Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service." />
@@ -361,6 +362,7 @@
     <string id="qm_status_get_another" text="Get Another" />
     <string id="qm_status_limit_hint" text="Two's the limit, soldier" />
     <string id="qm_no_weapon_slots" text="Your hands are full, soldier. Return something to the armory first." />
+    <string id="qm_added_to_inventory" text="{ITEM_NAME} stowed in your pack. Hands full." />
     <string id="qm_missing_equipment_title" text="Equipment Accountability" />
     <string id="qm_missing_equipment_header" text="Missing equipment deducted from pay:" />
     <string id="qm_missing_equipment_total" text="Total deducted: {AMOUNT} denars" />
@@ -376,5 +378,68 @@
     <!-- DEBUG - Temporary Testing Options (remove before release) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="debug_gain_xp" text="[DEBUG] Gain 1000 XP" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- QUARTERMASTER - Equipment Variants & Supplies -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="qm_no_weapon_variants" text="No weapon variants available for your troop tree." />
+    <string id="qm_no_armor_variants" text="No armor variants available for your troop tree." />
+    <string id="qm_no_helmet_variants" text="No helmet variants available for your troop type." />
+    <string id="qm_no_accessory_variants" text="No accessory variants available." />
+    <string id="qm_optimized_food" text="Optimized food supplies: +{AMOUNT} grain from efficient rationing." />
+    <string id="qm_reorganized_inventory" text="Reorganized inventory: +{AMOUNT} temporary carry capacity." />
+    <string id="qm_purchased_supplies" text="Purchased basic supplies: 5 grain, 2 tools." />
+    <string id="qm_already_have_variant" text="You already have this equipment variant." />
+    <string id="qm_insufficient_funds" text="Insufficient funds. You need {COST} denars." />
+    <string id="qm_already_equipped" text="You already have this equipment equipped." />
+    <string id="qm_insufficient_equipment" text="Insufficient funds. You need {COST} denars for this equipment." />
+    <string id="qm_error_selecting" text="Error selecting equipment. Please try again." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- EQUIPMENT - Master at Arms & Upgrades -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="eq_upgraded" text="Equipment upgraded to {TROOP_NAME} for {COST} denars." />
+    <string id="eq_insufficient_upgrade" text="Insufficient funds. Need {COST} denars for equipment upgrade." />
+    <string id="eq_must_be_enlisted" text="You must be enlisted to use Master at Arms." />
+    <string id="eq_no_eligible_troops" text="No eligible troops found for your rank and culture." />
+    <string id="eq_promoted_new_equipment" text="Promoted to {TROOP_NAME}! New equipment issued." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- ENLISTMENT - Battle Events & Service Messages -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="enlist_fallback_army" text="the army" />
+    <string id="enlist_lord_captured_ended" text="Your lord has been captured. Your service has ended." />
+    <string id="enlist_army_defeated_ended" text="Your lord's army has been defeated. Your service has ended." />
+    <string id="enlist_army_dispersed" text="Your lord's army has been dispersed. Continuing service." />
+    <string id="enlist_naval_remain" text="You remain aboard with {LORD}'s party." />
+    <string id="enlist_player_captured" text="You have been taken prisoner. Your service has ended." />
+    <string id="enlist_kingdom_fallen" text="The kingdom you served has fallen. Your grace period has been cancelled." />
+    <string id="enlist_promotion_quartermaster" text="Promoted to {RANK} (Tier {TIER})! Visit the quartermaster for equipment upgrades." />
+    <string id="enlist_following_battle" text="Following your lord into battle!" />
+    <string id="enlist_companions_rejoined" text="Your {COMPANION_COUNT} companions have rejoined your party upon retirement." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MENU - Error & Status Messages -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="menu_field_battle" text="field" />
+    <string id="menu_master_unavailable" text="Master at Arms system is temporarily unavailable." />
+    <string id="menu_must_be_enlisted_qm" text="You must be enlisted to access quartermaster services." />
+    <string id="menu_qm_unavailable" text="Quartermaster services temporarily unavailable." />
+    <string id="menu_qm_error" text="Quartermaster system error. Please report this issue." />
+    <string id="menu_must_be_enlisted_lords" text="You must be enlisted to speak with lords." />
+    <string id="menu_no_lords_available" text="No lords are available for conversation at this location." />
+    <string id="menu_lord_not_available" text="Lord is not available for conversation." />
+    <string id="menu_conversation_error" text="Unable to start conversation. Please try again." />
+    <string id="menu_lord_not_in_settlement" text="Your lord is not in a town or castle." />
+    <string id="menu_town_interface_error" text="Couldn't open the town interface." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMBAT - Encounter Options -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="combat_wait_reserve" text="Wait in reserve" />
+    <string id="combat_rejoin_battle" text="Rejoin the battle" />
+    <string id="combat_reserve_siege_disabled" text="Wait in reserve is not available during siege battles" />
+    <string id="combat_too_demoralized" text="You are too demoralized to fight." />
+    <string id="combat_reserve_siege_disabled_full" text="Wait in reserve is not available during siege battles." />
   </strings>
 </base>

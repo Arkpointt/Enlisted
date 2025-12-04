@@ -1002,6 +1002,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
+                
+                // EQUIPMENT ACCOUNTABILITY: Check for missing gear and charge the soldier before discharge
+                // EXCEPTION: Skip for honorable discharge (retirement) - player keeps all gear as reward
+                if (!isHonorableDischarge)
+                {
+                    ProcessEquipmentAccountabilityOnDischarge();
+                }
+                else
+                {
+                    // Clear issued equipment tracking without charging - retirement perk
+                    var troopSelection = TroopSelectionManager.Instance;
+                    troopSelection?.ClearIssuedEquipment();
+                    ModLogger.Info("Enlistment", "Retirement: skipping equipment accountability (keeping all gear)");
+                }
 
                 var main = MobileParty.MainParty;
                 var playerInBattleState = false;
@@ -1084,12 +1098,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Restore the player's personal equipment that was backed up at enlistment start
                 // EXCEPTION: During grace period (retainKingdomDuringGrace=true), keep enlisted equipment
-                // Player is still considered a soldier on temporary leave/grace, not fully discharged
+                // RETIREMENT REWARD: Honorable discharge = keep military gear, get old stuff back in inventory
                 if (_hasBackedUpEquipment && !retainKingdomDuringGrace)
                 {
-                    RestorePersonalEquipment();
-                    _hasBackedUpEquipment = false;
-                    ModLogger.Info("Equipment", "Personal equipment restored - full discharge");
+                    if (isHonorableDischarge)
+                    {
+                        // RETIREMENT: Player keeps military gear AND gets personal stuff back in inventory
+                        RestorePersonalEquipmentToInventory();
+                        _hasBackedUpEquipment = false;
+                        ModLogger.Info("Equipment", "Retirement reward: keeping military gear, personal items to inventory");
+                    }
+                    else
+                    {
+                        // REGULAR DISCHARGE: Replace military gear with original personal equipment
+                        RestorePersonalEquipment();
+                        _hasBackedUpEquipment = false;
+                        ModLogger.Info("Equipment", "Personal equipment restored - full discharge");
+                    }
                 }
                 else if (retainKingdomDuringGrace)
                 {
@@ -1273,6 +1298,80 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistedLord = null;
                 _hasBackedUpEquipment = false;
                 _disbandArmyAfterBattle = false;
+            }
+        }
+        
+        /// <summary>
+        /// Process equipment accountability when soldier is discharged or transfers service.
+        /// Checks for missing issued gear and deducts the cost from the soldier's pay.
+        /// </summary>
+        private void ProcessEquipmentAccountabilityOnDischarge()
+        {
+            try
+            {
+                var troopSelection = TroopSelectionManager.Instance;
+                if (troopSelection == null)
+                {
+                    return;
+                }
+                
+                var (missingItems, totalDebt) = troopSelection.CheckMissingEquipment();
+                
+                if (missingItems.Count == 0)
+                {
+                    // All equipment accounted for
+                    troopSelection.ClearIssuedEquipment();
+                    ModLogger.Info("Enlistment", "Equipment accountability check passed - all gear returned");
+                    return;
+                }
+                
+                // Deduct cost of missing equipment
+                var hero = Hero.MainHero;
+                if (hero != null && totalDebt > 0)
+                {
+                    hero.Gold = Math.Max(0, hero.Gold - totalDebt);
+                    
+                    // Build notification using localized strings
+                    var sb = new System.Text.StringBuilder();
+                    var headerText = new TextObject("{=qm_missing_discharge_header}Equipment missing at discharge:");
+                    sb.AppendLine(headerText.ToString());
+                    foreach (var item in missingItems)
+                    {
+                        sb.AppendLine($"  • {item.ItemName} ({item.ItemValue} denars)");
+                    }
+                    var totalText = new TextObject("{=qm_missing_discharge_total}Total deducted from final pay: {AMOUNT} denars");
+                    totalText.SetTextVariable("AMOUNT", totalDebt);
+                    sb.AppendLine(totalText.ToString());
+                    
+                    var chargeMsg = new TextObject("{=qm_missing_discharge_charge}Missing equipment: {AMOUNT} denars deducted from final pay.");
+                    chargeMsg.SetTextVariable("AMOUNT", totalDebt);
+                    InformationManager.DisplayMessage(new InformationMessage(chargeMsg.ToString(), Colors.Red));
+                    
+                    // Show popup for significant amounts
+                    if (totalDebt >= 100)
+                    {
+                        var titleText = new TextObject("{=qm_missing_equipment_title}Equipment Accountability");
+                        var btnText = new TextObject("{=qm_btn_understood}Understood");
+                        InformationManager.ShowInquiry(new InquiryData(
+                            titleText.ToString(),
+                            sb.ToString(),
+                            true,
+                            false,
+                            btnText.ToString(),
+                            string.Empty,
+                            null,
+                            null));
+                    }
+                    
+                    ModLogger.Info("Enlistment", $"Equipment accountability: {totalDebt} denars charged for {missingItems.Count} missing items");
+                }
+                
+                // Clear tracking
+                troopSelection.ClearIssuedEquipment();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Enlistment", "Error processing equipment accountability on discharge", ex);
             }
         }
 
@@ -1559,7 +1658,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var message =
                     new TextObject(
                         "You have deserted from {KINGDOM}. You are now branded a deserter and your reputation has suffered greatly.");
-                message.SetTextVariable("KINGDOM", targetKingdom?.Name ?? new TextObject("the army"));
+                message.SetTextVariable("KINGDOM", targetKingdom?.Name ?? new TextObject("{=enlist_fallback_army}the army"));
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                 // Log state transition
@@ -2232,6 +2331,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         main.IsVisible = true;
                         ModLogger.Info("SaveLoad", "Post-load: Lord party not found, keeping player visible");
                     }
+
+                    // At Tier 4+, ensure companions are with the player for the retinue system
+                    // This handles saves where companions are stuck in lord's party from earlier enlistment
+                    if (_enlistmentTier >= 4)
+                    {
+                        ReclaimCompanionsFromLord();
+                    }
                 }
             }
             catch (Exception ex)
@@ -2322,10 +2428,37 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             if (daysOnLeave > maxLeaveDays)
             {
-                ModLogger.Info("Leave", $"Leave expired after {daysOnLeave:F1} days - applying desertion penalties");
-
                 // Get the kingdom for desertion penalties
                 var lordKingdom = _enlistedLord.MapFaction as Kingdom;
+
+                // BUG FIX: Check if player has become a vassal or mercenary of the same faction
+                // If the player joined the same kingdom (as vassal or mercenary), they haven't deserted -
+                // they've elevated their service. Just clear leave state without penalties.
+                var playerClan = Clan.PlayerClan;
+                if (playerClan?.Kingdom != null && lordKingdom != null && playerClan.Kingdom == lordKingdom)
+                {
+                    ModLogger.Info("Leave",
+                        $"Leave expired but player is now a {(playerClan.IsUnderMercenaryService ? "mercenary" : "vassal")} of {lordKingdom.Name} - clearing leave without penalties");
+
+                    // Clear leave state
+                    _isOnLeave = false;
+                    _leaveStartDate = CampaignTime.Zero;
+
+                    // Fire event for other mods
+                    OnLeaveEnded?.Invoke();
+
+                    // End enlistment cleanly since player is now a vassal/mercenary
+                    StopEnlist("Player became vassal/mercenary of same faction", isHonorableDischarge: true);
+
+                    var vassalMessage =
+                        new TextObject(
+                            "{=Enlisted_Message_LeaveExpiredVassal}Your leave has expired, but as a member of {KINGDOM}, your service ends honorably.");
+                    vassalMessage.SetTextVariable("KINGDOM", lordKingdom.Name);
+                    InformationManager.DisplayMessage(new InformationMessage(vassalMessage.ToString()));
+                    return;
+                }
+
+                ModLogger.Info("Leave", $"Leave expired after {daysOnLeave:F1} days - applying desertion penalties");
 
                 // Clear leave state first
                 _isOnLeave = false;
@@ -3893,7 +4026,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     else
                     {
                         // No kingdom - immediate discharge
-                        var message = new TextObject("Your lord has been captured. Your service has ended.");
+                        var message = new TextObject("{=enlist_lord_captured_ended}Your lord has been captured. Your service has ended.");
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                         StopEnlist("Lord captured in battle");
                     }
@@ -3929,14 +4062,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     else
                     {
                         // No kingdom - immediate discharge
-                        var message = new TextObject("Your lord's army has been defeated. Your service has ended.");
+                        var message = new TextObject("{=enlist_army_defeated_ended}Your lord's army has been defeated. Your service has ended.");
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                         StopEnlist("Army defeated - lord lost");
                     }
                 }
                 else
                 {
-                    var message = new TextObject("Your lord's army has been dispersed. Continuing service.");
+                    var message = new TextObject("{=enlist_army_dispersed}Your lord's army has been dispersed. Continuing service.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                     // NAVAL FIX: Re-establish following when army disbands at sea
@@ -3964,7 +4097,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             // Camera should follow the lord
                             lordParty.Party.SetAsCameraFollowParty();
 
-                            var navalMessage = new TextObject("You remain aboard with {LORD}'s party.");
+                            var navalMessage = new TextObject("{=enlist_naval_remain}You remain aboard with {LORD}'s party.");
                             navalMessage.SetTextVariable("LORD", _enlistedLord.Name);
                             InformationManager.DisplayMessage(new InformationMessage(navalMessage.ToString()));
 
@@ -4017,7 +4150,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
                 else
                 {
-                    var message = new TextObject("You have been taken prisoner. Your service has ended.");
+                    var message = new TextObject("{=enlist_player_captured}You have been taken prisoner. Your service has ended.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 }
 
@@ -4056,7 +4189,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 else
                 {
                     // No kingdom - immediate discharge
-                    var message = new TextObject("Your lord has been captured. Your service has ended.");
+                    var message = new TextObject("{=enlist_lord_captured_ended}Your lord has been captured. Your service has ended.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                     if (playerCapturedWithLord || _playerCaptureCleanupScheduled)
                     {
@@ -4123,7 +4256,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Notify player that grace period is cancelled due to kingdom destruction
                 var message =
-                    new TextObject("The kingdom you served has fallen. Your grace period has been cancelled.");
+                    new TextObject("{=enlist_kingdom_fallen}The kingdom you served has fallen. Your grace period has been cancelled.");
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
             }
         }
@@ -4212,6 +4345,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Set tier directly (called by PromotionBehavior for immediate promotion).
+        ///     When crossing into Tier 4, reclaims companions from lord's party for retinue system.
         /// </summary>
         public void SetTier(int tier)
         {
@@ -4224,6 +4358,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var previousTier = _enlistmentTier;
             _enlistmentTier = tier;
             ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP})");
+
+            // When crossing into Tier 4, reclaim companions from lord's party
+            // This enables the Companion Assignments feature in the Command Tent
+            if (previousTier < 4 && tier >= 4)
+            {
+                ReclaimCompanionsFromLord();
+            }
         }
 
         /// <summary>
@@ -4359,7 +4500,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var rankName = GetRankName(newTier);
 
                 var message =
-                    new TextObject("Promoted to {RANK} (Tier {TIER})! Visit the quartermaster for equipment upgrades.");
+                    new TextObject("{=enlist_promotion_quartermaster}Promoted to {RANK} (Tier {TIER})! Visit the quartermaster for equipment upgrades.");
                 message.SetTextVariable("RANK", rankName);
                 message.SetTextVariable("TIER", newTier.ToString());
 
@@ -4473,6 +4614,46 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Equipment", "Error restoring equipment", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Restore personal equipment to INVENTORY for retirement.
+        /// Player keeps military gear AND gets old stuff back in inventory.
+        /// This is a reward for completing honorable service.
+        /// </summary>
+        private void RestorePersonalEquipmentToInventory()
+        {
+            try
+            {
+                var equipmentManager = EquipmentManager.Instance;
+                if (equipmentManager != null)
+                {
+                    equipmentManager.RestorePersonalEquipmentToInventory();
+                }
+                else
+                {
+                    // Fallback: Add backed up items to inventory
+                    var itemRoster = MobileParty.MainParty.ItemRoster;
+                    
+                    if (_personalBattleEquipment != null)
+                    {
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        {
+                            var item = _personalBattleEquipment[slot].Item;
+                            if (item != null)
+                            {
+                                itemRoster.AddToCounts(new EquipmentElement(item), 1);
+                            }
+                        }
+                    }
+                    
+                    ModLogger.Info("Equipment", "Retirement: personal equipment added to inventory (fallback)");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", "Error restoring equipment to inventory for retirement", ex);
             }
         }
 
@@ -4652,7 +4833,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Try to force battle participation through positioning
                     // Position is handled by Escort AI (SetMoveEscortParty)
 
-                    var message = new TextObject("Following your lord into battle!");
+                    var message = new TextObject("{=enlist_following_battle}Following your lord into battle!");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 }
                 else if (!lordInBattle && playerInBattle)
@@ -4770,8 +4951,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _isOnLeave = false;
                 _leaveStartDate = CampaignTime.Zero;
 
-                // Transfer any new companions/troops to lord's party
-                TransferPlayerTroopsToLord();
+                // NOTE: We intentionally do NOT transfer troops here. Unlike initial enlistment, 
+                // troops recruited during leave are the player's personal force and should stay
+                // with them when returning to service. The player earned these troops independently.
 
                 // Finish any active encounter first (prevents assertion crashes during state transitions)
                 // Same logic as StartEnlist() - must clean up encounters before setting IsActive = false
@@ -5091,7 +5273,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (companionsRestored > 0)
                 {
                     var message =
-                        new TextObject("Your {COMPANION_COUNT} companions have rejoined your party upon retirement.");
+                        new TextObject("{=enlist_companions_rejoined}Your {COMPANION_COUNT} companions have rejoined your party upon retirement.");
                     message.SetTextVariable("COMPANION_COUNT", companionsRestored.ToString());
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
@@ -5104,6 +5286,73 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Enlistment", "Error restoring companions on retirement", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Reclaims companions from the lord's party back to the player's MainParty.
+        ///     Called when the player reaches Tier 4 (via promotion or save load) to enable the
+        ///     Companion Assignments feature. At Tier 4+, companions should fight alongside the player.
+        /// </summary>
+        private void ReclaimCompanionsFromLord()
+        {
+            try
+            {
+                // Only reclaim at Tier 4+ (when companion assignments become available)
+                if (_enlistmentTier < 4)
+                {
+                    return;
+                }
+
+                var main = MobileParty.MainParty;
+                var lordParty = _enlistedLord?.PartyBelongedTo;
+
+                if (main == null || lordParty == null)
+                {
+                    return;
+                }
+
+                var companionsReclaimed = 0;
+                var companionsToReclaim = new List<TroopRosterElement>();
+
+                // Find player's companions in lord's party
+                foreach (var troop in lordParty.MemberRoster.GetTroopRoster())
+                {
+                    // Only reclaim hero companions that belong to the player's clan
+                    if (troop.Character.IsHero && troop.Character != CharacterObject.PlayerCharacter)
+                    {
+                        var hero = troop.Character.HeroObject;
+                        if (hero != null && hero.IsPlayerCompanion && hero.Clan == Clan.PlayerClan)
+                        {
+                            companionsToReclaim.Add(troop);
+                            companionsReclaimed += troop.Number;
+                        }
+                    }
+                }
+
+                // Transfer companions back to player's MainParty
+                foreach (var companion in companionsToReclaim)
+                {
+                    // Remove from lord's party
+                    lordParty.MemberRoster.AddToCounts(companion.Character, -1 * companion.Number, false, 0, 0, true, -1);
+                    // Add to player's party
+                    main.MemberRoster.AddToCounts(companion.Character, companion.Number, false, 0, 0, true, -1);
+                }
+
+                if (companionsReclaimed > 0)
+                {
+                    var message = new TextObject(
+                        "{=ct_companions_reclaimed}Your {COMPANION_COUNT} companion(s) have joined your personal retinue.");
+                    message.SetTextVariable("COMPANION_COUNT", companionsReclaimed.ToString());
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
+
+                    ModLogger.Info("Enlistment",
+                        $"Reclaimed {companionsReclaimed} companions from lord's party (Tier {_enlistmentTier} promotion)");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Enlistment", "Error reclaiming companions from lord", ex);
             }
         }
 
@@ -5665,6 +5914,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Only log diagnostics for battles that actually involved us
                 LogPartyState("OnMapEventEnded-Start");
 
+                // FIX: Proactive army state cleanup after naval battles
+                // Native PlayerArmyWaitBehavior crashes when Army.LeaderParty is null but Army is not
+                // This can happen after naval battles when the army state becomes inconsistent
+                // We proactively clean up any invalid army references to prevent the crash
+                ValidateAndCleanupArmyState(main, effectiveMapEvent?.IsNavalMapEvent == true);
+
                 // CRITICAL: Check if enlistment ended during the battle (lord captured/army defeated)
                 // Don't activate immediately - keep party inactive to prevent new encounters
                 if (!IsEnlisted || _isOnLeave)
@@ -5680,18 +5935,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Battle",
                         $"OnMapEventEnded early exit: IsEnlisted={IsEnlisted}, OnLeave={_isOnLeave}, main.HasMapEvent={main?.Party.MapEvent != null}, lordHasMapEvent={lordParty?.Party.MapEvent != null}, MapEventHasWinner={mapEvent?.HasWinner}");
 
-                    // Enlistment ended during battle - cleanup only, DO NOT activate
-                    // Activation will happen naturally when safe (no encounters will be created)
-                    if (main != null)
+                    // Enlistment ended during battle - cleanup army reference only
+                    // StopEnlist already handled party activation state based on whether player was in battle
+                    // Do NOT override IsActive/IsVisible here - that would revert StopEnlist's correct activation
+                    // for wounded players who weren't in the battle
+                    if (main?.Army != null)
                     {
-                        // Clean up any remaining battle state
-                        if (main.Army != null)
-                        {
-                            main.Army = null; // Clear army reference
-                        }
-
-                        main.IsActive = false;
-                        main.IsVisible = false;
+                        main.Army = null;
                     }
 
                     if (PlayerEncounter.Current != null)
@@ -6250,7 +6500,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Debug("Battle", $"Exited lingering menu after battle ({currentMenuId})");
                 }
 
-                // Return to enlisted menu after battle ends
+                // Handle menu restoration after battle ends
                 // Use NextFrameDispatcher to avoid race conditions with menu state
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
@@ -6258,6 +6508,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         ModLogger.Debug("Battle", "Activated enlisted_status menu after battle");
+                    }
+                    else
+                    {
+                        // Discharged during battle - ensure party is properly activated
+                        // StopEnlist handles this, but as a safety net verify state is correct
+                        var mainParty = MobileParty.MainParty;
+                        if (mainParty != null && !mainParty.IsActive)
+                        {
+                            mainParty.IsActive = true;
+                            mainParty.IsVisible = true;
+                            ModLogger.Info("Battle", "Safety recovery: activated party after discharge-during-battle");
+                        }
                     }
                 });
             }
@@ -6357,6 +6619,89 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Validates and cleans up potentially invalid army state to prevent native game crashes.
+        /// The native PlayerArmyWaitBehavior crashes when Army is not null but LeaderParty is null,
+        /// which can happen after naval battles when the army state becomes inconsistent.
+        /// This proactive cleanup prevents the crash by removing invalid army references.
+        /// </summary>
+        /// <param name="mainParty">The player's main party to check.</param>
+        /// <param name="wasNavalBattle">Whether the battle that just ended was a naval battle.</param>
+        private void ValidateAndCleanupArmyState(MobileParty mainParty, bool wasNavalBattle)
+        {
+            if (mainParty == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var army = mainParty.Army;
+                if (army == null)
+                {
+                    return;
+                }
+
+                // Check for invalid army state: Army exists but LeaderParty is null or invalid
+                // This is the exact crash condition in PlayerArmyWaitBehavior
+                var leaderParty = army.LeaderParty;
+                if (leaderParty == null)
+                {
+                    // Invalid state - remove the army reference to prevent crash
+                    mainParty.Army = null;
+                    ModLogger.Info("Naval",
+                        "Cleaned up invalid army state after battle (LeaderParty was null). " +
+                        "This prevents a native game crash in PlayerArmyWaitBehavior.");
+                    return;
+                }
+
+                // Additional validation for naval battles - check if the army is still coherent
+                if (wasNavalBattle)
+                {
+                    // After naval battles, verify the army leader is still valid and alive
+                    var leaderHero = leaderParty.LeaderHero;
+                    if (leaderHero == null || !leaderHero.IsAlive)
+                    {
+                        // Leader is gone - army should have been disbanded but wasn't
+                        mainParty.Army = null;
+                        ModLogger.Info("Naval",
+                            "Cleaned up army reference after naval battle (leader deceased or missing). " +
+                            "This prevents potential crashes.");
+                        return;
+                    }
+
+                    // Check if the army is at sea but has no sea capability
+                    // This can cause issues with the army_wait menu trying to access sea state
+                    if (leaderParty.IsCurrentlyAtSea && !leaderParty.HasNavalNavigationCapability)
+                    {
+                        ModLogger.Warn("Naval",
+                            "Army leader is at sea without naval capability after battle - " +
+                            "native game may have state issues");
+                        // Don't remove army here - just log for diagnostics
+                    }
+
+                    ModLogger.Debug("Naval",
+                        $"Post-naval battle army state validated: Leader={leaderHero.Name}, " +
+                        $"AtSea={leaderParty.IsCurrentlyAtSea}, ArmySize={army.Parties?.Count ?? 0}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Naval", $"Error validating army state: {ex.Message}");
+                
+                // On error, try to clean up anyway to prevent cascading crashes
+                try
+                {
+                    mainParty.Army = null;
+                    ModLogger.Info("Naval", "Forcibly cleared army reference after validation error");
+                }
+                catch
+                {
+                    // Can't even clear - leave it as is
+                }
+            }
         }
 
         /// <summary>
