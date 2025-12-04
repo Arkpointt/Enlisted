@@ -305,8 +305,82 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
+            // Set up global gold icon for inline currency display across all menus
+            MBTextManager.SetTextVariable("GOLD_ICON", "{=!}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">");
+            
             AddEnlistedMenus(starter);
-            ModLogger.Info("Interface", "Enlisted menu system initialized");
+            ModLogger.Info("Interface", "Enlisted menu system initialized with modern UI styling");
+        }
+        
+        /// <summary>
+        /// Menu background initialization for enlisted_status menu.
+        /// Sets culture-appropriate background and ambient audio for modern feel.
+        /// </summary>
+        [GameMenuInitializationHandler("enlisted_status")]
+        private static void OnEnlistedStatusBackgroundInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var backgroundMesh = "encounter_looter";
+            
+            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+            }
+            
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
+        }
+        
+        /// <summary>
+        /// Menu background initialization for enlisted_duty_selection menu.
+        /// Sets culture-appropriate background and ambient audio.
+        /// </summary>
+        [GameMenuInitializationHandler("enlisted_duty_selection")]
+        private static void OnDutySelectionBackgroundInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var backgroundMesh = "encounter_looter";
+            
+            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+            }
+            
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
+        }
+        
+        /// <summary>
+        /// Menu background initialization for enlisted_desert_confirm menu.
+        /// Sets ominous background for desertion confirmation.
+        /// </summary>
+        [GameMenuInitializationHandler("enlisted_desert_confirm")]
+        private static void OnDesertConfirmBackgroundInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var backgroundMesh = "encounter_looter";
+            
+            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+            }
+            
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
         }
 
         /// <summary>
@@ -699,54 +773,89 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnEnlistedStatusTick, // Tick handler for real-time updates
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption); // Wait menu template that hides progress boxes
 
-            // Main menu options for enlisted status menu
+            // Main menu options for enlisted status menu with modern icons and localized tooltips
 
-            // Master at Arms - allows players to select troop equipment
+            // Master at Arms - allows players to select troop equipment (TroopSelection icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
                 "{=Enlisted_Menu_MasterAtArms}Master at Arms",
-                IsMasterAtArmsAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
+                    args.Tooltip = new TextObject("{=menu_tooltip_master}Select your troop type and equipment loadout based on your current tier.");
+                    return IsMasterAtArmsAvailable(args);
+                },
                 OnMasterAtArmsSelected,
                 false, 1);
 
-            // Visit Quartermaster - equipment variant selection and management
+            // Visit Quartermaster - equipment variant selection and management (Trade icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
                 "{=Enlisted_Menu_VisitQuartermaster}Visit Quartermaster",
-                IsQuartermasterAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Request equipment variants and manage party supplies.");
+                    return IsQuartermasterAvailable(args);
+                },
                 OnQuartermasterSelected,
                 false, 2);
 
-            // My Lord... - conversation with the current lord
+            // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
                 "{=Enlisted_Menu_TalkToLord}My Lord...",
-                IsTalkToAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+                    args.Tooltip = new TextObject("{=menu_tooltip_talk}Speak with nearby lords for quests, news, and relation building.");
+                    return IsTalkToAvailable(args);
+                },
                 OnTalkToSelected,
                 false, 3);
 
-            // Visit Settlement (NEW - towns and castles only)
+            // Visit Settlement - towns and castles only (Submenu icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_visit_settlement",
                 "{VISIT_SETTLEMENT_TEXT}",
-                IsVisitSettlementAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=menu_tooltip_visit}Enter the settlement while your lord is present.");
+                    return IsVisitSettlementAvailable(args);
+                },
                 OnVisitTownSelected,
                 false, 4);
 
-            // Report for Duty (NEW - duty and profession selection)
+            // Report for Duty - duty and profession selection (Manage icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
                 "{=Enlisted_Menu_ReportDuty}Report for Duty",
-                IsReportDutyAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=menu_tooltip_duty}Select your daily duty and profession for bonuses and special abilities.");
+                    return IsReportDutyAvailable(args);
+                },
                 OnReportDutySelected,
                 false, 5);
 
-            // Ask commander for leave (moved to bottom)
+            // Ask commander for leave - moved to bottom (Leave icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
                 "{=Enlisted_Menu_AskLeave}Ask commander for leave",
-                IsAskLeaveAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service. You can return when ready.");
+                    return IsAskLeaveAvailable(args);
+                },
                 OnAskLeaveSelected,
                 false, 6);
 
-            // Desert Army option - allows player to voluntarily leave with penalties
+            // Desert Army option - allows player to voluntarily leave with penalties (Escape icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_desert_army",
                 "{=Enlisted_Menu_DesertArmy}Desert the Army",
-                IsDesertArmyAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Escape;
+                    args.Tooltip = new TextObject("{=menu_tooltip_desert}Abandon your post. WARNING: Severe relation and crime penalties!");
+                    return IsDesertArmyAvailable(args);
+                },
                 OnDesertArmySelected,
                 false, 7);
 
@@ -892,16 +1001,20 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnDutySelectionTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption); // Same as main menu
 
-            // BACK OPTION (first, like main menu style)
+            // BACK OPTION (first, like main menu style) - Leave icon
             starter.AddGameMenuOption("enlisted_duty_selection", "duty_back",
                 "{=Enlisted_Menu_BackToStatus}Back to enlisted status",
-                _ => true,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
                 OnDutyBackSelected,
                 false, 1);
 
-            // DUTIES HEADER
+            // DUTIES HEADER - cleaner styling with em-dashes
             starter.AddGameMenuOption("enlisted_duty_selection", "duties_header",
-                "{=Enlisted_Menu_Header_Duties}─── DUTIES ───",
+                "{=Enlisted_Menu_Header_Duties}— DUTIES —",
                 _ => true, // Show but make it a display-only option
                 _ =>
                 {
@@ -951,9 +1064,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 _ => { }, // No action when clicked
                 true, 8); // Disabled = true makes it gray and non-clickable
 
-            // PROFESSIONS HEADER
+            // PROFESSIONS HEADER - cleaner styling with em-dashes
             starter.AddGameMenuOption("enlisted_duty_selection", "professions_header",
-                "{=Enlisted_Menu_Header_Professions}─── PROFESSIONS ───",
+                "{=Enlisted_Menu_Header_Professions}— PROFESSIONS —",
                 _ => true, // Show but make it a display-only option
                 _ =>
                 {
@@ -1396,6 +1509,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsMasterAtArmsAvailable(MenuCallbackArgs args)
         {
+            _ = args; // Required by API contract
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
@@ -1421,6 +1535,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsQuartermasterAvailable(MenuCallbackArgs args)
         {
+            _ = args; // Required by API contract
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
@@ -1460,6 +1575,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsTalkToAvailable(MenuCallbackArgs args)
         {
+            _ = args; // Required by API contract
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
@@ -1643,6 +1759,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private bool IsVisitSettlementAvailable(MenuCallbackArgs args)
         {
+            _ = args; // Required by API contract
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment?.IsEnlisted != true)
             {
@@ -1804,6 +1921,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsAskLeaveAvailable(MenuCallbackArgs args)
         {
+            _ = args; // Required by API contract
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
@@ -1947,14 +2065,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Award 1000 XP for fast tier progression testing
                 enlistment.AddEnlistmentXP(1000, "DEBUG");
 
-                var currentXP = enlistment.EnlistmentXP;
+                var currentXp = enlistment.EnlistmentXP;
                 var currentTier = enlistment.EnlistmentTier;
 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"[DEBUG] +1000 XP granted! Total: {currentXP} | Tier: {currentTier}",
+                    $"[DEBUG] +1000 XP granted! Total: {currentXp} | Tier: {currentTier}",
                     Colors.Cyan));
 
-                ModLogger.Info("Interface", $"[DEBUG] Granted 1000 XP - Total: {currentXP}, Tier: {currentTier}");
+                ModLogger.Info("Interface", $"[DEBUG] Granted 1000 XP - Total: {currentXp}, Tier: {currentTier}");
 
                 // Refresh menu to show updated status
                 GameMenu.SwitchToMenu("enlisted_status");
@@ -1979,14 +2097,18 @@ namespace Enlisted.Features.Interface.Behaviors
                 "{DESERT_WARNING_TEXT}",
                 OnDesertionConfirmInit);
 
-            // Back to Camp button - returns to enlisted status menu
+            // Back to Camp button - returns to enlisted status menu (Leave icon)
             starter.AddGameMenuOption("enlisted_desert_confirm", "desert_back",
                 "Return to Camp",
-                _ => true,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
                 OnDesertionBackSelected,
-                true, 0);
+                false, 0);
 
-            // Continue with Desertion button - executes the desertion
+            // Continue with Desertion button - executes the desertion (Escape icon - already set)
             starter.AddGameMenuOption("enlisted_desert_confirm", "desert_confirm",
                 "Desert the Army (Accept Penalties)",
                 args =>
@@ -2158,6 +2280,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private bool IsReportDutyAvailable(MenuCallbackArgs args)
         {
+            _ = args; // Required by API contract
             var enlistment = EnlistmentBehavior.Instance;
             return enlistment?.IsEnlisted == true;
         }
@@ -2402,56 +2525,122 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #region Duty Selection Conditions and Actions
 
-        // Duty availability conditions - all duties are available to all enlisted players
+        // Duty availability conditions with localized tooltips explaining bonuses
         private bool IsDutyEnlistedAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+            args.Tooltip = new TextObject("{=duty_tooltip_enlisted}Standard military service. Train with your formation and earn base wages.");
             return true;
         }
 
         private bool IsDutyForagerAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+            args.Tooltip = new TextObject("{=duty_tooltip_forager}Gather food and supplies for the army. Earn bonus XP and improved wages.");
             return true;
         }
 
         private bool IsDutySentryAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.DefendAction;
+            args.Tooltip = new TextObject("{=duty_tooltip_sentry}Guard the camp perimeter. Improved detection of enemies and bonus relation with your lord.");
             return true;
         }
 
         private bool IsDutyMessengerAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Mission;
+            args.Tooltip = new TextObject("{=duty_tooltip_messenger}Deliver messages and scout ahead. Bonus riding/athletics XP and faster travel.");
             return true;
         }
 
         private bool IsDutyPioneerAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
+            args.Tooltip = new TextObject("{=duty_tooltip_pioneer}Build fortifications and siege works. Bonus engineering XP and siege effectiveness.");
             return true;
         }
 
-        // PROFESSION CONDITIONS (show option as available - Always visible, tier check in action)
+        // PROFESSION CONDITIONS with tier requirements shown in localized tooltips
+        private const int ProfessionTierRequirement = 3;
 
         private bool IsProfQuarterhandAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            if (tier < ProfessionTierRequirement)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+            }
+            else
+            {
+                args.Tooltip = new TextObject("{=prof_tooltip_quarterhand}Manage supplies and inventory. 15% better trade prices and +50 carry capacity.");
+            }
             return true;
         }
 
         private bool IsProfFieldMedicAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            if (tier < ProfessionTierRequirement)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+            }
+            else
+            {
+                args.Tooltip = new TextObject("{=prof_tooltip_medic}Tend to wounded soldiers. Faster healing, bonus medicine XP, and morale boost.");
+            }
             return true;
         }
 
         private bool IsProfSiegewrightAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            if (tier < ProfessionTierRequirement)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+            }
+            else
+            {
+                args.Tooltip = new TextObject("{=prof_tooltip_siege}Assist siege engineers. Faster siege construction and bonus engineering XP.");
+            }
             return true;
         }
 
         private bool IsProfDrillmasterAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack;
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            if (tier < ProfessionTierRequirement)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+            }
+            else
+            {
+                args.Tooltip = new TextObject("{=prof_tooltip_drill}Train soldiers in formation fighting. Bonus leadership XP and troop morale.");
+            }
             return true;
         }
 
         private bool IsProfSaboteurAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Raid;
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            if (tier < ProfessionTierRequirement)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+            }
+            else
+            {
+                args.Tooltip = new TextObject("{=prof_tooltip_saboteur}Conduct covert operations. Bonus roguery XP and special mission access.");
+            }
             return true;
         }
 
