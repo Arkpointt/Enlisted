@@ -4205,7 +4205,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Handle player clan changing kingdoms.
-        ///     Edge case: If player changes kingdoms during grace period, clear grace period.
+        ///     Edge cases:
+        ///     1. If player changes kingdoms during grace period, clear grace period.
+        ///     2. If player becomes vassal/mercenary while actively enlisted, end enlistment honorably.
         ///     Player can no longer rejoin the original kingdom, so grace period is invalid.
         /// </summary>
         private void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom,
@@ -4214,6 +4216,113 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (clan != Clan.PlayerClan)
             {
                 return; // Not the player's clan
+            }
+
+            // BUG FIX: If player is enlisted (active or on leave) and kingdom status changes, end enlistment honorably
+            // When actively enlisted, player is already a mercenary in the lord's kingdom.
+            // This handles:
+            // 1. Active enlistment: mercenary -> vassal promotion (same kingdom, oldKingdom == newKingdom)
+            // 2. Active enlistment: joins different kingdom (oldKingdom != newKingdom)
+            // 3. On leave: joins any kingdom as mercenary/vassal (may have left kingdom during leave)
+            // NOTE: We must NOT end enlistment when they first join as mercenary during StartEnlist()
+            // Becoming a vassal/mercenary is an elevation of service status, not desertion
+            if ((IsEnlisted || _isOnLeave) && newKingdom != null)
+            {
+                var playerClan = Clan.PlayerClan;
+                if (playerClan != null && playerClan.Kingdom == newKingdom)
+                {
+                    var lordKingdom = _enlistedLord?.MapFaction as Kingdom;
+                    
+                    // Determine if this is a meaningful status change that should end enlistment:
+                    // 1. Promotion to vassal: same kingdom, became vassal (was mercenary, now vassal) = honorable
+                    // 2. Kingdom transfer: joined different kingdom than lord's kingdom = desertion
+                    // 3. On leave + same kingdom: honorable discharge
+                    // 4. On leave + different kingdom: desertion
+                    // 
+                    // EXCLUDE: Initial enlistment (joining lord's kingdom as mercenary during StartEnlist)
+                    // This happens when: oldKingdom != lordKingdom && newKingdom == lordKingdom && is mercenary
+                    var isPromotionToVassal = oldKingdom == newKingdom && !playerClan.IsUnderMercenaryService;
+                    var isKingdomTransfer = lordKingdom != null && lordKingdom != newKingdom;
+                    var wasOnLeave = _isOnLeave;
+                    var isInitialEnlistment = lordKingdom != null && lordKingdom == newKingdom && 
+                                             oldKingdom != lordKingdom && playerClan.IsUnderMercenaryService;
+                    var isOnLeaveSameKingdom = wasOnLeave && lordKingdom != null && lordKingdom == newKingdom;
+                    var isOnLeaveDifferentKingdom = wasOnLeave && lordKingdom != null && lordKingdom != newKingdom;
+                    
+                    // Skip initial enlistment (joining lord's kingdom as mercenary during StartEnlist)
+                    if (isInitialEnlistment)
+                    {
+                        return; // Don't process - this is normal enlistment flow
+                    }
+                    
+                    // Handle honorable discharge cases:
+                    // 1. Promoted to vassal in same kingdom
+                    // 2. On leave and joined same kingdom
+                    if (isPromotionToVassal || isOnLeaveSameKingdom)
+                    {
+                        ModLogger.Info("Enlistment",
+                            $"Player became {(playerClan.IsUnderMercenaryService ? "mercenary" : "vassal")} of {newKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - ending enlistment honorably");
+
+                        // Clear leave state if on leave
+                        if (_isOnLeave)
+                        {
+                            _isOnLeave = false;
+                            _leaveStartDate = CampaignTime.Zero;
+                        }
+
+                        // End enlistment honorably since player elevated their service
+                        StopEnlist($"Player became {(playerClan.IsUnderMercenaryService ? "mercenary" : "vassal")} of {newKingdom.Name}", isHonorableDischarge: true);
+
+                        var message = new TextObject(
+                            "{=Enlisted_Message_BecameVassalMercenary}You have become a {STATUS} of {KINGDOM}. Your enlistment has ended honorably.");
+                        message.SetTextVariable("STATUS", playerClan.IsUnderMercenaryService 
+                            ? new TextObject("{=mercenary}mercenary") 
+                            : new TextObject("{=vassal}vassal"));
+                        message.SetTextVariable("KINGDOM", newKingdom.Name);
+                        InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                        
+                        return; // Early return - don't process grace period logic
+                    }
+                    
+                    // Handle desertion cases:
+                    // 1. Active enlistment + joined different kingdom
+                    // 2. On leave + joined different kingdom
+                    if (isKingdomTransfer || isOnLeaveDifferentKingdom)
+                    {
+                        ModLogger.Info("Desertion",
+                            $"Player joined different kingdom {newKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - treating as desertion");
+
+                        // Clear leave state if on leave
+                        if (_isOnLeave)
+                        {
+                            _isOnLeave = false;
+                            _leaveStartDate = CampaignTime.Zero;
+                        }
+
+                        // Set pending desertion kingdom to the original lord's kingdom
+                        if (lordKingdom != null)
+                        {
+                            _pendingDesertionKingdom = lordKingdom;
+                            
+                            // Apply desertion penalties
+                            ApplyDesertionPenalties();
+                        }
+
+                        // Fire event for other mods (before StopEnlist clears state)
+                        OnLeaveEnded?.Invoke();
+
+                        // End enlistment as desertion
+                        StopEnlist($"Player joined different kingdom {newKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - desertion", isHonorableDischarge: false);
+
+                        var desertionMessage = new TextObject(
+                            "{=Enlisted_Message_DesertedToOtherKingdom}You have deserted {ORIGINAL_KINGDOM} by joining {NEW_KINGDOM}. You have been branded a deserter.");
+                        desertionMessage.SetTextVariable("ORIGINAL_KINGDOM", lordKingdom?.Name ?? new TextObject("{=enlist_fallback_army}your lord's army"));
+                        desertionMessage.SetTextVariable("NEW_KINGDOM", newKingdom.Name);
+                        InformationManager.DisplayMessage(new InformationMessage(desertionMessage.ToString()));
+                        
+                        return; // Early return - don't process grace period logic
+                    }
+                }
             }
 
             // Edge case: If player changes kingdoms during grace period, clear it
