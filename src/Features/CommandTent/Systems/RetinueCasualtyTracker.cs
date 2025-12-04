@@ -55,31 +55,40 @@ namespace Enlisted.Features.CommandTent.Systems
         #region Battle Event Handlers
 
         /// <summary>
-        /// Called when a map event (battle) starts. Takes a snapshot of retinue counts.
+        /// Takes a snapshot of retinue counts when battle starts. Naval battles logged with dismount note.
         /// </summary>
         private void OnMapEventStarted(MapEvent mapEvent, PartyBase attackerParty, PartyBase defenderParty)
         {
             try
             {
-                // Check if player is involved in this battle
                 if (!IsPlayerInvolvedInMapEvent(mapEvent))
                 {
                     return;
                 }
 
-                // Check if player has a retinue to track
                 var manager = RetinueManager.Instance;
                 if (manager?.State == null || !manager.State.HasRetinue)
                 {
                     return;
                 }
 
-                // Take snapshot of current retinue counts
                 TakePreBattleSnapshot(manager.State);
                 _isInBattle = true;
 
-                ModLogger.Info(LogCategory,
-                    $"Battle started - snapshot taken: {manager.State.TotalSoldiers} retinue soldiers");
+                var retinueCount = manager.State.TotalSoldiers;
+                var retinueType = manager.State.SelectedTypeId ?? "unknown";
+                var isNaval = mapEvent.IsNavalMapEvent;
+                
+                if (isNaval)
+                {
+                    var isMounted = retinueType is "cavalry" or "horse_archers";
+                    var note = isMounted ? " [dismounted]" : "";
+                    ModLogger.Info(LogCategory, $"NAVAL battle snapshot: {retinueCount} {retinueType}{note}");
+                }
+                else
+                {
+                    ModLogger.Info(LogCategory, $"Battle snapshot: {retinueCount} retinue soldiers");
+                }
             }
             catch (Exception ex)
             {

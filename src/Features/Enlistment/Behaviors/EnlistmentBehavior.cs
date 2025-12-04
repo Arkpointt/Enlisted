@@ -2675,13 +2675,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                             }
                                             else
                                             {
-                                                // CRITICAL FIX: Only set MapEventSide if player party has troops
+                                                // CRITICAL FIX: Only set MapEventSide if player party has actual troops
                                                 // Setting MapEventSide on a party with no troops causes NullReferenceException
                                                 // in MapEventSide.ApplySimulatedHitRewardToSelectedTroop during battle simulation
                                                 // because SelectRandomSimulationTroop() returns invalid descriptor for empty parties.
                                                 // Enlisted players have no troops (transferred to lord), so we must NOT join
                                                 // the MapEvent directly - let native handle it through PlayerEncounter alone.
-                                                int partyTroopCount = mainParty.Party.NumberOfHealthyMembers;
+                                                // NOTE: Use NumberOfRegularMembers (not NumberOfHealthyMembers) because
+                                                // NumberOfHealthyMembers includes the hero, causing enlisted players with
+                                                // no troops to still appear as a separate party in battle.
+                                                int partyTroopCount = mainParty.Party.NumberOfRegularMembers;
                                                 if (partyTroopCount > 0)
                                                 {
                                                     var targetSide = lordSide == BattleSideEnum.Attacker

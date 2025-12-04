@@ -4,6 +4,7 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.AgentOrigins;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
@@ -94,6 +95,7 @@ namespace Enlisted.Features.Combat.Behaviors
         /// <summary>
         ///     Called when an agent is built.
         ///     This catches late joins, respawns, and reinforcements immediately.
+        ///     Also handles Phase 8: "Stay Back" companions are immediately retreated from battle.
         /// </summary>
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
@@ -104,11 +106,62 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     TryAssignPlayerToFormation("OnAgentBuild", agent);
                 }
+                else
+                {
+                    // Phase 8: Check if this is a "stay back" companion and remove them from battle
+                    TryRemoveStayBackCompanion(agent);
+                }
             }
             catch (Exception ex)
             {
                 ModLogger.Error("FormationAssignment", $"Error in OnAgentBuild: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Phase 8: Removes "stay back" companions from battle immediately after spawn.
+        /// This prevents them from fighting while keeping them safe in the roster.
+        /// </summary>
+        private void TryRemoveStayBackCompanion(Agent agent)
+        {
+            // Only process companions from player's party at Tier 4+
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.LanceTier)
+            {
+                return;
+            }
+
+            // Check if agent is from player's party
+            if (agent.Origin is not PartyGroupAgentOrigin partyOrigin || partyOrigin.Party != PartyBase.MainParty)
+            {
+                return;
+            }
+
+            // Only handle heroes (companions)
+            var characterObject = agent.Character as CharacterObject;
+            if (characterObject?.IsHero != true || characterObject.HeroObject == null)
+            {
+                return;
+            }
+
+            var hero = characterObject.HeroObject;
+            if (!hero.IsPlayerCompanion)
+            {
+                return;
+            }
+
+            // Check if this companion should stay back
+            if (ShouldCompanionFight(hero))
+            {
+                return;
+            }
+
+            // Companion is set to "stay back" - remove from battle immediately
+            // FadeOut removes the agent without tracking as casualty
+            agent.FadeOut(hideInstantly: true, hideMount: true);
+            
+            ModLogger.Info("FormationAssignment",
+                $"Companion {hero.Name} removed from battle (set to 'stay back')");
         }
 
         /// <summary>
@@ -179,8 +232,7 @@ namespace Enlisted.Features.Combat.Behaviors
             // Our ground-based formation teleporting would interfere with ship positioning
             if (Mission.Current?.IsNavalBattle == true)
             {
-                ModLogger.LogOnce("formation_naval_skip", "FormationAssignment",
-                    $"[{caller}] Skipping formation assignment - naval battle uses ship-based spawning");
+                LogNavalBattleRetinueInfo(caller);
                 return;
             }
 
@@ -485,7 +537,13 @@ namespace Enlisted.Features.Combat.Behaviors
                     if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
                     {
                         partyAgentsFound++;
-                        
+
+                        // Skip agents that have been faded out (e.g., "stay back" companions)
+                        if (!agent.IsActive())
+                        {
+                            continue;
+                        }
+
                         // Check if already in the correct formation
                         if (agent.Formation == _playerSquadFormation)
                         {
@@ -713,6 +771,52 @@ namespace Enlisted.Features.Combat.Behaviors
                 "horse_archer" => FormationClass.HorseArcher,
                 _ => FormationClass.Infantry // Default fallback
             };
+        }
+
+        /// <summary>
+        /// Logs retinue state when naval battle detected. Formation assignment deferred to Naval DLC.
+        /// </summary>
+        private static void LogNavalBattleRetinueInfo(string caller)
+        {
+            var manager = RetinueManager.Instance;
+            var enlistment = EnlistmentBehavior.Instance;
+            
+            var retinueCount = manager?.State?.TotalSoldiers ?? 0;
+            var retinueType = manager?.State?.SelectedTypeId ?? "none";
+            var companionCount = RetinueManager.GetCompanionCount();
+            var isMountedType = retinueType is "cavalry" or "horse_archers";
+            var partySize = PartyBase.MainParty?.NumberOfAllMembers ?? 0;
+
+            // Single consolidated log entry for naval battle context
+            var logMessage = $"[{caller}] NAVAL: Retinue={retinueCount} {retinueType}, " +
+                             $"Companions={companionCount}, Party={partySize}";
+
+            if (isMountedType && retinueCount > 0)
+            {
+                logMessage += " [dismounted]";
+            }
+
+            if (enlistment?.IsEnlisted == true)
+            {
+                logMessage += $", Tier={enlistment.EnlistmentTier}";
+            }
+
+            ModLogger.LogOnce("formation_naval_skip", "FormationAssignment", logMessage);
+        }
+
+        /// <summary>
+        /// Phase 8: Checks if a companion should spawn and fight in battle.
+        /// Delegates to CompanionAssignmentManager for the actual check.
+        /// </summary>
+        private static bool ShouldCompanionFight(Hero companion)
+        {
+            if (companion == null)
+            {
+                return true;
+            }
+
+            var manager = CompanionAssignmentManager.Instance;
+            return manager?.ShouldCompanionFight(companion) ?? true;
         }
 
         protected override void OnEndMission()

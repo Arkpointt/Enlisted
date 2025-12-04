@@ -750,6 +750,17 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnDesertArmySelected,
                 false, 7);
 
+            // DEBUG: Quick XP button for testing tier progression (temporary)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_debug_xp",
+                "{=debug_gain_xp}[DEBUG] Gain 1000 XP",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+                    return true;
+                },
+                OnDebugXPSelected,
+                false, 8);
+
             // No "return to duties" option needed - player IS doing duties by being in this menu
 
             // Add duty selection menu
@@ -1913,6 +1924,46 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", $"Error opening desertion menu: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     DEBUG: Handler for the quick XP gain button.
+        ///     Grants 1000 XP for fast tier progression testing.
+        ///     This is a temporary method - remove before release.
+        /// </summary>
+        private void OnDebugXPSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You must be enlisted to gain XP.", Colors.Red));
+                    return;
+                }
+
+                // Award 1000 XP for fast tier progression testing
+                enlistment.AddEnlistmentXP(1000, "DEBUG");
+
+                var currentXP = enlistment.EnlistmentXP;
+                var currentTier = enlistment.EnlistmentTier;
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"[DEBUG] +1000 XP granted! Total: {currentXP} | Tier: {currentTier}",
+                    Colors.Cyan));
+
+                ModLogger.Info("Interface", $"[DEBUG] Granted 1000 XP - Total: {currentXP}, Tier: {currentTier}");
+
+                // Refresh menu to show updated status
+                GameMenu.SwitchToMenu("enlisted_status");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"[DEBUG] Failed to grant XP: {ex.Message}");
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"[DEBUG] Error: {ex.Message}", Colors.Red));
             }
         }
 

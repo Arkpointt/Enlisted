@@ -355,6 +355,10 @@ namespace Enlisted.Mod.Entry
                     // Retinue casualty tracker: reconciles troop counts after battles
                     campaignStarter.AddBehavior(new RetinueCasualtyTracker());
 
+                    // Companion assignment manager: tracks which companions should fight vs stay back
+                    // Companions marked "stay back" don't spawn in battle, keeping them safe
+                    campaignStarter.AddBehavior(new CompanionAssignmentManager());
+
                     // Encounter guard: utility system for managing player party attachment and encounter transitions
                     // Initializes static helper methods used throughout the enlistment system
                     EncounterGuard.Initialize();

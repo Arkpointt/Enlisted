@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.CommandTent.Core;
@@ -35,6 +36,9 @@ namespace Enlisted.Features.CommandTent.UI
         private const string RetinuePurchaseMenuId = "command_tent_retinue_purchase";
         private const string RetinueDismissMenuId = "command_tent_retinue_dismiss";
         private const string RetinueRequisitionMenuId = "command_tent_retinue_requisition";
+
+        // Companion Assignment Menu IDs
+        private const string CompanionAssignmentsMenuId = "command_tent_companions";
 
         // Track selected faction for detail view
         private string _selectedFactionKey;
@@ -102,6 +106,9 @@ namespace Enlisted.Features.CommandTent.UI
 
             // Requisition menu (Phase 5)
             AddRetinueRequisitionMenu(starter);
+
+            // Companion Assignments menu (Phase 8)
+            AddCompanionAssignmentsMenu(starter);
         }
 
         #region Enlisted Status Integration
@@ -198,6 +205,16 @@ namespace Enlisted.Features.CommandTent.UI
                 _ => GameMenu.SwitchToMenu(RetinueMenuId),
                 false,
                 2);
+
+            // Companion Assignments option (Tier 4+ only)
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_companions",
+                "{=ct_option_companions}Companion assignments",
+                IsCompanionAssignmentsAvailable,
+                _ => GameMenu.SwitchToMenu(CompanionAssignmentsMenuId),
+                false,
+                3);
 
             // Back to camp option
             starter.AddGameMenuOption(
@@ -1110,7 +1127,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the purchase menu with soldier type options and costs.
+        /// Initializes the purchase menu. Shows gold, soldier options, and naval dismount note for mounted types.
         /// </summary>
         private void OnRetinuePurchaseInit(MenuCallbackArgs args)
         {
@@ -1121,7 +1138,7 @@ namespace Enlisted.Features.CommandTent.UI
                 var culture = enlistment?.CurrentLord?.Culture;
                 var tier = enlistment?.EnlistmentTier ?? 4;
 
-                // Build header text
+                // Build header text with naval note for mounted types
                 var sb = new StringBuilder();
                 sb.AppendLine("═══════════════════════════════════════════");
                 sb.AppendLine("         PURCHASE SOLDIERS");
@@ -1129,6 +1146,8 @@ namespace Enlisted.Features.CommandTent.UI
                 sb.AppendLine();
                 sb.AppendLine("  Select the type of soldiers to muster.");
                 sb.AppendLine($"  Your Gold: {Hero.MainHero?.Gold ?? 0} denars");
+                sb.AppendLine();
+                sb.AppendLine("  * Mounted troops fight on foot in naval battles.");
                 sb.AppendLine();
                 sb.AppendLine("═══════════════════════════════════════════");
 
@@ -1150,7 +1169,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Sets the menu option text variable for a soldier type with cost.
+        /// Sets the menu option text for a soldier type. Mounted types marked with * for naval warning.
         /// </summary>
         private void SetSoldierTypeOptionText(string typeId, CultureObject culture, int playerTier)
         {
@@ -1159,11 +1178,25 @@ namespace Enlisted.Features.CommandTent.UI
             var variableName = typeId.ToUpperInvariant() + "_OPTION_TEXT";
 
             var optionText = $"{typeName} ({cost} denars)";
+
+            if (IsMountedType(typeId))
+            {
+                optionText += " *";
+            }
+
             MBTextManager.SetTextVariable(variableName, optionText);
         }
 
         /// <summary>
-        /// Checks if a soldier type is available based on faction and affordability.
+        /// Returns true for cavalry/horse_archers which fight dismounted in naval battles.
+        /// </summary>
+        private static bool IsMountedType(string typeId)
+        {
+            return typeId is "cavalry" or "horse_archers";
+        }
+
+        /// <summary>
+        /// Validates soldier type availability. Checks faction restrictions, affordability, and shows naval tooltip for mounted types.
         /// </summary>
         private bool IsSoldierTypeAvailable(MenuCallbackArgs args, string typeId)
         {
@@ -1176,7 +1209,7 @@ namespace Enlisted.Features.CommandTent.UI
                 return true;
             }
 
-            // Check faction availability (horse archers restricted)
+            // Faction restriction check (horse archers not available for some factions)
             if (!RetinueManager.IsSoldierTypeAvailable(typeId, culture))
             {
                 args.IsEnabled = false;
@@ -1187,7 +1220,7 @@ namespace Enlisted.Features.CommandTent.UI
                 return true;
             }
 
-            // Check affordability
+            // Affordability check
             var cost = CalculateRecruitmentCost(typeId, culture, enlistment.EnlistmentTier);
             var playerGold = Hero.MainHero?.Gold ?? 0;
 
@@ -1200,16 +1233,24 @@ namespace Enlisted.Features.CommandTent.UI
                 return true;
             }
 
-            // Check if changing type with existing retinue
+            // Type change requires dismissing current retinue
             var manager = RetinueManager.Instance;
             if (manager?.State?.HasRetinue == true && manager.State.SelectedTypeId != typeId)
             {
-                // Still allow but will show dismiss confirmation
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
             }
             else
             {
                 args.optionLeaveType = GameMenuOption.LeaveType.Recruit;
+            }
+
+            // Naval dismount info tooltip for mounted types
+            if (IsMountedType(typeId))
+            {
+                var tooltipId = typeId == "cavalry" 
+                    ? "{=ct_naval_cavalry_tooltip}Cavalry will dismount and fight as infantry during naval engagements. Their horses cannot be brought aboard ships."
+                    : "{=ct_naval_horse_archer_tooltip}Horse archers will dismount and fight as foot archers during naval engagements. Their horses cannot be brought aboard ships.";
+                args.Tooltip = new TextObject(tooltipId);
             }
 
             return true;
@@ -1669,6 +1710,195 @@ namespace Enlisted.Features.CommandTent.UI
             }
 
             GameMenu.SwitchToMenu(RetinueMenuId);
+        }
+
+        #endregion
+
+        #region Companion Assignments Menu
+
+        /// <summary>
+        /// Checks if companion assignments option is available (Tier 4+ and has companions).
+        /// </summary>
+        private static bool IsCompanionAssignmentsAvailable(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            var tier = enlistment.EnlistmentTier;
+
+            if (tier < 4)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=ct_companions_tier_locked}You must reach Tier 4 to manage companion assignments.");
+            }
+            else
+            {
+                var manager = CompanionAssignmentManager.Instance;
+                var companions = manager?.GetAssignableCompanions() ?? new List<Hero>();
+                if (companions.Count == 0)
+                {
+                    args.IsEnabled = false;
+                    args.Tooltip = new TextObject("{=ct_companions_none}No companions in your command.");
+                }
+            }
+
+            args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+            return true;
+        }
+
+        /// <summary>
+        /// Creates the Companion Assignments submenu showing each companion with toggle options.
+        /// </summary>
+        private void AddCompanionAssignmentsMenu(CampaignGameStarter starter)
+        {
+            starter.AddGameMenu(
+                CompanionAssignmentsMenuId,
+                "{COMPANION_ASSIGNMENTS_TEXT}",
+                OnCompanionAssignmentsInit);
+
+            // Dynamic companion options are added via menu init text since GameMenu doesn't support 
+            // truly dynamic options. Instead we show the list in the description and use toggle buttons.
+            // Add 8 companion slots (should cover most parties)
+            for (var i = 0; i < 8; i++)
+            {
+                var index = i;
+                starter.AddGameMenuOption(
+                    CompanionAssignmentsMenuId,
+                    $"ct_companion_{i}",
+                    $"{{COMPANION_{i}_TEXT}}",
+                    args => IsCompanionSlotVisible(args, index),
+                    _ => OnCompanionToggle(index),
+                    false,
+                    i + 1);
+            }
+
+            // Back option
+            starter.AddGameMenuOption(
+                CompanionAssignmentsMenuId,
+                "ct_companions_back",
+                "{=ct_back_tent}Back to Command Tent",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                true,
+                100);
+        }
+
+        // Cache companions for the current menu session to maintain consistent indices
+        private List<Hero> _cachedCompanions;
+
+        /// <summary>
+        /// Initializes the companion assignments menu with current companion list.
+        /// </summary>
+        private void OnCompanionAssignmentsInit(MenuCallbackArgs args)
+        {
+            _ = args;
+            try
+            {
+                var manager = CompanionAssignmentManager.Instance;
+                _cachedCompanions = manager?.GetAssignableCompanions() ?? new List<Hero>();
+
+                var sb = new StringBuilder();
+                sb.AppendLine("═══════════════════════════════════════════");
+                sb.AppendLine("         COMPANION ASSIGNMENTS");
+                sb.AppendLine("═══════════════════════════════════════════");
+                sb.AppendLine();
+                sb.AppendLine("  Companions set to 'Stay Back' will not");
+                sb.AppendLine("  spawn in battle. They remain safe in your");
+                sb.AppendLine("  roster, immune to death, wounds, or capture.");
+                sb.AppendLine();
+
+                if (_cachedCompanions.Count == 0 || manager == null)
+                {
+                    sb.AppendLine("  No companions in your command.");
+                }
+                else
+                {
+                    var fightCount = manager.GetFightingCompanionCount();
+                    var stayBackCount = manager.GetStayBackCompanionCount();
+                    sb.AppendLine($"  Fighting: {fightCount}  |  Staying Back: {stayBackCount}");
+                }
+
+                sb.AppendLine();
+                sb.AppendLine("═══════════════════════════════════════════");
+
+                MBTextManager.SetTextVariable("COMPANION_ASSIGNMENTS_TEXT", sb.ToString());
+
+                // Set text variables for each companion slot
+                for (var i = 0; i < 8; i++)
+                {
+                    if (i < _cachedCompanions.Count && manager != null)
+                    {
+                        var companion = _cachedCompanions[i];
+                        var shouldFight = manager.ShouldCompanionFight(companion);
+                        var statusIcon = shouldFight ? "⚔" : "🏕";
+                        var statusText = shouldFight ? "Will fight" : "Stay back";
+                        MBTextManager.SetTextVariable($"COMPANION_{i}_TEXT", $"{statusIcon} {companion.Name} - {statusText}");
+                    }
+                    else
+                    {
+                        MBTextManager.SetTextVariable($"COMPANION_{i}_TEXT", string.Empty);
+                    }
+                }
+
+                ModLogger.Debug(LogCategory, $"Companion assignments menu initialized with {_cachedCompanions.Count} companions");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Error initializing companion assignments: {ex.Message}");
+                MBTextManager.SetTextVariable("COMPANION_ASSIGNMENTS_TEXT", "Error loading companion data.");
+            }
+        }
+
+        /// <summary>
+        /// Checks if a companion slot should be visible based on cached companion list.
+        /// </summary>
+        private bool IsCompanionSlotVisible(MenuCallbackArgs args, int index)
+        {
+            if (_cachedCompanions == null || index >= _cachedCompanions.Count)
+            {
+                return false;
+            }
+
+            args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+            return true;
+        }
+
+        /// <summary>
+        /// Toggles a companion's battle participation when their menu option is selected.
+        /// </summary>
+        private void OnCompanionToggle(int index)
+        {
+            if (_cachedCompanions == null || index >= _cachedCompanions.Count)
+            {
+                return;
+            }
+
+            var companion = _cachedCompanions[index];
+            var manager = CompanionAssignmentManager.Instance;
+            if (manager == null || companion == null)
+            {
+                return;
+            }
+
+            manager.ToggleCompanionParticipation(companion);
+            var newStatus = manager.ShouldCompanionFight(companion) ? "Fight" : "Stay Back";
+            
+            var message = new TextObject("{=ct_companion_toggled}{COMPANION_NAME} set to: {STATUS}");
+            message.SetTextVariable("COMPANION_NAME", companion.Name);
+            message.SetTextVariable("STATUS", newStatus);
+            InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+
+            ModLogger.Info(LogCategory, $"Toggled {companion.Name} to {newStatus}");
+
+            // Refresh the menu
+            GameMenu.SwitchToMenu(CompanionAssignmentsMenuId);
         }
 
         #endregion

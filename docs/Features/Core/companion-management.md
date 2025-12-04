@@ -7,6 +7,7 @@
 - [Current Implementation Status](#current-implementation-status)
 - [Battle Formation Assignment](#battle-formation-assignment)
 - [Companion State During Enlistment](#companion-state-during-enlistment)
+- [Companion Battle Participation (Stay Back Feature)](#companion-battle-participation-stay-back-feature)
 - [Native APIs and Behavior](#native-apis-and-behavior)
 - [Mission Companion Options](#mission-companion-options)
 - [Edge Cases and Recovery](#edge-cases-and-recovery)
@@ -252,6 +253,190 @@ Player Retires/Ends Service
 | Retired | Active, Visible | With player | Dismissed |
 
 **Key Point**: Player's party is always `IsVisible = false` when enlisted, so it cannot be attacked on the campaign map. But it's `IsActive = true` so troops participate in battles.
+
+---
+
+## Companion Battle Participation (Stay Back Feature)
+
+### Overview
+
+At Tier 4+, players can toggle which companions fight alongside them and which "stay back" (don't spawn in battle). This is a convenience feature for players who want some companions to remain safe.
+
+**Location**: Command Tent → Companion Assignments
+
+### How It Works
+
+| Setting | Behavior |
+|---------|----------|
+| **Fight** (default) | Companion spawns in battle, fights in player's squad |
+| **Stay Back** | Companion remains in roster but doesn't spawn in battle |
+
+### Why "Stay Back" Companions Are Safe
+
+**Key insight**: The native game only processes casualties for **spawned agents**. Troops in the roster who never spawn are **untouched** by battle resolution.
+
+From `BattleObserverMissionLogic.cs`:
+```csharp
+// Casualties tracked per spawned agent only
+this.BattleObserver.TroopNumberChanged(side, agent.Origin.BattleCombatant, agent.Character, -1, ...);
+```
+
+**Not spawned = not subject to:**
+- Death
+- Wounds
+- Capture
+- Any battle outcome
+
+### Edge Case: Army Destroyed
+
+When the lord's army is completely destroyed (lord captured/killed):
+
+```
+SCENARIO: Player Tier 4+, army is destroyed in battle
+
+BEFORE BATTLE:
+├── Lord's Army (contains player's invisible party)
+├── Player's Party (MobileParty.MainParty):
+│   ├── Player
+│   ├── Companion A [FIGHT] → Spawns in battle
+│   ├── Companion B [STAY BACK] → Doesn't spawn
+│   └── 8 Retinue soldiers → Spawn in battle
+
+BATTLE - ARMY WIPED:
+├── Lord killed/captured
+├── Player → Captured OR killed (depends on battle outcome)
+├── Companion A → Native handles: killed/captured/escaped
+├── Companion B → SAFE (wasn't spawned!)
+└── Retinue → Dead/captured in battle
+
+POST-BATTLE SYSTEM TRIGGERS:
+├── CampaignEvents.ArmyDispersed fires
+├── EnlistmentBehavior.OnArmyDispersed():
+│   └── StopEnlist("Army defeated", grace=true)
+├── RetinueLifecycleHandler.OnArmyDispersed():
+│   └── ClearRetinueWithMessage("army_defeat") → "scattered"
+│
+FINAL STATE:
+├── Player's Party (released, made visible):
+│   ├── Player (if survived) or in captivity
+│   ├── Companion A → Wherever native put them
+│   └── Companion B → STILL IN ROSTER ✅
+└── Retinue → CLEARED
+```
+
+### Edge Case: Player Captured
+
+If the player is captured during army destruction:
+
+1. `OnHeroPrisonerTaken` fires for player
+2. `MobileParty.MainParty.IsActive = false` (party deactivated)
+3. **Party roster is NOT cleared** (native behavior)
+4. "Stay back" companions remain in deactivated party roster
+5. When player escapes/ransomed, party reactivates with companions still there
+
+**Result**: "Stay back" companions survive even if player is captured!
+
+### Why This Works Without Special Code
+
+| System | What It Does | Effect on "Stay Back" |
+|--------|--------------|----------------------|
+| Native battle resolution | Processes spawned agents only | Not affected (not spawned) |
+| RetinueLifecycleHandler | Clears retinue on army defeat | Not touched (tracks retinue only, not companions) |
+| EnlistmentBehavior | Releases player party on discharge | Party survives with roster intact |
+| Player captivity | Deactivates party, keeps roster | Companions stay in roster |
+
+### Implementation (Completed)
+
+**File:** `src/Features/CommandTent/Core/CompanionAssignmentManager.cs`
+
+**1. State Storage**
+```csharp
+// Track battle participation per companion
+// Key: Hero.StringId, Value: true = fight (default), false = stay back
+[SaveableField(1)]
+private Dictionary<string, bool> _companionBattleParticipation;
+```
+
+**2. SyncData Persistence**
+```csharp
+public override void SyncData(IDataStore dataStore)
+{
+    dataStore.SyncData("_companionBattleParticipation", ref _companionBattleParticipation);
+    _companionBattleParticipation ??= new Dictionary<string, bool>();
+}
+```
+
+**3. Battle Spawn Filtering**
+
+**File:** `src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs`
+
+```csharp
+// In OnAgentBuild - immediately fade out "stay back" companions
+private void TryRemoveStayBackCompanion(Agent agent)
+{
+    // ... validation checks ...
+    if (!ShouldCompanionFight(hero))
+    {
+        // FadeOut removes agent without tracking as casualty
+        agent.FadeOut(hideInstantly: true, hideMount: true);
+    }
+}
+```
+
+**4. UI in Command Tent**
+
+**File:** `src/Features/CommandTent/UI/CommandTentMenuHandler.cs`
+
+```
+COMPANION ASSIGNMENTS
+
+For each companion at Tier 4+:
+┌─────────────────────────────────────────────────────┐
+│ ⚔ Sir Roland - Will fight                          │
+│ 🏕 Lady Elena - Stay back                          │
+│ ⚔ Brother Marcus - Will fight                     │
+└─────────────────────────────────────────────────────┘
+
+Click to toggle. No save button needed - changes instant.
+```
+
+### Cleanup Rules
+
+| Event | Action on "Stay Back" Companions |
+|-------|----------------------------------|
+| Player captured | Stay in inactive roster, rejoin on release |
+| Army destroyed | Stay with player (party released) |
+| Enlistment ends | Stay with player |
+| Lord dies | Stay with player (grace period) |
+| On leave | Stay with player |
+
+**NO special cleanup code needed** - the existing systems handle this correctly.
+
+### Configuration
+
+Add to `command_tent_config.json`:
+```json
+{
+  "companion_assignments": {
+    "enabled": true,
+    "default_participation": true,
+    "ui_submenu_id": "ct_companion_assignments"
+  }
+}
+```
+
+### Localization Strings
+
+Add to `enlisted_strings.xml`:
+```xml
+<string id="ct_companion_assignments_title" text="Companion Assignments" />
+<string id="ct_companion_fight" text="Will fight alongside you" />
+<string id="ct_companion_stay_back" text="Will guard the camp" />
+<string id="ct_companion_save" text="Save Assignments" />
+<string id="ct_companion_none" text="No companions in your command." />
+```
+
+---
 
 ### Companion Properties (from Decompile)
 
@@ -739,17 +924,32 @@ private float GetCompanionEscapeBonus()
 - [ ] Formation assignment works in field, siege, sally out battles
 - [ ] Player teleported to formation position if spawned incorrectly
 
+### Companion Battle Participation (Stay Back Feature)
+- [x] "Companion Assignments" submenu appears in Command Tent
+- [x] Each companion shows toggle: Fight / Stay Back
+- [x] Default is "Fight" for all companions
+- [x] Setting persists via SyncData
+- [x] "Stay back" companions don't spawn in battle (via FadeOut)
+- [ ] "Stay back" companions survive army destruction (needs testing)
+- [ ] "Stay back" companions survive player capture (needs testing)
+- [x] "Stay back" companions remain in roster on enlistment end
+- [x] UI shows correct count of companions available
+
 ### Edge Cases
-- [ ] Army defeated: companions in player's party stay with player
-- [ ] Lord dies: companions already with player (Tier 4+)
-- [ ] Player captured: companions captured with player (same party)
-- [ ] Companion dies in battle: native death handling
-- [ ] Companion wounded: native wound handling
+- [ ] Army defeated: "fight" companions handled by native (capture/escape/death) - needs testing
+- [ ] Army defeated: "stay back" companions survive in roster - needs testing
+- [ ] Lord dies: companions already with player (Tier 4+) - needs testing
+- [ ] Player captured: "fight" companions captured with player - needs testing
+- [ ] Player captured: "stay back" companions stay in deactivated roster - needs testing
+- [ ] Player released from captivity: all companions rejoin - needs testing
+- [x] Companion dies in battle: native death handling (not affected by our code)
+- [x] Companion wounded: native wound handling (not affected by our code)
 
 ### Retirement/Service End
 - [ ] Companions already with player at Tier 4+
 - [ ] Retinue dismissed on retirement
 - [ ] Grace period preserves companion location
+- [ ] "Stay back" state cleared on full retirement (start fresh next enlistment)
 
 ---
 

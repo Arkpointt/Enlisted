@@ -1034,11 +1034,63 @@ When player reaches **Tier 4**, display a dialog:
 
 ## Companion Management
 
-Companions can be assigned to:
-- **Battle Roster**: Companions who join the player in combat
-- **Mission Roster**: (Future) Companions available for special missions
+### Companion Assignments Submenu
 
-See [Companion Management](../Core/companion-management.md) for full details.
+At Tier 4+, players can manage companion battle participation through the Command Tent.
+
+**Menu Structure:**
+```
+[Companion Assignments]
+├── Battle Roster
+│   ├── Sir Roland        [⚔️ Fight] / [🏕️ Stay Back]
+│   ├── Lady Elena        [⚔️ Fight] / [🏕️ Stay Back]  
+│   └── Brother Marcus    [⚔️ Fight] / [🏕️ Stay Back]
+└── [Save Assignments]
+```
+
+### Battle Participation Toggle
+
+| Setting | Behavior |
+|---------|----------|
+| **Fight** (default) | Companion spawns with player's squad, faces all battle risks |
+| **Stay Back** | Companion stays in roster, doesn't spawn, immune to battle outcomes |
+
+### Why "Stay Back" Is Safe
+
+Companions marked "stay back" are **completely safe** from:
+- Death (not spawned)
+- Wounds (not spawned)  
+- Capture (not spawned)
+- Army destruction (stay in roster)
+
+This works because native battle resolution only processes **spawned agents**. Troops in the roster who never spawn are untouched.
+
+### Edge Cases Handled
+
+| Event | "Fight" Companions | "Stay Back" Companions |
+|-------|-------------------|------------------------|
+| Normal battle | Native casualties | Safe (not spawned) |
+| Army destroyed | Native handling | **Survive** in roster |
+| Player captured | Captured with player | **Survive** in deactivated roster |
+| Lord dies | Stay with player | Stay with player |
+| Enlistment ends | Stay with player | Stay with player |
+
+### Implementation Notes
+
+**State Storage:**
+```csharp
+private Dictionary<string, bool> _companionBattleParticipation;
+// Key: Hero.StringId, Value: true = fight, false = stay back
+```
+
+**Spawn Filtering:**
+- In `EnlistedFormationAssignmentBehavior`, check participation state
+- Only assign companions marked "fight" to formation
+- Skip spawning companions marked "stay back"
+
+**File Location:** `src/Features/CommandTent/UI/CommandTentMenuHandler.cs`
+
+See [Companion Management](../Core/companion-management.md) for full technical details.
 
 ---
 
@@ -1056,7 +1108,8 @@ src/Features/CommandTent/
 │   ├── CommandTentConfig.cs         # Configuration constants
 │   ├── ServiceRecordManager.cs      # Faction record tracking
 │   ├── RetinueManager.cs            # Soldier management (add/remove/track)
-│   └── RetinueLifecycleHandler.cs   # Leave, capture, enlistment end handling
+│   ├── RetinueLifecycleHandler.cs   # Leave, capture, enlistment end handling
+│   └── CompanionAssignmentManager.cs # Companion fight/stay back toggle (Phase 8)
 ├── Data/
 │   ├── FactionServiceRecord.cs      # Per-faction data class
 │   ├── LifetimeServiceRecord.cs     # Cross-faction totals
@@ -1067,7 +1120,7 @@ src/Features/CommandTent/
 │   ├── RetinueCasualtyTracker.cs    # Battle casualty reconciliation
 │   └── ServiceStatisticsSystem.cs   # Kill/battle tracking
 └── UI/
-    └── CommandTentMenuHandler.cs    # Menu integration
+    └── CommandTentMenuHandler.cs    # Menu integration + companion assignments UI
 ```
 
 **Key Design Principles:**
@@ -1117,6 +1170,14 @@ private CampaignTime _requisitionCooldownEnd;
 // Battle casualty tracking (transient, not saved)
 [NonSerialized]
 private Dictionary<string, int> _preBattleCounts;
+
+// ═══════════════════════════════════════════════════════════════
+// COMPANION ASSIGNMENTS (Phase 8)
+// ═══════════════════════════════════════════════════════════════
+
+// Track which companions should fight vs stay back
+// Key: Hero.StringId, Value: true = fight, false = stay back
+private Dictionary<string, bool> _companionBattleParticipation;
 ```
 
 **RetinueState Helper Class:**
@@ -1389,7 +1450,46 @@ foreach (var agent in Team.ActiveAgents)
 - [ ] Command suppression verification
 - [ ] Casualty tracking verification (native)
 
-### Phase 8: Polish and Edge Cases
+### Phase 8: Companion Battle Participation (Stay Back Feature)
+**Goal**: Allow players to toggle which companions fight vs. stay safe
+
+1. Add companion participation state tracking
+2. Add SyncData persistence for companion toggle states
+3. Add "Companion Assignments" submenu to Command Tent
+4. Implement battle spawn filtering in formation assignment
+5. Test edge cases (army defeat, player capture, enlistment end)
+
+**Key Code:**
+```csharp
+// State storage
+private Dictionary<string, bool> _companionBattleParticipation;
+// Key: Hero.StringId, Value: true = fight, false = stay back
+
+// Check before spawning in battle
+bool ShouldCompanionFight(Hero companion)
+{
+    return _companionBattleParticipation.TryGetValue(companion.StringId, out var fights) 
+        ? fights 
+        : true; // Default: fight
+}
+```
+
+**Deliverables:**
+- [x] Companion participation state dictionary
+- [x] SyncData serialization
+- [x] UI: Companion Assignments submenu
+- [x] UI: Toggle per companion (Fight / Stay Back)
+- [x] Battle spawn filtering (exclude "stay back" companions)
+- [ ] Verify "stay back" companions survive army destruction
+- [ ] Verify "stay back" companions survive player capture
+
+**Implementation Notes:**
+- State managed by `CompanionAssignmentManager.cs` in `src/Features/CommandTent/Core/`
+- Battle filtering in `EnlistedFormationAssignmentBehavior.TryRemoveStayBackCompanion()`
+- Uses `Agent.FadeOut()` to remove companions from battle without casualties
+- Menu shows up to 8 companions with ⚔/🏕 toggle icons
+
+### Phase 9: Polish and Edge Cases
 **Goal**: Handle all edge cases, final polish
 
 1. Handle **player capture** (clear retinue from roster)
@@ -1398,11 +1498,13 @@ foreach (var agent in Team.ActiveAgents)
 4. Handle **type change** (dismiss first, then purchase new)
 5. Handle **tier demotion** (if implemented - dismiss retinue)
 6. Handle **companions fill party** (UI warning, limited retinue)
-7. Comprehensive logging review
-8. Performance optimization
+7. Clear companion participation state on full retirement
+8. Comprehensive logging review
+9. Performance optimization
 
 **Deliverables:**
 - [ ] Edge case handling
+- [ ] Companion state cleanup on retirement
 - [ ] Final logging pass
 - [ ] Performance review
 
@@ -1732,6 +1834,45 @@ public static class CommandTentConfig
   - Native game handles this (some troops may be "over limit")
   - We don't forcibly remove soldiers, let native handle it
 
+### Naval Battles
+
+The Naval DLC introduces ship-based combat with special handling for troops. The retinue system works safely with naval battles thanks to native handling.
+
+#### How Naval Battles Handle Troops
+- **Ship Capacity**: Each ship has `TotalCrewCapacity` and `MainDeckCrewCapacity` limits
+- **Reserves System**: Troops exceeding ship capacity go to "reserves" and spawn as reinforcements
+- **Priority System**: Main agent gets priority 500, player troops get priority 400 (always spawn first)
+- **Auto-Dismount**: All cavalry and horse archers fight dismounted (handled by `TroopClassExtensions.DismountedClass()`)
+
+#### Cavalry and Horse Archers in Naval Combat
+- Mounted troops **lose their horses** in naval battles
+- They fight as foot soldiers (infantry/archers respectively)
+- UI warning added: "* Mounted troops fight on foot in naval battles."
+- Tooltip explains: horses cannot be brought aboard ships
+
+#### Formation Assignment Skipped
+- `EnlistedFormationAssignmentBehavior` skips in naval battles
+- Detected via `Mission.Current?.IsNavalBattle == true`
+- Naval DLC handles ship-based positioning instead
+
+#### Ship Capacity and Retinue
+- If retinue + companions exceed ship capacity:
+  - Excess troops placed in reserves
+  - Spawn as reinforcements during battle
+  - Player and player troops get spawn priority
+- No special handling needed; native reserves system works
+
+#### Casualty Tracking in Naval Battles
+- Same tracking system works for naval battles
+- `MapEvent.IsNavalMapEvent` detected and logged
+- Post-battle roster reconciliation unchanged
+- Debug logging enhanced for naval context
+
+#### What We DON'T Do
+- No ship-specific retinue limits (native handles overflow)
+- No blocking retinue selection for naval contexts
+- No forcing same-ship assignment (handled by priority)
+
 ---
 
 ## Acceptance Criteria
@@ -1824,6 +1965,25 @@ public static class CommandTentConfig
 - [ ] Player set as PlayerOwner of their formation only
 - [ ] Formation assignment works in field, siege, and sally out battles
 - [ ] Native casualty tracking updates roster automatically
+
+### Naval Battle Compatibility
+- [x] Formation assignment skipped in naval battles (detected via `Mission.Current?.IsNavalBattle`)
+- [x] UI warning for cavalry/horse archers: mounted troops fight dismounted in naval battles
+- [x] Tooltip explains naval dismount behavior
+- [x] Casualty tracking works via `MapEvent.IsNavalMapEvent` detection
+- [x] Naval-specific logging for diagnostics
+- [x] Native reserves system handles ship capacity overflow (no mod intervention needed)
+- [x] Player and player troops get spawn priority (400) after main agent (500)
+
+### Companion Battle Participation (Stay Back Feature)
+- [ ] "Companion Assignments" submenu in Command Tent
+- [ ] Toggle: "Fight" (default) vs "Stay Back" per companion
+- [ ] State persists via SyncData
+- [ ] "Stay back" companions excluded from battle spawn
+- [ ] "Stay back" companions survive army destruction (stay in roster)
+- [ ] "Stay back" companions survive player capture (in deactivated roster)
+- [ ] UI shows companion list with current settings
+- [ ] Changes saved when leaving menu
 
 ### Debugging
 - [ ] All record updates logged
@@ -1961,6 +2121,18 @@ Add these to `ModuleData/Languages/enlisted_strings.xml`:
 <string id="ct_defeat_retinue_lost" text="In the chaos of defeat, your retinue has scattered." />
 <string id="ct_lord_died_retinue" text="With your lord fallen, your retinue has scattered to the winds." />
 <string id="ct_type_change_dismiss" text="Your current soldiers have been dismissed to make way for new recruits." />
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- COMMAND TENT - Companion Assignments -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<string id="ct_companion_title" text="Companion Assignments" />
+<string id="ct_companion_intro" text="Determine which companions will stand beside you in battle." />
+<string id="ct_companion_fight" text="Will fight alongside you" />
+<string id="ct_companion_stay_back" text="Will guard the camp" />
+<string id="ct_companion_save" text="Save Assignments" />
+<string id="ct_companion_none" text="No companions serve under your command." />
+<string id="ct_companion_saved" text="Companion assignments updated." />
+<string id="ct_companion_low_tier" text="At higher ranks, companions will join your personal squad." />
 ```
 
 ---

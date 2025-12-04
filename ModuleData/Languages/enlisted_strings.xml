@@ -263,8 +263,25 @@
     <string id="ct_battle_wiped" text="Your entire retinue has been lost in battle." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- COMMAND TENT - Future Feature Placeholders -->
+    <!-- COMMAND TENT - Naval Battle Warnings -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="ct_companions_future" text="Companion assignments will be available in a future update." />
+    <string id="ct_naval_dismount_warning" text="Note: Mounted troops fight on foot in naval battles." />
+    <string id="ct_naval_cavalry_tooltip" text="Cavalry will dismount and fight as infantry during naval engagements. Their horses cannot be brought aboard ships." />
+    <string id="ct_naval_horse_archer_tooltip" text="Horse archers will dismount and fight as foot archers during naval engagements. Their horses cannot be brought aboard ships." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMAND TENT - Companion Assignments (Phase 8) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ct_companions_title" text="Companion Assignments" />
+    <string id="ct_companions_tier_locked" text="You must reach Tier 4 to manage companion assignments." />
+    <string id="ct_companions_none" text="No companions in your command." />
+    <string id="ct_companion_fight" text="Will fight alongside you" />
+    <string id="ct_companion_stay_back" text="Will guard the camp" />
+    <string id="ct_companion_toggled" text="{COMPANION_NAME} set to: {STATUS}" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DEBUG - Temporary Testing Options (remove before release) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="debug_gain_xp" text="[DEBUG] Gain 1000 XP" />
   </strings>
 </base>

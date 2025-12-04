@@ -173,6 +173,7 @@
     <Compile Include="src\Features\CommandTent\Core\ServiceRecordManager.cs"/>
     <Compile Include="src\Features\CommandTent\Core\RetinueManager.cs"/>
     <Compile Include="src\Features\CommandTent\Core\RetinueLifecycleHandler.cs"/>
+    <Compile Include="src\Features\CommandTent\Core\CompanionAssignmentManager.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\CommandTent\UI\CommandTentMenuHandler.cs"/>
