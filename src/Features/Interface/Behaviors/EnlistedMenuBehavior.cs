@@ -315,6 +315,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>
         /// Menu background initialization for enlisted_status menu.
         /// Sets culture-appropriate background and ambient audio for modern feel.
+        /// Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_status")]
         private static void OnEnlistedStatusBackgroundInit(MenuCallbackArgs args)
@@ -334,11 +335,16 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
+            
+            // Resume time - native GameMenu.SwitchToMenu() stops time by default,
+            // but we want time to continue passing while browsing enlisted menus
+            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
         }
         
         /// <summary>
         /// Menu background initialization for enlisted_duty_selection menu.
         /// Sets culture-appropriate background and ambient audio.
+        /// Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_duty_selection")]
         private static void OnDutySelectionBackgroundInit(MenuCallbackArgs args)
@@ -358,11 +364,15 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
+            
+            // Resume time - native GameMenu.SwitchToMenu() stops time by default
+            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
         }
         
         /// <summary>
         /// Menu background initialization for enlisted_desert_confirm menu.
         /// Sets ominous background for desertion confirmation.
+        /// Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_desert_confirm")]
         private static void OnDesertConfirmBackgroundInit(MenuCallbackArgs args)
@@ -381,6 +391,9 @@ namespace Enlisted.Features.Interface.Behaviors
             
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+            
+            // Resume time - native GameMenu.SwitchToMenu() stops time by default
+            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
         }
 
         /// <summary>

@@ -180,7 +180,8 @@ namespace Enlisted.Features.Ranks.Behaviors
                     null
                 );
 
-                InformationManager.ShowInquiry(data, true);
+                // pauseGameActiveState = false so notifications don't freeze game time
+                InformationManager.ShowInquiry(data, false);
 
                 ModLogger.Info("Promotion", $"Promotion notification triggered for {rankName} (Tier {newTier})");
             }
