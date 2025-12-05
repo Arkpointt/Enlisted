@@ -41,6 +41,25 @@ namespace Enlisted.Features.Equipment.UI
         [DataSourceProperty]
         public string ItemName { get; private set; }
         
+        /// <summary>
+        /// Primary stats line showing key stats for weapons/armor (displayed below image).
+        /// </summary>
+        [DataSourceProperty]
+        public string PrimaryStats { get; private set; }
+        
+        /// <summary>
+        /// Secondary stats line for additional details (tier, material type, etc).
+        /// </summary>
+        [DataSourceProperty]
+        public string SecondaryStats { get; private set; }
+        
+        /// <summary>
+        /// Slot type indicator (Head, Body, Weapon, etc).
+        /// </summary>
+        [DataSourceProperty]
+        public string SlotTypeText { get; private set; }
+        
+        // Legacy property for backwards compatibility
         [DataSourceProperty]
         public string WeaponDetails { get; private set; }
         
@@ -83,37 +102,50 @@ namespace Enlisted.Features.Equipment.UI
                 ItemName = item.Name?.ToString() ?? "Unknown Item";
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
-                IsEnabled = !_variant.IsCurrent && _variant.CanAfford;
+                
+                // Enable acquisition if:
+                // - Not at the 2-item limit
+                // - Either not currently equipped, OR is a duplicate-allowed item (weapons/consumables)
+                var canPurchaseWhenEquipped = _variant.AllowsDuplicatePurchase && _variant.IsCurrent;
+                IsEnabled = !_variant.IsAtLimit && (!_variant.IsCurrent || canPurchaseWhenEquipped);
                 
                 // Set item image using ItemImageIdentifierVM for proper image display (1.3.4 API)
-                // Omit bannerCode parameter as it uses its default value
                 Image = new ItemImageIdentifierVM(item);
                 
-                // Debug logging to diagnose image loading issues
-                ModLogger.Debug("QuartermasterUI", $"Item image created - Name: {item.Name}, StringId: {item.StringId}, Image.Id: {Image.Id}, Image.TextureProviderName: {Image.TextureProviderName}");
+                // Build equipment stats based on item type (weapon, armor, or accessory)
+                BuildEquipmentStats(item);
                 
-                // Build simplified weapon details
-                WeaponDetails = BuildSimpleWeaponDetails(item);
+                // Legacy support - combine stats into WeaponDetails for backwards compatibility
+                WeaponDetails = $"{PrimaryStats}\n{SecondaryStats}";
                 
-                // Set cost and status
-                if (_variant.IsCurrent)
+                // Set cost and status - equipment is FREE but limited to 2 per item type
+                // Using localized strings from enlisted_strings.xml
+                if (_variant.IsAtLimit)
                 {
-                    CostText = "(Current)";
+                    // Hit the 2-item limit - cannot acquire more
+                    CostText = new TextObject("{=qm_status_limit}Limit (2)").ToString();
+                    StatusText = new TextObject("{=qm_status_limit_hint}Two's the limit, soldier").ToString();
+                }
+                else if (_variant.IsCurrent && !_variant.AllowsDuplicatePurchase)
+                {
+                    // Standard equipment (armor, etc) - cannot acquire duplicates
+                    CostText = new TextObject("{=qm_status_equipped}Equipped").ToString();
                     StatusText = "Currently Equipped";
                 }
-                else if (_variant.CanAfford)
+                else if (_variant.IsCurrent && _variant.AllowsDuplicatePurchase)
                 {
-                    CostText = $"{_variant.Cost} denars";
-                    StatusText = "Available";
+                    // Weapons and consumables - can acquire additional copies for other slots or stacks
+                    CostText = new TextObject("{=qm_status_free}Free").ToString();
+                    StatusText = new TextObject("{=qm_status_get_another}Get Another").ToString();
                 }
                 else
                 {
-                    CostText = $"{_variant.Cost} denars";
-                    StatusText = "Insufficient Funds";
+                    // Available to acquire - equipment is free
+                    CostText = new TextObject("{=qm_status_free}Free").ToString();
+                    StatusText = new TextObject("{=qm_status_available}Available").ToString();
                 }
                 
                 // Notify UI of property changes for data binding updates
-                // Use OnPropertyChanged with nameof to avoid explicit caller info attribute issues
                 OnPropertyChanged(nameof(ItemName));
                 OnPropertyChanged(nameof(CostText));
                 OnPropertyChanged(nameof(StatusText));
@@ -121,6 +153,9 @@ namespace Enlisted.Features.Equipment.UI
                 OnPropertyChanged(nameof(CanAfford));
                 OnPropertyChanged(nameof(IsEnabled));
                 OnPropertyChanged(nameof(Image));
+                OnPropertyChanged(nameof(PrimaryStats));
+                OnPropertyChanged(nameof(SecondaryStats));
+                OnPropertyChanged(nameof(SlotTypeText));
                 OnPropertyChanged(nameof(WeaponDetails));
             }
             catch (Exception ex)
@@ -141,8 +176,11 @@ namespace Enlisted.Features.Equipment.UI
                 ItemName = "Empty";
                 CostText = "";
                 StatusText = "Empty Slot";
+                PrimaryStats = "";
+                SecondaryStats = "";
+                SlotTypeText = "";
                 WeaponDetails = "";
-                Image = new ItemImageIdentifierVM(null); // Empty image identifier (1.3.4 API)
+                Image = new ItemImageIdentifierVM(null);
             }
             else
             {
@@ -150,8 +188,11 @@ namespace Enlisted.Features.Equipment.UI
                 ItemName = "Error";
                 CostText = "";
                 StatusText = "Error loading item";
+                PrimaryStats = "";
+                SecondaryStats = "";
+                SlotTypeText = "";
                 WeaponDetails = "";
-                Image = new ItemImageIdentifierVM(null); // Empty image identifier for error case (1.3.4 API)
+                Image = new ItemImageIdentifierVM(null);
             }
             IsCurrentEquipment = false;
             CanAfford = false;
@@ -180,35 +221,36 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                if (_variant.IsCurrent)
+                // Block purchase only for non-duplicate items that are already equipped
+                if (_variant.IsCurrent && !_variant.AllowsDuplicatePurchase)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("You already have this equipment equipped.").ToString()));
+                        new TextObject("{=qm_already_equipped}You already have this equipment equipped.").ToString()));
                     return;
                 }
                 
                 if (!_variant.CanAfford)
                 {
-                    var message = new TextObject("Insufficient funds. You need {COST} denars for this equipment.");
+                    var message = new TextObject("{=qm_insufficient_equipment}Insufficient funds. You need {COST} denars for this equipment.");
                     message.SetTextVariable("COST", _variant.Cost.ToString());
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                     return;
                 }
                 
-                // Show confirmation
-                var confirmText = $"Equipping {_variant.Item.Name} for {_variant.Cost} denars...";
+                // Show confirmation - requisitioned equipment is free
+                var confirmText = $"Requisitioned {_variant.Item.Name}";
                 InformationManager.DisplayMessage(new InformationMessage(confirmText));
                 
                 // Apply selection through parent
                 _parentSelector?.OnEquipmentItemSelected(_variant);
                 
-                ModLogger.Info("QuartermasterUI", $"Equipment item selected: {_variant.Item.Name} for {_variant.Cost} denars");
+                ModLogger.Info("QuartermasterUI", $"Equipment requisitioned: {_variant.Item.Name}");
             }
             catch (Exception ex)
             {
                 ModLogger.Error("QuartermasterUI", "Error selecting equipment item", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("Error selecting equipment. Please try again.").ToString()));
+                    new TextObject("{=qm_error_selecting}Error selecting equipment. Please try again.").ToString()));
             }
         }
         
@@ -238,61 +280,224 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
-        /// Build simplified weapon details with key stats.
+        /// Build equipment stats based on item type (weapon, armor, shield, etc).
+        /// Sets PrimaryStats, SecondaryStats, and SlotTypeText properties.
         /// </summary>
-        private string BuildSimpleWeaponDetails(ItemObject item)
+        private void BuildEquipmentStats(ItemObject item)
         {
             try
             {
                 if (item == null)
                 {
-                    return "";
+                    PrimaryStats = "";
+                    SecondaryStats = "";
+                    SlotTypeText = "";
+                    return;
                 }
                 
-                // Culture info - ternary for cleaner conditional assignment
-                var details = new List<string>
-                {
-                    item.Culture?.Name != null
-                        ? $"Culture: {item.Culture.Name}"
-                        : "Culture: No Culture"
-                };
+                // Determine slot type display name
+                SlotTypeText = GetSlotTypeName(_variant.Slot);
                 
-                // Weapon class and tier
-                if (item.WeaponComponent != null)
+                // Build stats based on item component type
+                if (item.ArmorComponent != null)
                 {
-                    var weaponClass = item.WeaponComponent.GetItemType().ToString();
-                    details.Add($"Class: {weaponClass}");
-                    details.Add($"Weapon Tier: {item.Tier}");
-                    
-                    // Basic weapon stats
-                    var weapon = item.WeaponComponent.PrimaryWeapon;
-                    if (weapon.ThrustDamage > 0)
-                    {
-                        details.Add($"Thrust Speed: {weapon.ThrustSpeed}");
-                    }
-                    if (weapon.SwingDamage > 0)
-                    {
-                        details.Add($"Swing Speed: {weapon.SwingSpeed}");
-                    }
-                    if (weapon.ThrustDamage > 0)
-                    {
-                        details.Add($"Thrust Damage: {weapon.ThrustDamage} {weapon.ThrustDamageType}");
-                    }
-                    if (weapon.SwingDamage > 0)
-                    {
-                        details.Add($"Swing Damage: {weapon.SwingDamage} {weapon.SwingDamageType}");
-                    }
-                    details.Add($"Length: {weapon.WeaponLength}");
-                    details.Add($"Handling: {weapon.Handling}");
+                    BuildArmorStats(item);
                 }
-                
-                return string.Join("\n", details);
+                else if (item.WeaponComponent != null)
+                {
+                    BuildWeaponStats(item);
+                }
+                else
+                {
+                    // Generic item (banner, horse, etc)
+                    var tierNumber = ((int)item.Tier) + 1; // Tier enum is 0-based
+                    PrimaryStats = $"Tier {tierNumber}";
+                    SecondaryStats = item.Culture?.Name?.ToString() ?? "";
+                }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("QuartermasterUI", "Error building weapon details", ex);
-                return "Details unavailable";
+                ModLogger.Error("QuartermasterUI", "Error building equipment stats", ex);
+                PrimaryStats = "";
+                SecondaryStats = "Stats unavailable";
             }
+        }
+        
+        /// <summary>
+        /// Build armor-specific stats for display.
+        /// Shows armor values and material type.
+        /// </summary>
+        private void BuildArmorStats(ItemObject item)
+        {
+            var armor = item.ArmorComponent;
+            var statParts = new List<string>();
+            
+            // Show relevant armor values based on slot type
+            switch (_variant.Slot)
+            {
+                case EquipmentIndex.Head:
+                    if (armor.HeadArmor > 0)
+                    {
+                        statParts.Add($"Head: {armor.HeadArmor}");
+                    }
+                    break;
+                    
+                case EquipmentIndex.Body:
+                    if (armor.BodyArmor > 0)
+                    {
+                        statParts.Add($"Body: {armor.BodyArmor}");
+                    }
+                    if (armor.ArmArmor > 0)
+                    {
+                        statParts.Add($"Arm: {armor.ArmArmor}");
+                    }
+                    if (armor.LegArmor > 0)
+                    {
+                        statParts.Add($"Leg: {armor.LegArmor}");
+                    }
+                    break;
+                    
+                case EquipmentIndex.Leg:
+                    if (armor.LegArmor > 0)
+                    {
+                        statParts.Add($"Leg: {armor.LegArmor}");
+                    }
+                    break;
+                    
+                case EquipmentIndex.Gloves:
+                    if (armor.ArmArmor > 0)
+                    {
+                        statParts.Add($"Arm: {armor.ArmArmor}");
+                    }
+                    break;
+                    
+                case EquipmentIndex.Cape:
+                    // Capes typically have body armor bonus
+                    if (armor.BodyArmor > 0)
+                    {
+                        statParts.Add($"Body: {armor.BodyArmor}");
+                    }
+                    break;
+                    
+                default:
+                    // Show all non-zero armor values
+                    if (armor.HeadArmor > 0)
+                    {
+                        statParts.Add($"H:{armor.HeadArmor}");
+                    }
+                    if (armor.BodyArmor > 0)
+                    {
+                        statParts.Add($"B:{armor.BodyArmor}");
+                    }
+                    if (armor.ArmArmor > 0)
+                    {
+                        statParts.Add($"A:{armor.ArmArmor}");
+                    }
+                    if (armor.LegArmor > 0)
+                    {
+                        statParts.Add($"L:{armor.LegArmor}");
+                    }
+                    break;
+            }
+            
+            // Set primary stats (armor values)
+            PrimaryStats = statParts.Count > 0 ? string.Join(" | ", statParts) : "No armor bonus";
+            
+            // Set secondary stats (material and tier)
+            // Note: item.Tier is an enum (Tier1, Tier2, etc.) - extract just the number
+            var tierNumber = ((int)item.Tier) + 1; // Tier enum is 0-based
+            var materialName = armor.MaterialType.ToString();
+            SecondaryStats = $"Tier {tierNumber} • {materialName}";
+        }
+        
+        /// <summary>
+        /// Build weapon-specific stats for display.
+        /// Shows damage, speed, and handling.
+        /// </summary>
+        private void BuildWeaponStats(ItemObject item)
+        {
+            var weapon = item.WeaponComponent.PrimaryWeapon;
+            var statParts = new List<string>();
+            
+            // Damage stats - show most relevant based on weapon type
+            if (weapon.IsShield)
+            {
+                // Shield stats
+                statParts.Add($"HP: {weapon.MaxDataValue}");
+                if (weapon.BodyArmor > 0)
+                {
+                    statParts.Add($"Armor: {weapon.BodyArmor}");
+                }
+            }
+            else if (weapon.IsRangedWeapon && weapon.IsConsumable)
+            {
+                // Throwing weapons or arrows
+                if (weapon.MissileDamage > 0)
+                {
+                    statParts.Add($"Dmg: {weapon.MissileDamage}");
+                }
+                statParts.Add($"Stack: {weapon.MaxDataValue}");
+            }
+            else if (weapon.IsRangedWeapon)
+            {
+                // Bows/crossbows
+                if (weapon.MissileSpeed > 0)
+                {
+                    statParts.Add($"Speed: {weapon.MissileSpeed}");
+                }
+                if (weapon.ThrustDamage > 0)
+                {
+                    statParts.Add($"Dmg: {weapon.ThrustDamage}");
+                }
+            }
+            else
+            {
+                // Melee weapons - show primary damage type
+                if (weapon.SwingDamage > 0)
+                {
+                    statParts.Add($"Swing: {weapon.SwingDamage}");
+                }
+                if (weapon.ThrustDamage > 0)
+                {
+                    statParts.Add($"Thrust: {weapon.ThrustDamage}");
+                }
+            }
+            
+            // Add length for melee weapons
+            if (weapon.WeaponLength > 0 && !weapon.IsRangedWeapon)
+            {
+                statParts.Add($"Reach: {weapon.WeaponLength}");
+            }
+            
+            PrimaryStats = statParts.Count > 0 ? string.Join(" | ", statParts) : "No stats";
+            
+            // Secondary stats: handling and tier
+            // Note: item.Tier is an enum (Tier1, Tier2, etc.) - extract just the number
+            var tierNumber = ((int)item.Tier) + 1; // Tier enum is 0-based
+            var handlingText = weapon.Handling > 0 ? $"Handling: {weapon.Handling}" : "";
+            SecondaryStats = $"Tier {tierNumber}" + (handlingText.Length > 0 ? $" • {handlingText}" : "");
+        }
+        
+        /// <summary>
+        /// Get human-readable slot type name for display.
+        /// </summary>
+        private static string GetSlotTypeName(EquipmentIndex slot)
+        {
+            return slot switch
+            {
+                EquipmentIndex.Head => "Helmet",
+                EquipmentIndex.Body => "Body Armor",
+                EquipmentIndex.Leg => "Leg Armor",
+                EquipmentIndex.Gloves => "Gloves",
+                EquipmentIndex.Cape => "Cape",
+                EquipmentIndex.Weapon0 => "Weapon 1",
+                EquipmentIndex.Weapon1 => "Weapon 2",
+                EquipmentIndex.Weapon2 => "Weapon 3",
+                EquipmentIndex.Weapon3 => "Weapon 4",
+                EquipmentIndex.Horse => "Mount",
+                EquipmentIndex.HorseHarness => "Horse Armor",
+                _ => "Equipment"
+            };
         }
     }
 }

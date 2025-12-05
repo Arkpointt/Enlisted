@@ -6,15 +6,19 @@
 |---------|---------|--------|
 | Equipment Grid | Visual equipment selection | Enlisted Status → "Visit Quartermaster" |
 | Equipment Cards | Individual variant selection | Click equipment slot → Grid displays |
-| Officer Discounts | 15% cost reduction | Automatic for Quartermaster/Provisioner duties |
+| Free Gear | All equipment issued free | Automatic |
+| Item Limit | Max 2 of each item type (equipment + inventory) | Anti-abuse measure |
+| Inventory Overflow | Weapons go to pack when slots full | Automatic |
+| Accountability | Charged for missing gear on troop change | Automatic |
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [How It Works](#how-it-works)
   - [Equipment Selection Flow](#equipment-selection-flow)
-  - [Grid Display System](#grid-display-system)
-  - [Cost Calculation](#cost-calculation)
+  - [Item Limits](#item-limits)
+  - [Equipment Accountability](#equipment-accountability)
+  - [Retirement](#retirement)
 - [Technical Details](#technical-details)
   - [System Architecture](#system-architecture)
   - [Equipment Discovery](#equipment-discovery)
@@ -27,21 +31,21 @@
 
 ## Overview
 
-Grid-based UI system that lets players select individual equipment variants from a visual menu. Replaces basic text-based selection with clickable equipment cards showing weapon stats, costs, and images in a professional 4-column grid layout.
+Grid-based UI system that lets players select individual equipment variants from a visual menu. All gear is issued free, but soldiers are held accountable for missing equipment when changing troop types.
 
 **Key Features:**
 - Visual equipment cards with images and stats
 - 4-column grid layout (responsive to resolution)
-- Individual clickable selection per variant
-- Officer discounts (15% for Quartermaster/Provisioner duties)
-- Character preview showing equipment changes
-- Fallback to conversation-based selection if grid unavailable
+- All equipment free (military issue)
+- Max 2 of each item type (anti-abuse)
+- Accountability check on troop change (charged for missing gear)
+- Retirement reward: keep military gear + get personal belongings back
 
 **Files:**
-- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, cost calculation
+- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, variant options
+- `src/Features/Equipment/Behaviors/TroopSelectionManager.cs` - Equipment tracking and accountability
 - `src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs` - Gauntlet UI controller
 - `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Main view model
-- `src/Features/Equipment/UI/QuartermasterEquipmentRowVm.cs` - Row container (4 cards)
 - `src/Features/Equipment/UI/QuartermasterEquipmentItemVm.cs` - Individual equipment cards
 
 ---
@@ -60,52 +64,63 @@ Grid-based UI system that lets players select individual equipment variants from
 
 **Grid Display:**
 1. Shows 4-column grid of available equipment variants
-2. Each card displays: image, name, stats, cost
+2. Each card displays: image, name, stats, status
 3. Character preview updates when hovering over items
+
+**Status Indicators:**
+- "Free" - Available to obtain
+- "Get Another" - Weapons/consumables (can get a second)
+- "Equipped" - Already wearing this item
+- "Limit (2)" - Already have 2 of this item type
 
 **Selection Process:**
 1. Player clicks "Select" on any equipment card
-2. System validates player has enough gold (with officer discounts)
-3. Equipment applied using `EquipmentHelper.AssignHeroEquipmentFromEquipment()`
-4. Gold deducted for equipment cost
-5. Confirmation message shown
-6. UI closes after successful selection
+2. System checks item limit (max 2 per type)
+3. Equipment applied and tracked for accountability
+4. Confirmation message shown
 
-### Grid Display System
+### Item Limits
 
-**Layout:**
-- 4-column grid (responsive to screen resolution)
-- Rows contain 4 equipment cards each
-- Centered alignment for 4K resolution support
-- Character preview panel on side
+Soldiers can hold up to 2 of each item type to prevent abuse. The limit counts items across **both equipment slots and party inventory**.
 
-**Equipment Cards:**
-- Individual clickable cards per variant
-- Shows: equipment image, name, culture, class, weapon tier, damage stats
-- "Select" button (disabled if unaffordable)
-- "Preview" button for detailed stats
+**Limit Rules:**
+- Weapons: Max 2 of the same weapon (equipped + inventory combined)
+- Ammo/Consumables: Max 2 stacks
+- Armor: Single slot per type (replaces existing)
 
-**Visual Features:**
-- Equipment images load via `ImageIdentifierVM`
-- Loading spinner while images load
-- Cost displayed prominently
-- Red text for unaffordable items
+When limit reached, card shows "Limit (2)" and selection is blocked.
 
-### Cost Calculation
+### Inventory Overflow (Weapons)
 
-**Base Cost:**
-- Uses native equipment cost formula
-- Based on item tier and quality
+When a soldier's weapon slots are full (all 4 slots occupied) and they requisition a new weapon:
 
-**Officer Discounts:**
-- **15% discount** for Quartermaster's Aide duty
-- **15% discount** for Provisioner duty
-- Applied automatically during cost calculation
+1. Weapon is added to party inventory instead of replacing an equipped item
+2. Message shown: "{ITEM_NAME} stowed in your pack. Hands full."
+3. Item still counts toward the 2-item limit
 
-**Cost Display:**
-- Shows base cost and discounted cost (if applicable)
-- "Insufficient Funds" status for unaffordable items
-- "Select" button disabled when player cannot afford
+This allows soldiers to stock up on weapons while keeping their current loadout intact. Items in inventory can be equipped manually through the normal inventory screen.
+
+### Equipment Accountability
+
+When changing troop type (via Master at Arms):
+1. System checks what gear was issued vs what player has
+2. Missing items = gold deducted from pay
+3. Player notified of missing items and deduction
+4. New troop's equipment issued and tracked
+
+This encourages soldiers to take care of their gear.
+
+### Retirement
+
+**Honorable Discharge (Retirement):**
+- Player keeps ALL military equipment they're wearing
+- Personal belongings (backed up at enlistment) returned to inventory
+- No accountability check - keeping gear is the retirement reward
+
+**Regular Discharge:**
+- Accountability check runs (charged for missing gear)
+- Military equipment removed
+- Personal equipment restored (replaces military gear)
 
 ---
 
@@ -113,226 +128,140 @@ Grid-based UI system that lets players select individual equipment variants from
 
 ### System Architecture
 
-**Component Structure:**
 ```
 QuartermasterManager (Core Logic)
     ├── Equipment discovery and filtering
-    ├── Cost calculation with discounts
-    └── Equipment application
+    ├── Variant option building
+    └── Item limit checking
+
+TroopSelectionManager (Accountability)
+    ├── IssuedItemRecord tracking
+    ├── Missing equipment detection
+    └── Gold deduction
 
 QuartermasterEquipmentSelectorBehavior (UI Controller)
     ├── Gauntlet UI initialization
-    ├── Template loading
-    └── Input handling
+    └── Template loading
 
 QuartermasterEquipmentSelectorVm (View Model)
     ├── Row organization (4 cards per row)
-    ├── Equipment card data binding
     └── Selection handling
 
-QuartermasterEquipmentRowVm (Row Container)
-    └── 4 equipment cards per row
-
 QuartermasterEquipmentItemVm (Equipment Card)
-    ├── Equipment image and stats
-    ├── Cost display
-    └── Select/Preview buttons
+    ├── Status display (Free, Equipped, Limit)
+    └── Select button logic
 ```
 
 ### Equipment Discovery
 
-**Primary Source:**
-- Direct from selected troop's `BattleEquipments` collection
-- Filtered by tier, formation type, and cultural appropriateness
+Equipment variants are discovered using branch-based collection, which traverses the player's entire troop upgrade tree to find all available options.
 
-**Secondary Source:**
-- Culture-wide equipment pool for officers
-- Additional variants available at higher tiers
+**Branch-Based Collection:**
+- Builds the troop upgrade path from culture's BasicTroop/EliteBasicTroop to the player's selected troop
+- Collects equipment from ALL troops in that branch at the player's tier
+- Falls back to all tiers if exact tier has no variants
 
-**Filtering Logic:**
-- By tier: Only equipment appropriate for player's current tier
-- By formation: Infantry/Archer/Cavalry/HorseArcher variants
-- By culture: Faction-appropriate equipment only
-- By slot: Equipment type matches selected slot
+**Equipment Categories:**
+
+| Category | Menu Option | Slots |
+|----------|-------------|-------|
+| Weapons | "Request weapon variants" | Weapon0, Weapon1, Weapon2, Weapon3 |
+| Armor | "Request armor variants" | Body, Head, Leg (boots), Gloves, Cape |
 
 ### UI Templates
 
 **Template Location:**
 ```
 GUI/Prefabs/Equipment/
-├── QuartermasterEquipmentGrid.xml     # Main layout with character preview
-├── QuartermasterEquipmentCardRow.xml  # Row container (4 cards)
-└── QuartermasterEquipmentCard.xml     # Individual clickable cards
+├── QuartermasterEquipmentGrid.xml
+├── QuartermasterEquipmentCardRow.xml
+└── QuartermasterEquipmentCard.xml
 ```
-
-**Key Template Features:**
-- `HorizontalAlignment="Center"` for 4K resolution scaling
-- `ImageIdentifierVM` for equipment images
-- `Standard.CircleLoadingWidget` for loading states
-- Responsive layout adapts to screen resolution
-
-**Template Requirements:**
-- Must be in `GUI/Prefabs/Equipment/` folder
-- Use `<Widget>` instead of `<Panel>` (Gauntlet requirement)
-- Register hotkeys before `InputRestrictions` to prevent freezing
 
 ---
 
 ## Edge Cases
 
-### No Equipment Variants Available
+### Item Limit Reached
 
-**Scenario:** No equipment variants found for selected slot
-
-**Handling:**
-- Shows conversation-based fallback menu instead of grid
-- Provides simple text selection for basic functionality
-- No crash or error - graceful degradation
-
-### Equipment Images Fail to Load
-
-**Scenario:** Image loading fails or times out
+**Scenario:** Player tries to get a third copy of an item
 
 **Handling:**
-- Shows loading spinner with `Standard.CircleLoadingWidget`
-- Graceful fallback if image loading fails
-- Equipment card still functional without image
-- Error logged but doesn't crash the game
+- Card shows "Limit (2)" status
+- Select button disabled
+- Quartermaster dialogue: "Two's the limit, soldier. Army regs."
 
-### Insufficient Funds
+### Weapon Slots Full
 
-**Scenario:** Player cannot afford selected equipment
-
-**Handling:**
-- "Select" button disabled on unaffordable items
-- Cost displayed in red text
-- "Insufficient Funds" status message shown
-- Player can still preview item stats
-
-### Game Resolution Changes
-
-**Scenario:** Player changes resolution while UI is open
+**Scenario:** Player with all 4 weapon slots occupied requests another weapon
 
 **Handling:**
-- Responsive design scales automatically
-- `HorizontalAlignment="Center"` maintains centering
-- Tested on 1080p, 1440p, and 4K displays
-- Grid layout adapts to available space
+- Weapon added to party inventory (not equipped)
+- Message: "{ITEM_NAME} stowed in your pack. Hands full."
+- Still counts toward 2-item limit
+- Player can manually equip from inventory later
 
-### Gauntlet Template Loading Fails
+### Missing Equipment on Troop Change
 
-**Scenario:** Template files missing or corrupted
-
-**Handling:**
-- Automatic fallback to conversation-based selection
-- Error logged but doesn't crash the game
-- Player can still select equipment via text menu
-- System continues to function
-
-### Officer Duty Changes
-
-**Scenario:** Player changes duty while in Quartermaster menu
+**Scenario:** Player sold or lost issued gear
 
 **Handling:**
-- Discounts recalculated on next cost check
-- Menu refresh updates prices
-- No state corruption
+- Gold deducted equal to item value
+- Popup shows missing items and total deduction
+- If insufficient gold, debt is noted in log
+
+### Retirement with Missing Gear
+
+**Scenario:** Player retires but lost some equipment
+
+**Handling:**
+- No accountability check for retirement
+- Player keeps whatever they have
+- Personal belongings returned to inventory
 
 ---
 
 ## API Reference
 
-### Equipment Discovery
+### Equipment Tracking
 
 ```csharp
-// Get available equipment variants for slot
-List<EquipmentElement> GetAvailableEquipment(
-    EquipmentIndex slotIndex,
-    int playerTier,
-    FormationClass formationClass,
-    CultureObject culture)
-{
-    // Filter by tier, formation, culture, slot
-    // Return list of available variants
-}
+// Record issued equipment for accountability
+TroopSelectionManager.RecordIssuedEquipment()
 
-// Get equipment from troop's battle equipment
-EquipmentElement GetEquipmentFromTroop(
-    CharacterObject troop,
-    EquipmentIndex slotIndex)
-{
-    // Extract equipment from troop's BattleEquipments
-}
+// Check for missing equipment and calculate debt
+List<(string name, int value)> CheckMissingEquipment(out int totalDebt)
+
+// Clear tracking (retirement or full discharge)
+TroopSelectionManager.ClearIssuedEquipment()
 ```
 
-### Cost Calculation
+### Item Limit Checking
 
 ```csharp
-// Calculate equipment cost with discounts
-int CalculateEquipmentCost(EquipmentElement equipment, Hero buyer)
-{
-    // Base cost from native formula
-    int baseCost = Campaign.Current.Models.PartyWageModel
-        .GetEquipmentCost(equipment.Item, buyer);
-    
-    // Apply officer discount if applicable
-    if (HasOfficerDiscount(buyer))
-    {
-        baseCost = (int)(baseCost * 0.85); // 15% discount
-    }
-    
-    return baseCost;
-}
+// Check if player has reached limit for item type
+bool IsAtLimit = GetPlayerItemCount(item) >= MaxItemsPerType; // MaxItemsPerType = 2
 
-// Check if player has officer discount
-bool HasOfficerDiscount(Hero hero)
-{
-    // Check for Quartermaster's Aide or Provisioner duty
-    return EnlistedDutiesBehavior.Instance?.HasActiveDutyWithRole("Quartermaster") == true ||
-           EnlistedDutiesBehavior.Instance?.HasActiveDutyWithRole("Provisioner") == true;
-}
+// Get current count of item across equipment AND inventory
+int GetPlayerItemCount(Hero hero, string itemStringId)
+// Checks: BattleEquipment, CivilianEquipment, PartyBase.MainParty.ItemRoster
 ```
 
-### Equipment Application
+### Inventory Overflow
 
 ```csharp
-// Apply equipment to player
-void ApplyEquipment(EquipmentElement equipment, EquipmentIndex slotIndex)
-{
-    // Use native equipment helper
-    EquipmentHelper.AssignHeroEquipmentFromEquipment(
-        Hero.MainHero,
-        equipment,
-        slotIndex);
-    
-    // Deduct gold
-    Hero.MainHero.ChangeHeroGold(-CalculateEquipmentCost(equipment, Hero.MainHero));
-}
+// When weapon slots are full, adds to inventory instead
+PartyBase.MainParty.ItemRoster.AddToCounts(new EquipmentElement(item), 1);
 ```
 
-### UI Initialization
+### Retirement Equipment
 
 ```csharp
-// Initialize Gauntlet UI
-void InitializeQuartermasterUI()
-{
-    // Register hotkeys BEFORE InputRestrictions
-    RegisterHotKeyCategory();
-    
-    // Load template
-    LoadGauntletTemplate("QuartermasterEquipmentGrid");
-    
-    // Initialize view model
-    var vm = new QuartermasterEquipmentSelectorVm();
-    SetViewModel(vm);
-}
+// Add backed-up gear to inventory (player keeps military equipment)
+EquipmentManager.RestorePersonalEquipmentToInventory()
 
-// Register hotkeys
-void RegisterHotKeyCategory()
-{
-    // Prevents input freezing
-    // Must be called before InputRestrictions
-}
+// Standard restoration (replaces military gear with personal)
+EquipmentManager.RestorePersonalEquipment()
 ```
 
 ---
@@ -340,66 +269,29 @@ void RegisterHotKeyCategory()
 ## Debugging
 
 **Log Categories:**
-- `"Quartermaster"` - Core equipment logic
-- `"QuartermasterUI"` - Gauntlet UI operations
+- `"Quartermaster"` - Equipment logic
+- `"Equipment"` - Tracking and accountability
 
 **Key Log Points:**
 ```csharp
-// Equipment discovery
-ModLogger.Debug("Quartermaster", $"Found {count} variants for slot {slotIndex}");
-ModLogger.Debug("Quartermaster", $"Filtered by tier {tier}, formation {formation}");
+// Item issued to equipment slot
+ModLogger.Info("Quartermaster", $"Equipment issued: {item.Name} to slot {slot} (replaced {previous})");
 
-// Cost calculation
-ModLogger.Debug("Quartermaster", $"Base cost: {baseCost}, Discount: {discount}, Final: {finalCost}");
+// Item added to inventory (slots full)
+ModLogger.Info("Quartermaster", $"Weapon slots full - {item.Name} added to inventory");
 
-// Equipment application
-ModLogger.Info("Quartermaster", $"Applied {equipment.Item.Name} to slot {slotIndex} for {cost} gold");
+// Item limit reached
+ModLogger.Info("Quartermaster", $"Item limit reached: {item.Name} (count: {count})");
 
-// UI operations
-ModLogger.Debug("QuartermasterUI", $"Template loaded: {templateName}");
-ModLogger.Debug("QuartermasterUI", $"View model initialized with {rowCount} rows");
+// Accountability check
+ModLogger.Info("Equipment", $"Missing equipment check: {missingCount} items, {totalDebt} gold debt");
+
+// Retirement
+ModLogger.Info("Equipment", "Retirement reward: keeping military gear, personal items to inventory");
 ```
-
-**Common Issues:**
-
-**"Custom Widget type not found" error:**
-- Templates in wrong folder (need `GUI/Prefabs/Equipment/`)
-- Check template file paths
-- Verify template names match code references
-
-**Game freezes on open:**
-- Missing hotkey registration before input restrictions
-- Ensure `RegisterHotKeyCategory()` called before `InputRestrictions`
-- Check hotkey registration order
-
-**Images don't load:**
-- Missing `TaleWorlds.PlayerServices.dll` assembly reference
-- Verify assembly reference in project
-- Check `ImageIdentifierVM` initialization
-
-**UI not centered on 4K:**
-- Using fixed margins instead of center alignment
-- Use `HorizontalAlignment="Center"` in templates
-- Check template layout properties
-
-**"Panel widget not found" error:**
-- Replace `<Panel>` with `<Widget>` in templates
-- Gauntlet requires `<Widget>` elements
-- Check all template files for panel usage
-
-**Equipment variants not showing:**
-- Check tier filtering logic
-- Verify formation class matching
-- Check culture appropriateness
-- Review equipment discovery method
 
 **Debug Output Location:**
 - `Modules/Enlisted/Debugging/enlisted.log`
-
-**Related Files:**
-- `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
-- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs`
-- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs`
 
 ---
 
@@ -407,4 +299,3 @@ ModLogger.Debug("QuartermasterUI", $"View model initialized with {rowCount} rows
 
 - [Menu Interface](menu-interface.md) - Access point for Quartermaster
 - [Equipment System](../Equipment/equipment.md) - Equipment management overview
-- [Duties System](../Core/duties-system.md) - Officer discounts for duties

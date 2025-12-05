@@ -1,10 +1,10 @@
 # Feature Spec: Troop Selection System
 
 ## Overview
-On promotion, players choose from real Bannerlord troops and receive their equipment, rather than getting predefined equipment kits.
+On promotion, players choose from real Bannerlord troops and receive their equipment. Equipment is tracked for accountability.
 
 ## Purpose
-Provide authentic military progression where you become actual troop types (Imperial Legionary, Aserai Mameluke) and inherit their gear, making promotions feel meaningful and immersive.
+Provide authentic military progression where you become actual troop types (Imperial Legionary, Aserai Mameluke) and inherit their gear. Equipment is free but tracked - missing gear on troop change results in pay deduction.
 
 ## Inputs/Outputs
 
@@ -15,79 +15,81 @@ Provide authentic military progression where you become actual troop types (Impe
 - Available troops in the game matching culture and tier
 
 **Outputs:**
-- Equipment completely replaced with selected troop's gear
-- Player gains identity of chosen troop type
+- Equipment replaced with selected troop's gear
+- Equipment tracked for accountability
+- Missing gear check (gold deducted if gear lost)
 - Visual feedback showing equipment changes
-- Progression message confirming new rank
 
 ## Behavior
 
-1. **Promotion Trigger**: Player reaches XP threshold → "Promotion!" popup notification
-2. **Troop Menu**: Shows real troops filtered by culture and tier
-3. **Selection**: Player picks troop (Imperial Legionary, Battanian Fian, etc.)
-4. **Equipment Copy**: Player gets exact equipment from `CharacterObject.BattleEquipments[0]`
-5. **Application**: Uses `EquipmentHelper.AssignHeroEquipmentFromEquipment()` to apply safely
-6. **Feedback**: Character model updates immediately, confirmation message shown
+1. **Promotion Trigger**: Player reaches XP threshold → "Promotion!" notification
+2. **Accountability Check**: System checks for missing equipment from previous issue
+3. **Gold Deduction**: Player charged for any missing gear
+4. **Troop Menu**: Shows real troops filtered by culture and tier
+5. **Selection**: Player picks troop (Imperial Legionary, Battanian Fian, etc.)
+6. **Equipment Issue**: New troop's equipment assigned and tracked
+7. **Feedback**: Character model updates, confirmation shown
 
-**Troop Filtering Logic:**
-```csharp
-// Find troops matching player's situation
-var availableTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>()
-    .Where(troop => troop.Culture == lordCulture)
-    .Where(troop => troop.GetBattleTier() == playerTier)
-    .Where(troop => troop.Occupation == Occupation.Soldier);
-```
+## Equipment Accountability
+
+When changing troop types:
+- System compares current gear vs issued gear
+- Missing items = gold deducted from pay
+- Player notified of missing items and cost
+- New equipment issued and tracking reset
+
+**Exception - Retirement**: No accountability check. Player keeps all gear as reward for service.
 
 ## Technical Implementation
 
 **Files:**
-- `TroopSelectionManager.cs` - Handles troop filtering and selection UI
-- `EquipmentManager.cs` - Applies equipment from selected troops
-- `PromotionBehavior.cs` - Triggers selection on tier advancement
+- `TroopSelectionManager.cs` - Troop filtering, selection, and equipment tracking
+- `EquipmentManager.cs` - Equipment backup/restore for enlistment lifecycle
+- `QuartermasterManager.cs` - Equipment variant selection (free, 2-item limit)
 
-**Key APIs:**
-- `MBObjectManager.Instance.GetObjectTypeList<CharacterObject>()` - Get all game troops
-- `CharacterObject.BattleEquipments` - Access troop equipment variants
-- `EquipmentHelper.AssignHeroEquipmentFromEquipment()` - Apply equipment safely
+**Key Classes:**
+- `IssuedItemRecord` - Tracks item ID, name, value, slot for accountability
+- `_issuedEquipment` - Dictionary storing issued gear per slot
+
+**Key Methods:**
+- `RecordIssuedEquipment()` - Store current gear for tracking
+- `CheckMissingEquipment()` - Compare current vs issued, return debt
+- `ClearIssuedEquipment()` - Clear tracking (retirement/full discharge)
 
 ## Edge Cases
 
-**No Troops Available for Tier:**
-- Expand tier search range (+1/-1 from exact tier)
-- Fallback to basic equipment if no troops found
-- Log warning but don't crash
+**Missing Equipment on Troop Change:**
+- Calculate total value of missing items
+- Deduct from player gold
+- Show popup with missing items list
+- Log transaction for debugging
 
-**Equipment Assignment Fails:**
-- Rollback to previous equipment state
-- Show error message to player
-- Log details for debugging
+**Retirement with Missing Gear:**
+- No accountability check (retirement perk)
+- Player keeps current equipment
+- Personal belongings returned to inventory
 
-**Lord Culture Changes:**
-- Update available troop pool when lord changes
-- Handle culture transitions during service
-
-**Multiple Equipment Sets on Troop:**
-- Use first equipment set (`BattleEquipments[0]`)
-- Future: Could allow selection between variants
+**Insufficient Gold for Missing Gear:**
+- Debt logged but not blocked
+- Player still gets new equipment
 
 ## Acceptance Criteria
 
 - ✅ Players see real troop names in promotion menu
-- ✅ Equipment comes from actual game troops, not custom kits
-- ✅ Filtering works correctly by culture and tier
-- ✅ Equipment applies immediately with visual update
-- ✅ No crashes during equipment assignment
-- ✅ Works for all cultures (Empire, Aserai, Khuzait, Vlandia, Sturgia, Battania)
-- ✅ Handles edge cases gracefully (missing troops, failed assignment)
+- ✅ Equipment tracked from moment of issue
+- ✅ Missing gear detected on troop change
+- ✅ Gold deducted for missing equipment
+- ✅ Clear notification of missing items and cost
+- ✅ Retirement skips accountability (keeps all gear)
+- ✅ Personal belongings restored to inventory on retirement
 
 ## Debugging
 
-**Common Issues:**
-- **No troops in menu**: Check culture filtering and tier ranges
-- **Equipment not applying**: Verify `EquipmentHelper` call succeeds
-- **Wrong equipment**: Check which `BattleEquipments` index is being used
-
 **Log Categories:**
 - "TroopSelection" - Troop filtering and menu operations
-- "Equipment" - Equipment application and management
-- "Promotion" - Promotion triggers and tier advancement
+- "Equipment" - Tracking and accountability
+
+**Key Log Points:**
+- "Missing equipment check: X items, Y gold debt"
+- "Retirement: skipping equipment accountability"
+- "Issued equipment recorded: X items tracked"

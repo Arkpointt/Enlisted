@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -85,6 +86,19 @@ namespace Enlisted.Features.Combat.Behaviors
                         $"=== BEHAVIOR ACTIVE === Mission: {Mission.Current?.Mode}, " +
                         $"Enlisted: {enlistment?.IsEnlisted}, OnLeave: {enlistment?.IsOnLeave}, " +
                         $"Agent.Main exists: {Agent.Main != null}");
+                    
+                    // Log companion states at mission start for debugging Stay Back issues
+                    var companionManager = CompanionAssignmentManager.Instance;
+                    var companions = companionManager?.GetAssignableCompanions() ?? new List<Hero>();
+                    if (companions.Count > 0)
+                    {
+                        var stayBackCompanions = companions.Where(c => !(companionManager?.ShouldCompanionFight(c) ?? true)).ToList();
+                        if (stayBackCompanions.Any())
+                        {
+                            ModLogger.Debug("FormationAssignment",
+                                $"Companions set to Stay Back: {string.Join(", ", stayBackCompanions.Select(c => c.Name))}");
+                        }
+                    }
                 }
 
                 TryAssignPlayerToFormation("AfterStart");
@@ -204,7 +218,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 _companionRemovalDelayCounter = 0; // Reset delay counter when we add a new companion
                 
                 ModLogger.Debug("FormationAssignment",
-                    $"Companion {hero.Name} queued for deferred removal (stay back)");
+                    $"Stay Back companion {hero.Name} queued for removal (formation: {agent.Formation?.FormationIndex})");
             }
         }
         
@@ -246,11 +260,27 @@ namespace Enlisted.Features.Combat.Behaviors
                         ModLogger.Debug("FormationAssignment", $"Cleared {heroName} as formation captain before removal");
                     }
                     
+                    // CRITICAL FIX: Clear captain status from ALL formations, not just own formation
+                    // The game's GeneralsAndCaptainsAssignmentLogic can make companion captain of ANY formation
+                    if (agent.Team != null)
+                    {
+                        foreach (var formation in agent.Team.FormationsIncludingEmpty)
+                        {
+                            if (formation?.Captain == agent)
+                            {
+                                formation.Captain = null;
+                                ModLogger.Debug("FormationAssignment", 
+                                    $"Cleared {heroName} as captain of {formation.FormationIndex} (Stay Back)");
+                            }
+                        }
+                    }
+                    
                     // FadeOut removes the agent without tracking as casualty
                     agent.FadeOut(hideInstantly: true, hideMount: true);
                     
                     // Verify removal worked
                     var stillActive = agent.IsActive();
+                    
                     if (stillActive)
                     {
                         ModLogger.Warn("FormationAssignment",
@@ -951,7 +981,7 @@ namespace Enlisted.Features.Combat.Behaviors
                             $"Cleared companion {captainName} as formation captain (player should command)");
                     }
                 }
-
+                
                 // Log summary if we assigned anyone
                 var totalAssigned = assignedCompanions + assignedRetinue;
                 if (totalAssigned > 0 || partyAgentsFound > 0)

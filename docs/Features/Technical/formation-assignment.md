@@ -34,6 +34,7 @@ Automatically assigns the enlisted player to their designated formation based on
 - Automatic formation assignment matching player's duty type
 - Teleportation to lord's position to fix spawn location issues
 - Squad command authority at Tier 4+ (player controls their own formation)
+- Companion command blocking (companions cannot become captains or generals)
 - Handles late spawns, reinforcements, and multi-team scenarios
 
 **Purpose:**
@@ -41,6 +42,7 @@ Fix the issue where the player's map party spawns slightly behind the lord's arm
 
 **Files:**
 - `src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs` - Mission behavior that handles formation assignment and teleportation
+- `src/Mod.GameAdapters/Patches/CompanionCaptainBlockPatch.cs` - Harmony patches preventing companions from commanding formations or armies
 
 ---
 
@@ -67,6 +69,12 @@ Fix the issue where the player's map party spawns slightly behind the lord's arm
 **Tier-Based Behavior:**
 - **Below Tier 4**: Player joins formation as a soldier, no command authority
 - **Tier 4+**: Player becomes sergeant, controls their own formation, companions and retinue join the same formation
+
+**Companion Command Restrictions:**
+- Companions **cannot** become formation captains (blocked via Harmony patch)
+- Companions **cannot** become team general (blocked via Harmony patch)
+- Prevents "Stay Back" companions from appearing and giving tactical orders
+- Ensures only lords and non-player heroes can command formations/armies
 
 ### Position Teleportation
 
@@ -154,6 +162,24 @@ OnDeploymentFinished() // Reliable point where agents exist
 OnAgentBuild()        // Catches late spawns and reinforcements
 OnMissionTick()       // Fallback retry mechanism
 ```
+
+**Companion Command Blocking:**
+
+The vanilla game assigns heroes as formation captains and team generals based on power level. This would cause player companions (especially high-power ones) to be selected as commanders, breaking the enlisted soldier experience.
+
+**Harmony Patches:**
+- `CompanionCaptainBlockPatch` - Intercepts `Formation.Captain` setter to block companion assignments
+- `CompanionGeneralBlockPatch` - Intercepts `Team.GeneralAgent` setter to block companion assignments
+
+**When Active:**
+- Only applies when player is enlisted at Tier 4+ (when companions participate in battles)
+- Blocks ALL player companions, regardless of "Fight" or "Stay Back" setting
+- Ensures lords and non-player heroes can still command normally
+
+**Why This Matters:**
+- Prevents companions from giving tactical announcements ("Our plan is to...")
+- Prevents companions from appearing as formation captains when set to "Stay Back"
+- Maintains the enlisted soldier role - player is a soldier, not a commander
 
 ### Agent Search Priority
 
@@ -287,7 +313,9 @@ _spawnLogic.IsInitialSpawnOver      // True after initial deployment
 
 **Log Categories:**
 - `FormationAssignment` - Main log category for this system
+- `CompanionCommand` - Companion command blocking (captain/general prevention)
 - Look for messages starting with "Assigned enlisted player", "Teleported player", "Lord agent not found"
+- Look for "Blocked captain" or "Blocked general" messages when debugging companion issues
 
 **Debug Flags:**
 - Set log level to Debug for detailed teleportation attempt logs

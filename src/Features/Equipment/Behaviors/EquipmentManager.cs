@@ -167,7 +167,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Restore personal equipment from backup.
-        /// Called when retiring or leaving service.
+        /// Called when discharged (not retirement) - replaces current equipment with original.
         /// </summary>
         public void RestorePersonalEquipment()
         {
@@ -209,6 +209,82 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("Equipment", $"Error restoring personal equipment: {ex.Message}", ex);
             }
         }
+        
+        /// <summary>
+        /// Restore personal equipment to INVENTORY (not equipped) for retirement.
+        /// Player keeps their current military gear AND gets their old stuff back in inventory.
+        /// This is a reward for completing service honorably.
+        /// </summary>
+        public void RestorePersonalEquipmentToInventory()
+        {
+            try
+            {
+                if (!_hasBackedUpEquipment)
+                {
+                    ModLogger.Info("Equipment", "No personal equipment to restore to inventory");
+                    return;
+                }
+                
+                var itemRoster = MobileParty.MainParty.ItemRoster;
+                var itemsRestored = 0;
+                
+                // Add backed up BATTLE equipment to inventory (player keeps what they're wearing)
+                if (_personalBattleEquipment != null)
+                {
+                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    {
+                        var item = _personalBattleEquipment[slot].Item;
+                        if (item != null)
+                        {
+                            itemRoster.AddToCounts(new EquipmentElement(item), 1);
+                            itemsRestored++;
+                        }
+                    }
+                }
+                
+                // Add backed up CIVILIAN equipment to inventory
+                if (_personalCivilianEquipment != null)
+                {
+                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    {
+                        var item = _personalCivilianEquipment[slot].Item;
+                        if (item != null)
+                        {
+                            itemRoster.AddToCounts(new EquipmentElement(item), 1);
+                            itemsRestored++;
+                        }
+                    }
+                }
+                
+                // Restore backed up inventory items
+                foreach (var item in _personalInventory)
+                {
+                    itemRoster.AddToCounts(item.EquipmentElement, item.Amount);
+                    itemsRestored += item.Amount;
+                }
+                
+                // Clear backup data
+                _personalInventory.Clear();
+                _personalBattleEquipment = null;
+                _personalCivilianEquipment = null;
+                _hasBackedUpEquipment = false;
+                
+                ModLogger.Info("Equipment", $"Retirement reward: {itemsRestored} items restored to inventory (player keeps military gear)");
+                
+                // Notify player
+                var message = new TextObject("{=qm_retirement_gear}Your personal belongings have been returned. You may keep your military equipment as thanks for your service.");
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", $"Error restoring equipment to inventory for retirement: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Check if personal equipment has been backed up.
+        /// </summary>
+        public bool HasBackedUpEquipment => _hasBackedUpEquipment;
         
         /// <summary>
         /// Get culture-appropriate equipment for a specific tier and formation.
@@ -336,7 +412,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         ModLogger.Info("Gold", $"Equipment purchased: {selectedTroop.Name} for {cost} denars (had {goldBefore}, now {Hero.MainHero.Gold})");
                         ModLogger.IncrementSummary("equipment_purchases", 1, cost);
                         
-                        var message = new TextObject("Equipment upgraded to {TROOP_NAME} for {COST} denars.");
+                        var message = new TextObject("{=eq_upgraded}Equipment upgraded to {TROOP_NAME} for {COST} denars.");
                         message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
                         message.SetTextVariable("COST", cost.ToString());
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -344,7 +420,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     else
                     {
                         ModLogger.Warn("Gold", $"Insufficient funds for equipment: need {cost} denars, have {Hero.MainHero.Gold}");
-                        var message = new TextObject("Insufficient funds. Need {COST} denars for equipment upgrade.");
+                        var message = new TextObject("{=eq_insufficient_upgrade}Insufficient funds. Need {COST} denars for equipment upgrade.");
                         message.SetTextVariable("COST", cost.ToString());
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                     }

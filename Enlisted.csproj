@@ -201,6 +201,8 @@
     <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml"/>

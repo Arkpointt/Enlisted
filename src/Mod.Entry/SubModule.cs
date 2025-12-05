@@ -171,6 +171,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(FormationMessageSuppressionPatch);
                     _ = typeof(IncidentsSuppressionPatch);
                     _ = typeof(InfluenceMessageSuppressionPatch);
+                    _ = typeof(PlayerIsAtSeaTagCrashFix);
                     _ = nameof(ArmyDispersedMenuPatch.Prefix);
                     _ = nameof(JoinEncounterAutoSelectPatch.Prefix);
                     _ = nameof(EncounterSuppressionPatch.Prefix);

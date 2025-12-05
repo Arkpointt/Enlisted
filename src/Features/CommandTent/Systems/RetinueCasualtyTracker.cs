@@ -43,7 +43,11 @@ namespace Enlisted.Features.CommandTent.Systems
             // Also hook into player battle end for additional tracking
             CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnPlayerBattleEnd);
 
-            ModLogger.Debug(LogCategory, "RetinueCasualtyTracker registered for battle events");
+            // Daily sync to catch wounded soldiers who die from wounds between battles
+            // This ensures trickle can activate sooner when deaths occur outside of combat
+            CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+
+            ModLogger.Debug(LogCategory, "RetinueCasualtyTracker registered for battle events and daily sync");
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -147,6 +151,90 @@ namespace Enlisted.Features.CommandTent.Systems
             {
                 ModLogger.Error(LogCategory, $"Error in OnPlayerBattleEnd: {ex.Message}", ex);
                 _isInBattle = false;
+            }
+        }
+
+        /// <summary>
+        /// Daily tick handler - syncs retinue tracking with actual roster to catch
+        /// wounded soldiers who died from wounds between battles.
+        /// </summary>
+        private void OnDailyTick()
+        {
+            try
+            {
+                // Skip sync during active battles
+                if (_isInBattle)
+                {
+                    return;
+                }
+
+                var manager = RetinueManager.Instance;
+                if (manager?.State == null || !manager.State.HasRetinue)
+                {
+                    return;
+                }
+
+                // Perform a quiet sync - only log if corrections are needed
+                SyncWithRosterQuiet();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Error in daily sync: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
+        /// Quietly syncs retinue tracking with roster, logging only when corrections occur.
+        /// Used by daily tick to catch wounded soldiers who died from wounds.
+        /// </summary>
+        private void SyncWithRosterQuiet()
+        {
+            var manager = RetinueManager.Instance;
+            if (manager?.State == null)
+            {
+                return;
+            }
+
+            var roster = MobileParty.MainParty?.MemberRoster;
+            if (roster == null)
+            {
+                return;
+            }
+
+            var state = manager.State;
+            var totalLost = 0;
+            var lossLog = new List<string>();
+
+            foreach (var troopId in state.TroopCounts.Keys.ToList())
+            {
+                var character = CharacterObject.Find(troopId);
+                if (character == null)
+                {
+                    continue;
+                }
+
+                var actualCount = roster.GetTroopCount(character);
+                var trackedCount = state.GetTroopCount(troopId);
+
+                // Only care about losses (wounded dying from wounds)
+                if (actualCount < trackedCount)
+                {
+                    var lost = trackedCount - actualCount;
+                    state.UpdateTroopCount(troopId, -lost);
+                    totalLost += lost;
+                    lossLog.Add($"{lost}x {character.Name}");
+                }
+            }
+
+            // Clean up any zero-count entries
+            CleanupZeroCountEntries(state);
+
+            // Log if we found soldiers who died from wounds
+            if (totalLost > 0)
+            {
+                ModLogger.Info(LogCategory,
+                    $"Wounded casualties: {totalLost} soldiers succumbed to wounds ({string.Join(", ", lossLog)}), " +
+                    $"{state.TotalSoldiers} remaining");
             }
         }
 

@@ -523,16 +523,45 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // For weapons and consumables, find the best slot to place the item
                 // This prevents overwriting the same slot when player wants multiple items
                 var targetSlot = slot;
+                var addedToInventory = false;
+                
                 if (IsWeaponSlot(slot) || IsConsumableItem(requestedItem))
                 {
                     targetSlot = FindBestWeaponSlot(hero, requestedItem, slot);
+                    
+                    // If no empty slot available, add to inventory instead of blocking
                     if (targetSlot == EquipmentIndex.None)
                     {
-                        var noSlotsMsg = new TextObject("{=qm_no_weapon_slots}Your hands are full, soldier. Return something to the armory first.");
-                        InformationManager.DisplayMessage(new InformationMessage(noSlotsMsg.ToString(), Colors.Yellow));
-                        ModLogger.Info("Quartermaster", $"No available weapon slot for {requestedItem.Name}");
-                        return;
+                        // Add to party inventory since hands are full
+                        var partyInventory = PartyBase.MainParty?.ItemRoster;
+                        if (partyInventory != null)
+                        {
+                            partyInventory.AddToCounts(new EquipmentElement(requestedItem), 1);
+                            addedToInventory = true;
+                            
+                            var inventoryMsg = new TextObject("{=qm_added_to_inventory}{ITEM_NAME} stowed in your pack. Hands full.");
+                            inventoryMsg.SetTextVariable("ITEM_NAME", requestedItem.Name);
+                            InformationManager.DisplayMessage(new InformationMessage(inventoryMsg.ToString(), Colors.Yellow));
+                            ModLogger.Info("Quartermaster", $"Weapon slots full - {requestedItem.Name} added to inventory");
+                        }
+                        else
+                        {
+                            // Fallback if inventory unavailable (shouldn't happen)
+                            var noSlotsMsg = new TextObject("{=qm_no_weapon_slots}Your hands are full, soldier. Return something to the armory first.");
+                            InformationManager.DisplayMessage(new InformationMessage(noSlotsMsg.ToString(), Colors.Yellow));
+                            ModLogger.Info("Quartermaster", $"No available weapon slot for {requestedItem.Name}");
+                            return;
+                        }
                     }
+                }
+                
+                // If we added to inventory, record it and skip equipment slot change
+                if (addedToInventory)
+                {
+                    // Record for accountability (item is now in inventory)
+                    var troopSelection = TroopSelectionManager.Instance;
+                    troopSelection?.RecordIssuedItem(requestedItem, EquipmentIndex.None);
+                    return;
                 }
                 
                 var currentItem = hero.BattleEquipment[targetSlot].Item;
@@ -545,8 +574,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ApplyEquipmentSlotChange(hero, requestedItem, targetSlot);
                 
                 // Record newly issued equipment for accountability tracking
-                var troopSelection = TroopSelectionManager.Instance;
-                troopSelection?.RecordIssuedItem(requestedItem, targetSlot);
+                var troopSelectionMgr = TroopSelectionManager.Instance;
+                troopSelectionMgr?.RecordIssuedItem(requestedItem, targetSlot);
                 
                 // Success notification
                 var successMessage = new TextObject("{=qm_equipment_issued}Equipment issued: {ITEM_NAME}. Army provides.");
@@ -563,10 +592,13 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Find the best available weapon slot for an item.
-        /// Prefers empty slots, then slots without the same item, to allow having multiple weapons.
+        /// Only returns empty slots - does not replace existing items.
+        /// When all slots are full, returns None so caller can add to inventory.
         /// </summary>
         private static EquipmentIndex FindBestWeaponSlot(Hero hero, ItemObject newItem, EquipmentIndex preferredSlot)
         {
+            _ = newItem; // Item type not needed since we only look for empty slots
+            
             // Weapon slots are Weapon0 through Weapon3
             var weaponSlots = new[] { EquipmentIndex.Weapon0, EquipmentIndex.Weapon1, EquipmentIndex.Weapon2, EquipmentIndex.Weapon3 };
             
@@ -585,33 +617,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
             }
             
-            // Priority 3: If the preferred slot doesn't have this exact item, use it (replace different item)
-            if (IsWeaponSlot(preferredSlot))
-            {
-                var currentItem = hero.BattleEquipment[preferredSlot].Item;
-                if (currentItem?.StringId != newItem.StringId)
-                {
-                    return preferredSlot;
-                }
-            }
-            
-            // Priority 4: Find a slot that doesn't have this exact item (to avoid duplicating same slot)
-            foreach (var weaponSlot in weaponSlots)
-            {
-                var currentItem = hero.BattleEquipment[weaponSlot].Item;
-                if (currentItem?.StringId != newItem.StringId)
-                {
-                    return weaponSlot;
-                }
-            }
-            
-            // Priority 5: All slots have this item - no more room
-            // Return None to indicate no valid slot available
+            // All weapon slots are occupied - return None so caller can add to inventory
             return EquipmentIndex.None;
         }
         
         /// <summary>
-        /// Count how many of a specific item the player currently has equipped.
+        /// Count how many of a specific item the player currently has in equipment and inventory.
         /// Used to enforce the 2-item-per-type limit to prevent abuse.
         /// </summary>
         private static int GetPlayerItemCount(Hero hero, string itemStringId)
@@ -638,6 +649,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (hero.CivilianEquipment[slot].Item?.StringId == itemStringId)
                 {
                     count++;
+                }
+            }
+            
+            // Check party inventory for the same item
+            var partyInventory = PartyBase.MainParty?.ItemRoster;
+            if (partyInventory != null)
+            {
+                var targetItem = MBObjectManager.Instance.GetObject<ItemObject>(itemStringId);
+                if (targetItem != null)
+                {
+                    count += partyInventory.GetItemNumber(targetItem);
                 }
             }
             
@@ -1194,7 +1216,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (weaponOptions.Count == 0)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No weapon variants available for your troop tree.").ToString()));
+                        new TextObject("{=qm_no_weapon_variants}No weapon variants available for your troop tree.").ToString()));
                     return;
                 }
 
@@ -1435,7 +1457,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (filteredOptions.Count == 0 || !filteredOptions.Any(kvp => kvp.Value.Any()))
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No armor variants available for your troop tree.").ToString()));
+                        new TextObject("{=qm_no_armor_variants}No armor variants available for your troop tree.").ToString()));
                     return;
                 }
 
@@ -1779,14 +1801,24 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
+                        
+                        // Check if player has hit the 2-item limit for this item type
+                        var itemCount = GetPlayerItemCount(hero, item.StringId);
+                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        
+                        // Weapons always allow duplicate purchases (soldiers can carry multiple)
+                        var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
+                        
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
                             IsCurrent = item == currentItem,
-                            CanAfford = hero.Gold >= cost,
+                            CanAfford = !isAtLimit, // Can get if not at limit (equipment is free)
                             Slot = slot,
-                            IsOfficerExclusive = false
+                            IsOfficerExclusive = false,
+                            AllowsDuplicatePurchase = allowsDuplicate,
+                            IsAtLimit = isAtLimit
                         });
                     }
 
@@ -1871,6 +1903,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 
         /// <summary>
         /// Build variant options for armor - allows even single items to show (so player can see current equipment).
+        /// Armor does not allow duplicates (you can only wear one piece per slot).
         /// </summary>
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> BuildVariantOptionsForArmor(
             Dictionary<EquipmentIndex, List<ItemObject>> variants)
@@ -1893,14 +1926,21 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
+                        
+                        // Check if player has hit the 2-item limit for this item type
+                        var itemCount = GetPlayerItemCount(hero, item.StringId);
+                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
                             IsCurrent = item == currentItem,
-                            CanAfford = hero.Gold >= cost,
+                            CanAfford = !isAtLimit, // Can get if not at limit (equipment is free)
                             Slot = slot,
-                            IsOfficerExclusive = false
+                            IsOfficerExclusive = false,
+                            AllowsDuplicatePurchase = false, // Armor doesn't allow duplicates
+                            IsAtLimit = isAtLimit
                         });
                     }
 
@@ -2047,14 +2087,24 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
+                        
+                        // Check if player has hit the 2-item limit for this item type
+                        var itemCount = GetPlayerItemCount(hero, item.StringId);
+                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        
+                        // Weapons and consumables allow duplicates
+                        var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
+                        
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
                             IsCurrent = item == currentItem,
-                            CanAfford = hero.Gold >= cost,
+                            CanAfford = !isAtLimit, // Can get if not at limit (equipment is free)
                             Slot = slot,
-                            IsOfficerExclusive = false
+                            IsOfficerExclusive = false,
+                            AllowsDuplicatePurchase = allowsDuplicate,
+                            IsAtLimit = isAtLimit
                         });
                     }
 
@@ -2137,7 +2187,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No helmet variants available for your troop type.").ToString()));
+                        new TextObject("{=qm_no_helmet_variants}No helmet variants available for your troop type.").ToString()));
                 }
             }
             catch (Exception ex)
@@ -2203,7 +2253,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No accessory variants available.").ToString()));
+                        new TextObject("{=qm_no_accessory_variants}No accessory variants available.").ToString()));
                 }
             }
             catch (Exception ex)
@@ -2384,7 +2434,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 party.ItemRoster.AddToCounts(MBObjectManager.Instance.GetObject<ItemObject>("grain"), foodBonus);
                 
-                var message = new TextObject("Optimized food supplies: +{AMOUNT} grain from efficient rationing.");
+                var message = new TextObject("{=qm_optimized_food}Optimized food supplies: +{AMOUNT} grain from efficient rationing.");
                 message.SetTextVariable("AMOUNT", foodBonus.ToString());
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 
@@ -2406,7 +2456,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             var party = MobileParty.MainParty;
             var capacityBonus = party.InventoryCapacity * 0.05f; // 5% temporary capacity bonus
             
-            var message = new TextObject("Reorganized inventory: +{AMOUNT} temporary carry capacity.");
+            var message = new TextObject("{=qm_reorganized_inventory}Reorganized inventory: +{AMOUNT} temporary carry capacity.");
             message.SetTextVariable("AMOUNT", capacityBonus.ToString("F0"));
             InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
             
@@ -2433,7 +2483,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 party.ItemRoster.AddToCounts(MBObjectManager.Instance.GetObject<ItemObject>("tools"), 2);
                 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("Purchased basic supplies: 5 grain, 2 tools.").ToString()));
+                    new TextObject("{=qm_purchased_supplies}Purchased basic supplies: 5 grain, 2 tools.").ToString()));
                     
                 ModLogger.Info("Quartermaster", "Supply purchase completed");
             }
@@ -2490,13 +2540,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (selectedOption.IsCurrent && !selectedOption.AllowsDuplicatePurchase)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("You already have this equipment variant.").ToString()));
+                        new TextObject("{=qm_already_have_variant}You already have this equipment variant.").ToString()));
                     return;
                 }
                 
                 if (!selectedOption.CanAfford)
                 {
-                    var message = new TextObject("Insufficient funds. You need {COST} denars.");
+                    var message = new TextObject("{=qm_insufficient_funds}Insufficient funds. You need {COST} denars.");
                     message.SetTextVariable("COST", selectedOption.Cost.ToString());
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                     return;

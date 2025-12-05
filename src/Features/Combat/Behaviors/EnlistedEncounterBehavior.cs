@@ -9,6 +9,7 @@ using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -53,12 +54,35 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 AddEnlistedEncounterOptions(campaignStarter);
                 ModLogger.LogOnce("encounter_behavior_init", "Combat",
-                    "Encounter behavior initialized - battle wait menu and reserve options ready");
+                    "Encounter behavior initialized with modern UI styling - battle wait menu and reserve options ready");
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Combat", $"Failed to initialize encounter behavior: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// Menu background initialization for enlisted_battle_wait menu.
+        /// Sets culture-appropriate background and ambient audio for battle wait.
+        /// </summary>
+        [GameMenuInitializationHandler("enlisted_battle_wait")]
+        private static void OnBattleWaitBackgroundInit(MenuCallbackArgs args)
+        {
+            var lord = EnlistmentBehavior.Instance?.CurrentLord;
+            var backgroundMesh = "encounter_looter";
+            
+            if (lord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = lord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (lord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = lord.Culture.EncounterBackgroundMesh;
+            }
+            
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
         }
 
         /// <summary>
@@ -71,13 +95,17 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             // Add "Wait in reserve" option for large battles (100+ troops)
             // This allows players to stay out of the initial fighting in large battles
-            var waitInReserveText = new TextObject("Wait in reserve");
+            var waitInReserveText = new TextObject("{=combat_wait_reserve}Wait in reserve");
 
-            // Add to the encounter menu for field battles only
+            // Add to the encounter menu for field battles only (Wait icon)
             // Native system handles siege menus automatically
             starter.AddGameMenuOption("encounter", "enlisted_wait_reserve",
                 waitInReserveText.ToString(),
-                IsWaitInReserveAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Wait;
+                    return IsWaitInReserveAvailable(args);
+                },
                 OnWaitInReserveSelected,
                 false, 1);
 
@@ -94,11 +122,15 @@ namespace Enlisted.Features.Combat.Behaviors
                 OnBattleWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // Return to battle option
-            var rejoinBattleText = new TextObject("Rejoin the battle");
+            // Return to battle option (Mission icon for combat)
+            var rejoinBattleText = new TextObject("{=combat_rejoin_battle}Rejoin the battle");
             starter.AddGameMenuOption("enlisted_battle_wait", "enlisted_rejoin_battle",
                 rejoinBattleText.ToString(),
-                _ => true,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Mission;
+                    return true;
+                },
                 OnRejoinBattleSelected,
                 false, 1);
         }
@@ -143,7 +175,7 @@ namespace Enlisted.Features.Combat.Behaviors
             if (isSiegeBattle)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("Wait in reserve is not available during siege battles");
+                args.Tooltip = new TextObject("{=combat_reserve_siege_disabled}Wait in reserve is not available during siege battles");
                 ModLogger.Debug("Siege", "Wait in reserve disabled - siege battle detected");
                 return false;
             }
@@ -152,7 +184,7 @@ namespace Enlisted.Features.Combat.Behaviors
             if (MobileParty.MainParty.Morale <= 1f)
             {
                 args.optionLeaveType = GameMenuOption.LeaveType.Wait;
-                args.Tooltip = new TextObject("You are too demoralized to fight.");
+                args.Tooltip = new TextObject("{=combat_too_demoralized}You are too demoralized to fight.");
                 return true;
             }
 
@@ -184,7 +216,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     ModLogger.Info("Battle",
                         "Prevented wait in reserve during siege battle - native system handles siege menus");
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("Wait in reserve is not available during siege battles.").ToString()));
+                        new TextObject("{=combat_reserve_siege_disabled_full}Wait in reserve is not available during siege battles.").ToString()));
                     return; // Don't switch menus during sieges
                 }
 

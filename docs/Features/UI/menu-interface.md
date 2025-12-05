@@ -12,6 +12,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Modern UI Styling](#modern-ui-styling)
 - [How It Works](#how-it-works)
   - [Main Enlisted Status Menu](#main-enlisted-status-menu)
   - [Duty Selection Interface](#duty-selection-interface)
@@ -28,16 +29,61 @@
 
 ## Overview
 
-Professional military menu interface providing comprehensive service management with organized duty/profession selection, detailed descriptions, and tier-based progression.
+Professional military menu interface providing comprehensive service management with organized duty/profession selection, detailed descriptions, and tier-based progression. All menus feature modern styling with icons, tooltips, ambient audio, and culture-appropriate backgrounds.
 
 **Key Features:**
+- Modern icons on all menu options via `LeaveType`
+- Hover tooltips explaining each option's function and bonuses
+- Culture-appropriate background meshes
+- Ambient camp audio for immersion
 - Clean section organization (Duties vs. Professions)
-- Detailed descriptions of each military role
-- Tier-based progression visibility
+- Tier-based progression with helpful unlock messages
 - Real-time status updates
 - Connected daily XP processing
 
 **File:** `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
+
+---
+
+## Modern UI Styling
+
+All menus use a consistent modern styling system for professional appearance.
+
+### Menu Option Icons
+
+Each menu option has a `LeaveType` that displays an appropriate icon:
+
+| Option | LeaveType | Icon Purpose |
+|--------|-----------|--------------|
+| Master at Arms | `TroopSelection` | Troop management |
+| Visit Quartermaster | `Trade` | Equipment/trading |
+| My Lord... | `Conversation` | Dialog |
+| Visit Settlement | `Submenu` | Navigation |
+| Report for Duty | `Manage` | Management |
+| Ask for Leave | `Leave` | Exit action |
+| Desert the Army | `Escape` | Warning/danger |
+
+### Tooltips
+
+Every menu option displays a tooltip on hover explaining its function:
+- Main menu options show brief descriptions
+- Duty options explain skill bonuses and benefits
+- Profession options show tier requirements if locked, or bonuses if unlocked
+
+Tooltip strings are localized in `ModuleData/Languages/enlisted_strings.xml`.
+
+### Background and Audio
+
+Menus use `[GameMenuInitializationHandler]` attributes to set:
+- **Background Mesh**: Culture-appropriate encounter background from lord's kingdom
+- **Ambient Sound**: `event:/map/ambient/node/settlements/2d/camp_army`
+- **Panel Sound**: `event:/ui/panels/settlement_camp`
+
+### Text Formatting
+
+- Section headers use em-dashes: `— DUTIES —` instead of ASCII box characters
+- Currency displays use inline gold icons: `{GOLD_ICON}`
+- Bullet lists use modern markers: `•` for selected, `○` for available
 
 ---
 
@@ -47,15 +93,22 @@ Professional military menu interface providing comprehensive service management 
 
 **Menu ID:** `enlisted_status` (WaitGameMenu)
 
-**Options:**
-- **Master at Arms** - Troop selection with close button support
-- **Visit Quartermaster** - Equipment variant selection
-- **Command Tent** - Service records, retinue management, companion assignments
-- **My Lord...** - Conversation with nearby lords
-- **Report for Duty** - Organized duty/profession selection
-- **Ask commander for leave** - Positioned at bottom for logical flow
+**Options with Icons and Tooltips:**
+| Option | Icon | Tooltip |
+|--------|------|---------|
+| Master at Arms | TroopSelection | Select your troop type and equipment loadout based on your current tier |
+| Visit Quartermaster | Trade | Request equipment variants and manage party supplies |
+| My Lord... | Conversation | Speak with nearby lords for quests, news, and relation building |
+| Visit Settlement | Submenu | Enter the settlement while your lord is present |
+| Report for Duty | Manage | Select your daily duty and profession for bonuses and special abilities |
+| Ask commander for leave | Leave | Request temporary leave from service |
+| Desert the Army | Escape | WARNING: Severe relation and crime penalties |
 
 **Features:**
+- Modern icons on every option for visual clarity
+- Tooltips on hover explaining each action
+- Culture-appropriate background mesh from lord's kingdom
+- Ambient camp audio for immersion
 - Professional status display with real-time updates
 - Clean navigation to sub-menus
 - Status information (tier, XP, days served, etc.)
@@ -65,23 +118,27 @@ Professional military menu interface providing comprehensive service management 
 **Menu ID:** `enlisted_duty_selection` (WaitGameMenu)
 
 **Section Organization:**
-- **DUTIES** section header with visual separation
-- **PROFESSIONS** section header with visual separation
+- **— DUTIES —** section header with em-dash styling
+- **— PROFESSIONS —** section header with em-dash styling
 - Visual spacer between sections for clean layout
 
-**Duty Selection (Available T1+):**
-- **Enlisted** - General military service (+4 XP for non-formation skills)
-- **Forager** - Supply procurement (Charm, Roguery, Trade)
-- **Sentry** - Guard duty (Scouting, Tactics)
-- **Messenger** - Communications (Scouting, Charm, Trade)
-- **Pioneer** - Engineering work (Engineering, Steward, Smithing)
+**Duty Selection (Available T1+) with Icons and Tooltips:**
+| Duty | Icon | Tooltip |
+|------|------|---------|
+| Enlisted | Continue | Standard military service. Train with your formation and earn base wages |
+| Forager | Trade | Gather food and supplies for the army. Earn bonus XP and improved wages |
+| Sentry | DefendAction | Guard the camp perimeter. Improved detection and bonus lord relations |
+| Messenger | Mission | Deliver messages and scout ahead. Bonus riding/athletics XP |
+| Pioneer | SiegeAmbush | Build fortifications and siege works. Bonus engineering XP |
 
-**Profession Selection (Available T3+):**
-- **Quartermaster's Aide** - Logistics management (Steward, Trade)
-- **Field Medic** - Medical duties (Medicine)
-- **Siegewright's Aide** - Siege engineering (Engineering, Smithing)
-- **Drillmaster** - Training management (Leadership, Tactics)
-- **Saboteur** - Special operations (Roguery, Engineering, Smithing)
+**Profession Selection (Available T3+) with Icons and Tooltips:**
+| Profession | Icon | Tooltip (Unlocked) | Tooltip (Locked) |
+|------------|------|-------------------|------------------|
+| Quarterhand | Trade | 15% better trade prices and +50 carry capacity | Requires Tier 3 |
+| Field Medic | Manage | Faster healing, bonus medicine XP, morale boost | Requires Tier 3 |
+| Siegewright's Aide | SiegeAmbush | Faster siege construction, bonus engineering XP | Requires Tier 3 |
+| Drillmaster | OrderTroopsToAttack | Bonus leadership XP and troop morale | Requires Tier 3 |
+| Saboteur | Raid | Bonus roguery XP and special mission access | Requires Tier 3 |
 
 **Description System:**
 - Top of menu shows detailed descriptions for currently selected duty/profession
@@ -92,6 +149,11 @@ Professional military menu interface providing comprehensive service management 
 - Dynamic checkmarks (✓/○) showing current selections
 - Updates in real-time when selection changes
 - Visual feedback for active assignments
+
+**Tier-Locked Professions:**
+- Options below Tier 3 are grayed out (`args.IsEnabled = false`)
+- Tooltip shows "Requires Tier 3 to unlock this profession"
+- Still visible to show players what they're working toward
 
 ### Menu Navigation
 

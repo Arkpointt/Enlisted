@@ -72,8 +72,9 @@
     <string id="Enlisted_Message_PromotionAchieved" text="Promotion achieved! Your service and dedication have been recognized. You are now a {RANK}." />
     <string id="Enlisted_Message_LeaveExpiredDeserter" text="Your leave has expired. You have been branded a deserter." />
     <string id="Enlisted_Message_LeaveExpiredVassal" text="Your leave has expired, but as a member of {KINGDOM}, your service ends honorably." />
-    <string id="Enlisted_Message_BecameVassalMercenary" text="You have become a {STATUS} of {KINGDOM}. Your enlistment has ended honorably." />
+    <string id="Enlisted_Message_BecameVassal" text="You have become a vassal of {KINGDOM}. Your enlistment has ended honorably." />
     <string id="Enlisted_Message_DesertedToOtherKingdom" text="You have deserted {ORIGINAL_KINGDOM} by joining {NEW_KINGDOM}. You have been branded a deserter." />
+    <string id="Enlisted_Message_QuitMercenaryDesertion" text="You have abandoned your mercenary service with {KINGDOM}. You have been branded a deserter." />
     <string id="Enlisted_Message_LeaveRemaining" text="Leave: {DAYS} days remaining before desertion." />
     <string id="Enlisted_Message_TermCompleted" text="You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment." />
     <string id="Enlisted_Message_TermEndedDischarge" text="Your service term has ended. Speak with {LORD} to receive your discharge bonus or continue service." />

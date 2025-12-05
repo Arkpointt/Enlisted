@@ -1450,7 +1450,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 var text = new TextObject("{=Enlisted_Objective_Battle}Engaged in battle at {LOCATION}");
                 text.SetTextVariable("LOCATION",
-                    lordParty.Party.MapEvent.MapEventSettlement?.Name ?? new TextObject("field"));
+                    lordParty.Party.MapEvent.MapEventSettlement?.Name ?? new TextObject("{=menu_field_battle}field"));
                 return text.ToString();
             }
 
@@ -1521,7 +1521,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (manager == null)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("Master at Arms system is temporarily unavailable.").ToString()));
+                        new TextObject("{=menu_master_unavailable}Master at Arms system is temporarily unavailable.").ToString()));
                     return;
                 }
 
@@ -1547,7 +1547,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (enlistment?.IsEnlisted != true)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("You must be enlisted to access quartermaster services.").ToString()));
+                        new TextObject("{=menu_must_be_enlisted_qm}You must be enlisted to access quartermaster services.").ToString()));
                     return;
                 }
 
@@ -1561,14 +1561,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("Quartermaster services temporarily unavailable.").ToString()));
+                        new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
                 }
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", "Error accessing quartermaster services", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("Quartermaster system error. Please report this issue.").ToString()));
+                    new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }
         }
 
@@ -1587,7 +1587,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (enlistment?.IsEnlisted != true)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("You must be enlisted to speak with lords.").ToString()));
+                        new TextObject("{=menu_must_be_enlisted_lords}You must be enlisted to speak with lords.").ToString()));
                     return;
                 }
 
@@ -1596,7 +1596,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (nearbyLords.Count == 0)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No lords are available for conversation at this location.").ToString()));
+                        new TextObject("{=menu_no_lords_available}No lords are available for conversation at this location.").ToString()));
                     return;
                 }
 
@@ -1736,7 +1736,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (lord?.PartyBelongedTo == null)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("Lord is not available for conversation.").ToString()));
+                        new TextObject("{=menu_lord_not_available}Lord is not available for conversation.").ToString()));
                     return;
                 }
 
@@ -1749,7 +1749,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error("Interface", $"Error opening conversation with {lord?.Name}: {ex.Message}");
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("Unable to start conversation. Please try again.").ToString()));
+                    new TextObject("{=menu_conversation_error}Unable to start conversation. Please try again.").ToString()));
             }
         }
 
@@ -1831,7 +1831,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("Your lord is not in a town or castle.").ToString()));
+                        new TextObject("{=menu_lord_not_in_settlement}Your lord is not in a town or castle.").ToString()));
                     return;
                 }
 
@@ -1914,7 +1914,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error("Interface", $"VisitTown failed: {ex}");
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("Couldn't open the town interface.").ToString()));
+                    new TextObject("{=menu_town_interface_error}Couldn't open the town interface.").ToString()));
             }
         }
 

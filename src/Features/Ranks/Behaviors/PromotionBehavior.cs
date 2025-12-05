@@ -129,10 +129,8 @@ namespace Enlisted.Features.Ranks.Behaviors
             {
                 _formationSelectionPending = true;
 
-                var message =
-                    new TextObject(
-                        "Specialization available! Choose your military formation to unlock specialized duties and equipment.");
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                var message = new TextObject("{=formation_select_msg}The serjeant surveys the recruits. 'Time to find your place in the line, soldier. What are you trained for?'");
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
 
                 // Open formation selection (can be enhanced with custom menu later)
                 ShowFormationSelectionOptions();
@@ -146,35 +144,37 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Trigger promotion notification and troop selection.
+        ///     Trigger promotion notification with immersive roleplay text.
+        ///     Each tier has unique narrative describing what the promotion means.
         /// </summary>
         private void TriggerPromotionNotification(int newTier)
         {
             try
             {
                 var rankName = GetRankName(newTier);
-                var message =
-                    new TextObject(
-                        "Promotion available! You can advance to {RANK} (Tier {TIER}). Visit the quartermaster to choose your equipment.");
-                message.SetTextVariable("RANK", rankName);
-                message.SetTextVariable("TIER", newTier.ToString());
-
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-
-                // Show a popup inquiry to ensure the player notices the promotion
-                var titleText = new TextObject("Promotion!");
-                var popupMessage =
-                    new TextObject(
-                        "Congratulations! You have been promoted to {RANK} (Tier {TIER}).\n\nVisit the quartermaster to update your equipment.");
+                var playerName = Hero.MainHero?.Name?.ToString() ?? "Soldier";
+                
+                // Get tier-specific localized title and message
+                var titleText = GetPromotionTitle(newTier);
+                var popupMessage = GetPromotionMessage(newTier);
+                popupMessage.SetTextVariable("PLAYER_NAME", playerName);
                 popupMessage.SetTextVariable("RANK", rankName);
-                popupMessage.SetTextVariable("TIER", newTier.ToString());
+
+                // Show short notification in chat
+                var chatMessage = GetPromotionChatMessage(newTier);
+                InformationManager.DisplayMessage(new InformationMessage(chatMessage.ToString(), Colors.Green));
+
+                // Get appropriate button text based on tier
+                var buttonText = newTier >= 4 
+                    ? new TextObject("{=promo_btn_command}To the Command Tent").ToString()
+                    : new TextObject("{=promo_btn_understood}Understood").ToString();
 
                 var data = new InquiryData(
                     titleText.ToString(),
                     popupMessage.ToString(),
                     true,
                     false,
-                    "OK",
+                    buttonText,
                     "",
                     () => { },
                     null
@@ -188,6 +188,54 @@ namespace Enlisted.Features.Ranks.Behaviors
             {
                 ModLogger.Error("Promotion", "Error showing promotion notification", ex);
             }
+        }
+        
+        /// <summary>
+        ///     Get tier-specific promotion popup title from localization.
+        /// </summary>
+        private TextObject GetPromotionTitle(int tier)
+        {
+            return tier switch
+            {
+                2 => new TextObject("{=promo_title_2}Recognized as a Soldier"),
+                3 => new TextObject("{=promo_title_3}Rise to Serjeant"),
+                4 => new TextObject("{=promo_title_4}Sworn as Man-at-Arms"),
+                5 => new TextObject("{=promo_title_5}Entrusted with the Banner"),
+                6 => new TextObject("{=promo_title_6}Welcomed to the Household"),
+                _ => new TextObject("{=promo_title_default}Promotion!")
+            };
+        }
+        
+        /// <summary>
+        ///     Get tier-specific immersive promotion message from localization.
+        /// </summary>
+        private TextObject GetPromotionMessage(int tier)
+        {
+            return tier switch
+            {
+                2 => new TextObject("{=promo_msg_2}"),
+                3 => new TextObject("{=promo_msg_3}"),
+                4 => new TextObject("{=promo_msg_4}"),
+                5 => new TextObject("{=promo_msg_5}"),
+                6 => new TextObject("{=promo_msg_6}"),
+                _ => new TextObject("{=promo_msg_default}You have been promoted to {RANK}.")
+            };
+        }
+        
+        /// <summary>
+        ///     Get tier-specific short chat notification from localization.
+        /// </summary>
+        private TextObject GetPromotionChatMessage(int tier)
+        {
+            return tier switch
+            {
+                2 => new TextObject("{=promo_chat_2}"),
+                3 => new TextObject("{=promo_chat_3}"),
+                4 => new TextObject("{=promo_chat_4}"),
+                5 => new TextObject("{=promo_chat_5}"),
+                6 => new TextObject("{=promo_chat_6}"),
+                _ => new TextObject("{=promo_chat_default}You have been promoted!")
+            };
         }
 
         /// <summary>
@@ -206,11 +254,10 @@ namespace Enlisted.Features.Ranks.Behaviors
                 duties?.SetPlayerFormation(currentFormation.ToString().ToLower());
 
                 var formationName = GetFormationDisplayName(currentFormation);
-                var message =
-                    new TextObject("Formation specialized: {FORMATION}. New duties and equipment now available.");
+                var message = new TextObject("{=formation_assigned}Formation assigned: {FORMATION}. Your training and equipment will reflect your role.");
                 message.SetTextVariable("FORMATION", formationName);
 
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
 
                 _formationSelectionPending = false;
 

@@ -4,8 +4,8 @@
 
 | Feature | Tier | Description |
 |---------|------|-------------|
-| Service Records | 1 | View faction-specific and lifetime service statistics |
-| Companion Assignments | 1 | Toggle which companions fight in battles |
+| Service Records | 1+ | View faction-specific and lifetime service statistics |
+| Companion Assignments | 4+ | Toggle which companions fight in battles |
 | Personal Retinue | 4+ | Command soldiers (5 at T4, 10 at T5, 20 at T6) |
 
 ## Table of Contents
@@ -108,6 +108,7 @@ At Tier 4+, players can command soldiers that fight alongside them in battle.
    - 1 soldier every 2-3 days (randomized)
    - Automatic, no cost
    - Respects tier capacity and party size limits
+   - Waits for wounded soldiers to heal or die before filling slots (daily sync)
 
 2. **Instant Requisition** (Costly, Fast):
    - Instant fill of all missing soldiers
@@ -148,6 +149,11 @@ Manage which companions fight in battles (Tier 4+).
 - Native battle resolution only processes spawned agents
 - "Stay back" companions survive army destruction, player capture, all battle outcomes
 
+**Command Restrictions:**
+- Companions **cannot** become formation captains or team generals during enlistment
+- Prevents companions from giving tactical orders or appearing as commanders
+- Applies to all companions regardless of "Fight" or "Stay Back" setting
+
 **UI:**
 - Command Tent → Companion Assignments
 - Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
@@ -175,7 +181,7 @@ src/Features/CommandTent/
 │   └── RetinueState.cs              # Current retinue state
 ├── Systems/
 │   ├── RetinueTrickleSystem.cs     # Free, slow replenishment
-│   ├── RetinueCasualtyTracker.cs   # Battle casualty reconciliation
+│   ├── RetinueCasualtyTracker.cs   # Battle casualties + daily wounded sync
 │   └── ServiceStatisticsSystem.cs   # Kill/battle tracking
 └── UI/
     └── CommandTentMenuHandler.cs    # Menu integration
@@ -368,6 +374,11 @@ character.GetFormationClass();  // Returns FormationClass enum
 - Native `OnTroopKilled()` updates roster automatically
 - We sync tracking state to match roster
 
+**Wounded Soldiers:**
+- Wounded troops count towards retinue capacity while healing
+- Daily sync catches soldiers who die from wounds between battles
+- Once wounded soldiers heal or die, trickle can replenish the gap
+
 ---
 
 ## Debugging
@@ -378,6 +389,7 @@ character.GetFormationClass();  // Returns FormationClass enum
 - `"Upkeep"` - Daily gold deduction
 - `"Trickle"` - Free replenishment
 - `"Requisition"` - Instant replenishment
+- `"CasualtyTracker"` - Battle casualties and wounded sync
 
 **Key Log Points:**
 ```csharp
@@ -396,6 +408,10 @@ ModLogger.Warn("Upkeep", $"Player cannot afford upkeep, desertion triggered");
 
 // Lifecycle
 ModLogger.Info("Retinue", $"Cleared {count} retinue troops (reason: {reason})");
+
+// Casualty tracking
+ModLogger.Info("CasualtyTracker", $"Battle casualties: {lost} soldiers lost");
+ModLogger.Info("CasualtyTracker", $"Wounded casualties: {lost} soldiers succumbed to wounds");
 ```
 
 **Debug Output Location:**
@@ -404,6 +420,7 @@ ModLogger.Info("Retinue", $"Cleared {count} retinue troops (reason: {reason})");
 **Related Files:**
 - `src/Features/CommandTent/Core/RetinueManager.cs`
 - `src/Features/CommandTent/Core/ServiceRecordManager.cs`
+- `src/Features/CommandTent/Systems/RetinueCasualtyTracker.cs`
 - `src/Features/CommandTent/UI/CommandTentMenuHandler.cs`
 
 ---

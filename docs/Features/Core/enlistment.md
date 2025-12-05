@@ -80,6 +80,27 @@ Provide the foundation for military service - join a lord's forces, follow them 
 
 Rank names are configurable in `progression_config.json`.
 
+**Immersive Promotion Notifications:**
+
+Each tier has unique roleplay-focused promotion text with narrative describing the ceremony and new privileges:
+
+| Tier | Title | Key Unlocks |
+|------|-------|-------------|
+| 2 | "Recognized as a Soldier" | Formation selection, better equipment |
+| 3 | "Rise to Serjeant" | Military professions unlock |
+| 4 | "Sworn as Man-at-Arms" | Command 5 soldiers (retinue) |
+| 5 | "Entrusted with the Banner" | Command 10 soldiers |
+| 6 | "Welcomed to the Household" | Command 20 soldiers (max) |
+
+Promotion popup features:
+- Tier-specific title showing the ceremony name
+- Narrative text describing the promotion from the lord's or serjeant's perspective
+- Player name included in the narrative for immersion
+- Context-aware button text ("Understood" for Tier 2-3, "To the Command Tent" for Tier 4+)
+- Short chat notification for quick feedback
+
+All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xml` with IDs like `promo_title_X`, `promo_msg_X`, and `promo_chat_X`.
+
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
 - Automatic handling of army disbandment or lord capture
@@ -132,11 +153,15 @@ Rank names are configurable in `progression_config.json`.
 - Kills added to `_currentTermKills` after each battle
 - On retirement, term kills transfer to faction's TotalKills
 
-**Formation Assignment:**
-- `EnlistedFormationAssignmentBehavior` assigns player to their designated formation (Infantry, Archer, etc.)
-- Teleports player to correct position within formation if they spawned late or in wrong location
-- Handles mission modes: StartUp, Battle, Stealth, Deployment (sieges start in StartUp mode)
+**Formation Assignment (Battle Spawn):**
+- `EnlistedFormationAssignmentBehavior` assigns player to their designated formation based on duty (Infantry, Ranged, Cavalry, Horse Archer)
+- At Tier 4+, player commands a unified squad - all retinue soldiers and companions assigned to player's formation
+- Teleports player and squad to formation position using smart spawn detection:
+  - **Initial spawn**: Teleports if > 5m from formation (troops deploy near formation)
+  - **Reinforcement spawn**: Always teleports (troops spawn at map edge, run onto field)
+- Uses `MissionAgentSpawnLogic.IsInitialSpawnOver` to detect reinforcement phase
 - Skipped in naval battles - Naval DLC has its own ship-based spawn system
+- Player role set to Sergeant (can command own squad, not other formations)
 
 ## Technical Implementation
 
@@ -146,7 +171,7 @@ Rank names are configurable in `progression_config.json`.
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 - `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
-- `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player to their formation and teleports them to correct position (skipped in naval battles)
+- `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
 - `MercenaryIncomeSuppressionPatch.cs` - Suppresses native mercenary income (players receive mod wages only)
 - `FoodSystemPatches.cs` - Consolidated food handling: suppresses food consumption and prevents starvation when enlisted (lord provides food)

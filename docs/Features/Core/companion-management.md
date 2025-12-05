@@ -75,6 +75,7 @@ When a battle starts at Tier 4+, the player, companions, and retinue fight toget
 - Player is **not** "General" (cannot command entire army)
 - Formation ownership: `Formation.PlayerOwner = playerAgent`
 - Order controller transferred to lord
+- **Companions cannot command** - blocked from becoming captains or generals
 
 **Implementation:**
 - Handled by `EnlistedFormationAssignmentBehavior`
@@ -88,6 +89,12 @@ At Tier 4+, players can control which companions fight in battles through the Co
 **Settings:**
 - **Fight** (default): Companion spawns in battle, faces all risks
 - **Stay Back**: Companion remains in roster, doesn't spawn, immune to battle outcomes
+
+**Command Restrictions:**
+- Companions **cannot** become formation captains (blocked via Harmony patch)
+- Companions **cannot** become team general (blocked via Harmony patch)
+- Prevents companions from giving tactical orders or appearing as commanders
+- Applies to ALL companions during enlistment, regardless of "Fight" or "Stay Back" setting
 
 **Why "Stay Back" Is Safe:**
 - Native battle resolution only processes **spawned agents**
@@ -137,8 +144,10 @@ RestoreCompanionsToPlayer(); // Only needed for Tier 1-3 edge cases
 
 **Key Methods:**
 - `TryAssignPlayerToFormation()` - Assigns player to duty-based formation
-- `AssignPlayerPartyToFormation()` - Assigns all player party troops to same formation
+- `TryAssignPlayerPartyToFormation()` - Assigns all player party troops to same formation, teleports if needed
+- `TryTeleportPlayerToFormationPosition()` - Teleports player to formation center
 - `SuppressPlayerCommand()` - Removes generalship, sets sergeant role
+- `IsReinforcementPhase()` - Detects if spawning as reinforcement vs initial deployment
 
 **Formation Assignment Flow:**
 ```
@@ -148,16 +157,28 @@ Player party troops spawn via native PartyGroupTroopSupplier
     ↓
 EnlistedFormationAssignmentBehavior activates
     ↓
-Get player's duty formation (Infantry/Archer/Cavalry/HorseArcher)
+Get player's duty formation (Infantry/Ranged/Cavalry/HorseArcher)
     ↓
 Assign player agent to that formation
     ↓
+Detect spawn type (initial vs reinforcement):
+  - Initial spawn: teleport if > 5m from formation
+  - Reinforcement: always teleport (spawns at map edge)
+    ↓
 Find all agents from player's party → assign to SAME formation
+    ↓
+Teleport reassigned squad members to player's position
     ↓
 Set player as PlayerOwner of formation (squad commands enabled)
     ↓
 Suppress general/captain roles (army commands disabled)
 ```
+
+**Spawn Detection:**
+- Uses `MissionAgentSpawnLogic.IsInitialSpawnOver` to detect reinforcement phase
+- Initial spawn: troops deploy near their formation positions
+- Reinforcement spawn: troops spawn at map edge and run onto battlefield
+- Reinforcements always teleported to formation regardless of distance
 
 ### Battle Participation State
 
@@ -174,6 +195,12 @@ private Dictionary<string, bool> _companionBattleParticipation;
 - Check `ShouldCompanionFight(hero)` before assigning to formation
 - If "stay back": call `agent.FadeOut()` to remove without casualty tracking
 
+**Command Blocking:**
+- Harmony patches intercept `Formation.Captain` and `Team.GeneralAgent` setters
+- Blocks ALL player companions from being assigned to command roles
+- Prevents high-power companions from being selected as generals/captains by vanilla logic
+- Ensures "Stay Back" companions don't appear giving tactical announcements
+
 **Persistence:**
 - Saved via `SyncData` serialization
 - Persists across save/load
@@ -182,6 +209,28 @@ private Dictionary<string, bool> _companionBattleParticipation;
 ---
 
 ## Edge Cases
+
+### Reinforcement Spawn
+
+**Scenario:** Player joins battle as reinforcement (initial troops already deployed)
+
+**Behavior:**
+- Player and squad spawn at map edge (native reinforcement behavior)
+- System detects reinforcement phase via `MissionAgentSpawnLogic.IsInitialSpawnOver`
+- Player and all squad members **always teleported** to formation center
+- No distance threshold - reinforcements can spawn anywhere on map edge
+- Squad reassigned to player's duty formation (Infantry/Ranged/etc.) if they spawned in wrong formation
+
+### Retinue Type Differs from Duty Formation
+
+**Scenario:** Player duty is Ranged (archer), but retinue soldiers are Infantry type
+
+**Behavior:**
+- Game spawns infantry retinue with Infantry formation (their natural troop class)
+- System detects retinue soldiers are from player's party
+- Retinue reassigned from Infantry to player's Ranged formation
+- Retinue teleported to player's position (they spawned at Infantry's location)
+- Squad fights together in player's duty formation regardless of troop type
 
 ### Army Destroyed
 
@@ -298,6 +347,7 @@ agent.FadeOut(hideInstantly: true, hideMount: true);
 **Log Categories:**
 - `"Companions"` - Companion transfers and state changes
 - `"FormationAssignment"` - Battle formation assignment
+- `"CompanionCommand"` - Companion command blocking (captain/general prevention)
 
 **Key Log Points:**
 ```csharp
@@ -307,11 +357,18 @@ ModLogger.Info("Companions", $"Moved {count} companions to player's squad (Tier 
 
 // Formation assignment
 ModLogger.Info("FormationAssignment", $"Assigned enlisted player to {formationClass} formation");
-ModLogger.Debug("FormationAssignment", $"Assigned companion {name} to player's formation");
+ModLogger.Info("FormationAssignment", $"Teleported player to formation (REINFORCEMENT spawn, was 45.3m away)");
+ModLogger.Info("FormationAssignment", $"Player party assignment [REINFORCEMENT]: found=3, teleported=2");
+ModLogger.Info("FormationAssignment", $"=== UNIFIED SQUAD FORMED === 3 party members in Ranged formation");
+ModLogger.Debug("FormationAssignment", $"Assigned companion {name} to player's squad");
 ModLogger.Info("FormationAssignment", $"Command Suppression: Captaincy Stripped={stripped}");
 
 // Battle participation
 ModLogger.Debug("Companions", $"Companion {name} marked 'stay back' - removing from battle");
+
+// Command blocking
+ModLogger.Debug("CompanionCommand", $"Blocked captain: {name} -> {formation} | Companions cannot command formations while enlisted");
+ModLogger.Debug("CompanionCommand", $"Blocked general: {name} -> Team({side}) | Companions cannot be army general while enlisted");
 ```
 
 **Debug Output Location:**
@@ -321,6 +378,7 @@ ModLogger.Debug("Companions", $"Companion {name} marked 'stay back' - removing f
 - `src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs`
 - `src/Features/CommandTent/Core/CompanionAssignmentManager.cs`
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+- `src/Mod.GameAdapters/Patches/CompanionCaptainBlockPatch.cs` - Command blocking patches
 
 ---
 

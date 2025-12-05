@@ -53,7 +53,13 @@ namespace Enlisted.Features.CommandTent.Core
                 return true;
             }
 
-            return !_companionBattleParticipation.TryGetValue(companion.StringId, out var fights) || fights;
+            var hasEntry = _companionBattleParticipation.TryGetValue(companion.StringId, out var fights);
+            var result = !hasEntry || fights;
+            
+            ModLogger.Trace(LogCategory, 
+                $"ShouldFight check: {companion.Name} -> {(result ? "Fight" : "Stay Back")} (hasEntry={hasEntry})");
+            
+            return result;
         }
 
         /// <summary>
@@ -67,6 +73,7 @@ namespace Enlisted.Features.CommandTent.Core
             }
 
             _companionBattleParticipation[companion.StringId] = shouldFight;
+            
             ModLogger.Debug(LogCategory,
                 $"Set {companion.Name} participation to {(shouldFight ? "Fight" : "Stay Back")}");
         }

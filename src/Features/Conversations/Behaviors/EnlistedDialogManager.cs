@@ -5,6 +5,7 @@ using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -554,6 +555,28 @@ namespace Enlisted.Features.Conversations.Behaviors
             return new TextObject(key);
         }
 
+        /// <summary>
+        ///     Cleans up the enlisted menu after discharge/retirement.
+        ///     Called deferred (next frame) after retirement dialog closes to ensure
+        ///     the player isn't stuck on an empty menu with no options.
+        /// </summary>
+        private static void CleanupEnlistedMenuAfterDischarge()
+        {
+            try
+            {
+                // Only exit if we're still on the enlisted menu and not enlisted
+                if (EnlistmentBehavior.Instance?.IsEnlisted != true)
+                {
+                    ModLogger.Info("DialogManager", "Cleaning up enlisted menu after discharge");
+                    GameMenu.ExitToLast();
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", $"Error cleaning up menu after discharge: {ex.Message}");
+            }
+        }
+
         #endregion
 
         #region Shared Dialog Conditions
@@ -910,6 +933,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Handles first-term retirement with full benefits.
+        ///     Schedules menu cleanup after dialog closes to prevent empty menu state.
         /// </summary>
         private void OnAcceptFirstTermRetirement()
         {
@@ -917,6 +941,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
                 ModLogger.Info("DialogManager", "First-term retirement processed");
+                
+                // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
+                NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
             catch (Exception ex)
             {
@@ -944,6 +971,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Handles renewal term discharge with 5,000 gold.
+        ///     Schedules menu cleanup after dialog closes to prevent empty menu state.
         /// </summary>
         private void OnAcceptRenewalDischarge()
         {
@@ -951,6 +979,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
                 ModLogger.Info("DialogManager", "Renewal discharge processed");
+                
+                // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
+                NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
             catch (Exception ex)
             {
@@ -1001,6 +1032,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Handles early discharge (before full term, no benefits).
+        ///     Schedules menu cleanup after dialog closes to prevent empty menu state.
         /// </summary>
         private void OnGrantEarlyDischarge()
         {
@@ -1018,6 +1050,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                         GetLocalizedText(
                             "{=enlisted_early_discharge_notification}You have been discharged from service without full benefits.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    
+                    // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
+                    NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
                 }
             }
             catch (Exception ex)

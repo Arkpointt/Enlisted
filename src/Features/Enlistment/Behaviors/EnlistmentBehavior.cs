@@ -2431,14 +2431,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Get the kingdom for desertion penalties
                 var lordKingdom = _enlistedLord.MapFaction as Kingdom;
 
-                // BUG FIX: Check if player has become a vassal or mercenary of the same faction
-                // If the player joined the same kingdom (as vassal or mercenary), they haven't deserted -
-                // they've elevated their service. Just clear leave state without penalties.
+                // BUG FIX: Check if player has become a VASSAL of the same faction
+                // Only vassals get honorable discharge - they elevated their service.
+                // Mercenaries who didn't return to the army are still deserters.
                 var playerClan = Clan.PlayerClan;
-                if (playerClan?.Kingdom != null && lordKingdom != null && playerClan.Kingdom == lordKingdom)
+                if (playerClan?.Kingdom != null && lordKingdom != null && 
+                    playerClan.Kingdom == lordKingdom && !playerClan.IsUnderMercenaryService)
                 {
                     ModLogger.Info("Leave",
-                        $"Leave expired but player is now a {(playerClan.IsUnderMercenaryService ? "mercenary" : "vassal")} of {lordKingdom.Name} - clearing leave without penalties");
+                        $"Leave expired but player is now a vassal of {lordKingdom.Name} - clearing leave without penalties");
 
                     // Clear leave state
                     _isOnLeave = false;
@@ -2447,8 +2448,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Fire event for other mods
                     OnLeaveEnded?.Invoke();
 
-                    // End enlistment cleanly since player is now a vassal/mercenary
-                    StopEnlist("Player became vassal/mercenary of same faction", isHonorableDischarge: true);
+                    // End enlistment cleanly since player is now a vassal
+                    StopEnlist("Player became vassal of same faction", isHonorableDischarge: true);
 
                     var vassalMessage =
                         new TextObject(
@@ -4218,14 +4219,53 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return; // Not the player's clan
             }
 
-            // BUG FIX: If player is enlisted (active or on leave) and kingdom status changes, end enlistment honorably
+            // Handle player leaving the kingdom entirely (quitting mercenary service) while enlisted or on leave
+            // This is desertion - they abandoned their service commitment
+            if ((IsEnlisted || _isOnLeave) && newKingdom == null && oldKingdom != null)
+            {
+                var lordKingdom = _enlistedLord?.MapFaction as Kingdom;
+                
+                // Only process if they were in the lord's kingdom (not some random kingdom change)
+                if (lordKingdom != null && oldKingdom == lordKingdom)
+                {
+                    ModLogger.Info("Desertion",
+                        $"Player quit mercenary service with {oldKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - treating as desertion");
+
+                    // Clear leave state if on leave
+                    if (_isOnLeave)
+                    {
+                        _isOnLeave = false;
+                        _leaveStartDate = CampaignTime.Zero;
+                    }
+
+                    // Set pending desertion kingdom to the original lord's kingdom
+                    _pendingDesertionKingdom = lordKingdom;
+                    
+                    // Apply desertion penalties
+                    ApplyDesertionPenalties();
+
+                    // Fire event for other mods (before StopEnlist clears state)
+                    OnLeaveEnded?.Invoke();
+
+                    // End enlistment as desertion
+                    StopEnlist($"Player quit mercenary service with {oldKingdom.Name} - desertion", isHonorableDischarge: false);
+
+                    var desertionMessage = new TextObject(
+                        "{=Enlisted_Message_QuitMercenaryDesertion}You have abandoned your mercenary service with {KINGDOM}. You have been branded a deserter.");
+                    desertionMessage.SetTextVariable("KINGDOM", oldKingdom.Name);
+                    InformationManager.DisplayMessage(new InformationMessage(desertionMessage.ToString()));
+                    
+                    return; // Early return - don't process grace period logic
+                }
+            }
+
+            // BUG FIX: If player is enlisted (active or on leave) and kingdom status changes, handle appropriately
             // When actively enlisted, player is already a mercenary in the lord's kingdom.
             // This handles:
             // 1. Active enlistment: mercenary -> vassal promotion (same kingdom, oldKingdom == newKingdom)
             // 2. Active enlistment: joins different kingdom (oldKingdom != newKingdom)
             // 3. On leave: joins any kingdom as mercenary/vassal (may have left kingdom during leave)
             // NOTE: We must NOT end enlistment when they first join as mercenary during StartEnlist()
-            // Becoming a vassal/mercenary is an elevation of service status, not desertion
             if ((IsEnlisted || _isOnLeave) && newKingdom != null)
             {
                 var playerClan = Clan.PlayerClan;
@@ -4246,8 +4286,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var wasOnLeave = _isOnLeave;
                     var isInitialEnlistment = lordKingdom != null && lordKingdom == newKingdom && 
                                              oldKingdom != lordKingdom && playerClan.IsUnderMercenaryService;
-                    var isOnLeaveSameKingdom = wasOnLeave && lordKingdom != null && lordKingdom == newKingdom;
+                    // Only vassals of the same kingdom get honorable discharge
+                    // Mercenaries who join same kingdom while on leave are still deserters (they broke their service commitment)
+                    var isOnLeaveBecameVassal = wasOnLeave && lordKingdom != null && lordKingdom == newKingdom && !playerClan.IsUnderMercenaryService;
                     var isOnLeaveDifferentKingdom = wasOnLeave && lordKingdom != null && lordKingdom != newKingdom;
+                    var isOnLeaveSameKingdomAsMercenary = wasOnLeave && lordKingdom != null && lordKingdom == newKingdom && playerClan.IsUnderMercenaryService;
                     
                     // Skip initial enlistment (joining lord's kingdom as mercenary during StartEnlist)
                     if (isInitialEnlistment)
@@ -4256,12 +4299,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     
                     // Handle honorable discharge cases:
-                    // 1. Promoted to vassal in same kingdom
-                    // 2. On leave and joined same kingdom
-                    if (isPromotionToVassal || isOnLeaveSameKingdom)
+                    // 1. Promoted to vassal in same kingdom (active enlistment)
+                    // 2. On leave and became vassal of same kingdom
+                    if (isPromotionToVassal || isOnLeaveBecameVassal)
                     {
                         ModLogger.Info("Enlistment",
-                            $"Player became {(playerClan.IsUnderMercenaryService ? "mercenary" : "vassal")} of {newKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - ending enlistment honorably");
+                            $"Player became vassal of {newKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - ending enlistment honorably");
 
                         // Clear leave state if on leave
                         if (_isOnLeave)
@@ -4271,13 +4314,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
 
                         // End enlistment honorably since player elevated their service
-                        StopEnlist($"Player became {(playerClan.IsUnderMercenaryService ? "mercenary" : "vassal")} of {newKingdom.Name}", isHonorableDischarge: true);
+                        StopEnlist($"Player became vassal of {newKingdom.Name}", isHonorableDischarge: true);
 
                         var message = new TextObject(
-                            "{=Enlisted_Message_BecameVassalMercenary}You have become a {STATUS} of {KINGDOM}. Your enlistment has ended honorably.");
-                        message.SetTextVariable("STATUS", playerClan.IsUnderMercenaryService 
-                            ? new TextObject("{=mercenary}mercenary") 
-                            : new TextObject("{=vassal}vassal"));
+                            "{=Enlisted_Message_BecameVassal}You have become a vassal of {KINGDOM}. Your enlistment has ended honorably.");
                         message.SetTextVariable("KINGDOM", newKingdom.Name);
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                         
@@ -4287,7 +4327,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Handle desertion cases:
                     // 1. Active enlistment + joined different kingdom
                     // 2. On leave + joined different kingdom
-                    if (isKingdomTransfer || isOnLeaveDifferentKingdom)
+                    // 3. On leave + joined same kingdom as mercenary (they left and came back, breaking service commitment)
+                    if (isKingdomTransfer || isOnLeaveDifferentKingdom || isOnLeaveSameKingdomAsMercenary)
                     {
                         ModLogger.Info("Desertion",
                             $"Player joined different kingdom {newKingdom.Name} while {(IsEnlisted ? "enlisted" : "on leave")} - treating as desertion");

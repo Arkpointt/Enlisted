@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -64,6 +65,9 @@ namespace Enlisted.Features.CommandTent.UI
         {
             try
             {
+                // Set up inline icons for use in menu text (Bannerlord's rich text system)
+                SetupInlineIcons();
+                
                 AddCommandTentMenus(starter);
                 ModLogger.Info(LogCategory, "Command Tent menus registered successfully");
             }
@@ -71,6 +75,19 @@ namespace Enlisted.Features.CommandTent.UI
             {
                 ModLogger.Error(LogCategory, $"Failed to register Command Tent menus: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// Sets up inline icon variables for use in menu text.
+        /// Uses Bannerlord's native img tag system for inline sprites.
+        /// </summary>
+        private static void SetupInlineIcons()
+        {
+            // Gold/denar icon - displays coin sprite inline with text
+            MBTextManager.SetTextVariable("GOLD_ICON", "{=!}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">");
+            
+            // Influence icon - displays influence sprite inline
+            MBTextManager.SetTextVariable("INFLUENCE_ICON", "{=!}<img src=\"General\\Icons\\Influence@2x\" extend=\"7\">");
         }
 
         /// <summary>
@@ -179,48 +196,48 @@ namespace Enlisted.Features.CommandTent.UI
         {
             starter.AddGameMenu(
                 CommandTentMenuId,
-                "{=ct_menu_intro}The canvas flaps in the breeze. Maps and tallies cover a makeshift table. Your small corner of the army's camp.",
-                OnCommandTentInit); // Default overlay is None
+                "{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.",
+                OnCommandTentInit);
 
-            // Service Records option
+            // Service Records option - Manage icon (scroll/quill)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_service_records",
-                "{=ct_option_records}Review service records",
+                "{=ct_option_records}Review Service Records",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
                 _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
                 false,
                 1);
 
-            // Personal Retinue option (Tier 4+ only)
+            // Personal Retinue option - TroopSelection icon (soldiers)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_retinue",
-                "{=ct_option_retinue}Muster personal retinue",
+                "{=ct_option_retinue}Muster Personal Retinue",
                 IsRetinueAvailable,
                 _ => GameMenu.SwitchToMenu(RetinueMenuId),
                 false,
                 2);
 
-            // Companion Assignments option (Tier 4+ only)
+            // Companion Assignments option - Conversation icon (speech)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_companions",
-                "{=ct_option_companions}Companion assignments",
+                "{=ct_option_companions}Companion Assignments",
                 IsCompanionAssignmentsAvailable,
                 _ => GameMenu.SwitchToMenu(CompanionAssignmentsMenuId),
                 false,
                 3);
 
-            // Back to camp option
+            // Back to camp option - Leave icon (door)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_back",
-                "{=ct_option_back}Return to camp",
+                "{=ct_option_back}Return to Camp",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
@@ -236,13 +253,38 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void OnCommandTentInit(MenuCallbackArgs args)
         {
-            // args is required by the delegate signature but not used for initialization
-            _ = args;
+            // Refresh inline icons in case they were cleared
+            SetupInlineIcons();
             ModLogger.Debug(LogCategory, "Command Tent menu initialized");
+        }
+        
+        /// <summary>
+        /// Menu background and audio initialization for Command Tent menus.
+        /// Sets military-themed background and ambient audio for immersion.
+        /// </summary>
+        [GameMenuInitializationHandler(CommandTentMenuId)]
+        [GameMenuInitializationHandler(ServiceRecordsMenuId)]
+        [GameMenuInitializationHandler(CurrentPostingMenuId)]
+        [GameMenuInitializationHandler(FactionRecordsMenuId)]
+        [GameMenuInitializationHandler(FactionDetailMenuId)]
+        [GameMenuInitializationHandler(LifetimeSummaryMenuId)]
+        [GameMenuInitializationHandler(RetinueMenuId)]
+        [GameMenuInitializationHandler(RetinuePurchaseMenuId)]
+        [GameMenuInitializationHandler(RetinueDismissMenuId)]
+        [GameMenuInitializationHandler(RetinueRequisitionMenuId)]
+        [GameMenuInitializationHandler(CompanionAssignmentsMenuId)]
+        public static void CommandTentMenuBackgroundInit(MenuCallbackArgs args)
+        {
+            // Use a military meeting/camp background
+            args.MenuContext.SetBackgroundMeshName("encounter_meeting");
+            
+            // Add ambient audio for the command tent atmosphere
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
         }
 
         /// <summary>
         /// Checks if retinue option is available (Tier 4+ only).
+        /// Uses TroopSelection icon for soldier management.
         /// </summary>
         private bool IsRetinueAvailable(MenuCallbackArgs args)
         {
@@ -260,7 +302,7 @@ namespace Enlisted.Features.CommandTent.UI
                 args.Tooltip = new TextObject("{=ct_warn_tier_locked}You must reach Tier 4 to command soldiers.");
             }
 
-            args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+            args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
             return true;
         }
 
@@ -275,10 +317,10 @@ namespace Enlisted.Features.CommandTent.UI
         {
             starter.AddGameMenu(
                 ServiceRecordsMenuId,
-                "{=ct_records_intro}Your service history and military records are catalogued here.",
-                OnServiceRecordsInit); // Default overlay is None
+                "{=ct_records_intro}Your service history and military records.",
+                OnServiceRecordsInit);
 
-            // Current Posting option
+            // Current Posting option - Manage icon
             starter.AddGameMenuOption(
                 ServiceRecordsMenuId,
                 "ct_current_posting",
@@ -291,42 +333,42 @@ namespace Enlisted.Features.CommandTent.UI
                     {
                         args.Tooltip = new TextObject("{=ct_not_enlisted}You are not currently enlisted.");
                     }
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
                 _ => GameMenu.SwitchToMenu(CurrentPostingMenuId),
                 false,
                 1);
 
-            // Faction Records option
+            // Faction Records option - Leaderboard icon
             starter.AddGameMenuOption(
                 ServiceRecordsMenuId,
                 "ct_faction_records",
                 "{=ct_option_faction}Faction Records",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leaderboard;
                     return true;
                 },
                 _ => GameMenu.SwitchToMenu(FactionRecordsMenuId),
                 false,
                 2);
 
-            // Lifetime Summary option
+            // Lifetime Summary option - Manage icon
             starter.AddGameMenuOption(
                 ServiceRecordsMenuId,
                 "ct_lifetime_summary",
                 "{=ct_option_lifetime}Lifetime Summary",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
                 _ => GameMenu.SwitchToMenu(LifetimeSummaryMenuId),
                 false,
                 3);
 
-            // Back option
+            // Back option - Leave icon
             starter.AddGameMenuOption(
                 ServiceRecordsMenuId,
                 "ct_records_back",
@@ -397,6 +439,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Builds the formatted text for current posting display.
+        /// Uses clean, modern formatting without ASCII art.
         /// </summary>
         private string BuildCurrentPostingText()
         {
@@ -414,39 +457,26 @@ namespace Enlisted.Features.CommandTent.UI
             var tier = enlistment.EnlistmentTier;
             var daysServed = (int)enlistment.DaysServed;
             var daysRemaining = GetDaysRemaining(enlistment);
-
-            // Header
-            sb.AppendLine("═══════════════════════════════════════════");
-            sb.AppendLine("         CURRENT SERVICE RECORD");
-            sb.AppendLine("═══════════════════════════════════════════");
-            sb.AppendLine();
-
-            // Posting info
             var factionName = faction?.Name?.ToString() ?? "Unknown";
             var lordName = lord?.Name?.ToString() ?? "Unknown";
             var rankName = GetRankName(tier);
-
-            sb.AppendLine($"  Posting: Army of {factionName}");
-            sb.AppendLine($"  Lord: {lordName}");
-            sb.AppendLine($"  Rank: {rankName} (Tier {tier})");
-            sb.AppendLine();
-            sb.AppendLine($"  Days Served: {daysServed}");
-            sb.AppendLine($"  Contract Remaining: {daysRemaining}");
-            sb.AppendLine();
-
-            // Current term stats
-            sb.AppendLine("───────────────────────────────────────────");
-            sb.AppendLine("            THIS TERM");
-            sb.AppendLine("───────────────────────────────────────────");
-            sb.AppendLine();
-
             var termBattles = recordManager?.CurrentTermBattles ?? 0;
             var termKills = recordManager?.CurrentTermKills ?? 0;
 
-            sb.AppendLine($"  Battles: {termBattles}");
-            sb.AppendLine($"  Enemies Slain: {termKills}");
             sb.AppendLine();
-            sb.AppendLine("═══════════════════════════════════════════");
+            sb.AppendLine("— Current Service Record —");
+            sb.AppendLine();
+            sb.AppendLine($"Posting: Army of {factionName}");
+            sb.AppendLine($"Commander: {lordName}");
+            sb.AppendLine($"Rank: {rankName} (Tier {tier})");
+            sb.AppendLine();
+            sb.AppendLine($"Days Served: {daysServed}");
+            sb.AppendLine($"Contract: {daysRemaining}");
+            sb.AppendLine();
+            sb.AppendLine("— This Term —");
+            sb.AppendLine();
+            sb.AppendLine($"Battles Fought: {termBattles}");
+            sb.AppendLine($"Enemies Slain: {termKills}");
 
             return sb.ToString();
         }
@@ -543,40 +573,35 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Builds the faction records list text showing all factions served with summary stats.
+        /// Uses clean, modern formatting.
         /// </summary>
         private string BuildFactionRecordsListText()
         {
             var sb = new StringBuilder();
             var recordManager = ServiceRecordManager.Instance;
+            var records = recordManager?.GetAllRecords();
 
-            sb.AppendLine("═══════════════════════════════════════════");
-            sb.AppendLine("         FACTION SERVICE RECORDS");
-            sb.AppendLine("═══════════════════════════════════════════");
+            sb.AppendLine();
+            sb.AppendLine("— Faction Service Records —");
             sb.AppendLine();
 
-            var records = recordManager?.GetAllRecords();
             if (records == null || records.Count == 0)
             {
-                sb.AppendLine("  No faction service records found.");
+                sb.AppendLine("No faction service records found.");
                 sb.AppendLine();
-                sb.AppendLine("  Enlist with a lord to begin building");
-                sb.AppendLine("  your military service history.");
+                sb.AppendLine("Enlist with a lord to begin building your military service history.");
             }
             else
             {
-                sb.AppendLine("  Factions Served:");
-                sb.AppendLine();
-
                 foreach (var record in records.Values.OrderByDescending(r => r.TotalDaysServed))
                 {
                     var factionType = FormatFactionType(record.FactionType);
-                    sb.AppendLine($"  • {record.FactionDisplayName} ({factionType})");
-                    sb.AppendLine($"    Terms: {record.TermsCompleted} | Days: {record.TotalDaysServed} | Kills: {record.TotalKills}");
+                    sb.AppendLine($"• {record.FactionDisplayName}");
+                    sb.AppendLine($"  {factionType} — {record.TermsCompleted} terms, {record.TotalDaysServed} days");
+                    sb.AppendLine($"  Kills: {record.TotalKills}");
                     sb.AppendLine();
                 }
             }
-
-            sb.AppendLine("═══════════════════════════════════════════");
 
             return sb.ToString();
         }
@@ -646,6 +671,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Builds detailed faction record text.
+        /// Uses clean, modern formatting.
         /// </summary>
         private string BuildFactionDetailText(string factionKey)
         {
@@ -660,20 +686,19 @@ namespace Enlisted.Features.CommandTent.UI
 
             var highestRank = GetRankName(record.HighestTier);
 
-            sb.AppendLine("═══════════════════════════════════════════");
-            sb.AppendLine($"       SERVICE RECORD: {record.FactionDisplayName.ToUpperInvariant()}");
-            sb.AppendLine("═══════════════════════════════════════════");
             sb.AppendLine();
-            sb.AppendLine($"  Total Enlistments: {record.Enlistments}");
-            sb.AppendLine($"  Terms Completed: {record.TermsCompleted}");
-            sb.AppendLine($"  Days Served: {record.TotalDaysServed}");
-            sb.AppendLine($"  Highest Rank: {highestRank} (Tier {record.HighestTier})");
+            sb.AppendLine($"— {record.FactionDisplayName} —");
             sb.AppendLine();
-            sb.AppendLine($"  Battles Fought: {record.BattlesFought}");
-            sb.AppendLine($"  Enemies Slain: {record.TotalKills}");
-            sb.AppendLine($"  Lords Served: {record.LordsServed}");
+            sb.AppendLine($"Enlistments: {record.Enlistments}");
+            sb.AppendLine($"Terms Completed: {record.TermsCompleted}");
+            sb.AppendLine($"Days Served: {record.TotalDaysServed}");
+            sb.AppendLine($"Highest Rank: {highestRank} (Tier {record.HighestTier})");
             sb.AppendLine();
-            sb.AppendLine("═══════════════════════════════════════════");
+            sb.AppendLine("— Combat Record —");
+            sb.AppendLine();
+            sb.AppendLine($"Battles Fought: {record.BattlesFought}");
+            sb.AppendLine($"Enemies Slain: {record.TotalKills}");
+            sb.AppendLine($"Lords Served: {record.LordsServed}");
 
             return sb.ToString();
         }
@@ -737,6 +762,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Builds the lifetime summary text showing cross-faction statistics.
+        /// Uses clean, modern formatting.
         /// </summary>
         private string BuildLifetimeSummaryText()
         {
@@ -744,16 +770,15 @@ namespace Enlisted.Features.CommandTent.UI
             var recordManager = ServiceRecordManager.Instance;
             var lifetime = recordManager?.LifetimeRecord;
 
-            sb.AppendLine("═══════════════════════════════════════════");
-            sb.AppendLine("         LIFETIME SERVICE SUMMARY");
-            sb.AppendLine("═══════════════════════════════════════════");
+            sb.AppendLine();
+            sb.AppendLine("— Lifetime Service Summary —");
             sb.AppendLine();
 
             if (lifetime == null)
             {
-                sb.AppendLine("  No lifetime service records found.");
+                sb.AppendLine("No lifetime service records found.");
                 sb.AppendLine();
-                sb.AppendLine("  Your military career has not yet begun.");
+                sb.AppendLine("Your military career has not yet begun.");
             }
             else
             {
@@ -768,15 +793,16 @@ namespace Enlisted.Features.CommandTent.UI
                     timeString = $"{lifetime.TotalDaysServed} days";
                 }
 
-                sb.AppendLine($"  Years in Service: {timeString}");
-                sb.AppendLine($"  Total Enlistments: {lifetime.TotalEnlistments}");
-                sb.AppendLine($"  Terms Completed: {lifetime.TermsCompleted}");
+                sb.AppendLine($"Time in Service: {timeString}");
+                sb.AppendLine($"Total Enlistments: {lifetime.TotalEnlistments}");
+                sb.AppendLine($"Terms Completed: {lifetime.TermsCompleted}");
                 sb.AppendLine();
 
                 // List factions served
                 if (lifetime.FactionsServed != null && lifetime.FactionsServed.Count > 0)
                 {
-                    sb.AppendLine("  Factions Served:");
+                    sb.AppendLine("— Factions Served —");
+                    sb.AppendLine();
 
                     var allRecords = recordManager.GetAllRecords();
                     foreach (var factionId in lifetime.FactionsServed)
@@ -784,20 +810,19 @@ namespace Enlisted.Features.CommandTent.UI
                         if (allRecords.TryGetValue(factionId, out var record))
                         {
                             var terms = record.TermsCompleted > 0
-                                ? $"({record.TermsCompleted} term{(record.TermsCompleted > 1 ? "s" : "")})"
-                                : "(in progress)";
-                            sb.AppendLine($"    • {record.FactionDisplayName} {terms}");
+                                ? $"{record.TermsCompleted} term{(record.TermsCompleted > 1 ? "s" : "")}"
+                                : "in progress";
+                            sb.AppendLine($"• {record.FactionDisplayName} ({terms})");
                         }
                     }
                     sb.AppendLine();
                 }
 
-                sb.AppendLine($"  Total Battles Fought: {lifetime.TotalBattlesFought}");
-                sb.AppendLine($"  Total Enemies Slain: {lifetime.LifetimeKills}");
+                sb.AppendLine("— Combat Statistics —");
+                sb.AppendLine();
+                sb.AppendLine($"Total Battles: {lifetime.TotalBattlesFought}");
+                sb.AppendLine($"Enemies Slain: {lifetime.LifetimeKills}");
             }
-
-            sb.AppendLine();
-            sb.AppendLine("═══════════════════════════════════════════");
 
             return sb.ToString();
         }
@@ -816,11 +841,11 @@ namespace Enlisted.Features.CommandTent.UI
                 "{RETINUE_STATUS_TEXT}",
                 OnRetinueMenuInit);
 
-            // Current Muster option (view current soldiers if any)
+            // Current Muster option - ManageGarrison icon (soldiers/shield)
             starter.AddGameMenuOption(
                 RetinueMenuId,
                 "ct_retinue_muster",
-                "{=ct_retinue_current_muster}Current Muster",
+                "{=ct_retinue_current_muster}View Current Muster",
                 args =>
                 {
                     var manager = RetinueManager.Instance;
@@ -830,18 +855,23 @@ namespace Enlisted.Features.CommandTent.UI
                     {
                         args.Tooltip = new TextObject("{=ct_retinue_no_soldiers}You have no soldiers mustered.");
                     }
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    else
+                    {
+                        // Let users know this refreshes menu data (e.g., after battles or training)
+                        args.Tooltip = new TextObject("{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.");
+                    }
+                    args.optionLeaveType = GameMenuOption.LeaveType.ManageGarrison;
                     return true;
                 },
                 _ =>
                 {
-                    // Show current muster breakdown - just refresh the menu for now
+                    // Refresh the menu to show current muster breakdown
                     GameMenu.SwitchToMenu(RetinueMenuId);
                 },
                 false,
                 1);
 
-            // Purchase Soldiers option
+            // Purchase Soldiers option - Recruit icon
             starter.AddGameMenuOption(
                 RetinueMenuId,
                 "ct_retinue_purchase",
@@ -851,7 +881,6 @@ namespace Enlisted.Features.CommandTent.UI
                     var manager = RetinueManager.Instance;
                     var enlistment = EnlistmentBehavior.Instance;
 
-                    // Check if already at capacity
                     if (manager != null && enlistment != null)
                     {
                         var tierCapacity = RetinueManager.GetTierCapacity(enlistment.EnlistmentTier);
@@ -870,14 +899,14 @@ namespace Enlisted.Features.CommandTent.UI
                         }
                     }
 
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.optionLeaveType = GameMenuOption.LeaveType.Recruit;
                     return true;
                 },
                 _ => GameMenu.SwitchToMenu(RetinuePurchaseMenuId),
                 false,
                 2);
 
-            // Requisition Soldiers option (instant fill for gold, with cooldown)
+            // Requisition Soldiers option - Trade icon (coins)
             starter.AddGameMenuOption(
                 RetinueMenuId,
                 "ct_retinue_requisition",
@@ -887,7 +916,7 @@ namespace Enlisted.Features.CommandTent.UI
                 false,
                 3);
 
-            // Dismiss Soldiers option
+            // Dismiss Soldiers option - DonateTroops icon
             starter.AddGameMenuOption(
                 RetinueMenuId,
                 "ct_retinue_dismiss",
@@ -901,7 +930,7 @@ namespace Enlisted.Features.CommandTent.UI
                     {
                         args.Tooltip = new TextObject("{=ct_retinue_no_soldiers}You have no soldiers to dismiss.");
                     }
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.optionLeaveType = GameMenuOption.LeaveType.DonateTroops;
                     return true;
                 },
                 _ => GameMenu.SwitchToMenu(RetinueDismissMenuId),
@@ -948,6 +977,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Sets the requisition menu option text with cost and cooldown info.
+        /// Uses inline gold icon for currency display.
         /// </summary>
         private static void SetRequisitionOptionText()
         {
@@ -973,7 +1003,8 @@ namespace Enlisted.Features.CommandTent.UI
             }
             else
             {
-                optionText = $"Requisition Men ({cost} denars)";
+                // Use inline gold icon for cost display
+                optionText = $"Requisition Men ({cost}{{GOLD_ICON}})";
             }
 
             MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT", optionText);
@@ -981,6 +1012,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Builds the retinue status text showing current muster and capacity.
+        /// Uses clean formatting with inline gold icons for currency.
         /// </summary>
         private string BuildRetinueStatusText()
         {
@@ -1000,59 +1032,44 @@ namespace Enlisted.Features.CommandTent.UI
             var currentSoldiers = manager?.State?.TotalSoldiers ?? 0;
             var selectedType = manager?.State?.SelectedTypeId;
             var partySpace = GetAvailablePartySpace();
-            var dailyUpkeep = currentSoldiers * 2; // 2 gold per soldier per day
+            var dailyUpkeep = currentSoldiers * 2;
+            var partyLimit = PartyBase.MainParty?.PartySizeLimit ?? 0;
+            var currentMembers = PartyBase.MainParty?.NumberOfAllMembers ?? 0;
 
-            sb.AppendLine("═══════════════════════════════════════════");
-            sb.AppendLine("         PERSONAL RETINUE");
-            sb.AppendLine("═══════════════════════════════════════════");
             sb.AppendLine();
-
-            // Show rank and capacity
-            sb.AppendLine($"  Rank: {rankName} (Tier {tier})");
-            sb.AppendLine($"  Command Limit: {unitName}");
+            sb.AppendLine("— Personal Retinue —");
             sb.AppendLine();
-
-            // Show current muster
-            sb.AppendLine("───────────────────────────────────────────");
-            sb.AppendLine("            CURRENT MUSTER");
-            sb.AppendLine("───────────────────────────────────────────");
+            sb.AppendLine($"Rank: {rankName} (Tier {tier})");
+            sb.AppendLine($"Command Limit: {unitName}");
+            sb.AppendLine();
+            sb.AppendLine("— Current Muster —");
             sb.AppendLine();
 
             if (string.IsNullOrEmpty(selectedType))
             {
-                sb.AppendLine("  No soldiers mustered.");
-                sb.AppendLine("  Select a soldier type to begin.");
+                sb.AppendLine("No soldiers mustered.");
+                sb.AppendLine("Select a soldier type to begin.");
             }
             else
             {
                 var typeName = GetSoldierTypeName(selectedType, enlistment.CurrentLord?.Culture);
-                sb.AppendLine($"  Type: {typeName}");
-                sb.AppendLine($"  Soldiers: {currentSoldiers}/{tierCapacity}");
-                sb.AppendLine($"  Daily Upkeep: {dailyUpkeep} denars");
+                sb.AppendLine($"Type: {typeName}");
+                sb.AppendLine($"Soldiers: {currentSoldiers} / {tierCapacity}");
+                sb.AppendLine($"Daily Upkeep: {dailyUpkeep}{{GOLD_ICON}}");
             }
 
             sb.AppendLine();
-
-            // Show party size status
-            sb.AppendLine("───────────────────────────────────────────");
-            sb.AppendLine("            PARTY CAPACITY");
-            sb.AppendLine("───────────────────────────────────────────");
+            sb.AppendLine("— Party Capacity —");
             sb.AppendLine();
-
-            var partyLimit = PartyBase.MainParty?.PartySizeLimit ?? 0;
-            var currentMembers = PartyBase.MainParty?.NumberOfAllMembers ?? 0;
-            sb.AppendLine($"  Party Limit: {partyLimit}");
-            sb.AppendLine($"  Current Members: {currentMembers}");
-            sb.AppendLine($"  Available Space: {partySpace}");
+            sb.AppendLine($"Party Limit: {partyLimit}");
+            sb.AppendLine($"Current Members: {currentMembers}");
+            sb.AppendLine($"Available Space: {partySpace}");
 
             if (partySpace < tierCapacity - currentSoldiers)
             {
                 sb.AppendLine();
-                sb.AppendLine("  ⚠ Party size limits your retinue.");
+                sb.AppendLine("Party size limits your retinue.");
             }
-
-            sb.AppendLine();
-            sb.AppendLine("═══════════════════════════════════════════");
 
             return sb.ToString();
         }
@@ -1128,6 +1145,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Initializes the purchase menu. Shows gold, soldier options, and naval dismount note for mounted types.
+        /// Uses clean formatting with inline gold icons.
         /// </summary>
         private void OnRetinuePurchaseInit(MenuCallbackArgs args)
         {
@@ -1137,23 +1155,21 @@ namespace Enlisted.Features.CommandTent.UI
                 var enlistment = EnlistmentBehavior.Instance;
                 var culture = enlistment?.CurrentLord?.Culture;
                 var tier = enlistment?.EnlistmentTier ?? 4;
+                var playerGold = Hero.MainHero?.Gold ?? 0;
 
-                // Build header text with naval note for mounted types
                 var sb = new StringBuilder();
-                sb.AppendLine("═══════════════════════════════════════════");
-                sb.AppendLine("         PURCHASE SOLDIERS");
-                sb.AppendLine("═══════════════════════════════════════════");
                 sb.AppendLine();
-                sb.AppendLine("  Select the type of soldiers to muster.");
-                sb.AppendLine($"  Your Gold: {Hero.MainHero?.Gold ?? 0} denars");
+                sb.AppendLine("— Purchase Soldiers —");
                 sb.AppendLine();
-                sb.AppendLine("  * Mounted troops fight on foot in naval battles.");
+                sb.AppendLine("Select the type of soldiers to muster.");
                 sb.AppendLine();
-                sb.AppendLine("═══════════════════════════════════════════");
+                sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
+                sb.AppendLine();
+                sb.AppendLine("* Mounted troops fight on foot in naval battles.");
 
                 MBTextManager.SetTextVariable("RETINUE_PURCHASE_TEXT", sb.ToString());
 
-                // Set option text variables with costs
+                // Set option text variables with costs and gold icons
                 SetSoldierTypeOptionText("infantry", culture, tier);
                 SetSoldierTypeOptionText("archers", culture, tier);
                 SetSoldierTypeOptionText("cavalry", culture, tier);
@@ -1169,7 +1185,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Sets the menu option text for a soldier type. Mounted types marked with * for naval warning.
+        /// Sets the menu option text for a soldier type with inline gold icon.
+        /// Mounted types marked with * for naval warning.
         /// </summary>
         private void SetSoldierTypeOptionText(string typeId, CultureObject culture, int playerTier)
         {
@@ -1177,7 +1194,8 @@ namespace Enlisted.Features.CommandTent.UI
             var cost = CalculateRecruitmentCost(typeId, culture, playerTier);
             var variableName = typeId.ToUpperInvariant() + "_OPTION_TEXT";
 
-            var optionText = $"{typeName} ({cost} denars)";
+            // Use inline gold icon for cost display
+            var optionText = $"{typeName} ({cost}{{GOLD_ICON}})";
 
             if (IsMountedType(typeId))
             {
@@ -1196,7 +1214,25 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Validates soldier type availability. Checks faction restrictions, affordability, and shows naval tooltip for mounted types.
+        /// Gets a human-readable display name for a formation/soldier type.
+        /// Used for tooltip messages explaining formation restrictions.
+        /// </summary>
+        private static string GetFormationDisplayName(string typeId)
+        {
+            return typeId?.ToLowerInvariant() switch
+            {
+                "infantry" => "infantry",
+                "archers" or "archer" or "ranged" => "archers",
+                "cavalry" => "cavalry",
+                "horse_archers" or "horsearcher" or "horse_archer" => "horse archers",
+                _ => typeId ?? "soldiers"
+            };
+        }
+
+        /// <summary>
+        /// Validates soldier type availability. Checks player formation match, faction restrictions, affordability, 
+        /// and shows naval tooltip for mounted types.
+        /// Players can only recruit soldiers matching their own troop type (infantry can only lead infantry, etc.)
         /// </summary>
         private bool IsSoldierTypeAvailable(MenuCallbackArgs args, string typeId)
         {
@@ -1206,6 +1242,32 @@ namespace Enlisted.Features.CommandTent.UI
             if (culture == null)
             {
                 args.IsEnabled = false;
+                return true;
+            }
+
+            // Formation match check - players can only recruit soldiers matching their own formation type
+            // An infantry soldier leads infantry, a cavalryman leads cavalry, etc.
+            var duties = EnlistedDutiesBehavior.Instance;
+            var playerFormation = duties?.PlayerFormation?.ToLowerInvariant() ?? "infantry";
+            
+            // Map player formation to retinue type for comparison
+            var playerRetinueType = playerFormation switch
+            {
+                "archer" or "ranged" => "archers",
+                "cavalry" => "cavalry",
+                "horsearcher" or "horse_archer" => "horse_archers",
+                _ => "infantry"
+            };
+
+            if (!typeId.Equals(playerRetinueType, StringComparison.OrdinalIgnoreCase))
+            {
+                args.IsEnabled = false;
+                var formationDisplayName = GetFormationDisplayName(playerRetinueType);
+                var requestedDisplayName = GetFormationDisplayName(typeId);
+                var tooltip = new TextObject("{=ct_warn_formation_mismatch}As a {PLAYER_TYPE}, you can only command {PLAYER_TYPE} soldiers. You cannot lead {REQUESTED_TYPE}.");
+                tooltip.SetTextVariable("PLAYER_TYPE", formationDisplayName);
+                tooltip.SetTextVariable("REQUESTED_TYPE", requestedDisplayName);
+                args.Tooltip = tooltip;
                 return true;
             }
 
@@ -1461,7 +1523,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the dismiss menu.
+        /// Initializes the dismiss menu with clean formatting.
         /// </summary>
         private void OnRetinueDismissInit(MenuCallbackArgs args)
         {
@@ -1472,18 +1534,14 @@ namespace Enlisted.Features.CommandTent.UI
                 var currentCount = manager?.State?.TotalSoldiers ?? 0;
 
                 var sb = new StringBuilder();
-                sb.AppendLine("═══════════════════════════════════════════");
-                sb.AppendLine("         DISMISS SOLDIERS");
-                sb.AppendLine("═══════════════════════════════════════════");
                 sb.AppendLine();
-                sb.AppendLine("  Are you certain?");
+                sb.AppendLine("— Dismiss Soldiers —");
                 sb.AppendLine();
-                sb.AppendLine($"  Your {currentCount} soldiers will return");
-                sb.AppendLine("  to the army ranks.");
+                sb.AppendLine("Are you certain?");
                 sb.AppendLine();
-                sb.AppendLine("  This action cannot be undone.");
+                sb.AppendLine($"Your {currentCount} soldiers will return to the army ranks.");
                 sb.AppendLine();
-                sb.AppendLine("═══════════════════════════════════════════");
+                sb.AppendLine("This action cannot be undone.");
 
                 MBTextManager.SetTextVariable("RETINUE_DISMISS_TEXT", sb.ToString());
                 ModLogger.Debug(LogCategory, "Dismiss menu initialized");
@@ -1621,6 +1679,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Initializes the requisition menu with cost breakdown.
+        /// Uses clean formatting with inline gold icons.
         /// </summary>
         private static void OnRetinueRequisitionInit(MenuCallbackArgs args)
         {
@@ -1635,41 +1694,34 @@ namespace Enlisted.Features.CommandTent.UI
                 var cooldownDays = manager?.GetRequisitionCooldownDays() ?? 0;
 
                 var sb = new StringBuilder();
-                sb.AppendLine("═══════════════════════════════════════════");
-                sb.AppendLine("         REQUISITION MEN");
-                sb.AppendLine("═══════════════════════════════════════════");
                 sb.AppendLine();
-                sb.AppendLine("  A word to the right quartermaster, a few");
-                sb.AppendLine("  coins changing hands, and fresh soldiers");
-                sb.AppendLine("  report for duty.");
+                sb.AppendLine("— Requisition Men —");
                 sb.AppendLine();
-                sb.AppendLine("───────────────────────────────────────────");
+                sb.AppendLine("A word to the right quartermaster, a few coins changing hands, and fresh soldiers report for duty.");
                 sb.AppendLine();
-                sb.AppendLine($"  Missing Soldiers: {missing}");
-                sb.AppendLine($"  Cost per Soldier: {perSoldier} denars");
-                sb.AppendLine($"  Total Cost: {cost} denars");
+                sb.AppendLine($"Missing Soldiers: {missing}");
+                sb.AppendLine($"Cost per Soldier: {perSoldier}{{GOLD_ICON}}");
+                sb.AppendLine($"Total Cost: {cost}{{GOLD_ICON}}");
                 sb.AppendLine();
-                sb.AppendLine($"  Your Gold: {playerGold} denars");
+                sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
                 sb.AppendLine();
 
                 if (cooldownDays > 0)
                 {
-                    sb.AppendLine($"  ⏱ Cooldown: {cooldownDays} days remaining");
+                    sb.AppendLine($"Cooldown: {cooldownDays} days remaining");
                 }
                 else
                 {
-                    sb.AppendLine("  ✓ Requisition Available NOW");
+                    sb.AppendLine("Requisition available now");
                 }
 
                 sb.AppendLine();
-                sb.AppendLine("  After requisition: 14 day cooldown");
-                sb.AppendLine();
-                sb.AppendLine("═══════════════════════════════════════════");
+                sb.AppendLine("After requisition: 14 day cooldown");
 
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT", sb.ToString());
 
-                // Set confirm button text
-                var confirmText = $"Requisition {missing} soldiers for {cost} denars";
+                // Set confirm button text with gold icon
+                var confirmText = $"Requisition {missing} soldiers ({cost}{{GOLD_ICON}})";
                 MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", confirmText);
 
                 ModLogger.Debug(LogCategory, "Requisition menu initialized");
@@ -1718,6 +1770,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Checks if companion assignments option is available (Tier 4+ and has companions).
+        /// Uses Conversation icon for companion management.
         /// </summary>
         private static bool IsCompanionAssignmentsAvailable(MenuCallbackArgs args)
         {
@@ -1745,7 +1798,7 @@ namespace Enlisted.Features.CommandTent.UI
                 }
             }
 
-            args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+            args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
             return true;
         }
 
@@ -1795,6 +1848,7 @@ namespace Enlisted.Features.CommandTent.UI
 
         /// <summary>
         /// Initializes the companion assignments menu with current companion list.
+        /// Uses clean formatting with status indicators.
         /// </summary>
         private void OnCompanionAssignmentsInit(MenuCallbackArgs args)
         {
@@ -1805,41 +1859,35 @@ namespace Enlisted.Features.CommandTent.UI
                 _cachedCompanions = manager?.GetAssignableCompanions() ?? new List<Hero>();
 
                 var sb = new StringBuilder();
-                sb.AppendLine("═══════════════════════════════════════════");
-                sb.AppendLine("         COMPANION ASSIGNMENTS");
-                sb.AppendLine("═══════════════════════════════════════════");
                 sb.AppendLine();
-                sb.AppendLine("  Companions set to 'Stay Back' will not");
-                sb.AppendLine("  spawn in battle. They remain safe in your");
-                sb.AppendLine("  roster, immune to death, wounds, or capture.");
+                sb.AppendLine("— Companion Assignments —");
+                sb.AppendLine();
+                sb.AppendLine("Companions set to 'Stay Back' will not spawn in battle.");
+                sb.AppendLine("They remain safe, immune to death, wounds, or capture.");
                 sb.AppendLine();
 
                 if (_cachedCompanions.Count == 0 || manager == null)
                 {
-                    sb.AppendLine("  No companions in your command.");
+                    sb.AppendLine("No companions in your command.");
                 }
                 else
                 {
                     var fightCount = manager.GetFightingCompanionCount();
                     var stayBackCount = manager.GetStayBackCompanionCount();
-                    sb.AppendLine($"  Fighting: {fightCount}  |  Staying Back: {stayBackCount}");
+                    sb.AppendLine($"Fighting: {fightCount}  |  Staying Back: {stayBackCount}");
                 }
-
-                sb.AppendLine();
-                sb.AppendLine("═══════════════════════════════════════════");
 
                 MBTextManager.SetTextVariable("COMPANION_ASSIGNMENTS_TEXT", sb.ToString());
 
-                // Set text variables for each companion slot
+                // Set text variables for each companion slot with clear status indicators
                 for (var i = 0; i < 8; i++)
                 {
                     if (i < _cachedCompanions.Count && manager != null)
                     {
                         var companion = _cachedCompanions[i];
                         var shouldFight = manager.ShouldCompanionFight(companion);
-                        var statusIcon = shouldFight ? "⚔" : "🏕";
-                        var statusText = shouldFight ? "Will fight" : "Stay back";
-                        MBTextManager.SetTextVariable($"COMPANION_{i}_TEXT", $"{statusIcon} {companion.Name} - {statusText}");
+                        var statusText = shouldFight ? "[Fight]" : "[Stay Back]";
+                        MBTextManager.SetTextVariable($"COMPANION_{i}_TEXT", $"{companion.Name} {statusText}");
                     }
                     else
                     {
