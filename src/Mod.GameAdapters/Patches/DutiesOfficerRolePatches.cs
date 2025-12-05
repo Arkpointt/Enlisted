@@ -26,7 +26,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [HarmonyPatch(typeof(MobileParty), "EffectiveEngineer", MethodType.Getter)]
     public class DutiesEffectiveEngineerPatch
     {
-        static bool Prefix(MobileParty __instance, ref Hero __result)
+        /// <summary>
+        /// Prefix method that runs before MobileParty.EffectiveEngineer getter.
+        /// Called by Harmony via reflection.
+        /// </summary>
+        [HarmonyPrefix]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+        public static bool Prefix(MobileParty __instance, ref Hero __result)
         {
             try
             {
@@ -71,7 +77,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [HarmonyPatch(typeof(MobileParty), "EffectiveScout", MethodType.Getter)]
     public class DutiesEffectiveScoutPatch
     {
-        static bool Prefix(MobileParty __instance, ref Hero __result)
+        /// <summary>
+        /// Prefix method that runs before MobileParty.EffectiveScout getter.
+        /// Called by Harmony via reflection.
+        /// </summary>
+        [HarmonyPrefix]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+        public static bool Prefix(MobileParty __instance, ref Hero __result)
         {
             try
             {
@@ -113,7 +125,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [HarmonyPatch(typeof(MobileParty), "EffectiveQuartermaster", MethodType.Getter)]
     public class DutiesEffectiveQuartermasterPatch
     {
-        static bool Prefix(MobileParty __instance, ref Hero __result)
+        /// <summary>
+        /// Prefix method that runs before MobileParty.EffectiveQuartermaster getter.
+        /// Called by Harmony via reflection.
+        /// </summary>
+        [HarmonyPrefix]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+        public static bool Prefix(MobileParty __instance, ref Hero __result)
         {
             try
             {
@@ -155,7 +173,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [HarmonyPatch(typeof(MobileParty), "EffectiveSurgeon", MethodType.Getter)]
     public class DutiesEffectiveSurgeonPatch
     {
-        static bool Prefix(MobileParty __instance, ref Hero __result)
+        /// <summary>
+        /// Prefix method that runs before MobileParty.EffectiveSurgeon getter.
+        /// Called by Harmony via reflection.
+        /// </summary>
+        [HarmonyPrefix]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+        public static bool Prefix(MobileParty __instance, ref Hero __result)
         {
             try
             {

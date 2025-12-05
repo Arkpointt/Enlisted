@@ -2,9 +2,9 @@
 
 ## Build
 ```bash
-dotnet build -c "Enlisted EDITOR"
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
-Output: `<Bannerlord>/Modules/Enlisted/`
+Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/`
 
 ## Structure
 
@@ -47,8 +47,27 @@ All in `ModuleData/Enlisted/`:
 ## Debugging
 
 Logs in `Modules/Enlisted/Debugging/`:
-- `enlisted.log` - Main activity
-- `conflicts.log` - Mod compatibility
+- `enlisted.log` - Main activity log with category-based levels
+- `conflicts.log` - Comprehensive mod conflict diagnostics:
+  - Detects Harmony patch conflicts (other mods patching same methods)
+  - Shows patch execution order and priorities
+  - Lists all registered campaign behaviors
+  - Environment info (game version, mod version, OS, runtime)
+  - Loaded modules enumeration
+  - Categorized patch list (Army/Party, Encounter, Finance, UI/Menu, Combat, etc.)
+  - Tracks both main and deferred Harmony instances
+
+## API Reference
+
+When working with Bannerlord APIs, refer to the discovered documentation:
+- `docs/discovered/engine.md` - Core API signatures (v1.3.4 verified)
+- `docs/discovered/menus.md` - Menu system APIs
+- `docs/discovered/gauntlet.md` - UI system reference
+- `docs/discovered/images.md` - Image system (v1.3.4)
+- `docs/discovered/equipment.md` - Equipment APIs
+- `docs/discovered/helpers.md` - Helper methods
+
+All discovered docs are updated for Bannerlord v1.3.4 compatibility.
 
 ## Guidelines
 
@@ -56,3 +75,4 @@ Logs in `Modules/Enlisted/Debugging/`:
 - Comments explain *why*, not *what*
 - Use Harmony only when needed
 - Keep changes small and focused
+- Verify APIs against v1.3.4 decompile in `C:\Dev\Enlisted\DECOMPILE\`

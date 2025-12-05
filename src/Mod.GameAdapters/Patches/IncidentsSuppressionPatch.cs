@@ -13,7 +13,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [HarmonyPatch(typeof(IncidentsCampaignBehaviour), "TryInvokeIncident")]
     public class IncidentsSuppressionPatch
     {
-        static bool Prefix()
+        /// <summary>
+        /// Prefix method that runs before IncidentsCampaignBehaviour.TryInvokeIncident.
+        /// Called by Harmony via reflection.
+        /// </summary>
+        [HarmonyPrefix]
+        public static bool Prefix()
         {
             var enlistment = EnlistmentBehavior.Instance;
 
@@ -21,7 +26,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             // We explicitly allow incidents if the player is in a grace period (e.g. after desertion/discharge)
             // even if IsEnlisted were somehow true (though usually IsEnlisted is false during grace period).
             // We also allow incidents if not enlisted at all.
-            if (enlistment?.IsEnlisted == true && !enlistment.IsInDesertionGracePeriod)
+            if (enlistment is { IsEnlisted: true, IsInDesertionGracePeriod: false })
             {
                 ModLogger.Debug("Encounter", "Suppressed Incident (TryInvokeIncident) because player is enlisted and not in grace period.");
                 return false; // Prevent the incident from triggering

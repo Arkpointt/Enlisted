@@ -15,13 +15,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// but enlisted players should stay invisible (except during battles/sieges).
     /// This patch intercepts visibility changes and blocks them for enlisted players.
     /// </summary>
+    // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(MobileParty), "IsVisible", MethodType.Setter)]
     public class VisibilityEnforcementPatch
     {
         // Force-hide state: when true, blocks ALL visibility changes (overrides everything)
         // This is set after forced settlement exit to prevent race conditions
-        private static bool _forceHidden = false;
-        private static float _forceHiddenUntil = 0f;
+        private static bool _forceHidden;
+        private static float _forceHiddenUntil;
 
         /// <summary>
         /// Call this immediately BEFORE forcing player out of a settlement.
@@ -48,7 +50,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Prefix that prevents visibility from being set to true for enlisted players.
         /// Returns false to block the setter, true to allow normal visibility.
         /// </summary>
-        static bool Prefix(MobileParty __instance, bool value)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
+        private static bool Prefix(MobileParty __instance, bool value)
         {
             try
             {
@@ -69,19 +73,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     // we must ensure it stays visible on the map even if game mechanics (forests/ambush) try to hide it.
                     // The player "shares" the lord's vision, so the lord should never be hidden from the player.
                     var enlistedLord = enlistment?.CurrentLord;
-                    bool isLordParty = false;
+                    var isLordParty = false;
 
                     if (enlistedLord != null)
                     {
                         // Check both PartyBelongedTo and LeaderHero for robustness
-                        if (__instance == enlistedLord.PartyBelongedTo)
-                        {
-                            isLordParty = true;
-                        }
-                        else if (__instance.LeaderHero == enlistedLord)
-                        {
-                            isLordParty = true;
-                        }
+                        isLordParty = __instance == enlistedLord.PartyBelongedTo || __instance.LeaderHero == enlistedLord;
                     }
 
                     if (isLordParty)
@@ -89,8 +86,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         // If trying to hide (value == false) and the lord is on the map (not in settlement)
                         if (!value && __instance.CurrentSettlement == null && __instance.IsActive)
                         {
-                            bool isEnlistedCheck = enlistment?.IsEnlisted == true;
-                            bool onLeaveCheck = enlistment?.IsOnLeave == true;
+                            var isEnlistedCheck = enlistment?.IsEnlisted == true;
+                            var onLeaveCheck = enlistment?.IsOnLeave == true;
 
                             // If enlisted OR on leave, force visibility (block hiding)
                             if (isEnlistedCheck || onLeaveCheck)
@@ -146,9 +143,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
                 }
 
-                bool isEnlisted = enlistment?.IsEnlisted == true;
-                bool onLeave = enlistment?.IsOnLeave == true;
-                bool inGrace = enlistment?.IsInDesertionGracePeriod == true;
+                var isEnlisted = enlistment?.IsEnlisted == true;
+                var onLeave = enlistment?.IsOnLeave == true;
+                var inGrace = enlistment?.IsInDesertionGracePeriod == true;
 
                 // Fresh campaigns, leave, or grace periods should behave like vanilla.
                 // Note: This check fires very frequently (every visibility set attempt) so we don't log it
@@ -157,19 +154,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
 
-                bool playerEncounter = PlayerEncounter.Current != null;
-                bool playerBattle = mainParty.Party?.MapEvent != null || mainParty.Party?.SiegeEvent != null;
-                bool embeddedWithLord = enlistment.IsEmbeddedWithLord();
+                var playerEncounter = PlayerEncounter.Current != null;
+                var playerBattle = mainParty.Party?.MapEvent != null || mainParty.Party?.SiegeEvent != null;
 
                 // Check if lord or their army is in battle - if so, we MUST allow visibility for encounter system
-                var lordParty = enlistment.CurrentLord?.PartyBelongedTo;
-                bool lordInBattle = lordParty?.Party?.MapEvent != null || lordParty?.Party?.SiegeEvent != null;
+                var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+                var lordInBattle = lordParty?.Party?.MapEvent != null || lordParty?.Party?.SiegeEvent != null;
                 // Army battles: the army leader's party holds the MapEvent, not necessarily each member's party
-                bool armyInBattle = lordParty?.Army?.LeaderParty?.Party?.MapEvent != null || lordParty?.Army?.LeaderParty?.Party?.SiegeEvent != null;
-                bool anyBattleActive = lordInBattle || armyInBattle;
+                var armyInBattle = lordParty?.Army?.LeaderParty?.Party?.MapEvent != null || lordParty?.Army?.LeaderParty?.Party?.SiegeEvent != null;
+                var anyBattleActive = lordInBattle || armyInBattle;
 
                 // Check if player is in a settlement - if so, allow visibility for town/castle menus
-                bool playerInSettlement = mainParty.CurrentSettlement != null;
+                var playerInSettlement = mainParty.CurrentSettlement != null;
 
                 // When the native game needs us visible (battle, encounter, in settlement) we must allow it,
                 // otherwise the encounter system loops and eventually asserts (rglSkeleton.cpp:1197).

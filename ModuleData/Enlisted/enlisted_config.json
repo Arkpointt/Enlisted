@@ -1,128 +1,141 @@
 {
-  "schemaVersion": 1,
-  "enabled": true,
-  "system_info": {
-    "config_version": "1.0",
-    "compatible_game_versions": ["1.3.9"],
-    "mod_version": "0.4.3"
-  },
-  "enlistment": {
-    "tier_requirements": [0, 800, 3000, 6000, 11000, 19000],
-    "tier_names": [
-      "Levy", "Footman", "Serjeant",
-      "Man-at-Arms", "Banner Sergeant", "Household Guard"
-    ],
-    "daily_base_xp": 25,
-    "assignment_wage_multipliers": {
-      "grunt_work": 0.8,
-      "guard_duty": 0.9,
-      "cook": 0.9,
-      "foraging": 1.0,
-      "surgeon": 1.3,
-      "engineer": 1.4,
-      "quartermaster": 1.2,
-      "scout": 1.1,
-      "sergeant": 1.5,
-      "strategist": 1.6
+    "schemaVersion": 1,
+    "enabled": true,
+    "system_info": {
+        "config_version": "1.0",
+        "compatible_game_versions": [
+            "1.3.9"
+        ],
+        "mod_version": "0.5.0"
+    },
+    "enlistment": {
+        "tier_requirements": [
+            0,
+            800,
+            3000,
+            6000,
+            11000,
+            19000
+        ],
+        "tier_names": [
+            "Levy",
+            "Footman",
+            "Serjeant",
+            "Man-at-Arms",
+            "Banner Serjeant",
+            "Household Guard"
+        ],
+        "daily_base_xp": 25,
+        "assignment_wage_multipliers": {
+            "grunt_work": 0.8,
+            "guard_duty": 0.9,
+            "cook": 0.9,
+            "foraging": 1.0,
+            "surgeon": 1.3,
+            "engineer": 1.4,
+            "quartermaster": 1.2,
+            "scout": 1.1,
+            "sergeant": 1.5,
+            "strategist": 1.6
+        }
+    },
+    "gameplay": {
+        "desertion_grace_period_days": 14,
+        "leave_max_days": 14
+    },
+    "retirement": {
+        "first_term_days": 252,
+        "renewal_term_days": 84,
+        "cooldown_days": 42,
+        "first_term_gold": 10000,
+        "first_term_reenlist_bonus": 20000,
+        "renewal_discharge_gold": 5000,
+        "renewal_continue_bonus": 5000,
+        "lord_relation_bonus": 30,
+        "faction_reputation_bonus": 30,
+        "other_lords_relation_bonus": 15,
+        "other_lords_min_relation": 50
+    },
+    "formations": {
+        "infantry": {
+            "display_names": {
+                "empire": "Legionary",
+                "aserai": "Footman",
+                "khuzait": "Spearman",
+                "vlandia": "Man-at-Arms",
+                "sturgia": "Warrior",
+                "battania": "Clansman",
+                "nord": "Huskarl",
+                "darshi": "Desert Warrior"
+            }
+        },
+        "archer": {
+            "display_names": {
+                "empire": "Sagittarius",
+                "aserai": "Marksman",
+                "khuzait": "Hunter",
+                "vlandia": "Crossbowman",
+                "sturgia": "Bowman",
+                "battania": "Skirmisher",
+                "nord": "Nordic Bowman",
+                "darshi": "Desert Archer"
+            }
+        },
+        "cavalry": {
+            "display_names": {
+                "empire": "Equites",
+                "aserai": "Mameluke",
+                "khuzait": "Lancer",
+                "vlandia": "Knight",
+                "sturgia": "Druzhnik",
+                "battania": "Mounted Warrior",
+                "nord": "Nordic Rider",
+                "darshi": "Darshi Horseman"
+            }
+        },
+        "horsearcher": {
+            "display_names": {
+                "empire": "Equites Sagittarii",
+                "aserai": "Desert Horse Archer",
+                "khuzait": "Horse Archer",
+                "vlandia": "Mounted Crossbowman",
+                "sturgia": "Mounted Archer",
+                "battania": "Mounted Skirmisher",
+                "nord": "Nordic Mounted Archer",
+                "darshi": "Darshi Horse Archer"
+            }
+        }
+    },
+    "equipment_pricing": {
+        "base_cost_per_tier": 75,
+        "formation_multipliers": {
+            "infantry": 1.0,
+            "archer": 1.3,
+            "cavalry": 2.0,
+            "horsearcher": 2.5
+        },
+        "culture_modifiers": {
+            "empire": 1.0,
+            "aserai": 0.9,
+            "khuzait": 0.8,
+            "vlandia": 1.2,
+            "sturgia": 0.9,
+            "battania": 0.8,
+            "nord": 0.9,
+            "darshi": 0.9
+        },
+        "elite_multiplier": 1.5,
+        "personal_equipment_restore_cost": 0
+    },
+    "finance": {
+        "show_in_clan_tooltip": true,
+        "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
+        "wage_formula": {
+            "base_wage": 10,
+            "level_multiplier": 1,
+            "tier_multiplier": 5,
+            "xp_divisor": 200,
+            "army_bonus_multiplier": 1.2
+        }
     }
-  },
-  "gameplay": {
-    "desertion_grace_period_days": 14,
-    "leave_max_days": 14
-  },
-  "retirement": {
-    "first_term_days": 252,
-    "renewal_term_days": 84,
-    "cooldown_days": 42,
-    "first_term_gold": 10000,
-    "first_term_reenlist_bonus": 20000,
-    "renewal_discharge_gold": 5000,
-    "renewal_continue_bonus": 5000,
-    "lord_relation_bonus": 30,
-    "faction_reputation_bonus": 30,
-    "other_lords_relation_bonus": 15,
-    "other_lords_min_relation": 50
-  },
-  "formations": {
-    "infantry": {
-      "display_names": {
-        "empire": "Legionary",
-        "aserai": "Footman",
-        "khuzait": "Spearman",
-        "vlandia": "Man-at-Arms",
-        "sturgia": "Warrior",
-        "battania": "Clansman",
-        "nord": "Huskarl",
-        "darshi": "Desert Warrior"
-      }
-    },
-    "archer": {
-      "display_names": {
-        "empire": "Sagittarius",
-        "aserai": "Marksman",
-        "khuzait": "Hunter",
-        "vlandia": "Crossbowman",
-        "sturgia": "Bowman",
-        "battania": "Skirmisher",
-        "nord": "Nordic Bowman",
-        "darshi": "Desert Archer"
-      }
-    },
-    "cavalry": {
-      "display_names": {
-        "empire": "Equites",
-        "aserai": "Mameluke",
-        "khuzait": "Lancer",
-        "vlandia": "Knight",
-        "sturgia": "Druzhnik",
-        "battania": "Mounted Warrior",
-        "nord": "Nordic Rider",
-        "darshi": "Darshi Horseman"
-      }
-    },
-    "horsearcher": {
-      "display_names": {
-        "empire": "Equites Sagittarii",
-        "aserai": "Desert Horse Archer",
-        "khuzait": "Horse Archer",
-        "vlandia": "Mounted Crossbowman",
-        "sturgia": "Mounted Archer",
-        "battania": "Mounted Skirmisher",
-        "nord": "Nordic Mounted Archer",
-        "darshi": "Darshi Horse Archer"
-      }
-    }
-  },
-  "equipment_pricing": {
-    "base_cost_per_tier": 75,
-    "formation_multipliers": {
-      "infantry": 1.0,
-      "archer": 1.3,
-      "cavalry": 2.0,
-      "horsearcher": 2.5
-    },
-    "culture_modifiers": {
-      "empire": 1.0,
-      "aserai": 0.9,
-      "khuzait": 0.8,
-      "vlandia": 1.2,
-      "sturgia": 0.9,
-      "battania": 0.8,
-      "nord": 0.9,
-      "darshi": 0.9
-    },
-    "elite_multiplier": 1.5,
-    "personal_equipment_restore_cost": 0
-  },
-  "finance": {
-    "show_in_clan_tooltip": true,
-    "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
-    "wage_formula": {
-      "base_wage": 10,
-      "level_multiplier": 1,
-      "tier_multiplier": 5,
-      "xp_divisor": 200,
-      "army_bonus_multiplier": 1.2
-    }
-  }
 }

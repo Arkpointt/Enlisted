@@ -2,6 +2,19 @@
 
 Generated from "C:\Dev\Enlisted\DECOMPILE" on 2025-09-02 01:25:00 UTC
 
+## Index
+
+- [Screen Stack Operations](#screen-stack-operations)
+- [Gauntlet Layer Creation](#gauntlet-layer-creation)
+- [VM Command Patterns (from decompiled analysis)](#vm-command-patterns-from-decompiled-analysis)
+- [Custom Equipment Selector Pattern](#custom-equipment-selector-pattern)
+- [BANNERLORD GAUNTLET ASSET SYSTEM - COMPREHENSIVE REFERENCE](#-bannerlord-gauntlet-asset-system---comprehensive-reference)
+- [Implementation Strategy](#implementation-strategy)
+- [CUSTOM EQUIPMENT SELECTOR - DECOMPILED ANALYSIS & VERIFIED CURRENT APIS](#-custom-equipment-selector---decompiled-analysis--verified-current-apis)
+- [Working Implementation Notes](#working-implementation-notes)
+
+---
+
 ## Screen Stack Operations
 
 TaleWorlds.ScreenSystem.ScreenManager :: TopScreen { get; }
@@ -60,7 +73,8 @@ public static void DeleteVMLayer()
 ## 🎨 **BANNERLORD GAUNTLET ASSET SYSTEM - COMPREHENSIVE REFERENCE**
 
 **Research Date**: 2025-01-28  
-**Source**: Actual Bannerlord Module GUI assets analysis
+**Updated**: 2025-01-28 (v1.3.4 compatibility)  
+**Source**: Actual Bannerlord Module GUI assets analysis + v1.3.4 decompile
 
 ### **📍 Asset Locations by Type**
 
@@ -419,7 +433,7 @@ public class QuartermasterEquipmentCardVM : ViewModel
     public MBBindingList<BindingListStringItem> ItemName { get; set; } // ✅ VERIFIED type
     
     [DataSourceProperty] 
-    public ImageIdentifierVM ItemImage { get; set; } // ✅ VERIFIED type from current ViewModels
+    public ItemImageIdentifierVM ItemImage { get; set; } // ✅ VERIFIED v1.3.4 type (ImageIdentifierVM is now abstract)
     
     [DataSourceProperty]
     public MBBindingList<ItemFlagVM> ItemFlagList { get; set; } // ✅ VERIFIED type
@@ -438,7 +452,7 @@ public class QuartermasterEquipmentCardVM : ViewModel
         if (item != null)
         {
             ItemName.Add(new BindingListStringItem(item.Name?.ToString() ?? "Unknown")); // ✅ VERIFIED
-            ItemImage = new ImageIdentifierVM(item, ""); // ✅ VERIFIED constructor
+            ItemImage = new ItemImageIdentifierVM(item, ""); // ✅ VERIFIED v1.3.4 constructor
         }
         else
         {
@@ -532,7 +546,7 @@ public class QuartermasterEquipmentCardRowVM : ViewModel
 | `[DataSourceProperty]` attribute | ✅ **VERIFIED** | Used in current ViewModels |
 | `MBBindingList<T>` collections | ✅ **VERIFIED** | Standard collection type |
 | `CharacterViewModel` | ✅ **VERIFIED** | Character display |
-| `ImageIdentifierVM` | ✅ **VERIFIED** | Item image display |
+| `ItemImageIdentifierVM` | ✅ **VERIFIED v1.3.4** | Item image display (ImageIdentifierVM is now abstract) |
 
 ### Implementation Pattern
 
@@ -551,7 +565,7 @@ The Quartermaster system is working and uses these patterns:
 
 **Template files**: Put them in `GUI/Prefabs/Equipment/` - not `GUI/GauntletUI/` or it won't find them.
 
-**Image loading**: Need to add `TaleWorlds.PlayerServices.dll` reference or you get PlayerId errors. Use `new ImageIdentifierVM(item, "")` for equipment and `new ImageIdentifierVM(0)` for empty slots.
+**Image loading** (v1.3.4): Use `new ItemImageIdentifierVM(item, "")` for equipment and `new ItemImageIdentifierVM(null, "")` for empty slots. Note: `ImageIdentifierVM` is now abstract in v1.3.4, use concrete `ItemImageIdentifierVM` instead.
 
 **Input handling**: Register the hotkey category BEFORE setting input restrictions or the game freezes.
 ```csharp

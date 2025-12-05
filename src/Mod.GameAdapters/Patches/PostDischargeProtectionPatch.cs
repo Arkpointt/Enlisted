@@ -1,7 +1,7 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -16,13 +16,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// This patch blocks activation until the battle/encounter state is fully cleared.
     /// </summary>
     [HarmonyPatch(typeof(MobileParty), "IsActive", MethodType.Setter)]
+    [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch - applied via attribute")]
     public class PostDischargeProtectionPatch
     {
         /// <summary>
         /// Prefix that prevents activation if enlistment just ended and player is in battle state.
         /// Returns false to prevent activation, true to allow normal activation.
+        /// Harmony invokes this method via reflection - static analysis cannot detect runtime usage.
         /// </summary>
-        static bool Prefix(MobileParty __instance, bool value)
+        [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
+        [SuppressMessage("CodeQuality", "IDE0051", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "Called by Harmony via reflection")]
+        public static bool Prefix(MobileParty __instance, bool value)
         {
             try
             {
@@ -61,10 +66,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // Check if player is in a vulnerable state (in battle/encounter after discharge)
                 var mainParty = mainPartyMobile.Party;
-                bool playerInMapEvent = mainParty?.MapEvent != null;
-
-                bool playerInEncounter = campaign?.PlayerEncounter != null;
-                bool inVulnerableState = playerInMapEvent || playerInEncounter;
+                var playerInMapEvent = mainParty?.MapEvent != null;
+                var playerInEncounter = campaign?.PlayerEncounter != null;
+                var inVulnerableState = playerInMapEvent || playerInEncounter;
                 
                 // If in vulnerable state after discharge, prevent activation
                 if (inVulnerableState)

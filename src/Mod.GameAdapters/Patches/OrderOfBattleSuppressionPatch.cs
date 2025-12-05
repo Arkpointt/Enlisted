@@ -1,32 +1,31 @@
 using System;
-using HarmonyLib;
-using TaleWorlds.MountAndBlade.ComponentInterfaces;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using HarmonyLib;
+using TaleWorlds.MountAndBlade.ComponentInterfaces;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Prevents the Order of Battle deployment screen from appearing when the player is enlisted.
-    /// As an enlisted soldier, the player should not have deployment control and should spawn
-    /// automatically without the deployment screen, just like a regular soldier in an army.
-    /// 
-    /// This patches the base BattleInitializationModel.CanPlayerSideDeployWithOrderOfBattle()
-    /// method which is called by AssignPlayerRoleInTeamMissionController.OnPlayerTeamDeployed()
-    /// to decide whether to show the OOB screen.
-    /// 
-    /// Note: We target the base class because CanPlayerSideDeployWithOrderOfBattle() is defined
-    /// there and not overridden in derived classes (SandboxBattleInitializationModel, etc.).
-    /// Derived classes only override the protected CanPlayerSideDeployWithOrderOfBattleAux() method.
+    ///     Prevents the Order of Battle deployment screen from appearing when the player is enlisted.
+    ///     As an enlisted soldier, the player should not have deployment control and should spawn
+    ///     automatically without the deployment screen, just like a regular soldier in an army.
+    ///     This patches the base BattleInitializationModel.CanPlayerSideDeployWithOrderOfBattle()
+    ///     method which is called by AssignPlayerRoleInTeamMissionController.OnPlayerTeamDeployed()
+    ///     to decide whether to show the OOB screen.
+    ///     Note: We target the base class because CanPlayerSideDeployWithOrderOfBattle() is defined
+    ///     there and not overridden in derived classes (SandboxBattleInitializationModel, etc.).
+    ///     Derived classes only override the protected CanPlayerSideDeployWithOrderOfBattleAux() method.
     /// </summary>
-    [HarmonyPatch(typeof(BattleInitializationModel), nameof(BattleInitializationModel.CanPlayerSideDeployWithOrderOfBattle))]
+    [HarmonyPatch(typeof(BattleInitializationModel),
+        nameof(BattleInitializationModel.CanPlayerSideDeployWithOrderOfBattle))]
     public class OrderOfBattleSuppressionPatch
     {
         /// <summary>
-        /// Prefix that runs before CanPlayerSideDeployWithOrderOfBattle.
-        /// Returns false to prevent Order of Battle screen when player is enlisted.
+        ///     Prefix that runs before CanPlayerSideDeployWithOrderOfBattle.
+        ///     Returns false to prevent Order of Battle screen when player is enlisted.
         /// </summary>
-        static bool Prefix(ref bool __result)
+        private static bool Prefix(ref bool __result)
         {
             try
             {
@@ -36,7 +35,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     // Player is enlisted - skip Order of Battle screen
                     // They should spawn directly into battle as a regular soldier
                     __result = false;
-                    ModLogger.LogOnce("oob_suppressed", "Battle", "Order of Battle screen suppressed - enlisted soldiers spawn directly into battle");
+                    ModLogger.LogOnce("oob_suppressed", "Battle",
+                        "Order of Battle screen suppressed - enlisted soldiers spawn directly into battle");
                     return false; // Skip original method
                 }
 
@@ -51,4 +51,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-

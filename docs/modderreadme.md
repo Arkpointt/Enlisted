@@ -4,9 +4,9 @@ Quick reference for extending or modifying Enlisted.
 
 ## Build
 ```bash
-dotnet build -c "Enlisted EDITOR"
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
 ```
-Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_wEditor/Enlisted.dll`
+Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/Enlisted.dll`
 
 ## Structure
 
@@ -44,8 +44,13 @@ src/
 ## Logging
 
 Logs in `Modules/Enlisted/Debugging/`:
-- `enlisted.log` - Main log
-- `conflicts.log` - Mod compatibility
+- `enlisted.log` - Main log with category-based verbosity control
+- `conflicts.log` - Mod conflict diagnostics:
+  - Harmony patch conflict detection (identifies mods sharing patches)
+  - Patch execution order analysis
+  - Registered behaviors list
+  - Environment and module information
+  - Categorized patch inventory
 
 Configure levels in `settings.json`:
 ```json
@@ -166,4 +171,16 @@ All Enlisted patches use default priority (400). If your mod patches the same me
 |-----|---------|
 | docs/BLUEPRINT.md | Architecture, patterns |
 | docs/Features/*.md | Feature specs |
+| docs/discovered/*.md | Bannerlord API reference (v1.3.4 verified) |
 | ModuleData/Enlisted/README.md | Config schema |
+
+### API Reference
+
+When extending Enlisted, refer to the discovered API documentation:
+- `docs/discovered/engine.md` - Core API signatures
+- `docs/discovered/menus.md` - Menu system
+- `docs/discovered/gauntlet.md` - UI system
+- `docs/discovered/equipment.md` - Equipment APIs
+- `docs/discovered/helpers.md` - Helper methods
+
+All discovered docs are updated for Bannerlord v1.3.4 compatibility and include indexes for easy navigation.

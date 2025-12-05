@@ -1,48 +1,38 @@
 using System;
-using System.Collections.Generic;
+using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.Core;
-using TaleWorlds.Localization;
+using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
-using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.Interface.Behaviors;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
-using Enlisted.Mod.Core.Logging;
-using Enlisted.Mod.Entry;
-using Enlisted.Mod.GameAdapters.Patches;
+using TaleWorlds.Localization;
+using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
     /// <summary>
-    /// Handles encounter menu extensions and battle participation for enlisted soldiers.
-    /// Adds "Wait in reserve" option for large field battles (100+ troops).
-    /// Native system handles siege menus automatically.
+    ///     Handles encounter menu extensions and battle participation for enlisted soldiers.
+    ///     Adds "Wait in reserve" option for large field battles (100+ troops).
+    ///     Native system handles siege menus automatically.
     /// </summary>
     public sealed class EnlistedEncounterBehavior : CampaignBehaviorBase
     {
-        /// <summary>
-        /// Helper method to check if a party is in battle or siege.
-        /// This prevents PlayerSiege assertion failures by ensuring we don't finish encounters during sieges.
-        /// </summary>
-        private static bool InBattleOrSiege(MobileParty party) =>
-            party?.Party.MapEvent != null || party?.Party.SiegeEvent != null || party?.BesiegedSettlement != null;
-
-        public static EnlistedEncounterBehavior Instance { get; private set; }
-
-        /// <summary>
-        /// Tracks whether the player is currently waiting in reserve during a battle.
-        /// Used to prevent XP awards when entering reserve mode (OnPlayerBattleEnd fires but battle isn't actually over).
-        /// </summary>
-        public static bool IsWaitingInReserve { get; private set; }
-
         public EnlistedEncounterBehavior()
         {
             Instance = this;
         }
+
+        public static EnlistedEncounterBehavior Instance { get; private set; }
+
+        /// <summary>
+        ///     Tracks whether the player is currently waiting in reserve during a battle.
+        ///     Used to prevent XP awards when entering reserve mode (OnPlayerBattleEnd fires but battle isn't actually over).
+        /// </summary>
+        public static bool IsWaitingInReserve { get; private set; }
+
 
         public override void RegisterEvents()
         {
@@ -63,32 +53,59 @@ namespace Enlisted.Features.Combat.Behaviors
                 IsWaitingInReserve = false;
 
                 AddEnlistedEncounterOptions(campaignStarter);
-                ModLogger.LogOnce("encounter_behavior_init", "Combat", "Encounter behavior initialized - battle wait menu and reserve options ready");
+                ModLogger.LogOnce("encounter_behavior_init", "Combat",
+                    "Encounter behavior initialized with modern UI styling - battle wait menu and reserve options ready");
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Combat", $"Failed to initialize encounter behavior: {ex.Message}");
             }
         }
+        
+        /// <summary>
+        /// Menu background initialization for enlisted_battle_wait menu.
+        /// Sets culture-appropriate background and ambient audio for battle wait.
+        /// </summary>
+        [GameMenuInitializationHandler("enlisted_battle_wait")]
+        private static void OnBattleWaitBackgroundInit(MenuCallbackArgs args)
+        {
+            var lord = EnlistmentBehavior.Instance?.CurrentLord;
+            var backgroundMesh = "encounter_looter";
+            
+            if (lord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = lord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (lord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = lord.Culture.EncounterBackgroundMesh;
+            }
+            
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+        }
 
         /// <summary>
-        /// Registers military-specific menu options for battles.
-        /// Adds "Wait in reserve" option for large field battles (100+ troops).
-        /// This option appears in the encounter menu when the player is enlisted and their lord is in battle.
-        /// Native system handles siege menus automatically.
+        ///     Registers military-specific menu options for battles.
+        ///     Adds "Wait in reserve" option for large field battles (100+ troops).
+        ///     This option appears in the encounter menu when the player is enlisted and their lord is in battle.
+        ///     Native system handles siege menus automatically.
         /// </summary>
         private void AddEnlistedEncounterOptions(CampaignGameStarter starter)
         {
             // Add "Wait in reserve" option for large battles (100+ troops)
             // This allows players to stay out of the initial fighting in large battles
-            var waitInReserveText = new TextObject("Wait in reserve");
-            var waitInReserveTooltip = new TextObject("Stay back from the main fighting and wait for orders");
+            var waitInReserveText = new TextObject("{=combat_wait_reserve}Wait in reserve");
 
-            // Add to the encounter menu for field battles only
+            // Add to the encounter menu for field battles only (Wait icon)
             // Native system handles siege menus automatically
             starter.AddGameMenuOption("encounter", "enlisted_wait_reserve",
                 waitInReserveText.ToString(),
-                IsWaitInReserveAvailable,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Wait;
+                    return IsWaitInReserveAvailable(args);
+                },
                 OnWaitInReserveSelected,
                 false, 1);
 
@@ -96,45 +113,50 @@ namespace Enlisted.Features.Combat.Behaviors
 
             // Add a custom "wait in reserve" menu for battles
             // This menu shows while the player is waiting in reserve and allows them to rejoin
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar when not in active combat
+            // Use shorter overload - MenuOverlayType.None is default
             starter.AddWaitGameMenu("enlisted_battle_wait",
                 "Waiting in Reserve: {BATTLE_STATUS}",
                 OnBattleWaitInit,
                 OnBattleWaitCondition,
                 null,
                 OnBattleWaitTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption,
-                GameMenu.MenuOverlayType.None,  // No overlay - battle status shown in menu text instead
-                0f,
-                GameMenu.MenuFlags.None,
-                null);
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // Return to battle option
-            var rejoinBattleText = new TextObject("Rejoin the battle");
+            // Return to battle option (Mission icon for combat)
+            var rejoinBattleText = new TextObject("{=combat_rejoin_battle}Rejoin the battle");
             starter.AddGameMenuOption("enlisted_battle_wait", "enlisted_rejoin_battle",
                 rejoinBattleText.ToString(),
-                args => true,
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Mission;
+                    return true;
+                },
                 OnRejoinBattleSelected,
                 false, 1);
         }
 
         /// <summary>
-        /// Checks if the "Wait in Reserve" option should be available in the encounter menu.
-        /// This option is only available for enlisted soldiers in large battles (100+ troops),
-        /// allowing players to stay out of the initial fighting when the army is large enough.
+        ///     Checks if the "Wait in Reserve" option should be available in the encounter menu.
+        ///     This option is only available for enlisted soldiers in large battles (100+ troops),
+        ///     allowing players to stay out of the initial fighting when the army is large enough.
         /// </summary>
         /// <param name="args">Menu callback arguments containing menu state and context.</param>
         /// <returns>True if the option should be available, false otherwise.</returns>
         private bool IsWaitInReserveAvailable(MenuCallbackArgs args)
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment?.IsEnlisted == true)
+            if (enlistment?.IsEnlisted != true)
             {
                 return false;
             }
 
-            var lord = enlistment.CurrentLord;
-            var lordParty = lord?.PartyBelongedTo;
+            var lord = enlistment!.CurrentLord;
+            if (lord == null)
+            {
+                return false;
+            }
+
+            var lordParty = lord.PartyBelongedTo;
 
             // The MapEvent property exists on Party, not directly on MobileParty
             // This is the correct API structure for checking battle state
@@ -146,27 +168,23 @@ namespace Enlisted.Features.Combat.Behaviors
             // CRITICAL: Do NOT allow "Wait in Reserve" during siege battles
             // Siege battles have their own menu system and custom menus cause loops/crashes
             // Only available for field battles (not sieges)
-            bool isSiegeBattle = lordParty.Party.SiegeEvent != null ||
+            var isSiegeBattle = lordParty.Party.SiegeEvent != null ||
                                 lordParty.Party.MapEvent?.IsSiegeAssault == true ||
                                 lordParty.Party.MapEvent?.EventType == MapEvent.BattleTypes.Siege;
 
             if (isSiegeBattle)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("Wait in reserve is not available during siege battles");
+                args.Tooltip = new TextObject("{=combat_reserve_siege_disabled}Wait in reserve is not available during siege battles");
                 ModLogger.Debug("Siege", "Wait in reserve disabled - siege battle detected");
                 return false;
             }
-
-            // The MapEvent property exists on Party, not directly on MobileParty
-            // This is the correct API structure for checking battle state
-            var battle = lordParty.Party.MapEvent;
 
             // BUGFIX: Allow waiting in reserve if player morale is too low to fight, regardless of troop count
             if (MobileParty.MainParty.Morale <= 1f)
             {
                 args.optionLeaveType = GameMenuOption.LeaveType.Wait;
-                args.Tooltip = new TextObject("You are too demoralized to fight.");
+                args.Tooltip = new TextObject("{=combat_too_demoralized}You are too demoralized to fight.");
                 return true;
             }
 
@@ -176,9 +194,9 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Handles the player selecting "Wait in Reserve" from the encounter menu.
-        /// Exits the current encounter and switches to the battle wait menu where
-        /// the player can monitor the battle and rejoin when ready.
+        ///     Handles the player selecting "Wait in Reserve" from the encounter menu.
+        ///     Exits the current encounter and switches to the battle wait menu where
+        ///     the player can monitor the battle and rejoin when ready.
         /// </summary>
         /// <param name="args">Menu callback arguments containing menu state and context.</param>
         private void OnWaitInReserveSelected(MenuCallbackArgs args)
@@ -189,15 +207,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Siege battles have their own menu system and custom menus cause loops/crashes
                 var enlistmentBehavior = EnlistmentBehavior.Instance;
                 var lordParty = enlistmentBehavior?.CurrentLord?.PartyBelongedTo;
-                bool isSiegeBattle = lordParty?.Party.SiegeEvent != null ||
+                var isSiegeBattle = lordParty?.Party.SiegeEvent != null ||
                                     lordParty?.Party.MapEvent?.IsSiegeAssault == true ||
                                     lordParty?.Party.MapEvent?.EventType == MapEvent.BattleTypes.Siege;
 
                 if (isSiegeBattle)
                 {
-                    ModLogger.Info("Battle", "Prevented wait in reserve during siege battle - native system handles siege menus");
+                    ModLogger.Info("Battle",
+                        "Prevented wait in reserve during siege battle - native system handles siege menus");
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("Wait in reserve is not available during siege battles.").ToString()));
+                        new TextObject("{=combat_reserve_siege_disabled_full}Wait in reserve is not available during siege battles.").ToString()));
                     return; // Don't switch menus during sieges
                 }
 
@@ -209,12 +228,13 @@ namespace Enlisted.Features.Combat.Behaviors
                 // This allows the player to wait out the battle without participating
                 if (PlayerEncounter.Current != null)
                 {
-                    PlayerEncounter.Finish(true);
+                    PlayerEncounter.Finish();
                 }
 
                 // Switch to the battle wait menu where the player can monitor the battle
                 GameMenu.ActivateGameMenu("enlisted_battle_wait");
-                ModLogger.StateChange("Battle", "Fighting", "Reserve", "Player chose to wait in reserve during large battle");
+                ModLogger.StateChange("Battle", "Fighting", "Reserve",
+                    "Player chose to wait in reserve during large battle");
             }
             catch (Exception ex)
             {
@@ -223,7 +243,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Initialize battle wait menu.
+        ///     Initialize battle wait menu.
         /// </summary>
         private void OnBattleWaitInit(MenuCallbackArgs args)
         {
@@ -231,7 +251,7 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 // 1.3.4+: Set proper menu background - MUST be set before anything else
                 // to avoid "temp background" assertion failure
-                string backgroundMesh = "encounter_looter"; // Safe fallback
+                var backgroundMesh = "encounter_looter"; // Safe fallback
                 var lord = EnlistmentBehavior.Instance?.CurrentLord;
 
                 if (lord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
@@ -249,7 +269,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Time will continue at normal speed, and player can pause/unpause with spacebar
                 args.MenuContext.GameMenu.StartWait();
 
-                ModLogger.Info("Battle", "Started wait in reserve - time will continue at normal speed (can pause with spacebar)");
+                ModLogger.Info("Battle",
+                    "Started wait in reserve - time will continue at normal speed (can pause with spacebar)");
             }
             catch (Exception ex)
             {
@@ -258,7 +279,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Condition for battle wait menu.
+        ///     Condition for battle wait menu.
         /// </summary>
         private bool OnBattleWaitCondition(MenuCallbackArgs args)
         {
@@ -282,10 +303,10 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Tick handler for the battle wait menu that runs while the player is waiting in reserve.
-        /// Monitors battle state, checks if the native system wants to show a different menu,
-        /// and automatically returns the player to battle if troop count drops below 100.
-        /// Includes time delta validation to prevent assertion failures.
+        ///     Tick handler for the battle wait menu that runs while the player is waiting in reserve.
+        ///     Monitors battle state, checks if the native system wants to show a different menu,
+        ///     and automatically returns the player to battle if troop count drops below 100.
+        ///     Includes time delta validation to prevent assertion failures.
         /// </summary>
         /// <param name="args">Menu callback arguments containing menu state and context.</param>
         /// <param name="dt">Time elapsed since last tick, in campaign time. Must be positive.</param>
@@ -303,10 +324,11 @@ namespace Enlisted.Features.Combat.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 var lord = enlistment?.CurrentLord;
                 var lordParty = lord?.PartyBelongedTo;
-                bool isSiegeBattle = lordParty?.Party.SiegeEvent != null ||
+                var isSiegeBattle = lordParty?.Party.SiegeEvent != null ||
                                     lordParty?.Party.MapEvent?.IsSiegeAssault == true ||
                                     lordParty?.Party.MapEvent?.EventType == MapEvent.BattleTypes.Siege;
-                bool siegeAssaultStarted = isSiegeBattle && lordParty?.Party.MapEvent != null;
+                // If isSiegeBattle is true, lordParty is guaranteed to be non-null (all conditions use null-conditional)
+                var siegeAssaultStarted = isSiegeBattle && lordParty!.Party.MapEvent != null;
 
                 // If the actual assault has begun (MapEvent active), exit the reserve menu immediately so the native encounter can start
                 if (siegeAssaultStarted)
@@ -334,13 +356,13 @@ namespace Enlisted.Features.Combat.Behaviors
                 // The native system may want to show army_wait, menu_siege_strategies, or other menus
                 // We should respect this and switch to the native menu to avoid blocking battle flow
                 // BUT: Only check once per battle state change, not every tick
-                string genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                var genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
 
                 // CRITICAL: During battle, STAY in enlisted_battle_wait - don't switch to ANY menu
                 // The native game will try to push us to army_wait or encounter, but switching
                 // causes a loop where the game pushes back to encounter because the battle is still active
                 // Only allow menu switching when the battle has actually ended (no MapEvent)
-                bool lordStillInBattle = lordParty?.Party.MapEvent != null;
+                var lordStillInBattle = lordParty?.Party.MapEvent != null;
 
                 if (lordStillInBattle)
                 {
@@ -377,7 +399,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     // Exit and let the menu tick handler or native system decide the next menu
                     args.MenuContext.GameMenu.EndWait();
                     GameMenu.ExitToLast();
-                    ModLogger.Info("Battle", "Battle ended - exiting battle wait menu, native system will show appropriate menu");
+                    ModLogger.Info("Battle",
+                        "Battle ended - exiting battle wait menu, native system will show appropriate menu");
                 }
             }
             catch (Exception ex)
@@ -387,7 +410,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Handle rejoin battle selection.
+        ///     Handle rejoin battle selection.
         /// </summary>
         private void OnRejoinBattleSelected(MenuCallbackArgs args)
         {
@@ -429,107 +452,5 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
 
-        /// <summary>
-        /// Check if enlisted army battle options should be available.
-        /// </summary>
-        private bool IsEnlistedArmyBattleAvailable(MenuCallbackArgs args)
-        {
-            var enlistmentBehavior = EnlistmentBehavior.Instance;
-            if (enlistmentBehavior?.IsEnlisted != true)
-                return false;
-
-            var lord = enlistmentBehavior.CurrentLord;
-            var lordParty = lord?.PartyBelongedTo;
-
-            // Available if lord is in an army and has a MapEvent (battle)
-            return lordParty?.Army != null && lordParty.Party.MapEvent != null;
-        }
-
-        /// <summary>
-        /// Handles the player selecting to join an army battle.
-        /// Ensures the player is properly configured for battle participation by verifying
-        /// army membership and activating the party, then lets the native system handle
-        /// the actual battle start without interfering with menu state.
-        /// </summary>
-        /// <param name="args">Menu callback arguments containing menu state and context.</param>
-        private void OnJoinArmyBattleSelected(MenuCallbackArgs args)
-        {
-            ModLogger.Info("Combat", "Player selected to join army battle");
-
-            try
-            {
-                var enlistmentBehavior = EnlistmentBehavior.Instance;
-                var lord = enlistmentBehavior?.CurrentLord;
-                var lordParty = lord?.PartyBelongedTo;
-                var mainParty = MobileParty.MainParty;
-
-                if (lordParty?.Party.MapEvent == null)
-                {
-                    ModLogger.Error("Combat", "Cannot join battle - lord not in battle");
-                    return;
-                }
-
-                ModLogger.Info("Combat", $"Joining army battle: {lordParty.Party.MapEvent.EventType}");
-
-                // Don't clear menus or interfere with the native system
-                // The native system needs to handle the battle start sequence itself
-                // Interfering with menus can prevent battles from starting properly
-                ModLogger.Info("Combat", "Letting native system handle battle start");
-
-                // Ensure the player is properly configured for battle participation
-                // Add them to the lord's army if they're not already in it
-                if (mainParty.Army != lordParty.Army)
-                {
-                    ModLogger.Info("Combat", "Adding player to lord's army for battle");
-                    lordParty.Army.AddPartyToMergedParties(mainParty);
-                    mainParty.Army = lordParty.Army;
-                }
-
-                // Activate the player's party so they can participate in the battle
-                mainParty.IsActive = true;
-                mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
-
-                ModLogger.Info("Combat", "Player configured for battle - native system should handle battle start");
-                ModLogger.Info("Combat", $"Player party state: IsActive={mainParty.IsActive}, IsVisible={mainParty.IsVisible}, Army={mainParty.Army?.LeaderParty?.LeaderHero?.Name}");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Combat", $"Error joining army battle: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Handle waiting in army reserve.
-        /// </summary>
-        private void OnArmyReserveSelected(MenuCallbackArgs args)
-        {
-            ModLogger.Info("Combat", "Player selected to wait in army reserve");
-
-            // Exit current menu and activate reserve menu
-            GameMenu.ExitToLast();
-            GameMenu.ActivateGameMenu("enlisted_battle_wait");
-        }
-
-
-        /// <summary>
-        /// Helper method that checks if a specific party is included in a list of battle parties.
-        /// Used to determine which side of a battle a party is fighting on by checking
-        /// if the party appears in the attacker or defender side's party list.
-        /// </summary>
-        /// <param name="parties">The list of battle parties to check against.</param>
-        /// <param name="party">The party to search for in the list.</param>
-        /// <returns>True if the party is found in the list, false otherwise.</returns>
-        private bool ContainsParty(IReadOnlyList<MapEventParty> parties, MobileParty party)
-        {
-            foreach (var p in parties)
-            {
-                if (p.Party.MobileParty == party)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 }
-

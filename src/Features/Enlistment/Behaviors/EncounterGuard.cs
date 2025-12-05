@@ -25,18 +25,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 			// player-initiated encounters while enlisted
 		}
 
-		private static Hero enlistCurrentLord()
-		{
-			// Use public property instead of reflection - no processing cost
-			return EnlistmentBehavior.Instance?.CurrentLord;
-		}
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future functionality")]
+	private static Hero EnlistCurrentLord()
+	{
+		// Use public property instead of reflection - no processing cost
+		return EnlistmentBehavior.Instance?.CurrentLord;
+	}
 
 		/// <summary>
 		/// Safely leaves the current player encounter and activates the enlisted status menu.
 		/// Encounter exit and menu activation are deferred to the next frame to prevent
 		/// timing conflicts with the game's rendering system during state transitions.
-		/// </summary>
-		internal static void TryLeaveEncounter()
+	/// </summary>
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called from other modules")]
+	internal static void TryLeaveEncounter()
 		{
 			try
 			{
@@ -52,12 +54,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 						var stillHasEncounter = PlayerEncounter.Current != null;
 						ModLogger.Debug("EncounterGuard", $"Deferred encounter finish: stillHasEncounter={stillHasEncounter}");
 
-						if (stillHasEncounter)
-						{
-							PlayerEncounter.LeaveEncounter = true;
-							PlayerEncounter.Finish(true);
-							ModLogger.Debug("EncounterGuard", "PlayerEncounter finished successfully");
-						}
+					if (stillHasEncounter)
+					{
+						PlayerEncounter.LeaveEncounter = true;
+						PlayerEncounter.Finish(); // Default parameter forcePlayerOutFromSettlement=true is sufficient
+						ModLogger.Debug("EncounterGuard", "PlayerEncounter finished successfully");
+					}
 					});
 
 					// Defer menu activation to the next frame after encounter exit completes
@@ -138,27 +140,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
 		/// The native MobilePartyVisual system automatically fades out when IsVisible = false.
 		/// NOTE: This does NOT hide the player nameplate - the Harmony patch handles that separately.
 		/// </summary>
-		public static void HidePlayerPartyVisual()
+	public static void HidePlayerPartyVisual()
+	{
+		var mainParty = MobileParty.MainParty;
+		if (mainParty == null)
 		{
-			var mainParty = MobileParty.MainParty;
-			if (mainParty == null) return;
+			return;
+		}
 
-			var wasVisible = mainParty.IsVisible;
-			mainParty.IsVisible = false;
-			ModLogger.Info("EncounterGuard", $"HidePlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
+        var wasVisible = mainParty.IsVisible;
+        mainParty.IsVisible = false;
+        ModLogger.Info("EncounterGuard", $"HidePlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
 		}
 
 		/// <summary>
 		/// Shows the player's party visual (3D model on map) using the native IsVisible property.
 		/// </summary>
-		public static void ShowPlayerPartyVisual()
+	public static void ShowPlayerPartyVisual()
+	{
+		var mainParty = MobileParty.MainParty;
+		if (mainParty == null)
 		{
-			var mainParty = MobileParty.MainParty;
-			if (mainParty == null) return;
+			return;
+		}
 
-			var wasVisible = mainParty.IsVisible;
-			mainParty.IsVisible = true;
-			ModLogger.Info("EncounterGuard", $"ShowPlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
+        var wasVisible = mainParty.IsVisible;
+        mainParty.IsVisible = true;
+        ModLogger.Info("EncounterGuard", $"ShowPlayerPartyVisual: was={wasVisible}, now={mainParty.IsVisible}");
 			}
 
 		#endregion

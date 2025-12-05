@@ -5,27 +5,31 @@ using Enlisted.Features.Assignments.Core;
 namespace Enlisted.Mod.Core.Logging
 {
     /// <summary>
-    /// Logs session startup diagnostics once per game session.
-    /// Provides visibility into mod configuration and state without log spam.
+    ///     Logs session startup diagnostics once per game session.
+    ///     Provides visibility into mod configuration and state without log spam.
     /// </summary>
     public static class SessionDiagnostics
     {
-        private static bool _hasLoggedStartup = false;
-        private static bool _hasLoggedConfigValues = false;
-
         /// <summary>
-        /// Mod version for diagnostics. Update this when releasing new versions.
+        ///     Mod version for diagnostics. Update this when releasing new versions.
         /// </summary>
-        public const string ModVersion = "0.4.3";
+        public const string ModVersion = "0.5.0";
+
         public const string TargetGameVersion = "1.3.9";
+        private static bool _hasLoggedStartup;
+        private static bool _hasLoggedConfigValues;
 
         /// <summary>
-        /// Log startup diagnostics once when the game session begins.
-        /// Safe to call multiple times - only logs once per session.
+        ///     Log startup diagnostics once when the game session begins.
+        ///     Safe to call multiple times - only logs once per session.
         /// </summary>
         public static void LogStartupDiagnostics()
         {
-            if (_hasLoggedStartup) return;
+            if (_hasLoggedStartup)
+            {
+                return;
+            }
+
             _hasLoggedStartup = true;
 
             var sb = new StringBuilder();
@@ -40,12 +44,16 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Log configuration values once when configs are first loaded.
-        /// Helps verify that JSON configs are being read correctly.
+        ///     Log configuration values once when configs are first loaded.
+        ///     Helps verify that JSON configs are being read correctly.
         /// </summary>
         public static void LogConfigurationValues()
         {
-            if (_hasLoggedConfigValues) return;
+            if (_hasLoggedConfigValues)
+            {
+                return;
+            }
+
             _hasLoggedConfigValues = true;
 
             try
@@ -67,7 +75,8 @@ namespace Enlisted.Mod.Core.Logging
                 // Tier progression
                 var tierXP = ConfigurationManager.GetTierXpRequirements();
                 sb.AppendLine($"[Progression] tier_count: {tierXP.Length}");
-                sb.AppendLine($"[Progression] max_tier_xp: {(tierXP.Length > 0 ? tierXP[tierXP.Length - 1].ToString() : "N/A")}");
+                sb.AppendLine(
+                    $"[Progression] max_tier_xp: {(tierXP.Length > 0 ? tierXP[tierXP.Length - 1].ToString() : "N/A")}");
 
                 sb.AppendLine("----------------------------");
 
@@ -80,8 +89,8 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         /// <summary>
-        /// Log a state transition for debugging purposes.
-        /// Use for important one-time events, not per-tick updates.
+        ///     Log a state transition for debugging purposes.
+        ///     Use for important one-time events, not per-tick updates.
         /// </summary>
         public static void LogStateTransition(string system, string fromState, string toState, string details = null)
         {
@@ -90,11 +99,12 @@ namespace Enlisted.Mod.Core.Logging
             {
                 message += $" | {details}";
             }
+
             ModLogger.Debug(system, message);
         }
 
         /// <summary>
-        /// Log an important one-time event for troubleshooting.
+        ///     Log an important one-time event for troubleshooting.
         /// </summary>
         public static void LogEvent(string system, string eventName, string details = null)
         {
@@ -103,9 +113,8 @@ namespace Enlisted.Mod.Core.Logging
             {
                 message += $" | {details}";
             }
+
             ModLogger.Debug(system, message);
         }
-
     }
 }
-

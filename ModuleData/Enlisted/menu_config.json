@@ -26,6 +26,46 @@
       "text": "Experience Breakdown:\n{XP_BREAKDOWN}\n\nRelationships:\n{RELATIONSHIP_STATUS}\n\nBattle History:\n{BATTLE_STATISTICS}\n\nFormation Progress:\n{FORMATION_DETAILS}\n\nService Details:\n{SERVICE_INFORMATION}",
       "overlay": "None",
       "flags": "None"
+    },
+    "command_tent": {
+      "id": "command_tent",
+      "title_key": "{=ct_title}Command Tent",
+      "description": "Player's personal command space for service records and retinue management",
+      "text": "{=ct_menu_intro}The canvas flaps in the breeze. Maps and tallies cover a makeshift table. Your small corner of the army's camp.",
+      "overlay": "None",
+      "flags": "None"
+    },
+    "command_tent_service_records": {
+      "id": "command_tent_service_records",
+      "title_key": "{=ct_records_title}Service Records",
+      "description": "View current posting, faction history, and lifetime service statistics",
+      "text": "{=ct_records_intro}Your service history and military records are catalogued here.",
+      "overlay": "None",
+      "flags": "None"
+    },
+    "command_tent_current_posting": {
+      "id": "command_tent_current_posting",
+      "title_key": "{=ct_current_title}Current Posting",
+      "description": "Details of current enlistment term",
+      "text": "{CURRENT_POSTING_TEXT}",
+      "overlay": "None",
+      "flags": "None"
+    },
+    "command_tent_faction_records": {
+      "id": "command_tent_faction_records",
+      "title_key": "{=ct_faction_title}Faction Records",
+      "description": "Service history for each faction served",
+      "text": "{FACTION_RECORDS_TEXT}",
+      "overlay": "None",
+      "flags": "None"
+    },
+    "command_tent_lifetime_summary": {
+      "id": "command_tent_lifetime_summary",
+      "title_key": "{=ct_lifetime_title}Lifetime Summary",
+      "description": "Cross-faction career statistics",
+      "text": "{LIFETIME_SUMMARY_TEXT}",
+      "overlay": "None",
+      "flags": "None"
     }
   },
   "menu_options": {
@@ -114,6 +154,83 @@
       "leave_type": "Leave",
       "priority": 999,
       "target_menu": "enlisted_status"
+    },
+    "command_tent": {
+      "id": "enlisted_command_tent",
+      "display_text": "{=ct_menu_enter}Enter the Command Tent",
+      "description": "Access service records, retinue management, and companion assignments",
+      "leave_type": "Submenu",
+      "priority": 45,
+      "enabled_conditions": ["enlisted"],
+      "target_menu": "command_tent"
+    },
+    "ct_service_records": {
+      "id": "ct_service_records",
+      "display_text": "{=ct_option_records}Review service records",
+      "description": "View current posting, faction history, and lifetime statistics",
+      "leave_type": "Submenu",
+      "priority": 1,
+      "target_menu": "command_tent_service_records"
+    },
+    "ct_retinue": {
+      "id": "ct_retinue",
+      "display_text": "{=ct_option_retinue}Muster personal retinue",
+      "description": "Request soldiers to command (Tier 4+ only)",
+      "leave_type": "Submenu",
+      "priority": 2,
+      "enabled_conditions": ["enlisted", "tier_4_or_higher"],
+      "disabled_tooltips": {
+        "tier_locked": "{=ct_warn_tier_locked}You must reach Tier 4 to command soldiers."
+      }
+    },
+    "ct_back": {
+      "id": "ct_back",
+      "display_text": "{=ct_option_back}Return to camp",
+      "description": "Return to enlisted status menu",
+      "leave_type": "Leave",
+      "priority": 100,
+      "target_menu": "enlisted_status"
+    },
+    "ct_current_posting": {
+      "id": "ct_current_posting",
+      "display_text": "{=ct_option_current}Current Posting",
+      "description": "View details of your current enlistment",
+      "leave_type": "Submenu",
+      "priority": 1,
+      "enabled_conditions": ["enlisted"],
+      "target_menu": "command_tent_current_posting"
+    },
+    "ct_faction_records": {
+      "id": "ct_faction_records",
+      "display_text": "{=ct_option_faction}Faction Records",
+      "description": "View service history for each faction",
+      "leave_type": "Submenu",
+      "priority": 2,
+      "target_menu": "command_tent_faction_records"
+    },
+    "ct_lifetime_summary": {
+      "id": "ct_lifetime_summary",
+      "display_text": "{=ct_option_lifetime}Lifetime Summary",
+      "description": "View cross-faction career statistics",
+      "leave_type": "Submenu",
+      "priority": 3,
+      "target_menu": "command_tent_lifetime_summary"
+    },
+    "ct_back_records": {
+      "id": "ct_back_records",
+      "display_text": "{=ct_back_records}Back to Service Records",
+      "description": "Return to service records menu",
+      "leave_type": "Leave",
+      "priority": 100,
+      "target_menu": "command_tent_service_records"
+    },
+    "ct_back_tent": {
+      "id": "ct_back_tent",
+      "display_text": "{=ct_back_tent}Back to Command Tent",
+      "description": "Return to command tent menu",
+      "leave_type": "Leave",
+      "priority": 100,
+      "target_menu": "command_tent"
     }
   },
   "text_variables": {

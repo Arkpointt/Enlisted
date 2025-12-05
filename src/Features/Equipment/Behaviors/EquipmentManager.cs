@@ -30,7 +30,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private TaleWorlds.Core.Equipment _personalBattleEquipment;
         private TaleWorlds.Core.Equipment _personalCivilianEquipment;
         private ItemRoster _personalInventory = new ItemRoster();
-        private bool _hasBackedUpEquipment = false;
+        private bool _hasBackedUpEquipment;
         
         // Equipment pricing configuration
         private Dictionary<FormationType, float> _formationPriceMultipliers;
@@ -123,8 +123,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var hero = Hero.MainHero;
                 
                 // Backup equipment using verified APIs
-                _personalBattleEquipment = hero.BattleEquipment.Clone(false);
-                _personalCivilianEquipment = hero.CivilianEquipment.Clone(false);
+                _personalBattleEquipment = hero.BattleEquipment.Clone(); // Default cloneWithoutWeapons=false is sufficient
+                _personalCivilianEquipment = hero.CivilianEquipment.Clone(); // Default cloneWithoutWeapons=false is sufficient
                 
                 // CRITICAL: Quest-safe inventory backup (prevents quest item loss)
                 var itemsToBackup = new List<ItemRosterElement>();
@@ -167,7 +167,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Restore personal equipment from backup.
-        /// Called when retiring or leaving service.
+        /// Called when discharged (not retirement) - replaces current equipment with original.
         /// </summary>
         public void RestorePersonalEquipment()
         {
@@ -211,9 +211,86 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
+        /// Restore personal equipment to INVENTORY (not equipped) for retirement.
+        /// Player keeps their current military gear AND gets their old stuff back in inventory.
+        /// This is a reward for completing service honorably.
+        /// </summary>
+        public void RestorePersonalEquipmentToInventory()
+        {
+            try
+            {
+                if (!_hasBackedUpEquipment)
+                {
+                    ModLogger.Info("Equipment", "No personal equipment to restore to inventory");
+                    return;
+                }
+                
+                var itemRoster = MobileParty.MainParty.ItemRoster;
+                var itemsRestored = 0;
+                
+                // Add backed up BATTLE equipment to inventory (player keeps what they're wearing)
+                if (_personalBattleEquipment != null)
+                {
+                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    {
+                        var item = _personalBattleEquipment[slot].Item;
+                        if (item != null)
+                        {
+                            itemRoster.AddToCounts(new EquipmentElement(item), 1);
+                            itemsRestored++;
+                        }
+                    }
+                }
+                
+                // Add backed up CIVILIAN equipment to inventory
+                if (_personalCivilianEquipment != null)
+                {
+                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    {
+                        var item = _personalCivilianEquipment[slot].Item;
+                        if (item != null)
+                        {
+                            itemRoster.AddToCounts(new EquipmentElement(item), 1);
+                            itemsRestored++;
+                        }
+                    }
+                }
+                
+                // Restore backed up inventory items
+                foreach (var item in _personalInventory)
+                {
+                    itemRoster.AddToCounts(item.EquipmentElement, item.Amount);
+                    itemsRestored += item.Amount;
+                }
+                
+                // Clear backup data
+                _personalInventory.Clear();
+                _personalBattleEquipment = null;
+                _personalCivilianEquipment = null;
+                _hasBackedUpEquipment = false;
+                
+                ModLogger.Info("Equipment", $"Retirement reward: {itemsRestored} items restored to inventory (player keeps military gear)");
+                
+                // Notify player
+                var message = new TextObject("{=qm_retirement_gear}Your personal belongings have been returned. You may keep your military equipment as thanks for your service.");
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", $"Error restoring equipment to inventory for retirement: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Check if personal equipment has been backed up.
+        /// </summary>
+        public bool HasBackedUpEquipment => _hasBackedUpEquipment;
+        
+        /// <summary>
         /// Get culture-appropriate equipment for a specific tier and formation.
         /// Used for equipment pricing and availability calculations.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be used for future equipment selection features")]
         public List<ItemObject> GetCultureAppropriateEquipment(CultureObject culture, int tier, FormationType formation)
         {
             try
@@ -233,7 +310,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     foreach (var equipment in character.BattleEquipments)
                     {
-                        for (EquipmentIndex slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
                         {
                             var item = equipment[slot].Item;
                             if (item != null && !availableGear.Contains(item))
@@ -263,13 +340,21 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 // Detect formation based on equipment characteristics
                 if (troop.IsRanged && troop.IsMounted)
+                {
                     return FormationType.HorseArcher;   // Bow + Horse
+                }
                 else if (troop.IsMounted)
+                {
                     return FormationType.Cavalry;       // Sword + Horse  
+                }
                 else if (troop.IsRanged)
+                {
                     return FormationType.Archer;        // Bow + No Horse
+                }
                 else
+                {
                     return FormationType.Infantry;      // Sword + No Horse (default)
+                }
             }
             catch
             {
@@ -280,42 +365,54 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Process equipment request from weaponsmith menu option.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called from menu system")]
         public void ProcessEquipmentRequest(FormationType requestedFormation)
         {
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment == null || !enlistment.IsEnlisted)
                 {
                     return;
                 }
                 
-                var culture = enlistment.CurrentLord.Culture;
+                var currentLord = enlistment.CurrentLord;
+                if (currentLord == null)
+                {
+                    ModLogger.Warn("Equipment", "Cannot process equipment request - no current lord");
+                    return;
+                }
+                
+                var culture = currentLord.Culture;
                 var currentTier = enlistment.EnlistmentTier;
                 
                 // Get troops of requested formation at current tier
-                    var troopSelectionManager = TroopSelectionManager.Instance;
-                    var availableTroops = troopSelectionManager?.GetTroopsForCultureAndTier(culture.StringId, currentTier)
+                var troopSelectionManager = TroopSelectionManager.Instance;
+                var availableTroops = troopSelectionManager?.GetTroopsForCultureAndTier(culture.StringId, currentTier)
                     .Where(t => DetectTroopFormation(t) == requestedFormation).ToList();
                     
-                if (availableTroops.Count > 0)
+                if (availableTroops is { Count: > 0 })
                 {
                     // For now, select first available troop
                     // Can be enhanced with choice menu later
-                    var selectedTroop = availableTroops.First();
+                    var selectedTroop = availableTroops.FirstOrDefault();
+                    if (selectedTroop == null)
+                    {
+                        return;
+                    }
                     var cost = CalculateEquipmentCost(selectedTroop, requestedFormation);
                     
                     if (Hero.MainHero.Gold >= cost)
                     {
                         var goldBefore = Hero.MainHero.Gold;
-                        GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost, false);
+                        GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost); // Default disableNotification=false is sufficient
                         troopSelectionManager?.ApplySelectedTroopEquipment(Hero.MainHero, selectedTroop);
                         
                         // Log equipment purchase
                         ModLogger.Info("Gold", $"Equipment purchased: {selectedTroop.Name} for {cost} denars (had {goldBefore}, now {Hero.MainHero.Gold})");
                         ModLogger.IncrementSummary("equipment_purchases", 1, cost);
                         
-                        var message = new TextObject("Equipment upgraded to {TROOP_NAME} for {COST} denars.");
+                        var message = new TextObject("{=eq_upgraded}Equipment upgraded to {TROOP_NAME} for {COST} denars.");
                         message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
                         message.SetTextVariable("COST", cost.ToString());
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
@@ -323,7 +420,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     else
                     {
                         ModLogger.Warn("Gold", $"Insufficient funds for equipment: need {cost} denars, have {Hero.MainHero.Gold}");
-                        var message = new TextObject("Insufficient funds. Need {COST} denars for equipment upgrade.");
+                        var message = new TextObject("{=eq_insufficient_upgrade}Insufficient funds. Need {COST} denars for equipment upgrade.");
                         message.SetTextVariable("COST", cost.ToString());
                         InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                     }
@@ -336,3 +433,4 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
     }
 }
+

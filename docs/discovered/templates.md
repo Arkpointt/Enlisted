@@ -4,6 +4,16 @@
 **Updated**: 2025-01-28  
 **Purpose**: Solve UI widget issues in enlisted menu system
 
+## Index
+
+- [The UI Widget Problem](#-the-ui-widget-problem)
+- [Solution Options (From Decompile Analysis)](#-solution-options-from-decompile-analysis)
+- [Complete API Reference for Menu Creation](#-complete-api-reference-for-menu-creation)
+- [RECOMMENDED IMPLEMENTATION STRATEGY](#-recommended-implementation-strategy)
+- [IMMEDIATE ACTION PLAN](#-immediate-action-plan)
+
+---
+
 ## 🚨 **The UI Widget Problem**
 
 ### **Issue**: Empty Brown Boxes in Menu

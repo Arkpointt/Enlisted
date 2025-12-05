@@ -1,9 +1,7 @@
 using System;
-using System.Reflection;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
-using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -18,7 +16,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		/// Flag indicating if we're currently discharging the player from enlistment.
 		/// When true, relation penalties will be suppressed.
 		/// </summary>
-		public static bool IsDischarging { get; set; } = false;
+		public static bool IsDischarging { get; set; }
 	}
 
 	/// <summary>
@@ -29,12 +27,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
 	[HarmonyPatch(typeof(ChangeRelationAction), "ApplyRelationChangeBetweenHeroes")]
 	public class DischargeRelationPenaltyPatch
 	{
-		static bool Prefix(Hero hero, Hero gainedRelationWith, int relationChange, bool showQuickNotification)
+		/// <summary>
+		/// Prefix method that runs before ChangeRelationAction.ApplyRelationChangeBetweenHeroes.
+		/// Suppresses negative relation changes during discharge.
+		/// Called by Harmony via reflection.
+		/// </summary>
+		[HarmonyPrefix]
+		public static bool Prefix(Hero hero, Hero gainedRelationWith, int relationChange, bool showQuickNotification)
 		{
 			try
 			{
 				// Only suppress negative relation changes for the player during discharge
-				bool involvesPlayer = hero == Hero.MainHero || gainedRelationWith == Hero.MainHero;
+				var involvesPlayer = hero == Hero.MainHero || gainedRelationWith == Hero.MainHero;
 
 				if (!involvesPlayer)
 				{
@@ -94,8 +98,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
 				try
 				{
-					var currentKingdom = clan.Kingdom;
-					var isMercenary = clan.IsUnderMercenaryService;
+					var currentKingdom = clan?.Kingdom;
+					var isMercenary = clan?.IsUnderMercenaryService ?? false;
 
 					ModLogger.Debug("Discharge", $"Current state: currentKingdom={currentKingdom?.Name?.ToString() ?? "null"}, isMercenary={isMercenary}");
 

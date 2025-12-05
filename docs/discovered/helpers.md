@@ -2,6 +2,19 @@
 
 **Helper APIs and promotion utilities for the Enlisted military service system**
 
+## Index
+
+- [SYSTEM CHANGE: Troop Selection Approach](#-system-change-troop-selection-approach)
+- [Troop Selection Helper Methods](#-troop-selection-helper-methods)
+- [Object Manager Methods](#-object-manager-methods)
+- [Character Object Equipment Properties](#-character-object-equipment-properties)
+- [Equipment Management Core](#-equipment-management-core)
+- [Reflection Candidates](#-reflection-candidates)
+- [Promotion Helper Implementation](#-promotion-helper-implementation)
+- [Safe API Usage Patterns](#-safe-api-usage-patterns)
+
+---
+
 ## 🎯 **SYSTEM CHANGE: Troop Selection Approach**
 
 **ARCHITECTURAL DECISION** (2025-01-28): **Switched from custom equipment kits to troop selection using real game troops**

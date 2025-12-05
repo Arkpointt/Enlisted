@@ -1,7 +1,6 @@
 using System;
 using System.Reflection;
 using HarmonyLib;
-using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
@@ -9,6 +8,9 @@ using TaleWorlds.CampaignSystem.Roster;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
+// ReSharper disable UnusedType.Global - Harmony patches are applied via attributes, not direct code references
+// ReSharper disable UnusedMember.Local - Harmony Prefix/Postfix methods are invoked via reflection
+// ReSharper disable InconsistentNaming - __instance/__result are Harmony naming conventions; _fields follow project convention
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
@@ -26,16 +28,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// CRITICAL: We return EMPTY rosters, not null. Returning null causes crashes in
     /// MapEvent.LootDefeatedPartyItems() which doesn't handle null rosters gracefully.
     /// </summary>
+    // ReSharper disable once UnusedType.Global - Harmony patch classes discovered via reflection
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch classes discovered via reflection")]
     public static class LootBlockPatch
     {
         // Dummy rosters that receive loot but are never used
         // These prevent crashes while still blocking loot from going to player
-        private static ItemRoster _dummyItemRoster = new ItemRoster();
-        private static TroopRoster _dummyMemberRoster = TroopRoster.CreateDummyTroopRoster();
-        private static TroopRoster _dummyPrisonerRoster = TroopRoster.CreateDummyTroopRoster();
-        
-        // Track loot blocked for summary logging
-        private static int _lootBlockedCount = 0;
+        private static readonly ItemRoster _dummyItemRoster = new ItemRoster();
+        private static readonly TroopRoster _dummyMemberRoster = TroopRoster.CreateDummyTroopRoster();
+        private static readonly TroopRoster _dummyPrisonerRoster = TroopRoster.CreateDummyTroopRoster();
         
         private static bool ShouldBlockLoot()
         {
@@ -59,8 +60,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// </summary>
         private static void LogLootBlocked(string lootType)
         {
-            _lootBlockedCount++;
-            ModLogger.IncrementSummary("loot_blocked", 1);
+            ModLogger.IncrementSummary("loot_blocked");
             ModLogger.Trace("Gold", $"Blocked {lootType} loot - enlisted soldiers don't receive personal loot");
         }
         
@@ -88,10 +88,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Returns empty item roster, preventing item loot from reaching player.
         /// CRITICAL: Returns empty roster, not null - null causes crashes in LootDefeatedPartyItems.
         /// </summary>
+        // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
         [HarmonyPatch(typeof(MapEventParty), nameof(MapEventParty.RosterToReceiveLootItems), MethodType.Getter)]
         public static class ItemLootPatch
         {
-            static bool Prefix(MapEventParty __instance, ref ItemRoster __result)
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+            private static bool Prefix(MapEventParty __instance, ref ItemRoster __result)
             {
                 if (__instance.Party != PartyBase.MainParty)
                 {
@@ -114,10 +117,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Returns empty troop roster, preventing troop loot from reaching player.
         /// CRITICAL: Returns empty roster, not null - null causes crashes in LootDefeatedPartyItems.
         /// </summary>
+        // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
         [HarmonyPatch(typeof(MapEventParty), nameof(MapEventParty.RosterToReceiveLootMembers), MethodType.Getter)]
         public static class MemberLootPatch
         {
-            static bool Prefix(MapEventParty __instance, ref TroopRoster __result)
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+            private static bool Prefix(MapEventParty __instance, ref TroopRoster __result)
             {
                 if (__instance.Party != PartyBase.MainParty)
                 {
@@ -140,10 +146,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// Returns empty prisoner roster, preventing prisoner loot from reaching player.
         /// CRITICAL: Returns empty roster, not null - null causes crashes in LootDefeatedPartyItems.
         /// </summary>
+        // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
         [HarmonyPatch(typeof(MapEventParty), nameof(MapEventParty.RosterToReceiveLootPrisoners), MethodType.Getter)]
         public static class PrisonerLootPatch
         {
-            static bool Prefix(MapEventParty __instance, ref TroopRoster __result)
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+            private static bool Prefix(MapEventParty __instance, ref TroopRoster __result)
             {
                 if (__instance.Party != PartyBase.MainParty)
                 {
@@ -171,10 +180,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// This prevents crashes from banner/figurehead loot screens.
         /// Also clears dummy rosters to prevent memory buildup.
         /// </summary>
+        // ReSharper disable once UnusedType.Global - Harmony patch class discovered via reflection
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch class discovered via reflection")]
         [HarmonyPatch(typeof(PlayerEncounter), "DoLootParty")]
         public static class LootScreenPatch
         {
-            static bool Prefix(PlayerEncounter __instance)
+            [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
+            private static bool Prefix(PlayerEncounter __instance)
             {
                 try
                 {

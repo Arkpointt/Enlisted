@@ -13,7 +13,6 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using Enlisted.Features.Equipment.UI;
 using Enlisted.Mod.Entry;
 
 namespace Enlisted.Features.Equipment.Behaviors
@@ -30,12 +29,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         public static TroopSelectionManager Instance { get; private set; }
         
         // Promotion state tracking
-        private bool _promotionPending = false;
+        private bool _promotionPending;
         private int _pendingTier = 1;
         private List<CharacterObject> _availableTroops = new List<CharacterObject>();
         private string _lastSelectedTroopId;
+        
+        // Equipment accountability tracking - tracks what gear has been issued to the soldier
+        // Used to charge for missing equipment when changing troop types
+        private Dictionary<int, IssuedItemRecord> _issuedEquipment = new Dictionary<int, IssuedItemRecord>();
 
         public string LastSelectedTroopId => _lastSelectedTroopId;
+        
+        /// <summary>
+        /// Gets the currently issued equipment for accountability tracking.
+        /// </summary>
+        public IReadOnlyDictionary<int, IssuedItemRecord> IssuedEquipment => _issuedEquipment;
         
         public TroopSelectionManager()
         {
@@ -52,6 +60,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             dataStore.SyncData("_promotionPending", ref _promotionPending);
             dataStore.SyncData("_pendingTier", ref _pendingTier);
             dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
+            dataStore.SyncData("_issuedEquipment", ref _issuedEquipment);
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -61,7 +70,31 @@ namespace Enlisted.Features.Equipment.Behaviors
             // DEVELOPMENT: Validate troop coverage across all factions
             TroopDiscoveryValidator.ValidateAllCulturesAndTiers();
             
-            ModLogger.Info("TroopSelection", "Troop selection system initialized");
+            ModLogger.Info("TroopSelection", "Troop selection system initialized with modern UI styling");
+        }
+        
+        /// <summary>
+        /// Menu background initialization for enlisted_troop_selection menu.
+        /// Sets culture-appropriate background and ambient audio.
+        /// </summary>
+        [GameMenuInitializationHandler("enlisted_troop_selection")]
+        private static void OnTroopSelectionBackgroundInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var backgroundMesh = "encounter_looter";
+            
+            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+            }
+            
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
         
         /// <summary>
@@ -73,14 +106,14 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("You must be enlisted to use Master at Arms.").ToString()));
+                        new TextObject("{=eq_must_be_enlisted}You must be enlisted to use Master at Arms.").ToString()));
                     return;
                 }
 
-                var cultureId = enlistment.CurrentLord?.Culture?.StringId;
+                var cultureId = enlistment?.CurrentLord?.Culture?.StringId;
                 if (string.IsNullOrEmpty(cultureId))
                 {
                     ModLogger.Error("Equipment", "Master at Arms: Missing culture on current lord");
@@ -93,7 +126,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (unlocked.Count == 0)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("No eligible troops found for your rank and culture.").ToString()));
+                        new TextObject("{=eq_no_eligible_troops}No eligible troops found for your rank and culture.").ToString()));
                     return;
                 }
 
@@ -120,8 +153,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         try
                         {
-                            var chosen = selected?.FirstOrDefault()?.Identifier as CharacterObject;
-                            if (chosen != null)
+                            if (selected?.FirstOrDefault()?.Identifier is CharacterObject chosen)
                             {
                                                 ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
                                 ApplySelectedTroopEquipment(Hero.MainHero, chosen);
@@ -174,7 +206,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         !t.IsHero &&
                         t.BattleEquipments.Any() &&
                         SafeGetTier(t) <= currentTier)
-                    .OrderBy(t => SafeGetTier(t))
+                    .OrderBy(SafeGetTier)
                     .ThenBy(t => t.Name?.ToString())
                     .ToList();
 
@@ -246,7 +278,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var best = troop.BattleEquipments?.FirstOrDefault();
                 if (best != null)
                 {
-                    for (EquipmentIndex slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
                     {
                         var item = best[slot].Item;
                         if (item == null)
@@ -278,11 +310,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                 GameMenu.MenuFlags.None,
                 null);
                 
-            // "Collect equipment now" button - opens Master at Arms popup for troop selection
+            // "Collect equipment now" button - opens Master at Arms popup for troop selection (TroopSelection icon)
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_collect_now",
                 "Collect equipment now",
-                args => _promotionPending && _availableTroops.Count > 0,
                 args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
+                    return _promotionPending && _availableTroops.Count > 0;
+                },
+                _ =>
                 {
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
@@ -299,11 +335,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 false, 0);
             
-            // "Return to camp" button - player declines immediate equipment collection
+            // "Return to camp" button - player declines immediate equipment collection (Leave icon)
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_back",
                 "Return to camp",
-                args => true,
                 args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ =>
                 {
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
@@ -320,7 +360,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                     });
                 },
-                true, -1);
+                false, -1);
         }
         
         /// <summary>
@@ -332,13 +372,18 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
                     ModLogger.Error("TroopSelection", "Cannot show troop selection - player not enlisted");
                     return;
                 }
 
-                var cultureId = enlistment.CurrentLord.Culture.StringId;
+                var cultureId = enlistment.CurrentLord?.Culture?.StringId;
+                if (string.IsNullOrEmpty(cultureId))
+                {
+                    ModLogger.Error("TroopSelection", "Cannot show troop selection - missing culture on current lord");
+                    return;
+                }
                 _availableTroops = GetTroopsForCultureAndTier(cultureId, newTier);
                 _pendingTier = newTier;
                 _promotionPending = true;
@@ -371,7 +416,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 // 1.3.4+: Set proper menu background to avoid assertion failure
-                string backgroundMesh = "encounter_looter"; // Safe fallback
+                var backgroundMesh = "encounter_looter"; // Safe fallback
                 var enlistment = EnlistmentBehavior.Instance;
                 
                 if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
@@ -416,25 +461,14 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Create dynamic menu options for each available troop.
         /// </summary>
-        private void CreateTroopSelectionOptions(MenuCallbackArgs args)
+        private void CreateTroopSelectionOptions(MenuCallbackArgs _)
         {
             try
             {
-                // Clear any existing troop options
-                var currentMenu = args.MenuContext.GameMenu;
-                
-                // Add option for each available troop (limit to first 8 for UI reasons)
-                for (int i = 0; i < Math.Min(_availableTroops.Count, 8); i++)
-                {
-                    var troop = _availableTroops[i];
-                    var formation = DetectTroopFormation(troop);
-                    var optionText = $"Select {troop.Name} ({formation.ToString()})";
-                    
-                    // Troop selection is handled through the popup dialog system
-                    // Players choose from available troops displayed in a selection dialog
-                }
-                
-                ModLogger.Info("TroopSelection", $"Created {Math.Min(_availableTroops.Count, 8)} troop selection options");
+                // Troop selection is handled through the popup dialog system
+                // Players choose from available troops displayed in a selection dialog
+                var troopCount = Math.Min(_availableTroops.Count, 8);
+                ModLogger.Info("TroopSelection", $"Created {troopCount} troop selection options");
             }
             catch (Exception ex)
             {
@@ -548,9 +582,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                         {
                             foreach (var next in upgrades)
                             {
-                                if (next != null && next.Culture == culture && !next.IsHero && !visited.Contains(next.StringId))
+                                if (next != null && next.Culture == culture && !next.IsHero && visited.Add(next.StringId))
                                 {
-                                    visited.Add(next.StringId);
                                     queue.Enqueue(next);
                                 }
                             }
@@ -572,6 +605,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Apply equipment from selected troop to hero.
         /// Implements equipment REPLACEMENT system (not accumulation).
+        /// Includes accountability check - soldier is charged for missing equipment.
         /// </summary>
         public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop)
         {
@@ -579,7 +613,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 // Equipment is replaced (not accumulated) for realistic military service
                 // This ensures players get the equipment appropriate to their tier and troop type
-                // Player turns in old equipment, receives new equipment
                 var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
                 if (troopEquipment == null)
                 {
@@ -587,9 +620,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
                 
+                // ACCOUNTABILITY CHECK: Charge for any missing equipment before issuing new gear
+                ProcessEquipmentAccountability(hero);
+                
                 // Replace all equipment with new troop's gear
                 EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
                 _lastSelectedTroopId = selectedTroop.StringId;
+                
+                // Record newly issued equipment for future accountability
+                RecordIssuedEquipment(hero.BattleEquipment);
                 
                 // Update formation based on selected troop
                 var formation = DetectTroopFormation(selectedTroop);
@@ -597,7 +636,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 duties?.SetPlayerFormation(formation.ToString().ToLower());
                 
                 // Show promotion notification
-                var message = new TextObject("Promoted to {TROOP_NAME}! New equipment issued.");
+                var message = new TextObject("{=eq_promoted_new_equipment}Promoted to {TROOP_NAME}! New equipment issued.");
                 message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 
@@ -610,6 +649,74 @@ namespace Enlisted.Features.Equipment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("TroopSelection", $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}: {ex.Message}", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Process equipment accountability - check for missing gear and charge the soldier.
+        /// Called before issuing new equipment when changing troop type.
+        /// </summary>
+        private void ProcessEquipmentAccountability(Hero hero)
+        {
+            try
+            {
+                // Check for missing equipment
+                var (missingItems, totalDebt) = CheckMissingEquipment();
+                
+                if (missingItems.Count == 0)
+                {
+                    // All equipment accounted for - clear tracking for fresh start
+                    ClearIssuedEquipment();
+                    return;
+                }
+                
+                // Deduct the cost of missing equipment from soldier's pay
+                if (totalDebt > 0)
+                {
+                    hero.Gold = Math.Max(0, hero.Gold - totalDebt);
+                    
+                    // Build notification message listing missing items
+                    var sb = new System.Text.StringBuilder();
+                    var headerText = new TextObject("{=qm_missing_equipment_header}Missing equipment deducted from pay:");
+                    sb.AppendLine(headerText.ToString());
+                    foreach (var item in missingItems)
+                    {
+                        sb.AppendLine($"  • {item.ItemName} ({item.ItemValue} denars)");
+                    }
+                    var totalText = new TextObject("{=qm_missing_equipment_total}Total deducted: {AMOUNT} denars");
+                    totalText.SetTextVariable("AMOUNT", totalDebt);
+                    sb.AppendLine(totalText.ToString());
+                    
+                    // Show notification to player
+                    var chargeMsg = new TextObject("{=qm_missing_equipment_charge}Missing equipment charge: {AMOUNT} denars deducted from pay.");
+                    chargeMsg.SetTextVariable("AMOUNT", totalDebt);
+                    InformationManager.DisplayMessage(new InformationMessage(chargeMsg.ToString(), Colors.Red));
+                    
+                    // Show detailed popup if significant amount
+                    if (totalDebt >= 100)
+                    {
+                        var titleText = new TextObject("{=qm_missing_equipment_title}Equipment Accountability");
+                        var btnText = new TextObject("{=qm_btn_understood}Understood");
+                        InformationManager.ShowInquiry(new InquiryData(
+                            titleText.ToString(),
+                            sb.ToString(),
+                            true,
+                            false,
+                            btnText.ToString(),
+                            string.Empty,
+                            null,
+                            null));
+                    }
+                    
+                    ModLogger.Info("TroopSelection", $"Charged {totalDebt} denars for {missingItems.Count} missing items");
+                }
+                
+                // Clear tracking after processing
+                ClearIssuedEquipment();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", "Error processing equipment accountability", ex);
             }
         }
         
@@ -681,6 +788,143 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Get pending promotion tier.
         /// </summary>
         public int PendingTier => _pendingTier;
+        
+        #region Equipment Accountability
+        
+        /// <summary>
+        /// Record equipment as issued to the soldier for accountability tracking.
+        /// Called when equipment is given via promotion, enlistment, or quartermaster.
+        /// </summary>
+        public void RecordIssuedEquipment(TaleWorlds.Core.Equipment equipment)
+        {
+            try
+            {
+                if (equipment == null)
+                {
+                    return;
+                }
+                
+                _issuedEquipment.Clear();
+                
+                // Record all equipped items
+                for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                {
+                    var item = equipment[slot].Item;
+                    if (item != null)
+                    {
+                        _issuedEquipment[(int)slot] = new IssuedItemRecord(item, slot);
+                    }
+                }
+                
+                ModLogger.Info("TroopSelection", $"Recorded {_issuedEquipment.Count} issued equipment items for accountability");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", "Error recording issued equipment", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Record a single item as issued (for quartermaster acquisitions).
+        /// </summary>
+        public void RecordIssuedItem(ItemObject item, EquipmentIndex slot)
+        {
+            try
+            {
+                if (item == null)
+                {
+                    return;
+                }
+                
+                _issuedEquipment[(int)slot] = new IssuedItemRecord(item, slot);
+                ModLogger.Info("TroopSelection", $"Recorded issued item: {item.Name} in slot {slot}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", "Error recording issued item", ex);
+            }
+        }
+        
+        /// <summary>
+        /// Check for missing equipment and calculate the debt owed.
+        /// Returns a list of missing items and the total value to charge.
+        /// </summary>
+        public (List<IssuedItemRecord> MissingItems, int TotalDebt) CheckMissingEquipment()
+        {
+            var missingItems = new List<IssuedItemRecord>();
+            var totalDebt = 0;
+            
+            try
+            {
+                var hero = Hero.MainHero;
+                if (hero == null || _issuedEquipment.Count == 0)
+                {
+                    return (missingItems, totalDebt);
+                }
+                
+                foreach (var issued in _issuedEquipment.Values)
+                {
+                    if (string.IsNullOrEmpty(issued.ItemStringId))
+                    {
+                        continue;
+                    }
+                    
+                    // Check if the player still has this item equipped anywhere
+                    var hasItem = false;
+                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                    {
+                        var equippedItem = hero.BattleEquipment[slot].Item;
+                        if (equippedItem?.StringId == issued.ItemStringId)
+                        {
+                            hasItem = true;
+                            break;
+                        }
+                    }
+                    
+                    // Also check civilian equipment
+                    if (!hasItem)
+                    {
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        {
+                            var equippedItem = hero.CivilianEquipment[slot].Item;
+                            if (equippedItem?.StringId == issued.ItemStringId)
+                            {
+                                hasItem = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (!hasItem)
+                    {
+                        missingItems.Add(issued);
+                        totalDebt += issued.ItemValue;
+                    }
+                }
+                
+                if (missingItems.Count > 0)
+                {
+                    ModLogger.Info("TroopSelection", $"Found {missingItems.Count} missing items worth {totalDebt} denars");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", "Error checking missing equipment", ex);
+            }
+            
+            return (missingItems, totalDebt);
+        }
+        
+        /// <summary>
+        /// Clear the issued equipment tracking (called after accountability check).
+        /// </summary>
+        public void ClearIssuedEquipment()
+        {
+            _issuedEquipment.Clear();
+            ModLogger.Info("TroopSelection", "Cleared issued equipment tracking");
+        }
+        
+        #endregion
     }
     
     /// <summary>
@@ -693,5 +937,51 @@ namespace Enlisted.Features.Equipment.Behaviors
         Archer, 
         Cavalry,
         HorseArcher
+    }
+    
+    /// <summary>
+    /// Record of an item issued to the soldier for accountability tracking.
+    /// When the soldier changes troop type, missing items will be charged to their pay.
+    /// </summary>
+    [Serializable]
+    public class IssuedItemRecord
+    {
+        /// <summary>
+        /// The StringId of the issued item (used to look up the item).
+        /// </summary>
+        public string ItemStringId { get; set; }
+        
+        /// <summary>
+        /// The display name of the item (for notifications).
+        /// </summary>
+        public string ItemName { get; set; }
+        
+        /// <summary>
+        /// The value of the item in denars (charged if missing).
+        /// </summary>
+        public int ItemValue { get; set; }
+        
+        /// <summary>
+        /// The equipment slot this item was issued to.
+        /// </summary>
+        public int SlotIndex { get; set; }
+        
+        public IssuedItemRecord()
+        {
+            // Parameterless constructor for serialization
+        }
+        
+        public IssuedItemRecord(ItemObject item, EquipmentIndex slot)
+        {
+            if (item == null)
+            {
+                return;
+            }
+            
+            ItemStringId = item.StringId;
+            ItemName = item.Name?.ToString() ?? "Unknown Item";
+            ItemValue = item.Value;
+            SlotIndex = (int)slot;
+        }
     }
 }

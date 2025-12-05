@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Engine.GauntletUI;
 using TaleWorlds.InputSystem;
-using TaleWorlds.Library;
 using TaleWorlds.ScreenSystem;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -26,7 +24,7 @@ namespace Enlisted.Features.Equipment.UI
         private static GauntletLayer _gauntletLayer;
         // 1.3.4 API: LoadMovie now returns GauntletMovieIdentifier instead of IGauntletMovie
         private static GauntletMovieIdentifier _gauntletMovie;
-        private static QuartermasterEquipmentSelectorVM _selectorViewModel;
+        private static QuartermasterEquipmentSelectorVm _selectorViewModel;
         
         public QuartermasterEquipmentSelectorBehavior()
         {
@@ -65,11 +63,11 @@ namespace Enlisted.Features.Equipment.UI
                 }
                 
                 // Create Gauntlet layer for custom UI overlay
-                // 1.3.4 API: GauntletLayer constructor params reordered to (string name, int localOrder, bool shouldClear)
-                _gauntletLayer = new GauntletLayer("QuartermasterEquipmentGrid", 1001, false);
+                // 1.3.4 API: GauntletLayer constructor with name and localOrder (omit shouldClear as it defaults to false)
+                _gauntletLayer = new GauntletLayer("QuartermasterEquipmentGrid", 1001);
                 
                 // Create ViewModel with equipment variant collection
-                _selectorViewModel = new QuartermasterEquipmentSelectorVM(availableVariants, targetSlot, equipmentType);
+                _selectorViewModel = new QuartermasterEquipmentSelectorVm(availableVariants, targetSlot, equipmentType);
                 _selectorViewModel.RefreshValues();
                 
                 // FIXED: Load template from official module structure GUI/Prefabs/Equipment/
@@ -77,7 +75,8 @@ namespace Enlisted.Features.Equipment.UI
                 
                 // Register hotkeys and set input restrictions for UI interaction
                 _gauntletLayer.Input.RegisterHotKeyCategory(HotKeyManager.GetCategory("GenericPanelGameKeyCategory"));
-                _gauntletLayer.InputRestrictions.SetInputRestrictions(true, InputUsageMask.All);
+                // Omit default parameter values for cleaner code
+                _gauntletLayer.InputRestrictions.SetInputRestrictions();
                 ScreenManager.TopScreen.AddLayer(_gauntletLayer);
                 _gauntletLayer.IsFocusLayer = true;
                 ScreenManager.TrySetFocus(_gauntletLayer);
@@ -104,7 +103,7 @@ namespace Enlisted.Features.Equipment.UI
                 {
                     var method = typeof(QuartermasterManager).GetMethod("ShowConversationBasedEquipmentSelection", 
                         System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                    method?.Invoke(quartermasterManager, new object[] { availableVariants, equipmentType });
+                    method?.Invoke(quartermasterManager, [availableVariants, equipmentType]);
                 }
             }
             catch (Exception ex)
@@ -153,9 +152,5 @@ namespace Enlisted.Features.Equipment.UI
             }
         }
         
-        /// <summary>
-        /// Check if equipment selector is currently active.
-        /// </summary>
-        public static bool IsActive => _gauntletLayer != null;
     }
 }
