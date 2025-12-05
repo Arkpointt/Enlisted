@@ -717,6 +717,7 @@ namespace Enlisted.Features.CommandTent.Core
                 "Visit the Command Tent to request men be assigned to your command. " +
                 "Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep.");
 
+            // pauseGameActiveState = false so notifications don't freeze game time
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -727,7 +728,7 @@ namespace Enlisted.Features.CommandTent.Core
                     string.Empty,
                     null,
                     null),
-                true);
+                false);
 
             ModLogger.Info(LogCategory, "Showed Tier 4 leadership notification");
         }

@@ -261,6 +261,7 @@ namespace Enlisted.Features.CommandTent.UI
         /// <summary>
         /// Menu background and audio initialization for Command Tent menus.
         /// Sets military-themed background and ambient audio for immersion.
+        /// Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler(CommandTentMenuId)]
         [GameMenuInitializationHandler(ServiceRecordsMenuId)]
@@ -280,6 +281,10 @@ namespace Enlisted.Features.CommandTent.UI
             
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
+            
+            // Resume time - native GameMenu.SwitchToMenu() stops time by default,
+            // but we want time to continue passing while browsing Command Tent menus
+            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
         }
 
         /// <summary>
@@ -1393,6 +1398,7 @@ namespace Enlisted.Features.CommandTent.UI
             message.SetTextVariable("COST", totalCost);
             message.SetTextVariable("UPKEEP", count * 2);
 
+            // pauseGameActiveState = false so dialogs don't freeze game time
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1403,7 +1409,7 @@ namespace Enlisted.Features.CommandTent.UI
                     new TextObject("{=ct_confirm_no}Cancel").ToString(),
                     () => ExecutePurchase(typeId, count, totalCost),
                     () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
-                true);
+                false);
         }
 
         /// <summary>
@@ -1455,6 +1461,7 @@ namespace Enlisted.Features.CommandTent.UI
             var message = new TextObject("{=ct_type_change_msg}You currently have {COUNT} soldiers. Changing type will dismiss them. Continue?");
             message.SetTextVariable("COUNT", currentCount);
 
+            // pauseGameActiveState = false so dialogs don't freeze game time
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1476,7 +1483,7 @@ namespace Enlisted.Features.CommandTent.UI
                         OnSoldierTypePurchase(newTypeId);
                     },
                     () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
-                true);
+                false);
         }
 
         #endregion
