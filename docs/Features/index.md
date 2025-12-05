@@ -33,6 +33,7 @@ Additional gameplay mechanics and player choices.
 - **[Temporary Leave](Gameplay/temporary-leave.md)** - 14-day leave system with desertion penalties
 - **[Troop Selection](Gameplay/troop-selection.md)** - Real troop choice for promotions and formations
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
+- **[Gear Upgrade Loop](Gameplay/gear-upgrade-loop.md)** - Scuffed issue gear, repairs/upgrades with cooldowns, promotion reclaim with retention credit, optional buy-out, and apothecary phasing
 
 ---
 
