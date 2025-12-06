@@ -875,15 +875,10 @@ namespace Enlisted.Features.CommandTent.UI
                     var manager = RetinueManager.Instance;
                     var hasRetinue = manager?.State?.HasRetinue == true;
                     args.IsEnabled = hasRetinue;
-                    if (!hasRetinue)
-                    {
-                        args.Tooltip = new TextObject("{=ct_retinue_no_soldiers}You have no soldiers mustered.");
-                    }
-                    else
-                    {
-                        // Let users know this refreshes menu data (e.g., after battles or training)
-                        args.Tooltip = new TextObject("{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.");
-                    }
+                    // Hint refreshes when enabled; clear guidance when empty.
+                    args.Tooltip = hasRetinue
+                        ? new TextObject("{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.")
+                        : new TextObject("{=ct_retinue_no_soldiers}You have no soldiers mustered.");
                     args.optionLeaveType = GameMenuOption.LeaveType.ManageGarrison;
                     return true;
                 },
@@ -1730,14 +1725,10 @@ namespace Enlisted.Features.CommandTent.UI
                 sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
                 sb.AppendLine();
 
-                if (cooldownDays > 0)
-                {
-                    sb.AppendLine($"Cooldown: {cooldownDays} days remaining");
-                }
-                else
-                {
-                    sb.AppendLine("Requisition available now");
-                }
+                var cooldownLine = cooldownDays > 0
+                    ? $"Cooldown: {cooldownDays} days remaining"
+                    : "Requisition available now";
+                sb.AppendLine(cooldownLine);
 
                 sb.AppendLine();
                 sb.AppendLine("After requisition: 14 day cooldown");

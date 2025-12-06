@@ -305,10 +305,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("enlisted_troop_selection",
                 "Master at Arms\n{TROOP_SELECTION_TEXT}",
-                OnTroopSelectionInit,
-                GameMenu.MenuOverlayType.None,
-                GameMenu.MenuFlags.None,
-                null);
+                OnTroopSelectionInit);
                 
             // "Collect equipment now" button - opens Master at Arms popup for troop selection (TroopSelection icon)
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_collect_now",
@@ -359,8 +356,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                             EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
                     });
-                },
-                false, -1);
+                });
         }
         
         /// <summary>
@@ -937,12 +933,14 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 if (!dataStore.IsLoading)
                 {
+                    var issuedEquipment = _issuedEquipment ?? new Dictionary<int, IssuedItemRecord>();
                     var index = 0;
-                    foreach (var kvp in _issuedEquipment)
+                    const int unsetSlotIndex = -1;
+                    foreach (var kvp in issuedEquipment)
                     {
                         var slotKey = kvp.Key;
                         var record = kvp.Value ?? new IssuedItemRecord();
-                        var slotIndex = record.SlotIndex == 0 ? slotKey : record.SlotIndex;
+                        var slotIndex = record.SlotIndex >= 0 ? record.SlotIndex : unsetSlotIndex;
                         var itemId = record.ItemStringId ?? string.Empty;
                         var itemName = record.ItemName ?? string.Empty;
                         var itemValue = record.ItemValue;
@@ -958,6 +956,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 else
                 {
                     _issuedEquipment = new Dictionary<int, IssuedItemRecord>();
+                    const int unsetSlotIndex = -1;
                     for (var i = 0; i < count; i++)
                     {
                         var slotKey = 0;
@@ -972,12 +971,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                         dataStore.SyncData($"_issued_{i}_itemName", ref itemName);
                         dataStore.SyncData($"_issued_{i}_itemValue", ref itemValue);
 
+                        var resolvedSlotIndex = slotIndex == unsetSlotIndex ? slotKey : slotIndex;
                         _issuedEquipment[slotKey] = new IssuedItemRecord
                         {
                             ItemStringId = itemId,
                             ItemName = itemName,
                             ItemValue = itemValue,
-                            SlotIndex = slotIndex
+                            SlotIndex = resolvedSlotIndex
                         };
                     }
                 }
