@@ -42,6 +42,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **Files:**
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs` - Static utility class for encounter state management
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Active battle monitoring and participation logic
+- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu and battle wait handling
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
 
@@ -90,6 +91,14 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - Relies on vanilla autosim (player party isn't injected)
 - After seeing report, expect encounter menu (Attack/Surrender) if army loses
 - Player always resolves outcome through standard encounter UI
+
+**Wait in Reserve:**
+- Available for field battles (not sieges)
+- Player sits out the battle while the army fights
+- `IsWaitingInReserve` flag prevents menu loops during consecutive battles
+- Player stays in `enlisted_battle_wait` menu until army finishes fighting
+- Can rejoin battle at any time via menu option
+- Handled by `EnlistedEncounterBehavior`
 
 **Result:**
 - Player automatically joins lord's battles
@@ -223,6 +232,16 @@ public static void EnableEncounters()
 - Fixed by suppressing `IsActive` during siege "waiting" phase
 - Only active during actual assault (`MapEvent`)
 - Prevents menu loop issues
+
+### Consecutive Battles While in Reserve
+
+**Scenario:** Player is waiting in reserve when army engages in another battle
+
+**Handling:**
+- `OnMapEventStarted` checks `IsWaitingInReserve` flag before processing
+- If true, skips all battle processing (menu switching, teleport, army setup)
+- Player remains in `enlisted_battle_wait` menu until army finishes fighting
+- Prevents duplicate XP awards and menu flickering during rapid consecutive battles
 
 ### Lord Death While Enlisted
 
@@ -376,6 +395,11 @@ ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 - Player should resolve encounter manually (Attack/Surrender)
 - Matches native behavior
 - Not a bug - working as designed
+
+**Reserve mode not persisting across battles:**
+- `OnMapEventStarted` checks `IsWaitingInReserve` before processing
+- Log shows: "Skipping MapEventStarted - player is waiting in reserve"
+- If menu keeps appearing, verify the check is present in `OnMapEventStarted`
 
 **Party state not persisting:**
 - Check state enforcement in `OnTick()`

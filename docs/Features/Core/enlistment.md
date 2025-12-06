@@ -235,6 +235,13 @@ _currentTermKills += kills;  // Track for faction record
 - Progress (tier, XP) preserved during grace
 - Failing to re-enlist triggers desertion penalties
 
+**Minor/Bandit Factions & Faction Changes:**
+- Enlisting under non-Kingdom lords (minor or bandit factions) now force-enables battle participation via PlayerEncounter even when native faction checks fail.
+- If that lord’s clan later joins a Kingdom as mercenary, the player is auto-joined as a mercenary to keep battles working.
+
+**Waiting in Reserve:**
+- If the player chose “Wait in Reserve” after being wounded, enlistment battle handling is skipped until the current battle series ends (prevents encounter/menu loops and duplicate XP).
+
 **Army Defeated/Disbanded:**
 - 14-day grace period initiated
 - Player can find new lord in same faction
