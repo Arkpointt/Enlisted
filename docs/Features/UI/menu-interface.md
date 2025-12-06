@@ -2,46 +2,49 @@
 
 ## Quick Reference
 
-| Menu | Purpose | Access |
-|------|---------|--------|
-| Enlisted Status | Main service menu | After enlistment, from camp |
-| Duty Selection | Choose daily assignment | Enlisted Status → "Report for Duty" |
-| Quartermaster | Equipment selection | Enlisted Status → "Visit Quartermaster" |
-| Command Tent | Service records, retinue | Enlisted Status → "Command Tent" |
+| Menu            | Purpose                  | Access                                  |
+|-----------------|--------------------------|-----------------------------------------|
+| Enlisted Status | Main service menu        | After enlistment, from camp             |
+| Duty Selection  | Choose daily assignment  | Enlisted Status → "Report for Duty"     |
+| Quartermaster   | Equipment selection      | Enlisted Status → "Visit Quartermaster" |
+| Command Tent    | Service records, retinue | Enlisted Status → "Command Tent"        |
 
 ## Index
 
 ### Feature Documentation
+
 - [Overview](#overview) - System purpose and key features
 - [Modern UI Styling](#modern-ui-styling) - Icons, tooltips, backgrounds, audio
 - [How It Works](#how-it-works) - Menu structure and navigation
-  - [Main Enlisted Status Menu](#main-enlisted-status-menu)
-  - [Duty Selection Interface](#duty-selection-interface)
-  - [Menu Navigation](#menu-navigation)
+    - [Main Enlisted Status Menu](#main-enlisted-status-menu)
+    - [Duty Selection Interface](#duty-selection-interface)
+    - [Menu Navigation](#menu-navigation)
 - [Technical Details](#technical-details) - Implementation specifics
-  - [Menu Structure](#menu-structure)
-  - [Dynamic Text System](#dynamic-text-system)
-  - [Tier-Based Availability](#tier-based-availability)
+    - [Menu Structure](#menu-structure)
+    - [Dynamic Text System](#dynamic-text-system)
+    - [Tier-Based Availability](#tier-based-availability)
 - [Edge Cases](#edge-cases) - Problem scenarios and solutions
-  - [Menu State Consistency](#menu-state-consistency)
-  - [Tier Progression](#tier-progression)
-  - [Duty Selection Persistence](#duty-selection-persistence)
-  - [Menu Activation Timing](#menu-activation-timing)
-  - [Time Control Preservation](#time-control-preservation)
+    - [Menu State Consistency](#menu-state-consistency)
+    - [Tier Progression](#tier-progression)
+    - [Duty Selection Persistence](#duty-selection-persistence)
+    - [Menu Activation Timing](#menu-activation-timing)
+    - [Time Control Preservation](#time-control-preservation)
 
 ### Bannerlord API Reference
+
 - [Bannerlord Menu APIs](#bannerlord-menu-apis) - Native API patterns
-  - [Menu Types](#menu-types) - MenuAndOptionType values
-  - [Time Control Behavior](#time-control-behavior) - Vanilla behavior and preservation
-  - [Menu Registration](#menu-registration) - Creating menus
-  - [Background and Audio](#background-and-audio) - Visual/audio setup
-  - [Text Variables](#text-variables) - Dynamic text system
-  - [Menu Navigation](#menu-navigation-api) - Switching between menus
-  - [Menu Options](#menu-options) - Adding options with icons
-  - [LeaveType Icons](#leavetype-icons) - Icon reference table
-  - [Popup Dialogs](#popup-dialogs) - Inquiry dialogs
+    - [Menu Types](#menu-types) - MenuAndOptionType values
+    - [Time Control Behavior](#time-control-behavior) - Vanilla behavior and preservation
+    - [Menu Registration](#menu-registration) - Creating menus
+    - [Background and Audio](#background-and-audio) - Visual/audio setup
+    - [Text Variables](#text-variables) - Dynamic text system
+    - [Menu Navigation](#menu-navigation-api) - Switching between menus
+    - [Menu Options](#menu-options) - Adding options with icons
+    - [LeaveType Icons](#leavetype-icons) - Icon reference table
+    - [Popup Dialogs](#popup-dialogs) - Inquiry dialogs
 
 ### Development Reference
+
 - [API Reference](#api-reference) - Enlisted-specific APIs
 - [Debugging](#debugging) - Logging and troubleshooting
 
@@ -49,9 +52,12 @@
 
 ## Overview
 
-Professional military menu interface providing comprehensive service management with organized duty/profession selection, detailed descriptions, and tier-based progression. All menus feature modern styling with icons, tooltips, ambient audio, and culture-appropriate backgrounds.
+Professional military menu interface providing comprehensive service management with organized duty/profession
+selection, detailed descriptions, and tier-based progression. All menus feature modern styling with icons, tooltips,
+ambient audio, and culture-appropriate backgrounds.
 
 **Key Features:**
+
 - Modern icons on all menu options via `LeaveType`
 - Hover tooltips explaining each option's function and bonuses
 - Culture-appropriate background meshes
@@ -73,19 +79,20 @@ All menus use a consistent modern styling system for professional appearance.
 
 Each menu option has a `LeaveType` that displays an appropriate icon:
 
-| Option | LeaveType | Icon Purpose |
-|--------|-----------|--------------|
-| Master at Arms | `TroopSelection` | Troop management |
-| Visit Quartermaster | `Trade` | Equipment/trading |
-| My Lord... | `Conversation` | Dialog |
-| Visit Settlement | `Submenu` | Navigation |
-| Report for Duty | `Manage` | Management |
-| Ask for Leave | `Leave` | Exit action |
-| Desert the Army | `Escape` | Warning/danger |
+| Option              | LeaveType        | Icon Purpose      |
+|---------------------|------------------|-------------------|
+| Master at Arms      | `TroopSelection` | Troop management  |
+| Visit Quartermaster | `Trade`          | Equipment/trading |
+| My Lord...          | `Conversation`   | Dialog            |
+| Visit Settlement    | `Submenu`        | Navigation        |
+| Report for Duty     | `Manage`         | Management        |
+| Ask for Leave       | `Leave`          | Exit action       |
+| Desert the Army     | `Escape`         | Warning/danger    |
 
 ### Tooltips
 
 Every menu option displays a tooltip on hover explaining its function:
+
 - Main menu options show brief descriptions
 - Duty options explain skill bonuses and benefits
 - Profession options show tier requirements if locked, or bonuses if unlocked
@@ -95,6 +102,7 @@ Tooltip strings are localized in `ModuleData/Languages/enlisted_strings.xml`.
 ### Background and Audio
 
 Menus use `[GameMenuInitializationHandler]` attributes to set:
+
 - **Background Mesh**: Culture-appropriate encounter background from lord's kingdom
 - **Ambient Sound**: `event:/map/ambient/node/settlements/2d/camp_army`
 - **Panel Sound**: `event:/ui/panels/settlement_camp`
@@ -125,6 +133,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 | Desert the Army | Escape | WARNING: Severe relation and crime penalties |
 
 **Features:**
+
 - Modern icons on every option for visual clarity
 - Tooltips on hover explaining each action
 - Culture-appropriate background mesh from lord's kingdom
@@ -138,6 +147,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 **Menu ID:** `enlisted_duty_selection` (WaitGameMenu)
 
 **Section Organization:**
+
 - **— DUTIES —** section header with em-dash styling
 - **— PROFESSIONS —** section header with em-dash styling
 - Visual spacer between sections for clean layout
@@ -161,16 +171,19 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 | Saboteur | Raid | Bonus roguery XP and special mission access | Requires Tier 3 |
 
 **Description System:**
+
 - Top of menu shows detailed descriptions for currently selected duty/profession
 - "None" shows simple text when no profession selected
 - Rich military context explaining daily activities and skill training
 
 **Checkmark System:**
+
 - Dynamic checkmarks (✓/○) showing current selections
 - Updates in real-time when selection changes
 - Visual feedback for active assignments
 
 **Tier-Locked Professions:**
+
 - Options below Tier 3 are grayed out (`args.IsEnabled = false`)
 - Tooltip shows "Requires Tier 3 to unlock this profession"
 - Still visible to show players what they're working toward
@@ -178,6 +191,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 ### Menu Navigation
 
 **Flow:**
+
 ```
 Enlisted Status Menu
     ├── Master at Arms → Troop Selection Popup
@@ -189,6 +203,7 @@ Enlisted Status Menu
 ```
 
 **Navigation Features:**
+
 - Back button at top for easy access
 - Leave option at bottom of main menu
 - Close button in Master at Arms popup
@@ -201,6 +216,7 @@ Enlisted Status Menu
 ### Menu Structure
 
 **Main Menu:**
+
 ```csharp
 // Menu ID: enlisted_status
 // Type: WaitGameMenu
@@ -208,6 +224,7 @@ Enlisted Status Menu
 ```
 
 **Duty Selection:**
+
 ```csharp
 // Menu ID: enlisted_duty_selection
 // Type: WaitGameMenu
@@ -216,6 +233,7 @@ Enlisted Status Menu
 ```
 
 **Menu Registration:**
+
 - Registered in `EnlistedMenuBehavior.OnSessionLaunched()`
 - Menu options added via `AddGameMenuOption()`
 - Dynamic text variables set via `SetDynamicMenuText()`
@@ -225,19 +243,21 @@ Enlisted Status Menu
 **Purpose:** Real-time updates showing current selections
 
 **Implementation:**
+
 ```csharp
 // Set dynamic text for menu options
 private void SetDynamicMenuText()
 {
     var currentDuty = EnlistmentBehavior.Instance?.SelectedDuty ?? "None";
     var currentProfession = EnlistmentBehavior.Instance?.SelectedProfession ?? "None";
-    
+
     // Update checkmarks based on current selection
     // Format: "✓ Duty Name" or "○ Duty Name"
 }
 ```
 
 **Checkmark Logic:**
+
 - ✓ (checkmark) for currently selected duty/profession
 - ○ (circle) for available but not selected
 - Updates automatically when selection changes
@@ -245,15 +265,18 @@ private void SetDynamicMenuText()
 ### Tier-Based Availability
 
 **Duties:**
+
 - All available at Tier 1+
 - No restrictions
 
 **Professions:**
+
 - Visible at Tier 1-2 (locked with helpful messages)
 - Selectable at Tier 3+
 - Tier requirement messages: "Requires Tier 3 or higher"
 
 **Implementation:**
+
 ```csharp
 // Check tier requirement
 bool CanSelectProfession(string professionId)
@@ -265,6 +288,7 @@ bool CanSelectProfession(string professionId)
 ```
 
 **XP Integration:**
+
 - Selected duties/professions connect to daily XP processing
 - `EnlistedDutiesBehavior.AssignDuty()` processes selections
 - Formation training works with selections
@@ -279,6 +303,7 @@ bool CanSelectProfession(string professionId)
 **Problem:** Menu state can become inconsistent during navigation
 
 **Solution:**
+
 - Real-time refresh maintains menu state consistency
 - `SetDynamicMenuText()` called on menu refresh
 - Selection changes update immediately
@@ -288,6 +313,7 @@ bool CanSelectProfession(string professionId)
 **Scenario:** Player promotes to Tier 3 while menu is open
 
 **Handling:**
+
 - Professions unlock automatically
 - Menu refresh shows new availability
 - No need to close and reopen menu
@@ -297,6 +323,7 @@ bool CanSelectProfession(string professionId)
 **Scenario:** Player changes duty, then navigates away and back
 
 **Handling:**
+
 - Selection persists in `EnlistmentBehavior`
 - Menu shows correct checkmark on return
 - XP processing uses persisted selection
@@ -306,31 +333,38 @@ bool CanSelectProfession(string professionId)
 **Scenario:** Menu activation during encounter transitions
 
 **Handling:**
+
 - Uses `NextFrameDispatcher` for safe activation
 - Prevents timing conflicts with game state transitions
 - No crashes or assertion failures
 
 ### Time Control Preservation
 
-**Problem:** Vanilla `GameMenu.ActivateGameMenu()` and `SwitchToMenu()` force time to `Stop`, then wait menus call `StartWait()` which sets `UnstoppableFastForward`. This overrides the player's time preference.
+**Problem:** Vanilla `GameMenu.ActivateGameMenu()` and `SwitchToMenu()` force time to `Stop`, then wait menus call
+`StartWait()` which sets `UnstoppableFastForward`. This overrides the player's time preference.
 
 **Solution:** All Enlisted wait menus share a time preservation system:
 
 1. **Shared Time State:** `QuartermasterManager.CapturedTimeMode` stores the player's time preference across all menus
-2. **Capture Before Activation:** Button handlers call `CaptureTimeStateBeforeMenuActivation()` before showing popups or switching menus
+2. **Capture Before Activation:** Button handlers call `CaptureTimeStateBeforeMenuActivation()` before showing popups or
+   switching menus
 3. **Tick Handler Restoration:** Wait menu tick handlers restore time when `UnstoppableFastForward` is detected
-4. **Late-Capture Fallback:** If no time was captured (menu opened via native system), tick handlers capture current time as fallback
+4. **Late-Capture Fallback:** If no time was captured (menu opened via native system), tick handlers capture current
+   time as fallback
 
 **Popup Handling:**
+
 - Popup callbacks should NOT call `SafeActivateEnlistedMenu()` - this re-captures time incorrectly
 - Cancel actions just close the popup - the menu underneath is already active
 - Success actions refresh the menu without re-capturing time
 
 **Affected Menus:**
+
 - `enlisted_status` - Main enlisted menu
 - `enlisted_duty_selection` - Duty selection
 - `enlisted_battle_wait` - Battle reserve menu
-- All quartermaster menus (`quartermaster_equipment`, `quartermaster_variants`, `quartermaster_returns`, `quartermaster_supplies`)
+- All quartermaster menus (`quartermaster_equipment`, `quartermaster_variants`, `quartermaster_returns`,
+  `quartermaster_supplies`)
 
 ---
 
@@ -342,42 +376,45 @@ Reference for Bannerlord's native menu system APIs and patterns.
 
 **MenuAndOptionType Values:**
 
-| Type | Value | UI Widgets | Time Controls | Usage |
-|------|-------|------------|---------------|-------|
-| `RegularMenuOption` | 0 | None | Pauses game | Basic text menus |
-| `WaitMenuShowProgressAndHoursOption` | 1 | Progress bar + hours | Works | Time-based activities |
-| `WaitMenuShowOnlyProgressOption` | 2 | Progress only | Works | Menus with progress display |
-| `WaitMenuHideProgressAndHoursOption` | 3 | Clean text only | Works | Army wait, settlement wait |
+| Type                                 | Value | UI Widgets           | Time Controls | Usage                       |
+|--------------------------------------|-------|----------------------|---------------|-----------------------------|
+| `RegularMenuOption`                  | 0     | None                 | Pauses game   | Basic text menus            |
+| `WaitMenuShowProgressAndHoursOption` | 1     | Progress bar + hours | Works         | Time-based activities       |
+| `WaitMenuShowOnlyProgressOption`     | 2     | Progress only        | Works         | Menus with progress display |
+| `WaitMenuHideProgressAndHoursOption` | 3     | Clean text only      | Works         | Army wait, settlement wait  |
 
 **Recommended:** Use `WaitMenuHideProgressAndHoursOption` for clean menus without progress widgets.
 
 ### Time Control Behavior
 
 **Vanilla Behavior:**
+
 1. `GameMenu.ActivateGameMenu()` sets `Campaign.Current.TimeControlMode = Stop`
 2. For wait menus, `StartWait()` then sets `TimeControlMode = UnstoppableFastForward`
 3. This overrides player's time preference (paused/playing)
 
 **Time Control Modes:**
 
-| Mode | Description |
-|------|-------------|
-| `Stop` | Game paused |
-| `StoppablePlay` | Normal speed, can be paused |
-| `StoppableFastForward` | Fast speed, can be paused |
-| `UnstoppablePlay` | Normal speed, cannot be paused |
-| `UnstoppableFastForward` | Fast speed, forced by StartWait() |
-| `UnstoppableFastForwardForPartyWaitTime` | Party wait variant |
+| Mode                                     | Description                       |
+|------------------------------------------|-----------------------------------|
+| `Stop`                                   | Game paused                       |
+| `StoppablePlay`                          | Normal speed, can be paused       |
+| `StoppableFastForward`                   | Fast speed, can be paused         |
+| `UnstoppablePlay`                        | Normal speed, cannot be paused    |
+| `UnstoppableFastForward`                 | Fast speed, forced by StartWait() |
+| `UnstoppableFastForwardForPartyWaitTime` | Party wait variant                |
 
 **Preserving Player Time Preference:**
 
 1. Capture before menu activation:
+
 ```csharp
 CapturedTimeMode = Campaign.Current?.TimeControlMode;
 GameMenu.ActivateGameMenu("menu_id");
 ```
 
 2. Restore in tick handler:
+
 ```csharp
 private void OnMenuTick(MenuCallbackArgs args, CampaignTime dt)
 {
@@ -410,7 +447,7 @@ starter.AddWaitGameMenu("menu_id",
     null);
 
 // Add regular game menu (pauses game)
-starter.AddGameMenu(menuId, menuTitle, menuIntroText, 
+starter.AddGameMenu(menuId, menuTitle, menuIntroText,
     menuFlags, menuBackgroundMeshName);
 ```
 
@@ -422,7 +459,7 @@ private static void OnMenuBackgroundInit(MenuCallbackArgs args)
 {
     // Set culture-appropriate background
     args.MenuContext.SetBackgroundMeshName(Hero.MainHero.MapFaction.Culture.EncounterBackgroundMesh);
-    
+
     // Set ambient sound
     args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
     args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
@@ -466,25 +503,26 @@ starter.AddGameMenuOption("menu_id", "option_id", "Option Text",
 
 ### LeaveType Icons
 
-| LeaveType | Icon Purpose |
-|-----------|--------------|
-| `Continue` | Continue/default action |
-| `TroopSelection` | Troop management |
-| `Trade` | Trading/equipment |
-| `Conversation` | Dialog |
-| `Submenu` | Navigation |
-| `Manage` | Management |
-| `Leave` | Exit/leave action |
-| `Escape` | Warning/danger |
-| `Mission` | Combat |
-| `DefendAction` | Defense |
-| `Raid` | Aggressive action |
-| `SiegeAmbush` | Siege-related |
-| `OrderTroopsToAttack` | Command troops |
+| LeaveType             | Icon Purpose            |
+|-----------------------|-------------------------|
+| `Continue`            | Continue/default action |
+| `TroopSelection`      | Troop management        |
+| `Trade`               | Trading/equipment       |
+| `Conversation`        | Dialog                  |
+| `Submenu`             | Navigation              |
+| `Manage`              | Management              |
+| `Leave`               | Exit/leave action       |
+| `Escape`              | Warning/danger          |
+| `Mission`             | Combat                  |
+| `DefendAction`        | Defense                 |
+| `Raid`                | Aggressive action       |
+| `SiegeAmbush`         | Siege-related           |
+| `OrderTroopsToAttack` | Command troops          |
 
 ### Popup Dialogs
 
 **ShowInquiry:**
+
 ```csharp
 InformationManager.ShowInquiry(
     new InquiryData(
@@ -500,6 +538,7 @@ InformationManager.ShowInquiry(
 ```
 
 **ShowMultiSelectionInquiry:**
+
 ```csharp
 MBInformationManager.ShowMultiSelectionInquiry(
     new MultiSelectionInquiryData(
@@ -516,7 +555,8 @@ MBInformationManager.ShowMultiSelectionInquiry(
     pauseGameActiveState: false);
 ```
 
-**Note:** Popup callbacks should not call menu activation methods that re-capture time state. The underlying menu remains active when the popup closes.
+**Note:** Popup callbacks should not call menu activation methods that re-capture time state. The underlying menu
+remains active when the popup closes.
 
 ---
 
@@ -562,10 +602,12 @@ EnlistmentBehavior.Instance?.SetProfession(professionId);
 ## Debugging
 
 **Log Categories:**
+
 - `"Interface"` - Menu system activity
 - `"Menu"` - Menu navigation and state
 
 **Key Log Points:**
+
 ```csharp
 // Menu activation
 ModLogger.Info("Interface", $"Activating menu: {menuId}");
@@ -582,29 +624,35 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 **Common Issues:**
 
 **Professions not appearing:**
+
 - Check tier requirement and availability conditions
 - Verify `CanSelectProfession()` returns true
 - Check tier progression is working correctly
 
 **Checkmarks not updating:**
+
 - Verify `SetDynamicMenuText()` is called in refresh
 - Check selection persistence in `EnlistmentBehavior`
 - Ensure menu refresh happens after selection changes
 
 **XP not applying:**
+
 - Ensure selected duties connect to `EnlistedDutiesBehavior.AssignDuty()`
 - Check daily tick is processing assignments
 - Verify duty/profession IDs match configuration
 
 **Menu doesn't activate:**
+
 - Check `NextFrameDispatcher` is not busy
 - Verify encounter state allows menu activation
 - Check for timing conflicts with game state transitions
 
 **Debug Output Location:**
+
 - `Modules/Enlisted/Debugging/enlisted.log`
 
 **Related Files:**
+
 - `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
 - `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs`
