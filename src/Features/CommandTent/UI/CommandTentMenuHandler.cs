@@ -304,9 +304,12 @@ namespace Enlisted.Features.CommandTent.UI
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
             
-            // Resume time - native GameMenu.SwitchToMenu() stops time by default,
-            // but we want time to continue passing while browsing Command Tent menus
-            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            // Resume time if stopped, but preserve higher speed modes (StoppableFastForward)
+            // Native GameMenu.SwitchToMenu() stops time by default - we only unpause, never downgrade speed
+            if (Campaign.Current?.TimeControlMode == CampaignTimeControlMode.Stop)
+            {
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            }
         }
 
         /// <summary>
