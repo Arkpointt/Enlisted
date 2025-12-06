@@ -137,14 +137,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         private static void QuartermasterWaitTick(MenuCallbackArgs args, CampaignTime dt)
         {
             // Restore the player's time state after StartWait() forced UnstoppableFastForward
-            if (CapturedTimeMode.HasValue && Campaign.Current != null)
+            // Only restore if current mode is different (avoid spam and allow spacebar changes)
+            if (CapturedTimeMode.HasValue && Campaign.Current != null &&
+                (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                 Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
             {
-                // Only restore if current mode is different (avoid spam and allow spacebar changes)
-                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                {
-                    Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
-                }
+                Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
             }
         }
         
