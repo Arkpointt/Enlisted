@@ -1568,6 +1568,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var quartermasterManager = QuartermasterManager.Instance;
                 if (quartermasterManager != null)
                 {
+                    quartermasterManager.CaptureTimeControlState();
                     // Show equipment variants for current troop selection
                     GameMenu.ActivateGameMenu("quartermaster_equipment");
                 }

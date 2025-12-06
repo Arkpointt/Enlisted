@@ -342,6 +342,27 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("Quartermaster", "Failed to restore time control state", ex);
             }
         }
+
+        /// <summary>
+        /// Capture current time control state before entering quartermaster flow.
+        /// </summary>
+        public void CaptureTimeControlState()
+        {
+            try
+            {
+                var campaign = Campaign.Current;
+                if (campaign == null)
+                {
+                    return;
+                }
+
+                _capturedTimeControlMode = campaign.TimeControlMode;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to capture time control state", ex);
+            }
+        }
         
         /// <summary>
         /// Add dynamic variant selection options for the variants submenu.
