@@ -83,6 +83,7 @@ namespace Enlisted.Features.CommandTent.Core
         /// <summary>
         /// Handles enlistment ending for any reason. Determines appropriate retinue fate.
         /// Also clears companion assignments on full discharge (not grace period).
+        /// If player chose to keep troops on retirement, skips retinue clearing.
         /// </summary>
         private void OnEnlistmentEnded(string reason)
         {
@@ -94,6 +95,13 @@ namespace Enlisted.Features.CommandTent.Core
             {
                 CompanionAssignmentManager.Instance?.ClearAllSettings();
                 ModLogger.Debug(LogCategory, "Cleared companion assignments on full discharge");
+            }
+
+            // If player chose to keep their troops, skip clearing (handled by ServiceRecordManager)
+            if (EnlistmentBehavior.RetainTroopsOnRetirement)
+            {
+                ModLogger.Info(LogCategory, "Skipping retinue clear - player retained troops on retirement");
+                return;
             }
 
             var manager = RetinueManager.Instance;

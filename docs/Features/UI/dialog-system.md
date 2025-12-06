@@ -34,6 +34,7 @@ Centralized conversation manager that handles all military service dialogs. Prev
 - Centralized dialog ID management (no conflicts)
 - Shared condition and consequence methods
 - Immediate menu activation after enlistment (no encounter gaps)
+- Parallel dialog variants for minor faction lords (mercenary/band tone) gated by `lord.Clan?.IsMinorFaction`
 
 **File:** `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs`
 
@@ -43,11 +44,16 @@ Centralized conversation manager that handles all military service dialogs. Prev
 
 ### Enlistment Flow
 
-**Standard Flow:**
+**Standard Flow (kingdom lords):**
 1. Talk to any lord → "I have something else to discuss" → "I wish to serve in your warband"
 2. Lord responds based on relationship and faction status
 3. Player confirms → Immediate enlistment with `IsActive = false` and menu switch
 4. No encounter gaps - player goes straight to enlisted status menu
+
+**Minor Faction Flow:**
+- Uses the same conversation states but with higher-priority mercenary-themed lines when `lord.Clan?.IsMinorFaction == true` (works even if they are mercenaries for a kingdom).
+- Text themes: contract/payment focus, company camaraderie.
+- Retirement/renewal/leave/early-discharge also have minor-faction variants; consequences are shared (same code paths).
 
 **Army Leader Restriction:**
 If player is leading their own army, special dialog appears:
@@ -75,8 +81,8 @@ If player is leading their own army, special dialog appears:
 **Types:**
 - Promotion notifications
 - Equipment management conversations
-- Retirement and departure dialogs
-- Leave requests
+- Retirement and departure dialogs (kingdom + minor variants)
+- Leave/return and early discharge (kingdom + minor variants)
 
 **Behavior:**
 - Context-dependent availability
