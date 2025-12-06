@@ -1756,6 +1756,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void OnHourlyTick()
         {
+            // Check if grace period expired (even if not enlisted)
+            if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
+            {
+                ApplyDesertionPenalties();
+                return;
+            }
+
             SyncActivationState("hourly_tick");
             if (!EnlistedActivation.IsActive)
             {
@@ -1765,13 +1772,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var main = MobileParty.MainParty;
             if (main == null)
             {
-                return;
-            }
-
-            // Check if grace period expired (even if not enlisted)
-            if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
-            {
-                ApplyDesertionPenalties();
                 return;
             }
 

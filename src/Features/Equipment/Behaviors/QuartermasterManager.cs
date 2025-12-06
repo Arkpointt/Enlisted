@@ -43,7 +43,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> _availableVariants;
         private readonly EquipmentIndex _selectedSlot = EquipmentIndex.None;
         private readonly List<ReturnOption> _returnOptions = new List<ReturnOption>();
-        private CampaignTimeControlMode? _capturedTimeControlMode;
         
         // Conversation tracking for dynamic equipment selection
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future conversation-based equipment selection")]
@@ -64,6 +63,92 @@ namespace Enlisted.Features.Equipment.Behaviors
             Instance = this;
             InitializeVariantCache();
         }
+        
+        #region Time-Preserving Menu Helpers
+        
+        // Captured time state for wait menu time restoration (allows spacebar to work)
+        // Public so other menu behaviors can share the same captured state
+        public static CampaignTimeControlMode? CapturedTimeMode { get; set; }
+        
+        /// <summary>
+        /// Activate a game menu without changing the current time control mode.
+        /// Vanilla ActivateGameMenu forcibly pauses time; this wrapper captures and restores the prior state.
+        /// Also updates the captured time mode for the wait menu tick handler.
+        /// </summary>
+        private static void ActivateMenuPreserveTime(string menuId)
+        {
+            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
+            CapturedTimeMode = previousMode; // Update for tick handler (shared across all Enlisted menus)
+            GameMenu.ActivateGameMenu(menuId);
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = previousMode;
+            }
+        }
+        
+        /// <summary>
+        /// Switch to a game menu without changing the current time control mode.
+        /// Vanilla SwitchToMenu forcibly pauses time; this wrapper captures and restores the prior state.
+        /// Also updates the captured time mode for the wait menu tick handler.
+        /// </summary>
+        private static void SwitchToMenuPreserveTime(string menuId)
+        {
+            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
+            CapturedTimeMode = previousMode; // Update for tick handler (shared across all Enlisted menus)
+            GameMenu.SwitchToMenu(menuId);
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = previousMode;
+            }
+        }
+        
+        /// <summary>
+        /// Capture the current time control mode BEFORE activating a wait menu.
+        /// Must be called from the calling code before ActivateGameMenu/SwitchToMenu,
+        /// not from init handlers (which run after vanilla already sets Stop).
+        /// This is a shared capture used by all Enlisted wait menus.
+        /// </summary>
+        public static void CaptureTimeStateBeforeMenuActivation()
+        {
+            CapturedTimeMode = Campaign.Current?.TimeControlMode;
+            ModLogger.Info("Quartermaster", $"Captured time state: {CapturedTimeMode}");
+        }
+        
+        /// <summary>
+        /// Shared wait menu condition. Always returns true since we control exit via menu options.
+        /// </summary>
+        private static bool QuartermasterWaitCondition(MenuCallbackArgs args)
+        {
+            return true;
+        }
+        
+        /// <summary>
+        /// Shared wait menu consequence. Empty since we handle exit via menu options.
+        /// </summary>
+        private static void QuartermasterWaitConsequence(MenuCallbackArgs args)
+        {
+            // No consequence needed - we never let progress reach 100%
+        }
+        
+        /// <summary>
+        /// Shared wait menu tick handler. Restores player's time state after StartWait() forces fast-forward.
+        /// This runs every frame and allows spacebar time control to work in quartermaster menus.
+        /// </summary>
+        private static void QuartermasterWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            // Restore the player's time state after StartWait() forced UnstoppableFastForward
+            if (CapturedTimeMode.HasValue && Campaign.Current != null)
+            {
+                // Only restore if current mode is different (avoid spam and allow spacebar changes)
+                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                {
+                    Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
+                }
+            }
+        }
+        
+        #endregion
         
         public override void RegisterEvents()
         {
@@ -165,56 +250,39 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Shared condition/tick handlers for quartermaster menus to keep campaign time running.
-        /// Using wait menus prevents the game from auto-pausing when the quartermaster UI opens.
-        /// </summary>
-        private bool QuartermasterMenuCondition(MenuCallbackArgs args)
-        {
-            _ = args; // Required by API contract
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-        
-        private void QuartermasterMenuTick(MenuCallbackArgs args, CampaignTime dt)
-        {
-            _ = args; // Required by API contract
-            
-            // Guard against zero/negative deltas; no per-tick work yet.
-            if (dt.ToSeconds > 0)
-            {
-                // Placeholder for future timed updates (e.g., status polling)
-            }
-        }
-        
-        /// <summary>
         /// Add quartermaster menu system for equipment variant management.
+        /// Uses wait menus with hidden progress to allow spacebar time control passthrough.
         /// </summary>
         private void AddQuartermasterMenus(CampaignGameStarter starter)
         {
-            // Main quartermaster equipment menu (wait-style so the campaign clock keeps running)
-            starter.AddWaitGameMenu("quartermaster_equipment",
+            // Main quartermaster equipment menu (wait menu with hidden progress for spacebar support)
+            starter.AddWaitGameMenu(
+                "quartermaster_equipment",
                 "Army Quartermaster\n{QUARTERMASTER_TEXT}",
                 OnQuartermasterEquipmentInit,
-                QuartermasterMenuCondition,
-                null,
-                QuartermasterMenuTick,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
-            // Equipment variant selection submenu (also wait-style to avoid pausing)
-            starter.AddWaitGameMenu("quartermaster_variants",
+            // Equipment variant selection submenu (wait menu with hidden progress)
+            starter.AddWaitGameMenu(
+                "quartermaster_variants",
                 "Equipment Variants\n{VARIANT_TEXT}",
                 OnQuartermasterVariantsInit,
-                QuartermasterMenuCondition,
-                null,
-                QuartermasterMenuTick,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
             
-            // Return equipment submenu (wait-style so the campaign clock keeps running)
-            starter.AddWaitGameMenu("quartermaster_returns",
+            // Return equipment submenu (wait menu with hidden progress)
+            starter.AddWaitGameMenu(
+                "quartermaster_returns",
                 "Return Equipment\n{RETURN_TEXT}",
                 OnQuartermasterReturnsInit,
-                QuartermasterMenuCondition,
-                null,
-                QuartermasterMenuTick,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
             // Main equipment category options with modern icons
@@ -274,7 +342,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.ActivateGameMenu("quartermaster_returns"),
+                _ => ActivateMenuPreserveTime("quartermaster_returns"),
                 false, 6);
                 
             // Return to enlisted status (Leave icon)
@@ -291,7 +359,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         try
                         {
-                            GameMenu.SwitchToMenu("enlisted_status");
+                            SwitchToMenuPreserveTime("enlisted_status");
                             ModLogger.Info("Quartermaster", "Returned from quartermaster to enlisted status menu");
                         }
                         catch (Exception ex)
@@ -312,58 +380,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             AddSupplyManagementMenu(starter);
         }
 
-        /// <summary>
-        /// Restore the player's time control state captured when first entering the quartermaster flow.
-        /// Prevents the menu from altering time (no pause/unpause).
-        /// </summary>
-        private void RestoreCapturedTimeControl()
-        {
-            try
-            {
-                var campaign = Campaign.Current;
-                if (campaign == null)
-                {
-                    return;
-                }
-
-                if (!_capturedTimeControlMode.HasValue)
-                {
-                    _capturedTimeControlMode = campaign.TimeControlMode;
-                }
-
-                if (_capturedTimeControlMode.HasValue &&
-                    campaign.TimeControlMode != _capturedTimeControlMode.Value)
-                {
-                    campaign.TimeControlMode = _capturedTimeControlMode.Value;
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Quartermaster", "Failed to restore time control state", ex);
-            }
-        }
-
-        /// <summary>
-        /// Capture current time control state before entering quartermaster flow.
-        /// </summary>
-        public void CaptureTimeControlState()
-        {
-            try
-            {
-                var campaign = Campaign.Current;
-                if (campaign == null)
-                {
-                    return;
-                }
-
-                _capturedTimeControlMode = campaign.TimeControlMode;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Quartermaster", "Failed to capture time control state", ex);
-            }
-        }
-        
         /// <summary>
         /// Add dynamic variant selection options for the variants submenu.
         /// </summary>
@@ -388,7 +404,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.ActivateGameMenu("quartermaster_equipment"));
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
 
         /// <summary>
@@ -414,7 +430,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.ActivateGameMenu("quartermaster_equipment"));
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
         
         /// <summary>
@@ -965,7 +981,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _returnOptions.AddRange(BuildReturnOptions());
                 SetReturnOptionTextVariables();
 
-                GameMenu.SwitchToMenu("quartermaster_returns");
+                SwitchToMenuPreserveTime("quartermaster_returns");
             }
             catch (Exception ex)
             {
@@ -988,12 +1004,14 @@ namespace Enlisted.Features.Equipment.Behaviors
             // Prefer removing from inventory first to avoid stripping equipped gear if possible
             if (TryRemoveFromInventory(item))
             {
+                TroopSelectionManager.Instance?.MarkIssuedItemReturned(item.StringId);
                 return true;
             }
 
             var hero = Hero.MainHero;
             if (hero != null && TryRemoveFromEquipment(hero, item))
             {
+                TroopSelectionManager.Instance?.MarkIssuedItemReturned(item.StringId);
                 return true;
             }
 
@@ -1032,12 +1050,13 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
 
             // Civilian equipment
-            var civilianEquipment = hero.CivilianEquipment;
+            var civilianEquipment = hero.CivilianEquipment.Clone();
             for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
             {
                 if (civilianEquipment[slot].Item?.StringId == item.StringId)
                 {
                     civilianEquipment[slot] = default;
+                    hero.CivilianEquipment.FillFrom(civilianEquipment, false);
                     return true;
                 }
             }
@@ -1080,7 +1099,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                RestoreCapturedTimeControl();
+                // Time state is captured by caller before ActivateGameMenu (not here - too late)
                 
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
@@ -1455,7 +1474,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                RestoreCapturedTimeControl();
+                // Time state is captured by caller before menu transition (not here - too late)
                 
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
@@ -1511,7 +1530,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                RestoreCapturedTimeControl();
+                // Time state is captured by caller before menu transition (not here - too late)
                 
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -1812,7 +1831,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         RequestEquipmentVariant(selectedVariant.Item, selectedVariant.Slot);
                         
                         // Return to quartermaster menu
-                        GameMenu.ActivateGameMenu("quartermaster_equipment");
+                        ActivateMenuPreserveTime("quartermaster_equipment");
                     }
                 }
             }
@@ -1845,7 +1864,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     RequestEquipmentVariant(selectedVariant.Item, selectedVariant.Slot);
                     
                     // Return to main quartermaster menu to see updated equipment
-                    GameMenu.ActivateGameMenu("quartermaster_equipment");
+                    ActivateMenuPreserveTime("quartermaster_equipment");
                 }
                 else
                 {
@@ -2758,7 +2777,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                GameMenu.ActivateGameMenu("quartermaster_supplies");
+                ActivateMenuPreserveTime("quartermaster_supplies");
             }
             catch (Exception ex)
             {
@@ -2771,13 +2790,14 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private void AddSupplyManagementMenu(CampaignGameStarter starter)
         {
-            // Supply management menu for quartermaster officers (wait-style to keep time flowing)
-            starter.AddWaitGameMenu("quartermaster_supplies",
+            // Supply management menu (wait menu with hidden progress for spacebar support)
+            starter.AddWaitGameMenu(
+                "quartermaster_supplies",
                 "Supply Management\n{SUPPLY_TEXT}",
                 OnSupplyManagementInit,
-                QuartermasterMenuCondition,
-                null,
-                QuartermasterMenuTick,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
             // Food optimization option (Manage icon)
@@ -2821,7 +2841,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.ActivateGameMenu("quartermaster_equipment"));
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
         
         /// <summary>
@@ -2831,6 +2851,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Time state is captured by caller before menu transition (not here - too late)
+                
                 // Background is now set by GameMenuInitializationHandler
                 var sb = new StringBuilder();
                 var party = MobileParty.MainParty;
@@ -3003,7 +3025,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 RequestEquipmentVariant(selectedOption.Item, selectedOption.Slot);
                 
                 // Return to main quartermaster menu
-                GameMenu.ActivateGameMenu("quartermaster_equipment");
+                ActivateMenuPreserveTime("quartermaster_equipment");
             }
             catch (Exception ex)
             {

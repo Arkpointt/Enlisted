@@ -155,12 +155,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                         {
                             if (selected?.FirstOrDefault()?.Identifier is CharacterObject chosen)
                             {
-                                                ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
+                                ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
                                 ApplySelectedTroopEquipment(Hero.MainHero, chosen);
                                 _lastSelectedTroopId = chosen.StringId;
+                                // Don't re-capture time - preserve the time state from when the button was clicked
+                                // Just refresh the menu without affecting time control
                                 if (Campaign.Current?.CurrentMenuContext != null)
                                 {
-                                    EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                                    Campaign.Current.GameMenuManager.RefreshMenuOptions(Campaign.Current.CurrentMenuContext);
                                 }
                             }
                         }
@@ -171,17 +173,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     },
                     _ =>
                     {
-                        try
-                        {
-                            if (Campaign.Current?.CurrentMenuContext != null)
-                            {
-                                EnlistedMenuBehavior.SafeActivateEnlistedMenu();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            ModLogger.Error("TroopSelection", $"Master at Arms cancel failed: {ex.Message}");
-                        }
+                        // Cancel action - just close popup, don't affect menu or time state
+                        // The enlisted_status menu is already active underneath
                     },
                     string.Empty);
 
@@ -838,6 +831,38 @@ namespace Enlisted.Features.Equipment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("TroopSelection", "Error recording issued item", ex);
+            }
+        }
+
+        /// <summary>
+        /// Mark one issued item as returned, removing it from accountability tracking.
+        /// Matches by ItemStringId; removes a single record.
+        /// </summary>
+        public bool MarkIssuedItemReturned(string itemStringId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(itemStringId) || _issuedEquipment.Count == 0)
+                {
+                    return false;
+                }
+
+                var kvp = _issuedEquipment.FirstOrDefault(x =>
+                    x.Value != null && x.Value.ItemStringId == itemStringId);
+
+                if (kvp.Value == null)
+                {
+                    return false;
+                }
+
+                _issuedEquipment.Remove(kvp.Key);
+                ModLogger.Info("TroopSelection", $"Marked issued item returned: {kvp.Value.ItemName} (slot {kvp.Key})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", $"Error marking issued item returned: {ex.Message}");
+                return false;
             }
         }
         

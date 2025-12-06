@@ -1,5 +1,6 @@
 using System;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
@@ -314,6 +315,24 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             try
             {
+                // If no time state was captured yet (menu opened via native encounter system),
+                // capture current time now so we have a baseline for restoration
+                if (!QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                {
+                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
+                }
+                
+                // Restore player's time state after StartWait() forced fast-forward
+                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
+                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                {
+                    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                    {
+                        Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
+                    }
+                }
+                
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)

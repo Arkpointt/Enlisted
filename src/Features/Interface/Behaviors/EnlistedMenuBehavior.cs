@@ -279,6 +279,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 ModLogger.Info("Menu", "Activating enlisted status menu");
+                // Capture time state BEFORE menu activation (vanilla sets Stop, then StartWait sets FastForward)
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 GameMenu.ActivateGameMenu("enlisted_status");
             }
             catch (Exception ex)
@@ -286,6 +288,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Fallback to original behavior if GetGenericStateMenu() fails
                 // This ensures the menu can still be activated even if the check fails
                 ModLogger.Debug("Interface", $"Error checking GetGenericStateMenu, using fallback: {ex.Message}");
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 GameMenu.ActivateGameMenu("enlisted_status");
             }
         }
@@ -1132,6 +1135,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Time state is captured by calling code BEFORE menu activation
+                // (not here - vanilla has already set Stop by the time init runs)
+                
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 // Use the lord's kingdom culture background, or fallback to generic encounter mesh
                 var enlistment = EnlistmentBehavior.Instance;
@@ -1530,6 +1536,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Capture current time state - user may have changed it with spacebar since menu opened
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                
                 var manager = TroopSelectionManager.Instance;
                 if (manager == null)
                 {
@@ -1568,8 +1577,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 var quartermasterManager = QuartermasterManager.Instance;
                 if (quartermasterManager != null)
                 {
-                    quartermasterManager.CaptureTimeControlState();
+                    // Capture time state BEFORE menu activation - the wait menu tick will restore it
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    
                     // Show equipment variants for current troop selection
+                    // (wait menu tick handler will restore captured time state)
                     GameMenu.ActivateGameMenu("quartermaster_equipment");
                 }
                 else
@@ -1597,6 +1609,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Capture current time state - user may have changed it with spacebar since menu opened
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
@@ -1720,15 +1735,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     },
                     negativeAction: _ =>
                     {
-                        // Return to enlisted status menu (deferred to next frame)
-                        NextFrameDispatcher.RunNextFrame(() =>
-                        {
-                            if (Campaign.Current?.CurrentMenuContext != null)
-                            {
-                                ModLogger.Debug("Interface", "Deferred call: Ask leave negative action");
-                                SafeActivateEnlistedMenu();
-                            }
-                        });
+                        // Cancel action - just close popup, don't affect menu or time state
+                        // The enlisted_status menu is already active underneath
                     },
                     soundEventPath: string.Empty);
 
@@ -1943,6 +1951,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Capture current time state - user may have changed it with spacebar since menu opened
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
@@ -1974,15 +1985,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     },
                     negativeAction: () =>
                     {
-                        // Return to enlisted status menu (deferred to next frame)
-                        NextFrameDispatcher.RunNextFrame(() =>
-                        {
-                            if (Campaign.Current?.CurrentMenuContext != null)
-                            {
-                                ModLogger.Debug("Interface", "Deferred call: Visit settlement negative action");
-                                SafeActivateEnlistedMenu();
-                            }
-                        });
+                        // Cancel action - just close popup, don't affect menu or time state
+                        // The enlisted_status menu is already active underneath
                     });
 
                 InformationManager.ShowInquiry(confirmData);
@@ -2051,6 +2055,8 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Capture time state BEFORE menu switch to preserve player's time control
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 GameMenu.SwitchToMenu("enlisted_desert_confirm");
             }
             catch (Exception ex)
@@ -2203,6 +2209,24 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // If no time state was captured yet (menu opened via native encounter system),
+                // capture current time now so we have a baseline for restoration
+                if (!QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                {
+                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
+                }
+                
+                // Restore player's time state after StartWait() forced fast-forward
+                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
+                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                {
+                    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                    {
+                        Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
+                    }
+                }
+                
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -2267,6 +2291,8 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Capture time state BEFORE menu switch to preserve player's time control
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 GameMenu.SwitchToMenu("enlisted_duty_selection");
             }
             catch (Exception ex)
@@ -2283,6 +2309,9 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Time state is captured by calling code BEFORE menu activation
+                // (not here - vanilla has already set Stop by the time init runs)
+                
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -2340,6 +2369,24 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // If no time state was captured yet (menu opened via native encounter system),
+                // capture current time now so we have a baseline for restoration
+                if (!QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                {
+                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
+                }
+                
+                // Restore player's time state after StartWait() forced fast-forward
+                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
+                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                {
+                    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                    {
+                        Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
+                    }
+                }
+                
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -2675,6 +2722,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private void OnDutyBackSelected(MenuCallbackArgs args)
         {
+            // Capture time state BEFORE menu switch to preserve player's time control
+            QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
             GameMenu.SwitchToMenu("enlisted_status");
         }
 
