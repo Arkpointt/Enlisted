@@ -3,6 +3,7 @@ using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using HarmonyLib;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
@@ -72,17 +73,40 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Determine which side to join (same side as our lord)
                 var lordSide = lordIsAttacker ? BattleSideEnum.Attacker : BattleSideEnum.Defender;
 
-                // Check if we can actually join on the lord's side
-                if (!battle.CanPartyJoinBattle(PartyBase.MainParty, lordSide))
+                // Check if we can actually join on the lord's side using native faction checks
+                bool canJoinNatively = battle.CanPartyJoinBattle(PartyBase.MainParty, lordSide);
+                
+                // Check if lord is in a minor/bandit faction (not a Kingdom)
+                // Non-Kingdom faction lords don't trigger the mercenary join logic, so player's faction state
+                // may not have proper war relations with enemies like bandits.
+                bool isNonKingdomFactionLord = lord.MapFaction != null && 
+                                               !(lord.MapFaction is Kingdom) &&
+                                               (lord.MapFaction.IsMinorFaction || lord.MapFaction.IsBanditFaction);
+                
+                if (!canJoinNatively)
                 {
-                    ModLogger.Warn("JoinEncounter",
-                        $"Cannot join battle on lord's side ({lordSide}) - allowing native menu");
-                    return true;
+                    if (isNonKingdomFactionLord)
+                    {
+                        // NON-KINGDOM FACTION FIX: Bypass the native faction check for minor/bandit faction lords.
+                        // CanPartyJoinBattle requires formal faction war relations, but enlisted players
+                        // with non-Kingdom lords aren't joined to any faction. JoinBattle() internally
+                        // just sets MapEventSide directly without faction checks, so it should still work.
+                        ModLogger.Debug("JoinEncounter",
+                            $"Non-Kingdom faction lord - bypassing faction check for {lordSide} side");
+                    }
+                    else
+                    {
+                        // Kingdom lord but faction check failed - this is unexpected
+                        // Let native menu handle it to avoid masking potential bugs
+                        ModLogger.Warn("JoinEncounter",
+                            $"Faction check failed for Kingdom lord ({lordSide} side) - allowing native menu. Report if issue persists.");
+                        return true;
+                    }
                 }
 
                 // Auto-join the battle on the lord's side
-                ModLogger.Info("JoinEncounter",
-                    $"Auto-joining lord's battle as {lordSide} (Lord: {lord.Name}, Battle: {battle.EventType})");
+                ModLogger.Debug("JoinEncounter",
+                    $"Auto-joining {lordSide} battle (Lord: {lord.Name}, Type: {battle.EventType}, NonKingdom: {isNonKingdomFactionLord})");
 
                 try
                 {

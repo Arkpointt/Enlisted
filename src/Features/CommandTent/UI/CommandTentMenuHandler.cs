@@ -73,6 +73,21 @@ namespace Enlisted.Features.CommandTent.UI
             }
         }
         
+        /// <summary>
+        /// Switch to a menu while preserving the current time control mode.
+        /// Uses the shared CapturedTimeMode from QuartermasterManager.
+        /// </summary>
+        private static void SwitchToMenuPreserveTime(string menuId)
+        {
+            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
+            QuartermasterManager.CapturedTimeMode = previousMode;
+            SwitchToMenuPreserveTime(menuId);
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = previousMode;
+            }
+        }
+        
         #endregion
 
         // Companion Assignment Menu IDs
@@ -237,7 +252,7 @@ namespace Enlisted.Features.CommandTent.UI
                     }
                 }
 
-                GameMenu.SwitchToMenu(CommandTentMenuId);
+                SwitchToMenuPreserveTime(CommandTentMenuId);
                 ModLogger.Debug(LogCategory, "Player entered Command Tent");
             }
             catch (Exception ex)
@@ -275,7 +290,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 false,
                 1);
 
@@ -285,7 +300,7 @@ namespace Enlisted.Features.CommandTent.UI
                 "ct_retinue",
                 "{=ct_option_retinue}Muster Personal Retinue",
                 IsRetinueAvailable,
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 false,
                 2);
 
@@ -295,7 +310,7 @@ namespace Enlisted.Features.CommandTent.UI
                 "ct_companions",
                 "{=ct_option_companions}Companion Assignments",
                 IsCompanionAssignmentsAvailable,
-                _ => GameMenu.SwitchToMenu(CompanionAssignmentsMenuId),
+                _ => SwitchToMenuPreserveTime(CompanionAssignmentsMenuId),
                 false,
                 3);
 
@@ -309,7 +324,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu("enlisted_status"),
+                _ => SwitchToMenuPreserveTime("enlisted_status"),
                 true,
                 100);
         }
@@ -410,7 +425,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CurrentPostingMenuId),
+                _ => SwitchToMenuPreserveTime(CurrentPostingMenuId),
                 false,
                 1);
 
@@ -424,7 +439,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leaderboard;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(FactionRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(FactionRecordsMenuId),
                 false,
                 2);
 
@@ -438,7 +453,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(LifetimeSummaryMenuId),
+                _ => SwitchToMenuPreserveTime(LifetimeSummaryMenuId),
                 false,
                 3);
 
@@ -452,7 +467,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }
@@ -491,7 +506,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 true,
                 100);
         }
@@ -629,7 +644,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 true,
                 100);
         }
@@ -732,7 +747,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(FactionRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(FactionRecordsMenuId),
                 true,
                 100);
         }
@@ -795,7 +810,7 @@ namespace Enlisted.Features.CommandTent.UI
         public void ViewFactionDetail(string factionKey)
         {
             _selectedFactionKey = factionKey;
-            GameMenu.SwitchToMenu(FactionDetailMenuId);
+            SwitchToMenuPreserveTime(FactionDetailMenuId);
         }
 
         #endregion
@@ -826,7 +841,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 true,
                 100);
         }
@@ -955,7 +970,7 @@ namespace Enlisted.Features.CommandTent.UI
                 _ =>
                 {
                     // Refresh the menu to show current muster breakdown
-                    GameMenu.SwitchToMenu(RetinueMenuId);
+                    SwitchToMenuPreserveTime(RetinueMenuId);
                 },
                 false,
                 1);
@@ -991,7 +1006,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Recruit;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinuePurchaseMenuId),
+                _ => SwitchToMenuPreserveTime(RetinuePurchaseMenuId),
                 false,
                 2);
 
@@ -1001,7 +1016,7 @@ namespace Enlisted.Features.CommandTent.UI
                 "ct_retinue_requisition",
                 "{REQUISITION_OPTION_TEXT}",
                 IsRequisitionAvailable,
-                _ => GameMenu.SwitchToMenu(RetinueRequisitionMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueRequisitionMenuId),
                 false,
                 3);
 
@@ -1022,7 +1037,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.DonateTroops;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueDismissMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueDismissMenuId),
                 false,
                 4);
 
@@ -1036,7 +1051,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }
@@ -1231,7 +1246,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 true,
                 100);
         }
@@ -1497,7 +1512,7 @@ namespace Enlisted.Features.CommandTent.UI
                     new TextObject("{=ct_confirm_yes}Purchase").ToString(),
                     new TextObject("{=ct_confirm_no}Cancel").ToString(),
                     () => ExecutePurchase(typeId, count, totalCost),
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
+                    () => SwitchToMenuPreserveTime(RetinuePurchaseMenuId)),
                 pauseGameActiveState);
         }
 
@@ -1535,7 +1550,7 @@ namespace Enlisted.Features.CommandTent.UI
             }
 
             // Return to retinue menu
-            GameMenu.SwitchToMenu(RetinueMenuId);
+            SwitchToMenuPreserveTime(RetinueMenuId);
         }
 
         /// <summary>
@@ -1572,7 +1587,7 @@ namespace Enlisted.Features.CommandTent.UI
                         // Now proceed with new type purchase
                         OnSoldierTypePurchase(newTypeId);
                     },
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
+                    () => SwitchToMenuPreserveTime(RetinuePurchaseMenuId)),
                 pauseGameActiveState);
         }
 
@@ -1618,7 +1633,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 true,
                 100);
         }
@@ -1669,7 +1684,7 @@ namespace Enlisted.Features.CommandTent.UI
             var msg = new TextObject("{=ct_dismiss_success}Your soldiers have been dismissed.");
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
 
-            GameMenu.SwitchToMenu(RetinueMenuId);
+            SwitchToMenuPreserveTime(RetinueMenuId);
         }
 
         #endregion
@@ -1777,7 +1792,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 true,
                 100);
         }
@@ -1844,7 +1859,7 @@ namespace Enlisted.Features.CommandTent.UI
             if (manager == null)
             {
                 ModLogger.Error(LogCategory, "ExecuteRequisition: manager null");
-                GameMenu.SwitchToMenu(RetinueMenuId);
+                SwitchToMenuPreserveTime(RetinueMenuId);
                 return;
             }
 
@@ -1862,7 +1877,7 @@ namespace Enlisted.Features.CommandTent.UI
                 ModLogger.Warn(LogCategory, $"Requisition failed: {message}");
             }
 
-            GameMenu.SwitchToMenu(RetinueMenuId);
+            SwitchToMenuPreserveTime(RetinueMenuId);
         }
 
         #endregion
@@ -1943,7 +1958,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }
@@ -2051,7 +2066,7 @@ namespace Enlisted.Features.CommandTent.UI
             ModLogger.Info(LogCategory, $"Toggled {companion.Name} to {newStatus}");
 
             // Refresh the menu
-            GameMenu.SwitchToMenu(CompanionAssignmentsMenuId);
+            SwitchToMenuPreserveTime(CompanionAssignmentsMenuId);
         }
 
         #endregion

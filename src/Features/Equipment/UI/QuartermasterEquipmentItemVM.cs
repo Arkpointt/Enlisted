@@ -68,6 +68,11 @@ namespace Enlisted.Features.Equipment.UI
         private readonly QuartermasterEquipmentSelectorVm _parentSelector;
         
         /// <summary>
+        /// Get the underlying variant option for state updates.
+        /// </summary>
+        public EquipmentVariantOption GetVariant() => _variant;
+        
+        /// <summary>
         /// Initialize equipment item with variant data.
         /// Sets up the ViewModel with equipment variant information for display and selection.
         /// </summary>
@@ -103,11 +108,12 @@ namespace Enlisted.Features.Equipment.UI
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
                 
-                // Enable acquisition if:
-                // - Not at the 2-item limit
-                // - Either not currently equipped, OR is a duplicate-allowed item (weapons/consumables)
-                var canPurchaseWhenEquipped = _variant.AllowsDuplicatePurchase && _variant.IsCurrent;
-                IsEnabled = !_variant.IsAtLimit && (!_variant.IsCurrent || canPurchaseWhenEquipped);
+                // Enable acquisition if not at the slot-specific limit
+                // Armor = 1 per type, Weapons = 2 per type
+                IsEnabled = !_variant.IsAtLimit;
+                
+                // Determine slot limit for display purposes
+                var isWeaponSlot = _variant.Slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3;
                 
                 // Set item image using ItemImageIdentifierVM for proper image display (1.3.4 API)
                 Image = new ItemImageIdentifierVM(item);
@@ -118,23 +124,26 @@ namespace Enlisted.Features.Equipment.UI
                 // Legacy support - combine stats into WeaponDetails for backwards compatibility
                 WeaponDetails = $"{PrimaryStats}\n{SecondaryStats}";
                 
-                // Set cost and status - equipment is FREE but limited to 2 per item type
-                // Using localized strings from enlisted_strings.xml
+                // Set cost and status - equipment is FREE but limited by slot type
+                // Weapons allow 2, armor/accessories allow 1
                 if (_variant.IsAtLimit)
                 {
-                    // Hit the 2-item limit - cannot acquire more
-                    CostText = new TextObject("{=qm_status_limit}Limit (2)").ToString();
-                    StatusText = new TextObject("{=qm_status_limit_hint}Two's the limit, soldier").ToString();
+                    if (isWeaponSlot)
+                    {
+                        // Weapons: hit the 2-item limit
+                        CostText = new TextObject("{=qm_status_limit}Limit (2)").ToString();
+                        StatusText = new TextObject("{=qm_status_limit_hint}Two's the limit, soldier").ToString();
+                    }
+                    else
+                    {
+                        // Armor/accessories: hit the 1-item limit (currently equipped)
+                        CostText = new TextObject("{=qm_status_equipped}Equipped").ToString();
+                        StatusText = new TextObject("{=qm_status_equipped_hint}Already issued").ToString();
+                    }
                 }
-                else if (_variant.IsCurrent && !_variant.AllowsDuplicatePurchase)
+                else if (_variant.IsCurrent && isWeaponSlot)
                 {
-                    // Standard equipment (armor, etc) - cannot acquire duplicates
-                    CostText = new TextObject("{=qm_status_equipped}Equipped").ToString();
-                    StatusText = "Currently Equipped";
-                }
-                else if (_variant.IsCurrent && _variant.AllowsDuplicatePurchase)
-                {
-                    // Weapons and consumables - can acquire additional copies for other slots or stacks
+                    // Weapon currently equipped but can still get another (haven't hit limit of 2)
                     CostText = new TextObject("{=qm_status_free}Free").ToString();
                     StatusText = new TextObject("{=qm_status_get_another}Get Another").ToString();
                 }
@@ -221,19 +230,11 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                // Block purchase only for non-duplicate items that are already equipped
-                if (_variant.IsCurrent && !_variant.AllowsDuplicatePurchase)
+                // Only block purchase when at the 2-item limit - that's the ONLY restriction
+                if (_variant.IsAtLimit)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=qm_already_equipped}You already have this equipment equipped.").ToString()));
-                    return;
-                }
-                
-                if (!_variant.CanAfford)
-                {
-                    var message = new TextObject("{=qm_insufficient_equipment}Insufficient funds. You need {COST} denars for this equipment.");
-                    message.SetTextVariable("COST", _variant.Cost.ToString());
-                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                        new TextObject("{=qm_at_limit}You already have 2 of this item - that's the limit, soldier.").ToString()));
                     return;
                 }
                 
