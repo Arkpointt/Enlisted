@@ -304,12 +304,25 @@ namespace Enlisted.Features.CommandTent.UI
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
             
-            // Resume time if stopped, but preserve higher speed modes (StoppableFastForward)
-            // Native GameMenu.SwitchToMenu() stops time by default - we only unpause, never downgrade speed
-            if (Campaign.Current?.TimeControlMode == CampaignTimeControlMode.Stop)
+            // Preserve player's time control preference - convert unstoppable modes to stoppable equivalents
+            // Native GameMenu.SwitchToMenu() can change time mode - we restore it properly
+            if (Campaign.Current == null) return;
+            
+            // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
+            if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+            {
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+            }
+            else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppablePlay)
             {
                 Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
             }
+            else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
+            {
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            }
+            // Otherwise keep current mode (StoppablePlay or StoppableFastForward)
         }
 
         /// <summary>
