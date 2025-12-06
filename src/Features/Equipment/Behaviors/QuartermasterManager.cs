@@ -43,6 +43,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> _availableVariants;
         private readonly EquipmentIndex _selectedSlot = EquipmentIndex.None;
         private readonly List<ReturnOption> _returnOptions = new List<ReturnOption>();
+        private CampaignTimeControlMode? _capturedTimeControlMode;
         
         // Conversation tracking for dynamic equipment selection
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future conversation-based equipment selection")]
@@ -309,6 +310,37 @@ namespace Enlisted.Features.Equipment.Behaviors
             
             // Supply management menu for quartermaster officers
             AddSupplyManagementMenu(starter);
+        }
+
+        /// <summary>
+        /// Restore the player's time control state captured when first entering the quartermaster flow.
+        /// Prevents the menu from altering time (no pause/unpause).
+        /// </summary>
+        private void RestoreCapturedTimeControl()
+        {
+            try
+            {
+                var campaign = Campaign.Current;
+                if (campaign == null)
+                {
+                    return;
+                }
+
+                if (!_capturedTimeControlMode.HasValue)
+                {
+                    _capturedTimeControlMode = campaign.TimeControlMode;
+                }
+
+                if (_capturedTimeControlMode.HasValue &&
+                    campaign.TimeControlMode != _capturedTimeControlMode.Value)
+                {
+                    campaign.TimeControlMode = _capturedTimeControlMode.Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to restore time control state", ex);
+            }
         }
         
         /// <summary>
@@ -1027,6 +1059,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                RestoreCapturedTimeControl();
+                
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -1400,6 +1434,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                RestoreCapturedTimeControl();
+                
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -1454,6 +1490,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                RestoreCapturedTimeControl();
+                
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
 
