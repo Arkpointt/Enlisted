@@ -3,20 +3,15 @@ using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
     ///     Prevents player companions from being assigned as formation captains during enlistment.
-    ///     
     ///     During enlistment, the player is a soldier in their lord's army - not a commander.
     ///     Their companions should fight alongside them (or stay back), but never command
     ///     formations. The vanilla game assigns heroes as captains based on power level,
     ///     which would make companions issue orders and break the enlisted soldier experience.
-    ///     
     ///     This patch intercepts the Formation.Captain setter directly to catch ALL captain
     ///     assignments, regardless of which code path triggers them. This is more comprehensive
     ///     than patching GeneralsAndCaptainsAssignmentLogic.OnCaptainAssignedToFormation, which
@@ -70,9 +65,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // The player is a soldier in the lord's army - companions shouldn't command
                 if (hero.IsPlayerCompanion)
                 {
-                    ModLogger.Debug(LogCategory, 
+                    ModLogger.Debug(LogCategory,
                         $"Blocked captain: {hero.Name} -> {__instance?.FormationIndex} | Companions cannot command formations while enlisted");
-                    
+
                     // Set value to null to prevent companion from becoming captain
                     // The setter will then early-return if current captain is already null
                     value = null;
@@ -92,7 +87,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
     /// <summary>
     ///     Prevents player companions from being assigned as the Team's GeneralAgent during enlistment.
-    ///     
     ///     The vanilla game picks the highest-power hero (excluding the main agent) as GeneralAgent.
     ///     If the player's companion has high power, they could be selected as the "general" and
     ///     announce tactical plans like "Our plan is to shower them with arrows..." which breaks
@@ -141,9 +135,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // The lord should be the general, not the player's companion
                 if (hero.IsPlayerCompanion)
                 {
-                    ModLogger.Debug(LogCategory, 
+                    ModLogger.Debug(LogCategory,
                         $"Blocked general: {hero.Name} -> Team({__instance?.Side}) | Companions cannot be army general while enlisted");
-                    
+
                     // Set value to null to prevent companion from becoming general
                     value = null;
                     return true; // Continue with null value - another hero will be picked
@@ -160,4 +154,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-
