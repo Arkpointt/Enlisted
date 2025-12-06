@@ -1,12 +1,8 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.GameComponents;
-using TaleWorlds.Core;
-using TaleWorlds.Localization;
+using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -59,7 +55,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     continue generating income regardless of enlistment status.
     /// </summary>
     // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanIncome))]
     internal static class ClanFinanceEnlistmentIncomePatch
     {
@@ -71,9 +67,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Matches signature: public override ExplainedNumber CalculateClanIncome(Clan clan, bool includeDescriptions = false,
         ///     bool applyWithdrawals = false, bool includeDetails = false)
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Local",
+            Justification = "Parameters required to match Harmony patch signature")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __result is a special injected parameter")]
         private static bool Prefix(Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails,
             ref ExplainedNumber __result)
         {
@@ -251,7 +249,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
         /// <summary>
         ///     Clear cached tooltip labels when config is reloaded.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Global", Justification = "May be called for configuration reloading")]
+        [SuppressMessage("ReSharper", "UnusedMember.Global",
+            Justification = "May be called for configuration reloading")]
         internal static void ClearCache()
         {
             WageTooltipLabels.ClearCache();
@@ -264,7 +263,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     This prevents any army/party/garrison expenses from appearing in the player's finances.
     /// </summary>
     // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanExpenses))]
     internal static class ClanFinanceEnlistmentExpensePatch
     {
@@ -275,9 +274,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         ///     Matches signature: public override ExplainedNumber CalculateClanExpenses(Clan clan, bool includeDescriptions =
         ///     false, bool applyWithdrawals = false, bool includeDetails = false)
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Local",
+            Justification = "Parameters required to match Harmony patch signature")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __result is a special injected parameter")]
         private static bool Prefix(Clan clan, bool includeDescriptions, bool applyWithdrawals, bool includeDetails,
             ref ExplainedNumber __result)
         {
@@ -334,7 +335,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     work).
     /// </summary>
     // ReSharper disable once UnusedType.Local - Harmony patch class discovered via reflection
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
+    [SuppressMessage("ReSharper", "UnusedType.Local", Justification = "Harmony patch class discovered via reflection")]
     [HarmonyPatch(typeof(DefaultClanFinanceModel), nameof(DefaultClanFinanceModel.CalculateClanGoldChange))]
     internal static class ClanFinanceEnlistmentGoldChangePatch
     {
@@ -349,9 +350,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedParameter.Local", Justification = "Parameters required to match Harmony patch signature")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance and __result are special injected parameters")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "UnusedParameter.Local",
+            Justification = "Parameters required to match Harmony patch signature")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __instance and __result are special injected parameters")]
         private static bool Prefix(DefaultClanFinanceModel __instance, Clan clan, bool includeDescriptions,
             bool applyWithdrawals, bool includeDetails, ref ExplainedNumber __result)
         {

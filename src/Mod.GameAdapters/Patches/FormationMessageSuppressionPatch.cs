@@ -3,8 +3,6 @@ using System.Reflection;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -16,13 +14,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
     ///     The vanilla code tries to strip "MBModule.Behavior" prefix but the actual classes
     ///     use "TaleWorlds.MountAndBlade" namespace, so the full class name gets displayed:
     ///     "Men! TaleWorlds.MountAndBlade.BehaviorGeneral!"
-    ///     
     ///     CRITICAL FIX: We must ONLY suppress for the player's specific formation.
     ///     The previous implementation returned false for ALL formations when enlisted,
     ///     which blocked OnBehaviorActivatedAux() from running - this is where formations
     ///     receive their movement orders! This caused armies to freeze after cavalry skirmishes
     ///     because infantry/main formations never got their Advance/Charge orders.
-    ///     
     ///     Now we:
     ///     1. Let ALL non-player formations run vanilla (essential for AI movement!)
     ///     2. For player's formation only: suppress message but still call OnBehaviorActivatedAux()
@@ -43,12 +39,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
         /// <summary>
         ///     Prefix that suppresses broken behavior notification messages for enlisted soldiers.
-        ///     
         ///     CRITICAL: We must only intercept for the player's formation!
         ///     All other formations MUST run vanilla OnBehaviorActivated() or their AI breaks.
         ///     OnBehaviorActivatedAux() is where movement orders are set - blocking it causes
         ///     formations to freeze in place.
-        ///     
         ///     For the player's formation (which includes companions and retinue at Tier 4+),
         ///     we suppress the broken message but still call OnBehaviorActivatedAux() to ensure
         ///     the squad continues to receive proper movement orders from the AI.
@@ -88,7 +82,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // We want to suppress the broken "Men! TaleWorlds.MountAndBlade.BehaviorX!" message
                 // BUT we MUST still call OnBehaviorActivatedAux() for AI behavior to work!
                 // Without this, the player's squad would freeze and not follow formation orders.
-                
+
                 if (__instance.Formation.IsAIControlled && OnBehaviorActivatedAuxMethod != null)
                 {
                     // Call the protected OnBehaviorActivatedAux() method via reflection
@@ -103,7 +97,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             catch (Exception ex)
             {
                 // On any error, fail open to vanilla behavior to avoid breaking battles
-                ModLogger.Error("FormationPatch", 
+                ModLogger.Error("FormationPatch",
                     $"Error in FormationMessageSuppressionPatch: {ex.Message}");
                 return true;
             }
