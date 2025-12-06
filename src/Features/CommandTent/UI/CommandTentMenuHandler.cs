@@ -81,7 +81,7 @@ namespace Enlisted.Features.CommandTent.UI
         {
             var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
             QuartermasterManager.CapturedTimeMode = previousMode;
-            SwitchToMenuPreserveTime(menuId);
+            GameMenu.SwitchToMenu(menuId);
             if (Campaign.Current != null)
             {
                 Campaign.Current.TimeControlMode = previousMode;
