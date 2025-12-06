@@ -2,6 +2,7 @@ using System;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -37,6 +38,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
 		{
 			try
 			{
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
 				// Only suppress negative relation changes for the player during discharge
 				var involvesPlayer = hero == Hero.MainHero || gainedRelationWith == Hero.MainHero;
 

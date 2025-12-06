@@ -9,21 +9,41 @@
 | Quartermaster | Equipment selection | Enlisted Status → "Visit Quartermaster" |
 | Command Tent | Service records, retinue | Enlisted Status → "Command Tent" |
 
-## Table of Contents
+## Index
 
-- [Overview](#overview)
-- [Modern UI Styling](#modern-ui-styling)
-- [How It Works](#how-it-works)
+### Feature Documentation
+- [Overview](#overview) - System purpose and key features
+- [Modern UI Styling](#modern-ui-styling) - Icons, tooltips, backgrounds, audio
+- [How It Works](#how-it-works) - Menu structure and navigation
   - [Main Enlisted Status Menu](#main-enlisted-status-menu)
   - [Duty Selection Interface](#duty-selection-interface)
   - [Menu Navigation](#menu-navigation)
-- [Technical Details](#technical-details)
+- [Technical Details](#technical-details) - Implementation specifics
   - [Menu Structure](#menu-structure)
   - [Dynamic Text System](#dynamic-text-system)
   - [Tier-Based Availability](#tier-based-availability)
-- [Edge Cases](#edge-cases)
-- [API Reference](#api-reference)
-- [Debugging](#debugging)
+- [Edge Cases](#edge-cases) - Problem scenarios and solutions
+  - [Menu State Consistency](#menu-state-consistency)
+  - [Tier Progression](#tier-progression)
+  - [Duty Selection Persistence](#duty-selection-persistence)
+  - [Menu Activation Timing](#menu-activation-timing)
+  - [Time Control Preservation](#time-control-preservation)
+
+### Bannerlord API Reference
+- [Bannerlord Menu APIs](#bannerlord-menu-apis) - Native API patterns
+  - [Menu Types](#menu-types) - MenuAndOptionType values
+  - [Time Control Behavior](#time-control-behavior) - Vanilla behavior and preservation
+  - [Menu Registration](#menu-registration) - Creating menus
+  - [Background and Audio](#background-and-audio) - Visual/audio setup
+  - [Text Variables](#text-variables) - Dynamic text system
+  - [Menu Navigation](#menu-navigation-api) - Switching between menus
+  - [Menu Options](#menu-options) - Adding options with icons
+  - [LeaveType Icons](#leavetype-icons) - Icon reference table
+  - [Popup Dialogs](#popup-dialogs) - Inquiry dialogs
+
+### Development Reference
+- [API Reference](#api-reference) - Enlisted-specific APIs
+- [Debugging](#debugging) - Logging and troubleshooting
 
 ---
 
@@ -290,48 +310,239 @@ bool CanSelectProfession(string professionId)
 - Prevents timing conflicts with game state transitions
 - No crashes or assertion failures
 
+### Time Control Preservation
+
+**Problem:** Vanilla `GameMenu.ActivateGameMenu()` and `SwitchToMenu()` force time to `Stop`, then wait menus call `StartWait()` which sets `UnstoppableFastForward`. This overrides the player's time preference.
+
+**Solution:** All Enlisted wait menus share a time preservation system:
+
+1. **Shared Time State:** `QuartermasterManager.CapturedTimeMode` stores the player's time preference across all menus
+2. **Capture Before Activation:** Button handlers call `CaptureTimeStateBeforeMenuActivation()` before showing popups or switching menus
+3. **Tick Handler Restoration:** Wait menu tick handlers restore time when `UnstoppableFastForward` is detected
+4. **Late-Capture Fallback:** If no time was captured (menu opened via native system), tick handlers capture current time as fallback
+
+**Popup Handling:**
+- Popup callbacks should NOT call `SafeActivateEnlistedMenu()` - this re-captures time incorrectly
+- Cancel actions just close the popup - the menu underneath is already active
+- Success actions refresh the menu without re-capturing time
+
+**Affected Menus:**
+- `enlisted_status` - Main enlisted menu
+- `enlisted_duty_selection` - Duty selection
+- `enlisted_battle_wait` - Battle reserve menu
+- All quartermaster menus (`quartermaster_equipment`, `quartermaster_variants`, `quartermaster_returns`, `quartermaster_supplies`)
+
 ---
 
-## API Reference
+## Bannerlord Menu APIs
+
+Reference for Bannerlord's native menu system APIs and patterns.
+
+### Menu Types
+
+**MenuAndOptionType Values:**
+
+| Type | Value | UI Widgets | Time Controls | Usage |
+|------|-------|------------|---------------|-------|
+| `RegularMenuOption` | 0 | None | Pauses game | Basic text menus |
+| `WaitMenuShowProgressAndHoursOption` | 1 | Progress bar + hours | Works | Time-based activities |
+| `WaitMenuShowOnlyProgressOption` | 2 | Progress only | Works | Menus with progress display |
+| `WaitMenuHideProgressAndHoursOption` | 3 | Clean text only | Works | Army wait, settlement wait |
+
+**Recommended:** Use `WaitMenuHideProgressAndHoursOption` for clean menus without progress widgets.
+
+### Time Control Behavior
+
+**Vanilla Behavior:**
+1. `GameMenu.ActivateGameMenu()` sets `Campaign.Current.TimeControlMode = Stop`
+2. For wait menus, `StartWait()` then sets `TimeControlMode = UnstoppableFastForward`
+3. This overrides player's time preference (paused/playing)
+
+**Time Control Modes:**
+
+| Mode | Description |
+|------|-------------|
+| `Stop` | Game paused |
+| `StoppablePlay` | Normal speed, can be paused |
+| `StoppableFastForward` | Fast speed, can be paused |
+| `UnstoppablePlay` | Normal speed, cannot be paused |
+| `UnstoppableFastForward` | Fast speed, forced by StartWait() |
+| `UnstoppableFastForwardForPartyWaitTime` | Party wait variant |
+
+**Preserving Player Time Preference:**
+
+1. Capture before menu activation:
+```csharp
+CapturedTimeMode = Campaign.Current?.TimeControlMode;
+GameMenu.ActivateGameMenu("menu_id");
+```
+
+2. Restore in tick handler:
+```csharp
+private void OnMenuTick(MenuCallbackArgs args, CampaignTime dt)
+{
+    // Restore if StartWait() forced UnstoppableFastForward
+    if (CapturedTimeMode.HasValue && Campaign.Current != null)
+    {
+        if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+            Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+        {
+            Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
+        }
+    }
+}
+```
 
 ### Menu Registration
 
 ```csharp
-// Add game menu
+// Add wait game menu (recommended for time controls)
+starter.AddWaitGameMenu("menu_id",
+    "Menu Title: {TEXT_VAR}",
+    OnMenuInit,
+    OnMenuCondition,
+    null, // OnConsequenceDelegate
+    OnMenuTick,
+    GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption,
+    GameOverlays.MenuOverlayType.None,
+    0f,
+    GameMenu.MenuFlags.None,
+    null);
+
+// Add regular game menu (pauses game)
 starter.AddGameMenu(menuId, menuTitle, menuIntroText, 
     menuFlags, menuBackgroundMeshName);
-
-// Add menu option
-starter.AddGameMenuOption(menuId, optionId, optionText,
-    GameMenuOption.OnConditionDelegate condition,
-    GameMenuOption.OnConsequenceDelegate consequence,
-    isLeave: false, priority: 0);
 ```
 
-### Dynamic Text
+### Background and Audio
 
 ```csharp
-// Set dynamic text variable
-GameMenu.SetTextVariable(menuId, variableName, value);
+[GameMenuInitializationHandler("menu_id")]
+private static void OnMenuBackgroundInit(MenuCallbackArgs args)
+{
+    // Set culture-appropriate background
+    args.MenuContext.SetBackgroundMeshName(Hero.MainHero.MapFaction.Culture.EncounterBackgroundMesh);
+    
+    // Set ambient sound
+    args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+    args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
+}
+```
 
-// Example: Set checkmark
-string checkmark = isSelected ? "✓" : "○";
-GameMenu.SetTextVariable("enlisted_duty_selection", "duty_checkmark", checkmark);
+### Text Variables
+
+```csharp
+// Get menu text and set variables (in init or tick handler)
+var text = args.MenuContext.GameMenu.GetText();
+text.SetTextVariable("PARTY_LEADER", lordName);
+text.SetTextVariable("PARTY_TEXT", statusContent);
+
+// Global text variables
+MBTextManager.SetTextVariable("VARIABLE_NAME", value, false);
+```
+
+### Menu Navigation {#menu-navigation-api}
+
+```csharp
+GameMenu.SwitchToMenu("target_menu_id");  // Switch between menus
+GameMenu.ExitToLast();                     // Return to previous menu
+args.MenuContext.GameMenu.EndWait();       // End wait menu properly
+```
+
+### Menu Options
+
+```csharp
+starter.AddGameMenuOption("menu_id", "option_id", "Option Text",
+    args =>
+    {
+        args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+        args.Tooltip = new TextObject("Tooltip text");
+        return true; // Available
+    },
+    OnOptionSelected,
+    isLeave: false,
+    priority: 0);
+```
+
+### LeaveType Icons
+
+| LeaveType | Icon Purpose |
+|-----------|--------------|
+| `Continue` | Continue/default action |
+| `TroopSelection` | Troop management |
+| `Trade` | Trading/equipment |
+| `Conversation` | Dialog |
+| `Submenu` | Navigation |
+| `Manage` | Management |
+| `Leave` | Exit/leave action |
+| `Escape` | Warning/danger |
+| `Mission` | Combat |
+| `DefendAction` | Defense |
+| `Raid` | Aggressive action |
+| `SiegeAmbush` | Siege-related |
+| `OrderTroopsToAttack` | Command troops |
+
+### Popup Dialogs
+
+**ShowInquiry:**
+```csharp
+InformationManager.ShowInquiry(
+    new InquiryData(
+        title,
+        message,
+        isAffirmativeOptionShown: true,
+        isNegativeOptionShown: true,
+        affirmativeText: "Yes",
+        negativeText: "No",
+        affirmativeAction: () => { /* on yes */ },
+        negativeAction: () => { /* on no */ }),
+    pauseGameActiveState: false); // false = don't pause game
+```
+
+**ShowMultiSelectionInquiry:**
+```csharp
+MBInformationManager.ShowMultiSelectionInquiry(
+    new MultiSelectionInquiryData(
+        title,
+        description,
+        options,        // List<InquiryElement>
+        isExitShown: true,
+        minSelectableOptionCount: 1,
+        maxSelectableOptionCount: 1,
+        affirmativeText: "Select",
+        negativeText: "Cancel",
+        affirmativeAction: selected => { /* on select */ },
+        negativeAction: _ => { /* on cancel */ }),
+    pauseGameActiveState: false);
+```
+
+**Note:** Popup callbacks should not call menu activation methods that re-capture time state. The underlying menu remains active when the popup closes.
+
+---
+
+## API Reference
+
+Enlisted-specific menu APIs and patterns.
+
+### Time State Management
+
+```csharp
+// Capture time state before menu activation (shared across all menus)
+QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+
+// Access shared captured time mode
+CampaignTimeControlMode? captured = QuartermasterManager.CapturedTimeMode;
 ```
 
 ### Menu Activation
 
 ```csharp
-// Activate menu (safe, deferred)
-NextFrameDispatcher.RunNextFrame(() => 
-    GameMenu.ActivateGameMenu("enlisted_status"));
+// Safe menu activation (with time preservation)
+EnlistedMenuBehavior.SafeActivateEnlistedMenu();
 
-// Check if menu can be activated
-bool CanActivateMenu()
-{
-    return !NextFrameDispatcher.Busy() && 
-           PlayerEncounter.Current == null;
-}
+// Direct activation (capture time first)
+QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+GameMenu.ActivateGameMenu("enlisted_status");
 ```
 
 ### Selection Management

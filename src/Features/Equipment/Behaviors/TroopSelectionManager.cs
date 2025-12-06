@@ -60,7 +60,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             dataStore.SyncData("_promotionPending", ref _promotionPending);
             dataStore.SyncData("_pendingTier", ref _pendingTier);
             dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
-            dataStore.SyncData("_issuedEquipment", ref _issuedEquipment);
+            SerializeIssuedEquipment(dataStore);
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -155,12 +155,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                         {
                             if (selected?.FirstOrDefault()?.Identifier is CharacterObject chosen)
                             {
-                                                ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
+                                ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
                                 ApplySelectedTroopEquipment(Hero.MainHero, chosen);
                                 _lastSelectedTroopId = chosen.StringId;
+                                // Don't re-capture time - preserve the time state from when the button was clicked
+                                // Just refresh the menu without affecting time control
                                 if (Campaign.Current?.CurrentMenuContext != null)
                                 {
-                                    EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                                    Campaign.Current.GameMenuManager.RefreshMenuOptions(Campaign.Current.CurrentMenuContext);
                                 }
                             }
                         }
@@ -171,17 +173,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     },
                     _ =>
                     {
-                        try
-                        {
-                            if (Campaign.Current?.CurrentMenuContext != null)
-                            {
-                                EnlistedMenuBehavior.SafeActivateEnlistedMenu();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            ModLogger.Error("TroopSelection", $"Master at Arms cancel failed: {ex.Message}");
-                        }
+                        // Cancel action - just close popup, don't affect menu or time state
+                        // The enlisted_status menu is already active underneath
                     },
                     string.Empty);
 
@@ -305,10 +298,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
             starter.AddGameMenu("enlisted_troop_selection",
                 "Master at Arms\n{TROOP_SELECTION_TEXT}",
-                OnTroopSelectionInit,
-                GameMenu.MenuOverlayType.None,
-                GameMenu.MenuFlags.None,
-                null);
+                OnTroopSelectionInit);
                 
             // "Collect equipment now" button - opens Master at Arms popup for troop selection (TroopSelection icon)
             starter.AddGameMenuOption("enlisted_troop_selection", "troop_selection_collect_now",
@@ -359,8 +349,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                             EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
                     });
-                },
-                false, -1);
+                });
         }
         
         /// <summary>
@@ -844,6 +833,38 @@ namespace Enlisted.Features.Equipment.Behaviors
                 ModLogger.Error("TroopSelection", "Error recording issued item", ex);
             }
         }
+
+        /// <summary>
+        /// Mark one issued item as returned, removing it from accountability tracking.
+        /// Matches by ItemStringId; removes a single record.
+        /// </summary>
+        public bool MarkIssuedItemReturned(string itemStringId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(itemStringId) || _issuedEquipment.Count == 0)
+                {
+                    return false;
+                }
+
+                var kvp = _issuedEquipment.FirstOrDefault(x =>
+                    x.Value != null && x.Value.ItemStringId == itemStringId);
+
+                if (kvp.Value == null)
+                {
+                    return false;
+                }
+
+                _issuedEquipment.Remove(kvp.Key);
+                ModLogger.Info("TroopSelection", $"Marked issued item returned: {kvp.Value.ItemName} (slot {kvp.Key})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", $"Error marking issued item returned: {ex.Message}");
+                return false;
+            }
+        }
         
         /// <summary>
         /// Check for missing equipment and calculate the debt owed.
@@ -922,6 +943,74 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             _issuedEquipment.Clear();
             ModLogger.Info("TroopSelection", "Cleared issued equipment tracking");
+        }
+
+        /// <summary>
+        ///     Manually serialize issued equipment so the save system only touches primitives.
+        ///     Avoids missing type definitions for IssuedItemRecord dictionaries during save.
+        /// </summary>
+        private void SerializeIssuedEquipment(IDataStore dataStore)
+        {
+            try
+            {
+                var count = _issuedEquipment?.Count ?? 0;
+                dataStore.SyncData("_issued_count", ref count);
+
+                if (!dataStore.IsLoading)
+                {
+                    var issuedEquipment = _issuedEquipment ?? new Dictionary<int, IssuedItemRecord>();
+                    var index = 0;
+                    const int unsetSlotIndex = -1;
+                    foreach (var kvp in issuedEquipment)
+                    {
+                        var slotKey = kvp.Key;
+                        var record = kvp.Value ?? new IssuedItemRecord();
+                        var slotIndex = record.SlotIndex >= 0 ? record.SlotIndex : unsetSlotIndex;
+                        var itemId = record.ItemStringId ?? string.Empty;
+                        var itemName = record.ItemName ?? string.Empty;
+                        var itemValue = record.ItemValue;
+
+                        dataStore.SyncData($"_issued_{index}_slotKey", ref slotKey);
+                        dataStore.SyncData($"_issued_{index}_slotIndex", ref slotIndex);
+                        dataStore.SyncData($"_issued_{index}_itemId", ref itemId);
+                        dataStore.SyncData($"_issued_{index}_itemName", ref itemName);
+                        dataStore.SyncData($"_issued_{index}_itemValue", ref itemValue);
+                        index++;
+                    }
+                }
+                else
+                {
+                    _issuedEquipment = new Dictionary<int, IssuedItemRecord>();
+                    const int unsetSlotIndex = -1;
+                    for (var i = 0; i < count; i++)
+                    {
+                        var slotKey = 0;
+                        var slotIndex = 0;
+                        var itemId = string.Empty;
+                        var itemName = string.Empty;
+                        var itemValue = 0;
+
+                        dataStore.SyncData($"_issued_{i}_slotKey", ref slotKey);
+                        dataStore.SyncData($"_issued_{i}_slotIndex", ref slotIndex);
+                        dataStore.SyncData($"_issued_{i}_itemId", ref itemId);
+                        dataStore.SyncData($"_issued_{i}_itemName", ref itemName);
+                        dataStore.SyncData($"_issued_{i}_itemValue", ref itemValue);
+
+                        var resolvedSlotIndex = slotIndex == unsetSlotIndex ? slotKey : slotIndex;
+                        _issuedEquipment[slotKey] = new IssuedItemRecord
+                        {
+                            ItemStringId = itemId,
+                            ItemName = itemName,
+                            ItemValue = itemValue,
+                            SlotIndex = resolvedSlotIndex
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", $"Error serializing issued equipment: {ex.Message}");
+            }
         }
         
         #endregion

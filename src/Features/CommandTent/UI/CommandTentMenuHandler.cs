@@ -8,6 +8,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -37,6 +38,9 @@ namespace Enlisted.Features.CommandTent.UI
         private const string RetinuePurchaseMenuId = "command_tent_retinue_purchase";
         private const string RetinueDismissMenuId = "command_tent_retinue_dismiss";
         private const string RetinueRequisitionMenuId = "command_tent_retinue_requisition";
+
+        // Ensure Command Tent dialogs never pause the campaign clock.
+        private static bool ShouldPauseDuringCommandTentInquiry() => false;
 
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "command_tent_companions";
@@ -176,6 +180,24 @@ namespace Enlisted.Features.CommandTent.UI
         {
             try
             {
+                // If we're inside a settlement encounter, finish it first so the engine
+                // doesn't immediately re-enter the town/castle menu when we switch.
+                var encounterSettlement = PlayerEncounter.EncounterSettlement;
+                if (encounterSettlement != null)
+                {
+                    var lordParty = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
+                    var inBattleOrSiege = lordParty?.Party.MapEvent != null ||
+                                          lordParty?.Party.SiegeEvent != null ||
+                                          lordParty?.BesiegedSettlement != null;
+
+                    if (!inBattleOrSiege)
+                    {
+                        PlayerEncounter.Finish();
+                        ModLogger.Info(LogCategory,
+                            $"Finished settlement encounter ({encounterSettlement.Name}) before opening Command Tent");
+                    }
+                }
+
                 GameMenu.SwitchToMenu(CommandTentMenuId);
                 ModLogger.Debug(LogCategory, "Player entered Command Tent");
             }
@@ -856,15 +878,10 @@ namespace Enlisted.Features.CommandTent.UI
                     var manager = RetinueManager.Instance;
                     var hasRetinue = manager?.State?.HasRetinue == true;
                     args.IsEnabled = hasRetinue;
-                    if (!hasRetinue)
-                    {
-                        args.Tooltip = new TextObject("{=ct_retinue_no_soldiers}You have no soldiers mustered.");
-                    }
-                    else
-                    {
-                        // Let users know this refreshes menu data (e.g., after battles or training)
-                        args.Tooltip = new TextObject("{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.");
-                    }
+                    // Hint refreshes when enabled; clear guidance when empty.
+                    args.Tooltip = hasRetinue
+                        ? new TextObject("{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.")
+                        : new TextObject("{=ct_retinue_no_soldiers}You have no soldiers mustered.");
                     args.optionLeaveType = GameMenuOption.LeaveType.ManageGarrison;
                     return true;
                 },
@@ -1399,6 +1416,7 @@ namespace Enlisted.Features.CommandTent.UI
             message.SetTextVariable("UPKEEP", count * 2);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
+            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1409,7 +1427,7 @@ namespace Enlisted.Features.CommandTent.UI
                     new TextObject("{=ct_confirm_no}Cancel").ToString(),
                     () => ExecutePurchase(typeId, count, totalCost),
                     () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
-                false);
+                pauseGameActiveState);
         }
 
         /// <summary>
@@ -1462,6 +1480,7 @@ namespace Enlisted.Features.CommandTent.UI
             message.SetTextVariable("COUNT", currentCount);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
+            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1483,7 +1502,7 @@ namespace Enlisted.Features.CommandTent.UI
                         OnSoldierTypePurchase(newTypeId);
                     },
                     () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
-                false);
+                pauseGameActiveState);
         }
 
         #endregion
@@ -1713,14 +1732,10 @@ namespace Enlisted.Features.CommandTent.UI
                 sb.AppendLine($"Your Gold: {playerGold}{{GOLD_ICON}}");
                 sb.AppendLine();
 
-                if (cooldownDays > 0)
-                {
-                    sb.AppendLine($"Cooldown: {cooldownDays} days remaining");
-                }
-                else
-                {
-                    sb.AppendLine("Requisition available now");
-                }
+                var cooldownLine = cooldownDays > 0
+                    ? $"Cooldown: {cooldownDays} days remaining"
+                    : "Requisition available now";
+                sb.AppendLine(cooldownLine);
 
                 sb.AppendLine();
                 sb.AppendLine("After requisition: 14 day cooldown");

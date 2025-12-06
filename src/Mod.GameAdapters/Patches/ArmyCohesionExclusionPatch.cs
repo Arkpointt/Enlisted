@@ -6,6 +6,7 @@ using TaleWorlds.CampaignSystem.GameComponents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Localization;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -45,6 +46,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return;
+                }
+
                 // Check if player is enlisted
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)

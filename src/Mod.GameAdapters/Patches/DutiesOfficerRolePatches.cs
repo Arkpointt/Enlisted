@@ -36,6 +36,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 // Skip during character creation - use safe guard to prevent crashes
                 if (!CampaignSafetyGuard.IsCampaignReady)
                 {
@@ -87,6 +92,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 // Skip during character creation - use safe guard to prevent crashes
                 if (!CampaignSafetyGuard.IsCampaignReady)
                 {
@@ -135,6 +145,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 // Skip during character creation - use safe guard to prevent crashes
                 if (!CampaignSafetyGuard.IsCampaignReady)
                 {

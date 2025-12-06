@@ -42,11 +42,14 @@ Grid-based UI system that lets players select individual equipment variants from
 - Retirement reward: keep military gear + get personal belongings back
 
 **Files:**
-- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, variant options
+- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, variant options, shared time state
 - `src/Features/Equipment/Behaviors/TroopSelectionManager.cs` - Equipment tracking and accountability
 - `src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs` - Gauntlet UI controller
 - `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Main view model
 - `src/Features/Equipment/UI/QuartermasterEquipmentItemVm.cs` - Individual equipment cards
+
+**Shared Time State:**
+`QuartermasterManager.CapturedTimeMode` is a public static property used by all Enlisted wait menus to preserve player's time control preference (pause/play) when navigating between menus.
 
 ---
 

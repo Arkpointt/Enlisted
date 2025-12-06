@@ -55,6 +55,8 @@ When changing troop types:
 - `RecordIssuedEquipment()` - Store current gear for tracking
 - `CheckMissingEquipment()` - Compare current vs issued, return debt
 - `ClearIssuedEquipment()` - Clear tracking (retirement/full discharge)
+- `MarkIssuedItemReturned()` - Remove item from tracking when returned via quartermaster
+- `ShowMasterAtArmsPopup()` - Display troop selection popup (preserves time state)
 
 ## Edge Cases
 

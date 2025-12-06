@@ -3,6 +3,7 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.GameMenus;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -27,6 +28,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return;
+                }
+
                 // Only modify if native would show the button
                 if (!__result)
                 {

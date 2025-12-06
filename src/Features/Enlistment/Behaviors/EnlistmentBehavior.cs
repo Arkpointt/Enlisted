@@ -306,6 +306,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _pendingDesertionKingdom != null &&
             CampaignTime.Now < _desertionGracePeriodEnd;
 
+        private bool ShouldActivationBeOn()
+        {
+            return IsEnlisted || _isOnLeave || IsInDesertionGracePeriod;
+        }
+
+        private void SyncActivationState(string reason)
+        {
+            var shouldBeActive = ShouldActivationBeOn();
+            if (shouldBeActive != EnlistedActivation.IsActive)
+            {
+                EnlistedActivation.SetActive(shouldBeActive, reason);
+            }
+        }
+
         /// <summary>
         ///     Kingdom that the player needs to rejoin during grace period to avoid desertion.
         ///     Returns null if not in grace period.
@@ -562,6 +576,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     $"Loading enlistment state - Lord: {_enlistedLord?.Name?.ToString() ?? "null"}, Tier: {_enlistmentTier}, XP: {_enlistmentXP}, OnLeave: {_isOnLeave}, GracePeriod: {IsInDesertionGracePeriod}");
                 ValidateLoadedState();
                 ModLogger.Info("SaveLoad", "Enlistment state validated and restored");
+
+                // Sync activation based on loaded state
+                SyncActivationState("sync_load");
             }
             else
             {
@@ -813,6 +830,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
                 }
+
+                SyncActivationState("start_enlist");
 
                 var resumedFromGrace = resumingGraceService;
                 if (resumedFromGrace)
@@ -1290,6 +1309,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Fire event for other mods
                 OnDischarged?.Invoke(reason);
+
+                SyncActivationState("stop_enlist");
             }
             catch (Exception ex)
             {
@@ -1423,6 +1444,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Fire event for other mods
                 OnGracePeriodStarted?.Invoke();
+
+                SyncActivationState("start_grace_period");
             }
             catch (Exception ex)
             {
@@ -1535,6 +1558,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _savedGraceTroopId = null;
             _savedGraceEnlistmentDate = CampaignTime.Zero;
             _graceProtectionEnds = CampaignTime.Zero;
+
+            SyncActivationState("clear_grace_period");
         }
 
         /// <summary>
@@ -1731,16 +1756,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void OnHourlyTick()
         {
-            var main = MobileParty.MainParty;
-            if (main == null)
-            {
-                return;
-            }
-
             // Check if grace period expired (even if not enlisted)
             if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
             {
                 ApplyDesertionPenalties();
+                return;
+            }
+
+            SyncActivationState("hourly_tick");
+            if (!EnlistedActivation.IsActive)
+            {
+                return;
+            }
+
+            var main = MobileParty.MainParty;
+            if (main == null)
+            {
                 return;
             }
 
@@ -1952,12 +1983,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void OnDailyTick()
         {
-            // Always check for captivity escape during grace period, even if not currently listed as 'active' enlisted
+            // Always run captivity + leave maintenance even when inactive so grace-period escapes
+            // and leave expirations are processed for players who temporarily lost activation.
             CheckPlayerCaptivityDuration();
 
             // Check for leave expiration (14 days max)
             // This runs even when "not enlisted" because IsOnLeave makes IsEnlisted return false
             CheckLeaveExpiration();
+
+            SyncActivationState("daily_tick");
+            if (!EnlistedActivation.IsActive)
+            {
+                return;
+            }
 
             if (!IsEnlisted || _enlistedLord?.IsAlive != true)
             {
@@ -2506,6 +2544,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // CRITICAL: Skip during character creation when campaign isn't initialized
             // Accessing Hero.MainHero or MobileParty.MainParty during character creation throws exceptions
             if (!CampaignSafetyGuard.IsCampaignReady)
+            {
+                return;
+            }
+
+            SyncActivationState("realtime_tick");
+
+            // When inactive, do nothing at all (mod effectively disabled).
+            if (!EnlistedActivation.EnsureActive())
             {
                 return;
             }
@@ -5900,6 +5946,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                // SAFETY: Never process enlistment battle flow while the player is a prisoner or
+                // while capture cleanup is pending. The native captivity system owns the state during this time,
+                // and forcing battle prep (teleport/army join) can crash when captors are attacked.
+                if (Hero.MainHero.IsPrisoner || _playerCaptureCleanupScheduled)
+                {
+                    ModLogger.Info("EventSafety",
+                        $"Skipping MapEventStarted - player prisoner or cleanup pending (IsPrisoner={Hero.MainHero.IsPrisoner}, CaptureCleanupScheduled={_playerCaptureCleanupScheduled})");
+                    return;
+                }
+
                 var lordParty = _enlistedLord.PartyBelongedTo;
                 if (lordParty == null || mapEvent == null)
                 {
@@ -6029,6 +6085,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var main = MobileParty.MainParty;
+
+                // SAFETY: If the player is still a prisoner or capture cleanup is queued, avoid any post-battle
+                // enlistment cleanup (army/visibility/menu) and let native captivity flow finalize first.
+                if (Hero.MainHero.IsPrisoner || _playerCaptureCleanupScheduled)
+                {
+                    ModLogger.Info("EventSafety",
+                        $"Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner={Hero.MainHero.IsPrisoner}, CaptureCleanupScheduled={_playerCaptureCleanupScheduled})");
+                    _cachedLordMapEvent = null;
+                    return;
+                }
 
                 var effectiveMapEvent = mapEvent ?? _cachedLordMapEvent;
 

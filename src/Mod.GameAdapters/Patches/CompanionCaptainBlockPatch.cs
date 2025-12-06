@@ -1,6 +1,7 @@
 using System;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
@@ -35,6 +36,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 // Skip if value is null (clearing captain is always allowed)
                 if (value == null)
                 {

@@ -4,6 +4,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -30,6 +31,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 // Check if player is enlisted or just ended enlistment (grace period)
                 var enlistment = EnlistmentBehavior.Instance;
                 var isEnlisted = enlistment?.IsEnlisted == true;

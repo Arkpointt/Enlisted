@@ -376,6 +376,14 @@
     <string id="qm_accountability_passed" text="Equipment accountability check passed - all gear returned." />
     <string id="qm_btn_understood" text="Understood" />
     <string id="qm_retirement_gear" text="Your personal belongings have been returned. You may keep your military equipment as thanks for your service." />
+    <string id="qm_return_intro" text="Return issued gear to the armory. Select an item to hand back." />
+    <string id="qm_return_line" text="{ITEM_NAME} x{COUNT}" />
+    <string id="qm_return_option_label" text="{ITEM_NAME} (x{COUNT}) - Return one" />
+    <string id="qm_return_success" text="Returned {ITEM_NAME} to the armory." />
+    <string id="qm_return_none_left" text="No {ITEM_NAME} remains to return." />
+    <string id="qm_return_none" text="No equipment to return." />
+    <string id="qm_return_error" text="Return processing unavailable." />
+    <string id="qm_return_tooltip" text="Hand one item back to the quartermaster." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DEBUG - Temporary Testing Options (remove before release) -->

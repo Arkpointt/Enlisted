@@ -42,6 +42,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private CharacterObject _selectedTroop;
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> _availableVariants;
         private readonly EquipmentIndex _selectedSlot = EquipmentIndex.None;
+        private readonly List<ReturnOption> _returnOptions = new List<ReturnOption>();
         
         // Conversation tracking for dynamic equipment selection
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future conversation-based equipment selection")]
@@ -51,11 +52,101 @@ namespace Enlisted.Features.Equipment.Behaviors
         // ReSharper disable once NotAccessedField.Local - Field is assigned for future conversation-based equipment selection
         private string _conversationEquipmentType = "";
         
+        private sealed class ReturnOption
+        {
+            public ItemObject Item { get; set; }
+            public int Count { get; set; }
+        }
+        
         public QuartermasterManager()
         {
             Instance = this;
             InitializeVariantCache();
         }
+        
+        #region Time-Preserving Menu Helpers
+        
+        // Captured time state for wait menu time restoration (allows spacebar to work)
+        // Public so other menu behaviors can share the same captured state
+        public static CampaignTimeControlMode? CapturedTimeMode { get; set; }
+        
+        /// <summary>
+        /// Activate a game menu without changing the current time control mode.
+        /// Vanilla ActivateGameMenu forcibly pauses time; this wrapper captures and restores the prior state.
+        /// Also updates the captured time mode for the wait menu tick handler.
+        /// </summary>
+        private static void ActivateMenuPreserveTime(string menuId)
+        {
+            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
+            CapturedTimeMode = previousMode; // Update for tick handler (shared across all Enlisted menus)
+            GameMenu.ActivateGameMenu(menuId);
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = previousMode;
+            }
+        }
+        
+        /// <summary>
+        /// Switch to a game menu without changing the current time control mode.
+        /// Vanilla SwitchToMenu forcibly pauses time; this wrapper captures and restores the prior state.
+        /// Also updates the captured time mode for the wait menu tick handler.
+        /// </summary>
+        private static void SwitchToMenuPreserveTime(string menuId)
+        {
+            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
+            CapturedTimeMode = previousMode; // Update for tick handler (shared across all Enlisted menus)
+            GameMenu.SwitchToMenu(menuId);
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = previousMode;
+            }
+        }
+        
+        /// <summary>
+        /// Capture the current time control mode BEFORE activating a wait menu.
+        /// Must be called from the calling code before ActivateGameMenu/SwitchToMenu,
+        /// not from init handlers (which run after vanilla already sets Stop).
+        /// This is a shared capture used by all Enlisted wait menus.
+        /// </summary>
+        public static void CaptureTimeStateBeforeMenuActivation()
+        {
+            CapturedTimeMode = Campaign.Current?.TimeControlMode;
+            ModLogger.Info("Quartermaster", $"Captured time state: {CapturedTimeMode}");
+        }
+        
+        /// <summary>
+        /// Shared wait menu condition. Always returns true since we control exit via menu options.
+        /// </summary>
+        private static bool QuartermasterWaitCondition(MenuCallbackArgs args)
+        {
+            return true;
+        }
+        
+        /// <summary>
+        /// Shared wait menu consequence. Empty since we handle exit via menu options.
+        /// </summary>
+        private static void QuartermasterWaitConsequence(MenuCallbackArgs args)
+        {
+            // No consequence needed - we never let progress reach 100%
+        }
+        
+        /// <summary>
+        /// Shared wait menu tick handler. Restores player's time state after StartWait() forces fast-forward.
+        /// This runs every frame and allows spacebar time control to work in quartermaster menus.
+        /// </summary>
+        private static void QuartermasterWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            // Restore the player's time state after StartWait() forced UnstoppableFastForward
+            // Only restore if current mode is different (avoid spam and allow spacebar changes)
+            if (CapturedTimeMode.HasValue && Campaign.Current != null &&
+                (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                 Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
+            {
+                Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
+            }
+        }
+        
+        #endregion
         
         public override void RegisterEvents()
         {
@@ -158,20 +249,39 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Add quartermaster menu system for equipment variant management.
+        /// Uses wait menus with hidden progress to allow spacebar time control passthrough.
         /// </summary>
         private void AddQuartermasterMenus(CampaignGameStarter starter)
         {
-            // Main quartermaster equipment menu
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
-            starter.AddGameMenu("quartermaster_equipment",
+            // Main quartermaster equipment menu (wait menu with hidden progress for spacebar support)
+            starter.AddWaitGameMenu(
+                "quartermaster_equipment",
                 "Army Quartermaster\n{QUARTERMASTER_TEXT}",
-                OnQuartermasterEquipmentInit); // Default parameters are sufficient
+                OnQuartermasterEquipmentInit,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
-            // Equipment variant selection submenu
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
-            starter.AddGameMenu("quartermaster_variants",
+            // Equipment variant selection submenu (wait menu with hidden progress)
+            starter.AddWaitGameMenu(
+                "quartermaster_variants",
                 "Equipment Variants\n{VARIANT_TEXT}",
-                OnQuartermasterVariantsInit); // Default parameters are sufficient
+                OnQuartermasterVariantsInit,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+            
+            // Return equipment submenu (wait menu with hidden progress)
+            starter.AddWaitGameMenu(
+                "quartermaster_returns",
+                "Return Equipment\n{RETURN_TEXT}",
+                OnQuartermasterReturnsInit,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
             // Main equipment category options with modern icons
 
@@ -221,6 +331,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 OnSupplyManagementSelected,
                 false, 5);
+            
+            // Return issued equipment (Manage icon)
+            starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_return",
+                "Return issued equipment",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    return true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_returns"),
+                false, 6);
                 
             // Return to enlisted status (Leave icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",
@@ -236,7 +357,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         try
                         {
-                            GameMenu.SwitchToMenu("enlisted_status");
+                            SwitchToMenuPreserveTime("enlisted_status");
                             ModLogger.Info("Quartermaster", "Returned from quartermaster to enlisted status menu");
                         }
                         catch (Exception ex)
@@ -250,10 +371,13 @@ namespace Enlisted.Features.Equipment.Behaviors
             // Variant selection options (dynamically populated)
             AddVariantSelectionOptions(starter);
             
+            // Return equipment options
+            AddReturnMenuOptions(starter);
+            
             // Supply management menu for quartermaster officers
             AddSupplyManagementMenu(starter);
         }
-        
+
         /// <summary>
         /// Add dynamic variant selection options for the variants submenu.
         /// </summary>
@@ -278,7 +402,33 @@ namespace Enlisted.Features.Equipment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.ActivateGameMenu("quartermaster_equipment"));
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"));
+        }
+
+        /// <summary>
+        /// Add dynamic return options for the return submenu.
+        /// </summary>
+        private void AddReturnMenuOptions(CampaignGameStarter starter)
+        {
+            for (var i = 1; i <= MaxReturnOptions; i++)
+            {
+                var index = i;
+                starter.AddGameMenuOption("quartermaster_returns", $"return_option_{index}",
+                    $"{{RETURN_OPTION_{index}}}",
+                    args => IsReturnOptionAvailable(args, index),
+                    args => OnReturnOptionSelected(args, index),
+                    false, index);
+            }
+
+            // Return to quartermaster (Leave icon)
+            starter.AddGameMenuOption("quartermaster_returns", "returns_back",
+                "Return to quartermaster",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
         
         /// <summary>
@@ -491,6 +641,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         private const int MaxItemsPerType = 2;
         
         /// <summary>
+        /// Maximum return options shown at once in the return menu.
+        /// </summary>
+        private const int MaxReturnOptions = 6;
+        
+        /// <summary>
         /// Process equipment variant request and update player equipment.
         /// Equipment is FREE (cost = 0), but limited to 2 of each item type.
         /// For weapons and consumables, finds the next available slot if the requested slot is occupied.
@@ -665,6 +820,246 @@ namespace Enlisted.Features.Equipment.Behaviors
             
             return count;
         }
+
+        /// <summary>
+        /// Build a list of returnable items with their total counts.
+        /// </summary>
+        private List<ReturnOption> BuildReturnOptions()
+        {
+            var options = new List<ReturnOption>();
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return options;
+            }
+
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+
+            void TryAddItem(ItemObject item)
+            {
+                if (!IsReturnableItem(item) || !seen.Add(item.StringId))
+                {
+                    return;
+                }
+
+                var total = GetPlayerItemCount(hero, item.StringId);
+                if (total > 0)
+                {
+                    options.Add(new ReturnOption { Item = item, Count = total });
+                }
+            }
+
+            // Battle equipment
+            for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+            {
+                TryAddItem(hero.BattleEquipment[slot].Item);
+            }
+
+            // Civilian equipment
+            for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+            {
+                TryAddItem(hero.CivilianEquipment[slot].Item);
+            }
+
+            // Party inventory
+            var roster = PartyBase.MainParty?.ItemRoster;
+            if (roster != null)
+            {
+                for (var i = 0; i < roster.Count; i++)
+                {
+                    var element = roster.GetElementCopyAtIndex(i);
+                    if (element.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    TryAddItem(element.EquipmentElement.Item);
+                }
+            }
+
+            return options
+                .OrderByDescending(o => o.Count)
+                .ThenBy(o => o.Item.Name?.ToString())
+                .Take(MaxReturnOptions)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Update text variables for return options.
+        /// </summary>
+        private void SetReturnOptionTextVariables()
+        {
+            for (var i = 0; i < MaxReturnOptions; i++)
+            {
+                var variableName = $"RETURN_OPTION_{i + 1}";
+                if (i < _returnOptions.Count)
+                {
+                    var option = _returnOptions[i];
+                    var text = new TextObject("{=qm_return_option_label}{ITEM_NAME} (x{COUNT}) - Return one");
+                    text.SetTextVariable("ITEM_NAME", option.Item.Name);
+                    text.SetTextVariable("COUNT", option.Count);
+                    MBTextManager.SetTextVariable(variableName, text.ToString());
+                }
+                else
+                {
+                    MBTextManager.SetTextVariable(variableName, "");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determine if an item is valid for return (equipment/weapon/mount/consumable).
+        /// </summary>
+        private static bool IsReturnableItem(ItemObject item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            return item.PrimaryWeapon != null ||
+                   item.ArmorComponent != null ||
+                   item.HorseComponent != null;
+        }
+
+        private bool IsReturnOptionAvailable(MenuCallbackArgs args, int optionIndex)
+        {
+            try
+            {
+                if (optionIndex > _returnOptions.Count)
+                {
+                    return false;
+                }
+
+                var option = _returnOptions[optionIndex - 1];
+                if (option == null || option.Count <= 0)
+                {
+                    return false;
+                }
+
+                args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                args.Tooltip = new TextObject("{=qm_return_tooltip}Return one item to the armory.");
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void OnReturnOptionSelected(MenuCallbackArgs args, int optionIndex)
+        {
+            _ = args;
+            try
+            {
+                if (optionIndex > _returnOptions.Count)
+                {
+                    return;
+                }
+
+                var option = _returnOptions[optionIndex - 1];
+                var item = option.Item;
+
+                var removed = TryReturnSingleItem(item);
+                var remaining = GetPlayerItemCount(Hero.MainHero, item.StringId);
+
+                var message = removed
+                    ? new TextObject("{=qm_return_success}Returned {ITEM_NAME} to the armory.")
+                    : new TextObject("{=qm_return_none_left}No {ITEM_NAME} remains to return.");
+                message.SetTextVariable("ITEM_NAME", item.Name);
+
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Yellow));
+
+                ModLogger.Info("Quartermaster",
+                    $"Return action: {item.Name}; removed={(removed ? "yes" : "no")}; remaining={remaining}");
+
+                // Refresh options after removal
+                _returnOptions.Clear();
+                _returnOptions.AddRange(BuildReturnOptions());
+                SetReturnOptionTextVariables();
+
+                SwitchToMenuPreserveTime("quartermaster_returns");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error returning equipment", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_return_error}Return processing unavailable.").ToString(), Colors.Red));
+            }
+        }
+
+        /// <summary>
+        /// Attempt to return a single item from inventory or equipment.
+        /// </summary>
+        private bool TryReturnSingleItem(ItemObject item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            // Prefer removing from inventory first to avoid stripping equipped gear if possible
+            if (TryRemoveFromInventory(item))
+            {
+                TroopSelectionManager.Instance?.MarkIssuedItemReturned(item.StringId);
+                return true;
+            }
+
+            var hero = Hero.MainHero;
+            if (hero != null && TryRemoveFromEquipment(hero, item))
+            {
+                TroopSelectionManager.Instance?.MarkIssuedItemReturned(item.StringId);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryRemoveFromInventory(ItemObject item)
+        {
+            var roster = PartyBase.MainParty?.ItemRoster;
+            if (roster == null)
+            {
+                return false;
+            }
+
+            if (roster.GetItemNumber(item) <= 0)
+            {
+                return false;
+            }
+
+            roster.AddToCounts(new EquipmentElement(item), -1);
+            return true;
+        }
+
+        private bool TryRemoveFromEquipment(Hero hero, ItemObject item)
+        {
+            // Battle equipment first
+            var battleEquipment = hero.BattleEquipment.Clone();
+            for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+            {
+                if (battleEquipment[slot].Item?.StringId == item.StringId)
+                {
+                    battleEquipment[slot] = default;
+                    EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, battleEquipment);
+                    return true;
+                }
+            }
+
+            // Civilian equipment
+            var civilianEquipment = hero.CivilianEquipment.Clone();
+            for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+            {
+                if (civilianEquipment[slot].Item?.StringId == item.StringId)
+                {
+                    civilianEquipment[slot] = default;
+                    hero.CivilianEquipment.FillFrom(civilianEquipment, false);
+                    return true;
+                }
+            }
+
+            return false;
+        }
         
         /// <summary>
         /// Apply equipment change to a specific slot while preserving other equipment.
@@ -701,6 +1096,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Time state is captured by caller before ActivateGameMenu (not here - too late)
+                
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -1074,6 +1471,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Time state is captured by caller before menu transition (not here - too late)
+                
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -1118,6 +1517,67 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 ModLogger.Error("Quartermaster", "Error initializing variant selection", ex);
                 MBTextManager.SetTextVariable("VARIANT_TEXT", "Equipment variant information unavailable.");
+            }
+        }
+
+        /// <summary>
+        /// Initialize return menu with current equipment/inventory counts.
+        /// </summary>
+        private void OnQuartermasterReturnsInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                // Time state is captured by caller before menu transition (not here - too late)
+                
+                var enlistment = EnlistmentBehavior.Instance;
+                var backgroundMesh = "encounter_looter"; // Safe fallback
+
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+
+                _returnOptions.Clear();
+                _returnOptions.AddRange(BuildReturnOptions());
+                SetReturnOptionTextVariables();
+
+                if (_returnOptions.Count == 0)
+                {
+                    MBTextManager.SetTextVariable("RETURN_TEXT",
+                        new TextObject("{=qm_return_none}No equipment to return.").ToString());
+                    return;
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine(new TextObject("{=qm_return_intro}Return issued gear to the armory. Select an item to hand back.").ToString());
+                sb.AppendLine();
+
+                foreach (var option in _returnOptions.Take(5))
+                {
+                    var line = new TextObject("{=qm_return_line}{ITEM_NAME} x{COUNT}");
+                    line.SetTextVariable("ITEM_NAME", option.Item.Name);
+                    line.SetTextVariable("COUNT", option.Count);
+                    sb.AppendLine(line.ToString());
+                }
+
+                if (_returnOptions.Count > 5)
+                {
+                    sb.AppendLine($"... plus {_returnOptions.Count - 5} more items");
+                }
+
+                MBTextManager.SetTextVariable("RETURN_TEXT", sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error initializing return menu", ex);
+                MBTextManager.SetTextVariable("RETURN_TEXT",
+                    new TextObject("{=qm_return_error}Return processing unavailable.").ToString());
             }
         }
         
@@ -1368,7 +1828,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         RequestEquipmentVariant(selectedVariant.Item, selectedVariant.Slot);
                         
                         // Return to quartermaster menu
-                        GameMenu.ActivateGameMenu("quartermaster_equipment");
+                        ActivateMenuPreserveTime("quartermaster_equipment");
                     }
                 }
             }
@@ -1401,7 +1861,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     RequestEquipmentVariant(selectedVariant.Item, selectedVariant.Slot);
                     
                     // Return to main quartermaster menu to see updated equipment
-                    GameMenu.ActivateGameMenu("quartermaster_equipment");
+                    ActivateMenuPreserveTime("quartermaster_equipment");
                 }
                 else
                 {
@@ -2314,7 +2774,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                GameMenu.ActivateGameMenu("quartermaster_supplies");
+                ActivateMenuPreserveTime("quartermaster_supplies");
             }
             catch (Exception ex)
             {
@@ -2327,11 +2787,15 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private void AddSupplyManagementMenu(CampaignGameStarter starter)
         {
-            // Supply management menu for quartermaster officers
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
-            starter.AddGameMenu("quartermaster_supplies",
+            // Supply management menu (wait menu with hidden progress for spacebar support)
+            starter.AddWaitGameMenu(
+                "quartermaster_supplies",
                 "Supply Management\n{SUPPLY_TEXT}",
-                OnSupplyManagementInit); // Default parameters are sufficient
+                OnSupplyManagementInit,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
             // Food optimization option (Manage icon)
             starter.AddGameMenuOption("quartermaster_supplies", "optimize_food",
@@ -2374,7 +2838,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.ActivateGameMenu("quartermaster_equipment"));
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
         
         /// <summary>
@@ -2384,6 +2848,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Time state is captured by caller before menu transition (not here - too late)
+                
                 // Background is now set by GameMenuInitializationHandler
                 var sb = new StringBuilder();
                 var party = MobileParty.MainParty;
@@ -2556,7 +3022,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 RequestEquipmentVariant(selectedOption.Item, selectedOption.Slot);
                 
                 // Return to main quartermaster menu
-                GameMenu.ActivateGameMenu("quartermaster_equipment");
+                ActivateMenuPreserveTime("quartermaster_equipment");
             }
             catch (Exception ex)
             {

@@ -15,6 +15,7 @@ using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.GameAdapters.Patches;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
@@ -282,6 +283,7 @@ namespace Enlisted.Mod.Entry
             try
             {
                 ModLogger.Info("Bootstrap", "Game start");
+                EnlistedActivation.SetActive(false, "game_start");
 
                 // Log startup diagnostics once per session for troubleshooting
                 SessionDiagnostics.LogStartupDiagnostics();

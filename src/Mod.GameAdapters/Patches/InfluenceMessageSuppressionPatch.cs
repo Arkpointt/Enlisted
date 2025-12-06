@@ -3,6 +3,7 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -28,6 +29,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 // Only intercept if this is about the player
                 if (hero != Hero.MainHero)
                 {

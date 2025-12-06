@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using HarmonyLib;
 using TaleWorlds.MountAndBlade;
@@ -57,6 +58,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return true;
+                }
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
