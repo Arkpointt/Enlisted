@@ -79,12 +79,22 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private static void SwitchToMenuPreserveTime(string menuId)
         {
-            var previousMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
-            QuartermasterManager.CapturedTimeMode = previousMode;
+            // Preserve the player's time mode from the moment they first entered the Command Tent.
+            // Do not overwrite it on subsequent hops between submenus so time never gets paused/resumed unexpectedly.
+            var capturedMode = QuartermasterManager.CapturedTimeMode
+                               ?? Campaign.Current?.TimeControlMode
+                               ?? CampaignTimeControlMode.Stop;
+
+            if (!QuartermasterManager.CapturedTimeMode.HasValue)
+            {
+                QuartermasterManager.CapturedTimeMode = capturedMode;
+            }
+
             GameMenu.SwitchToMenu(menuId);
+
             if (Campaign.Current != null)
             {
-                Campaign.Current.TimeControlMode = previousMode;
+                Campaign.Current.TimeControlMode = capturedMode;
             }
         }
         
