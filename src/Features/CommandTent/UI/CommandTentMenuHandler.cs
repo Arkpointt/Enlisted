@@ -39,6 +39,9 @@ namespace Enlisted.Features.CommandTent.UI
         private const string RetinueDismissMenuId = "command_tent_retinue_dismiss";
         private const string RetinueRequisitionMenuId = "command_tent_retinue_requisition";
 
+        // Ensure Command Tent dialogs never pause the campaign clock.
+        private static bool ShouldPauseDuringCommandTentInquiry() => false;
+
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "command_tent_companions";
 
@@ -1413,6 +1416,7 @@ namespace Enlisted.Features.CommandTent.UI
             message.SetTextVariable("UPKEEP", count * 2);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
+            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1422,7 +1426,8 @@ namespace Enlisted.Features.CommandTent.UI
                     new TextObject("{=ct_confirm_yes}Purchase").ToString(),
                     new TextObject("{=ct_confirm_no}Cancel").ToString(),
                     () => ExecutePurchase(typeId, count, totalCost),
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)));
+                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
+                pauseGameActiveState);
         }
 
         /// <summary>
@@ -1475,6 +1480,7 @@ namespace Enlisted.Features.CommandTent.UI
             message.SetTextVariable("COUNT", currentCount);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
+            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1495,7 +1501,8 @@ namespace Enlisted.Features.CommandTent.UI
                         // Now proceed with new type purchase
                         OnSoldierTypePurchase(newTypeId);
                     },
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)));
+                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
+                pauseGameActiveState);
         }
 
         #endregion

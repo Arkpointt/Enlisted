@@ -157,21 +157,48 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
+        /// Shared condition/tick handlers for quartermaster menus to keep campaign time running.
+        /// Using wait menus prevents the game from auto-pausing when the quartermaster UI opens.
+        /// </summary>
+        private bool QuartermasterMenuCondition(MenuCallbackArgs args)
+        {
+            _ = args; // Required by API contract
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+        
+        private void QuartermasterMenuTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            _ = args; // Required by API contract
+            
+            // Guard against zero/negative deltas; we don't need per-tick work here.
+            if (dt.ToSeconds <= 0)
+            {
+                return;
+            }
+        }
+        
+        /// <summary>
         /// Add quartermaster menu system for equipment variant management.
         /// </summary>
         private void AddQuartermasterMenus(CampaignGameStarter starter)
         {
-            // Main quartermaster equipment menu
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
-            starter.AddGameMenu("quartermaster_equipment",
+            // Main quartermaster equipment menu (wait-style so the campaign clock keeps running)
+            starter.AddWaitGameMenu("quartermaster_equipment",
                 "Army Quartermaster\n{QUARTERMASTER_TEXT}",
-                OnQuartermasterEquipmentInit); // Default parameters are sufficient
+                OnQuartermasterEquipmentInit,
+                QuartermasterMenuCondition,
+                null,
+                QuartermasterMenuTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
-            // Equipment variant selection submenu
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
-            starter.AddGameMenu("quartermaster_variants",
+            // Equipment variant selection submenu (also wait-style to avoid pausing)
+            starter.AddWaitGameMenu("quartermaster_variants",
                 "Equipment Variants\n{VARIANT_TEXT}",
-                OnQuartermasterVariantsInit); // Default parameters are sufficient
+                OnQuartermasterVariantsInit,
+                QuartermasterMenuCondition,
+                null,
+                QuartermasterMenuTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
             // Main equipment category options with modern icons
 
@@ -2327,11 +2354,14 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// </summary>
         private void AddSupplyManagementMenu(CampaignGameStarter starter)
         {
-            // Supply management menu for quartermaster officers
-            // NOTE: Use MenuOverlayType.None to avoid showing empty battle bar
-            starter.AddGameMenu("quartermaster_supplies",
+            // Supply management menu for quartermaster officers (wait-style to keep time flowing)
+            starter.AddWaitGameMenu("quartermaster_supplies",
                 "Supply Management\n{SUPPLY_TEXT}",
-                OnSupplyManagementInit); // Default parameters are sufficient
+                OnSupplyManagementInit,
+                QuartermasterMenuCondition,
+                null,
+                QuartermasterMenuTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
                 
             // Food optimization option (Manage icon)
             starter.AddGameMenuOption("quartermaster_supplies", "optimize_food",
