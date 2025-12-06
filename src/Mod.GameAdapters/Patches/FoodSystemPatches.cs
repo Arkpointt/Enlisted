@@ -3,6 +3,7 @@ using HarmonyLib;
 using TaleWorlds.CampaignSystem.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
 namespace Enlisted.Mod.GameAdapters.Patches
@@ -36,6 +37,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
             {
                 try
                 {
+                    if (!EnlistedActivation.EnsureActive())
+                    {
+                        return;
+                    }
+
                     // Only modify for the player's party
                     if (__instance == null || !__instance.IsMainParty)
                     {
@@ -92,6 +98,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
             {
                 try
                 {
+                    if (!EnlistedActivation.EnsureActive())
+                    {
+                        return true;
+                    }
+
                     // Only intercept for the player's party
                     if (mobileParty == null || !mobileParty.IsMainParty)
                     {

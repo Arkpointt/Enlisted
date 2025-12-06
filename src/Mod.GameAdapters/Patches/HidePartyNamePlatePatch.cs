@@ -89,6 +89,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
             
             try
             {
+                if (!EnlistedActivation.EnsureActive())
+                {
+                    return;
+                }
+
                 if (!CampaignSafetyGuard.IsCampaignReady)
                 {
                     return;

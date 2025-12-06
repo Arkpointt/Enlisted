@@ -142,6 +142,7 @@
     <Compile Include="src\Mod.Core\Logging\ModLogger.cs"/>
     <Compile Include="src\Mod.Core\Logging\ModConflictDiagnostics.cs"/>
     <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs"/>
+    <Compile Include="src\Mod.Core\EnlistedActivation.cs"/>
     <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>

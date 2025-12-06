@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
@@ -143,6 +144,11 @@ namespace Enlisted.Features.Assignments.Behaviors
         /// </summary>
         private void OnDailyTick()
         {
+            if (!EnlistedActivation.EnsureActive())
+            {
+                return;
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
             if (!IsInitialized || !_config.Enabled || enlistment == null)
             {

@@ -60,7 +60,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             dataStore.SyncData("_promotionPending", ref _promotionPending);
             dataStore.SyncData("_pendingTier", ref _pendingTier);
             dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
-            dataStore.SyncData("_issuedEquipment", ref _issuedEquipment);
+            SerializeIssuedEquipment(dataStore);
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -922,6 +922,70 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             _issuedEquipment.Clear();
             ModLogger.Info("TroopSelection", "Cleared issued equipment tracking");
+        }
+
+        /// <summary>
+        ///     Manually serialize issued equipment so the save system only touches primitives.
+        ///     Avoids missing type definitions for IssuedItemRecord dictionaries during save.
+        /// </summary>
+        private void SerializeIssuedEquipment(IDataStore dataStore)
+        {
+            try
+            {
+                var count = _issuedEquipment?.Count ?? 0;
+                dataStore.SyncData("_issued_count", ref count);
+
+                if (!dataStore.IsLoading)
+                {
+                    var index = 0;
+                    foreach (var kvp in _issuedEquipment)
+                    {
+                        var slotKey = kvp.Key;
+                        var record = kvp.Value ?? new IssuedItemRecord();
+                        var slotIndex = record.SlotIndex == 0 ? slotKey : record.SlotIndex;
+                        var itemId = record.ItemStringId ?? string.Empty;
+                        var itemName = record.ItemName ?? string.Empty;
+                        var itemValue = record.ItemValue;
+
+                        dataStore.SyncData($"_issued_{index}_slotKey", ref slotKey);
+                        dataStore.SyncData($"_issued_{index}_slotIndex", ref slotIndex);
+                        dataStore.SyncData($"_issued_{index}_itemId", ref itemId);
+                        dataStore.SyncData($"_issued_{index}_itemName", ref itemName);
+                        dataStore.SyncData($"_issued_{index}_itemValue", ref itemValue);
+                        index++;
+                    }
+                }
+                else
+                {
+                    _issuedEquipment = new Dictionary<int, IssuedItemRecord>();
+                    for (var i = 0; i < count; i++)
+                    {
+                        var slotKey = 0;
+                        var slotIndex = 0;
+                        var itemId = string.Empty;
+                        var itemName = string.Empty;
+                        var itemValue = 0;
+
+                        dataStore.SyncData($"_issued_{i}_slotKey", ref slotKey);
+                        dataStore.SyncData($"_issued_{i}_slotIndex", ref slotIndex);
+                        dataStore.SyncData($"_issued_{i}_itemId", ref itemId);
+                        dataStore.SyncData($"_issued_{i}_itemName", ref itemName);
+                        dataStore.SyncData($"_issued_{i}_itemValue", ref itemValue);
+
+                        _issuedEquipment[slotKey] = new IssuedItemRecord
+                        {
+                            ItemStringId = itemId,
+                            ItemName = itemName,
+                            ItemValue = itemValue,
+                            SlotIndex = slotIndex
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", $"Error serializing issued equipment: {ex.Message}");
+            }
         }
         
         #endregion

@@ -5,6 +5,7 @@ using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
@@ -101,6 +102,11 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private void OnHourlyTick()
         {
+            if (!EnlistedActivation.EnsureActive())
+            {
+                return;
+            }
+
             // Skip all processing if the player is not currently enlisted
             // This avoids unnecessary computation when the system isn't active
             var enlistmentBehavior = EnlistmentBehavior.Instance;
@@ -405,6 +411,11 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <param name="dt">Time elapsed since last frame, in seconds. Must be positive.</param>
         private void OnTick(float dt)
         {
+            if (!EnlistedActivation.EnsureActive())
+            {
+                return;
+            }
+
             // Skip all processing if the player is not currently enlisted
             // This avoids unnecessary computation when the system isn't active
             var enlistmentBehavior = EnlistmentBehavior.Instance;
@@ -871,17 +882,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 },
                 OnDesertArmySelected,
                 false, 7);
-
-            // DEBUG: Quick XP button for testing tier progression (temporary)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_debug_xp",
-                "{=debug_gain_xp}[DEBUG] Gain 1000 XP",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    return true;
-                },
-                OnDebugXPSelected,
-                false, 8);
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
 
@@ -2058,45 +2058,6 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        /// <summary>
-        ///     DEBUG: Handler for the quick XP gain button.
-        ///     Grants 1000 XP for fast tier progression testing.
-        ///     This is a temporary method - remove before release.
-        /// </summary>
-        private void OnDebugXPSelected(MenuCallbackArgs args)
-        {
-            try
-            {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted != true)
-                {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        "You must be enlisted to gain XP.", Colors.Red));
-                    return;
-                }
-
-                // Award 1000 XP for fast tier progression testing
-                enlistment.AddEnlistmentXP(1000, "DEBUG");
-
-                var currentXp = enlistment.EnlistmentXP;
-                var currentTier = enlistment.EnlistmentTier;
-
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"[DEBUG] +1000 XP granted! Total: {currentXp} | Tier: {currentTier}",
-                    Colors.Cyan));
-
-                ModLogger.Info("Interface", $"[DEBUG] Granted 1000 XP - Total: {currentXp}, Tier: {currentTier}");
-
-                // Refresh menu to show updated status
-                GameMenu.SwitchToMenu("enlisted_status");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", $"[DEBUG] Failed to grant XP: {ex.Message}");
-                InformationManager.DisplayMessage(new InformationMessage(
-                    $"[DEBUG] Error: {ex.Message}", Colors.Red));
-            }
-        }
 
         /// <summary>
         ///     Creates the desertion confirmation menu with roleplay-appropriate warning text
