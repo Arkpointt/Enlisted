@@ -5,6 +5,7 @@ using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
@@ -41,6 +42,38 @@ namespace Enlisted.Features.CommandTent.UI
 
         // Ensure Command Tent dialogs never pause the campaign clock.
         private static bool ShouldPauseDuringCommandTentInquiry() => false;
+
+        #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
+        
+        /// <summary>
+        /// Wait condition - always returns true since we control exit via menu options.
+        /// </summary>
+        private static bool CommandTentWaitCondition(MenuCallbackArgs args) => true;
+        
+        /// <summary>
+        /// Wait consequence - empty since we handle exit via menu options.
+        /// </summary>
+        private static void CommandTentWaitConsequence(MenuCallbackArgs args)
+        {
+            // No consequence needed - we never let progress reach 100%
+        }
+        
+        /// <summary>
+        /// Wait tick handler - restores player's time state after StartWait() forces fast-forward.
+        /// This runs every frame and allows spacebar time control to work in Command Tent menus.
+        /// </summary>
+        private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            // Restore the player's time state after StartWait() forced UnstoppableFastForward
+            if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null &&
+                (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                 Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
+            {
+                Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
+            }
+        }
+        
+        #endregion
 
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "command_tent_companions";
@@ -180,6 +213,12 @@ namespace Enlisted.Features.CommandTent.UI
         {
             try
             {
+                // Capture time mode before SwitchToMenu changes it
+                if (Campaign.Current != null)
+                {
+                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
+                }
+
                 // If we're inside a settlement encounter, finish it first so the engine
                 // doesn't immediately re-enter the town/castle menu when we switch.
                 var encounterSettlement = PlayerEncounter.EncounterSettlement;
@@ -216,10 +255,15 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddMainCommandTentMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            // Use wait menu with hidden progress to allow spacebar time control (like Quartermaster)
+            starter.AddWaitGameMenu(
                 CommandTentMenuId,
                 "{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.",
-                OnCommandTentInit);
+                OnCommandTentInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Service Records option - Manage icon (scroll/quill)
             starter.AddGameMenuOption(
@@ -304,25 +348,8 @@ namespace Enlisted.Features.CommandTent.UI
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
             
-            // Preserve player's time control preference - convert unstoppable modes to stoppable equivalents
-            // Native GameMenu.SwitchToMenu() can change time mode - we restore it properly
-            if (Campaign.Current == null) return;
-            
-            // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
-            if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-            {
-                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
-            }
-            else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppablePlay)
-            {
-                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-            }
-            else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
-            {
-                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-            }
-            // Otherwise keep current mode (StoppablePlay or StoppableFastForward)
+            // Time control is handled by CommandTentWaitTick (wait menu tick handler)
+            // which restores the captured time mode after StartWait() forces UnstoppableFastForward
         }
 
         /// <summary>
@@ -358,10 +385,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddServiceRecordsMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 ServiceRecordsMenuId,
                 "{=ct_records_intro}Your service history and military records.",
-                OnServiceRecordsInit);
+                OnServiceRecordsInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Posting option - Manage icon
             starter.AddGameMenuOption(
@@ -441,10 +472,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddCurrentPostingMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 CurrentPostingMenuId,
                 "{CURRENT_POSTING_TEXT}",
-                OnCurrentPostingInit); // Default overlay is None
+                OnCurrentPostingInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
             starter.AddGameMenuOption(
@@ -574,10 +609,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddFactionRecordsMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 FactionRecordsMenuId,
                 "{FACTION_RECORDS_TEXT}",
-                OnFactionRecordsInit); // Default overlay is None
+                OnFactionRecordsInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic faction options will be added during init
             // For now, add a static back option
@@ -674,10 +713,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddFactionDetailMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 FactionDetailMenuId,
                 "{FACTION_DETAIL_TEXT}",
-                OnFactionDetailInit); // Default overlay is None
+                OnFactionDetailInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
             starter.AddGameMenuOption(
@@ -764,10 +807,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddLifetimeSummaryMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 LifetimeSummaryMenuId,
                 "{LIFETIME_SUMMARY_TEXT}",
-                OnLifetimeSummaryInit); // Default overlay is None
+                OnLifetimeSummaryInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
             starter.AddGameMenuOption(
@@ -879,10 +926,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinueMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinueMenuId,
                 "{RETINUE_STATUS_TEXT}",
-                OnRetinueMenuInit);
+                OnRetinueMenuInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Muster option - ManageGarrison icon (soldiers/shield)
             starter.AddGameMenuOption(
@@ -1121,10 +1172,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinuePurchaseMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinuePurchaseMenuId,
                 "{RETINUE_PURCHASE_TEXT}",
-                OnRetinuePurchaseInit);
+                OnRetinuePurchaseInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Infantry option - Men-at-Arms
             starter.AddGameMenuOption(
@@ -1530,10 +1585,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinueDismissMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinueDismissMenuId,
                 "{RETINUE_DISMISS_TEXT}",
-                OnRetinueDismissInit);
+                OnRetinueDismissInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm dismiss option
             starter.AddGameMenuOption(
@@ -1678,10 +1737,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinueRequisitionMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinueRequisitionMenuId,
                 "{REQUISITION_MENU_TEXT}",
-                OnRetinueRequisitionInit);
+                OnRetinueRequisitionInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm requisition option
             starter.AddGameMenuOption(
@@ -1845,10 +1908,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddCompanionAssignmentsMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 CompanionAssignmentsMenuId,
                 "{COMPANION_ASSIGNMENTS_TEXT}",
-                OnCompanionAssignmentsInit);
+                OnCompanionAssignmentsInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic companion options are added via menu init text since GameMenu doesn't support 
             // truly dynamic options. Instead we show the list in the description and use toggle buttons.
