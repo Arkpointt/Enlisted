@@ -77,6 +77,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 4. `JoinEncounterAutoSelectPatch` intercepts "join_encounter" menu and automatically joins battle on lord's side
 5. Player sees standard encounter menu (Attack/Send Troops/Wait) instead of "Help X's Party / Don't get involved"
 6. Player participates in battle
+7. If the player is a prisoner or capture cleanup is queued, battle handling is skipped to let native captivity finish (prevents crash when captors are defeated by friendlies).
 
 **Battle Types:**
 
@@ -181,6 +182,14 @@ public static void EnableEncounters()
 - Ensures "Encounter" menu instead of "Help or Leave"
 - Standard battle interface for player
 - Predictable behavior across all battle types
+
+### Activation Gating (Inactive Mode)
+
+- Global gate: `EnlistedActivation` (default off). Flips on at enlist start, off at discharge; synced on load from `IsEnlisted`.
+- Guard pattern: behaviors and patches early-return when inactive; logs once if something runs while inactive.
+- Crash guards: currently off while inactive per design; can be whitelisted later if needed.
+- Menus: remain registered, but handlers/ticks are inert when inactive.
+- Scope: finance/food/XP/formation/influence/encounter/nameplate/visibility/captain/return-to-army/order-of-battle, etc., all guarded.
 
 ---
 
