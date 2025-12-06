@@ -1,19 +1,18 @@
 using System;
-using HarmonyLib;
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
-using System.Reflection;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Prevents the player's party nameplate from appearing when enlisted.
-    /// Works by nulling out the PlayerNameplate on PartyNameplatesVM, which is the same
-    /// mechanism the game uses when the player enters a settlement.
-    /// 
-    /// Uses manual patching to avoid type resolution issues during character creation.
-    /// This class is NOT auto-patched by Harmony - it's applied manually in SubModule.
+    ///     Prevents the player's party nameplate from appearing when enlisted.
+    ///     Works by nulling out the PlayerNameplate on PartyNameplatesVM, which is the same
+    ///     mechanism the game uses when the player enters a settlement.
+    ///     Uses manual patching to avoid type resolution issues during character creation.
+    ///     This class is NOT auto-patched by Harmony - it's applied manually in SubModule.
     /// </summary>
     public static class HidePartyNamePlatePatch
     {
@@ -23,25 +22,26 @@ namespace Enlisted.Mod.GameAdapters.Patches
         private static MethodInfo _playerNameplateClearMethod;
         private static bool _isNameplateHidden;
         private static int _updateCallCount;
-        
+
         /// <summary>
-        /// Manually applies the patch to PartyNameplatesVM.Update().
-        /// Call this from SubModule instead of using HarmonyPatchAll.
+        ///     Manually applies the patch to PartyNameplatesVM.Update().
+        ///     Call this from SubModule instead of using HarmonyPatchAll.
         /// </summary>
         public static void ApplyManualPatches(Harmony harmony)
         {
             try
             {
                 ModLogger.Info("HidePartyNamePlatePatch", "Applying nameplate hiding patch...");
-                
+
                 // Find PartyNameplatesVM - this is the VM that manages all nameplates on the map
-                _partyNameplatesVmType = AccessTools.TypeByName("SandBox.ViewModelCollection.Nameplate.PartyNameplatesVM");
+                _partyNameplatesVmType =
+                    AccessTools.TypeByName("SandBox.ViewModelCollection.Nameplate.PartyNameplatesVM");
                 if (_partyNameplatesVmType == null)
                 {
                     ModLogger.Info("HidePartyNamePlatePatch", "PartyNameplatesVM type not found - skipping patch");
                     return;
                 }
-                
+
                 // Cache the PlayerNameplate property - this is what we'll set to null
                 _playerNameplateProperty = _partyNameplatesVmType.GetProperty("PlayerNameplate");
                 if (_playerNameplateProperty == null)
@@ -49,16 +49,19 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     ModLogger.Info("HidePartyNamePlatePatch", "PlayerNameplate property not found - skipping patch");
                     return;
                 }
-                
+
                 // Cache the Clear method on PartyPlayerNameplateVM for proper cleanup
-                var playerNameplateVmType = AccessTools.TypeByName("SandBox.ViewModelCollection.Nameplate.PartyPlayerNameplateVM");
+                var playerNameplateVmType =
+                    AccessTools.TypeByName("SandBox.ViewModelCollection.Nameplate.PartyPlayerNameplateVM");
                 if (playerNameplateVmType != null)
                 {
-                    _playerNameplateClearMethod = playerNameplateVmType.GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
+                    _playerNameplateClearMethod =
+                        playerNameplateVmType.GetMethod("Clear", BindingFlags.Instance | BindingFlags.Public);
                 }
-                
+
                 // Patch the Update method - this runs every frame and manages nameplate state
-                var updateMethod = _partyNameplatesVmType.GetMethod("Update", BindingFlags.Instance | BindingFlags.Public);
+                var updateMethod =
+                    _partyNameplatesVmType.GetMethod("Update", BindingFlags.Instance | BindingFlags.Public);
                 if (updateMethod != null)
                 {
                     var postfix = typeof(HidePartyNamePlatePatch).GetMethod(nameof(UpdatePostfix),
@@ -76,17 +79,18 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 ModLogger.Error("HidePartyNamePlatePatch", $"Failed to apply patch: {ex.Message}");
             }
         }
-        
+
         /// <summary>
-        /// After the game's Update() processes nameplates, we hide the player's nameplate
-        /// by clearing it and setting it to null - exactly what the game does when entering a settlement.
+        ///     After the game's Update() processes nameplates, we hide the player's nameplate
+        ///     by clearing it and setting it to null - exactly what the game does when entering a settlement.
         /// </summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __instance is a special injected parameter")]
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
+        [SuppressMessage("ReSharper", "InconsistentNaming",
+            Justification = "Harmony convention: __instance is a special injected parameter")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "Called by Harmony via reflection")]
         private static void UpdatePostfix(object __instance)
         {
             _updateCallCount++;
-            
+
             try
             {
                 if (!EnlistedActivation.EnsureActive())
@@ -98,27 +102,27 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     return;
                 }
-                
+
                 var isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
                 var isOnLeave = EnlistmentBehavior.Instance?.IsOnLeave == true;
                 var hasLord = EnlistmentBehavior.Instance?.CurrentLord != null;
                 var shouldHide = isEnlisted || (hasLord && !isOnLeave);
-                
+
                 if (shouldHide)
                 {
                     var currentNameplate = _playerNameplateProperty?.GetValue(__instance);
-                    
+
                     if (currentNameplate != null)
                     {
                         if (!_isNameplateHidden)
                         {
                             ModLogger.Info("HidePartyNamePlatePatch", "Hiding player nameplate");
                         }
-                        
+
                         // Clear and null - same as game's OnSettlementEntered behavior
                         _playerNameplateClearMethod?.Invoke(currentNameplate, null);
                         _playerNameplateProperty?.SetValue(__instance, null);
-                        
+
                         _isNameplateHidden = true;
                     }
                 }

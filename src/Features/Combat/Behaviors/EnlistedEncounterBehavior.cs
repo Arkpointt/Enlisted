@@ -3,14 +3,6 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -62,17 +54,17 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("Combat", $"Failed to initialize encounter behavior: {ex.Message}");
             }
         }
-        
+
         /// <summary>
-        /// Menu background initialization for enlisted_battle_wait menu.
-        /// Sets culture-appropriate background and ambient audio for battle wait.
+        ///     Menu background initialization for enlisted_battle_wait menu.
+        ///     Sets culture-appropriate background and ambient audio for battle wait.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_battle_wait")]
         private static void OnBattleWaitBackgroundInit(MenuCallbackArgs args)
         {
             var lord = EnlistmentBehavior.Instance?.CurrentLord;
             var backgroundMesh = "encounter_looter";
-            
+
             if (lord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = lord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -81,7 +73,7 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 backgroundMesh = lord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
         }
@@ -176,7 +168,9 @@ namespace Enlisted.Features.Combat.Behaviors
             if (isSiegeBattle)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=combat_reserve_siege_disabled}Wait in reserve is not available during siege battles");
+                args.Tooltip =
+                    new TextObject(
+                        "{=combat_reserve_siege_disabled}Wait in reserve is not available during siege battles");
                 ModLogger.Debug("Siege", "Wait in reserve disabled - siege battle detected");
                 return false;
             }
@@ -217,7 +211,9 @@ namespace Enlisted.Features.Combat.Behaviors
                     ModLogger.Info("Battle",
                         "Prevented wait in reserve during siege battle - native system handles siege menus");
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=combat_reserve_siege_disabled_full}Wait in reserve is not available during siege battles.").ToString()));
+                        new TextObject(
+                                "{=combat_reserve_siege_disabled_full}Wait in reserve is not available during siege battles.")
+                            .ToString()));
                     return; // Don't switch menus during sieges
                 }
 
@@ -321,18 +317,19 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
-                
+
                 // Restore player's time state after StartWait() forced fast-forward
                 // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
                 if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
                 {
                     if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                        Campaign.Current.TimeControlMode ==
+                        CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
                     {
                         Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
                     }
                 }
-                
+
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -469,7 +466,5 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("Battle", $"Error rejoining battle: {ex.Message}");
             }
         }
-
-
     }
 }
