@@ -2378,13 +2378,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 
                 // Restore player's time state after StartWait() forced fast-forward
                 // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
-                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
+                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null &&
+                    (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                     Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
                 {
-                    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                    {
-                        Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
-                    }
+                    Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
                 }
                 
                 // Validate time delta to prevent assertion failures
