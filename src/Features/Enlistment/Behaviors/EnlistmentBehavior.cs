@@ -5,6 +5,7 @@ using System.Reflection;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core;
@@ -6364,6 +6365,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _currentTermKills += killsThisBattle;
                     ModLogger.Info("Battle",
                         $"Term kills updated: +{killsThisBattle} = {_currentTermKills} total this term");
+                    
+                    // Update Service Records for Command Tent display
+                    ServiceRecordManager.Instance?.OnKillsRecorded(killsThisBattle);
                 }
             }
             catch (Exception ex)
