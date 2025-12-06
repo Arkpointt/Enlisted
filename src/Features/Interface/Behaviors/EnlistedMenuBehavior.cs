@@ -2249,14 +2249,12 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
                 
-                // Restore player's time state after StartWait() forced fast-forward
-                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
-                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null &&
-                    (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                     Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
-                {
-                    Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
-                }
+                // NOTE: Time mode restoration is handled ONCE in OnEnlistedStatusInit, not here.
+                // Previously this tick handler would restore CapturedTimeMode whenever it saw
+                // UnstoppableFastForward, but this fought with user input - when the user clicked
+                // fast forward (which sets UnstoppableFastForward for army members), the next tick
+                // would immediately restore it back to Stop. This caused x3 speed to pause.
+                // The fix is to only handle time mode conversion once during menu init.
                 
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
@@ -2424,14 +2422,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
                 
-                // Restore player's time state after StartWait() forced fast-forward
-                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
-                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null &&
-                    (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                     Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
-                {
-                    Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
-                }
+                // NOTE: Time mode restoration is handled ONCE in menu init, not here.
+                // Previously this tick handler would restore CapturedTimeMode whenever it saw
+                // UnstoppableFastForward, but this fought with user input - when the user clicked
+                // fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
                 
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system

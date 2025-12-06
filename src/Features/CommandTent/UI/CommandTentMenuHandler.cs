@@ -59,18 +59,16 @@ namespace Enlisted.Features.CommandTent.UI
         }
         
         /// <summary>
-        /// Wait tick handler - restores player's time state after StartWait() forces fast-forward.
-        /// This runs every frame and allows spacebar time control to work in Command Tent menus.
+        /// Wait tick handler for Command Tent menus.
+        /// NOTE: Time mode restoration is handled ONCE during menu init, not here.
+        /// Previously this tick handler would restore CapturedTimeMode whenever it saw
+        /// UnstoppableFastForward, but this fought with user input - when the user clicked
+        /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
         /// </summary>
         private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
         {
-            // Restore the player's time state after StartWait() forced UnstoppableFastForward
-            if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null &&
-                (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                 Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
-            {
-                Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
-            }
+            // Intentionally empty - time mode is handled in menu init, not per-tick
+            // The old code here fought with user speed input and caused pausing issues
         }
         
         /// <summary>

@@ -132,19 +132,16 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Shared wait menu tick handler. Restores player's time state after StartWait() forces fast-forward.
-        /// This runs every frame and allows spacebar time control to work in quartermaster menus.
+        /// Wait tick handler for Quartermaster menus.
+        /// NOTE: Time mode restoration is handled ONCE during menu init, not here.
+        /// Previously this tick handler would restore CapturedTimeMode whenever it saw
+        /// UnstoppableFastForward, but this fought with user input - when the user clicked
+        /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
         /// </summary>
         private static void QuartermasterWaitTick(MenuCallbackArgs args, CampaignTime dt)
         {
-            // Restore the player's time state after StartWait() forced UnstoppableFastForward
-            // Only restore if current mode is different (avoid spam and allow spacebar changes)
-            if (CapturedTimeMode.HasValue && Campaign.Current != null &&
-                (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                 Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime))
-            {
-                Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
-            }
+            // Intentionally empty - time mode is handled in menu init, not per-tick
+            // The old code here fought with user speed input and caused pausing issues
         }
         
         #endregion

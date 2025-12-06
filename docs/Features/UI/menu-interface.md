@@ -314,23 +314,32 @@ bool CanSelectProfession(string professionId)
 
 **Problem:** Vanilla `GameMenu.ActivateGameMenu()` and `SwitchToMenu()` force time to `Stop`, then wait menus call `StartWait()` which sets `UnstoppableFastForward`. This overrides the player's time preference.
 
-**Solution:** All Enlisted wait menus share a time preservation system:
+**Solution:** Handle time mode conversion once in menu init, never in tick handlers:
 
-1. **Shared Time State:** `QuartermasterManager.CapturedTimeMode` stores the player's time preference across all menus
-2. **Capture Before Activation:** Button handlers call `CaptureTimeStateBeforeMenuActivation()` before showing popups or switching menus
-3. **Tick Handler Restoration:** Wait menu tick handlers restore time when `UnstoppableFastForward` is detected
-4. **Late-Capture Fallback:** If no time was captured (menu opened via native system), tick handlers capture current time as fallback
+1. **In Menu Init:** Call `StartWait()`, then convert unstoppable modes to stoppable equivalents
+2. **Unlock Time Control:** Call `SetTimeControlModeLock(false)` to allow player speed changes
+3. **No Tick Restoration:** Tick handlers must NOT restore time mode - this fights with user input
+
+**Why No Tick Restoration:** For army members, native code uses `UnstoppableFastForward` when the user clicks fast forward. If tick handlers restore `CapturedTimeMode` whenever they see `UnstoppableFastForward`, the next tick immediately reverts user input, breaking speed controls.
+
+**Correct Pattern:**
+```csharp
+// In menu init - convert once
+args.MenuContext.GameMenu.StartWait();
+Campaign.Current.SetTimeControlModeLock(false);
+if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward)
+{
+    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+}
+
+// In tick handler - do NOT restore time mode
+// Just handle menu-specific logic, leave time control alone
+```
 
 **Popup Handling:**
 - Popup callbacks should NOT call `SafeActivateEnlistedMenu()` - this re-captures time incorrectly
 - Cancel actions just close the popup - the menu underneath is already active
 - Success actions refresh the menu without re-capturing time
-
-**Affected Menus:**
-- `enlisted_status` - Main enlisted menu
-- `enlisted_duty_selection` - Duty selection
-- `enlisted_battle_wait` - Battle reserve menu
-- All quartermaster menus (`quartermaster_equipment`, `quartermaster_variants`, `quartermaster_returns`, `quartermaster_supplies`)
 
 ---
 
@@ -371,26 +380,31 @@ Reference for Bannerlord's native menu system APIs and patterns.
 
 **Preserving Player Time Preference:**
 
-1. Capture before menu activation:
+Handle in menu init only (not in tick handlers):
 ```csharp
-CapturedTimeMode = Campaign.Current?.TimeControlMode;
-GameMenu.ActivateGameMenu("menu_id");
-```
-
-2. Restore in tick handler:
-```csharp
-private void OnMenuTick(MenuCallbackArgs args, CampaignTime dt)
+private void OnMenuInit(MenuCallbackArgs args)
 {
-    // Restore if StartWait() forced UnstoppableFastForward
-    if (CapturedTimeMode.HasValue && Campaign.Current != null)
+    // Start wait to enable time controls
+    args.MenuContext.GameMenu.StartWait();
+    
+    // Unlock so player can change speed
+    Campaign.Current.SetTimeControlModeLock(false);
+    
+    // Convert unstoppable to stoppable (allows pause button)
+    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
     {
-        if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-            Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-        {
-            Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
-        }
+        Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+    }
+    else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
+    {
+        Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
     }
 }
+
+// In tick handler - do NOT modify time control mode
+// Native uses UnstoppableFastForward for army members clicking fast forward
+// Restoring CapturedTimeMode in tick fights with user input
 ```
 
 ### Menu Registration

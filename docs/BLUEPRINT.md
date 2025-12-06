@@ -44,7 +44,7 @@ src/
 | DischargePenaltySuppressionPatch | Prevents relation loss on discharge                                  |
 | DutiesOfficerRolePatches         | Officer role integration                                             |
 | EncounterSuppressionPatch        | Prevents unwanted encounters                                         |
-| EnlistedWaitingPatch             | Prevents game pause when lord battles                                |
+| EnlistedWaitingPatch             | Overrides ComputeIsWaiting() to allow time flow when enlisted        |
 | EnlistmentExpenseIsolationPatch  | Hides expenses while enlisted                                        |
 | FoodSystemPatches                | Skips food consumption when enlisted (lord provides food)            |
 | FormationMessageSuppressionPatch | Suppresses formation command messages                                |
@@ -137,6 +137,26 @@ NextFrameDispatcher.RunNextFrame(() => { ... });  // Avoid timing conflicts
 ```csharp
 var hero = CampaignSafetyGuard.SafeMainHero;  // Null-safe during char creation
 ```
+
+### Wait Menu Time Control
+
+Wait menus use `StartWait()` to enable time controls (play/pause/fast-forward buttons). Native `StartWait()` forces `UnstoppableFastForward` mode. Handle time mode conversion once in menu init, never in tick handlers:
+
+```csharp
+// In menu init - convert unstoppable to stoppable (allows pause)
+args.MenuContext.GameMenu.StartWait();
+Campaign.Current.SetTimeControlModeLock(false);
+if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward)
+{
+    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+}
+
+// In tick handler - do NOT restore time mode here
+// Native sets UnstoppableFastForward when user clicks fast forward (for army members)
+// Restoring in tick fights with user input and causes speed controls to break
+```
+
+For army members, native uses `UnstoppableFastForward` when fast-forwarding. Per-tick restoration of `CapturedTimeMode` will fight with user input and break speed controls.
 
 ## Configuration
 
