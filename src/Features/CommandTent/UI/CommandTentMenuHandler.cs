@@ -1427,8 +1427,7 @@ namespace Enlisted.Features.CommandTent.UI
                     new TextObject("{=ct_confirm_yes}Purchase").ToString(),
                     new TextObject("{=ct_confirm_no}Cancel").ToString(),
                     () => ExecutePurchase(typeId, count, totalCost),
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
-                false);
+                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)));
         }
 
         /// <summary>
@@ -1501,8 +1500,7 @@ namespace Enlisted.Features.CommandTent.UI
                         // Now proceed with new type purchase
                         OnSoldierTypePurchase(newTypeId);
                     },
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
-                false);
+                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)));
         }
 
         #endregion
