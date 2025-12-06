@@ -921,8 +921,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             return item.PrimaryWeapon != null ||
                    item.ArmorComponent != null ||
-                   item.HorseComponent != null ||
-                   item.PrimaryWeapon?.IsShield == true;
+                   item.HorseComponent != null;
         }
 
         private bool IsReturnOptionAvailable(MenuCallbackArgs args, int optionIndex)
