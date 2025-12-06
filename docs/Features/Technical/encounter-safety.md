@@ -187,6 +187,7 @@ public static void EnableEncounters()
 
 - Global gate: `EnlistedActivation` (default off). Flips on at enlist start, off at discharge; synced on load from `IsEnlisted`.
 - Guard pattern: behaviors and patches early-return when inactive; logs once if something runs while inactive.
+- Active while enlisted, on leave, or in desertion grace so protections stay on during grace/leave; deactivates only once all three are false.
 - Crash guards: currently off while inactive per design; can be whitelisted later if needed.
 - Menus: remain registered, but handlers/ticks are inert when inactive.
 - Scope: finance/food/XP/formation/influence/encounter/nameplate/visibility/captain/return-to-army/order-of-battle, etc., all guarded.

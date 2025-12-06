@@ -306,6 +306,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _pendingDesertionKingdom != null &&
             CampaignTime.Now < _desertionGracePeriodEnd;
 
+        private bool ShouldActivationBeOn()
+        {
+            return IsEnlisted || _isOnLeave || IsInDesertionGracePeriod;
+        }
+
+        private void SyncActivationState(string reason)
+        {
+            var shouldBeActive = ShouldActivationBeOn();
+            if (shouldBeActive != EnlistedActivation.IsActive)
+            {
+                EnlistedActivation.SetActive(shouldBeActive, reason);
+            }
+        }
+
         /// <summary>
         ///     Kingdom that the player needs to rejoin during grace period to avoid desertion.
         ///     Returns null if not in grace period.
@@ -564,7 +578,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info("SaveLoad", "Enlistment state validated and restored");
 
                 // Sync activation based on loaded state
-                EnlistedActivation.SetActive(IsEnlisted, "sync_load");
+                SyncActivationState("sync_load");
             }
             else
             {
@@ -789,7 +803,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             try
             {
-                EnlistedActivation.SetActive(true, "start_enlist");
                 var rejoiningKingdom = lord.MapFaction as Kingdom;
                 _graceProtectionEnds = CampaignTime.Zero;
                 var resumingGraceService = IsInDesertionGracePeriod && rejoiningKingdom == _pendingDesertionKingdom &&
@@ -817,6 +830,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
                 }
+
+                SyncActivationState("start_enlist");
 
                 var resumedFromGrace = resumingGraceService;
                 if (resumedFromGrace)
@@ -1006,7 +1021,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
-                EnlistedActivation.SetActive(false, "stop_enlist");
                 
                 // EQUIPMENT ACCOUNTABILITY: Check for missing gear and charge the soldier before discharge
                 // EXCEPTION: Skip for honorable discharge (retirement) - player keeps all gear as reward
@@ -1295,6 +1309,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Fire event for other mods
                 OnDischarged?.Invoke(reason);
+
+                SyncActivationState("stop_enlist");
             }
             catch (Exception ex)
             {
@@ -1428,6 +1444,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Fire event for other mods
                 OnGracePeriodStarted?.Invoke();
+
+                SyncActivationState("start_grace_period");
             }
             catch (Exception ex)
             {
@@ -1540,6 +1558,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _savedGraceTroopId = null;
             _savedGraceEnlistmentDate = CampaignTime.Zero;
             _graceProtectionEnds = CampaignTime.Zero;
+
+            SyncActivationState("clear_grace_period");
         }
 
         /// <summary>
@@ -1736,16 +1756,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void OnHourlyTick()
         {
+            SyncActivationState("hourly_tick");
             if (!EnlistedActivation.IsActive)
             {
-                if (IsEnlisted)
-                {
-                    EnlistedActivation.SetActive(true, "restore_activation_hourly");
-                }
-                else
-                {
-                    return;
-                }
+                return;
             }
 
             var main = MobileParty.MainParty;
@@ -1969,24 +1983,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void OnDailyTick()
         {
-            if (!EnlistedActivation.IsActive)
-            {
-                if (IsEnlisted)
-                {
-                    EnlistedActivation.SetActive(true, "restore_activation_daily");
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            // Always check for captivity escape during grace period, even if not currently listed as 'active' enlisted
+            // Always run captivity + leave maintenance even when inactive so grace-period escapes
+            // and leave expirations are processed for players who temporarily lost activation.
             CheckPlayerCaptivityDuration();
 
             // Check for leave expiration (14 days max)
             // This runs even when "not enlisted" because IsOnLeave makes IsEnlisted return false
             CheckLeaveExpiration();
+
+            SyncActivationState("daily_tick");
+            if (!EnlistedActivation.IsActive)
+            {
+                return;
+            }
 
             if (!IsEnlisted || _enlistedLord?.IsAlive != true)
             {
@@ -2539,11 +2548,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            // If we loaded into an enlisted state, resync activation.
-            if (!EnlistedActivation.IsActive && IsEnlisted)
-            {
-                EnlistedActivation.SetActive(true, "restore_activation_realtime");
-            }
+            SyncActivationState("realtime_tick");
 
             // When inactive, do nothing at all (mod effectively disabled).
             if (!EnlistedActivation.EnsureActive())
