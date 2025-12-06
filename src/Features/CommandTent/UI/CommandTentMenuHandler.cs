@@ -8,6 +8,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
+using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
@@ -176,6 +177,24 @@ namespace Enlisted.Features.CommandTent.UI
         {
             try
             {
+                // If we're inside a settlement encounter, finish it first so the engine
+                // doesn't immediately re-enter the town/castle menu when we switch.
+                var encounterSettlement = PlayerEncounter.EncounterSettlement;
+                if (encounterSettlement != null)
+                {
+                    var lordParty = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
+                    var inBattleOrSiege = lordParty?.Party.MapEvent != null ||
+                                          lordParty?.Party.SiegeEvent != null ||
+                                          lordParty?.BesiegedSettlement != null;
+
+                    if (!inBattleOrSiege)
+                    {
+                        PlayerEncounter.Finish();
+                        ModLogger.Info(LogCategory,
+                            $"Finished settlement encounter ({encounterSettlement.Name}) before opening Command Tent");
+                    }
+                }
+
                 GameMenu.SwitchToMenu(CommandTentMenuId);
                 ModLogger.Debug(LogCategory, "Player entered Command Tent");
             }
