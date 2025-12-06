@@ -1,0 +1,57 @@
+"workshopitem"
+{
+    // Mount & Blade II: Bannerlord App ID
+    "appid" "261550"
+    
+    // TODO: After first upload, Steam will assign a Workshop Item ID. 
+    // Replace "0" with that ID for updates. Leave as "0" for first upload.
+    "publishedfileid" "0"
+    
+    // Path to your mod folder in Bannerlord's Modules directory
+    "contentfolder" "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
+    
+    // Path to your preview image (512x512 or 1024x1024 PNG, under 1MB)
+    "previewfile" "C:\Dev\Enlisted\Enlisted_Preivew.png"
+    
+    // Your mod's display title on Steam Workshop
+    "title" "Enlisted - Military Service Mod"
+    
+    // Description shown on the Workshop page (supports Steam formatting)
+    "description" "Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
+
+[h1]Features[/h1]
+[list]
+[*] [b]Enlistment[/b] - Talk to any lord to join their warband as a soldier
+[*] [b]Battle System[/b] - Automatic deployment in your assigned formation, no orders to give
+[*] [b]Rank Progression[/b] - 6 tiers from Levy to Household Guard with increasing wages
+[*] [b]Duties System[/b] - Daily assignments for bonus XP and Gold
+[*] [b]Equipment[/b] - Quartermaster with tiered, culture-specific gear
+[*] [b]Naval Support[/b] - Full compatibility with naval mods
+[*] [b]Retirement[/b] - Honorable discharge or re-enlist after your term
+[/list]
+
+[h1]Requirements[/h1]
+[list]
+[*] Mount & Blade II: Bannerlord v1.3.9+
+[*] Bannerlord.Harmony v2.3.6+
+[/list]
+
+[h1]Load Order[/h1]
+Harmony → Native → ... → Enlisted"
+    
+    // Visibility: 0 = Public, 1 = Friends Only, 2 = Hidden/Private
+    // Start with 2 (Hidden) to test before making public
+    "visibility" "2"
+    
+    // Tags help users find your mod (use Bannerlord's standard tags)
+    "tags"
+    {
+        "0" "Gameplay"
+        "1" "Singleplayer"
+        "2" "Overhaul"
+    }
+    
+    // Optional: Change notes for updates
+    "changenote" "Update v0.5.3"
+}
+
