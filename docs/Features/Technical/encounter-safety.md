@@ -266,6 +266,7 @@ public static void EnableEncounters()
 - Prevents crashes during emergency service termination
 - Grace period begins normally
 - State cleanup happens automatically
+- Naval safety: if the player is at sea without ships when the lord dies (or any service-ending event), the system always teleports the player to the nearest port before continuing grace/retirement so they cannot get stranded on water.
 
 ### Battle Defeat (Autosim)
 
@@ -276,6 +277,44 @@ public static void EnableEncounters()
 - Standard native behavior
 - Player resolves outcome manually
 - No special handling needed
+
+### Player Captured (Prisoner State)
+
+**Scenario:** Player is taken prisoner after battle defeat or lord capture
+
+**Handling:**
+- Mod detects capture via `OnHeroPrisonerTaken` event
+- Service ends with grace period (14 days to rejoin same kingdom after escape)
+- All map event processing skipped while `Hero.MainHero.IsPrisoner == true`
+- Logs show: `Skipping MapEventEnded - player prisoner or cleanup pending`
+- Native captivity system takes full control of player state
+
+**Important - Prisoner Transfers (Base Game Behavior):**
+- While imprisoned, the base game's `TransferPrisonerBarterBehavior` remains active
+- When enemy lords meet and interact (dialog/barter), they can trade prisoners
+- This includes transferring the player to a different captor
+- This is **expected native behavior**, not a mod bug
+- The mod correctly stays inactive during captivity, letting native mechanics operate
+- Grace period remains valid regardless of which enemy holds the player
+
+**Log Pattern:**
+```
+[EventSafety] Lord {name} captured - starting grace period
+[Battle] Encounter active during lord capture - letting native surrender capture handle the player.
+[Enlistment] Service ended: Lord captured (Honorable: False)
+[EventSafety] Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)
+```
+
+### Lord Captured While Player Active
+
+**Scenario:** Lord is captured while player is still fighting or in encounter
+
+**Handling:**
+- `TryCapturePlayerAlongsideLord()` checks if player should be captured too
+- If player already in encounter (surrender screen), native flow handles capture
+- If player not in encounter, mod calls `TakePrisonerAction.Apply()` to mirror capture
+- Grace period starts for the kingdom the player was serving
+- Cleanup deferred via `SchedulePlayerCaptureCleanup()` until encounter closes
 
 ---
 
@@ -368,6 +407,7 @@ void DeactivateAfterBattle()
 - `"EncounterGuard"` - State management operations
 - `"Enlistment"` - Service state changes that affect encounters
 - `"Battle"` - Battle join logic and vanilla encounter coordination
+- `"EventSafety"` - Capture/prisoner handling and map event skipping
 
 **Key Log Points:**
 ```csharp
@@ -382,6 +422,13 @@ ModLogger.Debug("Battle", $"Player party activated for battle participation");
 // State validation
 ModLogger.Warn("EncounterGuard", $"Unexpected IsActive state: {isActive}, expected: {expected}");
 ModLogger.Debug("EncounterGuard", $"State reset to expected value");
+
+// Capture/prisoner handling
+ModLogger.Info("EventSafety", $"Lord {name} captured - starting grace period");
+ModLogger.Info("EventSafety", $"Player captured - deferring enlistment teardown until encounter closes");
+ModLogger.Info("EventSafety", $"Skipping MapEventEnded - player prisoner or cleanup pending");
+ModLogger.Info("EventSafety", $"Finalizing deferred capture cleanup for player");
+ModLogger.Info("Battle", $"Encounter active during lord capture - letting native surrender capture handle the player.");
 ```
 
 **Common Issues:**
@@ -427,6 +474,20 @@ ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 - Verify state is being reset continuously
 - Check for save/load issues
 - Review state validation logs
+
+**Repeated "Skipping MapEventEnded" logs while prisoner:**
+- This is **expected behavior** when `IsPrisoner=True`
+- The mod correctly skips all map event processing during captivity
+- Native captivity system handles all prisoner mechanics
+- Grace period remains active for rejoining after escape
+- Log pattern: `Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)`
+
+**Player transferred to different captor:**
+- This is **base game behavior**, not a mod bug
+- Native `TransferPrisonerBarterBehavior` allows lords to trade prisoners
+- When enemy lords meet/dialog, they can exchange prisoners including the player
+- The mod correctly stays inactive during captivity
+- Grace period is unaffected by captor changes
 
 **Debug Output Location:**
 - `Modules/Enlisted/Debugging/enlisted.log`

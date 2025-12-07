@@ -271,6 +271,8 @@ _currentTermKills += kills;  // Track for faction record
 - One-day protection shield after release
 - When captor enters a settlement, mod skips all settlement handling (`IsPrisoner` check)
 - Native `PlayerCaptivity` system controls all state during captivity
+- Prisoner transfers between captors (when enemy lords meet/dialog) is expected base game behavior
+- Grace period remains valid regardless of which enemy currently holds the player
 
 **Player Captured at Sea (Naval War Expansion):**
 - Native `PlayerCaptivity` system handles sea captures correctly
