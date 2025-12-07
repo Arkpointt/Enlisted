@@ -206,6 +206,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\GenericStateMenuPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EndCaptivityCleanupPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\AbandonArmyBlockPatch.cs"/>
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml"/>
