@@ -1151,7 +1151,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private bool IsMinorFactionLord()
         {
             var lord = Hero.OneToOneConversationHero;
-            return lord?.Clan?.IsMinorFaction == true;
+            return lord?.Clan?.IsMinorFaction;
         }
 
         /// <summary>
