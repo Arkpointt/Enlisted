@@ -5,6 +5,7 @@ using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
@@ -41,6 +42,61 @@ namespace Enlisted.Features.CommandTent.UI
 
         // Ensure Command Tent dialogs never pause the campaign clock.
         private static bool ShouldPauseDuringCommandTentInquiry() => false;
+
+        #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
+        
+        /// <summary>
+        /// Wait condition - always returns true since we control exit via menu options.
+        /// </summary>
+        private static bool CommandTentWaitCondition(MenuCallbackArgs args) => true;
+        
+        /// <summary>
+        /// Wait consequence - empty since we handle exit via menu options.
+        /// </summary>
+        private static void CommandTentWaitConsequence(MenuCallbackArgs args)
+        {
+            // No consequence needed - we never let progress reach 100%
+        }
+        
+        /// <summary>
+        /// Wait tick handler for Command Tent menus.
+        /// NOTE: Time mode restoration is handled ONCE during menu init, not here.
+        /// Previously this tick handler would restore CapturedTimeMode whenever it saw
+        /// UnstoppableFastForward, but this fought with user input - when the user clicked
+        /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
+        /// </summary>
+        private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            // Intentionally empty - time mode is handled in menu init, not per-tick
+            // The old code here fought with user speed input and caused pausing issues
+        }
+        
+        /// <summary>
+        /// Switch to a menu while preserving the current time control mode.
+        /// Uses the shared CapturedTimeMode from QuartermasterManager.
+        /// </summary>
+        private static void SwitchToMenuPreserveTime(string menuId)
+        {
+            // Preserve the player's time mode from the moment they first entered the Command Tent.
+            // Do not overwrite it on subsequent hops between submenus so time never gets paused/resumed unexpectedly.
+            var capturedMode = QuartermasterManager.CapturedTimeMode
+                               ?? Campaign.Current?.TimeControlMode
+                               ?? CampaignTimeControlMode.Stop;
+
+            if (!QuartermasterManager.CapturedTimeMode.HasValue)
+            {
+                QuartermasterManager.CapturedTimeMode = capturedMode;
+            }
+
+            GameMenu.SwitchToMenu(menuId);
+
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = capturedMode;
+            }
+        }
+        
+        #endregion
 
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "command_tent_companions";
@@ -180,6 +236,12 @@ namespace Enlisted.Features.CommandTent.UI
         {
             try
             {
+                // Capture time mode before SwitchToMenu changes it
+                if (Campaign.Current != null)
+                {
+                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
+                }
+
                 // If we're inside a settlement encounter, finish it first so the engine
                 // doesn't immediately re-enter the town/castle menu when we switch.
                 var encounterSettlement = PlayerEncounter.EncounterSettlement;
@@ -198,7 +260,7 @@ namespace Enlisted.Features.CommandTent.UI
                     }
                 }
 
-                GameMenu.SwitchToMenu(CommandTentMenuId);
+                SwitchToMenuPreserveTime(CommandTentMenuId);
                 ModLogger.Debug(LogCategory, "Player entered Command Tent");
             }
             catch (Exception ex)
@@ -216,10 +278,15 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddMainCommandTentMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            // Use wait menu with hidden progress to allow spacebar time control (like Quartermaster)
+            starter.AddWaitGameMenu(
                 CommandTentMenuId,
                 "{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.",
-                OnCommandTentInit);
+                OnCommandTentInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Service Records option - Manage icon (scroll/quill)
             starter.AddGameMenuOption(
@@ -231,7 +298,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 false,
                 1);
 
@@ -241,7 +308,7 @@ namespace Enlisted.Features.CommandTent.UI
                 "ct_retinue",
                 "{=ct_option_retinue}Muster Personal Retinue",
                 IsRetinueAvailable,
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 false,
                 2);
 
@@ -251,7 +318,7 @@ namespace Enlisted.Features.CommandTent.UI
                 "ct_companions",
                 "{=ct_option_companions}Companion Assignments",
                 IsCompanionAssignmentsAvailable,
-                _ => GameMenu.SwitchToMenu(CompanionAssignmentsMenuId),
+                _ => SwitchToMenuPreserveTime(CompanionAssignmentsMenuId),
                 false,
                 3);
 
@@ -265,7 +332,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu("enlisted_status"),
+                _ => SwitchToMenuPreserveTime("enlisted_status"),
                 true,
                 100);
         }
@@ -304,9 +371,9 @@ namespace Enlisted.Features.CommandTent.UI
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
             
-            // Resume time - native GameMenu.SwitchToMenu() stops time by default,
-            // but we want time to continue passing while browsing Command Tent menus
-            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            // NOTE: We intentionally do NOT call StartWait() here. Command Tent menus rely on
+            // the wait-menu type for layout/options, but we keep time control unchanged and
+            // preserve the player's captured time mode when hopping between submenus.
         }
 
         /// <summary>
@@ -342,10 +409,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddServiceRecordsMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 ServiceRecordsMenuId,
                 "{=ct_records_intro}Your service history and military records.",
-                OnServiceRecordsInit);
+                OnServiceRecordsInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Posting option - Manage icon
             starter.AddGameMenuOption(
@@ -363,7 +434,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CurrentPostingMenuId),
+                _ => SwitchToMenuPreserveTime(CurrentPostingMenuId),
                 false,
                 1);
 
@@ -377,7 +448,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leaderboard;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(FactionRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(FactionRecordsMenuId),
                 false,
                 2);
 
@@ -391,7 +462,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(LifetimeSummaryMenuId),
+                _ => SwitchToMenuPreserveTime(LifetimeSummaryMenuId),
                 false,
                 3);
 
@@ -405,7 +476,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }
@@ -425,10 +496,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddCurrentPostingMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 CurrentPostingMenuId,
                 "{CURRENT_POSTING_TEXT}",
-                OnCurrentPostingInit); // Default overlay is None
+                OnCurrentPostingInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
             starter.AddGameMenuOption(
@@ -440,7 +515,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 true,
                 100);
         }
@@ -558,10 +633,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddFactionRecordsMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 FactionRecordsMenuId,
                 "{FACTION_RECORDS_TEXT}",
-                OnFactionRecordsInit); // Default overlay is None
+                OnFactionRecordsInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic faction options will be added during init
             // For now, add a static back option
@@ -574,7 +653,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 true,
                 100);
         }
@@ -658,10 +737,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddFactionDetailMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 FactionDetailMenuId,
                 "{FACTION_DETAIL_TEXT}",
-                OnFactionDetailInit); // Default overlay is None
+                OnFactionDetailInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
             starter.AddGameMenuOption(
@@ -673,7 +756,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(FactionRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(FactionRecordsMenuId),
                 true,
                 100);
         }
@@ -736,7 +819,7 @@ namespace Enlisted.Features.CommandTent.UI
         public void ViewFactionDetail(string factionKey)
         {
             _selectedFactionKey = factionKey;
-            GameMenu.SwitchToMenu(FactionDetailMenuId);
+            SwitchToMenuPreserveTime(FactionDetailMenuId);
         }
 
         #endregion
@@ -748,10 +831,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddLifetimeSummaryMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 LifetimeSummaryMenuId,
                 "{LIFETIME_SUMMARY_TEXT}",
-                OnLifetimeSummaryInit); // Default overlay is None
+                OnLifetimeSummaryInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
             starter.AddGameMenuOption(
@@ -763,7 +850,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
                 true,
                 100);
         }
@@ -863,10 +950,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinueMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinueMenuId,
                 "{RETINUE_STATUS_TEXT}",
-                OnRetinueMenuInit);
+                OnRetinueMenuInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Muster option - ManageGarrison icon (soldiers/shield)
             starter.AddGameMenuOption(
@@ -888,7 +979,7 @@ namespace Enlisted.Features.CommandTent.UI
                 _ =>
                 {
                     // Refresh the menu to show current muster breakdown
-                    GameMenu.SwitchToMenu(RetinueMenuId);
+                    SwitchToMenuPreserveTime(RetinueMenuId);
                 },
                 false,
                 1);
@@ -924,7 +1015,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Recruit;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinuePurchaseMenuId),
+                _ => SwitchToMenuPreserveTime(RetinuePurchaseMenuId),
                 false,
                 2);
 
@@ -934,7 +1025,7 @@ namespace Enlisted.Features.CommandTent.UI
                 "ct_retinue_requisition",
                 "{REQUISITION_OPTION_TEXT}",
                 IsRequisitionAvailable,
-                _ => GameMenu.SwitchToMenu(RetinueRequisitionMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueRequisitionMenuId),
                 false,
                 3);
 
@@ -955,7 +1046,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.DonateTroops;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueDismissMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueDismissMenuId),
                 false,
                 4);
 
@@ -969,7 +1060,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }
@@ -1105,10 +1196,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinuePurchaseMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinuePurchaseMenuId,
                 "{RETINUE_PURCHASE_TEXT}",
-                OnRetinuePurchaseInit);
+                OnRetinuePurchaseInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Infantry option - Men-at-Arms
             starter.AddGameMenuOption(
@@ -1160,7 +1255,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 true,
                 100);
         }
@@ -1426,7 +1521,7 @@ namespace Enlisted.Features.CommandTent.UI
                     new TextObject("{=ct_confirm_yes}Purchase").ToString(),
                     new TextObject("{=ct_confirm_no}Cancel").ToString(),
                     () => ExecutePurchase(typeId, count, totalCost),
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
+                    () => SwitchToMenuPreserveTime(RetinuePurchaseMenuId)),
                 pauseGameActiveState);
         }
 
@@ -1464,7 +1559,7 @@ namespace Enlisted.Features.CommandTent.UI
             }
 
             // Return to retinue menu
-            GameMenu.SwitchToMenu(RetinueMenuId);
+            SwitchToMenuPreserveTime(RetinueMenuId);
         }
 
         /// <summary>
@@ -1501,7 +1596,7 @@ namespace Enlisted.Features.CommandTent.UI
                         // Now proceed with new type purchase
                         OnSoldierTypePurchase(newTypeId);
                     },
-                    () => GameMenu.SwitchToMenu(RetinuePurchaseMenuId)),
+                    () => SwitchToMenuPreserveTime(RetinuePurchaseMenuId)),
                 pauseGameActiveState);
         }
 
@@ -1514,10 +1609,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinueDismissMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinueDismissMenuId,
                 "{RETINUE_DISMISS_TEXT}",
-                OnRetinueDismissInit);
+                OnRetinueDismissInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm dismiss option
             starter.AddGameMenuOption(
@@ -1543,7 +1642,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 true,
                 100);
         }
@@ -1594,7 +1693,7 @@ namespace Enlisted.Features.CommandTent.UI
             var msg = new TextObject("{=ct_dismiss_success}Your soldiers have been dismissed.");
             InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
 
-            GameMenu.SwitchToMenu(RetinueMenuId);
+            SwitchToMenuPreserveTime(RetinueMenuId);
         }
 
         #endregion
@@ -1662,10 +1761,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddRetinueRequisitionMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 RetinueRequisitionMenuId,
                 "{REQUISITION_MENU_TEXT}",
-                OnRetinueRequisitionInit);
+                OnRetinueRequisitionInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm requisition option
             starter.AddGameMenuOption(
@@ -1698,7 +1801,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(RetinueMenuId),
+                _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 true,
                 100);
         }
@@ -1765,7 +1868,7 @@ namespace Enlisted.Features.CommandTent.UI
             if (manager == null)
             {
                 ModLogger.Error(LogCategory, "ExecuteRequisition: manager null");
-                GameMenu.SwitchToMenu(RetinueMenuId);
+                SwitchToMenuPreserveTime(RetinueMenuId);
                 return;
             }
 
@@ -1783,7 +1886,7 @@ namespace Enlisted.Features.CommandTent.UI
                 ModLogger.Warn(LogCategory, $"Requisition failed: {message}");
             }
 
-            GameMenu.SwitchToMenu(RetinueMenuId);
+            SwitchToMenuPreserveTime(RetinueMenuId);
         }
 
         #endregion
@@ -1829,10 +1932,14 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddCompanionAssignmentsMenu(CampaignGameStarter starter)
         {
-            starter.AddGameMenu(
+            starter.AddWaitGameMenu(
                 CompanionAssignmentsMenuId,
                 "{COMPANION_ASSIGNMENTS_TEXT}",
-                OnCompanionAssignmentsInit);
+                OnCompanionAssignmentsInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic companion options are added via menu init text since GameMenu doesn't support 
             // truly dynamic options. Instead we show the list in the description and use toggle buttons.
@@ -1860,7 +1967,7 @@ namespace Enlisted.Features.CommandTent.UI
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => GameMenu.SwitchToMenu(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }
@@ -1968,7 +2075,7 @@ namespace Enlisted.Features.CommandTent.UI
             ModLogger.Info(LogCategory, $"Toggled {companion.Name} to {newStatus}");
 
             // Refresh the menu
-            GameMenu.SwitchToMenu(CompanionAssignmentsMenuId);
+            SwitchToMenuPreserveTime(CompanionAssignmentsMenuId);
         }
 
         #endregion

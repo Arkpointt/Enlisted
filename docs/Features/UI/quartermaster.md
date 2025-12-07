@@ -7,7 +7,8 @@
 | Equipment Grid | Visual equipment selection | Enlisted Status → "Visit Quartermaster" |
 | Equipment Cards | Individual variant selection | Click equipment slot → Grid displays |
 | Free Gear | All equipment issued free | Automatic |
-| Item Limit | Max 2 of each item type (equipment + inventory) | Anti-abuse measure |
+| Slot-Specific Limits | Armor = 1, Weapons = 2 | Anti-abuse measure |
+| Real-Time Updates | Buttons and player model update instantly | No menu exit needed |
 | Inventory Overflow | Weapons go to pack when slots full | Automatic |
 | Accountability | Charged for missing gear on troop change | Automatic |
 
@@ -16,12 +17,13 @@
 - [Overview](#overview)
 - [How It Works](#how-it-works)
   - [Equipment Selection Flow](#equipment-selection-flow)
-  - [Item Limits](#item-limits)
+  - [Slot-Specific Item Limits](#slot-specific-item-limits)
   - [Equipment Accountability](#equipment-accountability)
   - [Retirement](#retirement)
 - [Technical Details](#technical-details)
   - [System Architecture](#system-architecture)
   - [Equipment Discovery](#equipment-discovery)
+  - [Real-Time UI Updates](#real-time-ui-updates)
   - [UI Templates](#ui-templates)
 - [Edge Cases](#edge-cases)
 - [API Reference](#api-reference)
@@ -37,15 +39,16 @@ Grid-based UI system that lets players select individual equipment variants from
 - Visual equipment cards with images and stats
 - 4-column grid layout (responsive to resolution)
 - All equipment free (military issue)
-- Max 2 of each item type (anti-abuse)
+- Slot-specific limits (armor = 1, weapons = 2)
+- Real-time button and player model updates without leaving menu
 - Accountability check on troop change (charged for missing gear)
 - Retirement reward: keep military gear + get personal belongings back
 
 **Files:**
-- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, variant options, shared time state
+- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, variant options, item limits
 - `src/Features/Equipment/Behaviors/TroopSelectionManager.cs` - Equipment tracking and accountability
 - `src/Features/Equipment/UI/QuartermasterEquipmentSelectorBehavior.cs` - Gauntlet UI controller
-- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Main view model
+- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Main view model, real-time refresh
 - `src/Features/Equipment/UI/QuartermasterEquipmentItemVm.cs` - Individual equipment cards
 
 **Shared Time State:**
@@ -59,39 +62,46 @@ Grid-based UI system that lets players select individual equipment variants from
 
 **Entry:**
 1. Player accesses through enlisted menu "Visit Quartermaster"
-2. System checks available equipment variants for player's tier and culture
+2. System checks available equipment variants for player's tier using branch-based collection
 
 **Slot Selection:**
 1. Player chooses equipment slot (Primary Weapon, Helmet, Body Armor, etc.)
 2. System filters available variants by slot type
+3. Slots with only one available option still show the issued item so players can review what they have even when no alternates exist.
 
 **Grid Display:**
 1. Shows 4-column grid of available equipment variants
 2. Each card displays: image, name, stats, status
-3. Character preview updates when hovering over items
+3. Player model preview updates in real-time when equipment changes
 
 **Status Indicators:**
 - "Free" - Available to obtain
-- "Get Another" - Weapons/consumables (can get a second)
-- "Equipped" - Already wearing this item
-- "Limit (2)" - Already have 2 of this item type
+- "Get Another" - Weapons/consumables (can get a second when you have 1)
+- "Equipped / Already issued" - Armor at limit (1)
+- "Limit (2)" - Weapons at limit (already have 2)
 
 **Selection Process:**
 1. Player clicks "Select" on any equipment card
-2. System checks item limit (max 2 per type)
+2. System checks slot-specific item limit
 3. Equipment applied and tracked for accountability
-4. Confirmation message shown
+4. Button states and player model update instantly (no menu exit needed)
+5. Menu stays open for additional selections
 
-### Item Limits
+### Slot-Specific Item Limits
 
-Soldiers can hold up to 2 of each item type to prevent abuse. The limit counts items across **both equipment slots and party inventory**.
+Different equipment types have different limits based on realistic military constraints:
 
-**Limit Rules:**
-- Weapons: Max 2 of the same weapon (equipped + inventory combined)
-- Ammo/Consumables: Max 2 stacks
-- Armor: Single slot per type (replaces existing)
+| Slot Type | Limit | Behavior |
+|-----------|-------|----------|
+| **Armor** (Head, Body, Legs, Gloves, Cape) | 1 | Greys out when equipped, shows "Equipped / Already issued" |
+| **Shields** | 1 | Same as armor |
+| **Weapons** (Swords, Axes, Maces, Spears) | 2 | Shows "Get Another" at 1, greys out at 2 with "Limit (2)" |
+| **Ranged** (Bows, Crossbows) | 2 | Same as weapons |
+| **Consumables** (Arrows, Bolts, Javelins, Throwing) | 2 | Same as weapons |
 
-When limit reached, card shows "Limit (2)" and selection is blocked.
+The limit counts items across **both equipment slots and party inventory**.
+
+Armor/shields use an "already issued" message at 1; weapons and consumables hit the "Limit (2)" state after two of the same item are owned.
 
 ### Inventory Overflow (Weapons)
 
@@ -133,9 +143,10 @@ This encourages soldiers to take care of their gear.
 
 ```
 QuartermasterManager (Core Logic)
-    ├── Equipment discovery and filtering
-    ├── Variant option building
-    └── Item limit checking
+    ├── Equipment discovery via branch-based collection
+    ├── Variant option building with slot-specific limits
+    ├── GetItemLimit(slot) - returns 1 for armor/shields, 2 for weapons
+    └── Item limit checking per slot type
 
 TroopSelectionManager (Accountability)
     ├── IssuedItemRecord tracking
@@ -148,21 +159,25 @@ QuartermasterEquipmentSelectorBehavior (UI Controller)
 
 QuartermasterEquipmentSelectorVm (View Model)
     ├── Row organization (4 cards per row)
-    └── Selection handling
+    ├── RecalculateAllVariantStates() - real-time button updates
+    ├── RefreshCharacterModel() - real-time player preview
+    └── Selection handling (menu stays open)
 
 QuartermasterEquipmentItemVm (Equipment Card)
-    ├── Status display (Free, Equipped, Limit)
-    └── Select button logic
+    ├── IsEnabled based on IsAtLimit only
+    ├── Status display (Free, Get Another, Equipped, Limit)
+    └── GetVariant() for state access
 ```
 
 ### Equipment Discovery
 
-Equipment variants are discovered using branch-based collection, which traverses the player's entire troop upgrade tree to find all available options.
+Equipment variants are discovered using branch-based collection from the player's troop upgrade tree.
 
 **Branch-Based Collection:**
 - Builds the troop upgrade path from culture's BasicTroop/EliteBasicTroop to the player's selected troop
 - Collects equipment from ALL troops in that branch at the player's tier
 - Falls back to all tiers if exact tier has no variants
+- Items are NOT filtered by culture (allows cross-culture items that appear in troop loadouts)
 
 **Equipment Categories:**
 
@@ -170,6 +185,25 @@ Equipment variants are discovered using branch-based collection, which traverses
 |----------|-------------|-------|
 | Weapons | "Request weapon variants" | Weapon0, Weapon1, Weapon2, Weapon3 |
 | Armor | "Request armor variants" | Body, Head, Leg (boots), Gloves, Cape |
+
+### Real-Time UI Updates
+
+The UI updates instantly without requiring the player to exit and re-enter the menu:
+
+**Button State Updates:**
+- `RecalculateAllVariantStates(hero)` is called on every refresh
+- Iterates through all variant cards and recalculates `IsAtLimit` and `CanAfford`
+- `OnPropertyChanged(nameof(IsEnabled))` triggers UI binding update
+
+**Player Model Updates:**
+- `RefreshCharacterModel(hero)` is called after equipment changes
+- Calls `UnitCharacter.FillFrom(hero.CharacterObject)` to reload equipment
+- `OnPropertyChanged(nameof(UnitCharacter))` triggers 3D preview update
+
+**Menu Persistence:**
+- Menu no longer closes after each requisition
+- Player can requisition multiple items in sequence
+- Exit by clicking Close/Back button
 
 ### UI Templates
 
@@ -185,13 +219,22 @@ GUI/Prefabs/Equipment/
 
 ## Edge Cases
 
-### Item Limit Reached
+### Item Limit Reached (Armor)
 
-**Scenario:** Player tries to get a third copy of an item
+**Scenario:** Player tries to get armor they're already wearing
+
+**Handling:**
+- Card shows "Equipped / Already issued" status
+- Select button disabled (greyed out)
+- Limit is 1 for all armor slots
+
+### Item Limit Reached (Weapons)
+
+**Scenario:** Player tries to get a third copy of a weapon
 
 **Handling:**
 - Card shows "Limit (2)" status
-- Select button disabled
+- Select button disabled (greyed out)
 - Quartermaster dialogue: "Two's the limit, soldier. Army regs."
 
 ### Weapon Slots Full
@@ -226,6 +269,17 @@ GUI/Prefabs/Equipment/
 
 ## API Reference
 
+### Slot-Specific Item Limits
+
+```csharp
+// Get the limit for a specific equipment slot
+int GetItemLimit(EquipmentIndex slot)
+// Returns 1 for armor/shields, 2 for weapons/consumables
+
+// Check if player has reached limit for item in slot
+bool IsAtLimit = GetPlayerItemCount(item) >= GetItemLimit(slot);
+```
+
 ### Equipment Tracking
 
 ```csharp
@@ -239,15 +293,17 @@ List<(string name, int value)> CheckMissingEquipment(out int totalDebt)
 TroopSelectionManager.ClearIssuedEquipment()
 ```
 
-### Item Limit Checking
+### Real-Time Updates
 
 ```csharp
-// Check if player has reached limit for item type
-bool IsAtLimit = GetPlayerItemCount(item) >= MaxItemsPerType; // MaxItemsPerType = 2
+// Recalculate all variant button states
+void RecalculateAllVariantStates(Hero hero)
 
-// Get current count of item across equipment AND inventory
-int GetPlayerItemCount(Hero hero, string itemStringId)
-// Checks: BattleEquipment, CivilianEquipment, PartyBase.MainParty.ItemRoster
+// Refresh character model preview
+void RefreshCharacterModel(Hero hero)
+
+// Get the underlying variant for state updates
+EquipmentVariantOption GetVariant()
 ```
 
 ### Inventory Overflow
@@ -273,6 +329,7 @@ EquipmentManager.RestorePersonalEquipment()
 
 **Log Categories:**
 - `"Quartermaster"` - Equipment logic
+- `"QuartermasterUI"` - UI operations
 - `"Equipment"` - Tracking and accountability
 
 **Key Log Points:**
@@ -284,13 +341,13 @@ ModLogger.Info("Quartermaster", $"Equipment issued: {item.Name} to slot {slot} (
 ModLogger.Info("Quartermaster", $"Weapon slots full - {item.Name} added to inventory");
 
 // Item limit reached
-ModLogger.Info("Quartermaster", $"Item limit reached: {item.Name} (count: {count})");
+ModLogger.Info("Quartermaster", $"Item limit reached: {item.Name} (count: {count}, limit: {limit})");
 
 // Accountability check
 ModLogger.Info("Equipment", $"Missing equipment check: {missingCount} items, {totalDebt} gold debt");
 
-// Retirement
-ModLogger.Info("Equipment", "Retirement reward: keeping military gear, personal items to inventory");
+// Character model refresh
+ModLogger.Info("QuartermasterUI", "Character model refreshed after equipment change");
 ```
 
 **Debug Output Location:**
@@ -301,4 +358,4 @@ ModLogger.Info("Equipment", "Retirement reward: keeping military gear, personal 
 ## Related Documentation
 
 - [Menu Interface](menu-interface.md) - Access point for Quartermaster
-- [Equipment System](../Equipment/equipment.md) - Equipment management overview
+- [Equipment Reference](../../discovered/equipment.md) - Equipment system research

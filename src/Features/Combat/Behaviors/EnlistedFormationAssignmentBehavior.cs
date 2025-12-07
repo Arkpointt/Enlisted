@@ -56,6 +56,15 @@ namespace Enlisted.Features.Combat.Behaviors
         private int _partyAssignmentAttempts;
         private Formation _playerSquadFormation;
         
+        // Retry lord attach when formation is solo and lord agent was not spawned yet
+        private bool _needsLordAttachRetry;
+        private int _lordAttachRetryAttempts;
+        private const int MaxLordAttachRetryAttempts = 180; // ~3 seconds at 60fps
+
+        // Logging flags to avoid spamming user-facing logs
+        private bool _loggedSoloAttachOutcome;
+        private bool _loggedSoloAttachMissing;
+        
         // Deferred companion removal to avoid corrupting spawn state
         // Removing agents during OnAgentBuild can crash the native spawn loop
         private readonly List<Agent> _companionsToRemove = new List<Agent>();
@@ -76,6 +85,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 
                 // Cache the spawn logic for reinforcement detection
                 _spawnLogic = Mission.Current?.GetMissionBehavior<MissionAgentSpawnLogic>();
+                _loggedSoloAttachOutcome = false;
+                _loggedSoloAttachMissing = false;
 
                 // Log that the behavior has been initialized (once per mission)
                 if (!_hasLoggedInit)
@@ -322,6 +333,17 @@ namespace Enlisted.Features.Combat.Behaviors
                     _positionFixAttempts++;
                     TryTeleportPlayerToFormationPosition();
                 }
+
+                // Retry lord attach if we couldn't find lord formation initially
+                if (_needsLordAttachRetry && _lordAttachRetryAttempts < MaxLordAttachRetryAttempts)
+                {
+                    _lordAttachRetryAttempts++;
+                    TryAttachToAlliedOrLordFormation("OnMissionTick-Retry");
+                }
+                else if (_lordAttachRetryAttempts >= MaxLordAttachRetryAttempts)
+                {
+                    _needsLordAttachRetry = false;
+                }
                 
                 // Phase 7: Handle player party (companions + retinue) formation assignment
                 // Agents may not all be spawned in the first few ticks, so we keep trying
@@ -443,8 +465,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 return;
             }
 
-            // Check if player is already in this formation
-            if (playerAgent.Formation == targetFormation)
+            var targetFormationUnitCount = targetFormation.CountOfUnits;
+            ModLogger.Debug("FormationAssignment",
+                $"[{caller}] Target formation={formationClass}, Units={targetFormationUnitCount}, PlayerTeamSide={playerTeam.Side}, MissionTeams={Mission.Current?.Teams.Count()}");
+
+            // If already in this formation but it is effectively empty (only player), try to anchor to lord's formation instead.
+            // In non-army battles with 0 party troops, native spawns the player in a solo formation at the rear.
+            // We reattach to the lord's formation so the player spawns with the main line.
+            var isSoloFormation = targetFormationUnitCount <= 1;
+
+            if (playerAgent.Formation == targetFormation && !isSoloFormation)
             {
                 ModLogger.Info("FormationAssignment",
                     $"[{caller}] Player already in {formationClass} formation - will still check position");
@@ -470,6 +500,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
 
                 return;
+            }
+
+            // If formation is solo, try to attach to a populated allied formation on the same side; fallback to lord formation
+            if (isSoloFormation && enlistment?.CurrentLord != null)
+            {
+                var currentLord = enlistment.CurrentLord;
+                if (TryAttachToAlliedOrLordFormation(caller, playerAgent, playerTeam, isTier4Plus, enlistmentTier, formationClass))
+                {
+                    return;
+                }
             }
 
             // Assign the player to the formation
@@ -515,6 +555,152 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
+        /// Attempts to attach the player to the lord's formation. Returns true if attached.
+        /// </summary>
+        private bool TryAttachToAlliedOrLordFormation(string caller, Agent playerAgent = null, Team playerTeam = null,
+            bool isTier4Plus = false, int enlistmentTier = 0, FormationClass desiredClass = FormationClass.Infantry)
+        {
+            try
+            {
+                playerAgent ??= Agent.Main;
+                playerTeam ??= playerAgent?.Team;
+                
+                var enlistment = EnlistmentBehavior.Instance;
+                if (playerAgent == null || playerTeam == null || enlistment?.CurrentLord == null)
+                {
+                    return false;
+                }
+
+                var currentLord = enlistment.CurrentLord;
+                Formation lordFormation = null;
+                Team lordTeam = null;
+                Formation bestAlliedFormation = null;
+                var missionTeams = Mission.Current?.Teams;
+
+                foreach (var missionTeam in missionTeams ?? Enumerable.Empty<Team>())
+                {
+                    if (missionTeam.Side == playerTeam.Side)
+                    {
+                        // Consider allied formations first
+                        var preferred = missionTeam.GetFormation(desiredClass);
+                        if (preferred != null && preferred.CountOfUnits > 1)
+                        {
+                            bestAlliedFormation ??= preferred;
+                            if (bestAlliedFormation == null || preferred.CountOfUnits > bestAlliedFormation.CountOfUnits)
+                            {
+                                bestAlliedFormation = preferred;
+                            }
+                        }
+
+                        // If none in desired class, pick the largest non-empty allied formation
+                        foreach (var formation in missionTeam.FormationsIncludingSpecialAndEmpty)
+                        {
+                            if (formation == null || formation.CountOfUnits <= 1)
+                                continue;
+                            if (bestAlliedFormation == null || formation.CountOfUnits > bestAlliedFormation.CountOfUnits)
+                            {
+                                bestAlliedFormation = formation;
+                            }
+                        }
+                    }
+
+                    foreach (var agent in missionTeam.ActiveAgents)
+                    {
+                        if (agent?.Character == currentLord.CharacterObject)
+                        {
+                            lordFormation = agent.Formation;
+                            lordTeam = missionTeam;
+                            break;
+                        }
+                    }
+
+                    if (lordFormation != null)
+                    {
+                        break;
+                    }
+                }
+
+                // Primary fallback: populated allied formation (prefer duty class)
+                if (bestAlliedFormation != null)
+                {
+                    if (!_loggedSoloAttachOutcome)
+                    {
+                        ModLogger.Info("FormationAssignment",
+                            $"[{caller}] Joined allied formation (index {bestAlliedFormation.FormationIndex}, units {bestAlliedFormation.CountOfUnits})");
+                        _loggedSoloAttachOutcome = true;
+                    }
+
+                    playerAgent.Formation = bestAlliedFormation;
+                    _playerSquadFormation = bestAlliedFormation;
+                    _assignedAgent = playerAgent;
+
+                    SetupSquadCommand(playerAgent, bestAlliedFormation, isTier4Plus);
+
+                    _needsPositionFix = true;
+                    _positionFixAttempts = 0;
+
+                    if (isTier4Plus)
+                    {
+                        _needsPartyAssignment = true;
+                        _partyAssignmentAttempts = 0;
+                        _partyAssignmentComplete = false;
+                    }
+
+                    _needsLordAttachRetry = false;
+                    return true;
+                }
+
+                if (lordFormation != null && lordFormation.CountOfUnits > 0)
+                {
+                    if (!_loggedSoloAttachOutcome)
+                    {
+                        ModLogger.Info("FormationAssignment",
+                            $"[{caller}] Joined lord formation (index {lordFormation.FormationIndex}, units {lordFormation.CountOfUnits}, side={lordTeam?.Side})");
+                        _loggedSoloAttachOutcome = true;
+                    }
+
+                    playerAgent.Formation = lordFormation;
+                    _playerSquadFormation = lordFormation;
+                    _assignedAgent = playerAgent;
+
+                    SetupSquadCommand(playerAgent, lordFormation, isTier4Plus);
+
+                    // Ensure we teleport to the lord's line
+                    _needsPositionFix = true;
+                    _positionFixAttempts = 0;
+
+                    if (isTier4Plus)
+                    {
+                        _needsPartyAssignment = true;
+                        _partyAssignmentAttempts = 0;
+                        _partyAssignmentComplete = false;
+                    }
+
+                    _needsLordAttachRetry = false;
+                    return true;
+                }
+
+                var missionTeamCount = missionTeams?.Count() ?? 0;
+                if (!_loggedSoloAttachMissing)
+                {
+                    ModLogger.Warn("FormationAssignment",
+                        $"[{caller}] Solo formation; no allied/lord formation yet (teams={missionTeamCount}). Will retry briefly.");
+                    _loggedSoloAttachMissing = true;
+                }
+
+                // Schedule retry on tick (lord may not be spawned yet)
+                _needsLordAttachRetry = true;
+                _lordAttachRetryAttempts = 0;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", $"[{caller}] Error during lord attach: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         ///     Attempts to teleport the player (and their squad at Tier 4+) to the correct position 
         ///     within their assigned formation. This fixes the issue where the player's party spawns 
         ///     behind the formation when their map party was slightly behind the lord when battle started.
@@ -556,53 +742,46 @@ namespace Enlisted.Features.Combat.Behaviors
                 var playerPosition = playerAgent.Position;
                 var mainParty = PartyBase.MainParty;
 
-                // FIX: Find the LORD agent directly as the teleport reference
-                // The player wants to spawn near their lord, mimicking being in the lord's army
-                // Previous approach failed because only player party agents were visible in team.ActiveAgents
-                Agent referenceAgent = null;
+                // Get the player's formation class from duties (Infantry, Ranged, Cavalry, HorseArcher)
+                // NOTE: Don't use formation.FormationIndex - it can return incorrect values like NumberOfRegularFormations
+                var duties = EnlistedDutiesBehavior.Instance;
+                var formationString = duties?.PlayerFormation ?? "infantry";
+                var formationClass = GetFormationClassFromString(formationString);
                 var currentLord = enlistment.CurrentLord;
+                Vec3 targetPosition = Vec3.Invalid;
+                Vec2 formationDirection = Vec2.Forward;
+                string teleportSource = "unknown";
                 
-                // PRIORITY 1: Find the lord agent directly
-                if (currentLord != null)
+                // Debug logging for troubleshooting teleport issues
+                var teamCount = Mission.Current.Teams.Count();
+                ModLogger.Debug("FormationAssignment", 
+                    $"Teleport search: Looking for {formationClass} formation (duty={formationString}). " +
+                    $"Player team index={team.TeamIndex}, Side={team.Side}, Total teams={teamCount}");
+                
+                // PRIORITY 1: Use the formation on the player's team directly
+                // All allied troops (lord's army + player's party) are on the SAME team in Bannerlord battles
+                // The formation's CachedMedianPosition includes all units, giving us the army's center position
+                var targetFormation = team.GetFormation(formationClass);
+                if (targetFormation != null && targetFormation.CountOfUnits > 0)
                 {
-                    foreach (var agent in team.ActiveAgents)
-                    {
-                        if (agent == null || !agent.IsActive())
-                            continue;
-                        
-                        // Check if this is our lord
-                        if (agent.Character == currentLord.CharacterObject)
-                        {
-                            referenceAgent = agent;
-                            break;
-                        }
-                    }
+                    var unitCount = targetFormation.CountOfUnits;
+                    formationDirection = targetFormation.Direction.IsValid ? targetFormation.Direction : Vec2.Forward;
+                    
+                    // Position several meters behind the formation so player spawns at the rear, not stuck in the middle
+                    var behindOffset = -formationDirection.ToVec3() * 5f;
+                    targetPosition = targetFormation.CachedMedianPosition.GetGroundVec3() + behindOffset;
+                    teleportSource = $"{formationClass} formation ({unitCount} units)";
+                    
+                    ModLogger.Debug("FormationAssignment", 
+                        $"Found {formationClass} formation on player's team ({unitCount} units)");
                 }
                 
-                // PRIORITY 2: If lord not found, try any non-player-party agent
-                if (referenceAgent == null)
+                // FALLBACK 1: If no allied formation found, fall back to LORD position
+                if (!targetPosition.IsValid && currentLord != null)
                 {
-                    foreach (var agent in team.ActiveAgents)
-                    {
-                        if (agent == null || !agent.IsActive() || agent == playerAgent)
-                            continue;
-                        
-                        // Skip agents from player's party
-                        if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
-                            continue;
-                        
-                        // Found an army agent - use them as reference
-                        if (agent.Formation != null)
-                        {
-                            referenceAgent = agent;
-                            break;
-                        }
-                    }
-                }
-                
-                // PRIORITY 3: If still no reference, check ALL teams for the lord (might be on different team object)
-                if (referenceAgent == null && currentLord != null)
-                {
+                    ModLogger.Debug("FormationAssignment", 
+                        $"No {formationClass} formation found, falling back to lord position");
+                    
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
@@ -610,28 +789,56 @@ namespace Enlisted.Features.Combat.Behaviors
                         
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
-                            if (agent == null || !agent.IsActive())
-                                continue;
-                            
-                            if (agent.Character == currentLord.CharacterObject)
+                            if (agent?.Character == currentLord.CharacterObject)
                             {
-                                referenceAgent = agent;
+                                targetPosition = agent.Position;
+                                formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
+                                teleportSource = $"Lord {currentLord.Name}";
+                                ModLogger.Debug("FormationAssignment", 
+                                    $"Fallback: Found lord {currentLord.Name} on Team {missionTeam.TeamIndex}");
                                 break;
                             }
                         }
-                        if (referenceAgent != null) break;
+                        if (targetPosition.IsValid) break;
                     }
                 }
                 
-                if (referenceAgent == null)
+                // FALLBACK 2: If still nothing, use ANY non-player-party agent (last resort)
+                if (!targetPosition.IsValid)
                 {
                     ModLogger.Debug("FormationAssignment", 
-                        "Lord agent not found yet, will retry teleport");
-                    return;
+                        "Lord not found, falling back to any allied agent");
+                    
+                    foreach (var missionTeam in Mission.Current.Teams)
+                    {
+                        if (missionTeam.Side != team.Side)
+                            continue; // Only check allied teams
+                        
+                        foreach (var agent in missionTeam.ActiveAgents)
+                        {
+                            if (agent == null || !agent.IsActive() || agent == playerAgent)
+                                continue;
+                            if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
+                                continue;
+                            
+                            targetPosition = agent.Position;
+                            formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
+                            teleportSource = "allied agent";
+                            ModLogger.Debug("FormationAssignment", 
+                                $"Fallback: Using agent {agent.Character?.Name} on Team {missionTeam.TeamIndex}");
+                            break;
+                        }
+                        if (targetPosition.IsValid) break;
+                    }
                 }
                 
-                var targetPosition = referenceAgent.Position;
-                var formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
+                // If no valid target found, retry next tick
+                if (!targetPosition.IsValid)
+                {
+                    ModLogger.Debug("FormationAssignment", 
+                        $"No valid teleport target found for {formationClass} formation, will retry");
+                    return;
+                }
                 
                 // Calculate distance from player to reference agent
                 var distanceToTarget = playerPosition.Distance(targetPosition);
@@ -641,7 +848,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 const float teleportThreshold = 10f;
 
                 ModLogger.Debug("FormationAssignment",
-                    $"Teleport check: RefAgent={referenceAgent.Character?.Name}, " +
+                    $"Teleport check: Source={teleportSource}, " +
                     $"Distance={distanceToTarget:F1}m, Threshold={teleportThreshold}m, " +
                     $"PlayerPos=({playerPosition.x:F1},{playerPosition.y:F1}), " +
                     $"TargetPos=({targetPosition.x:F1},{targetPosition.y:F1})");
@@ -650,7 +857,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     var prePos = playerAgent.Position;
                     
-                    // Teleport player to near the lord (army position)
+                    // Teleport player to formation position (or fallback to lord/agent)
                     playerAgent.TeleportToPosition(targetPosition);
                     playerAgent.SetMovementDirection(formationDirection);
                     playerAgent.LookDirection = formationDirection.ToVec3();
@@ -669,7 +876,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     var squadInfo = squadTeleported > 0 ? $" + {squadTeleported} squad members" : "";
                     
                     ModLogger.Info("FormationAssignment",
-                        $"Teleported player{squadInfo} to army position: " +
+                        $"Teleported player{squadInfo} to {teleportSource}: " +
                         $"was {distanceToTarget:F1}m away, moved {actualMovement:F1}m, " +
                         $"from ({prePos.x:F1},{prePos.y:F1}) to ({postPos.x:F1},{postPos.y:F1})");
                     
@@ -682,7 +889,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 else
                 {
                     ModLogger.Debug("FormationAssignment",
-                        $"Player already near army ({distanceToTarget:F1}m <= {teleportThreshold}m) - no teleport needed");
+                        $"Player already near {teleportSource} ({distanceToTarget:F1}m <= {teleportThreshold}m) - no teleport needed");
                 }
 
                 _needsPositionFix = false;

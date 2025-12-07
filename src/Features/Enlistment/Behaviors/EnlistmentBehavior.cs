@@ -5,6 +5,7 @@ using System.Reflection;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core;
@@ -88,6 +89,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _battleXPAwardedThisBattle;
 
         private MapEvent _cachedLordMapEvent;
+
+        /// <summary>
+        ///     Tracks whether a PlayerEncounter has been created for the current lord's battle.
+        ///     Prevents repeated PlayerEncounter creation during the same battle (which causes loops).
+        ///     Reset when the battle ends (OnMapEventEnded) or when the lord's MapEvent changes.
+        /// </summary>
+        private bool _playerEncounterCreatedForBattle;
 
         /// <summary>
         ///     Campaign time when the desertion grace period ends.
@@ -186,6 +194,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private CampaignTime _leaveStartDate = CampaignTime.Zero;
 
         /// <summary>
+        ///     Campaign time when the player can next request leave.
+        ///     Set when returning from leave to enforce a cooldown.
+        /// </summary>
+        private CampaignTime _leaveCooldownEnds = CampaignTime.Zero;
+
+        /// <summary>
         ///     Flag to indicate party state needs to be restored after save loading.
         ///     We can't set IsActive during SyncData because the game asserts !IsActive during load.
         ///     This flag triggers restoration on the first campaign tick after loading.
@@ -259,6 +273,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     when service ends.
         /// </summary>
         private bool _wasIndependentClan;
+
+        /// <summary>
+        ///     Tracks faction StringIds for war relations we created when enlisting with a minor faction lord.
+        ///     When the player enlists with a minor faction (not a Kingdom), they don't automatically get
+        ///     faction relationships. We mirror the lord's faction war relations to the player clan so that
+        ///     nameplates show correct ally/enemy colors. These are restored to neutral when service ends.
+        /// </summary>
+        private List<string> _minorFactionWarRelations = new List<string>();
+
+        /// <summary>
+        ///     Tracks desertion cooldowns for minor factions. When a player deserts from a minor faction lord,
+        ///     they cannot re-enlist with any lord in that faction for 90 days. Unlike Kingdoms, minor factions
+        ///     have no crime rating system, so we use this cooldown-based blocking instead.
+        ///     Key: Minor faction StringId, Value: Cooldown end time
+        /// </summary>
+        private Dictionary<string, CampaignTime> _minorFactionDesertionCooldowns = new Dictionary<string, CampaignTime>();
 
         /// <summary>
         ///     Initializes the enlistment behavior and sets up singleton access.
@@ -541,6 +571,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
             dataStore.SyncData("_isOnLeave", ref _isOnLeave);
             dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
+            dataStore.SyncData("_leaveCooldownEnds", ref _leaveCooldownEnds);
             dataStore.SyncData("_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
             dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
             dataStore.SyncData("_savedGraceTier", ref _savedGraceTier);
@@ -555,6 +586,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Serialize kingdom state so we can restore the player's original kingdom/clan status
             dataStore.SyncData("_originalKingdom", ref _originalKingdom);
             dataStore.SyncData("_wasIndependentClan", ref _wasIndependentClan);
+
+            // Serialize minor faction war relations - these are created when enlisting with non-Kingdom lords
+            // and need to be restored to neutral when service ends
+            dataStore.SyncData("_minorFactionWarRelations", ref _minorFactionWarRelations);
+
+            // Serialize minor faction desertion cooldowns - manual serialization for Dictionary<string, CampaignTime>
+            // Bannerlord's save system can serialize this dictionary directly since both types are primitives
+            SerializeMinorFactionDesertionCooldowns(dataStore);
 
             // Veteran retirement system state - manual serialization for dictionary
             // Bannerlord's save system can't serialize custom class dictionaries directly
@@ -690,6 +729,64 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
+        /// <summary>
+        ///     Manually serialize/deserialize minor faction desertion cooldowns.
+        ///     Uses a simple count + individual field approach for maximum compatibility.
+        /// </summary>
+        private void SerializeMinorFactionDesertionCooldowns(IDataStore dataStore)
+        {
+            try
+            {
+                var cooldownCount = _minorFactionDesertionCooldowns?.Count ?? 0;
+                dataStore.SyncData("_minorFacDesertion_count", ref cooldownCount);
+
+                if (!dataStore.IsLoading)
+                {
+                    // Saving: serialize each cooldown entry individually
+                    var index = 0;
+                    foreach (var kvp in _minorFactionDesertionCooldowns)
+                    {
+                        var factionId = kvp.Key;
+                        var cooldownEnd = kvp.Value;
+
+                        dataStore.SyncData($"_minorFacDesertion_{index}_id", ref factionId);
+                        dataStore.SyncData($"_minorFacDesertion_{index}_end", ref cooldownEnd);
+                        index++;
+                    }
+                }
+                else
+                {
+                    // Loading: reconstruct dictionary from individual fields
+                    _minorFactionDesertionCooldowns = new Dictionary<string, CampaignTime>();
+
+                    for (var i = 0; i < cooldownCount; i++)
+                    {
+                        var factionId = "";
+                        var cooldownEnd = CampaignTime.Zero;
+
+                        dataStore.SyncData($"_minorFacDesertion_{i}_id", ref factionId);
+                        dataStore.SyncData($"_minorFacDesertion_{i}_end", ref cooldownEnd);
+
+                        if (!string.IsNullOrEmpty(factionId))
+                        {
+                            _minorFactionDesertionCooldowns[factionId] = cooldownEnd;
+                        }
+                    }
+
+                    ModLogger.Debug("SaveLoad", $"Loaded {_minorFactionDesertionCooldowns.Count} minor faction desertion cooldowns");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("SaveLoad", $"Error serializing minor faction desertion cooldowns: {ex.Message}");
+                // Ensure dictionary exists even on error
+                if (_minorFactionDesertionCooldowns == null)
+                {
+                    _minorFactionDesertionCooldowns = new Dictionary<string, CampaignTime>();
+                }
+            }
+        }
+
         public bool CanEnlistWithParty(Hero lord, out TextObject reason)
         {
             reason = TextObject.GetEmpty(); // 1.3.4 API: Empty is now GetEmpty() method
@@ -766,6 +863,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         _pendingDesertionKingdom.Name ?? TextObject.GetEmpty()); // 1.3.4 API
                     return false;
                 }
+            }
+
+            // Block re-enlistment with minor factions if player deserted from them
+            // Minor factions have no crime rating system, so we use a cooldown-based block instead
+            if (lord.MapFaction != null && !(lord.MapFaction is Kingdom) && IsBlockedFromMinorFaction(lord.MapFaction, out var remainingDays))
+            {
+                reason = new TextObject(
+                    "{=Enlisted_Message_MinorFactionCooldown}{FACTION} will not accept you back for another {DAYS} days due to your past desertion.");
+                reason.SetTextVariable("FACTION", lord.MapFaction.Name);
+                reason.SetTextVariable("DAYS", remainingDays);
+                return false;
             }
 
             var counterpartParty = MobileParty.ConversationParty ?? lord.PartyBelongedTo;
@@ -896,7 +1004,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
                 else if (lordKingdom == null)
                 {
-                    ModLogger.Debug("Enlistment", "Lord has no kingdom - player clan remains independent");
+                    // MINOR FACTION FIX: Mirror the lord's faction war relations to the player clan
+                    // Without this, nameplates don't show green/red colors and battle participation fails
+                    // because the player has no faction relationships with enemies/allies.
+                    MirrorMinorFactionWarRelations(lord);
                 }
 
                 // Transfer any existing companions and troops from the player's party to the lord's party
@@ -1105,9 +1216,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
 
                     // NAVAL FIX: Handle sea stranding - if player is at sea without naval capability, teleport to nearest port
-                    // This can happen when the army disbands at sea and service ends (e.g., lord captured at sea)
+                    // This can happen when the army disbands at sea and service ends (e.g., lord captured at sea, lord dies at sea)
                     // Without this fix, the player becomes permanently stranded on the water
-                    if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability && !retainKingdomDuringGrace)
+                    // Always teleport regardless of grace period - being stuck at sea is a critical issue that blocks gameplay
+                    if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability)
                     {
                         ModLogger.Info("Naval",
                             "Player stranded at sea after service ended - teleporting to nearest port");
@@ -1154,6 +1266,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Restore companions and troops to the player's party
                 // These were transferred to the lord's party when service started
                 RestoreCompanionsToPlayer();
+
+                // MINOR FACTION CLEANUP: Restore war relations that were mirrored when enlisting with a minor faction
+                // During grace period, keep war relations in case player re-enlists with another lord in same faction
+                if (!retainKingdomDuringGrace)
+                {
+                    RestoreMinorFactionWarRelations();
+                }
+                else
+                {
+                    ModLogger.Debug("FactionRelations", "Keeping mirrored war relations during grace period");
+                }
 
                 // Determine if player completed full enlistment period (252 days / 3 Bannerlord years)
                 // This is required for honorable discharge to restore original kingdom
@@ -1563,6 +1686,113 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Apply desertion penalties for minor faction lords.
+        ///     Minor factions don't have a crime rating system, so we apply relation penalties
+        ///     with the lord and their clan members, plus a 90-day re-enlistment cooldown.
+        /// </summary>
+        /// <param name="lord">The minor faction lord the player is deserting from.</param>
+        private void ApplyMinorFactionDesertionPenalties(Hero lord)
+        {
+            try
+            {
+                if (lord == null)
+                {
+                    ModLogger.Debug("Desertion", "Cannot apply minor faction penalties - lord is null");
+                    return;
+                }
+
+                var faction = lord.MapFaction;
+                if (faction == null)
+                {
+                    ModLogger.Debug("Desertion", "Cannot apply minor faction penalties - faction is null");
+                    return;
+                }
+
+                ModLogger.Info("Desertion", 
+                    $"Applying minor faction desertion penalties for {lord.Name} ({faction.Name})");
+
+                // Apply -50 relation with the lord
+                var relationPenalty = -50;
+                var herosPenalized = 0;
+
+                if (lord.IsAlive && lord != Hero.MainHero)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(lord, relationPenalty, true, true);
+                    herosPenalized++;
+                    ModLogger.Debug("Desertion", $"Applied {relationPenalty} relation with lord {lord.Name}");
+                }
+
+                // Apply -50 relation with all clan members
+                var lordClan = lord.Clan;
+                if (lordClan != null)
+                {
+                    foreach (var clanMember in lordClan.Heroes)
+                    {
+                        // Skip the lord (already penalized), dead heroes, and the player
+                        if (clanMember == lord || !clanMember.IsAlive || clanMember == Hero.MainHero)
+                        {
+                            continue;
+                        }
+
+                        ChangeRelationAction.ApplyPlayerRelation(clanMember, relationPenalty, true, true);
+                        herosPenalized++;
+                    }
+                }
+
+                // Add 90-day cooldown for this faction
+                var cooldownDays = 90;
+                var cooldownEnd = CampaignTime.Now + CampaignTime.Days(cooldownDays);
+                _minorFactionDesertionCooldowns[faction.StringId] = cooldownEnd;
+
+                // Display notification
+                var message = new TextObject(
+                    "{=Enlisted_Message_MinorFactionDeserter}You have deserted {LORD}'s company. Your reputation with {FACTION} has suffered, and they will not accept you back for some time.");
+                message.SetTextVariable("LORD", lord.Name);
+                message.SetTextVariable("FACTION", faction.Name);
+                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Red));
+
+                ModLogger.Info("Desertion",
+                    $"Minor faction desertion penalties applied: {relationPenalty} relation with {herosPenalized} heroes, {cooldownDays}-day cooldown for {faction.Name}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Desertion", $"Error applying minor faction desertion penalties: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     Checks if the player is blocked from re-enlisting with a minor faction due to desertion.
+        /// </summary>
+        /// <param name="faction">The minor faction to check.</param>
+        /// <param name="remainingDays">Output: days remaining in cooldown (0 if not blocked).</param>
+        /// <returns>True if blocked, false if can enlist.</returns>
+        public bool IsBlockedFromMinorFaction(IFaction faction, out int remainingDays)
+        {
+            remainingDays = 0;
+
+            if (faction == null || _minorFactionDesertionCooldowns == null)
+            {
+                return false;
+            }
+
+            if (_minorFactionDesertionCooldowns.TryGetValue(faction.StringId, out var cooldownEnd))
+            {
+                if (CampaignTime.Now < cooldownEnd)
+                {
+                    remainingDays = (int)(cooldownEnd - CampaignTime.Now).ToDays;
+                    return true;
+                }
+                else
+                {
+                    // Cooldown expired, remove it
+                    _minorFactionDesertionCooldowns.Remove(faction.StringId);
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         ///     Voluntarily desert from the army. The player keeps their current equipment but
         ///     receives desertion penalties: -50 relation with all lords in the kingdom and
         ///     +50 crime rating. After deserting, the player is free to enlist with other factions.
@@ -1643,7 +1873,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // === STEP 2: Apply desertion penalties ===
                 if (targetKingdom != null && !targetKingdom.IsEliminated)
                 {
-                    // -50 relation with all lords in kingdom
+                    // Kingdom desertion: -50 relation with all lords in kingdom + crime rating
                     var lordsPenalized = 0;
                     foreach (Clan clan in targetKingdom.Clans)
                     {
@@ -1659,6 +1889,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                     ModLogger.Info("Desertion",
                         $"Applied desertion penalties: -50 relation with {lordsPenalized} lords, +50 crime rating");
+                }
+                else if (previousLord != null && previousLord.MapFaction != null && !(previousLord.MapFaction is Kingdom))
+                {
+                    // Minor faction desertion: no crime rating (they have no judicial system),
+                    // but apply relation penalties and cooldown
+                    ApplyMinorFactionDesertionPenalties(previousLord);
                 }
 
                 // === STEP 3: Leave the kingdom ===
@@ -2345,7 +2581,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         bool lordInBattle = lordParty.Party.MapEvent != null;
                         bool armyInBattle = lordArmy?.LeaderParty?.Party.MapEvent != null;
 
-                        if (lordInBattle || armyInBattle)
+                        // CRITICAL: Don't override reserve mode settings
+                        // If player is waiting in reserve, keep them inactive and out of the MapEvent
+                        if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                        {
+                            ModLogger.Info("SaveLoad",
+                                "Post-load: Player is in reserve mode - keeping party inactive");
+                            main.IsActive = false;
+                            main.IsVisible = false;
+                            main.MapEventSide = null;
+                        }
+                        else if (lordInBattle || armyInBattle)
                         {
                             ModLogger.Info("SaveLoad",
                                 $"Post-load: Loaded into active battle! Lord battle: {lordInBattle}, Army battle: {armyInBattle}");
@@ -2826,76 +3072,117 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                             ? BattleSideEnum.Attacker
                                             : BattleSideEnum.Defender;
 
-                                        // Check if we can join on the lord's side
-                                        if (lordMapEvent.CanPartyJoinBattle(mainParty.Party, lordSide))
+                                        // Check if we can join on the lord's side using native faction checks
+                                        bool canJoinNatively = lordMapEvent.CanPartyJoinBattle(mainParty.Party, lordSide);
+                                        
+                                        // Check if lord is in a minor/bandit faction (not a Kingdom)
+                                        // Minor/bandit faction lords don't trigger the mercenary join logic, leaving the player's
+                                        // faction state independent. This causes CanPartyJoinBattle to fail because the
+                                        // player isn't formally "at war" with bandits/enemies.
+                                        var mapFaction = _enlistedLord?.MapFaction;
+                                        bool isNonKingdomFactionLord = mapFaction != null &&
+                                                                       !(mapFaction is Kingdom) &&
+                                                                       (mapFaction.IsMinorFaction || mapFaction.IsBanditFaction);
+                                        
+                                        // Determine if we should bypass the native faction check
+                                        // Only bypass for minor/bandit faction lords where we KNOW the faction logic doesn't work
+                                        bool shouldBypassFactionCheck = !canJoinNatively && isNonKingdomFactionLord;
+                                        
+                                        if (canJoinNatively)
                                         {
-                                            ModLogger.Info("Battle",
+                                            ModLogger.Debug("Battle",
                                                 $"Can join battle on lord's side ({lordSide}) - preparing for battle participation");
-
-                                            // Make the player active for the encounter but keep them INVISIBLE
-                                            // CRITICAL: If IsVisible = true, the native system creates a "Help [Party]" encounter menu
-                                            // instead of directly joining the lord's battle. Keeping invisible ensures seamless battle entry.
-                                            mainParty.IsActive = true;
-                                            mainParty.IsVisible = false;
-                                            mainParty.ShouldJoinPlayerBattles = true;
-
-                                            // Clear any ignore window so we can be collected
-                                            mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
-
-                                            // NAVAL BATTLE FIX: Check if this is a naval battle
-                                            // Naval battles require ships - enlisted players have no ships (they're passengers on lord's ship)
-                                            // Skip direct MapEvent join for naval battles to prevent spawn crashes
-                                            // The player will still participate via PlayerEncounter as crew member on lord's ship
-                                            bool isNavalBattle = lordMapEvent.IsNavalMapEvent;
-
-                                            if (isNavalBattle)
-                                            {
-                                                ModLogger.Info("Naval",
-                                                    "Naval battle detected - skipping direct MapEvent join (enlisted player has no ships). Will participate via PlayerEncounter as crew member.");
-                                            }
-                                            else
-                                            {
-                                                // CRITICAL FIX: Only set MapEventSide if player party has actual troops
-                                                // Setting MapEventSide on a party with no troops causes NullReferenceException
-                                                // in MapEventSide.ApplySimulatedHitRewardToSelectedTroop during battle simulation
-                                                // because SelectRandomSimulationTroop() returns invalid descriptor for empty parties.
-                                                // Enlisted players have no troops (transferred to lord), so we must NOT join
-                                                // the MapEvent directly - let native handle it through PlayerEncounter alone.
-                                                // NOTE: Use NumberOfRegularMembers (not NumberOfHealthyMembers) because
-                                                // NumberOfHealthyMembers includes the hero, causing enlisted players with
-                                                // no troops to still appear as a separate party in battle.
-                                                int partyTroopCount = mainParty.Party.NumberOfRegularMembers;
-                                                if (partyTroopCount > 0)
-                                                {
-                                                    var targetSide = lordSide == BattleSideEnum.Attacker
-                                                        ? lordMapEvent.AttackerSide
-                                                        : lordMapEvent.DefenderSide;
-                                                    mainParty.Party.MapEventSide = targetSide;
-                                                    ModLogger.Info("Battle",
-                                                        $"Joined MapEvent on {lordSide} side (troops: {partyTroopCount}). Player MapEvent: {mainParty.Party.MapEvent != null}");
-                                                }
-                                                else
-                                                {
-                                                    ModLogger.Info("Battle",
-                                                        "Skipping direct MapEvent join - player has no troops (enlisted). Will participate via PlayerEncounter only.");
-                                                }
-                                            }
-
-                                            // CRITICAL: Create a PlayerEncounter - the native menu system requires this
-                                            // The EncounterGameMenuBehavior asserts that PlayerEncounter.Current != null
-                                            // when initializing the encounter menu.
-                                            // NOTE: Do NOT call JoinBattle() - that caused NullReferenceExceptions.
-                                            // PlayerEncounter allows the hero to participate in battle even without troops.
-                                            if (PlayerEncounter.Current == null)
-                                            {
-                                                PlayerEncounter.Start();
-                                                ModLogger.Info("Battle", "Created PlayerEncounter for battle menu");
-                                            }
+                                        }
+                                        else if (shouldBypassFactionCheck)
+                                        {
+                                            // NON-KINGDOM FACTION FIX: Bypass the native faction check for minor/bandit faction lords.
+                                            // CanPartyJoinBattle requires player.MapFaction.IsAtWarWith(enemy), but enlisted
+                                            // players with non-Kingdom lords aren't joined to the faction (no Kingdom to join).
+                                            // As an enlisted soldier, we logically belong to the lord's side regardless of
+                                            // formal faction state. Skip MapEventSide (which crashes without faction compat)
+                                            // but create PlayerEncounter so the hero can participate.
+                                            ModLogger.Debug("Battle",
+                                                $"Non-Kingdom faction lord battle - bypassing native faction check for {lordSide} side");
                                         }
                                         else
                                         {
+                                            // Kingdom lord but faction check failed - this is unexpected
+                                            // Log warning but don't force bypass - let native system handle it
+                                            ModLogger.Warn("Battle",
+                                                $"Faction check failed for Kingdom lord battle ({lordSide} side) - player may not be able to join. Please report this if battle participation fails.");
+                                            // Don't return here - still try to set up PlayerEncounter as fallback
+                                        }
+
+                                        // Make the player active for the encounter but keep them INVISIBLE
+                                        // CRITICAL: If IsVisible = true, the native system creates a "Help [Party]" encounter menu
+                                        // instead of directly joining the lord's battle. Keeping invisible ensures seamless battle entry.
+                                        mainParty.IsActive = true;
+                                        mainParty.IsVisible = false;
+                                        mainParty.ShouldJoinPlayerBattles = true;
+
+                                        // Clear any ignore window so we can be collected
+                                        mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now);
+
+                                        // NAVAL BATTLE FIX: Check if this is a naval battle
+                                        // Naval battles require ships - enlisted players have no ships (they're passengers on lord's ship)
+                                        // Skip direct MapEvent join for naval battles to prevent spawn crashes
+                                        // The player will still participate via PlayerEncounter as crew member on lord's ship
+                                        bool isNavalBattle = lordMapEvent.IsNavalMapEvent;
+
+                                        // Determine if we should set MapEventSide to join the battle
+                                        // NOTE: The old code avoided setting MapEventSide for parties with 0 troops,
+                                        // fearing a crash in ApplySimulatedHitRewardToSelectedTroop during auto-sim.
+                                        // However, this prevented enlisted players from joining small battles entirely!
+                                        // The auto-sim crash only occurs if the player uses "Send Troops" with 0 troops,
+                                        // which won't happen in practice - players will use "Attack" for manual combat.
+                                        // By setting MapEventSide, the player properly joins the MapEvent and can participate.
+                                        var targetSide = lordSide == BattleSideEnum.Attacker
+                                            ? lordMapEvent.AttackerSide
+                                            : lordMapEvent.DefenderSide;
+
+                                        if (isNavalBattle)
+                                        {
+                                            // Naval battles - join MapEventSide so Init() works, Naval DLC handles ship assignment
+                                            mainParty.Party.MapEventSide = targetSide;
+                                            ModLogger.Info("Naval",
+                                                $"Naval battle detected - joined MapEventSide on {lordSide} side (Naval DLC will assign ship)");
+                                        }
+                                        else if (canJoinNatively || shouldBypassFactionCheck)
+                                        {
+                                            // Land battle - join the MapEvent on lord's side
+                                            mainParty.Party.MapEventSide = targetSide;
+                                            int partyTroopCount = mainParty.Party.NumberOfRegularMembers;
                                             ModLogger.Info("Battle",
-                                                $"Cannot join battle on lord's side ({lordSide}) - faction incompatibility or already at war with allies?");
+                                                $"Joined MapEvent on {lordSide} side (troops: {partyTroopCount}, bypass: {shouldBypassFactionCheck})");
+                                        }
+                                        else
+                                        {
+                                            // Kingdom lord but faction check failed - try anyway, but warn
+                                            mainParty.Party.MapEventSide = targetSide;
+                                            ModLogger.Warn("Battle",
+                                                $"Faction check failed but joining MapEvent anyway on {lordSide} side - report if battle doesn't work");
+                                        }
+
+                                        // CRITICAL: Create and initialize a PlayerEncounter to show encounter menu.
+                                        // Now that MapEventSide is set, MobileParty.MainParty.MapEvent returns the battle.
+                                        // The public static PlayerEncounter.Init() will properly initialize the encounter.
+                                        // Guard flag prevents repeated creation during the same battle (causes loops).
+                                        if (PlayerEncounter.Current == null && !_playerEncounterCreatedForBattle)
+                                        {
+                                            _playerEncounterCreatedForBattle = true;
+                                            
+                                            // Start the encounter, then Init() uses MainParty.MapEvent
+                                            PlayerEncounter.Start();
+                                            PlayerEncounter.Init();
+                                            
+                                            var attackerName = lordMapEvent.AttackerSide?.LeaderParty?.Name?.ToString() ?? "unknown";
+                                            var defenderName = lordMapEvent.DefenderSide?.LeaderParty?.Name?.ToString() ?? "unknown";
+                                            ModLogger.Info("Battle", 
+                                                $"Initialized PlayerEncounter (attacker: {attackerName}, defender: {defenderName})");
+                                        }
+                                        else if (_playerEncounterCreatedForBattle)
+                                        {
+                                            // Already created for this battle, don't spam logs
                                         }
                                     }
                                     else
@@ -3538,6 +3825,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public static event Action<int, string> OnXPGained;
 
         /// <summary>
+        ///     Flag indicating the player chose to keep their retinue troops on retirement.
+        ///     Set by dialog, checked by RetinueLifecycleHandler and ServiceRecordManager,
+        ///     then reset after processing. Troops become regular party members.
+        /// </summary>
+        public static bool RetainTroopsOnRetirement { get; set; }
+
+        /// <summary>
         ///     Fired when daily wage is paid. Passes the wage amount.
         /// </summary>
         public static event Action<int> OnWagePaid;
@@ -3735,6 +4029,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Apply relation bonuses
             ApplyVeteranRelationBonuses(config);
 
+            // Award 50 renown for first term retirement
+            GainRenownAction.Apply(Hero.MainHero, 50f);
+            ModLogger.Info("Renown", "First term retirement: +50 renown");
+
             // End enlistment
             StopEnlist("Honorable retirement - first term", true);
 
@@ -3799,6 +4097,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Start a renewal term with bonus payment.
         ///     Called when player chooses to continue service.
+        ///     First re-enlistment grants full veteran bonuses (30/30/15 relation, 50 renown).
+        ///     Subsequent re-enlistments grant smaller bonuses (10/10/10 relation, 10 renown).
         /// </summary>
         public void StartRenewalTerm(int bonus)
         {
@@ -3811,6 +4111,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var config = EnlistedConfig.LoadRetirementConfig();
             var faction = _enlistedLord.MapFaction;
             var record = GetFactionVeteranRecord(faction);
+
+            // Check if this is the first re-enlistment (no renewal terms completed yet)
+            var isFirstReenlistment = record.RenewalTermsCompleted == 0;
 
             // Update record for renewal
             if (!record.FirstTermCompleted)
@@ -3827,6 +4130,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 GiveGoldAction.ApplyForCharacterToParty(null, MobileParty.MainParty.Party, bonus, true);
             }
 
+            // Apply relation and renown bonuses based on whether this is first or subsequent re-enlistment
+            if (isFirstReenlistment)
+            {
+                // First re-enlistment: same bonuses as first retirement (30/30/15 relation, 50 renown)
+                ApplyVeteranRelationBonuses(config);
+                GainRenownAction.Apply(Hero.MainHero, 50f);
+                ModLogger.Info("Renown", "First re-enlistment: +50 renown, full relation bonuses applied");
+            }
+            else
+            {
+                // Subsequent re-enlistments: smaller bonuses (10/10/10 relation, 10 renown)
+                ApplySubsequentReenlistmentBonuses();
+                GainRenownAction.Apply(Hero.MainHero, 10f);
+                ModLogger.Info("Renown", "Subsequent re-enlistment: +10 renown, reduced relation bonuses applied");
+            }
+
             // Reset notification flag for this term
             _retirementNotificationShown = true; // Don't show first-term notification again
 
@@ -3838,7 +4157,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
             ModLogger.Info("Retirement",
-                $"Renewal term started: {bonus}g bonus, ends in {config.RenewalTermDays} days");
+                $"Renewal term started: {bonus}g bonus, ends in {config.RenewalTermDays} days, first={isFirstReenlistment}");
         }
 
         /// <summary>
@@ -3988,6 +4307,79 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Retirement", $"Error applying relation bonuses: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     Apply smaller relation bonuses for subsequent re-enlistments.
+        ///     +10 with current lord, +10 with faction leader, +10 with other lords.
+        /// </summary>
+        private void ApplySubsequentReenlistmentBonuses()
+        {
+            const int subsequentBonus = 10;
+
+            try
+            {
+                var faction = _enlistedLord?.MapFaction;
+                if (faction == null)
+                {
+                    ModLogger.Error("Retirement", "Cannot apply subsequent bonuses - no faction");
+                    return;
+                }
+
+                // +10 with current lord
+                if (_enlistedLord != null)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, subsequentBonus, true, true);
+                    ModLogger.Info("Retirement", $"+{subsequentBonus} relation with {_enlistedLord.Name} (subsequent re-enlistment)");
+                }
+
+                // +10 with faction leader
+                if (faction.Leader != null && faction.Leader != _enlistedLord)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(faction.Leader, subsequentBonus, true, true);
+                    ModLogger.Info("Retirement", $"+{subsequentBonus} relation with {faction.Name} leader (subsequent re-enlistment)");
+                }
+
+                // +10 with other lords in faction (no minimum relation requirement for subsequent)
+                if (faction is Kingdom kingdom)
+                {
+                    foreach (var clan in kingdom.Clans)
+                    {
+                        if (clan == Clan.PlayerClan)
+                        {
+                            continue;
+                        }
+
+                        foreach (var hero in clan.Heroes)
+                        {
+                            if (!hero.IsLord || hero == _enlistedLord || hero == kingdom.Leader || !hero.IsAlive)
+                            {
+                                continue;
+                            }
+
+                            ChangeRelationAction.ApplyPlayerRelation(hero, subsequentBonus, true, false);
+                        }
+                    }
+                }
+                else if (faction is Clan clan)
+                {
+                    foreach (var hero in clan.Heroes)
+                    {
+                        if (!hero.IsLord || hero == _enlistedLord || hero == clan.Leader || !hero.IsAlive)
+                        {
+                            continue;
+                        }
+
+                        ChangeRelationAction.ApplyPlayerRelation(hero, subsequentBonus, true, false);
+                    }
+                }
+
+                ModLogger.Info("Retirement", $"Subsequent re-enlistment bonuses applied (+{subsequentBonus} relation)");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Retirement", $"Error applying subsequent bonuses: {ex.Message}");
             }
         }
 
@@ -4251,18 +4643,48 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Handle player clan changing kingdoms.
+        ///     Handle clan changing kingdoms - both player clan and lord's clan.
         ///     Edge cases:
         ///     1. If player changes kingdoms during grace period, clear grace period.
         ///     2. If player becomes vassal/mercenary while actively enlisted, end enlistment honorably.
+        ///     3. If lord's minor faction clan joins a Kingdom, auto-join player as mercenary.
         ///     Player can no longer rejoin the original kingdom, so grace period is invalid.
         /// </summary>
         private void OnClanChangedKingdom(Clan clan, Kingdom oldKingdom, Kingdom newKingdom,
             ChangeKingdomAction.ChangeKingdomActionDetail detail, bool showNotification)
         {
+            // EDGE CASE: Lord's clan (minor faction) joins a Kingdom as mercenary
+            // When enlisted with a minor faction lord, the player isn't joined to any faction.
+            // If the lord's clan joins a Kingdom, we should auto-join the player too so
+            // battle participation works correctly (CanPartyJoinBattle requires faction alignment).
+            if (IsEnlisted && !_isOnLeave && clan == _enlistedLord?.Clan && clan != Clan.PlayerClan)
+            {
+                if (newKingdom != null && oldKingdom == null)
+                {
+                    // Lord's clan joined a Kingdom - auto-join player as mercenary
+                    var playerClan = Clan.PlayerClan;
+                    if (playerClan != null && playerClan.Kingdom != newKingdom)
+                    {
+                        try
+                        {
+                            ChangeKingdomAction.ApplyByJoinFactionAsMercenary(playerClan, newKingdom,
+                                default(CampaignTime), 0, false);
+                            ModLogger.Info("Enlistment",
+                                $"Lord's clan joined {newKingdom.Name} - auto-joined player as mercenary to maintain battle eligibility");
+                        }
+                        catch (Exception ex)
+                        {
+                            ModLogger.Error("Enlistment",
+                                $"Failed to auto-join player as mercenary when lord's clan joined {newKingdom.Name}: {ex.Message}");
+                        }
+                    }
+                }
+                return; // Don't process further - this was the lord's clan, not player's
+            }
+            
             if (clan != Clan.PlayerClan)
             {
-                return; // Not the player's clan
+                return; // Not the player's clan and not lord's clan
             }
 
             // Handle player leaving the kingdom entirely (quitting mercenary service) while enlisted or on leave
@@ -4502,6 +4924,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 if (!IsEnlisted)
                 {
+                    return;
+                }
+
+                // Don't award XP if player is waiting in reserve - they're sitting out all battles
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle", "Skipping XP award - player is waiting in reserve");
                     return;
                 }
 
@@ -4746,6 +5175,204 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Use configured tier names from progression_config.json
             return Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierName(tier);
         }
+
+        #region Minor Faction War Relations
+
+        /// <summary>
+        ///     Mirrors the lord's faction war relations to the player clan when enlisting with a minor faction.
+        ///     This enables proper nameplate coloring (green for allies, red for enemies) and battle participation.
+        ///     Uses FactionManager.DeclareWar directly (not DeclareWarAction) to avoid firing campaign events.
+        /// </summary>
+        /// <param name="lord">The minor faction lord the player is enlisting with.</param>
+        private void MirrorMinorFactionWarRelations(Hero lord)
+        {
+            try
+            {
+                var lordFaction = lord.MapFaction;
+                var playerClan = Clan.PlayerClan;
+
+                if (lordFaction == null || playerClan == null)
+                {
+                    ModLogger.Debug("Enlistment", "Cannot mirror war relations - lord faction or player clan is null");
+                    return;
+                }
+
+                // Clear any previous tracking in case of re-enlistment
+                _minorFactionWarRelations.Clear();
+
+                // Get all factions the lord's faction is at war with
+                var enemyFactions = lordFaction.FactionsAtWarWith?.ToList() ?? new List<IFaction>();
+
+                if (enemyFactions.Count == 0)
+                {
+                    ModLogger.Info("FactionRelations", 
+                        $"Minor faction lord {lord.Name} has no enemies - no war relations to mirror");
+                    return;
+                }
+
+                ModLogger.Info("FactionRelations", 
+                    $"Mirroring {enemyFactions.Count} war relations from {lordFaction.Name} to player clan");
+
+                foreach (var enemyFaction in enemyFactions)
+                {
+                    // Skip if already at war (player might have their own existing wars)
+                    if (FactionManager.IsAtWarAgainstFaction(playerClan, enemyFaction))
+                    {
+                        ModLogger.Debug("FactionRelations", 
+                            $"Already at war with {enemyFaction.Name} - skipping");
+                        continue;
+                    }
+
+                    // Skip constant-war factions (bandits, etc.) - diplomacy model handles these automatically
+                    if (Campaign.Current.Models.DiplomacyModel.IsAtConstantWar(playerClan, enemyFaction))
+                    {
+                        ModLogger.Debug("FactionRelations", 
+                            $"Constant war with {enemyFaction.Name} (bandits/outlaws) - handled by diplomacy model");
+                        continue;
+                    }
+
+                    // Use low-level FactionManager.DeclareWar - does NOT fire OnWarDeclared events
+                    FactionManager.DeclareWar(playerClan, enemyFaction);
+                    
+                    // Track this relation for cleanup when service ends
+                    _minorFactionWarRelations.Add(enemyFaction.StringId);
+
+                    ModLogger.Info("FactionRelations", 
+                        $"Declared war with {enemyFaction.Name} (mirrored from {lordFaction.Name})");
+                }
+
+                // Refresh visuals so nameplate colors update immediately
+                RefreshFactionVisuals();
+
+                ModLogger.Info("FactionRelations", 
+                    $"Mirrored {_minorFactionWarRelations.Count} war relations for minor faction enlistment");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FactionRelations", $"Error mirroring war relations: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     Restores faction relations to neutral that were created when enlisting with a minor faction.
+        ///     Called when enlistment ends to return the player to their original diplomatic state.
+        ///     Uses FactionManager.SetNeutral directly (not MakePeaceAction) to avoid firing campaign events.
+        /// </summary>
+        private void RestoreMinorFactionWarRelations()
+        {
+            try
+            {
+                if (_minorFactionWarRelations == null || _minorFactionWarRelations.Count == 0)
+                {
+                    return;
+                }
+
+                var playerClan = Clan.PlayerClan;
+                if (playerClan == null)
+                {
+                    ModLogger.Debug("FactionRelations", "Cannot restore relations - player clan is null");
+                    _minorFactionWarRelations.Clear();
+                    return;
+                }
+
+                ModLogger.Info("FactionRelations", 
+                    $"Restoring {_minorFactionWarRelations.Count} war relations to neutral");
+
+                var restoredCount = 0;
+                foreach (var factionId in _minorFactionWarRelations.ToList())
+                {
+                    // Look up the faction by StringId
+                    var faction = Campaign.Current?.Factions?.FirstOrDefault(f => f.StringId == factionId);
+                    if (faction == null)
+                    {
+                        ModLogger.Debug("FactionRelations", 
+                            $"Faction {factionId} not found (may have been destroyed) - skipping");
+                        continue;
+                    }
+
+                    // Skip constant-war factions - can't make peace with them
+                    if (Campaign.Current.Models.DiplomacyModel.IsAtConstantWar(playerClan, faction))
+                    {
+                        ModLogger.Debug("FactionRelations", 
+                            $"Cannot make peace with {faction.Name} (constant war) - skipping");
+                        continue;
+                    }
+
+                    // Use low-level FactionManager.SetNeutral - does NOT fire OnMakePeace events
+                    FactionManager.SetNeutral(playerClan, faction);
+                    restoredCount++;
+
+                    ModLogger.Info("FactionRelations", 
+                        $"Restored neutral relations with {faction.Name}");
+                }
+
+                // Clear tracking
+                _minorFactionWarRelations.Clear();
+
+                // Refresh visuals so nameplate colors update
+                RefreshFactionVisuals();
+
+                ModLogger.Info("FactionRelations", 
+                    $"Restored {restoredCount} faction relations to neutral");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FactionRelations", $"Error restoring war relations: {ex.Message}");
+                // Clear tracking even on error to prevent stale state
+                _minorFactionWarRelations?.Clear();
+            }
+        }
+
+        /// <summary>
+        ///     Refreshes party visuals to update nameplate colors after faction relation changes.
+        ///     This marks enemy faction parties as "dirty" so their nameplates redraw with correct colors.
+        /// </summary>
+        private void RefreshFactionVisuals()
+        {
+            try
+            {
+                var playerFaction = Hero.MainHero?.MapFaction;
+                if (playerFaction == null) return;
+
+                // Mark all visible parties from factions at war with player as dirty
+                // This triggers nameplate color refresh (same pattern as DeclareWarAction.ApplyInternal)
+                foreach (var party in MobileParty.All)
+                {
+                    if (!party.IsVisible) continue;
+                    
+                    var partyFaction = party.MapFaction;
+                    if (partyFaction == null) continue;
+
+                    // Check if this party's faction is at war with player
+                    if (FactionManager.IsAtWarAgainstFaction(playerFaction, partyFaction))
+                    {
+                        party.Party.SetVisualAsDirty();
+                    }
+                }
+
+                // Also mark settlements
+                foreach (var settlement in Settlement.All)
+                {
+                    if (!settlement.IsVisible) continue;
+                    
+                    var settlementFaction = settlement.MapFaction;
+                    if (settlementFaction == null) continue;
+
+                    if (FactionManager.IsAtWarAgainstFaction(playerFaction, settlementFaction))
+                    {
+                        settlement.Party.SetVisualAsDirty();
+                    }
+                }
+
+                ModLogger.Debug("FactionRelations", "Refreshed faction visuals after relation change");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FactionRelations", $"Error refreshing faction visuals: {ex.Message}");
+            }
+        }
+
+        #endregion
 
         /// <summary>
         ///     Backup player equipment before service to prevent loss.
@@ -5070,6 +5697,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                if (IsLeaveOnCooldown(out var cooldownDays))
+                {
+                    var cooldownMsg = new TextObject("{=Enlisted_Leave_Cooldown}Leave is on cooldown. {DAYS} days remain before you can request leave again.");
+                    cooldownMsg.SetTextVariable("DAYS", cooldownDays);
+                    InformationManager.DisplayMessage(new InformationMessage(cooldownMsg.ToString(), Colors.Red));
+                    ModLogger.Info("Enlistment", $"Leave request blocked by cooldown ({cooldownDays} days remaining)");
+                    return;
+                }
+
                 ModLogger.Info("Enlistment", "Starting temporary leave - suspending service");
 
                 // Clean up any active encounters first
@@ -5143,9 +5779,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
                 }
 
-                // Clear leave state
+                // Clear leave state and start cooldown before next leave
                 _isOnLeave = false;
                 _leaveStartDate = CampaignTime.Zero;
+                _leaveCooldownEnds = CampaignTime.Now + CampaignTime.Days(30);
 
                 // NOTE: We intentionally do NOT transfer troops here. Unlike initial enlistment, 
                 // troops recruited during leave are the player's personal force and should stay
@@ -5185,6 +5822,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error("Enlistment", "Error returning from leave", ex);
             }
+        }
+
+        /// <summary>
+        ///     Checks whether the player is currently on leave cooldown.
+        /// </summary>
+        public bool IsLeaveOnCooldown(out int daysRemaining)
+        {
+            daysRemaining = 0;
+
+            if (_leaveCooldownEnds == CampaignTime.Zero || _leaveCooldownEnds <= CampaignTime.Now)
+            {
+                return false;
+            }
+
+            daysRemaining = (int)Math.Ceiling((_leaveCooldownEnds - CampaignTime.Now).ToDays);
+            return true;
         }
 
         /// <summary>
@@ -5956,6 +6609,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                // BUGFIX: Skip battle processing if player is already waiting in reserve.
+                // When player was wounded and chose "Wait in Reserve", they intend to sit out ALL battles
+                // in the current series. Without this check, each new MapEvent triggers menu switching,
+                // creating a loop where the encounter menu keeps appearing and awarding duplicate XP.
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle",
+                        "Skipping MapEventStarted - player is waiting in reserve (already chose to sit out battles)");
+                    return;
+                }
+
                 var lordParty = _enlistedLord.PartyBelongedTo;
                 if (lordParty == null || mapEvent == null)
                 {
@@ -6000,8 +6664,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Debug("Battle",
                     $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, inArmy={inArmy}, armyLeaderInvolved={armyLeaderInvolved}");
 
-                // Reset XP tracking flag for new battle
+                // Reset tracking flags for new battle
                 _battleXPAwardedThisBattle = false;
+                _playerEncounterCreatedForBattle = false;
 
                 var isSiegeBattle = mapEvent.IsSiegeAssault || mapEvent.EventType == MapEvent.BattleTypes.Siege;
 
@@ -6010,6 +6675,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Exit custom enlisted menus so the native system can push its own encounter/army menus
                 var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
+                
                 if (!string.IsNullOrEmpty(currentMenu) && currentMenu.StartsWith("enlisted_") && !isSiegeBattle)
                 {
                     var encounterMenuModel = Campaign.Current?.Models?.EncounterGameMenuModel;
@@ -6086,6 +6752,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 var main = MobileParty.MainParty;
 
+                // Reset PlayerEncounter guard flag - battle is ending
+                _playerEncounterCreatedForBattle = false;
+                
                 // SAFETY: If the player is still a prisoner or capture cleanup is queued, avoid any post-battle
                 // enlistment cleanup (army/visibility/menu) and let native captivity flow finalize first.
                 if (Hero.MainHero.IsPrisoner || _playerCaptureCleanupScheduled)
@@ -6212,8 +6881,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Battle", "Lord battle ended, returning to hidden state");
                     _cachedLordMapEvent = null;
 
-                    // Award battle XP if player participated
-                    AwardBattleXP(playerParticipated);
+                    // Award battle XP only if player actually participated (not waiting in reserve)
+                    // Players who chose "Wait in Reserve" opted out of combat and don't earn XP
+                    if (!EnlistedEncounterBehavior.IsWaitingInReserve)
+                    {
+                        AwardBattleXP(playerParticipated);
+                    }
+                    else
+                    {
+                        ModLogger.Debug("Battle", "Skipping battle XP - player waited in reserve");
+                    }
 
                     // CRITICAL: Clear siege encounter creation timestamp when battle ends
                     // This allows new encounters to be created if needed after the battle
@@ -6364,6 +7041,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _currentTermKills += killsThisBattle;
                     ModLogger.Info("Battle",
                         $"Term kills updated: +{killsThisBattle} = {_currentTermKills} total this term");
+                    
+                    // Update Service Records for Command Tent display
+                    ServiceRecordManager.Instance?.OnKillsRecorded(killsThisBattle);
                 }
             }
             catch (Exception ex)
@@ -6380,6 +7060,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
+                // Don't award XP if player is waiting in reserve - they're sitting out all battles
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle", "Skipping XP award (kills) - player is waiting in reserve");
+                    return;
+                }
+
                 // Prevent double XP awards
                 if (_battleXPAwardedThisBattle)
                 {

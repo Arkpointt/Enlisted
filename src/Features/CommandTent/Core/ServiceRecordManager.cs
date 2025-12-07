@@ -333,8 +333,21 @@ namespace Enlisted.Features.CommandTent.Core
                 OnTermCompleted();
             }
 
-            // Clear retinue when enlistment ends
-            _retinueManager?.ClearRetinueTroops("enlistment_end");
+            // Check if player chose to keep their troops on retirement
+            if (EnlistmentBehavior.RetainTroopsOnRetirement)
+            {
+                // Clear only the tracking state - troops stay in party as regular members
+                _retinueState?.Clear();
+                ModLogger.Info(LogCategory, "Retinue tracking cleared - troops retained as regular party members");
+                
+                // Reset the flag after use
+                EnlistmentBehavior.RetainTroopsOnRetirement = false;
+            }
+            else
+            {
+                // Clear retinue when enlistment ends (default behavior)
+                _retinueManager?.ClearRetinueTroops("enlistment_end");
+            }
 
             OnEnlistmentEnded();
         }

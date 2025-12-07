@@ -15,7 +15,7 @@
 ---
 
 ## Overview
-Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits.
+Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits. Minor faction enlistment is supported with mirrored war stances and mercenary-themed dialogs.
 
 ## Purpose
 Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through six tiers, and handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.).
@@ -23,7 +23,7 @@ Provide the foundation for military service - join a lord's forces, follow them 
 ## Inputs/Outputs
 
 **Inputs:**
-- Player dialog choice to enlist with a lord
+- Player dialog choice to enlist with a lord (kingdom or minor faction)
 - Lord availability and relationship status
 - Current campaign state (peace/war, lord location, etc.)
 - Real-time monitoring of lord and army status
@@ -41,16 +41,19 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Complete financial isolation from lord's clan finances
 - No loot access (spoils go to the lord)
 - No food consumption (lord provides food - party skips food calculations entirely)
+- Minor faction enlistment mirrors the lord faction’s active wars to the player clan and restores them to neutral on discharge
+- Minor faction desertion applies -50 relation to the lord and their clan members and blocks re-enlistment with that faction for 90 days (no crime rating)
 
 ## Behavior
 
 **Enlistment Process:**
-1. Talk to lord → Express interest in military service
+1. Talk to lord → Express interest in military service (kingdom flow or minor-faction mercenary flow)
 2. Lord evaluates player (relationship, faction status)
 3. **Army Leader Restriction**: If player is leading their own army, lord will refuse with roleplay dialog explaining they must disband their army first
 4. Player confirms → Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
+7. **Minor factions only:** Mirror the lord faction’s current wars to the player clan so ally/enemy colors and battle joins work; relations are reverted to neutral on discharge
 
 **Daily Service:**
 - Follow enlisted lord's army movements
@@ -104,9 +107,10 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
 - Automatic handling of army disbandment or lord capture
-- 14-day grace period if lord dies, is captured, or army defeated
+- 14-day grace period if lord dies, is captured, or army defeated (kingdom lords only)
 - The player clan stays inside the kingdom throughout the grace window
 - While on leave or grace, enlistment requests from foreign lords are automatically declined
+- Minor faction enlistment skips grace; desertion is handled immediately with relation penalties and re-enlistment cooldown
 
 **Service Transfer (Leave/Grace):**
 - While on leave or in grace period, player can talk to other lords in the same faction
@@ -166,10 +170,10 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 ## Technical Implementation
 
 **Files:**
-- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer, naval position sync
+- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer, naval position sync, minor faction war mirroring, minor faction desertion cooldowns
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
-- `EnlistedDialogManager.cs` - Retirement, re-enlistment, and service transfer dialogs
+- `EnlistedDialogManager.cs` - Retirement, re-enlistment, service transfer dialogs, minor faction dialog variants
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
@@ -196,6 +200,10 @@ public bool IsOnLeave { get; }            // True if on temporary leave
 public Hero EnlistedLord { get; }         // The lord the player is serving under
 public CampaignTime EnlistmentDate { get; }  // When current enlistment started
 public CampaignTime LeaveStartDate { get; }  // When current leave started
+
+// Minor faction war mirroring and desertion cooldown
+private List<string> _minorFactionWarRelations;                 // wars mirrored from minor faction lord
+private Dictionary<string, CampaignTime> _minorFactionDesertionCooldowns; // re-enlist block per minor faction
 
 // Veteran retirement system (per-faction)
 private Dictionary<string, FactionVeteranRecord> _veteranRecords;
@@ -235,6 +243,19 @@ _currentTermKills += kills;  // Track for faction record
 - Progress (tier, XP) preserved during grace
 - Failing to re-enlist triggers desertion penalties
 
+**Minor Factions (Mercenary Clans):**
+- When enlisting with minor factions, player clan mirrors the lord faction’s active wars; nameplate colors and battle joins work as allies/enemies.
+- On discharge, mirrored wars are reset to neutral.
+- Deserting a minor faction applies -50 relation to the lord and their clan members and blocks re-enlistment with that faction for 90 in-game days (no crime rating).
+- Minor faction lords remain `Clan.IsMinorFaction == true` even while mercenaries for a kingdom; `MapFaction` is the kingdom they serve.
+
+**Waiting in Reserve:**
+- Available in field battles when player is wounded or chooses to sit out
+- Player removed from MapEvent (`MapEventSide = null`) to avoid participation
+- `GenericStateMenuPatch` prevents menu stutter by intercepting native menu calls
+- Player can rejoin anytime - re-adds to MapEvent and activates encounter menu
+- Battle handling skipped while in reserve (prevents menu loops and duplicate XP)
+
 **Army Defeated/Disbanded:**
 - 14-day grace period initiated
 - Player can find new lord in same faction
@@ -250,6 +271,8 @@ _currentTermKills += kills;  // Track for faction record
 - One-day protection shield after release
 - When captor enters a settlement, mod skips all settlement handling (`IsPrisoner` check)
 - Native `PlayerCaptivity` system controls all state during captivity
+- Prisoner transfers between captors (when enemy lords meet/dialog) is expected base game behavior
+- Grace period remains valid regardless of which enemy currently holds the player
 
 **Player Captured at Sea (Naval War Expansion):**
 - Native `PlayerCaptivity` system handles sea captures correctly
