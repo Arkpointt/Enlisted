@@ -57,14 +57,27 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     return true;
                 }
+                
+                // If player is a prisoner, allow all activation changes (captivity system needs control)
+                if (Hero.MainHero?.IsPrisoner == true)
+                {
+                    return true;
+                }
 
-                // CRITICAL: Block activation when waiting in reserve
-                // The native game can try to activate the player during army battles
-                // which causes the encounter system to detect the player and switch menus
-                if (Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+                // Block activation when waiting in reserve AND still enlisted
+                // Only block if actively enlisted - if enlistment ended, allow activation even if flag is stale
+                var isInReserve = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+                if (isInReserve && enlistment.IsEnlisted)
                 {
                     ModLogger.Debug("PostDischargeProtection", "Blocked party activation - player waiting in reserve");
                     return false;
+                }
+                
+                // If reserve flag is stale (enlistment ended but flag wasn't cleared), clear it
+                if (isInReserve && !enlistment.IsEnlisted)
+                {
+                    ModLogger.Debug("PostDischargeProtection", "Clearing stale reserve flag during activation");
+                    Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
                 }
                 
                 // Only intervene when the player has just been discharged and is still in their grace/cleanup window.
@@ -73,20 +86,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
 
-                // Check if player is in a vulnerable state (in battle/encounter after discharge)
+                // Check if player is in a MapEvent after discharge - block to prevent crash-inducing encounter
                 var mainParty = mainPartyMobile.Party;
                 var playerInMapEvent = mainParty?.MapEvent != null;
-                var playerInEncounter = campaign?.PlayerEncounter != null;
-                var inVulnerableState = playerInMapEvent || playerInEncounter;
                 
-                // If in vulnerable state after discharge, prevent activation
-                if (inVulnerableState)
+                if (playerInMapEvent)
                 {
-                    ModLogger.Info("PostDischargeProtection", $"Prevented party activation - discharged but still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
-                    return false; // Prevent activation - this will block IsActive = true
+                    ModLogger.Info("PostDischargeProtection", "Prevented party activation - discharged but still in MapEvent");
+                    return false;
                 }
                 
-                return true; // Allow activation - no vulnerable state detected
+                return true;
             }
             catch (Exception ex)
             {
@@ -96,4 +106,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-

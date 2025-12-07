@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem.GameComponents;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 
@@ -46,9 +47,33 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return;
                 }
                 
-                // When in reserve, the native system returns "army_wait" because the player is attached
-                // to the army leader. Override this to return our custom menu instead.
-                // This prevents ALL native menu switching systems from interfering.
+                // Check if actually enlisted - if not, reserve flag is stale
+                var enlistment = EnlistmentBehavior.Instance;
+                var isEnlisted = enlistment?.IsEnlisted == true;
+                
+                if (!isEnlisted)
+                {
+                    // Reserve flag is stale - clear it and don't intercept
+                    ModLogger.Debug("GenericStateMenuPatch", "Clearing stale reserve flag during menu check");
+                    EnlistedEncounterBehavior.ClearReserveState();
+                    return;
+                }
+                
+                // Check if battle is actually over - if so, DON'T override
+                // This allows the tick handler to detect battle end via genericStateMenu
+                var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+                var mapEvent = lordParty?.Party?.MapEvent;
+                
+                // Battle is over when: no MapEvent, OR MapEvent has a winner, OR lord party is gone
+                var battleOver = mapEvent == null || mapEvent.HasWinner || lordParty == null || !lordParty.IsActive;
+                
+                if (battleOver)
+                {
+                    // Battle is over - don't override, let native menu system take over
+                    return;
+                }
+                
+                // When in reserve AND battle is ongoing, override to our custom menu
                 if (__result == "army_wait" || __result == "army_wait_at_settlement" || __result == "encounter")
                 {
                     __result = "enlisted_battle_wait";
@@ -61,4 +86,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-

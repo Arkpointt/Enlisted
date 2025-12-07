@@ -47,7 +47,10 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
 - `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
-- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes “Abandon army” options while enlisted
+- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes "Abandon army" options while enlisted
+- `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs` - Blocks unwanted encounters, clears stale reserve flags
+- `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs` - Blocks party activation in vulnerable states
+- `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs` - Controls party visibility, allows captivity system control
 
 ---
 
@@ -196,6 +199,7 @@ public static void EnableEncounters()
 - Ensures "Encounter" menu instead of "Help or Leave"
 - Standard battle interface for player
 - Predictable behavior across all battle types
+- Naval MapEvents: `ForceImmediateBattleJoin` syncs the player's `IsCurrentlyAtSea` state and position to the lord before calling `PlayerEncounter.Start/Init()`. This matches the native requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`) and prevents naval join crashes.
 
 ### Activation Gating (Inactive Mode)
 
@@ -260,6 +264,26 @@ public static void EnableEncounters()
 - Player can then choose to Attack, Send Troops, or Leave
 - If battle ended while waiting, player exits to appropriate post-battle menu
 
+### Lingering PlayerEncounter After Discharge
+
+**Scenario:** Service ends (lord captured, player captured, discharge) but PlayerEncounter remains without a MapEvent
+
+**Handling:**
+- `PostDischargeProtectionPatch` blocks party activation while `PlayerEncounter.Current != null`
+- This prevents crashes from "Attack or Surrender" encounters created immediately after discharge
+- `SchedulePostEncounterVisibilityRestore()` queues visibility restoration
+- `RestoreVisibilityAfterEncounter()` waits until PlayerEncounter clears
+- **Watchdog timeout**: If encounter persists >5 seconds with no MapEvent and player is discharged (not enlisted, not prisoner), `ForceFinishLingeringEncounter()` clears it
+- This prevents permanent stuck state when encounter cleanup fails
+
+**Log Pattern:**
+```
+[Enlistment] Player in vulnerable state when ending service (MapEvent: False, Encounter: True, Prisoner: False) - deferring activation
+[PostDischargeProtection] Prevented party activation - discharged but still in battle state (MapEvent: False, Encounter: True)
+[EncounterCleanup] Force finishing lingering PlayerEncounter after discharge (requested at {time})
+[Enlistment] Party visibility restored after encounter cleanup
+```
+
 ### Lord Death While Enlisted
 
 **Scenario:** Lord dies while player is enlisted
@@ -292,6 +316,13 @@ public static void EnableEncounters()
 - Logs show: `Skipping MapEventEnded - player prisoner or cleanup pending`
 - Native captivity system takes full control of player state
 
+**Critical - Party Activation During Captivity:**
+- Native `PlayerCaptivity.StartCaptivity()` sets `MobileParty.MainParty.IsActive = false`
+- `StopEnlist()` now checks `Hero.MainHero.IsPrisoner` before activating the party
+- If prisoner, party stays deactivated; `SchedulePostEncounterVisibilityRestore()` waits for captivity to end
+- `RestoreVisibilityAfterEncounter()` also checks prisoner state and defers until released
+- This prevents the mod from fighting native captivity's party state management
+
 **Important - Prisoner Transfers (Base Game Behavior):**
 - While imprisoned, the base game's `TransferPrisonerBarterBehavior` remains active
 - When enemy lords meet and interact (dialog/barter), they can trade prisoners
@@ -305,6 +336,7 @@ public static void EnableEncounters()
 [EventSafety] Lord {name} captured - starting grace period
 [Battle] Encounter active during lord capture - letting native surrender capture handle the player.
 [Enlistment] Service ended: Lord captured (Honorable: False)
+[Enlistment] Player in vulnerable state when ending service (MapEvent: False, Encounter: False, Prisoner: True) - deferring activation
 [EventSafety] Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)
 ```
 
@@ -315,9 +347,32 @@ public static void EnableEncounters()
 **Handling:**
 - `TryCapturePlayerAlongsideLord()` checks if player should be captured too
 - If player already in encounter (surrender screen), native flow handles capture
-- If player not in encounter, mod calls `TakePrisonerAction.Apply()` to mirror capture
+- If player was in reserve, reserve state is cleared and player is teleported to safety with protection
 - Grace period starts for the kingdom the player was serving
 - Cleanup deferred via `SchedulePlayerCaptureCleanup()` until encounter closes
+
+### Lord's Party Disbanded While Player in Reserve
+
+**Scenario:** Lord's party disbands (not captured) while player is waiting in reserve during battle
+
+**Handling:**
+- `StopEnlist()` now clears `IsWaitingInReserve` immediately when service ends for ANY reason
+- Harmony patches check `IsEnlisted` alongside `IsWaitingInReserve` before blocking
+- If reserve flag is stale (not enlisted), patches clear it automatically
+- This prevents player getting stuck with invisible/inactive party after party disband
+- Player receives grace period and is restored to normal map state
+
+**Log Pattern (when fix triggers):**
+```
+[Enlistment] Lord's party disbanded (Lord: {name}, Kingdom: {kingdom}) - starting grace period
+[Battle] Clearing reserve state during service end
+[Enlistment] Party activated and made visible (no active battle state)
+```
+
+**Log Pattern (stale flag cleared by patches):**
+```
+[PostDischargeProtection] Clearing stale reserve flag during activation
+```
 
 ---
 
@@ -492,6 +547,19 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - The mod correctly stays inactive during captivity
 - Grace period is unaffected by captor changes
 
+**Party stuck invisible/inactive after discharge:**
+- Check if PlayerEncounter is lingering: log shows `Prevented party activation - discharged but still in battle state (Encounter: True)`
+- Watchdog should force-finish after 5 seconds: `Force finishing lingering PlayerEncounter after discharge`
+- If still stuck, check if player is prisoner (`IsPrisoner=True`) - native captivity owns state until release
+- Log pattern when prisoner blocks activation: `Player in vulnerable state when ending service (Prisoner: True) - deferring activation`
+- If stuck after party disband while in reserve, check log for `Clearing reserve state during service end` - this should clear the flag
+- If patches see stale reserve flag, they auto-clear it: `Clearing stale reserve flag during activation`
+
+**"Party activated and made visible" but player is prisoner:**
+- This was a bug (now fixed) - StopEnlist didn't check prisoner state before activating
+- Current code checks `playerIsPrisoner` alongside MapEvent/Encounter before deciding to activate
+- If you see this log while prisoner, ensure you have the latest code
+
 **Debug Output Location:**
 - `Modules/Enlisted/Debugging/enlisted.log`
 
@@ -502,6 +570,9 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs`
 - `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs`
+- `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs`
+- `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs`
+- `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs`
 
 ---
 

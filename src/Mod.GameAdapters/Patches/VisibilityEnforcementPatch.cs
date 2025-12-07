@@ -69,6 +69,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 var enlistment = EnlistmentBehavior.Instance;
+                
+                // If player is a prisoner, allow all visibility changes (captivity system needs control)
+                if (__instance == mainParty && Hero.MainHero?.IsPrisoner == true)
+                {
+                    return true;
+                }
 
                 // Only check for main party
                 if (__instance != mainParty)

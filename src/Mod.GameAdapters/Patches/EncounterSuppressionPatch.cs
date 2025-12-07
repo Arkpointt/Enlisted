@@ -41,9 +41,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var isEnlisted = enlistment?.IsEnlisted == true;
                 var hasGraceProtection = enlistment?.HasActiveGraceProtection == true;
                 
-                // CRITICAL: Also suppress encounters if player just ended enlistment and is still in a MapEvent OR PlayerEncounter
-                // This prevents crashes when player becomes "attackable" right after army defeat
-                // Player might be in a surrender menu (PlayerEncounter) even if MapEvent is null
+                // Check if player just ended enlistment and is still in a MapEvent/Encounter
                 var mainParty = MobileParty.MainParty?.Party;
                 var playerInMapEvent = mainParty?.MapEvent != null;
                 var playerInEncounter = PlayerEncounter.Current != null;
@@ -56,28 +54,39 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true; // Allow normal encounter creation
                 }
 
-                // Check if the main party is involved in this encounter
                 var mainPartyInvolved = attackerParty == mainParty || defenderParty == mainParty;
                 if (!mainPartyInvolved)
                 {
                     return true; // Allow normal encounter creation
                 }
                 
-                // CRITICAL: Block encounters involving the player's party when waiting in reserve
-                // The native game can set IsActive=true even when we set it to false,
-                // which would otherwise allow encounters to be created and pull player back to battle
-                if (Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+                // If player is already a prisoner, allow encounters (captor movement)
+                if (Hero.MainHero?.IsPrisoner == true)
+                {
+                    return true;
+                }
+                
+                // Block encounters when waiting in reserve AND still enlisted
+                // Only block if actively enlisted - if enlistment ended, clear stale flag and allow
+                var isInReserve = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+                if (isInReserve && isEnlisted)
                 {
                     ModLogger.Debug("EncounterSuppression", "Suppressed player encounter - waiting in reserve");
                     return false;
                 }
                 
-                // CRITICAL: Suppress encounters if enlistment just ended and player is still in MapEvent/Encounter
-                // This prevents crashes when clicking "Surrender" after army defeat
+                // If reserve flag is stale (enlistment ended but flag wasn't cleared), clear it
+                if (isInReserve && !isEnlisted)
+                {
+                    ModLogger.Debug("EncounterSuppression", "Clearing stale reserve flag during encounter creation");
+                    Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                }
+                
+                // Suppress encounters if enlistment just ended and player is still in MapEvent/Encounter
                 if (justEndedEnlistment)
                 {
                     ModLogger.Warn("Encounter", $"Suppressed encounter - enlistment just ended and player still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
-                    return false; // Prevent encounter until battle state clears
+                    return false;
                 }
 
                 if (hasGraceProtection)
@@ -89,12 +98,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // If not enlisted and not in grace period, allow normal encounters
                 if (!isEnlisted)
                 {
-                    return true; // Allow normal encounter creation
+                    return true;
                 }
 
                 // CRITICAL: Prevent encounters with the lord's party itself
-                // When the player is positioned at the lord's location and activated,
-                // the game can create an unwanted encounter with the lord's party
                 var enlistedLord = enlistment!.CurrentLord;
                 var lordParty = enlistedLord?.PartyBelongedTo?.Party;
                 
@@ -110,9 +117,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         var lordInBattle = lordParty.MapEvent != null;
                         if (!lordInBattle)
                         {
-                            // CRITICAL: Allow encounters when player party is visible/active - indicates player-initiated conversation
-                            // When party is invisible and attached, it's an unwanted automatic encounter
-                            // When party is visible or not attached, it's likely a player-initiated conversation
+                            // Allow encounters when player party is visible/active - indicates player-initiated conversation
                             var mainMobileParty = MobileParty.MainParty;
                             var partyVisible = mainMobileParty?.IsVisible == true;
                             var partyActive = mainMobileParty?.IsActive == true;
@@ -120,14 +125,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
                             
                             if (isPlayerInitiated)
                             {
-                                // Player party is visible/active (or the player explicitly triggered the interaction)
-                                // Allow the encounter so the player can talk to the lord while remaining hidden on the map.
-                                ModLogger.Debug("EncounterSuppression", $"Allowing player-initiated encounter with lord's party (Lord: {enlistedLord!.Name}, Visible: {partyVisible}, Active: {partyActive})");
+                                ModLogger.Debug("EncounterSuppression", $"Allowing player-initiated encounter with lord's party (Lord: {enlistedLord!.Name})");
                                 return true;
                             }
                             
-                            // Party is invisible and inactive - this is an unwanted automatic encounter
-                            // Suppress it to prevent "You have encountered a lord's army" menu
+                            // Party is invisible and inactive - suppress unwanted automatic encounter
                             ModLogger.Debug("EncounterSuppression", $"Suppressed unwanted encounter with lord's party (Lord: {enlistedLord.Name})");
                             return false;
                         }
@@ -138,8 +140,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     
                     if (lordInvolved && lordParty.MapEvent != null)
                     {
-                        // This is a legitimate battle involving the lord's party
-                        // Allow it so the player can participate in the battle
                         ModLogger.Debug("EncounterSuppression", "Allowing legitimate battle involving enlisted lord's party");
                         return true;
                     }
@@ -157,24 +157,21 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
                 }
 
-                // Check if the main party is currently active and in a battle (indicating battle participation)
-                // If the party is active and has a MapEvent, it means a battle is starting
+                // Check if the main party is currently active and in a battle
                 if (MobileParty.MainParty?.IsActive == true && mainParty.MapEvent != null)
                 {
                     ModLogger.Debug("EncounterSuppression", "Allowing encounter - main party is active and in battle");
                     return true;
                 }
 
-                // This appears to be an unwanted encounter (not a legitimate battle)
-                // Suppress it to prevent the encounter menu from appearing
+                // Suppress unwanted encounter
                 ModLogger.Debug("EncounterSuppression", "Suppressed unwanted encounter involving enlisted player party");
                 return false;
             }
             catch (Exception ex)
             {
                 ModLogger.Error("EncounterSuppression", $"Error in encounter suppression patch: {ex.Message}");
-                // Fail open - allow encounter if we can't determine state
-                return true;
+                return true; // Fail open - allow encounter if we can't determine state
             }
         }
     }

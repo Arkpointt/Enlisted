@@ -227,6 +227,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private string _pendingPlayerCaptureReason;
         private bool _pendingVisibilityRestore;
+        private CampaignTime _pendingVisibilityRestoreStartTime = CampaignTime.Zero;
 
         /// <summary>
         ///     Backup of the player's battle equipment before enlistment.
@@ -534,6 +535,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 main.IsVisible = false;
                 main.IgnoreByOtherPartiesTill(CampaignTime.Now);
                 TrySetShouldJoinPlayerBattles(main, true);
+
+                // NAVAL BATTLE FIX: Sync player's sea state with lord before joining naval battles
+                // The game requires IsCurrentlyAtSea to match the MapEvent type for encounters to work.
+                // Without this sync, PlayerEncounter.Init() crashes because the player party state
+                // doesn't match the naval battle expectations (ship handling, position validation, etc.)
+                if (mapEvent.IsNavalMapEvent && main.IsCurrentlyAtSea != lordParty.IsCurrentlyAtSea)
+                {
+                    main.IsCurrentlyAtSea = lordParty.IsCurrentlyAtSea;
+                    main.Position = lordParty.Position;
+                    ModLogger.Debug("Battle",
+                        $"Synced player sea state to {lordParty.IsCurrentlyAtSea} for naval battle join");
+                }
 
                 var playerSideLabel = lordIsAttacker ? "Attacker" : "Defender";
 
@@ -1204,6 +1217,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
                 
+                // Clear reserve state immediately when enlistment ends for ANY reason
+                // This prevents player getting stuck invisible if lord's party disbands while in reserve
+                if (Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Info("Battle", "Clearing reserve state during service end");
+                    Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                }
+                
                 // EQUIPMENT ACCOUNTABILITY: Check for missing gear and charge the soldier before discharge
                 // EXCEPTION: Skip for honorable discharge (retirement) - player keeps all gear as reward
                 if (!isHonorableDischarge)
@@ -1252,18 +1273,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Disable battle joining BEFORE state changes
                     TrySetShouldJoinPlayerBattles(main, false);
 
-                    // CRITICAL: Check if player is still in a MapEvent OR PlayerEncounter
-                    // If the player is in either state, we must NOT activate to prevent crashes
+                    // CRITICAL: Check if player is still in a MapEvent, PlayerEncounter, or is a prisoner.
+                    // If the player is in any of these states, we must NOT activate to prevent crashes.
                     // This is especially important when the lord is captured/defeated while the player
-                    // is in a surrender menu - activating while in an encounter causes assertion failures
+                    // is in a surrender menu - activating while in an encounter causes assertion failures.
+                    // Also check prisoner state because native PlayerCaptivity deactivates the party;
+                    // reactivating it here would fight with the native captivity system.
                     bool playerInMapEvent = main.Party.MapEvent != null;
                     bool playerInEncounter = PlayerEncounter.Current != null;
-                    playerInBattleState = playerInMapEvent || playerInEncounter;
+                    bool playerIsPrisoner = Hero.MainHero?.IsPrisoner == true;
+                    playerInBattleState = playerInMapEvent || playerInEncounter || playerIsPrisoner;
 
                     if (playerInBattleState)
                     {
                         ModLogger.Info("Enlistment",
-                            $"Player still in battle state when ending service (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter}) - deactivating to prevent crashes");
+                            $"Player in vulnerable state when ending service (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter}, Prisoner: {playerIsPrisoner}) - deferring activation");
                         // CRITICAL: Deactivate party to prevent them from becoming "attackable"
                         // while still in battle/encounter state - this prevents crashes when clicking "Surrender"
                         main.IsActive = false;
@@ -2118,31 +2142,58 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Hourly tick runs once per in-game hour, providing periodic enforcement
             if (!IsEnlisted)
             {
-                if (!Hero.MainHero.IsPrisoner)
+                var partyState = main?.Party;
+                var inMapEvent = partyState?.MapEvent != null;
+                var isPrisoner = Hero.MainHero.IsPrisoner;
+                var inEncounter = Campaign.Current?.PlayerEncounter != null;
+                var isActive = main.IsActive;
+                var isVisible = main.IsVisible;
+
+                // #region agent log
+                try
                 {
-                    // Enforce visibility and activity for non-enlisted players as a fallback
-                    // This catches any cases where realtime tick might have missed something
-                    bool needsActivation = !main.IsActive;
-                    bool needsVisibility = !main.IsVisible;
+                    var log = $"{{\"sessionId\":\"debug-session\",\"runId\":\"post-fix2\",\"hypothesisId\":\"H3\",\"location\":\"EnlistmentBehavior.cs:OnHourlyTick\",\"message\":\"visibility_check\",\"data\":{{\"inMapEvent\":{inMapEvent.ToString().ToLower()},\"isPrisoner\":{isPrisoner.ToString().ToLower()},\"inEncounter\":{inEncounter.ToString().ToLower()},\"isActive\":{isActive.ToString().ToLower()},\"isVisible\":{isVisible.ToString().ToLower()},\"isEnlisted\":{IsEnlisted.ToString().ToLower()},\"isGracePeriod\":{IsInDesertionGracePeriod.ToString().ToLower()}}},\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}}}\r\n";
+                    System.IO.File.AppendAllText("c:\\Dev\\Enlisted\\Enlisted\\.cursor\\debug.log", log);
+                }
+                catch { }
+                // #endregion agent log
 
-                    if (needsActivation || needsVisibility)
+                // Only skip visibility enforcement when in a MEANINGFUL encounter state:
+                // - Actively in a MapEvent (battle in progress)
+                // - Player is a prisoner (captivity system owns the player)
+                // NOTE: We do NOT skip just because PlayerEncounter.Current exists - it can
+                // be stale after battle ends (LeaveEncounter=true set but not yet processed)
+                if (inMapEvent || isPrisoner)
+                {
+                    ModLogger.LogOnce(
+                        "hourly_skip_vanilla_capture",
+                        "Hourly",
+                        $"Skipping visibility enforcement - vanilla owns player (MapEvent:{inMapEvent}, Prisoner:{isPrisoner})");
+                    return;
+                }
+
+                // Enforce visibility and activity for non-enlisted players as a fallback
+                // This catches any cases where realtime tick might have missed something
+                bool needsActivation = !main.IsActive;
+                bool needsVisibility = !main.IsVisible;
+
+                if (needsActivation || needsVisibility)
+                {
+                    // Log when we're fixing visibility/activity to help diagnose issues
+                    if (needsVisibility)
                     {
-                        // Log when we're fixing visibility/activity to help diagnose issues
-                        if (needsVisibility)
-                        {
-                            ModLogger.Info("Hourly",
-                                "Enforcing visibility for non-enlisted player (was invisible - hourly fallback check)");
-                        }
-
-                        if (needsActivation)
-                        {
-                            ModLogger.Info("Hourly",
-                                "Enforcing activity for non-enlisted player (was inactive - hourly fallback check)");
-                        }
-
-                        main.IsActive = true;
-                        main.IsVisible = true;
+                        ModLogger.Info("Hourly",
+                            "Enforcing visibility for non-enlisted player (was invisible - hourly fallback check)");
                     }
+
+                    if (needsActivation)
+                    {
+                        ModLogger.Info("Hourly",
+                            "Enforcing activity for non-enlisted player (was inactive - hourly fallback check)");
+                    }
+
+                    main.IsActive = true;
+                    main.IsVisible = true;
                 }
 
                 return; // Skip enlistment logic for non-enlisted players
@@ -3017,8 +3068,38 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 var mainParty = CampaignSafetyGuard.SafeMainParty;
                 var mainHero = CampaignSafetyGuard.SafeMainHero;
-                if (mainParty != null && mainHero != null && !mainHero.IsPrisoner)
+                if (mainParty != null && mainHero != null)
                 {
+                    var partyState = mainParty.Party;
+                    var inMapEvent = partyState?.MapEvent != null;
+                    var isPrisoner = mainHero.IsPrisoner;
+                    var inEncounter = Campaign.Current?.PlayerEncounter != null;
+                    var isActive = mainParty.IsActive;
+                    var isVisible = mainParty.IsVisible;
+
+                    // #region agent log
+                    try
+                    {
+                        var log = $"{{\"sessionId\":\"debug-session\",\"runId\":\"post-fix2\",\"hypothesisId\":\"H4\",\"location\":\"EnlistmentBehavior.cs:OnRealtimeTick\",\"message\":\"visibility_check\",\"data\":{{\"inMapEvent\":{inMapEvent.ToString().ToLower()},\"isPrisoner\":{isPrisoner.ToString().ToLower()},\"inEncounter\":{inEncounter.ToString().ToLower()},\"isActive\":{isActive.ToString().ToLower()},\"isVisible\":{isVisible.ToString().ToLower()},\"isEnlisted\":{IsEnlisted.ToString().ToLower()},\"isGracePeriod\":{IsInDesertionGracePeriod.ToString().ToLower()}}},\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}}}\r\n";
+                        System.IO.File.AppendAllText("c:\\Dev\\Enlisted\\Enlisted\\.cursor\\debug.log", log);
+                    }
+                    catch { }
+                    // #endregion agent log
+
+                    // Only skip visibility enforcement when in a MEANINGFUL encounter state:
+                    // - Actively in a MapEvent (battle in progress)
+                    // - Player is a prisoner (captivity system owns the player)
+                    // NOTE: We do NOT skip just because PlayerEncounter.Current exists - it can
+                    // be stale after battle ends (LeaveEncounter=true set but not yet processed)
+                    if (inMapEvent || isPrisoner)
+                    {
+                        ModLogger.LogOnce(
+                            "realtime_skip_vanilla_capture",
+                            "Realtime",
+                            $"Skipping visibility enforcement - vanilla owns player (MapEvent:{inMapEvent}, Prisoner:{isPrisoner})");
+                        return;
+                    }
+
                     // Enforce visibility and activity for non-enlisted players
                     // This ensures the player remains visible even if native systems switch it off
                     // Check both IsActive and IsVisible to catch any state changes
@@ -3847,6 +3928,88 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
+
+        /// <summary>
+        ///     Teleports the player to a safe location (nearest friendly or neutral settlement).
+        ///     Called when lord is captured while player is in reserve, so player doesn't spawn
+        ///     surrounded by enemies at the battle location.
+        /// </summary>
+        /// <param name="mainParty">The player's party to teleport.</param>
+        private void TryTeleportToSafety(MobileParty mainParty)
+        {
+            try
+            {
+                if (mainParty == null)
+                {
+                    return;
+                }
+
+                var playerPosition = mainParty.Position;
+                var playerFaction = Hero.MainHero?.MapFaction;
+                Settlement bestSettlement = null;
+                var bestDistance = float.MaxValue;
+
+                // Find the nearest friendly or neutral settlement
+                foreach (var settlement in Settlement.All)
+                {
+                    if (settlement == null || settlement.IsHideout)
+                    {
+                        continue;
+                    }
+
+                    // Skip enemy settlements
+                    if (playerFaction != null && settlement.MapFaction != null)
+                    {
+                        if (FactionManager.IsAtWarAgainstFaction(playerFaction, settlement.MapFaction))
+                        {
+                            continue;
+                        }
+                    }
+
+                    // Prefer towns and castles over villages
+                    var settlementPosition = settlement.GatePosition;
+                    var distance = playerPosition.Distance(settlementPosition);
+
+                    // Prioritize towns (safer, more services)
+                    if (settlement.IsTown)
+                    {
+                        distance *= 0.7f; // 30% distance bonus for towns
+                    }
+                    else if (settlement.IsCastle)
+                    {
+                        distance *= 0.85f; // 15% distance bonus for castles
+                    }
+
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        bestSettlement = settlement;
+                    }
+                }
+
+                if (bestSettlement != null)
+                {
+                    // Teleport to just outside the settlement
+                    mainParty.Position = bestSettlement.GatePosition;
+                    mainParty.SetMoveModeHold();
+
+                    ModLogger.Info("Battle", 
+                        $"Teleported player to safety near {bestSettlement.Name} after lord capture");
+
+                    var message = new TextObject("{=Enlisted_Message_EscapedToSafety}You have escaped to {SETTLEMENT}.");
+                    message.SetTextVariable("SETTLEMENT", bestSettlement.Name);
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                }
+                else
+                {
+                    ModLogger.Warn("Battle", "No safe settlement found for teleport after lord capture");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Battle", $"Failed to teleport player to safety: {ex.Message}");
+            }
+        }
 
         /// <summary>
         ///     Teleports the player to the nearest settlement with a port when stranded at sea.
@@ -7416,13 +7579,46 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return false;
             }
 
-            if (capturingParty == null)
+            // Check if player was waiting in reserve - if so, clean up the reserve state
+            // so the player can appear on the map after the battle ends
+            var wasInReserve = Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+            
+            if (wasInReserve)
             {
-                ModLogger.Info("Battle",
-                    "Lord capture detected but no captor party was provided to mirror capture for player");
+                // Clean up reserve state so player can be restored to the map
+                Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                
+                if (PlayerEncounter.Current != null)
+                {
+                    PlayerEncounter.Current.IsPlayerWaiting = false;
+                    PlayerEncounter.LeaveEncounter = true;
+                }
+                
+                // Restore player party to active/visible state
+                var mainParty = MobileParty.MainParty;
+                if (mainParty != null)
+                {
+                    mainParty.IsActive = true;
+                    mainParty.IsVisible = true;
+                    
+                    // Apply protection so enemies don't immediately attack
+                    var protectionDuration = CampaignTime.Days(1f);
+                    mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + protectionDuration);
+                    
+                    // Move player to nearest friendly settlement to escape the battle
+                    TryTeleportToSafety(mainParty);
+                }
+                
+                // Exit the menu so player returns to campaign map
+                GameMenu.ExitToLast();
+                
+                ModLogger.Info("Battle", "Cleared reserve state after lord capture - player returned to map with protection");
+                
+                // We don't mirror capture here to avoid crashes from calling TakePrisonerAction
+                // during the HeroPrisonerTaken event. Player escapes to safety instead.
                 return false;
             }
-
+            
             if (PlayerEncounter.Current != null)
             {
                 // Player is already in an encounter (e.g., choosing Surrender). Native flow will capture them.
@@ -7431,17 +7627,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return false;
             }
 
-            try
-            {
-                TakePrisonerAction.Apply(capturingParty, Hero.MainHero);
-                ModLogger.Info("Battle", $"Mirrored player capture after lord capture - captor: {capturingParty.Name}");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Battle", $"Error mirroring capture after lord capture: {ex.Message}");
-                return false;
-            }
+            // Player wasn't in reserve and has no active encounter - they shouldn't be here
+            // but if they are, just log and skip capture to avoid crashes
+            ModLogger.Info("Battle", "Lord captured but player not in reserve or encounter - skipping capture mirror");
+            return false;
         }
 
         private void SchedulePostEncounterVisibilityRestore()
@@ -7452,6 +7641,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             _pendingVisibilityRestore = true;
+            _pendingVisibilityRestoreStartTime = CampaignTime.Now;
             NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
         }
 
@@ -7469,13 +7659,40 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
+            var mainHero = Hero.MainHero;
+
+            // Wait until encounter/MapEvent clears before restoring visibility
             if (PlayerEncounter.Current != null || mainParty.Party?.MapEvent != null)
+            {
+                // If enlistment already ended and the encounter persists without a MapEvent, force-finish after a short timeout.
+                // This prevents the player from remaining invisible/inactive because PostDischargeProtection blocks reactivation.
+                var encounter = PlayerEncounter.Current;
+                if ((!IsEnlisted || _isOnLeave) && mainHero != null && !mainHero.IsPrisoner &&
+                    encounter != null && mainParty.Party?.MapEvent == null &&
+                    _pendingVisibilityRestoreStartTime != CampaignTime.Zero &&
+                    CampaignTime.Now - _pendingVisibilityRestoreStartTime > CampaignTime.Seconds(5L))
+                {
+                    ModLogger.Warn("EncounterCleanup",
+                        $"Force finishing lingering PlayerEncounter after discharge (requested at {_pendingVisibilityRestoreStartTime})");
+                    ForceFinishLingeringEncounter("VisibilityRestoreTimeout");
+                    _pendingVisibilityRestoreStartTime = CampaignTime.Now;
+                }
+
+                NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
+                return;
+            }
+
+            // CRITICAL: Don't restore visibility while the player is a prisoner.
+            // Native PlayerCaptivity deactivates the party; fighting it causes state corruption.
+            // Keep waiting until captivity ends (native will restore party state on release).
+            if (mainHero != null && mainHero.IsPrisoner)
             {
                 NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
                 return;
             }
 
             _pendingVisibilityRestore = false;
+            _pendingVisibilityRestoreStartTime = CampaignTime.Zero;
 
             // CRITICAL: If in grace period, apply protection BEFORE making visible
             // This prevents enemies from immediately attacking the player after discharge
