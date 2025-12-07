@@ -33,6 +33,15 @@ namespace Enlisted.Features.Combat.Behaviors
         ///     Used to prevent XP awards when entering reserve mode (OnPlayerBattleEnd fires but battle isn't actually over).
         /// </summary>
         public static bool IsWaitingInReserve { get; private set; }
+        
+        /// <summary>
+        ///     Clears the reserve state flag. Called when the lord is captured while player is in reserve,
+        ///     allowing the capture to proceed cleanly.
+        /// </summary>
+        public static void ClearReserveState()
+        {
+            IsWaitingInReserve = false;
+        }
 
 
         public override void RegisterEvents()
@@ -47,6 +56,11 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             // No persistent state needed
         }
+
+        // NOTE: OnHeroPrisonerTaken handler removed - capture logic is handled by
+        // EnlistmentBehavior.TryCapturePlayerAlongsideLord which properly integrates
+        // with the grace period system. Adding a second handler here caused crashes
+        // due to conflicting state management.
 
         private void OnSessionLaunched(CampaignGameStarter campaignStarter)
         {
@@ -464,22 +478,44 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
 
                 // Check if the battle has ended
-                // If so, let the native system decide what menu to show next
-                // Don't force a return to the enlisted menu - let GetGenericStateMenu() determine it
+                // Battle ends when: MapEvent is null, OR MapEvent.HasWinner is true
                 // Note: lord and lordParty are already declared above (lines 300-301)
-
-                // The MapEvent property exists on Party, not directly on MobileParty
-                // This is the correct API structure for checking battle state
-                if (lordParty?.Party.MapEvent == null && string.IsNullOrEmpty(genericStateMenu))
+                var mapEvent = lordParty?.Party.MapEvent;
+                var battleEnded = mapEvent == null || mapEvent.HasWinner;
+                
+                // Also check if lord's party is gone (disbanded/captured)
+                var lordPartyGone = lordParty == null || !lordParty.IsActive;
+                
+                if ((battleEnded || lordPartyGone) && string.IsNullOrEmpty(genericStateMenu))
                 {
                     // Clear the waiting in reserve flag - battle has ended
                     IsWaitingInReserve = false;
-                    
-                    // Battle ended - return to normal enlisted state
-                    // Party should stay inactive (normal enlisted hidden state)
                     args.MenuContext.GameMenu.EndWait();
                     
-                    // Return to enlisted status menu for clean recovery
+                    // CRITICAL: Clean up the encounter state so the player doesn't get stuck invisible
+                    // When the battle ends while in reserve, we need to:
+                    // 1. Clear the encounter so visibility enforcement doesn't skip us
+                    // 2. Restore the party to active/visible if not enlisted
+                    if (PlayerEncounter.Current != null)
+                    {
+                        PlayerEncounter.Current.IsPlayerWaiting = false;
+                        PlayerEncounter.LeaveEncounter = true;
+                        ModLogger.Info("Battle", "Cleaned up encounter state after battle end");
+                    }
+                    
+                    // If no longer enlisted (lord captured/party disbanded), restore player to map
+                    if (enlistment?.IsEnlisted != true)
+                    {
+                        var mainParty = MobileParty.MainParty;
+                        if (mainParty != null && !Hero.MainHero.IsPrisoner)
+                        {
+                            mainParty.IsActive = true;
+                            mainParty.IsVisible = true;
+                            ModLogger.Info("Battle", "Restored player party to map after battle end (not enlisted)");
+                        }
+                    }
+                    
+                    // Return to normal enlisted state or campaign map
                     // Note: 'enlistment' variable is already defined at the start of this method
                     if (enlistment?.IsEnlisted == true)
                     {

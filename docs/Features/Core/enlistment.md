@@ -58,6 +58,7 @@ Provide the foundation for military service - join a lord's forces, follow them 
 **Daily Service:**
 - Follow enlisted lord's army movements
 - Participate in battles when lord fights (Direct join, bypassing "Help or Leave")
+- Naval battles: before `PlayerEncounter.Start/Init`, the player party copies the lord's `IsCurrentlyAtSea` flag and position so naval encounters meet the engine requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`) and avoid crashes.
 - Receive daily wages (detailed breakdown shown in clan finance tooltip)
 - Earn XP: +25 daily, +25 per battle, +1 per enemy killed
 - Kills tracked per faction and term (persists on re-enlistment)
@@ -234,6 +235,58 @@ _currentTermKills += kills;  // Track for faction record
 - **Grace Period Shield**: After defeat, one-day ignore window prevents re-engagement
 - **Visual Map Tracking**: Lord's party automatically tracked on map when enlisted, removed on discharge/leave
 - **Minor Faction Support**: Veteran system now supports both Kingdoms and Clans (minor factions)
+
+**Critical Code - StopEnlist Prisoner/Battle State Check:**
+```csharp
+// In StopEnlist() - determines whether to activate party or defer
+bool playerInMapEvent = main.Party.MapEvent != null;
+bool playerInEncounter = PlayerEncounter.Current != null;
+bool playerIsPrisoner = Hero.MainHero?.IsPrisoner == true;
+playerInBattleState = playerInMapEvent || playerInEncounter || playerIsPrisoner;
+
+if (playerInBattleState)
+{
+    // Don't fight native state management - defer activation
+    main.IsActive = false;
+    main.IsVisible = false;
+    SchedulePostEncounterVisibilityRestore();
+}
+else
+{
+    // Safe to activate - no active encounter/battle/captivity
+    main.IsVisible = true;
+    main.IsActive = true;
+}
+```
+
+**Critical Code - Visibility Restore Watchdog:**
+```csharp
+// In RestoreVisibilityAfterEncounter() - handles stuck encounters
+// Wait for encounter to clear
+if (PlayerEncounter.Current != null || mainParty.Party?.MapEvent != null)
+{
+    // Watchdog: if discharged and encounter lingers >5s with no MapEvent, force-finish it
+    if ((!IsEnlisted || _isOnLeave) && !mainHero.IsPrisoner &&
+        encounter != null && mainParty.Party?.MapEvent == null &&
+        CampaignTime.Now - _pendingVisibilityRestoreStartTime > CampaignTime.Seconds(5L))
+    {
+        ForceFinishLingeringEncounter("VisibilityRestoreTimeout");
+    }
+    NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
+    return;
+}
+
+// Don't restore while prisoner - native captivity owns party state
+if (mainHero != null && mainHero.IsPrisoner)
+{
+    NextFrameDispatcher.RunNextFrame(RestoreVisibilityAfterEncounter, true);
+    return;
+}
+
+// Safe to restore visibility
+mainParty.IsActive = true;
+mainParty.IsVisible = true;
+```
 
 ## Edge Cases
 

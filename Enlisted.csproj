@@ -178,6 +178,7 @@
     <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\CommandTent\UI\CommandTentMenuHandler.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs"/>

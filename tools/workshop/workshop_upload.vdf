@@ -52,6 +52,6 @@ Harmony → Native → ... → Enlisted"
     }
     
     // Optional: Change notes for updates
-    "changenote" "Update v0.5.4"
+    "changenote" "Update v0.5.5"
 }
 

@@ -8,7 +8,7 @@ Comprehensive documentation for all major features in the Enlisted mod. Each spe
 
 The foundational systems that enable military service.
 
-- **[Enlistment System](Core/enlistment.md)** - Core service mechanics: wages, XP, kills, retirement, grace periods, army following
+- **[Enlistment System](Core/enlistment.md)** - Core service mechanics: wages, XP, kills, retirement, grace periods, army following; naval join safety (sea-state sync before PlayerEncounter) and prisoner/encounter-safe discharge recovery
 - **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment and missions
 - **[Duties System](Core/duties-system.md)** - Military roles and assignments with skill bonuses
 - **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression
@@ -49,7 +49,7 @@ Special mission types available to enlisted players.
 
 Low-level systems that ensure stability and prevent issues.
 
-- **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention and safety measures
+- **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention and safety measures, including reserve watchdog for lingering encounters, prisoner-state aware activation, and a guarded besiege-menu fix (Harmony prefix on `CheckFortificationAttackableHonorably`, gated by EnlistedActivation to avoid the null `EncounterSettlement` crash)
 - **[Formation Assignment](Technical/formation-assignment.md)** - Battle formation assignment and position teleportation to lord's deployment
 
 ---

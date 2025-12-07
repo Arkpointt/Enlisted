@@ -2149,15 +2149,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var isActive = main.IsActive;
                 var isVisible = main.IsVisible;
 
-                // #region agent log
-                try
-                {
-                    var log = $"{{\"sessionId\":\"debug-session\",\"runId\":\"post-fix2\",\"hypothesisId\":\"H3\",\"location\":\"EnlistmentBehavior.cs:OnHourlyTick\",\"message\":\"visibility_check\",\"data\":{{\"inMapEvent\":{inMapEvent.ToString().ToLower()},\"isPrisoner\":{isPrisoner.ToString().ToLower()},\"inEncounter\":{inEncounter.ToString().ToLower()},\"isActive\":{isActive.ToString().ToLower()},\"isVisible\":{isVisible.ToString().ToLower()},\"isEnlisted\":{IsEnlisted.ToString().ToLower()},\"isGracePeriod\":{IsInDesertionGracePeriod.ToString().ToLower()}}},\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}}}\r\n";
-                    System.IO.File.AppendAllText("c:\\Dev\\Enlisted\\Enlisted\\.cursor\\debug.log", log);
-                }
-                catch { }
-                // #endregion agent log
-
                 // Only skip visibility enforcement when in a MEANINGFUL encounter state:
                 // - Actively in a MapEvent (battle in progress)
                 // - Player is a prisoner (captivity system owns the player)
@@ -3076,15 +3067,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var inEncounter = Campaign.Current?.PlayerEncounter != null;
                     var isActive = mainParty.IsActive;
                     var isVisible = mainParty.IsVisible;
-
-                    // #region agent log
-                    try
-                    {
-                        var log = $"{{\"sessionId\":\"debug-session\",\"runId\":\"post-fix2\",\"hypothesisId\":\"H4\",\"location\":\"EnlistmentBehavior.cs:OnRealtimeTick\",\"message\":\"visibility_check\",\"data\":{{\"inMapEvent\":{inMapEvent.ToString().ToLower()},\"isPrisoner\":{isPrisoner.ToString().ToLower()},\"inEncounter\":{inEncounter.ToString().ToLower()},\"isActive\":{isActive.ToString().ToLower()},\"isVisible\":{isVisible.ToString().ToLower()},\"isEnlisted\":{IsEnlisted.ToString().ToLower()},\"isGracePeriod\":{IsInDesertionGracePeriod.ToString().ToLower()}}},\"timestamp\":{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}}}\r\n";
-                        System.IO.File.AppendAllText("c:\\Dev\\Enlisted\\Enlisted\\.cursor\\debug.log", log);
-                    }
-                    catch { }
-                    // #endregion agent log
 
                     // Only skip visibility enforcement when in a MEANINGFUL encounter state:
                     // - Actively in a MapEvent (battle in progress)

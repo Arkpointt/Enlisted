@@ -13,7 +13,7 @@ namespace Enlisted.Mod.Core.Logging
         /// <summary>
         ///     Mod version for diagnostics. Update this when releasing new versions.
         /// </summary>
-        public const string ModVersion = "0.5.4";
+        public const string ModVersion = "0.5.5";
 
         public const string TargetGameVersion = "1.3.9";
         private static bool _hasLoggedStartup;

@@ -150,6 +150,6 @@ tools/workshop/
 |-------|-------|
 | AppID | 261550 |
 | Mod Name | Enlisted |
-| Version | v0.5.4 |
+| Version | v0.5.5 |
 | Visibility | 0=Public, 1=Friends, 2=Hidden |
 
