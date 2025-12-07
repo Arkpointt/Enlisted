@@ -186,6 +186,19 @@ namespace Enlisted.Features.Interface.Behaviors
             var playerEncounter = PlayerEncounter.Current != null;
             var lordSiegeEvent = lord?.Party.SiegeEvent != null;
             var siegeRelatedBattle = IsSiegeRelatedBattle(main, lord);
+            
+            // Settlement encounters are OK - they happen when armies enter towns/castles
+            // We only want to block battle/siege encounters, not peaceful settlement visits
+            var isSettlementEncounter = playerEncounter &&
+                PlayerEncounter.EncounterSettlement != null &&
+                !playerBattle;
+            
+            // If it's a settlement encounter (not a battle), allow menu activation
+            if (isSettlementEncounter && !lordSiegeEvent && !siegeRelatedBattle)
+            {
+                ModLogger.Debug("Interface", "Allowing menu activation - settlement encounter (not battle)");
+                return true;
+            }
 
             // If any conflict exists, prevent menu activation
             // This ensures menus don't interfere with battles, sieges, or encounters
@@ -553,9 +566,33 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Override army_wait and army_wait_at_settlement menus when enlisted
                 // These are native army menus that appear when the lord leaves settlements or during army operations
                 // Enlisted soldiers should see their custom menu instead, unless in combat/siege
-                if (_currentMenuId == "army_wait" || _currentMenuId == "army_wait_at_settlement")
+                
+                // For army_wait_at_settlement, we EXPECT a settlement encounter - that's normal for entering a town
+                // We should only block during actual battles, not peaceful settlement entries
+                var isSettlementEncounter = PlayerEncounter.Current != null &&
+                    PlayerEncounter.EncounterSettlement != null &&
+                    MobileParty.MainParty?.Party.MapEvent == null;
+                
+                if (_currentMenuId == "army_wait_at_settlement")
                 {
-                    // Don't override during battles or sieges
+                    // Allow override for settlement encounters (peaceful town/castle entry)
+                    // Block only during sieges or siege-related battles
+                    if (!lordSiegeEvent && !siegeRelatedBattle)
+                    {
+                        ModLogger.Debug("Menu", $"Overriding army_wait_at_settlement (settlement encounter: {isSettlementEncounter})");
+                        // Defer the override to next frame to avoid conflicts with the native menu system
+                        NextFrameDispatcher.RunNextFrame(() =>
+                        {
+                            if (enlistment?.IsEnlisted == true)
+                            {
+                                SafeActivateEnlistedMenu();
+                            }
+                        });
+                    }
+                }
+                else if (_currentMenuId == "army_wait")
+                {
+                    // For army_wait (non-settlement), keep the original stricter check
                     if (!playerBattle && !playerEncounter && !lordSiegeEvent && !siegeRelatedBattle)
                     {
                         // Defer the override to next frame to avoid conflicts with the native menu system
@@ -1829,10 +1866,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
             var settlement = lord.CurrentSettlement;
 
-            // Check if lord is in a town or castle AND player is not already inside the settlement
-            // Player is "inside" if they have an active settlement encounter or are in a town/castle menu
-            var playerInSettlement = MobileParty.MainParty?.CurrentSettlement != null;
-            var canVisit = (settlement.IsTown || settlement.IsCastle) && !playerInSettlement;
+            // Check if lord is in a town or castle AND player hasn't already entered the native town/castle menu
+            // When in an army, CurrentSettlement is set but player hasn't visited the town yet (shops, keep, etc.)
+            // We check if the current menu is a native settlement menu to determine if they're actually inside
+            var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "";
+            var playerInNativeSettlementMenu = currentMenu == "town" || currentMenu == "castle" ||
+                currentMenu.StartsWith("town_") || currentMenu.StartsWith("castle_");
+            var canVisit = (settlement.IsTown || settlement.IsCastle) && !playerInNativeSettlementMenu;
 
             if (canVisit)
             {

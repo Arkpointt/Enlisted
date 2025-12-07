@@ -492,6 +492,73 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Immediately joins the lord's battle when MapEvent starts so the fight cannot auto-resolve
+        ///     before the player is collected. Used as a fast-path guard for tiny skirmishes that end in
+        ///     the same frame they begin.
+        /// </summary>
+        private void ForceImmediateBattleJoin(MapEvent mapEvent, MobileParty main, MobileParty lordParty)
+        {
+            try
+            {
+                if (mapEvent == null || main == null || lordParty == null)
+                {
+                    return;
+                }
+
+                // Respect reserve choice; don't force-join if the player opted to sit out
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle", "Skipping immediate join - player is waiting in reserve");
+                    return;
+                }
+
+                // Already joined
+                if (main.Party?.MapEvent == mapEvent)
+                {
+                    return;
+                }
+
+                var attackerSide = mapEvent.AttackerSide;
+                var defenderSide = mapEvent.DefenderSide;
+                bool lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == lordParty.Party) == true;
+                var targetSide = lordIsAttacker ? attackerSide : defenderSide;
+
+                if (targetSide == null)
+                {
+                    ModLogger.Warn("Battle", "MapEventStarted: could not resolve lord side for immediate join");
+                    return;
+                }
+
+                // Make sure the player is eligible for collection and hidden to avoid helper menus
+                main.IsActive = true;
+                main.IsVisible = false;
+                main.IgnoreByOtherPartiesTill(CampaignTime.Now);
+                TrySetShouldJoinPlayerBattles(main, true);
+
+                var playerSideLabel = lordIsAttacker ? "Attacker" : "Defender";
+
+                // Join the MapEvent on the lord's side right away to block auto-sim resolution
+                main.Party.MapEventSide = targetSide;
+                ModLogger.Info("Battle",
+                    $"Immediate battle join on {playerSideLabel} side (MapEventStarted guard, naval={mapEvent.IsNavalMapEvent})");
+
+                if (PlayerEncounter.Current == null && !_playerEncounterCreatedForBattle)
+                {
+                    _playerEncounterCreatedForBattle = true;
+                    PlayerEncounter.Start();
+                    PlayerEncounter.Init();
+                    ModLogger.Info("Battle",
+                        "PlayerEncounter initialized at battle start to prevent instant auto-resolve");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Battle",
+                    $"Failed immediate battle join on MapEventStarted: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         ///     Registers event listeners that respond to game events throughout the campaign.
         ///     These events fire at various intervals and trigger specific behaviors like
         ///     party state updates, battle detection, lord status changes, and XP processing.
@@ -614,6 +681,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info("SaveLoad",
                     $"Loading enlistment state - Lord: {_enlistedLord?.Name?.ToString() ?? "null"}, Tier: {_enlistmentTier}, XP: {_enlistmentXP}, OnLeave: {_isOnLeave}, GracePeriod: {IsInDesertionGracePeriod}");
                 ValidateLoadedState();
+                
+                // Clean up any duplicate hero entries in rosters (can occur after escape from captivity)
+                DeduplicateRosterHeroes();
+                
                 ModLogger.Info("SaveLoad", "Enlistment state validated and restored");
 
                 // Sync activation based on loaded state
@@ -2537,6 +2608,103 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Removes duplicate hero entries from player's roster that can occur after escape from captivity.
+        ///     Also cleans up stale references to player companions in other parties (e.g., lord's party).
+        /// </summary>
+        private void DeduplicateRosterHeroes()
+        {
+            try
+            {
+                var main = MobileParty.MainParty;
+                if (main == null)
+                {
+                    return;
+                }
+
+                var mainRoster = main.MemberRoster;
+                var duplicatesRemoved = 0;
+                var staleRefsRemoved = 0;
+
+                // Track heroes we've seen in main roster to detect duplicates
+                var seenHeroes = new HashSet<CharacterObject>();
+                var heroesToRemove = new List<(CharacterObject character, int excess)>();
+
+                foreach (var troop in mainRoster.GetTroopRoster())
+                {
+                    if (!troop.Character.IsHero)
+                    {
+                        continue;
+                    }
+
+                    // Heroes should only appear once in roster (count = 1)
+                    if (troop.Number > 1)
+                    {
+                        heroesToRemove.Add((troop.Character, troop.Number - 1));
+                    }
+                    else if (seenHeroes.Contains(troop.Character))
+                    {
+                        // Duplicate entry - shouldn't happen but clean up
+                        heroesToRemove.Add((troop.Character, troop.Number));
+                    }
+                    else
+                    {
+                        seenHeroes.Add(troop.Character);
+                    }
+                }
+
+                // Remove duplicate hero entries
+                foreach (var (character, excess) in heroesToRemove)
+                {
+                    mainRoster.AddToCounts(character, -excess, false, 0, 0, true, -1);
+                    duplicatesRemoved += excess;
+                    ModLogger.Warn("SaveLoad", $"Removed {excess} duplicate entry for hero {character.Name}");
+                }
+
+                // Clean up stale companion references in lord's party (if enlisted)
+                if (_enlistedLord?.PartyBelongedTo != null)
+                {
+                    var lordRoster = _enlistedLord.PartyBelongedTo.MemberRoster;
+                    var staleCompanions = new List<TroopRosterElement>();
+
+                    foreach (var troop in lordRoster.GetTroopRoster())
+                    {
+                        if (!troop.Character.IsHero || troop.Character == CharacterObject.PlayerCharacter)
+                        {
+                            continue;
+                        }
+
+                        var hero = troop.Character.HeroObject;
+                        if (hero != null && hero.Clan == Clan.PlayerClan)
+                        {
+                            // Companion is in lord's party - check if also in player's party (stale ref)
+                            if (mainRoster.GetTroopCount(troop.Character) > 0)
+                            {
+                                staleCompanions.Add(troop);
+                            }
+                        }
+                    }
+
+                    foreach (var stale in staleCompanions)
+                    {
+                        lordRoster.AddToCounts(stale.Character, -stale.Number, false, 0, 0, true, -1);
+                        staleRefsRemoved++;
+                        ModLogger.Warn("SaveLoad", $"Removed stale companion ref {stale.Character.Name} from lord's party");
+                    }
+                }
+
+                if (duplicatesRemoved > 0 || staleRefsRemoved > 0)
+                {
+                    ModLogger.Info("SaveLoad",
+                        $"Roster cleanup: removed {duplicatesRemoved} duplicates, {staleRefsRemoved} stale refs");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("SaveLoad", $"Error during roster deduplication: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         ///     Restores proper party activity state after a save is loaded.
         ///     Called from the first campaign tick after loading, NOT from SyncData.
         ///     The game asserts !IsActive during save load, so we must defer this.
@@ -2622,6 +2790,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         ReclaimCompanionsFromLord();
                     }
+
+                    // Activate enlisted menu after state restoration (deferred to next frame)
+                    // This ensures the player sees their status menu when loading a save while enlisted
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        if (IsEnlisted && !_isOnLeave && !Hero.MainHero.IsPrisoner)
+                        {
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                        }
+                    });
                 }
             }
             catch (Exception ex)
@@ -5332,16 +5510,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var playerFaction = Hero.MainHero?.MapFaction;
-                if (playerFaction == null) return;
+                if (playerFaction == null)
+                {
+                    return;
+                }
 
                 // Mark all visible parties from factions at war with player as dirty
                 // This triggers nameplate color refresh (same pattern as DeclareWarAction.ApplyInternal)
                 foreach (var party in MobileParty.All)
                 {
-                    if (!party.IsVisible) continue;
+                    if (!party.IsVisible)
+                    {
+                        continue;
+                    }
                     
                     var partyFaction = party.MapFaction;
-                    if (partyFaction == null) continue;
+                    if (partyFaction == null)
+                    {
+                        continue;
+                    }
 
                     // Check if this party's faction is at war with player
                     if (FactionManager.IsAtWarAgainstFaction(playerFaction, partyFaction))
@@ -5353,10 +5540,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Also mark settlements
                 foreach (var settlement in Settlement.All)
                 {
-                    if (!settlement.IsVisible) continue;
+                    if (!settlement.IsVisible)
+                    {
+                        continue;
+                    }
                     
                     var settlementFaction = settlement.MapFaction;
-                    if (settlementFaction == null) continue;
+                    if (settlementFaction == null)
+                    {
+                        continue;
+                    }
 
                     if (FactionManager.IsAtWarAgainstFaction(playerFaction, settlementFaction))
                     {
@@ -6077,6 +6270,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Restore companions to player party on retirement (regular troops stay with lord).
         ///     Companions should be available for the player again after service ends.
+        ///     Deduplicates against existing roster and cleans stale refs from lord party.
         /// </summary>
         private void RestoreCompanionsToPlayer()
         {
@@ -6085,52 +6279,79 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var main = MobileParty.MainParty;
                 var lordParty = _enlistedLord?.PartyBelongedTo;
 
-                if (main == null || lordParty == null)
+                if (main == null)
                 {
+                    ModLogger.Warn("Enlistment", "RestoreCompanionsToPlayer skipped - main party missing");
                     return;
                 }
 
-                var companionsRestored = 0;
+                if (lordParty == null)
+                {
+                    ModLogger.Warn("Enlistment", "RestoreCompanionsToPlayer skipped - lord party missing");
+                    return;
+                }
+
+                var mainRoster = main.MemberRoster;
+                var lordRoster = lordParty.MemberRoster;
                 var companionsToRestore = new List<TroopRosterElement>();
+                var staleRefsToRemove = new List<TroopRosterElement>();
 
                 // Find player's companions in lord's party
-                foreach (var troop in lordParty.MemberRoster.GetTroopRoster())
+                foreach (var troop in lordRoster.GetTroopRoster())
                 {
-                    // Only restore hero companions, not regular troops
-                    if (troop.Character.IsHero && troop.Character != CharacterObject.PlayerCharacter)
+                    if (!troop.Character.IsHero || troop.Character == CharacterObject.PlayerCharacter)
                     {
-                        // Check if this companion belongs to player's clan
-                        var hero = troop.Character.HeroObject;
-                        if (hero != null && hero.Clan == Clan.PlayerClan)
-                        {
-                            companionsToRestore.Add(troop);
-                            companionsRestored += troop.Number;
-                        }
+                        continue;
+                    }
+
+                    var hero = troop.Character.HeroObject;
+                    if (hero == null || hero.Clan != Clan.PlayerClan)
+                    {
+                        continue;
+                    }
+
+                    // Check if companion already in player's roster
+                    if (mainRoster.GetTroopCount(troop.Character) > 0)
+                    {
+                        // Stale reference - companion escaped and is already with player
+                        staleRefsToRemove.Add(troop);
+                    }
+                    else
+                    {
+                        // Need to restore this companion to player
+                        companionsToRestore.Add(troop);
                     }
                 }
 
-                // Transfer companions back to player using verified API pattern
-                foreach (var companion in companionsToRestore)
+                // Remove stale references from lord's party (companion already with player)
+                foreach (var stale in staleRefsToRemove)
                 {
-                    // Remove from lord's party
-                    lordParty.MemberRoster.AddToCounts(companion.Character, -1 * companion.Number, false, 0, 0, true,
-                        -1);
-                    // Add back to player party
-                    main.MemberRoster.AddToCounts(companion.Character, companion.Number, false, 0, 0, true, -1);
+                    lordRoster.AddToCounts(stale.Character, -stale.Number, false, 0, 0, true, -1);
+                    ModLogger.Info("Enlistment", $"Cleaned stale ref for {stale.Character.Name} from lord's party");
                 }
 
-                if (companionsRestored > 0)
+                // Transfer companions that need restoration
+                foreach (var companion in companionsToRestore)
+                {
+                    lordRoster.AddToCounts(companion.Character, -companion.Number, false, 0, 0, true, -1);
+                    mainRoster.AddToCounts(companion.Character, companion.Number, false, 0, 0, true, -1);
+                }
+
+                if (companionsToRestore.Count > 0)
                 {
                     var message =
                         new TextObject("{=enlist_companions_rejoined}Your {COMPANION_COUNT} companions have rejoined your party upon retirement.");
-                    message.SetTextVariable("COMPANION_COUNT", companionsRestored.ToString());
+                    message.SetTextVariable("COMPANION_COUNT", companionsToRestore.Count.ToString());
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                     ModLogger.Info("Enlistment",
-                        $"Restored {companionsRestored} companions to player party on retirement");
+                        $"Restored {companionsToRestore.Count} companions to player party (cleaned {staleRefsToRemove.Count} stale refs)");
                 }
-
-                // Note: Regular troops stay with the lord as they've become part of the military unit
+                else if (staleRefsToRemove.Count > 0)
+                {
+                    ModLogger.Info("Enlistment",
+                        $"Cleaned {staleRefsToRemove.Count} stale companion refs from lord's party (companions already with player)");
+                }
             }
             catch (Exception ex)
             {
@@ -6428,9 +6649,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         // CRITICAL GUARD: Don't interfere with battle/siege encounter menus
                         // CORRECT API: Use Party.MapEvent (not direct on MobileParty)
-                        var inBattleOrSiege = mainParty?.Party.MapEvent != null ||
-                                              PlayerEncounter.Current != null ||
-                                              _enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null;
+                        // Allow settlement encounters (peaceful town/castle entry) but block battles
+                        var isSettlementEncounter = PlayerEncounter.EncounterSettlement != null &&
+                                                    mainParty?.Party.MapEvent == null;
+                        var inBattleOrSiege = (mainParty?.Party.MapEvent != null) ||
+                                              (PlayerEncounter.Current != null && !isSettlementEncounter) ||
+                                              (_enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null);
 
                         if (!inBattleOrSiege)
                         {
@@ -6718,6 +6942,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 EnsurePlayerSharesArmy(lordParty);
                 PreparePartyForNativeBattle(main);
+                ForceImmediateBattleJoin(mapEvent, main, lordParty);
 
                 // Keep escort behaviour hooked so we stay attached to the lord while the encounter progresses
                 EncounterGuard.TryAttachOrEscort(_enlistedLord);
@@ -7318,6 +7543,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             ModLogger.Info("EventSafety", "Finalizing deferred capture cleanup for player");
+
+            // If the lord party vanished (captor destroyed/captured), companion restore will skip safely.
+            if (_enlistedLord?.PartyBelongedTo == null)
+            {
+                ModLogger.Warn("EventSafety", "Capture cleanup: lord party missing, companion restore may be skipped");
+            }
 
             if (kingdom != null)
             {

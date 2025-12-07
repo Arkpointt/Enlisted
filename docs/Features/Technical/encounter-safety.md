@@ -35,6 +35,7 @@ Prevents the player from triggering map encounters while enlisted by using the g
 - Player party hidden from map systems (UI and logical)
 - Smooth transitions between peace and battle states
 - Reliable cleanup when returning to normal campaign play
+- Hides native “Abandon army” menu option for enlisted players
 
 **Purpose:**
 Keep enlisted players from accidentally entering encounters that would break military service or cause pathfinding crashes, while ensuring they correctly join their Lord's battles without engine conflicts.
@@ -46,6 +47,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
 - `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
+- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes “Abandon army” options while enlisted
 
 ---
 
@@ -78,6 +80,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 3. Player party kept in same army/attachment so vanilla encounter stack automatically collects it
 4. `JoinEncounterAutoSelectPatch` intercepts "join_encounter" menu and automatically joins battle on lord's side
 5. Player sees standard encounter menu (Attack/Send Troops/Wait) instead of "Help X's Party / Don't get involved"
+6. `AbandonArmyBlockPatch` hides native “Abandon army” options while enlisted (no change when not enlisted)
 6. Player participates in battle
 7. If the player is a prisoner or capture cleanup is queued, battle handling is skipped to let native captivity finish (prevents crash when captors are defeated by friendlies).
 
