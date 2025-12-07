@@ -86,13 +86,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
 
-                // Check if player is in a MapEvent after discharge - block to prevent crash-inducing encounter
+                // Check if player is in a vulnerable state after discharge - block to prevent crash-inducing encounter
+                // Must check BOTH MapEvent AND PlayerEncounter - player can be in encounter state
+                // (e.g. surrender negotiations) without an active MapEvent
                 var mainParty = mainPartyMobile.Party;
                 var playerInMapEvent = mainParty?.MapEvent != null;
+                var playerInEncounter = campaign.PlayerEncounter != null;
                 
-                if (playerInMapEvent)
+                if (playerInMapEvent || playerInEncounter)
                 {
-                    ModLogger.Info("PostDischargeProtection", "Prevented party activation - discharged but still in MapEvent");
+                    ModLogger.Info("PostDischargeProtection", 
+                        $"Prevented party activation - discharged but still in battle state (MapEvent: {playerInMapEvent}, Encounter: {playerInEncounter})");
                     return false;
                 }
                 
