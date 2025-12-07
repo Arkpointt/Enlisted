@@ -492,6 +492,73 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Immediately joins the lord's battle when MapEvent starts so the fight cannot auto-resolve
+        ///     before the player is collected. Used as a fast-path guard for tiny skirmishes that end in
+        ///     the same frame they begin.
+        /// </summary>
+        private void ForceImmediateBattleJoin(MapEvent mapEvent, MobileParty main, MobileParty lordParty)
+        {
+            try
+            {
+                if (mapEvent == null || main == null || lordParty == null)
+                {
+                    return;
+                }
+
+                // Respect reserve choice; don't force-join if the player opted to sit out
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle", "Skipping immediate join - player is waiting in reserve");
+                    return;
+                }
+
+                // Already joined
+                if (main.Party?.MapEvent == mapEvent)
+                {
+                    return;
+                }
+
+                var attackerSide = mapEvent.AttackerSide;
+                var defenderSide = mapEvent.DefenderSide;
+                bool lordIsAttacker = attackerSide?.Parties?.Any(p => p?.Party == lordParty.Party) == true;
+                var targetSide = lordIsAttacker ? attackerSide : defenderSide;
+
+                if (targetSide == null)
+                {
+                    ModLogger.Warn("Battle", "MapEventStarted: could not resolve lord side for immediate join");
+                    return;
+                }
+
+                // Make sure the player is eligible for collection and hidden to avoid helper menus
+                main.IsActive = true;
+                main.IsVisible = false;
+                main.IgnoreByOtherPartiesTill(CampaignTime.Now);
+                TrySetShouldJoinPlayerBattles(main, true);
+
+                var playerSideLabel = lordIsAttacker ? "Attacker" : "Defender";
+
+                // Join the MapEvent on the lord's side right away to block auto-sim resolution
+                main.Party.MapEventSide = targetSide;
+                ModLogger.Info("Battle",
+                    $"Immediate battle join on {playerSideLabel} side (MapEventStarted guard, naval={mapEvent.IsNavalMapEvent})");
+
+                if (PlayerEncounter.Current == null && !_playerEncounterCreatedForBattle)
+                {
+                    _playerEncounterCreatedForBattle = true;
+                    PlayerEncounter.Start();
+                    PlayerEncounter.Init();
+                    ModLogger.Info("Battle",
+                        "PlayerEncounter initialized at battle start to prevent instant auto-resolve");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Battle",
+                    $"Failed immediate battle join on MapEventStarted: {ex.Message}", ex);
+            }
+        }
+
+        /// <summary>
         ///     Registers event listeners that respond to game events throughout the campaign.
         ///     These events fire at various intervals and trigger specific behaviors like
         ///     party state updates, battle detection, lord status changes, and XP processing.
@@ -5433,16 +5500,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var playerFaction = Hero.MainHero?.MapFaction;
-                if (playerFaction == null) return;
+                if (playerFaction == null)
+                {
+                    return;
+                }
 
                 // Mark all visible parties from factions at war with player as dirty
                 // This triggers nameplate color refresh (same pattern as DeclareWarAction.ApplyInternal)
                 foreach (var party in MobileParty.All)
                 {
-                    if (!party.IsVisible) continue;
+                    if (!party.IsVisible)
+                    {
+                        continue;
+                    }
                     
                     var partyFaction = party.MapFaction;
-                    if (partyFaction == null) continue;
+                    if (partyFaction == null)
+                    {
+                        continue;
+                    }
 
                     // Check if this party's faction is at war with player
                     if (FactionManager.IsAtWarAgainstFaction(playerFaction, partyFaction))
@@ -5454,10 +5530,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Also mark settlements
                 foreach (var settlement in Settlement.All)
                 {
-                    if (!settlement.IsVisible) continue;
+                    if (!settlement.IsVisible)
+                    {
+                        continue;
+                    }
                     
                     var settlementFaction = settlement.MapFaction;
-                    if (settlementFaction == null) continue;
+                    if (settlementFaction == null)
+                    {
+                        continue;
+                    }
 
                     if (FactionManager.IsAtWarAgainstFaction(playerFaction, settlementFaction))
                     {
@@ -6847,6 +6929,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 EnsurePlayerSharesArmy(lordParty);
                 PreparePartyForNativeBattle(main);
+                ForceImmediateBattleJoin(mapEvent, main, lordParty);
 
                 // Keep escort behaviour hooked so we stay attached to the lord while the encounter progresses
                 EncounterGuard.TryAttachOrEscort(_enlistedLord);

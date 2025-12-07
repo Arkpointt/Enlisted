@@ -38,6 +38,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         private Dictionary<string, CharacterObject> _currentTroopCache;
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future cache invalidation")]
         private CampaignTime _lastCacheUpdate = CampaignTime.Zero;
+        private static readonly HashSet<string> NonReturnableQuestItemIds =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "dragon_banner" // Main quest banner item should never be returned
+            };
 
         // Quartermaster state
         private CharacterObject _selectedTroop;
@@ -928,6 +933,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         private static bool IsReturnableItem(ItemObject item)
         {
             if (item == null)
+            {
+                return false;
+            }
+
+            // Never allow quest-critical items (e.g., Dragon Banner) to be returned
+            if (item.IsQuestItem || NonReturnableQuestItemIds.Contains(item.StringId))
             {
                 return false;
             }
