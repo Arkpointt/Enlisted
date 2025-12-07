@@ -1151,7 +1151,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private bool IsMinorFactionLord()
         {
             var lord = Hero.OneToOneConversationHero;
-            return lord?.Clan?.IsMinorFaction;
+            return lord?.Clan?.IsMinorFaction == true;
         }
 
         /// <summary>
@@ -1183,7 +1183,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return false;
             }
 
-            return enlistment?.CanEnlistWithParty(lord, out _);
+            return enlistment != null && enlistment.CanEnlistWithParty(lord, out _);
         }
 
         /// <summary>

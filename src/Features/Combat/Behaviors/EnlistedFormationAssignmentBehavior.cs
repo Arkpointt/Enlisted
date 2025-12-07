@@ -56,6 +56,15 @@ namespace Enlisted.Features.Combat.Behaviors
         private int _partyAssignmentAttempts;
         private Formation _playerSquadFormation;
         
+        // Retry lord attach when formation is solo and lord agent was not spawned yet
+        private bool _needsLordAttachRetry;
+        private int _lordAttachRetryAttempts;
+        private const int MaxLordAttachRetryAttempts = 180; // ~3 seconds at 60fps
+
+        // Logging flags to avoid spamming user-facing logs
+        private bool _loggedSoloAttachOutcome;
+        private bool _loggedSoloAttachMissing;
+        
         // Deferred companion removal to avoid corrupting spawn state
         // Removing agents during OnAgentBuild can crash the native spawn loop
         private readonly List<Agent> _companionsToRemove = new List<Agent>();
@@ -76,6 +85,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 
                 // Cache the spawn logic for reinforcement detection
                 _spawnLogic = Mission.Current?.GetMissionBehavior<MissionAgentSpawnLogic>();
+                _loggedSoloAttachOutcome = false;
+                _loggedSoloAttachMissing = false;
 
                 // Log that the behavior has been initialized (once per mission)
                 if (!_hasLoggedInit)
@@ -322,6 +333,17 @@ namespace Enlisted.Features.Combat.Behaviors
                     _positionFixAttempts++;
                     TryTeleportPlayerToFormationPosition();
                 }
+
+                // Retry lord attach if we couldn't find lord formation initially
+                if (_needsLordAttachRetry && _lordAttachRetryAttempts < MaxLordAttachRetryAttempts)
+                {
+                    _lordAttachRetryAttempts++;
+                    TryAttachToAlliedOrLordFormation("OnMissionTick-Retry");
+                }
+                else if (_lordAttachRetryAttempts >= MaxLordAttachRetryAttempts)
+                {
+                    _needsLordAttachRetry = false;
+                }
                 
                 // Phase 7: Handle player party (companions + retinue) formation assignment
                 // Agents may not all be spawned in the first few ticks, so we keep trying
@@ -443,8 +465,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 return;
             }
 
-            // Check if player is already in this formation
-            if (playerAgent.Formation == targetFormation)
+            var targetFormationUnitCount = targetFormation.CountOfUnits;
+            ModLogger.Debug("FormationAssignment",
+                $"[{caller}] Target formation={formationClass}, Units={targetFormationUnitCount}, PlayerTeamSide={playerTeam.Side}, MissionTeams={Mission.Current?.Teams.Count()}");
+
+            // If already in this formation but it is effectively empty (only player), try to anchor to lord's formation instead.
+            // In non-army battles with 0 party troops, native spawns the player in a solo formation at the rear.
+            // We reattach to the lord's formation so the player spawns with the main line.
+            var isSoloFormation = targetFormationUnitCount <= 1;
+
+            if (playerAgent.Formation == targetFormation && !isSoloFormation)
             {
                 ModLogger.Info("FormationAssignment",
                     $"[{caller}] Player already in {formationClass} formation - will still check position");
@@ -470,6 +500,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
 
                 return;
+            }
+
+            // If formation is solo, try to attach to a populated allied formation on the same side; fallback to lord formation
+            if (isSoloFormation && enlistment?.CurrentLord != null)
+            {
+                var currentLord = enlistment.CurrentLord;
+                if (TryAttachToAlliedOrLordFormation(caller, playerAgent, playerTeam, isTier4Plus, enlistmentTier, formationClass))
+                {
+                    return;
+                }
             }
 
             // Assign the player to the formation
@@ -511,6 +551,152 @@ namespace Enlisted.Features.Combat.Behaviors
                     $"[{caller}] Failed to assign player to formation: {ex.Message}");
                 // Mark as assigned to prevent spamming this error for this agent
                 _assignedAgent = playerAgent;
+            }
+        }
+
+        /// <summary>
+        /// Attempts to attach the player to the lord's formation. Returns true if attached.
+        /// </summary>
+        private bool TryAttachToAlliedOrLordFormation(string caller, Agent playerAgent = null, Team playerTeam = null,
+            bool isTier4Plus = false, int enlistmentTier = 0, FormationClass desiredClass = FormationClass.Infantry)
+        {
+            try
+            {
+                playerAgent ??= Agent.Main;
+                playerTeam ??= playerAgent?.Team;
+                
+                var enlistment = EnlistmentBehavior.Instance;
+                if (playerAgent == null || playerTeam == null || enlistment?.CurrentLord == null)
+                {
+                    return false;
+                }
+
+                var currentLord = enlistment.CurrentLord;
+                Formation lordFormation = null;
+                Team lordTeam = null;
+                Formation bestAlliedFormation = null;
+                var missionTeams = Mission.Current?.Teams;
+
+                foreach (var missionTeam in missionTeams ?? Enumerable.Empty<Team>())
+                {
+                    if (missionTeam.Side == playerTeam.Side)
+                    {
+                        // Consider allied formations first
+                        var preferred = missionTeam.GetFormation(desiredClass);
+                        if (preferred != null && preferred.CountOfUnits > 1)
+                        {
+                            bestAlliedFormation ??= preferred;
+                            if (bestAlliedFormation == null || preferred.CountOfUnits > bestAlliedFormation.CountOfUnits)
+                            {
+                                bestAlliedFormation = preferred;
+                            }
+                        }
+
+                        // If none in desired class, pick the largest non-empty allied formation
+                        foreach (var formation in missionTeam.FormationsIncludingSpecialAndEmpty)
+                        {
+                            if (formation == null || formation.CountOfUnits <= 1)
+                                continue;
+                            if (bestAlliedFormation == null || formation.CountOfUnits > bestAlliedFormation.CountOfUnits)
+                            {
+                                bestAlliedFormation = formation;
+                            }
+                        }
+                    }
+
+                    foreach (var agent in missionTeam.ActiveAgents)
+                    {
+                        if (agent?.Character == currentLord.CharacterObject)
+                        {
+                            lordFormation = agent.Formation;
+                            lordTeam = missionTeam;
+                            break;
+                        }
+                    }
+
+                    if (lordFormation != null)
+                    {
+                        break;
+                    }
+                }
+
+                // Primary fallback: populated allied formation (prefer duty class)
+                if (bestAlliedFormation != null)
+                {
+                    if (!_loggedSoloAttachOutcome)
+                    {
+                        ModLogger.Info("FormationAssignment",
+                            $"[{caller}] Joined allied formation (index {bestAlliedFormation.FormationIndex}, units {bestAlliedFormation.CountOfUnits})");
+                        _loggedSoloAttachOutcome = true;
+                    }
+
+                    playerAgent.Formation = bestAlliedFormation;
+                    _playerSquadFormation = bestAlliedFormation;
+                    _assignedAgent = playerAgent;
+
+                    SetupSquadCommand(playerAgent, bestAlliedFormation, isTier4Plus);
+
+                    _needsPositionFix = true;
+                    _positionFixAttempts = 0;
+
+                    if (isTier4Plus)
+                    {
+                        _needsPartyAssignment = true;
+                        _partyAssignmentAttempts = 0;
+                        _partyAssignmentComplete = false;
+                    }
+
+                    _needsLordAttachRetry = false;
+                    return true;
+                }
+
+                if (lordFormation != null && lordFormation.CountOfUnits > 0)
+                {
+                    if (!_loggedSoloAttachOutcome)
+                    {
+                        ModLogger.Info("FormationAssignment",
+                            $"[{caller}] Joined lord formation (index {lordFormation.FormationIndex}, units {lordFormation.CountOfUnits}, side={lordTeam?.Side})");
+                        _loggedSoloAttachOutcome = true;
+                    }
+
+                    playerAgent.Formation = lordFormation;
+                    _playerSquadFormation = lordFormation;
+                    _assignedAgent = playerAgent;
+
+                    SetupSquadCommand(playerAgent, lordFormation, isTier4Plus);
+
+                    // Ensure we teleport to the lord's line
+                    _needsPositionFix = true;
+                    _positionFixAttempts = 0;
+
+                    if (isTier4Plus)
+                    {
+                        _needsPartyAssignment = true;
+                        _partyAssignmentAttempts = 0;
+                        _partyAssignmentComplete = false;
+                    }
+
+                    _needsLordAttachRetry = false;
+                    return true;
+                }
+
+                var missionTeamCount = missionTeams?.Count() ?? 0;
+                if (!_loggedSoloAttachMissing)
+                {
+                    ModLogger.Warn("FormationAssignment",
+                        $"[{caller}] Solo formation; no allied/lord formation yet (teams={missionTeamCount}). Will retry briefly.");
+                    _loggedSoloAttachMissing = true;
+                }
+
+                // Schedule retry on tick (lord may not be spawned yet)
+                _needsLordAttachRetry = true;
+                _lordAttachRetryAttempts = 0;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("FormationAssignment", $"[{caller}] Error during lord attach: {ex.Message}");
+                return false;
             }
         }
 

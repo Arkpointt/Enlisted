@@ -280,7 +280,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     faction relationships. We mirror the lord's faction war relations to the player clan so that
         ///     nameplates show correct ally/enemy colors. These are restored to neutral when service ends.
         /// </summary>
-        private readonly List<string> _minorFactionWarRelations = new List<string>();
+        private List<string> _minorFactionWarRelations = new List<string>();
 
         /// <summary>
         ///     Tracks desertion cooldowns for minor factions. When a player deserts from a minor faction lord,
