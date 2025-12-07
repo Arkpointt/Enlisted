@@ -157,6 +157,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _isOnLeave;
 
         /// <summary>
+        ///     Tracks whether the player was a prisoner on the previous tick.
+        ///     Used to detect captivity release and apply protection when transitioning
+        ///     from prisoner to free during the grace period.
+        /// </summary>
+        private bool _wasPrisonerLastTick;
+
+        /// <summary>
         ///     Flag to block all IsActive modifications until post-load initialization is complete.
         ///     This prevents the realtime tick from setting IsActive during the loading process.
         ///     Defaults to false (safe) - set true only after proper initialization.
@@ -3068,6 +3075,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var isActive = mainParty.IsActive;
                     var isVisible = mainParty.IsVisible;
 
+                    // CAPTIVITY TRACKING: Detect when player is released from captivity
+                    // This helps debug issues where players get attacked immediately after release
+                    if (_wasPrisonerLastTick && !isPrisoner)
+                    {
+                        // Player just released from captivity!
+                        ModLogger.Info("Captivity", 
+                            $"Player RELEASED from captivity - IsActive:{isActive}, IsVisible:{isVisible}, InMapEvent:{inMapEvent}, InEncounter:{inEncounter}, InGrace:{IsInDesertionGracePeriod}");
+                        
+                        // ALWAYS apply protection on captivity release - player shouldn't be attacked immediately
+                        // This applies regardless of whether we're in grace period or not
+                        if (mainParty != null)
+                        {
+                            var protectionDuration = CampaignTime.Days(1f);
+                            var protectionUntil = CampaignTime.Now + protectionDuration;
+                            
+                            // Native protection - prevents parties from targeting us
+                            mainParty.IgnoreByOtherPartiesTill(protectionUntil);
+                            
+                            // Mod-level protection - our EncounterSuppressionPatch will block encounters
+                            _graceProtectionEnds = protectionUntil;
+                            
+                            ModLogger.Info("Captivity", 
+                                $"Applied 1-day protection after captivity release (until {protectionUntil})");
+                        }
+                    }
+                    _wasPrisonerLastTick = isPrisoner;
+                    
                     // Only skip visibility enforcement when in a MEANINGFUL encounter state:
                     // - Actively in a MapEvent (battle in progress)
                     // - Player is a prisoner (captivity system owns the player)
@@ -7567,19 +7601,30 @@ namespace Enlisted.Features.Enlistment.Behaviors
             
             if (wasInReserve)
             {
-                // Clean up reserve state so StopEnlist can properly handle restoration
-                // NOTE: We intentionally do NOT activate the party here because:
-                // 1. PlayerEncounter.LeaveEncounter = true isn't processed immediately
-                // 2. This returns false, causing caller to invoke StopEnlist()
-                // 3. StopEnlist sees PlayerEncounter.Current != null and would deactivate again
-                // 4. That race condition leaves the player stuck invisible
-                // Instead, let StopEnlist() handle deferred activation via SchedulePostEncounterVisibilityRestore()
+                // Clean up reserve state and IMMEDIATELY finish the encounter
+                // Setting LeaveEncounter = true doesn't work reliably because:
+                // 1. It's only processed on future menu ticks
+                // 2. GameMenu.ExitToLast() can interrupt normal tick processing
+                // 3. If game time is paused (menus), the encounter stays stuck forever
+                // 4. This caused players to be stuck invisible with no way to recover
                 Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
                 
-                if (PlayerEncounter.Current != null)
+                // CRITICAL: Immediately finish the encounter - don't rely on LeaveEncounter flag
+                var encounter = PlayerEncounter.Current;
+                if (encounter != null)
                 {
-                    PlayerEncounter.Current.IsPlayerWaiting = false;
-                    PlayerEncounter.LeaveEncounter = true;
+                    try
+                    {
+                        encounter.IsPlayerWaiting = false;
+                        PlayerEncounter.LeaveEncounter = true;
+                        // Force immediate cleanup - this clears PlayerEncounter.Current
+                        PlayerEncounter.Finish(true);
+                        ModLogger.Info("Battle", "Force-finished PlayerEncounter to prevent stuck state");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        ModLogger.Warn("Battle", $"Error finishing encounter: {ex.Message} - will rely on watchdog");
+                    }
                 }
                 
                 // Apply protection so enemies don't immediately attack when restored
@@ -7591,17 +7636,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     
                     // Move player to nearest friendly settlement to escape the battle
                     TryTeleportToSafety(mainParty);
+                    
+                    // Since we've finished the encounter, StopEnlist won't see it as "in battle state"
+                    // and will activate the party directly - this is what we want
                 }
                 
                 // Exit the menu so player returns to campaign map
                 GameMenu.ExitToLast();
                 
-                ModLogger.Info("Battle", "Cleared reserve state after lord capture - StopEnlist will handle deferred restoration");
+                ModLogger.Info("Battle", "Cleared reserve state after lord capture - encounter finished, party can be restored");
                 
-                // Return false - StopEnlist will be called and will:
-                // 1. See PlayerEncounter.Current != null (LeaveEncounter not yet processed)
-                // 2. Call SchedulePostEncounterVisibilityRestore()
-                // 3. Visibility watchdog will restore party once encounter clears
                 return false;
             }
             

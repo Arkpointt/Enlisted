@@ -62,8 +62,11 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 
                 // If player is already a prisoner, allow encounters (captor movement)
+                // Log this to help debug "attacked while prisoner" issues
                 if (Hero.MainHero?.IsPrisoner == true)
                 {
+                    ModLogger.Info("Captivity", 
+                        $"Encounter while prisoner - Attacker:{attackerParty?.Name}, Defender:{defenderParty?.Name} (captor party can be attacked)");
                     return true;
                 }
                 
