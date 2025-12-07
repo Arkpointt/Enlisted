@@ -5,9 +5,9 @@
 | Component | Behavior |
 |-----------|----------|
 | Formation Assignment | Player automatically assigned to duty-based formation (Infantry/Ranged/Cavalry/Horse Archer) at battle start |
-| Position Teleportation | Player and squad teleported to lord's position to match army deployment |
-| Reference Agent Search | Searches for lord agent directly across all allied teams |
-| Retry Window | 120 attempts (~2 seconds at 60fps) to allow lord to spawn |
+| Position Teleportation | Player and squad teleported to their assigned formation's position (5m behind center) |
+| Teleport Priority | Formation position → Lord position → Any allied agent |
+| Retry Window | 120 attempts (~2 seconds at 60fps) to allow formations to populate |
 
 ## Table of Contents
 
@@ -28,17 +28,18 @@
 
 ## Overview
 
-Automatically assigns the enlisted player to their designated formation based on duty type (Infantry, Ranged, Cavalry, Horse Archer) when a battle starts, then teleports the player and their squad to the lord's position to ensure they spawn with the army instead of behind it.
+Automatically assigns the enlisted player to their designated formation based on duty type (Infantry, Ranged, Cavalry, Horse Archer) when a battle starts, then teleports the player and their squad to their assigned formation's position to ensure they spawn with their unit type instead of behind the army.
 
 **Key Features:**
 - Automatic formation assignment matching player's duty type
-- Teleportation to lord's position to fix spawn location issues
+- Teleportation to formation position (e.g., archers teleport to archer formation)
+- Player spawns 5m behind formation center to avoid being stuck in the middle
 - Squad command authority at Tier 4+ (player controls their own formation)
 - Companion command blocking (companions cannot become captains or generals)
-- Handles late spawns, reinforcements, and multi-team scenarios
+- Handles late spawns, reinforcements, and single-team scenarios
 
 **Purpose:**
-Fix the issue where the player's map party spawns slightly behind the lord's army when battle starts, causing the player to appear in the wrong location (behind formations instead of with them). This system ensures the player spawns at the correct position mimicking being part of the lord's army deployment.
+Fix the issue where the player's map party spawns slightly behind the lord's army when battle starts, causing the player to appear in the wrong location. This system ensures the player spawns at their assigned formation's position - if you're an archer, you spawn with the archers; if infantry, you spawn with the infantry.
 
 **Files:**
 - `src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs` - Mission behavior that handles formation assignment and teleportation
@@ -82,60 +83,74 @@ Fix the issue where the player's map party spawns slightly behind the lord's arm
 
 **Process:**
 1. System detects position fix is needed (player spawned in wrong location)
-2. Searches for lord agent as teleport reference (see [Reference Agent Search](#reference-agent-search))
-3. Calculates distance from player to lord
-4. If distance > 10m threshold, teleports player to lord's position
-5. Sets movement direction and look direction to match formation
-6. Forces cache update to ensure position sticks
-7. At Tier 4+, also teleports squad members (companions + retinue) to nearby positions
+2. Gets player's formation class from duties system (Infantry/Ranged/Cavalry/HorseArcher)
+3. Gets that formation from the player's team (all allied troops are on the same team)
+4. Calculates target position: formation's CachedMedianPosition minus 5m (behind formation)
+5. If distance > 10m threshold, teleports player to formation position
+6. Sets movement direction and look direction to match formation
+7. Forces cache update to ensure position sticks
+8. At Tier 4+, also teleports squad members (companions + retinue) to nearby positions
+
+**Teleport Priority:**
+1. **Formation Position** - Uses the team's formation matching player's duty (Infantry, Ranged, etc.)
+2. **Lord Position** - Fallback if formation not found or has no units
+3. **Any Allied Agent** - Last resort fallback
 
 **Teleport Threshold:**
-- **10 meters**: If player is more than 10m from lord, teleport is triggered
-- This handles both initial spawn (player party lagged behind) and reinforcement scenarios
+- **10 meters**: If player is more than 10m from target, teleport is triggered
+- **5 meters behind**: Player spawns 5m behind formation center to avoid being stuck in the middle
 
-### Reference Agent Search
+### Formation Position Lookup
 
-**Critical Implementation Detail:** The system must find the lord agent directly, not just any army agent, because during early spawn only the player's party members may be visible in `team.ActiveAgents`.
+**Critical Implementation Detail:** In Bannerlord battles, all allied troops (lord's army + player's party) are on the **same team**. There are no separate allied teams to search - everyone fighting together is on one Team object.
 
-**Search Priority:**
+**Position Priority:**
 
-**Priority 1 - Direct Lord Match:**
+**Priority 1 - Formation Position (Primary):**
+```csharp
+var targetFormation = team.GetFormation(formationClass);
+if (targetFormation != null && targetFormation.CountOfUnits > 0)
+{
+    targetPosition = targetFormation.CachedMedianPosition.GetGroundVec3();
+    // Offset 5m behind formation center
+    targetPosition += -formationDirection.ToVec3() * 5f;
+}
 ```
-Search team.ActiveAgents for agent where:
-  agent.Character == currentLord.CharacterObject
-```
-- Checks all active agents on player's team
-- Matches by character object reference
-- Most reliable method when lord has spawned
+- Gets the formation matching player's duty type from the player's team
+- Uses `CachedMedianPosition` which represents the center of all units in that formation
+- Includes both player party members and lord's army troops
+- Position offset 5m behind to avoid spawning in middle of troops
 
-**Priority 2 - Non-Player-Party Agent:**
+**Priority 2 - Lord Position (Fallback):**
+```csharp
+// Search all teams on same side for lord agent
+foreach (var agent in missionTeam.ActiveAgents)
+    if (agent.Character == currentLord.CharacterObject)
+        targetPosition = agent.Position;
 ```
-Search team.ActiveAgents for agent where:
-  agent.Origin is NOT PartyGroupAgentOrigin from MainParty
-  AND agent.Formation != null
+- Used if formation has no units or doesn't exist
+- Searches all allied teams for the lord agent
+- Falls back to lord's actual position
+
+**Priority 3 - Any Allied Agent (Last Resort):**
+```csharp
+// Find any non-player-party agent on allied team
+foreach (var agent in missionTeam.ActiveAgents)
+    if (agent.Origin is NOT PartyGroupAgentOrigin from MainParty)
+        targetPosition = agent.Position;
 ```
-- Fallback if lord not found in Priority 1
-- Looks for any army troop (not from player's party)
-- Useful when lord hasn't spawned but other army troops have
+- Used only if both formation and lord not found
+- Searches for any army troop not from player's party
+- Ensures some valid teleport target exists
 
-**Priority 3 - Cross-Team Lord Search:**
-```
-Search all Mission.Current.Teams where:
-  team.Side == playerTeam.Side (allied teams)
-  AND find agent where agent.Character == currentLord.CharacterObject
-```
-- Searches all allied team objects
-- Handles cases where lord is on different Team object
-- Ensures lord can be found even if team structure is complex
+**Why Formation Position Works:**
 
-**Why This Matters:**
+The formation's `CachedMedianPosition` includes all units assigned to that formation type:
+- Lord's infantry/archers/cavalry/horse archers
+- Player's retinue (if same formation type)
+- Any reinforcements
 
-The original implementation searched for any non-player-party agent, but during the initial spawn window (first ~0.5-2 seconds), `team.ActiveAgents` may only contain the player's party members:
-- Player agent
-- Companions (if Tier 4+)
-- Retinue soldiers (if Tier 4+)
-
-The lord's army troops may not have spawned yet, or may be in a different collection. By directly searching for the lord's character object, we can find them even if they're in a different team object or spawn slightly later than expected.
+This gives the true center of where that unit type is positioned on the battlefield, ensuring players spawn with their assigned troop type.
 
 ---
 
@@ -181,19 +196,19 @@ The vanilla game assigns heroes as formation captains and team generals based on
 - Prevents companions from appearing as formation captains when set to "Stay Back"
 - Maintains the enlisted soldier role - player is a soldier, not a commander
 
-### Agent Search Priority
+### Teleport Target Priority
 
-The reference agent search uses a three-tier priority system to handle various spawn scenarios:
+The teleport target search uses a three-tier priority system:
 
-1. **Direct Lord Match** - Most reliable, works when lord has spawned
-2. **Non-Player-Party Agent** - Fallback for early spawn scenarios
-3. **Cross-Team Search** - Handles complex team structures
+1. **Formation Position** - Primary: uses the formation's CachedMedianPosition
+2. **Lord Position** - Fallback: finds lord agent and uses their position
+3. **Any Allied Agent** - Last resort: uses any non-player-party agent
 
 This priority system ensures the teleportation can work even when:
-- Lord spawns after player's party
-- Lord is on different Team object
+- Formation has no units yet (falls back to lord)
+- Lord hasn't spawned yet (falls back to any army agent)
 - Only player party agents are visible initially
-- Multiple team objects exist for the same side
+- Complex spawn timing scenarios
 
 ### Spawn Timing Considerations
 
@@ -294,8 +309,8 @@ _spawnLogic.IsInitialSpawnOver      // True after initial deployment
 **Common Issues:**
 
 **Player not teleporting:**
-- Check if lord agent is found (look for "Lord agent not found yet" in logs)
-- Verify `EnlistmentBehavior.Instance.CurrentLord` is not null
+- Check logs for "Teleported player to X formation" message
+- Verify formation has units (log shows unit count)
 - Check if battle is naval (teleportation skipped)
 - Verify player is enlisted and not on leave
 
@@ -311,20 +326,19 @@ _spawnLogic.IsInitialSpawnOver      // True after initial deployment
 - Verify player agent is active and valid
 - Check if already assigned (prevents re-assignment)
 
-**Log Categories:**
-- `FormationAssignment` - Main log category for this system
-- `CompanionCommand` - Companion command blocking (captain/general prevention)
-- Look for messages starting with "Assigned enlisted player", "Teleported player", "Lord agent not found"
-- Look for "Blocked captain" or "Blocked general" messages when debugging companion issues
+**Log Messages (INFO level):**
+- `"Teleported player to Infantry formation (90 units)"` - Success, shows formation type and unit count
+- `"Teleported player to Lord Debana"` - Fallback to lord position (formation not found)
+- `"Teleported player to allied agent"` - Last resort fallback
 
-**Debug Flags:**
-- Set log level to Debug for detailed teleportation attempt logs
-- Monitor retry attempts (should succeed within 120 attempts)
-- Check reference agent search priority (Priority 1, 2, or 3)
+**Debug Logs (DEBUG level - enable for troubleshooting):**
+- `"Teleport search: Looking for X formation"` - Shows search parameters
+- `"Found X formation on player's team (N units)"` - Formation found
+- `"No X formation found, falling back to lord position"` - Fallback triggered
 
 **Verification Steps:**
 1. Player should be in correct formation based on duty type
-2. Player should spawn near lord's position (within 10m)
+2. Player should spawn near their formation (within 10m, 5m behind center)
 3. At Tier 4+, companions and retinue should join same formation
 4. Teleportation should complete within 2 seconds of battle start
 5. Position should remain stable (not revert after teleport)
@@ -333,28 +347,37 @@ _spawnLogic.IsInitialSpawnOver      // True after initial deployment
 
 ## Implementation Notes
 
-**Why Direct Lord Search:**
+**Why Formation Position Instead of Lord:**
 
-The original implementation searched for any non-player-party agent as a teleport reference. However, during the initial spawn window, `team.ActiveAgents` often only contains:
-- Player agent
-- Player's companions (if Tier 4+)
-- Player's retinue soldiers (if Tier 4+)
+The original implementation searched for the lord agent as a teleport reference. However, this had issues:
+- Player would spawn at lord's position, not with their assigned unit type
+- Archers would spawn near infantry if lord was with infantry
+- Didn't reflect the "serve in a formation" fantasy
 
-The lord's army troops may not have spawned yet or may be in a different collection. By directly searching for the lord's character object (`agent.Character == currentLord.CharacterObject`), we can:
-- Find the lord even if on different Team object
-- Work when only player party is visible
-- Handle delayed spawn scenarios
-- Ensure consistent reference point
+The new implementation uses the formation's `CachedMedianPosition`:
+- Player spawns with their assigned troop type (archers with archers, infantry with infantry)
+- Formation position includes all units of that type (lord's army + player's party)
+- 5m offset behind formation center prevents spawning stuck in the middle
 
-**Retry Window:**
+**Why Same Team, Not Separate Teams:**
 
-Extended from 30 attempts (~0.5s) to 120 attempts (~2s) because:
-- Lord may spawn after player's party
-- Mission initialization can delay spawns
-- Multiple spawn waves need time
-- Cross-team search may need multiple attempts
+In Bannerlord battles, all allied troops are on the **same Team object**. There are typically only 2 teams:
+- Team 0: One side (e.g., Defenders)
+- Team 1: Other side (e.g., Attackers)
 
-This ensures teleportation succeeds even in slow-spawn scenarios while remaining fast enough to feel instant.
+The lord's army and player's party are both on the same team. The formation system groups troops by type (Infantry/Ranged/Cavalry/HorseArcher) within each team.
+
+**Getting Formation Class Correctly:**
+
+The formation class must come from the duties system, not from `formation.FormationIndex`:
+```csharp
+// WRONG - can return incorrect values like NumberOfRegularFormations
+var formationClass = formation.FormationIndex;
+
+// CORRECT - uses the duties system
+var formationString = duties?.PlayerFormation ?? "infantry";
+var formationClass = GetFormationClassFromString(formationString);
+```
 
 **Squad Teleportation:**
 
