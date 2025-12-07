@@ -867,16 +867,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Block re-enlistment with minor factions if player deserted from them
             // Minor factions have no crime rating system, so we use a cooldown-based block instead
-            if (lord.MapFaction != null && !(lord.MapFaction is Kingdom))
+            if (lord.MapFaction != null && !(lord.MapFaction is Kingdom) && IsBlockedFromMinorFaction(lord.MapFaction, out var remainingDays))
             {
-                if (IsBlockedFromMinorFaction(lord.MapFaction, out var remainingDays))
-                {
-                    reason = new TextObject(
-                        "{=Enlisted_Message_MinorFactionCooldown}{FACTION} will not accept you back for another {DAYS} days due to your past desertion.");
-                    reason.SetTextVariable("FACTION", lord.MapFaction.Name);
-                    reason.SetTextVariable("DAYS", remainingDays);
-                    return false;
-                }
+                reason = new TextObject(
+                    "{=Enlisted_Message_MinorFactionCooldown}{FACTION} will not accept you back for another {DAYS} days due to your past desertion.");
+                reason.SetTextVariable("FACTION", lord.MapFaction.Name);
+                reason.SetTextVariable("DAYS", remainingDays);
+                return false;
             }
 
             var counterpartParty = MobileParty.ConversationParty ?? lord.PartyBelongedTo;
