@@ -209,6 +209,10 @@ Customize how formations are displayed per culture:
 ## Supported Cultures
 empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
 
+## Enlisted settlement behavior
+- When enlisted and your lord/army reaches a town or castle, the enlisted menu remains active and now shows a Visit option. It only hides if you are already inside a native town/castle menu or an actual battle/siege is active.
+- Settlement encounters (peaceful entry) are allowed; only live battles or sieges block the enlisted menu.
+
 ## Notes
 
 - Changes to config files require restarting your campaign to take effect

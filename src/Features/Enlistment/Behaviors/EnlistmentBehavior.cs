@@ -2790,6 +2790,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         ReclaimCompanionsFromLord();
                     }
+
+                    // Activate enlisted menu after state restoration (deferred to next frame)
+                    // This ensures the player sees their status menu when loading a save while enlisted
+                    NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        if (IsEnlisted && !_isOnLeave && !Hero.MainHero.IsPrisoner)
+                        {
+                            EnlistedMenuBehavior.SafeActivateEnlistedMenu();
+                        }
+                    });
                 }
             }
             catch (Exception ex)
@@ -6639,9 +6649,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         // CRITICAL GUARD: Don't interfere with battle/siege encounter menus
                         // CORRECT API: Use Party.MapEvent (not direct on MobileParty)
-                        var inBattleOrSiege = mainParty?.Party.MapEvent != null ||
-                                              PlayerEncounter.Current != null ||
-                                              _enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null;
+                        // Allow settlement encounters (peaceful town/castle entry) but block battles
+                        var isSettlementEncounter = PlayerEncounter.EncounterSettlement != null &&
+                                                    mainParty?.Party.MapEvent == null;
+                        var inBattleOrSiege = (mainParty?.Party.MapEvent != null) ||
+                                              (PlayerEncounter.Current != null && !isSettlementEncounter) ||
+                                              (_enlistedLord?.PartyBelongedTo?.BesiegedSettlement != null);
 
                         if (!inBattleOrSiege)
                         {
