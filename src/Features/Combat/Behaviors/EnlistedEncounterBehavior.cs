@@ -524,12 +524,6 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 args.MenuContext.GameMenu.EndWait();
 
-                // Check if lord is still in battle - if so, go directly to encounter menu
-                var enlistment = EnlistmentBehavior.Instance;
-                var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
-                var lordMapEvent = lordParty?.Party.MapEvent;
-                var lordStillInBattle = lordMapEvent != null;
-
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
                     try
@@ -539,19 +533,20 @@ namespace Enlisted.Features.Combat.Behaviors
                             ModLogger.Warn("Battle", "Rejoin aborted - campaign not available");
                             return;
                         }
-                        
+                        // Re-evaluate battle state next frame to avoid using stale data
+                        var enlistment = EnlistmentBehavior.Instance;
+                        var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+                        var lordMapEvent = lordParty?.Party.MapEvent;
+                        var lordSide = lordParty?.Party.MapEventSide;
+
                         // CRITICAL: If lord is still in battle, re-add player to the MapEvent
                         // before activating encounter menu (we removed them when entering reserve)
-                        if (lordStillInBattle && lordMapEvent != null)
+                        if (lordMapEvent != null && lordSide != null)
                         {
-                            var lordSide = lordParty?.Party.MapEventSide;
-                            if (lordSide != null)
+                            var playerParty = MobileParty.MainParty?.Party;
+                            if (playerParty != null)
                             {
-                                var playerParty = MobileParty.MainParty?.Party;
-                                if (playerParty != null)
-                                {
-                                    playerParty.MapEventSide = lordSide;
-                                }
+                                playerParty.MapEventSide = lordSide;
                             }
                             
                             GameMenu.ActivateGameMenu("encounter");
