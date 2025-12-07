@@ -862,6 +862,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
+                // Only allow items that were issued by the quartermaster
+                var wasIssued = TroopSelectionManager.Instance?.IsIssuedItem(item.StringId) == true;
+                if (!wasIssued)
+                {
+                    return;
+                }
+
                 var total = GetPlayerItemCount(hero, item.StringId);
                 if (total > 0)
                 {
@@ -988,6 +995,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 var removed = TryReturnSingleItem(item);
                 var remaining = GetPlayerItemCount(Hero.MainHero, item.StringId);
+            var wasIssued = TroopSelectionManager.Instance?.IsIssuedItem(item.StringId) == true;
 
                 var message = removed
                     ? new TextObject("{=qm_return_success}Returned {ITEM_NAME} to the armory.")
@@ -997,7 +1005,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Yellow));
 
                 ModLogger.Info("Quartermaster",
-                    $"Return action: {item.Name}; removed={(removed ? "yes" : "no")}; remaining={remaining}");
+                $"Return action: {item.Name}; removed={(removed ? "yes" : "no")}; remaining={remaining}; issued={wasIssued}");
+
+            // Track issued-item returns for diagnostics
+            if (removed && wasIssued)
+            {
+                ModLogger.IncrementSummary("quartermaster_returns", 1, 0);
+            }
 
                 // Refresh options after removal
                 _returnOptions.Clear();

@@ -835,6 +835,29 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
+        /// Determine if an item (by stringId) is currently tracked as issued.
+        /// Used to filter quartermaster returns so only issued items are returnable.
+        /// </summary>
+        public bool IsIssuedItem(string itemStringId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(itemStringId) || _issuedEquipment.Count == 0)
+                {
+                    return false;
+                }
+
+                return _issuedEquipment.Values.Any(v =>
+                    v != null && v.ItemStringId == itemStringId);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("TroopSelection", $"Error checking issued item: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Mark one issued item as returned, removing it from accountability tracking.
         /// Matches by ItemStringId; removes a single record.
         /// </summary>
