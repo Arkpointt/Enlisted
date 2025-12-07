@@ -1,53 +1,87 @@
 <Prefab>
-	<Window>
-		<!-- Equipment Card - Modern layout with stats below image -->
-		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="340" MarginTop="10" MarginLeft="10">
-			<Children>
-				<!-- Card background with subtle border -->
-				<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
-					<Children>
-						<!-- Main card container -->
-						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="5" MarginRight="5" MarginTop="5" MarginBottom="5">
-							<Children>
-								
-								<!-- Slot Type Label (top) -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="5" Brush="SPGeneral.MediumText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Text="@SlotTypeText"/>
-								
-								<!-- Equipment Icon (display only, not clickable) -->
-								<!-- Using 2:1 aspect ratio like native inventory to prevent stretching -->
-								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="70" SuggestedWidth="140" MarginTop="25" HorizontalAlignment="Center" Brush="Encyclopedia.SubPage.Element">
-									<Children>
-										<ImageIdentifierWidget DataSource="{Image}" DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="130" SuggestedHeight="60" HorizontalAlignment="Center" VerticalAlignment="Center" ImageId="@Id" AdditionalArgs="@AdditionalArgs" TextureProviderName="@TextureProviderName" />
-									</Children>
-								</Widget>
-								
-								<!-- Item Name -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="105" MarginLeft="2" MarginRight="2" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Text="@ItemName"/>
-								
-								<!-- Cost Display (prominent) -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="145" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Text="@CostText"/>
-								
-								<!-- Primary Stats (armor/damage values) -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="170" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextHorizontalAlignment="Center" Text="@PrimaryStats"/>
-								
-								<!-- Secondary Stats (tier, material) -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="195" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Text="@SecondaryStats"/>
-								
-								<!-- Status indicator -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="220" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
-								
-							<!-- Single centered Requisition Button -->
-							<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45" SuggestedWidth="145" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="15" Brush="ButtonBrush1" Command.Click="ExecuteSelectItem" IsEnabled="@IsEnabled">
-								<Children>
-									<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Requisition Gear" />
-								</Children>
-							</ButtonWidget>
-								
-							</Children>
-						</Widget>
-					</Children>
-				</BrushWidget>
-			</Children>
-		</Widget>
-	</Window>
+    <Window>
+        <!-- Equipment Card - Modern layout with stats below image -->
+        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="340"
+                MarginTop="10" MarginLeft="10">
+            <Children>
+                <!-- Card background with subtle border -->
+                <BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent"
+                             Brush="Encyclopedia.SubPage.Element">
+                    <Children>
+                        <!-- Main card container -->
+                        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="5"
+                                MarginRight="5" MarginTop="5" MarginBottom="5">
+                            <Children>
+
+                                <!-- Slot Type Label (top) -->
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren"
+                                                HorizontalAlignment="Center" MarginTop="5" Brush="SPGeneral.MediumText"
+                                                Brush.FontSize="11" Brush.TextHorizontalAlignment="Center"
+                                                Text="@SlotTypeText"/>
+
+                                <!-- Equipment Icon (display only, not clickable) -->
+                                <!-- Using 2:1 aspect ratio like native inventory to prevent stretching -->
+                                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="70"
+                                        SuggestedWidth="140" MarginTop="25" HorizontalAlignment="Center"
+                                        Brush="Encyclopedia.SubPage.Element">
+                                    <Children>
+                                        <ImageIdentifierWidget DataSource="{Image}" DoNotAcceptEvents="true"
+                                                               WidthSizePolicy="Fixed" HeightSizePolicy="Fixed"
+                                                               SuggestedWidth="130" SuggestedHeight="60"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                               ImageId="@Id" AdditionalArgs="@AdditionalArgs"
+                                                               TextureProviderName="@TextureProviderName"/>
+                                    </Children>
+                                </Widget>
+
+                                <!-- Item Name -->
+                                <RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren"
+                                                HorizontalAlignment="Center" MarginTop="105" MarginLeft="2"
+                                                MarginRight="2" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="14"
+                                                Brush.TextHorizontalAlignment="Center" Text="@ItemName"/>
+
+                                <!-- Cost Display (prominent) -->
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren"
+                                                HorizontalAlignment="Center" MarginTop="145"
+                                                Brush="Recruitment.Popup.Description.Text" Brush.FontSize="15"
+                                                Brush.TextHorizontalAlignment="Center" Text="@CostText"/>
+
+                                <!-- Primary Stats (armor/damage values) -->
+                                <RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren"
+                                                HorizontalAlignment="Center" MarginTop="170" MarginLeft="4"
+                                                MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="12"
+                                                Brush.TextHorizontalAlignment="Center" Text="@PrimaryStats"/>
+
+                                <!-- Secondary Stats (tier, material) -->
+                                <RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren"
+                                                HorizontalAlignment="Center" MarginTop="195" MarginLeft="4"
+                                                MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="11"
+                                                Brush.TextHorizontalAlignment="Center" Text="@SecondaryStats"/>
+
+                                <!-- Status indicator -->
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren"
+                                                HorizontalAlignment="Center" MarginTop="220" Brush="SPGeneral.SmallText"
+                                                Brush.FontSize="10" Brush.TextHorizontalAlignment="Center"
+                                                Text="@StatusText"/>
+
+                                <!-- Single centered Requisition Button -->
+                                <ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45"
+                                              SuggestedWidth="145" HorizontalAlignment="Center"
+                                              VerticalAlignment="Bottom" MarginBottom="15" Brush="ButtonBrush1"
+                                              Command.Click="ExecuteSelectItem" IsEnabled="@IsEnabled">
+                                    <Children>
+                                        <RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren"
+                                                        HeightSizePolicy="CoverChildren" HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center" Brush="OverlayPopup.ButtonText"
+                                                        Brush.FontSize="14" Text="Requisition Gear"/>
+                                    </Children>
+                                </ButtonWidget>
+
+                            </Children>
+                        </Widget>
+                    </Children>
+                </BrushWidget>
+            </Children>
+        </Widget>
+    </Window>
 </Prefab>

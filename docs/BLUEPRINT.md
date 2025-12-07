@@ -68,14 +68,14 @@ Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 
 - `enlisted.log` - Main activity log with throttling and category-based levels
 - `conflicts.log` - Comprehensive mod conflict diagnostics:
-  - Harmony patch conflict detection (identifies which mods patch the same methods)
-  - Patch execution order and priority analysis
-  - Registered campaign behaviors inventory
-  - Environment info (game version, mod version, OS, CLR version)
-  - Loaded modules enumeration
-  - Categorized patch list by purpose (Army/Party, Encounter, Kingdom/Clan, Finance, UI/Menu, Combat, Other)
-  - Tracks both main Harmony instance (startup patches) and deferred instance (campaign-start patches)
-  - Combined conflict summary across all patches
+    - Harmony patch conflict detection (identifies which mods patch the same methods)
+    - Patch execution order and priority analysis
+    - Registered campaign behaviors inventory
+    - Environment info (game version, mod version, OS, CLR version)
+    - Loaded modules enumeration
+    - Categorized patch list by purpose (Army/Party, Encounter, Kingdom/Clan, Finance, UI/Menu, Combat, Other)
+    - Tracks both main Harmony instance (startup patches) and deferred instance (campaign-start patches)
+    - Combined conflict summary across all patches
 
 ### Log Levels
 
@@ -140,7 +140,8 @@ var hero = CampaignSafetyGuard.SafeMainHero;  // Null-safe during char creation
 
 ### Wait Menu Time Control
 
-Wait menus use `StartWait()` to enable time controls (play/pause/fast-forward buttons). Native `StartWait()` forces `UnstoppableFastForward` mode. Handle time mode conversion once in menu init, never in tick handlers:
+Wait menus use `StartWait()` to enable time controls (play/pause/fast-forward buttons). Native `StartWait()` forces
+`UnstoppableFastForward` mode. Handle time mode conversion once in menu init, never in tick handlers:
 
 ```csharp
 // In menu init - convert unstoppable to stoppable (allows pause)
@@ -156,7 +157,8 @@ if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastF
 // Restoring in tick fights with user input and causes speed controls to break
 ```
 
-For army members, native uses `UnstoppableFastForward` when fast-forwarding. Per-tick restoration of `CapturedTimeMode` will fight with user input and break speed controls.
+For army members, native uses `UnstoppableFastForward` when fast-forwarding. Per-tick restoration of `CapturedTimeMode`
+will fight with user input and break speed controls.
 
 ## Configuration
 

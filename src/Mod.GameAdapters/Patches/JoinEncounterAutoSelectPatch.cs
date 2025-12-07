@@ -1,13 +1,6 @@
 using System;
-using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -75,14 +68,14 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // Check if we can actually join on the lord's side using native faction checks
                 bool canJoinNatively = battle.CanPartyJoinBattle(PartyBase.MainParty, lordSide);
-                
+
                 // Check if lord is in a minor/bandit faction (not a Kingdom)
                 // Non-Kingdom faction lords don't trigger the mercenary join logic, so player's faction state
                 // may not have proper war relations with enemies like bandits.
-                bool isNonKingdomFactionLord = lord.MapFaction != null && 
-                                               !(lord.MapFaction is Kingdom) &&
-                                               (lord.MapFaction.IsMinorFaction || lord.MapFaction.IsBanditFaction);
-                
+                var isNonKingdomFactionLord = lord.MapFaction != null &&
+                                              !(lord.MapFaction is Kingdom) &&
+                                              (lord.MapFaction.IsMinorFaction || lord.MapFaction.IsBanditFaction);
+
                 if (!canJoinNatively)
                 {
                     if (isNonKingdomFactionLord)

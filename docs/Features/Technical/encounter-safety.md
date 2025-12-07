@@ -2,23 +2,23 @@
 
 ## Quick Reference
 
-| State | Party Visibility | Encounter Behavior | Battle Participation |
-|-------|-----------------|-------------------|---------------------|
-| Enlisted (Peace) | Hidden (`IsActive = false`) | No encounters | N/A |
-| Enlisted (Battle) | Hidden but Active (`IsActive = true`) | Auto-joins lord's battle | Yes |
-| Not Enlisted | Visible (`IsActive = true`) | Normal encounters | Normal |
+| State             | Party Visibility                      | Encounter Behavior       | Battle Participation |
+|-------------------|---------------------------------------|--------------------------|----------------------|
+| Enlisted (Peace)  | Hidden (`IsActive = false`)           | No encounters            | N/A                  |
+| Enlisted (Battle) | Hidden but Active (`IsActive = true`) | Auto-joins lord's battle | Yes                  |
+| Not Enlisted      | Visible (`IsActive = true`)           | Normal encounters        | Normal               |
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [How It Works](#how-it-works)
-  - [During Enlistment (Peace/Travel)](#during-enlistment-peacetravel)
-  - [During Service (Battle)](#during-service-battle)
-  - [On Retirement](#on-retirement)
+    - [During Enlistment (Peace/Travel)](#during-enlistment-peacetravel)
+    - [During Service (Battle)](#during-service-battle)
+    - [On Retirement](#on-retirement)
 - [Technical Details](#technical-details)
-  - [System Architecture](#system-architecture)
-  - [State Management](#state-management)
-  - [Battle Participation](#battle-participation)
+    - [System Architecture](#system-architecture)
+    - [State Management](#state-management)
+    - [Battle Participation](#battle-participation)
 - [Edge Cases](#edge-cases)
 - [API Reference](#api-reference)
 - [Debugging](#debugging)
@@ -27,9 +27,11 @@
 
 ## Overview
 
-Prevents the player from triggering map encounters while enlisted by using the game engine's `IsActive` property and Harmony patches, with enhanced battle participation and cleanup logic.
+Prevents the player from triggering map encounters while enlisted by using the game engine's `IsActive` property and
+Harmony patches, with enhanced battle participation and cleanup logic.
 
 **Key Features:**
+
 - No map encounters during peaceful service (bandit raids, etc.)
 - Automatic battle participation when lord enters combat
 - Player party hidden from map systems (UI and logical)
@@ -37,9 +39,11 @@ Prevents the player from triggering map encounters while enlisted by using the g
 - Reliable cleanup when returning to normal campaign play
 
 **Purpose:**
-Keep enlisted players from accidentally entering encounters that would break military service or cause pathfinding crashes, while ensuring they correctly join their Lord's battles without engine conflicts.
+Keep enlisted players from accidentally entering encounters that would break military service or cause pathfinding
+crashes, while ensuring they correctly join their Lord's battles without engine conflicts.
 
 **Files:**
+
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs` - Static utility class for encounter state management
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Active battle monitoring and participation logic
 - `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu and battle wait handling
@@ -56,6 +60,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **State:** Player party is inactive and hidden
 
 **Process:**
+
 1. Player enlists → `MobileParty.MainParty.IsActive = false`
 2. Nameplate hidden via `HidePartyNamePlatePatch`
 3. Game engine stops considering player for encounters
@@ -63,6 +68,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 5. System continuously enforces state (prevents manual changes)
 
 **Result:**
+
 - No bandit raids or random encounters
 - No pathfinding crashes
 - Player party invisible on map
@@ -73,36 +79,43 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **State:** Player party is active but visually hidden, participates in battle
 
 **Process:**
+
 1. Lord enters battle (`MapEvent` detected)
 2. `EnlistmentBehavior` activates player party (`IsActive = true`) while keeping it visually hidden
 3. Player party kept in same army/attachment so vanilla encounter stack automatically collects it
 4. `JoinEncounterAutoSelectPatch` intercepts "join_encounter" menu and automatically joins battle on lord's side
 5. Player sees standard encounter menu (Attack/Send Troops/Wait) instead of "Help X's Party / Don't get involved"
 6. Player participates in battle
-7. If the player is a prisoner or capture cleanup is queued, battle handling is skipped to let native captivity finish (prevents crash when captors are defeated by friendlies).
+7. If the player is a prisoner or capture cleanup is queued, battle handling is skipped to let native captivity finish (
+   prevents crash when captors are defeated by friendlies).
 
 **Battle Types:**
 
 **Manual Battle:**
+
 - Player's troops participate directly in combat
 - Standard battle interface
 - Player controls their squad
 
 **Autosim (Send Troops):**
+
 - Relies on vanilla autosim (player party isn't injected)
 - After seeing report, expect encounter menu (Attack/Surrender) if army loses
 - Player always resolves outcome through standard encounter UI
 
 **Wait in Reserve:**
+
 - Available for field battles (not sieges)
 - Player sits out the battle while the army fights
 - `IsWaitingInReserve` flag tracks reserve state
 - Player stays in `enlisted_battle_wait` menu until army finishes or player rejoins
-- `GenericStateMenuPatch` intercepts `GetGenericStateMenu()` to return `enlisted_battle_wait` when in reserve, preventing native menu systems from switching to `army_wait` (which would cause visual stutter)
+- `GenericStateMenuPatch` intercepts `GetGenericStateMenu()` to return `enlisted_battle_wait` when in reserve,
+  preventing native menu systems from switching to `army_wait` (which would cause visual stutter)
 - Rejoin removes player from reserve, re-adds them to the MapEvent on lord's side, then activates encounter menu
 - Handled by `EnlistedEncounterBehavior` and `GenericStateMenuPatch`
 
 **Result:**
+
 - Player automatically joins lord's battles
 - Correct encounter menus (not "Help or Leave")
 - Predictable battle behavior
@@ -113,12 +126,14 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **State:** Player party returns to normal visibility and encounter behavior
 
 **Process:**
+
 1. Player leaves service → `MobileParty.MainParty.IsActive = true`
 2. Game engine re-enables normal encounter behavior
 3. Player returns to normal world interaction
 4. Nameplate restored
 
 **Result:**
+
 - Normal encounter behavior restored
 - Player party visible on map
 - Full campaign map interaction available
@@ -130,6 +145,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 ### System Architecture
 
 **Component Structure:**
+
 ```
 EncounterGuard (Static Utility)
     ├── DisableEncounters() - Sets IsActive = false
@@ -151,6 +167,7 @@ JoinEncounterAutoSelectPatch (Harmony Patch)
 ### State Management
 
 **Core Methods:**
+
 ```csharp
 // Disable encounters during enlistment
 public static void DisableEncounters()
@@ -166,12 +183,14 @@ public static void EnableEncounters()
 ```
 
 **Monitoring:**
+
 - Called from `EnlistmentBehavior.OnTick()` for continuous enforcement
 - State checked every frame during military service
 - Immediate response to enlistment status changes
 - Prevents manual state changes by player or other systems
 
 **State Validation:**
+
 - System continuously resets `IsActive = false` during service
 - Logs warnings if state doesn't match expected service status
 - Recovers automatically on next tick
@@ -179,29 +198,35 @@ public static void EnableEncounters()
 ### Battle Participation
 
 **Battle Detection:**
+
 - Monitors `MapEvent` state for lord's party
 - Detects when lord enters combat
 - Activates player party for battle participation
 
 **Auto-Join Logic:**
+
 - `JoinEncounterAutoSelectPatch` intercepts encounter menu
 - Automatically selects lord's side
 - Bypasses "Help or Leave" choice menu
 - Routes to standard encounter menu (Attack/Send Troops/Wait)
 
 **Menu Routing:**
+
 - Ensures "Encounter" menu instead of "Help or Leave"
 - Standard battle interface for player
 - Predictable behavior across all battle types
 
 ### Activation Gating (Inactive Mode)
 
-- Global gate: `EnlistedActivation` (default off). Flips on at enlist start, off at discharge; synced on load from `IsEnlisted`.
+- Global gate: `EnlistedActivation` (default off). Flips on at enlist start, off at discharge; synced on load from
+  `IsEnlisted`.
 - Guard pattern: behaviors and patches early-return when inactive; logs once if something runs while inactive.
-- Active while enlisted, on leave, or in desertion grace so protections stay on during grace/leave; deactivates only once all three are false.
+- Active while enlisted, on leave, or in desertion grace so protections stay on during grace/leave; deactivates only
+  once all three are false.
 - Crash guards: currently off while inactive per design; can be whitelisted later if needed.
 - Menus: remain registered, but handlers/ticks are inert when inactive.
-- Scope: finance/food/XP/formation/influence/encounter/nameplate/visibility/captain/return-to-army/order-of-battle, etc., all guarded.
+- Scope: finance/food/XP/formation/influence/encounter/nameplate/visibility/captain/return-to-army/order-of-battle,
+  etc., all guarded.
 
 ---
 
@@ -212,6 +237,7 @@ public static void EnableEncounters()
 **Scenario:** Player or other system tries to change `IsActive` during service
 
 **Handling:**
+
 - System continuously resets `IsActive = false` during service
 - Prevents player from accidentally re-enabling encounters
 - State enforced every tick
@@ -221,6 +247,7 @@ public static void EnableEncounters()
 **Scenario:** Unexpected `IsActive` changes from game engine
 
 **Handling:**
+
 - Monitor for unexpected `IsActive` changes
 - Log warnings if state doesn't match expected service status
 - Recover automatically on next tick
@@ -231,6 +258,7 @@ public static void EnableEncounters()
 **Scenario:** Player stuck in siege "waiting" phase
 
 **Handling:**
+
 - Fixed by suppressing `IsActive` during siege "waiting" phase
 - Only active during actual assault (`MapEvent`)
 - Prevents menu loop issues
@@ -240,6 +268,7 @@ public static void EnableEncounters()
 **Scenario:** Player is waiting in reserve when army engages in another battle
 
 **Handling:**
+
 - `OnMapEventStarted` checks `IsWaitingInReserve` flag before processing
 - If true, skips all battle processing (menu switching, teleport, army setup)
 - `GenericStateMenuPatch` ensures native menu calls return `enlisted_battle_wait` instead of `army_wait`
@@ -251,6 +280,7 @@ public static void EnableEncounters()
 **Scenario:** Player clicks "Rejoin Battle" while waiting in reserve
 
 **Handling:**
+
 - `IsWaitingInReserve` flag cleared immediately
 - Player party re-added to lord's MapEvent on same side (`playerParty.MapEventSide = lordSide`)
 - Encounter menu activated via `GameMenu.ActivateGameMenu("encounter")`
@@ -262,17 +292,21 @@ public static void EnableEncounters()
 **Scenario:** Lord dies while player is enlisted
 
 **Handling:**
+
 - Encounter safety disabled before retirement processing
 - Prevents crashes during emergency service termination
 - Grace period begins normally
 - State cleanup happens automatically
-- Naval safety: if the player is at sea without ships when the lord dies (or any service-ending event), the system always teleports the player to the nearest port before continuing grace/retirement so they cannot get stranded on water.
+- Naval safety: if the player is at sea without ships when the lord dies (or any service-ending event), the system
+  always teleports the player to the nearest port before continuing grace/retirement so they cannot get stranded on
+  water.
 
 ### Battle Defeat (Autosim)
 
 **Scenario:** Lord's army loses in autosim
 
 **Handling:**
+
 - Player sees encounter menu (Attack/Surrender) after report
 - Standard native behavior
 - Player resolves outcome manually
@@ -283,6 +317,7 @@ public static void EnableEncounters()
 **Scenario:** Player is taken prisoner after battle defeat or lord capture
 
 **Handling:**
+
 - Mod detects capture via `OnHeroPrisonerTaken` event
 - Service ends with grace period (14 days to rejoin same kingdom after escape)
 - All map event processing skipped while `Hero.MainHero.IsPrisoner == true`
@@ -290,6 +325,7 @@ public static void EnableEncounters()
 - Native captivity system takes full control of player state
 
 **Important - Prisoner Transfers (Base Game Behavior):**
+
 - While imprisoned, the base game's `TransferPrisonerBarterBehavior` remains active
 - When enemy lords meet and interact (dialog/barter), they can trade prisoners
 - This includes transferring the player to a different captor
@@ -298,6 +334,7 @@ public static void EnableEncounters()
 - Grace period remains valid regardless of which enemy holds the player
 
 **Log Pattern:**
+
 ```
 [EventSafety] Lord {name} captured - starting grace period
 [Battle] Encounter active during lord capture - letting native surrender capture handle the player.
@@ -310,6 +347,7 @@ public static void EnableEncounters()
 **Scenario:** Lord is captured while player is still fighting or in encounter
 
 **Handling:**
+
 - `TryCapturePlayerAlongsideLord()` checks if player should be captured too
 - If player already in encounter (surrender screen), native flow handles capture
 - If player not in encounter, mod calls `TakePrisonerAction.Apply()` to mirror capture
@@ -404,12 +442,14 @@ void DeactivateAfterBattle()
 ## Debugging
 
 **Log Categories:**
+
 - `"EncounterGuard"` - State management operations
 - `"Enlistment"` - Service state changes that affect encounters
 - `"Battle"` - Battle join logic and vanilla encounter coordination
 - `"EventSafety"` - Capture/prisoner handling and map event skipping
 
 **Key Log Points:**
+
 ```csharp
 // State changes
 ModLogger.Info("EncounterGuard", $"Encounters disabled (IsActive = false)");
@@ -434,55 +474,65 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 **Common Issues:**
 
 **Encounters still happening:**
+
 - Check `IsActive` is actually false
 - Verify `DisableEncounters()` is being called
 - Check for conflicting systems changing party state
 - Review logs for state validation warnings
 
 **Not joining battles:**
+
 - Check `MapEvent` detection logic in `EnlistmentBehavior`
 - Verify battle detection is working correctly
 - Check if player party is in same army as lord
 - Review battle participation logs
 
 **"Help or Leave" menu appearing:**
+
 - Fixed by `JoinEncounterAutoSelectPatch`
 - If still appearing, check patch is registered in logs
 - Verify patch is applied correctly
 - Check for patch conflicts with other mods
 
 **"Attack or Surrender" after autosim defeat:**
+
 - Expected outcome when lord loses
 - Player should resolve encounter manually (Attack/Surrender)
 - Matches native behavior
 - Not a bug - working as designed
 
 **Reserve mode menu stutter (flickering between menus):**
+
 - `GenericStateMenuPatch` should intercept `GetGenericStateMenu()` calls
 - Verify patch is registered in `conflicts.log`
 - Check `IsWaitingInReserve` is true when in reserve
 - If stutter persists, the patch may be missing from `Enlisted.csproj`
 
 **Rejoin battle not working:**
+
 - Log should show: "Player rejoining battle from reserve"
 - Player must be re-added to MapEvent before encounter menu activates
 - Check `lordParty.Party.MapEventSide` is not null
 - Verify `GameMenu.ActivateGameMenu("encounter")` is called
 
 **Party state not persisting:**
+
 - Check state enforcement in `OnTick()`
 - Verify state is being reset continuously
 - Check for save/load issues
 - Review state validation logs
 
 **Repeated "Skipping MapEventEnded" logs while prisoner:**
+
 - This is **expected behavior** when `IsPrisoner=True`
 - The mod correctly skips all map event processing during captivity
 - Native captivity system handles all prisoner mechanics
 - Grace period remains active for rejoining after escape
-- Log pattern: `Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)`
+- Log pattern:
+  `Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)`
 
 **Player transferred to different captor:**
+
 - This is **base game behavior**, not a mod bug
 - Native `TransferPrisonerBarterBehavior` allows lords to trade prisoners
 - When enemy lords meet/dialog, they can exchange prisoners including the player
@@ -490,9 +540,11 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - Grace period is unaffected by captor changes
 
 **Debug Output Location:**
+
 - `Modules/Enlisted/Debugging/enlisted.log`
 
 **Related Files:**
+
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs`
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
 - `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs`

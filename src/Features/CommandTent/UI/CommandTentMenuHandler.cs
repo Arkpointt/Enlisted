@@ -7,20 +7,14 @@ using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
 namespace Enlisted.Features.CommandTent.UI
 {
     /// <summary>
-    /// Handles the Command Tent menu system for service records display.
-    /// Provides menus for viewing current posting, faction history, and lifetime statistics.
-    /// Integrates with the existing enlisted status menu by adding a "Command Tent" option.
+    ///     Handles the Command Tent menu system for service records display.
+    ///     Provides menus for viewing current posting, faction history, and lifetime statistics.
+    ///     Integrates with the existing enlisted status menu by adding a "Command Tent" option.
     /// </summary>
     public sealed class CommandTentMenuHandler : CampaignBehaviorBase
     {
@@ -40,75 +34,23 @@ namespace Enlisted.Features.CommandTent.UI
         private const string RetinueDismissMenuId = "command_tent_retinue_dismiss";
         private const string RetinueRequisitionMenuId = "command_tent_retinue_requisition";
 
-        // Ensure Command Tent dialogs never pause the campaign clock.
-        private static bool ShouldPauseDuringCommandTentInquiry() => false;
-
-        #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
-        
-        /// <summary>
-        /// Wait condition - always returns true since we control exit via menu options.
-        /// </summary>
-        private static bool CommandTentWaitCondition(MenuCallbackArgs args) => true;
-        
-        /// <summary>
-        /// Wait consequence - empty since we handle exit via menu options.
-        /// </summary>
-        private static void CommandTentWaitConsequence(MenuCallbackArgs args)
-        {
-            // No consequence needed - we never let progress reach 100%
-        }
-        
-        /// <summary>
-        /// Wait tick handler for Command Tent menus.
-        /// NOTE: Time mode restoration is handled ONCE during menu init, not here.
-        /// Previously this tick handler would restore CapturedTimeMode whenever it saw
-        /// UnstoppableFastForward, but this fought with user input - when the user clicked
-        /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
-        /// </summary>
-        private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
-        {
-            // Intentionally empty - time mode is handled in menu init, not per-tick
-            // The old code here fought with user speed input and caused pausing issues
-        }
-        
-        /// <summary>
-        /// Switch to a menu while preserving the current time control mode.
-        /// Uses the shared CapturedTimeMode from QuartermasterManager.
-        /// </summary>
-        private static void SwitchToMenuPreserveTime(string menuId)
-        {
-            // Preserve the player's time mode from the moment they first entered the Command Tent.
-            // Do not overwrite it on subsequent hops between submenus so time never gets paused/resumed unexpectedly.
-            var capturedMode = QuartermasterManager.CapturedTimeMode
-                               ?? Campaign.Current?.TimeControlMode
-                               ?? CampaignTimeControlMode.Stop;
-
-            if (!QuartermasterManager.CapturedTimeMode.HasValue)
-            {
-                QuartermasterManager.CapturedTimeMode = capturedMode;
-            }
-
-            GameMenu.SwitchToMenu(menuId);
-
-            if (Campaign.Current != null)
-            {
-                Campaign.Current.TimeControlMode = capturedMode;
-            }
-        }
-        
-        #endregion
-
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "command_tent_companions";
 
         // Track selected faction for detail view
         private string _selectedFactionKey;
 
-        public static CommandTentMenuHandler Instance { get; private set; }
-
         public CommandTentMenuHandler()
         {
             Instance = this;
+        }
+
+        public static CommandTentMenuHandler Instance { get; private set; }
+
+        // Ensure Command Tent dialogs never pause the campaign clock.
+        private static bool ShouldPauseDuringCommandTentInquiry()
+        {
+            return false;
         }
 
         public override void RegisterEvents()
@@ -127,7 +69,7 @@ namespace Enlisted.Features.CommandTent.UI
             {
                 // Set up inline icons for use in menu text (Bannerlord's rich text system)
                 SetupInlineIcons();
-                
+
                 AddCommandTentMenus(starter);
                 ModLogger.Info(LogCategory, "Command Tent menus registered successfully");
             }
@@ -136,22 +78,23 @@ namespace Enlisted.Features.CommandTent.UI
                 ModLogger.Error(LogCategory, $"Failed to register Command Tent menus: {ex.Message}");
             }
         }
-        
+
         /// <summary>
-        /// Sets up inline icon variables for use in menu text.
-        /// Uses Bannerlord's native img tag system for inline sprites.
+        ///     Sets up inline icon variables for use in menu text.
+        ///     Uses Bannerlord's native img tag system for inline sprites.
         /// </summary>
         private static void SetupInlineIcons()
         {
             // Gold/denar icon - displays coin sprite inline with text
             MBTextManager.SetTextVariable("GOLD_ICON", "{=!}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">");
-            
+
             // Influence icon - displays influence sprite inline
-            MBTextManager.SetTextVariable("INFLUENCE_ICON", "{=!}<img src=\"General\\Icons\\Influence@2x\" extend=\"7\">");
+            MBTextManager.SetTextVariable("INFLUENCE_ICON",
+                "{=!}<img src=\"General\\Icons\\Influence@2x\" extend=\"7\">");
         }
 
         /// <summary>
-        /// Registers all Command Tent menus and options with the game.
+        ///     Registers all Command Tent menus and options with the game.
         /// </summary>
         private void AddCommandTentMenus(CampaignGameStarter starter)
         {
@@ -188,10 +131,68 @@ namespace Enlisted.Features.CommandTent.UI
             AddCompanionAssignmentsMenu(starter);
         }
 
+        #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
+
+        /// <summary>
+        ///     Wait condition - always returns true since we control exit via menu options.
+        /// </summary>
+        private static bool CommandTentWaitCondition(MenuCallbackArgs args)
+        {
+            return true;
+        }
+
+        /// <summary>
+        ///     Wait consequence - empty since we handle exit via menu options.
+        /// </summary>
+        private static void CommandTentWaitConsequence(MenuCallbackArgs args)
+        {
+            // No consequence needed - we never let progress reach 100%
+        }
+
+        /// <summary>
+        ///     Wait tick handler for Command Tent menus.
+        ///     NOTE: Time mode restoration is handled ONCE during menu init, not here.
+        ///     Previously this tick handler would restore CapturedTimeMode whenever it saw
+        ///     UnstoppableFastForward, but this fought with user input - when the user clicked
+        ///     fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
+        /// </summary>
+        private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            // Intentionally empty - time mode is handled in menu init, not per-tick
+            // The old code here fought with user speed input and caused pausing issues
+        }
+
+        /// <summary>
+        ///     Switch to a menu while preserving the current time control mode.
+        ///     Uses the shared CapturedTimeMode from QuartermasterManager.
+        /// </summary>
+        private static void SwitchToMenuPreserveTime(string menuId)
+        {
+            // Preserve the player's time mode from the moment they first entered the Command Tent.
+            // Do not overwrite it on subsequent hops between submenus so time never gets paused/resumed unexpectedly.
+            var capturedMode = QuartermasterManager.CapturedTimeMode
+                               ?? Campaign.Current?.TimeControlMode
+                               ?? CampaignTimeControlMode.Stop;
+
+            if (!QuartermasterManager.CapturedTimeMode.HasValue)
+            {
+                QuartermasterManager.CapturedTimeMode = capturedMode;
+            }
+
+            GameMenu.SwitchToMenu(menuId);
+
+            if (Campaign.Current != null)
+            {
+                Campaign.Current.TimeControlMode = capturedMode;
+            }
+        }
+
+        #endregion
+
         #region Enlisted Status Integration
 
         /// <summary>
-        /// Adds the Command Tent option to the main enlisted status menu.
+        ///     Adds the Command Tent option to the main enlisted status menu.
         /// </summary>
         private void AddCommandTentOptionToEnlistedMenu(CampaignGameStarter starter)
         {
@@ -215,7 +216,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Checks if the Command Tent option should be available (player must be enlisted).
+        ///     Checks if the Command Tent option should be available (player must be enlisted).
         /// </summary>
         private bool IsCommandTentAvailable(MenuCallbackArgs args)
         {
@@ -230,7 +231,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Opens the Command Tent main menu.
+        ///     Opens the Command Tent main menu.
         /// </summary>
         private void OnCommandTentSelected(MenuCallbackArgs args)
         {
@@ -274,7 +275,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Main Command Tent Menu
 
         /// <summary>
-        /// Creates the main Command Tent menu with introduction text.
+        ///     Creates the main Command Tent menu with introduction text.
         /// </summary>
         private void AddMainCommandTentMenu(CampaignGameStarter starter)
         {
@@ -338,7 +339,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the main Command Tent menu.
+        ///     Initializes the main Command Tent menu.
         /// </summary>
         private void OnCommandTentInit(MenuCallbackArgs args)
         {
@@ -346,11 +347,11 @@ namespace Enlisted.Features.CommandTent.UI
             SetupInlineIcons();
             ModLogger.Debug(LogCategory, "Command Tent menu initialized");
         }
-        
+
         /// <summary>
-        /// Menu background and audio initialization for Command Tent menus.
-        /// Sets military-themed background and ambient audio for immersion.
-        /// Resumes time so it continues passing while browsing menus.
+        ///     Menu background and audio initialization for Command Tent menus.
+        ///     Sets military-themed background and ambient audio for immersion.
+        ///     Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler(CommandTentMenuId)]
         [GameMenuInitializationHandler(ServiceRecordsMenuId)]
@@ -367,18 +368,18 @@ namespace Enlisted.Features.CommandTent.UI
         {
             // Use a military meeting/camp background
             args.MenuContext.SetBackgroundMeshName("encounter_meeting");
-            
+
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
-            
+
             // NOTE: We intentionally do NOT call StartWait() here. Command Tent menus rely on
             // the wait-menu type for layout/options, but we keep time control unchanged and
             // preserve the player's captured time mode when hopping between submenus.
         }
 
         /// <summary>
-        /// Checks if retinue option is available (Tier 4+ only).
-        /// Uses TroopSelection icon for soldier management.
+        ///     Checks if retinue option is available (Tier 4+ only).
+        ///     Uses TroopSelection icon for soldier management.
         /// </summary>
         private bool IsRetinueAvailable(MenuCallbackArgs args)
         {
@@ -405,7 +406,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Service Records Menu
 
         /// <summary>
-        /// Creates the Service Records submenu with options for different record views.
+        ///     Creates the Service Records submenu with options for different record views.
         /// </summary>
         private void AddServiceRecordsMenu(CampaignGameStarter starter)
         {
@@ -431,6 +432,7 @@ namespace Enlisted.Features.CommandTent.UI
                     {
                         args.Tooltip = new TextObject("{=ct_not_enlisted}You are not currently enlisted.");
                     }
+
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
@@ -492,7 +494,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Current Posting Menu
 
         /// <summary>
-        /// Creates the Current Posting display showing current enlistment details.
+        ///     Creates the Current Posting display showing current enlistment details.
         /// </summary>
         private void AddCurrentPostingMenu(CampaignGameStarter starter)
         {
@@ -521,7 +523,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the Current Posting display with live data.
+        ///     Initializes the Current Posting display with live data.
         /// </summary>
         private void OnCurrentPostingInit(MenuCallbackArgs args)
         {
@@ -540,8 +542,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Builds the formatted text for current posting display.
-        /// Uses clean, modern formatting without ASCII art.
+        ///     Builds the formatted text for current posting display.
+        ///     Uses clean, modern formatting without ASCII art.
         /// </summary>
         private string BuildCurrentPostingText()
         {
@@ -584,7 +586,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Calculates days remaining in current term based on term type (first term vs renewal).
+        ///     Calculates days remaining in current term based on term type (first term vs renewal).
         /// </summary>
         private static string GetDaysRemaining(EnlistmentBehavior enlistment)
         {
@@ -629,7 +631,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Faction Records Menu
 
         /// <summary>
-        /// Creates the Faction Records list showing all factions served.
+        ///     Creates the Faction Records list showing all factions served.
         /// </summary>
         private void AddFactionRecordsMenu(CampaignGameStarter starter)
         {
@@ -659,7 +661,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the Faction Records list.
+        ///     Initializes the Faction Records list.
         /// </summary>
         private void OnFactionRecordsInit(MenuCallbackArgs args)
         {
@@ -678,8 +680,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Builds the faction records list text showing all factions served with summary stats.
-        /// Uses clean, modern formatting.
+        ///     Builds the faction records list text showing all factions served with summary stats.
+        ///     Uses clean, modern formatting.
         /// </summary>
         private string BuildFactionRecordsListText()
         {
@@ -713,7 +715,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Formats the faction type for display.
+        ///     Formats the faction type for display.
         /// </summary>
         private static string FormatFactionType(string factionType)
         {
@@ -733,7 +735,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Faction Detail Menu
 
         /// <summary>
-        /// Creates the Faction Detail view for a specific faction.
+        ///     Creates the Faction Detail view for a specific faction.
         /// </summary>
         private void AddFactionDetailMenu(CampaignGameStarter starter)
         {
@@ -762,7 +764,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the Faction Detail display.
+        ///     Initializes the Faction Detail display.
         /// </summary>
         private void OnFactionDetailInit(MenuCallbackArgs args)
         {
@@ -780,8 +782,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Builds detailed faction record text.
-        /// Uses clean, modern formatting.
+        ///     Builds detailed faction record text.
+        ///     Uses clean, modern formatting.
         /// </summary>
         private string BuildFactionDetailText(string factionKey)
         {
@@ -814,7 +816,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Sets the selected faction for detail view and navigates to detail menu.
+        ///     Sets the selected faction for detail view and navigates to detail menu.
         /// </summary>
         public void ViewFactionDetail(string factionKey)
         {
@@ -827,7 +829,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Lifetime Summary Menu
 
         /// <summary>
-        /// Creates the Lifetime Summary display showing cross-faction totals.
+        ///     Creates the Lifetime Summary display showing cross-faction totals.
         /// </summary>
         private void AddLifetimeSummaryMenu(CampaignGameStarter starter)
         {
@@ -856,7 +858,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the Lifetime Summary display.
+        ///     Initializes the Lifetime Summary display.
         /// </summary>
         private void OnLifetimeSummaryInit(MenuCallbackArgs args)
         {
@@ -875,8 +877,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Builds the lifetime summary text showing cross-faction statistics.
-        /// Uses clean, modern formatting.
+        ///     Builds the lifetime summary text showing cross-faction statistics.
+        ///     Uses clean, modern formatting.
         /// </summary>
         private string BuildLifetimeSummaryText()
         {
@@ -929,6 +931,7 @@ namespace Enlisted.Features.CommandTent.UI
                             sb.AppendLine($"• {record.FactionDisplayName} ({terms})");
                         }
                     }
+
                     sb.AppendLine();
                 }
 
@@ -946,7 +949,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Retinue Menu
 
         /// <summary>
-        /// Creates the Personal Retinue submenu showing current muster status and options.
+        ///     Creates the Personal Retinue submenu showing current muster status and options.
         /// </summary>
         private void AddRetinueMenu(CampaignGameStarter starter)
         {
@@ -971,7 +974,8 @@ namespace Enlisted.Features.CommandTent.UI
                     args.IsEnabled = hasRetinue;
                     // Hint refreshes when enabled; clear guidance when empty.
                     args.Tooltip = hasRetinue
-                        ? new TextObject("{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.")
+                        ? new TextObject(
+                            "{=ct_retinue_muster_hint}Select to refresh the menu and see updated retinue data.")
                         : new TextObject("{=ct_retinue_no_soldiers}You have no soldiers mustered.");
                     args.optionLeaveType = GameMenuOption.LeaveType.ManageGarrison;
                     return true;
@@ -1008,7 +1012,9 @@ namespace Enlisted.Features.CommandTent.UI
                         else if (partySpace <= 0)
                         {
                             args.IsEnabled = false;
-                            args.Tooltip = new TextObject("{=ct_warn_party_full}Your party is full. Dismiss troops or increase party size.");
+                            args.Tooltip =
+                                new TextObject(
+                                    "{=ct_warn_party_full}Your party is full. Dismiss troops or increase party size.");
                         }
                     }
 
@@ -1043,6 +1049,7 @@ namespace Enlisted.Features.CommandTent.UI
                     {
                         args.Tooltip = new TextObject("{=ct_retinue_no_soldiers}You have no soldiers to dismiss.");
                     }
+
                     args.optionLeaveType = GameMenuOption.LeaveType.DonateTroops;
                     return true;
                 },
@@ -1066,7 +1073,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the Retinue menu with current status.
+        ///     Initializes the Retinue menu with current status.
         /// </summary>
         private void OnRetinueMenuInit(MenuCallbackArgs args)
         {
@@ -1089,8 +1096,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Sets the requisition menu option text with cost and cooldown info.
-        /// Uses inline gold icon for currency display.
+        ///     Sets the requisition menu option text with cost and cooldown info.
+        ///     Uses inline gold icon for currency display.
         /// </summary>
         private static void SetRequisitionOptionText()
         {
@@ -1124,8 +1131,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Builds the retinue status text showing current muster and capacity.
-        /// Uses clean formatting with inline gold icons for currency.
+        ///     Builds the retinue status text showing current muster and capacity.
+        ///     Uses clean formatting with inline gold icons for currency.
         /// </summary>
         private string BuildRetinueStatusText()
         {
@@ -1192,7 +1199,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Retinue Purchase Menu
 
         /// <summary>
-        /// Creates the soldier type selection and purchase menu.
+        ///     Creates the soldier type selection and purchase menu.
         /// </summary>
         private void AddRetinuePurchaseMenu(CampaignGameStarter starter)
         {
@@ -1261,8 +1268,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the purchase menu. Shows gold, soldier options, and naval dismount note for mounted types.
-        /// Uses clean formatting with inline gold icons.
+        ///     Initializes the purchase menu. Shows gold, soldier options, and naval dismount note for mounted types.
+        ///     Uses clean formatting with inline gold icons.
         /// </summary>
         private void OnRetinuePurchaseInit(MenuCallbackArgs args)
         {
@@ -1302,8 +1309,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Sets the menu option text for a soldier type with inline gold icon.
-        /// Mounted types marked with * for naval warning.
+        ///     Sets the menu option text for a soldier type with inline gold icon.
+        ///     Mounted types marked with * for naval warning.
         /// </summary>
         private void SetSoldierTypeOptionText(string typeId, CultureObject culture, int playerTier)
         {
@@ -1323,7 +1330,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Returns true for cavalry/horse_archers which fight dismounted in naval battles.
+        ///     Returns true for cavalry/horse_archers which fight dismounted in naval battles.
         /// </summary>
         private static bool IsMountedType(string typeId)
         {
@@ -1331,8 +1338,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Gets a human-readable display name for a formation/soldier type.
-        /// Used for tooltip messages explaining formation restrictions.
+        ///     Gets a human-readable display name for a formation/soldier type.
+        ///     Used for tooltip messages explaining formation restrictions.
         /// </summary>
         private static string GetFormationDisplayName(string typeId)
         {
@@ -1347,9 +1354,9 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Validates soldier type availability. Checks player formation match, faction restrictions, affordability, 
-        /// and shows naval tooltip for mounted types.
-        /// Players can only recruit soldiers matching their own troop type (infantry can only lead infantry, etc.)
+        ///     Validates soldier type availability. Checks player formation match, faction restrictions, affordability,
+        ///     and shows naval tooltip for mounted types.
+        ///     Players can only recruit soldiers matching their own troop type (infantry can only lead infantry, etc.)
         /// </summary>
         private bool IsSoldierTypeAvailable(MenuCallbackArgs args, string typeId)
         {
@@ -1366,7 +1373,7 @@ namespace Enlisted.Features.CommandTent.UI
             // An infantry soldier leads infantry, a cavalryman leads cavalry, etc.
             var duties = EnlistedDutiesBehavior.Instance;
             var playerFormation = duties?.PlayerFormation?.ToLowerInvariant() ?? "infantry";
-            
+
             // Map player formation to retinue type for comparison
             var playerRetinueType = playerFormation switch
             {
@@ -1381,7 +1388,9 @@ namespace Enlisted.Features.CommandTent.UI
                 args.IsEnabled = false;
                 var formationDisplayName = GetFormationDisplayName(playerRetinueType);
                 var requestedDisplayName = GetFormationDisplayName(typeId);
-                var tooltip = new TextObject("{=ct_warn_formation_mismatch}As a {PLAYER_TYPE}, you can only command {PLAYER_TYPE} soldiers. You cannot lead {REQUESTED_TYPE}.");
+                var tooltip =
+                    new TextObject(
+                        "{=ct_warn_formation_mismatch}As a {PLAYER_TYPE}, you can only command {PLAYER_TYPE} soldiers. You cannot lead {REQUESTED_TYPE}.");
                 tooltip.SetTextVariable("PLAYER_TYPE", formationDisplayName);
                 tooltip.SetTextVariable("REQUESTED_TYPE", requestedDisplayName);
                 args.Tooltip = tooltip;
@@ -1393,7 +1402,8 @@ namespace Enlisted.Features.CommandTent.UI
             {
                 args.IsEnabled = false;
                 var factionName = culture.Name?.ToString() ?? "This faction";
-                var tooltip = new TextObject("{=ct_warn_faction_unavailable}{FACTION_NAME} does not field mounted archers.");
+                var tooltip =
+                    new TextObject("{=ct_warn_faction_unavailable}{FACTION_NAME} does not field mounted archers.");
                 tooltip.SetTextVariable("FACTION_NAME", factionName);
                 args.Tooltip = tooltip;
                 return true;
@@ -1406,7 +1416,8 @@ namespace Enlisted.Features.CommandTent.UI
             if (playerGold < cost)
             {
                 args.IsEnabled = false;
-                var tooltip = new TextObject("{=ct_warn_cannot_afford}You cannot afford this ({COST} denars required).");
+                var tooltip =
+                    new TextObject("{=ct_warn_cannot_afford}You cannot afford this ({COST} denars required).");
                 tooltip.SetTextVariable("COST", cost);
                 args.Tooltip = tooltip;
                 return true;
@@ -1426,7 +1437,7 @@ namespace Enlisted.Features.CommandTent.UI
             // Naval dismount info tooltip for mounted types
             if (IsMountedType(typeId))
             {
-                var tooltipId = typeId == "cavalry" 
+                var tooltipId = typeId == "cavalry"
                     ? "{=ct_naval_cavalry_tooltip}Cavalry will dismount and fight as infantry during naval engagements. Their horses cannot be brought aboard ships."
                     : "{=ct_naval_horse_archer_tooltip}Horse archers will dismount and fight as foot archers during naval engagements. Their horses cannot be brought aboard ships.";
                 args.Tooltip = new TextObject(tooltipId);
@@ -1436,7 +1447,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Handles soldier type purchase selection.
+        ///     Handles soldier type purchase selection.
         /// </summary>
         private void OnSoldierTypePurchase(string typeId)
         {
@@ -1495,7 +1506,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Shows purchase confirmation dialog.
+        ///     Shows purchase confirmation dialog.
         /// </summary>
         private void ShowPurchaseConfirmation(string typeId, int count, int totalCost)
         {
@@ -1504,7 +1515,9 @@ namespace Enlisted.Features.CommandTent.UI
             var typeName = GetSoldierTypeName(typeId, culture);
 
             var title = new TextObject("{=ct_purchase_confirm_title}Confirm Purchase");
-            var message = new TextObject("{=ct_purchase_confirm_msg}Purchase {COUNT} {TYPE_NAME} for {COST} denars?\n\nDaily upkeep: {UPKEEP} denars");
+            var message =
+                new TextObject(
+                    "{=ct_purchase_confirm_msg}Purchase {COUNT} {TYPE_NAME} for {COST} denars?\n\nDaily upkeep: {UPKEEP} denars");
             message.SetTextVariable("COUNT", count);
             message.SetTextVariable("TYPE_NAME", typeName);
             message.SetTextVariable("COST", totalCost);
@@ -1526,7 +1539,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Executes the actual purchase of soldiers.
+        ///     Executes the actual purchase of soldiers.
         /// </summary>
         private void ExecutePurchase(string typeId, int count, int totalCost)
         {
@@ -1546,7 +1559,8 @@ namespace Enlisted.Features.CommandTent.UI
             {
                 ModLogger.Info(LogCategory, $"Purchased {actuallyAdded} {typeId} soldiers for {totalCost} gold");
 
-                var successMsg = new TextObject("{=ct_purchase_success}{COUNT} soldiers have been mustered to your retinue.");
+                var successMsg =
+                    new TextObject("{=ct_purchase_success}{COUNT} soldiers have been mustered to your retinue.");
                 successMsg.SetTextVariable("COUNT", actuallyAdded);
                 InformationManager.DisplayMessage(new InformationMessage(successMsg.ToString(), Colors.Green));
             }
@@ -1563,7 +1577,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Shows confirmation dialog when changing soldier type with existing retinue.
+        ///     Shows confirmation dialog when changing soldier type with existing retinue.
         /// </summary>
         private void ShowTypeChangeConfirmation(string newTypeId)
         {
@@ -1571,7 +1585,9 @@ namespace Enlisted.Features.CommandTent.UI
             var currentCount = manager?.State?.TotalSoldiers ?? 0;
 
             var title = new TextObject("{=ct_type_change_title}Change Soldier Type");
-            var message = new TextObject("{=ct_type_change_msg}You currently have {COUNT} soldiers. Changing type will dismiss them. Continue?");
+            var message =
+                new TextObject(
+                    "{=ct_type_change_msg}You currently have {COUNT} soldiers. Changing type will dismiss them. Continue?");
             message.SetTextVariable("COUNT", currentCount);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
@@ -1590,7 +1606,9 @@ namespace Enlisted.Features.CommandTent.UI
                         manager?.ClearRetinueTroops("type_change");
                         ModLogger.Info(LogCategory, "Dismissed retinue for type change");
 
-                        var dismissMsg = new TextObject("{=ct_type_change_dismiss}Your current soldiers have been dismissed to make way for new recruits.");
+                        var dismissMsg =
+                            new TextObject(
+                                "{=ct_type_change_dismiss}Your current soldiers have been dismissed to make way for new recruits.");
                         InformationManager.DisplayMessage(new InformationMessage(dismissMsg.ToString()));
 
                         // Now proceed with new type purchase
@@ -1605,7 +1623,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Retinue Dismiss Menu
 
         /// <summary>
-        /// Creates the dismiss soldiers confirmation menu.
+        ///     Creates the dismiss soldiers confirmation menu.
         /// </summary>
         private void AddRetinueDismissMenu(CampaignGameStarter starter)
         {
@@ -1648,7 +1666,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the dismiss menu with clean formatting.
+        ///     Initializes the dismiss menu with clean formatting.
         /// </summary>
         private void OnRetinueDismissInit(MenuCallbackArgs args)
         {
@@ -1679,7 +1697,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Executes the dismissal of all retinue soldiers.
+        ///     Executes the dismissal of all retinue soldiers.
         /// </summary>
         private void ExecuteDismiss()
         {
@@ -1701,8 +1719,8 @@ namespace Enlisted.Features.CommandTent.UI
         #region Requisition Menu
 
         /// <summary>
-        /// Checks if the requisition menu option should be available.
-        /// Shows disabled state with tooltip when on cooldown or at capacity.
+        ///     Checks if the requisition menu option should be available.
+        ///     Shows disabled state with tooltip when on cooldown or at capacity.
         /// </summary>
         private static bool IsRequisitionAvailable(MenuCallbackArgs args)
         {
@@ -1722,7 +1740,8 @@ namespace Enlisted.Features.CommandTent.UI
             {
                 args.IsEnabled = false;
                 var days = manager.GetRequisitionCooldownDays();
-                var tooltip = new TextObject("{=ct_requisition_cooldown}Requisition on cooldown: {DAYS} days remaining.");
+                var tooltip =
+                    new TextObject("{=ct_requisition_cooldown}Requisition on cooldown: {DAYS} days remaining.");
                 tooltip.SetTextVariable("DAYS", days);
                 args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
@@ -1745,7 +1764,8 @@ namespace Enlisted.Features.CommandTent.UI
             if (playerGold < cost)
             {
                 args.IsEnabled = false;
-                var tooltip = new TextObject("{=ct_warn_cannot_afford}You cannot afford this ({COST} denars required).");
+                var tooltip =
+                    new TextObject("{=ct_warn_cannot_afford}You cannot afford this ({COST} denars required).");
                 tooltip.SetTextVariable("COST", cost);
                 args.Tooltip = tooltip;
                 args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
@@ -1757,7 +1777,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Creates the Requisition confirmation menu with cost breakdown.
+        ///     Creates the Requisition confirmation menu with cost breakdown.
         /// </summary>
         private void AddRetinueRequisitionMenu(CampaignGameStarter starter)
         {
@@ -1807,8 +1827,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Initializes the requisition menu with cost breakdown.
-        /// Uses clean formatting with inline gold icons.
+        ///     Initializes the requisition menu with cost breakdown.
+        ///     Uses clean formatting with inline gold icons.
         /// </summary>
         private static void OnRetinueRequisitionInit(MenuCallbackArgs args)
         {
@@ -1826,7 +1846,8 @@ namespace Enlisted.Features.CommandTent.UI
                 sb.AppendLine();
                 sb.AppendLine("— Requisition Men —");
                 sb.AppendLine();
-                sb.AppendLine("A word to the right quartermaster, a few coins changing hands, and fresh soldiers report for duty.");
+                sb.AppendLine(
+                    "A word to the right quartermaster, a few coins changing hands, and fresh soldiers report for duty.");
                 sb.AppendLine();
                 sb.AppendLine($"Missing Soldiers: {missing}");
                 sb.AppendLine($"Cost per Soldier: {perSoldier}{{GOLD_ICON}}");
@@ -1860,7 +1881,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Executes the instant requisition of soldiers.
+        ///     Executes the instant requisition of soldiers.
         /// </summary>
         private void ExecuteRequisition()
         {
@@ -1894,8 +1915,8 @@ namespace Enlisted.Features.CommandTent.UI
         #region Companion Assignments Menu
 
         /// <summary>
-        /// Checks if companion assignments option is available (Tier 4+ and has companions).
-        /// Uses Conversation icon for companion management.
+        ///     Checks if companion assignments option is available (Tier 4+ and has companions).
+        ///     Uses Conversation icon for companion management.
         /// </summary>
         private static bool IsCompanionAssignmentsAvailable(MenuCallbackArgs args)
         {
@@ -1910,7 +1931,9 @@ namespace Enlisted.Features.CommandTent.UI
             if (tier < 4)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=ct_companions_tier_locked}You must reach Tier 4 to manage companion assignments.");
+                args.Tooltip =
+                    new TextObject(
+                        "{=ct_companions_tier_locked}You must reach Tier 4 to manage companion assignments.");
             }
             else
             {
@@ -1928,7 +1951,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Creates the Companion Assignments submenu showing each companion with toggle options.
+        ///     Creates the Companion Assignments submenu showing each companion with toggle options.
         /// </summary>
         private void AddCompanionAssignmentsMenu(CampaignGameStarter starter)
         {
@@ -1976,8 +1999,8 @@ namespace Enlisted.Features.CommandTent.UI
         private List<Hero> _cachedCompanions;
 
         /// <summary>
-        /// Initializes the companion assignments menu with current companion list.
-        /// Uses clean formatting with status indicators.
+        ///     Initializes the companion assignments menu with current companion list.
+        ///     Uses clean formatting with status indicators.
         /// </summary>
         private void OnCompanionAssignmentsInit(MenuCallbackArgs args)
         {
@@ -2024,7 +2047,8 @@ namespace Enlisted.Features.CommandTent.UI
                     }
                 }
 
-                ModLogger.Debug(LogCategory, $"Companion assignments menu initialized with {_cachedCompanions.Count} companions");
+                ModLogger.Debug(LogCategory,
+                    $"Companion assignments menu initialized with {_cachedCompanions.Count} companions");
             }
             catch (Exception ex)
             {
@@ -2034,7 +2058,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Checks if a companion slot should be visible based on cached companion list.
+        ///     Checks if a companion slot should be visible based on cached companion list.
         /// </summary>
         private bool IsCompanionSlotVisible(MenuCallbackArgs args, int index)
         {
@@ -2048,7 +2072,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Toggles a companion's battle participation when their menu option is selected.
+        ///     Toggles a companion's battle participation when their menu option is selected.
         /// </summary>
         private void OnCompanionToggle(int index)
         {
@@ -2066,7 +2090,7 @@ namespace Enlisted.Features.CommandTent.UI
 
             manager.ToggleCompanionParticipation(companion);
             var newStatus = manager.ShouldCompanionFight(companion) ? "Fight" : "Stay Back";
-            
+
             var message = new TextObject("{=ct_companion_toggled}{COMPANION_NAME} set to: {STATUS}");
             message.SetTextVariable("COMPANION_NAME", companion.Name);
             message.SetTextVariable("STATUS", newStatus);
@@ -2083,7 +2107,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Utility Methods
 
         /// <summary>
-        /// Gets the rank name for a given tier.
+        ///     Gets the rank name for a given tier.
         /// </summary>
         private static string GetRankName(int tier)
         {
@@ -2100,7 +2124,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Gets the unit name for a tier (lance/squad/retinue).
+        ///     Gets the unit name for a tier (lance/squad/retinue).
         /// </summary>
         private static string GetUnitNameForTier(int tier)
         {
@@ -2114,7 +2138,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Gets the display name for a soldier type, with faction-specific overrides.
+        ///     Gets the display name for a soldier type, with faction-specific overrides.
         /// </summary>
         private static string GetSoldierTypeName(string typeId, CultureObject culture)
         {
@@ -2141,7 +2165,7 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Gets available party space for new soldiers.
+        ///     Gets available party space for new soldiers.
         /// </summary>
         private static int GetAvailablePartySpace()
         {
@@ -2155,8 +2179,8 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Calculates the recruitment cost for one soldier of the given type.
-        /// Uses the native PartyWageModel.GetTroopRecruitmentCost formula.
+        ///     Calculates the recruitment cost for one soldier of the given type.
+        ///     Uses the native PartyWageModel.GetTroopRecruitmentCost formula.
         /// </summary>
         private static int CalculateRecruitmentCost(string typeId, CultureObject culture, int playerTier)
         {
@@ -2191,4 +2215,3 @@ namespace Enlisted.Features.CommandTent.UI
         #endregion
     }
 }
-

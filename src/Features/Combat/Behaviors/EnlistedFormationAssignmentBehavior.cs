@@ -5,23 +5,15 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.AgentOrigins;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
-using TaleWorlds.Library;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
     /// <summary>
     ///     Mission behavior that automatically assigns enlisted players to their designated formation
     ///     (Infantry, Ranged, Cavalry, Horse Archer) based on their duty when a battle starts.
-    ///     
     ///     At Tier 4+, players can command their own formation (sergeant mode) - their retinue and
     ///     companions are assigned to the same formation and the formation is made player-controllable.
     ///     Below Tier 4, players join the formation but cannot issue commands.
-    ///     
     ///     FIX: Also teleports the player to the correct position within their formation to handle
     ///     cases where the player's map party was slightly behind the lord when battle started,
     ///     causing them to spawn in the wrong position (behind the formation instead of in it).
@@ -31,44 +23,47 @@ namespace Enlisted.Features.Combat.Behaviors
         private const int MaxPositionFixAttempts = 120; // Try for about 2 seconds at 60fps (lord may spawn later)
         private const int MaxPartyAssignmentAttempts = 60; // Try for about 1 second at 60fps for party assignment
         private const int CompanionRemovalDelayTicks = 30; // Delay companion removal to avoid spawn corruption
-        
+
         // Distance thresholds for teleporting
         private const float InitialSpawnTeleportDistance = 5f; // 5m for initial spawn (deployed near formation)
-        private const float ReinforcementTeleportDistance = 0f; // Always teleport for reinforcements (spawn at map edge)
-        
+
+        private const float
+            ReinforcementTeleportDistance = 0f; // Always teleport for reinforcements (spawn at map edge)
+
+        private const int MaxLordAttachRetryAttempts = 180; // ~3 seconds at 60fps
+
+        // Deferred companion removal to avoid corrupting spawn state
+        // Removing agents during OnAgentBuild can crash the native spawn loop
+        private readonly List<Agent> _companionsToRemove = new();
+
         private Agent _assignedAgent;
-        
-        // Cached spawn logic to detect reinforcement phase
-        private MissionAgentSpawnLogic _spawnLogic;
+        private int _companionRemovalDelayCounter;
 
         // Track if we've logged the behavior initialization
         private bool _hasLoggedInit;
+        private bool _loggedSoloAttachMissing;
+
+        // Logging flags to avoid spamming user-facing logs
+        private bool _loggedSoloAttachOutcome;
+        private int _lordAttachRetryAttempts;
+
+        // Retry lord attach when formation is solo and lord agent was not spawned yet
+        private bool _needsLordAttachRetry;
+
+        // Track player party (companions + retinue) formation assignment
+        // This ensures all player party members fight together as a unified squad
+        private bool _needsPartyAssignment;
 
         // Track whether we need to teleport the player to their formation position
         // This handles the case where the player spawned late or in wrong position
         private bool _needsPositionFix;
-        private int _positionFixAttempts;
-        
-        // Track player party (companions + retinue) formation assignment
-        // This ensures all player party members fight together as a unified squad
-        private bool _needsPartyAssignment;
-        private bool _partyAssignmentComplete;
         private int _partyAssignmentAttempts;
+        private bool _partyAssignmentComplete;
         private Formation _playerSquadFormation;
-        
-        // Retry lord attach when formation is solo and lord agent was not spawned yet
-        private bool _needsLordAttachRetry;
-        private int _lordAttachRetryAttempts;
-        private const int MaxLordAttachRetryAttempts = 180; // ~3 seconds at 60fps
+        private int _positionFixAttempts;
 
-        // Logging flags to avoid spamming user-facing logs
-        private bool _loggedSoloAttachOutcome;
-        private bool _loggedSoloAttachMissing;
-        
-        // Deferred companion removal to avoid corrupting spawn state
-        // Removing agents during OnAgentBuild can crash the native spawn loop
-        private readonly List<Agent> _companionsToRemove = new List<Agent>();
-        private int _companionRemovalDelayCounter;
+        // Cached spawn logic to detect reinforcement phase
+        private MissionAgentSpawnLogic _spawnLogic;
 
         public override MissionBehaviorType BehaviorType => MissionBehaviorType.Other;
 
@@ -82,7 +77,7 @@ namespace Enlisted.Features.Combat.Behaviors
             try
             {
                 base.AfterStart();
-                
+
                 // Cache the spawn logic for reinforcement detection
                 _spawnLogic = Mission.Current?.GetMissionBehavior<MissionAgentSpawnLogic>();
                 _loggedSoloAttachOutcome = false;
@@ -97,13 +92,14 @@ namespace Enlisted.Features.Combat.Behaviors
                         $"=== BEHAVIOR ACTIVE === Mission: {Mission.Current?.Mode}, " +
                         $"Enlisted: {enlistment?.IsEnlisted}, OnLeave: {enlistment?.IsOnLeave}, " +
                         $"Agent.Main exists: {Agent.Main != null}");
-                    
+
                     // Log companion states at mission start for debugging Stay Back issues
                     var companionManager = CompanionAssignmentManager.Instance;
                     var companions = companionManager?.GetAssignableCompanions() ?? new List<Hero>();
                     if (companions.Count > 0)
                     {
-                        var stayBackCompanions = companions.Where(c => !(companionManager?.ShouldCompanionFight(c) ?? true)).ToList();
+                        var stayBackCompanions = companions
+                            .Where(c => !(companionManager?.ShouldCompanionFight(c) ?? true)).ToList();
                         if (stayBackCompanions.Any())
                         {
                             ModLogger.Debug("FormationAssignment",
@@ -119,11 +115,11 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("FormationAssignment", $"Error in AfterStart: {ex.Message}");
             }
         }
-        
+
         /// <summary>
-        /// Determines if we're currently in reinforcement spawn phase.
-        /// Initial spawn places agents at formation positions; reinforcements spawn at map edges.
-        /// For reinforcements, we should always teleport regardless of distance.
+        ///     Determines if we're currently in reinforcement spawn phase.
+        ///     Initial spawn places agents at formation positions; reinforcements spawn at map edges.
+        ///     For reinforcements, we should always teleport regardless of distance.
         /// </summary>
         private bool IsReinforcementPhase()
         {
@@ -132,7 +128,7 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 return false;
             }
-            
+
             // IsInitialSpawnOver is true once the initial deployment phase troops have all spawned
             // After that, any new spawns are reinforcements from the map edge
             return _spawnLogic.IsInitialSpawnOver;
@@ -182,10 +178,10 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Phase 8: Queues "stay back" companions for deferred removal from battle.
-        /// We can't remove them during OnAgentBuild because that corrupts the native spawn loop
-        /// and causes crashes in Mission.SpawnAgent. Instead, we queue them for removal
-        /// after the spawn phase completes.
+        ///     Phase 8: Queues "stay back" companions for deferred removal from battle.
+        ///     We can't remove them during OnAgentBuild because that corrupts the native spawn loop
+        ///     and causes crashes in Mission.SpawnAgent. Instead, we queue them for removal
+        ///     after the spawn phase completes.
         /// </summary>
         private void TryRemoveStayBackCompanion(Agent agent)
         {
@@ -227,15 +223,15 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 _companionsToRemove.Add(agent);
                 _companionRemovalDelayCounter = 0; // Reset delay counter when we add a new companion
-                
+
                 ModLogger.Debug("FormationAssignment",
                     $"Stay Back companion {hero.Name} queued for removal (formation: {agent.Formation?.FormationIndex})");
             }
         }
-        
+
         /// <summary>
-        /// Processes the deferred companion removal queue after spawn phase completes.
-        /// This avoids corrupting the native spawn loop which caused crashes.
+        ///     Processes the deferred companion removal queue after spawn phase completes.
+        ///     This avoids corrupting the native spawn loop which caused crashes.
         /// </summary>
         private void ProcessDeferredCompanionRemovals()
         {
@@ -243,14 +239,14 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 return;
             }
-            
+
             // Wait for spawn phase to complete before removing companions
             _companionRemovalDelayCounter++;
             if (_companionRemovalDelayCounter < CompanionRemovalDelayTicks)
             {
                 return;
             }
-            
+
             // Process all queued companions
             foreach (var agent in _companionsToRemove)
             {
@@ -261,16 +257,17 @@ namespace Enlisted.Features.Combat.Behaviors
                     {
                         continue;
                     }
-                    
+
                     var heroName = (agent.Character as CharacterObject)?.HeroObject?.Name?.ToString() ?? "Unknown";
-                    
+
                     // Clear captain status if this companion was made captain
                     if (agent.Formation?.Captain == agent)
                     {
                         agent.Formation.Captain = null;
-                        ModLogger.Debug("FormationAssignment", $"Cleared {heroName} as formation captain before removal");
+                        ModLogger.Debug("FormationAssignment",
+                            $"Cleared {heroName} as formation captain before removal");
                     }
-                    
+
                     // CRITICAL FIX: Clear captain status from ALL formations, not just own formation
                     // The game's GeneralsAndCaptainsAssignmentLogic can make companion captain of ANY formation
                     if (agent.Team != null)
@@ -280,18 +277,18 @@ namespace Enlisted.Features.Combat.Behaviors
                             if (formation?.Captain == agent)
                             {
                                 formation.Captain = null;
-                                ModLogger.Debug("FormationAssignment", 
+                                ModLogger.Debug("FormationAssignment",
                                     $"Cleared {heroName} as captain of {formation.FormationIndex} (Stay Back)");
                             }
                         }
                     }
-                    
+
                     // FadeOut removes the agent without tracking as casualty
                     agent.FadeOut(hideInstantly: true, hideMount: true);
-                    
+
                     // Verify removal worked
                     var stillActive = agent.IsActive();
-                    
+
                     if (stillActive)
                     {
                         ModLogger.Warn("FormationAssignment",
@@ -310,7 +307,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     ModLogger.Error("FormationAssignment", $"Error removing stay-back companion: {ex.Message}");
                 }
             }
-            
+
             _companionsToRemove.Clear();
         }
 
@@ -344,16 +341,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     _needsLordAttachRetry = false;
                 }
-                
+
                 // Phase 7: Handle player party (companions + retinue) formation assignment
                 // Agents may not all be spawned in the first few ticks, so we keep trying
-                if (_needsPartyAssignment && !_partyAssignmentComplete && 
+                if (_needsPartyAssignment && !_partyAssignmentComplete &&
                     _partyAssignmentAttempts < MaxPartyAssignmentAttempts)
                 {
                     _partyAssignmentAttempts++;
                     TryAssignPlayerPartyToFormation();
                 }
-                
+
                 // Phase 8: Process deferred companion removals after spawn phase completes
                 // This prevents crashes from FadeOut during OnAgentBuild corrupting the spawn loop
                 ProcessDeferredCompanionRemovals();
@@ -451,7 +448,7 @@ namespace Enlisted.Features.Combat.Behaviors
             // At Tier 4+, the formation will be made player-controllable for squad commands
             var enlistmentTier = enlistment.EnlistmentTier;
             var isTier4Plus = enlistmentTier >= RetinueManager.LanceTier;
-            
+
             var duties = EnlistedDutiesBehavior.Instance;
             var formationString = duties?.PlayerFormation ?? "infantry";
             var formationClass = GetFormationClassFromString(formationString);
@@ -489,13 +486,13 @@ namespace Enlisted.Features.Combat.Behaviors
                     _needsPositionFix = true;
                     _positionFixAttempts = 0;
                 }
-                
+
                 // At Tier 4+, still need to assign party members to the same formation
                 if (isTier4Plus && !_partyAssignmentComplete)
                 {
                     _needsPartyAssignment = true;
                     _partyAssignmentAttempts = 0;
-                    ModLogger.Debug("FormationAssignment", 
+                    ModLogger.Debug("FormationAssignment",
                         $"Tier {enlistmentTier} player already in formation - will still assign party members");
                 }
 
@@ -506,7 +503,8 @@ namespace Enlisted.Features.Combat.Behaviors
             if (isSoloFormation && enlistment?.CurrentLord != null)
             {
                 var currentLord = enlistment.CurrentLord;
-                if (TryAttachToAlliedOrLordFormation(caller, playerAgent, playerTeam, isTier4Plus, enlistmentTier, formationClass))
+                if (TryAttachToAlliedOrLordFormation(caller, playerAgent, playerTeam, isTier4Plus, enlistmentTier,
+                        formationClass))
                 {
                     return;
                 }
@@ -518,7 +516,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 playerAgent.Formation = targetFormation;
                 SetupSquadCommand(playerAgent, targetFormation, isTier4Plus);
                 _assignedAgent = playerAgent;
-                
+
                 // Store the player's formation for party assignment
                 _playerSquadFormation = targetFormation;
 
@@ -527,7 +525,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 // because their map party was slightly behind the lord when battle started
                 _needsPositionFix = true;
                 _positionFixAttempts = 0;
-                
+
                 // At Tier 4+, player has companions and retinue soldiers
                 // Mark that we need to assign all player party members to the same formation
                 if (isTier4Plus)
@@ -535,7 +533,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     _needsPartyAssignment = true;
                     _partyAssignmentAttempts = 0;
                     _partyAssignmentComplete = false;
-                    
+
                     ModLogger.Info("FormationAssignment",
                         $"[{caller}] Tier {enlistmentTier} player assigned to {formationClass} - party will join, squad commands enabled");
                 }
@@ -555,7 +553,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Attempts to attach the player to the lord's formation. Returns true if attached.
+        ///     Attempts to attach the player to the lord's formation. Returns true if attached.
         /// </summary>
         private bool TryAttachToAlliedOrLordFormation(string caller, Agent playerAgent = null, Team playerTeam = null,
             bool isTier4Plus = false, int enlistmentTier = 0, FormationClass desiredClass = FormationClass.Infantry)
@@ -564,7 +562,7 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 playerAgent ??= Agent.Main;
                 playerTeam ??= playerAgent?.Team;
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (playerAgent == null || playerTeam == null || enlistment?.CurrentLord == null)
                 {
@@ -586,7 +584,8 @@ namespace Enlisted.Features.Combat.Behaviors
                         if (preferred != null && preferred.CountOfUnits > 1)
                         {
                             bestAlliedFormation ??= preferred;
-                            if (bestAlliedFormation == null || preferred.CountOfUnits > bestAlliedFormation.CountOfUnits)
+                            if (bestAlliedFormation == null ||
+                                preferred.CountOfUnits > bestAlliedFormation.CountOfUnits)
                             {
                                 bestAlliedFormation = preferred;
                             }
@@ -596,8 +595,12 @@ namespace Enlisted.Features.Combat.Behaviors
                         foreach (var formation in missionTeam.FormationsIncludingSpecialAndEmpty)
                         {
                             if (formation == null || formation.CountOfUnits <= 1)
+                            {
                                 continue;
-                            if (bestAlliedFormation == null || formation.CountOfUnits > bestAlliedFormation.CountOfUnits)
+                            }
+
+                            if (bestAlliedFormation == null ||
+                                formation.CountOfUnits > bestAlliedFormation.CountOfUnits)
                             {
                                 bestAlliedFormation = formation;
                             }
@@ -701,11 +704,10 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        ///     Attempts to teleport the player (and their squad at Tier 4+) to the correct position 
-        ///     within their assigned formation. This fixes the issue where the player's party spawns 
+        ///     Attempts to teleport the player (and their squad at Tier 4+) to the correct position
+        ///     within their assigned formation. This fixes the issue where the player's party spawns
         ///     behind the formation when their map party was slightly behind the lord when battle started.
         ///     At Tier 4+, the entire squad (player + retinue + companions) is teleported together.
-        ///     
         ///     CRITICAL: We find an ARMY agent (not from player's party) to use as reference position,
         ///     because CachedMedianPosition includes our own party members who spawned at the wrong spot.
         /// </summary>
@@ -731,7 +733,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     return;
                 }
-                
+
                 var team = playerAgent.Team;
                 if (team?.ActiveAgents == null)
                 {
@@ -750,14 +752,14 @@ namespace Enlisted.Features.Combat.Behaviors
                 var currentLord = enlistment.CurrentLord;
                 Vec3 targetPosition = Vec3.Invalid;
                 Vec2 formationDirection = Vec2.Forward;
-                string teleportSource = "unknown";
-                
+                var teleportSource = "unknown";
+
                 // Debug logging for troubleshooting teleport issues
                 var teamCount = Mission.Current.Teams.Count();
-                ModLogger.Debug("FormationAssignment", 
+                ModLogger.Debug("FormationAssignment",
                     $"Teleport search: Looking for {formationClass} formation (duty={formationString}). " +
                     $"Player team index={team.TeamIndex}, Side={team.Side}, Total teams={teamCount}");
-                
+
                 // PRIORITY 1: Use the formation on the player's team directly
                 // All allied troops (lord's army + player's party) are on the SAME team in Bannerlord battles
                 // The formation's CachedMedianPosition includes all units, giving us the army's center position
@@ -766,27 +768,29 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     var unitCount = targetFormation.CountOfUnits;
                     formationDirection = targetFormation.Direction.IsValid ? targetFormation.Direction : Vec2.Forward;
-                    
+
                     // Position several meters behind the formation so player spawns at the rear, not stuck in the middle
                     var behindOffset = -formationDirection.ToVec3() * 5f;
                     targetPosition = targetFormation.CachedMedianPosition.GetGroundVec3() + behindOffset;
                     teleportSource = $"{formationClass} formation ({unitCount} units)";
-                    
-                    ModLogger.Debug("FormationAssignment", 
+
+                    ModLogger.Debug("FormationAssignment",
                         $"Found {formationClass} formation on player's team ({unitCount} units)");
                 }
-                
+
                 // FALLBACK 1: If no allied formation found, fall back to LORD position
                 if (!targetPosition.IsValid && currentLord != null)
                 {
-                    ModLogger.Debug("FormationAssignment", 
+                    ModLogger.Debug("FormationAssignment",
                         $"No {formationClass} formation found, falling back to lord position");
-                    
+
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
+                        {
                             continue; // Only check allied teams
-                        
+                        }
+
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
                             if (agent?.Character == currentLord.CharacterObject)
@@ -794,52 +798,67 @@ namespace Enlisted.Features.Combat.Behaviors
                                 targetPosition = agent.Position;
                                 formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
                                 teleportSource = $"Lord {currentLord.Name}";
-                                ModLogger.Debug("FormationAssignment", 
+                                ModLogger.Debug("FormationAssignment",
                                     $"Fallback: Found lord {currentLord.Name} on Team {missionTeam.TeamIndex}");
                                 break;
                             }
                         }
-                        if (targetPosition.IsValid) break;
+
+                        if (targetPosition.IsValid)
+                        {
+                            break;
+                        }
                     }
                 }
-                
+
                 // FALLBACK 2: If still nothing, use ANY non-player-party agent (last resort)
                 if (!targetPosition.IsValid)
                 {
-                    ModLogger.Debug("FormationAssignment", 
+                    ModLogger.Debug("FormationAssignment",
                         "Lord not found, falling back to any allied agent");
-                    
+
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
+                        {
                             continue; // Only check allied teams
-                        
+                        }
+
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
                             if (agent == null || !agent.IsActive() || agent == playerAgent)
+                            {
                                 continue;
+                            }
+
                             if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
+                            {
                                 continue;
-                            
+                            }
+
                             targetPosition = agent.Position;
                             formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
                             teleportSource = "allied agent";
-                            ModLogger.Debug("FormationAssignment", 
+                            ModLogger.Debug("FormationAssignment",
                                 $"Fallback: Using agent {agent.Character?.Name} on Team {missionTeam.TeamIndex}");
                             break;
                         }
-                        if (targetPosition.IsValid) break;
+
+                        if (targetPosition.IsValid)
+                        {
+                            break;
+                        }
                     }
                 }
-                
+
                 // If no valid target found, retry next tick
                 if (!targetPosition.IsValid)
                 {
-                    ModLogger.Debug("FormationAssignment", 
+                    ModLogger.Debug("FormationAssignment",
                         $"No valid teleport target found for {formationClass} formation, will retry");
                     return;
                 }
-                
+
                 // Calculate distance from player to reference agent
                 var distanceToTarget = playerPosition.Distance(targetPosition);
 
@@ -856,13 +875,13 @@ namespace Enlisted.Features.Combat.Behaviors
                 if (distanceToTarget > teleportThreshold)
                 {
                     var prePos = playerAgent.Position;
-                    
+
                     // Teleport player to formation position (or fallback to lord/agent)
                     playerAgent.TeleportToPosition(targetPosition);
                     playerAgent.SetMovementDirection(formationDirection);
                     playerAgent.LookDirection = formationDirection.ToVec3();
                     playerAgent.ForceUpdateCachedAndFormationValues(true, false);
-                    
+
                     var postPos = playerAgent.Position;
                     var actualMovement = prePos.Distance(postPos);
 
@@ -874,12 +893,12 @@ namespace Enlisted.Features.Combat.Behaviors
                     }
 
                     var squadInfo = squadTeleported > 0 ? $" + {squadTeleported} squad members" : "";
-                    
+
                     ModLogger.Info("FormationAssignment",
                         $"Teleported player{squadInfo} to {teleportSource}: " +
                         $"was {distanceToTarget:F1}m away, moved {actualMovement:F1}m, " +
                         $"from ({prePos.x:F1},{prePos.y:F1}) to ({postPos.x:F1},{postPos.y:F1})");
-                    
+
                     if (actualMovement < 5f && distanceToTarget > 20f)
                     {
                         ModLogger.Warn("FormationAssignment",
@@ -896,19 +915,20 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error teleporting player to formation: {ex.Message}\n{ex.StackTrace}");
+                ModLogger.Error("FormationAssignment",
+                    $"Error teleporting player to formation: {ex.Message}\n{ex.StackTrace}");
                 _needsPositionFix = false;
             }
         }
-        
+
         /// <summary>
-        /// Teleports all squad members (retinue + companions) to positions near the player within the formation.
-        /// This ensures the entire squad spawns together with their troop type formation, not behind the line.
+        ///     Teleports all squad members (retinue + companions) to positions near the player within the formation.
+        ///     This ensures the entire squad spawns together with their troop type formation, not behind the line.
         /// </summary>
         private int TeleportSquadToFormation(Agent playerAgent, Formation formation, Vec3 formationCenter)
         {
             var teleportedCount = 0;
-            
+
             try
             {
                 var team = playerAgent.Team;
@@ -926,12 +946,12 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Get formation direction for proper positioning
                 var formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
                 var formationRight = formationDirection.RightVec();
-                
+
                 // Position squad members in a small cluster around the formation center
                 // Spread them out slightly so they don't stack on top of each other
                 var squadIndex = 0;
                 const float squadSpacing = 1.5f; // meters between squad members
-                
+
                 foreach (var agent in team.ActiveAgents)
                 {
                     // Skip the player
@@ -955,17 +975,17 @@ namespace Enlisted.Features.Combat.Behaviors
                     // Calculate offset position in a grid pattern around the player
                     // This keeps the squad together but not stacked
                     var row = squadIndex / 3;
-                    var col = (squadIndex % 3) - 1; // -1, 0, 1 for left, center, right
-                    
+                    var col = squadIndex % 3 - 1; // -1, 0, 1 for left, center, right
+
                     var offsetForward = -row * squadSpacing; // Behind the player slightly
                     var offsetRight = col * squadSpacing;
-                    
-                    var squadPosition = formationCenter 
-                        + formationDirection.ToVec3() * offsetForward 
-                        + formationRight.ToVec3() * offsetRight;
+
+                    var squadPosition = formationCenter
+                                        + formationDirection.ToVec3() * offsetForward
+                                        + formationRight.ToVec3() * offsetRight;
 
                     agent.TeleportToPosition(squadPosition);
-                    
+
                     // Face same direction as formation
                     if (formation.Direction.IsValid)
                     {
@@ -974,7 +994,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     }
 
                     agent.ForceUpdateCachedAndFormationValues(true, false);
-                    
+
                     teleportedCount++;
                     squadIndex++;
                 }
@@ -1050,15 +1070,15 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 // Get player position for teleporting reassigned soldiers
                 var playerPosition = playerAgent.Position;
-                var formationDirection = _playerSquadFormation.Direction.IsValid 
-                    ? _playerSquadFormation.Direction 
+                var formationDirection = _playerSquadFormation.Direction.IsValid
+                    ? _playerSquadFormation.Direction
                     : Vec2.Forward;
                 var formationRight = formationDirection.RightVec();
-                
+
                 // Track how many soldiers we've positioned for grid layout
                 var positionIndex = 0;
                 const float squadSpacing = 1.5f;
-                
+
                 // Determine teleport threshold based on spawn type
                 // Reinforcements spawn at map edge, so always teleport them to the player
                 var isReinforcement = IsReinforcementPhase();
@@ -1066,7 +1086,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 // Create a snapshot of agents to iterate (avoids collection modification issues)
                 var agentSnapshot = new List<Agent>(team.ActiveAgents);
-                
+
                 foreach (var agent in agentSnapshot)
                 {
                     // Skip the player themselves
@@ -1123,7 +1143,7 @@ namespace Enlisted.Features.Combat.Behaviors
                                     $"Assigned retinue soldier {troopName} to player's squad");
                             }
                         }
-                        
+
                         // Teleport soldiers who were in a different formation to be near the player
                         // This fixes the issue where infantry retinue spawns with Infantry formation
                         // even when the player's duty puts them in Ranged formation
@@ -1131,22 +1151,22 @@ namespace Enlisted.Features.Combat.Behaviors
                         {
                             var agentPosition = agent.Position;
                             var distanceSquared = (agentPosition.AsVec2 - playerPosition.AsVec2).LengthSquared;
-                            
+
                             if (distanceSquared > minTeleportDistanceSquared)
                             {
                                 // Calculate position in a grid behind/around the player
                                 var row = positionIndex / 3;
-                                var col = (positionIndex % 3) - 1; // -1, 0, 1 for left, center, right
-                                
+                                var col = positionIndex % 3 - 1; // -1, 0, 1 for left, center, right
+
                                 var offsetForward = -row * squadSpacing - 2f; // Start 2m behind player
                                 var offsetRight = col * squadSpacing;
-                                
-                                var targetPosition = playerPosition 
-                                    + formationDirection.ToVec3() * offsetForward 
-                                    + formationRight.ToVec3() * offsetRight;
+
+                                var targetPosition = playerPosition
+                                                     + formationDirection.ToVec3() * offsetForward
+                                                     + formationRight.ToVec3() * offsetRight;
 
                                 agent.TeleportToPosition(targetPosition);
-                                
+
                                 // Face same direction as formation
                                 if (_playerSquadFormation.Direction.IsValid)
                                 {
@@ -1157,7 +1177,7 @@ namespace Enlisted.Features.Combat.Behaviors
                                 agent.ForceUpdateCachedAndFormationValues(true, false);
                                 teleportedCount++;
                             }
-                            
+
                             positionIndex++;
                         }
                     }
@@ -1171,7 +1191,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     _playerSquadFormation.SetControlledByAI(false);
                     ModLogger.Debug("FormationAssignment", "Reinforced player control of squad formation");
                 }
-                
+
                 // CRITICAL: Clear captain if it's a player party member (companion)
                 // The game auto-assigns captains based on hero power, which can make companions captain
                 // This breaks the player's command experience - they see their companion giving orders
@@ -1179,16 +1199,16 @@ namespace Enlisted.Features.Combat.Behaviors
                 if (currentCaptain != null && currentCaptain != playerAgent)
                 {
                     // Check if captain is from player's party
-                    if (currentCaptain.Origin is PartyGroupAgentOrigin captainOrigin && 
+                    if (currentCaptain.Origin is PartyGroupAgentOrigin captainOrigin &&
                         captainOrigin.Party == mainParty)
                     {
                         var captainName = currentCaptain.Character?.Name?.ToString() ?? "Unknown";
                         _playerSquadFormation.Captain = null;
-                        ModLogger.Info("FormationAssignment", 
+                        ModLogger.Info("FormationAssignment",
                             $"Cleared companion {captainName} as formation captain (player should command)");
                     }
                 }
-                
+
                 // Log summary if we assigned anyone
                 var totalAssigned = assignedCompanions + assignedRetinue;
                 if (totalAssigned > 0 || partyAgentsFound > 0)
@@ -1205,7 +1225,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 if (partyAgentsFound > 0 || _partyAssignmentAttempts >= MaxPartyAssignmentAttempts / 2)
                 {
                     _partyAssignmentComplete = true;
-                    
+
                     if (partyAgentsFound > 0)
                     {
                         // Log the formation class (Infantry, Ranged, etc.) not PhysicalClass which can be misleading
@@ -1225,7 +1245,7 @@ namespace Enlisted.Features.Combat.Behaviors
         /// <summary>
         ///     Sets up command authority for the enlisted player based on their tier.
         ///     At Tier 4+: Player becomes sergeant and can command their own formation.
-        ///                 The formation is made player-controllable via SetControlledByAI(false).
+        ///     The formation is made player-controllable via SetControlledByAI(false).
         ///     Below Tier 4: Player has no command authority - just a soldier in the ranks.
         /// </summary>
         private void SetupSquadCommand(Agent playerAgent, Formation formation, bool isTier4Plus)
@@ -1247,23 +1267,23 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     // TIER 4+ SQUAD COMMAND SETUP
                     // The player can command their own formation like a sergeant
-                    
+
                     // CRITICAL: Make this specific formation player-controlled
                     // Without this, SetPlayerRole makes ALL formations AI-controlled
                     // This matches what Team.AssignPlayerAsSergeantOfFormation does
                     formation.SetControlledByAI(false);
                     formation.PlayerOwner = playerAgent;
-                    
+
                     // Set player as sergeant (can command own formation only)
                     team.SetPlayerRole(isPlayerGeneral: false, isPlayerSergeant: true);
-                    
+
                     // Strip captaincy if player is captain of a different formation
                     // (shouldn't happen, but safety check)
                     if (formation.Captain == playerAgent)
                     {
                         // Player can remain as captain of their own formation
                     }
-                    
+
                     ModLogger.Info("FormationAssignment",
                         $"Command Setup: Tier 4+ sergeant mode - formation {formation.FormationIndex} is player-controlled");
                 }
@@ -1271,27 +1291,27 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     // BELOW TIER 4: NO COMMAND AUTHORITY
                     // Player is just a soldier in the formation, cannot issue orders
-                    
+
                     // Strip any command roles
                     if (team.IsPlayerGeneral || team.IsPlayerSergeant)
                     {
                         team.SetPlayerRole(isPlayerGeneral: false, isPlayerSergeant: false);
                     }
-                    
+
                     // Strip captaincy if somehow assigned
                     if (formation.Captain == playerAgent)
                     {
                         formation.Captain = null;
                     }
-                    
+
                     // Transfer army command to the lord
                     if (team.PlayerOrderController?.Owner == playerAgent)
                     {
                         TransferArmyCommandToLord(playerAgent, team);
                     }
-                    
+
                     ModLogger.Info("FormationAssignment",
-                        $"Command Setup: Below Tier 4 - no command authority");
+                        "Command Setup: Below Tier 4 - no command authority");
                 }
             }
             catch (Exception ex)
@@ -1299,7 +1319,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("FormationAssignment", $"Error setting up squad command: {ex.Message}");
             }
         }
-        
+
         /// <summary>
         ///     Transfers army-wide command from player to the lord or another suitable agent.
         ///     Used for enlisted soldiers below Tier 4 who shouldn't have command authority.
@@ -1364,13 +1384,13 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Logs retinue state when naval battle detected. Formation assignment deferred to Naval DLC.
+        ///     Logs retinue state when naval battle detected. Formation assignment deferred to Naval DLC.
         /// </summary>
         private static void LogNavalBattleRetinueInfo(string caller)
         {
             var manager = RetinueManager.Instance;
             var enlistment = EnlistmentBehavior.Instance;
-            
+
             var retinueCount = manager?.State?.TotalSoldiers ?? 0;
             var retinueType = manager?.State?.SelectedTypeId ?? "none";
             var companionCount = RetinueManager.GetCompanionCount();
@@ -1395,8 +1415,8 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Phase 8: Checks if a companion should spawn and fight in battle.
-        /// Delegates to CompanionAssignmentManager for the actual check.
+        ///     Phase 8: Checks if a companion should spawn and fight in battle.
+        ///     Delegates to CompanionAssignmentManager for the actual check.
         /// </summary>
         private static bool ShouldCompanionFight(Hero companion)
         {
@@ -1414,22 +1434,22 @@ namespace Enlisted.Features.Combat.Behaviors
             try
             {
                 base.OnEndMission();
-                
+
                 // Reset player assignment state
                 _assignedAgent = null;
                 _needsPositionFix = false;
                 _positionFixAttempts = 0;
-                
+
                 // Reset player party assignment state
                 _needsPartyAssignment = false;
                 _partyAssignmentComplete = false;
                 _partyAssignmentAttempts = 0;
                 _playerSquadFormation = null;
-                
+
                 // Clear deferred companion removal queue
                 _companionsToRemove.Clear();
                 _companionRemovalDelayCounter = 0;
-                
+
                 // Clear spawn logic reference
                 _spawnLogic = null;
             }

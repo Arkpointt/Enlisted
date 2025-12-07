@@ -1,20 +1,14 @@
 using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Actions;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
 namespace Enlisted.Features.CommandTent.Core
 {
     /// <summary>
-    /// Handles retinue lifecycle events: player capture, enlistment end, lord death, army defeat.
-    /// When these events occur, the retinue is cleared with an appropriate message.
-    /// This class hooks into campaign events and EnlistmentBehavior events to manage retinue state.
+    ///     Handles retinue lifecycle events: player capture, enlistment end, lord death, army defeat.
+    ///     When these events occur, the retinue is cleared with an appropriate message.
+    ///     This class hooks into campaign events and EnlistmentBehavior events to manage retinue state.
     /// </summary>
     public sealed class RetinueLifecycleHandler : CampaignBehaviorBase
     {
@@ -24,12 +18,12 @@ namespace Enlisted.Features.CommandTent.Core
         private bool _dischargeDuringGrace;
         private string _lastDischargeReason = string.Empty;
 
-        public static RetinueLifecycleHandler Instance { get; private set; }
-
         public RetinueLifecycleHandler()
         {
             Instance = this;
         }
+
+        public static RetinueLifecycleHandler Instance { get; private set; }
 
         public override void RegisterEvents()
         {
@@ -58,7 +52,7 @@ namespace Enlisted.Features.CommandTent.Core
         #region Event Handlers
 
         /// <summary>
-        /// Handles player being taken prisoner. Clears retinue with capture message.
+        ///     Handles player being taken prisoner. Clears retinue with capture message.
         /// </summary>
         private void OnHeroPrisonerTaken(PartyBase capturingParty, Hero prisoner)
         {
@@ -81,9 +75,9 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Handles enlistment ending for any reason. Determines appropriate retinue fate.
-        /// Also clears companion assignments on full discharge (not grace period).
-        /// If player chose to keep troops on retirement, skips retinue clearing.
+        ///     Handles enlistment ending for any reason. Determines appropriate retinue fate.
+        ///     Also clears companion assignments on full discharge (not grace period).
+        ///     If player chose to keep troops on retirement, skips retinue clearing.
         /// </summary>
         private void OnEnlistmentEnded(string reason)
         {
@@ -119,8 +113,8 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Handles lord death. If player's lord dies, retinue scatters.
-        /// Note: EnlistmentBehavior handles grace period, we just clear the retinue.
+        ///     Handles lord death. If player's lord dies, retinue scatters.
+        ///     Note: EnlistmentBehavior handles grace period, we just clear the retinue.
         /// </summary>
         private void OnHeroKilled(Hero victim, Hero killer, KillCharacterAction.KillCharacterActionDetail detail,
             bool showNotification)
@@ -154,7 +148,7 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Handles army dispersal. If player's army is defeated, retinue scatters.
+        ///     Handles army dispersal. If player's army is defeated, retinue scatters.
         /// </summary>
         private void OnArmyDispersed(Army army, Army.ArmyDispersionReason reason, bool isLeaderPartyRemoved)
         {
@@ -200,7 +194,7 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Daily tick handler - checks for leave expiration (desertion).
+        ///     Daily tick handler - checks for leave expiration (desertion).
         /// </summary>
         private void OnDailyTick()
         {
@@ -243,7 +237,7 @@ namespace Enlisted.Features.CommandTent.Core
         #region Helper Methods
 
         /// <summary>
-        /// Maps discharge reasons from EnlistmentBehavior to lifecycle event types.
+        ///     Maps discharge reasons from EnlistmentBehavior to lifecycle event types.
         /// </summary>
         private string DetermineLifecycleReason(string dischargeReason)
         {
@@ -291,7 +285,7 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Clears the retinue and displays the appropriate lifecycle message.
+        ///     Clears the retinue and displays the appropriate lifecycle message.
         /// </summary>
         /// <param name="reason">The lifecycle reason (capture, desertion, lord_died, army_defeat, enlistment_end)</param>
         public void ClearRetinueWithMessage(string reason)
@@ -326,38 +320,50 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Gets the localized message for a lifecycle event.
+        ///     Gets the localized message for a lifecycle event.
         /// </summary>
         private static string GetLifecycleMessage(string reason)
         {
             return reason switch
             {
                 "capture" =>
-                    new TextObject("{=ct_capture_retinue_lost}Your retinue has scattered. Your soldiers fled when you were captured.").ToString(),
+                    new TextObject(
+                            "{=ct_capture_retinue_lost}Your retinue has scattered. Your soldiers fled when you were captured.")
+                        .ToString(),
 
                 "desertion" =>
-                    new TextObject("{=ct_desert_retinue_lost}Your retinue has abandoned you. Deserters cannot command men.").ToString(),
+                    new TextObject(
+                            "{=ct_desert_retinue_lost}Your retinue has abandoned you. Deserters cannot command men.")
+                        .ToString(),
 
                 "lord_died" =>
-                    new TextObject("{=ct_lord_died_retinue}With your lord fallen, your retinue has scattered to the winds.").ToString(),
+                    new TextObject(
+                            "{=ct_lord_died_retinue}With your lord fallen, your retinue has scattered to the winds.")
+                        .ToString(),
 
                 "army_defeat" =>
-                    new TextObject("{=ct_defeat_retinue_lost}In the chaos of defeat, your retinue has scattered.").ToString(),
+                    new TextObject("{=ct_defeat_retinue_lost}In the chaos of defeat, your retinue has scattered.")
+                        .ToString(),
 
                 "enlistment_end" =>
-                    new TextObject("{=ct_enlist_end_retinue}Your soldiers have returned to the army ranks. Serve again to command new men.").ToString(),
+                    new TextObject(
+                            "{=ct_enlist_end_retinue}Your soldiers have returned to the army ranks. Serve again to command new men.")
+                        .ToString(),
 
                 "type_change" =>
-                    new TextObject("{=ct_type_change_dismiss}Your current soldiers have been dismissed to make way for new recruits.").ToString(),
+                    new TextObject(
+                            "{=ct_type_change_dismiss}Your current soldiers have been dismissed to make way for new recruits.")
+                        .ToString(),
 
                 _ =>
-                    new TextObject("{=ct_defeat_retinue_lost}In the chaos of defeat, your retinue has scattered.").ToString()
+                    new TextObject("{=ct_defeat_retinue_lost}In the chaos of defeat, your retinue has scattered.")
+                        .ToString()
             };
         }
 
         /// <summary>
-        /// Called when the player voluntarily changes their soldier type.
-        /// Clears existing retinue before allowing new type selection.
+        ///     Called when the player voluntarily changes their soldier type.
+        ///     Clears existing retinue before allowing new type selection.
         /// </summary>
         public void HandleTypeChange()
         {
@@ -372,7 +378,7 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Checks if the player currently has an active retinue that would be affected by lifecycle events.
+        ///     Checks if the player currently has an active retinue that would be affected by lifecycle events.
         /// </summary>
         public bool HasActiveRetinue()
         {
@@ -381,7 +387,7 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Gets the current retinue soldier count for status displays.
+        ///     Gets the current retinue soldier count for status displays.
         /// </summary>
         public int GetRetinueCount()
         {
@@ -392,4 +398,3 @@ namespace Enlisted.Features.CommandTent.Core
         #endregion
     }
 }
-

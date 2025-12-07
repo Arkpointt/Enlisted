@@ -5,13 +5,6 @@ using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
-using TaleWorlds.ObjectSystem;
 
 namespace Enlisted.Features.Conversations.Behaviors
 {
@@ -445,7 +438,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_minor_farewell_with_troops_text",
                 "enlisted_minor_farewell_with_troops",
                 "close_window",
-                GetRetinueFarewellText(isMinorFaction: true),
+                GetRetinueFarewellText(true),
                 null,
                 OnFinalizeRetirementWithTroops,
                 110);
@@ -573,7 +566,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_farewell_with_troops_text",
                 "enlisted_farewell_with_troops",
                 "close_window",
-                GetRetinueFarewellText(isMinorFaction: false),
+                GetRetinueFarewellText(false),
                 null,
                 OnFinalizeRetirementWithTroops,
                 110);
@@ -725,7 +718,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_minor_renewal_farewell_with_troops_text",
                 "enlisted_minor_renewal_farewell_with_troops",
                 "close_window",
-                GetRetinueFarewellText(isMinorFaction: true),
+                GetRetinueFarewellText(true),
                 null,
                 OnFinalizeRenewalWithTroops,
                 110);
@@ -841,7 +834,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 "enlisted_renewal_farewell_with_troops_text",
                 "enlisted_renewal_farewell_with_troops",
                 "close_window",
-                GetRetinueFarewellText(isMinorFaction: false),
+                GetRetinueFarewellText(false),
                 null,
                 OnFinalizeRenewalWithTroops,
                 110);
@@ -1553,7 +1546,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
                 ModLogger.Info("DialogManager", "First-term retirement processed");
-                
+
                 // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -1583,12 +1576,12 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Process the retirement with troop retention flag set
                 EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
-                
+
                 // Add starter supplies so they don't starve immediately
                 AddRetirementSupplies();
-                
+
                 ModLogger.Info("DialogManager", "First-term retirement with troops processed");
-                
+
                 // Defer menu cleanup until after dialog closes
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -1705,7 +1698,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
                 ModLogger.Info("DialogManager", "Renewal discharge processed");
-                
+
                 // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -1725,12 +1718,12 @@ namespace Enlisted.Features.Conversations.Behaviors
             {
                 // Process the renewal discharge with troop retention flag set
                 EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
-                
+
                 // Add starter supplies so they don't starve immediately
                 AddRetirementSupplies();
-                
+
                 ModLogger.Info("DialogManager", "Renewal discharge with troops processed");
-                
+
                 // Defer menu cleanup until after dialog closes
                 NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
             }
@@ -1801,7 +1794,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         GetLocalizedText(
                             "{=enlisted_early_discharge_notification}You have been discharged from service without full benefits.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                    
+
                     // Defer menu cleanup until after dialog closes - prevents stuck menu with no options
                     NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
                 }

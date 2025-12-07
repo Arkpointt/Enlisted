@@ -1,16 +1,8 @@
 using System;
-using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -65,17 +57,17 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("Combat", $"Failed to initialize encounter behavior: {ex.Message}");
             }
         }
-        
+
         /// <summary>
-        /// Menu background initialization for enlisted_battle_wait menu.
-        /// Sets culture-appropriate background and ambient audio for battle wait.
+        ///     Menu background initialization for enlisted_battle_wait menu.
+        ///     Sets culture-appropriate background and ambient audio for battle wait.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_battle_wait")]
         private static void OnBattleWaitBackgroundInit(MenuCallbackArgs args)
         {
             var lord = EnlistmentBehavior.Instance?.CurrentLord;
             var backgroundMesh = "encounter_looter";
-            
+
             if (lord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = lord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -84,7 +76,7 @@ namespace Enlisted.Features.Combat.Behaviors
             {
                 backgroundMesh = lord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
         }
@@ -179,7 +171,9 @@ namespace Enlisted.Features.Combat.Behaviors
             if (isSiegeBattle)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=combat_reserve_siege_disabled}Wait in reserve is not available during siege battles");
+                args.Tooltip =
+                    new TextObject(
+                        "{=combat_reserve_siege_disabled}Wait in reserve is not available during siege battles");
                 ModLogger.Debug("Siege", "Wait in reserve disabled - siege battle detected");
                 return false;
             }
@@ -220,7 +214,9 @@ namespace Enlisted.Features.Combat.Behaviors
                     ModLogger.Info("Battle",
                         "Prevented wait in reserve during siege battle - native system handles siege menus");
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=combat_reserve_siege_disabled_full}Wait in reserve is not available during siege battles.").ToString()));
+                        new TextObject(
+                                "{=combat_reserve_siege_disabled_full}Wait in reserve is not available during siege battles.")
+                            .ToString()));
                     return; // Don't switch menus during sieges
                 }
 
@@ -344,19 +340,19 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     return;
                 }
-                
+
                 // If no time state was captured yet (menu opened via native encounter system),
                 // capture current time now so we have a baseline for restoration
                 if (!QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
                 {
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
-                
+
                 // NOTE: Time mode restoration is handled ONCE in menu init, not here.
                 // Previously this tick handler would restore CapturedTimeMode whenever it saw
                 // UnstoppableFastForward, but this fought with user input - when the user clicked
                 // fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
-                
+
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -417,18 +413,19 @@ namespace Enlisted.Features.Combat.Behaviors
                         {
                             mainParty.IsActive = false;
                         }
+
                         if (mainParty.MapEventSide != null)
                         {
                             mainParty.MapEventSide = null;
                         }
                     }
-                    
+
                     return;
                 }
 
                 // Lord's current MapEvent is null, but check if we're in an army that's still fighting
                 // Army battles can have multiple waves - don't exit reserve until the entire army sequence is done
-                var armyStillInBattle = lordParty?.Army != null && 
+                var armyStillInBattle = lordParty?.Army != null &&
                                         lordParty.Army.Parties.Any(p => p?.Party?.MapEvent != null);
 
                 if (armyStillInBattle)
@@ -474,11 +471,11 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     // Clear the waiting in reserve flag - battle has ended
                     IsWaitingInReserve = false;
-                    
+
                     // Battle ended - return to normal enlisted state
                     // Party should stay inactive (normal enlisted hidden state)
                     args.MenuContext.GameMenu.EndWait();
-                    
+
                     // Return to enlisted status menu for clean recovery
                     // Note: 'enlistment' variable is already defined at the start of this method
                     if (enlistment?.IsEnlisted == true)
@@ -533,6 +530,7 @@ namespace Enlisted.Features.Combat.Behaviors
                             ModLogger.Warn("Battle", "Rejoin aborted - campaign not available");
                             return;
                         }
+
                         // Re-evaluate battle state next frame to avoid using stale data
                         var enlistment = EnlistmentBehavior.Instance;
                         var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
@@ -548,12 +546,12 @@ namespace Enlisted.Features.Combat.Behaviors
                             {
                                 playerParty.MapEventSide = lordSide;
                             }
-                            
+
                             GameMenu.ActivateGameMenu("encounter");
                             ModLogger.Info("Battle", "Player rejoining battle from reserve");
                             return;
                         }
-                        
+
                         // Lord not in battle - check what menu native system wants
                         var desiredMenu = Campaign.Current?.Models?.EncounterGameMenuModel?.GetGenericStateMenu();
 
@@ -592,7 +590,5 @@ namespace Enlisted.Features.Combat.Behaviors
                 ModLogger.Error("Battle", $"Error rejoining battle: {ex.Message}");
             }
         }
-
-
     }
 }

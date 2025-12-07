@@ -1,44 +1,43 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Enlisted.Features.CommandTent.Data;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Util;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.MapEvents;
-using TaleWorlds.CampaignSystem.Party;
 
 namespace Enlisted.Features.CommandTent.Core
 {
     /// <summary>
-    /// Manages service records for all factions and the player's retinue state.
-    /// Handles CRUD operations, event-driven updates, and serialization.
+    ///     Manages service records for all factions and the player's retinue state.
+    ///     Handles CRUD operations, event-driven updates, and serialization.
     /// </summary>
     public sealed class ServiceRecordManager : CampaignBehaviorBase
     {
         private const string LogCategory = "ServiceRecords";
 
-        public static ServiceRecordManager Instance { get; private set; }
-
-        private Dictionary<string, FactionServiceRecord> _factionRecords = new Dictionary<string, FactionServiceRecord>();
-        private readonly LifetimeServiceRecord _lifetimeRecord = new LifetimeServiceRecord();
-
         // Retinue system state
-        private readonly RetinueState _retinueState = new RetinueState();
-        private RetinueManager _retinueManager;
+        private string _currentFactionId;
+        private string _currentLordId;
+
+        private int _currentTermBattles;
+        private int _currentTermKills;
+
+        private Dictionary<string, FactionServiceRecord> _factionRecords = new();
 
         // Track if we've shown the Tier 4 leadership notification this session
         private bool _shownLeadershipNotification;
 
-        private int _currentTermBattles;
-        private int _currentTermKills;
-        private string _currentFactionId;
-        private string _currentLordId;
+        public ServiceRecordManager()
+        {
+            Instance = this;
+            RetinueManager = new RetinueManager(RetinueState);
+        }
+
+        public static ServiceRecordManager Instance { get; private set; }
 
         /// <summary>Lifetime service totals across all factions.</summary>
         [UsedImplicitly]
-        public LifetimeServiceRecord LifetimeRecord => _lifetimeRecord;
+        public LifetimeServiceRecord LifetimeRecord { get; } = new();
 
         /// <summary>Battles fought in current enlistment term.</summary>
         [UsedImplicitly]
@@ -49,16 +48,10 @@ namespace Enlisted.Features.CommandTent.Core
         public int CurrentTermKills => _currentTermKills;
 
         /// <summary>Gets the retinue manager for soldier management operations.</summary>
-        public RetinueManager RetinueManager => _retinueManager;
+        public RetinueManager RetinueManager { get; private set; }
 
         /// <summary>Gets the current retinue state for UI display.</summary>
-        public RetinueState RetinueState => _retinueState;
-
-        public ServiceRecordManager()
-        {
-            Instance = this;
-            _retinueManager = new RetinueManager(_retinueState);
-        }
+        public RetinueState RetinueState { get; } = new();
 
         public override void RegisterEvents()
         {
@@ -73,11 +66,11 @@ namespace Enlisted.Features.CommandTent.Core
 
         public override void SyncData(IDataStore dataStore)
         {
-            var lifetimeKills = _lifetimeRecord.LifetimeKills;
-            var totalDays = _lifetimeRecord.TotalDaysServed;
-            var termsComplete = _lifetimeRecord.TermsCompleted;
-            var totalEnlist = _lifetimeRecord.TotalEnlistments;
-            var totalBattles = _lifetimeRecord.TotalBattlesFought;
+            var lifetimeKills = LifetimeRecord.LifetimeKills;
+            var totalDays = LifetimeRecord.TotalDaysServed;
+            var termsComplete = LifetimeRecord.TermsCompleted;
+            var totalEnlist = LifetimeRecord.TotalEnlistments;
+            var totalBattles = LifetimeRecord.TotalBattlesFought;
 
             dataStore.SyncData("svc_lifetimeKills", ref lifetimeKills);
             dataStore.SyncData("svc_totalDaysServed", ref totalDays);
@@ -87,14 +80,14 @@ namespace Enlisted.Features.CommandTent.Core
 
             if (dataStore.IsLoading)
             {
-                _lifetimeRecord.LifetimeKills = lifetimeKills;
-                _lifetimeRecord.TotalDaysServed = totalDays;
-                _lifetimeRecord.TermsCompleted = termsComplete;
-                _lifetimeRecord.TotalEnlistments = totalEnlist;
-                _lifetimeRecord.TotalBattlesFought = totalBattles;
+                LifetimeRecord.LifetimeKills = lifetimeKills;
+                LifetimeRecord.TotalDaysServed = totalDays;
+                LifetimeRecord.TermsCompleted = termsComplete;
+                LifetimeRecord.TotalEnlistments = totalEnlist;
+                LifetimeRecord.TotalBattlesFought = totalBattles;
             }
 
-            var factionsServedList = _lifetimeRecord.FactionsServed ?? new List<string>();
+            var factionsServedList = LifetimeRecord.FactionsServed ?? new List<string>();
             var factionCount = factionsServedList.Count;
             dataStore.SyncData("svc_factionServedCount", ref factionCount);
 
@@ -110,7 +103,8 @@ namespace Enlisted.Features.CommandTent.Core
                         factionsServedList.Add(factionId);
                     }
                 }
-                _lifetimeRecord.FactionsServed = factionsServedList;
+
+                LifetimeRecord.FactionsServed = factionsServedList;
             }
             else
             {
@@ -132,39 +126,40 @@ namespace Enlisted.Features.CommandTent.Core
             if (dataStore.IsLoading)
             {
                 // Reinitialize retinue manager with loaded state
-                _retinueManager = new RetinueManager(_retinueState);
-                ModLogger.Debug(LogCategory, $"Loaded {_factionRecords.Count} faction records, lifetime: {_lifetimeRecord}");
-                ModLogger.Debug("Retinue", $"Loaded retinue state: {_retinueState}");
+                RetinueManager = new RetinueManager(RetinueState);
+                ModLogger.Debug(LogCategory,
+                    $"Loaded {_factionRecords.Count} faction records, lifetime: {LifetimeRecord}");
+                ModLogger.Debug("Retinue", $"Loaded retinue state: {RetinueState}");
             }
         }
 
         /// <summary>
-        /// Serializes retinue state to/from save data.
+        ///     Serializes retinue state to/from save data.
         /// </summary>
         private void SerializeRetinueState(IDataStore dataStore)
         {
             // Selected type
-            var typeId = _retinueState.SelectedTypeId ?? string.Empty;
+            var typeId = RetinueState.SelectedTypeId ?? string.Empty;
             dataStore.SyncData("ret_selectedType", ref typeId);
 
             // Trickle tracking
-            var daysSinceTrickle = _retinueState.DaysSinceLastTrickle;
+            var daysSinceTrickle = RetinueState.DaysSinceLastTrickle;
             dataStore.SyncData("ret_trickleDays", ref daysSinceTrickle);
 
             // Requisition cooldown - CampaignTime can be serialized directly
-            var cooldownEnd = _retinueState.RequisitionCooldownEnd;
+            var cooldownEnd = RetinueState.RequisitionCooldownEnd;
             dataStore.SyncData("ret_reqCooldown", ref cooldownEnd);
 
             // Troop counts dictionary
-            var troopCount = _retinueState.TroopCounts?.Count ?? 0;
+            var troopCount = RetinueState.TroopCounts?.Count ?? 0;
             dataStore.SyncData("ret_troopCount", ref troopCount);
 
             if (dataStore.IsLoading)
             {
-                _retinueState.SelectedTypeId = string.IsNullOrEmpty(typeId) ? null : typeId;
-                _retinueState.DaysSinceLastTrickle = daysSinceTrickle;
-                _retinueState.RequisitionCooldownEnd = cooldownEnd;
-                _retinueState.TroopCounts = new Dictionary<string, int>();
+                RetinueState.SelectedTypeId = string.IsNullOrEmpty(typeId) ? null : typeId;
+                RetinueState.DaysSinceLastTrickle = daysSinceTrickle;
+                RetinueState.RequisitionCooldownEnd = cooldownEnd;
+                RetinueState.TroopCounts = new Dictionary<string, int>();
 
                 for (var i = 0; i < troopCount; i++)
                 {
@@ -175,14 +170,14 @@ namespace Enlisted.Features.CommandTent.Core
 
                     if (!string.IsNullOrEmpty(troopId) && count > 0)
                     {
-                        _retinueState.TroopCounts[troopId] = count;
+                        RetinueState.TroopCounts[troopId] = count;
                     }
                 }
             }
-            else if (_retinueState.TroopCounts != null)
+            else if (RetinueState.TroopCounts != null)
             {
                 var idx = 0;
-                foreach (var kvp in _retinueState.TroopCounts)
+                foreach (var kvp in RetinueState.TroopCounts)
                 {
                     var troopId = kvp.Key;
                     var count = kvp.Value;
@@ -337,23 +332,23 @@ namespace Enlisted.Features.CommandTent.Core
             if (EnlistmentBehavior.RetainTroopsOnRetirement)
             {
                 // Clear only the tracking state - troops stay in party as regular members
-                _retinueState?.Clear();
+                RetinueState?.Clear();
                 ModLogger.Info(LogCategory, "Retinue tracking cleared - troops retained as regular party members");
-                
+
                 // Reset the flag after use
                 EnlistmentBehavior.RetainTroopsOnRetirement = false;
             }
             else
             {
                 // Clear retinue when enlistment ends (default behavior)
-                _retinueManager?.ClearRetinueTroops("enlistment_end");
+                RetinueManager?.ClearRetinueTroops("enlistment_end");
             }
 
             OnEnlistmentEnded();
         }
 
         /// <summary>
-        /// Called when player receives a promotion. Shows leadership notification at Tier 4.
+        ///     Called when player receives a promotion. Shows leadership notification at Tier 4.
         /// </summary>
         private void HandlePromotion(int newTier)
         {
@@ -522,8 +517,8 @@ namespace Enlisted.Features.CommandTent.Core
             record.Enlistments++;
             record.UpdateHighestTier(startingTier);
 
-            _lifetimeRecord.TotalEnlistments++;
-            _lifetimeRecord.AddFactionServed(record.FactionId);
+            LifetimeRecord.TotalEnlistments++;
+            LifetimeRecord.AddFactionServed(record.FactionId);
 
             _currentTermBattles = 0;
             _currentTermKills = 0;
@@ -544,9 +539,10 @@ namespace Enlisted.Features.CommandTent.Core
             }
 
             record.TermsCompleted++;
-            _lifetimeRecord.TermsCompleted++;
+            LifetimeRecord.TermsCompleted++;
 
-            ModLogger.Info(LogCategory, $"Term completed: {record.FactionDisplayName}, total terms={record.TermsCompleted}");
+            ModLogger.Info(LogCategory,
+                $"Term completed: {record.FactionDisplayName}, total terms={record.TermsCompleted}");
         }
 
         /// <summary>Called when enlistment ends (any reason).</summary>
@@ -568,7 +564,7 @@ namespace Enlisted.Features.CommandTent.Core
 
             record.TotalDaysServed++;
             record.UpdateHighestTier(currentTier);
-            _lifetimeRecord.TotalDaysServed++;
+            LifetimeRecord.TotalDaysServed++;
         }
 
         /// <summary>Called when player participates in a battle.</summary>
@@ -582,9 +578,10 @@ namespace Enlisted.Features.CommandTent.Core
 
             record.BattlesFought++;
             _currentTermBattles++;
-            _lifetimeRecord.TotalBattlesFought++;
+            LifetimeRecord.TotalBattlesFought++;
 
-            ModLogger.Debug(LogCategory, $"Battle recorded: term={_currentTermBattles}, faction total={record.BattlesFought}");
+            ModLogger.Debug(LogCategory,
+                $"Battle recorded: term={_currentTermBattles}, faction total={record.BattlesFought}");
         }
 
         /// <summary>Called when player gets kills in battle.</summary>
@@ -602,10 +599,10 @@ namespace Enlisted.Features.CommandTent.Core
             }
 
             _currentTermKills += killCount;
-            _lifetimeRecord.LifetimeKills += killCount;
+            LifetimeRecord.LifetimeKills += killCount;
 
             ModLogger.Debug(LogCategory, $"Kills recorded: {killCount}, term total={_currentTermKills}, " +
-                                         $"lifetime={_lifetimeRecord.LifetimeKills}");
+                                         $"lifetime={LifetimeRecord.LifetimeKills}");
         }
 
         /// <summary>Called when player's tier changes (for updating highest tier).</summary>
