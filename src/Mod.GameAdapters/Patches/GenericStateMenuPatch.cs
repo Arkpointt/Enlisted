@@ -2,10 +2,10 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem.GameComponents;
-using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
+using EnlistedEncounterBehavior = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -20,7 +20,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// This prevents ALL native systems from trying to switch away from our menu.
     /// </summary>
     [HarmonyPatch(typeof(DefaultEncounterGameMenuModel), nameof(DefaultEncounterGameMenuModel.GetGenericStateMenu))]
-    [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch - applied via attribute")]
     public class GenericStateMenuPatch
     {
         /// <summary>
@@ -65,7 +64,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var mapEvent = lordParty?.Party?.MapEvent;
                 
                 // Battle is over when: no MapEvent, OR MapEvent has a winner, OR lord party is gone
-                var battleOver = mapEvent == null || mapEvent.HasWinner || lordParty == null || !lordParty.IsActive;
+                var battleOver = mapEvent == null || mapEvent.HasWinner;
                 
                 if (battleOver)
                 {

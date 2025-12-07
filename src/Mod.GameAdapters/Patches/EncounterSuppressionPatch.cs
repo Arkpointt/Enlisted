@@ -6,6 +6,7 @@ using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
+using EnlistedEncounterBehavior = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -68,7 +69,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 
                 // Block encounters when waiting in reserve AND still enlisted
                 // Only block if actively enlisted - if enlistment ended, clear stale flag and allow
-                var isInReserve = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+                var isInReserve = EnlistedEncounterBehavior.IsWaitingInReserve;
                 if (isInReserve && isEnlisted)
                 {
                     ModLogger.Debug("EncounterSuppression", "Suppressed player encounter - waiting in reserve");
@@ -79,7 +80,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 if (isInReserve && !isEnlisted)
                 {
                     ModLogger.Debug("EncounterSuppression", "Clearing stale reserve flag during encounter creation");
-                    Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                    EnlistedEncounterBehavior.ClearReserveState();
                 }
                 
                 // Suppress encounters if enlistment just ended and player is still in MapEvent/Encounter

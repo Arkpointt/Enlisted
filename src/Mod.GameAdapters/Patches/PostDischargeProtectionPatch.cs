@@ -5,6 +5,7 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
+using EnlistedEncounterBehavior = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
@@ -16,7 +17,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// This patch blocks activation until the battle/encounter state is fully cleared.
     /// </summary>
     [HarmonyPatch(typeof(MobileParty), "IsActive", MethodType.Setter)]
-    [SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch - applied via attribute")]
     public class PostDischargeProtectionPatch
     {
         /// <summary>
@@ -66,7 +66,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 // Block activation when waiting in reserve AND still enlisted
                 // Only block if actively enlisted - if enlistment ended, allow activation even if flag is stale
-                var isInReserve = Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+                var isInReserve = EnlistedEncounterBehavior.IsWaitingInReserve;
                 if (isInReserve && enlistment.IsEnlisted)
                 {
                     ModLogger.Debug("PostDischargeProtection", "Blocked party activation - player waiting in reserve");
@@ -77,7 +77,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 if (isInReserve && !enlistment.IsEnlisted)
                 {
                     ModLogger.Debug("PostDischargeProtection", "Clearing stale reserve flag during activation");
-                    Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                    EnlistedEncounterBehavior.ClearReserveState();
                 }
                 
                 // Only intervene when the player has just been discharged and is still in their grace/cleanup window.
