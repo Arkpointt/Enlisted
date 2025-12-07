@@ -345,9 +345,9 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
             
-            // Resume time - native GameMenu.SwitchToMenu() stops time by default,
-            // but we want time to continue passing while browsing enlisted menus
-            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            // Resume time if stopped, but preserve higher speed modes (StoppableFastForward)
+            // Native GameMenu.SwitchToMenu() stops time by default - we only unpause, never downgrade speed
+            ResumeTimeWithoutDowngrade();
         }
         
         /// <summary>
@@ -374,8 +374,8 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
             
-            // Resume time - native GameMenu.SwitchToMenu() stops time by default
-            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            // Resume time if stopped, but preserve higher speed modes
+            ResumeTimeWithoutDowngrade();
         }
         
         /// <summary>
@@ -401,8 +401,24 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             
-            // Resume time - native GameMenu.SwitchToMenu() stops time by default
-            Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            // Resume time if stopped, but preserve higher speed modes
+            ResumeTimeWithoutDowngrade();
+        }
+        
+        /// <summary>
+        /// Resumes time if currently stopped, but preserves higher speed modes.
+        /// This allows players to use fast forward (speed 2/3) while in enlisted menus.
+        /// Only sets to StoppablePlay if currently stopped - never downgrades from FastForward.
+        /// </summary>
+        private static void ResumeTimeWithoutDowngrade()
+        {
+            if (Campaign.Current == null) return;
+            
+            // Only unpause if currently stopped - preserve StoppableFastForward and other higher speeds
+            if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
+            {
+                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+            }
         }
 
         /// <summary>
@@ -1157,9 +1173,26 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
 
-                // Set time control mode to allow unpausing (from BLUEPRINT)
+                // Unlock time control so player can change speed, but don't force a specific mode
+                // StartWait() sets UnstoppableFastForward - we convert to stoppable to allow player control
+                // but only if currently in an unstoppable mode, preserving player's speed preference
                 Campaign.Current.SetTimeControlModeLock(false);
-                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                
+                // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
+                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+                }
+                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppablePlay)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                }
+                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                }
+                // Otherwise keep current mode (StoppablePlay or StoppableFastForward)
 
                 RefreshEnlistedStatusDisplay(args);
                 _menuNeedsRefresh = true;
@@ -1943,8 +1976,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsAskLeaveAvailable(MenuCallbackArgs args)
         {
-            _ = args; // Required by API contract
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            if (enlistment.IsLeaveOnCooldown(out var daysRemaining))
+            {
+                args.IsEnabled = false;
+                var tooltip = new TextObject("{=Enlisted_Leave_Cooldown_Tooltip}Leave is on cooldown. {DAYS} days remain.");
+                tooltip.SetTextVariable("DAYS", daysRemaining);
+                args.Tooltip = tooltip;
+            }
+
+            return true;
         }
 
         private void OnAskLeaveSelected(MenuCallbackArgs args)
@@ -1963,7 +2009,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Show leave request confirmation
                 var titleText = "Request Leave from Commander";
                 var descriptionText =
-                    "Request temporary leave from military service. You will regain independent movement but forfeit daily wages and duties until you return.";
+                    "Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 30-day cooldown after you come back.";
 
                 var confirmData = new InquiryData(
                     titleText,
@@ -2216,16 +2262,12 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
                 
-                // Restore player's time state after StartWait() forced fast-forward
-                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
-                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
-                {
-                    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                    {
-                        Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
-                    }
-                }
+                // NOTE: Time mode restoration is handled ONCE in OnEnlistedStatusInit, not here.
+                // Previously this tick handler would restore CapturedTimeMode whenever it saw
+                // UnstoppableFastForward, but this fought with user input - when the user clicked
+                // fast forward (which sets UnstoppableFastForward for army members), the next tick
+                // would immediately restore it back to Stop. This caused x3 speed to pause.
+                // The fix is to only handle time mode conversion once during menu init.
                 
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
@@ -2330,9 +2372,26 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
 
-                // Set time control mode to allow unpausing (same as main menu)
+                // Unlock time control so player can change speed, but don't force a specific mode
+                // StartWait() sets UnstoppableFastForward - we convert to stoppable to allow player control
+                // but preserve the speed (fast forward vs normal play)
                 Campaign.Current.SetTimeControlModeLock(false);
-                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                
+                // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
+                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
+                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
+                }
+                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppablePlay)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                }
+                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
+                }
+                // Otherwise keep current mode (StoppablePlay or StoppableFastForward)
 
                 // Initialize dynamic menu text on load
                 if (enlistment?.IsEnlisted == true)
@@ -2376,16 +2435,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
                 
-                // Restore player's time state after StartWait() forced fast-forward
-                // Uses shared CapturedTimeMode from QuartermasterManager for consistency across all Enlisted menus
-                if (QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
-                {
-                    if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                        Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                    {
-                        Campaign.Current.TimeControlMode = QuartermasterManager.CapturedTimeMode.Value;
-                    }
-                }
+                // NOTE: Time mode restoration is handled ONCE in menu init, not here.
+                // Previously this tick handler would restore CapturedTimeMode whenever it saw
+                // UnstoppableFastForward, but this fought with user input - when the user clicked
+                // fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
                 
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system

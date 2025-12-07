@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using TaleWorlds.CampaignSystem;
@@ -37,7 +38,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         private Dictionary<string, CharacterObject> _currentTroopCache;
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future cache invalidation")]
         private CampaignTime _lastCacheUpdate = CampaignTime.Zero;
-        
+
         // Quartermaster state
         private CharacterObject _selectedTroop;
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> _availableVariants;
@@ -131,21 +132,16 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Shared wait menu tick handler. Restores player's time state after StartWait() forces fast-forward.
-        /// This runs every frame and allows spacebar time control to work in quartermaster menus.
+        /// Wait tick handler for Quartermaster menus.
+        /// NOTE: Time mode restoration is handled ONCE during menu init, not here.
+        /// Previously this tick handler would restore CapturedTimeMode whenever it saw
+        /// UnstoppableFastForward, but this fought with user input - when the user clicked
+        /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
         /// </summary>
         private static void QuartermasterWaitTick(MenuCallbackArgs args, CampaignTime dt)
         {
-            // Restore the player's time state after StartWait() forced UnstoppableFastForward
-            if (CapturedTimeMode.HasValue && Campaign.Current != null)
-            {
-                // Only restore if current mode is different (avoid spam and allow spacebar changes)
-                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                {
-                    Campaign.Current.TimeControlMode = CapturedTimeMode.Value;
-                }
-            }
+            // Intentionally empty - time mode is handled in menu init, not per-tick
+            // The old code here fought with user speed input and caused pausing issues
         }
         
         #endregion
@@ -638,9 +634,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Maximum number of any single item a soldier can have (anti-abuse limit).
+        /// Get the item limit for a specific equipment slot.
+        /// Armor slots (head, body, legs, gloves, cape, shields) = 1 per type.
+        /// Weapon slots (weapons, bows, arrows, bolts, javelins, throwing) = 2 per type.
         /// </summary>
-        private const int MaxItemsPerType = 2;
+        private static int GetSlotItemLimit(EquipmentIndex slot)
+        {
+            // Weapon slots allow 2 of each type (multiple weapons, ammo stacks, etc.)
+            if (slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3)
+            {
+                return 2;
+            }
+            // Armor/accessory slots only allow 1 of each type
+            return 1;
+        }
         
         /// <summary>
         /// Maximum return options shown at once in the return menu.
@@ -665,15 +672,21 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 var hero = Hero.MainHero;
                 
-                // ITEM LIMIT CHECK: Soldiers can only have 2 of each item type (anti-abuse)
+                // ITEM LIMIT CHECK: Weapons allow 2, armor/accessories allow 1
                 var currentCount = GetPlayerItemCount(hero, requestedItem.StringId);
-                if (currentCount >= MaxItemsPerType)
+                var itemLimit = GetSlotItemLimit(slot);
+                
+                ModLogger.Debug("Quartermaster", $"Limit check: {requestedItem.Name} in {slot} - owned={currentCount}, limit={itemLimit} ({(itemLimit == 1 ? "armor" : "weapon")})");
+                
+                if (currentCount >= itemLimit)
                 {
-                    var limitMsg = new TextObject("{=qm_item_limit_reached}Two's the limit, soldier. Army regs. You already have {COUNT} of {ITEM_NAME}.");
+                    var limitMsg = itemLimit == 1 
+                        ? new TextObject("{=qm_item_limit_reached_1}You already have this equipped, soldier.")
+                        : new TextObject("{=qm_item_limit_reached_2}Two's the limit, soldier. Army regs. You already have {COUNT} of {ITEM_NAME}.");
                     limitMsg.SetTextVariable("COUNT", currentCount);
                     limitMsg.SetTextVariable("ITEM_NAME", requestedItem.Name);
                     InformationManager.DisplayMessage(new InformationMessage(limitMsg.ToString(), Colors.Yellow));
-                    ModLogger.Info("Quartermaster", $"Item limit reached: {requestedItem.Name} (count: {currentCount})");
+                    ModLogger.Info("Quartermaster", $"Item limit reached: {requestedItem.Name} (count: {currentCount}, limit: {itemLimit})");
                     return;
                 }
                 
@@ -1247,8 +1260,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var slot = slotItems.Key;
                 var items = slotItems.Value;
                 
-                // Only include slots with multiple options
-                if (items.Count > 1)
+                // Include all slots with at least one option - this ensures players can see their
+                // current equipment even if no alternatives exist (e.g., Tier 1 Levy with only one helmet type).
+                // Previously filtered to Count > 1, which caused equipped items to be hidden from the store.
+                if (items.Count > 0)
                 {
                     var variantOptions = new List<EquipmentVariantOption>();
                     var currentItem = hero.BattleEquipment[slot].Item;
@@ -1257,9 +1272,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         var isCurrent = item == currentItem;
                         
-                        // Check if player has hit the 2-item limit for this item type
+                        // Check if player has hit the slot-specific limit (weapons=2, armor=1)
                         var itemCount = GetPlayerItemCount(hero, item.StringId);
-                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        var itemLimit = GetSlotItemLimit(slot);
+                        var isAtLimit = itemCount >= itemLimit;
                         
                         // Determine if item allows duplicate purchases (weapons and consumables)
                         // Soldiers can carry multiple weapons in different slots or multiple stacks of ammo
@@ -1287,7 +1303,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     finalOptions[slot] = variantOptions;
                 }
             }
-            
+
             return finalOptions;
         }
         
@@ -1349,85 +1365,42 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Build quartermaster status display with current equipment and available variants.
+        /// Build quartermaster status display - clean, organized format matching other Enlisted menus.
         /// </summary>
         private void BuildQuartermasterStatusDisplay()
         {
             try
             {
                 var sb = new StringBuilder();
-                var hero = Hero.MainHero;
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                // Quartermaster dialogue - explains the policy in-character
-                var qmDialogue = new TextObject("{=qm_intro_dialogue}\"Take what you need, soldier - the army provides. Two of each, no more. Mind you, any gear that goes missing will be deducted from your pay when you change posts. Keep your kit in order.\"");
+                // In-character quartermaster dialogue
+                var qmDialogue = new TextObject("{=qm_intro_dialogue}\"Take what you need, soldier. The army provides. Mind your kit - anything missing gets docked from your pay.\"");
                 sb.AppendLine(qmDialogue.ToString());
                 sb.AppendLine();
                 
-                // Header information
-                sb.AppendLine($"Current Equipment: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
-                sb.AppendLine($"Your Pay: {hero.Gold} {{GOLD_ICON}}");
+                // Current status section
+                sb.AppendLine("— Current Status —");
+                sb.AppendLine();
+                sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
                 sb.AppendLine();
                 
-                // Show equipment slots with variants available
-                if (_availableVariants.Count > 0)
-                {
-                    sb.AppendLine("Equipment variants available for your troop type:");
-                    sb.AppendLine();
-                    
-                    foreach (var slotOptions in _availableVariants)
-                    {
-                        var slot = slotOptions.Key;
-                        var options = slotOptions.Value;
-                        var slotName = GetSlotDisplayName(slot);
-                        
-                        sb.AppendLine($"{slotName} ({options.Count} variants):");
-                        
-                        foreach (var option in options.Take(3)) // Show first 3 variants
-                        {
-                            string status;
-                            if (option.IsAtLimit)
-                            {
-                                status = "(Limit Reached)";
-                            }
-                            else if (option.IsCurrent)
-                            {
-                                status = "(Equipped)";
-                            }
-                            else
-                            {
-                                status = "(Free)";
-                            }
-                            var marker = option.IsCurrent ? "•" : "○";
-                            var exclusiveMarker = option.IsOfficerExclusive ? " [Officer]" : "";
-                            
-                            sb.AppendLine($"  {marker} {option.Item.Name} {status}{exclusiveMarker}");
-                        }
-                        
-                        if (options.Count > 3)
-                        {
-                            sb.AppendLine($"  ... and {options.Count - 3} more variants");
-                        }
-                        sb.AppendLine();
-                    }
-                }
-                else
-                {
-                    sb.AppendLine("Your current troop type has limited equipment variants.");
-                    sb.AppendLine("Standard military issue equipment is in good condition.");
-                }
+                // Issue limits section
+                sb.AppendLine("— Issue Limits —");
+                sb.AppendLine();
+                sb.AppendLine("Armor & Shields: 1 each");
+                sb.AppendLine("Weapons & Ammo: 2 each");
+                sb.AppendLine();
                 
-                // Show quartermaster duty bonus if applicable with cleaner formatting
+                // Officer privileges if applicable
                 var isProvisioner = duties?.ActiveDuties.Contains("provisioner") == true;
                 var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
                 
                 if (isProvisioner || isQuartermaster)
                 {
+                    sb.AppendLine("— Officer Access —");
                     sb.AppendLine();
-                    sb.AppendLine("— OFFICER PRIVILEGES —");
-                    sb.AppendLine("• Access to supply management functions"); 
-                    sb.AppendLine("• Equipment variant discovery and selection");
-                    sb.AppendLine("• Party logistics and carry capacity management");
+                    sb.AppendLine("Extended equipment options available.");
                     sb.AppendLine();
                 }
                 
@@ -1455,9 +1428,9 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 // Add a generic "Request weapon variant" option
                 // The actual variant selection would happen in a submenu or through conversation
-                // Weapons and consumables allow duplicate purchases (multiple slots or ammo stacks)
+                // Check if any variants are available (not at the 2-item limit)
                 var hasAffordableVariants = weaponVariants.Any(kvp => 
-                    kvp.Value.Any(opt => opt.CanAfford && (!opt.IsCurrent || opt.AllowsDuplicatePurchase)));
+                    kvp.Value.Any(opt => !opt.IsAtLimit));
                     
                 if (hasAffordableVariants)
                 {
@@ -1654,9 +1627,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 // Available if there are any weapon slots with at least one purchasable option
                 // Weapons allow duplicate purchases, so include current items that allow duplicates
+                // Weapons available if any are not at the 2-item limit
                 return weaponOptions.Any(kvp => 
                     kvp.Value != null && 
-                    kvp.Value.Any(opt => !opt.IsCurrent || opt.AllowsDuplicatePurchase));
+                    kvp.Value.Any(opt => !opt.IsAtLimit));
             }
             catch
             {
@@ -1761,9 +1735,9 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Filter to purchasable variants - include duplicates for weapons/consumables
+                // Filter to purchasable variants - only exclude items at the 2-item limit
                 var availableVariants = variants
-                    .Where(v => !v.IsCurrent || v.AllowsDuplicatePurchase)
+                    .Where(v => !v.IsAtLimit)
                     .Take(5).ToList(); // Limit to 5 for conversation
                 
                 if (availableVariants.Count > 1)
@@ -1848,8 +1822,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Find available variants that player can afford
-                var availableVariants = variants.Where(v => !v.IsCurrent && v.CanAfford).ToList();
+                // Find available variants that player hasn't hit the 2-item limit on
+                var availableVariants = variants.Where(v => !v.IsAtLimit).ToList();
                 
                 if (availableVariants.Count > 0)
                 {
@@ -1889,10 +1863,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head, EquipmentIndex.Leg, EquipmentIndex.Gloves };
                 var armorOptions = BuildArmorOptionsFromCurrentTroop();
                 
-                // Available if there are any armor slots with at least one non-current option
+                // Available if there are any armor slots with at least one option not at limit
                 return armorSlots.Any(slot => 
                     armorOptions.ContainsKey(slot) &&
-                    armorOptions[slot].Any(opt => !opt.IsCurrent));
+                    armorOptions[slot].Any(opt => !opt.IsAtLimit));
             }
             catch
             {
@@ -1943,10 +1917,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Helmets are part of armor collection
+                // Helmets are part of armor collection - available if not at limit
                 var armorOptions = BuildArmorOptionsFromCurrentTroop();
                 return armorOptions.ContainsKey(EquipmentIndex.Head) &&
-                       armorOptions[EquipmentIndex.Head].Any(opt => !opt.IsCurrent);
+                       armorOptions[EquipmentIndex.Head].Any(opt => !opt.IsAtLimit);
             }
             catch
             {
@@ -2151,11 +2125,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                             {
                                 continue;
                             }
-                            // Culture filter: if item declares a culture, it must match the troop's culture
-                            if (culture != null && item.Culture != null && item.Culture != culture)
-                            {
-                                continue;
-                            }
+                            // NOTE: Removed culture filter - items from a troop's own BattleEquipments are already
+                            // validated by the game's troop data. Culture filter was incorrectly excluding valid items.
                             if (!variants.ContainsKey(slot))
                             {
                                 variants[slot] = new List<ItemObject>();
@@ -2205,16 +2176,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                                 continue;
                             }
                             
-                            var itemCulture = item.Culture?.Name?.ToString() ?? "none";
+                            // NOTE: Removed culture filter - items from a troop's own BattleEquipments are already
+                            // validated by the game's troop data. Culture filter was incorrectly excluding valid items.
                             var isShield = item.WeaponComponent?.PrimaryWeapon?.IsShield == true;
                             var weaponType = item.WeaponComponent?.GetItemType().ToString() ?? "unknown";
-                            
-                            // Be more lenient with culture matching
-                            if (culture != null && item.Culture != null && item.Culture != culture)
-                            {
-                                ModLogger.Debug("Quartermaster", $"    {slot}: {item.Name} ({weaponType}) - SKIP (culture: {itemCulture})");
-                                continue;
-                            }
                             
                             if (!variants.ContainsKey(slot))
                             {
@@ -2264,9 +2229,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
                         
-                        // Check if player has hit the 2-item limit for this item type
+                        // Check if player has hit the slot-specific limit (weapons=2, armor=1)
                         var itemCount = GetPlayerItemCount(hero, item.StringId);
-                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        var itemLimit = GetSlotItemLimit(slot);
+                        var isAtLimit = itemCount >= itemLimit;
                         
                         // Weapons always allow duplicate purchases (soldiers can carry multiple)
                         var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
@@ -2335,12 +2301,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                                 continue;
                             }
                             
-                            // Be more lenient with culture matching - only skip if cultures actively conflict
-                            if (culture != null && item.Culture != null && item.Culture != culture)
-                            {
-                                ModLogger.Debug("Quartermaster", $"    {slot}: {item.Name} - SKIP (culture mismatch: {itemCulture} vs {culture.Name})");
-                                continue;
-                            }
+                            // NOTE: Removed culture filter - items from a troop's own BattleEquipments are already
+                            // validated by the game's troop data. Culture filter was incorrectly excluding valid items.
                             
                             if (!variants.ContainsKey(slot))
                             {
@@ -2389,15 +2351,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
                         
-                        // Check if player has hit the 2-item limit for this item type
+                        // Check if player has hit the slot-specific limit (armor=1, weapons=2)
                         var itemCount = GetPlayerItemCount(hero, item.StringId);
-                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        var itemLimit = GetSlotItemLimit(slot);
+                        var isAtLimit = itemCount >= itemLimit;
+                        var isCurrent = item == currentItem;
                         
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
-                            IsCurrent = item == currentItem,
+                            IsCurrent = isCurrent,
                             CanAfford = !isAtLimit, // Can get if not at limit (equipment is free)
                             Slot = slot,
                             IsOfficerExclusive = false,
@@ -2482,6 +2446,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var armorSlots = new[] { EquipmentIndex.Body, EquipmentIndex.Head, EquipmentIndex.Gloves, EquipmentIndex.Leg, EquipmentIndex.Cape };
+                
                 foreach (var troop in nodes)
                 {
                     // Only gather from exact tier nodes to reflect the current tier's supply
@@ -2489,6 +2454,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         continue;
                     }
+                    
                     foreach (var equipment in troop.BattleEquipments)
                     {
                         foreach (var slot in armorSlots)
@@ -2498,12 +2464,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                             {
                                 continue;
                             }
-                            // Safety filters: ensure true armor, and culture match when item has culture
+                            // Safety filter: ensure true armor component exists
+                            // NOTE: Removed culture filter here - items from a troop's own BattleEquipments are already
+                            // validated by the game's troop data. The culture filter was incorrectly excluding items like
+                            // leather_cap (empire culture) from vlandian_recruit even though the troop legitimately uses it.
                             if (item.ArmorComponent == null)
-                            {
-                                continue;
-                            }
-                            if (culture != null && item.Culture != null && item.Culture != culture)
                             {
                                 continue;
                             }
@@ -2550,9 +2515,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
                         
-                        // Check if player has hit the 2-item limit for this item type
+                        // Check if player has hit the slot-specific limit (weapons=2, armor=1)
                         var itemCount = GetPlayerItemCount(hero, item.StringId);
-                        var isAtLimit = itemCount >= MaxItemsPerType;
+                        var itemLimit = GetSlotItemLimit(slot);
+                        var isAtLimit = itemCount >= itemLimit;
                         
                         // Weapons and consumables allow duplicates
                         var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
@@ -2667,14 +2633,14 @@ namespace Enlisted.Features.Equipment.Behaviors
             _ = args; // Required by API contract
             try
             {
-                // Capes from armor slots
+                // Capes from armor slots - available if not at limit
                 var armorOptions = BuildArmorOptionsFromCurrentTroop();
                 var hasCapes = armorOptions.ContainsKey(EquipmentIndex.Cape) &&
-                               armorOptions[EquipmentIndex.Cape].Any(opt => !opt.IsCurrent);
+                               armorOptions[EquipmentIndex.Cape].Any(opt => !opt.IsAtLimit);
                 
-                // Shields from weapon slots
+                // Shields from weapon slots - available if not at limit
                 var shieldOptions = BuildShieldOptionsFromWeapons();
-                var hasShields = shieldOptions.Any(opt => !opt.IsCurrent);
+                var hasShields = shieldOptions.Any(opt => !opt.IsAtLimit);
                 
                 ModLogger.Debug("Quartermaster", $"Accessories check: Capes={hasCapes}, Shields={shieldOptions.Count}");
                 
@@ -2708,7 +2674,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 ModLogger.Info("Quartermaster", $"Accessory selection: {combined.Count} total items (Capes, Shields)");
                 
-                if (combined.Any(opt => !opt.IsCurrent))
+                // Show dialog if any items are not at limit
+                if (combined.Any(opt => !opt.IsAtLimit))
                 {
                     ShowEquipmentVariantSelectionDialog(combined, "accessories");
                 }

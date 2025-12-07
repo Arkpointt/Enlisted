@@ -63,6 +63,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true; // Allow normal encounter creation
                 }
                 
+                // CRITICAL: Block encounters involving the player's party when waiting in reserve
+                // The native game can set IsActive=true even when we set it to false,
+                // which would otherwise allow encounters to be created and pull player back to battle
+                if (Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("EncounterSuppression", "Suppressed player encounter - waiting in reserve");
+                    return false;
+                }
+                
                 // CRITICAL: Suppress encounters if enlistment just ended and player is still in MapEvent/Encounter
                 // This prevents crashes when clicking "Surrender" after army defeat
                 if (justEndedEnlistment)

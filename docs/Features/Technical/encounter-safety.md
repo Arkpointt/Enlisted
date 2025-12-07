@@ -42,8 +42,10 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **Files:**
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs` - Static utility class for encounter state management
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Active battle monitoring and participation logic
+- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu and battle wait handling
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
+- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
 
 ---
 
@@ -90,6 +92,15 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - Relies on vanilla autosim (player party isn't injected)
 - After seeing report, expect encounter menu (Attack/Surrender) if army loses
 - Player always resolves outcome through standard encounter UI
+
+**Wait in Reserve:**
+- Available for field battles (not sieges)
+- Player sits out the battle while the army fights
+- `IsWaitingInReserve` flag tracks reserve state
+- Player stays in `enlisted_battle_wait` menu until army finishes or player rejoins
+- `GenericStateMenuPatch` intercepts `GetGenericStateMenu()` to return `enlisted_battle_wait` when in reserve, preventing native menu systems from switching to `army_wait` (which would cause visual stutter)
+- Rejoin removes player from reserve, re-adds them to the MapEvent on lord's side, then activates encounter menu
+- Handled by `EnlistedEncounterBehavior` and `GenericStateMenuPatch`
 
 **Result:**
 - Player automatically joins lord's battles
@@ -224,6 +235,28 @@ public static void EnableEncounters()
 - Only active during actual assault (`MapEvent`)
 - Prevents menu loop issues
 
+### Consecutive Battles While in Reserve
+
+**Scenario:** Player is waiting in reserve when army engages in another battle
+
+**Handling:**
+- `OnMapEventStarted` checks `IsWaitingInReserve` flag before processing
+- If true, skips all battle processing (menu switching, teleport, army setup)
+- `GenericStateMenuPatch` ensures native menu calls return `enlisted_battle_wait` instead of `army_wait`
+- Player remains in `enlisted_battle_wait` menu until army finishes fighting
+- Prevents duplicate XP awards and menu flickering during rapid consecutive battles
+
+### Rejoining Battle from Reserve
+
+**Scenario:** Player clicks "Rejoin Battle" while waiting in reserve
+
+**Handling:**
+- `IsWaitingInReserve` flag cleared immediately
+- Player party re-added to lord's MapEvent on same side (`playerParty.MapEventSide = lordSide`)
+- Encounter menu activated via `GameMenu.ActivateGameMenu("encounter")`
+- Player can then choose to Attack, Send Troops, or Leave
+- If battle ended while waiting, player exits to appropriate post-battle menu
+
 ### Lord Death While Enlisted
 
 **Scenario:** Lord dies while player is enlisted
@@ -233,6 +266,7 @@ public static void EnableEncounters()
 - Prevents crashes during emergency service termination
 - Grace period begins normally
 - State cleanup happens automatically
+- Naval safety: if the player is at sea without ships when the lord dies (or any service-ending event), the system always teleports the player to the nearest port before continuing grace/retirement so they cannot get stranded on water.
 
 ### Battle Defeat (Autosim)
 
@@ -243,6 +277,44 @@ public static void EnableEncounters()
 - Standard native behavior
 - Player resolves outcome manually
 - No special handling needed
+
+### Player Captured (Prisoner State)
+
+**Scenario:** Player is taken prisoner after battle defeat or lord capture
+
+**Handling:**
+- Mod detects capture via `OnHeroPrisonerTaken` event
+- Service ends with grace period (14 days to rejoin same kingdom after escape)
+- All map event processing skipped while `Hero.MainHero.IsPrisoner == true`
+- Logs show: `Skipping MapEventEnded - player prisoner or cleanup pending`
+- Native captivity system takes full control of player state
+
+**Important - Prisoner Transfers (Base Game Behavior):**
+- While imprisoned, the base game's `TransferPrisonerBarterBehavior` remains active
+- When enemy lords meet and interact (dialog/barter), they can trade prisoners
+- This includes transferring the player to a different captor
+- This is **expected native behavior**, not a mod bug
+- The mod correctly stays inactive during captivity, letting native mechanics operate
+- Grace period remains valid regardless of which enemy holds the player
+
+**Log Pattern:**
+```
+[EventSafety] Lord {name} captured - starting grace period
+[Battle] Encounter active during lord capture - letting native surrender capture handle the player.
+[Enlistment] Service ended: Lord captured (Honorable: False)
+[EventSafety] Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)
+```
+
+### Lord Captured While Player Active
+
+**Scenario:** Lord is captured while player is still fighting or in encounter
+
+**Handling:**
+- `TryCapturePlayerAlongsideLord()` checks if player should be captured too
+- If player already in encounter (surrender screen), native flow handles capture
+- If player not in encounter, mod calls `TakePrisonerAction.Apply()` to mirror capture
+- Grace period starts for the kingdom the player was serving
+- Cleanup deferred via `SchedulePlayerCaptureCleanup()` until encounter closes
 
 ---
 
@@ -335,6 +407,7 @@ void DeactivateAfterBattle()
 - `"EncounterGuard"` - State management operations
 - `"Enlistment"` - Service state changes that affect encounters
 - `"Battle"` - Battle join logic and vanilla encounter coordination
+- `"EventSafety"` - Capture/prisoner handling and map event skipping
 
 **Key Log Points:**
 ```csharp
@@ -349,6 +422,13 @@ ModLogger.Debug("Battle", $"Player party activated for battle participation");
 // State validation
 ModLogger.Warn("EncounterGuard", $"Unexpected IsActive state: {isActive}, expected: {expected}");
 ModLogger.Debug("EncounterGuard", $"State reset to expected value");
+
+// Capture/prisoner handling
+ModLogger.Info("EventSafety", $"Lord {name} captured - starting grace period");
+ModLogger.Info("EventSafety", $"Player captured - deferring enlistment teardown until encounter closes");
+ModLogger.Info("EventSafety", $"Skipping MapEventEnded - player prisoner or cleanup pending");
+ModLogger.Info("EventSafety", $"Finalizing deferred capture cleanup for player");
+ModLogger.Info("Battle", $"Encounter active during lord capture - letting native surrender capture handle the player.");
 ```
 
 **Common Issues:**
@@ -377,11 +457,37 @@ ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 - Matches native behavior
 - Not a bug - working as designed
 
+**Reserve mode menu stutter (flickering between menus):**
+- `GenericStateMenuPatch` should intercept `GetGenericStateMenu()` calls
+- Verify patch is registered in `conflicts.log`
+- Check `IsWaitingInReserve` is true when in reserve
+- If stutter persists, the patch may be missing from `Enlisted.csproj`
+
+**Rejoin battle not working:**
+- Log should show: "Player rejoining battle from reserve"
+- Player must be re-added to MapEvent before encounter menu activates
+- Check `lordParty.Party.MapEventSide` is not null
+- Verify `GameMenu.ActivateGameMenu("encounter")` is called
+
 **Party state not persisting:**
 - Check state enforcement in `OnTick()`
 - Verify state is being reset continuously
 - Check for save/load issues
 - Review state validation logs
+
+**Repeated "Skipping MapEventEnded" logs while prisoner:**
+- This is **expected behavior** when `IsPrisoner=True`
+- The mod correctly skips all map event processing during captivity
+- Native captivity system handles all prisoner mechanics
+- Grace period remains active for rejoining after escape
+- Log pattern: `Skipping MapEventEnded - player prisoner or cleanup pending (IsPrisoner=True, CaptureCleanupScheduled=False)`
+
+**Player transferred to different captor:**
+- This is **base game behavior**, not a mod bug
+- Native `TransferPrisonerBarterBehavior` allows lords to trade prisoners
+- When enemy lords meet/dialog, they can exchange prisoners including the player
+- The mod correctly stays inactive during captivity
+- Grace period is unaffected by captor changes
 
 **Debug Output Location:**
 - `Modules/Enlisted/Debugging/enlisted.log`
@@ -389,8 +495,10 @@ ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 **Related Files:**
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs`
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs`
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs`
+- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs`
 
 ---
 

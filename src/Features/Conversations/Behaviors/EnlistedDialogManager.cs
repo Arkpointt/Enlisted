@@ -1,4 +1,5 @@
 using System;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -7,8 +8,10 @@ using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManage
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using TaleWorlds.ObjectSystem;
 
 namespace Enlisted.Features.Conversations.Behaviors
 {
@@ -121,7 +124,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             var enlistmentText =
                 GetLocalizedText(
                     "{=enlisted_request_service}I offer you my sword and my loyalty, my lord. Will you have me in your ranks?");
-            // Option to request enlistment (standard)
+            // Option to request enlistment (standard kingdom lords)
             starter.AddPlayerLine(
                 "enlisted_request_service",
                 "enlisted_service_options",
@@ -130,6 +133,30 @@ namespace Enlisted.Features.Conversations.Behaviors
                 CanRequestStandardEnlistment,
                 null,
                 110);
+
+            // Option to request enlistment (minor faction lords - mercenary tone)
+            starter.AddPlayerLine(
+                "enlisted_minor_request_service",
+                "enlisted_service_options",
+                "enlisted_minor_enlistment_response",
+                GetLocalizedText(
+                        "{=enlisted_minor_request_service}I hear your company takes on capable fighters. I can handle myself in a scrap - interested?")
+                    .ToString(),
+                CanRequestMinorFactionEnlistment,
+                null,
+                111); // Higher priority than standard
+
+            // Minor faction lord's response to enlistment request
+            starter.AddDialogLine(
+                "enlisted_minor_enlistment_accepted",
+                "enlisted_minor_enlistment_response",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_enlistment_accepted}You look useful. We pay fair coin for good work, and dead men don't collect. Fall in with the lads and keep your blade sharp.")
+                    .ToString(),
+                null,
+                OnAcceptEnlistment,
+                111);
 
             // Army leader attempting to enlist - shows when player commands their own army
             // Higher priority (109) so it appears when condition is met, blocking standard enlistment
@@ -180,7 +207,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 110);
 
-            // Option to return from temporary leave
+            // Option to return from temporary leave - kingdom lords
             starter.AddPlayerLine(
                 "enlisted_return_from_leave",
                 "enlisted_service_options",
@@ -192,7 +219,19 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 111);
 
-            // Lord's response to return from leave request
+            // Option to return from temporary leave - minor faction lords
+            starter.AddPlayerLine(
+                "enlisted_minor_return_from_leave",
+                "enlisted_service_options",
+                "enlisted_minor_return_response",
+                GetLocalizedText(
+                        "{=enlisted_minor_return_from_leave}I've had my rest. Ready to get back to work, captain.")
+                    .ToString(),
+                CanReturnFromMinorFactionLeave,
+                null,
+                112); // Higher priority
+
+            // Lord's response to return from leave request - kingdom lords
             starter.AddDialogLine(
                 "enlisted_return_accepted",
                 "enlisted_return_response",
@@ -203,6 +242,18 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnReturnFromLeave,
                 111);
+
+            // Minor faction lord's response to return from leave
+            starter.AddDialogLine(
+                "enlisted_minor_return_accepted",
+                "enlisted_minor_return_response",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_return_accepted}Good timing. We've got work lined up and could use another blade. Fall in with the lads.")
+                    .ToString(),
+                null,
+                OnReturnFromLeave,
+                112);
 
             // Option to transfer service to a different lord (while on leave or grace period)
             starter.AddPlayerLine(
@@ -293,7 +344,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddRetirementDialogs(CampaignGameStarter starter)
         {
-            // First-term retirement discussion (available after 3 years)
+            // First-term retirement discussion (available after 3 years) - kingdom lords
             starter.AddPlayerLine(
                 "enlisted_discuss_retirement",
                 "enlisted_service_options",
@@ -305,7 +356,149 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 109); // Higher priority than regular retirement
 
-            // Lord explains benefits (mentions 1-year re-enlistment term)
+            // First-term retirement discussion - minor faction lords (mercenary tone)
+            starter.AddPlayerLine(
+                "enlisted_minor_discuss_retirement",
+                "enlisted_service_options",
+                "enlisted_minor_retirement_benefits",
+                GetLocalizedText(
+                        "{=enlisted_minor_discuss_retirement}Captain, I've been riding with the company long enough. Time we settled accounts.")
+                    .ToString(),
+                CanDiscussMinorFactionRetirement,
+                null,
+                110); // Higher priority than kingdom version
+
+            // Minor faction lord explains benefits (mercenary tone)
+            starter.AddDialogLine(
+                "enlisted_minor_retirement_benefits_explanation",
+                "enlisted_minor_retirement_benefits",
+                "enlisted_minor_retirement_choice",
+                GetLocalizedText(
+                        "{=enlisted_minor_retirement_benefits}You've earned your share and then some. Take your coin now and walk free, or stick around another year - I'll sweeten the pot. Your call.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Player accepts retirement from minor faction (with retinue - goes to troop choice)
+            starter.AddPlayerLine(
+                "enlisted_minor_accept_retirement_with_retinue",
+                "enlisted_minor_retirement_choice",
+                "enlisted_minor_retinue_ask",
+                GetLocalizedText(
+                        "{=enlisted_minor_accept_retirement}I'll take my cut now. It's been good riding with you.")
+                    .ToString(),
+                HasRetinueForRetirement,
+                null,
+                111); // Higher priority when has retinue
+
+            // Player accepts retirement from minor faction (no retinue - direct farewell)
+            starter.AddPlayerLine(
+                "enlisted_minor_accept_retirement_no_retinue",
+                "enlisted_minor_retirement_choice",
+                "enlisted_minor_retirement_farewell",
+                GetLocalizedText(
+                        "{=enlisted_minor_accept_retirement}I'll take my cut now. It's been good riding with you.")
+                    .ToString(),
+                () => !HasRetinueForRetirement(),
+                OnAcceptFirstTermRetirement,
+                110);
+
+            // Minor faction captain asks about the troops
+            starter.AddDialogLine(
+                "enlisted_minor_retinue_ask_text",
+                "enlisted_minor_retinue_ask",
+                "enlisted_minor_retinue_choice",
+                GetLocalizedText(
+                        "{=enlisted_minor_retinue_ask}Your lads have been asking around. Word is they'd rather follow you than draw army pay. Your call, fighter.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Player keeps troops (minor faction)
+            starter.AddPlayerLine(
+                "enlisted_minor_keep_troops",
+                "enlisted_minor_retinue_choice",
+                "enlisted_minor_farewell_with_troops",
+                GetLocalizedText(
+                        "{=enlisted_minor_keep_troops}Tell them to pack their gear. We ride together.")
+                    .ToString(),
+                null,
+                OnKeepTroopsRetirement,
+                110);
+
+            // Player releases troops (minor faction)
+            starter.AddPlayerLine(
+                "enlisted_minor_release_troops",
+                "enlisted_minor_retinue_choice",
+                "enlisted_minor_retirement_farewell",
+                GetLocalizedText(
+                        "{=enlisted_minor_release_troops}They're good fighters. The company needs them more than I do.")
+                    .ToString(),
+                null,
+                OnAcceptFirstTermRetirement,
+                110);
+
+            // Minor faction farewell when keeping troops
+            starter.AddDialogLine(
+                "enlisted_minor_farewell_with_troops_text",
+                "enlisted_minor_farewell_with_troops",
+                "close_window",
+                GetRetinueFarewellText(isMinorFaction: true),
+                null,
+                OnFinalizeRetirementWithTroops,
+                110);
+
+            // Player accepts re-enlistment with minor faction (1-year term)
+            starter.AddPlayerLine(
+                "enlisted_minor_accept_reenlist",
+                "enlisted_minor_retirement_choice",
+                "enlisted_minor_reenlist_confirmed",
+                GetLocalizedText(
+                        "{=enlisted_minor_accept_reenlist}Coin's good, company's better. I'll stick around for that bonus.")
+                    .ToString(),
+                null,
+                OnAcceptFirstTermReenlistBonus,
+                110);
+
+            // Player needs time to decide (minor faction)
+            starter.AddPlayerLine(
+                "enlisted_minor_retirement_later",
+                "enlisted_minor_retirement_choice",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_retirement_later}Let me think on it. I'll find you when I've decided.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Minor faction lord's farewell on retirement
+            starter.AddDialogLine(
+                "enlisted_minor_retirement_farewell_text",
+                "enlisted_minor_retirement_farewell",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_retirement_farewell}Fair winds, fighter. You've done right by the company. If you ever need work again, you know where to find us.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Minor faction lord confirms re-enlistment
+            starter.AddDialogLine(
+                "enlisted_minor_reenlist_confirmed",
+                "enlisted_minor_reenlist_confirmed",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_reenlist_confirmed}Smart choice. The lads will be glad to have you. Your bonus is guaranteed when the year's up. Now let's find some trouble.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Lord explains benefits (mentions 1-year re-enlistment term) - kingdom lords
             starter.AddDialogLine(
                 "enlisted_retirement_benefits_explanation",
                 "enlisted_retirement_benefits",
@@ -317,16 +510,72 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 110);
 
-            // Player accepts retirement with benefits
+            // Player accepts retirement with benefits (with retinue - goes to troop choice)
             starter.AddPlayerLine(
-                "enlisted_accept_retirement",
+                "enlisted_accept_retirement_with_retinue",
+                "enlisted_retirement_choice",
+                "enlisted_retinue_ask",
+                GetLocalizedText(
+                        "{=enlisted_accept_retirement}I thank you for everything, my lord. It has been an honor to serve under your banner.")
+                    .ToString(),
+                HasRetinueForRetirement,
+                null,
+                111); // Higher priority when has retinue
+
+            // Player accepts retirement with benefits (no retinue - direct farewell)
+            starter.AddPlayerLine(
+                "enlisted_accept_retirement_no_retinue",
                 "enlisted_retirement_choice",
                 "enlisted_retirement_farewell",
                 GetLocalizedText(
                         "{=enlisted_accept_retirement}I thank you for everything, my lord. It has been an honor to serve under your banner.")
                     .ToString(),
+                () => !HasRetinueForRetirement(),
+                OnAcceptFirstTermRetirement,
+                110);
+
+            // Kingdom lord asks about the troops
+            starter.AddDialogLine(
+                "enlisted_retinue_ask_text",
+                "enlisted_retinue_ask",
+                "enlisted_retinue_choice",
+                GetRetinueAskText(),
+                null,
+                null,
+                110);
+
+            // Player keeps troops (kingdom)
+            starter.AddPlayerLine(
+                "enlisted_keep_troops",
+                "enlisted_retinue_choice",
+                "enlisted_farewell_with_troops",
+                GetLocalizedText(
+                        "{=enlisted_keep_troops}My men have chosen to march with me, my lord. We've bled together - that bond does not break so easily.")
+                    .ToString(),
+                null,
+                OnKeepTroopsRetirement,
+                110);
+
+            // Player releases troops (kingdom)
+            starter.AddPlayerLine(
+                "enlisted_release_troops",
+                "enlisted_retinue_choice",
+                "enlisted_retirement_farewell",
+                GetLocalizedText(
+                        "{=enlisted_release_troops}Let them return to the army. They signed on to serve the kingdom, not one man.")
+                    .ToString(),
                 null,
                 OnAcceptFirstTermRetirement,
+                110);
+
+            // Kingdom farewell when keeping troops
+            starter.AddDialogLine(
+                "enlisted_farewell_with_troops_text",
+                "enlisted_farewell_with_troops",
+                "close_window",
+                GetRetinueFarewellText(isMinorFaction: false),
+                null,
+                OnFinalizeRetirementWithTroops,
                 110);
 
             // Player accepts re-enlistment bonus (1-year term)
@@ -377,7 +626,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 110);
 
-            // Renewal term complete dialog (after 1-year renewal)
+            // Renewal term complete dialog (after 1-year renewal) - kingdom lords
             starter.AddPlayerLine(
                 "enlisted_renewal_complete",
                 "enlisted_service_options",
@@ -388,7 +637,136 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 108);
 
-            // Lord explains renewal options (1-year terms)
+            // Renewal term complete dialog - minor faction lords
+            starter.AddPlayerLine(
+                "enlisted_minor_renewal_complete",
+                "enlisted_service_options",
+                "enlisted_minor_renewal_options",
+                GetLocalizedText(
+                    "{=enlisted_minor_renewal_complete}Captain, the year's up. What's the score?").ToString(),
+                CanDiscussMinorFactionRenewalEnd,
+                null,
+                109); // Higher priority
+
+            // Minor faction lord explains renewal options
+            starter.AddDialogLine(
+                "enlisted_minor_renewal_options_explanation",
+                "enlisted_minor_renewal_options",
+                "enlisted_minor_renewal_choice",
+                GetLocalizedText(
+                        "{=enlisted_minor_renewal_options}Another year done, and you're still breathing. Take your gold and go free, or sign on for another round - same deal as before. What'll it be?")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Player accepts renewal discharge from minor faction (with retinue - goes to troop choice)
+            starter.AddPlayerLine(
+                "enlisted_minor_accept_renewal_discharge_with_retinue",
+                "enlisted_minor_renewal_choice",
+                "enlisted_minor_renewal_retinue_ask",
+                GetLocalizedText(
+                        "{=enlisted_minor_renewal_discharge}I'll take my share. Time to see what else is out there.")
+                    .ToString(),
+                HasRetinueForRetirement,
+                null,
+                111); // Higher priority when has retinue
+
+            // Player accepts renewal discharge from minor faction (no retinue - direct farewell)
+            starter.AddPlayerLine(
+                "enlisted_minor_accept_renewal_discharge_no_retinue",
+                "enlisted_minor_renewal_choice",
+                "enlisted_minor_renewal_farewell",
+                GetLocalizedText(
+                        "{=enlisted_minor_renewal_discharge}I'll take my share. Time to see what else is out there.")
+                    .ToString(),
+                () => !HasRetinueForRetirement(),
+                OnAcceptRenewalDischarge,
+                110);
+
+            // Minor faction captain asks about troops on renewal discharge
+            starter.AddDialogLine(
+                "enlisted_minor_renewal_retinue_ask_text",
+                "enlisted_minor_renewal_retinue_ask",
+                "enlisted_minor_renewal_retinue_choice",
+                GetLocalizedText(
+                        "{=enlisted_minor_retinue_ask}Your lads have been asking around. Word is they'd rather follow you than draw army pay. Your call, fighter.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Player keeps troops on renewal discharge (minor faction)
+            starter.AddPlayerLine(
+                "enlisted_minor_renewal_keep_troops",
+                "enlisted_minor_renewal_retinue_choice",
+                "enlisted_minor_renewal_farewell_with_troops",
+                GetLocalizedText(
+                        "{=enlisted_minor_keep_troops}Tell them to pack their gear. We ride together.")
+                    .ToString(),
+                null,
+                OnKeepTroopsRetirement,
+                110);
+
+            // Player releases troops on renewal discharge (minor faction)
+            starter.AddPlayerLine(
+                "enlisted_minor_renewal_release_troops",
+                "enlisted_minor_renewal_retinue_choice",
+                "enlisted_minor_renewal_farewell",
+                GetLocalizedText(
+                        "{=enlisted_minor_release_troops}They're good fighters. The company needs them more than I do.")
+                    .ToString(),
+                null,
+                OnAcceptRenewalDischarge,
+                110);
+
+            // Minor faction farewell when keeping troops on renewal
+            starter.AddDialogLine(
+                "enlisted_minor_renewal_farewell_with_troops_text",
+                "enlisted_minor_renewal_farewell_with_troops",
+                "close_window",
+                GetRetinueFarewellText(isMinorFaction: true),
+                null,
+                OnFinalizeRenewalWithTroops,
+                110);
+
+            // Player continues with minor faction (another 1-year term)
+            starter.AddPlayerLine(
+                "enlisted_minor_continue_service",
+                "enlisted_minor_renewal_choice",
+                "enlisted_minor_continue_confirmed",
+                GetLocalizedText(
+                        "{=enlisted_minor_continue_service}The road's been good to me here. I'm in for another year.")
+                    .ToString(),
+                null,
+                OnContinueService,
+                110);
+
+            // Minor faction lord's farewell on renewal discharge
+            starter.AddDialogLine(
+                "enlisted_minor_renewal_farewell_text",
+                "enlisted_minor_renewal_farewell",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_renewal_farewell}Your coin's counted and your horse is yours. Good luck out there - and if you hear of any good contracts, send word.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Minor faction lord confirms continued service
+            starter.AddDialogLine(
+                "enlisted_minor_continue_confirmed",
+                "enlisted_minor_continue_confirmed",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_continue_confirmed}Good man. The company's better for having you. Same terms, same coin - let's get back to work.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+            // Lord explains renewal options (1-year terms) - kingdom lords
             starter.AddDialogLine(
                 "enlisted_renewal_options_explanation",
                 "enlisted_renewal_options",
@@ -400,16 +778,72 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 110);
 
-            // Player accepts renewal discharge
+            // Player accepts renewal discharge (with retinue - goes to troop choice)
             starter.AddPlayerLine(
-                "enlisted_accept_renewal_discharge",
+                "enlisted_accept_renewal_discharge_with_retinue",
+                "enlisted_renewal_choice",
+                "enlisted_renewal_retinue_ask",
+                GetLocalizedText(
+                        "{=enlisted_renewal_discharge}It is time I sought my own path, my lord. I thank you for the opportunity.")
+                    .ToString(),
+                HasRetinueForRetirement,
+                null,
+                111); // Higher priority when has retinue
+
+            // Player accepts renewal discharge (no retinue - direct farewell)
+            starter.AddPlayerLine(
+                "enlisted_accept_renewal_discharge_no_retinue",
                 "enlisted_renewal_choice",
                 "enlisted_renewal_farewell",
                 GetLocalizedText(
                         "{=enlisted_renewal_discharge}It is time I sought my own path, my lord. I thank you for the opportunity.")
                     .ToString(),
+                () => !HasRetinueForRetirement(),
+                OnAcceptRenewalDischarge,
+                110);
+
+            // Kingdom lord asks about troops on renewal discharge
+            starter.AddDialogLine(
+                "enlisted_renewal_retinue_ask_text",
+                "enlisted_renewal_retinue_ask",
+                "enlisted_renewal_retinue_choice",
+                GetRetinueAskText(),
+                null,
+                null,
+                110);
+
+            // Player keeps troops on renewal discharge (kingdom)
+            starter.AddPlayerLine(
+                "enlisted_renewal_keep_troops",
+                "enlisted_renewal_retinue_choice",
+                "enlisted_renewal_farewell_with_troops",
+                GetLocalizedText(
+                        "{=enlisted_keep_troops}My men have chosen to march with me, my lord. We've bled together - that bond does not break so easily.")
+                    .ToString(),
+                null,
+                OnKeepTroopsRetirement,
+                110);
+
+            // Player releases troops on renewal discharge (kingdom)
+            starter.AddPlayerLine(
+                "enlisted_renewal_release_troops",
+                "enlisted_renewal_retinue_choice",
+                "enlisted_renewal_farewell",
+                GetLocalizedText(
+                        "{=enlisted_release_troops}Let them return to the army. They signed on to serve the kingdom, not one man.")
+                    .ToString(),
                 null,
                 OnAcceptRenewalDischarge,
+                110);
+
+            // Kingdom farewell when keeping troops on renewal
+            starter.AddDialogLine(
+                "enlisted_renewal_farewell_with_troops_text",
+                "enlisted_renewal_farewell_with_troops",
+                "close_window",
+                GetRetinueFarewellText(isMinorFaction: false),
+                null,
+                OnFinalizeRenewalWithTroops,
                 110);
 
             // Player continues service (another 1-year term)
@@ -508,7 +942,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 110);
 
-            // Simple early discharge (for those not eligible for full retirement)
+            // Simple early discharge (for those not eligible for full retirement) - kingdom lords
             starter.AddPlayerLine(
                 "enlisted_request_early_discharge",
                 "enlisted_service_options",
@@ -520,13 +954,37 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 115); // Lower priority - shows when not eligible for full retirement
 
-            // Lord grants early discharge (no benefits)
+            // Simple early discharge - minor faction lords
+            starter.AddPlayerLine(
+                "enlisted_minor_request_early_discharge",
+                "enlisted_service_options",
+                "enlisted_minor_early_discharge_response",
+                GetLocalizedText(
+                        "{=enlisted_minor_early_discharge}Captain, I need to break contract early. Something's come up.")
+                    .ToString(),
+                CanRequestMinorFactionEarlyDischarge,
+                null,
+                116); // Higher priority
+
+            // Lord grants early discharge (no benefits) - kingdom lords
             starter.AddDialogLine(
                 "enlisted_early_discharge_granted",
                 "enlisted_early_discharge_response",
                 "close_window",
                 GetLocalizedText(
                         "{=enlisted_early_discharge_granted}I release you from your oath. You leave without the honors of a full term, but you are free. Go, and think carefully before you take up arms again.")
+                    .ToString(),
+                null,
+                OnGrantEarlyDischarge,
+                110);
+
+            // Minor faction lord grants early discharge
+            starter.AddDialogLine(
+                "enlisted_minor_early_discharge_granted",
+                "enlisted_minor_early_discharge_response",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_minor_early_discharge_granted}Contract's done then. No hard feelings - everyone's got their reasons. Don't expect a warm welcome if you come crawling back soon, though.")
                     .ToString(),
                 null,
                 OnGrantEarlyDischarge,
@@ -685,10 +1143,61 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
-        ///     Checks if the player can request enlistment with the current lord.
+        ///     Checks if the conversation partner is a minor faction lord.
+        ///     Minor faction lords (mercenary companies, bandits, etc.) use different dialog text
+        ///     even when they're serving as mercenaries for a kingdom. Uses Clan.IsMinorFaction
+        ///     which remains true regardless of kingdom affiliation.
+        /// </summary>
+        private bool IsMinorFactionLord()
+        {
+            var lord = Hero.OneToOneConversationHero;
+            return lord?.Clan?.IsMinorFaction;
+        }
+
+        /// <summary>
+        ///     Checks if the player can request enlistment with a minor faction lord.
+        ///     Same logic as standard enlistment but only for minor faction lords.
+        /// </summary>
+        private bool CanRequestMinorFactionEnlistment()
+        {
+            if (!IsMinorFactionLord())
+            {
+                return false;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+
+            if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
+            {
+                return false;
+            }
+
+            if (enlistment?.IsInDesertionGracePeriod == true)
+            {
+                return false;
+            }
+
+            var lord = Hero.OneToOneConversationHero;
+            if (lord == null || !lord.IsLord)
+            {
+                return false;
+            }
+
+            return enlistment?.CanEnlistWithParty(lord, out _);
+        }
+
+        /// <summary>
+        ///     Checks if the player can request standard kingdom enlistment (not minor faction).
+        ///     Minor faction lords use CanRequestMinorFactionEnlistment instead.
         /// </summary>
         private bool CanRequestStandardEnlistment()
         {
+            // Minor faction lords use separate dialog
+            if (IsMinorFactionLord())
+            {
+                return false;
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
 
             if (enlistment?.IsEnlisted == true || enlistment?.IsOnLeave == true)
@@ -768,9 +1277,16 @@ namespace Enlisted.Features.Conversations.Behaviors
         ///     Checks if the player can discuss first-term retirement (after 252 days).
         ///     Must be enlisted with current lord, have completed minimum service,
         ///     and not be in a grace period or already in a renewal term.
+        ///     Only for kingdom lords - minor factions use CanDiscussMinorFactionRetirement.
         /// </summary>
         private bool CanDiscussFirstTermRetirement()
         {
+            // Minor faction lords use separate dialog
+            if (IsMinorFactionLord())
+            {
+                return false;
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
 
@@ -783,10 +1299,56 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
+        ///     Checks if the player can discuss retirement with a minor faction lord.
+        ///     Same eligibility as kingdom lords but uses mercenary-themed dialog.
+        /// </summary>
+        private bool CanDiscussMinorFactionRetirement()
+        {
+            if (!IsMinorFactionLord())
+            {
+                return false;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            return enlistment?.IsEnlisted == true &&
+                   enlistment.CurrentLord == lord &&
+                   enlistment.IsEligibleForRetirement &&
+                   !enlistment.IsInDesertionGracePeriod;
+        }
+
+        /// <summary>
         ///     Checks if the player can discuss renewal term completion.
+        ///     Only for kingdom lords - minor factions use CanDiscussMinorFactionRenewalEnd.
         /// </summary>
         private bool CanDiscussRenewalTermEnd()
         {
+            // Minor faction lords use separate dialog
+            if (IsMinorFactionLord())
+            {
+                return false;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            return enlistment?.IsEnlisted == true &&
+                   enlistment.CurrentLord == lord &&
+                   enlistment.IsInRenewalTerm &&
+                   enlistment.IsRenewalTermComplete;
+        }
+
+        /// <summary>
+        ///     Checks if the player can discuss renewal term completion with a minor faction lord.
+        /// </summary>
+        private bool CanDiscussMinorFactionRenewalEnd()
+        {
+            if (!IsMinorFactionLord())
+            {
+                return false;
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
 
@@ -816,9 +1378,16 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Checks if the player can request early discharge (before full term).
         ///     Shows only when not eligible for full retirement benefits.
+        ///     Only for kingdom lords - minor factions use CanRequestMinorFactionEarlyDischarge.
         /// </summary>
         private bool CanRequestEarlyDischarge()
         {
+            // Minor faction lords use separate dialog
+            if (IsMinorFactionLord())
+            {
+                return false;
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
 
@@ -830,14 +1399,57 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
+        ///     Checks if the player can request early discharge from a minor faction.
+        /// </summary>
+        private bool CanRequestMinorFactionEarlyDischarge()
+        {
+            if (!IsMinorFactionLord())
+            {
+                return false;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            return enlistment?.IsEnlisted == true &&
+                   enlistment.CurrentLord == lord &&
+                   !enlistment.IsEligibleForRetirement &&
+                   !enlistment.IsRenewalTermComplete;
+        }
+
+        /// <summary>
         ///     Checks if the player can return from temporary leave.
+        ///     Only for kingdom lords - minor factions use CanReturnFromMinorFactionLeave.
         /// </summary>
         private bool CanReturnFromLeave()
         {
+            // Minor faction lords use separate dialog
+            if (IsMinorFactionLord())
+            {
+                return false;
+            }
+
             var enlistment = EnlistmentBehavior.Instance;
             var lord = Hero.OneToOneConversationHero;
 
             // Must be on leave and talking to the same lord you served
+            return enlistment?.IsOnLeave == true &&
+                   enlistment.CurrentLord == lord;
+        }
+
+        /// <summary>
+        ///     Checks if the player can return from leave with a minor faction lord.
+        /// </summary>
+        private bool CanReturnFromMinorFactionLeave()
+        {
+            if (!IsMinorFactionLord())
+            {
+                return false;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
             return enlistment?.IsOnLeave == true &&
                    enlistment.CurrentLord == lord;
         }
@@ -952,6 +1564,120 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         /// <summary>
+        ///     Called when player chooses to keep their troops during retirement.
+        ///     Sets the retention flag - actual processing happens in OnFinalizeRetirementWithTroops.
+        /// </summary>
+        private void OnKeepTroopsRetirement()
+        {
+            EnlistmentBehavior.RetainTroopsOnRetirement = true;
+            ModLogger.Info("DialogManager", "Player chose to keep retinue troops on retirement");
+        }
+
+        /// <summary>
+        ///     Finalizes retirement when player kept troops. Processes retirement,
+        ///     adds starter supplies (grain), and cleans up.
+        /// </summary>
+        private void OnFinalizeRetirementWithTroops()
+        {
+            try
+            {
+                // Process the retirement with troop retention flag set
+                EnlistmentBehavior.Instance?.ProcessFirstTermRetirement();
+                
+                // Add starter supplies so they don't starve immediately
+                AddRetirementSupplies();
+                
+                ModLogger.Info("DialogManager", "First-term retirement with troops processed");
+                
+                // Defer menu cleanup until after dialog closes
+                NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during retirement with troops", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Adds 10 grain to player inventory as retirement supplies.
+        ///     Prevents immediate starvation when leaving the army's supply train.
+        /// </summary>
+        private static void AddRetirementSupplies()
+        {
+            try
+            {
+                var party = MobileParty.MainParty;
+                if (party == null)
+                {
+                    return;
+                }
+
+                var grain = MBObjectManager.Instance.GetObject<ItemObject>("grain");
+                if (grain != null)
+                {
+                    party.ItemRoster.AddToCounts(grain, 10);
+                    ModLogger.Info("DialogManager", "Added 10 grain as retirement supplies");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", $"Failed to add retirement supplies: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        ///     Checks if player has a retinue that can be kept on retirement.
+        ///     Used to determine which dialog branch to show.
+        /// </summary>
+        private static bool HasRetinueForRetirement()
+        {
+            var manager = ServiceRecordManager.Instance?.RetinueManager;
+            return manager?.State?.HasRetinue == true;
+        }
+
+        /// <summary>
+        ///     Gets the lord's question text about the troops, with unit name variable.
+        /// </summary>
+        private static string GetRetinueAskText()
+        {
+            var unitName = GetRetinueUnitName();
+            var text = new TextObject(
+                "{=enlisted_retinue_ask}Your {UNIT_NAME} has served you well these many months. What of your men? They may return to the ranks, or... if they wish to follow you into the unknown, I shall not stop them.");
+            text.SetTextVariable("UNIT_NAME", unitName);
+            return text.ToString();
+        }
+
+        /// <summary>
+        ///     Gets the farewell text when player keeps their troops.
+        /// </summary>
+        private static string GetRetinueFarewellText(bool isMinorFaction)
+        {
+            var manager = ServiceRecordManager.Instance?.RetinueManager;
+            var count = manager?.State?.TotalSoldiers ?? 0;
+
+            TextObject text = new TextObject(
+                isMinorFaction
+                    ? "{=enlisted_minor_farewell_troops}Ha! Loyal to the end, that lot. Your {COUNT} have decided to stay with you instead of signing back on. Here's some grain for the road - you'll need it. Don't be a stranger."
+                    : "{=enlisted_farewell_troops}So be it. Your {COUNT} soldiers have decided to stay with you rather than re-enlist. I've had the quartermaster set aside provisions for your journey. Fare well, soldier.");
+            text.SetTextVariable("COUNT", count);
+            return text.ToString();
+        }
+
+        /// <summary>
+        ///     Gets the unit name based on player's tier (Lance, Squad, or Retinue).
+        /// </summary>
+        private static string GetRetinueUnitName()
+        {
+            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 4;
+            return tier switch
+            {
+                >= 6 => "retinue",
+                5 => "squad",
+                _ => "lance"
+            };
+        }
+
+        /// <summary>
         ///     Handles first-term re-enlistment with 20,000 gold bonus.
         /// </summary>
         private void OnAcceptFirstTermReenlistBonus()
@@ -986,6 +1712,31 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("DialogManager", "Error during renewal discharge", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Finalizes renewal discharge when player kept troops. Processes discharge,
+        ///     adds starter supplies (grain), and cleans up.
+        /// </summary>
+        private void OnFinalizeRenewalWithTroops()
+        {
+            try
+            {
+                // Process the renewal discharge with troop retention flag set
+                EnlistmentBehavior.Instance?.ProcessRenewalRetirement();
+                
+                // Add starter supplies so they don't starve immediately
+                AddRetirementSupplies();
+                
+                ModLogger.Info("DialogManager", "Renewal discharge with troops processed");
+                
+                // Defer menu cleanup until after dialog closes
+                NextFrameDispatcher.RunNextFrame(CleanupEnlistedMenuAfterDischarge);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error during renewal discharge with troops", ex);
             }
         }
 

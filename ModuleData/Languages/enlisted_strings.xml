@@ -88,6 +88,53 @@
     <string id="Enlisted_Message_LordFallenGrace" text="Your lord has fallen. You have 14 days to find a new commander in {KINGDOM} before desertion." />
     <string id="Enlisted_Message_LordFallenEnded" text="Your lord has fallen. Your service has ended." />
     <string id="Enlisted_Message_LordFallenDischarged" text="Your lord has fallen in battle. You have been honorably discharged." />
+    <string id="Enlisted_Message_MinorFactionDeserter" text="You have deserted {LORD}'s company. Your reputation with {FACTION} has suffered, and they will not accept you back for some time." />
+    <string id="Enlisted_Message_MinorFactionCooldown" text="{FACTION} will not accept you back for another {DAYS} days due to your past desertion." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MINOR FACTION DIALOGS - Mercenary/Company Themed Text -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Minor Faction Enlistment -->
+    <string id="enlisted_minor_request_service" text="I hear your company takes on capable fighters. I can handle myself in a scrap - interested?" />
+    <string id="enlisted_minor_enlistment_accepted" text="You look useful. We pay fair coin for good work, and dead men don't collect. Fall in with the lads and keep your blade sharp." />
+    
+    <!-- Minor Faction Retirement (First Term) -->
+    <string id="enlisted_minor_discuss_retirement" text="Captain, I've been riding with the company long enough. Time we settled accounts." />
+    <string id="enlisted_minor_retirement_benefits" text="You've earned your share and then some. Take your coin now and walk free, or stick around another year - I'll sweeten the pot. Your call." />
+    <string id="enlisted_minor_accept_retirement" text="I'll take my cut now. It's been good riding with you." />
+    <string id="enlisted_minor_accept_reenlist" text="Coin's good, company's better. I'll stick around for that bonus." />
+    <string id="enlisted_minor_retirement_later" text="Let me think on it. I'll find you when I've decided." />
+    <string id="enlisted_minor_retirement_farewell" text="Fair winds, fighter. You've done right by the company. If you ever need work again, you know where to find us." />
+    <string id="enlisted_minor_reenlist_confirmed" text="Smart choice. The lads will be glad to have you. Your bonus is guaranteed when the year's up. Now let's find some trouble." />
+    
+    <!-- Minor Faction Renewal Term -->
+    <string id="enlisted_minor_renewal_complete" text="Captain, the year's up. What's the score?" />
+    <string id="enlisted_minor_renewal_options" text="Another year done, and you're still breathing. Take your gold and go free, or sign on for another round - same deal as before. What'll it be?" />
+    <string id="enlisted_minor_renewal_discharge" text="I'll take my share. Time to see what else is out there." />
+    <string id="enlisted_minor_continue_service" text="The road's been good to me here. I'm in for another year." />
+    <string id="enlisted_minor_renewal_farewell" text="Your coin's counted and your horse is yours. Good luck out there - and if you hear of any good contracts, send word." />
+    <string id="enlisted_minor_continue_confirmed" text="Good man. The company's better for having you. Same terms, same coin - let's get back to work." />
+    
+    <!-- Minor Faction Leave/Return -->
+    <string id="enlisted_minor_return_from_leave" text="I've had my rest. Ready to get back to work, captain." />
+    <string id="enlisted_minor_return_accepted" text="Good timing. We've got work lined up and could use another blade. Fall in with the lads." />
+    
+    <!-- Minor Faction Early Discharge -->
+    <string id="enlisted_minor_early_discharge" text="Captain, I need to break contract early. Something's come up." />
+    <string id="enlisted_minor_early_discharge_granted" text="Contract's done then. No hard feelings - everyone's got their reasons. Don't expect a warm welcome if you come crawling back soon, though." />
+
+    <!-- Retirement Troop Retention - Kingdom Lords -->
+    <string id="enlisted_retinue_ask" text="Your {UNIT_NAME} has served you well these many months. What of your men? They may return to the ranks, or... if they wish to follow you into the unknown, I shall not stop them." />
+    <string id="enlisted_keep_troops" text="My men have chosen to march with me, my lord. We've bled together - that bond does not break so easily." />
+    <string id="enlisted_release_troops" text="Let them return to the army. They signed on to serve the kingdom, not one man." />
+    <string id="enlisted_farewell_troops" text="So be it. Your {COUNT} soldiers have decided to stay with you rather than re-enlist. I've had the quartermaster set aside provisions for your journey. Fare well, soldier." />
+    
+    <!-- Retirement Troop Retention - Minor Faction Lords -->
+    <string id="enlisted_minor_retinue_ask" text="Your lads have been asking around. Word is they'd rather follow you than draw army pay. Your call, fighter." />
+    <string id="enlisted_minor_keep_troops" text="Tell them to pack their gear. We ride together." />
+    <string id="enlisted_minor_release_troops" text="They're good fighters. The company needs them more than I do." />
+    <string id="enlisted_minor_farewell_troops" text="Ha! Loyal to the end, that lot. Your {COUNT} have decided to stay with you instead of signing back on. Here's some grain for the road - you'll need it. Don't be a stranger." />
 
     <!-- Menu Options -->
     <string id="Enlisted_Menu_ReturnToCamp" text="Return to camp" />

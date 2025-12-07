@@ -18,7 +18,7 @@
 - [Equipment Categories by Tier & Culture](#-equipment-categories-by-tier--culture)
 - [Implementation Usage](#-implementation-usage)
 - [Equipment Filtering](#-equipment-filtering)
-- [FINAL QUARTERMASTER RESEARCH SUMMARY](#-final-quartermaster-research-summary)
+- [Quartermaster Implementation Status](#quartermaster-implementation-status)
 
 ---
 
@@ -1006,62 +1006,37 @@ public List<ItemObject> GetAvailableItemsByTier(CultureObject culture, int maxTi
 
 **This system ensures culture-appropriate, tier-appropriate equipment selection for enlisted soldiers with realistic military progression.**
 
-## 🎯 **FINAL QUARTERMASTER RESEARCH SUMMARY**
+## QUARTERMASTER IMPLEMENTATION STATUS
 
-### **✅ RESEARCH COMPLETE - ALL QUESTIONS ANSWERED**
+**Status**: Fully implemented and working.
 
-**Date**: 2025-01-28
-**Status**: ✅ **QUARTERMASTER FEATURE CONFIRMED VIABLE**
+### Current Features
 
-### **Key Questions → Verified Answers**
+**Equipment Discovery:**
+- Branch-based collection from player's troop upgrade tree
+- Collects equipment from all troops in branch at player's tier
+- Items NOT filtered by culture (cross-culture items from troop loadouts allowed)
+- Falls back to all tiers if exact tier has no variants
 
-| **Question** | **Answer** | **Evidence Source** |
-|--------------|------------|-------------------|
-| **Do troops have multiple equipment variants?** | ✅ **YES - CONFIRMED** | `battanian_volunteer` has 4 different weapon variants in spnpccharacters.xml |
-| **Do weapon variants exist across factions?** | ✅ **YES - CONFIRMED** | Battanian: maul/hatchet/mace/pickaxe; Imperial: spear variants |
-| **Which equipment slots have variants?** | ✅ **WEAPONS + ARMOR + HELMETS** | Item0 (weapons), Body (armor), Head (helmets) all have variants |
-| **Do all factions have variants?** | ✅ **CONFIRMED for BATTANIA + EMPIRE** | Found `battanian_volunteer`, `battanian_clanwarrior`, `imperial_heavy_horseman` with variants |
-| **Are low-tier troops variant-limited?** | ✅ **NO - LOW TIERS HAVE MOST VARIANTS** | `battanian_volunteer` (level 6) has 4 variants, higher tiers have fewer |
+**Slot-Specific Item Limits:**
 
-### **🛠️ IMPLEMENTATION CONFIDENCE: 100%**
+| Slot Type | Limit | Status Text |
+|-----------|-------|-------------|
+| Armor (Head, Body, Legs, Gloves, Cape) | 1 | "Equipped / Already issued" |
+| Shields | 1 | "Equipped / Already issued" |
+| Weapons (Swords, Axes, Maces, Spears) | 2 | "Get Another" at 1, "Limit (2)" at 2 |
+| Ranged (Bows, Crossbows) | 2 | Same as weapons |
+| Consumables (Arrows, Bolts, Javelins, Throwing) | 2 | Same as weapons |
 
-**✅ CONFIRMED TECHNICAL FEASIBILITY**:
-- API structure supports equipment variants ✅
-- **50+ actual military troops analyzed across all factions** ✅ **CONFIRMED**
-- **Multiple EquipmentRoster entries per troop** ✅ **CONFIRMED**
-- **Weapon variants in ALL factions** ✅ **CONFIRMED**
-- **All factions have extensive troop trees** ✅ **CONFIRMED**
-- Decompiled loading logic confirmed ✅
-- Existing validation tools ready ✅
+**Real-Time UI Updates:**
+- Button grey state updates instantly after requisition
+- Player model preview updates to show new equipment
+- Menu stays open for multiple selections
+- No need to exit and re-enter menu
 
-**✅ VERIFICATION COMPLETE - ALL FACTIONS COVERED**:
-- **Equipment structure verified**: NPCCharacter → Multiple EquipmentRoster → Different weapons/armor per roster
-- **Comprehensive faction coverage**: 6 factions, 50+ troops analyzed, equipment variants confirmed
-- **All equipment slots have variants**: Weapons (Item0), Armor (Body), Helmets (Head) all confirmed
-- **Tier progression confirmed**: Low-tier troops have most variants (4 per Battanian Volunteer)
-- **Formation coverage confirmed**: Infantry, Archers, Cavalry, Horse Archers all represented
+**Key Files:**
+- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, `GetItemLimit(slot)`
+- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Real-time refresh, `RecalculateAllVariantStates()`, `RefreshCharacterModel()`
+- `src/Features/Equipment/UI/QuartermasterEquipmentItemVm.cs` - Card status display
 
-### **🎯 RECOMMENDED QUARTERMASTER ARCHITECTURE**
-
-**Hybrid Strategy** (Handles all scenarios):
-
-```csharp
-// Level 1: Direct troop variants (for characters with multiple EquipmentSet entries)
-var directVariants = GetTroopEquipmentVariants(selectedTroop);
-
-// Level 2: Culture equipment pool (fallback for limited variants)
-var culturePool = GetCultureEquipmentAtTier(selectedTroop.Culture, selectedTroop.Tier);
-
-// Level 3: Formation-wide equipment (maximum choice)
-var formationPool = GetFormationEquipmentForCulture(selectedTroop);
-
-// Quartermaster menu shows: Direct variants + Culture pool + Formation pool
-```
-
-**Result**: **Quartermaster will provide meaningful equipment choices regardless of individual troop variant availability.**
-
-### Implementation Status
-
-The Quartermaster system is implemented and working. It finds equipment variants from troop data and shows them in a grid UI where you can click individual items to equip them.
-
-The system works and is ready to use.
+See `docs/Features/UI/quartermaster.md` for full documentation.
