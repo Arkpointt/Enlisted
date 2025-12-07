@@ -1976,8 +1976,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private bool IsAskLeaveAvailable(MenuCallbackArgs args)
         {
-            _ = args; // Required by API contract
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            if (enlistment.IsLeaveOnCooldown(out var daysRemaining))
+            {
+                args.IsEnabled = false;
+                var tooltip = new TextObject("{=Enlisted_Leave_Cooldown_Tooltip}Leave is on cooldown. {DAYS} days remain.");
+                tooltip.SetTextVariable("DAYS", daysRemaining);
+                args.Tooltip = tooltip;
+            }
+
+            return true;
         }
 
         private void OnAskLeaveSelected(MenuCallbackArgs args)
@@ -1996,7 +2009,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Show leave request confirmation
                 var titleText = "Request Leave from Commander";
                 var descriptionText =
-                    "Request temporary leave from military service. You will regain independent movement but forfeit daily wages and duties until you return.";
+                    "Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 30-day cooldown after you come back.";
 
                 var confirmData = new InquiryData(
                     titleText,
