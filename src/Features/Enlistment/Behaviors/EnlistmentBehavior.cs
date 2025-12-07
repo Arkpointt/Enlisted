@@ -7567,7 +7567,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             
             if (wasInReserve)
             {
-                // Clean up reserve state so player can be restored to the map
+                // Clean up reserve state so StopEnlist can properly handle restoration
+                // NOTE: We intentionally do NOT activate the party here because:
+                // 1. PlayerEncounter.LeaveEncounter = true isn't processed immediately
+                // 2. This returns false, causing caller to invoke StopEnlist()
+                // 3. StopEnlist sees PlayerEncounter.Current != null and would deactivate again
+                // 4. That race condition leaves the player stuck invisible
+                // Instead, let StopEnlist() handle deferred activation via SchedulePostEncounterVisibilityRestore()
                 Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
                 
                 if (PlayerEncounter.Current != null)
@@ -7576,14 +7582,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     PlayerEncounter.LeaveEncounter = true;
                 }
                 
-                // Restore player party to active/visible state
+                // Apply protection so enemies don't immediately attack when restored
                 var mainParty = MobileParty.MainParty;
                 if (mainParty != null)
                 {
-                    mainParty.IsActive = true;
-                    mainParty.IsVisible = true;
-                    
-                    // Apply protection so enemies don't immediately attack
                     var protectionDuration = CampaignTime.Days(1f);
                     mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + protectionDuration);
                     
@@ -7594,10 +7596,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Exit the menu so player returns to campaign map
                 GameMenu.ExitToLast();
                 
-                ModLogger.Info("Battle", "Cleared reserve state after lord capture - player returned to map with protection");
+                ModLogger.Info("Battle", "Cleared reserve state after lord capture - StopEnlist will handle deferred restoration");
                 
-                // We don't mirror capture here to avoid crashes from calling TakePrisonerAction
-                // during the HeroPrisonerTaken event. Player escapes to safety instead.
+                // Return false - StopEnlist will be called and will:
+                // 1. See PlayerEncounter.Current != null (LeaveEncounter not yet processed)
+                // 2. Call SchedulePostEncounterVisibilityRestore()
+                // 3. Visibility watchdog will restore party once encounter clears
                 return false;
             }
             
