@@ -45,6 +45,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs` - Wait in Reserve menu and battle wait handling
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
+- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
 
 ---
 
@@ -95,10 +96,11 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **Wait in Reserve:**
 - Available for field battles (not sieges)
 - Player sits out the battle while the army fights
-- `IsWaitingInReserve` flag prevents menu loops during consecutive battles
-- Player stays in `enlisted_battle_wait` menu until army finishes fighting
-- Can rejoin battle at any time via menu option
-- Handled by `EnlistedEncounterBehavior`
+- `IsWaitingInReserve` flag tracks reserve state
+- Player stays in `enlisted_battle_wait` menu until army finishes or player rejoins
+- `GenericStateMenuPatch` intercepts `GetGenericStateMenu()` to return `enlisted_battle_wait` when in reserve, preventing native menu systems from switching to `army_wait` (which would cause visual stutter)
+- Rejoin removes player from reserve, re-adds them to the MapEvent on lord's side, then activates encounter menu
+- Handled by `EnlistedEncounterBehavior` and `GenericStateMenuPatch`
 
 **Result:**
 - Player automatically joins lord's battles
@@ -240,8 +242,20 @@ public static void EnableEncounters()
 **Handling:**
 - `OnMapEventStarted` checks `IsWaitingInReserve` flag before processing
 - If true, skips all battle processing (menu switching, teleport, army setup)
+- `GenericStateMenuPatch` ensures native menu calls return `enlisted_battle_wait` instead of `army_wait`
 - Player remains in `enlisted_battle_wait` menu until army finishes fighting
 - Prevents duplicate XP awards and menu flickering during rapid consecutive battles
+
+### Rejoining Battle from Reserve
+
+**Scenario:** Player clicks "Rejoin Battle" while waiting in reserve
+
+**Handling:**
+- `IsWaitingInReserve` flag cleared immediately
+- Player party re-added to lord's MapEvent on same side (`playerParty.MapEventSide = lordSide`)
+- Encounter menu activated via `GameMenu.ActivateGameMenu("encounter")`
+- Player can then choose to Attack, Send Troops, or Leave
+- If battle ended while waiting, player exits to appropriate post-battle menu
 
 ### Lord Death While Enlisted
 
@@ -396,10 +410,17 @@ ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 - Matches native behavior
 - Not a bug - working as designed
 
-**Reserve mode not persisting across battles:**
-- `OnMapEventStarted` checks `IsWaitingInReserve` before processing
-- Log shows: "Skipping MapEventStarted - player is waiting in reserve"
-- If menu keeps appearing, verify the check is present in `OnMapEventStarted`
+**Reserve mode menu stutter (flickering between menus):**
+- `GenericStateMenuPatch` should intercept `GetGenericStateMenu()` calls
+- Verify patch is registered in `conflicts.log`
+- Check `IsWaitingInReserve` is true when in reserve
+- If stutter persists, the patch may be missing from `Enlisted.csproj`
+
+**Rejoin battle not working:**
+- Log should show: "Player rejoining battle from reserve"
+- Player must be re-added to MapEvent before encounter menu activates
+- Check `lordParty.Party.MapEventSide` is not null
+- Verify `GameMenu.ActivateGameMenu("encounter")` is called
 
 **Party state not persisting:**
 - Check state enforcement in `OnTick()`
@@ -413,8 +434,10 @@ ModLogger.Debug("EncounterGuard", $"State reset to expected value");
 **Related Files:**
 - `src/Features/Enlistment/Behaviors/EncounterGuard.cs`
 - `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+- `src/Features/Combat/Behaviors/EnlistedEncounterBehavior.cs`
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs`
+- `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs`
 
 ---
 

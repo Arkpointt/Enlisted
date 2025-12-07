@@ -58,6 +58,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
 
+                // CRITICAL: Block activation when waiting in reserve
+                // The native game can try to activate the player during army battles
+                // which causes the encounter system to detect the player and switch menus
+                if (Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("PostDischargeProtection", "Blocked party activation - player waiting in reserve");
+                    return false;
+                }
+                
                 // Only intervene when the player has just been discharged and is still in their grace/cleanup window.
                 if (enlistment.IsEnlisted || !enlistment.IsInDesertionGracePeriod)
                 {

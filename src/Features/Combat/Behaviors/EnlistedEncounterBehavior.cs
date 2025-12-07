@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -10,7 +11,6 @@ using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Combat.Behaviors
 {
@@ -38,6 +38,9 @@ namespace Enlisted.Features.Combat.Behaviors
         public override void RegisterEvents()
         {
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
+            // NOTE: Menu stability is now handled by GenericStateMenuPatch which overrides
+            // GetGenericStateMenu() to return "enlisted_battle_wait" when in reserve mode.
+            // This prevents native systems from even wanting to switch menus.
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -221,18 +224,37 @@ namespace Enlisted.Features.Combat.Behaviors
                     return; // Don't switch menus during sieges
                 }
 
-                // CRITICAL: Set waiting in reserve flag BEFORE PlayerEncounter.Finish()
-                // This prevents OnPlayerBattleEnd from awarding XP when we're just entering reserve mode
+                // CRITICAL: Set waiting in reserve flag
+                // This prevents XP awards and encounter loops while the player sits out battles
                 IsWaitingInReserve = true;
 
-                // Exit the current encounter and switch to the wait menu
-                // This allows the player to wait out the battle without participating
+                // CRITICAL: Remove the player from the MapEvent so GetGenericStateMenu() won't return "encounter"
+                // This is the same technique used in DestroyClanAction to remove parties from battles
+                // The battle continues with the lord fighting, but the player is no longer involved
+                if (MobileParty.MainParty?.MapEventSide != null)
+                {
+                    MobileParty.MainParty.MapEventSide = null;
+                    ModLogger.Debug("Battle", "Removed player from MapEvent for reserve mode");
+                }
+
+                // Tell the game the player is waiting (like native army_wait does)
                 if (PlayerEncounter.Current != null)
                 {
-                    PlayerEncounter.Finish();
+                    PlayerEncounter.Current.IsPlayerWaiting = true;
+                }
+
+                // CRITICAL: Make player party inactive to prevent native system from creating new encounters
+                // Without this, the game detects the player near the battle and forces them back to encounter menu
+                var mainParty = MobileParty.MainParty;
+                if (mainParty != null)
+                {
+                    mainParty.IsActive = false;
+                    ModLogger.Debug("Battle", "Set player party inactive for reserve mode");
                 }
 
                 // Switch to the battle wait menu where the player can monitor the battle
+                // NOTE: GenericStateMenuPatch will now return "enlisted_battle_wait" when GetGenericStateMenu()
+                // is called, preventing native systems from switching away from our menu.
                 GameMenu.ActivateGameMenu("enlisted_battle_wait");
                 ModLogger.StateChange("Battle", "Fighting", "Reserve",
                     "Player chose to wait in reserve during large battle");
@@ -315,6 +337,14 @@ namespace Enlisted.Features.Combat.Behaviors
         {
             try
             {
+                // CRITICAL: If player clicked "Rejoin battle", stop all tick processing immediately
+                // Without this check, the tick would reset mainParty.IsActive = false after rejoin
+                // sets it to true, causing the encounter system to misbehave
+                if (!IsWaitingInReserve)
+                {
+                    return;
+                }
+                
                 // If no time state was captured yet (menu opened via native encounter system),
                 // capture current time now so we have a baseline for restoration
                 if (!QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
@@ -366,33 +396,69 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
 
                 // Check what menu the native game system wants to show based on current state
-                // The native system may want to show army_wait, menu_siege_strategies, or other menus
-                // We should respect this and switch to the native menu to avoid blocking battle flow
-                // BUT: Only check once per battle state change, not every tick
-                var genericStateMenu = Campaign.Current.Models.EncounterGameMenuModel.GetGenericStateMenu();
+                // NOTE: GenericStateMenuPatch overrides this to return "enlisted_battle_wait" when in reserve,
+                // so the result here will reflect our custom menu, not army_wait.
+                var genericStateMenu = Campaign.Current?.Models?.EncounterGameMenuModel?.GetGenericStateMenu();
 
-                // CRITICAL: During battle, STAY in enlisted_battle_wait - don't switch to ANY menu
-                // The native game will try to push us to army_wait or encounter, but switching
-                // causes a loop where the game pushes back to encounter because the battle is still active
-                // Only allow menu switching when the battle has actually ended (no MapEvent)
+                // Check if lord is still in battle - if so, stay in reserve
+                // NOTE: Menu stability is now handled by GenericStateMenuPatch which overrides
+                // GetGenericStateMenu() to return "enlisted_battle_wait" when in reserve.
+                // We no longer need to defensively switch menus here.
                 var lordStillInBattle = lordParty?.Party.MapEvent != null;
 
                 if (lordStillInBattle)
                 {
-                    // Lord is still in battle - stay in reserve, don't switch menus
-                    // Switching to army_wait or encounter will cause the game to loop back
-                    ModLogger.Debug("Battle", "Staying in reserve - lord still in battle");
+                    // Lord is still in battle - stay in reserve
+                    // Keep player party inactive and out of MapEvent while waiting
+                    var mainParty = MobileParty.MainParty;
+                    if (mainParty != null)
+                    {
+                        if (mainParty.IsActive)
+                        {
+                            mainParty.IsActive = false;
+                        }
+                        if (mainParty.MapEventSide != null)
+                        {
+                            mainParty.MapEventSide = null;
+                        }
+                    }
+                    
                     return;
                 }
 
-                // Battle has ended - now we can switch to whatever menu the native system wants
+                // Lord's current MapEvent is null, but check if we're in an army that's still fighting
+                // Army battles can have multiple waves - don't exit reserve until the entire army sequence is done
+                var armyStillInBattle = lordParty?.Army != null && 
+                                        lordParty.Army.Parties.Any(p => p?.Party?.MapEvent != null);
+
+                if (armyStillInBattle)
+                {
+                    // Army is still fighting (different party in battle) - stay in reserve
+                    ModLogger.Debug("Battle", "Staying in reserve - army still fighting (other party in battle)");
+                    return;
+                }
+
+                // CRITICAL: Don't switch to army_wait - it triggers new battle events and XP spam
+                // Instead, check if the native system wants army_wait (meaning army battles ongoing)
+                // and if so, STAY in our menu until battles are truly done
+                if (!string.IsNullOrEmpty(genericStateMenu) && genericStateMenu == "army_wait")
+                {
+                    // Native system wants army_wait - this means the army battle series is ongoing
+                    // Stay in our reserve menu to avoid triggering encounter loops
+                    ModLogger.Debug("Battle", "Native wants army_wait - staying in reserve to avoid encounter loop");
+                    return;
+                }
+
+                // Battle series has truly ended (not army_wait) - now we can exit reserve
+                // NOTE: Since GenericStateMenuPatch returns "enlisted_battle_wait" while in reserve,
+                // this will only trigger when battle truly ends and patch stops overriding
                 if (!string.IsNullOrEmpty(genericStateMenu) &&
                     genericStateMenu != "enlisted_battle_wait")
                 {
-                    // Clear the waiting in reserve flag - battle has ended
+                    // Clear the waiting in reserve flag - battle series has ended
                     IsWaitingInReserve = false;
                     args.MenuContext.GameMenu.EndWait();
-                    ModLogger.Info("Battle", $"Battle ended - switching to native menu '{genericStateMenu}'");
+                    ModLogger.Info("Battle", $"Battle series ended - switching to native menu '{genericStateMenu}'");
                     GameMenu.SwitchToMenu(genericStateMenu);
                     return;
                 }
@@ -408,12 +474,23 @@ namespace Enlisted.Features.Combat.Behaviors
                 {
                     // Clear the waiting in reserve flag - battle has ended
                     IsWaitingInReserve = false;
-                    // Battle ended and native system doesn't want a specific menu
-                    // Exit and let the menu tick handler or native system decide the next menu
+                    
+                    // Battle ended - return to normal enlisted state
+                    // Party should stay inactive (normal enlisted hidden state)
                     args.MenuContext.GameMenu.EndWait();
-                    GameMenu.ExitToLast();
-                    ModLogger.Info("Battle",
-                        "Battle ended - exiting battle wait menu, native system will show appropriate menu");
+                    
+                    // Return to enlisted status menu for clean recovery
+                    // Note: 'enlistment' variable is already defined at the start of this method
+                    if (enlistment?.IsEnlisted == true)
+                    {
+                        GameMenu.SwitchToMenu("enlisted_status");
+                        ModLogger.Info("Battle", "Battle ended - returning to enlisted status menu");
+                    }
+                    else
+                    {
+                        GameMenu.ExitToLast();
+                        ModLogger.Info("Battle", "Battle ended - exiting to campaign map");
+                    }
                 }
             }
             catch (Exception ex)
@@ -432,31 +509,81 @@ namespace Enlisted.Features.Combat.Behaviors
                 // Clear the waiting in reserve flag - player is rejoining battle
                 IsWaitingInReserve = false;
 
+                // Clear the player waiting flag so the encounter can proceed
+                if (PlayerEncounter.Current != null)
+                {
+                    PlayerEncounter.Current.IsPlayerWaiting = false;
+                }
+
+                // Restore player party to active state so they can participate in encounters
+                var mainParty = MobileParty.MainParty;
+                if (mainParty != null)
+                {
+                    mainParty.IsActive = true;
+                }
+
                 args.MenuContext.GameMenu.EndWait();
+
+                // Check if lord is still in battle - if so, go directly to encounter menu
+                var enlistment = EnlistmentBehavior.Instance;
+                var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+                var lordMapEvent = lordParty?.Party.MapEvent;
+                var lordStillInBattle = lordMapEvent != null;
 
                 NextFrameDispatcher.RunNextFrame(() =>
                 {
-                    var encounterModel = Campaign.Current?.Models?.EncounterGameMenuModel;
-                    var desiredMenu = encounterModel?.GetGenericStateMenu();
+                    try
+                    {
+                        if (Campaign.Current == null)
+                        {
+                            ModLogger.Warn("Battle", "Rejoin aborted - campaign not available");
+                            return;
+                        }
+                        
+                        // CRITICAL: If lord is still in battle, re-add player to the MapEvent
+                        // before activating encounter menu (we removed them when entering reserve)
+                        if (lordStillInBattle && lordMapEvent != null)
+                        {
+                            var lordSide = lordParty?.Party.MapEventSide;
+                            if (lordSide != null)
+                            {
+                                var playerParty = MobileParty.MainParty?.Party;
+                                if (playerParty != null)
+                                {
+                                    playerParty.MapEventSide = lordSide;
+                                }
+                            }
+                            
+                            GameMenu.ActivateGameMenu("encounter");
+                            ModLogger.Info("Battle", "Player rejoining battle from reserve");
+                            return;
+                        }
+                        
+                        // Lord not in battle - check what menu native system wants
+                        var desiredMenu = Campaign.Current?.Models?.EncounterGameMenuModel?.GetGenericStateMenu();
 
-                    if (!string.IsNullOrEmpty(desiredMenu) && desiredMenu != "enlisted_battle_wait")
-                    {
-                        ModLogger.Info("Battle", $"Rejoin requested - switching to native menu '{desiredMenu}'");
-                        GameMenu.SwitchToMenu(desiredMenu);
+                        if (!string.IsNullOrEmpty(desiredMenu) && desiredMenu != "enlisted_battle_wait")
+                        {
+                            GameMenu.ActivateGameMenu(desiredMenu);
+                            ModLogger.Info("Battle", $"Exited reserve - battle ended, showing '{desiredMenu}'");
+                        }
+                        else if (PlayerEncounter.Current != null)
+                        {
+                            GameMenu.ActivateGameMenu("encounter");
+                            ModLogger.Info("Battle", "Exited reserve to encounter menu");
+                        }
+                        else
+                        {
+                            GameMenu.ExitToLast();
+                            ModLogger.Info("Battle", "Exited reserve - no active battle");
+                        }
                     }
-                    else if (PlayerEncounter.Current != null)
+                    catch (Exception ex)
                     {
-                        ModLogger.Info("Battle", "Rejoin requested - forcing encounter menu");
-                        GameMenu.SwitchToMenu("encounter");
-                    }
-                    else
-                    {
-                        ModLogger.Debug("Battle", "Rejoin requested but no native menu available - leaving wait menu");
-                        GameMenu.ExitToLast();
+                        ModLogger.Error("Battle", $"Error in rejoin menu switch: {ex.Message}");
+                        try { GameMenu.ExitToLast(); } catch { }
                     }
                 });
-
-                ModLogger.Info("Battle", "Player rejoining battle from reserve");
             }
             catch (Exception ex)
             {

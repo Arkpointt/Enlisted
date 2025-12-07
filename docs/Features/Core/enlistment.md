@@ -250,7 +250,11 @@ _currentTermKills += kills;  // Track for faction record
 - Minor faction lords remain `Clan.IsMinorFaction == true` even while mercenaries for a kingdom; `MapFaction` is the kingdom they serve.
 
 **Waiting in Reserve:**
-- If the player chose “Wait in Reserve” after being wounded, enlistment battle handling is skipped until the current battle series ends (prevents encounter/menu loops and duplicate XP).
+- Available in field battles when player is wounded or chooses to sit out
+- Player removed from MapEvent (`MapEventSide = null`) to avoid participation
+- `GenericStateMenuPatch` prevents menu stutter by intercepting native menu calls
+- Player can rejoin anytime - re-adds to MapEvent and activates encounter menu
+- Battle handling skipped while in reserve (prevents menu loops and duplicate XP)
 
 **Army Defeated/Disbanded:**
 - 14-day grace period initiated

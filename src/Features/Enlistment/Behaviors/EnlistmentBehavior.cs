@@ -187,6 +187,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private CampaignTime _leaveStartDate = CampaignTime.Zero;
 
         /// <summary>
+        ///     Campaign time when the player can next request leave.
+        ///     Set when returning from leave to enforce a cooldown.
+        /// </summary>
+        private CampaignTime _leaveCooldownEnds = CampaignTime.Zero;
+
+        /// <summary>
         ///     Flag to indicate party state needs to be restored after save loading.
         ///     We can't set IsActive during SyncData because the game asserts !IsActive during load.
         ///     This flag triggers restoration on the first campaign tick after loading.
@@ -558,6 +564,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
             dataStore.SyncData("_isOnLeave", ref _isOnLeave);
             dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
+            dataStore.SyncData("_leaveCooldownEnds", ref _leaveCooldownEnds);
             dataStore.SyncData("_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
             dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
             dataStore.SyncData("_savedGraceTier", ref _savedGraceTier);
@@ -2569,7 +2576,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         bool lordInBattle = lordParty.Party.MapEvent != null;
                         bool armyInBattle = lordArmy?.LeaderParty?.Party.MapEvent != null;
 
-                        if (lordInBattle || armyInBattle)
+                        // CRITICAL: Don't override reserve mode settings
+                        // If player is waiting in reserve, keep them inactive and out of the MapEvent
+                        if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                        {
+                            ModLogger.Info("SaveLoad",
+                                "Post-load: Player is in reserve mode - keeping party inactive");
+                            main.IsActive = false;
+                            main.IsVisible = false;
+                            main.MapEventSide = null;
+                        }
+                        else if (lordInBattle || armyInBattle)
                         {
                             ModLogger.Info("SaveLoad",
                                 $"Post-load: Loaded into active battle! Lord battle: {lordInBattle}, Army battle: {armyInBattle}");
@@ -4908,6 +4925,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                // Don't award XP if player is waiting in reserve - they're sitting out all battles
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle", "Skipping XP award - player is waiting in reserve");
+                    return;
+                }
+
                 // Prevent double XP awards - OnPlayerBattleEnd may have already awarded XP
                 if (_battleXPAwardedThisBattle)
                 {
@@ -5671,6 +5695,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                if (IsLeaveOnCooldown(out var cooldownDays))
+                {
+                    var cooldownMsg = new TextObject("{=Enlisted_Leave_Cooldown}Leave is on cooldown. {DAYS} days remain before you can request leave again.");
+                    cooldownMsg.SetTextVariable("DAYS", cooldownDays);
+                    InformationManager.DisplayMessage(new InformationMessage(cooldownMsg.ToString(), Colors.Red));
+                    ModLogger.Info("Enlistment", $"Leave request blocked by cooldown ({cooldownDays} days remaining)");
+                    return;
+                }
+
                 ModLogger.Info("Enlistment", "Starting temporary leave - suspending service");
 
                 // Clean up any active encounters first
@@ -5744,9 +5777,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     Campaign.Current.VisualTrackerManager.RemoveTrackedObject(_enlistedLord);
                 }
 
-                // Clear leave state
+                // Clear leave state and start cooldown before next leave
                 _isOnLeave = false;
                 _leaveStartDate = CampaignTime.Zero;
+                _leaveCooldownEnds = CampaignTime.Now + CampaignTime.Days(30);
 
                 // NOTE: We intentionally do NOT transfer troops here. Unlike initial enlistment, 
                 // troops recruited during leave are the player's personal force and should stay
@@ -5786,6 +5820,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error("Enlistment", "Error returning from leave", ex);
             }
+        }
+
+        /// <summary>
+        ///     Checks whether the player is currently on leave cooldown.
+        /// </summary>
+        public bool IsLeaveOnCooldown(out int daysRemaining)
+        {
+            daysRemaining = 0;
+
+            if (_leaveCooldownEnds == CampaignTime.Zero || _leaveCooldownEnds <= CampaignTime.Now)
+            {
+                return false;
+            }
+
+            daysRemaining = (int)Math.Ceiling((_leaveCooldownEnds - CampaignTime.Now).ToDays);
+            return true;
         }
 
         /// <summary>
@@ -6622,6 +6672,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Exit custom enlisted menus so the native system can push its own encounter/army menus
                 var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId;
+                
                 if (!string.IsNullOrEmpty(currentMenu) && currentMenu.StartsWith("enlisted_") && !isSiegeBattle)
                 {
                     var encounterMenuModel = Campaign.Current?.Models?.EncounterGameMenuModel;
@@ -6824,8 +6875,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Battle", "Lord battle ended, returning to hidden state");
                     _cachedLordMapEvent = null;
 
-                    // Award battle XP if player participated
-                    AwardBattleXP(playerParticipated);
+                    // Award battle XP only if player actually participated (not waiting in reserve)
+                    // Players who chose "Wait in Reserve" opted out of combat and don't earn XP
+                    if (!EnlistedEncounterBehavior.IsWaitingInReserve)
+                    {
+                        AwardBattleXP(playerParticipated);
+                    }
+                    else
+                    {
+                        ModLogger.Debug("Battle", "Skipping battle XP - player waited in reserve");
+                    }
 
                     // CRITICAL: Clear siege encounter creation timestamp when battle ends
                     // This allows new encounters to be created if needed after the battle
@@ -6995,6 +7054,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
+                // Don't award XP if player is waiting in reserve - they're sitting out all battles
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    ModLogger.Debug("Battle", "Skipping XP award (kills) - player is waiting in reserve");
+                    return;
+                }
+
                 // Prevent double XP awards
                 if (_battleXPAwardedThisBattle)
                 {
