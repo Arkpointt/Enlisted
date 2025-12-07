@@ -581,7 +581,14 @@ namespace Enlisted.Features.Combat.Behaviors
                     catch (Exception ex)
                     {
                         ModLogger.Error("Battle", $"Error in rejoin menu switch: {ex.Message}");
-                        try { GameMenu.ExitToLast(); } catch { }
+                        try
+                        {
+                            GameMenu.ExitToLast();
+                        }
+                        catch (Exception fallbackEx)
+                        {
+                            ModLogger.Error("Battle", $"Error during fallback exit: {fallbackEx.Message}");
+                        }
                     }
                 });
             }
