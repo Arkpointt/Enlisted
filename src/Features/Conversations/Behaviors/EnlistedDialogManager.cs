@@ -1655,17 +1655,10 @@ namespace Enlisted.Features.Conversations.Behaviors
             var manager = ServiceRecordManager.Instance?.RetinueManager;
             var count = manager?.State?.TotalSoldiers ?? 0;
 
-            TextObject text;
-            if (isMinorFaction)
-            {
-                text = new TextObject(
-                    "{=enlisted_minor_farewell_troops}Ha! Loyal to the end, that lot. Your {COUNT} have decided to stay with you instead of signing back on. Here's some grain for the road - you'll need it. Don't be a stranger.");
-            }
-            else
-            {
-                text = new TextObject(
-                    "{=enlisted_farewell_troops}So be it. Your {COUNT} soldiers have decided to stay with you rather than re-enlist. I've had the quartermaster set aside provisions for your journey. Fare well, soldier.");
-            }
+            TextObject text = new TextObject(
+                isMinorFaction
+                    ? "{=enlisted_minor_farewell_troops}Ha! Loyal to the end, that lot. Your {COUNT} have decided to stay with you instead of signing back on. Here's some grain for the road - you'll need it. Don't be a stranger."
+                    : "{=enlisted_farewell_troops}So be it. Your {COUNT} soldiers have decided to stay with you rather than re-enlist. I've had the quartermaster set aside provisions for your journey. Fare well, soldier.");
             text.SetTextVariable("COUNT", count);
             return text.ToString();
         }
