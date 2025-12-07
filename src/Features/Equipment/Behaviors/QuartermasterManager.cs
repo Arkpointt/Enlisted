@@ -938,7 +938,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
 
             // Never allow quest-critical items (e.g., Dragon Banner) to be returned
-            if (item.IsQuestItem || NonReturnableQuestItemIds.Contains(item.StringId))
+            if (NonReturnableQuestItemIds.Contains(item.StringId))
             {
                 return false;
             }
