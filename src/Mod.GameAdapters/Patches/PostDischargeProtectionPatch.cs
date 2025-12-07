@@ -59,8 +59,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 
                 // If player is a prisoner, allow all activation changes (captivity system needs control)
+                // Log this to diagnose "attacked while prisoner" - activation shouldn't normally happen
                 if (Hero.MainHero?.IsPrisoner == true)
                 {
+                    var settlement = Hero.MainHero?.CurrentSettlement?.Name?.ToString() ?? "none";
+                    ModLogger.Info("Captivity", 
+                        $"Party activation allowed while prisoner (value: {value}, settlement: {settlement})");
                     return true;
                 }
 

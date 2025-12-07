@@ -4934,6 +4934,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Case 1: Player captured
             if (prisoner == Hero.MainHero)
             {
+                var captorName = capturingParty?.LeaderHero?.Name?.ToString() ?? capturingParty?.Name?.ToString() ?? "unknown";
+                ModLogger.Info("Captivity", $"Captured by {captorName} - service ended, grace period started");
                 ModLogger.Info("EventSafety", "Player captured - deferring enlistment teardown until encounter closes");
 
                 var lordKingdom = _enlistedLord?.MapFaction as Kingdom;
@@ -6748,10 +6750,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // (e.g., when captor enters a settlement with the player as prisoner)
                 if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
                 {
-                    if (Hero.MainHero.IsPrisoner && IsEnlisted)
+                    if (Hero.MainHero.IsPrisoner)
                     {
-                        ModLogger.Debug("Settlement",
-                            $"Skipping settlement entry handling - player is prisoner (captor entering {settlement?.Name})");
+                        ModLogger.Info("Captivity",
+                            $"Captor entered {settlement?.Name} with player as prisoner");
                     }
 
                     return;

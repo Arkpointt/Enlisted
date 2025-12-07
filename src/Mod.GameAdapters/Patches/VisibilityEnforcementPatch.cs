@@ -71,8 +71,12 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 var enlistment = EnlistmentBehavior.Instance;
                 
                 // If player is a prisoner, allow all visibility changes (captivity system needs control)
+                // Log this to diagnose "attacked while prisoner" - visibility changes shouldn't normally happen
                 if (__instance == mainParty && Hero.MainHero?.IsPrisoner == true)
                 {
+                    var settlement = Hero.MainHero?.CurrentSettlement?.Name?.ToString() ?? "none";
+                    ModLogger.Info("Captivity", 
+                        $"Party visibility allowed while prisoner (value: {value}, settlement: {settlement})");
                     return true;
                 }
 
