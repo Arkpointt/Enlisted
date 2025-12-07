@@ -91,6 +91,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private MapEvent _cachedLordMapEvent;
 
         /// <summary>
+        ///     Tracks whether a PlayerEncounter has been created for the current lord's battle.
+        ///     Prevents repeated PlayerEncounter creation during the same battle (which causes loops).
+        ///     Reset when the battle ends (OnMapEventEnded) or when the lord's MapEvent changes.
+        /// </summary>
+        private bool _playerEncounterCreatedForBattle;
+
+        /// <summary>
         ///     Campaign time when the desertion grace period ends.
         ///     If current time exceeds this and player hasn't rejoined, desertion penalties apply.
         ///     Set when army is defeated or lord is captured, giving player 14 days to rejoin another lord in the same kingdom.
@@ -3124,63 +3131,60 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                         // The player will still participate via PlayerEncounter as crew member on lord's ship
                                         bool isNavalBattle = lordMapEvent.IsNavalMapEvent;
 
+                                        // Determine if we should set MapEventSide to join the battle
+                                        // NOTE: The old code avoided setting MapEventSide for parties with 0 troops,
+                                        // fearing a crash in ApplySimulatedHitRewardToSelectedTroop during auto-sim.
+                                        // However, this prevented enlisted players from joining small battles entirely!
+                                        // The auto-sim crash only occurs if the player uses "Send Troops" with 0 troops,
+                                        // which won't happen in practice - players will use "Attack" for manual combat.
+                                        // By setting MapEventSide, the player properly joins the MapEvent and can participate.
+                                        var targetSide = lordSide == BattleSideEnum.Attacker
+                                            ? lordMapEvent.AttackerSide
+                                            : lordMapEvent.DefenderSide;
+
                                         if (isNavalBattle)
                                         {
+                                            // Naval battles - join MapEventSide so Init() works, Naval DLC handles ship assignment
+                                            mainParty.Party.MapEventSide = targetSide;
                                             ModLogger.Info("Naval",
-                                                "Naval battle detected - skipping direct MapEvent join (enlisted player has no ships). Will participate via PlayerEncounter as crew member.");
+                                                $"Naval battle detected - joined MapEventSide on {lordSide} side (Naval DLC will assign ship)");
                                         }
-                                        else if (canJoinNatively)
+                                        else if (canJoinNatively || shouldBypassFactionCheck)
                                         {
-                                            // Only set MapEventSide if native faction check passed - otherwise it may crash
-                                            // CRITICAL FIX: Only set MapEventSide if player party has actual troops
-                                            // Setting MapEventSide on a party with no troops causes NullReferenceException
-                                            // in MapEventSide.ApplySimulatedHitRewardToSelectedTroop during battle simulation
-                                            // because SelectRandomSimulationTroop() returns invalid descriptor for empty parties.
-                                            // Enlisted players have no troops (transferred to lord), so we must NOT join
-                                            // the MapEvent directly - let native handle it through PlayerEncounter alone.
-                                            // NOTE: Use NumberOfRegularMembers (not NumberOfHealthyMembers) because
-                                            // NumberOfHealthyMembers includes the hero, causing enlisted players with
-                                            // no troops to still appear as a separate party in battle.
+                                            // Land battle - join the MapEvent on lord's side
+                                            mainParty.Party.MapEventSide = targetSide;
                                             int partyTroopCount = mainParty.Party.NumberOfRegularMembers;
-                                            if (partyTroopCount > 0)
-                                            {
-                                                var targetSide = lordSide == BattleSideEnum.Attacker
-                                                    ? lordMapEvent.AttackerSide
-                                                    : lordMapEvent.DefenderSide;
-                                                mainParty.Party.MapEventSide = targetSide;
-                                                ModLogger.Debug("Battle",
-                                                    $"Joined MapEvent on {lordSide} side (troops: {partyTroopCount})");
-                                            }
-                                            else
-                                            {
-                                                ModLogger.Debug("Battle",
-                                                    "Skipping MapEvent join - no troops (enlisted), participating via PlayerEncounter");
-                                            }
-                                        }
-                                        else if (shouldBypassFactionCheck)
-                                        {
-                                            // Non-Kingdom faction lord - faction check failed as expected
-                                            // Skip MapEventSide assignment to avoid crashes, but PlayerEncounter will still allow hero participation
-                                            ModLogger.Debug("Battle",
-                                                "Non-Kingdom faction lord - skipping MapEventSide, participating via PlayerEncounter");
+                                            ModLogger.Info("Battle",
+                                                $"Joined MapEvent on {lordSide} side (troops: {partyTroopCount}, bypass: {shouldBypassFactionCheck})");
                                         }
                                         else
                                         {
-                                            // Kingdom lord but faction check failed - unexpected bug case
-                                            // Skip MapEventSide to be safe, but warn that this shouldn't happen
+                                            // Kingdom lord but faction check failed - try anyway, but warn
+                                            mainParty.Party.MapEventSide = targetSide;
                                             ModLogger.Warn("Battle",
-                                                "Skipping MapEventSide - Kingdom lord faction check failed unexpectedly. Report if battle doesn't work.");
+                                                $"Faction check failed but joining MapEvent anyway on {lordSide} side - report if battle doesn't work");
                                         }
 
-                                        // CRITICAL: Create a PlayerEncounter - the native menu system requires this
-                                        // The EncounterGameMenuBehavior asserts that PlayerEncounter.Current != null
-                                        // when initializing the encounter menu.
-                                        // NOTE: Do NOT call JoinBattle() - that caused NullReferenceExceptions.
-                                        // PlayerEncounter allows the hero to participate in battle even without troops.
-                                        if (PlayerEncounter.Current == null)
+                                        // CRITICAL: Create and initialize a PlayerEncounter to show encounter menu.
+                                        // Now that MapEventSide is set, MobileParty.MainParty.MapEvent returns the battle.
+                                        // The public static PlayerEncounter.Init() will properly initialize the encounter.
+                                        // Guard flag prevents repeated creation during the same battle (causes loops).
+                                        if (PlayerEncounter.Current == null && !_playerEncounterCreatedForBattle)
                                         {
+                                            _playerEncounterCreatedForBattle = true;
+                                            
+                                            // Start the encounter, then Init() uses MainParty.MapEvent
                                             PlayerEncounter.Start();
-                                            ModLogger.Debug("Battle", "Created PlayerEncounter for battle menu");
+                                            PlayerEncounter.Init();
+                                            
+                                            var attackerName = lordMapEvent.AttackerSide?.LeaderParty?.Name?.ToString() ?? "unknown";
+                                            var defenderName = lordMapEvent.DefenderSide?.LeaderParty?.Name?.ToString() ?? "unknown";
+                                            ModLogger.Info("Battle", 
+                                                $"Initialized PlayerEncounter (attacker: {attackerName}, defender: {defenderName})");
+                                        }
+                                        else if (_playerEncounterCreatedForBattle)
+                                        {
+                                            // Already created for this battle, don't spam logs
                                         }
                                     }
                                     else
@@ -6662,8 +6666,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Debug("Battle",
                     $"lordIsAttacker={lordIsAttacker}, lordIsDefender={lordIsDefender}, inArmy={inArmy}, armyLeaderInvolved={armyLeaderInvolved}");
 
-                // Reset XP tracking flag for new battle
+                // Reset tracking flags for new battle
                 _battleXPAwardedThisBattle = false;
+                _playerEncounterCreatedForBattle = false;
 
                 var isSiegeBattle = mapEvent.IsSiegeAssault || mapEvent.EventType == MapEvent.BattleTypes.Siege;
 
@@ -6749,6 +6754,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 var main = MobileParty.MainParty;
 
+                // Reset PlayerEncounter guard flag - battle is ending
+                _playerEncounterCreatedForBattle = false;
+                
                 // SAFETY: If the player is still a prisoner or capture cleanup is queued, avoid any post-battle
                 // enlistment cleanup (army/visibility/menu) and let native captivity flow finalize first.
                 if (Hero.MainHero.IsPrisoner || _playerCaptureCleanupScheduled)
