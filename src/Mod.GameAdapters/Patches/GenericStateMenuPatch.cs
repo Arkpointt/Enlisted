@@ -75,6 +75,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // When in reserve AND battle is ongoing, override to our custom menu
                 if (__result == "army_wait" || __result == "army_wait_at_settlement" || __result == "encounter")
                 {
+                    ModLogger.Debug("Battle", $"Menu override: {__result} -> enlisted_battle_wait (player in reserve)");
                     __result = "enlisted_battle_wait";
                 }
             }

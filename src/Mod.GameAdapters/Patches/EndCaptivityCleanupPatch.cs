@@ -37,6 +37,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return;
                 }
 
+                // Log key captivity transition - this helps track prisoner lifecycle
+                ModLogger.Info("Captivity", "Player released from captivity - cleaning up prison rosters");
+
                 var removed = 0;
 
                 // Check all mobile parties for stale prison roster entries

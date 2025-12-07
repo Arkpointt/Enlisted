@@ -105,8 +105,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
 
                 // Auto-join the battle on the lord's side
-                ModLogger.Debug("JoinEncounter",
-                    $"Auto-joining {lordSide} battle (Lord: {lord.Name}, Type: {battle.EventType}, NonKingdom: {isNonKingdomFactionLord})");
+                ModLogger.Info("Battle",
+                    $"Auto-joining {lord.Name}'s battle as {lordSide} (vs {(lordSide == BattleSideEnum.Attacker ? battle.DefenderSide.LeaderParty?.Name : battle.AttackerSide.LeaderParty?.Name)})");
 
                 try
                 {
