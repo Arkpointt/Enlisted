@@ -11,7 +11,7 @@
     "contentfolder" "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
     
     // Path to your preview image (512x512 or 1024x1024 PNG, under 1MB)
-    "previewfile" "C:\Dev\Enlisted\Enlisted_Preivew.png"
+    "previewfile" "C:\Dev\Enlisted\Enlisted_Preview.png"
     
     // Your mod's display title on Steam Workshop
     "title" "Enlisted - Military Service Mod"
