@@ -3079,10 +3079,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                         // Minor/bandit faction lords don't trigger the mercenary join logic, leaving the player's
                                         // faction state independent. This causes CanPartyJoinBattle to fail because the
                                         // player isn't formally "at war" with bandits/enemies.
-                                        bool isNonKingdomFactionLord = _enlistedLord?.MapFaction != null && 
-                                                                       !(_enlistedLord.MapFaction is Kingdom) &&
-                                                                       (_enlistedLord.MapFaction.IsMinorFaction || 
-                                                                        _enlistedLord.MapFaction.IsBanditFaction);
+                                        var mapFaction = _enlistedLord?.MapFaction;
+                                        bool isNonKingdomFactionLord = mapFaction != null &&
+                                                                       !(mapFaction is Kingdom) &&
+                                                                       (mapFaction.IsMinorFaction || mapFaction.IsBanditFaction);
                                         
                                         // Determine if we should bypass the native faction check
                                         // Only bypass for minor/bandit faction lords where we KNOW the faction logic doesn't work
