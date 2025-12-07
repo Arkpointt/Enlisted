@@ -1219,9 +1219,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
 
                     // NAVAL FIX: Handle sea stranding - if player is at sea without naval capability, teleport to nearest port
-                    // This can happen when the army disbands at sea and service ends (e.g., lord captured at sea)
+                    // This can happen when the army disbands at sea and service ends (e.g., lord captured at sea, lord dies at sea)
                     // Without this fix, the player becomes permanently stranded on the water
-                    if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability && !retainKingdomDuringGrace)
+                    // Always teleport regardless of grace period - being stuck at sea is a critical issue that blocks gameplay
+                    if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability)
                     {
                         ModLogger.Info("Naval",
                             "Player stranded at sea after service ended - teleporting to nearest port");

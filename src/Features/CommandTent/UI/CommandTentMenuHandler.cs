@@ -371,8 +371,9 @@ namespace Enlisted.Features.CommandTent.UI
             // Add ambient audio for the command tent atmosphere
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/keep");
             
-            // Time control is handled by CommandTentWaitTick (wait menu tick handler)
-            // which restores the captured time mode after StartWait() forces UnstoppableFastForward
+            // NOTE: We intentionally do NOT call StartWait() here. Command Tent menus rely on
+            // the wait-menu type for layout/options, but we keep time control unchanged and
+            // preserve the player's captured time mode when hopping between submenus.
         }
 
         /// <summary>
