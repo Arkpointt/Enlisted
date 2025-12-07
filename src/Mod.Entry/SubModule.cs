@@ -13,16 +13,10 @@ using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Ranks.Behaviors;
+using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
-using Enlisted.Mod.Core;
 using Enlisted.Mod.GameAdapters.Patches;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
-using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Mod.Entry
 {
@@ -198,10 +192,10 @@ namespace Enlisted.Mod.Entry
                     // This causes crashes on Proton/Linux and potential issues on Windows under some conditions.
                     var manualPatches = new HashSet<string>
                     {
-                        "HidePartyNamePlatePatch",           // Uses manual patching via ApplyManualPatches()
-                        "ArmyCohesionExclusionPatch",        // Target: DefaultArmyManagementCalculationModel
+                        "HidePartyNamePlatePatch", // Uses manual patching via ApplyManualPatches()
+                        "ArmyCohesionExclusionPatch", // Target: DefaultArmyManagementCalculationModel
                         "SettlementOutsideLeaveButtonPatch", // Target: EncounterGameMenuBehavior
-                        "JoinEncounterAutoSelectPatch"       // Target: EncounterGameMenuBehavior
+                        "JoinEncounterAutoSelectPatch" // Target: EncounterGameMenuBehavior
                     };
 
                     var assembly = Assembly.GetExecutingAssembly();
@@ -235,6 +229,7 @@ namespace Enlisted.Mod.Entry
                             {
                                 ModLogger.Error("Bootstrap", $"  Inner exception: {patchEx.InnerException.Message}");
                             }
+
                             ModLogger.Debug("Bootstrap", $"  Stack trace: {patchEx.StackTrace}");
                         }
                     }
@@ -367,26 +362,17 @@ namespace Enlisted.Mod.Entry
                     // Initializes static helper methods used throughout the enlistment system
                     EncounterGuard.Initialize();
                     ModLogger.Info("Bootstrap", "Military service behaviors registered successfully");
-                    
+
                     // Log registered behaviors for conflict diagnostics
                     // This helps troubleshoot issues by showing exactly what was registered
                     ModConflictDiagnostics.LogRegisteredBehaviors(new[]
                     {
-                        nameof(EnlistmentBehavior),
-                        nameof(EnlistedDialogManager),
-                        nameof(EnlistedDutiesBehavior),
-                        nameof(EnlistedMenuBehavior),
-                        nameof(TroopSelectionManager),
-                        nameof(EquipmentManager),
-                        nameof(PromotionBehavior),
-                        nameof(QuartermasterManager),
-                        nameof(QuartermasterEquipmentSelectorBehavior),
-                        nameof(EnlistedEncounterBehavior),
-                        nameof(ServiceRecordManager),
-                        nameof(CommandTentMenuHandler),
-                        nameof(RetinueTrickleSystem),
-                        nameof(RetinueLifecycleHandler),
-                        nameof(RetinueCasualtyTracker),
+                        nameof(EnlistmentBehavior), nameof(EnlistedDialogManager), nameof(EnlistedDutiesBehavior),
+                        nameof(EnlistedMenuBehavior), nameof(TroopSelectionManager), nameof(EquipmentManager),
+                        nameof(PromotionBehavior), nameof(QuartermasterManager),
+                        nameof(QuartermasterEquipmentSelectorBehavior), nameof(EnlistedEncounterBehavior),
+                        nameof(ServiceRecordManager), nameof(CommandTentMenuHandler), nameof(RetinueTrickleSystem),
+                        nameof(RetinueLifecycleHandler), nameof(RetinueCasualtyTracker),
                         nameof(CompanionAssignmentManager)
                     });
                 }
@@ -476,7 +462,7 @@ namespace Enlisted.Mod.Entry
                 {
                     var harmony = new Harmony("com.enlisted.mod.deferred");
                     HidePartyNamePlatePatch.ApplyManualPatches(harmony);
-                    
+
                     // Apply patches that target types with early static initialization.
                     // These fail on Proton/Linux if applied during OnSubModuleLoad because
                     // their target classes call GameTexts.FindText() in static field initializers.
@@ -484,9 +470,9 @@ namespace Enlisted.Mod.Entry
                     harmony.CreateClassProcessor(typeof(ArmyCohesionExclusionPatch)).Patch();
                     harmony.CreateClassProcessor(typeof(SettlementOutsideLeaveButtonPatch)).Patch();
                     harmony.CreateClassProcessor(typeof(JoinEncounterAutoSelectPatch)).Patch();
-                    
+
                     ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
-                    
+
                     // Update conflict diagnostics with deferred patch info
                     // This appends to the existing conflicts.log so users can see all patches
                     ModConflictDiagnostics.RefreshDeferredPatches(harmony);

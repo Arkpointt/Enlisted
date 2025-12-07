@@ -1,8 +1,5 @@
+using System;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Settlements;
 
 // ReSharper disable UnusedType.Global
 // ReSharper disable UnusedMember.Local
@@ -10,16 +7,16 @@ using TaleWorlds.CampaignSystem.Settlements;
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Fixes vanilla issue where player isn't removed from captor's prison roster when
-    /// captor party is inactive (e.g., captor was defeated/captured).
-    /// This prevents hero duplication after escaping captivity.
+    ///     Fixes vanilla issue where player isn't removed from captor's prison roster when
+    ///     captor party is inactive (e.g., captor was defeated/captured).
+    ///     This prevents hero duplication after escaping captivity.
     /// </summary>
     [HarmonyPatch(typeof(PlayerCaptivity), nameof(PlayerCaptivity.EndCaptivity))]
     public static class EndCaptivityCleanupPatch
     {
         /// <summary>
-        /// After vanilla EndCaptivity runs, ensure player is removed from all prison rosters.
-        /// Vanilla only removes from captor if captor.IsActive, leaving stale refs when captor is inactive.
+        ///     After vanilla EndCaptivity runs, ensure player is removed from all prison rosters.
+        ///     Vanilla only removes from captor if captor.IsActive, leaving stale refs when captor is inactive.
         /// </summary>
         private static void Postfix()
         {
@@ -81,11 +78,10 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         $"Cleaned {removed} stale prison roster entries for player after escape");
                 }
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 ModLogger.Error("CaptivityFix", $"Error cleaning prison rosters: {ex.Message}");
             }
         }
     }
 }
-

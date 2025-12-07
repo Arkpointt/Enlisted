@@ -1,23 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using TaleWorlds.CampaignSystem;
-using TaleWorlds.CampaignSystem.Conversation;
-using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.GameMenus;
-using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.CampaignSystem.Settlements;
-using TaleWorlds.Core;
-using TaleWorlds.Core.ImageIdentifiers;
-using TaleWorlds.Library;
-using TaleWorlds.Localization;
+
 // 1.3.4 API: ImageIdentifier moved here
 
 namespace Enlisted.Features.Interface.Behaviors
@@ -186,13 +177,13 @@ namespace Enlisted.Features.Interface.Behaviors
             var playerEncounter = PlayerEncounter.Current != null;
             var lordSiegeEvent = lord?.Party.SiegeEvent != null;
             var siegeRelatedBattle = IsSiegeRelatedBattle(main, lord);
-            
+
             // Settlement encounters are OK - they happen when armies enter towns/castles
             // We only want to block battle/siege encounters, not peaceful settlement visits
             var isSettlementEncounter = playerEncounter &&
-                PlayerEncounter.EncounterSettlement != null &&
-                !playerBattle;
-            
+                                        PlayerEncounter.EncounterSettlement != null &&
+                                        !playerBattle;
+
             // If it's a settlement encounter (not a battle), allow menu activation
             if (isSettlementEncounter && !lordSiegeEvent && !siegeRelatedBattle)
             {
@@ -329,22 +320,22 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             // Set up global gold icon for inline currency display across all menus
             MBTextManager.SetTextVariable("GOLD_ICON", "{=!}<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">");
-            
+
             AddEnlistedMenus(starter);
             ModLogger.Info("Interface", "Enlisted menu system initialized with modern UI styling");
         }
-        
+
         /// <summary>
-        /// Menu background initialization for enlisted_status menu.
-        /// Sets culture-appropriate background and ambient audio for modern feel.
-        /// Resumes time so it continues passing while browsing menus.
+        ///     Menu background initialization for enlisted_status menu.
+        ///     Sets culture-appropriate background and ambient audio for modern feel.
+        ///     Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_status")]
         private static void OnEnlistedStatusBackgroundInit(MenuCallbackArgs args)
         {
             var enlistment = EnlistmentBehavior.Instance;
             var backgroundMesh = "encounter_looter";
-            
+
             if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -353,27 +344,27 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
-            
+
             // Resume time if stopped, but preserve higher speed modes (StoppableFastForward)
             // Native GameMenu.SwitchToMenu() stops time by default - we only unpause, never downgrade speed
             ResumeTimeWithoutDowngrade();
         }
-        
+
         /// <summary>
-        /// Menu background initialization for enlisted_duty_selection menu.
-        /// Sets culture-appropriate background and ambient audio.
-        /// Resumes time so it continues passing while browsing menus.
+        ///     Menu background initialization for enlisted_duty_selection menu.
+        ///     Sets culture-appropriate background and ambient audio.
+        ///     Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_duty_selection")]
         private static void OnDutySelectionBackgroundInit(MenuCallbackArgs args)
         {
             var enlistment = EnlistmentBehavior.Instance;
             var backgroundMesh = "encounter_looter";
-            
+
             if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -382,26 +373,26 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
-            
+
             // Resume time if stopped, but preserve higher speed modes
             ResumeTimeWithoutDowngrade();
         }
-        
+
         /// <summary>
-        /// Menu background initialization for enlisted_desert_confirm menu.
-        /// Sets ominous background for desertion confirmation.
-        /// Resumes time so it continues passing while browsing menus.
+        ///     Menu background initialization for enlisted_desert_confirm menu.
+        ///     Sets ominous background for desertion confirmation.
+        ///     Resumes time so it continues passing while browsing menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_desert_confirm")]
         private static void OnDesertConfirmBackgroundInit(MenuCallbackArgs args)
         {
             var enlistment = EnlistmentBehavior.Instance;
             var backgroundMesh = "encounter_looter";
-            
+
             if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
             {
                 backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
@@ -410,23 +401,26 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
             }
-            
+
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
-            
+
             // Resume time if stopped, but preserve higher speed modes
             ResumeTimeWithoutDowngrade();
         }
-        
+
         /// <summary>
-        /// Resumes time if currently stopped, but preserves higher speed modes.
-        /// This allows players to use fast forward (speed 2/3) while in enlisted menus.
-        /// Only sets to StoppablePlay if currently stopped - never downgrades from FastForward.
+        ///     Resumes time if currently stopped, but preserves higher speed modes.
+        ///     This allows players to use fast forward (speed 2/3) while in enlisted menus.
+        ///     Only sets to StoppablePlay if currently stopped - never downgrades from FastForward.
         /// </summary>
         private static void ResumeTimeWithoutDowngrade()
         {
-            if (Campaign.Current == null) return;
-            
+            if (Campaign.Current == null)
+            {
+                return;
+            }
+
             // Only unpause if currently stopped - preserve StoppableFastForward and other higher speeds
             if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
             {
@@ -566,20 +560,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Override army_wait and army_wait_at_settlement menus when enlisted
                 // These are native army menus that appear when the lord leaves settlements or during army operations
                 // Enlisted soldiers should see their custom menu instead, unless in combat/siege
-                
+
                 // For army_wait_at_settlement, we EXPECT a settlement encounter - that's normal for entering a town
                 // We should only block during actual battles, not peaceful settlement entries
                 var isSettlementEncounter = PlayerEncounter.Current != null &&
-                    PlayerEncounter.EncounterSettlement != null &&
-                    MobileParty.MainParty?.Party.MapEvent == null;
-                
+                                            PlayerEncounter.EncounterSettlement != null &&
+                                            MobileParty.MainParty?.Party.MapEvent == null;
+
                 if (_currentMenuId == "army_wait_at_settlement")
                 {
                     // Allow override for settlement encounters (peaceful town/castle entry)
                     // Block only during sieges or siege-related battles
                     if (!lordSiegeEvent && !siegeRelatedBattle)
                     {
-                        ModLogger.Debug("Menu", $"Overriding army_wait_at_settlement (settlement encounter: {isSettlementEncounter})");
+                        ModLogger.Debug("Menu",
+                            $"Overriding army_wait_at_settlement (settlement encounter: {isSettlementEncounter})");
                         // Defer the override to next frame to avoid conflicts with the native menu system
                         NextFrameDispatcher.RunNextFrame(() =>
                         {
@@ -851,7 +846,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnEnlistedStatusCondition,
                 null, // No consequence for wait menu
                 OnEnlistedStatusTick, // Tick handler for real-time updates
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption); // Wait menu template that hides progress boxes
+                GameMenu.MenuAndOptionType
+                    .WaitMenuHideProgressAndHoursOption); // Wait menu template that hides progress boxes
 
             // Main menu options for enlisted status menu with modern icons and localized tooltips
 
@@ -861,7 +857,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
-                    args.Tooltip = new TextObject("{=menu_tooltip_master}Select your troop type and equipment loadout based on your current tier.");
+                    args.Tooltip =
+                        new TextObject(
+                            "{=menu_tooltip_master}Select your troop type and equipment loadout based on your current tier.");
                     return IsMasterAtArmsAvailable(args);
                 },
                 OnMasterAtArmsSelected,
@@ -873,7 +871,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Request equipment variants and manage party supplies.");
+                    args.Tooltip =
+                        new TextObject(
+                            "{=menu_tooltip_quartermaster}Request equipment variants and manage party supplies.");
                     return IsQuartermasterAvailable(args);
                 },
                 OnQuartermasterSelected,
@@ -885,7 +885,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
-                    args.Tooltip = new TextObject("{=menu_tooltip_talk}Speak with nearby lords for quests, news, and relation building.");
+                    args.Tooltip =
+                        new TextObject(
+                            "{=menu_tooltip_talk}Speak with nearby lords for quests, news, and relation building.");
                     return IsTalkToAvailable(args);
                 },
                 OnTalkToSelected,
@@ -897,7 +899,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=menu_tooltip_visit}Enter the settlement while your lord is present.");
+                    args.Tooltip =
+                        new TextObject("{=menu_tooltip_visit}Enter the settlement while your lord is present.");
                     return IsVisitSettlementAvailable(args);
                 },
                 OnVisitTownSelected,
@@ -909,7 +912,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=menu_tooltip_duty}Select your daily duty and profession for bonuses and special abilities.");
+                    args.Tooltip =
+                        new TextObject(
+                            "{=menu_tooltip_duty}Select your daily duty and profession for bonuses and special abilities.");
                     return IsReportDutyAvailable(args);
                 },
                 OnReportDutySelected,
@@ -921,7 +926,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service. You can return when ready.");
+                    args.Tooltip =
+                        new TextObject(
+                            "{=menu_tooltip_leave}Request temporary leave from service. You can return when ready.");
                     return IsAskLeaveAvailable(args);
                 },
                 OnAskLeaveSelected,
@@ -933,7 +940,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Escape;
-                    args.Tooltip = new TextObject("{=menu_tooltip_desert}Abandon your post. WARNING: Severe relation and crime penalties!");
+                    args.Tooltip =
+                        new TextObject(
+                            "{=menu_tooltip_desert}Abandon your post. WARNING: Severe relation and crime penalties!");
                     return IsDesertArmyAvailable(args);
                 },
                 OnDesertArmySelected,
@@ -1190,7 +1199,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Time state is captured by calling code BEFORE menu activation
                 // (not here - vanilla has already set Stop by the time init runs)
-                
+
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 // Use the lord's kingdom culture background, or fallback to generic encounter mesh
                 var enlistment = EnlistmentBehavior.Instance;
@@ -1214,7 +1223,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // StartWait() sets UnstoppableFastForward - we convert to stoppable to allow player control
                 // but only if currently in an unstoppable mode, preserving player's speed preference
                 Campaign.Current.SetTimeControlModeLock(false);
-                
+
                 // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
                 if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
                     Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
@@ -1389,7 +1398,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private int GetNextTierXpRequirement(int currentTier)
         {
             // Load from progression_config.json instead of hardcoded values
-            return Assignments.Core.ConfigurationManager.GetXpRequiredForTier(currentTier);
+            return ConfigurationManager.GetXpRequiredForTier(currentTier);
         }
 
         /// <summary>
@@ -1417,7 +1426,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (!isRenewal)
                 {
                     // First term calculation
-                    var retirementConfig = Assignments.Core.ConfigurationManager.LoadRetirementConfig();
+                    var retirementConfig = ConfigurationManager.LoadRetirementConfig();
                     var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
                     remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
                 }
@@ -1608,12 +1617,13 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture current time state - user may have changed it with spacebar since menu opened
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                
+
                 var manager = TroopSelectionManager.Instance;
                 if (manager == null)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_master_unavailable}Master at Arms system is temporarily unavailable.").ToString()));
+                        new TextObject("{=menu_master_unavailable}Master at Arms system is temporarily unavailable.")
+                            .ToString()));
                     return;
                 }
 
@@ -1639,7 +1649,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (enlistment?.IsEnlisted != true)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_must_be_enlisted_qm}You must be enlisted to access quartermaster services.").ToString()));
+                        new TextObject(
+                                "{=menu_must_be_enlisted_qm}You must be enlisted to access quartermaster services.")
+                            .ToString()));
                     return;
                 }
 
@@ -1649,7 +1661,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     // Capture time state BEFORE menu activation - the wait menu tick will restore it
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    
+
                     // Show equipment variants for current troop selection
                     // (wait menu tick handler will restore captured time state)
                     GameMenu.ActivateGameMenu("quartermaster_equipment");
@@ -1657,14 +1669,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
+                        new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.")
+                            .ToString()));
                 }
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", "Error accessing quartermaster services", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
+                    new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.")
+                        .ToString()));
             }
         }
 
@@ -1681,12 +1695,13 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture current time state - user may have changed it with spacebar since menu opened
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_must_be_enlisted_lords}You must be enlisted to speak with lords.").ToString()));
+                        new TextObject("{=menu_must_be_enlisted_lords}You must be enlisted to speak with lords.")
+                            .ToString()));
                     return;
                 }
 
@@ -1695,7 +1710,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (nearbyLords.Count == 0)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_no_lords_available}No lords are available for conversation at this location.").ToString()));
+                        new TextObject(
+                                "{=menu_no_lords_available}No lords are available for conversation at this location.")
+                            .ToString()));
                     return;
                 }
 
@@ -1828,7 +1845,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (lord?.PartyBelongedTo == null)
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_lord_not_available}Lord is not available for conversation.").ToString()));
+                        new TextObject("{=menu_lord_not_available}Lord is not available for conversation.")
+                            .ToString()));
                     return;
                 }
 
@@ -1841,7 +1859,8 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error("Interface", $"Error opening conversation with {lord?.Name}: {ex.Message}");
                 InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=menu_conversation_error}Unable to start conversation. Please try again.").ToString()));
+                    new TextObject("{=menu_conversation_error}Unable to start conversation. Please try again.")
+                        .ToString()));
             }
         }
 
@@ -1871,7 +1890,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // We check if the current menu is a native settlement menu to determine if they're actually inside
             var currentMenu = Campaign.Current?.CurrentMenuContext?.GameMenu?.StringId ?? "";
             var playerInNativeSettlementMenu = currentMenu == "town" || currentMenu == "castle" ||
-                currentMenu.StartsWith("town_") || currentMenu.StartsWith("castle_");
+                                               currentMenu.StartsWith("town_") || currentMenu.StartsWith("castle_");
             var canVisit = (settlement.IsTown || settlement.IsCastle) && !playerInNativeSettlementMenu;
 
             if (canVisit)
@@ -1926,7 +1945,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_lord_not_in_settlement}Your lord is not in a town or castle.").ToString()));
+                        new TextObject("{=menu_lord_not_in_settlement}Your lord is not in a town or castle.")
+                            .ToString()));
                     return;
                 }
 
@@ -2025,7 +2045,8 @@ namespace Enlisted.Features.Interface.Behaviors
             if (enlistment.IsLeaveOnCooldown(out var daysRemaining))
             {
                 args.IsEnabled = false;
-                var tooltip = new TextObject("{=Enlisted_Leave_Cooldown_Tooltip}Leave is on cooldown. {DAYS} days remain.");
+                var tooltip =
+                    new TextObject("{=Enlisted_Leave_Cooldown_Tooltip}Leave is on cooldown. {DAYS} days remain.");
                 tooltip.SetTextVariable("DAYS", daysRemaining);
                 args.Tooltip = tooltip;
             }
@@ -2039,7 +2060,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture current time state - user may have changed it with spacebar since menu opened
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
@@ -2301,14 +2322,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
-                
+
                 // NOTE: Time mode restoration is handled ONCE in OnEnlistedStatusInit, not here.
                 // Previously this tick handler would restore CapturedTimeMode whenever it saw
                 // UnstoppableFastForward, but this fought with user input - when the user clicked
                 // fast forward (which sets UnstoppableFastForward for army members), the next tick
                 // would immediately restore it back to Stop. This caused x3 speed to pause.
                 // The fix is to only handle time mode conversion once during menu init.
-                
+
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -2393,7 +2414,7 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Time state is captured by calling code BEFORE menu activation
                 // (not here - vanilla has already set Stop by the time init runs)
-                
+
                 // 1.3.4+: Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
@@ -2416,7 +2437,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // StartWait() sets UnstoppableFastForward - we convert to stoppable to allow player control
                 // but preserve the speed (fast forward vs normal play)
                 Campaign.Current.SetTimeControlModeLock(false);
-                
+
                 // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
                 if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
                     Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
@@ -2474,12 +2495,12 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
                 }
-                
+
                 // NOTE: Time mode restoration is handled ONCE in menu init, not here.
                 // Previously this tick handler would restore CapturedTimeMode whenever it saw
                 // UnstoppableFastForward, but this fought with user input - when the user clicked
                 // fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
-                
+
                 // Validate time delta to prevent assertion failures
                 // Zero-delta-time updates can cause assertion failures in the rendering system
                 if (dt.ToSeconds <= 0)
@@ -2644,35 +2665,45 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsDutyEnlistedAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-            args.Tooltip = new TextObject("{=duty_tooltip_enlisted}Standard military service. Train with your formation and earn base wages.");
+            args.Tooltip =
+                new TextObject(
+                    "{=duty_tooltip_enlisted}Standard military service. Train with your formation and earn base wages.");
             return true;
         }
 
         private bool IsDutyForagerAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-            args.Tooltip = new TextObject("{=duty_tooltip_forager}Gather food and supplies for the army. Earn bonus XP and improved wages.");
+            args.Tooltip =
+                new TextObject(
+                    "{=duty_tooltip_forager}Gather food and supplies for the army. Earn bonus XP and improved wages.");
             return true;
         }
 
         private bool IsDutySentryAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.DefendAction;
-            args.Tooltip = new TextObject("{=duty_tooltip_sentry}Guard the camp perimeter. Improved detection of enemies and bonus relation with your lord.");
+            args.Tooltip =
+                new TextObject(
+                    "{=duty_tooltip_sentry}Guard the camp perimeter. Improved detection of enemies and bonus relation with your lord.");
             return true;
         }
 
         private bool IsDutyMessengerAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.Mission;
-            args.Tooltip = new TextObject("{=duty_tooltip_messenger}Deliver messages and scout ahead. Bonus riding/athletics XP and faster travel.");
+            args.Tooltip =
+                new TextObject(
+                    "{=duty_tooltip_messenger}Deliver messages and scout ahead. Bonus riding/athletics XP and faster travel.");
             return true;
         }
 
         private bool IsDutyPioneerAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
-            args.Tooltip = new TextObject("{=duty_tooltip_pioneer}Build fortifications and siege works. Bonus engineering XP and siege effectiveness.");
+            args.Tooltip =
+                new TextObject(
+                    "{=duty_tooltip_pioneer}Build fortifications and siege works. Bonus engineering XP and siege effectiveness.");
             return true;
         }
 
@@ -2690,8 +2721,11 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             else
             {
-                args.Tooltip = new TextObject("{=prof_tooltip_quarterhand}Manage supplies and inventory. 15% better trade prices and +50 carry capacity.");
+                args.Tooltip =
+                    new TextObject(
+                        "{=prof_tooltip_quarterhand}Manage supplies and inventory. 15% better trade prices and +50 carry capacity.");
             }
+
             return true;
         }
 
@@ -2706,8 +2740,11 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             else
             {
-                args.Tooltip = new TextObject("{=prof_tooltip_medic}Tend to wounded soldiers. Faster healing, bonus medicine XP, and morale boost.");
+                args.Tooltip =
+                    new TextObject(
+                        "{=prof_tooltip_medic}Tend to wounded soldiers. Faster healing, bonus medicine XP, and morale boost.");
             }
+
             return true;
         }
 
@@ -2722,8 +2759,11 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             else
             {
-                args.Tooltip = new TextObject("{=prof_tooltip_siege}Assist siege engineers. Faster siege construction and bonus engineering XP.");
+                args.Tooltip =
+                    new TextObject(
+                        "{=prof_tooltip_siege}Assist siege engineers. Faster siege construction and bonus engineering XP.");
             }
+
             return true;
         }
 
@@ -2738,8 +2778,11 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             else
             {
-                args.Tooltip = new TextObject("{=prof_tooltip_drill}Train soldiers in formation fighting. Bonus leadership XP and troop morale.");
+                args.Tooltip =
+                    new TextObject(
+                        "{=prof_tooltip_drill}Train soldiers in formation fighting. Bonus leadership XP and troop morale.");
             }
+
             return true;
         }
 
@@ -2754,8 +2797,11 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             else
             {
-                args.Tooltip = new TextObject("{=prof_tooltip_saboteur}Conduct covert operations. Bonus roguery XP and special mission access.");
+                args.Tooltip =
+                    new TextObject(
+                        "{=prof_tooltip_saboteur}Conduct covert operations. Bonus roguery XP and special mission access.");
             }
+
             return true;
         }
 

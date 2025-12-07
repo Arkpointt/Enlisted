@@ -1,14 +1,12 @@
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
-using HarmonyLib;
-using TaleWorlds.CampaignSystem.GameMenus;
 
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Prevents enlisted soldiers from seeing the native "Abandon army" options
-    /// in encounter-related menus. When enlisted, we short-circuit the native
-    /// on_condition callbacks so the option is hidden entirely.
+    ///     Prevents enlisted soldiers from seeing the native "Abandon army" options
+    ///     in encounter-related menus. When enlisted, we short-circuit the native
+    ///     on_condition callbacks so the option is hidden entirely.
     /// </summary>
     [HarmonyPatch]
     internal static class AbandonArmyBlockPatch
@@ -49,4 +47,3 @@ namespace Enlisted.Mod.GameAdapters.Patches
         }
     }
 }
-

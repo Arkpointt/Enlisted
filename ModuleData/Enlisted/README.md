@@ -2,24 +2,25 @@
 
 JSON files controlling the Enlisted mod. Edit and restart campaign to apply changes.
 
-**Current Mod Version**: 0.5.4  
+**Current Mod Version**: 0.5.4
 **Compatible Game Version**: 1.3.9
 
 ## Files
 
-| File | Purpose |
-|------|---------|
-| settings.json | Logging levels, encounter settings, mod behavior flags |
-| enlisted_config.json | Tiers, wages, retirement, grace periods, formations, equipment pricing |
-| duties_system.json | Duty definitions and officer roles |
-| progression_config.json | XP thresholds, XP sources, wage formulas, promotion benefits |
-| equipment_pricing.json | Formation/culture cost multipliers |
-| equipment_kits.json | Culture-specific loadouts |
-| menu_config.json | Menu text and options |
+| File                    | Purpose                                                                |
+|-------------------------|------------------------------------------------------------------------|
+| settings.json           | Logging levels, encounter settings, mod behavior flags                 |
+| enlisted_config.json    | Tiers, wages, retirement, grace periods, formations, equipment pricing |
+| duties_system.json      | Duty definitions and officer roles                                     |
+| progression_config.json | XP thresholds, XP sources, wage formulas, promotion benefits           |
+| equipment_pricing.json  | Formation/culture cost multipliers                                     |
+| equipment_kits.json     | Culture-specific loadouts                                              |
+| menu_config.json        | Menu text and options                                                  |
 
 ## Key Settings
 
 ### Retirement (enlisted_config.json)
+
 ```json
 "retirement": {
   "first_term_days": 252,
@@ -37,6 +38,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### Tier Requirements (enlisted_config.json)
+
 ```json
 "enlistment": {
   "tier_requirements": [0, 800, 3000, 6000, 11000, 19000],
@@ -65,6 +67,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### Finance Settings (enlisted_config.json)
+
 ```json
 "finance": {
   "show_in_clan_tooltip": true,
@@ -80,6 +83,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### XP Sources (progression_config.json)
+
 ```json
 "xp_sources": {
   "daily_base": 25,
@@ -89,6 +93,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### Wage Formula (progression_config.json)
+
 ```json
 "wage_system": {
   "base_formula": {
@@ -109,6 +114,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### Formation Selection (progression_config.json)
+
 ```json
 "formation_selection": {
   "trigger_tier": 2,
@@ -119,6 +125,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### Grace Period (enlisted_config.json)
+
 ```json
 "gameplay": {
   "desertion_grace_period_days": 14,
@@ -127,6 +134,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 ```
 
 ### Log Levels (settings.json)
+
 ```json
 "LogLevels": {
   "Default": "Info",
@@ -150,9 +158,11 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
   "Config": "Info"
 }
 ```
+
 Valid levels: Off, Error, Warn, Info, Debug, Trace
 
 ### Encounter Settings (settings.json)
+
 ```json
 "Encounter": {
   "AttachWhenClose": true,
@@ -163,6 +173,7 @@ Valid levels: Off, Error, Warn, Info, Debug, Trace
 ```
 
 ### Formation Pricing (equipment_pricing.json)
+
 ```json
 "equipment_pricing": {
   "base_cost_per_tier": 75,
@@ -188,7 +199,9 @@ Valid levels: Off, Error, Warn, Info, Debug, Trace
 ```
 
 ### Formation Display Names (enlisted_config.json)
+
 Customize how formations are displayed per culture:
+
 ```json
 "formations": {
   "infantry": {
@@ -207,10 +220,13 @@ Customize how formations are displayed per culture:
 ```
 
 ## Supported Cultures
+
 empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
 
 ## Enlisted settlement behavior
-- When enlisted and your lord/army reaches a town or castle, the enlisted menu remains active and now shows a Visit option. It only hides if you are already inside a native town/castle menu or an actual battle/siege is active.
+
+- When enlisted and your lord/army reaches a town or castle, the enlisted menu remains active and now shows a Visit
+  option. It only hides if you are already inside a native town/castle menu or an actual battle/siege is active.
 - Settlement encounters (peaceful entry) are allowed; only live battles or sieges block the enlisted menu.
 
 ## Notes
