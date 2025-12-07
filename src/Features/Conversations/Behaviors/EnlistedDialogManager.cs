@@ -1183,7 +1183,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 return false;
             }
 
-            return enlistment?.CanEnlistWithParty(lord, out _) == true;
+            return enlistment?.CanEnlistWithParty(lord, out _);
         }
 
         /// <summary>
