@@ -43,7 +43,10 @@ src/
 
 ## Logging
 
-Logs in `Modules/Enlisted/Debugging/`:
+### Mod Logs
+
+Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
+
 - `enlisted.log` - Main log with category-based verbosity control
 - `conflicts.log` - Mod conflict diagnostics:
   - Harmony patch conflict detection (identifies mods sharing patches)
@@ -51,6 +54,12 @@ Logs in `Modules/Enlisted/Debugging/`:
   - Registered behaviors list
   - Environment and module information
   - Categorized patch inventory
+
+### Game Crash Logs
+
+Location: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
+
+Each crash creates a timestamped folder containing `crash_tags.txt`, `rgl_log_*.txt`, and `dump.dmp`.
 
 Configure levels in `settings.json`:
 ```json

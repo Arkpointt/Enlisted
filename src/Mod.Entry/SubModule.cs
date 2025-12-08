@@ -174,6 +174,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(InfluenceMessageSuppressionPatch);
                     _ = typeof(PlayerIsAtSeaTagCrashFix);
                     _ = typeof(EndCaptivityCleanupPatch);
+                    _ = typeof(RaftStateSuppressionPatch);
                     _ = nameof(ArmyDispersedMenuPatch.Prefix);
                     _ = nameof(JoinEncounterAutoSelectPatch.Prefix);
                     _ = nameof(EncounterSuppressionPatch.Prefix);
@@ -484,6 +485,11 @@ namespace Enlisted.Mod.Entry
                     harmony.CreateClassProcessor(typeof(ArmyCohesionExclusionPatch)).Patch();
                     harmony.CreateClassProcessor(typeof(SettlementOutsideLeaveButtonPatch)).Patch();
                     harmony.CreateClassProcessor(typeof(JoinEncounterAutoSelectPatch)).Patch();
+                    
+                    // Apply Naval DLC patches that use reflection to find types.
+                    // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
+                    RaftStateSuppressionPatch.TryApplyPatch(harmony);
+                    RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
                     
                     ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
                     

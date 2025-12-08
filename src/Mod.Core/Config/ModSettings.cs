@@ -140,6 +140,10 @@ namespace Enlisted.Mod.Core.Config
 			[DataMember(Name = "Config")]
 			public string Config { get; set; } = "Info";
 
+			/// <summary>Naval battle logging (ship assignment, deployment).</summary>
+			[DataMember(Name = "Naval")]
+			public string Naval { get; set; } = "Info";
+
 			/// <summary>
 			/// Convert settings to a dictionary for ModLogger.ConfigureLevels().
 			/// </summary>
@@ -165,6 +169,7 @@ namespace Enlisted.Mod.Core.Config
 				AddLevel(dict, "Bootstrap", Bootstrap);
 				AddLevel(dict, "Session", Session);
 				AddLevel(dict, "Config", Config);
+				AddLevel(dict, "Naval", Naval);
 				
 				return dict;
 			}

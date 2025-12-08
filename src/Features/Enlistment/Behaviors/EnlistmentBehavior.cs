@@ -3478,10 +3478,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                                         if (isNavalBattle)
                                         {
-                                            // Naval battles - join MapEventSide so Init() works, Naval DLC handles ship assignment
+                                            // Naval battles - join MapEventSide so Init() works
+                                            // NavalBattleShipAssignmentPatch assigns ship from lord's fleet (enlisted players have no ships)
                                             mainParty.Party.MapEventSide = targetSide;
                                             ModLogger.Info("Naval",
-                                                $"Naval battle detected - joined MapEventSide on {lordSide} side (Naval DLC will assign ship)");
+                                                $"Naval battle detected - joined MapEventSide on {lordSide} side");
                                         }
                                         else if (canJoinNatively || shouldBypassFactionCheck)
                                         {

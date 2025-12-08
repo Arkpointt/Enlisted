@@ -125,7 +125,9 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
   - -1 cohesion/day per party
   - Additional penalty for parties with ≤10 healthy members
   - Additional penalty for parties with morale ≤25
+  - Additional penalty for starving parties
 - `ArmyCohesionExclusionPatch` adds compensating bonus to offset these penalties
+- Compensation also offsets starvation penalty for the enlisted party (covers timing gaps and cases where the lord temporarily has no food)
 - Compensation shown in cohesion tooltip as "Enlisted soldier (embedded)"
 - Thematically correct: enlisted soldiers are embedded with their lord, not a separate party
 
@@ -379,13 +381,30 @@ mainParty.IsVisible = true;
 - Player remains aboard with lord's party (not stranded)
 - If service ends while at sea (e.g., lord captured), player teleported to nearest port
 - `TryTeleportToNearestPort` finds closest settlement with a port and moves player there
+- Stranded UI suppression: `RaftStateSuppressionPatch` blocks the Naval DLC stranded menu (`player_raft_state`) while enlisted if the lord/army still has ships; only shows when the lord truly has no naval capability
 
 **Naval Battles (Naval War Expansion):**
 - When lord enters a naval battle, enlisted player participates as crew member
-- `IsNavalMapEvent` check prevents direct `MapEventSide` join (which would crash - enlisted players have no ships)
-- Player joins via `PlayerEncounter` only, spawning on lord's ship as crew
-- Native Naval DLC's `GetSuitablePlayerShip()` fallback assigns players without ships to allied party ships
-- No crashes when entering sea battles while enlisted
+- Sea-state sync: before `PlayerEncounter.Start/Init`, player's `IsCurrentlyAtSea` and position sync to lord
+- Ship assignment via `NavalBattleShipAssignmentPatch` (5 patches):
+  - **GetSuitablePlayerShip**: Assigns ship from lord's fleet when player has no ships
+    - Tier 1-5: Always board lord's ship (soldiers don't command vessels)
+    - Tier 6+ with retinue AND ships: Can command own vessel (rare edge case)
+    - Capacity-aware: Prefers ships that fit player's party, falls back to largest
+  - **GetOrderedCaptainsForPlayerTeamShips**: Assigns lord as captain for borrowed ships
+  - **AllocateAndDeployInitialTroopsOfPlayerTeam**: Spawns player on friendly ship if MissionShip is null
+  - **OnUnitAddedToFormationForTheFirstTime**: Prevents crash when adding AI behaviors to formations without ships (skips behavior creation, just calls `ForceCalculateCaches()`)
+  - **OnShipRemoved**: Safe mission cleanup when battle ends (handles agents with null Team, prevents native crash during FadeOut)
+- Player and their party spawn on assigned ship as crew
+- Logs: ship name, hull health %, capacity, party size, fleet composition
+
+**Critical Naval Fixes:**
+
+*Formation Behavior Crash:*
+The Naval DLC creates AI behaviors (like `BehaviorNavalEngageCorrespondingEnemy`) for ALL formations in a battle. When enlisted players have no ships, some formations have no ship assigned. The behavior constructor crashes when accessing null ship data. We fix this by patching `OnUnitAddedToFormationForTheFirstTime` - if no ship exists for a formation, we skip behavior creation entirely.
+
+*Mission Cleanup Crash:*
+When the battle ends, the Naval DLC's `OnShipRemoved` iterates through agents and calls `FadeOut()`. Agents in certain states (null Team, already inactive) cause a native crash. We patch `NavalTeamAgents.OnShipRemoved` to handle cleanup safely with null checks before each operation. Key detail: `DequeueReservedTroop` has multiple overloads - must specify exact signature `(NavalShipAgents)` to avoid "Ambiguous match" exception.
 
 **Settlement Access (Castle/Town Menus):**
 - Native Leave buttons are hidden in settlement menus while enlisted (via `TownLeaveButtonPatch`)

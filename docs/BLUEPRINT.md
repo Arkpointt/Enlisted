@@ -54,6 +54,7 @@ src/
 | JoinEncounterAutoSelectPatch     | Auto-joins lord's battle, bypasses "Help or Don't get involved" menu |
 | LootBlockPatch                   | Prevents personal loot                                               |
 | MercenaryIncomeSuppressionPatch  | Suppresses native mercenary income (players receive mod wages only)  |
+| NavalBattleShipAssignmentPatch   | Naval crash fixes: ship assignment, captain lookup, troop deployment, AI behavior creation, and mission cleanup |
 | NavalShipExclusionPatch          | Prevents lord from using enlisted player's ships for sea travel      |
 | OrderOfBattleSuppressionPatch    | Skips deployment screen                                              |
 | PostDischargeProtectionPatch     | Protects after discharge                                             |
@@ -64,7 +65,9 @@ src/
 
 ## Logging
 
-Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
+### Mod Logs
+
+Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
 
 - `enlisted.log` - Main activity log with throttling and category-based levels
 - `conflicts.log` - Comprehensive mod conflict diagnostics:
@@ -76,6 +79,12 @@ Logs in `<Bannerlord>\Modules\Enlisted\Debugging\`:
   - Categorized patch list by purpose (Army/Party, Encounter, Kingdom/Clan, Finance, UI/Menu, Combat, Other)
   - Tracks both main Harmony instance (startup patches) and deferred instance (campaign-start patches)
   - Combined conflict summary across all patches
+
+### Game Crash Logs
+
+Location: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
+
+Each crash creates a timestamped folder containing `crash_tags.txt`, `rgl_log_*.txt`, and `dump.dmp`.
 
 ### Log Levels
 

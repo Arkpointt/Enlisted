@@ -19,10 +19,16 @@ namespace Enlisted.Mod.GameAdapters.Patches
     /// - Each party in army: -1 cohesion/day
     /// - Low member parties (≤10): additional penalty
     /// - Low morale parties (≤25): additional penalty
+    /// - Starving parties: additional penalty
     ///
     /// Since the enlisted player is conceptually embedded with their lord (not a separate
     /// party), these penalties are not thematically appropriate. This patch adds a
     /// compensating bonus to offset the penalties the player's party causes.
+    ///
+    /// Note: Even though FoodSystemPatches ties player food to the lord's supply,
+    /// the cohesion calculation may still see the player as starving due to timing
+    /// issues or if the lord's army actually has no food. We compensate for this
+    /// because an embedded soldier shouldn't count as a separate starving party.
     ///
     /// Uses Postfix approach for maximum compatibility - doesn't block or modify the
     /// native calculation, just adds a compensating modifier afterward.
@@ -94,7 +100,17 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     lowMoraleCompensation = 0.5f;
                 }
 
-                var totalCompensation = partyCountCompensation + lowMemberCompensation + lowMoraleCompensation;
+                // 4. Compensate for starvation penalty if applicable
+                // Native applies: -((num1 + 1) / 2) where num1 = count of starving parties
+                // For a single party, that's -(1 + 1) / 2 = -1, but then halved again = -0.5
+                // Note: Even with FoodSystemPatches, player may appear starving due to timing or empty lord supplies
+                var starvationCompensation = 0f;
+                if (mainParty.Party.IsStarving)
+                {
+                    starvationCompensation = 0.5f;
+                }
+
+                var totalCompensation = partyCountCompensation + lowMemberCompensation + lowMoraleCompensation + starvationCompensation;
 
                 // Apply AI multiplier if this is not the player's own army
                 // Native code applies 0.25x multiplier to AI armies
@@ -108,7 +124,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 ModLogger.Debug("Cohesion",
                     $"Added cohesion compensation: +{totalCompensation:F2} " +
-                    $"(party:{partyCountCompensation}, lowMember:{lowMemberCompensation}, lowMorale:{lowMoraleCompensation})");
+                    $"(party:{partyCountCompensation}, lowMember:{lowMemberCompensation}, lowMorale:{lowMoraleCompensation}, starving:{starvationCompensation})");
             }
             catch (Exception ex)
             {

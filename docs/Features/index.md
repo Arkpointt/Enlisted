@@ -49,7 +49,7 @@ Special mission types available to enlisted players.
 
 Low-level systems that ensure stability and prevent issues.
 
-- **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention and safety measures, including reserve watchdog for lingering encounters, prisoner-state aware activation, and a guarded besiege-menu fix (Harmony prefix on `CheckFortificationAttackableHonorably`, gated by EnlistedActivation to avoid the null `EncounterSettlement` crash)
+- **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention, reserve watchdog, prisoner-state aware activation, besiege-menu fix, and naval battle fixes (ship assignment, captain lookup, troop deployment, AI behavior creation for shipless formations)
 - **[Formation Assignment](Technical/formation-assignment.md)** - Battle formation assignment and position teleportation to lord's deployment
 
 ---

@@ -51,6 +51,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs` - Blocks unwanted encounters, clears stale reserve flags
 - `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs` - Blocks party activation in vulnerable states
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs` - Controls party visibility, allows captivity system control
+- `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs` - Fixes naval battle crash (assigns ship from lord's fleet)
 
 ---
 
@@ -199,7 +200,30 @@ public static void EnableEncounters()
 - Ensures "Encounter" menu instead of "Help or Leave"
 - Standard battle interface for player
 - Predictable behavior across all battle types
-- Naval MapEvents: `ForceImmediateBattleJoin` syncs the player's `IsCurrentlyAtSea` state and position to the lord before calling `PlayerEncounter.Start/Init()`. This matches the native requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`) and prevents naval join crashes.
+
+**Naval Battle Safety:**
+- Sea-state sync: `ForceImmediateBattleJoin` syncs `IsCurrentlyAtSea` state and position to lord before `PlayerEncounter.Start/Init()`. Matches native requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`).
+- Ship assignment: `NavalBattleShipAssignmentPatch` provides five patches to prevent crashes:
+
+  **Patch 1 - GetSuitablePlayerShip:** Intercepts before Naval DLC calls `MinBy` on empty ship collection:
+  - Tier 1-5: Always board lord's ship (soldiers don't command vessels)
+  - Tier 6+ with retinue AND ships: Can command own vessel (rare edge case)
+  - Capacity-aware: Prefers ships that can fit player's party size, falls back to largest
+  - Logs ship name, hull health, capacity, and fleet composition per battle
+
+  **Patch 2 - GetOrderedCaptainsForPlayerTeamShips:** Assigns lord as captain when player borrows a ship (prevents null reference when looking up ship owner).
+
+  **Patch 3 - AllocateAndDeployInitialTroopsOfPlayerTeam:** Handles cases where player team's `MissionShip` is null. Finds any friendly ship in the mission and spawns player there as crew.
+
+  **Patch 4 - OnUnitAddedToFormationForTheFirstTime:** Prevents crash when adding AI behaviors to formations without ships. The Naval DLC creates `BehaviorNavalEngageCorrespondingEnemy` for all formations, but crashes if a formation has no ship assigned (common when enlisted player has no ships). This patch checks for a ship BEFORE creating behaviors - if no ship exists, it skips behavior creation entirely and just calls `ForceCalculateCaches()`.
+
+  **Patch 5 - OnShipRemoved:** Safe mission cleanup when battle ends. The Naval DLC's cleanup code iterates through agents and calls `FadeOut()`, but agents in certain states (null Team, already inactive) cause a native crash. This patch intercepts `NavalTeamAgents.OnShipRemoved` and performs cleanup with null checks before each operation. Skips FadeOut for agents that are inactive or have null Team.
+
+  **Why Patch 4 is critical:** When there are more formations than ships (e.g., player formations without ships when enlisted under a lord), the Naval DLC tries to create AI behaviors for all formations. The `BehaviorNavalEngageCorrespondingEnemy` constructor calls `GetShip()` and then immediately accesses `_formationMainShip.GameEntity` - if GetShip returns null, this crashes. We can't patch the constructor itself (returning false from a constructor prefix leaves the object uninitialized), so we patch the caller to prevent behavior creation when no ship exists.
+
+  **Why Patch 5 is critical:** After battle ends, `OnEndMission()` removes all ships, which triggers `OnShipRemoved` for each ship. The original code assumes all agents are still valid, but during enlisted naval battles, agents may be in transitional states. The `DequeueReservedTroop` method has multiple overloads - must use `AccessTools.Method(type, "DequeueReservedTroop", new[] { navalShipAgentsType })` to avoid "Ambiguous match" exception.
+
+  **Patch 6 - Raft State Suppression (stranded UI):** Prevents the Naval DLC `player_raft_state`/“stranded at sea” menu from firing when the enlisted player’s lord (or army leader) still has ships. Deactivates the raft state and resyncs the player to the lord at sea; allows the raft menu only when the lord truly has no naval capability.
 
 ### Activation Gating (Inactive Mode)
 
@@ -560,6 +584,43 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - Current code checks `playerIsPrisoner` alongside MapEvent/Encounter before deciding to activate
 - If you see this log while prisoner, ensure you have the latest code
 
+**Naval Battle Crash Debugging:**
+
+If you see crashes in naval battles with stack traces containing:
+- `NavalDLC.GameComponents.NavalDLCShipDeploymentModel.GetSuitablePlayerShip` → Patch 1 should handle this
+- `NavalDLC.GameComponents.NavalDLCShipDeploymentModel.GetOrderedCaptainsForPlayerTeamShips` → Patch 2 should handle this
+- `NavalDLC.Missions.MissionLogics.NavalAgentsLogic.AddReservedTroopToShip` → Patch 3 should handle this
+- `NavalDLC.Missions.AI.Behaviors.BehaviorNavalEngageCorrespondingEnemy..ctor` → Patch 4 should handle this
+- `NavalDLC.Missions.MissionLogics.NavalTeamAgents.OnShipRemoved` → Patch 5 should handle this
+- `TaleWorlds.MountAndBlade.BattleObserverMissionLogic.OnAgentRemoved` (during naval cleanup) → Patch 5 handles indirectly
+
+Log messages to look for:
+```
+[Naval] Naval enlisted crew fix registered (GetSuitablePlayerShip)
+[Naval] Naval captain assignment fix registered
+[Naval] Naval troop allocation fix registered
+[Naval] Naval TeamAI formation patch registered
+[Naval] Naval OnShipRemoved safety fix registered
+```
+
+If formation crash persists:
+- Enable Debug level for "Naval" category in `settings.json`
+- Check if `Skipping naval behaviors for Formation X - no ship assigned` appears
+- If not appearing, the patch isn't detecting the shipless formation
+- Check `GetShip` reflection is working (look for method lookup errors)
+
+If mission cleanup crash persists (crash after battle ends):
+- Look for `OnShipRemoved: Handling cleanup` in logs
+- Check if cleanup completes: `OnShipRemoved: Cleanup complete`
+- Common cause: agent with null Team being passed to FadeOut
+- If falling back to original: "OnShipRemoved error" will show the exception
+
+**Key Technical Details:**
+
+*Constructor prefix limitation:* You CANNOT prevent object creation by returning `false` from a Harmony prefix on a constructor - the object is already allocated, only the constructor body is skipped. This leaves the object uninitialized and it will crash when used. Always patch the CALLER instead.
+
+*Method overload ambiguity:* When using `AccessTools.Method` for Naval DLC internals, always specify parameter types. `DequeueReservedTroop` has 2 overloads - use `AccessTools.Method(type, "DequeueReservedTroop", new[] { navalShipAgentsType })` to avoid "Ambiguous match" exceptions that silently break patches.
+
 **Debug Output Location:**
 - `Modules/Enlisted/Debugging/enlisted.log`
 
@@ -573,6 +634,7 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs`
 - `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs`
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs`
+- `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs`
 
 ---
 

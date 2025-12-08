@@ -46,7 +46,13 @@ All in `ModuleData/Enlisted/`:
 
 ## Debugging
 
-Logs in `Modules/Enlisted/Debugging/`:
+### Mod Logs (Enlisted)
+
+Full path: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
+
+Example: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+
+Files:
 - `enlisted.log` - Main activity log with category-based levels
 - `conflicts.log` - Comprehensive mod conflict diagnostics:
   - Detects Harmony patch conflicts (other mods patching same methods)
@@ -56,6 +62,17 @@ Logs in `Modules/Enlisted/Debugging/`:
   - Loaded modules enumeration
   - Categorized patch list (Army/Party, Encounter, Finance, UI/Menu, Combat, etc.)
   - Tracks both main and deferred Harmony instances
+
+### Game Crash Logs (Bannerlord)
+
+Full path: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
+
+Each crash creates a timestamped folder (e.g., `2025-12-08_03.41.58\`) containing:
+- `crash_tags.txt` - Module versions and system info
+- `rgl_log_*.txt` - Engine logs (large, check near end for crash context)
+- `rgl_log_errors_*.txt` - Engine error summary
+- `dump.dmp` - Memory dump for debugging
+- `module_list.txt` - Active modules at crash time
 
 ## API Reference
 
