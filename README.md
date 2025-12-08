@@ -2,10 +2,9 @@
 
 Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
 
-## What's New (v0.5.6)
-- Naval safety: suppresses the Naval DLC "stranded at sea" raft menu when your enlisted lord/army still has ships; stays in lockstep with your lord at sea, only showing raft state when truly shipless.
-- Cohesion: added starvation compensation to the embedded-player cohesion patch so the player's party never drags army cohesion when sharing the lord's food.
-- Version bump and docs refresh for 0.5.6.
+## What's New (v0.5.7)
+- Removed unused CombatStats behaviors to reduce patch surface and avoid redundant mission hooks.
+- Clean build for retail configuration and version bump to 0.5.7.
 
 ## Features
 
