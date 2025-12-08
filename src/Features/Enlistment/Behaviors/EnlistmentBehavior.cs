@@ -4964,18 +4964,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Info("EventSafety", $"Lord {prisoner.Name} captured - starting grace period");
 
-                var playerCapturedWithLord = TryCapturePlayerAlongsideLord(capturingParty);
-                if (playerCapturedWithLord)
-                {
-                    ModLogger.Info("Battle", "Player captured alongside lord due to mirrored capture logic");
-                }
+                // Handle player state cleanup (reserve mode, encounters, etc.)
+                // This doesn't capture the player - if player was fighting, native surrender flow handles capture
+                // If player was in reserve, they escape to safety
+                HandlePlayerStateOnLordCapture();
 
                 // Start grace period instead of immediate discharge
                 // Player has 14 days to rejoin another lord in the same kingdom
                 var lordKingdom = _enlistedLord.MapFaction as Kingdom;
                 if (lordKingdom != null)
                 {
-                    if (playerCapturedWithLord || _playerCaptureCleanupScheduled)
+                    if (_playerCaptureCleanupScheduled)
                     {
                         ModLogger.Info("EventSafety",
                             "Deferring lord capture discharge because player capture cleanup is pending");
@@ -4992,7 +4991,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // No kingdom - immediate discharge
                     var message = new TextObject("{=enlist_lord_captured_ended}Your lord has been captured. Your service has ended.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                    if (playerCapturedWithLord || _playerCaptureCleanupScheduled)
+                    if (_playerCaptureCleanupScheduled)
                     {
                         SchedulePlayerCaptureCleanup(null);
                     }
@@ -7604,11 +7603,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _latchedSiegeSettlement = null;
         }
 
-        private bool TryCapturePlayerAlongsideLord(PartyBase capturingParty)
+        /// <summary>
+        /// Handles player state cleanup when lord is captured.
+        /// - If player was in reserve: clears reserve state, finishes encounter, teleports to safety
+        /// - If player is in encounter: native surrender flow handles capture
+        /// - Otherwise: just logs (edge case)
+        /// Does NOT directly capture the player - native game handles actual capture via surrender.
+        /// </summary>
+        private void HandlePlayerStateOnLordCapture()
         {
             if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
             {
-                return false;
+                return;
             }
 
             // Check if player was waiting in reserve - if so, clean up the reserve state
@@ -7660,23 +7666,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Exit the menu so player returns to campaign map
                 GameMenu.ExitToLast();
                 
-                ModLogger.Info("Battle", "Cleared reserve state after lord capture - encounter finished, party can be restored");
-                
-                return false;
+                ModLogger.Info("Battle", "Player escaped during lord capture (was in reserve) - teleported to safety");
+                return;
             }
             
             if (PlayerEncounter.Current != null)
             {
                 // Player is already in an encounter (e.g., choosing Surrender). Native flow will capture them.
                 ModLogger.Info("Battle",
-                    "Encounter active during lord capture - letting native surrender capture handle the player.");
-                return false;
+                    "Encounter active during lord capture - native surrender flow will handle player.");
+                return;
             }
 
-            // Player wasn't in reserve and has no active encounter - they shouldn't be here
-            // but if they are, just log and skip capture to avoid crashes
-            ModLogger.Info("Battle", "Lord captured but player not in reserve or encounter - skipping capture mirror");
-            return false;
+            // Player wasn't in reserve and has no active encounter - edge case, just log
+            ModLogger.Info("Battle", "Lord captured but player not in reserve or encounter - no action needed");
         }
 
         private void SchedulePostEncounterVisibilityRestore()
