@@ -2154,7 +2154,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 var partyState = main?.Party;
                 var inMapEvent = partyState?.MapEvent != null;
-                var isPrisoner = Hero.MainHero.IsPrisoner;
+                var isPrisoner = Hero.MainHero?.IsPrisoner == true;
                 var inEncounter = Campaign.Current?.PlayerEncounter != null;
                 var isActive = main.IsActive;
                 var isVisible = main.IsVisible;
@@ -7712,7 +7712,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void HandlePlayerStateOnLordCapture(PartyBase capturingParty)
         {
-            if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
+            if (!IsEnlisted || _isOnLeave || Hero.MainHero?.IsPrisoner == true)
             {
                 return;
             }

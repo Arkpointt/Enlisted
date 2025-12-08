@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -85,6 +86,8 @@ namespace Enlisted.Features.Combat.Behaviors
         /// Sets culture-appropriate background and ambient audio for battle wait.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_battle_wait")]
+        [SuppressMessage("ReSharper", "UnusedMember.Local", 
+            Justification = "Called by Bannerlord engine via GameMenuInitializationHandler attribute")]
         private static void OnBattleWaitBackgroundInit(MenuCallbackArgs args)
         {
             var lord = EnlistmentBehavior.Instance?.CurrentLord;
@@ -507,7 +510,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     if (enlistment?.IsEnlisted != true)
                     {
                         var mainParty = MobileParty.MainParty;
-                        if (mainParty != null && !Hero.MainHero.IsPrisoner)
+                        if (mainParty != null && Hero.MainHero?.IsPrisoner != true)
                         {
                             mainParty.IsActive = true;
                             mainParty.IsVisible = true;
