@@ -34,6 +34,22 @@ src/
     └── Interface/          # Menus
 ```
 
+## Adding New Files
+
+**CRITICAL**: This project uses an old-style `.csproj` with explicit file includes. New `.cs` files are NOT automatically compiled.
+
+When adding a new source file:
+1. Create the `.cs` file in the appropriate location
+2. **Manually add it to `Enlisted.csproj`** in the `<ItemGroup>` with `<Compile Include="..."/>` entries
+3. Build and verify the file is included
+
+Example - adding a new patch:
+```xml
+<Compile Include="src\Mod.GameAdapters\Patches\YourNewPatch.cs"/>
+```
+
+If you forget this step, the file will exist but won't be compiled, and your code won't run.
+
 ## Harmony Patches (23)
 
 | Patch                            | Purpose                                                              |

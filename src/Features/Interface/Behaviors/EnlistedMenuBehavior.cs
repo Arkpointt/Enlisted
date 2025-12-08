@@ -1782,6 +1782,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         ///     Start conversation with selected lord using verified TaleWorlds APIs.
+        ///     Uses different conversation systems for land vs sea to ensure proper scene selection.
         /// </summary>
         private void StartConversationWithLord(Hero lord)
         {
@@ -1794,10 +1795,24 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Use the same conversation system our dialogs use
-                CampaignMapConversation.OpenConversation(
-                    new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
-                    new ConversationCharacterData(lord.CharacterObject, lord.PartyBelongedTo.Party));
+                var playerData = new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty);
+                var lordData = new ConversationCharacterData(lord.CharacterObject, lord.PartyBelongedTo.Party);
+
+                // At sea: use mission-based conversation with proper ship scene
+                // On land: use map conversation (character portraits)
+                // This mirrors PlayerEncounter behavior for proper scene selection
+                if (MobileParty.MainParty?.IsCurrentlyAtSea == true)
+                {
+                    // Use Naval DLC's sea conversation scene for proper ship deck visuals
+                    const string seaConversationScene = "conversation_scene_sea_multi_agent";
+                    ModLogger.Info("Interface", $"Opening sea conversation with {lord.Name} using scene: {seaConversationScene}");
+                    CampaignMission.OpenConversationMission(playerData, lordData, seaConversationScene);
+                }
+                else
+                {
+                    // Standard land conversation using map conversation system
+                    CampaignMapConversation.OpenConversation(playerData, lordData);
+                }
             }
             catch (Exception ex)
             {
