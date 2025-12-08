@@ -3090,7 +3090,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         // This applies regardless of whether we're in grace period or not
                         if (mainParty != null)
                         {
-                            var protectionDuration = CampaignTime.Days(1f);
+                            var protectionDuration = CampaignTime.Hours(12f);
                             var protectionUntil = CampaignTime.Now + protectionDuration;
                             
                             // Native protection - prevents parties from targeting us
@@ -7653,7 +7653,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var mainParty = MobileParty.MainParty;
                 if (mainParty != null)
                 {
-                    var protectionDuration = CampaignTime.Days(1f);
+                    var protectionDuration = CampaignTime.Hours(12f);
                     mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + protectionDuration);
                     
                     // Move player to nearest friendly settlement to escape the battle
@@ -7747,7 +7747,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // This prevents enemies from immediately attacking the player after discharge
             if (IsInDesertionGracePeriod)
             {
-                var protectionUntil = CampaignTime.Now + CampaignTime.Days(1f);
+                var protectionUntil = CampaignTime.Now + CampaignTime.Hours(12f);
                 mainParty.IgnoreByOtherPartiesTill(protectionUntil);
                 _graceProtectionEnds = protectionUntil;
                 ModLogger.Info("Enlistment",
@@ -7851,7 +7851,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Info("Captivity", "Skipping grace protection activation - player is prisoner");
                     // Still set the protection timer so it's ready when released
-                    _graceProtectionEnds = CampaignTime.Now + CampaignTime.Days(1f);
+                    _graceProtectionEnds = CampaignTime.Now + CampaignTime.Hours(12f);
                     return;
                 }
 
@@ -7863,7 +7863,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                var protectionUntil = CampaignTime.Now + CampaignTime.Days(1f);
+                var protectionUntil = CampaignTime.Now + CampaignTime.Hours(12f);
                 main.IgnoreByOtherPartiesTill(protectionUntil);
                 _graceProtectionEnds = protectionUntil;
 
