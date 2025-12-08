@@ -176,6 +176,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private bool _isSiegePreparationLatched;
 
+        /// <summary>
+        ///     Guard flag to indicate we're processing an intentional discharge (retirement/honorable discharge).
+        ///     Prevents OnClanChangedKingdom from treating the kingdom removal as desertion when the player
+        ///     is legitimately ending their service through proper channels like retirement.
+        /// </summary>
+        private bool _isProcessingDischarge;
+
         // Captivity settlement log throttle to avoid spamming every hop
         private static readonly HashSet<string> _captivitySettlementsLogged = new HashSet<string>();
 
@@ -1227,6 +1234,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
                 
+                // Set guard flag to prevent OnClanChangedKingdom from treating the upcoming
+                // kingdom removal as desertion. This is an intentional discharge, not abandonment.
+                _isProcessingDischarge = true;
+                
                 // Clear reserve state immediately when enlistment ends for ANY reason
                 // This prevents player getting stuck invisible if lord's party disbands while in reserve
                 if (Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve)
@@ -1547,6 +1558,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistedLord = null;
                 _hasBackedUpEquipment = false;
                 _disbandArmyAfterBattle = false;
+            }
+            finally
+            {
+                // Always clear the discharge guard flag, even if an exception occurred.
+                // This ensures OnClanChangedKingdom returns to normal behavior after discharge completes.
+                _isProcessingDischarge = false;
             }
         }
         
@@ -2235,6 +2252,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             var protectionDuration = CampaignTime.Hours(12f);
                             mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + protectionDuration);
                             TryTeleportToSafety(mainParty);
+                            
+                            // Reactivate and make the party visible after the safety teleport
+                            mainParty.IsActive = true;
+                            mainParty.IsVisible = true;
+                            mainParty.SetMoveModeHold(); // stop any phantom movement after disband
+                        }
+                        
+                        // Normalize time control to a stoppable mode so reserve wait state does not leave unstoppable speed
+                        if (Campaign.Current != null)
+                        {
+                            var normalized = Equipment.Behaviors.QuartermasterManager.NormalizeToStoppable(
+                                Campaign.Current.TimeControlMode);
+                            Campaign.Current.TimeControlMode = normalized;
                         }
                         
                         GameMenu.ExitToLast();
@@ -5150,7 +5180,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Handle player leaving the kingdom entirely (quitting mercenary service) while enlisted or on leave
             // This is desertion - they abandoned their service commitment
-            if ((IsEnlisted || _isOnLeave) && newKingdom == null && oldKingdom != null)
+            // EXCEPTION: If _isProcessingDischarge is true, this is an intentional retirement/discharge,
+            // not a player abandoning their post. Skip desertion logic to allow graceful retirement.
+            if ((IsEnlisted || _isOnLeave) && newKingdom == null && oldKingdom != null && !_isProcessingDischarge)
             {
                 var lordKingdom = _enlistedLord?.MapFaction as Kingdom;
                 
@@ -5195,7 +5227,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // 2. Active enlistment: joins different kingdom (oldKingdom != newKingdom)
             // 3. On leave: joins any kingdom as mercenary/vassal (may have left kingdom during leave)
             // NOTE: We must NOT end enlistment when they first join as mercenary during StartEnlist()
-            if ((IsEnlisted || _isOnLeave) && newKingdom != null)
+            // NOTE: Skip all of this if _isProcessingDischarge is true - intentional discharge kingdom changes
+            // (like restoring to original kingdom after full service) should not trigger any of this logic.
+            if ((IsEnlisted || _isOnLeave) && newKingdom != null && !_isProcessingDischarge)
             {
                 var playerClan = Clan.PlayerClan;
                 if (playerClan != null && playerClan.Kingdom == newKingdom)

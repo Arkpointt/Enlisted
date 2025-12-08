@@ -337,7 +337,7 @@ namespace Enlisted.Features.Interface.Behaviors
         /// <summary>
         /// Menu background initialization for enlisted_status menu.
         /// Sets culture-appropriate background and ambient audio for modern feel.
-        /// Resumes time so it continues passing while browsing menus.
+        /// Leaves time control untouched so player retains current pause/speed.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_status")]
         private static void OnEnlistedStatusBackgroundInit(MenuCallbackArgs args)
@@ -357,16 +357,12 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
-            
-            // Resume time if stopped, but preserve higher speed modes (StoppableFastForward)
-            // Native GameMenu.SwitchToMenu() stops time by default - we only unpause, never downgrade speed
-            ResumeTimeWithoutDowngrade();
         }
         
         /// <summary>
         /// Menu background initialization for enlisted_duty_selection menu.
         /// Sets culture-appropriate background and ambient audio.
-        /// Resumes time so it continues passing while browsing menus.
+        /// Leaves time control untouched so player retains current pause/speed.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_duty_selection")]
         private static void OnDutySelectionBackgroundInit(MenuCallbackArgs args)
@@ -386,15 +382,12 @@ namespace Enlisted.Features.Interface.Behaviors
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
-            
-            // Resume time if stopped, but preserve higher speed modes
-            ResumeTimeWithoutDowngrade();
         }
         
         /// <summary>
         /// Menu background initialization for enlisted_desert_confirm menu.
         /// Sets ominous background for desertion confirmation.
-        /// Resumes time so it continues passing while browsing menus.
+        /// Leaves time control untouched so player retains current pause/speed.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_desert_confirm")]
         private static void OnDesertConfirmBackgroundInit(MenuCallbackArgs args)
@@ -413,27 +406,9 @@ namespace Enlisted.Features.Interface.Behaviors
             
             args.MenuContext.SetBackgroundMeshName(backgroundMesh);
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
-            
-            // Resume time if stopped, but preserve higher speed modes
-            ResumeTimeWithoutDowngrade();
+            // Time control left untouched - respects player's current pause/speed setting
         }
         
-        /// <summary>
-        /// Resumes time if currently stopped, but preserves higher speed modes.
-        /// This allows players to use fast forward (speed 2/3) while in enlisted menus.
-        /// Only sets to StoppablePlay if currently stopped - never downgrades from FastForward.
-        /// </summary>
-        private static void ResumeTimeWithoutDowngrade()
-        {
-            if (Campaign.Current == null) return;
-            
-            // Only unpause if currently stopped - preserve StoppableFastForward and other higher speeds
-            if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
-            {
-                Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-            }
-        }
-
         /// <summary>
         ///     Real-time tick handler that runs every game frame while the player is enlisted.
         ///     Handles menu state updates, menu transitions, and settlement access logic.
@@ -1210,26 +1185,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
 
-                // Unlock time control so player can change speed, but don't force a specific mode
-                // StartWait() sets UnstoppableFastForward - we convert to stoppable to allow player control
-                // but only if currently in an unstoppable mode, preserving player's speed preference
+                // Unlock time control so player can change speed, then restore their prior state
                 Campaign.Current.SetTimeControlModeLock(false);
-                
-                // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
-                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                {
-                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
-                }
-                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppablePlay)
-                {
-                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-                }
-                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
-                {
-                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-                }
-                // Otherwise keep current mode (StoppablePlay or StoppableFastForward)
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
 
                 RefreshEnlistedStatusDisplay(args);
                 _menuNeedsRefresh = true;
@@ -2233,6 +2195,8 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Capture time state BEFORE menu switch to preserve player's time control
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 GameMenu.SwitchToMenu("enlisted_status");
             }
             catch (Exception ex)
@@ -2412,26 +2376,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Start wait to enable time controls for the wait menu
                 args.MenuContext.GameMenu.StartWait();
 
-                // Unlock time control so player can change speed, but don't force a specific mode
-                // StartWait() sets UnstoppableFastForward - we convert to stoppable to allow player control
-                // but preserve the speed (fast forward vs normal play)
+                // Unlock time control so the player can change speed, but restore their prior state
                 Campaign.Current.SetTimeControlModeLock(false);
-                
-                // Convert unstoppable modes to stoppable equivalents (allow pause), preserve speed
-                if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForward ||
-                    Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime)
-                {
-                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppableFastForward;
-                }
-                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.UnstoppablePlay)
-                {
-                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-                }
-                else if (Campaign.Current.TimeControlMode == CampaignTimeControlMode.Stop)
-                {
-                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.StoppablePlay;
-                }
-                // Otherwise keep current mode (StoppablePlay or StoppableFastForward)
+
+                // Restore the captured time mode using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
 
                 // Initialize dynamic menu text on load
                 if (enlistment?.IsEnlisted == true)

@@ -393,8 +393,21 @@ namespace Enlisted.Features.Combat.Behaviors
                 // If the actual assault has begun (MapEvent active), exit the reserve menu immediately so the native encounter can start
                 if (siegeAssaultStarted)
                 {
+                    // CRITICAL: Clear reserve state BEFORE exiting the menu!
+                    // Otherwise GenericStateMenuPatch still sees IsWaitingInReserve=true and returns
+                    // "enlisted_battle_wait", causing the menu to immediately re-open in an infinite loop
+                    IsWaitingInReserve = false;
+                    
+                    // Restore player party to active state so they can participate in the siege
+                    var mainParty = MobileParty.MainParty;
+                    if (mainParty != null)
+                    {
+                        mainParty.IsActive = true;
+                        mainParty.IsVisible = true;
+                    }
+                    
                     args.MenuContext.GameMenu.EndWait();
-                    ModLogger.Info("Battle", "Siege assault started - exiting reserve menu for native encounter");
+                    ModLogger.Info("Battle", "Siege assault started - cleared reserve state, exiting for native encounter");
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
                         if (Campaign.Current?.CurrentMenuContext != null)
@@ -495,32 +508,39 @@ namespace Enlisted.Features.Combat.Behaviors
                     IsWaitingInReserve = false;
                     args.MenuContext.GameMenu.EndWait();
                     
-                    // CRITICAL: Clean up the encounter state so the player doesn't get stuck invisible
-                    // When the battle ends while in reserve, we need to:
-                    // 1. Clear the encounter so visibility enforcement doesn't skip us
-                    // 2. Restore the party to active/visible if not enlisted
+                    // CRITICAL: Fully clean up the encounter state so the player doesn't get stuck invisible
+                    // When the battle ends while in reserve, we must call Finish() to immediately clear
+                    // PlayerEncounter.Current. Setting LeaveEncounter=true alone is not enough because
+                    // StopEnlist() checks PlayerEncounter.Current and will deactivate the party if it's still set.
                     if (PlayerEncounter.Current != null)
                     {
                         PlayerEncounter.Current.IsPlayerWaiting = false;
                         PlayerEncounter.LeaveEncounter = true;
-                        ModLogger.Info("Battle", "Cleaned up encounter state after battle end");
+                        try
+                        {
+                            PlayerEncounter.Finish(true); // Immediately clear PlayerEncounter.Current
+                            ModLogger.Info("Battle", "Finished PlayerEncounter after battle end");
+                        }
+                        catch (Exception finishEx)
+                        {
+                            ModLogger.Error("Battle", $"Error finishing encounter: {finishEx.Message}");
+                        }
                     }
                     
-                    // If no longer enlisted (lord captured/party disbanded), restore player to map
-                    if (enlistment?.IsEnlisted != true)
+                    // Restore player party to map - needed whether enlisted or not since we just exited reserve
+                    var mainParty = MobileParty.MainParty;
+                    if (mainParty != null && Hero.MainHero?.IsPrisoner != true)
                     {
-                        var mainParty = MobileParty.MainParty;
-                        if (mainParty != null && Hero.MainHero?.IsPrisoner != true)
-                        {
-                            mainParty.IsActive = true;
-                            mainParty.IsVisible = true;
-                            ModLogger.Info("Battle", "Restored player party to map after battle end (not enlisted)");
-                        }
+                        mainParty.IsActive = true;
+                        mainParty.IsVisible = true;
+                        mainParty.SetMoveModeHold(); // Stop any phantom movement from battle
+                        ModLogger.Info("Battle", "Restored player party to map after battle/reserve end");
                     }
                     
                     // Return to normal enlisted state or campaign map
                     // Note: 'enlistment' variable is already defined at the start of this method
-                    if (enlistment?.IsEnlisted == true)
+                    // If lord's party is gone, go to campaign map (hourly tick will handle grace period)
+                    if (enlistment?.IsEnlisted == true && !lordPartyGone)
                     {
                         GameMenu.SwitchToMenu("enlisted_status");
                         ModLogger.Info("Battle", "Battle ended - returning to enlisted status menu");
@@ -528,7 +548,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     else
                     {
                         GameMenu.ExitToLast();
-                        ModLogger.Info("Battle", "Battle ended - exiting to campaign map");
+                        ModLogger.Info("Battle", "Battle ended or lord party gone - exiting to campaign map");
                     }
                 }
             }

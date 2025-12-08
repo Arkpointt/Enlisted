@@ -119,6 +119,21 @@ namespace Enlisted.Features.Equipment.Behaviors
             CapturedTimeMode = Campaign.Current?.TimeControlMode;
             ModLogger.Info("Quartermaster", $"Captured time state: {CapturedTimeMode}");
         }
+
+        /// <summary>
+        /// Convert any unstoppable time modes to their stoppable equivalents while preserving Stop.
+        /// Used to restore player-controlled speed after wait menus without auto-unpausing.
+        /// </summary>
+        public static CampaignTimeControlMode NormalizeToStoppable(CampaignTimeControlMode mode)
+        {
+            return mode switch
+            {
+                CampaignTimeControlMode.UnstoppablePlay => CampaignTimeControlMode.StoppablePlay,
+                CampaignTimeControlMode.UnstoppableFastForward => CampaignTimeControlMode.StoppableFastForward,
+                CampaignTimeControlMode.UnstoppableFastForwardForPartyWaitTime => CampaignTimeControlMode.StoppableFastForward,
+                _ => mode // Stop/StoppablePlay/StoppableFastForward stay unchanged
+            };
+        }
         
         /// <summary>
         /// Shared wait menu condition. Always returns true since we control exit via menu options.
