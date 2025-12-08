@@ -3949,12 +3949,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
 
         /// <summary>
-        ///     Teleports the player to a safe location (nearest friendly or neutral settlement).
+        ///     Teleports the player to a safe location just outside engagement range.
+        ///     Uses the game's navigation mesh to ensure the destination is valid terrain (not water/mountains).
+        ///     For naval scenarios, falls back to finding the nearest friendly/neutral port.
         ///     Called when lord is captured while player is in reserve, so player doesn't spawn
         ///     surrounded by enemies at the battle location.
         /// </summary>
         /// <param name="mainParty">The player's party to teleport.</param>
-        private void TryTeleportToSafety(MobileParty mainParty)
+        /// <param name="threatParty">Optional threat party to escape from.</param>
+        private void TryTeleportToSafety(MobileParty mainParty, PartyBase threatParty = null)
         {
             try
             {
@@ -3963,65 +3966,71 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                var playerPosition = mainParty.Position;
-                var playerFaction = Hero.MainHero?.MapFaction;
-                Settlement bestSettlement = null;
-                var bestDistance = float.MaxValue;
+                // Determine reference point (threat or lord position) to escape from
+                CampaignVec2 referencePosition;
+                var threatName = "battle";
 
-                // Find the nearest friendly or neutral settlement
-                foreach (var settlement in Settlement.All)
+                if (threatParty?.MobileParty != null)
                 {
-                    if (settlement == null || settlement.IsHideout)
-                    {
-                        continue;
-                    }
-
-                    // Skip enemy settlements
-                    if (playerFaction != null && settlement.MapFaction != null)
-                    {
-                        if (FactionManager.IsAtWarAgainstFaction(playerFaction, settlement.MapFaction))
-                        {
-                            continue;
-                        }
-                    }
-
-                    // Prefer towns and castles over villages
-                    var settlementPosition = settlement.GatePosition;
-                    var distance = playerPosition.Distance(settlementPosition);
-
-                    // Prioritize towns (safer, more services)
-                    if (settlement.IsTown)
-                    {
-                        distance *= 0.7f; // 30% distance bonus for towns
-                    }
-                    else if (settlement.IsCastle)
-                    {
-                        distance *= 0.85f; // 15% distance bonus for castles
-                    }
-
-                    if (distance < bestDistance)
-                    {
-                        bestDistance = distance;
-                        bestSettlement = settlement;
-                    }
+                    referencePosition = threatParty.MobileParty.Position;
+                    threatName = threatParty.Name?.ToString() ?? "enemy";
+                }
+                else if (_enlistedLord?.PartyBelongedTo != null)
+                {
+                    referencePosition = _enlistedLord.PartyBelongedTo.Position;
+                    threatName = _enlistedLord.Name?.ToString() ?? "lord";
+                }
+                else
+                {
+                    // No reference - use player's current position as center
+                    referencePosition = mainParty.Position;
                 }
 
-                if (bestSettlement != null)
+                // Find a safe, reachable point just outside engagement range (12-20 map units)
+                // NavigationHelper validates the position is on valid terrain (not water/mountains)
+                // and that there's a navigable path to reach it
+                var safePosition = Helpers.NavigationHelper.FindPointAroundPosition(
+                    referencePosition,
+                    MobileParty.NavigationType.Default, // Land navigation
+                    maxDistance: 20f,
+                    minDistance: 12f,
+                    requirePath: true,
+                    useUniformDistribution: false
+                );
+
+                // Verify we got a valid different position
+                if (safePosition.IsValid() && safePosition != referencePosition)
                 {
-                    // Teleport to just outside the settlement
-                    mainParty.Position = bestSettlement.GatePosition;
+                    mainParty.Position = safePosition;
                     mainParty.SetMoveModeHold();
 
-                    ModLogger.Info("Battle", 
-                        $"Teleported player to safety near {bestSettlement.Name} after lord capture");
+                    ModLogger.Info("Battle",
+                        $"Teleported player to safe distance from {threatName} (validated terrain)");
 
-                    var message = new TextObject("{=Enlisted_Message_EscapedToSafety}You have escaped to {SETTLEMENT}.");
-                    message.SetTextVariable("SETTLEMENT", bestSettlement.Name);
+                    var message = new TextObject("{=Enlisted_Message_EscapedToSafety}You have escaped to a safe distance.");
                     InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
                 }
                 else
                 {
-                    ModLogger.Warn("Battle", "No safe settlement found for teleport after lord capture");
+                    // Fallback for naval scenarios or when no nearby land: find nearest friendly/neutral port
+                    var port = FindNearestFriendlyPort(mainParty.Position);
+                    if (port != null)
+                    {
+                        mainParty.Position = port.GatePosition;
+                        mainParty.SetMoveModeHold();
+
+                        ModLogger.Info("Battle",
+                            $"Teleported player to {port.Name} after naval defeat (no nearby land found)");
+
+                        var message = new TextObject("{=Enlisted_Message_EscapedToPort}You have washed ashore at {PORT}.");
+                        message.SetTextVariable("PORT", port.Name);
+                        InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    }
+                    else
+                    {
+                        ModLogger.Warn("Battle",
+                            $"Could not find valid terrain or port for safety teleport near {threatName} - player stays in place");
+                    }
                 }
             }
             catch (Exception ex)
@@ -4123,6 +4132,69 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Ignore - we tried our best
                 }
             }
+        }
+
+        /// <summary>
+        ///     Finds the nearest friendly or neutral settlement with a port.
+        ///     Used for naval defeat scenarios where the player needs to "wash ashore" somewhere safe.
+        /// </summary>
+        /// <param name="fromPosition">The position to search from.</param>
+        /// <returns>The nearest friendly/neutral port settlement, or null if none found.</returns>
+        private Settlement FindNearestFriendlyPort(CampaignVec2 fromPosition)
+        {
+            var playerFaction = Hero.MainHero?.MapFaction;
+            Settlement bestPort = null;
+            var bestDistance = float.MaxValue;
+
+            foreach (var settlement in Settlement.All)
+            {
+                if (settlement == null || settlement.IsHideout)
+                {
+                    continue;
+                }
+
+                // Skip settlements without ports (for naval scenarios)
+                // Also accept any town/castle for land-based fallback
+                var isPort = settlement.HasPort;
+                var isSafeSettlement = settlement.IsTown || settlement.IsCastle;
+                
+                if (!isPort && !isSafeSettlement)
+                {
+                    continue;
+                }
+
+                // Skip enemy settlements
+                if (playerFaction != null && settlement.MapFaction != null)
+                {
+                    if (FactionManager.IsAtWarAgainstFaction(playerFaction, settlement.MapFaction))
+                    {
+                        continue;
+                    }
+                }
+
+                var targetPosition = isPort ? settlement.PortPosition : settlement.GatePosition;
+                var distance = fromPosition.Distance(targetPosition);
+
+                // Prefer ports for naval scenarios
+                if (isPort)
+                {
+                    distance *= 0.8f; // 20% distance bonus for ports
+                }
+
+                // Prefer towns over castles (more services)
+                if (settlement.IsTown)
+                {
+                    distance *= 0.9f; // 10% distance bonus for towns
+                }
+
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    bestPort = settlement;
+                }
+            }
+
+            return bestPort;
         }
 
         #region Veteran Retirement System
@@ -4967,7 +5039,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Handle player state cleanup (reserve mode, encounters, etc.)
                 // This doesn't capture the player - if player was fighting, native surrender flow handles capture
                 // If player was in reserve, they escape to safety
-                HandlePlayerStateOnLordCapture();
+                HandlePlayerStateOnLordCapture(capturingParty);
 
                 // Start grace period instead of immediate discharge
                 // Player has 14 days to rejoin another lord in the same kingdom
@@ -7610,7 +7682,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// - Otherwise: just logs (edge case)
         /// Does NOT directly capture the player - native game handles actual capture via surrender.
         /// </summary>
-        private void HandlePlayerStateOnLordCapture()
+        private void HandlePlayerStateOnLordCapture(PartyBase capturingParty)
         {
             if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
             {
@@ -7657,7 +7729,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + protectionDuration);
                     
                     // Move player to nearest friendly settlement to escape the battle
-                    TryTeleportToSafety(mainParty);
+                    TryTeleportToSafety(mainParty, capturingParty);
                     
                     // Since we've finished the encounter, StopEnlist won't see it as "in battle state"
                     // and will activate the party directly - this is what we want
