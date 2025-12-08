@@ -24,6 +24,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
         // This is set after forced settlement exit to prevent race conditions
         private static bool _forceHidden;
         private static float _forceHiddenUntil;
+        private static bool? _lastPrisonerVisibilityValue;
+        private static string _lastPrisonerVisibilitySettlement;
 
         /// <summary>
         /// Call this immediately BEFORE forcing player out of a settlement.
@@ -70,15 +72,26 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
                 var enlistment = EnlistmentBehavior.Instance;
                 
-                // If player is a prisoner, allow all visibility changes (captivity system needs control)
-                // Log this to diagnose "attacked while prisoner" - visibility changes shouldn't normally happen
-                if (__instance == mainParty && Hero.MainHero?.IsPrisoner == true)
+            // If player is a prisoner, allow all visibility changes (captivity system needs control)
+            // Throttle logging to changes in value/settlement to avoid spam while being marched
+            if (__instance == mainParty && Hero.MainHero?.IsPrisoner == true)
                 {
                     var settlement = Hero.MainHero?.CurrentSettlement?.Name?.ToString() ?? "none";
+                if (_lastPrisonerVisibilityValue != value || _lastPrisonerVisibilitySettlement != settlement)
+                {
                     ModLogger.Info("Captivity", 
                         $"Party visibility allowed while prisoner (value: {value}, settlement: {settlement})");
+                    _lastPrisonerVisibilityValue = value;
+                    _lastPrisonerVisibilitySettlement = settlement;
+                }
                     return true;
                 }
+            else if (_lastPrisonerVisibilityValue.HasValue)
+            {
+                // Reset throttle cache once no longer prisoner
+                _lastPrisonerVisibilityValue = null;
+                _lastPrisonerVisibilitySettlement = null;
+            }
 
                 // Only check for main party
                 if (__instance != mainParty)

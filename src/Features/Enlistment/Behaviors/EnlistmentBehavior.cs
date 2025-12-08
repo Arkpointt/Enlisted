@@ -176,6 +176,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private bool _isSiegePreparationLatched;
 
+        // Captivity settlement log throttle to avoid spamming every hop
+        private static readonly HashSet<string> _captivitySettlementsLogged = new HashSet<string>();
+
         /// <summary>
         ///     Last campaign time when the real-time tick update was processed.
         ///     Used with _realtimeUpdateIntervalSeconds to throttle update frequency.
@@ -6748,12 +6751,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // The native PlayerCaptivity system handles everything during captivity
                 // Interfering with party state or menus while captured causes crashes
                 // (e.g., when captor enters a settlement with the player as prisoner)
-                if (!IsEnlisted || _isOnLeave || Hero.MainHero.IsPrisoner)
+                var playerIsPrisoner = Hero.MainHero.IsPrisoner;
+                if (!IsEnlisted || _isOnLeave || playerIsPrisoner)
                 {
-                    if (Hero.MainHero.IsPrisoner)
+                    if (playerIsPrisoner)
                     {
-                        ModLogger.Info("Captivity",
-                            $"Captor entered {settlement?.Name} with player as prisoner");
+                        var settlementName = settlement?.Name?.ToString() ?? "unknown";
+                        if (!_captivitySettlementsLogged.Contains(settlementName))
+                        {
+                            ModLogger.Info("Captivity",
+                                $"Captor entered {settlementName} with player as prisoner");
+                            _captivitySettlementsLogged.Add(settlementName);
+                        }
+                    }
+                    else
+                    {
+                        // Clear throttle cache once not prisoner so next captivity run logs fresh
+                        _captivitySettlementsLogged.Clear();
                     }
 
                     return;
@@ -7825,6 +7839,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var main = MobileParty.MainParty;
                 if (main == null)
                 {
+                    return;
+                }
+
+                // CRITICAL: Do NOT activate party while prisoner - captivity system owns player state
+                // Making the party active/visible while prisoner allows enemies to attack us in dungeon
+                if (Hero.MainHero?.IsPrisoner == true)
+                {
+                    ModLogger.Info("Captivity", "Skipping grace protection activation - player is prisoner");
+                    // Still set the protection timer so it's ready when released
+                    _graceProtectionEnds = CampaignTime.Now + CampaignTime.Days(1f);
                     return;
                 }
 
