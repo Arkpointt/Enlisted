@@ -153,45 +153,52 @@ namespace Enlisted.Mod.Entry
 
                 try
                 {
-                    // Reference patch types and methods to satisfy static analysis (ReSharper)
+                    // Reference patch types to satisfy static analysis (ReSharper)
                     // These are discovered via reflection by Harmony.PatchAll()
-                    _ = typeof(ArmyDispersedMenuPatch);
-                    _ = typeof(JoinEncounterAutoSelectPatch);
-                    _ = typeof(EncounterSuppressionPatch);
+                    // Listed alphabetically by patch file for easy maintenance
+                    _ = typeof(AbandonArmyBlockPatch);
                     _ = typeof(ArmyCohesionExclusionPatch);
+                    _ = typeof(ArmyDispersedMenuPatch);
+                    _ = typeof(CheckFortificationAttackablePatch);
+                    _ = typeof(ClanFinanceEnlistmentIncomePatch);
+                    _ = typeof(CompanionCaptainBlockPatch);
+                    _ = typeof(CompanionGeneralBlockPatch);
                     _ = typeof(DischargeRelationPenaltyPatch);
                     _ = typeof(DutiesEffectiveEngineerPatch);
                     _ = typeof(DutiesEffectiveScoutPatch);
                     _ = typeof(DutiesEffectiveQuartermasterPatch);
                     _ = typeof(DutiesEffectiveSurgeonPatch);
+                    _ = typeof(EncounterSuppressionPatch);
+                    _ = typeof(EndCaptivityCleanupPatch);
                     _ = typeof(EnlistedWaitingPatch);
                     _ = typeof(EnlistmentExpenseIsolationPatch);
                     _ = typeof(FoodSystemPatches);
                     _ = typeof(FoodSystemPatches.VirtualFoodLinkPatch);
                     _ = typeof(FoodSystemPatches.SharedFoodConsumptionPatch);
                     _ = typeof(FormationMessageSuppressionPatch);
+                    _ = typeof(GenericStateMenuPatch);
+                    _ = typeof(HidePartyNamePlatePatch);
                     _ = typeof(IncidentsSuppressionPatch);
                     _ = typeof(InfluenceMessageSuppressionPatch);
+                    _ = typeof(JoinEncounterAutoSelectPatch);
+                    _ = typeof(LootBlockPatch);
+                    _ = typeof(LootBlockPatch.ItemLootPatch);
+                    _ = typeof(LootBlockPatch.MemberLootPatch);
+                    _ = typeof(LootBlockPatch.PrisonerLootPatch);
+                    _ = typeof(LootBlockPatch.LootScreenPatch);
+                    _ = typeof(MercenaryIncomeSuppressionPatch);
+                    _ = typeof(NavalBattleArmyWaitCrashFix);
+                    _ = typeof(NavalBattleShipAssignmentPatch);
+                    _ = typeof(NavalShipDamageProtectionPatch);
+                    _ = typeof(OrderOfBattleSuppressionPatch);
                     _ = typeof(PlayerIsAtSeaTagCrashFix);
-                    _ = typeof(EndCaptivityCleanupPatch);
+                    _ = typeof(PostDischargeProtectionPatch);
                     _ = typeof(RaftStateSuppressionPatch);
-                    _ = nameof(ArmyDispersedMenuPatch.Prefix);
-                    _ = nameof(JoinEncounterAutoSelectPatch.Prefix);
-                    _ = nameof(EncounterSuppressionPatch.Prefix);
-                    _ = nameof(ArmyCohesionExclusionPatch.Postfix);
-                    _ = nameof(DischargeRelationPenaltyPatch.Prefix);
-                    _ = nameof(DutiesEffectiveEngineerPatch.Prefix);
-                    _ = nameof(DutiesEffectiveScoutPatch.Prefix);
-                    _ = nameof(DutiesEffectiveQuartermasterPatch.Prefix);
-                    _ = nameof(DutiesEffectiveSurgeonPatch.Prefix);
-                    _ = nameof(EnlistedWaitingPatch.Postfix);
-                    _ = nameof(EnlistmentExpenseIsolationPatch.TargetMethod);
-                    _ = nameof(EnlistmentExpenseIsolationPatch.Prefix);
-                    _ = nameof(FoodSystemPatches.VirtualFoodLinkPatch.Postfix);
-                    _ = nameof(FoodSystemPatches.SharedFoodConsumptionPatch.Prefix);
-                    _ = nameof(FormationMessageSuppressionPatch.Prefix);
-                    _ = nameof(IncidentsSuppressionPatch.Prefix);
-                    _ = nameof(InfluenceMessageSuppressionPatch.Prefix);
+                    _ = typeof(ReturnToArmySuppressionPatch);
+                    _ = typeof(SettlementOutsideLeaveButtonPatch);
+                    _ = typeof(SkillSuppressionPatch);
+                    _ = typeof(TownLeaveButtonPatch);
+                    _ = typeof(VisibilityEnforcementPatch);
 
                     // These patches are deferred until first Campaign.Tick() to avoid TypeInitializationException.
                     // Their target classes (DefaultArmyManagementCalculationModel, EncounterGameMenuBehavior)

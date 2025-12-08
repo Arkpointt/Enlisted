@@ -166,8 +166,6 @@
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
-    <Compile Include="src\Features\Combat\Stats\Behaviors\CombatStatsBehavior.cs"/>
-    <Compile Include="src\Features\Combat\Stats\Behaviors\CombatStatsMissionBehavior.cs"/>
     <Compile Include="src\Features\CommandTent\Data\FactionServiceRecord.cs"/>
     <Compile Include="src\Features\CommandTent\Data\LifetimeServiceRecord.cs"/>
     <Compile Include="src\Features\CommandTent\Data\RetinueState.cs"/>
@@ -192,6 +190,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleShipAssignmentPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleArmyWaitCrashFix.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\RaftStateSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs"/>
