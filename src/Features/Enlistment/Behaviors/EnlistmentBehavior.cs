@@ -2212,6 +2212,34 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Enlistment",
                         $"Lord's party disbanded (Lord: {_enlistedLord.Name}, Kingdom: {lordKingdom.Name}) - starting grace period");
 
+                    // If player was in reserve during disbandment, teleport to safety first
+                    // This prevents spawning surrounded by enemies at the battle location
+                    var wasInReserve = Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve;
+                    if (wasInReserve)
+                    {
+                        ModLogger.Info("Battle", "Player was in reserve when party disbanded - teleporting to safety");
+                        Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
+                        
+                        // Clear any lingering encounter state
+                        if (PlayerEncounter.Current != null)
+                        {
+                            PlayerEncounter.Current.IsPlayerWaiting = false;
+                            PlayerEncounter.LeaveEncounter = true;
+                            PlayerEncounter.Finish(true);
+                        }
+                        
+                        // Apply protection and teleport
+                        var mainParty = MobileParty.MainParty;
+                        if (mainParty != null)
+                        {
+                            var protectionDuration = CampaignTime.Hours(12f);
+                            mainParty.IgnoreByOtherPartiesTill(CampaignTime.Now + protectionDuration);
+                            TryTeleportToSafety(mainParty);
+                        }
+                        
+                        GameMenu.ExitToLast();
+                    }
+
                     // Stop enlistment but retain state for grace period
                     // This saves the current tier/XP to _savedGraceTier/_savedGraceXP
                     StopEnlist("Party disbanded - awaiting transfer", retainKingdomDuringGrace: true);
