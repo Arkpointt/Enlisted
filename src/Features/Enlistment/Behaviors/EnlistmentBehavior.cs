@@ -1334,12 +1334,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // NAVAL FIX: Handle sea stranding - if player is at sea without naval capability, teleport to nearest port
                     // This can happen when the army disbands at sea and service ends (e.g., lord captured at sea, lord dies at sea)
                     // Without this fix, the player becomes permanently stranded on the water
-                    // Always teleport regardless of grace period - being stuck at sea is a critical issue that blocks gameplay
-                    if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability)
+                    // EXCEPTION: If player is a PRISONER, do NOT teleport - let native's player_raft_state_after_prisoner
+                    // menu handle stranding after release. Teleporting while prisoner causes confusing "washed ashore"
+                    // notifications while still in captivity.
+                    if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability && !playerIsPrisoner)
                     {
                         ModLogger.Info("Naval",
                             "Player stranded at sea after service ended - teleporting to nearest port");
                         TryTeleportToNearestPort(main);
+                    }
+                    else if (main.IsCurrentlyAtSea && !main.HasNavalNavigationCapability && playerIsPrisoner)
+                    {
+                        ModLogger.Info("Naval",
+                            "Player stranded at sea but is prisoner - letting native handle stranding after release");
                     }
                 }
 
