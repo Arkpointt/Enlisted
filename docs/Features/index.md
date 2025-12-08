@@ -34,6 +34,7 @@ Additional gameplay mechanics and player choices.
 - **[Troop Selection](Gameplay/troop-selection.md)** - Real troop choice for promotions and formations
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
 - **[Gear Upgrade Loop](Gameplay/gear-upgrade-loop.md)** - Scuffed issue gear, repairs/upgrades with cooldowns, promotion reclaim with retention credit, optional buy-out, and apothecary phasing
+- **[Personal Chest](Gameplay/personal-chest.md)** - Sealed personal storage with capacity upgrades, overweight guards on leave/discharge, and issued-gear auto-restore safeguards
 
 ---
 
