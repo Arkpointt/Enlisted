@@ -2,6 +2,11 @@
 
 Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
 
+## What's New (v0.5.6)
+- Naval safety: suppresses the Naval DLC "stranded at sea" raft menu when your enlisted lord/army still has ships; stays in lockstep with your lord at sea, only showing raft state when truly shipless.
+- Cohesion: added starvation compensation to the embedded-player cohesion patch so the player's party never drags army cohesion when sharing the lord's food.
+- Version bump and docs refresh for 0.5.6.
+
 ## Features
 
 ### 🛡️ Enlistment
@@ -9,7 +14,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - You join their party as a regular soldier.
 - **Army Leader Restriction**: Cannot enlist while leading your own army (must disband first).
 - **No Personal Loot/Prisoners**: Spoils go to your lord.
-- **No Starvation**: Your lord provides food.
+- **No Starvation**: Your lord provides food (embedded food sharing; starvation cohesion penalties are compensated).
 - **Wages**: Paid daily based on your rank.
 
 ### ⚔️ Battle System
@@ -43,6 +48,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - Your party follows the lord onto ships seamlessly.
 - **Ship Protection**: Your ships are protected from damage while enlisted.
 - **Naval Exclusion**: Lords cannot use your ships for navigation.
+- **Stranding Protection**: Prevents the Naval DLC stranded-at-sea UI while enlisted when your lord/army has ships; only triggers raft state when no naval capability remains.
 
 ### 🚪 Retirement
 - **Term of Service**: 252 days (3 years).
