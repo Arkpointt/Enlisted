@@ -87,7 +87,17 @@ If you forget this step, the file will exist but won't be compiled, and your cod
 
 Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
 
-- `enlisted.log` - Main activity log with throttling and category-based levels
+- Session logs rotate across three files for easy human reading:
+  - `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
+  - `Session-B_{...}.log`
+  - `Session-C_{...}.log` (oldest kept)
+- `current_session.txt` points to the active session file.
+- Conflicts logs rotate similarly:
+  - `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
+  - `Conflicts-B_{...}.log`
+  - `Conflicts-C_{...}.log` (oldest kept)
+- `Current_Session_README.txt` summarizes Session/Conflicts A/B/C and how to share logs.
+- `enlisted.log` - Legacy name (redirected to session rotation); throttled, category-based
 - `conflicts.log` - Comprehensive mod conflict diagnostics:
   - Harmony patch conflict detection (identifies which mods patch the same methods)
   - Patch execution order and priority analysis

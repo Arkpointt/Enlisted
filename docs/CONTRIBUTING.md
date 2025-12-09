@@ -69,7 +69,16 @@ Full path: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
 Example: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
 
 Files:
-- `enlisted.log` - Main activity log with category-based levels
+- Session logs rotate across three files:
+  - `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
+  - `Session-B_{...}.log`
+  - `Session-C_{...}.log` (oldest kept)
+- Conflicts logs rotate similarly:
+  - `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
+  - `Conflicts-B_{...}.log`
+  - `Conflicts-C_{...}.log` (oldest kept)
+- `Current_Session_README.txt` summarizes Session/Conflicts A/B/C and how to share logs.
+- `enlisted.log` - Legacy name (redirected to session rotation); main activity log with category-based levels
 - `conflicts.log` - Comprehensive mod conflict diagnostics:
   - Detects Harmony patch conflicts (other mods patching same methods)
   - Shows patch execution order and priorities

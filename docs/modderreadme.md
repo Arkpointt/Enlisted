@@ -47,7 +47,16 @@ src/
 
 Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
 
-- `enlisted.log` - Main log with category-based verbosity control
+- Session logs rotate across three files:
+  - `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
+  - `Session-B_{...}.log`
+  - `Session-C_{...}.log` (oldest kept)
+- Conflicts logs rotate similarly:
+  - `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
+  - `Conflicts-B_{...}.log`
+  - `Conflicts-C_{...}.log` (oldest kept)
+- `Current_Session_README.txt` summarizes Session/Conflicts A/B/C and how to share logs.
+- `enlisted.log` - Legacy name (redirected to session rotation); main log with category-based verbosity control
 - `conflicts.log` - Mod conflict diagnostics:
   - Harmony patch conflict detection (identifies mods sharing patches)
   - Patch execution order analysis

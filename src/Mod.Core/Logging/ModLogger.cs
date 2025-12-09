@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Enlisted.Mod.Core.Logging
@@ -20,20 +22,26 @@ namespace Enlisted.Mod.Core.Logging
 	}
 
 	/// <summary>
-	/// File logger for the mod with category-based log levels, throttling, and anti-spam features.
-	/// Writes to Modules/Enlisted/Debugging/enlisted.log and category-specific log files.
+	/// File logger for the mod with category-based log levels, throttling, anti-spam features,
+	/// and a three-session rotation that keeps the latest sessions easy to identify.
+	/// Writes session logs to Modules/Enlisted/Debugging/ as Session-A/B/C with timestamps.
 	/// 
 	/// Features:
 	/// - Per-category log levels (configure in settings.json)
 	/// - Message throttling to prevent spam from repeated messages
 	/// - LogOnce() for one-time messages per session
 	/// - LogSummary() for periodic summary reports
+	/// - Session log rotation (up to three: A newest, C oldest)
 	/// </summary>
 	public static class ModLogger
 	{
 		private static readonly object Sync = new object();
 		private static string _logFilePath = null; // Will be set in Initialize()
-		private static string _sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
+		private static string _sessionId = "Session-A";
+		private const int MaxSessionLogs = 3;
+		private const string SessionPrefix = "Session-";
+		private static readonly string[] SessionSlots = { "Session-A", "Session-B", "Session-C" };
+		private const string CombinedPointerFile = "Current_Session_README.txt";
 
 		// Per-category log levels (default to Info)
 		private static Dictionary<string, LogLevel> _categoryLevels = new Dictionary<string, LogLevel>(StringComparer.OrdinalIgnoreCase);
@@ -80,16 +88,8 @@ namespace Enlisted.Mod.Core.Logging
 				lock (Sync)
 				{
 					_logFilePath = string.IsNullOrWhiteSpace(customPath) ? ResolveDefaultLogPath() : customPath;
-					
-					// Ensure we have a valid path
-					if (string.IsNullOrWhiteSpace(_logFilePath))
-					{
-						_logFilePath = ResolveDocumentsPath("enlisted.log");
-					}
-					
-					var logDir = Path.GetDirectoryName(_logFilePath);
-					EnsureDirectoryExists(logDir);
-					ClearPreviousSessionFiles(logDir);
+					_logFilePath = PrepareSessionLogFile(_logFilePath);
+					_sessionId = Path.GetFileNameWithoutExtension(_logFilePath) ?? "Session-A";
 					
 					// Clear session-specific tracking
 					_loggedOnceKeys.Clear();
@@ -104,12 +104,11 @@ namespace Enlisted.Mod.Core.Logging
 			{
 				// Log to debug output so we can see what went wrong during initialization
 				System.Diagnostics.Debug.WriteLine($"[Enlisted] Logger initialization failed: {ex.Message}\n{ex.StackTrace}");
-				// Try to set a fallback path
+				// Try to set a fallback path with session rotation
 				try
 				{
-					_logFilePath = ResolveDocumentsPath("enlisted.log");
-					var logDir = Path.GetDirectoryName(_logFilePath);
-					EnsureDirectoryExists(logDir);
+					_logFilePath = PrepareSessionLogFile(ResolveDocumentsPath("enlisted.log"));
+					_sessionId = Path.GetFileNameWithoutExtension(_logFilePath) ?? "Session-A";
 				}
 				catch
 				{
@@ -585,26 +584,192 @@ namespace Enlisted.Mod.Core.Logging
 			}
 		}
 
-		private static void ClearPreviousSessionFiles(string directory)
+		private static string PrepareSessionLogFile(string preferredPath)
 		{
 			try
 			{
-				if (string.IsNullOrWhiteSpace(directory))
+				var basePath = string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath("enlisted.log") : preferredPath;
+				var logDir = Path.GetDirectoryName(basePath);
+				if (string.IsNullOrWhiteSpace(logDir))
 				{
-					return;
+					logDir = Path.GetDirectoryName(ResolveDocumentsPath("enlisted.log"));
 				}
-				if (!Directory.Exists(directory))
+
+				EnsureDirectoryExists(logDir);
+				var utcNow = DateTime.UtcNow;
+
+				// Collect existing session logs and legacy enlisted.log
+				var sessionFiles = Directory.GetFiles(logDir, $"{SessionPrefix}*.log", SearchOption.TopDirectoryOnly)
+					.Select(path => new FileInfo(path))
+					.OrderByDescending(f => f.CreationTimeUtc)
+					.ToList();
+
+				var legacyLog = Path.Combine(logDir, "enlisted.log");
+				if (File.Exists(legacyLog))
 				{
-					return;
+					sessionFiles.Insert(0, new FileInfo(legacyLog));
 				}
-				foreach (var file in Directory.GetFiles(directory))
+
+				// Keep at most the two newest existing sessions (B and C after shifting)
+				var toShift = sessionFiles.Take(SessionSlots.Length - 1).ToList();
+				var toDelete = sessionFiles.Skip(SessionSlots.Length - 1).ToList();
+				foreach (var old in toDelete)
 				{
-					try { File.Delete(file); } catch { /* best effort */ }
+					TryDeleteFile(old.FullName);
+				}
+
+				// Rename existing sessions to maintain slot ordering (newest -> B, next -> C)
+				for (int i = 0; i < toShift.Count && i + 1 < SessionSlots.Length; i++)
+				{
+					var stamp = ExtractTimestamp(toShift[i]) ?? toShift[i].CreationTimeUtc;
+					var targetName = $"{SessionSlots[i + 1]}_{stamp:yyyy-MM-dd_HH-mm-ss}.log";
+					var targetPath = Path.Combine(logDir, targetName);
+					TryMoveFile(toShift[i].FullName, targetPath);
+				}
+
+				// Create the new session log as Session-A
+				var newLogName = $"{SessionSlots[0]}_{utcNow:yyyy-MM-dd_HH-mm-ss}.log";
+				var newLogPath = Path.Combine(logDir, newLogName);
+				WriteSessionHeader(newLogPath, utcNow);
+				WriteCombinedPointer(logDir, newLogName, null);
+				return newLogPath;
+			}
+			catch
+			{
+				// Last resort: return the preferred path to let the caller fallback further
+				return string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath("enlisted.log") : preferredPath;
+			}
+		}
+
+		private static DateTime? ExtractTimestamp(FileInfo file)
+		{
+			try
+			{
+				var name = Path.GetFileNameWithoutExtension(file.Name);
+				if (string.IsNullOrWhiteSpace(name))
+				{
+					return null;
+				}
+
+				var parts = name.Split('_');
+				if (parts.Length == 0)
+				{
+					return null;
+				}
+
+				var tail = parts[parts.Length - 1];
+				if (DateTime.TryParseExact(tail, "yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture,
+						DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed))
+				{
+					return parsed;
 				}
 			}
 			catch
 			{
-				// best effort cleanup; ignore
+				// ignore parse errors
+			}
+			return null;
+		}
+
+		private static void WriteSessionHeader(string path, DateTime utcNow)
+		{
+			try
+			{
+				var local = utcNow.ToLocalTime();
+				var header = new StringBuilder();
+				header.AppendLine("=== ENLISTED LOG SESSION START ===");
+				header.AppendLine($"Session File: {Path.GetFileName(path)}");
+				header.AppendLine($"Started (UTC): {utcNow:yyyy-MM-dd HH:mm:ss}");
+				header.AppendLine($"Started (Local): {local:yyyy-MM-dd HH:mm:ss}");
+				header.AppendLine("Build: Enlisted RETAIL");
+				header.AppendLine(new string('-', 60));
+				File.WriteAllText(path, header.ToString(), Encoding.UTF8);
+			}
+			catch
+			{
+				// best-effort header
+			}
+		}
+
+		internal static void WriteCombinedPointer(string directory, string sessionFile, string conflictsFile)
+		{
+			try
+			{
+				EnsureDirectoryExists(directory);
+
+				// If values are missing, infer the latest by timestamp (not alphabetical)
+				if (string.IsNullOrWhiteSpace(sessionFile))
+				{
+					sessionFile = Directory.GetFiles(directory, $"{SessionPrefix}*.log", SearchOption.TopDirectoryOnly)
+						.Select(path => new FileInfo(path))
+						.Select(fi => new { File = fi, Stamp = ExtractTimestamp(fi) ?? fi.CreationTimeUtc })
+						.OrderByDescending(x => x.Stamp)
+						.Select(x => x.File.Name)
+						.FirstOrDefault();
+				}
+
+				if (string.IsNullOrWhiteSpace(conflictsFile))
+				{
+					conflictsFile = Directory.GetFiles(directory, "Conflicts-*.log", SearchOption.TopDirectoryOnly)
+						.Select(path => new FileInfo(path))
+						.Select(fi => new { File = fi, Stamp = ExtractTimestamp(fi) ?? fi.CreationTimeUtc })
+						.OrderByDescending(x => x.Stamp)
+						.Select(x => x.File.Name)
+						.FirstOrDefault();
+				}
+
+				var pointerPath = Path.Combine(directory, CombinedPointerFile);
+				var sb = new StringBuilder();
+				sb.AppendLine("Log pointer (sessions + conflicts)");
+				sb.AppendLine();
+				sb.AppendLine("Session logs");
+				sb.AppendLine("- Session-A: current/latest session");
+				sb.AppendLine("- Session-B: previous session");
+				sb.AppendLine("- Session-C: third-most-recent session");
+				if (!string.IsNullOrWhiteSpace(sessionFile))
+				{
+					sb.AppendLine($"Current file: {sessionFile}");
+				}
+				sb.AppendLine();
+				sb.AppendLine("Conflicts");
+				sb.AppendLine("- Conflicts-A: current/latest");
+				sb.AppendLine("- Conflicts-B: previous");
+				sb.AppendLine("- Conflicts-C: third-most-recent");
+				if (!string.IsNullOrWhiteSpace(conflictsFile))
+				{
+					sb.AppendLine($"Current file: {conflictsFile}");
+				}
+				sb.AppendLine();
+				sb.AppendLine("Send both the session and conflicts logs (choose one path):");
+				sb.AppendLine("- Option 1: Upload both logs to pastebin.com and post the links on the BUG forums: https://www.nexusmods.com/mountandblade2bannerlord/mods/9193?tab=posts");
+				sb.AppendLine("- Option 2: Retrieve the support email from the tagged posts on that page and email both logs with a brief crash description.");
+
+				File.WriteAllText(pointerPath, sb.ToString(), Encoding.UTF8);
+			}
+			catch
+			{
+				// best effort; ignore pointer failures
+			}
+		}
+
+		private static void TryDeleteFile(string path)
+		{
+			try { File.Delete(path); } catch { /* best effort */ }
+		}
+
+		private static void TryMoveFile(string source, string destination)
+		{
+			try
+			{
+				if (File.Exists(destination))
+				{
+					File.Delete(destination);
+				}
+				File.Move(source, destination);
+			}
+			catch
+			{
+				// best effort; if move fails, the old file remains
 			}
 		}
 

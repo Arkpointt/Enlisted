@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,6 +30,8 @@ namespace Enlisted.Mod.Core.Logging
         private static string _conflictLogPath;
         private static bool _hasRunStartup;
         private static bool _hasDeferredPatchInfo;
+		private const string ConflictPrefix = "Conflicts-";
+		private static readonly string[] ConflictSlots = { "Conflicts-A", "Conflicts-B", "Conflicts-C" };
 
         /// <summary>
         ///     Runs initial startup diagnostics and writes to Debugging/conflicts.log.
@@ -49,7 +52,6 @@ namespace Enlisted.Mod.Core.Logging
             {
                 _hasRunStartup = true;
                 InitializeLogPath();
-                ClearPreviousLog();
 
                 WriteHeader();
                 WriteEnvironmentInfo();
@@ -179,7 +181,7 @@ namespace Enlisted.Mod.Core.Logging
                     Directory.CreateDirectory(debugDir);
                 }
 
-                _conflictLogPath = Path.Combine(debugDir, "conflicts.log");
+				_conflictLogPath = RotateConflictLogs(debugDir);
             }
             catch (Exception ex)
             {
@@ -189,14 +191,14 @@ namespace Enlisted.Mod.Core.Logging
                     var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
                     var fallbackDir = Path.Combine(docs, "Mount and Blade II Bannerlord", "Logs", "Enlisted");
                     Directory.CreateDirectory(fallbackDir);
-                    _conflictLogPath = Path.Combine(fallbackDir, "conflicts.log");
+					_conflictLogPath = RotateConflictLogs(fallbackDir);
                     System.Diagnostics.Debug.WriteLine(
                         $"[Enlisted] Conflict log using Documents fallback (Error: {ex.Message})");
                 }
                 catch (Exception fallbackEx)
                 {
                     // Last resort: use a temp path
-                    _conflictLogPath = Path.Combine(Path.GetTempPath(), "Enlisted", "conflicts.log");
+					_conflictLogPath = RotateConflictLogs(Path.Combine(Path.GetTempPath(), "Enlisted"));
                     var tempDir = Path.GetDirectoryName(_conflictLogPath);
                     if (tempDir != null && !Directory.Exists(tempDir))
                     {
@@ -209,23 +211,63 @@ namespace Enlisted.Mod.Core.Logging
             }
         }
 
-        /// <summary>
-        ///     Clears the previous session's conflict log so only current session data is present.
-        /// </summary>
-        private static void ClearPreviousLog()
-        {
-            try
-            {
-                if (File.Exists(_conflictLogPath))
-                {
-                    File.Delete(_conflictLogPath);
-                }
-            }
-            catch
-            {
-                // Best effort - don't crash over log cleanup
-            }
-        }
+		private static string RotateConflictLogs(string logDir)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(logDir))
+				{
+					logDir = "Debugging";
+				}
+
+				if (!Directory.Exists(logDir))
+				{
+					Directory.CreateDirectory(logDir);
+				}
+
+				var utcNow = DateTime.UtcNow;
+
+				var files = Directory.GetFiles(logDir, $"{ConflictPrefix}*.log", SearchOption.TopDirectoryOnly)
+					.Select(path => new FileInfo(path))
+					.OrderByDescending(f => f.CreationTimeUtc)
+					.ToList();
+
+				var legacy = Path.Combine(logDir, "conflicts.log");
+				if (File.Exists(legacy))
+				{
+					files.Insert(0, new FileInfo(legacy));
+				}
+
+				var toShift = files.Take(ConflictSlots.Length - 1).ToList();
+				var toDelete = files.Skip(ConflictSlots.Length - 1).ToList();
+				foreach (var old in toDelete)
+				{
+					TryDelete(old.FullName);
+				}
+
+				for (int i = 0; i < toShift.Count && i + 1 < ConflictSlots.Length; i++)
+				{
+					var stamp = ExtractTimestamp(toShift[i]) ?? toShift[i].CreationTimeUtc;
+					var target = Path.Combine(logDir, $"{ConflictSlots[i + 1]}_{stamp:yyyy-MM-dd_HH-mm-ss}.log");
+					TryMove(toShift[i].FullName, target);
+				}
+
+				var newName = $"{ConflictSlots[0]}_{utcNow:yyyy-MM-dd_HH-mm-ss}.log";
+				var newPath = Path.Combine(logDir, newName);
+
+				// Touch the file so WriteLine can append later
+				File.WriteAllText(newPath, string.Empty, Encoding.UTF8);
+
+				// Update combined pointer with latest conflicts file
+				ModLogger.WriteCombinedPointer(logDir, null, newName);
+
+				return newPath;
+			}
+			catch
+			{
+				return Path.Combine(logDir, "conflicts.log");
+			}
+		}
 
         /// <summary>
         ///     Writes a line to the conflicts.log file.
@@ -246,6 +288,61 @@ namespace Enlisted.Mod.Core.Logging
         }
 
         #endregion
+
+		#region Helpers for rotation
+
+		private static DateTime? ExtractTimestamp(FileInfo file)
+		{
+			try
+			{
+				var name = Path.GetFileNameWithoutExtension(file.Name);
+				if (string.IsNullOrWhiteSpace(name))
+				{
+					return null;
+				}
+
+				var parts = name.Split('_');
+				if (parts.Length == 0)
+				{
+					return null;
+				}
+
+				var tail = parts[parts.Length - 1];
+				if (DateTime.TryParseExact(tail, "yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture,
+						DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var parsed))
+				{
+					return parsed;
+				}
+			}
+			catch
+			{
+				// ignore parse errors
+			}
+			return null;
+		}
+
+		private static void TryDelete(string path)
+		{
+			try { File.Delete(path); } catch { /* best effort */ }
+		}
+
+		private static void TryMove(string source, string destination)
+		{
+			try
+			{
+				if (File.Exists(destination))
+				{
+					File.Delete(destination);
+				}
+				File.Move(source, destination);
+			}
+			catch
+			{
+				// best effort
+			}
+		}
+
+		#endregion
 
         #region Header and Footer
 
