@@ -518,7 +518,15 @@ namespace Enlisted.Features.Combat.Behaviors
                         PlayerEncounter.LeaveEncounter = true;
                         try
                         {
-                        PlayerEncounter.Finish(); // Immediately clear PlayerEncounter.Current
+                            // Must explicitly call LeaveSettlement() before Finish() when enlisted.
+                            // The forcePlayerOutFromSettlement parameter in Finish() only works when
+                            // MainParty.AttachedTo == null, but enlisted players are attached to their lord.
+                            if (PlayerEncounter.InsideSettlement)
+                            {
+                                PlayerEncounter.LeaveSettlement();
+                            }
+                            
+                            PlayerEncounter.Finish(); // Immediately clear PlayerEncounter.Current
                             ModLogger.Info("Battle", "Finished PlayerEncounter after battle end");
                         }
                         catch (Exception finishEx)
