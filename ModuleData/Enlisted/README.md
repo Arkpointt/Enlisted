@@ -10,9 +10,9 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 | File | Purpose |
 |------|---------|
 | settings.json | Logging levels, encounter settings, mod behavior flags |
-| enlisted_config.json | Tiers, wages, retirement, grace periods, formations, equipment pricing |
+| enlisted_config.json | Retirement, grace periods, formations display names, equipment pricing |
 | duties_system.json | Duty definitions and officer roles |
-| progression_config.json | XP thresholds, XP sources, wage formulas, promotion benefits |
+| progression_config.json | **XP/tier progression**, XP sources, wage formulas, promotion benefits |
 | equipment_pricing.json | Formation/culture cost multipliers |
 | equipment_kits.json | Culture-specific loadouts |
 | menu_config.json | Menu text and options |
@@ -36,33 +36,21 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 }
 ```
 
-### Tier Requirements (enlisted_config.json)
+### Tier/XP Progression (progression_config.json)
+To change how fast you rank up, edit `progression_config.json` (not enlisted_config.json):
 ```json
-"enlistment": {
-  "tier_requirements": [0, 800, 3000, 6000, 11000, 19000],
-  "tier_names": [
-    "Levy",
-    "Footman",
-    "Serjeant",
-    "Man-at-Arms",
-    "Banner Serjeant",
-    "Household Guard"
-  ],
-  "daily_base_xp": 25,
-  "assignment_wage_multipliers": {
-    "grunt_work": 0.8,
-    "guard_duty": 0.9,
-    "cook": 0.9,
-    "foraging": 1.0,
-    "surgeon": 1.3,
-    "engineer": 1.4,
-    "quartermaster": 1.2,
-    "scout": 1.1,
-    "sergeant": 1.5,
-    "strategist": 1.6
-  }
+"tier_progression": {
+  "requirements": [
+    { "tier": 1, "xp_required": 0, "name": "Levy" },
+    { "tier": 2, "xp_required": 800, "name": "Footman" },
+    { "tier": 3, "xp_required": 3000, "name": "Serjeant" },
+    { "tier": 4, "xp_required": 6000, "name": "Man-at-Arms" },
+    { "tier": 5, "xp_required": 11000, "name": "Banner Serjeant" },
+    { "tier": 6, "xp_required": 19000, "name": "Household Guard" }
+  ]
 }
 ```
+Lower `xp_required` values = faster progression. Tier 1 should always be 0.
 
 ### Finance Settings (enlisted_config.json)
 ```json
