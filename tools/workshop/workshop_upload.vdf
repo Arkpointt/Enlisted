@@ -52,6 +52,6 @@ Harmony → Native → ... → Enlisted"
     }
     
     // Optional: Change notes for updates
-    "changenote" "Update v0.5.7"
+    "changenote" "Update v0.5.8: siege auto-resolve fix, abandon-army suppression, formation teleport, sea-lord dialog fix"
 }
 
