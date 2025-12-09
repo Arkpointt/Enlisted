@@ -91,13 +91,13 @@ namespace Enlisted.Features.Assignments.Core
         public string TargetSkill { get; set; }
         
         [JsonProperty("skill_xp_daily")]
-        public int SkillXpDaily { get; set; } = 0;
+        public int SkillXpDaily { get; set; }
         
         [JsonProperty("officer_role")]
         public string OfficerRole { get; set; }
         
         [JsonProperty("xp_share_multiplier")]
-        public float XpShareMultiplier { get; set; } = 0.0f;
+        public float XpShareMultiplier { get; set; }
         
         [JsonProperty("wage_multiplier")]
         public float WageMultiplier { get; set; } = 1.0f;
@@ -122,10 +122,10 @@ namespace Enlisted.Features.Assignments.Core
     public class UnlockConditions
     {
         [JsonProperty("relationship_required")]
-        public int RelationshipRequired { get; set; } = 0;
+        public int RelationshipRequired { get; set; }
         
         [JsonProperty("skill_required")]
-        public int SkillRequired { get; set; } = 0;
+        public int SkillRequired { get; set; }
     }
     
     [Serializable]

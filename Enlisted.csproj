@@ -209,6 +209,8 @@
     <Compile Include="src\Mod.GameAdapters\Patches\GenericStateMenuPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EndCaptivityCleanupPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\AbandonArmyBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PrisonerActionBlockPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\PlayerEncounterFinishSafetyPatch.cs"/>
   </ItemGroup>
   <ItemGroup>
     <Content Include="SubModule.xml"/>

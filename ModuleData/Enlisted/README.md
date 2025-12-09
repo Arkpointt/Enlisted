@@ -3,7 +3,7 @@
 JSON files controlling the Enlisted mod. Edit and restart campaign to apply changes.
 
 **Current Mod Version**: 0.5.7  
-**Compatible Game Version**: 1.3.9
+**Compatible Game Version**: 1.3.10
 
 ## Files
 

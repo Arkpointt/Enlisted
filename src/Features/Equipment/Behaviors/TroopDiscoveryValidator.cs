@@ -61,6 +61,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                var troopList = allTroops?.ToList() ?? new List<CharacterObject>();
+
                 var culture = MBObjectManager.Instance.GetObject<CultureObject>(cultureId);
                 if (culture == null)
                 {
@@ -70,7 +72,6 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
 
                 // Log if this is a secondary culture that shares troops
-                var isSecondaryCulture = cultureId == "nord" || cultureId == "darshi";
                 var parentNote = cultureId == "nord" ? " (uses Sturgian troops)" :
                                  cultureId == "darshi" ? " (uses Aserai troops)" : "";
 
@@ -80,7 +81,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Uses GetBattleTier() to match TroopSelectionManager behavior
                 for (int tier = 1; tier <= 6; tier++)
                 {
-                    var troopsAtTier = allTroops.Where(troop =>
+                    var troopsAtTier = troopList.Where(troop =>
                         troop.Culture == culture &&
                         SafeGetTier(troop) == tier &&
                         troop.IsSoldier &&
@@ -162,13 +163,21 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 if (troop.IsRanged && troop.IsMounted)
+                {
                     return FormationType.HorseArcher;
+                }
                 else if (troop.IsMounted)
+                {
                     return FormationType.Cavalry;
+                }
                 else if (troop.IsRanged)
+                {
                     return FormationType.Archer;
+                }
                 else
+                {
                     return FormationType.Infantry;
+                }
             }
             catch
             {

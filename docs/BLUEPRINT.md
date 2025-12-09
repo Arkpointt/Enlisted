@@ -23,7 +23,7 @@ src/
 ├── Mod.Entry/              # SubModule + Harmony init
 ├── Mod.Core/               # Logging, config, helpers
 ├── Mod.GameAdapters/       # Harmony patches
-│   └── Patches/            # 23 patches
+│   └── Patches/            # 25 patches
 └── Features/
     ├── Enlistment/         # Core service state, retirement
     ├── Assignments/        # Duties system
@@ -50,7 +50,7 @@ Example - adding a new patch:
 
 If you forget this step, the file will exist but won't be compiled, and your code won't run.
 
-## Harmony Patches (23)
+## Harmony Patches (25)
 
 | Patch                            | Purpose                                                              |
 |----------------------------------|----------------------------------------------------------------------|
@@ -73,7 +73,9 @@ If you forget this step, the file will exist but won't be compiled, and your cod
 | NavalBattleShipAssignmentPatch   | Naval crash fixes: ship assignment, captain lookup, troop deployment, AI behavior creation, and mission cleanup |
 | NavalShipExclusionPatch          | Prevents lord from using enlisted player's ships for sea travel      |
 | OrderOfBattleSuppressionPatch    | Skips deployment screen                                              |
+| PlayerEncounterFinishSafetyPatch | Prevents crash when both mod and native try to finish encounter      |
 | PostDischargeProtectionPatch     | Protects after discharge                                             |
+| PrisonerActionBlockPatch         | Prevents enlisted soldiers from executing/releasing prisoner lords   |
 | ReturnToArmySuppressionPatch     | Suppresses return to army messages                                   |
 | SkillSuppressionPatch            | Blocks tactics/leadership XP                                         |
 | TownLeaveButtonPatch             | Hides Leave button                                                   |

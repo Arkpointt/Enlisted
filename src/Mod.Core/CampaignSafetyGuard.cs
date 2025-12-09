@@ -110,7 +110,11 @@ namespace Enlisted.Mod.Core
             {
                 try
                 {
-                    if (Campaign.Current == null) return null;
+                    if (Campaign.Current == null)
+                    {
+                        return null;
+                    }
+
                     return Hero.MainHero;
                 }
                 catch
@@ -129,7 +133,11 @@ namespace Enlisted.Mod.Core
             {
                 try
                 {
-                    if (Campaign.Current == null) return null;
+                    if (Campaign.Current == null)
+                    {
+                        return null;
+                    }
+
                     return MobileParty.MainParty;
                 }
                 catch
@@ -148,7 +156,11 @@ namespace Enlisted.Mod.Core
             {
                 try
                 {
-                    if (Campaign.Current == null) return null;
+                    if (Campaign.Current == null)
+                    {
+                        return null;
+                    }
+
                     return Clan.PlayerClan;
                 }
                 catch

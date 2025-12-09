@@ -18,6 +18,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
     {
         private static bool Prefix(CharacterObject character, ref bool __result)
         {
+            _ = __result; // consume incoming value to satisfy analyzers
+
             if (character?.HeroObject == null)
             {
                 __result = false;
@@ -49,9 +51,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
 
         private static MobileParty GetMobileParty(Hero hero)
         {
-            if (hero == null) return null;
-            return hero.IsPrisoner 
-                ? hero.PartyBelongedToAsPrisoner?.MobileParty 
+            if (hero == null)
+            {
+                return null;
+            }
+
+            return hero.IsPrisoner
+                ? hero.PartyBelongedToAsPrisoner?.MobileParty
                 : hero.PartyBelongedTo;
         }
     }

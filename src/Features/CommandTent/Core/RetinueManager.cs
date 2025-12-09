@@ -727,8 +727,7 @@ namespace Enlisted.Features.CommandTent.Core
                     new TextObject("{=ct_leadership_acknowledge}Understood").ToString(),
                     string.Empty,
                     null,
-                    null),
-                false);
+                    null));
 
             ModLogger.Info(LogCategory, "Showed Tier 4 leadership notification");
         }

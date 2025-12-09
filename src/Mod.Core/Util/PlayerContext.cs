@@ -8,9 +8,21 @@ namespace Enlisted.Mod.Core.Util
 	{
 		public static bool IsPlayerContextActive()
 		{
-			if (Hero.OneToOneConversationHero != null) return true;
-			if (MobileParty.MainParty != null && MobileParty.MainParty.CurrentSettlement != null) return true;
-			if (PlayerEncounter.Current != null) return true;
+			if (Hero.OneToOneConversationHero != null)
+			{
+				return true;
+			}
+
+			if (MobileParty.MainParty != null && MobileParty.MainParty.CurrentSettlement != null)
+			{
+				return true;
+			}
+
+			if (PlayerEncounter.Current != null)
+			{
+				return true;
+			}
+
 			return false;
 		}
 	}

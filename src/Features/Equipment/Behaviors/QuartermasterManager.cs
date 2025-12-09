@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using TaleWorlds.CampaignSystem;
@@ -1025,7 +1024,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             // Track issued-item returns for diagnostics
             if (removed && wasIssued)
             {
-                ModLogger.IncrementSummary("quartermaster_returns", 1, 0);
+                ModLogger.IncrementSummary("quartermaster_returns");
             }
 
                 // Refresh options after removal

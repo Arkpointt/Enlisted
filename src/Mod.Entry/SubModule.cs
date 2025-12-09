@@ -35,7 +35,7 @@ namespace Enlisted.Mod.Entry
     /// </summary>
     public static class NextFrameDispatcher
     {
-        private static readonly Queue<DeferredAction> _nextFrame = new();
+        private static readonly Queue<DeferredAction> NextFrameQueue = new();
 
         /// <summary>
         ///     Queues an action to execute on the next game frame tick instead of immediately.
@@ -53,7 +53,7 @@ namespace Enlisted.Mod.Entry
         {
             if (action != null)
             {
-                _nextFrame.Enqueue(new DeferredAction(action, requireNoEncounter));
+                NextFrameQueue.Enqueue(new DeferredAction(action, requireNoEncounter));
             }
         }
 
@@ -64,15 +64,15 @@ namespace Enlisted.Mod.Entry
         /// </summary>
         public static void ProcessNextFrame()
         {
-            if (_nextFrame.Count == 0)
+            if (NextFrameQueue.Count == 0)
             {
                 return;
             }
 
-            var itemsToProcess = _nextFrame.Count;
-            while (itemsToProcess-- > 0 && _nextFrame.Count > 0)
+            var itemsToProcess = NextFrameQueue.Count;
+            while (itemsToProcess-- > 0 && NextFrameQueue.Count > 0)
             {
-                var deferred = _nextFrame.Dequeue();
+                var deferred = NextFrameQueue.Dequeue();
                 if (deferred?.Action == null)
                 {
                     continue;
@@ -81,7 +81,7 @@ namespace Enlisted.Mod.Entry
                 if (deferred.RequireNoEncounter && PlayerEncounter.Current != null)
                 {
                     // Re-queue until the encounter fully finishes
-                    _nextFrame.Enqueue(deferred);
+                    NextFrameQueue.Enqueue(deferred);
                     continue;
                 }
 
@@ -94,26 +94,6 @@ namespace Enlisted.Mod.Entry
                     ModLogger.Error("NextFrameDispatcher", $"Error processing next frame action: {ex.Message}");
                 }
             }
-        }
-
-        /// <summary>
-        ///     Checks whether the game is currently processing an encounter or battle event.
-        ///     Returns true if a player encounter exists or the main party is in a map event (battle/siege).
-        ///     Used to prevent state modifications during critical game events when the system is updating
-        ///     encounter state, battle positions, or other time-sensitive game logic.
-        /// </summary>
-        /// <returns>True if the game is busy with encounters or battles, false otherwise.</returns>
-        public static bool Busy()
-        {
-            // Skip during character creation when campaign isn't initialized
-            if (Campaign.Current == null || MobileParty.MainParty == null)
-            {
-                return false;
-            }
-
-            // The MapEvent property exists on Party, not directly on MobileParty
-            // This is the correct API structure for checking battle state
-            return PlayerEncounter.Current != null || MobileParty.MainParty?.Party.MapEvent != null;
         }
 
         private sealed class DeferredAction
@@ -157,6 +137,8 @@ namespace Enlisted.Mod.Entry
                     // These are discovered via reflection by Harmony.PatchAll()
                     // Listed alphabetically by patch file for easy maintenance
                     _ = typeof(AbandonArmyBlockPatch);
+                    _ = typeof(EncounterAbandonArmyBlockPatch);
+                    _ = typeof(EncounterAbandonArmyBlockPatch2);
                     _ = typeof(ArmyCohesionExclusionPatch);
                     _ = typeof(ArmyDispersedMenuPatch);
                     _ = typeof(CheckFortificationAttackablePatch);
@@ -206,10 +188,12 @@ namespace Enlisted.Mod.Entry
                     // This causes crashes on Proton/Linux and potential issues on Windows under some conditions.
                     var manualPatches = new HashSet<string>
                     {
-                        "HidePartyNamePlatePatch",           // Uses manual patching via ApplyManualPatches()
-                        "ArmyCohesionExclusionPatch",        // Target: DefaultArmyManagementCalculationModel
-                        "SettlementOutsideLeaveButtonPatch", // Target: EncounterGameMenuBehavior
-                        "JoinEncounterAutoSelectPatch"       // Target: EncounterGameMenuBehavior
+                        "HidePartyNamePlatePatch",              // Uses manual patching via ApplyManualPatches()
+                        "ArmyCohesionExclusionPatch",           // Target: DefaultArmyManagementCalculationModel
+                        "SettlementOutsideLeaveButtonPatch",    // Target: EncounterGameMenuBehavior
+                        "JoinEncounterAutoSelectPatch",         // Target: EncounterGameMenuBehavior
+                        "EncounterAbandonArmyBlockPatch",       // Target: EncounterGameMenuBehavior (deferred)
+                        "EncounterAbandonArmyBlockPatch2"       // Target: EncounterGameMenuBehavior (deferred)
                     };
 
                     var assembly = Assembly.GetExecutingAssembly();
@@ -378,8 +362,7 @@ namespace Enlisted.Mod.Entry
                     
                     // Log registered behaviors for conflict diagnostics
                     // This helps troubleshoot issues by showing exactly what was registered
-                    ModConflictDiagnostics.LogRegisteredBehaviors(new[]
-                    {
+                    ModConflictDiagnostics.LogRegisteredBehaviors([
                         nameof(EnlistmentBehavior),
                         nameof(EnlistedDialogManager),
                         nameof(EnlistedDutiesBehavior),
@@ -396,7 +379,7 @@ namespace Enlisted.Mod.Entry
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),
                         nameof(CompanionAssignmentManager)
-                    });
+                    ]);
                 }
             }
             catch (Exception ex)
@@ -480,37 +463,57 @@ namespace Enlisted.Mod.Entry
             if (!_deferredPatchesApplied)
             {
                 _deferredPatchesApplied = true;
-                try
-                {
-                    var harmony = new Harmony("com.enlisted.mod.deferred");
-                    HidePartyNamePlatePatch.ApplyManualPatches(harmony);
-                    
-                    // Apply patches that target types with early static initialization.
-                    // These fail on Proton/Linux if applied during OnSubModuleLoad because
-                    // their target classes call GameTexts.FindText() in static field initializers.
-                    // By deferring until now, the localization system is fully initialized.
-                    harmony.CreateClassProcessor(typeof(ArmyCohesionExclusionPatch)).Patch();
-                    harmony.CreateClassProcessor(typeof(SettlementOutsideLeaveButtonPatch)).Patch();
-                    harmony.CreateClassProcessor(typeof(JoinEncounterAutoSelectPatch)).Patch();
-                    
-                    // Apply Naval DLC patches that use reflection to find types.
-                    // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
-                    RaftStateSuppressionPatch.TryApplyPatch(harmony);
-                    RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
-                    
-                    ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
-                    
-                    // Update conflict diagnostics with deferred patch info
-                    // This appends to the existing conflicts.log so users can see all patches
-                    ModConflictDiagnostics.RefreshDeferredPatches(harmony);
-                }
-                catch (Exception ex)
-                {
-                    ModLogger.Error("Bootstrap", $"Failed to apply deferred patches: {ex.Message}");
-                }
+                var harmony = new Harmony("com.enlisted.mod.deferred");
+                
+                // Apply manual patches
+                HidePartyNamePlatePatch.ApplyManualPatches(harmony);
+                
+                // Apply patches that target types with early static initialization.
+                // These fail on Proton/Linux if applied during OnSubModuleLoad because
+                // their target classes call GameTexts.FindText() in static field initializers.
+                // By deferring until now, the localization system is fully initialized.
+                // Each patch is wrapped individually so one failure doesn't block others.
+                ApplyDeferredPatch(harmony, typeof(ArmyCohesionExclusionPatch));
+                ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
+                ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
+                ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
+                ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
+                
+                // Apply Naval DLC patches that use reflection to find types.
+                // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
+                RaftStateSuppressionPatch.TryApplyPatch(harmony);
+                RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
+                
+                ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
+                
+                // Update conflict diagnostics with deferred patch info
+                // This appends to the existing conflicts.log so users can see all patches
+                ModConflictDiagnostics.RefreshDeferredPatches(harmony);
             }
 
             NextFrameDispatcher.ProcessNextFrame();
+        }
+
+        /// <summary>
+        /// Applies a deferred patch with detailed error logging.
+        /// Isolates failures so one broken patch doesn't block others.
+        /// </summary>
+        private static void ApplyDeferredPatch(Harmony harmony, Type patchType)
+        {
+            try
+            {
+                harmony.CreateClassProcessor(patchType).Patch();
+                ModLogger.Info("Bootstrap", $"Applied deferred patch: {patchType.Name}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Bootstrap", $"Failed to apply deferred patch {patchType.Name}: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    ModLogger.Error("Bootstrap", $"  Inner exception: {ex.InnerException.Message}");
+                }
+                ModLogger.Debug("Bootstrap", $"  Stack trace: {ex.StackTrace}");
+            }
         }
     }
 }

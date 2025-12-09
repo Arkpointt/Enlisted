@@ -67,7 +67,6 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     var playerParty = MobileParty.MainParty;
                     var playerActive = playerParty?.IsActive ?? false;
-                    var playerVisible = playerParty?.IsVisible ?? false;
                     var inSettlement = Hero.MainHero?.CurrentSettlement?.Name?.ToString();
                     
                     // PlayerActive: True while prisoner = BUG (party should be deactivated)
@@ -86,7 +85,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 
                 // If reserve flag is stale (enlistment ended but flag wasn't cleared), clear it
-                if (isInReserve && !isEnlisted)
+                else if (isInReserve) // here isEnlisted must be false if still in reserve
                 {
                     ModLogger.Debug("EncounterSuppression", "Clearing stale reserve flag during encounter creation");
                     EnlistedEncounterBehavior.ClearReserveState();

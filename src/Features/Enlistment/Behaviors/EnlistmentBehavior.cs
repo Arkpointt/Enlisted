@@ -7457,53 +7457,100 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // This allows new encounters to be created if needed after the battle
                     _lastSiegeEncounterCreation = CampaignTime.Zero;
 
-                    // CRITICAL: Defer finishing PlayerEncounter to next frame to avoid timing issues
-                    // The game may still be using the encounter for score screens or settlement entry
-                    // Finishing immediately after battle ends can cause crashes
+                    // Determine if this was a siege battle - affects cleanup strategy
+                    // For sieges, native AiPartyThinkBehavior.PartyHourlyAiTick also calls PlayerEncounter.Finish()
+                    // when parties change behavior. We must avoid a race condition.
+                    bool wasSiege = effectiveMapEvent?.IsSiegeAssault == true || 
+                                   effectiveMapEvent?.IsSallyOut == true ||
+                                   lordParty?.BesiegedSettlement != null ||
+                                   main?.BesiegedSettlement != null;
+                    
+                    // FIX: For siege battles, finish the encounter immediately instead of deferring.
+                    // The native AI will try to call Finish() in its next hourly tick after the battle ends.
+                    // If we defer our Finish() call, both systems race to clean up the same encounter,
+                    // causing NullReferenceException when internal state becomes inconsistent.
+                    // PlayerEncounterFinishSafetyPatch provides additional crash protection.
                     if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
                     {
-                        NextFrameDispatcher.RunNextFrame(() =>
+                        if (wasSiege)
                         {
+                            // SIEGE: Finish immediately to prevent race with native AI
+                            ModLogger.Debug("Battle", 
+                                "Siege battle ended - finishing encounter immediately to avoid native AI race");
                             try
                             {
-                                if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+                                if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.InsideSettlement)
                                 {
-                                    if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.InsideSettlement)
-                                    {
-                                        TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
-                                    }
-
-                                    TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish(true);
-                                    ModLogger.Info("Battle",
-                                        "Finished PlayerEncounter after battle ended (deferred to next frame)");
+                                    TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
                                 }
-
-                                // Return to hidden enlisted state after encounter is finished
-                                var mainParty = MobileParty.MainParty;
-                                if (mainParty != null && IsEnlisted)
-                                {
-                                    mainParty.IsActive = false;
-                                    mainParty.IsVisible = false;
-                                    ModLogger.Info("Battle",
-                                        "Player returned to hidden enlisted state after encounter cleanup");
-                                }
-
-                                ResetSiegePreparationLatch();
-                                RestoreCampaignFlowAfterBattle();
+                                TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish(true);
+                                ModLogger.Info("Battle", "Finished PlayerEncounter after siege battle (immediate)");
                             }
                             catch (Exception ex)
                             {
-                                ModLogger.Error("Battle",
-                                    $"Error finishing PlayerEncounter after battle: {ex.Message}");
+                                // PlayerEncounterFinishSafetyPatch should catch most issues,
+                                // but log if something still slips through
+                                ModLogger.Warn("Battle", 
+                                    $"Error finishing siege encounter (safety patch may have handled it): {ex.Message}");
                             }
-                        });
+                            
+                            // Return to hidden state
+                            if (main != null && IsEnlisted)
+                            {
+                                main.IsActive = false;
+                                main.IsVisible = false;
+                            }
+                            ResetSiegePreparationLatch();
+                            RestoreCampaignFlowAfterBattle();
+                        }
+                        else
+                        {
+                            // NON-SIEGE: Defer to next frame (safe for field battles)
+                            // Field battles don't have the same AI race condition because parties
+                            // don't change their besieging behavior on battle end.
+                            NextFrameDispatcher.RunNextFrame(() =>
+                            {
+                                try
+                                {
+                                    if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+                                    {
+                                        if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.InsideSettlement)
+                                        {
+                                            TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.LeaveSettlement();
+                                        }
+
+                                        TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Finish(true);
+                                        ModLogger.Info("Battle",
+                                            "Finished PlayerEncounter after battle ended (deferred)");
+                                    }
+
+                                    // Return to hidden enlisted state after encounter is finished
+                                    var mainParty = MobileParty.MainParty;
+                                    if (mainParty != null && IsEnlisted)
+                                    {
+                                        mainParty.IsActive = false;
+                                        mainParty.IsVisible = false;
+                                        ModLogger.Debug("Battle",
+                                            "Player returned to hidden state after deferred cleanup");
+                                    }
+
+                                    ResetSiegePreparationLatch();
+                                    RestoreCampaignFlowAfterBattle();
+                                }
+                                catch (Exception ex)
+                                {
+                                    ModLogger.Error("Battle",
+                                        $"Error in deferred encounter cleanup: {ex.Message}");
+                                }
+                            });
+                        }
                     }
                     else
                     {
                         // No encounter to finish - return to hidden enlisted state immediately
                         main.IsActive = false;
                         main.IsVisible = false;
-                        ModLogger.Info("Battle", "Player returned to hidden enlisted state (no encounter to finish)");
+                        ModLogger.Debug("Battle", "No encounter to finish - returning to hidden state");
                         ResetSiegePreparationLatch();
                         RestoreCampaignFlowAfterBattle();
                     }
@@ -7517,7 +7564,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         ModLogger.Debug("Battle", "Disbanded temporary army");
                     }
 
-                    ModLogger.Info("Battle", "Player returned to hidden enlisted state");
+                    ModLogger.Info("Battle", "Battle cleanup complete");
                 }
             }
             catch (Exception ex)

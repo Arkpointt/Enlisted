@@ -35,7 +35,7 @@ Prevents the player from triggering map encounters while enlisted by using the g
 - Player party hidden from map systems (UI and logical)
 - Smooth transitions between peace and battle states
 - Reliable cleanup when returning to normal campaign play
-- Hides native “Abandon army” menu option for enlisted players
+- Hides native “Abandon army” menu options while enlisted (join_encounter, encounter, army_wait, raiding_village)
 
 **Purpose:**
 Keep enlisted players from accidentally entering encounters that would break military service or cause pathfinding crashes, while ensuring they correctly join their Lord's battles without engine conflicts.
@@ -47,11 +47,12 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs` - UI suppression
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
 - `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
-- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes "Abandon army" options while enlisted
+- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes "Abandon army" options while enlisted; applied as a deferred patch on first campaign tick to avoid EncounterGameMenuBehavior static init issues
 - `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs` - Blocks unwanted encounters, clears stale reserve flags
 - `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs` - Blocks party activation in vulnerable states
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs` - Controls party visibility, allows captivity system control
 - `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs` - Fixes naval battle crash (assigns ship from lord's fleet)
+- `src/Mod.GameAdapters/Patches/PlayerEncounterFinishSafetyPatch.cs` - Crash protection for siege battle cleanup race condition
 
 ---
 
@@ -84,8 +85,8 @@ Keep enlisted players from accidentally entering encounters that would break mil
 3. Player party kept in same army/attachment so vanilla encounter stack automatically collects it
 4. `JoinEncounterAutoSelectPatch` intercepts "join_encounter" menu and automatically joins battle on lord's side
 5. Player sees standard encounter menu (Attack/Send Troops/Wait) instead of "Help X's Party / Don't get involved"
-6. `AbandonArmyBlockPatch` hides native “Abandon army” options while enlisted (no change when not enlisted)
-6. Player participates in battle
+6. `AbandonArmyBlockPatch` hides native “Abandon army” options while enlisted (join_encounter, encounter, army_wait, raiding_village)
+7. Player participates in battle
 7. If the player is a prisoner or capture cleanup is queued, battle handling is skipped to let native captivity finish (prevents crash when captors are defeated by friendlies).
 
 **Battle Types:**
@@ -200,6 +201,15 @@ public static void EnableEncounters()
 - Ensures "Encounter" menu instead of "Help or Leave"
 - Standard battle interface for player
 - Predictable behavior across all battle types
+
+**Abandon Army Suppression:**
+- Targeted menus: `join_encounter` (join_encounter_abandon), `encounter` (abandon_army), `army_wait` (abandon_army), `raiding_village` (abandon_army)
+- Patch files: `AbandonArmyBlockPatch` (army_wait, raiding_village) and `EncounterAbandonArmyBlockPatch/EncounterAbandonArmyBlockPatch2` (join_encounter, encounter)
+- Application timing: encounter-menu patches are deferred to first campaign tick (after localization init) to avoid EncounterGameMenuBehavior static-init issues
+
+**Siege Auto-Resolve Crash Guard:**
+- Patch file: `PlayerEncounterFinishSafetyPatch` (Harmony finalizer/prefix on `PlayerEncounter.Finish`)
+- Purpose: Prevents siege cleanup crashes (commonly triggered after auto-resolve) by validating encounter state and swallowing NullReferenceException while enlisted; lets other exceptions propagate
 
 **Naval Battle Safety:**
 - Sea-state sync: `ForceImmediateBattleJoin` syncs `IsCurrentlyAtSea` state and position to lord before `PlayerEncounter.Start/Init()`. Matches native requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`).
@@ -579,6 +589,16 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 - If stuck after party disband while in reserve, check log for `Clearing reserve state during service end` - this should clear the flag
 - If patches see stale reserve flag, they auto-clear it: `Clearing stale reserve flag during activation`
 
+**Crash in PlayerEncounter.Finish() after siege battle (NullReferenceException):**
+- This was caused by a race condition between our mod and native AI
+- After siege battles, native `AiPartyThinkBehavior.PartyHourlyAiTick` calls `PlayerEncounter.Finish()` when parties change behavior
+- If our deferred cleanup ran at the same time, internal state became inconsistent
+- Fixed by: (1) finishing siege encounters immediately instead of deferring, (2) `PlayerEncounterFinishSafetyPatch` catches and recovers from crashes
+- Log pattern on crash recovery: `Recovering from NullReferenceException in Finish - cleaning up encounter state`
+- Log pattern showing siege immediate cleanup: `Siege battle ended - finishing encounter immediately to avoid native AI race`
+- Debug context shows caller: `NativeAI` = native system, `EnlistmentBattle` = our OnMapEventEnded
+- Rapid call detection: `Rapid Finish calls detected: Xms apart` indicates race condition was occurring
+
 **"Party activated and made visible" but player is prisoner:**
 - This was a bug (now fixed) - StopEnlist didn't check prisoner state before activating
 - Current code checks `playerIsPrisoner` alongside MapEvent/Encounter before deciding to activate
@@ -635,6 +655,7 @@ If mission cleanup crash persists (crash after battle ends):
 - `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs`
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs`
 - `src/Mod.GameAdapters/Patches/NavalBattleShipAssignmentPatch.cs`
+- `src/Mod.GameAdapters/Patches/PlayerEncounterFinishSafetyPatch.cs`
 
 ---
 

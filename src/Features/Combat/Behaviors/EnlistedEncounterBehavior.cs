@@ -518,7 +518,7 @@ namespace Enlisted.Features.Combat.Behaviors
                         PlayerEncounter.LeaveEncounter = true;
                         try
                         {
-                            PlayerEncounter.Finish(true); // Immediately clear PlayerEncounter.Current
+                        PlayerEncounter.Finish(); // Immediately clear PlayerEncounter.Current
                             ModLogger.Info("Battle", "Finished PlayerEncounter after battle end");
                         }
                         catch (Exception finishEx)

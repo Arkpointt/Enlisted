@@ -176,7 +176,10 @@ namespace Enlisted.Features.Equipment.UI
                     foreach (var card in row.Cards)
                     {
                         var variant = card.GetVariant();
-                        if (variant?.Item == null) continue;
+                        if (variant?.Item == null)
+                        {
+                            continue;
+                        }
                         
                         // Recalculate item count
                         var itemCount = CountPlayerItems(hero, variant.Item.StringId);
@@ -191,7 +194,10 @@ namespace Enlisted.Features.Equipment.UI
                         variant.IsCurrent = variant.Item == currentItem;
                         
                         cardsUpdated++;
-                        if (variant.IsAtLimit) atLimitCount++;
+                        if (variant.IsAtLimit)
+                        {
+                            atLimitCount++;
+                        }
                     }
                 }
                 
@@ -249,7 +255,10 @@ namespace Enlisted.Features.Equipment.UI
             try
             {
                 var hero = Hero.MainHero;
-                if (hero == null) return;
+                if (hero == null)
+                {
+                    return;
+                }
                 
                 // Update all cards in all rows that match this item
                 foreach (var row in EquipmentRows)
@@ -300,14 +309,18 @@ namespace Enlisted.Features.Equipment.UI
             for (var i = EquipmentIndex.Weapon0; i <= EquipmentIndex.HorseHarness; i++)
             {
                 if (hero.BattleEquipment[i].Item?.StringId == itemId)
+                {
                     count++;
+                }
             }
             
             // Count in civilian equipment
             for (var i = EquipmentIndex.Weapon0; i <= EquipmentIndex.HorseHarness; i++)
             {
                 if (hero.CivilianEquipment[i].Item?.StringId == itemId)
+                {
                     count++;
+                }
             }
             
             // Count in party inventory
@@ -317,8 +330,11 @@ namespace Enlisted.Features.Equipment.UI
                 for (var j = 0; j < partyInventory.Count; j++)
                 {
                     var element = partyInventory.GetElementCopyAtIndex(j);
-                    if (element.EquipmentElement.Item?.StringId == itemId)
+                    var rosterItem = element.EquipmentElement.Item;
+                    if (rosterItem != null && rosterItem.StringId == itemId)
+                    {
                         count += element.Amount;
+                    }
                 }
             }
             

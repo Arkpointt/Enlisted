@@ -90,7 +90,7 @@ namespace Enlisted.Mod.Core.Config
 
 			/// <summary>XP system logging (awards, progression).</summary>
 			[DataMember(Name = "XP")]
-			public string XP { get; set; } = "Info";
+			public string Xp { get; set; } = "Info";
 
 			/// <summary>Menu system logging (state transitions, activation).</summary>
 			[DataMember(Name = "Menu")]
@@ -156,7 +156,7 @@ namespace Enlisted.Mod.Core.Config
 				AddLevel(dict, "Combat", Combat);
 				AddLevel(dict, "Equipment", Equipment);
 				AddLevel(dict, "Gold", Gold);
-				AddLevel(dict, "XP", XP);
+				AddLevel(dict, "XP", Xp);
 				AddLevel(dict, "Menu", Menu);
 				AddLevel(dict, "Encounter", Encounter);
 				AddLevel(dict, "Promotion", Promotion);
@@ -190,10 +190,14 @@ namespace Enlisted.Mod.Core.Config
 			private LogLevel ParseLevel(string levelStr)
 			{
 				if (string.IsNullOrEmpty(levelStr))
+				{
 					return LogLevel.Info;
+				}
 
 				if (Enum.TryParse<LogLevel>(levelStr, true, out var level))
+				{
 					return level;
+				}
 
 				return LogLevel.Info;
 			}
@@ -250,12 +254,10 @@ namespace Enlisted.Mod.Core.Config
 					return new ModSettings();
 				}
 
-				using (var stream = File.OpenRead(settingsPath))
-				{
-					var serializer = new DataContractJsonSerializer(typeof(ModSettings));
-					var loaded = serializer.ReadObject(stream) as ModSettings;
-					return loaded ?? new ModSettings();
-				}
+				using var stream = File.OpenRead(settingsPath);
+				var serializer = new DataContractJsonSerializer(typeof(ModSettings));
+				var loaded = serializer.ReadObject(stream) as ModSettings;
+				return loaded ?? new ModSettings();
 			}
 			catch
 			{
