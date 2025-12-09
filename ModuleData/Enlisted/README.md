@@ -10,7 +10,7 @@ JSON files controlling the Enlisted mod. Edit and restart campaign to apply chan
 | File | Purpose |
 |------|---------|
 | settings.json | Logging levels, encounter settings, mod behavior flags |
-| enlisted_config.json | Retirement, grace periods, formations display names, equipment pricing |
+| enlisted_config.json | Retirement, grace periods, finance/wage display |
 | duties_system.json | Duty definitions and officer roles |
 | progression_config.json | **XP/tier progression**, XP sources, wage formulas, promotion benefits |
 | equipment_pricing.json | Formation/culture cost multipliers |
@@ -172,25 +172,6 @@ Valid levels: Off, Error, Warn, Info, Debug, Trace
   },
   "elite_multiplier": 1.5,
   "personal_equipment_restore_cost": 0
-}
-```
-
-### Formation Display Names (enlisted_config.json)
-Customize how formations are displayed per culture:
-```json
-"formations": {
-  "infantry": {
-    "display_names": {
-      "empire": "Legionary",
-      "aserai": "Footman",
-      "khuzait": "Spearman",
-      "vlandia": "Man-at-Arms",
-      "sturgia": "Warrior",
-      "battania": "Clansman",
-      "nord": "Huskarl",
-      "darshi": "Desert Warrior"
-    }
-  }
 }
 ```
 
