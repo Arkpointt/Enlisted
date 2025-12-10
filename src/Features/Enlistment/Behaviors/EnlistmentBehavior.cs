@@ -7442,6 +7442,44 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Battle", "Lord battle ended, returning to hidden state");
                     _cachedLordMapEvent = null;
 
+                    // If the player chose to wait in reserve, make sure we clear the suspended state
+                    // once the battle (or battle series) is actually over. Without this, the party
+                    // can stay inactive and flagged as waiting, which blocks health regen until the
+                    // player hits another major state change (reload, level, new battle, leave).
+                    if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                    {
+                        var lordStillInBattle = lordParty?.Party.MapEvent != null;
+                        var armyStillInBattle = lordParty?.Army?.Parties?.Any(p => p?.Party?.MapEvent != null) == true;
+
+                        // Only clear reserve when no active battles remain for the lord/army
+                        if (!lordStillInBattle && !armyStillInBattle)
+                        {
+                            EnlistedEncounterBehavior.ClearReserveState();
+
+                            // Release any lingering wait flag on the encounter
+                            var encounter = TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current;
+                            if (encounter != null)
+                            {
+                                encounter.IsPlayerWaiting = false;
+                                PlayerEncounter.LeaveEncounter = true;
+                            }
+
+                            var mainParty = MobileParty.MainParty;
+                            if (mainParty != null && Hero.MainHero?.IsPrisoner != true)
+                            {
+                                mainParty.IsActive = true;   // ensure ticks resume (health, wages, etc.)
+                                // Keep them hidden; visibility is managed elsewhere
+                                if (!mainParty.IsVisible)
+                                {
+                                    mainParty.IsVisible = false;
+                                }
+                            }
+
+                            ModLogger.Info("Battle",
+                                "Cleared reserve state after battle end - restoring party activity for regen");
+                        }
+                    }
+
                     // Award battle XP only if player actually participated (not waiting in reserve)
                     // Players who chose "Wait in Reserve" opted out of combat and don't earn XP
                     if (!EnlistedEncounterBehavior.IsWaitingInReserve)
