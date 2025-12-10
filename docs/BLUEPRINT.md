@@ -19,6 +19,7 @@ Architecture and standards for the Enlisted mod.
   - `contentfolder` points to installed `Modules\Enlisted`; `previewfile` to `tools/workshop/preview.png`.
   - `visibility` defaults to public (`0`); keep in sync with Steam page if changed there.
 - Keep description in VDF aligned with current Nexus/Steam text and reporting instructions; rerun SteamCMD after edits.
+- The uploader generates `workshop_upload.resolved.vdf` with the preview path resolved to your local repo, so the VDF stays repo-relative.
 
 ## Dependencies
 

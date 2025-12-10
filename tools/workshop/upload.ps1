@@ -52,6 +52,16 @@ if ($vdfContent -match "TODO") {
     }
 }
 
+# Resolve preview path and write a temp VDF with an absolute previewfile to avoid machine-specific paths
+$resolvedPreviewPath = $PreviewPath
+if (Test-Path $PreviewPath) {
+    $resolvedPreviewPath = (Resolve-Path $PreviewPath).Path
+}
+
+$tempVdfPath = Join-Path $ScriptDir "workshop_upload.resolved.vdf"
+$vdfResolved = $vdfContent -replace '"previewfile"\s+"[^"]+"', "`"previewfile`" `"$resolvedPreviewPath`""
+Set-Content -Path $tempVdfPath -Value $vdfResolved -Encoding ASCII
+
 # Prompt for Steam username if not provided
 if ([string]::IsNullOrEmpty($SteamUser)) {
     $SteamUser = Read-Host "Enter your Steam username"
@@ -59,11 +69,11 @@ if ([string]::IsNullOrEmpty($SteamUser)) {
 
 Write-Host ""
 Write-Host "Uploading to Steam Workshop..." -ForegroundColor Green
-Write-Host "VDF: $VdfPath"
+Write-Host "VDF: $tempVdfPath"
 Write-Host ""
 
 # Run SteamCMD
-& $SteamCmdPath +login $SteamUser +workshop_build_item $VdfPath +quit
+& $SteamCmdPath +login $SteamUser +workshop_build_item $tempVdfPath +quit
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
