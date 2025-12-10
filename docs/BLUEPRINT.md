@@ -8,6 +8,18 @@ Architecture and standards for the Enlisted mod.
 - CLI: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
 - Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/`
 
+## Steam Workshop upload (AI checklist)
+- Build first: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64` (copies `WorkshopCreate.xml` into `Modules/Enlisted`).
+- WorkshopCreate.xml (game-version tag file) lives at `tools/workshop/WorkshopCreate.xml`; tags: `Singleplayer`, `Gameplay`, `Overhaul`, `v1.3.10`. Escaped path: `Mount &amp; Blade II Bannerlord`.
+- Upload via SteamCMD:
+  - `& "C:\Dev\steamcmd\steamcmd.exe" +login YOUR_STEAM_USERNAME +workshop_build_item "C:\Dev\Enlisted\Enlisted\tools\workshop\workshop_upload.vdf" +quit`
+  - Uses cached credentials if present; otherwise prompts for password/Steam Guard.
+- VDF: `tools/workshop/workshop_upload.vdf`
+  - `publishedfileid` already set to current Workshop ID (`3621116083`); keep as-is for updates.
+  - `contentfolder` points to installed `Modules\Enlisted`; `previewfile` to `tools/workshop/preview.png`.
+  - `visibility` defaults to public (`0`); keep in sync with Steam page if changed there.
+- Keep description in VDF aligned with current Nexus/Steam text and reporting instructions; rerun SteamCMD after edits.
+
 ## Dependencies
 
 ```xml

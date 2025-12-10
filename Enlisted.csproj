@@ -256,6 +256,7 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="tools\workshop\WorkshopCreate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\conflicts.log" Lines="[Init] Precreated by build" Overwrite="false"/>
   </Target>

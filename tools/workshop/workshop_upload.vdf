@@ -1,57 +1,71 @@
 "workshopitem"
 {
-    // Mount & Blade II: Bannerlord App ID
-    "appid" "261550"
-    
-    // TODO: After first upload, Steam will assign a Workshop Item ID. 
-    // Replace "0" with that ID for updates. Leave as "0" for first upload.
-    "publishedfileid" "0"
-    
-    // Path to your mod folder in Bannerlord's Modules directory
-    "contentfolder" "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
-    
-    // Path to your preview image (512x512 or 1024x1024 PNG, under 1MB)
-    "previewfile" "C:\Dev\Enlisted\Enlisted_Preview.png"
-    
-    // Your mod's display title on Steam Workshop
-    "title" "Enlisted - Military Service Mod"
-    
-    // Description shown on the Workshop page (supports Steam formatting)
-    "description" "Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
+	"appid"		"261550"
+	"publishedfileid"		"3621116083"
+	"contentfolder"		"C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted"
+	"previewfile"		"C:\Dev\Enlisted\Enlisted\tools\workshop\preview.png"
+	"title"		"Enlisted - Military Service Mod"
+	"description"		"Serve as a soldier, not a warlord. Enlist with any lord, follow orders, climb the ranks, and retire with honor. Lightweight, open-source, and built to play nicely with other mods and UI overhauls. Work in progress: features are still being tuned and expanded. Nexus page: https://www.nexusmods.com/mountandblade2bannerlord/mods/9193?tab=description
 
-[h1]Features[/h1]
+[h1]What is this mod?[/h1]
+Live the early game as a soldier instead of running an empire. Earn wages, follow your lord's orders, and let the world unfold around you. Contributions are welcome on GitHub.
+
+[h1]Main Features[/h1]
 [list]
-[*] [b]Enlistment[/b] - Talk to any lord to join their warband as a soldier
-[*] [b]Battle System[/b] - Automatic deployment in your assigned formation, no orders to give
-[*] [b]Rank Progression[/b] - 6 tiers from Levy to Household Guard with increasing wages
-[*] [b]Duties System[/b] - Daily assignments for bonus XP and Gold
-[*] [b]Equipment[/b] - Quartermaster with tiered, culture-specific gear
-[*] [b]Naval Support[/b] - Full compatibility with naval mods
-[*] [b]Retirement[/b] - Honorable discharge or re-enlist after your term
+[*] [b]The life of a soldier[/b] - Ask any lord to enlist. You march, eat, and get paid by your lord; personal loot/prisoner micromanagement is suppressed. Crash guards keep you from getting stuck in edge states.
+[*] [b]Chain of command[/b] - Auto-deploy into your assigned formation; Order of Battle suppressed. F1-F9 commanding disabled. Pick your troop line/formation as you rise (culture-aware, with cooldowns).
+[*] [b]Rank & progression[/b] - Advance through Levy ➔ Footman ➔ Serjeant ➔ Man-at-Arms ➔ Banner Serjeant ➔ Household Guard for better wages, gear, and discounts.
+[*] [b]Camp life & duties[/b] - Daily duties like Guard, Sentry, Forager, Cook, Messenger, Quartermaster Hand, Field Medic. Passive training per formation (e.g., Athletics for Infantry, Riding for Cavalry). Quartermaster sells culture-appropriate kits that unlock as you rank.
+[*] [b]Command & freedom[/b] - Command Tent (Tier 2+) to review records and manage companions safely. Personal Retinue (Tier 4+) with upkeep. Recon Missions (Tier 4+) for intel and rewards. Temporary Leave up to 14 days (don't desert).
+[*] [b]Naval support[/b] - Parties follow lords onto ships. Your ships are protected while enlisted; lords cannot commandeer them.
+[/list]
+
+[h1]Retirement[/h1]
+[list]
+[*] Standard term: 252 days (3 years)
+[*] Honorable discharge: gold bonus + relation boost
+[*] Re-enlistment: signing bonus
+[*] Desertion: crime rating + relation loss
 [/list]
 
 [h1]Requirements[/h1]
 [list]
-[*] Mount & Blade II: Bannerlord v1.3.10+
+[*] Mount & Blade II: Bannerlord v1.3.4 - v1.3.10
 [*] Bannerlord.Harmony v2.3.6+
 [/list]
 
-[h1]Load Order[/h1]
-Harmony → Native → ... → Enlisted"
-    
-    // Visibility: 0 = Public, 1 = Friends Only, 2 = Hidden/Private
-    // Start with 2 (Hidden) to test before making public
-    "visibility" "2"
-    
-    // Tags help users find your mod (use Bannerlord's standard tags)
-    "tags"
-    {
-        "0" "Gameplay"
-        "1" "Singleplayer"
-        "2" "Overhaul"
-    }
-    
-    // Optional: Change notes for updates
-    "changenote" "Update v0.5.8: siege auto-resolve fix, abandon-army suppression, formation teleport, sea-lord dialog fix"
-}
+[h1]Installation[/h1]
+[list]
+[*] Extract to <Bannerlord>\Modules\Enlisted\
+[*] Enable Harmony then Enlisted; load order: Harmony → Native → ... → Enlisted
+[*] Optional tuning: edit JSON in Modules\Enlisted\ModuleData\Enlisted\
+[/list]
 
+[h1]Troubleshooting[/h1]
+[list]
+[*] Logs: Modules\Enlisted\Debugging\enlisted.log (core), conflicts.log (Harmony/load order)
+[*] If you crash, check logs and list other mods/versions before reporting
+[/list]
+
+[h1]How to report issues[/h1]
+[list]
+[*] Share links (Drive/Dropbox/Gist/Pastebin) - you can also email the logs if needed. Email is on Nexus.
+[*] Include newest logs from Modules\Enlisted\Debugging\: Session-A_{timestamp}.log and Conflicts-A_{timestamp}.log (A = newest). Legacy aliases exist, but rotating files are canonical.
+[*] For crashes, add the crash folder from C:\ProgramData\Mount and Blade II Bannerlord\crashes\ (zip it).
+[*] Include what you were doing when it crashed.
+[/list]
+
+[h1]Open Source[/h1]
+[list]
+[*] PRs welcome for fixes, features, and balance on GitHub
+[*] https://github.com/Arkpointt/Enlisted
+[/list]"
+	"visibility"		"0"
+	"tags"
+	{
+		"0"		"Gameplay"
+		"1"		"Singleplayer"
+		"2"		"Overhaul"
+	}
+	"changenote"		"Update v0.5.8: siege auto-resolve fix, abandon-army suppression, formation teleport, sea-lord dialog fix"
+}

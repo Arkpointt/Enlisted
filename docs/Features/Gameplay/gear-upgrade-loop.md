@@ -1,7 +1,6 @@
 ## Overview
 - Goal: keep the army-issue/accountability loop, make issued gear start “scuffed” (low-quality modifiers), and add a fun repair → upgrade path that ties into promotions and camp revelry.
 - Scope: Quartermaster issuance, promotion turnover, repair/upgrade actions, optional pay-to-retain, and small morale touches via camp revelry.
-- Out of scope: SAS modifiers (not used); any new durability system (none in Bannerlord).
 
 ## Index
 - [Overview](#overview)

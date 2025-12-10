@@ -79,14 +79,17 @@ Customize the mod via JSON files in `Modules\Enlisted\ModuleData\Enlisted\`:
 ## Troubleshooting
 
 Logs are located in `<Bannerlord>\Modules\Enlisted\Debugging\`:
-- `enlisted.log`: General mod activity.
-- `conflicts.log`: Comprehensive mod conflict diagnostics including:
-  - Harmony patch conflicts (which mods patch the same methods)
-  - Patch execution order and priorities
-  - Registered campaign behaviors
-  - Environment info (game version, mod version, OS)
-  - Loaded modules list
-  - Categorized patch list by purpose (Army/Party, Encounter, Finance, etc.)
+- `Session-A/B/C_{timestamp}.log`: Rotating session logs (A = newest). Share Session-A.
+- `Conflicts-A/B/C_{timestamp}.log`: Rotating conflict diagnostics (A = newest). Share Conflicts-A.
+- `Current_Session_README.txt`: Quick pointers to the newest logs.
+- Legacy aliases remain (`enlisted.log`, `conflicts.log`) but the rotating files are canonical.
 - `dialogue.log`: Conversation system events.
 
-**Note**: The `conflicts.log` is generated at startup and updated when the campaign starts (deferred patches). If you're experiencing issues, share this file when reporting bugs.
+**Note**: Conflict diagnostics are written at startup and refreshed when a campaign begins. Always include the newest Session-A and Conflicts-A when reporting issues.
+
+## Reporting issues
+- Steam comments cannot take file uploads; share links instead (Drive/Dropbox/GitHub Gist/Pastebin).
+- Include logs: `Modules\Enlisted\Debugging\enlisted.log` and `conflicts.log` (zip if large).
+- If crashing, include crash folder from `C:\ProgramData\Mount and Blade II Bannerlord\crashes\` (zip).
+- List Bannerlord version, Harmony version, and full mod list with load order.
+- Note how you installed (Steam Workshop vs Nexus) and steps to reproduce the issue.
