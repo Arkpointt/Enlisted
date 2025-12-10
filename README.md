@@ -2,12 +2,12 @@
 
 Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
 
-## What's New (v0.5.8)
-- Siege auto-resolve crash guard: stabilizes PlayerEncounter.Finish after sieges.
-- Abandon army suppressed while enlisted (raid, army_wait, encounter menus) with deferred-safe patches.
-- Formation assignment: confirms duty formation and teleports you in; no command authority below Tier 4 (expected).
-- Sea-lord conversation path fixed so enlisted dialogs appear correctly.
-- Cleanup: removed obsolete CombatStats behaviors; version bump to 0.5.8.
+## What's New (v0.5.9)
+- Steam Workshop upload: cross-machine path resolution, proper XML metadata, and upload automation
+- Enhanced logging: improved conflict diagnostics, session rotation, and mod compatibility detection
+- Config cleanup: removed unused legacy sections from enlisted_config.json
+- Documentation: fixed XP progression location references, updated reporting instructions
+- Safety fix: ensure settlement exit before finishing encounters while enlisted
 
 ## Features
 
