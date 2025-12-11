@@ -142,7 +142,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 var data = new MultiSelectionInquiryData(
                     "Select equipment to use",
-                    string.Empty,
+                    "Gear will not be auto-issued after Tier 1. Your chosen kit becomes purchasable at the Quartermaster.",
                     options,
                     true, // Enable close button (X) like lord selection dialog
                     1,
@@ -156,7 +156,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                             if (selected?.FirstOrDefault()?.Identifier is CharacterObject chosen)
                             {
                                 ModLogger.Info("TroopSelection", $"Player selected troop: {chosen.Name} (ID: {chosen.StringId}, Tier: {SafeGetTier(chosen)}, Formation: {DetectTroopFormation(chosen)})");
-                                ApplySelectedTroopEquipment(Hero.MainHero, chosen);
+                                var autoIssue = SafeGetTier(chosen) <= 1; // Tier 1 keeps auto-issue; higher tiers unlock for purchase
+                                ApplySelectedTroopEquipment(Hero.MainHero, chosen, autoIssue);
                                 _lastSelectedTroopId = chosen.StringId;
                                 // Don't re-capture time - preserve the time state from when the button was clicked
                                 // Just refresh the menu without affecting time control
@@ -432,7 +433,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 var statusText = "You've been summoned before the Master at Arms.\n\n";
                 statusText += $"\"Soldier, your service has not gone unnoticed. You've earned promotion to {rankName}.\"\n\n";
-                statusText += "Do you want to complete the paperwork and collect your new equipment now, or later?\n\n";
+                statusText += "After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster.\n\n";
                 statusText += $"({_availableTroops.Count} troop specializations available)";
                 
                 MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", statusText);
@@ -594,46 +595,58 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Apply equipment from selected troop to hero.
         /// Implements equipment REPLACEMENT system (not accumulation).
-        /// Includes accountability check - soldier is charged for missing equipment.
+        /// Includes accountability check - soldier is charged for missing equipment when auto-issuing.
         /// </summary>
-        public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop)
+        public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop, bool autoIssueEquipment)
         {
             try
             {
-                // Equipment is replaced (not accumulated) for realistic military service
-                // This ensures players get the equipment appropriate to their tier and troop type
-                var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
-                if (troopEquipment == null)
-                {
-                    ModLogger.Error("TroopSelection", $"No equipment found for {selectedTroop.Name}");
-                    return;
-                }
-                
-                // ACCOUNTABILITY CHECK: Charge for any missing equipment before issuing new gear
-                ProcessEquipmentAccountability(hero);
-                
-                // Replace all equipment with new troop's gear
-                EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
                 _lastSelectedTroopId = selectedTroop.StringId;
-                
-                // Record newly issued equipment for future accountability
-                RecordIssuedEquipment(hero.BattleEquipment);
-                
-                // Update formation based on selected troop
+
+                // Update formation based on selected troop (always)
                 var formation = DetectTroopFormation(selectedTroop);
                 var duties = EnlistedDutiesBehavior.Instance;
                 duties?.SetPlayerFormation(formation.ToString().ToLower());
                 
-                // Show promotion notification
-                var message = new TextObject("{=eq_promoted_new_equipment}Promoted to {TROOP_NAME}! New equipment issued.");
-                message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                if (autoIssueEquipment)
+                {
+                    // Equipment is replaced (not accumulated) for realistic military service
+                    var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
+                    if (troopEquipment == null)
+                    {
+                        ModLogger.Error("TroopSelection", $"No equipment found for {selectedTroop.Name}");
+                        return;
+                    }
+
+                    // ACCOUNTABILITY CHECK: Charge for any missing equipment before issuing new gear
+                    ProcessEquipmentAccountability(hero);
+
+                    // Replace all equipment with new troop's gear
+                    EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
+
+                    // Record newly issued equipment for future accountability
+                    RecordIssuedEquipment(hero.BattleEquipment);
+
+                    // Show promotion notification
+                    var message = new TextObject("{=eq_promoted_new_equipment}Promoted to {TROOP_NAME}! New equipment issued.");
+                    message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                }
+                else
+                {
+                    // No auto-issue: inform player gear is purchasable at Quartermaster
+                    var message = new TextObject("{=eq_purchasable_qm}Promotion recorded. Gear for {TROOP_NAME} is now available at the Quartermaster.");
+                    message.SetTextVariable("TROOP_NAME", selectedTroop.Name);
+                    InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                }
                 
                 // Clear promotion state
                 _promotionPending = false;
                 _availableTroops.Clear();
                 
-                ModLogger.Info("TroopSelection", $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation})");
+                ModLogger.Info("TroopSelection", autoIssueEquipment
+                    ? $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation})"
+                    : $"Troop selection recorded without auto-issue (Formation: {formation}); gear available at Quartermaster");
             }
             catch (Exception ex)
             {
@@ -752,7 +765,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var troopOfType = _availableTroops.FirstOrDefault(t => DetectTroopFormation(t) == formationType);
                 if (troopOfType != null)
                 {
-                    ApplySelectedTroopEquipment(Hero.MainHero, troopOfType);
+                    ApplySelectedTroopEquipment(Hero.MainHero, troopOfType, autoIssueEquipment: SafeGetTier(troopOfType) <= 1);
                     
                     // Return to main enlisted menu
                     EnlistedMenuBehavior.SafeActivateEnlistedMenu();

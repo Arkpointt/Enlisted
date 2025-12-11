@@ -155,7 +155,7 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddCommandTentMenus(CampaignGameStarter starter)
         {
-            // Add "Command Tent" option to enlisted_status menu
+            // Add "My Camp" option to enlisted_status menu (Command Tent entry point)
             AddCommandTentOptionToEnlistedMenu(starter);
 
             // Main Command Tent menu
@@ -191,7 +191,7 @@ namespace Enlisted.Features.CommandTent.UI
         #region Enlisted Status Integration
 
         /// <summary>
-        /// Adds the Command Tent option to the main enlisted status menu.
+        /// Adds the Camp option to the main enlisted status menu.
         /// </summary>
         private void AddCommandTentOptionToEnlistedMenu(CampaignGameStarter starter)
         {
@@ -200,7 +200,7 @@ namespace Enlisted.Features.CommandTent.UI
                 starter.AddGameMenuOption(
                     "enlisted_status",
                     "enlisted_command_tent",
-                    "{=ct_menu_enter}Enter the Command Tent",
+                    "My Camp",
                     IsCommandTentAvailable,
                     OnCommandTentSelected,
                     false,
@@ -213,6 +213,7 @@ namespace Enlisted.Features.CommandTent.UI
                 ModLogger.Error(LogCategory, $"Failed to add Command Tent option: {ex.Message}");
             }
         }
+
 
         /// <summary>
         /// Checks if the Command Tent option should be available (player must be enlisted).
@@ -292,15 +293,30 @@ namespace Enlisted.Features.CommandTent.UI
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_service_records",
-                "{=ct_option_records}Review Service Records",
+                "Review Service Records",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(LifetimeSummaryMenuId),
                 false,
                 1);
+
+            // Baggage Train (stash access) - Submenu icon
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_baggage_train",
+                "{=enlisted_baggage_train}Visit Baggage Train",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=qm_baggage_tooltip}Access your stored belongings (fatigue cost by rank).");
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
+                false,
+                2);
 
             // Personal Retinue option - TroopSelection icon (soldiers)
             starter.AddGameMenuOption(
@@ -310,7 +326,7 @@ namespace Enlisted.Features.CommandTent.UI
                 IsRetinueAvailable,
                 _ => SwitchToMenuPreserveTime(RetinueMenuId),
                 false,
-                2);
+                3);
 
             // Companion Assignments option - Conversation icon (speech)
             starter.AddGameMenuOption(
@@ -409,6 +425,7 @@ namespace Enlisted.Features.CommandTent.UI
         /// </summary>
         private void AddServiceRecordsMenu(CampaignGameStarter starter)
         {
+            // Keep the menu registration minimal; service records now go straight to LifetimeSummary
             starter.AddWaitGameMenu(
                 ServiceRecordsMenuId,
                 "{=ct_records_intro}Your service history and military records.",
@@ -417,68 +434,6 @@ namespace Enlisted.Features.CommandTent.UI
                 CommandTentWaitConsequence,
                 CommandTentWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            // Current Posting option - Manage icon
-            starter.AddGameMenuOption(
-                ServiceRecordsMenuId,
-                "ct_current_posting",
-                "{=ct_option_current}Current Posting",
-                args =>
-                {
-                    var enlistment = EnlistmentBehavior.Instance;
-                    args.IsEnabled = enlistment?.IsEnlisted == true;
-                    if (!args.IsEnabled)
-                    {
-                        args.Tooltip = new TextObject("{=ct_not_enlisted}You are not currently enlisted.");
-                    }
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(CurrentPostingMenuId),
-                false,
-                1);
-
-            // Faction Records option - Leaderboard icon
-            starter.AddGameMenuOption(
-                ServiceRecordsMenuId,
-                "ct_faction_records",
-                "{=ct_option_faction}Faction Records",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leaderboard;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(FactionRecordsMenuId),
-                false,
-                2);
-
-            // Lifetime Summary option - Manage icon
-            starter.AddGameMenuOption(
-                ServiceRecordsMenuId,
-                "ct_lifetime_summary",
-                "{=ct_option_lifetime}Lifetime Summary",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(LifetimeSummaryMenuId),
-                false,
-                3);
-
-            // Back option - Leave icon
-            starter.AddGameMenuOption(
-                ServiceRecordsMenuId,
-                "ct_records_back",
-                "{=ct_back_tent}Back to Command Tent",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
-                true,
-                100);
         }
 
         private void OnServiceRecordsInit(MenuCallbackArgs args)
@@ -844,13 +799,13 @@ namespace Enlisted.Features.CommandTent.UI
             starter.AddGameMenuOption(
                 LifetimeSummaryMenuId,
                 "ct_lifetime_back",
-                "{=ct_back_records}Back to Service Records",
+                "{=ct_back_records}Back to Camp",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(ServiceRecordsMenuId),
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
                 true,
                 100);
         }

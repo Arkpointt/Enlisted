@@ -53,6 +53,7 @@ Provide the foundation for military service - join a lord's forces, follow them 
 4. Player confirms → Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
+7. Bag check is deferred ~12 in-game hours after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
 7. **Minor factions only:** Mirror the lord faction’s current wars to the player clan so ally/enemy colors and battle joins work; relations are reverted to neutral on discharge
 
 **Daily Service:**
@@ -100,7 +101,7 @@ Promotion popup features:
 - Tier-specific title showing the ceremony name
 - Narrative text describing the promotion from the lord's or serjeant's perspective
 - Player name included in the narrative for immersion
-- Context-aware button text ("Understood" for Tier 2-3, "To the Command Tent" for Tier 4+)
+- Context-aware button text ("Understood" for Tier 2-3, "To Camp" for Tier 4+)
 - Short chat notification for quick feedback
 
 All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xml` with IDs like `promo_title_X`, `promo_msg_X`, and `promo_chat_X`.
@@ -177,6 +178,7 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 - `EnlistedDialogManager.cs` - Retirement, re-enlistment, service transfer dialogs, minor faction dialog variants
+- `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident; schedules a deferred (~12h) native map incident via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip

@@ -406,7 +406,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         var goldBefore = Hero.MainHero.Gold;
                         GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost); // Default disableNotification=false is sufficient
-                        troopSelectionManager?.ApplySelectedTroopEquipment(Hero.MainHero, selectedTroop);
+                        troopSelectionManager?.ApplySelectedTroopEquipment(Hero.MainHero, selectedTroop, autoIssueEquipment: true);
                         
                         // Log equipment purchase
                         ModLogger.Info("Gold", $"Equipment purchased: {selectedTroop.Name} for {cost} denars (had {goldBefore}, now {Hero.MainHero.Gold})");

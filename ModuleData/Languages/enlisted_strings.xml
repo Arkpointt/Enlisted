@@ -53,8 +53,20 @@
     <!-- Formation Selection -->
     <string id="formation_select_msg" text="The serjeant surveys the recruits. 'Time to find your place in the line, soldier. What are you trained for?'" />
     <string id="formation_assigned" text="Formation assigned: {FORMATION}. Your training and equipment will reflect your role." />
+    
+    <!-- Lance Selection -->
+    <string id="Lance_Select_Title" text="Select a Lance in need of recruits" />
+    <string id="Lance_Select_Body" text="Choose a Lance to formally join at Tier 2." />
+    <string id="Lance_Select_Confirm" text="Join" />
+    <string id="Lance_Select_Cancel" text="Keep provisional" />
+    <string id="Lance_Select_Finalized" text="You have joined the {LANCE}." />
+    <string id="Lance_StylePrompt_Title" text="How does this army fight?" />
+    <string id="Lance_StylePrompt_Body" text="Choose a tradition for your lance." />
+    <string id="Lance_StylePrompt_Confirm" text="Choose" />
+    <string id="Lance_StylePrompt_Cancel" text="Cancel" />
 
     <!-- Enlistment Messages -->
+    <string id="enlisted_success_notification" text="You have enlisted in {LORD_NAME}'s service." />
     <string id="Enlisted_Message_AlreadyInService" text="You are already in service." />
     <string id="Enlisted_Message_MustSpeakToNoble" text="We must speak to a noble to enlist." />
     <string id="Enlisted_Message_NoMainParty" text="No main party found." />
@@ -422,6 +434,24 @@
     <string id="qm_missing_discharge_charge" text="Missing equipment: {AMOUNT} denars deducted from final pay." />
     <string id="qm_accountability_passed" text="Equipment accountability check passed - all gear returned." />
     <string id="qm_btn_understood" text="Understood" />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- QUARTERMASTER - Bag Check (Enlistment Incident) -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="qm_bagcheck_title" text="Enlistment Bag Check" />
+    <string id="qm_bagcheck_body" text="The quartermaster lifts his quill. &quot;You can't march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?&quot;" />
+    <string id="qm_stow_all" text="&quot;Stow it all&quot; (50g)" />
+    <string id="qm_stow_hint" text="Move every scrap into the baggage wagon and pay the clerk his fee." />
+    <string id="qm_sell_all" text="&quot;Sell it all&quot; (60%)" />
+    <string id="qm_sell_hint" text="Liquidate the lot at a battlefield rate and march off heavier in coin." />
+    <string id="qm_smuggle_one" text="&quot;I'm keeping one thing&quot; (Roguery 30+)" />
+    <string id="qm_smuggle_hint" text="Slip one prized piece past the ledger; if caught, it's gone." />
+    <string id="qm_continue" text="Continue" />
+    <string id="qm_fee_paid" text="You pay {FEE} denars for the wagon fee." />
+    <string id="qm_liquidate_gain" text="You receive {GOLD} denars from liquidating your possessions." />
+    <string id="qm_smuggle_success" text="You tuck away your {ITEM} without being caught." />
+    <string id="qm_smuggle_fail" text="Caught smuggling. Your {ITEM} is confiscated." />
+    <string id="qm_baggage_no_fatigue" text="You are too exhausted to rummage through the baggage train." />
     <string id="qm_retirement_gear" text="Your personal belongings have been returned. You may keep your military equipment as thanks for your service." />
     <string id="qm_return_intro" text="Return issued gear to the armory. Select an item to hand back." />
     <string id="qm_return_line" text="{ITEM_NAME} x{COUNT}" />
@@ -444,6 +474,20 @@
     <string id="qm_no_armor_variants" text="No armor variants available for your troop tree." />
     <string id="qm_no_helmet_variants" text="No helmet variants available for your troop type." />
     <string id="qm_no_accessory_variants" text="No accessory variants available." />
+    <string id="qm_no_mount_variants" text="No mount variants available." />
+    
+    <!-- Quartermaster Menu Options -->
+    <string id="qm_menu_request_weapons" text="Request weapon variants" />
+    <string id="qm_menu_request_armor" text="Request armor variants" />
+    <string id="qm_menu_request_accessories" text="Request accessory variants" />
+    <string id="qm_menu_request_mounts" text="Request mount variants" />
+    <string id="qm_menu_manage_supplies" text="Manage party supplies" />
+    <string id="qm_menu_return_equipment" text="Return issued equipment" />
+    <string id="qm_menu_back_status" text="Return to enlisted status" />
+    <string id="qm_menu_optimize_food" text="Optimize food supplies" />
+    <string id="qm_menu_reorganize_inventory" text="Reorganize party inventory" />
+    <string id="qm_menu_purchase_supplies" text="Purchase additional supplies" />
+    <string id="qm_menu_supplies_back" text="Return to quartermaster" />
     <string id="qm_optimized_food" text="Optimized food supplies: +{AMOUNT} grain from efficient rationing." />
     <string id="qm_reorganized_inventory" text="Reorganized inventory: +{AMOUNT} temporary carry capacity." />
     <string id="qm_purchased_supplies" text="Purchased basic supplies: 5 grain, 2 tools." />

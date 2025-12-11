@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core;
@@ -255,6 +256,52 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 ModLogger.Error("Interface", $"Error in siege battle detection: {ex.Message}");
                 return false;
+            }
+        }
+
+        private void OnDebugToolsSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var data = new InquiryData(
+                    new TextObject("{=Enlisted_Debug_Title}Debug Tools").ToString(),
+                    new TextObject("{=Enlisted_Debug_Body}Grant testing resources.").ToString(),
+                    true,
+                    true,
+                    new TextObject("{=Enlisted_Debug_Gold}Give 1000 Gold").ToString(),
+                    new TextObject("{=Enlisted_Debug_XP}Give XP to Rank Up").ToString(),
+                    () => Debugging.Behaviors.DebugToolsBehavior.GiveGold(),
+                    () => Debugging.Behaviors.DebugToolsBehavior.GiveEnlistmentXp());
+
+                InformationManager.ShowInquiry(data);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error opening debug tools: {ex.Message}");
+            }
+        }
+
+        private bool IsBaggageTrainAvailable(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            return enlistment?.IsEnlisted == true;
+        }
+
+        private void OnBaggageTrainSelected(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_baggage_unavailable}You must be enlisted to access the baggage train.").ToString(),
+                    Colors.Red));
+                return;
+            }
+
+            if (!enlistment.TryOpenBaggageTrain())
+            {
+                // failure handled internally (fatigue or other checks)
+                return;
             }
         }
 
@@ -845,6 +892,18 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Main menu options for enlisted status menu with modern icons and localized tooltips
 
+            // Debug tools (QA only): grant gold/XP
+            starter.AddGameMenuOption("enlisted_status", "enlisted_debug_tools",
+                "{=Enlisted_Menu_DebugTools}Debug Tools",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=menu_tooltip_debug}Grant gold or enlistment XP for testing.");
+                    return true;
+                },
+                OnDebugToolsSelected,
+                false, 0);
+
             // Master at Arms - allows players to select troop equipment (TroopSelection icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
                 "{=Enlisted_Menu_MasterAtArms}Master at Arms",
@@ -1286,6 +1345,39 @@ namespace Enlisted.Features.Interface.Behaviors
                     formationLine.SetTextVariable("FORMATION", formationName);
                     statusContent += formationLine + "\n";
 
+                    // Fatigue placeholder (camp actions will consume later)
+                    var fatigueLine = new TextObject("{=Enlisted_Status_Fatigue}Fatigue : {CUR}/{MAX}");
+                    fatigueLine.SetTextVariable("CUR", enlistment.FatigueCurrent);
+                    fatigueLine.SetTextVariable("MAX", enlistment.FatigueMax);
+                    statusContent += fatigueLine + "\n";
+
+                    // Lance display (provisional vs finalized)
+                    if (LanceRegistry.IsFeatureEnabled() && !string.IsNullOrWhiteSpace(enlistment.CurrentLanceName))
+                    {
+                        TextObject lanceLine;
+                        if (enlistment.IsLanceLegacy)
+                        {
+                            lanceLine = new TextObject("{=Enlisted_Status_LanceLegacy}Lance (Legacy) : {LANCE}");
+                        }
+                        else if (enlistment.IsLanceProvisional)
+                        {
+                            lanceLine = new TextObject("{=Enlisted_Status_LanceProvisional}Lance (Provisional) : {LANCE}");
+                        }
+                        else
+                        {
+                            lanceLine = new TextObject("{=Enlisted_Status_Lance}Lance : {LANCE}");
+                        }
+                        lanceLine.SetTextVariable("LANCE", enlistment.CurrentLanceName);
+                        statusContent += lanceLine + "\n";
+
+                        // Light, non-intrusive hint to finalize at Tier 2 when provisional
+                        if (enlistment.IsLanceProvisional)
+                        {
+                            var hint = new TextObject("{=Enlisted_Status_LanceHint}Hint: Finalize your lance at Tier 2.");
+                            statusContent += hint + "\n";
+                        }
+                    }
+
                     // Wage and experience information
                     var dailyWage = CalculateCurrentDailyWage();
                     var wageLine = new TextObject("{=Enlisted_Status_Wage}Wage : {WAGE}");
@@ -1636,6 +1728,39 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", "Error accessing quartermaster services", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
+            }
+        }
+
+        private void OnQuartermasterHorsesSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=menu_must_be_enlisted_qm}You must be enlisted to access quartermaster services.").ToString()));
+                    return;
+                }
+
+                var quartermasterManager = QuartermasterManager.Instance;
+                if (quartermasterManager != null)
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    quartermasterManager.SetFilterToHorseAndTack();
+                    GameMenu.ActivateGameMenu("quartermaster_equipment");
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error accessing quartermaster horse/tack services", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }

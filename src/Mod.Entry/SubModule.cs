@@ -299,6 +299,9 @@ namespace Enlisted.Mod.Entry
                     // handles party following, battle participation, and leave/temporary absence
                     campaignStarter.AddBehavior(new EnlistmentBehavior());
 
+                    // Incidents: registers enlistment-specific incidents (e.g., deferred bag check)
+                    campaignStarter.AddBehavior(new EnlistedIncidentsBehavior());
+
                     // Conversation system: adds dialog options to talk with lords about enlistment,
                     // service status, promotions, and requesting leave
                     campaignStarter.AddBehavior(new EnlistedDialogManager());
@@ -364,6 +367,7 @@ namespace Enlisted.Mod.Entry
                     // This helps troubleshoot issues by showing exactly what was registered
                     ModConflictDiagnostics.LogRegisteredBehaviors([
                         nameof(EnlistmentBehavior),
+                        nameof(EnlistedIncidentsBehavior),
                         nameof(EnlistedDialogManager),
                         nameof(EnlistedDutiesBehavior),
                         nameof(EnlistedMenuBehavior),

@@ -36,10 +36,10 @@
 								<!-- Status indicator -->
 								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="220" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
 								
-							<!-- Single centered Requisition Button -->
+							<!-- Single centered Buy Button -->
 							<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45" SuggestedWidth="145" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="15" Brush="ButtonBrush1" Command.Click="ExecuteSelectItem" IsEnabled="@IsEnabled">
 								<Children>
-									<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Requisition Gear" />
+									<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="OverlayPopup.ButtonText" Brush.FontSize="14" Text="Buy Gear" />
 								</Children>
 							</ButtonWidget>
 								

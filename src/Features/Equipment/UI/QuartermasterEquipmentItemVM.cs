@@ -20,9 +20,6 @@ namespace Enlisted.Features.Equipment.UI
     {
         // DataSourceProperty attributes enable data binding with the UI layer
         
-        [DataSourceProperty] 
-        public string CostText { get; private set; }
-        
         [DataSourceProperty]
         public string StatusText { get; private set; }
         
@@ -40,6 +37,7 @@ namespace Enlisted.Features.Equipment.UI
         
         [DataSourceProperty]
         public string ItemName { get; private set; }
+        [DataSourceProperty] public string CostText { get; private set; }
         
         /// <summary>
         /// Primary stats line showing key stats for weapons/armor (displayed below image).
@@ -100,17 +98,18 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                // Build item details for display
+                // Build item details for display, include price
                 var item = _variant.Item;
+                CostText = $"Price: {_variant.Cost} denars";
+                OnPropertyChanged(nameof(CostText));
                 
                 // Set item name and basic properties
                 ItemName = item.Name?.ToString() ?? "Unknown Item";
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
                 
-                // Enable acquisition if not at the slot-specific limit
-                // Armor = 1 per type, Weapons = 2 per type
-                IsEnabled = !_variant.IsAtLimit;
+                // Enable acquisition as long as player can afford it
+                IsEnabled = _variant.CanAfford;
                 
                 // Determine slot limit for display purposes
                 var isWeaponSlot = _variant.Slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3;
@@ -231,21 +230,22 @@ namespace Enlisted.Features.Equipment.UI
                 }
                 
                 // Only block purchase when at the 2-item limit - that's the ONLY restriction
-                if (_variant.IsAtLimit)
+                if (!_variant.CanAfford)
                 {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=qm_at_limit}You already have 2 of this item - that's the limit, soldier.").ToString()));
+                    var msg = new TextObject("{=qm_cannot_afford}You can’t afford this. Cost: {COST} denars.");
+                    msg.SetTextVariable("COST", _variant.Cost);
+                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return;
                 }
                 
-                // Show confirmation - requisitioned equipment is free
-                var confirmText = $"Requisitioned {_variant.Item.Name}";
+                // Price check handled in parent; show confirmation text with price
+                var confirmText = $"Purchased {_variant.Item.Name} for {_variant.Cost} denars";
                 InformationManager.DisplayMessage(new InformationMessage(confirmText));
                 
                 // Apply selection through parent
                 _parentSelector?.OnEquipmentItemSelected(_variant);
                 
-                ModLogger.Info("QuartermasterUI", $"Equipment requisitioned: {_variant.Item.Name}");
+                ModLogger.Info("QuartermasterUI", $"Equipment purchased: {_variant.Item.Name} ({_variant.Cost} denars)");
             }
             catch (Exception ex)
             {

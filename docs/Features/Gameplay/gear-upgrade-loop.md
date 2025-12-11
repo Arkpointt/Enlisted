@@ -82,7 +82,7 @@
 - Phase 1 (core): Apothecary applies to player + retinue only; 7-day cooldown; cost scales with treated count; modest heal (not full top-off).
 - Phase 2 (companions opt-in): Add a toggle in Companion Assignments (“Eligible for care”). Only flagged companions are included in the next apothecary batch.
 - Safety: Companions set to “Stay Back” are excluded unless wounded via non-battle events.
-- UI: In Command Tent → Companion Assignments, add “Send to Apothecary” that queues selected companions; show wounded count and cooldown timer.
+- UI: In Camp → Companion Assignments, add "Send to Apothecary" that queues selected companions; show wounded count and cooldown timer.
 - Balance: Keep batch heal partial; cap per batch; keep the same cooldown; log treated heroes and cost.
 
 ## Edge Cases

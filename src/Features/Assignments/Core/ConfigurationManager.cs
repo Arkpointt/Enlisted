@@ -20,6 +20,9 @@ namespace Enlisted.Features.Assignments.Core
         private static FinanceConfig _cachedFinanceConfig;
         private static GameplayConfig _cachedGameplayConfig;
         private static RetirementConfig _cachedRetirementConfig;
+        private static LancesFeatureConfig _cachedLancesConfig;
+        private static QuartermasterConfig _cachedQuartermasterConfig;
+        private static LanceCatalogConfig _cachedLanceCatalogConfig;
 
         /// <summary>
         ///     Load duties system configuration with comprehensive error handling and schema validation.
@@ -364,6 +367,8 @@ namespace Enlisted.Features.Assignments.Core
             _cachedFinanceConfig = null;
             _cachedGameplayConfig = null;
             _cachedRetirementConfig = null;
+            _cachedLancesConfig = null;
+            _cachedLanceCatalogConfig = null;
         }
 
         /// <summary>
@@ -589,6 +594,362 @@ namespace Enlisted.Features.Assignments.Core
         {
             return new RetirementConfig();
         }
+
+        /// <summary>
+        ///     Load lance feature toggles from enlisted_config.json.
+        ///     Keeps the feature gated until explicitly enabled.
+        /// </summary>
+        public static LancesFeatureConfig LoadLancesConfig()
+        {
+            if (_cachedLancesConfig != null)
+            {
+                return _cachedLancesConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    return CreateDefaultLancesFeatureConfig();
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                if (fullConfig?.Lances == null)
+                {
+                    ModLogger.Info("Config", "No lances section in enlisted_config.json, using defaults");
+                    return CreateDefaultLancesFeatureConfig();
+                }
+
+                _cachedLancesConfig = fullConfig.Lances;
+                ModLogger.Info("Config",
+                    $"Lances feature config loaded (enabled={_cachedLancesConfig.LancesEnabled})");
+                return _cachedLancesConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", "Error loading lances feature config", ex);
+                return CreateDefaultLancesFeatureConfig();
+            }
+        }
+
+        public static QuartermasterConfig LoadQuartermasterConfig()
+        {
+            if (_cachedQuartermasterConfig != null)
+            {
+                return _cachedQuartermasterConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for quartermaster");
+                    _cachedQuartermasterConfig = new QuartermasterConfig();
+                    return _cachedQuartermasterConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedQuartermasterConfig = fullConfig?.Quartermaster ?? new QuartermasterConfig();
+                return _cachedQuartermasterConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", $"Failed to load quartermaster config, using defaults. Error: {ex.Message}");
+                _cachedQuartermasterConfig = new QuartermasterConfig();
+                return _cachedQuartermasterConfig;
+            }
+        }
+
+        private static LancesFeatureConfig CreateDefaultLancesFeatureConfig()
+        {
+            return new LancesFeatureConfig
+            {
+                LancesEnabled = false,
+                LanceSelectionCount = 3,
+                UseCultureWeighting = true
+            };
+        }
+
+        /// <summary>
+        ///     Load lance catalog configuration from lances_config.json.
+        ///     Provides style definitions, lance names, and culture mapping.
+        /// </summary>
+        public static LanceCatalogConfig LoadLanceCatalog()
+        {
+            if (_cachedLanceCatalogConfig != null)
+            {
+                return _cachedLanceCatalogConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("lances_config.json");
+
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Info("Config", $"Lances catalog not found at: {configPath}, using defaults");
+                    return CreateDefaultLanceCatalog();
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var config = JsonConvert.DeserializeObject<LanceCatalogConfig>(jsonContent);
+
+                if (config?.SchemaVersion != 1)
+                {
+                    ModLogger.Error("Config",
+                        $"Unsupported lances config schema version: {config?.SchemaVersion}. Expected: 1");
+                    return CreateDefaultLanceCatalog();
+                }
+
+                if (config.StyleDefinitions == null || config.StyleDefinitions.Count == 0)
+                {
+                    ModLogger.Error("Config", "Lances config contains no style definitions");
+                    return CreateDefaultLanceCatalog();
+                }
+
+                _cachedLanceCatalogConfig = config;
+                ModLogger.Info("Config",
+                    $"Lances catalog loaded successfully: {config.StyleDefinitions.Count} style definitions");
+                return config;
+            }
+            catch (JsonException ex)
+            {
+                ModLogger.Error("Config", "JSON parsing error in lances config", ex);
+                return CreateDefaultLanceCatalog();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", "Unexpected error loading lances config", ex);
+                return CreateDefaultLanceCatalog();
+            }
+        }
+
+        /// <summary>
+        ///     Default lance catalog used when JSON is missing or invalid.
+        ///     Provides coverage for core cultures and style archetypes.
+        /// </summary>
+        private static LanceCatalogConfig CreateDefaultLanceCatalog()
+        {
+            var catalog = new LanceCatalogConfig
+            {
+                SchemaVersion = 1,
+                CultureMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["empire"] = "style_legion",
+                    ["calradia_empire"] = "style_legion",
+                    ["rome_reborn"] = "style_legion",
+                    ["vlandia"] = "style_feudal",
+                    ["culture_westerlands"] = "style_feudal",
+                    ["battania"] = "style_tribal",
+                    ["sturgia"] = "style_tribal",
+                    ["wildling"] = "style_tribal",
+                    ["khuzait"] = "style_horde",
+                    ["dothraki"] = "style_horde",
+                    ["aserai"] = "style_mercenary"
+                }
+            };
+
+            catalog.StyleDefinitions =
+            [
+                new LanceStyleDefinition
+                {
+                    Id = "style_legion",
+                    Lances =
+                    [
+                        new LanceDefinition
+                        {
+                            Id = "legion_fourth_cohort", Name = "The 4th Cohort", RoleHint = "infantry",
+                            StoryId = "story_legion_fourth_cohort"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "legion_iron_column", Name = "The Iron Column", RoleHint = "infantry",
+                            StoryId = "story_legion_iron_column"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "legion_emperors_eyes", Name = "The Emperor's Eyes", RoleHint = "ranged",
+                            StoryId = "story_legion_emperors_eyes"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "legion_porphyry_guard", Name = "The Porphyry Guard", RoleHint = "ranged",
+                            StoryId = "story_legion_porphyry_guard"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "legion_eagles_talons", Name = "The Eagle's Talons", RoleHint = "cavalry",
+                            StoryId = "story_legion_eagles_talons"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "legion_immortals", Name = "The Immortals", RoleHint = "cavalry",
+                            StoryId = "story_legion_immortals"
+                        }
+                    ]
+                },
+                new LanceStyleDefinition
+                {
+                    Id = "style_feudal",
+                    Lances =
+                    [
+                        new LanceDefinition
+                        {
+                            Id = "feudal_red_chevron", Name = "The Red Chevron", RoleHint = "infantry",
+                            StoryId = "story_feudal_red_chevron"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "feudal_white_gauntlets", Name = "The White Gauntlets", RoleHint = "infantry",
+                            StoryId = "story_feudal_white_gauntlets"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "feudal_broken_lances", Name = "The Broken Lances", RoleHint = "cavalry",
+                            StoryId = "story_feudal_broken_lances"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "feudal_iron_spur", Name = "The Iron Spur", RoleHint = "cavalry",
+                            StoryId = "story_feudal_iron_spur"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "feudal_black_pennant", Name = "The Black Pennant", RoleHint = "ranged",
+                            StoryId = "story_feudal_black_pennant"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "feudal_gilded_lilies", Name = "The Gilded Lilies", RoleHint = "ranged",
+                            StoryId = "story_feudal_gilded_lilies"
+                        }
+                    ]
+                },
+                new LanceStyleDefinition
+                {
+                    Id = "style_tribal",
+                    Lances =
+                    [
+                        new LanceDefinition
+                        {
+                            Id = "tribal_wolf_skins", Name = "The Wolf-Skins", RoleHint = "infantry",
+                            StoryId = "story_tribal_wolf_skins"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "tribal_bears_paw", Name = "The Bear's Paw", RoleHint = "infantry",
+                            StoryId = "story_tribal_bears_paw"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "tribal_raven_feeders", Name = "The Raven Feeders", RoleHint = "ranged",
+                            StoryId = "story_tribal_raven_feeders"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "tribal_stags_blood", Name = "The Stag's Blood", RoleHint = "ranged",
+                            StoryId = "story_tribal_stags_blood"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "tribal_shield_biters", Name = "The Shield-Biters", RoleHint = "cavalry",
+                            StoryId = "story_tribal_shield_biters"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "tribal_frost_eaters", Name = "The Frost-Eaters", RoleHint = "cavalry",
+                            StoryId = "story_tribal_frost_eaters"
+                        }
+                    ]
+                },
+                new LanceStyleDefinition
+                {
+                    Id = "style_horde",
+                    Lances =
+                    [
+                        new LanceDefinition
+                        {
+                            Id = "horde_wind_riders", Name = "The Wind-Riders", RoleHint = "horsearcher",
+                            StoryId = "story_horde_wind_riders"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "horde_black_sky", Name = "The Black Sky", RoleHint = "horsearcher",
+                            StoryId = "story_horde_black_sky"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "horde_lightning_hooves", Name = "The Lightning Hooves", RoleHint = "cavalry",
+                            StoryId = "story_horde_lightning_hooves"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "horde_cloud_lancers", Name = "The Cloud Lancers", RoleHint = "cavalry",
+                            StoryId = "story_horde_cloud_lancers"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "horde_steppe_sentinels", Name = "The Steppe Sentinels", RoleHint = "infantry",
+                            StoryId = "story_horde_steppe_sentinels"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "horde_skywise", Name = "The Skywise", RoleHint = "infantry",
+                            StoryId = "story_horde_skywise"
+                        }
+                    ]
+                },
+                new LanceStyleDefinition
+                {
+                    Id = "style_mercenary",
+                    Lances =
+                    [
+                        new LanceDefinition
+                        {
+                            Id = "merc_mud_eaters", Name = "The Mud-Eaters", RoleHint = "infantry",
+                            StoryId = "story_merc_mud_eaters"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "merc_vanguard", Name = "The Vanguard", RoleHint = "infantry",
+                            StoryId = "story_merc_vanguard"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "merc_second_sons", Name = "The Second Sons", RoleHint = "ranged",
+                            StoryId = "story_merc_second_sons"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "merc_free_arrows", Name = "The Free Arrows", RoleHint = "ranged",
+                            StoryId = "story_merc_free_arrows"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "merc_coin_guard", Name = "The Coin Guard", RoleHint = "cavalry",
+                            StoryId = "story_merc_coin_guard"
+                        },
+                        new LanceDefinition
+                        {
+                            Id = "merc_steel_company", Name = "The Steel Company", RoleHint = "cavalry",
+                            StoryId = "story_merc_steel_company"
+                        }
+                    ]
+                }
+            ];
+
+            _cachedLanceCatalogConfig = catalog;
+            ModLogger.Info("Config", "Using fallback lances catalog");
+            return catalog;
+        }
     }
 
     /// <summary>
@@ -601,6 +962,10 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("gameplay")] public GameplayConfig Gameplay { get; set; }
 
         [JsonProperty("retirement")] public RetirementConfig Retirement { get; set; }
+
+        [JsonProperty("quartermaster")] public QuartermasterConfig Quartermaster { get; set; }
+
+        [JsonProperty("lances")] public LancesFeatureConfig Lances { get; set; }
     }
 
     /// <summary>
@@ -650,6 +1015,18 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
+    ///     Quartermaster tuning for pricing and buybacks.
+    /// </summary>
+    public class QuartermasterConfig
+    {
+        [JsonProperty("soldier_tax")] public float SoldierTax { get; set; } = 1.2f;
+
+        [JsonProperty("buyback_rate")] public float BuybackRate { get; set; } = 0.5f;
+
+        [JsonProperty("officer_stock_tax")] public float OfficerStockTax { get; set; } = 1.35f;
+    }
+
+    /// <summary>
     ///     Retirement system configuration for veteran benefits and term tracking.
     /// </summary>
     public class RetirementConfig
@@ -681,5 +1058,57 @@ namespace Enlisted.Features.Assignments.Core
 
         [JsonProperty("other_lords_min_relation")]
         public int OtherLordsMinRelation { get; set; } = 50;
+    }
+
+    /// <summary>
+    ///     Feature gating and tuning for the lance system.
+    ///     Loaded from the lances section of enlisted_config.json.
+    /// </summary>
+    public class LancesFeatureConfig
+    {
+        [JsonProperty("lances_enabled")] public bool LancesEnabled { get; set; }
+
+        [JsonProperty("lance_selection_count")]
+        public int LanceSelectionCount { get; set; } = 3;
+
+        [JsonProperty("use_culture_weighting")]
+        public bool UseCultureWeighting { get; set; } = true;
+    }
+
+    /// <summary>
+    ///     Root catalog for lances_config.json defining styles, lances, and culture mapping.
+    /// </summary>
+    public class LanceCatalogConfig
+    {
+        [JsonProperty("schemaVersion")] public int SchemaVersion { get; set; } = 1;
+
+        [JsonProperty("style_definitions")]
+        public List<LanceStyleDefinition> StyleDefinitions { get; set; } = new();
+
+        [JsonProperty("culture_map")] public Dictionary<string, string> CultureMap { get; set; } = new();
+    }
+
+    /// <summary>
+    ///     Style archetype containing a collection of lance definitions.
+    /// </summary>
+    public class LanceStyleDefinition
+    {
+        [JsonProperty("id")] public string Id { get; set; }
+
+        [JsonProperty("lances")] public List<LanceDefinition> Lances { get; set; } = new();
+    }
+
+    /// <summary>
+    ///     Individual lance entry with display name, role hint, and story mapping.
+    /// </summary>
+    public class LanceDefinition
+    {
+        [JsonProperty("id")] public string Id { get; set; }
+
+        [JsonProperty("name")] public string Name { get; set; }
+
+        [JsonProperty("roleHint")] public string RoleHint { get; set; }
+
+        [JsonProperty("storyId")] public string StoryId { get; set; }
     }
 }

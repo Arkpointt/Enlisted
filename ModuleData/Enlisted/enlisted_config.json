@@ -12,6 +12,11 @@
         "desertion_grace_period_days": 14,
         "leave_max_days": 14
     },
+    "quartermaster": {
+        "soldier_tax": 1.2,
+        "buyback_rate": 0.5,
+        "officer_stock_tax": 1.35
+    },
     "retirement": {
         "first_term_days": 252,
         "renewal_term_days": 84,
@@ -35,5 +40,10 @@
             "xp_divisor": 200,
             "army_bonus_multiplier": 1.2
         }
+    },
+    "lances": {
+        "lances_enabled": false,
+        "lance_selection_count": 3,
+        "use_culture_weighting": true
     }
 }

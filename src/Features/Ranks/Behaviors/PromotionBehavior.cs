@@ -76,6 +76,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             {
                 var currentTier = enlistment.EnlistmentTier;
                 var currentXp = enlistment.EnlistmentXP;
+                var previousTier = currentTier;
 
                 var promoted = false;
 
@@ -103,10 +104,13 @@ namespace Enlisted.Features.Ranks.Behaviors
                 // Handle promotion notifications
                 if (promoted)
                 {
-                    // Special handling for Tier 2 (formation selection)
-                    if (currentTier == 2 && !_formationSelectionPending)
+                    var reachedTier2Now = previousTier < 2 && currentTier >= 2;
+
+                    // Special handling for Tier 2 (formation + lance selection)
+                    if (reachedTier2Now && !_formationSelectionPending)
                     {
                         TriggerFormationSelection(currentTier);
+                        enlistment.TryPromptLanceSelection();
                     }
                     else
                     {

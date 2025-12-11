@@ -6,7 +6,7 @@
 |---------|-----------------|----------|
 | Companions in lord's party | Tier 1-3 | Lord's party roster |
 | Companions in player's squad | Tier 4+ | Player's party roster |
-| Battle participation toggle | Tier 4+ | Command Tent menu |
+| Battle participation toggle | Tier 4+ | Camp menu |
 | Unified squad formation | Tier 4+ | Battle missions |
 
 ## Table of Contents
@@ -84,7 +84,7 @@ When a battle starts at Tier 4+, the player, companions, and retinue fight toget
 
 ### Companion Battle Participation
 
-At Tier 4+, players can control which companions fight in battles through the Command Tent menu.
+At Tier 4+, players can control which companions fight in battles through the Camp menu.
 
 **Settings:**
 - **Fight** (default): Companion spawns in battle, faces all risks
@@ -106,7 +106,7 @@ At Tier 4+, players can control which companions fight in battles through the Co
   - All battle outcomes (not subject to casualty tracking)
 
 **UI Location:**
-- Command Tent → Companion Assignments
+- Camp → Companion Assignments
 - Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
 - Changes saved immediately (no save button needed)
 
@@ -384,6 +384,6 @@ ModLogger.Debug("CompanionCommand", $"Blocked general: {name} -> Team({side}) | 
 
 ## Related Documentation
 
-- [Command Tent System](../UI/command-tent.md) - Companion assignments UI
+- [Camp System](../UI/command-tent.md) - Companion assignments UI (formerly Command Tent)
 - [Enlistment System](enlistment.md) - Tier progression and service state
 - [Formation Training](formation-training.md) - Battle formation details

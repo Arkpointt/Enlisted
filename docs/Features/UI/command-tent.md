@@ -1,4 +1,4 @@
-# Command Tent System
+# Camp (formerly Command Tent)
 
 ## Quick Reference
 
@@ -27,11 +27,11 @@
 
 ## Overview
 
-The **Command Tent** is the player's personal command space within the enlisted army. It provides access to service records, retinue management (Tier 4+), and companion assignments.
+The **Camp** (formerly the Command Tent) is the player's personal command space within the enlisted army. It provides access to service records, retinue management (Tier 4+), and companion assignments.
 
 **Menu Structure:**
 ```
-[Command Tent]
+[Camp]
 ├── Service Records
 │   ├── Current Posting (this enlistment)
 │   ├── Faction Records (per-faction history)
@@ -155,7 +155,7 @@ Manage which companions fight in battles (Tier 4+).
 - Applies to all companions regardless of "Fight" or "Stay Back" setting
 
 **UI:**
-- Command Tent → Companion Assignments
+- Camp → Companion Assignments
 - Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
 - Changes saved immediately
 

@@ -7,7 +7,7 @@
 | Enlisted Status | Main service menu | After enlistment, from camp |
 | Duty Selection | Choose daily assignment | Enlisted Status → "Report for Duty" |
 | Quartermaster | Equipment selection | Enlisted Status → "Visit Quartermaster" |
-| Command Tent | Service records, retinue | Enlisted Status → "Command Tent" |
+| Camp (formerly Command Tent) | Service records, retinue | Enlisted Status → "Camp" |
 
 ## Index
 
@@ -182,7 +182,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 Enlisted Status Menu
     ├── Master at Arms → Troop Selection Popup
     ├── Visit Quartermaster → Equipment Selection Menu
-    ├── Command Tent → Service Records / Retinue / Companions
+    ├── Camp → Service Records / Retinue / Companions
     ├── My Lord... → Dialog System
     ├── Report for Duty → Duty Selection Menu
     └── Ask commander for leave → Leave Request Dialog
@@ -628,5 +628,5 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 ## Related Documentation
 
 - [Dialog System](dialog-system.md) - Menu activation after enlistment
-- [Command Tent](command-tent.md) - Service records and retinue management
+- [Camp](command-tent.md) - Service records and retinue management
 - [Duties System](../Core/duties-system.md) - Duty/profession definitions and XP

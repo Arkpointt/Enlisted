@@ -78,6 +78,11 @@ namespace Enlisted.Mod.Core.Logging
                 sb.AppendLine(
                     $"[Progression] max_tier_xp: {(tierXP.Length > 0 ? tierXP[tierXP.Length - 1].ToString() : "N/A")}");
 
+                // Lances config
+                var lances = ConfigurationManager.LoadLancesConfig();
+                sb.AppendLine(
+                    $"[Lances] enabled: {lances.LancesEnabled}, selection_count: {lances.LanceSelectionCount}, culture_weighting: {lances.UseCultureWeighting}");
+
                 sb.AppendLine("----------------------------");
 
                 ModLogger.Info("Config", sb.ToString());

@@ -20,7 +20,7 @@ The foundational systems that enable military service.
 Menu systems and player interaction interfaces.
 
 - **[Menu Interface](UI/menu-interface.md)** - Main enlisted status menu and navigation
-- **[Command Tent](UI/command-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub
+- **[Camp](UI/command-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub (formerly Command Tent)
 - **[Dialog System](UI/dialog-system.md)** - Conversation management with lords
 - **[Quartermaster](UI/quartermaster.md)** - Equipment selection UI and variant management
 
@@ -73,14 +73,14 @@ Each feature specification follows this structure:
 ## Quick Reference
 
 **By Tier Requirement:**
-- Tier 1+: Enlistment, Duties, Formation Training, Troop Selection, Companion Management, Command Tent (basic)
+- Tier 1+: Enlistment, Duties, Formation Training, Troop Selection, Companion Management, Camp (basic)
 - Tier 2+: Quartermaster, Menu Interface
-- Tier 4+: Personal Retinue (Command Tent), Recon Mission
+- Tier 4+: Personal Retinue (Camp), Recon Mission
 
 **By Category:**
 - **Progression**: Enlistment, Duties, Formation Training, Troop Selection
-- **Party Management**: Companion Management, Personal Retinue (Command Tent)
-- **Interaction**: Dialog System, Menu Interface, Town Access, Command Tent
+- **Party Management**: Companion Management, Personal Retinue (Camp)
+- **Interaction**: Dialog System, Menu Interface, Town Access, Camp
 - **Equipment**: Quartermaster
 - **Special**: Temporary Leave, Recon Mission
 - **Technical/Safety**: Encounter Safety, Formation Assignment, Night Rest & Fatigue

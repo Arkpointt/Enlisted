@@ -223,11 +223,11 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                // Apply equipment through existing QuartermasterManager
+                // Apply equipment through existing QuartermasterManager (priced purchase)
                 var quartermasterManager = QuartermasterManager.Instance;
                 if (quartermasterManager != null)
                 {
-                    quartermasterManager.RequestEquipmentVariant(selectedVariant.Item, selectedVariant.Slot);
+                    quartermasterManager.RequestEquipmentVariant(selectedVariant);
                     
                     // Update ALL variants with the same item ID to reflect new count/limit status
                     // This ensures consistent state across duplicates in the grid
