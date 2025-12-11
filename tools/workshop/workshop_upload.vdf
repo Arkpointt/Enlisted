@@ -67,5 +67,5 @@ Live the early game as a soldier instead of running an empire. Earn wages, follo
 		"1"		"Singleplayer"
 		"2"		"Overhaul"
     }
-	"changenote"		"v0.5.9: Steam Workshop upload improvements, enhanced logging diagnostics, config cleanup, settlement exit safety fix"
+	"changenote"		"v0.6.0"
 }

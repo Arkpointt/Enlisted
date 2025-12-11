@@ -52,6 +52,7 @@ Low-level systems that ensure stability and prevent issues.
 
 - **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention, reserve watchdog, prisoner-state aware activation, besiege-menu fix, and naval battle fixes (ship assignment, captain lookup, troop deployment, AI behavior creation for shipless formations)
 - **[Formation Assignment](Technical/formation-assignment.md)** - Battle formation assignment and position teleportation to lord's deployment
+- **[Night Rest & Fatigue](Technical/night-rest-fatigue.md)** - Night halt logic for lords/armies with optional enlisted fatigue when rest is impossible; phased plan and safeguards
 
 ---
 
@@ -82,4 +83,4 @@ Each feature specification follows this structure:
 - **Interaction**: Dialog System, Menu Interface, Town Access, Command Tent
 - **Equipment**: Quartermaster
 - **Special**: Temporary Leave, Recon Mission
-- **Technical/Safety**: Encounter Safety, Formation Assignment
+- **Technical/Safety**: Encounter Safety, Formation Assignment, Night Rest & Fatigue

@@ -75,6 +75,14 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private bool _syntheticOutsideEncounter;
 
+        /// <summary>
+        ///     Last time we logged an enlisted menu activation, used to avoid log spam
+        ///     when activation is retried in quick succession.
+        /// </summary>
+        private static CampaignTime _lastEnlistedMenuActivationLogTime = CampaignTime.Zero;
+
+        private const float EnlistedMenuActivationLogCooldownSeconds = 1.0f;
+
         public EnlistedMenuBehavior()
         {
             Instance = this;
@@ -291,7 +299,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     ModLogger.Debug("Menu", $"Overriding '{genericStateMenu}' with enlisted_status");
                 }
 
-                ModLogger.Info("Menu", "Activating enlisted status menu");
+                var now = CampaignTime.Now;
+                if (now - _lastEnlistedMenuActivationLogTime >
+                    CampaignTime.Seconds((long)EnlistedMenuActivationLogCooldownSeconds))
+                {
+                    ModLogger.Info("Menu", "Activating enlisted status menu");
+                    _lastEnlistedMenuActivationLogTime = now;
+                }
+
                 // Capture time state BEFORE menu activation (vanilla sets Stop, then StartWait sets FastForward)
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                 GameMenu.ActivateGameMenu("enlisted_status");
@@ -948,10 +963,6 @@ namespace Enlisted.Features.Interface.Behaviors
                         if (currentMenuId == "enlisted_status")
                         {
                             GameMenu.SwitchToMenu("enlisted_status");
-                        }
-                        else if (menuContext?.GameMenu != null)
-                        {
-                            Campaign.Current.GameMenuManager.RefreshMenuOptions(menuContext);
                         }
                     }
                 }
