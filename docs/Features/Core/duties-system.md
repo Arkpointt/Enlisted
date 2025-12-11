@@ -63,7 +63,7 @@ Add variety and specialization to military service. Different duties provide dif
   "duties": {
     "quartermaster": {
       "id": "quartermaster",
-      "display_name": "Quartermaster",
+      "display_name": "Supply Sergeant",
       "required_formations": ["infantry", "cavalry"],
       "skill_xp_daily": 25,
       "officer_role": "Quartermaster",

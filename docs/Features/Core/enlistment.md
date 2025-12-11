@@ -6,7 +6,7 @@
 - [Purpose](#purpose)
 - [Inputs/Outputs](#inputsoutputs)
 - [Behavior](#behavior)
-- [Veteran Retirement System](#veteran-retirement-system)
+- [Retire Flow (Camp Map Event)](#retire-flow-camp-map-event)
 - [Technical Implementation](#technical-implementation)
 - [Edge Cases](#edge-cases)
 - [Acceptance Criteria](#acceptance-criteria)
@@ -18,7 +18,7 @@
 Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits. Minor faction enlistment is supported with mirrored war stances and mercenary-themed dialogs.
 
 ## Purpose
-Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through six tiers, and handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.).
+Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through six tiers, handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.), and retire honorably through a camp-driven map incident.
 
 ## Inputs/Outputs
 
@@ -32,13 +32,12 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Player joins lord's kingdom as mercenary (native mercenary income suppressed)
 - Player party hidden from map (`IsVisible = false`, Nameplate hidden)
 - Player follows enlisted lord's movements (including naval travel)
-- Daily wage payments with detailed tooltip breakdown (mod wages only)
+- Daily wage accrual (custom pay system) and participation in a periodic pay muster map incident
 - XP progression: +25 daily, +25 per battle, +1 per kill
 - Participation in lord's battles and army activities
 - Kill tracking per faction (persists across re-enlistments)
 - Safe handling of service interruption (lord death, army defeat, capture)
-- Veteran retirement system with per-faction tracking
-- Complete financial isolation from lord's clan finances
+- Camp-triggered Retire flow that replaces the old desert button, grants honorable discharge rewards, and can be tuned by service length
 - No loot access (spoils go to the lord)
 - No food consumption (lord provides food - party skips food calculations entirely)
 - Minor faction enlistment mirrors the lord faction’s active wars to the player clan and restores them to neutral on discharge
@@ -60,12 +59,11 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Follow enlisted lord's army movements
 - Participate in battles when lord fights (Direct join, bypassing "Help or Leave")
 - Naval battles: before `PlayerEncounter.Start/Init`, the player party copies the lord's `IsCurrentlyAtSea` flag and position so naval encounters meet the engine requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`) and avoid crashes.
-- Receive daily wages (detailed breakdown shown in clan finance tooltip)
+- Accrue daily wages into the custom pay ledger; periodic pay muster incident handles payouts
 - Earn XP: +25 daily, +25 per battle, +1 per enemy killed
 - Kills tracked per faction and term (persists on re-enlistment)
-- Check retirement eligibility and term completion
 
-**Wage Breakdown (shown in tooltip):**
+**Wage Breakdown (custom pay ledger):**
 - Soldier's Pay: Base wage from config (default 10)
 - Combat Exp: +1 per player level
 - Rank Pay: +5 per tier
@@ -132,34 +130,25 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 - Compensation shown in cohesion tooltip as "Enlisted soldier (embedded)"
 - Thematically correct: enlisted soldiers are embedded with their lord, not a separate party
 
-## Veteran Retirement System
+## Retire Flow (Camp Map Event)
 
-**First Term (252 days / 3 game years):**
-- Notification when eligible for retirement
-- Must speak with current lord to discuss options
-- **Retirement benefits**: 10,000 gold, +30 relation with lord, +30 faction reputation, +15 with other lords (if respected)
-- **Re-enlistment option**: 20,000 gold bonus for 1 additional year (84 days)
-
-**Renewal Terms (84 days / 1 game year):**
-- **Discharge**: 5,000 gold + 6-month (42 day) faction cooldown
-- **Continue**: 5,000 gold bonus + another 1-year term
-
-**After Cooldown:**
-- Can re-enlist with same faction
-- Tier/rank preserved, must re-select troop type
-- 1-year term with 5,000 gold discharge at end
-
-**Per-Faction Tracking:**
-- `FactionVeteranRecord` class stores: FirstTermCompleted, PreservedTier, TotalKills, CooldownEnds, CurrentTermEnd, IsInRenewalTerm
-- Each faction tracked separately - starting fresh with new factions
-- TotalKills accumulated across all service terms with that faction
-- Kill count preserved on re-enlistment after cooldown
-
-**Kill Tracking:**
-- `EnlistedKillTrackerBehavior` tracks kills during missions
-- Registered via `SubModule.OnMissionBehaviorInitialize` for combat missions
-- Kills added to `_currentTermKills` after each battle
-- On retirement, term kills transfer to faction's TotalKills
+- Replace the main-menu “Desert the Army” option with a “Retire” action located in the Camp screen.
+- Selecting Retire starts a native map incident (camp map event) instead of an immediate menu action; incident ensures safe state (no battle/encounter/captivity) before presenting choices.
+- Eligibility & scaling:
+  - Track total enlisted service days; retirement benefits increase with longer service (tunable thresholds).
+  - Minimum check: must currently be enlisted and in good standing (no active desertion/crime penalties with the faction).
+- Honorable discharge rewards (no letter of recommendation):
+  - +30 relation with the enlisted lord.
+  - +10 relation with all lords in the same kingdom (when serving as mercenary for that kingdom).
+  - +20 faction relation with that kingdom.
+  - 10,000 gold lump sum.
+  - Pension: +100 gold/day while reputation with the enlisted lord and faction remains positive (disable if relation drops below a threshold, e.g., 0).
+- UX/location:
+  - Retire option appears in Camp actions; removed from the main town/army menus.
+  - Incident text clarifies benefits scale with service length and that misconduct (relation drop) can suspend the pension.
+- Data:
+  - Store service days and last honorable discharge reward band for tuning.
+  - Pension paid via daily tick hook outside clan finances (custom pay system).
 
 **Formation Assignment (Battle Spawn):**
 - `EnlistedFormationAssignmentBehavior` assigns player to their designated formation based on duty (Infantry, Ranged, Cavalry, Horse Archer)
@@ -173,12 +162,12 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 
 ## Technical Implementation
 
-**Files:**
-- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, veteran retirement, service transfer, naval position sync, minor faction war mirroring, minor faction desertion cooldowns
+- **Files:**
+- `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, retire incident entry point, service transfer, naval position sync, minor faction war mirroring, minor faction desertion cooldowns
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
-- `EnlistedDialogManager.cs` - Retirement, re-enlistment, service transfer dialogs, minor faction dialog variants
-- `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident; schedules a deferred (~12h) native map incident via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable
+- `EnlistedDialogManager.cs` - Retire dialog routing, service transfer dialogs, minor faction dialog variants
+- `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident and the retire incident; schedules deferred native map incidents via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
 - `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
@@ -365,11 +354,6 @@ mainParty.IsVisible = true;
 - All enlistment state persists correctly
 - Veteran records saved via indexed primitive fields
 - Lord references restored properly on load
-
-**Retirement During Service:**
-- Player must speak with current lord
-- Dialog explains benefits and options
-- Can accept retirement, re-enlist, or decide later
 
 **Naval Travel (Naval War Expansion):**
 - When lord boards a ship, player position syncs automatically

@@ -360,17 +360,6 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 OnSupplyManagementSelected,
                 false, 6);
-            
-            // Return issued equipment (Manage icon)
-            starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_return",
-                new TextObject("{=qm_menu_return_equipment}Return issued equipment").ToString(),
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    return true;
-                },
-                _ => ActivateMenuPreserveTime("quartermaster_returns"),
-                false, 7);
                 
             // Return to enlisted status (Leave icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",

@@ -268,7 +268,7 @@ namespace Enlisted.Features.Equipment.UI
                         var variant = card.GetVariant();
                         if (variant?.Item?.StringId == acquiredItemId)
                         {
-                            // Recalculate if at limit (weapons=2, armor=1)
+                            // Recalculate if at limit (weapons=unlimited, armor=1)
                             var newCount = CountPlayerItems(hero, acquiredItemId);
                             var itemLimit = GetSlotItemLimit(variant.Slot);
                             variant.IsAtLimit = newCount >= itemLimit;
@@ -285,14 +285,14 @@ namespace Enlisted.Features.Equipment.UI
         
         /// <summary>
         /// Get the item limit for a specific equipment slot.
-        /// Armor slots = 1 per type, Weapon slots = 2 per type.
+        /// Weapons have no limit, armor/accessory slots = 1 per type.
         /// </summary>
         private static int GetSlotItemLimit(EquipmentIndex slot)
         {
-            // Weapon slots allow 2 of each type
+            // Weapon slots have no limit
             if (slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3)
             {
-                return 2;
+                return int.MaxValue; // No limit for weapons
             }
             // Armor/accessory slots only allow 1 of each type
             return 1;
