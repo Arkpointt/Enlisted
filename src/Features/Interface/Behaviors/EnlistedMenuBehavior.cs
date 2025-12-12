@@ -848,7 +848,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     ModLogger.Info("Interface", "Lord is in active siege - attempting to join siege assault");
                     // Siege assault participation is handled by the native game system
                     // The player's army membership automatically includes them in the siege
-                    InformationManager.DisplayMessage(new InformationMessage("Joining siege assault..."));
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=enlisted_joining_siege_assault}Joining siege assault...").ToString()));
                 }
                 // Check if the lord is in a siege-related battle (like sally-outs)
                 else if (lordParty?.Party.MapEvent != null)
@@ -856,12 +857,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     ModLogger.Info("Interface", "Lord is in siege-related battle - attempting to join");
                     // Battle participation is handled by the native game system
                     // The player's army membership automatically includes them in the battle
-                    InformationManager.DisplayMessage(new InformationMessage("Joining siege battle..."));
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=enlisted_joining_siege_battle}Joining siege battle...").ToString()));
                 }
                 else
                 {
                     ModLogger.Info("Interface", "No siege situation detected - option should not have been available");
-                    InformationManager.DisplayMessage(new InformationMessage("No siege battle available."));
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=enlisted_no_siege_battle}No siege battle available.").ToString()));
                 }
             }
             catch (Exception ex)

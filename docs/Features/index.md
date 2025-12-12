@@ -56,6 +56,8 @@ The foundational systems that enable military service.
 - **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment and missions
 - **[Duties System](Core/duties-system.md)** - Military roles and assignments with skill bonuses
 - **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression
+- **[Implementation Roadmap](Core/implementation-roadmap.md)** - Master phased plan for Camp Life + Lance Life development (source-of-truth and scope control)
+- **[Phase 4 Corruption Checklist](Core/corruption-phase-checklist.md)** - Acceptance gate for Heat/Discipline/Corruption escalation and consequences
 
 ---
 
@@ -99,6 +101,11 @@ Low-level systems that ensure stability and prevent issues.
 - **[Night Rest & Fatigue](Technical/night-rest-fatigue.md)** - Night halt logic for lords/armies with optional enlisted fatigue when rest is impossible; phased plan and safeguards
 
 ---
+
+## Research / Design Drafts
+
+Working notes and design drafts live under `docs/research`:
+- **[Research Index](../research/index.md)** - Entry point for prompts, design drafts, and API notes
 
 ## Spec Structure
 

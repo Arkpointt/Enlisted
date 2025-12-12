@@ -457,6 +457,62 @@
     <string id="qm_return_tooltip" text="Sell one item back to the quartermaster." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LANCE LIFE - Stories / VC-style popups (localizable story packs) -->
+    <!-- Note: Story packs reference these IDs via JSON fields like titleId/bodyId/textId/hintId. -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="ll_default_title" text="Lance Activity" />
+    <string id="ll_default_continue" text="Continue" />
+    <string id="ll_inquiry_choose" text="Choose" />
+    <string id="ll_inquiry_leave" text="Leave" />
+    <string id="ll_not_enough_coin" text="You don't have enough coin." />
+
+    <!-- Story: After Hours — Lance Drill -->
+    <string id="ll_story_lance_drill_night_sparring_title" text="After Hours — Lance Drill" />
+    <string id="ll_story_lance_drill_night_sparring_body" text="The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someone’s bleeding. Still… good practice is hard to come by on campaign." />
+    <string id="ll_story_lance_drill_night_sparring_opt_lead_text" text="Lead the drill (Athletics + Polearm)" />
+    <string id="ll_story_lance_drill_night_sparring_opt_lead_hint" text="Spend a little energy to build real soldiering skills." />
+    <string id="ll_story_lance_drill_night_sparring_opt_delegate_text" text="Let them run it without you (Leadership)" />
+    <string id="ll_story_lance_drill_night_sparring_opt_delegate_hint" text="You keep your strength. They still learn from your example." />
+    <string id="ll_story_lance_drill_night_sparring_opt_turnin_text" text="Turn in early" />
+    <string id="ll_story_lance_drill_night_sparring_opt_turnin_hint" text="No gains. No risks." />
+
+    <!-- Story: Thin Wagons -->
+    <string id="ll_story_lance_scrounge_rations_title" text="Thin Wagons" />
+    <string id="ll_story_lance_scrounge_rations_body" text="The ration cart is light. No fresh sacks. No extra salt.\n\nA couple in your lance are already talking about &quot;finding&quot; something before the week turns ugly." />
+    <string id="ll_story_lance_scrounge_rations_opt_forage_text" text="Take a small party and forage (Scouting + Steward)" />
+    <string id="ll_story_lance_scrounge_rations_opt_forage_hint" text="Do it the right way. Costs time and energy, but keeps heat down." />
+    <string id="ll_story_lance_scrounge_rations_opt_buy_text" text="Buy from camp-followers (Charm)" />
+    <string id="ll_story_lance_scrounge_rations_opt_buy_hint" text="Coin changes hands. Nobody asks too many questions." />
+    <string id="ll_story_lance_scrounge_rations_opt_nothing_text" text="Do nothing" />
+    <string id="ll_story_lance_scrounge_rations_opt_nothing_hint" text="Hope the wagons catch up." />
+
+    <!-- Story: The Ledger and the Smile -->
+    <string id="ll_story_lance_quartermaster_ledger_skim_title" text="The Ledger and the Smile" />
+    <string id="ll_story_lance_quartermaster_ledger_skim_body" text="The quartermaster’s clerk doesn’t look up as you approach. He just taps the ledger with a dirty nail.\n\n&quot;There’s the price,&quot; he says. Then, quieter: &quot;Unless we’re friends.&quot;" />
+    <string id="ll_story_lance_quartermaster_ledger_skim_opt_refuse_text" text="Refuse. Pay the posted price." />
+    <string id="ll_story_lance_quartermaster_ledger_skim_opt_refuse_hint" text="No heat. No favors owed." />
+    <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_text" text="Slip him a little (Roguery)" />
+    <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_hint" text="A small bribe. Lower prices today… and eyes on you tomorrow." />
+
+    <!-- Enlisted status notifications -->
+    <string id="enlisted_joining_siege_assault" text="Joining siege assault..." />
+    <string id="enlisted_joining_siege_battle" text="Joining siege battle..." />
+    <string id="enlisted_no_siege_battle" text="No siege battle available." />
+
+    <!-- Menu / debug tools -->
+    <string id="Enlisted_Menu_DebugTools" text="Debug Tools" />
+    <string id="menu_tooltip_debug" text="Grant gold or enlistment XP for testing." />
+
+    <!-- Quartermaster UI (Gauntlet) -->
+    <string id="qm_ui_empty" text="Empty" />
+    <string id="qm_ui_empty_slot_label" text="Empty Slot" />
+    <string id="qm_ui_error" text="Error" />
+    <string id="qm_ui_error_loading_item" text="Error loading item" />
+    <string id="qm_ui_unequip_not_supported" text="Equipment unequipping not yet supported." />
+    <string id="qm_ui_preview" text="Preview: {ITEM_NAME} - {COST} denars" />
+    <string id="qm_ui_empty_equipment_slot" text="Empty equipment slot" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DEBUG - Temporary Testing Options (remove before release) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="debug_gain_xp" text="[DEBUG] Gain 1000 XP" />

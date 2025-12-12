@@ -48,6 +48,16 @@ This feature should be implemented as a new Enlisted behavior that:
 
 In other words: we simulate “camp life” by changing **Enlisted-owned menus/outcomes**, not by rewriting Bannerlord.
 
+## Localization (required)
+All Camp Life player-facing text must be translatable:
+- Use `{=string_id}` **TextObject** strings for:
+  - incidents and inquiry prompts (titles/body/option text/hints)
+  - menu headers and status lines
+  - notifications/messages shown to the player
+- Store translations in `ModuleData/Languages/enlisted_strings.xml`.
+- Allow placeholders (e.g., `{PLAYER_NAME}`, `{LORD_NAME}`, `{SETTLEMENT}`) and resolve them at runtime.
+- Raw text may exist only as a **fallback English** to prevent crashes if a string ID is missing.
+
 ## Inputs / Outputs
 
 ### Inputs

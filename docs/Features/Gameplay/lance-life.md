@@ -73,11 +73,18 @@ To enable it:
 - In `ModuleData/Enlisted/enlisted_config.json`:
   - Set `lances.lances_enabled = true` (so the player has a lance identity)
   - Set `lance_life.enabled = true`
-- Add/edit stories in `ModuleData/Enlisted/lance_stories.json`
+- Add/edit story packs under `ModuleData/Enlisted/StoryPacks/LanceLife/`
+  - Example: `core.json`, `training.json`, `corruption.json`, `logistics.json`
 
 Initial implementation notes:
 - Stories are gated by **tier** (`minTier`) and by whether the lance is **finalized** (`requireFinalLance`).
 - Stories fire on **daily tick** and only when safe (no battle/encounter/prisoner).
+
+## Related research docs (design drafts)
+These are longer, more free-form drafts that can inform future expansion:
+- **[Lance Career System (draft)](../../research/lance_career_system.md)**
+- **[Lance Life Doc Index (import)](../../research/lance_life_INDEX.md)**
+- **[Story brainstorming prompt](../../research/story-writer-prompt.md)**
 
 ### Outputs
 - Enlisted story incident choices (text + results)
@@ -99,8 +106,36 @@ Every lance has a `storyId` already (catalog placeholder). Lance Life uses that 
 This prevents stories from feeling generic and makes the lance matter.
 
 ### Story packs (data-driven content)
-Stories should be defined in a separate, additive content layer. Proposed approach:
-- `ModuleData/Enlisted/lance_stories.json` (or multiple `lance_stories_*.json` files if you prefer later)
+Stories must be defined in a separate, additive **content pack** layer so we can expand safely without touching code.
+
+**Required approach:**
+- A dedicated folder for Lance Life story packs:
+  - `ModuleData/Enlisted/StoryPacks/LanceLife/*.json`
+- Packs are organized by theme (small files, not one giant file):
+  - `core.json`, `training.json`, `corruption.json`, `morale.json`, `logistics.json`, etc.
+- Each pack declares a `schemaVersion` and (optionally) a `packId` for diagnostics.
+- Every event `id` is **namespaced** (recommended: `{packId}.{eventName}`) to prevent collisions.
+- Events are defined using a stable schema:
+  - **Requirements are declarative** (tier, final-lance, time-of-day, activity/AI-state, camp conditions).
+  - **Options use small, composable effect types** (XP, fatigue, gold/ledger, heat, discipline, reputation).
+  - We do **not** ship “special-case code” that exists only for a single event ID.
+
+**Validation and diagnostics (required):**
+- On campaign start (or first load), we validate all packs and log a readable report:
+  - duplicate IDs
+  - missing required fields
+  - invalid triggers/categories
+  - invalid skill names / malformed effect payloads
+- Bad packs/events should be **skipped safely** (do not crash the campaign).
+
+**Localization (required):**
+- Story packs must provide **string IDs** for all player-facing text (title, body, option text, option hints).
+- Translations live in `ModuleData/Languages/enlisted_strings.xml`.
+- Events may use placeholders like `{PLAYER_NAME}`, `{LORD_NAME}`, `{LANCE_NAME}` (resolved at runtime).
+- Raw text fields may exist only as **fallback English** (so missing translations never crash).
+
+**Contract (source of truth):**
+- **[Content Pack Contract — Lance Life Story Packs](../Core/story-pack-contract.md)** defines the required folder layout, schema, ID rules, localization mapping, and validation behavior.
 
 Each story entry should be self-contained and removable:
 - `id`, `tags`, `lanceStoryIds[]` or `roleHints[]` or `styleIds[]`
@@ -216,6 +251,7 @@ Stories that build relationships and hard choices:
 
 ## Acceptance Criteria
 - Stories can be enabled/disabled by config without code changes.
+- Story content is organized as multiple packs (folder-based) and validated on load (bad entries skipped safely).
 - At least one story type exists for:
   - skill/drill, logistics, corruption, theft, morale
 - Story triggers correlate with camp conditions (e.g., high logistics strain → forage story appears).

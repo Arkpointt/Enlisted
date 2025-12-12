@@ -18,6 +18,7 @@
   - [Main Enlisted Status Menu](#main-enlisted-status-menu)
   - [Duty Selection Interface](#duty-selection-interface)
   - [Menu Navigation](#menu-navigation)
+-  - [Popups & Incidents (not menus)](#popups--incidents-not-menus)
 - [Technical Details](#technical-details) - Implementation specifics
   - [Menu Structure](#menu-structure)
   - [Dynamic Text System](#dynamic-text-system)
@@ -189,6 +190,24 @@ Enlisted Status Menu
     ├── Report for Duty → Duty Selection Menu
     └── Ask commander for leave → Leave Request Dialog
 ```
+
+### Popups & Incidents (not menus)
+
+Some player-facing UI in Enlisted is **not** a GameMenu. These are inquiry/incident-style popups that fire when it is safe (no battle/encounter/captivity), and they exist to simulate “camp life” without requiring scenes.
+
+Key popups:
+- **Enlistment Bag Check** (first enlistment)
+  - Fires ~12 in-game hours after enlistment when safe.
+  - Doc: **[Enlistment System](../Core/enlistment.md)** (Bag Check section) and **[Quartermaster](quartermaster.md)**
+- **Pay Muster** (periodic)
+  - Fires when the muster ledger reaches payday and it is safe to show UI.
+  - Doc: **[Pay System](../Core/pay-system-rework.md)**
+- **Lance Life events** (text-based camp activities)
+  - “Viking Conquest style” story popups tied to lance identity and tier gating.
+  - Doc: **[Lance Life](../Gameplay/lance-life.md)**
+- **Camp Life Simulation hooks** (conditions that influence other UI)
+  - Not a single popup by itself; it is the condition layer that can drive future popups and menu availability (Quartermaster mood/stockouts, delayed pay/IOUs, etc.).
+  - Doc: **[Camp Life Simulation](../Gameplay/camp-life-simulation.md)**
 
 ## Discharge paths (where they live)
 

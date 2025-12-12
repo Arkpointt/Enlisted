@@ -176,7 +176,7 @@ namespace Enlisted.Features.Lances.Behaviors
                     return;
                 }
 
-                ShowStoryInquiry(picked);
+                ShowStoryInquiry(picked, enlistment);
 
                 // Update limiters immediately to prevent double-fires.
                 _storiesFiredThisWeek++;
@@ -212,12 +212,17 @@ namespace Enlisted.Features.Lances.Behaviors
             return CampaignTime.Now < next;
         }
 
-        private void ShowStoryInquiry(LanceStory story)
+        private void ShowStoryInquiry(LanceStory story, EnlistmentBehavior enlistment)
         {
             // Viking Conquest-style: a short body and a few choices.
             // We use MultiSelectionInquiryData so each choice can have a tooltip/hint.
             try
             {
+                // Localizable strings: each story/option can provide string IDs.
+                // If the ID is missing or not found in language XML, Bannerlord falls back to the text we embed in the TextObject.
+                var title = ResolveLocalizedString(story.TitleId, story.Title, "{=ll_default_title}Lance Activity", enlistment);
+                var body = ResolveLocalizedString(story.BodyId, story.Body, string.Empty, enlistment);
+
                 var options = new List<InquiryElement>();
                 foreach (var option in story.Options ?? new List<LanceStoryOption>())
                 {
@@ -227,8 +232,9 @@ namespace Enlisted.Features.Lances.Behaviors
                     }
 
                     var enabled = option.IsEnabled(Hero.MainHero);
-                    var hint = option.Hint ?? string.Empty;
-                    options.Add(new InquiryElement(option, option.Text ?? "Continue", null, enabled, hint));
+                    var optionText = ResolveLocalizedString(option.TextId, option.Text, "{=ll_default_continue}Continue", enlistment);
+                    var hint = ResolveLocalizedString(option.HintId, option.Hint, string.Empty, enlistment);
+                    options.Add(new InquiryElement(option, optionText, null, enabled, hint));
                 }
 
                 if (options.Count == 0)
@@ -237,14 +243,14 @@ namespace Enlisted.Features.Lances.Behaviors
                 }
 
                 var inquiry = new MultiSelectionInquiryData(
-                    titleText: story.Title ?? "Lance Activity",
-                    descriptionText: story.Body ?? string.Empty,
+                    titleText: title,
+                    descriptionText: body,
                     inquiryElements: options,
                     isExitShown: true,
                     minSelectableOptionCount: 1,
                     maxSelectableOptionCount: 1,
-                    affirmativeText: "Choose",
-                    negativeText: "Leave",
+                    affirmativeText: new TextObject("{=ll_inquiry_choose}Choose").ToString(),
+                    negativeText: new TextObject("{=ll_inquiry_leave}Leave").ToString(),
                     affirmativeAction: selected =>
                     {
                         try
@@ -299,7 +305,7 @@ namespace Enlisted.Features.Lances.Behaviors
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("You don't have enough coin.").ToString(), Colors.Red));
+                        new TextObject("{=ll_not_enough_coin}You don't have enough coin.").ToString(), Colors.Red));
                     return;
                 }
             }
@@ -322,6 +328,33 @@ namespace Enlisted.Features.Lances.Behaviors
             {
                 InformationManager.DisplayMessage(new InformationMessage(option.ResultText, Colors.White));
             }
+        }
+
+        private static string ResolveLocalizedString(string textId, string fallbackText, string defaultText, EnlistmentBehavior enlistment)
+        {
+            // Prefer a provided ID, otherwise just return fallback/default.
+            if (string.IsNullOrWhiteSpace(textId))
+            {
+                return !string.IsNullOrWhiteSpace(fallbackText) ? fallbackText : (defaultText ?? string.Empty);
+            }
+
+            var embeddedFallback = !string.IsNullOrWhiteSpace(fallbackText) ? fallbackText : (defaultText ?? string.Empty);
+            var t = new TextObject("{=" + textId + "}" + embeddedFallback);
+            ApplyCommonStoryTextVariables(t, enlistment);
+            return t.ToString();
+        }
+
+        private static void ApplyCommonStoryTextVariables(TextObject text, EnlistmentBehavior enlistment)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            // Keep this minimal and safe: these variables are always available while enlisted.
+            text.SetTextVariable("PLAYER_NAME", Hero.MainHero?.Name ?? TextObject.Empty);
+            text.SetTextVariable("LORD_NAME", enlistment?.EnlistedLord?.Name ?? new TextObject("{=enlist_fallback_army}the army"));
+            text.SetTextVariable("LANCE_NAME", !string.IsNullOrWhiteSpace(enlistment?.CurrentLanceName) ? new TextObject(enlistment.CurrentLanceName) : TextObject.Empty);
         }
 
         private static SkillObject ResolveSkill(string skillName)
@@ -390,6 +423,8 @@ namespace Enlisted.Features.Lances.Behaviors
             [JsonProperty("id")] public string Id { get; set; }
             [JsonProperty("title")] public string Title { get; set; }
             [JsonProperty("body")] public string Body { get; set; }
+            [JsonProperty("titleId")] public string TitleId { get; set; }
+            [JsonProperty("bodyId")] public string BodyId { get; set; }
 
             [JsonProperty("minTier")] public int MinTier { get; set; } = 1;
             [JsonProperty("requireFinalLance")] public bool RequireFinalLance { get; set; } = true;
@@ -423,6 +458,8 @@ namespace Enlisted.Features.Lances.Behaviors
             [JsonProperty("id")] public string Id { get; set; }
             [JsonProperty("text")] public string Text { get; set; }
             [JsonProperty("hint")] public string Hint { get; set; }
+            [JsonProperty("textId")] public string TextId { get; set; }
+            [JsonProperty("hintId")] public string HintId { get; set; }
 
             [JsonProperty("fatigueCost")] public int FatigueCost { get; set; }
             [JsonProperty("fatigueRestore")] public int FatigueRestore { get; set; }

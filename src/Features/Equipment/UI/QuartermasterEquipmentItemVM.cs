@@ -165,9 +165,9 @@ namespace Enlisted.Features.Equipment.UI
             if (_variant == null)
             {
                 // Empty slot display
-                ItemName = "Empty";
+                ItemName = new TextObject("{=qm_ui_empty}Empty").ToString();
                 CostText = "";
-                StatusText = "Empty Slot";
+                StatusText = new TextObject("{=qm_ui_empty_slot_label}Empty Slot").ToString();
                 PrimaryStats = "";
                 SecondaryStats = "";
                 SlotTypeText = "";
@@ -177,9 +177,9 @@ namespace Enlisted.Features.Equipment.UI
             else
             {
                 // Error case
-                ItemName = "Error";
+                ItemName = new TextObject("{=qm_ui_error}Error").ToString();
                 CostText = "";
-                StatusText = "Error loading item";
+                StatusText = new TextObject("{=qm_ui_error_loading_item}Error loading item").ToString();
                 PrimaryStats = "";
                 SecondaryStats = "";
                 SlotTypeText = "";
@@ -203,7 +203,8 @@ namespace Enlisted.Features.Equipment.UI
                 if (_variant == null)
                 {
                     // Empty slot - unequip current equipment
-                    InformationManager.DisplayMessage(new InformationMessage("Equipment unequipping not yet supported."));
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_ui_unequip_not_supported}Equipment unequipping not yet supported.").ToString()));
                     return;
                 }
                 
@@ -245,13 +246,16 @@ namespace Enlisted.Features.Equipment.UI
             {
                 if (_variant?.Item != null)
                 {
-                    var previewText = $"Preview: {_variant.Item.Name} - {_variant.Cost} denars";
-                    InformationManager.DisplayMessage(new InformationMessage(previewText));
+                    var msg = new TextObject("{=qm_ui_preview}Preview: {ITEM_NAME} - {COST} denars");
+                    msg.SetTextVariable("ITEM_NAME", _variant.Item.Name);
+                    msg.SetTextVariable("COST", _variant.Cost);
+                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
                 }
                 else
                 {
                     // Empty slot or null item
-                    InformationManager.DisplayMessage(new InformationMessage("Empty equipment slot"));
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_ui_empty_equipment_slot}Empty equipment slot").ToString()));
                 }
             }
             catch (Exception ex)
