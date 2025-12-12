@@ -12,6 +12,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Lances.Behaviors;
 using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
@@ -334,6 +335,9 @@ namespace Enlisted.Mod.Entry
                     // can click on individual equipment pieces to see stats and select variants
                     campaignStarter.AddBehavior(new QuartermasterEquipmentSelectorBehavior());
 
+                    // Lance Life (text events): Viking Conquest-style camp activities and stories tied to lance identity
+                    campaignStarter.AddBehavior(new LanceStoryBehavior());
+
                     // Battle encounter system: detects when the lord enters battle and handles player participation,
                     // manages menu transitions during battles, and provides battle wait menu options
                     campaignStarter.AddBehavior(new EnlistedEncounterBehavior());
@@ -383,6 +387,7 @@ namespace Enlisted.Mod.Entry
                         nameof(PromotionBehavior),
                         nameof(QuartermasterManager),
                         nameof(QuartermasterEquipmentSelectorBehavior),
+                        nameof(LanceStoryBehavior),
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),

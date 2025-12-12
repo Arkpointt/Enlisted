@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "stories": [
+    {
+      "id": "lance_drill_night_sparring",
+      "title": "After Hours — Lance Drill",
+      "body": "The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someone’s bleeding. Still… good practice is hard to come by on campaign.",
+      "minTier": 2,
+      "requireFinalLance": true,
+      "cooldownDays": 5,
+      "options": [
+        {
+          "id": "lead_the_drill",
+          "text": "Lead the drill (Athletics + Polearm)",
+          "hint": "Spend a little energy to build real soldiering skills.",
+          "fatigueCost": 2,
+          "skillXp": { "Athletics": 35, "Polearm": 35 }
+        },
+        {
+          "id": "let_them_run_it",
+          "text": "Let them run it without you (Leadership)",
+          "hint": "You keep your strength. They still learn from your example.",
+          "skillXp": { "Leadership": 20 }
+        },
+        {
+          "id": "turn_in",
+          "text": "Turn in early",
+          "hint": "No gains. No risks.",
+          "fatigueRestore": 1
+        }
+      ]
+    },
+    {
+      "id": "lance_scrounge_rations",
+      "title": "Thin Wagons",
+      "body": "The ration cart is light. No fresh sacks. No extra salt.\n\nA couple in your lance are already talking about \"finding\" something before the week turns ugly.",
+      "minTier": 2,
+      "requireFinalLance": true,
+      "cooldownDays": 6,
+      "options": [
+        {
+          "id": "forage_proper",
+          "text": "Take a small party and forage (Scouting + Steward)",
+          "hint": "Do it the right way. Costs time and energy, but keeps heat down.",
+          "fatigueCost": 2,
+          "skillXp": { "Scouting": 30, "Steward": 30 }
+        },
+        {
+          "id": "quietly_buy",
+          "text": "Buy from camp-followers (Charm)",
+          "hint": "Coin changes hands. Nobody asks too many questions.",
+          "goldCost": 50,
+          "skillXp": { "Charm": 25 }
+        },
+        {
+          "id": "do_nothing",
+          "text": "Do nothing",
+          "hint": "Hope the wagons catch up.",
+          "skillXp": {}
+        }
+      ]
+    },
+    {
+      "id": "lance_quartermaster_ledger_skim",
+      "title": "The Ledger and the Smile",
+      "body": "The quartermaster’s clerk doesn’t look up as you approach. He just taps the ledger with a dirty nail.\n\n\"There’s the price,\" he says. Then, quieter: \"Unless we’re friends.\"",
+      "minTier": 3,
+      "requireFinalLance": true,
+      "cooldownDays": 8,
+      "options": [
+        {
+          "id": "refuse_clean",
+          "text": "Refuse. Pay the posted price.",
+          "hint": "No heat. No favors owed.",
+          "skillXp": { "Charm": 10 }
+        },
+        {
+          "id": "slip_a_tip",
+          "text": "Slip him a little (Roguery)",
+          "hint": "A small bribe. Lower prices today… and eyes on you tomorrow.",
+          "goldCost": 100,
+          "skillXp": { "Roguery": 30 }
+        }
+      ]
+    }
+  ]
+}
+
+

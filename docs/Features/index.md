@@ -77,6 +77,8 @@ Additional gameplay mechanics and player choices.
 - **[Temporary Leave](Gameplay/temporary-leave.md)** - 14-day leave system with desertion penalties
 - **[Troop Selection](Gameplay/troop-selection.md)** - Real troop choice for promotions and formations
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
+- **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts (phased plan)
+- **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and theft with consequences (data-driven, modular)
 
 ---
 

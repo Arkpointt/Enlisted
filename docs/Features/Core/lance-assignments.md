@@ -79,3 +79,8 @@ Lances give enlisted players a sub-unit identity from enlistment through promoti
 ## Missing / To-Do
 - Optional: explicit legacy “disbanded” badge string (currently shows “Lance (Legacy)” only).
 - Optional: style-weighted selection/count tuning via config if desired later.
+
+## Related docs
+- [Lances Catalog](lances-catalog.md)
+- [Lance Life](../Gameplay/lance-life.md)
+- [Camp Life Simulation](../Gameplay/camp-life-simulation.md)

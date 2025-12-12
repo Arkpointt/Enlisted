@@ -58,5 +58,12 @@
         "lances_enabled": false,
         "lance_selection_count": 3,
         "use_culture_weighting": true
+    },
+    "lance_life": {
+        "enabled": false,
+        "require_final_lance": true,
+        "min_tier": 2,
+        "max_stories_per_week": 2,
+        "min_days_between_stories": 2
     }
 }

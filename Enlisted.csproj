@@ -153,6 +153,7 @@
     <Compile Include="src\Features\Assignments\Core\DutyConfiguration.cs"/>
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs"/>
     <Compile Include="src\Features\Assignments\Core\LanceRegistry.cs"/>
+    <Compile Include="src\Features\Lances\Behaviors\LanceStoryBehavior.cs"/>
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs"/>
     <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>

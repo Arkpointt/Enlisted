@@ -83,6 +83,7 @@ Discharge is not handled inside Quartermaster. It resolves via **Final Muster** 
 - [Enlistment](../Core/enlistment.md)
 - [Pay System](../Core/pay-system-rework.md)
 - [Camp (My Camp)](command-tent.md)
+- [Camp Life Simulation](../Gameplay/camp-life-simulation.md)
 
 ## Appendix: Future ideas (not implemented)
 These are design ideas retained for later work; they are **not implemented** unless you can find code for them:

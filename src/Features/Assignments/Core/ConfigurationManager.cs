@@ -21,6 +21,7 @@ namespace Enlisted.Features.Assignments.Core
         private static GameplayConfig _cachedGameplayConfig;
         private static RetirementConfig _cachedRetirementConfig;
         private static LancesFeatureConfig _cachedLancesConfig;
+        private static LanceLifeConfig _cachedLanceLifeConfig;
         private static QuartermasterConfig _cachedQuartermasterConfig;
         private static LanceCatalogConfig _cachedLanceCatalogConfig;
 
@@ -146,6 +147,15 @@ namespace Enlisted.Features.Assignments.Core
                 // Fallback to a safe non-null default under application base directory
                 return Path.Combine(AppContext.BaseDirectory, "ModuleData", "Enlisted", fileName);
             }
+        }
+
+        /// <summary>
+        ///     Expose module data path resolution for additive content loaders (e.g., lance stories).
+        ///     This keeps file path logic consistent across Enlisted systems without duplicating it.
+        /// </summary>
+        public static string GetModuleDataPathForConsumers(string fileName)
+        {
+            return GetModuleDataPath(fileName);
         }
 
         /// <summary>
@@ -668,6 +678,37 @@ namespace Enlisted.Features.Assignments.Core
             }
         }
 
+        public static LanceLifeConfig LoadLanceLifeConfig()
+        {
+            if (_cachedLanceLifeConfig != null)
+            {
+                return _cachedLanceLifeConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for lance life");
+                    _cachedLanceLifeConfig = new LanceLifeConfig();
+                    return _cachedLanceLifeConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedLanceLifeConfig = fullConfig?.LanceLife ?? new LanceLifeConfig();
+                return _cachedLanceLifeConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", $"Failed to load lance life config, using defaults. Error: {ex.Message}");
+                _cachedLanceLifeConfig = new LanceLifeConfig();
+                return _cachedLanceLifeConfig;
+            }
+        }
+
         private static LancesFeatureConfig CreateDefaultLancesFeatureConfig()
         {
             return new LancesFeatureConfig
@@ -966,6 +1007,8 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("quartermaster")] public QuartermasterConfig Quartermaster { get; set; }
 
         [JsonProperty("lances")] public LancesFeatureConfig Lances { get; set; }
+
+        [JsonProperty("lance_life")] public LanceLifeConfig LanceLife { get; set; }
     }
 
     /// <summary>
@@ -1097,6 +1140,23 @@ namespace Enlisted.Features.Assignments.Core
 
         [JsonProperty("use_culture_weighting")]
         public bool UseCultureWeighting { get; set; } = true;
+    }
+
+    /// <summary>
+    ///     Feature gating and tuning for lance life (text-based stories and camp activities).
+    ///     Loaded from the lance_life section of enlisted_config.json.
+    /// </summary>
+    public class LanceLifeConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; }
+
+        [JsonProperty("require_final_lance")] public bool RequireFinalLance { get; set; } = true;
+
+        [JsonProperty("min_tier")] public int MinTier { get; set; } = 2;
+
+        [JsonProperty("max_stories_per_week")] public int MaxStoriesPerWeek { get; set; } = 2;
+
+        [JsonProperty("min_days_between_stories")] public int MinDaysBetweenStories { get; set; } = 2;
     }
 
     /// <summary>
