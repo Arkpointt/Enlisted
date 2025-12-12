@@ -172,13 +172,14 @@
     <Compile Include="src\Features\CommandTent\Data\FactionServiceRecord.cs"/>
     <Compile Include="src\Features\CommandTent\Data\LifetimeServiceRecord.cs"/>
     <Compile Include="src\Features\CommandTent\Data\RetinueState.cs"/>
+    <Compile Include="src\Features\CommandTent\Data\ReservistRecord.cs"/>
     <Compile Include="src\Features\CommandTent\Core\ServiceRecordManager.cs"/>
     <Compile Include="src\Features\CommandTent\Core\RetinueManager.cs"/>
     <Compile Include="src\Features\CommandTent\Core\RetinueLifecycleHandler.cs"/>
     <Compile Include="src\Features\CommandTent\Core\CompanionAssignmentManager.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
-    <Compile Include="src\Features\CommandTent\UI\CommandTentMenuHandler.cs"/>
+    <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
@@ -186,11 +187,9 @@
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs"/>
     <!-- Disabled: Native game handles siege dismounting -->
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\EnlistmentExpenseIsolationPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\FoodSystemPatches.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\IncidentsSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\LootBlockPatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\MercenaryIncomeSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleShipAssignmentPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleArmyWaitCrashFix.cs"/>
@@ -199,7 +198,6 @@
     <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\VisibilityEnforcementPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\HidePartyNamePlatePatch.cs"/>
-    <Compile Include="src\Mod.GameAdapters\Patches\ClanFinanceEnlistmentIncomePatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\OrderOfBattleSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\SkillSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\FormationMessageSuppressionPatch.cs"/>

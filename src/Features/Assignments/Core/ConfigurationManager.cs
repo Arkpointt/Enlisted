@@ -980,6 +980,14 @@ namespace Enlisted.Features.Assignments.Core
         public string TooltipLabel { get; set; } = "{=enlisted_wage_income}Enlistment Wages";
 
         [JsonProperty("wage_formula")] public WageFormulaConfig WageFormula { get; set; } = new();
+
+        // Payday cadence (muster interval) in days. Default: 12.
+        [JsonProperty("payday_interval_days")]
+        public int PaydayIntervalDays { get; set; } = 12;
+
+        // Random jitter applied to payday interval (+/-). Default: 1 day.
+        [JsonProperty("payday_jitter_days")]
+        public float PaydayJitterDays { get; set; } = 1f;
     }
 
     /// <summary>
@@ -1058,6 +1066,22 @@ namespace Enlisted.Features.Assignments.Core
 
         [JsonProperty("other_lords_min_relation")]
         public int OtherLordsMinRelation { get; set; } = 50;
+
+            [JsonProperty("pension_honorable_daily")] public int PensionHonorableDaily { get; set; } = 50;
+            [JsonProperty("pension_veteran_daily")] public int PensionVeteranDaily { get; set; } = 100;
+            [JsonProperty("pension_relation_stop_threshold")] public int PensionRelationStopThreshold { get; set; }
+
+            [JsonProperty("severance_honorable")] public int SeveranceHonorable { get; set; } = 3000;
+            [JsonProperty("severance_veteran")] public int SeveranceVeteran { get; set; } = 10000;
+            [JsonProperty("debug_skip_gear_stripping")] public bool DebugSkipGearStripping { get; set; }
+
+            // Probation (washout/deserter re-entry)
+            [JsonProperty("probation_days")] public int ProbationDays { get; set; } = 12;
+            [JsonProperty("probation_wage_multiplier")] public float ProbationWageMultiplier { get; set; } = 0.5f;
+            [JsonProperty("probation_fatigue_cap")] public int ProbationFatigueCap { get; set; } = 18;
+
+            // Commander re-entry fine (gold) to clear bad blood; influence not used for mercenaries.
+            [JsonProperty("commander_reentry_fine_gold")] public int CommanderReentryFineGold { get; set; } = 3000;
     }
 
     /// <summary>

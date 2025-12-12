@@ -17,7 +17,7 @@ Add variety and specialization to military service. Different duties provide dif
 **Outputs:**
 - Active duty assignments with real benefits
 - Skill bonuses applied daily/on events
-- Equipment access modifications (officers get broader selection)
+- Equipment access modifications (e.g., broader Quartermaster stock / role-based access and pricing)
 - Status display in enlisted menu
 
 ## Behavior
@@ -31,7 +31,7 @@ Add variety and specialization to military service. Different duties provide dif
 **Daily Processing:**
 - Skill bonuses awarded based on active duties
 - Formation-based skill training applied automatically (Infantry: Athletics, One-Handed, Two-Handed, Polearm, Throwing)
-- Officer role benefits calculated (15% equipment discount, etc.)
+- Role benefits calculated (wage multipliers, access gating, etc.)
 - Duty performance tracked for future advancement
 
 **Formation Training System:**
@@ -90,7 +90,7 @@ Add variety and specialization to military service. Different duties provide dif
 **Benefit Application:**
 - Formation Training: `Hero.MainHero.AddSkillXp(skill, amount)` applied daily for all formation skills
 - Duty Skills: `Hero.MainHero.AddSkillXp(skill, bonusAmount)` for active duty assignments
-- Equipment: Discount multiplier in cost calculation
+- Equipment: Access / pricing modifiers (Quartermaster is purchase-based; provisioner/Quartermaster role discounts and supply management access)
 - Officer roles: Integration with existing party role system
 
 **Formation Detection:**

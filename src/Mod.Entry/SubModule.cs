@@ -6,7 +6,7 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
-using Enlisted.Features.CommandTent.UI;
+using Enlisted.Features.Camp;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -20,7 +20,6 @@ using Enlisted.Mod.GameAdapters.Patches;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Encounters;
-using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.MountAndBlade;
 
@@ -35,7 +34,7 @@ namespace Enlisted.Mod.Entry
     /// </summary>
     public static class NextFrameDispatcher
     {
-        private static readonly Queue<DeferredAction> NextFrameQueue = new();
+        private static readonly Queue<DeferredAction> NextFrameQueue = new Queue<DeferredAction>();
 
         /// <summary>
         ///     Queues an action to execute on the next game frame tick instead of immediately.
@@ -142,7 +141,6 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(ArmyCohesionExclusionPatch);
                     _ = typeof(ArmyDispersedMenuPatch);
                     _ = typeof(CheckFortificationAttackablePatch);
-                    _ = typeof(ClanFinanceEnlistmentIncomePatch);
                     _ = typeof(CompanionCaptainBlockPatch);
                     _ = typeof(CompanionGeneralBlockPatch);
                     _ = typeof(DischargeRelationPenaltyPatch);
@@ -153,7 +151,6 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(EncounterSuppressionPatch);
                     _ = typeof(EndCaptivityCleanupPatch);
                     _ = typeof(EnlistedWaitingPatch);
-                    _ = typeof(EnlistmentExpenseIsolationPatch);
                     _ = typeof(FoodSystemPatches);
                     _ = typeof(FoodSystemPatches.VirtualFoodLinkPatch);
                     _ = typeof(FoodSystemPatches.SharedFoodConsumptionPatch);
@@ -168,7 +165,6 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(LootBlockPatch.MemberLootPatch);
                     _ = typeof(LootBlockPatch.PrisonerLootPatch);
                     _ = typeof(LootBlockPatch.LootScreenPatch);
-                    _ = typeof(MercenaryIncomeSuppressionPatch);
                     _ = typeof(NavalBattleArmyWaitCrashFix);
                     _ = typeof(NavalBattleShipAssignmentPatch);
                     _ = typeof(NavalShipDamageProtectionPatch);
@@ -295,6 +291,10 @@ namespace Enlisted.Mod.Entry
 
                 if (gameStarterObject is CampaignGameStarter campaignStarter)
                 {
+                    // Save/load diagnostics: two marker behaviors registered first/last so we can log
+                    // user-friendly "Saving..." / "Save finished" and "Loading..." / "Load finished" lines.
+                    campaignStarter.AddBehavior(new SaveLoadDiagnosticsMarkerBehavior(SaveLoadDiagnosticsMarkerBehavior.Phase.Begin));
+
                     // Core enlistment system: tracks which lord the player serves, manages enlistment state,
                     // handles party following, battle participation, and leave/temporary absence
                     campaignStarter.AddBehavior(new EnlistmentBehavior());
@@ -341,9 +341,9 @@ namespace Enlisted.Mod.Entry
                     // Service records: tracks faction-specific and lifetime statistics
                     campaignStarter.AddBehavior(new ServiceRecordManager());
 
-                    // Command Tent UI: provides menus for viewing service records (current posting,
+                    // Camp UI: provides menus for viewing service records (current posting,
                     // faction history, lifetime summary) and future retinue management
-                    campaignStarter.AddBehavior(new CommandTentMenuHandler());
+                    campaignStarter.AddBehavior(new CampMenuHandler());
 
                     // Retinue trickle system: adds free soldiers over time (every 2-3 days)
                     campaignStarter.AddBehavior(new RetinueTrickleSystem());
@@ -358,6 +358,10 @@ namespace Enlisted.Mod.Entry
                     // Companions marked "stay back" don't spawn in battle, keeping them safe
                     campaignStarter.AddBehavior(new CompanionAssignmentManager());
 
+                    // Save/load diagnostics end marker: registered last so it runs after all other behaviors
+                    // during save/load serialization passes.
+                    campaignStarter.AddBehavior(new SaveLoadDiagnosticsMarkerBehavior(SaveLoadDiagnosticsMarkerBehavior.Phase.End));
+
                     // Encounter guard: utility system for managing player party attachment and encounter transitions
                     // Initializes static helper methods used throughout the enlistment system
                     EncounterGuard.Initialize();
@@ -365,7 +369,10 @@ namespace Enlisted.Mod.Entry
                     
                     // Log registered behaviors for conflict diagnostics
                     // This helps troubleshoot issues by showing exactly what was registered
-                    ModConflictDiagnostics.LogRegisteredBehaviors([
+                    // NOTE: Use classic collection initializer (ReSharper can choke on newer collection expressions).
+                    ModConflictDiagnostics.LogRegisteredBehaviors(new List<string>
+                    {
+                        nameof(SaveLoadDiagnosticsMarkerBehavior),
                         nameof(EnlistmentBehavior),
                         nameof(EnlistedIncidentsBehavior),
                         nameof(EnlistedDialogManager),
@@ -378,12 +385,12 @@ namespace Enlisted.Mod.Entry
                         nameof(QuartermasterEquipmentSelectorBehavior),
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
-                        nameof(CommandTentMenuHandler),
+                        nameof(CampMenuHandler),
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),
                         nameof(CompanionAssignmentManager)
-                    ]);
+                    });
                 }
             }
             catch (Exception ex)
@@ -463,36 +470,47 @@ namespace Enlisted.Mod.Entry
         /// </summary>
         private static void Postfix()
         {
-            // Apply deferred patches on first campaign tick (after char creation)
-            if (!_deferredPatchesApplied)
+            // Apply deferred patches only after the campaign is *fully* ready.
+            // On some platforms (notably Proton/Linux), Campaign.Tick can run during character creation,
+            // and touching certain menu/localization-heavy types at that time can crash the game.
+            if (!_deferredPatchesApplied && CampaignSafetyGuard.IsCampaignReady)
             {
-                _deferredPatchesApplied = true;
-                var harmony = new Harmony("com.enlisted.mod.deferred");
-                
-                // Apply manual patches
-                HidePartyNamePlatePatch.ApplyManualPatches(harmony);
-                
-                // Apply patches that target types with early static initialization.
-                // These fail on Proton/Linux if applied during OnSubModuleLoad because
-                // their target classes call GameTexts.FindText() in static field initializers.
-                // By deferring until now, the localization system is fully initialized.
-                // Each patch is wrapped individually so one failure doesn't block others.
-                ApplyDeferredPatch(harmony, typeof(ArmyCohesionExclusionPatch));
-                ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
-                ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
-                ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
-                ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
-                
-                // Apply Naval DLC patches that use reflection to find types.
-                // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
-                RaftStateSuppressionPatch.TryApplyPatch(harmony);
-                RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
-                
-                ModLogger.Info("Bootstrap", "Deferred patches applied on first campaign tick");
-                
-                // Update conflict diagnostics with deferred patch info
-                // This appends to the existing conflicts.log so users can see all patches
-                ModConflictDiagnostics.RefreshDeferredPatches(harmony);
+                try
+                {
+                    _deferredPatchesApplied = true;
+                    var harmony = new Harmony("com.enlisted.mod.deferred");
+
+                    // Apply manual patches
+                    HidePartyNamePlatePatch.ApplyManualPatches(harmony);
+
+                    // Apply patches that target types with early static initialization.
+                    // These fail on Proton/Linux if applied during OnSubModuleLoad because
+                    // their target classes call GameTexts.FindText() in static field initializers.
+                    // By deferring until the campaign is ready, the localization system is fully initialized.
+                    // Each patch is wrapped individually so one failure doesn't block others.
+                    ApplyDeferredPatch(harmony, typeof(ArmyCohesionExclusionPatch));
+                    ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
+                    ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
+                    ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
+                    ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
+
+                    // Apply Naval DLC patches that use reflection to find types.
+                    // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
+                    RaftStateSuppressionPatch.TryApplyPatch(harmony);
+                    RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
+
+                    ModLogger.Info("Bootstrap", "Deferred patches applied (campaign ready)");
+
+                    // Update conflict diagnostics with deferred patch info
+                    // This appends to the existing conflicts.log so users can see all patches
+                    ModConflictDiagnostics.RefreshDeferredPatches(harmony);
+                }
+                catch (Exception ex)
+                {
+                    // Hard safety: never allow a failure during deferred patch application to crash the game.
+                    // If something goes wrong here, we'll run without deferred patches.
+                    ModLogger.Error("Bootstrap", $"Unexpected error applying deferred patches: {ex.Message}");
+                }
             }
 
             NextFrameDispatcher.ProcessNextFrame();

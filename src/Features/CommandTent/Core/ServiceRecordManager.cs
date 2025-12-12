@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.CommandTent.Data;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.CommandTent.Data;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Util;
 using TaleWorlds.CampaignSystem;
@@ -23,6 +23,7 @@ namespace Enlisted.Features.CommandTent.Core
 
         private Dictionary<string, FactionServiceRecord> _factionRecords = new Dictionary<string, FactionServiceRecord>();
         private readonly LifetimeServiceRecord _lifetimeRecord = new LifetimeServiceRecord();
+        private ReservistRecord _reservistRecord = new ReservistRecord();
 
         // Retinue system state
         private readonly RetinueState _retinueState = new RetinueState();
@@ -53,6 +54,8 @@ namespace Enlisted.Features.CommandTent.Core
 
         /// <summary>Gets the current retinue state for UI display.</summary>
         public RetinueState RetinueState => _retinueState;
+
+        public ReservistRecord ReservistRecord => _reservistRecord;
 
         public ServiceRecordManager()
         {
@@ -125,6 +128,43 @@ namespace Enlisted.Features.CommandTent.Core
             dataStore.SyncData("svc_currentTermKills", ref _currentTermKills);
             dataStore.SyncData("svc_currentFactionId", ref _currentFactionId);
             dataStore.SyncData("svc_currentLordId", ref _currentLordId);
+
+            // Reservist snapshot
+            var resLord = _reservistRecord.LastLordId;
+            var resFaction = _reservistRecord.LastFactionId;
+            var resDays = _reservistRecord.DaysServed;
+            var resTier = _reservistRecord.TierAtExit;
+            var resXp = _reservistRecord.XpAtExit;
+            var resBand = _reservistRecord.DischargeBand;
+            var resRel = _reservistRecord.RelationAtExit;
+            var resAt = _reservistRecord.RecordedAt;
+            var resConsumed = _reservistRecord.Consumed;
+            var resGrantedProbation = _reservistRecord.GrantedProbation;
+
+            dataStore.SyncData("svc_reservist_lastLord", ref resLord);
+            dataStore.SyncData("svc_reservist_lastFaction", ref resFaction);
+            dataStore.SyncData("svc_reservist_daysServed", ref resDays);
+            dataStore.SyncData("svc_reservist_tier", ref resTier);
+            dataStore.SyncData("svc_reservist_xp", ref resXp);
+            dataStore.SyncData("svc_reservist_band", ref resBand);
+            dataStore.SyncData("svc_reservist_relation", ref resRel);
+            dataStore.SyncData("svc_reservist_recordedAt", ref resAt);
+            dataStore.SyncData("svc_reservist_consumed", ref resConsumed);
+            dataStore.SyncData("svc_reservist_grantedProbation", ref resGrantedProbation);
+
+            if (dataStore.IsLoading)
+            {
+                _reservistRecord.LastLordId = resLord;
+                _reservistRecord.LastFactionId = resFaction;
+                _reservistRecord.DaysServed = resDays;
+                _reservistRecord.TierAtExit = resTier;
+                _reservistRecord.XpAtExit = resXp;
+                _reservistRecord.DischargeBand = resBand;
+                _reservistRecord.RelationAtExit = resRel;
+                _reservistRecord.RecordedAt = resAt;
+                _reservistRecord.Consumed = resConsumed;
+                _reservistRecord.GrantedProbation = resGrantedProbation;
+            }
 
             SerializeFactionRecords(dataStore);
             SerializeRetinueState(dataStore);
@@ -269,6 +309,93 @@ namespace Enlisted.Features.CommandTent.Core
                     dataStore.SyncData($"svc_rec_{idx}_kills", ref kills);
                     idx++;
                 }
+            }
+        }
+
+        public void RecordReservist(string dischargeBand, int daysServed, int tier, int xp, Hero lord)
+        {
+            try
+            {
+                _reservistRecord.DischargeBand = dischargeBand;
+                _reservistRecord.DaysServed = daysServed;
+                _reservistRecord.TierAtExit = tier;
+                _reservistRecord.XpAtExit = xp;
+                _reservistRecord.LastLordId = lord?.StringId;
+                _reservistRecord.LastFactionId = lord?.MapFaction?.StringId;
+                _reservistRecord.RelationAtExit = lord != null ? Hero.MainHero.GetRelation(lord) : 0;
+                _reservistRecord.RecordedAt = CampaignTime.Now;
+                _reservistRecord.Consumed = false;
+
+                ModLogger.Info(LogCategory,
+                    $"Reservist snapshot recorded: band={dischargeBand}, days={daysServed}, tier={tier}, lord={lord?.Name}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn(LogCategory, $"Failed to record reservist snapshot: {ex.Message}");
+            }
+        }
+
+        public bool TryConsumeReservistForFaction(IFaction faction, out int targetTier, out int bonusXp, out int relationBonus, out string band, out bool probation)
+        {
+            targetTier = 0;
+            bonusXp = 0;
+            relationBonus = 0;
+            band = "none";
+            probation = false;
+
+            try
+            {
+                if (_reservistRecord == null || _reservistRecord.Consumed)
+                {
+                    return false;
+                }
+
+                if (faction == null || string.IsNullOrWhiteSpace(faction.StringId))
+                {
+                    return false;
+                }
+
+                if (!string.Equals(_reservistRecord.LastFactionId, faction.StringId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                band = _reservistRecord.DischargeBand?.ToLowerInvariant() ?? "none";
+
+                switch (band)
+                {
+                    case "washout":
+                    case "deserter":
+                        targetTier = 1;
+                        bonusXp = 0;
+                        relationBonus = 0;
+                        probation = true;
+                        break;
+                    case "honorable":
+                        targetTier = 3;
+                        bonusXp = 500;
+                        relationBonus = 5;
+                        break;
+                    case "veteran":
+                    case "heroic":
+                        targetTier = 4;
+                        bonusXp = 1000;
+                        relationBonus = 10;
+                        break;
+                    default:
+                        return false;
+                }
+
+                _reservistRecord.Consumed = true;
+                _reservistRecord.GrantedProbation = probation;
+                ModLogger.Info(LogCategory,
+                    $"Reservist offer consumed for faction {faction.Name} (band={band}, targetTier={targetTier}, bonusXp={bonusXp}, relBonus={relationBonus}, probation={probation})");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn(LogCategory, $"Error consuming reservist record: {ex.Message}");
+                return false;
             }
         }
 

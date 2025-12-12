@@ -1,10 +1,12 @@
-# Camp (formerly Command Tent)
+# Camp ("My Camp")
 
 ## Quick Reference
 
 | Feature | Tier | Description |
 |---------|------|-------------|
 | Service Records | 1+ | View faction-specific and lifetime service statistics |
+| Pay & Pension | 1+ | View pending muster pay, next payday, last pay outcome, pension status |
+| Discharge Actions | 1+ | Request/Cancel Pending Discharge (Final Muster at next pay muster) |
 | Companion Assignments | 4+ | Toggle which companions fight in battles |
 | Personal Retinue | 4+ | Command soldiers (5 at T4, 10 at T5, 20 at T6) |
 
@@ -27,7 +29,7 @@
 
 ## Overview
 
-The **Camp** (formerly the Command Tent) is the player's personal command space within the enlisted army. It provides access to service records, retinue management (Tier 4+), and companion assignments.
+The **Camp ("My Camp")** is the player's personal hub within the enlisted army. It provides access to service records, pay/pension status, discharge actions, retinue management (Tier 4+), and companion assignments.
 
 **Menu Structure:**
 ```
@@ -36,6 +38,14 @@ The **Camp** (formerly the Command Tent) is the player's personal command space 
 │   ├── Current Posting (this enlistment)
 │   ├── Faction Records (per-faction history)
 │   └── Lifetime Summary (cross-faction totals)
+├── Pay & Pension (this enlistment)
+│   ├── Pending Muster Pay
+│   ├── Next Payday
+│   ├── Last Pay Outcome / Pay Muster Pending
+│   └── Pension Amount / Pension Paused
+├── Discharge
+│   ├── Request Discharge (Final Muster)
+│   └── Cancel Pending Discharge
 ├── Personal Retinue (Tier 4+ only)
 │   ├── Current Muster
 │   ├── Purchase Soldiers
@@ -69,6 +79,22 @@ Tracks military service history per faction and lifetime totals.
 - Current Posting: Shows current enlistment stats
 - Faction Records: Per-faction history
 - Lifetime Summary: Cross-faction totals
+
+### Pay & Pension
+
+Camp surfaces the pay-system state so players always know where they stand:
+- **Pending Muster Pay**: The current ledger total waiting for pay muster.
+- **Next Payday**: When the next pay muster should trigger (may defer if unsafe).
+- **Last Pay Outcome**: What happened the last time pay muster resolved.
+- **Pay Muster Pending**: Whether a pay muster is queued and waiting for a safe moment.
+- **Pension Amount / Paused**: Current pension stipend (if any) and whether it is paused (e.g. during enlistment).
+
+### Discharge Actions (Final Muster)
+
+Discharge is handled as **Pending Discharge → Final Muster**:
+- **Request Discharge (Final Muster)** sets pending discharge.
+- **Cancel Pending Discharge** clears it.
+- Final Muster resolves at the **next pay muster** and is where severance, pension, and gear handling occur.
 
 ### Personal Retinue
 
@@ -430,3 +456,4 @@ ModLogger.Info("CasualtyTracker", $"Wounded casualties: {lost} soldiers succumbe
 - [Companion Management](../Core/companion-management.md) - Companion battle participation details
 - [Enlistment System](../Core/enlistment.md) - Tier progression and service state
 - [Menu Interface](menu-interface.md) - Parent menu system
+- [Pay System](../Core/pay-system-rework.md) - Muster ledger, pay muster, discharge, pensions

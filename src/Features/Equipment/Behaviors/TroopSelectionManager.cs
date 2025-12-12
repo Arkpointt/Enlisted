@@ -33,17 +33,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         private int _pendingTier = 1;
         private List<CharacterObject> _availableTroops = new List<CharacterObject>();
         private string _lastSelectedTroopId;
-        
-        // Equipment accountability tracking - tracks what gear has been issued to the soldier
-        // Used to charge for missing equipment when changing troop types
-        private Dictionary<int, IssuedItemRecord> _issuedEquipment = new Dictionary<int, IssuedItemRecord>();
 
         public string LastSelectedTroopId => _lastSelectedTroopId;
-        
-        /// <summary>
-        /// Gets the currently issued equipment for accountability tracking.
-        /// </summary>
-        public IReadOnlyDictionary<int, IssuedItemRecord> IssuedEquipment => _issuedEquipment;
         
         public TroopSelectionManager()
         {
@@ -60,7 +51,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             dataStore.SyncData("_promotionPending", ref _promotionPending);
             dataStore.SyncData("_pendingTier", ref _pendingTier);
             dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
-            SerializeIssuedEquipment(dataStore);
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -618,14 +608,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                         return;
                     }
 
-                    // ACCOUNTABILITY CHECK: Charge for any missing equipment before issuing new gear
-                    ProcessEquipmentAccountability(hero);
-
                     // Replace all equipment with new troop's gear
                     EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
-
-                    // Record newly issued equipment for future accountability
-                    RecordIssuedEquipment(hero.BattleEquipment);
 
                     // Show promotion notification
                     var message = new TextObject("{=eq_promoted_new_equipment}Promoted to {TROOP_NAME}! New equipment issued.");
@@ -651,74 +635,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("TroopSelection", $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}: {ex.Message}", ex);
-            }
-        }
-        
-        /// <summary>
-        /// Process equipment accountability - check for missing gear and charge the soldier.
-        /// Called before issuing new equipment when changing troop type.
-        /// </summary>
-        private void ProcessEquipmentAccountability(Hero hero)
-        {
-            try
-            {
-                // Check for missing equipment
-                var (missingItems, totalDebt) = CheckMissingEquipment();
-                
-                if (missingItems.Count == 0)
-                {
-                    // All equipment accounted for - clear tracking for fresh start
-                    ClearIssuedEquipment();
-                    return;
-                }
-                
-                // Deduct the cost of missing equipment from soldier's pay
-                if (totalDebt > 0)
-                {
-                    hero.Gold = Math.Max(0, hero.Gold - totalDebt);
-                    
-                    // Build notification message listing missing items
-                    var sb = new System.Text.StringBuilder();
-                    var headerText = new TextObject("{=qm_missing_equipment_header}Missing equipment deducted from pay:");
-                    sb.AppendLine(headerText.ToString());
-                    foreach (var item in missingItems)
-                    {
-                        sb.AppendLine($"  • {item.ItemName} ({item.ItemValue} denars)");
-                    }
-                    var totalText = new TextObject("{=qm_missing_equipment_total}Total deducted: {AMOUNT} denars");
-                    totalText.SetTextVariable("AMOUNT", totalDebt);
-                    sb.AppendLine(totalText.ToString());
-                    
-                    // Show notification to player
-                    var chargeMsg = new TextObject("{=qm_missing_equipment_charge}Missing equipment charge: {AMOUNT} denars deducted from pay.");
-                    chargeMsg.SetTextVariable("AMOUNT", totalDebt);
-                    InformationManager.DisplayMessage(new InformationMessage(chargeMsg.ToString(), Colors.Red));
-                    
-                    // Show detailed popup if significant amount
-                    if (totalDebt >= 100)
-                    {
-                        var titleText = new TextObject("{=qm_missing_equipment_title}Equipment Accountability");
-                        var btnText = new TextObject("{=qm_btn_understood}Understood");
-                        InformationManager.ShowInquiry(new InquiryData(
-                            titleText.ToString(),
-                            sb.ToString(),
-                            true,
-                            false,
-                            btnText.ToString(),
-                            string.Empty,
-                            null,
-                            null));
-                    }
-                    
-                    ModLogger.Info("TroopSelection", $"Charged {totalDebt} denars for {missingItems.Count} missing items");
-                }
-                
-                // Clear tracking after processing
-                ClearIssuedEquipment();
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", "Error processing equipment accountability", ex);
             }
         }
         
@@ -790,266 +706,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Get pending promotion tier.
         /// </summary>
         public int PendingTier => _pendingTier;
-        
-        #region Equipment Accountability
-        
-        /// <summary>
-        /// Record equipment as issued to the soldier for accountability tracking.
-        /// Called when equipment is given via promotion, enlistment, or quartermaster.
-        /// </summary>
-        public void RecordIssuedEquipment(TaleWorlds.Core.Equipment equipment)
-        {
-            try
-            {
-                if (equipment == null)
-                {
-                    return;
-                }
-                
-                _issuedEquipment.Clear();
-                
-                // Record all equipped items
-                for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                {
-                    var item = equipment[slot].Item;
-                    if (item != null)
-                    {
-                        _issuedEquipment[(int)slot] = new IssuedItemRecord(item, slot);
-                    }
-                }
-                
-                ModLogger.Info("TroopSelection", $"Recorded {_issuedEquipment.Count} issued equipment items for accountability");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", "Error recording issued equipment", ex);
-            }
-        }
-        
-        /// <summary>
-        /// Record a single item as issued (for quartermaster acquisitions).
-        /// </summary>
-        public void RecordIssuedItem(ItemObject item, EquipmentIndex slot)
-        {
-            try
-            {
-                if (item == null)
-                {
-                    return;
-                }
-                
-                _issuedEquipment[(int)slot] = new IssuedItemRecord(item, slot);
-                ModLogger.Info("TroopSelection", $"Recorded issued item: {item.Name} in slot {slot}");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", "Error recording issued item", ex);
-            }
-        }
-
-        /// <summary>
-        /// Determine if an item (by stringId) is currently tracked as issued.
-        /// Used to filter quartermaster returns so only issued items are returnable.
-        /// </summary>
-        public bool IsIssuedItem(string itemStringId)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(itemStringId) || _issuedEquipment.Count == 0)
-                {
-                    return false;
-                }
-
-                return _issuedEquipment.Values.Any(v =>
-                    v != null && v.ItemStringId == itemStringId);
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", $"Error checking issued item: {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Mark one issued item as returned, removing it from accountability tracking.
-        /// Matches by ItemStringId; removes a single record.
-        /// </summary>
-        public bool MarkIssuedItemReturned(string itemStringId)
-        {
-            try
-            {
-                if (string.IsNullOrEmpty(itemStringId) || _issuedEquipment.Count == 0)
-                {
-                    return false;
-                }
-
-                var kvp = _issuedEquipment.FirstOrDefault(x =>
-                    x.Value != null && x.Value.ItemStringId == itemStringId);
-
-                if (kvp.Value == null)
-                {
-                    return false;
-                }
-
-                _issuedEquipment.Remove(kvp.Key);
-                ModLogger.Info("TroopSelection", $"Marked issued item returned: {kvp.Value.ItemName} (slot {kvp.Key})");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", $"Error marking issued item returned: {ex.Message}");
-                return false;
-            }
-        }
-        
-        /// <summary>
-        /// Check for missing equipment and calculate the debt owed.
-        /// Returns a list of missing items and the total value to charge.
-        /// </summary>
-        public (List<IssuedItemRecord> MissingItems, int TotalDebt) CheckMissingEquipment()
-        {
-            var missingItems = new List<IssuedItemRecord>();
-            var totalDebt = 0;
-            
-            try
-            {
-                var hero = Hero.MainHero;
-                if (hero == null || _issuedEquipment.Count == 0)
-                {
-                    return (missingItems, totalDebt);
-                }
-                
-                foreach (var issued in _issuedEquipment.Values)
-                {
-                    if (string.IsNullOrEmpty(issued.ItemStringId))
-                    {
-                        continue;
-                    }
-                    
-                    // Check if the player still has this item equipped anywhere
-                    var hasItem = false;
-                    for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                    {
-                        var equippedItem = hero.BattleEquipment[slot].Item;
-                        if (equippedItem?.StringId == issued.ItemStringId)
-                        {
-                            hasItem = true;
-                            break;
-                        }
-                    }
-                    
-                    // Also check civilian equipment
-                    if (!hasItem)
-                    {
-                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
-                        {
-                            var equippedItem = hero.CivilianEquipment[slot].Item;
-                            if (equippedItem?.StringId == issued.ItemStringId)
-                            {
-                                hasItem = true;
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if (!hasItem)
-                    {
-                        missingItems.Add(issued);
-                        totalDebt += issued.ItemValue;
-                    }
-                }
-                
-                if (missingItems.Count > 0)
-                {
-                    ModLogger.Info("TroopSelection", $"Found {missingItems.Count} missing items worth {totalDebt} denars");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", "Error checking missing equipment", ex);
-            }
-            
-            return (missingItems, totalDebt);
-        }
-        
-        /// <summary>
-        /// Clear the issued equipment tracking (called after accountability check).
-        /// </summary>
-        public void ClearIssuedEquipment()
-        {
-            _issuedEquipment.Clear();
-            ModLogger.Info("TroopSelection", "Cleared issued equipment tracking");
-        }
-
-        /// <summary>
-        ///     Manually serialize issued equipment so the save system only touches primitives.
-        ///     Avoids missing type definitions for IssuedItemRecord dictionaries during save.
-        /// </summary>
-        private void SerializeIssuedEquipment(IDataStore dataStore)
-        {
-            try
-            {
-                var count = _issuedEquipment?.Count ?? 0;
-                dataStore.SyncData("_issued_count", ref count);
-
-                if (!dataStore.IsLoading)
-                {
-                    var issuedEquipment = _issuedEquipment ?? new Dictionary<int, IssuedItemRecord>();
-                    var index = 0;
-                    const int unsetSlotIndex = -1;
-                    foreach (var kvp in issuedEquipment)
-                    {
-                        var slotKey = kvp.Key;
-                        var record = kvp.Value ?? new IssuedItemRecord();
-                        var slotIndex = record.SlotIndex >= 0 ? record.SlotIndex : unsetSlotIndex;
-                        var itemId = record.ItemStringId ?? string.Empty;
-                        var itemName = record.ItemName ?? string.Empty;
-                        var itemValue = record.ItemValue;
-
-                        dataStore.SyncData($"_issued_{index}_slotKey", ref slotKey);
-                        dataStore.SyncData($"_issued_{index}_slotIndex", ref slotIndex);
-                        dataStore.SyncData($"_issued_{index}_itemId", ref itemId);
-                        dataStore.SyncData($"_issued_{index}_itemName", ref itemName);
-                        dataStore.SyncData($"_issued_{index}_itemValue", ref itemValue);
-                        index++;
-                    }
-                }
-                else
-                {
-                    _issuedEquipment = new Dictionary<int, IssuedItemRecord>();
-                    const int unsetSlotIndex = -1;
-                    for (var i = 0; i < count; i++)
-                    {
-                        var slotKey = 0;
-                        var slotIndex = 0;
-                        var itemId = string.Empty;
-                        var itemName = string.Empty;
-                        var itemValue = 0;
-
-                        dataStore.SyncData($"_issued_{i}_slotKey", ref slotKey);
-                        dataStore.SyncData($"_issued_{i}_slotIndex", ref slotIndex);
-                        dataStore.SyncData($"_issued_{i}_itemId", ref itemId);
-                        dataStore.SyncData($"_issued_{i}_itemName", ref itemName);
-                        dataStore.SyncData($"_issued_{i}_itemValue", ref itemValue);
-
-                        var resolvedSlotIndex = slotIndex == unsetSlotIndex ? slotKey : slotIndex;
-                        _issuedEquipment[slotKey] = new IssuedItemRecord
-                        {
-                            ItemStringId = itemId,
-                            ItemName = itemName,
-                            ItemValue = itemValue,
-                            SlotIndex = resolvedSlotIndex
-                        };
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("TroopSelection", $"Error serializing issued equipment: {ex.Message}");
-            }
-        }
-        
-        #endregion
     }
     
     /// <summary>
@@ -1064,49 +720,4 @@ namespace Enlisted.Features.Equipment.Behaviors
         HorseArcher
     }
     
-    /// <summary>
-    /// Record of an item issued to the soldier for accountability tracking.
-    /// When the soldier changes troop type, missing items will be charged to their pay.
-    /// </summary>
-    [Serializable]
-    public class IssuedItemRecord
-    {
-        /// <summary>
-        /// The StringId of the issued item (used to look up the item).
-        /// </summary>
-        public string ItemStringId { get; set; }
-        
-        /// <summary>
-        /// The display name of the item (for notifications).
-        /// </summary>
-        public string ItemName { get; set; }
-        
-        /// <summary>
-        /// The value of the item in denars (charged if missing).
-        /// </summary>
-        public int ItemValue { get; set; }
-        
-        /// <summary>
-        /// The equipment slot this item was issued to.
-        /// </summary>
-        public int SlotIndex { get; set; }
-        
-        public IssuedItemRecord()
-        {
-            // Parameterless constructor for serialization
-        }
-        
-        public IssuedItemRecord(ItemObject item, EquipmentIndex slot)
-        {
-            if (item == null)
-            {
-                return;
-            }
-            
-            ItemStringId = item.StringId;
-            ItemName = item.Name?.ToString() ?? "Unknown Item";
-            ItemValue = item.Value;
-            SlotIndex = (int)slot;
-        }
-    }
 }

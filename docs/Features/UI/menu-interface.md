@@ -7,7 +7,7 @@
 | Enlisted Status | Main service menu | After enlistment, from camp |
 | Duty Selection | Choose daily assignment | Enlisted Status → "Report for Duty" |
 | Quartermaster | Equipment selection | Enlisted Status → "Visit Quartermaster" |
-| Camp (formerly Command Tent) | Service records, retinue | Enlisted Status → "Camp" |
+| Camp ("My Camp") | Service records, pay/pension status, discharge actions, retinue | Enlisted Status → "Camp" |
 
 ## Index
 
@@ -81,7 +81,8 @@ Each menu option has a `LeaveType` that displays an appropriate icon:
 | Visit Settlement | `Submenu` | Navigation |
 | Report for Duty | `Manage` | Management |
 | Ask for Leave | `Leave` | Exit action |
-| Desert the Army | `Escape` | Warning/danger |
+| Desert the Army | `Escape` | Warning/danger (immediate abandonment) |
+| (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge → Final Muster) |
 
 ### Tooltips
 
@@ -117,12 +118,12 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 | Option | Icon | Tooltip |
 |--------|------|---------|
 | Master at Arms | TroopSelection | Select your troop type and equipment loadout based on your current tier |
-| Visit Quartermaster | Trade | Request equipment variants and manage party supplies |
+| Visit Quartermaster | Trade | Purchase equipment and manage party supplies |
 | My Lord... | Conversation | Speak with nearby lords for quests, news, and relation building |
 | Visit Settlement | Submenu | Enter the settlement while your lord is present |
 | Report for Duty | Manage | Select your daily duty and profession for bonuses and special abilities |
 | Ask commander for leave | Leave | Request temporary leave from service |
-| Desert the Army | Escape | WARNING: Severe relation and crime penalties |
+| Desert the Army | Escape | WARNING: Immediate abandonment with severe penalties |
 
 **Features:**
 - Modern icons on every option for visual clarity
@@ -132,6 +133,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 - Professional status display with real-time updates
 - Clean navigation to sub-menus
 - Status information (tier, XP, days served, etc.)
+- Pay is handled via a muster ledger and pay muster (see Pay System doc); discharge is managed from Camp.
 
 ### Duty Selection Interface
 
@@ -182,11 +184,22 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 Enlisted Status Menu
     ├── Master at Arms → Troop Selection Popup
     ├── Visit Quartermaster → Equipment Selection Menu
-    ├── Camp → Service Records / Retinue / Companions
+    ├── Camp → Service Records / Pay & Pension / Discharge / Retinue / Companions
     ├── My Lord... → Dialog System
     ├── Report for Duty → Duty Selection Menu
     └── Ask commander for leave → Leave Request Dialog
 ```
+
+## Discharge paths (where they live)
+
+There are **two** ways to leave service:
+
+1. **Desert the Army** (from `enlisted_status`)
+   - Immediate exit with penalties (crime/relation). This is the “panic button”.
+
+2. **Request Discharge (Final Muster)** (from Camp)
+   - Sets a pending discharge state and resolves at the next pay muster (“Final Muster”).
+   - This is the intended “retire properly” path and is where pensions/severance are awarded.
 
 **Navigation Features:**
 - Back button at top for easy access

@@ -1,6 +1,8 @@
 using System;
 using System.Text;
 using Enlisted.Features.Assignments.Core;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
 
 namespace Enlisted.Mod.Core.Logging
 {
@@ -120,6 +122,159 @@ namespace Enlisted.Mod.Core.Logging
             }
 
             ModLogger.Debug(system, message);
+        }
+    }
+
+    /// <summary>
+    ///     Lightweight, user-friendly save/load logging.
+    ///     Implemented via two marker behaviors registered first/last so we can log both "begin" and "end"
+    ///     without relying on fragile internal save-system hooks.
+    /// </summary>
+    public static class SaveLoadDiagnostics
+    {
+        private static readonly object Sync = new object();
+
+        private static int _saveSequence;
+        private static int _loadSequence;
+
+        private static DateTime _saveStartUtc;
+        private static DateTime _loadStartUtc;
+
+        private static bool _saveInProgress;
+        private static bool _loadInProgress;
+
+        public static void OnSaveBegin()
+        {
+            lock (Sync)
+            {
+                if (_saveInProgress)
+                {
+                    return;
+                }
+
+                _saveInProgress = true;
+                _saveSequence++;
+                _saveStartUtc = DateTime.UtcNow;
+            }
+
+            var heroName = Hero.MainHero?.Name?.ToString() ?? "Unknown";
+            var day = CampaignTime.Now.ToDays;
+            ModLogger.Info("SaveLoad", $"Saving game... (#{_saveSequence}, Hero: {heroName}, Day: {day:F1})");
+        }
+
+        public static void OnSaveEnd()
+        {
+            int seq;
+            DateTime startUtc;
+
+            lock (Sync)
+            {
+                if (!_saveInProgress)
+                {
+                    return;
+                }
+
+                _saveInProgress = false;
+                seq = _saveSequence;
+                startUtc = _saveStartUtc;
+            }
+
+            var elapsedMs = (int)Math.Max(0, (DateTime.UtcNow - startUtc).TotalMilliseconds);
+            ModLogger.Info("SaveLoad", $"Save finished. (#{seq}, {elapsedMs} ms)");
+        }
+
+        public static void OnLoadBegin()
+        {
+            lock (Sync)
+            {
+                if (_loadInProgress)
+                {
+                    return;
+                }
+
+                _loadInProgress = true;
+                _loadSequence++;
+                _loadStartUtc = DateTime.UtcNow;
+            }
+
+            ModLogger.Info("SaveLoad", $"Loading save... (#{_loadSequence})");
+        }
+
+        public static void OnLoadEnd()
+        {
+            int seq;
+            DateTime startUtc;
+
+            lock (Sync)
+            {
+                if (!_loadInProgress)
+                {
+                    return;
+                }
+
+                _loadInProgress = false;
+                seq = _loadSequence;
+                startUtc = _loadStartUtc;
+            }
+
+            var elapsedMs = (int)Math.Max(0, (DateTime.UtcNow - startUtc).TotalMilliseconds);
+            ModLogger.Info("SaveLoad", $"Load finished. (#{seq}, {elapsedMs} ms)");
+        }
+    }
+
+    /// <summary>
+    ///     Save/load marker behavior. Register one instance at the beginning of the behavior list and one at the end.
+    ///     This yields predictable "begin" and "end" callbacks during Save/Load serialization passes.
+    /// </summary>
+    public sealed class SaveLoadDiagnosticsMarkerBehavior : CampaignBehaviorBase
+    {
+        public enum Phase
+        {
+            Begin,
+            End
+        }
+
+        private readonly Phase _phase;
+
+        public SaveLoadDiagnosticsMarkerBehavior(Phase phase)
+        {
+            _phase = phase;
+        }
+
+        public override void RegisterEvents()
+        {
+            // No runtime events required.
+        }
+
+        public override void SyncData(IDataStore dataStore)
+        {
+            if (dataStore == null)
+            {
+                return;
+            }
+
+            if (dataStore.IsSaving)
+            {
+                if (_phase == Phase.Begin)
+                {
+                    SaveLoadDiagnostics.OnSaveBegin();
+                }
+                else
+                {
+                    SaveLoadDiagnostics.OnSaveEnd();
+                }
+            }
+            else if (dataStore.IsLoading)
+            {
+                if (_phase == Phase.Begin)
+                {
+                    SaveLoadDiagnostics.OnLoadBegin();
+                }
+                else
+                {
+                    SaveLoadDiagnostics.OnLoadEnd();
+                }
+            }
         }
     }
 }

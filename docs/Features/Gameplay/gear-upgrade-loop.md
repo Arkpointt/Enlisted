@@ -1,6 +1,10 @@
+# Gear Upgrade Loop (Design Draft — Not Implemented)
+
+This document is a **design draft** for a future equipment upgrade loop. It is **not currently implemented** in the mod’s codebase.
+
 ## Overview
-- Goal: keep the army-issue/accountability loop, make issued gear start “scuffed” (low-quality modifiers), and add a fun repair → upgrade path that ties into promotions and camp revelry.
-- Scope: Quartermaster issuance, promotion turnover, repair/upgrade actions, optional pay-to-retain, and small morale touches via camp revelry.
+- Goal: add a repair/upgrade path for issued gear (quality modifiers) tied to promotions and camp actions.
+- Scope: issuance rules, repair/upgrade actions, optional retention/buy-out, and small morale touches.
 
 ## Index
 - [Overview](#overview)

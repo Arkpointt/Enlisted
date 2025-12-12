@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Combat.Behaviors;
-using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core;
@@ -77,6 +77,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
     /// </summary>
     public sealed class EnlistmentBehavior : CampaignBehaviorBase
     {
+        private const string SaveKeyPrefix = "Enlisted.EnlistmentBehavior.";
+
+        private static string Key(string legacyKey) => $"{SaveKeyPrefix}{legacyKey}";
+
+        private static void SyncKey<T>(IDataStore dataStore, string legacyKey, ref T value)
+        {
+            // On load: try legacy key first (for backwards compatibility), then prefixed key.
+            // On save: only write prefixed keys to avoid collisions with other behaviors.
+            if (dataStore == null || string.IsNullOrWhiteSpace(legacyKey))
+            {
+                return;
+            }
+
+            if (dataStore.IsLoading)
+            {
+                dataStore.SyncData(legacyKey, ref value);
+            }
+
+            dataStore.SyncData(Key(legacyKey), ref value);
+        }
         /// <summary>
         ///     Minimum time interval between real-time tick updates, in seconds.
         ///     Updates are throttled to every 100ms to prevent overwhelming the game's
@@ -307,6 +327,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _savedGraceLanceProvisional;
         private string _savedGraceManualLanceStyleId;
 
+        // Ledger-based pay scheduling (custom muster system)
+        private int _pendingMusterPay;
+        private CampaignTime _nextPayday = CampaignTime.Zero;
+        private bool _payMusterPending;
+        private string _lastPayOutcome;
+        private int _pensionAmountPerDay;
+        private string _pensionFactionId;
+        private bool _isPensionPaused;
+        private bool _isPendingDischarge;
+        private string _lastDischargeBand;
+        private bool _isOnProbation;
+        private CampaignTime _probationEnds = CampaignTime.Zero;
+
         /// <summary>
         ///     Currently selected duty assignment ID (e.g., "enlisted", "forager", "sentry").
         ///     Duties provide daily skill XP bonuses and may include wage multipliers.
@@ -451,6 +484,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         public bool IsLanceProvisional => _isLanceProvisional;
         public bool IsLanceLegacy => _isLanceLegacy;
+        public int PendingMusterPay => _pendingMusterPay;
+        public CampaignTime NextPaydaySafe => _nextPayday != CampaignTime.Zero ? _nextPayday : (_nextPayday = ComputeNextPayday());
+        public string LastPayOutcome => _lastPayOutcome ?? "none";
+        public bool IsPayMusterPending => _payMusterPending;
+        public int PensionAmountPerDay => _pensionAmountPerDay;
+        public bool IsPensionPaused => _isPensionPaused;
+        public bool IsPendingDischarge => _isPendingDischarge;
+        public string LastDischargeBand => _lastDischargeBand ?? "none";
+        public bool IsOnProbation => _isOnProbation;
 
         /// <summary>
         ///     Current fatigue for camp actions (placeholder hook; no mechanics yet).
@@ -527,6 +569,102 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SessionDiagnostics.LogEvent("Fatigue", "Consumed",
                 $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "camp_action"}");
             return true;
+        }
+
+        private void ActivateProbation()
+        {
+            var config = EnlistedConfig.LoadRetirementConfig();
+            var days = Math.Max(1, config?.ProbationDays ?? 12);
+            _isOnProbation = true;
+            _probationEnds = CampaignTime.Now + CampaignTime.Days(days);
+
+            var fatigueCap = Math.Max(1, config?.ProbationFatigueCap ?? 18);
+            _fatigueMax = Math.Min(_fatigueMax, fatigueCap);
+            _fatigueCurrent = Math.Min(_fatigueCurrent, _fatigueMax);
+
+            ModLogger.Info("Probation", $"Probation activated for {days} days (fatigue cap {_fatigueMax})");
+        }
+
+        private void ClearProbation(string reason)
+        {
+            if (!_isOnProbation)
+            {
+                return;
+            }
+
+            _isOnProbation = false;
+            _probationEnds = CampaignTime.Zero;
+            _fatigueMax = 24;
+            _fatigueCurrent = Math.Min(_fatigueCurrent, _fatigueMax);
+
+            ModLogger.Info("Probation", $"Probation cleared ({reason})");
+        }
+
+        private void TryApplyReservistReentryBoost(IFaction faction)
+        {
+            try
+            {
+                var svc = ServiceRecordManager.Instance;
+                if (svc == null || faction == null)
+                {
+                    return;
+                }
+
+                if (svc.TryConsumeReservistForFaction(faction, out var targetTier, out var bonusXp,
+                        out var relationBonus, out var band, out var probation))
+                {
+                    if (probation)
+                    {
+                        ActivateProbation();
+                    }
+
+                    if (targetTier > 0)
+                    {
+                        _enlistmentTier = Math.Max(_enlistmentTier, targetTier);
+                    }
+
+                    if (bonusXp > 0)
+                    {
+                        AddEnlistmentXP(bonusXp, "Reservist Re-entry");
+                    }
+
+                    if (relationBonus > 0)
+                    {
+                        if (_enlistedLord != null)
+                        {
+                            ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, relationBonus, true, true);
+                        }
+
+                        var factionLeader = faction.Leader;
+                        if (factionLeader != null && factionLeader != _enlistedLord)
+                        {
+                            ChangeRelationAction.ApplyPlayerRelation(factionLeader, relationBonus, true, true);
+                        }
+                    }
+
+                    if (targetTier >= 7)
+                    {
+                        var fine = Math.Max(0, EnlistedConfig.LoadRetirementConfig().CommanderReentryFineGold);
+                        if (fine > 0)
+                        {
+                            var hero = Hero.MainHero;
+                            if (hero != null)
+                            {
+                                var paid = Math.Min(hero.Gold, fine);
+                                hero.ChangeHeroGold(-paid);
+                                ModLogger.Info("Enlistment",
+                                    $"Commander re-entry fine paid: {paid} (configured {fine})");
+                            }
+                        }
+                    }
+
+                    _lastDischargeBand = band;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Enlistment", $"Reservist re-entry boost failed: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -802,55 +940,66 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             // Serialize all enlistment state variables
             // These values are saved to the game's save file and restored when loading
-            dataStore.SyncData("_enlistedLord", ref _enlistedLord);
-            dataStore.SyncData("_enlistmentTier", ref _enlistmentTier);
-            dataStore.SyncData("_enlistmentXP", ref _enlistmentXP);
-            dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
-            dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);
-            dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment);
-            dataStore.SyncData("_personalInventory", ref _personalInventory);
-            dataStore.SyncData("_baggageStash", ref _baggageStash);
-            dataStore.SyncData("_bagCheckCompleted", ref _bagCheckCompleted);
-            dataStore.SyncData("_bagCheckEverCompleted", ref _bagCheckEverCompleted);
-            dataStore.SyncData("_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
-            dataStore.SyncData("_enlistmentDate", ref _enlistmentDate);
-            dataStore.SyncData("_isOnLeave", ref _isOnLeave);
-            dataStore.SyncData("_leaveStartDate", ref _leaveStartDate);
-            dataStore.SyncData("_leaveCooldownEnds", ref _leaveCooldownEnds);
-            dataStore.SyncData("_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
-            dataStore.SyncData("_pendingDesertionKingdom", ref _pendingDesertionKingdom);
-            dataStore.SyncData("_savedGraceTier", ref _savedGraceTier);
-            dataStore.SyncData("_savedGraceLord", ref _savedGraceLord);
-            dataStore.SyncData("_savedGraceXP", ref _savedGraceXP);
-            dataStore.SyncData("_savedGraceTroopId", ref _savedGraceTroopId);
-            dataStore.SyncData("_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
-            dataStore.SyncData("_savedGraceLanceId", ref _savedGraceLanceId);
-            dataStore.SyncData("_savedGraceLanceName", ref _savedGraceLanceName);
-            dataStore.SyncData("_savedGraceLanceStyle", ref _savedGraceLanceStyle);
-            dataStore.SyncData("_savedGraceLanceStoryId", ref _savedGraceLanceStoryId);
-            dataStore.SyncData("_savedGraceLanceProvisional", ref _savedGraceLanceProvisional);
-            dataStore.SyncData("_savedGraceManualLanceStyleId", ref _savedGraceManualLanceStyleId);
-            dataStore.SyncData("_savedGraceLanceLegacy", ref _savedGraceLanceLegacy);
-            dataStore.SyncData("_graceProtectionEnds", ref _graceProtectionEnds);
-            dataStore.SyncData("_selectedDuty", ref _selectedDuty);
-            dataStore.SyncData("_selectedProfession", ref _selectedProfession);
-            dataStore.SyncData("_currentLanceId", ref _currentLanceId);
-            dataStore.SyncData("_currentLanceName", ref _currentLanceName);
-            dataStore.SyncData("_currentLanceStyle", ref _currentLanceStyle);
-            dataStore.SyncData("_currentLanceStoryId", ref _currentLanceStoryId);
-            dataStore.SyncData("_isLanceProvisional", ref _isLanceProvisional);
-            dataStore.SyncData("_manualLanceStyleId", ref _manualLanceStyleId);
-            dataStore.SyncData("_isLanceLegacy", ref _isLanceLegacy);
-            dataStore.SyncData("_fatigueCurrent", ref _fatigueCurrent);
-            dataStore.SyncData("_fatigueMax", ref _fatigueMax);
+            SyncKey(dataStore, "_enlistedLord", ref _enlistedLord);
+            SyncKey(dataStore, "_enlistmentTier", ref _enlistmentTier);
+            SyncKey(dataStore, "_enlistmentXP", ref _enlistmentXP);
+            SyncKey(dataStore, "_hasBackedUpEquipment", ref _hasBackedUpEquipment);
+            SyncKey(dataStore, "_personalBattleEquipment", ref _personalBattleEquipment);
+            SyncKey(dataStore, "_personalCivilianEquipment", ref _personalCivilianEquipment);
+            SyncKey(dataStore, "_personalInventory", ref _personalInventory);
+            SyncKey(dataStore, "_baggageStash", ref _baggageStash);
+            SyncKey(dataStore, "_bagCheckCompleted", ref _bagCheckCompleted);
+            SyncKey(dataStore, "_bagCheckEverCompleted", ref _bagCheckEverCompleted);
+            SyncKey(dataStore, "_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
+            SyncKey(dataStore, "_enlistmentDate", ref _enlistmentDate);
+            SyncKey(dataStore, "_isOnLeave", ref _isOnLeave);
+            SyncKey(dataStore, "_leaveStartDate", ref _leaveStartDate);
+            SyncKey(dataStore, "_leaveCooldownEnds", ref _leaveCooldownEnds);
+            SyncKey(dataStore, "_desertionGracePeriodEnd", ref _desertionGracePeriodEnd);
+            SyncKey(dataStore, "_pendingDesertionKingdom", ref _pendingDesertionKingdom);
+            SyncKey(dataStore, "_savedGraceTier", ref _savedGraceTier);
+            SyncKey(dataStore, "_savedGraceLord", ref _savedGraceLord);
+            SyncKey(dataStore, "_savedGraceXP", ref _savedGraceXP);
+            SyncKey(dataStore, "_savedGraceTroopId", ref _savedGraceTroopId);
+            SyncKey(dataStore, "_pendingMusterPay", ref _pendingMusterPay);
+            SyncKey(dataStore, "_nextPayday", ref _nextPayday);
+            SyncKey(dataStore, "_payMusterPending", ref _payMusterPending);
+            SyncKey(dataStore, "_lastPayOutcome", ref _lastPayOutcome);
+            SyncKey(dataStore, "_pensionAmountPerDay", ref _pensionAmountPerDay);
+            SyncKey(dataStore, "_pensionFactionId", ref _pensionFactionId);
+            SyncKey(dataStore, "_isPensionPaused", ref _isPensionPaused);
+            SyncKey(dataStore, "_isPendingDischarge", ref _isPendingDischarge);
+            SyncKey(dataStore, "_lastDischargeBand", ref _lastDischargeBand);
+            SyncKey(dataStore, "_isOnProbation", ref _isOnProbation);
+            SyncKey(dataStore, "_probationEnds", ref _probationEnds);
+            SyncKey(dataStore, "_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
+            SyncKey(dataStore, "_savedGraceLanceId", ref _savedGraceLanceId);
+            SyncKey(dataStore, "_savedGraceLanceName", ref _savedGraceLanceName);
+            SyncKey(dataStore, "_savedGraceLanceStyle", ref _savedGraceLanceStyle);
+            SyncKey(dataStore, "_savedGraceLanceStoryId", ref _savedGraceLanceStoryId);
+            SyncKey(dataStore, "_savedGraceLanceProvisional", ref _savedGraceLanceProvisional);
+            SyncKey(dataStore, "_savedGraceManualLanceStyleId", ref _savedGraceManualLanceStyleId);
+            SyncKey(dataStore, "_savedGraceLanceLegacy", ref _savedGraceLanceLegacy);
+            SyncKey(dataStore, "_graceProtectionEnds", ref _graceProtectionEnds);
+            SyncKey(dataStore, "_selectedDuty", ref _selectedDuty);
+            SyncKey(dataStore, "_selectedProfession", ref _selectedProfession);
+            SyncKey(dataStore, "_currentLanceId", ref _currentLanceId);
+            SyncKey(dataStore, "_currentLanceName", ref _currentLanceName);
+            SyncKey(dataStore, "_currentLanceStyle", ref _currentLanceStyle);
+            SyncKey(dataStore, "_currentLanceStoryId", ref _currentLanceStoryId);
+            SyncKey(dataStore, "_isLanceProvisional", ref _isLanceProvisional);
+            SyncKey(dataStore, "_manualLanceStyleId", ref _manualLanceStyleId);
+            SyncKey(dataStore, "_isLanceLegacy", ref _isLanceLegacy);
+            SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
+            SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
 
             // Serialize kingdom state so we can restore the player's original kingdom/clan status
-            dataStore.SyncData("_originalKingdom", ref _originalKingdom);
-            dataStore.SyncData("_wasIndependentClan", ref _wasIndependentClan);
+            SyncKey(dataStore, "_originalKingdom", ref _originalKingdom);
+            SyncKey(dataStore, "_wasIndependentClan", ref _wasIndependentClan);
 
             // Serialize minor faction war relations - these are created when enlisting with non-Kingdom lords
             // and need to be restored to neutral when service ends
-            dataStore.SyncData("_minorFactionWarRelations", ref _minorFactionWarRelations);
+            SyncKey(dataStore, "_minorFactionWarRelations", ref _minorFactionWarRelations);
 
             // Serialize minor faction desertion cooldowns - manual serialization for Dictionary<string, CampaignTime>
             // Bannerlord's save system can serialize this dictionary directly since both types are primitives
@@ -858,8 +1007,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Veteran retirement system state - manual serialization for dictionary
             // Bannerlord's save system can't serialize custom class dictionaries directly
-            dataStore.SyncData("_retirementNotificationShown", ref _retirementNotificationShown);
-            dataStore.SyncData("_currentTermKills", ref _currentTermKills);
+            SyncKey(dataStore, "_retirementNotificationShown", ref _retirementNotificationShown);
+            SyncKey(dataStore, "_currentTermKills", ref _currentTermKills);
 
             // Manual serialization of _veteranRecords dictionary
             SerializeVeteranRecords(dataStore);
@@ -912,7 +1061,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 // Store/load the count first
                 var recordCount = _veteranRecords?.Count ?? 0;
-                dataStore.SyncData("_vetRec_count", ref recordCount);
+                SyncKey(dataStore, "_vetRec_count", ref recordCount);
 
                 if (!dataStore.IsLoading)
                 {
@@ -929,14 +1078,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var renewal = kvp.Value.IsInRenewalTerm;
                         var renewalCount = kvp.Value.RenewalTermsCompleted;
 
-                        dataStore.SyncData($"_vetRec_{index}_id", ref kingdomId);
-                        dataStore.SyncData($"_vetRec_{index}_firstTerm", ref firstTerm);
-                        dataStore.SyncData($"_vetRec_{index}_tier", ref tier);
-                        dataStore.SyncData($"_vetRec_{index}_kills", ref kills);
-                        dataStore.SyncData($"_vetRec_{index}_cooldown", ref cooldown);
-                        dataStore.SyncData($"_vetRec_{index}_termEnd", ref termEnd);
-                        dataStore.SyncData($"_vetRec_{index}_renewal", ref renewal);
-                        dataStore.SyncData($"_vetRec_{index}_renewalCount", ref renewalCount);
+                        SyncKey(dataStore, $"_vetRec_{index}_id", ref kingdomId);
+                        SyncKey(dataStore, $"_vetRec_{index}_firstTerm", ref firstTerm);
+                        SyncKey(dataStore, $"_vetRec_{index}_tier", ref tier);
+                        SyncKey(dataStore, $"_vetRec_{index}_kills", ref kills);
+                        SyncKey(dataStore, $"_vetRec_{index}_cooldown", ref cooldown);
+                        SyncKey(dataStore, $"_vetRec_{index}_termEnd", ref termEnd);
+                        SyncKey(dataStore, $"_vetRec_{index}_renewal", ref renewal);
+                        SyncKey(dataStore, $"_vetRec_{index}_renewalCount", ref renewalCount);
                         index++;
                     }
                 }
@@ -956,14 +1105,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var renewal = false;
                         var renewalCount = 0;
 
-                        dataStore.SyncData($"_vetRec_{i}_id", ref kingdomId);
-                        dataStore.SyncData($"_vetRec_{i}_firstTerm", ref firstTerm);
-                        dataStore.SyncData($"_vetRec_{i}_tier", ref tier);
-                        dataStore.SyncData($"_vetRec_{i}_kills", ref kills);
-                        dataStore.SyncData($"_vetRec_{i}_cooldown", ref cooldown);
-                        dataStore.SyncData($"_vetRec_{i}_termEnd", ref termEnd);
-                        dataStore.SyncData($"_vetRec_{i}_renewal", ref renewal);
-                        dataStore.SyncData($"_vetRec_{i}_renewalCount", ref renewalCount);
+                        SyncKey(dataStore, $"_vetRec_{i}_id", ref kingdomId);
+                        SyncKey(dataStore, $"_vetRec_{i}_firstTerm", ref firstTerm);
+                        SyncKey(dataStore, $"_vetRec_{i}_tier", ref tier);
+                        SyncKey(dataStore, $"_vetRec_{i}_kills", ref kills);
+                        SyncKey(dataStore, $"_vetRec_{i}_cooldown", ref cooldown);
+                        SyncKey(dataStore, $"_vetRec_{i}_termEnd", ref termEnd);
+                        SyncKey(dataStore, $"_vetRec_{i}_renewal", ref renewal);
+                        SyncKey(dataStore, $"_vetRec_{i}_renewalCount", ref renewalCount);
 
                         if (!string.IsNullOrEmpty(kingdomId))
                         {
@@ -1003,7 +1152,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var cooldownCount = _minorFactionDesertionCooldowns?.Count ?? 0;
-                dataStore.SyncData("_minorFacDesertion_count", ref cooldownCount);
+                SyncKey(dataStore, "_minorFacDesertion_count", ref cooldownCount);
 
                 if (!dataStore.IsLoading)
                 {
@@ -1014,8 +1163,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var factionId = kvp.Key;
                         var cooldownEnd = kvp.Value;
 
-                        dataStore.SyncData($"_minorFacDesertion_{index}_id", ref factionId);
-                        dataStore.SyncData($"_minorFacDesertion_{index}_end", ref cooldownEnd);
+                        SyncKey(dataStore, $"_minorFacDesertion_{index}_id", ref factionId);
+                        SyncKey(dataStore, $"_minorFacDesertion_{index}_end", ref cooldownEnd);
                         index++;
                     }
                 }
@@ -1029,8 +1178,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var factionId = "";
                         var cooldownEnd = CampaignTime.Zero;
 
-                        dataStore.SyncData($"_minorFacDesertion_{i}_id", ref factionId);
-                        dataStore.SyncData($"_minorFacDesertion_{i}_end", ref cooldownEnd);
+                        SyncKey(dataStore, $"_minorFacDesertion_{i}_id", ref factionId);
+                        SyncKey(dataStore, $"_minorFacDesertion_{i}_end", ref cooldownEnd);
 
                         if (!string.IsNullOrEmpty(factionId))
                         {
@@ -1368,10 +1517,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     var fee = Math.Min(chargeFee, hero.Gold);
                     if (fee > 0)
                     {
-                        hero.Gold -= fee;
+                        // Use ChangeHeroGold to ensure the engine updates state/UI consistently.
+                        hero.ChangeHeroGold(-fee);
                         InformationManager.DisplayMessage(new InformationMessage(
                             new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
                                 .SetTextVariable("FEE", fee).ToString()));
+                        ModLogger.Info("Gold", $"Wagon fee paid: {fee} denars");
                     }
                 }
 
@@ -1407,7 +1558,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var gain = (int)Math.Floor(totalValue);
                 if (gain > 0)
                 {
-                    hero.Gold += gain;
+                    // Use ChangeHeroGold to ensure the engine updates state/UI consistently.
+                    hero.ChangeHeroGold(gain);
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
                             .SetTextVariable("GOLD", gain).ToString()));
@@ -1617,6 +1769,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _selectedProfession = "none"; // No profession initially (unlocks at tier 3)
                 _fatigueMax = 24;
                 _fatigueCurrent = _fatigueMax;
+                _pendingMusterPay = 0;
+                _payMusterPending = false;
+                _nextPayday = CampaignTime.Zero;
+                _lastPayOutcome = null;
+                _isPensionPaused = true; // Pension payments pause while enlisted
+                _isPendingDischarge = false;
+                _lastDischargeBand = null;
+                _isOnProbation = false;
+                _probationEnds = CampaignTime.Zero;
+
+                TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
+
+                TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
 
                 // Assign provisional lance on enlist (or restore from grace)
                 // If culture is unknown, prompt for style before assigning provisional lance
@@ -1730,7 +1895,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // This ensures the player follows the lord during travel and integrates with armies
                 // IMPORTANT: Do this AFTER finishing any active encounters to avoid creating
                 // an encounter with the lord's party itself
-                // Expense sharing is prevented by EnlistmentExpenseIsolationPatch
+                // Escort into lord's party when nearby; clan expenses now native
                 EncounterGuard.TryAttachOrEscort(lord);
 
                 // Configure party state to prevent random encounters while allowing battle participation
@@ -2082,20 +2247,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Battle", "Clearing reserve state during service end");
                     Combat.Behaviors.EnlistedEncounterBehavior.ClearReserveState();
                 }
-                
-                // EQUIPMENT ACCOUNTABILITY: Check for missing gear and charge the soldier before discharge
-                // EXCEPTION: Skip for honorable discharge (retirement) - player keeps all gear as reward
-                if (!isHonorableDischarge)
-                {
-                    ProcessEquipmentAccountabilityOnDischarge();
-                }
-                else
-                {
-                    // Clear issued equipment tracking without charging - retirement perk
-                    var troopSelection = TroopSelectionManager.Instance;
-                    troopSelection?.ClearIssuedEquipment();
-                    ModLogger.Info("Enlistment", "Retirement: skipping equipment accountability (keeping all gear)");
-                }
 
                 var main = MobileParty.MainParty;
                 var playerInBattleState = false;
@@ -2241,6 +2392,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Determine if player completed full enlistment period (configurable Bannerlord years)
                 // This is required for honorable discharge to restore original kingdom
                 var completedFullService = false;
+                var daysServedInt = 0;
                 if (_enlistmentDate != CampaignTime.Zero)
                 {
                     var serviceDuration = CampaignTime.Now - _enlistmentDate;
@@ -2248,9 +2400,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     completedFullService = serviceDuration >= fullServicePeriod;
 
                     var daysServed = serviceDuration.ToDays;
+                    daysServedInt = (int)Math.Floor(daysServed);
                     ModLogger.Info("Enlistment",
                         $"Service duration: {daysServed:F1} days (Full period: {firstTermDays} days, Completed: {completedFullService})");
                 }
+
+                // Pension determination happens on discharge (honorable only)
+                ApplyPensionOnDischarge(isHonorableDischarge, daysServedInt);
 
                 // Determine target kingdom based on discharge type
                 // Default: Return to independent status
@@ -2423,80 +2579,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
         
-        /// <summary>
-        /// Process equipment accountability when soldier is discharged or transfers service.
-        /// Checks for missing issued gear and deducts the cost from the soldier's pay.
-        /// </summary>
-        private void ProcessEquipmentAccountabilityOnDischarge()
-        {
-            try
-            {
-                var troopSelection = TroopSelectionManager.Instance;
-                if (troopSelection == null)
-                {
-                    return;
-                }
-                
-                var (missingItems, totalDebt) = troopSelection.CheckMissingEquipment();
-                
-                if (missingItems.Count == 0)
-                {
-                    // All equipment accounted for
-                    troopSelection.ClearIssuedEquipment();
-                    ModLogger.Info("Enlistment", "Equipment accountability check passed - all gear returned");
-                    return;
-                }
-                
-                // Deduct cost of missing equipment
-                var hero = Hero.MainHero;
-                if (hero != null && totalDebt > 0)
-                {
-                    hero.Gold = Math.Max(0, hero.Gold - totalDebt);
-                    
-                    // Build notification using localized strings
-                    var sb = new System.Text.StringBuilder();
-                    var headerText = new TextObject("{=qm_missing_discharge_header}Equipment missing at discharge:");
-                    sb.AppendLine(headerText.ToString());
-                    foreach (var item in missingItems)
-                    {
-                        sb.AppendLine($"  • {item.ItemName} ({item.ItemValue} denars)");
-                    }
-                    var totalText = new TextObject("{=qm_missing_discharge_total}Total deducted from final pay: {AMOUNT} denars");
-                    totalText.SetTextVariable("AMOUNT", totalDebt);
-                    sb.AppendLine(totalText.ToString());
-                    
-                    var chargeMsg = new TextObject("{=qm_missing_discharge_charge}Missing equipment: {AMOUNT} denars deducted from final pay.");
-                    chargeMsg.SetTextVariable("AMOUNT", totalDebt);
-                    InformationManager.DisplayMessage(new InformationMessage(chargeMsg.ToString(), Colors.Red));
-                    
-                    // Show popup for significant amounts
-                    if (totalDebt >= 100)
-                    {
-                        var titleText = new TextObject("{=qm_missing_equipment_title}Equipment Accountability");
-                        var btnText = new TextObject("{=qm_btn_understood}Understood");
-                        InformationManager.ShowInquiry(new InquiryData(
-                            titleText.ToString(),
-                            sb.ToString(),
-                            true,
-                            false,
-                            btnText.ToString(),
-                            string.Empty,
-                            null,
-                            null));
-                    }
-                    
-                    ModLogger.Info("Enlistment", $"Equipment accountability: {totalDebt} denars charged for {missingItems.Count} missing items");
-                }
-                
-                // Clear tracking
-                troopSelection.ClearIssuedEquipment();
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Enlistment", "Error processing equipment accountability on discharge", ex);
-            }
-        }
-
         /// <summary>
         ///     Start desertion grace period when army is defeated or lord is captured.
         ///     Player has 14 days to rejoin another lord in the same kingdom before being branded a deserter.
@@ -3152,7 +3234,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Maintain party attachment to the lord's party using natural attachment system
             // This ensures the player continues to follow the lord during travel and integrates with armies
-            // Expense sharing is prevented by EnlistmentExpenseIsolationPatch
+            // Escort into lord's party when nearby; clan expenses now native
             EncounterGuard.TryAttachOrEscort(_enlistedLord);
 
             // Keep the player party invisible on the map (they're part of the lord's force)
@@ -3260,10 +3342,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Always run captivity + leave maintenance even when inactive so grace-period escapes
             // and leave expirations are processed for players who temporarily lost activation.
             CheckPlayerCaptivityDuration();
+            CheckProbationExpiration();
 
             // Check for leave expiration (14 days max)
             // This runs even when "not enlisted" because IsOnLeave makes IsEnlisted return false
             CheckLeaveExpiration();
+
+            // Pensions are paid daily while NOT enlisted (and paused while enlisted).
+            // This must run even when EnlistedActivation is inactive.
+            ProcessDailyPension();
 
             SyncActivationState("daily_tick");
             if (!EnlistedActivation.IsActive)
@@ -3276,26 +3363,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
+            // Pause accrual while on leave or captive
+            if (_isOnLeave || Hero.MainHero?.IsPrisoner == true)
+            {
+                return;
+            }
+
+            if (_nextPayday == CampaignTime.Zero)
+            {
+                _nextPayday = ComputeNextPayday();
+            }
+
             try
             {
-                // Calculate daily wage based on tier, level, and duties
+                // Accrue daily wage into muster ledger (no clan finance involvement)
                 var wage = CalculateDailyWage();
-
-                // Wage payment is handled by ClanFinanceEnlistmentIncomePatch + ClanFinanceEnlistmentGoldChangePatch
-                // which feed into the native daily gold change system.
-                // We only log and track stats here to avoid double payment.
-                if (wage > 0)
+                if (wage > 0 && !_payMusterPending)
                 {
-                    // Log wage payment with breakdown context
-                    var breakdown = GetWageBreakdown();
-                    ModLogger.Info("Gold",
-                        $"Wage paid: {wage} denars (base {breakdown.BasePay} + tier {breakdown.TierBonus} + level {breakdown.LevelBonus} + service {breakdown.ServiceBonus} + army {breakdown.ArmyBonus} + duty {breakdown.DutyBonus})");
+                    _pendingMusterPay += wage;
+                }
 
-                    // Track total wages for summary
-                    ModLogger.IncrementSummary("wages_earned", 1, wage);
-
-                    // Fire event for other mods
-                    OnWagePaid?.Invoke(wage);
+                // Schedule pay muster when due; gate to one active incident at a time
+                if (!_payMusterPending && CampaignTime.Now >= _nextPayday)
+                {
+                    _payMusterPending = true;
+                    ModLogger.Info("Gold", $"Pay muster queued. Pending={_pendingMusterPay}, NextPayday={_nextPayday}");
+                    EnlistedIncidentsBehavior.Instance?.TriggerPayMusterIncident();
                 }
 
                 // Award daily XP for military tier progression (config-driven)
@@ -3314,6 +3407,643 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Enlistment", "Daily service processing failed", ex);
+            }
+        }
+
+        private void CheckProbationExpiration()
+        {
+            if (!_isOnProbation)
+            {
+                return;
+            }
+
+            if (_probationEnds != CampaignTime.Zero && CampaignTime.Now >= _probationEnds)
+            {
+                ClearProbation("duration_elapsed");
+            }
+        }
+
+        private CampaignTime ComputeNextPayday()
+        {
+            var finance = EnlistedConfig.LoadFinanceConfig();
+            var interval = finance?.PaydayIntervalDays > 0 ? finance.PaydayIntervalDays : 12;
+            var jitter = finance?.PaydayJitterDays ?? 0f;
+            var jitterOffset = jitter > 0f ? MBRandom.RandomFloatRanged(-jitter, jitter) : 0f;
+            var days = Math.Max(1f, interval + jitterOffset);
+            return CampaignTime.Now + CampaignTime.Days(days);
+        }
+
+        internal void ResolvePayMusterStandard()
+        {
+            if (_isPendingDischarge)
+            {
+                ModLogger.Info("Pay", "Resolving pay muster: final muster (pending discharge)");
+                FinalizePendingDischarge();
+                return;
+            }
+
+            var payout = _pendingMusterPay;
+            ModLogger.Info("Pay", $"Resolving pay muster: standard (PendingPay={payout})");
+            if (payout > 0)
+            {
+                Hero.MainHero.ChangeHeroGold(payout);
+                OnWagePaid?.Invoke(payout);
+                ModLogger.Info("Gold", $"Pay muster payout: {payout} (pending cleared)");
+            }
+            _pendingMusterPay = 0;
+            _lastPayOutcome = $"standard:{payout}";
+            _nextPayday = ComputeNextPayday();
+            _payMusterPending = false;
+            ClearProbation("pay_muster_resolved");
+            ModLogger.Info("Pay", $"Pay muster resolved: standard (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+        }
+
+        internal void ResolveCorruptionMuster()
+        {
+            try
+            {
+                if (_isPendingDischarge)
+                {
+                    ModLogger.Info("Pay", "Resolving pay muster: final muster (pending discharge)");
+                    FinalizePendingDischarge();
+                    return;
+                }
+
+                ModLogger.Info("Pay", $"Resolving pay muster: corruption attempt (PendingPay={_pendingMusterPay})");
+
+                // Fatigue cost
+                if (!TryConsumeFatigue(10, "corruption"))
+                {
+                    _lastPayOutcome = "corruption_blocked_fatigue";
+                    _payMusterPending = false;
+                    _nextPayday = ComputeNextPayday();
+                    ModLogger.Warn("Pay", $"Corruption muster blocked by fatigue (NextPayday={_nextPayday})");
+                    return;
+                }
+
+                var roguery = Hero.MainHero.GetSkillValue(DefaultSkills.Roguery);
+                var charm = Hero.MainHero.GetSkillValue(DefaultSkills.Charm);
+                var best = Math.Max(roguery, charm);
+
+                // Requirement: Roguery > 20 OR Charm > 20
+                if (best <= 20)
+                {
+                    FailCorruption();
+                }
+                else
+                {
+                    var baseChance = 0.70f;
+                    var bonus = (best - 20) * 0.005f;
+                    var chance = Math.Min(0.90f, baseChance + bonus);
+                    var roll = MBRandom.RandomFloat;
+
+                    if (roll <= chance)
+                    {
+                        // Success: 1.20x
+                        var payout = (int)(_pendingMusterPay * 1.2f);
+                        if (payout > 0)
+                        {
+                            Hero.MainHero.ChangeHeroGold(payout);
+                            OnWagePaid?.Invoke(payout);
+                        }
+                        _lastPayOutcome = $"corruption_success:{payout}";
+                        ModLogger.Info("Pay", $"Corruption muster success (Payout={payout}, Chance={chance:0.00}, Roll={roll:0.00})");
+                        if (_enlistedLord != null)
+                        {
+                            ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, 1, true, true);
+                        }
+                    }
+                    else
+                    {
+                        FailCorruption();
+                        ModLogger.Info("Pay", $"Corruption muster failed (Outcome={_lastPayOutcome}, Chance={chance:0.00}, Roll={roll:0.00})");
+                    }
+                }
+
+                _pendingMusterPay = 0;
+                _nextPayday = ComputeNextPayday();
+                _payMusterPending = false;
+                ClearProbation("pay_muster_resolved");
+                ModLogger.Info("Pay", $"Pay muster resolved: corruption (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Pay", $"Corruption muster failed: {ex.Message}");
+                _payMusterPending = false;
+                _nextPayday = ComputeNextPayday();
+            }
+        }
+
+        private void FailCorruption()
+        {
+            var payout = (int)(_pendingMusterPay * 0.95f);
+            if (payout > 0)
+            {
+                Hero.MainHero.ChangeHeroGold(payout);
+                OnWagePaid?.Invoke(payout);
+            }
+
+            if (_enlistedLord != null)
+            {
+                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, true, true);
+            }
+
+            _lastPayOutcome = $"corruption_fail:{payout}";
+        }
+
+        internal void ResolveSideDealMuster()
+        {
+            try
+            {
+                if (_isPendingDischarge)
+                {
+                    ModLogger.Info("Pay", "Resolving pay muster: final muster (pending discharge)");
+                    FinalizePendingDischarge();
+                    return;
+                }
+
+                ModLogger.Info("Pay", $"Resolving pay muster: side deal attempt (PendingPay={_pendingMusterPay})");
+
+                // Fatigue cost
+                if (!TryConsumeFatigue(6, "side_deal"))
+                {
+                    _lastPayOutcome = "side_deal_blocked_fatigue";
+                    _payMusterPending = false;
+                    _nextPayday = ComputeNextPayday();
+                    ModLogger.Warn("Pay", $"Side deal muster blocked by fatigue (NextPayday={_nextPayday})");
+                    return;
+                }
+
+                var dailyWage = CalculateDailyWage();
+                var payout = Math.Max(0, (int)(_pendingMusterPay * 0.4f));
+
+                // Side deal only makes sense if it produces at least ~one day's wage.
+                // Otherwise, fall back to standard pay.
+                if (payout <= 0 || payout < dailyWage)
+                {
+                    ModLogger.Info("Pay",
+                        $"Side deal not worthwhile; falling back to standard (SideDeal={payout}, DailyWage={dailyWage})");
+                    ResolvePayMusterStandard();
+                    return;
+                }
+
+                Hero.MainHero.ChangeHeroGold(payout);
+                OnWagePaid?.Invoke(payout);
+
+                // Placeholder: if no gear picker available, just log outcome.
+                _lastPayOutcome = $"side_deal:{payout}";
+
+                _pendingMusterPay = 0;
+                _nextPayday = ComputeNextPayday();
+                _payMusterPending = false;
+                ClearProbation("pay_muster_resolved");
+                ModLogger.Info("Pay", $"Pay muster resolved: side deal (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Pay", $"Side deal muster failed: {ex.Message}");
+                _payMusterPending = false;
+                _nextPayday = ComputeNextPayday();
+            }
+        }
+
+        internal void DeferPayMuster()
+        {
+            _payMusterPending = false;
+            // Player cancelled the pay muster prompt; do NOT push the schedule out by a full interval.
+            // Instead, retry soon so the player can resolve pay without losing track of it.
+            _nextPayday = CampaignTime.Now + CampaignTime.Days(1f);
+            ModLogger.Info("Pay", $"Pay muster deferred; retry scheduled for {_nextPayday} (Pending={_pendingMusterPay}).");
+        }
+
+        public bool RequestDischarge()
+        {
+            if (!IsEnlisted)
+            {
+                return false;
+            }
+
+            _isPendingDischarge = true;
+            _lastPayOutcome = "pending_discharge";
+            ModLogger.Info("Retirement", "Pending discharge requested; will resolve at next pay muster");
+            return true;
+        }
+
+        public bool CancelDischarge()
+        {
+            if (!_isPendingDischarge)
+            {
+                return false;
+            }
+
+            _isPendingDischarge = false;
+            _lastPayOutcome = "pending_discharge_cancelled";
+            ModLogger.Info("Retirement", "Pending discharge cancelled");
+            return true;
+        }
+
+        private void FinalizePendingDischarge()
+        {
+            try
+            {
+                var daysServed = (int)(CampaignTime.Now - _enlistmentDate).ToDays;
+                var config = EnlistedConfig.LoadRetirementConfig();
+                var band = daysServed >= 200 ? "veteran" : daysServed >= 100 ? "honorable" : "washout";
+
+                // Honorable/Veteran discharge requires at least neutral relation with the enlisted lord.
+                // If relations are negative at exit, treat as washout even if days-served threshold is met.
+                if ((band == "honorable" || band == "veteran") &&
+                    _enlistedLord != null &&
+                    Hero.MainHero.GetRelation(_enlistedLord) < 0)
+                {
+                    band = "washout";
+                }
+
+                var lordRelation = 0;
+                var factionRelation = 0;
+                var severance = 0;
+                var isHonorable = false;
+
+                switch (band)
+                {
+                    case "veteran":
+                        lordRelation = 30;
+                        factionRelation = 15;
+                        severance = Math.Max(0, config?.SeveranceVeteran ?? 3000);
+                        isHonorable = true;
+                        _lastDischargeBand = "veteran";
+                        break;
+                    case "honorable":
+                        lordRelation = 10;
+                        factionRelation = 5;
+                        severance = Math.Max(0, config?.SeveranceHonorable ?? 3000);
+                        isHonorable = true;
+                        _lastDischargeBand = "honorable";
+                        break;
+                    default:
+                        lordRelation = -10;
+                        factionRelation = -10;
+                        severance = 0;
+                        isHonorable = false;
+                        _lastDischargeBand = "washout";
+                        break;
+                }
+
+                // Apply relations
+                if (_enlistedLord != null)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, lordRelation, true, true);
+                }
+
+                var faction = _enlistedLord?.MapFaction;
+                if (faction is Kingdom kingdom && kingdom.Leader != null && kingdom.Leader != _enlistedLord)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(kingdom.Leader, factionRelation, true, true);
+                }
+
+                // Payout: pending muster + severance
+                var payout = Math.Max(0, _pendingMusterPay) + Math.Max(0, severance);
+                if (payout > 0)
+                {
+                    Hero.MainHero.ChangeHeroGold(payout);
+                }
+
+                ModLogger.Info("Pay",
+                    $"Final muster resolved (Band={band}, DaysServed={daysServed}, PendingPay={_pendingMusterPay}, Severance={severance}, Payout={payout})");
+
+                _pendingMusterPay = 0;
+                _payMusterPending = false;
+                _isPendingDischarge = false;
+                _nextPayday = CampaignTime.Zero;
+                _lastPayOutcome = $"final_muster:{band}:{payout}";
+                _lastDischargeBand = band;
+
+                // Snapshot reservist data for re-entry flows
+                ServiceRecordManager.Instance?.RecordReservist(
+                    band,
+                    daysServed,
+                    _enlistmentTier,
+                    _enlistmentXP,
+                    _enlistedLord);
+
+                HandleGearOnDischarge(band);
+
+                // Pension assignment handled inside StopEnlist via ApplyPensionOnDischarge
+                StopEnlist($"Final muster ({band})", isHonorable);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Retirement", $"Error finalizing discharge: {ex.Message}");
+                _isPendingDischarge = false;
+                _payMusterPending = false;
+                _pendingMusterPay = 0;
+                _nextPayday = CampaignTime.Zero;
+            }
+        }
+
+        internal void ResolveSmuggleDischarge()
+        {
+            try
+            {
+                if (!IsEnlisted || !_isPendingDischarge)
+                {
+                    return;
+                }
+
+                ModLogger.Info("Pay", "Resolving final muster: smuggle discharge (deserter)");
+
+                var faction = _enlistedLord?.MapFaction as Kingdom;
+                if (faction != null)
+                {
+                    ChangeCrimeRatingAction.Apply(faction, 30f, true);
+                    if (faction.Leader != null)
+                    {
+                        ChangeRelationAction.ApplyPlayerRelation(faction.Leader, -50, true, true);
+                    }
+                }
+
+                if (_enlistedLord != null)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -50, true, true);
+                }
+
+                // Deserter outcome: keep all gear, clear pension
+                _pensionAmountPerDay = 0;
+                _pensionFactionId = null;
+                _isPensionPaused = true;
+
+                _pendingMusterPay = 0;
+                _payMusterPending = false;
+                _isPendingDischarge = false;
+                _nextPayday = CampaignTime.Zero;
+                _lastDischargeBand = "deserter";
+                _lastPayOutcome = "final_muster:deserter:smuggle";
+
+                ServiceRecordManager.Instance?.RecordReservist(
+                    "deserter",
+                    (int)(CampaignTime.Now - _enlistmentDate).ToDays,
+                    _enlistmentTier,
+                    _enlistmentXP,
+                    _enlistedLord);
+
+                StopEnlist("Smuggle discharge (deserter)", false);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Pay", $"Error resolving smuggle discharge: {ex.Message}");
+                _isPendingDischarge = false;
+                _payMusterPending = false;
+                _pendingMusterPay = 0;
+                _nextPayday = CampaignTime.Zero;
+            }
+        }
+
+        private void ProcessDailyPension()
+        {
+            // Pension is only paid while NOT enlisted (no double-dipping).
+            if (IsEnlisted)
+            {
+                return;
+            }
+
+            if (_pensionAmountPerDay <= 0 || _isPensionPaused)
+            {
+                return;
+            }
+
+            try
+            {
+                var faction = ResolvePensionFaction();
+                if (faction != null)
+                {
+                    // Stop if at war with pension faction
+                    if (Hero.MainHero?.MapFaction != null && faction.IsAtWarWith(Hero.MainHero.MapFaction))
+                    {
+                        _isPensionPaused = true;
+                        _lastPayOutcome = "pension_paused_war";
+                        return;
+                    }
+
+                    // Stop if crime rating positive (best-effort)
+                    if (HasCrimeAgainstFaction(faction))
+                    {
+                        _isPensionPaused = true;
+                        _lastPayOutcome = "pension_paused_crime";
+                        return;
+                    }
+
+                    // Stop if relation below threshold
+                    var config = EnlistedConfig.LoadRetirementConfig();
+                    var relationStop = config?.PensionRelationStopThreshold ?? 0;
+                    if (faction.Leader != null && Hero.MainHero.GetRelation(faction.Leader) < relationStop)
+                    {
+                        _isPensionPaused = true;
+                        _lastPayOutcome = "pension_paused_relation";
+                        return;
+                    }
+                }
+
+                Hero.MainHero?.ChangeHeroGold(_pensionAmountPerDay);
+                _lastPayOutcome = $"pension:{_pensionAmountPerDay}";
+                ModLogger.Info("Gold", $"Pension paid: {_pensionAmountPerDay} denars");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Gold", $"Pension processing failed: {ex.Message}");
+            }
+        }
+
+        private IFaction ResolvePensionFaction()
+        {
+            if (string.IsNullOrWhiteSpace(_pensionFactionId))
+            {
+                return null;
+            }
+
+            try
+            {
+                // Search kingdoms first
+                var kingdom = Campaign.Current?.Kingdoms?.FirstOrDefault(k => k.StringId == _pensionFactionId);
+                if (kingdom != null)
+                {
+                    return kingdom;
+                }
+                // Then search clans
+                var clan = Campaign.Current?.Clans?.FirstOrDefault(c => c.StringId == _pensionFactionId);
+                return clan;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private bool HasCrimeAgainstFaction(IFaction faction)
+        {
+            try
+            {
+                if (faction == null)
+                {
+                    return false;
+                }
+
+                // Verified via decompile: crime rating is stored per-faction on IFaction.MainHeroCrimeRating
+                return faction.MainHeroCrimeRating > 0f;
+            }
+            catch
+            {
+                // best-effort
+            }
+
+            return false;
+        }
+
+        private void HandleGearOnDischarge(string band)
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                if (hero == null)
+                {
+                    return;
+                }
+
+                var retireConfig = EnlistedConfig.LoadRetirementConfig();
+                if (retireConfig?.DebugSkipGearStripping == true)
+                {
+                    ModLogger.Debug("Equipment", "Gear stripping skipped (debug flag)");
+                    return;
+                }
+
+                switch (band)
+                {
+                    case "washout":
+                        ClearAllEquipment(hero);
+                        break;
+                    case "honorable":
+                    case "veteran":
+                        // Keep armor (slots 6–9), clear weapons (0–3) and mounts (10–11) to inventory
+                        MoveSlotsToInventory(hero, new[] { 0, 1, 2, 3, 10, 11 });
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Equipment", $"Gear handling on discharge failed: {ex.Message}");
+            }
+        }
+
+        private void MoveSlotsToInventory(Hero hero, int[] slotIndices)
+        {
+            if (hero?.BattleEquipment == null || slotIndices == null)
+            {
+                return;
+            }
+
+            var roster = hero.PartyBelongedTo?.ItemRoster ?? MobileParty.MainParty?.ItemRoster;
+            var updated = hero.BattleEquipment.Clone();
+            foreach (var idx in slotIndices)
+            {
+                if (idx < 0 || idx >= (int)EquipmentIndex.NumEquipmentSetSlots)
+                {
+                    continue;
+                }
+
+                var slot = (EquipmentIndex)idx;
+                var elem = updated[slot];
+                if (elem.Item != null)
+                {
+                    // Preserve modifiers/quest flags by moving the full EquipmentElement into inventory.
+                    roster?.AddToCounts(elem, 1);
+                    updated[slot] = default;
+                }
+            }
+
+            // Apply equipment changes safely (ensures visuals refresh).
+            Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, updated);
+        }
+
+        private void ClearAllEquipment(Hero hero)
+        {
+            try
+            {
+                if (hero?.BattleEquipment != null)
+                {
+                    for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+                    {
+                        hero.BattleEquipment[(EquipmentIndex)i] = default;
+                    }
+                }
+
+                if (hero?.CivilianEquipment != null)
+                {
+                    for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+                    {
+                        hero.CivilianEquipment[(EquipmentIndex)i] = default;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Equipment", $"Failed to clear equipment: {ex.Message}");
+            }
+        }
+
+        private void ApplyPensionOnDischarge(bool isHonorableDischarge, int daysServed)
+        {
+            try
+            {
+                // Default: clear/paused
+                _pensionAmountPerDay = 0;
+                _pensionFactionId = null;
+                _isPensionPaused = true;
+
+                if (!isHonorableDischarge || daysServed <= 0)
+                {
+                    return;
+                }
+
+                var faction = _enlistedLord?.MapFaction;
+                if (faction == null)
+                {
+                    ModLogger.Debug("Retirement", "No faction for pension determination");
+                    return;
+                }
+
+                var config = EnlistedConfig.LoadRetirementConfig();
+                var honorable = config?.PensionHonorableDaily ?? 50;
+                var veteran = config?.PensionVeteranDaily ?? 100;
+                var relationStop = config?.PensionRelationStopThreshold ?? 0;
+
+                // Determine band
+                var amount = daysServed >= 200 ? veteran : (daysServed >= 100 ? honorable : 0);
+                if (amount <= 0)
+                {
+                    ModLogger.Debug("Retirement", $"No pension awarded (days served: {daysServed})");
+                    return;
+                }
+
+                // Relation gate at award time
+                var leader = faction.Leader;
+                if (leader != null && Hero.MainHero.GetRelation(leader) < relationStop)
+                {
+                    ModLogger.Info("Retirement",
+                        $"Pension blocked at award time due to relation {Hero.MainHero.GetRelation(leader)} < {relationStop}");
+                    _lastPayOutcome = "pension_blocked_relation";
+                    return;
+                }
+
+                _pensionAmountPerDay = amount;
+                _pensionFactionId = faction.StringId;
+                _isPensionPaused = false;
+                _lastPayOutcome = $"pension_start:{amount}";
+
+                ModLogger.Info("Retirement",
+                    $"Pension started: {amount}/day (daysServed={daysServed}, faction={faction.Name})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Retirement", $"Error applying pension on discharge: {ex.Message}");
             }
         }
 
@@ -3342,7 +4072,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var dutiesMultiplier = GetDutiesWageMultiplier();
 
             // Apply multipliers and cap
-            var finalWage = Math.Min((int)(baseWage * armyMultiplier * dutiesMultiplier), 150);
+            var probationMult = _isOnProbation ? Math.Max(0.01f, EnlistedConfig.LoadRetirementConfig().ProbationWageMultiplier) : 1f;
+            var finalWage = Math.Min((int)(baseWage * armyMultiplier * dutiesMultiplier * probationMult), 150);
             return Math.Max(finalWage, 24); // Minimum 24 gold/day
         }
 

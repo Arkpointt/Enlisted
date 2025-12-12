@@ -26,25 +26,25 @@
     <!-- Tier-Specific Promotion Popup Messages (Roleplay - Field/Camp Context) -->
     <string id="promo_msg_2" text="The serjeant-at-arms looks you up and down with grudging approval.\n\n'You've survived the mud, the marching, and the misery. No longer a green levy—you're one of the lads now, {PLAYER_NAME}. A proper Footman.'\n\nYou may now choose your military formation and specialize your training. Better equipment awaits at the quartermaster's wagon." />
     
-    <string id="promo_msg_3" text="You're summoned to the command tent as evening falls over the camp.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of Serjeant.'\n\nAs Serjeant, you may now choose a military profession—Quarterhand, Field Medic, Drillmaster, or other specialized roles that grant unique abilities and bonuses." />
+    <string id="promo_msg_3" text="You're summoned to the camp headquarters as evening falls over the camp.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of Serjeant.'\n\nAs Serjeant, you may now choose a military profession—Quarterhand, Field Medic, Drillmaster, or other specialized roles that grant unique abilities and bonuses." />
     
-    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, Serjeant. You have proven yourself worthy of greater trust. I hereby swear you into my service as a Man-at-Arms. You shall command a lance of five soldiers in battle—their lives are now your responsibility.'\n\nVisit the Command Tent to muster your personal retinue. Each soldier costs 2 denars per day in upkeep." />
+    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, Serjeant. You have proven yourself worthy of greater trust. I hereby swear you into my service as a Man-at-Arms. You shall command a lance of five soldiers in battle—their lives are now your responsibility.'\n\nVisit My Camp to muster your personal retinue. Each soldier costs 2 denars per day in upkeep." />
     
-    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I entrust you with the company banner. You are now Banner Serjeant—a veteran of the highest order. Your command extends to ten soldiers.'\n\nYour retinue capacity has increased. Visit the Command Tent to expand your forces." />
+    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I entrust you with the company banner. You are now Banner Serjeant—a veteran of the highest order. Your command extends to ten soldiers.'\n\nYour retinue capacity has increased. Visit My Camp to expand your forces." />
     
     <string id="promo_msg_6" text="Around the officers' fire, with the camp spread beneath the stars, your lord addresses the gathered veterans.\n\n'Few soldiers ever stand where you stand today. By your blood and your blade, you have earned a place among my Household Guard—the finest warriors under my banner. Twenty men shall march beneath your command.'\n\nYou have reached the pinnacle of enlisted service. Your retinue capacity is now at maximum." />
 
     <!-- Promotion Chat Messages (shorter, for notification bar) -->
     <string id="promo_chat_2" text="Your service is recognized! You have been promoted to Footman. Visit the quartermaster for new equipment." />
     <string id="promo_chat_3" text="By order of your captain, you have been promoted to Serjeant! Professions are now available." />
-    <string id="promo_chat_4" text="You have been sworn in as a Man-at-Arms! You may now command soldiers. Visit the Command Tent." />
+    <string id="promo_chat_4" text="You have been sworn in as a Man-at-Arms! You may now command soldiers. Visit My Camp." />
     <string id="promo_chat_5" text="The banner is yours to bear! Promoted to Banner Serjeant. Your retinue capacity has increased." />
     <string id="promo_chat_6" text="You have joined the Household Guard! Maximum retinue capacity unlocked." />
     <string id="promo_chat_default" text="You have been promoted!" />
 
     <!-- Promotion Button Text -->
     <string id="promo_btn_understood" text="Understood" />
-    <string id="promo_btn_command" text="To the Command Tent" />
+    <string id="promo_btn_command" text="To My Camp" />
 
     <!-- Promotion Fallbacks -->
     <string id="promo_title_default" text="Promotion!" />
@@ -165,7 +165,7 @@
 
     <!-- Menu Option Tooltips -->
     <string id="menu_tooltip_master" text="Select your troop type and equipment loadout based on your current tier." />
-    <string id="menu_tooltip_quartermaster" text="Request equipment variants and manage party supplies." />
+    <string id="menu_tooltip_quartermaster" text="Purchase equipment and manage party supplies." />
     <string id="menu_tooltip_talk" text="Speak with nearby lords for quests, news, and relation building." />
     <string id="menu_tooltip_visit" text="Enter the settlement while your lord is present." />
     <string id="menu_tooltip_duty" text="Select your daily duty and profession for bonuses and special abilities." />
@@ -235,7 +235,7 @@
     <string id="Enlisted_Duty_Desc_Enlisted" text="You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)" />
     <string id="Enlisted_Duty_Desc_Forager" text="Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)" />
     <string id="Enlisted_Duty_Desc_Sentry" text="Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)" />
-    <string id="Enlisted_Duty_Desc_Messenger" text="Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)" />
+    <string id="Enlisted_Duty_Desc_Messenger" text="Run dispatches between camp headquarters, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)" />
     <string id="Enlisted_Duty_Desc_Pioneer" text="Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)" />
 
     <!-- Profession Descriptions -->
@@ -255,7 +255,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- COMMAND TENT - Main Menu -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="ct_menu_enter" text="Enter the Command Tent" />
+    <string id="ct_menu_enter" text="My Camp" />
     <string id="ct_menu_intro" text="The canvas flaps in the breeze. Maps and tallies cover a makeshift table. Your small corner of the army's camp." />
     <string id="ct_option_records" text="Review service records" />
     <string id="ct_option_retinue" text="Muster personal retinue" />
@@ -269,7 +269,7 @@
     <string id="ct_option_current" text="Current Posting" />
     <string id="ct_option_faction" text="Faction Records" />
     <string id="ct_option_lifetime" text="Lifetime Summary" />
-    <string id="ct_back_tent" text="Back to Command Tent" />
+    <string id="ct_back_tent" text="Back to My Camp" />
     <string id="ct_back_records" text="Back to Service Records" />
     <string id="ct_back_factions" text="Back to Faction Records" />
     <string id="ct_not_enlisted" text="You are not currently enlisted." />
@@ -288,7 +288,7 @@
     <!-- COMMAND TENT - Leadership Notification (Tier 4) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="ct_leadership_title" text="Promotion to Leadership" />
-    <string id="ct_leadership_message" text="Your service has not gone unnoticed. You've been granted the authority to command a small lance of soldiers in battle.\n\nVisit the Command Tent to request men be assigned to your command. Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep." />
+    <string id="ct_leadership_message" text="Your service has not gone unnoticed. You've been granted the authority to command a small lance of soldiers in battle.\n\nVisit My Camp to request men be assigned to your command. Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep." />
     <string id="ct_leadership_acknowledge" text="Understood" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -412,27 +412,21 @@
     <string id="ct_companions_reclaimed" text="Your {COMPANION_COUNT} companion(s) have joined your personal retinue." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <!-- QUARTERMASTER - Equipment Accountability System -->
+    <!-- QUARTERMASTER - Purchase & Buyback -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="qm_intro_dialogue" text="&quot;Take what you need, soldier - the army provides. Two of each, no more. Mind you, any gear that goes missing will be deducted from your pay when you change posts. Keep your kit in order.&quot;" />
-    <string id="qm_item_limit_reached" text="Two's the limit, soldier. Army regs. You already have {COUNT} of {ITEM_NAME}." />
-    <string id="qm_equipment_issued" text="Equipment issued: {ITEM_NAME}. Army provides." />
+    <string id="qm_intro_dialogue" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, I’ll buy it back.&quot;" />
+    <string id="qm_cannot_afford" text="You can’t afford this. Cost: {COST} denars." />
+    <string id="qm_equipment_issued_buy" text="Purchased {ITEM_NAME} for {COST} denars." />
+    <string id="qm_item_limit_reached" text="You already have {COUNT} of {ITEM_NAME}." />
+    <string id="qm_equipment_issued" text="Purchased: {ITEM_NAME}." />
     <string id="qm_status_free" text="Free" />
     <string id="qm_status_equipped" text="Equipped" />
     <string id="qm_status_limit" text="Limit (2)" />
     <string id="qm_status_available" text="Available" />
     <string id="qm_status_get_another" text="Get Another" />
     <string id="qm_status_limit_hint" text="Two's the limit, soldier" />
-    <string id="qm_no_weapon_slots" text="Your hands are full, soldier. Return something to the armory first." />
+    <string id="qm_no_weapon_slots" text="Your hands are full, soldier. Sell something back to the quartermaster first." />
     <string id="qm_added_to_inventory" text="{ITEM_NAME} stowed in your pack. Hands full." />
-    <string id="qm_missing_equipment_title" text="Equipment Accountability" />
-    <string id="qm_missing_equipment_header" text="Missing equipment deducted from pay:" />
-    <string id="qm_missing_equipment_total" text="Total deducted: {AMOUNT} denars" />
-    <string id="qm_missing_equipment_charge" text="Missing equipment charge: {AMOUNT} denars deducted from pay." />
-    <string id="qm_missing_discharge_header" text="Equipment missing at discharge:" />
-    <string id="qm_missing_discharge_total" text="Total deducted from final pay: {AMOUNT} denars" />
-    <string id="qm_missing_discharge_charge" text="Missing equipment: {AMOUNT} denars deducted from final pay." />
-    <string id="qm_accountability_passed" text="Equipment accountability check passed - all gear returned." />
     <string id="qm_btn_understood" text="Understood" />
     
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -453,14 +447,14 @@
     <string id="qm_smuggle_fail" text="Caught smuggling. Your {ITEM} is confiscated." />
     <string id="qm_baggage_no_fatigue" text="You are too exhausted to rummage through the baggage train." />
     <string id="qm_retirement_gear" text="Your personal belongings have been returned. You may keep your military equipment as thanks for your service." />
-    <string id="qm_return_intro" text="Return issued gear to the armory. Select an item to hand back." />
+    <string id="qm_return_intro" text="Sell equipment back to the quartermaster. Select an item to sell." />
     <string id="qm_return_line" text="{ITEM_NAME} x{COUNT}" />
-    <string id="qm_return_option_label" text="{ITEM_NAME} (x{COUNT}) - Return one" />
-    <string id="qm_return_success" text="Returned {ITEM_NAME} to the armory." />
-    <string id="qm_return_none_left" text="No {ITEM_NAME} remains to return." />
-    <string id="qm_return_none" text="No equipment to return." />
-    <string id="qm_return_error" text="Return processing unavailable." />
-    <string id="qm_return_tooltip" text="Hand one item back to the quartermaster." />
+    <string id="qm_return_option_label" text="{ITEM_NAME} (x{COUNT}) - Sell one ({PRICE} denars)" />
+    <string id="qm_return_success" text="Sold {ITEM_NAME} for {AMOUNT} denars." />
+    <string id="qm_return_none_left" text="No {ITEM_NAME} remains to sell." />
+    <string id="qm_return_none" text="No equipment to sell." />
+    <string id="qm_return_error" text="Sale processing unavailable." />
+    <string id="qm_return_tooltip" text="Sell one item back to the quartermaster." />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DEBUG - Temporary Testing Options (remove before release) -->
@@ -477,12 +471,12 @@
     <string id="qm_no_mount_variants" text="No mount variants available." />
     
     <!-- Quartermaster Menu Options -->
-    <string id="qm_menu_request_weapons" text="Request weapon variants" />
-    <string id="qm_menu_request_armor" text="Request armor variants" />
-    <string id="qm_menu_request_accessories" text="Request accessory variants" />
-    <string id="qm_menu_request_mounts" text="Request mount variants" />
+    <string id="qm_menu_request_weapons" text="Buy weapons" />
+    <string id="qm_menu_request_armor" text="Buy armor" />
+    <string id="qm_menu_request_accessories" text="Buy accessories" />
+    <string id="qm_menu_request_mounts" text="Buy mounts" />
     <string id="qm_menu_manage_supplies" text="Manage party supplies" />
-    <string id="qm_menu_return_equipment" text="Return issued equipment" />
+    <string id="qm_menu_return_equipment" text="Sell equipment" />
     <string id="qm_menu_back_status" text="Return to enlisted status" />
     <string id="qm_menu_optimize_food" text="Optimize food supplies" />
     <string id="qm_menu_reorganize_inventory" text="Reorganize party inventory" />
@@ -516,7 +510,7 @@
     <string id="enlist_naval_remain" text="You remain aboard with {LORD}'s party." />
     <string id="enlist_player_captured" text="You have been taken prisoner. Your service has ended." />
     <string id="enlist_kingdom_fallen" text="The kingdom you served has fallen. Your grace period has been cancelled." />
-    <string id="enlist_promotion_quartermaster" text="Promoted to {RANK} (Tier {TIER})! Visit the quartermaster for equipment upgrades." />
+    <string id="enlist_promotion_quartermaster" text="Promoted to {RANK} (Tier {TIER})! Visit the Quartermaster to purchase new equipment." />
     <string id="enlist_following_battle" text="Following your lord into battle!" />
     <string id="enlist_companions_rejoined" text="Your {COMPANION_COUNT} companions have rejoined your party upon retirement." />
 

@@ -6,7 +6,8 @@
 - [Purpose](#purpose)
 - [Inputs/Outputs](#inputsoutputs)
 - [Behavior](#behavior)
-- [Retire Flow (Camp Map Event)](#retire-flow-camp-map-event)
+- [Discharge & Final Muster (Pending Discharge Flow)](#discharge--final-muster-pending-discharge-flow)
+- [Re-entry & Reservist System](#re-entry--reservist-system)
 - [Technical Implementation](#technical-implementation)
 - [Edge Cases](#edge-cases)
 - [Acceptance Criteria](#acceptance-criteria)
@@ -18,7 +19,7 @@
 Core military service functionality that lets players enlist with any lord, follow their armies, participate in military life, earn XP and wages, and eventually retire as a veteran with benefits. Minor faction enlistment is supported with mirrored war stances and mercenary-themed dialogs.
 
 ## Purpose
-Provide the foundation for military service - join a lord's forces, follow them around, participate in their battles, progress through six tiers, handle all the complex edge cases that can break this (lord death, army defeat, capture, etc.), and retire honorably through a camp-driven map incident.
+Provide the foundation for military service: enlist with a lord, follow their movements, participate in battles, progress through tiers, handle edge cases safely (lord death/defeat/capture), earn wages via the muster ledger + pay muster, and leave service either by **managed discharge** (Final Muster) or **desertion** (immediate penalties).
 
 ## Inputs/Outputs
 
@@ -29,15 +30,15 @@ Provide the foundation for military service - join a lord's forces, follow them 
 - Real-time monitoring of lord and army status
 
 **Outputs:**
-- Player joins lord's kingdom as mercenary (native mercenary income suppressed)
+- Player joins lord's kingdom as mercenary (native mercenary income remains native; Enlisted wages use the muster ledger)
 - Player party hidden from map (`IsVisible = false`, Nameplate hidden)
 - Player follows enlisted lord's movements (including naval travel)
-- Daily wage accrual (custom pay system) and participation in a periodic pay muster map incident
+- Daily wage accrual into muster ledger; periodic pay muster incident (inquiry fallback) handles payouts with multiple options (Standard, Corruption Challenge, Side Deal, Final Muster/Smuggle)
 - XP progression: +25 daily, +25 per battle, +1 per kill
 - Participation in lord's battles and army activities
 - Kill tracking per faction (persists across re-enlistments)
 - Safe handling of service interruption (lord death, army defeat, capture)
-- Camp-triggered Retire flow that replaces the old desert button, grants honorable discharge rewards, and can be tuned by service length
+- Camp-based pending discharge + Final Muster flow (managed discharge) resolves at pay muster with service-length-based rewards (Washout/Honorable/Veteran/Heroic bands), pensions, and gear handling
 - No loot access (spoils go to the lord)
 - No food consumption (lord provides food - party skips food calculations entirely)
 - Minor faction enlistment mirrors the lord faction’s active wars to the player clan and restores them to neutral on discharge
@@ -53,33 +54,39 @@ Provide the foundation for military service - join a lord's forces, follow them 
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
 7. Bag check is deferred ~12 in-game hours after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
+   - **Stow it all (50g)**: stashes all inventory + equipped items into the baggage train and charges a **50 denar wagon fee** (clamped to what you can afford).
+   - **Sell it all (60%)**: liquidates inventory + equipped items at **60%** and gives you the resulting denars.
+   - **I'm keeping one thing (Roguery 30+)**: attempts to keep a single item (currently selects the highest-value item). If Roguery < 30, it is confiscated.
 7. **Minor factions only:** Mirror the lord faction’s current wars to the player clan so ally/enemy colors and battle joins work; relations are reverted to neutral on discharge
 
 **Daily Service:**
 - Follow enlisted lord's army movements
 - Participate in battles when lord fights (Direct join, bypassing "Help or Leave")
 - Naval battles: before `PlayerEncounter.Start/Init`, the player party copies the lord's `IsCurrentlyAtSea` flag and position so naval encounters meet the engine requirement (`encounteredBattle.IsNavalMapEvent == MainParty.IsCurrentlyAtSea`) and avoid crashes.
-- Accrue daily wages into the custom pay ledger; periodic pay muster incident handles payouts
+- Accrue daily wages into the muster ledger (`_pendingMusterPay`); periodic pay muster incident (inquiry fallback) handles payouts with options: Standard Pay, Corruption Challenge (skill check), Side Deal (gear bribe), Final Muster/Smuggle (when discharge pending)
 - Earn XP: +25 daily, +25 per battle, +1 per enemy killed
 - Kills tracked per faction and term (persists on re-enlistment)
 
-**Wage Breakdown (custom pay ledger):**
+**Wage Breakdown (muster ledger):**
 - Soldier's Pay: Base wage from config (default 10)
 - Combat Exp: +1 per player level
 - Rank Pay: +5 per tier
 - Service Seniority: +1 per 200 XP accumulated
 - Army Campaign Bonus: +20% when lord is in army
 - Duty Assignment: Varies by active duty (0.8x to 1.6x)
+- Probation Multiplier: Applied if on probation (reduces wage)
+- Wages accrue daily into `_pendingMusterPay`; paid out at pay muster (configurable interval ~12 days with jitter)
+- Daily wage is clamped after multipliers (minimum **24/day**, maximum **150/day**)
 
 **Tier Progression (XP thresholds from progression_config.json):**
-| Tier | Rank Name | XP Required |
-|------|-----------|-------------|
-| 1 | Levy | 0 |
-| 2 | Footman | 800 |
-| 3 | Serjeant | 3,000 |
-| 4 | Man-at-Arms | 6,000 |
-| 5 | Banner Serjeant | 11,000 |
-| 6 | Household Guard | 19,000 |
+| Tier | Rank Name | XP Required | Key Features |
+|------|-----------|-------------|-------------|
+| 1 | Levy | 0 | Auto-issue equipment, basic duties |
+| 2 | Footman | 800 | Formation selection unlocked, better equipment access |
+| 3 | Serjeant | 3,000 | Military professions unlock, re-entry starting tier (Honorable) |
+| 4 | Man-at-Arms | 6,000 | Command 5 soldiers (retinue), re-entry starting tier (Veteran/Heroic) |
+| 5 | Banner Serjeant | 11,000 | Command 10 soldiers |
+| 6 | Household Guard | 19,000 | Command 20 soldiers (max) |
 
 Rank names are configurable in `progression_config.json`.
 
@@ -99,7 +106,7 @@ Promotion popup features:
 - Tier-specific title showing the ceremony name
 - Narrative text describing the promotion from the lord's or serjeant's perspective
 - Player name included in the narrative for immersion
-- Context-aware button text ("Understood" for Tier 2-3, "To Camp" for Tier 4+)
+- Context-aware button text ("Understood" for Tier 2-3, "To My Camp" for Tier 4+)
 - Short chat notification for quick feedback
 
 All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xml` with IDs like `promo_title_X`, `promo_msg_X`, and `promo_chat_X`.
@@ -130,25 +137,49 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 - Compensation shown in cohesion tooltip as "Enlisted soldier (embedded)"
 - Thematically correct: enlisted soldiers are embedded with their lord, not a separate party
 
-## Retire Flow (Camp Map Event)
+## Discharge & Final Muster (Pending Discharge Flow)
 
-- Replace the main-menu “Desert the Army” option with a “Retire” action located in the Camp screen.
-- Selecting Retire starts a native map incident (camp map event) instead of an immediate menu action; incident ensures safe state (no battle/encounter/captivity) before presenting choices.
+- Managed discharge is requested from **Camp ("My Camp")**. The main enlisted menu still has a **Desert the Army** option (immediate abandonment with penalties).
+- Selecting "Request Discharge" sets `IsPendingDischarge = true`; discharge resolves at the next pay muster incident (Final Muster branch).
+- Discharge can be cancelled via "Cancel Pending Discharge" in Camp menu before pay muster fires.
 - Eligibility & scaling:
-  - Track total enlisted service days; retirement benefits increase with longer service (tunable thresholds).
+  - Track total enlisted service days; discharge rewards scale by service length (Washout <100, Honorable 100-199, Veteran/Heroic 200+).
   - Minimum check: must currently be enlisted and in good standing (no active desertion/crime penalties with the faction).
-- Honorable discharge rewards (no letter of recommendation):
-  - +30 relation with the enlisted lord.
-  - +10 relation with all lords in the same kingdom (when serving as mercenary for that kingdom).
-  - +20 faction relation with that kingdom.
-  - 10,000 gold lump sum.
-  - Pension: +100 gold/day while reputation with the enlisted lord and faction remains positive (disable if relation drops below a threshold, e.g., 0).
+- Discharge bands (resolved at Final Muster):
+  - **Washout** (<100 days): -10 lord / -10 faction leader; no pension; gear stripped (moved to inventory or deleted); probation on re-entry.
+  - **Honorable** (100-199 days, relation ≥ 0): +10 lord / +5 faction leader; severance gold (config); pension 50/day; gear: keep armor (slots 6-9), remove weapons (0-3) and mount/harness (10-11) to inventory.
+  - **Veteran/Heroic** (200+ days, relation ≥ 0): +30 lord / +15 faction leader; severance gold (config); pension 100/day; same gear handling as Honorable.
+  - **Smuggle** (deserter path): keep all gear; crime +30; -50 relation lord/leader; no pension; probation on re-entry.
+- Pension system:
+  - Pauses on re-enlistment (no double-dipping); updates on next retirement to new band; no top-up option.
+  - Stops if relation below threshold, at war with pension faction, or crime rating > 0.
+  - Paid via daily tick hook outside clan finances (custom ledger).
+- Reservist snapshot:
+  - On discharge, stores service metrics (days served, tier, XP, relations, faction/lord, discharge band) to `ReservistRecord` for re-entry boosts/probation.
+  - Snapshot is consumed on first re-entry with matching faction; provides tier/XP/relation bonuses or probation based on discharge band.
 - UX/location:
-  - Retire option appears in Camp actions; removed from the main town/army menus.
-  - Incident text clarifies benefits scale with service length and that misconduct (relation drop) can suspend the pension.
-- Data:
-  - Store service days and last honorable discharge reward band for tuning.
-  - Pension paid via daily tick hook outside clan finances (custom pay system).
+  - Discharge request/cancel appears in Camp ("My Camp") actions; removed from main town/army menus.
+  - Final Muster resolves at pay muster incident (inquiry fallback) when `IsPendingDischarge` is true.
+
+## Re-entry & Reservist System
+
+When re-enlisting with a faction you've previously served, your reservist record (stored on discharge) provides automatic benefits or penalties:
+
+**Re-entry Bonuses (by Discharge Band):**
+- **Washout** (<100 days) or **Deserter** (smuggle path): Start at Tier 1 (raw recruit), probation status activated (reduced wage multiplier, fatigue cap), no XP/relation bonuses.
+- **Honorable** (100-199 days): Start at Tier 3 (NCO path), +500 XP bonus, +5 relation bonus with enlisted lord, no probation.
+- **Veteran/Heroic** (200+ days): Start at Tier 4 (officer path), +1,000 XP bonus, +10 relation bonus with enlisted lord, no probation.
+
+**Probation System:**
+- Activated automatically on washout/deserter re-entry.
+- Reduces wage multiplier (configurable, default <1.0).
+- Caps maximum fatigue (configurable).
+- Clears automatically on pay muster resolution or after configurable duration (`probation_days`).
+
+**Reservist Record Consumption:**
+- Snapshot is consumed (marked `Consumed = true`) on first re-entry with matching faction.
+- Subsequent re-entries with the same faction do not provide bonuses (fresh start).
+- Record persists across save/load; can be manually cleared if needed.
 
 **Formation Assignment (Battle Spawn):**
 - `EnlistedFormationAssignmentBehavior` assigns player to their designated formation based on duty (Infantry, Ranged, Cavalry, Horse Archer)
@@ -167,11 +198,10 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
 - `EnlistedDialogManager.cs` - Retire dialog routing, service transfer dialogs, minor faction dialog variants
-- `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident and the retire incident; schedules deferred native map incidents via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable
+- `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident and pay muster incident; schedules deferred native map incidents via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable; pay muster presents options (Standard, Corruption, Side Deal, Final Muster/Smuggle)
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
-- `ClanFinanceEnlistmentIncomePatch.cs` - Wage breakdown in clan finance tooltip
-- `MercenaryIncomeSuppressionPatch.cs` - Suppresses native mercenary income (players receive mod wages only)
+- Finance patches removed: vanilla clan finance and workshops are untouched; wages accrue to muster ledger only
 - `FoodSystemPatches.cs` - Consolidated food handling: suppresses food consumption and prevents starvation when enlisted (lord provides food)
 - `LootBlockPatch.cs` - Blocks all loot assignment and loot screens for enlisted soldiers
 - `TownLeaveButtonPatch.cs` - Hides native Leave button in town/castle menus when enlisted
@@ -216,8 +246,9 @@ CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnPlayerBat
 AwardBattleXP(kills);  // +25 participation + kills*1 XP
 _currentTermKills += kills;  // Track for faction record
 
-// Wage breakdown (in ClanFinanceEnlistmentIncomePatch)
-// Shows: Base Pay, Level Bonus, Tier Bonus, Service Seniority, Army Bonus, Duty Bonus
+// Wage accrual (in OnDailyTick)
+// Accrues daily wages into _pendingMusterPay ledger; pay muster incident handles payouts
+// Probation reduces wage multiplier; fatigue cap applies during probation
 ```
 
 **Safety Systems:**
@@ -333,15 +364,12 @@ mainParty.IsVisible = true;
 - Desertion penalties applied
 - Service terminated
 
-**Voluntary Desertion:**
-- Player can choose to desert at any time via the "Desert the Army" menu option
-- Opens confirmation menu with roleplay explanation of consequences
-- If confirmed:
-  - Player keeps their current enlisted equipment (not restored to original gear)
-  - -50 relation with ALL lords in the kingdom
-  - +50 crime rating with the kingdom
-  - Removed from kingdom (becomes independent)
-  - Free to enlist with other factions afterward
+**Voluntary Discharge:**
+- Player can request discharge via "Request Discharge" in Camp ("My Camp") menu
+- Sets `IsPendingDischarge = true`; discharge resolves at next pay muster (Final Muster branch)
+- Can be cancelled via "Cancel Pending Discharge" before pay muster fires
+- Discharge bands determined by service length (see Discharge & Final Muster section)
+- Smuggle path (deserter): available at Final Muster when discharge pending; keep all gear, crime +30, -50 relation, no pension, probation on re-entry
 
 **Player Leading Own Army:**
 - If player is leading their own army, enlistment is blocked to prevent crashes
@@ -404,16 +432,19 @@ When the battle ends, the Naval DLC's `OnShipRemoved` iterates through agents an
 - ✅ Can enlist with any lord that accepts player
 - ✅ Army leader restriction prevents crash and shows roleplay dialog
 - ✅ Player party safely hidden from map during service (UI Nameplate hidden)
-- ✅ Daily wage payments with detailed tooltip breakdown
+- ✅ Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
 - ✅ Daily XP progression (+25 per day)
 - ✅ Battle XP (+25 per battle, +1 per kill)
 - ✅ Kill tracking per faction (persists across terms)
-- ✅ Clan finances completely isolated (no lord income/expenses shown)
+- ✅ Vanilla clan finances untouched; muster ledger separate from clan finance UI
 - ✅ Lord death/capture triggers 14-day grace period (not immediate discharge)
 - ✅ Army disbandment detected and grace period started
 - ✅ Service state persists through save/load cycles
-- ✅ Veteran retirement at 252 days with full benefits
-- ✅ Re-enlistment with preserved tier and kill count
+- ✅ Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
+- ✅ Re-enlistment with preserved tier and kill count; reservist re-entry system:
+  - Washout/Deserter: Tier 1 start, probation status
+  - Honorable: Tier 3 start, +500 XP, +5 relation
+  - Veteran/Heroic: Tier 4 start, +1,000 XP, +10 relation
 - ✅ Per-faction veteran tracking
 - ✅ Service transfer to different lord while on leave/grace (preserves all progression)
 - ✅ Voluntary desertion with confirmation menu and penalties

@@ -15,16 +15,16 @@ using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
-namespace Enlisted.Features.CommandTent.UI
+namespace Enlisted.Features.Camp
 {
     /// <summary>
-    /// Handles the Command Tent menu system for service records display.
+    /// Handles the Camp menu system for service records display.
     /// Provides menus for viewing current posting, faction history, and lifetime statistics.
-    /// Integrates with the existing enlisted status menu by adding a "Command Tent" option.
+    /// Integrates with the existing enlisted status menu by adding a "My Camp" option.
     /// </summary>
-    public sealed class CommandTentMenuHandler : CampaignBehaviorBase
+    public sealed class CampMenuHandler : CampaignBehaviorBase
     {
-        private const string LogCategory = "CommandTent";
+        private const string LogCategory = "Camp";
 
         // Menu IDs
         private const string CommandTentMenuId = "command_tent";
@@ -104,9 +104,9 @@ namespace Enlisted.Features.CommandTent.UI
         // Track selected faction for detail view
         private string _selectedFactionKey;
 
-        public static CommandTentMenuHandler Instance { get; private set; }
+        public static CampMenuHandler Instance { get; private set; }
 
-        public CommandTentMenuHandler()
+        public CampMenuHandler()
         {
             Instance = this;
         }
@@ -129,11 +129,11 @@ namespace Enlisted.Features.CommandTent.UI
                 SetupInlineIcons();
                 
                 AddCommandTentMenus(starter);
-                ModLogger.Info(LogCategory, "Command Tent menus registered successfully");
+                ModLogger.Info(LogCategory, "Camp menus registered successfully");
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to register Command Tent menus: {ex.Message}");
+                ModLogger.Error(LogCategory, $"Failed to register camp menus: {ex.Message}");
             }
         }
         
@@ -151,14 +151,14 @@ namespace Enlisted.Features.CommandTent.UI
         }
 
         /// <summary>
-        /// Registers all Command Tent menus and options with the game.
+        /// Registers all camp menus and options with the game.
         /// </summary>
         private void AddCommandTentMenus(CampaignGameStarter starter)
         {
-            // Add "My Camp" option to enlisted_status menu (Command Tent entry point)
+            // Add "My Camp" option to enlisted_status menu (entry point)
             AddCommandTentOptionToEnlistedMenu(starter);
 
-            // Main Command Tent menu
+            // Main camp menu
             AddMainCommandTentMenu(starter);
 
             // Service Records submenu
@@ -317,6 +317,75 @@ namespace Enlisted.Features.CommandTent.UI
                 _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
                 false,
                 2);
+
+            // Request Discharge (Final Muster)
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_request_discharge",
+                "{=ct_request_discharge}Request Discharge (Final Muster)",
+                args =>
+                {
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsEnlisted != true)
+                    {
+                        return false;
+                    }
+
+                    if (enlistment.IsPendingDischarge)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=ct_discharge_pending}Discharge already pending; will resolve at next pay muster.");
+                    }
+
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    return true;
+                },
+                _ =>
+                {
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.RequestDischarge() == true)
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=ct_discharge_requested}Discharge requested. It will resolve at the next pay muster.")
+                                .ToString()));
+                        
+                        // Refresh menu immediately so the player sees "pending" state without leaving/re-entering.
+                        SwitchToMenuPreserveTime(CommandTentMenuId);
+                    }
+                },
+                false,
+                3);
+
+            // Cancel Pending Discharge
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_cancel_discharge",
+                "{=ct_cancel_discharge}Cancel Pending Discharge",
+                args =>
+                {
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsEnlisted == true && enlistment.IsPendingDischarge)
+                    {
+                        args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                        return true;
+                    }
+
+                    return false;
+                },
+                _ =>
+                {
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.CancelDischarge() == true)
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=ct_discharge_cancelled}Pending discharge cancelled.").ToString()));
+                        
+                        // Refresh menu immediately so "Request Discharge" returns without leaving/re-entering.
+                        SwitchToMenuPreserveTime(CommandTentMenuId);
+                    }
+                },
+                false,
+                4);
 
             // Personal Retinue option - TroopSelection icon (soldiers)
             starter.AddGameMenuOption(
@@ -519,6 +588,13 @@ namespace Enlisted.Features.CommandTent.UI
             var rankName = GetRankName(tier);
             var termBattles = recordManager?.CurrentTermBattles ?? 0;
             var termKills = recordManager?.CurrentTermKills ?? 0;
+            var pendingPay = enlistment.PendingMusterPay;
+            var nextPay = enlistment.NextPaydaySafe;
+            var daysToPay = Math.Max(0, (float)(nextPay - CampaignTime.Now).ToDays);
+            var lastPay = enlistment.LastPayOutcome;
+            var musterQueued = enlistment.IsPayMusterPending;
+            var pensionDaily = GetPensionDaily(enlistment);
+            var pensionStatus = GetPensionStatus(enlistment);
 
             sb.AppendLine();
             sb.AppendLine("— Current Service Record —");
@@ -530,12 +606,51 @@ namespace Enlisted.Features.CommandTent.UI
             sb.AppendLine($"Days Served: {daysServed}");
             sb.AppendLine($"Contract: {daysRemaining}");
             sb.AppendLine();
+            sb.AppendLine("— Pay Muster —");
+            sb.AppendLine();
+            sb.AppendLine($"Pending Muster Pay: {pendingPay} denars");
+            sb.AppendLine($"Next Payday: in {daysToPay:F1} days");
+            sb.AppendLine($"Last Outcome: {lastPay}");
+            if (musterQueued)
+            {
+                sb.AppendLine("Status: Muster queued");
+            }
+            if (enlistment.IsPendingDischarge)
+            {
+                sb.AppendLine("Status: Discharge pending (will resolve at next pay muster)");
+            }
+            sb.AppendLine();
+            sb.AppendLine("— Pension —");
+            sb.AppendLine();
+            sb.AppendLine($"Daily Pension: {pensionDaily} denars");
+            sb.AppendLine($"Status: {pensionStatus}");
+            sb.AppendLine();
             sb.AppendLine("— This Term —");
             sb.AppendLine();
             sb.AppendLine($"Battles Fought: {termBattles}");
             sb.AppendLine($"Enemies Slain: {termKills}");
 
             return sb.ToString();
+        }
+
+        private static int GetPensionDaily(EnlistmentBehavior enlistment)
+        {
+            return enlistment?.PensionAmountPerDay ?? 0;
+        }
+
+        private static string GetPensionStatus(EnlistmentBehavior enlistment)
+        {
+            if (enlistment == null)
+            {
+                return "Unknown";
+            }
+
+            if (enlistment.IsPensionPaused)
+            {
+                return "Paused";
+            }
+
+            return "Active";
         }
 
         /// <summary>
@@ -1009,7 +1124,7 @@ namespace Enlisted.Features.CommandTent.UI
             starter.AddGameMenuOption(
                 RetinueMenuId,
                 "ct_retinue_back",
-                "{=ct_back_tent}Back to Command Tent",
+                "{=ct_back_tent}Back to Camp",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
@@ -1916,7 +2031,7 @@ namespace Enlisted.Features.CommandTent.UI
             starter.AddGameMenuOption(
                 CompanionAssignmentsMenuId,
                 "ct_companions_back",
-                "{=ct_back_tent}Back to Command Tent",
+                "{=ct_back_tent}Back to Camp",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;

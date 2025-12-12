@@ -83,5 +83,6 @@
 ## Current Enlisted usage (implemented)
 - `EnlistedIncidentsBehavior` registers the enlistment bag-check incident and triggers it by setting `MapState.NextIncident` (native map incident UI). If incidents are unavailable, it falls back to the inquiry prompt so enlistment never blocks.
 - Bag check is scheduled ~12 in-game hours after enlistment and only fires when safe (no battle/encounter/captivity). Completion resets the schedule.
+- Pay muster currently uses an **inquiry fallback** prompt (not native incident UI), so it does not rely on `MapState.NextIncident`.
 - Incident suppression: while enlisted (not in grace), native incidents are suppressed via `IncidentsCampaignBehaviour.TryInvokeIncident` prefix to prevent inappropriate random incidents; the bag-check incident bypasses suppression because it is triggered directly by Enlisted.
 

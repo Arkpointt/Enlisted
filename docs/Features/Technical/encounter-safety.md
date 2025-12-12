@@ -14,7 +14,7 @@
 - [How It Works](#how-it-works)
   - [During Enlistment (Peace/Travel)](#during-enlistment-peacetravel)
   - [During Service (Battle)](#during-service-battle)
-  - [On Retirement](#on-retirement)
+  - [On Discharge](#on-discharge)
 - [Technical Details](#technical-details)
   - [System Architecture](#system-architecture)
   - [State Management](#state-management)
@@ -116,7 +116,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - Predictable battle behavior
 - No manual intervention needed
 
-### On Retirement
+### On Discharge / End of Service
 
 **State:** Player party returns to normal visibility and encounter behavior
 
@@ -662,4 +662,4 @@ If mission cleanup crash persists (crash after battle ends):
 ## Related Documentation
 
 - [Enlistment System](../Core/enlistment.md) - Service state management
-- [Battle System](../Combat/battle-system.md) - Battle participation details
+- [Formation Assignment](formation-assignment.md) - Battle formation assignment details

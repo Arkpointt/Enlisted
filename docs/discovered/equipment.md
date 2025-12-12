@@ -1008,7 +1008,7 @@ public List<ItemObject> GetAvailableItemsByTier(CultureObject culture, int maxTi
 
 ## QUARTERMASTER IMPLEMENTATION STATUS
 
-**Status**: Fully implemented and working.
+**Status**: Implemented (purchase + buyback).
 
 ### Current Features
 
@@ -1018,25 +1018,19 @@ public List<ItemObject> GetAvailableItemsByTier(CultureObject culture, int maxTi
 - Items NOT filtered by culture (cross-culture items from troop loadouts allowed)
 - Falls back to all tiers if exact tier has no variants
 
-**Slot-Specific Item Limits:**
+**Purchasing & Equipment Handling:**
+- Equipment is **purchased** (denars) via Quartermaster menus.
+- Weapons fill the first empty weapon slot; if all weapon slots are full, the purchased item is placed into party inventory.
+- Armor/mount purchases equip into the relevant slot; replaced items are moved into party inventory.
 
-| Slot Type | Limit | Status Text |
-|-----------|-------|-------------|
-| Armor (Head, Body, Legs, Gloves, Cape) | 1 | "Equipped / Already issued" |
-| Shields | 1 | "Equipped / Already issued" |
-| Weapons (Swords, Axes, Maces, Spears) | 2 | "Get Another" at 1, "Limit (2)" at 2 |
-| Ranged (Bows, Crossbows) | 2 | Same as weapons |
-| Consumables (Arrows, Bolts, Javelins, Throwing) | 2 | Same as weapons |
-
-**Real-Time UI Updates:**
-- Button grey state updates instantly after requisition
-- Player model preview updates to show new equipment
-- Menu stays open for multiple selections
-- No need to exit and re-enter menu
+**Buyback (Sell Equipment):**
+- Quartermaster offers a sell menu for eligible equipment from player equipment and party inventory.
+- Selling removes one item and pays a buyback amount.
+- Quest-critical items are excluded.
 
 **Key Files:**
-- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic, `GetItemLimit(slot)`
-- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Real-time refresh, `RecalculateAllVariantStates()`, `RefreshCharacterModel()`
-- `src/Features/Equipment/UI/QuartermasterEquipmentItemVm.cs` - Card status display
+- `src/Features/Equipment/Behaviors/QuartermasterManager.cs` - Core logic (availability, pricing, buyback)
+- `src/Features/Equipment/UI/QuartermasterEquipmentSelectorVm.cs` - Selection UI
+- `src/Features/Equipment/UI/QuartermasterEquipmentItemVm.cs` - Item cards
 
 See `docs/Features/UI/quartermaster.md` for full documentation.

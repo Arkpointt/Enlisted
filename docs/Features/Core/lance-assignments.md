@@ -1,4 +1,4 @@
-﻿# Lance Assignments — Documentation
+# Lance Assignments — Documentation
 
 ## Index
 - [Overview](#overview)
@@ -9,7 +9,6 @@
 - [Events & API Surfaces](#events--api-surfaces)
 - [Diagnostics](#diagnostics)
 - [Safety & Compatibility](#safety--compatibility)
-- [Rank Reference (Tier 1–9)](#rank-reference-tier-1-9)
 - [References (API verification)](#references-api-verification)
 - [Missing / To-Do](#missing--to-do)
 
@@ -52,7 +51,7 @@ Lances give enlisted players a sub-unit identity from enlistment through promoti
 ## UI
 - `enlisted_status` shows:
   - Lance line: Provisional, Final, or Legacy; hidden when none.
-  - Fatigue line (24/24) for future camp use.
+  - Fatigue line (Current/Max) as part of enlisted status.
   - Hint to finalize when provisional.
 
 ## Events & API Surfaces
@@ -72,19 +71,11 @@ Lances give enlisted players a sub-unit identity from enlistment through promoti
 - Fallbacks for missing config; unknown culture prompt; mercenary fallback retained.
 - Party activation/time control unchanged outside existing guards.
 
-## Rank Reference (Tier 1–9)
-- Feudal: Peasant, Levy, Footman, Man-at-Arms, Sergeant, Knight Bachelor, Dizener (10), Vintener (20), Lieutenant (30)
-- Legion: Tiro, Miles, Immunes, Principalis, Evocatus, Aquilifer, Decanus (10), Optio (20), Decurion (30)
-- Tribal: Thrall, Ceorl, Fyrdman, Drengr, Huskarl, Varangian, Hase (10), Styriman (20), Hersir (30)
-- Horde: Outsider, Nomad, Noker, Warrior, Veteran, Bahadur, Arban (10), Keshig (20), Cherbi (30)
-- Mercenary/Universal: Follower, Recruit, Free Sword, Veteran, Blade, Chosen, Corporal (10), Sergeant (20), Ensign (30)
-
 ## References (API verification)
 - Culture: `Hero.MapFaction?.Culture?.StringId`, fallback `Hero.Culture?.StringId` (native Hero).
 - Menus: `MBInformationManager.ShowMultiSelectionInquiry`, `GameMenu` APIs.
 - Persistence: `CampaignBehaviorBase.SyncData(IDataStore)`.
 
 ## Missing / To-Do
-- Camp fatigue consumption/recovery rules (logic intentionally deferred).
 - Optional: explicit legacy “disbanded” badge string (currently shows “Lance (Legacy)” only).
 - Optional: style-weighted selection/count tuning via config if desired later.

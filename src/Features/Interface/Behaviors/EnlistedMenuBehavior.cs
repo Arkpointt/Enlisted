@@ -1705,8 +1705,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_must_be_enlisted_qm}You must be enlisted to access quartermaster services.").ToString()));
+                    ModLogger.Warn("Quartermaster", "Quartermaster open blocked: player not enlisted");
                     return;
                 }
+
+                var troopId = TroopSelectionManager.Instance?.LastSelectedTroopId ?? "unknown";
+                ModLogger.Info("Quartermaster",
+                    $"Opening quartermaster menu (Tier={enlistment.EnlistmentTier}, Troop={troopId})");
 
                 // Connect to new Quartermaster system
                 var quartermasterManager = QuartermasterManager.Instance;
@@ -1723,6 +1728,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
+                    ModLogger.Error("Quartermaster", "Quartermaster open failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)
@@ -1742,6 +1748,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_must_be_enlisted_qm}You must be enlisted to access quartermaster services.").ToString()));
+                    ModLogger.Warn("Quartermaster", "Quartermaster (horse/tack) open blocked: player not enlisted");
                     return;
                 }
 
@@ -1750,12 +1757,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     quartermasterManager.SetFilterToHorseAndTack();
+                    ModLogger.Info("Quartermaster",
+                        $"Opening quartermaster menu (horse/tack filter) (Tier={enlistment.EnlistmentTier}, Troop={TroopSelectionManager.Instance?.LastSelectedTroopId ?? "unknown"})");
                     GameMenu.ActivateGameMenu("quartermaster_equipment");
                 }
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
+                    ModLogger.Error("Quartermaster",
+                        "Quartermaster (horse/tack) open failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)

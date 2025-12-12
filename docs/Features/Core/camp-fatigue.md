@@ -1,11 +1,16 @@
-﻿# Camp Fatigue â€” Documentation
+# Camp Fatigue — Documentation
 
 ## Overview
-Fatigue is a simple counter used by camp actions. It displays on the main enlisted menu so players can see how much capacity remains. Current baseline is 24/24; consumption logic is not yet wired into camp actions.
+Fatigue is a stamina-like counter used to gate certain enlisted actions and choices. It displays in the enlisted UI so players can see how much capacity remains.
+
+Fatigue is currently used by:
+- Pay Muster options (e.g. Corruption Challenge, Side Deal)
+- Probation (caps max fatigue while probation is active)
 
 ## Data & State
 - Stored on `EnlistmentBehavior`: `FatigueCurrent`, `FatigueMax` (default 24/24).
-- Serialized via SyncData; reset to full on enlist/discharge; validated on load (clamped to >0, current <= max).
+- Serialized via `SyncData`; validated on load (clamped to >0, current <= max).
+- Probation may temporarily reduce `FatigueMax` (fatigue cap), and the max is restored when probation clears.
 
 ## APIs (for camp actions)
 - `EnlistmentBehavior.TryConsumeFatigue(int amount, string reason = null)`: clamps 0..max, returns true if applied.
@@ -20,9 +25,7 @@ Fatigue is a simple counter used by camp actions. It displays on the main enlist
 
 ## Safety & Compatibility
 - No native menu/time patches; contained in EnlistedBehavior and UI.
-- Defaults safe if config missing; currently hardcoded 24/24.
+- Defaults safe if config missing; baseline is 24/24 unless modified by probation.
 
-## Missing / To-Do
-- Wire actual camp actions to call `TryConsumeFatigue` and `RestoreFatigue` with tuned amounts.
-- Decide recovery rules (daily? rest events?), caps, and any culture/style modifiers if desired later.
-- Make fatigue max configurable if needed.
+## Recovery
+- Fatigue is restored by rest and/or specific systems (implementation-owned by enlistment behavior). If fatigue is capped by probation, recovery cannot exceed the cap until probation ends.

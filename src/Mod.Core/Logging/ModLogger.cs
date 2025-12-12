@@ -48,14 +48,14 @@ namespace Enlisted.Mod.Core.Logging
 		private static LogLevel _defaultLevel = LogLevel.Info;
 
 		// Throttling system - tracks recent messages to prevent spam
-		private static readonly Dictionary<string, ThrottleEntry> _throttleCache = new Dictionary<string, ThrottleEntry>();
+		private static readonly Dictionary<string, ThrottleEntry> ThrottleCache = new Dictionary<string, ThrottleEntry>();
 		private static int _throttleSeconds = 5;
 
 		// LogOnce tracking - messages that should only appear once per session
-		private static readonly HashSet<string> _loggedOnceKeys = new HashSet<string>();
+		private static readonly HashSet<string> LoggedOnceKeys = new HashSet<string>();
 
 		// Summary tracking - accumulates counts for periodic summaries
-		private static readonly Dictionary<string, SummaryEntry> _summaryData = new Dictionary<string, SummaryEntry>();
+		private static readonly Dictionary<string, SummaryEntry> SummaryData = new Dictionary<string, SummaryEntry>();
 
 		/// <summary>
 		/// Tracks repeated messages for throttling.
@@ -92,9 +92,9 @@ namespace Enlisted.Mod.Core.Logging
 					_sessionId = Path.GetFileNameWithoutExtension(_logFilePath) ?? "Session-A";
 					
 					// Clear session-specific tracking
-					_loggedOnceKeys.Clear();
-					_throttleCache.Clear();
-					_summaryData.Clear();
+					LoggedOnceKeys.Clear();
+					ThrottleCache.Clear();
+					SummaryData.Clear();
 					
 					// Write initialization message - this will test if logging works
 					WriteInternal("INFO", "Init", $"Logger initialized (session: {_sessionId}, path: {_logFilePath})");
@@ -250,12 +250,10 @@ namespace Enlisted.Mod.Core.Logging
 
 			lock (Sync)
 			{
-				if (_loggedOnceKeys.Contains(key))
+				if (!LoggedOnceKeys.Add(key))
 				{
 					return;
 				}
-					
-				_loggedOnceKeys.Add(key);
 			}
 			
 			var levelStr = level.ToString().ToUpper();
@@ -273,10 +271,10 @@ namespace Enlisted.Mod.Core.Logging
 		{
 			lock (Sync)
 			{
-				if (!_summaryData.TryGetValue(key, out var entry))
+				if (!SummaryData.TryGetValue(key, out var entry))
 				{
 					entry = new SummaryEntry();
-					_summaryData[key] = entry;
+					SummaryData[key] = entry;
 				}
 				entry.Count += incrementCount;
 				entry.TotalValue += incrementValue;
@@ -301,12 +299,12 @@ namespace Enlisted.Mod.Core.Logging
 			SummaryEntry entry;
 			lock (Sync)
 			{
-				if (!_summaryData.TryGetValue(key, out entry) || entry.Count == 0)
+				if (!SummaryData.TryGetValue(key, out entry) || entry.Count == 0)
 				{
 					return;
 				}
 					
-				_summaryData.Remove(key);
+				SummaryData.Remove(key);
 			}
 
 			var message = string.Format(messageFormat, entry.Count, entry.TotalValue);
@@ -375,7 +373,7 @@ namespace Enlisted.Mod.Core.Logging
 
 			lock (Sync)
 			{
-				if (_throttleCache.TryGetValue(key, out var entry))
+				if (ThrottleCache.TryGetValue(key, out var entry))
 				{
 					var elapsed = (now - entry.LastLogTime).TotalSeconds;
 					if (elapsed < _throttleSeconds)
@@ -401,7 +399,7 @@ namespace Enlisted.Mod.Core.Logging
 				else
 				{
 					// First time seeing this message
-					_throttleCache[key] = new ThrottleEntry
+					ThrottleCache[key] = new ThrottleEntry
 					{
 						LastLogTime = now,
 						SuppressedCount = 0,
@@ -422,7 +420,7 @@ namespace Enlisted.Mod.Core.Logging
 		private static void CleanThrottleCache()
 		{
 			// Only clean occasionally to avoid overhead
-			if (_throttleCache.Count < 100)
+			if (ThrottleCache.Count < 100)
 			{
 				return;
 			}
@@ -432,7 +430,7 @@ namespace Enlisted.Mod.Core.Logging
 
 			lock (Sync)
 			{
-				foreach (var kvp in _throttleCache)
+				foreach (var kvp in ThrottleCache)
 				{
 					if ((now - kvp.Value.LastLogTime).TotalSeconds > _throttleSeconds * 10)
 					{
@@ -442,7 +440,7 @@ namespace Enlisted.Mod.Core.Logging
 
 				foreach (var key in expiredKeys)
 				{
-					_throttleCache.Remove(key);
+					ThrottleCache.Remove(key);
 				}
 			}
 		}
@@ -619,7 +617,7 @@ namespace Enlisted.Mod.Core.Logging
 				}
 
 				// Rename existing sessions to maintain slot ordering (newest -> B, next -> C)
-				for (int i = 0; i < toShift.Count && i + 1 < SessionSlots.Length; i++)
+				for (var i = 0; i < toShift.Count && i + 1 < SessionSlots.Length; i++)
 				{
 					var stamp = ExtractTimestamp(toShift[i]) ?? toShift[i].CreationTimeUtc;
 					var targetName = $"{SessionSlots[i + 1]}_{stamp:yyyy-MM-dd_HH-mm-ss}.log";

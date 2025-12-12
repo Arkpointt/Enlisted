@@ -2,13 +2,6 @@
 
 Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
 
-## What's New (v0.5.9)
-- Steam Workshop upload: cross-machine path resolution, proper XML metadata, and upload automation
-- Enhanced logging: improved conflict diagnostics, session rotation, and mod compatibility detection
-- Config cleanup: removed unused legacy sections from enlisted_config.json
-- Documentation: fixed XP progression location references, updated reporting instructions
-- Safety fix: ensure settlement exit before finishing encounters while enlisted
-
 ## Features
 
 ### 🛡️ Enlistment
@@ -17,7 +10,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - **Army Leader Restriction**: Cannot enlist while leading your own army (must disband first).
 - **No Personal Loot/Prisoners**: Spoils go to your lord.
 - **No Starvation**: Your lord provides food (embedded food sharing; starvation cohesion penalties are compensated).
-- **Wages**: Paid daily based on your rank.
+- **Wages**: Daily wages accrue into a muster ledger; paid periodically at pay muster incidents (~12 days) with multiple payout options (Standard Pay, Corruption Challenge, Side Deal, Final Muster).
 
 ### ⚔️ Battle System
 - **Automatic Deployment**: You spawn in your assigned formation (Infantry, Archer, Cavalry, etc.).
@@ -29,9 +22,10 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - **No Order of Battle**: The deployment screen is suppressed for immersion.
 
 ### 🎖️ Rank & Progression
-- **6 Tiers**: Levy → Footman → Serjeant → Man-at-Arms → Banner Serjeant → Household Guard.
-- **Promotions**: Earn XP from battles and kills to reach the next tier.
-- **Rewards**: Higher daily wages and access to better equipment.
+- **6 Tiers**: Levy (Tier 1) → Footman (Tier 2) → Serjeant (Tier 3) → Man-at-Arms (Tier 4) → Banner Serjeant (Tier 5) → Household Guard (Tier 6).
+- **Promotions**: Earn XP from battles and kills (+25 daily, +25 per battle, +1-2 per kill) to reach the next tier.
+- **XP Thresholds**: Tier 2 (800 XP), Tier 3 (3,000 XP), Tier 4 (6,000 XP), Tier 5 (11,000 XP), Tier 6 (19,000 XP).
+- **Rewards**: Higher daily wages (accrued to muster ledger), access to better equipment, and command privileges (Tier 4+: personal retinue).
 
 ### 📋 Duties System
 - **Daily Assignments**: Choose a duty in the Camp Menu to earn bonus XP and Gold.
@@ -41,9 +35,9 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - **Passive Training**: Gain skill XP daily based on your formation (e.g., Athletics for Infantry, Riding for Cavalry).
 
 ### 📦 Equipment
-- **Quartermaster**: Visit the Quartermaster in the Camp Menu to purchase gear.
+- **Quartermaster**: Visit the Quartermaster from the **Enlisted Status** menu to **purchase** gear (prices use `soldier_tax`), and sell gear back via **buyback**.
 - **Tiered Kits**: Unlocks culture-specific equipment matching your rank (e.g., Legionary gear for Empire).
-- **Allowance**: Officers receive equipment discounts.
+- **Discounts**: Provisioner duty / Quartermaster role gets 15% better Quartermaster prices.
 
 ### ⚓ Naval Support
 - Fully compatible with naval mods.
@@ -52,11 +46,19 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 - **Naval Exclusion**: Lords cannot use your ships for navigation.
 - **Stranding Protection**: Prevents the Naval DLC stranded-at-sea UI while enlisted when your lord/army has ships; only triggers raft state when no naval capability remains.
 
-### 🚪 Retirement
-- **Term of Service**: 252 days (3 years).
-- **Honorable Discharge**: Retire with a gold bonus and relation boost.
-- **Re-enlist**: Sign on for another year for a large signing bonus.
-- **Desertion**: Leave early at the cost of honor (crime rating + relation penalty).
+### 🚪 Discharge & Retirement
+- **Pending Discharge**: Request discharge in the Camp ("My Camp") menu; resolves at the next pay muster (Final Muster branch).
+- **Discharge Bands**: Service length determines rewards:
+  - **Washout** (<100 days): Relation penalties, no pension, gear stripped.
+  - **Honorable** (100-199 days): Relation bonuses, severance gold, pension 50/day, keep armor/lose weapons.
+  - **Veteran/Heroic** (200+ days): Larger relation bonuses, severance gold, pension 100/day, same gear handling.
+  - **Smuggle** (deserter): Keep all gear, crime +30, relation penalties, no pension.
+- **Pensions**: Daily payments pause on re-enlistment, stop if relation drops or at war, update on next retirement to new band.
+- **Re-entry System**: When re-enlisting with the same faction, your reservist record provides benefits:
+  - **Washout/Deserter**: Start at Tier 1 (raw recruit), probation status (reduced wages, fatigue cap).
+  - **Honorable Discharge**: Start at Tier 3 (NCO path), +500 XP bonus, +5 relation bonus.
+  - **Veteran/Heroic Discharge**: Start at Tier 4 (officer path), +1,000 XP bonus, +10 relation bonus.
+- **Probation**: Applied on washout/deserter re-entry; reduces wage multiplier and caps fatigue; clears on pay muster resolution or after configurable duration.
 
 ## Installation
 
@@ -72,7 +74,7 @@ Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks
 ## Configuration
 
 Customize the mod via JSON files in `Modules\Enlisted\ModuleData\Enlisted\`:
-- `enlisted_config.json`: Wages, XP thresholds, retirement rules.
+- `enlisted_config.json`: Wages, XP thresholds, pay muster intervals, discharge/retirement rules, probation settings.
 - `duties_system.json`: Duty definitions and rewards.
 - `settings.json`: Logging levels.
 
@@ -92,4 +94,4 @@ Logs are located in `<Bannerlord>\Modules\Enlisted\Debugging\`:
 - Include logs: `Modules\Enlisted\Debugging\enlisted.log` and `conflicts.log` (zip if large).
 - If crashing, include crash folder from `C:\ProgramData\Mount and Blade II Bannerlord\crashes\` (zip).
 - List Bannerlord version, Harmony version, and full mod list with load order.
-- Note how you installed (Steam Workshop vs Nexus) and steps to reproduce the issue.
+- Note how you installed and steps to reproduce the issue.

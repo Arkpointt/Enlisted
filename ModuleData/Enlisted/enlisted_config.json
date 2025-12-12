@@ -9,6 +9,7 @@
         "mod_version": "0.6.0"
     },
     "gameplay": {
+        "reserve_troop_threshold": 100,
         "desertion_grace_period_days": 14,
         "leave_max_days": 14
     },
@@ -28,11 +29,23 @@
         "lord_relation_bonus": 30,
         "faction_reputation_bonus": 30,
         "other_lords_relation_bonus": 15,
-        "other_lords_min_relation": 50
+        "other_lords_min_relation": 50,
+        "pension_honorable_daily": 50,
+        "pension_veteran_daily": 100,
+        "pension_relation_stop_threshold": 0,
+        "severance_honorable": 3000,
+        "severance_veteran": 10000,
+        "debug_skip_gear_stripping": false,
+        "probation_days": 12,
+        "probation_wage_multiplier": 0.5,
+        "probation_fatigue_cap": 18,
+        "commander_reentry_fine_gold": 3000
     },
     "finance": {
         "show_in_clan_tooltip": true,
         "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
+        "payday_interval_days": 12,
+        "payday_jitter_days": 1,
         "wage_formula": {
             "base_wage": 10,
             "level_multiplier": 1,

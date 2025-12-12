@@ -18,6 +18,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
     public sealed class EnlistedIncidentsBehavior : CampaignBehaviorBase
     {
         private Incident _bagCheckIncident;
+        private Incident _payMusterIncident;
         public static EnlistedIncidentsBehavior Instance { get; private set; }
 
         public EnlistedIncidentsBehavior()
@@ -38,6 +39,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             RegisterBagCheckIncident();
+            RegisterPayMusterIncident();
         }
 
         private void RegisterBagCheckIncident()
@@ -54,15 +56,98 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     CampaignTime.Days(365f),
                     _ => true);
 
-                _bagCheckIncident.AddOption("{=qm_stow_all}\"Stow it all\" (50g)", new List<IncidentEffect>());
-                _bagCheckIncident.AddOption("{=qm_sell_all}\"Sell it all\" (60%)", new List<IncidentEffect>());
-                _bagCheckIncident.AddOption("{=qm_smuggle_one}\"I'm keeping one thing\" (Roguery 30+)", new List<IncidentEffect>());
+                // NOTE: Incident options only "do something" if they have effects and/or a consequence delegate.
+                // Without either, the UI will show "Nothing happens" and no gameplay changes will occur.
+                _bagCheckIncident.AddOption(
+                    "{=qm_stow_all}\"Stow it all\" (50g)",
+                    new List<IncidentEffect>
+                    {
+                        IncidentEffect.Custom(
+                            condition: () => true,
+                            consequence: () =>
+                            {
+                                // Reuse the same logic as the inquiry fallback so this stays consistent.
+                                EnlistmentBehavior.Instance?.HandleBagCheckChoice("stash");
+                                return new List<TextObject>
+                                {
+                                    new TextObject("{=qm_stow_hint}Move every scrap into the baggage wagon and pay the clerk his fee.")
+                                };
+                            },
+                            hint: _ => new List<TextObject>
+                            {
+                                new TextObject("{=qm_stow_hint}Move every scrap into the baggage wagon and pay the clerk his fee.")
+                            })
+                    });
+
+                _bagCheckIncident.AddOption(
+                    "{=qm_sell_all}\"Sell it all\" (60%)",
+                    new List<IncidentEffect>
+                    {
+                        IncidentEffect.Custom(
+                            condition: () => true,
+                            consequence: () =>
+                            {
+                                EnlistmentBehavior.Instance?.HandleBagCheckChoice("sell");
+                                return new List<TextObject>
+                                {
+                                    new TextObject("{=qm_sell_hint}Liquidate the lot at a battlefield rate and march off heavier in coin.")
+                                };
+                            },
+                            hint: _ => new List<TextObject>
+                            {
+                                new TextObject("{=qm_sell_hint}Liquidate the lot at a battlefield rate and march off heavier in coin.")
+                            })
+                    });
+
+                _bagCheckIncident.AddOption(
+                    "{=qm_smuggle_one}\"I'm keeping one thing\" (Roguery 30+)",
+                    new List<IncidentEffect>
+                    {
+                        IncidentEffect.Custom(
+                            condition: () => true,
+                            consequence: () =>
+                            {
+                                EnlistmentBehavior.Instance?.HandleBagCheckChoice("smuggle");
+                                return new List<TextObject>
+                                {
+                                    new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, it’s gone.")
+                                };
+                            },
+                            hint: _ => new List<TextObject>
+                            {
+                                new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, it’s gone.")
+                            })
+                    });
 
                 ModLogger.Info("Incident", "Registered enlistment bag-check incident.");
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Incident", $"Failed to register bag-check incident: {ex.Message}");
+            }
+        }
+
+        private void RegisterPayMusterIncident()
+        {
+            try
+            {
+                _payMusterIncident =
+                    Game.Current.ObjectManager.RegisterPresumedObject(new Incident("incident_enlisted_pay_muster"));
+                _payMusterIncident.Initialize(
+                    "{=enlisted_pay_muster_title}Pay Muster",
+                    "{=enlisted_pay_muster_body}The paymaster calls the muster. Step forward to receive your pay.",
+                    IncidentsCampaignBehaviour.IncidentTrigger.EnteringTown,
+                    IncidentsCampaignBehaviour.IncidentType.TroopSettlementRelation,
+                    CampaignTime.Days(365f),
+                    _ => true);
+
+                _payMusterIncident.AddOption("{=enlisted_pay_standard}Accept your pay", new List<IncidentEffect>());
+
+                ModLogger.Info("Incident", "Registered pay muster incident.");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Incident", $"Failed to register pay muster incident: {ex.Message}");
             }
         }
 
@@ -92,6 +177,109 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error("Incident", $"Error triggering bag-check incident: {ex.Message}");
                 EnlistmentBehavior.Instance?.ShowBagCheckInquiryFallback();
+            }
+        }
+
+        public void TriggerPayMusterIncident()
+        {
+            try
+            {
+                // For now, use inquiry to ensure callbacks fire consistently.
+                ShowPayMusterInquiryFallback();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Incident", $"Error triggering pay muster incident: {ex.Message}");
+                ShowPayMusterInquiryFallback();
+            }
+        }
+
+        private void ShowPayMusterInquiryFallback()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var dischargePending = enlistment?.IsPendingDischarge == true;
+                var pendingPay = enlistment?.PendingMusterPay ?? 0;
+                ModLogger.Info("Pay",
+                    $"Pay muster prompt opened (PendingPay={pendingPay}, DischargePending={dischargePending})");
+
+                var options = new List<InquiryElement>();
+
+                options.Add(new InquiryElement(
+                    dischargePending ? "final_muster" : "standard",
+                    dischargePending
+                        ? new TextObject("{=enlisted_final_muster}Resolve Final Muster").ToString()
+                        : new TextObject("{=enlisted_pay_standard}Accept your pay").ToString(),
+                    null,
+                    true,
+                    dischargePending
+                        ? new TextObject("{=enlisted_final_muster_hint}Process your discharge now.").ToString()
+                        : new TextObject("{=enlisted_pay_standard_hint}Take your accumulated muster pay.").ToString()));
+
+                // Corruption Challenge (Option 2)
+                options.Add(new InquiryElement(
+                    "corruption",
+                    new TextObject("{=enlisted_pay_corruption}Demand a Recount").ToString(),
+                    null,
+                    true,
+                    new TextObject("{=enlisted_pay_corruption_hint}Roguery/Charm check; better payout on success.").ToString()));
+
+                // Side Deal (Option 3)
+                options.Add(new InquiryElement(
+                    "side_deal",
+                    new TextObject("{=enlisted_pay_sidedeal}Side Deal for Select Gear").ToString(),
+                    null,
+                    true,
+                    new TextObject("{=enlisted_pay_sidedeal_hint}Trade most pay for a select gear pick.").ToString()));
+
+                if (dischargePending)
+                {
+                    options.Add(new InquiryElement(
+                        "smuggle",
+                        new TextObject("{=enlisted_final_muster_smuggle}Smuggle Out (Deserter)").ToString(),
+                        null,
+                        true,
+                        new TextObject("{=enlisted_final_muster_smuggle_hint}Keep all gear but take deserter penalties.").ToString()));
+                }
+
+                var inquiry = new MultiSelectionInquiryData(
+                    new TextObject("{=enlisted_pay_muster_title}Pay Muster").ToString(),
+                    new TextObject("{=enlisted_pay_muster_body}The paymaster calls the muster. Step forward to receive your pay.").ToString(),
+                    options,
+                    false,
+                    1,
+                    1,
+                    new TextObject("{=qm_continue}Continue").ToString(),
+                    new TextObject("{=str_cancel}Cancel").ToString(),
+                    selection =>
+                    {
+                        var choice = selection?.FirstOrDefault()?.Identifier as string;
+                        ModLogger.Info("Pay", $"Pay muster choice selected: {choice ?? "null"}");
+                        if (choice == "standard" || choice == "final_muster")
+                        {
+                            EnlistmentBehavior.Instance?.ResolvePayMusterStandard();
+                        }
+                        else if (choice == "corruption")
+                        {
+                            EnlistmentBehavior.Instance?.ResolveCorruptionMuster();
+                        }
+                        else if (choice == "side_deal")
+                        {
+                            EnlistmentBehavior.Instance?.ResolveSideDealMuster();
+                        }
+                        else if (choice == "smuggle")
+                        {
+                            EnlistmentBehavior.Instance?.ResolveSmuggleDischarge();
+                        }
+                    },
+                    _ => { EnlistmentBehavior.Instance?.DeferPayMuster(); });
+
+                MBInformationManager.ShowMultiSelectionInquiry(inquiry);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Incident", $"Pay muster inquiry failed: {ex.Message}");
             }
         }
 

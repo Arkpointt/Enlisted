@@ -1,4 +1,4 @@
-# Night Rest & Fatigue (Design Spec)
+# Night Rest & Fatigue (Design Draft — Not Implemented)
 
 ## Overview
 Make lord-led parties respect nightfall by pausing long marches in safe conditions and, when they cannot safely rest, apply a light temporary fatigue penalty to enlisted players. No global time control changes.
@@ -81,27 +81,7 @@ Phase 4 – Polish & UX
 - Minimal UI hint (optional): status line in enlisted menu when fatigued.
 - Final logging level tuning.
 
-## Player Fatigue System (for camp activities and UI 24/24)
-- Goal: Show an enlisted-only fatigue meter in the main enlisted menu (e.g., `24/24`, 1 pip per in-game hour). Consumed by camp activities; replenished by successful night rest. Contained fully inside Enlisted systems to limit mod conflicts.
-- Storage:
-  - Persist in `EnlistmentBehavior.SyncData` as ints: `fatigueMax` (default 24), `fatigueCurrent`.
-  - Reset or clamp on enlist start/discharge; survive save/load.
-- Flow:
-  - Hourly tick: if enlisted and not prisoner/leave, increment fatigue when resting at night; decrement when flagged as “forced march” (no-rest counter high) or when camp activities consume it.
-  - Night rest success: refill up to max (e.g., +3 per restful night hour, capped at `fatigueMax`).
-  - Forced march/no rest: drain (e.g., -1 per missed night hour) and can apply a temporary debuff flag while low.
-  - Cap: never below 0 or above max.
-- UI (enlisted_status menu):
-  - Add a line `Fatigue : {FATIGUE_CURRENT}/{FATIGUE_MAX}` in the existing status text block.
-  - Only shown when enlisted; hide otherwise.
-- Camp activity hook (design placeholder):
-  - Camp actions cost fatigue (e.g., drills, crafting, scouting). Check `fatigueCurrent >= cost`; on success, deduct.
-  - If insufficient fatigue, show a polite message and block the action.
-- Config knobs (enlisted_config.json):
-  - `fatigue_enabled` (bool), `fatigue_max` (int, default 24), `fatigue_rest_gain_per_hour`, `fatigue_forced_march_loss_per_hour`, `fatigue_minimum_for_camp_actions` (optional).
-  - Default off until validated.
-- Safety/compat:
-  - No global time control changes; no party visibility/active toggles for fatigue.
-  - All logic confined to Enlisted behaviors and menu text; no changes to native menus or shared globals.
-  - Skip tick changes while in battle/siege/raid/naval to avoid side effects; treat reserve and captivity as neutral (no gain/loss).
+## Player fatigue (current system)
+Enlisted already has an implemented fatigue counter used by pay muster choices and probation. See:
+- [Camp Fatigue](../Core/camp-fatigue.md)
 

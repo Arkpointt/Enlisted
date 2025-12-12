@@ -117,7 +117,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         public static void CaptureTimeStateBeforeMenuActivation()
         {
             CapturedTimeMode = Campaign.Current?.TimeControlMode;
-            ModLogger.Info("Quartermaster", $"Captured time state: {CapturedTimeMode}");
+            // Debug-only: useful for diagnosing time-control issues without spamming normal logs.
+            ModLogger.Debug("Quartermaster", $"Captured time state: {CapturedTimeMode}");
         }
 
         /// <summary>
@@ -294,7 +295,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             // Return equipment submenu (wait menu with hidden progress)
             starter.AddWaitGameMenu(
                 "quartermaster_returns",
-                "Return Equipment\n{RETURN_TEXT}",
+                "Sell Equipment\n{RETURN_TEXT}",
                 OnQuartermasterReturnsInit,
                 QuartermasterWaitCondition,
                 QuartermasterWaitConsequence,
@@ -360,6 +361,34 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 OnSupplyManagementSelected,
                 false, 6);
+
+            // Sell equipment back to the quartermaster (Trade icon)
+            starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_sell",
+                new TextObject("{=qm_menu_return_equipment}Sell equipment").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    try
+                    {
+                        var hasAny = BuildReturnOptions().Count > 0;
+                        if (!hasAny)
+                        {
+                            args.IsEnabled = false;
+                            args.Tooltip = new TextObject("{=qm_return_none}No equipment to sell.");
+                        }
+                        else
+                        {
+                            args.Tooltip = new TextObject("{=qm_return_tooltip}Sell one item back to the quartermaster.");
+                        }
+                    }
+                    catch
+                    {
+                        args.IsEnabled = false;
+                    }
+                    return true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_returns"),
+                false, 7);
                 
             // Return to enlisted status (Leave icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",
@@ -500,8 +529,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 // Cache result for performance
                 _troopEquipmentVariants[cacheKey] = variants;
-                
-                ModLogger.Info("Quartermaster", $"Discovered {variants.Sum(kvp => kvp.Value.Count)} equipment variants for {selectedTroop.Name}");
+
+                // Avoid log spam: only log discovery once per troop type per session.
+                var total = variants.Sum(kvp => kvp.Value.Count);
+                ModLogger.LogOnce($"qm_variants_discovered_{cacheKey}", "Quartermaster",
+                    $"Discovered {total} equipment variants for {selectedTroop.Name}");
                 return variants;
             }
             catch (Exception ex)
@@ -613,59 +645,21 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         /// <summary>
         /// Calculate cost for requesting a specific equipment variant.
-        /// Integrates with existing equipment pricing system.
+        /// Purchase-based: cost is derived from the item's base value and quartermaster pricing rules.
         /// </summary>
         public int CalculateVariantCost(ItemObject requestedItem, ItemObject currentItem, EquipmentIndex slot)
         {
             try
             {
-                if (requestedItem == null || currentItem == null)
+                _ = currentItem;
+                _ = slot;
+
+                if (requestedItem == null)
                 {
                     return 0;
                 }
-                
-                // Base cost calculation
-                var itemValue = requestedItem.Value;
-                var currentValue = currentItem.Value;
-                var costDifference = Math.Max(itemValue - currentValue, 0);
-                
-                // Slot-based multipliers
-                var slotMultiplier = slot switch
-                {
-                    EquipmentIndex.Weapon0 or EquipmentIndex.Weapon1 or 
-                    EquipmentIndex.Weapon2 or EquipmentIndex.Weapon3 => 1.0f, // Base cost for weapons
-                    EquipmentIndex.Head => 0.3f,        // Helmets are cheaper to swap
-                    EquipmentIndex.Body => 0.8f,        // Armor is significant cost
-                    EquipmentIndex.Leg => 0.2f,         // Boots are minor cost
-                    EquipmentIndex.Gloves => 0.2f,      // Gloves are minor cost
-                    EquipmentIndex.Cape => 0.2f,        // Capes are minor cost
-                    EquipmentIndex.Horse => 2.0f,       // Horses are expensive
-                    EquipmentIndex.HorseHarness => 0.5f, // Horse armor moderate cost
-                    _ => 1.0f
-                };
-                
-                // Formation-based multipliers (from existing EquipmentManager)
-                var formation = DetectTroopFormation(GetPlayerSelectedTroop());
-                var formationMultiplier = formation switch
-                {
-                    FormationType.Infantry => 1.0f,        // Base cost
-                    FormationType.Archer => 1.3f,          // +30% for ranged equipment
-                    FormationType.Cavalry => 2.0f,         // +100% for mounted equipment
-                    FormationType.HorseArcher => 2.5f,     // +150% for elite mounted ranged
-                    _ => 1.0f
-                };
-                
-                // Service fee (quartermaster profit)
-                var serviceFee = 10; // Base 10 gold service charge
-                
-                // Quartermaster duty discount (15% off for provisioners)
-                var duties = EnlistedDutiesBehavior.Instance;
-                var isProvisioner = duties?.ActiveDuties.Contains("provisioner") == true;
-                var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
-                var discountMultiplier = (isProvisioner || isQuartermaster) ? 0.85f : 1.0f; // 15% discount
-                
-                var finalCost = (int)((costDifference * slotMultiplier * formationMultiplier * discountMultiplier) + serviceFee);
-                return Math.Max(finalCost, 5); // Minimum 5 gold
+
+                return CalculateQuartermasterPrice(requestedItem);
             }
             catch
             {
@@ -674,6 +668,9 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
+        /// Calculate the quartermaster purchase price for an item.
+        /// Applies the configured soldier tax, plus any applicable duty/officer discounts.
+        /// </summary>
         private int CalculateQuartermasterPrice(ItemObject item)
         {
             try
@@ -686,12 +683,42 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
                 var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
                 var basePrice = item.Value;
-                var price = (int)MathF.Max(5f, basePrice * soldierTax);
-                return price;
+
+                // Quartermaster/provisioner discount.
+                var duties = EnlistedDutiesBehavior.Instance;
+                var isProvisioner = duties?.ActiveDuties.Contains("provisioner") == true;
+                var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
+                var discountMultiplier = (isProvisioner || isQuartermaster) ? 0.85f : 1.0f;
+
+                var price = basePrice * soldierTax * discountMultiplier;
+                var roundedPrice = Convert.ToInt32(MathF.Round(price));
+                return Math.Max(5, roundedPrice);
             }
             catch
             {
                 return 25; // Safe fallback
+            }
+        }
+
+        private int CalculateQuartermasterBuybackPrice(ItemObject item)
+        {
+            try
+            {
+                if (item == null)
+                {
+                    return 0;
+                }
+
+                var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
+                var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
+                var basePrice = item.Value;
+                var priceFloat = MathF.Max(0f, basePrice * buybackRate);
+                var price = (int)priceFloat;
+                return Math.Max(price, 0);
+            }
+            catch
+            {
+                return 0;
             }
         }
 
@@ -730,21 +757,30 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
 
                 var enlistment = EnlistmentBehavior.Instance;
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
-                    ModLogger.Error("Quartermaster", "Equipment request failed - player not enlisted");
+                    ModLogger.Warn("Quartermaster", "Equipment request blocked: player not enlisted");
                     return;
                 }
                 
                 var hero = Hero.MainHero;
                 var requestedItem = variant.Item;
                 var slot = variant.Slot;
+
+                // If the player selected their currently-equipped non-weapon item, treat as no-op (avoid charging / affordability warnings).
+                // Weapons are handled differently because duplicates can be purchased into other weapon slots.
+                if (variant.IsCurrent && !IsWeaponSlot(slot) && !IsConsumableItem(requestedItem))
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_already_equipped}Already equipped.").ToString(), Colors.Yellow));
+                    return;
+                }
                 
                 // PRICE CHECK
-                var cost = Math.Max(variant.Cost, CalculateQuartermasterPrice(requestedItem));
+                var cost = variant.Cost > 0 ? variant.Cost : CalculateQuartermasterPrice(requestedItem);
                 if (hero.Gold < cost)
                 {
-                    var msg = new TextObject("{=qm_cannot_afford}You can’t afford this. Cost: {COST} denars.");
+                    var msg = new TextObject("{=qm_cannot_afford}You canâ€™t afford this. Cost: {COST} denars.");
                     msg.SetTextVariable("COST", cost);
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return;
@@ -777,7 +813,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         else
                         {
                             // Fallback if inventory unavailable (shouldn't happen)
-                            var noSlotsMsg = new TextObject("{=qm_no_weapon_slots}Your hands are full, soldier. Return something to the armory first.");
+                            var noSlotsMsg = new TextObject("{=qm_no_weapon_slots}Your hands are full, soldier. Sell something back to the quartermaster first.");
                             InformationManager.DisplayMessage(new InformationMessage(noSlotsMsg.ToString(), Colors.Yellow));
                             ModLogger.Info("Quartermaster", $"No available weapon slot for {requestedItem.Name}");
                             return;
@@ -785,13 +821,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                     }
                 }
                 
-                // If we added to inventory, record it and skip equipment slot change
+                // If we added to inventory, skip equipment slot change
                 if (addedToInventory)
                 {
-                    // Record for accountability (item is now in inventory)
-                    var troopSelection = TroopSelectionManager.Instance;
-                    troopSelection?.RecordIssuedItem(requestedItem, EquipmentIndex.None);
-                    
                     // Charge cost
                     ChargeGold(hero, cost, requestedItem);
                     return;
@@ -800,12 +832,24 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var currentItem = hero.BattleEquipment[targetSlot].Item;
                 var previousItemName = currentItem?.Name?.ToString() ?? "empty";
 
+                // No-op: already equipped in that slot.
+                if (currentItem != null && currentItem.StringId == requestedItem.StringId)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_already_equipped}Already equipped.").ToString(), Colors.Yellow));
+                    return;
+                }
+
+                // Preserve the replaced item (purchase-based system: don't delete player property).
+                // For weapons, FindBestWeaponSlot only returns empty slots, so this typically applies to armor/mount slots.
+                var roster = PartyBase.MainParty?.ItemRoster;
+                if (roster != null && !hero.BattleEquipment[targetSlot].IsEmpty && hero.BattleEquipment[targetSlot].Item != null)
+                {
+                    roster.AddToCounts(hero.BattleEquipment[targetSlot], 1);
+                }
+
                 // Apply the equipment change to the target slot
                 ApplyEquipmentSlotChange(hero, requestedItem, targetSlot);
-                
-                // Record newly issued equipment for accountability tracking
-                var troopSelectionMgr = TroopSelectionManager.Instance;
-                troopSelectionMgr?.RecordIssuedItem(requestedItem, targetSlot);
                 
                 // Success notification
                 var successMessage = new TextObject("{=qm_equipment_issued_buy}Purchased {ITEM_NAME} for {COST} denars.");
@@ -890,10 +934,22 @@ namespace Enlisted.Features.Equipment.Behaviors
             var partyInventory = PartyBase.MainParty?.ItemRoster;
             if (partyInventory != null)
             {
-                var targetItem = MBObjectManager.Instance.GetObject<ItemObject>(itemStringId);
-                if (targetItem != null)
+                // IMPORTANT: ItemRoster can contain multiple elements for the same ItemObject with different modifiers.
+                // GetItemNumber(ItemObject) only returns the count of the first matching element, not the total across modifiers.
+                // Sum all matching roster elements by StringId to get an accurate total.
+                for (var i = 0; i < partyInventory.Count; i++)
                 {
-                    count += partyInventory.GetItemNumber(targetItem);
+                    var element = partyInventory.GetElementCopyAtIndex(i);
+                    if (element.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    var rosterItem = element.EquipmentElement.Item;
+                    if (rosterItem?.StringId == itemStringId)
+                    {
+                        count += element.Amount;
+                    }
                 }
             }
             
@@ -917,13 +973,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             void TryAddItem(ItemObject item)
             {
                 if (!IsReturnableItem(item) || !seen.Add(item.StringId))
-                {
-                    return;
-                }
-
-                // Only allow items that were issued by the quartermaster
-                var wasIssued = TroopSelectionManager.Instance?.IsIssuedItem(item.StringId) == true;
-                if (!wasIssued)
                 {
                     return;
                 }
@@ -981,9 +1030,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (i < _returnOptions.Count)
                 {
                     var option = _returnOptions[i];
-                    var text = new TextObject("{=qm_return_option_label}{ITEM_NAME} (x{COUNT}) - Return one");
+                    var buyback = CalculateQuartermasterBuybackPrice(option.Item);
+                    var text = new TextObject("{=qm_return_option_label}{ITEM_NAME} (x{COUNT}) - Sell one ({PRICE} denars)");
                     text.SetTextVariable("ITEM_NAME", option.Item.Name);
                     text.SetTextVariable("COUNT", option.Count);
+                    text.SetTextVariable("PRICE", buyback);
                     MBTextManager.SetTextVariable(variableName, text.ToString());
                 }
                 else
@@ -1030,7 +1081,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
 
                 args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                args.Tooltip = new TextObject("{=qm_return_tooltip}Return one item to the armory.");
+                args.Tooltip = new TextObject("{=qm_return_tooltip}Sell one item back to the quartermaster.");
                 return true;
             }
             catch
@@ -1054,23 +1105,31 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 var removed = TryReturnSingleItem(item);
                 var remaining = GetPlayerItemCount(Hero.MainHero, item.StringId);
-            var wasIssued = TroopSelectionManager.Instance?.IsIssuedItem(item.StringId) == true;
+                var buyback = removed ? CalculateQuartermasterBuybackPrice(item) : 0;
+                if (removed && buyback > 0)
+                {
+                    Hero.MainHero.ChangeHeroGold(buyback);
+                }
 
                 var message = removed
-                    ? new TextObject("{=qm_return_success}Returned {ITEM_NAME} to the armory.")
-                    : new TextObject("{=qm_return_none_left}No {ITEM_NAME} remains to return.");
+                    ? new TextObject("{=qm_return_success}Sold {ITEM_NAME} for {AMOUNT} denars.")
+                    : new TextObject("{=qm_return_none_left}No {ITEM_NAME} remains to sell.");
                 message.SetTextVariable("ITEM_NAME", item.Name);
+                if (removed)
+                {
+                    message.SetTextVariable("AMOUNT", buyback);
+                }
 
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Yellow));
 
                 ModLogger.Info("Quartermaster",
-                $"Return action: {item.Name}; removed={(removed ? "yes" : "no")}; remaining={remaining}; issued={wasIssued}");
+                    $"Sell action: {item.Name}; removed={(removed ? "yes" : "no")}; remaining={remaining}; buyback={buyback}");
 
-            // Track issued-item returns for diagnostics
-            if (removed && wasIssued)
-            {
-                ModLogger.IncrementSummary("quartermaster_returns");
-            }
+                // Track buybacks for diagnostics
+                if (removed)
+                {
+                    ModLogger.IncrementSummary("quartermaster_buyback");
+                }
 
                 // Refresh options after removal
                 _returnOptions.Clear();
@@ -1100,14 +1159,12 @@ namespace Enlisted.Features.Equipment.Behaviors
             // Prefer removing from inventory first to avoid stripping equipped gear if possible
             if (TryRemoveFromInventory(item))
             {
-                TroopSelectionManager.Instance?.MarkIssuedItemReturned(item.StringId);
                 return true;
             }
 
             var hero = Hero.MainHero;
             if (hero != null && TryRemoveFromEquipment(hero, item))
             {
-                TroopSelectionManager.Instance?.MarkIssuedItemReturned(item.StringId);
                 return true;
             }
 
@@ -1122,13 +1179,31 @@ namespace Enlisted.Features.Equipment.Behaviors
                 return false;
             }
 
-            if (roster.GetItemNumber(item) <= 0)
+            if (item == null)
             {
                 return false;
             }
 
-            roster.AddToCounts(new EquipmentElement(item), -1);
-            return true;
+            // IMPORTANT: Inventory can contain multiple EquipmentElements for the same ItemObject (modifiers).
+            // Removing by a freshly-constructed EquipmentElement(item) can fail if the roster contains only modified variants.
+            // Instead, find an existing roster element and remove that exact EquipmentElement.
+            for (var i = 0; i < roster.Count; i++)
+            {
+                var element = roster.GetElementCopyAtIndex(i);
+                if (element.Amount <= 0)
+                {
+                    continue;
+                }
+
+                var ee = element.EquipmentElement;
+                if (ee.Item?.StringId == item.StringId)
+                {
+                    roster.AddToCounts(ee, -1);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool TryRemoveFromEquipment(Hero hero, ItemObject item)
@@ -1213,11 +1288,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                 args.MenuContext.SetBackgroundMeshName(backgroundMesh);
                 
                 // Validate enlisted state
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
                     MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", 
                         "You must be enlisted to access quartermaster services.");
-                    ModLogger.Error("Quartermaster", "Quartermaster access denied - player not enlisted");
+                    // Not an error: users can reach this via UI navigation in odd states.
+                    ModLogger.Warn("Quartermaster", "Quartermaster access denied: player not enlisted");
                     return;
                 }
                 
@@ -1250,7 +1326,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     sb.AppendLine($"Current Equipment: {_selectedTroop.Name?.ToString() ?? "Unknown"}");
                     sb.AppendLine($"Your Gold: {Hero.MainHero.Gold} denars");
                     sb.AppendLine();
-                    sb.AppendLine("Your current troop type uses standard military issue equipment.");
+                    sb.AppendLine("Your current troop type has no purchasable equipment variants.");
                     sb.AppendLine("No equipment variants are available for this troop type.");
                     sb.AppendLine();
                     sb.AppendLine("Equipment variants may become available when you advance");
@@ -1378,7 +1454,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var items = slotItems.Value;
                 
                 // Apply horse-only filter if requested
-                if (_forceHorseOnly)
+                if (horseOnlyFilter)
                 {
                     if (slot != EquipmentIndex.Horse && slot != EquipmentIndex.HorseHarness)
                     {
@@ -1397,10 +1473,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var isCurrent = item == currentItem;
-                        
-                        // No item limits; allow duplicates freely
-                        var isAtLimit = false;
-                        var allowsDuplicate = true;
+
+                        var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
+                        var limit = allowsDuplicate ? 2 : 1;
+                        var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= limit;
                         
                         var price = CalculateQuartermasterPrice(item);
                         var canAfford = hero.Gold >= price;
@@ -1555,23 +1631,27 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 var sb = new StringBuilder();
                 var duties = EnlistedDutiesBehavior.Instance;
+                var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
+                var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
+                var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
                 
                 // In-character quartermaster dialogue
-                var qmDialogue = new TextObject("{=qm_intro_dialogue}\"Take what you need, soldier. The army provides. Mind your kit - anything missing gets docked from your pay.\"");
+                var qmDialogue = new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"");
                 sb.AppendLine(qmDialogue.ToString());
                 sb.AppendLine();
                 
                 // Current status section
-                sb.AppendLine("— Current Status —");
+                sb.AppendLine("â€” Current Status â€”");
                 sb.AppendLine();
                 sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
+                sb.AppendLine($"Your Gold: {Hero.MainHero.Gold} denars");
                 sb.AppendLine();
                 
-                // Issue limits section
-                sb.AppendLine("— Issue Limits —");
+                // Pricing section
+                sb.AppendLine("â€” Pricing â€”");
                 sb.AppendLine();
-                sb.AppendLine("Armor & Shields: 1 each");
-                sb.AppendLine("Weapons & Ammo: 2 each");
+                sb.AppendLine($"Soldier tax: x{soldierTax:0.00}");
+                sb.AppendLine($"Buyback: {(int)(buybackRate * 100f)}% of base value");
                 sb.AppendLine();
                 
                 // Officer privileges if applicable
@@ -1580,7 +1660,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 if (isProvisioner || isQuartermaster)
                 {
-                    sb.AppendLine("— Officer Access —");
+                    sb.AppendLine("â€” Officer Access â€”");
                     sb.AppendLine();
                     sb.AppendLine("Extended equipment options available.");
                     sb.AppendLine();
@@ -1661,7 +1741,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var status = option.IsCurrent ? "(Current Equipment)" :
                                 option.CanAfford ? $"Cost: {option.Cost} denars" :
                                 $"Cost: {option.Cost} denars (Insufficient funds)";
-                    var marker = option.IsCurrent ? "●" : "○";
+                    var marker = option.IsCurrent ? "â—" : "â—‹";
                     
                     sb.AppendLine($"{marker} {option.Item.Name}");
                     sb.AppendLine($"  {status}");
@@ -1707,12 +1787,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (_returnOptions.Count == 0)
                 {
                     MBTextManager.SetTextVariable("RETURN_TEXT",
-                        new TextObject("{=qm_return_none}No equipment to return.").ToString());
+                        new TextObject("{=qm_return_none}No equipment to sell.").ToString());
                     return;
                 }
 
                 var sb = new StringBuilder();
-                sb.AppendLine(new TextObject("{=qm_return_intro}Return issued gear to the armory. Select an item to hand back.").ToString());
+                sb.AppendLine(new TextObject("{=qm_return_intro}Sell equipment back to the quartermaster. Select an item to sell.").ToString());
                 sb.AppendLine();
 
                 foreach (var option in _returnOptions.Take(5))
@@ -1772,7 +1852,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                if (!enlistment?.IsEnlisted == true)
+                if (enlistment?.IsEnlisted != true)
                 {
                     return false;
                 }
@@ -1919,7 +1999,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 // Filter to purchasable variants - only exclude items at the 2-item limit
                 var availableVariants = variants
-                    .Where(v => !v.IsAtLimit)
+                    .Where(v => !v.IsAtLimit && !v.IsCurrent)
                     .Take(5).ToList(); // Limit to 5 for conversation
                 
                 if (availableVariants.Count > 1)
@@ -2005,11 +2085,11 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 // Find available variants that player hasn't hit the 2-item limit on
-                var availableVariants = variants.Where(v => !v.IsAtLimit).ToList();
+                var availableVariants = variants.Where(v => !v.IsAtLimit && !v.IsCurrent && v.CanAfford).ToList();
                 
                 if (availableVariants.Count > 0)
                 {
-                    var selectedVariant = availableVariants.First();
+                    var selectedVariant = availableVariants.OrderBy(v => v.Cost).First();
                     
                     // Apply the equipment variant (priced purchase)
                     RequestEquipmentVariant(selectedVariant);
@@ -2319,7 +2399,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"CollectWeaponVariantsFromNodes failed: {ex.Message}");
+                ModLogger.Error("Quartermaster",
+                    $"CollectWeaponVariantsFromNodes failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
             }
             return variants;
         }
@@ -2376,7 +2457,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"CollectWeaponVariantsFromAllTiers failed: {ex.Message}");
+                ModLogger.Error("Quartermaster",
+                    $"CollectWeaponVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
             }
             return variants;
         }
@@ -2406,16 +2488,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
-                        
-                        var isAtLimit = false;
-                        var allowsDuplicate = true;
+
+                        var allowsDuplicate = item.WeaponComponent?.PrimaryWeapon?.IsShield != true;
+                        var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= 2;
+                        var isCurrent = item == currentItem;
+                        var canAfford = hero.Gold >= cost;
                         
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
-                            IsCurrent = item == currentItem,
-                            CanAfford = true,
+                            IsCurrent = isCurrent,
+                            CanAfford = canAfford,
                             Slot = slot,
                             IsOfficerExclusive = false,
                             AllowsDuplicatePurchase = allowsDuplicate,
@@ -2493,7 +2577,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"CollectArmorVariantsFromAllTiers failed: {ex.Message}");
+                ModLogger.Error("Quartermaster",
+                    $"CollectArmorVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
             }
             return variants;
         }
@@ -2523,19 +2608,22 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
-                        
-                        var isAtLimit = false;
+
+                        // Armor isn't duplicate-purchasable; use a computed expression to avoid false-positive "always false".
+                        var allowsDuplicate = IsConsumableItem(item);
+                        var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= 1;
                         var isCurrent = item == currentItem;
+                        var canAfford = hero.Gold >= cost;
                         
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
                             IsCurrent = isCurrent,
-                            CanAfford = true,
+                            CanAfford = canAfford,
                             Slot = slot,
                             IsOfficerExclusive = false,
-                            AllowsDuplicatePurchase = true,
+                            AllowsDuplicatePurchase = allowsDuplicate,
                             IsAtLimit = isAtLimit
                         });
                     }
@@ -2656,7 +2744,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"CollectArmorVariantsFromNodes failed: {ex.Message}");
+                ModLogger.Error("Quartermaster",
+                    $"CollectArmorVariantsFromNodes failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
             }
             return variants;
         }
@@ -2684,16 +2773,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var item in items)
                     {
                         var cost = CalculateVariantCost(item, currentItem, slot);
-                        
-                        var isAtLimit = false;
-                        var allowsDuplicate = true;
+
+                        var allowsDuplicate = IsWeaponSlot(slot) || IsConsumableItem(item);
+                        var limit = allowsDuplicate ? 2 : 1;
+                        var isAtLimit = GetPlayerItemCount(hero, item.StringId) >= limit;
+                        var isCurrent = item == currentItem;
+                        var canAfford = hero.Gold >= cost;
                         
                         optionList.Add(new EquipmentVariantOption
                         {
                             Item = item,
                             Cost = cost,
-                            IsCurrent = item == currentItem,
-                            CanAfford = !isAtLimit, // Can get if not at limit (equipment is free)
+                            IsCurrent = isCurrent,
+                            CanAfford = canAfford,
                             Slot = slot,
                             IsOfficerExclusive = false,
                             AllowsDuplicatePurchase = allowsDuplicate,
@@ -3043,7 +3135,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var party = MobileParty.MainParty;
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                sb.AppendLine("— Supply Status —");
+                sb.AppendLine("â€” Supply Status â€”");
                 sb.AppendLine();
                 
                 // Current supply status with cleaner formatting
@@ -3055,10 +3147,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Officer benefits display with modern formatting
                 if (duties?.GetCurrentOfficerRole() == "Quartermaster")
                 {
-                    sb.AppendLine("— Officer Benefits —");
-                    sb.AppendLine("• +50 party carry capacity");
-                    sb.AppendLine("• +15% food efficiency");
-                    sb.AppendLine("• Enhanced supply management options");
+                    sb.AppendLine("â€” Officer Benefits â€”");
+                    sb.AppendLine("â€¢ +50 party carry capacity");
+                    sb.AppendLine("â€¢ +15% food efficiency");
+                    sb.AppendLine("â€¢ Enhanced supply management options");
                     sb.AppendLine();
                 }
                 
@@ -3283,3 +3375,4 @@ namespace Enlisted.Features.Equipment.Behaviors
         public bool IsAtLimit { get; set; }
     }
 }
+

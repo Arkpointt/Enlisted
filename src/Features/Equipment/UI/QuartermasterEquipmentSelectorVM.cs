@@ -111,8 +111,8 @@ namespace Enlisted.Features.Equipment.UI
                 PlayerGoldText = $"Your Gold: {hero.Gold} denars";
                 CurrentEquipmentText = $"Current: {currentItem?.Name?.ToString() ?? "None"}";
                 
-                // Recalculate ALL variant states based on current player inventory
-                // This ensures buttons grey/ungrey correctly after acquiring or returning items
+                // Recalculate ALL variant states based on current gold/equipment.
+                // This ensures buttons enable/disable correctly after purchases.
                 RecalculateAllVariantStates(hero);
                 
                 // Refresh the character model to show updated equipment
@@ -169,7 +169,6 @@ namespace Enlisted.Features.Equipment.UI
             try
             {
                 var cardsUpdated = 0;
-                var atLimitCount = 0;
                 
                 foreach (var row in EquipmentRows)
                 {
@@ -180,28 +179,22 @@ namespace Enlisted.Features.Equipment.UI
                         {
                             continue;
                         }
-                        
-                        // Recalculate item count
-                        var itemCount = CountPlayerItems(hero, variant.Item.StringId);
-                        var itemLimit = GetSlotItemLimit(variant.Slot);
-                        
-                        // Update variant state
-                        variant.IsAtLimit = itemCount >= itemLimit;
-                        variant.CanAfford = !variant.IsAtLimit;
-                        
-                        // Update IsCurrent based on what's actually equipped now
-                        var currentItem = hero.BattleEquipment[variant.Slot].Item;
-                        variant.IsCurrent = variant.Item == currentItem;
-                        
+
+                        // No issue limits / no accountability in purchase-based Quartermaster.
+                        variant.IsAtLimit = false;
+
+                        // Update IsCurrent based on what's actually equipped now (slot-based).
+                        var currentItemForSlot = hero.BattleEquipment[variant.Slot].Item;
+                        variant.IsCurrent = variant.Item == currentItemForSlot;
+
+                        // Purchase affordability.
+                        variant.CanAfford = hero.Gold >= variant.Cost;
+
                         cardsUpdated++;
-                        if (variant.IsAtLimit)
-                        {
-                            atLimitCount++;
-                        }
                     }
                 }
                 
-                ModLogger.Debug("QuartermasterUI", $"Real-time refresh: {cardsUpdated} cards updated, {atLimitCount} at limit");
+                ModLogger.Debug("QuartermasterUI", $"Quartermaster refresh: {cardsUpdated} cards updated");
             }
             catch (Exception ex)
             {
@@ -228,10 +221,6 @@ namespace Enlisted.Features.Equipment.UI
                 if (quartermasterManager != null)
                 {
                     quartermasterManager.RequestEquipmentVariant(selectedVariant);
-                    
-                    // Update ALL variants with the same item ID to reflect new count/limit status
-                    // This ensures consistent state across duplicates in the grid
-                    UpdateVariantStatesAfterAcquisition(selectedVariant.Item.StringId);
                 }
                 
                 // Refresh the UI to reflect the acquisition (update item counts, limits, etc.)
@@ -244,101 +233,6 @@ namespace Enlisted.Features.Equipment.UI
             {
                 ModLogger.Error("QuartermasterUI", "Error applying selected equipment", ex);
             }
-        }
-        
-        /// <summary>
-        /// Update all variant states after an item is acquired.
-        /// Recalculates IsAtLimit based on current player inventory.
-        /// </summary>
-        private void UpdateVariantStatesAfterAcquisition(string acquiredItemId)
-        {
-            try
-            {
-                var hero = Hero.MainHero;
-                if (hero == null)
-                {
-                    return;
-                }
-                
-                // Update all cards in all rows that match this item
-                foreach (var row in EquipmentRows)
-                {
-                    foreach (var card in row.Cards)
-                    {
-                        var variant = card.GetVariant();
-                        if (variant?.Item?.StringId == acquiredItemId)
-                        {
-                            // Recalculate if at limit (weapons=unlimited, armor=1)
-                            var newCount = CountPlayerItems(hero, acquiredItemId);
-                            var itemLimit = GetSlotItemLimit(variant.Slot);
-                            variant.IsAtLimit = newCount >= itemLimit;
-                            variant.CanAfford = !variant.IsAtLimit;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("QuartermasterUI", $"Error updating variant states: {ex.Message}");
-            }
-        }
-        
-        /// <summary>
-        /// Get the item limit for a specific equipment slot.
-        /// Weapons have no limit, armor/accessory slots = 1 per type.
-        /// </summary>
-        private static int GetSlotItemLimit(EquipmentIndex slot)
-        {
-            // Weapon slots have no limit
-            if (slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3)
-            {
-                return int.MaxValue; // No limit for weapons
-            }
-            // Armor/accessory slots only allow 1 of each type
-            return 1;
-        }
-        
-        /// <summary>
-        /// Count how many of a specific item the player has (equipment + inventory).
-        /// </summary>
-        private static int CountPlayerItems(Hero hero, string itemId)
-        {
-            var count = 0;
-            
-            // Count in battle equipment
-            for (var i = EquipmentIndex.Weapon0; i <= EquipmentIndex.HorseHarness; i++)
-            {
-                if (hero.BattleEquipment[i].Item?.StringId == itemId)
-                {
-                    count++;
-                }
-            }
-            
-            // Count in civilian equipment
-            for (var i = EquipmentIndex.Weapon0; i <= EquipmentIndex.HorseHarness; i++)
-            {
-                if (hero.CivilianEquipment[i].Item?.StringId == itemId)
-                {
-                    count++;
-                }
-            }
-            
-            // Count in party inventory
-            var partyInventory = hero.PartyBelongedTo?.ItemRoster;
-            if (partyInventory != null)
-            {
-                for (var j = 0; j < partyInventory.Count; j++)
-                {
-                    var element = partyInventory.GetElementCopyAtIndex(j);
-                    var rosterItem = element.EquipmentElement.Item;
-                    if (rosterItem != null && rosterItem.StringId == itemId)
-                    {
-                        count += element.Amount;
-                    }
-                }
-            }
-            
-            return count;
         }
         
         /// <summary>

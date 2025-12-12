@@ -101,17 +101,13 @@ namespace Enlisted.Features.Equipment.UI
                 // Build item details for display, include price
                 var item = _variant.Item;
                 CostText = $"Price: {_variant.Cost} denars";
-                OnPropertyChanged(nameof(CostText));
                 
                 // Set item name and basic properties
                 ItemName = item.Name?.ToString() ?? "Unknown Item";
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
                 
-                // Enable acquisition as long as player can afford it
-                IsEnabled = _variant.CanAfford;
-                
-                // Determine slot limit for display purposes
+                // Determine slot type for enable/disable behavior (weapons can be bought repeatedly).
                 var isWeaponSlot = _variant.Slot is >= EquipmentIndex.Weapon0 and <= EquipmentIndex.Weapon3;
                 
                 // Set item image using ItemImageIdentifierVM for proper image display (1.3.4 API)
@@ -123,35 +119,23 @@ namespace Enlisted.Features.Equipment.UI
                 // Legacy support - combine stats into WeaponDetails for backwards compatibility
                 WeaponDetails = $"{PrimaryStats}\n{SecondaryStats}";
                 
-                // Set cost and status - equipment is FREE but limited by slot type
-                // Weapons allow 2, armor/accessories allow 1
-                if (_variant.IsAtLimit)
+                // Purchase-based status (no issue limits / no accountability).
+                if (_variant.IsCurrent)
                 {
-                    if (isWeaponSlot)
-                    {
-                        // Weapons: hit the 2-item limit
-                        CostText = new TextObject("{=qm_status_limit}Limit (2)").ToString();
-                        StatusText = new TextObject("{=qm_status_limit_hint}Two's the limit, soldier").ToString();
-                    }
-                    else
-                    {
-                        // Armor/accessories: hit the 1-item limit (currently equipped)
-                        CostText = new TextObject("{=qm_status_equipped}Equipped").ToString();
-                        StatusText = new TextObject("{=qm_status_equipped_hint}Already issued").ToString();
-                    }
+                    StatusText = new TextObject("{=qm_status_equipped}Equipped").ToString();
                 }
-                else if (_variant.IsCurrent && isWeaponSlot)
+                else if (!_variant.CanAfford)
                 {
-                    // Weapon currently equipped but can still get another (haven't hit limit of 2)
-                    CostText = new TextObject("{=qm_status_free}Free").ToString();
-                    StatusText = new TextObject("{=qm_status_get_another}Get Another").ToString();
+                    StatusText = "Insufficient funds";
                 }
                 else
                 {
-                    // Available to acquire - equipment is free
-                    CostText = new TextObject("{=qm_status_free}Free").ToString();
                     StatusText = new TextObject("{=qm_status_available}Available").ToString();
                 }
+
+                // Disable buying the currently-equipped non-weapon item (no-op purchase).
+                // Weapons can be purchased repeatedly (another copy goes to an empty weapon slot or inventory).
+                IsEnabled = _variant.CanAfford && (isWeaponSlot || !_variant.IsCurrent);
                 
                 // Notify UI of property changes for data binding updates
                 OnPropertyChanged(nameof(ItemName));
@@ -229,7 +213,7 @@ namespace Enlisted.Features.Equipment.UI
                     return;
                 }
                 
-                // Only block purchase when at the 2-item limit - that's the ONLY restriction
+                // Block purchase when the player can't afford it.
                 if (!_variant.CanAfford)
                 {
                     var msg = new TextObject("{=qm_cannot_afford}You can’t afford this. Cost: {COST} denars.");
@@ -237,10 +221,6 @@ namespace Enlisted.Features.Equipment.UI
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return;
                 }
-                
-                // Price check handled in parent; show confirmation text with price
-                var confirmText = $"Purchased {_variant.Item.Name} for {_variant.Cost} denars";
-                InformationManager.DisplayMessage(new InformationMessage(confirmText));
                 
                 // Apply selection through parent
                 _parentSelector?.OnEquipmentItemSelected(_variant);

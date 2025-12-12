@@ -1,97 +1,52 @@
-# Feature Spec: Troop Selection System
+# Feature Spec: Troop Selection (Master at Arms)
 
 ## Overview
-On promotion, players choose from real Bannerlord troops and receive their equipment. Equipment is tracked for accountability.
+Troop Selection lets enlisted players choose which **real Bannerlord troop template** they represent (culture + tier). This choice drives:
+- Your **troop identity** (kit source) for the Quartermaster
+- Your **formation identity** (Infantry/Archer/Cavalry/Horse Archer)
+- Tier 1 only: a one-time **auto-issue** equipment replacement
 
 ## Purpose
-Provide authentic military progression where you become actual troop types (Imperial Legionary, Aserai Mameluke) and inherit their gear. Equipment is free but tracked - missing gear on troop change results in pay deduction.
+- Keep progression grounded in native troop trees (culture-appropriate roles)
+- Provide a single place (Master at Arms) to update your role expression without changing your tier
+- Prevent “free gear escalation” after Tier 1 by requiring **Quartermaster purchases** for Tier 2+
 
-## Inputs/Outputs
+## Inputs / Outputs
 
-**Inputs:**
-- Player promotion trigger (XP threshold reached)
-- Current enlisted lord's culture
-- Player's new tier level
-- Available troops in the game matching culture and tier
+**Inputs**
+- Current enlisted lord culture
+- Current tier (Tier 1–6)
+- Promotion flow (optional) and Master at Arms access
 
-**Outputs:**
-- Equipment replaced with selected troop's gear
-- Equipment tracked for accountability
-- Missing gear check (gold deducted if gear lost)
-- Visual feedback showing equipment changes
+**Outputs**
+- Selected troop template stored (last selected troop ID)
+- Tier 1: immediate equipment assignment (auto-issue / full replacement)
+- Tier 2+: no auto-issue; chosen troop’s branch becomes eligible for Quartermaster purchase pools
 
 ## Behavior
 
-1. **Promotion Trigger**: Player reaches XP threshold → "Promotion!" notification
-2. **Accountability Check**: System checks for missing equipment from previous issue
-3. **Gold Deduction**: Player charged for any missing gear
-4. **Troop Menu**: Shows real troops filtered by culture and tier
-5. **Selection**: Player picks troop (Imperial Legionary, Battanian Fian, etc.)
-6. **Equipment Issue**: New troop's equipment assigned and tracked
-7. **Feedback**: Character model updates, confirmation shown
+### Master at Arms popup
+- Available while enlisted from the main enlisted status menu.
+- Builds a list of unlocked troops for the lord’s culture where troop tier ≤ your current tier.
+- On selection:
+  - If selected troop tier ≤ 1 → **auto-issue** the chosen kit (replaces equipment)
+  - If selected troop tier > 1 → **no auto-issue**; selection updates your “current kit identity” for Quartermaster availability
 
-## Equipment Accountability
+### Promotions
+On tier promotion, the same selection flow can be used to pick a troop identity appropriate to the new tier.
 
-When changing troop types:
-- System compares current gear vs issued gear
-- Missing items = gold deducted from pay
-- Player notified of missing items and cost
-- New equipment issued and tracking reset
+## Equipment access
+- Tier 1: auto-issued kit replacement.
+- Tier 2+: equipment is **purchased** at the Quartermaster (no accountability/issued-gear tracking).
 
-**Exception - Retirement**: No accountability check. Player keeps all gear as reward for service.
+## Technical implementation
+- `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`
+  - Builds culture troop trees and unlock lists
+  - Shows the inquiry popup
+  - Applies Tier 1 auto-issue and records last selected troop
+- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
+  - Exposes Master at Arms entry point
 
-## Technical Implementation
-
-**Files:**
-- `TroopSelectionManager.cs` - Troop filtering, selection, and equipment tracking
-- `EquipmentManager.cs` - Equipment backup/restore for enlistment lifecycle
-- `QuartermasterManager.cs` - Equipment variant selection (free, 2-item limit)
-
-**Key Classes:**
-- `IssuedItemRecord` - Tracks item ID, name, value, slot for accountability
-- `_issuedEquipment` - Dictionary storing issued gear per slot
-
-**Key Methods:**
-- `RecordIssuedEquipment()` - Store current gear for tracking
-- `CheckMissingEquipment()` - Compare current vs issued, return debt
-- `ClearIssuedEquipment()` - Clear tracking (retirement/full discharge)
-- `MarkIssuedItemReturned()` - Remove item from tracking when returned via quartermaster
-- `ShowMasterAtArmsPopup()` - Display troop selection popup (preserves time state)
-
-## Edge Cases
-
-**Missing Equipment on Troop Change:**
-- Calculate total value of missing items
-- Deduct from player gold
-- Show popup with missing items list
-- Log transaction for debugging
-
-**Retirement with Missing Gear:**
-- No accountability check (retirement perk)
-- Player keeps current equipment
-- Personal belongings returned to inventory
-
-**Insufficient Gold for Missing Gear:**
-- Debt logged but not blocked
-- Player still gets new equipment
-
-## Acceptance Criteria
-
-- ✅ Players see real troop names in promotion menu
-- ✅ Equipment tracked from moment of issue
-- ✅ Missing gear detected on troop change
-- ✅ Gold deducted for missing equipment
-- ✅ Clear notification of missing items and cost
-- ✅ Retirement skips accountability (keeps all gear)
-- ✅ Personal belongings restored to inventory on retirement
-
-## Debugging
-
-**Log Categories:**
-- "TroopSelection" - Troop filtering and menu operations
-- "Equipment" - Tracking and accountability
-
-**Key Log Points:**
-- "Missing equipment check: X items, Y gold debt"
-- "Retirement: skipping equipment accountability"
-- "Issued equipment recorded: X items tracked"
+## Related docs
+- [Quartermaster](../UI/quartermaster.md)
+- [Enlistment](../Core/enlistment.md)
