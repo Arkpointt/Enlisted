@@ -1153,6 +1153,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Immediately joins the lord's battle when MapEvent starts so the fight cannot auto-resolve
         ///     before the player is collected. Used as a fast-path guard for tiny skirmishes that end in
         ///     the same frame they begin.
+        ///     
+        ///     NOTE: With AttachedTo set on enlistment, MapEvent automatically includes attached parties
+        ///     instantly. This method now serves as a safety net for edge cases where AttachedTo might
+        ///     not be set (e.g., mid-enlistment state transitions, save/load race conditions).
         /// </summary>
         private void ForceImmediateBattleJoin(MapEvent mapEvent, MobileParty main, MobileParty lordParty)
         {
@@ -2309,8 +2313,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (lordParty != null)
                     {
                         main.SetMoveEscortParty(lordParty, MobileParty.NavigationType.Default, false);
+                        
+                        // *** INSTANT BATTLE PARTICIPATION: Set AttachedTo for zero-delay battle joining ***
+                        // When a MapEvent starts, it immediately checks the lord's AttachedParties list.
+                        // This eliminates the 0.5-2 second delay from tick-based party discovery.
+                        // AttachedTo doesn't merge rosters - companions and retinue stay in player's party.
+                        main.AttachedTo = lordParty;
+                        
                         lordParty.Party.SetAsCameraFollowParty();
-                        ModLogger.Debug("Enlistment", $"Set escort AI to follow {lord.Name}");
+                        ModLogger.Info("Battle", 
+                            $"Player party attached to {lord.Name} for instant battle participation (zero-delay collection)");
                     }
 
                     // Enable battle participation so the player joins battles when the lord fights
@@ -2663,6 +2675,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                     }
 
+                    // *** CLEAR ATTACHEDTO: Remove instant battle participation ***
+                    // This must be done before finishing encounters to prevent player from being
+                    // collected into battles as service ends
+                    if (main.AttachedTo != null)
+                    {
+                        main.AttachedTo = null;
+                        ModLogger.Info("Battle", "Cleared AttachedTo - player no longer instantly collected into battles");
+                    }
+                    
                     // Release attachment to lord's party BEFORE finishing encounters
                     // CRITICAL: Clear attachment (clearAttachment = true) to prevent player from being
                     // considered part of defeated force, avoiding immediate "Attack or Surrender" encounters
@@ -6116,6 +6137,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                                 // Army joining is now handled in OnRealtimeTick when lord merges with army
                                 // If already in lord's army, just ensure battle participation flags are set
+                                // NOTE: AttachedTo provides instant battle participation for both solo lord
+                                // and army battles. Player party is automatically included in MapEvents.
                                 if (lordParty.Army != null && mainParty.Army == lordParty.Army)
                                 {
                                     ModLogger.Debug("Battle",
