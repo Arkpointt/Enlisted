@@ -1013,7 +1013,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnVisitTownSelected,
                 false, 7);
 
-            // Report for Duty - duty and profession selection (Manage icon)
+            // Report for Duty - duty selection (Manage icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
                 "{=Enlisted_Menu_ReportDuty}Report for Duty",
                 args =>
@@ -1217,7 +1217,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Add duty selection menu for choosing duties and professions.
+        ///     Add duty selection menu for choosing duties.
         /// </summary>
         private void AddDutySelectionMenu(CampaignGameStarter starter)
         {
@@ -1318,59 +1318,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 args => OnDutySlotSelected(args, 9),
                 false, 12);
 
-            // SPACER between duties and professions
-            starter.AddGameMenuOption("enlisted_duty_selection", "section_spacer",
-                " ",
-                _ => true, // Show as visible separator
-                _ => { }, // No action when clicked
-                true, 8); // Disabled = true makes it gray and non-clickable
-
-            // PROFESSIONS HEADER - cleaner styling with em-dashes
-            starter.AddGameMenuOption("enlisted_duty_selection", "professions_header",
-                "{=Enlisted_Menu_Header_Professions}— PROFESSIONS —",
-                _ => true, // Show but make it a display-only option
-                _ =>
-                {
-                    // Show message when clicked to indicate it's just a header
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject(
-                                "{=Enlisted_Message_HeaderInfo_Professions}This is a section header. Select professions below.")
-                            .ToString()));
-                },
-                false, 9);
-
-            // PROFESSION OPTIONS (T3+) - Dynamic text based on current selection
-            // Remove "None" profession as requested by user
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_quarterhand",
-                "{PROF_QUARTERHAND_TEXT}",
-                IsProfQuarterhandAvailable,
-                OnProfQuarterhandSelected,
-                false, 10);
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_field_medic",
-                "{PROF_FIELD_MEDIC_TEXT}",
-                IsProfFieldMedicAvailable,
-                OnProfFieldMedicSelected,
-                false, 11);
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_siegewright",
-                "{PROF_SIEGEWRIGHT_TEXT}",
-                IsProfSiegewrightAvailable,
-                OnProfSiegewrightSelected,
-                false, 12);
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_drillmaster",
-                "{PROF_DRILLMASTER_TEXT}",
-                IsProfDrillmasterAvailable,
-                OnProfDrillmasterSelected,
-                false, 13);
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_saboteur",
-                "{PROF_SABOTEUR_TEXT}",
-                IsProfSaboteurAvailable,
-                OnProfSaboteurSelected,
-                false, 14);
         }
 
         /// <summary>
@@ -2960,29 +2907,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     statusContent += "Duty Transfer : Unlocks at next rank\n\n";
                 }
 
-                // Current assignments with descriptions
+                // Current duty assignment with description
                 var currentDuty = GetDutyDisplayName(enlistment.SelectedDuty);
-                var currentProfession = enlistment.SelectedProfession == "none"
-                    ? "None"
-                    : GetProfessionDisplayName(enlistment.SelectedProfession);
-
-                statusContent += $"Current Duty : {currentDuty}\n";
-                if (currentTier >= 3)
-                {
-                    statusContent += $"Current Profession : {currentProfession}\n";
-                }
-                statusContent += "\n";
+                statusContent += $"Current Duty : {currentDuty}\n\n";
 
                 // Add duty description
                 var dutyDescription = GetDutyDescription(enlistment.SelectedDuty);
                 statusContent += $"{dutyDescription}";
-                
-                // Add profession description if applicable
-                if (currentTier >= 3 && enlistment.SelectedProfession != "none")
-                {
-                    var professionDescription = GetProfessionDescription(enlistment.SelectedProfession);
-                    statusContent += $"\n\n{professionDescription}";
-                }
 
                 // Set dynamic text variables for menu options with correct checkmarks
                 SetDynamicMenuText(enlistment);
@@ -3023,7 +2954,6 @@ namespace Enlisted.Features.Interface.Behaviors
         private void SetDynamicMenuText(EnlistmentBehavior enlistment)
         {
             var selectedDuty = enlistment.SelectedDuty;
-            var selectedProfession = enlistment.SelectedProfession;
 
             // Helper to format option text
             TextObject FormatOption(string id, string nameText, string currentId)
@@ -3037,9 +2967,9 @@ namespace Enlisted.Features.Interface.Behaviors
             }
 
             // DUTY TEXT VARIABLES - Data-driven from cached duties
-            // Refresh the cached duties for current formation
+            // Refresh the cached duties (all duties, with formation check for greying out)
             var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-            _cachedDutiesForMenu = dutiesBehavior?.GetDutiesForCurrentFormation() ?? new List<DutyDefinition>();
+            _cachedDutiesForMenu = dutiesBehavior?.GetAllDuties() ?? new List<DutyDefinition>();
 
             // Set text variables for each duty slot (up to 10 slots)
             // Phase 7: T2+ players see "Request Transfer" instead of direct selection
@@ -3057,22 +2987,30 @@ namespace Enlisted.Features.Interface.Behaviors
                     var duty = _cachedDutiesForMenu[i];
                     var displayName = duty.DisplayName ?? duty.Id;
                     var isCurrentDuty = duty.Id == selectedDuty;
+                    var isFormationCompatible = dutiesBehavior?.IsDutyCompatibleWithFormation(duty) ?? true;
 
-                    // Check tier lock
-                    var tierLock = duty.MinTier > currentTier
-                        ? $" [Requires {Ranks.RankHelper.GetRankTitle(duty.MinTier, Ranks.RankHelper.GetCultureId(enlistment))}]"
-                        : "";
-
-                    // Phase 7: Show request mode for T2+ players
+                    // Check formation compatibility first (highest priority lock)
                     string suffix = "";
-                    if (isRequestMode && !isCurrentDuty && string.IsNullOrEmpty(tierLock))
+                    if (!isFormationCompatible)
+                    {
+                        // Show which formations this duty requires
+                        var requiredFormations = string.Join(", ", duty.RequiredFormations ?? new List<string>());
+                        suffix = $" [{requiredFormations} only]";
+                    }
+                    // Check tier lock
+                    else if (duty.MinTier > currentTier)
+                    {
+                        suffix = $" [Requires {Ranks.RankHelper.GetRankTitle(duty.MinTier, Ranks.RankHelper.GetCultureId(enlistment))}]";
+                    }
+                    // Phase 7: Show request mode for T2+ players
+                    else if (isRequestMode && !isCurrentDuty)
                     {
                         suffix = onCooldown 
                             ? $" [Cooldown: {cooldownDays}d]" 
                             : " [Request Transfer]";
                     }
 
-                    MBTextManager.SetTextVariable(textVar, FormatOption(duty.Id, displayName + tierLock + suffix, selectedDuty));
+                    MBTextManager.SetTextVariable(textVar, FormatOption(duty.Id, displayName + suffix, selectedDuty));
                 }
                 else
                 {
@@ -3080,30 +3018,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     MBTextManager.SetTextVariable(textVar, " ");
                 }
             }
-
-            // PROFESSION TEXT VARIABLES
-            MBTextManager.SetTextVariable("PROF_QUARTERHAND_TEXT",
-                FormatOption("quarterhand", "{=Enlisted_Prof_Name_Quarterhand}Quarterhand", selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_FIELD_MEDIC_TEXT",
-                FormatOption("field_medic", "{=Enlisted_Prof_Name_FieldMedic}Field Medic", selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_SIEGEWRIGHT_TEXT",
-                FormatOption("siegewright_aide", "{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide",
-                    selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_DRILLMASTER_TEXT",
-                FormatOption("drillmaster", "{=Enlisted_Prof_Name_Drillmaster}Drillmaster", selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_SABOTEUR_TEXT",
-                FormatOption("saboteur", "{=Enlisted_Prof_Name_Saboteur}Saboteur", selectedProfession));
         }
 
         #region Duty Selection Conditions and Actions
 
         /// <summary>
         ///     Data-driven duty slot availability check.
-        ///     Phase 7: Shows all duties but controls enabled state based on tier and request system.
+        ///     Shows all duties but controls enabled state based on formation, tier and request system.
         /// </summary>
         private bool IsDutySlotAvailable(MenuCallbackArgs args, int slotIndex)
         {
@@ -3126,6 +3047,19 @@ namespace Enlisted.Features.Interface.Behaviors
             var currentTier = enlistment?.EnlistmentTier ?? 1;
             var isCurrentDuty = duty.Id == enlistment?.SelectedDuty;
             var dutiesBehavior = EnlistedDutiesBehavior.Instance;
+            var isFormationCompatible = dutiesBehavior?.IsDutyCompatibleWithFormation(duty) ?? true;
+
+            // Check formation compatibility first - grey out incompatible duties
+            if (!isFormationCompatible)
+            {
+                args.IsEnabled = false;
+                var requiredFormations = string.Join(", ", duty.RequiredFormations ?? new List<string>());
+                var playerFormation = dutiesBehavior?.GetPlayerFormationType() ?? "infantry";
+                args.Tooltip = new TextObject("{=duty_tooltip_formation_locked}This duty requires {FORMATIONS} formation. You are currently {PLAYER_FORMATION}.")
+                    .SetTextVariable("FORMATIONS", requiredFormations)
+                    .SetTextVariable("PLAYER_FORMATION", playerFormation);
+                return true;
+            }
 
             // Check tier requirement - show culture-specific rank in tooltip
             if (duty.MinTier > currentTier)
@@ -3229,132 +3163,6 @@ namespace Enlisted.Features.Interface.Behaviors
             };
         }
 
-        // PROFESSION CONDITIONS with tier requirements shown in localized tooltips
-        private const int ProfessionTierRequirement = 3;
-
-        private bool IsProfQuarterhandAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-            var enlistment = EnlistmentBehavior.Instance;
-            var tier = enlistment?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
-                    .SetTextVariable("RANK", requiredRank);
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_quarterhand}Manage supplies and inventory. 15% better trade prices and +50 carry capacity.");
-            }
-            return true;
-        }
-
-        private bool IsProfFieldMedicAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-            var enlistment = EnlistmentBehavior.Instance;
-            var tier = enlistment?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
-                    .SetTextVariable("RANK", requiredRank);
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_medic}Tend to wounded soldiers. Faster healing, bonus medicine XP, and morale boost.");
-            }
-            return true;
-        }
-
-        private bool IsProfSiegewrightAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
-            var enlistment = EnlistmentBehavior.Instance;
-            var tier = enlistment?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
-                    .SetTextVariable("RANK", requiredRank);
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_siege}Assist siege engineers. Faster siege construction and bonus engineering XP.");
-            }
-            return true;
-        }
-
-        private bool IsProfDrillmasterAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack;
-            var enlistment = EnlistmentBehavior.Instance;
-            var tier = enlistment?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
-                    .SetTextVariable("RANK", requiredRank);
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_drill}Train soldiers in formation fighting. Bonus leadership XP and troop morale.");
-            }
-            return true;
-        }
-
-        private bool IsProfSaboteurAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Raid;
-            var enlistment = EnlistmentBehavior.Instance;
-            var tier = enlistment?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
-                    .SetTextVariable("RANK", requiredRank);
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_saboteur}Conduct covert operations. Bonus roguery XP and special mission access.");
-            }
-            return true;
-        }
-
-        // PROFESSION ACTIONS (with tier checking)
-
-        private void OnProfQuarterhandSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("quarterhand", "{=Enlisted_Prof_Name_Quarterhand}Quarterhand");
-        }
-
-        private void OnProfFieldMedicSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("field_medic", "{=Enlisted_Prof_Name_FieldMedic}Field Medic");
-        }
-
-        private void OnProfSiegewrightSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("siegewright_aide",
-                "{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide");
-        }
-
-        private void OnProfDrillmasterSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("drillmaster", "{=Enlisted_Prof_Name_Drillmaster}Drillmaster");
-        }
-
-        private void OnProfSaboteurSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("saboteur", "{=Enlisted_Prof_Name_Saboteur}Saboteur");
-        }
-
         private void OnDutyBackSelected(MenuCallbackArgs args)
         {
             // Capture time state BEFORE menu switch to preserve player's time control
@@ -3416,51 +3224,6 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Select a new profession and show confirmation.
-        /// </summary>
-        private void SelectProfession(string professionId, string professionName)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted == true)
-            {
-                enlistment.SetSelectedProfession(professionId);
-
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_ProfessionChanged}Profession changed to {PROFESSION}. Your specialized training has begun.");
-                message.SetTextVariable("PROFESSION", new TextObject(professionName));
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-
-                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
-            }
-        }
-
-        /// <summary>
-        ///     Select profession with tier requirement check.
-        /// </summary>
-        private void SelectProfessionWithTierCheck(string professionId, string professionName)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true)
-            {
-                return;
-            }
-
-            // Check tier requirement
-            if (enlistment.EnlistmentTier < 3)
-            {
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_Tier3Required}You must reach Tier 3 before selecting professions. Continue your service to unlock specialized roles.");
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                return;
-            }
-
-            // Tier 3+, allow selection
-            SelectProfession(professionId, professionName);
-        }
-
-        /// <summary>
         ///     Get display name for duty ID.
         /// </summary>
         private string GetDutyDisplayName(string dutyId)
@@ -3499,51 +3262,6 @@ namespace Enlisted.Features.Interface.Behaviors
                         "{=Enlisted_Duty_Desc_Pioneer}Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)")
                     .ToString(),
                 _ => "Military service duties."
-            };
-        }
-
-        /// <summary>
-        ///     Get display name for profession ID.
-        /// </summary>
-        private string GetProfessionDisplayName(string professionId)
-        {
-            return professionId switch
-            {
-                "none" => "None", // Default but invisible in menu
-                "quarterhand" => new TextObject("{=Enlisted_Prof_Name_Quarterhand}Quarterhand").ToString(),
-                "field_medic" => new TextObject("{=Enlisted_Prof_Name_FieldMedic}Field Medic").ToString(),
-                "siegewright_aide" => new TextObject("{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide")
-                    .ToString(),
-                "drillmaster" => new TextObject("{=Enlisted_Prof_Name_Drillmaster}Drillmaster").ToString(),
-                "saboteur" => new TextObject("{=Enlisted_Prof_Name_Saboteur}Saboteur").ToString(),
-                _ => "Unknown"
-            };
-        }
-
-        /// <summary>
-        ///     Get detailed description for profession ID.
-        /// </summary>
-        private string GetProfessionDescription(string professionId)
-        {
-            return professionId switch
-            {
-                "none" => new TextObject("{=Enlisted_Prof_Desc_None}No specialized profession assigned.").ToString(),
-                "quarterhand" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Quarterhand}Post billet lists, route carts around trenches, book barns/inns, and settle accounts. (Skills: Steward, Trade)")
-                    .ToString(),
-                "field_medic" => new TextObject(
-                        "{=Enlisted_Prof_Desc_FieldMedic}Run the aid tent by the stockade; clean and dress wounds, set bones, and keep salves stocked. (Skill: Medicine)")
-                    .ToString(),
-                "siegewright_aide" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Siegewright}Work the siege park; shape beams, lash ladders and gabions, and patch engines between bombardments. (Skills: Engineering, Smithing)")
-                    .ToString(),
-                "drillmaster" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Drillmaster}Run morning drill on the parade ground; dress ranks, time volleys, rehearse signals, and sharpen maneuvers. (Skills: Leadership, Tactics)")
-                    .ToString(),
-                "saboteur" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Saboteur}Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)")
-                    .ToString(),
-                _ => new TextObject("{=Enlisted_Prof_Desc_Unknown}Specialized military profession.").ToString()
             };
         }
 

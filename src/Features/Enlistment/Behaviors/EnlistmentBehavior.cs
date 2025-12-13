@@ -376,13 +376,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private string _selectedDuty = "enlisted";
 
         /// <summary>
-        ///     Currently selected profession ID (e.g., "field_medic", "quartermaster_aide").
-        ///     Professions unlock at tier 3 and provide specialized skill XP bonuses.
-        ///     Can be set to "none" if no profession is selected.
-        /// </summary>
-        private string _selectedProfession = "none";
-
-        /// <summary>
         ///     Whether the player's clan was independent (no kingdom) before enlistment.
         ///     Used to determine whether to restore independence or rejoin the original kingdom
         ///     when service ends.
@@ -519,11 +512,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Currently assigned duty (e.g., "enlisted", "pathfinder", "field_medic").
         /// </summary>
         public string SelectedDuty => _selectedDuty;
-
-        /// <summary>
-        ///     Currently selected profession track (e.g., "infantry", "cavalry"). "none" if not selected.
-        /// </summary>
-        public string SelectedProfession => _selectedProfession;
 
         /// <summary>
         ///     Current lance identifiers for UI/story systems.
@@ -1076,7 +1064,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_savedGraceLanceLegacy", ref _savedGraceLanceLegacy);
             SyncKey(dataStore, "_graceProtectionEnds", ref _graceProtectionEnds);
             SyncKey(dataStore, "_selectedDuty", ref _selectedDuty);
-            SyncKey(dataStore, "_selectedProfession", ref _selectedProfession);
             SyncKey(dataStore, "_currentLanceId", ref _currentLanceId);
             SyncKey(dataStore, "_currentLanceName", ref _currentLanceName);
             SyncKey(dataStore, "_currentLanceStyle", ref _currentLanceStyle);
@@ -1858,8 +1845,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentDate = resumedFromGrace && _savedGraceEnlistmentDate != CampaignTime.Zero
                     ? _savedGraceEnlistmentDate
                     : CampaignTime.Now; // Record when service started (or resume previous enlistment date)
-                _selectedDuty = "enlisted"; // Default to basic enlisted duty for daily XP
-                _selectedProfession = "none"; // No profession initially (unlocks at tier 3)
+                _selectedDuty = "runner"; // Default to runner duty for new recruits
                 _fatigueMax = 24;
                 _fatigueCurrent = _fatigueMax;
                 _pendingMusterPay = 0;
@@ -7979,43 +7965,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             ModLogger.Info("Duties", $"Changed duty to: {dutyId}");
-        }
-
-        /// <summary>
-        ///     Change selected profession (called from duty selection menu).
-        /// </summary>
-        public void SetSelectedProfession(string professionId)
-        {
-            if (!IsEnlisted || string.IsNullOrEmpty(professionId))
-            {
-                return;
-            }
-
-            // Remove previous profession if different and not "none"
-            if (_selectedProfession != professionId && _selectedProfession != "none" &&
-                !string.IsNullOrEmpty(_selectedProfession))
-            {
-                var duties = EnlistedDutiesBehavior.Instance;
-                if (duties != null)
-                {
-                    duties.RemoveDuty(_selectedProfession);
-                }
-            }
-
-            _selectedProfession = professionId;
-
-            // Add the new profession to active duties for daily XP processing (skip "none")
-            // "none" remains as default internal value but isn't an active duty
-            if (professionId != "none")
-            {
-                var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-                if (dutiesBehavior != null)
-                {
-                    dutiesBehavior.AssignDuty(professionId);
-                }
-            }
-
-            ModLogger.Info("Duties", $"Changed profession to: {professionId}");
         }
 
         /// <summary>

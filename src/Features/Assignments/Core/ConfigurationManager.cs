@@ -157,19 +157,8 @@ namespace Enlisted.Features.Assignments.Core
                     }
                 }
 
-                // Filter professions (if any are expansion-gated)
-                if (config.Professions != null && config.Professions.Count > 0)
-                {
-                    var toRemove = config.Professions
-                        .Where(kvp => ShouldSkipForExpansion(kvp.Value, hasWarSails))
-                        .Select(kvp => kvp.Key)
-                        .ToList();
-
-                    foreach (var key in toRemove)
-                    {
-                        config.Professions.Remove(key);
-                    }
-                }
+                // NOTE: Professions were removed from the duties system in favor of unified duty definitions.
+                // All duties (including former "professions") are now in the Duties dictionary.
             }
             catch (Exception ex)
             {

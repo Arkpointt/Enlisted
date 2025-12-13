@@ -1,7 +1,7 @@
 # Feature Spec: Military Duties System
 
 ## Overview
-Data-driven duty + profession system that lets enlisted players pick an active role (duty) and (later tiers) a specialization (profession). Duties/professions grant daily skill XP and modify service pay via wage multipliers. This system also owns formation-based daily training XP.
+Data-driven duty system that lets enlisted players pick an active military role. Duties grant daily skill XP and modify service pay via wage multipliers. This system also owns formation-based daily training XP.
 
 ## Purpose
 Add variety and specialization to military service. Different duties provide different benefits (skill bonuses, equipment access, special abilities) and make each playthrough feel different.
@@ -10,7 +10,7 @@ Add variety and specialization to military service. Different duties provide dif
 
 **Inputs:**
 - Player's current formation type (`infantry`, `archer`, `cavalry`, `horsearcher`, `naval`)
-- Player's enlistment tier (tier-gates some duties/professions)
+- Player's enlistment tier (tier-gates some duties)
 - Current enlisted lord party (for optional officer-role assignment)
 - JSON configuration: `ModuleData/Enlisted/duties_system.json`
 
@@ -52,16 +52,18 @@ Add variety and specialization to military service. Different duties provide dif
 - Denied requests show the specific blocking reason
 
 **Duty Menu Display:**
+- All duties are shown in the menu regardless of formation
 - `[Request Transfer]` - Available duties that can be requested
 - `[Cooldown: Xd]` - Duty on cooldown, shows days remaining
 - `[Requires {Rank}]` - Duty locked by tier, shows culture-specific rank name
+- `[{formations} only]` - Greyed out, duty requires different formation (shows required formations)
 - `(Current)` - Currently active duty
 
 ### Daily Processing
 - Skill bonuses awarded based on active duties
 - Formation-based skill training applied automatically (see Formation Training section below)
 - Wage multipliers applied by the Pay System at pay muster time
-- Any duty/profession that is no longer valid (missing from config) is removed safely
+- Any duty that is no longer valid (missing from config) is removed safely
 
 ### Formation Training System
 - Automatic daily skill XP based on player's military formation
@@ -70,12 +72,13 @@ Add variety and specialization to military service. Different duties provide dif
 - Uses authentic military training descriptions for immersion
 
 ### Formation-Based Filtering
-- The canonical duties are filtered by `required_formations` in `duties_system.json`:
+- Duties have `required_formations` in `duties_system.json` that determine which formations can select them:
   - Infantry: `runner`, `quartermaster`, `field_medic`, `armorer`, `engineer`
   - Archer: `scout`, `lookout`
   - Cavalry: `scout`, `messenger`
   - Horse Archer: `scout`, `messenger`
   - Naval (War Sails): `boatswain`, `navigator`
+- All duties are **shown** in the menu, but formation-incompatible duties are greyed out with a tooltip
 
 **Expansion gating (War Sails):**
 - Naval duties (`boatswain`, `navigator`) are only available when the War Sails expansion is detected.
@@ -86,7 +89,7 @@ Add variety and specialization to military service. Different duties provide dif
 - `EnlistedDutiesBehavior.cs` - Core duty management, benefit application, formation training, duty request system, and duty filtering APIs
 - `EnlistedMenuBehavior.cs` - Data-driven duty selection menu with request flow
 - `DutyConfiguration.cs` - JSON loading and validation  
-- `ModuleData/Enlisted/duties_system.json` - Duty/profession definitions + formation training configuration
+- `ModuleData/Enlisted/duties_system.json` - Duty definitions + formation training configuration
 
 **Configuration Structure:**
 ```json
@@ -94,7 +97,6 @@ Add variety and specialization to military service. Different duties provide dif
   "schemaVersion": 1,
   "enabled": true,
   "duties": { "...": "..." },
-  "professions": { "...": "..." },
   "formation_training": { "enabled": true, "formations": { "...": "..." } }
 }
 ```
@@ -111,8 +113,9 @@ bool IsDutyRequestOnCooldown();
 int GetDutyRequestCooldownRemaining();
 ```
 
-**Duty Filtering APIs:**
-- `GetDutiesForCurrentFormation()` - Returns duties valid for player's formation
+**Duty APIs:**
+- `GetAllDuties()` - Returns all duties (expansion-gated only)
+- `IsDutyCompatibleWithFormation(DutyDefinition)` - Checks if duty matches player's formation
 - `IsExpansionActive(string)` - Checks if an expansion (e.g., "war_sails") is active
 - `IsDutySelectableByPlayer(DutyDefinition)` - Checks tier and other requirements
 - `GetDutyById(string)` - Lookup duty definition by ID
@@ -158,10 +161,10 @@ int GetDutyRequestCooldownRemaining();
 ## Acceptance Criteria
 
 - ✅ JSON configuration loads and validates correctly
-- ✅ Duties filtered appropriately by formation type
+- ✅ All duties shown in menu (incompatible ones greyed out with tooltip)
 - ✅ Skill bonuses applied correctly and consistently  
 - ✅ Optional officer-role assignment works safely when enabled (Quartermaster/Engineer/Surgeon/Scout)
-- ✅ Duty/profession selection constraints enforced based on tier progression (e.g., professions unlock at Tier 3+)
+- ✅ Duty selection constraints enforced based on tier and formation
 - ✅ Configuration changes work without recompiling mod
 - ✅ Save/load maintains duty assignments correctly
 - ✅ Duty request system enforces cooldown and approval requirements
@@ -170,7 +173,7 @@ int GetDutyRequestCooldownRemaining();
 ## Debugging
 
 **Common Issues:**
-- **Duties not showing**: Check formation type detection and JSON filtering
+- **Duties not showing**: Check expansion gating (naval requires War Sails)
 - **Benefits not applying**: Verify daily tick events are firing correctly
 - **Config not loading**: Check JSON syntax and file location
 - **Request denied unexpectedly**: Check lance reputation and cooldown status

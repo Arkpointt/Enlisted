@@ -308,21 +308,13 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        ///     Helper method to get duty/profession definition from either Duties or Professions dictionaries.
-        ///     Fix: Professions are stored separately but need to be processed the same way as duties.
+        ///     Helper method to get duty definition from the Duties dictionary.
         /// </summary>
-        private bool TryGetDutyOrProfession(string dutyId, out DutyDefinition dutyDef)
+        private bool TryGetDuty(string dutyId, out DutyDefinition dutyDef)
         {
             dutyDef = null;
 
-            // Check Duties first (most common)
             if (_config.Duties != null && _config.Duties.TryGetValue(dutyId, out dutyDef))
-            {
-                return true;
-            }
-
-            // Check Professions if not found in Duties
-            if (_config.Professions != null && _config.Professions.TryGetValue(dutyId, out dutyDef))
             {
                 return true;
             }
@@ -340,7 +332,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             foreach (var dutyId in _activeDuties.ToList()) // ToList to prevent modification during iteration
             {
                 // Fix: Check both Duties and Professions dictionaries
-                if (!TryGetDutyOrProfession(dutyId, out var dutyDef))
+                if (!TryGetDuty(dutyId, out var dutyDef))
                 {
                     ModLogger.Error("Duties", $"Unknown duty/profession in active duties: {dutyId}");
                     _activeDuties.Remove(dutyId);
@@ -464,7 +456,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                 foreach (var dutyId in _activeDuties)
                 {
                     // Fix: Check both Duties and Professions dictionaries
-                    if (!TryGetDutyOrProfession(dutyId, out var dutyDef) ||
+                    if (!TryGetDuty(dutyId, out var dutyDef) ||
                         string.IsNullOrEmpty(dutyDef.OfficerRole))
                     {
                         continue;
@@ -507,7 +499,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
 
             return _activeDuties.Any(dutyId =>
-                TryGetDutyOrProfession(dutyId, out var dutyDef) &&
+                TryGetDuty(dutyId, out var dutyDef) &&
                 string.Equals(dutyDef.OfficerRole, officerRole, StringComparison.OrdinalIgnoreCase));
         }
 
@@ -537,7 +529,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
 
             // Fix: Check both Duties and Professions dictionaries
-            if (!TryGetDutyOrProfession(dutyId, out var dutyDef))
+            if (!TryGetDuty(dutyId, out var dutyDef))
             {
                 ModLogger.Error("Duties", $"Unknown duty/profession: {dutyId}");
                 return false;
@@ -588,7 +580,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
 
             // Get duty definition
-            if (!TryGetDutyOrProfession(newDutyId, out var dutyDef))
+            if (!TryGetDuty(newDutyId, out var dutyDef))
             {
                 return new DutyRequestResult
                 {
@@ -773,8 +765,60 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
+        ///     Get all duties from config, respecting expansion requirements.
+        ///     Returns all duties regardless of formation - UI should grey out incompatible ones.
+        /// </summary>
+        public List<DutyDefinition> GetAllDuties()
+        {
+            if (!IsInitialized || _config?.Duties == null)
+            {
+                return new List<DutyDefinition>();
+            }
+
+            var result = new List<DutyDefinition>();
+
+            foreach (var duty in _config.Duties.Values)
+            {
+                // Check expansion requirement (e.g., war_sails for naval duties)
+                if (!string.IsNullOrEmpty(duty.RequiresExpansion))
+                {
+                    if (!IsExpansionActive(duty.RequiresExpansion))
+                    {
+                        continue; // Expansion not active
+                    }
+                }
+
+                result.Add(duty);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        ///     Check if a duty is compatible with the player's current formation.
+        /// </summary>
+        public bool IsDutyCompatibleWithFormation(DutyDefinition duty)
+        {
+            if (duty == null)
+            {
+                return false;
+            }
+
+            // If no formation requirements, duty is compatible with all formations
+            if (duty.RequiredFormations == null || duty.RequiredFormations.Count == 0)
+            {
+                return true;
+            }
+
+            var formation = GetPlayerFormationType();
+            return duty.RequiredFormations.Any(f => 
+                string.Equals(f, formation, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
         ///     Get all duties from config that are valid for the player's current formation.
         ///     Includes tier-locked duties (for graying out) and respects expansion requirements.
+        ///     DEPRECATED: Use GetAllDuties() and IsDutyCompatibleWithFormation() instead.
         /// </summary>
         public List<DutyDefinition> GetDutiesForCurrentFormation()
         {
@@ -890,7 +934,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                 return null;
             }
 
-            if (TryGetDutyOrProfession(dutyId, out var duty))
+            if (TryGetDuty(dutyId, out var duty))
             {
                 return duty;
             }
@@ -978,7 +1022,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             // Remove any duties that are no longer compatible
             // Fix: Check both Duties and Professions dictionaries
             var incompatibleDuties = _activeDuties.Where(dutyId =>
-                TryGetDutyOrProfession(dutyId, out var duty) &&
+                TryGetDuty(dutyId, out var duty) &&
                 duty.RequiredFormations.Count > 0 &&
                 !duty.RequiredFormations.Contains(formation)).ToList();
 
@@ -1011,7 +1055,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                 foreach (var dutyId in _activeDuties)
                 {
                     // Fix: Check both Duties and Professions dictionaries
-                    if (TryGetDutyOrProfession(dutyId, out var dutyDef))
+                    if (TryGetDuty(dutyId, out var dutyDef))
                     {
                         totalMultiplier += dutyDef.WageMultiplier;
                         validDuties++;
@@ -1059,7 +1103,7 @@ namespace Enlisted.Features.Assignments.Behaviors
 
             // Fix: Check both Duties and Professions dictionaries
             var duties =
-                _activeDuties.Select(id => TryGetDutyOrProfession(id, out var dutyDef) ? dutyDef.DisplayName : id);
+                _activeDuties.Select(id => TryGetDuty(id, out var dutyDef) ? dutyDef.DisplayName : id);
             var maxSlots = GetMaxDutySlots();
 
             return $"{string.Join(", ", duties)} ({_activeDuties.Count}/{maxSlots})";
@@ -1073,7 +1117,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             foreach (var dutyId in _activeDuties)
             {
                 // Fix: Check both Duties and Professions dictionaries
-                if (TryGetDutyOrProfession(dutyId, out var dutyDef) && !string.IsNullOrEmpty(dutyDef.OfficerRole))
+                if (TryGetDuty(dutyId, out var dutyDef) && !string.IsNullOrEmpty(dutyDef.OfficerRole))
                 {
                     return dutyDef.OfficerRole;
                 }
