@@ -6,6 +6,8 @@ Fatigue is a stamina-like counter used to gate certain enlisted actions and choi
 Fatigue is currently used by:
 - Pay Muster options (e.g. Corruption Challenge, Side Deal)
 - Probation (caps max fatigue while probation is active)
+- Camp Activities (data-driven menu actions can cost or restore fatigue)
+- Lance Life Events (event options can cost or restore fatigue; menu availability considers fatigue)
 
 ## Data & State
 - Stored on `EnlistmentBehavior`: `FatigueCurrent`, `FatigueMax` (default 24/24).

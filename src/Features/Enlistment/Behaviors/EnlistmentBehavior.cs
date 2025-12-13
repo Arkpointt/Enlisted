@@ -6,6 +6,7 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.Escalation;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core;
@@ -157,6 +158,25 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Used to determine tier promotions based on thresholds in progression_config.json.
         /// </summary>
         private int _enlistmentXP;
+
+        /// <summary>
+        ///     Phase 7: Date of last promotion (or enlistment if T1). Used to calculate days in rank.
+        /// </summary>
+        private CampaignTime _lastPromotionDate = CampaignTime.Zero;
+
+        /// <summary>
+        ///     Phase 7: Number of battles survived since enlistment. Used for promotion requirements.
+        /// </summary>
+        private int _battlesSurvived;
+
+        /// <summary>
+        ///     Phase 7: Number of Lance Life events completed. Used for promotion requirements.
+        /// </summary>
+        private int _eventsCompleted;
+
+        // Phase 4: promotion can be temporarily blocked at very high discipline risk.
+        // This is rate-limited to avoid message spam when earning XP while blocked.
+        private CampaignTime _lastPromotionBlockedMessageTime = CampaignTime.Zero;
 
         private CampaignTime _graceProtectionEnds = CampaignTime.Zero;
 
@@ -340,6 +360,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _isOnProbation;
         private CampaignTime _probationEnds = CampaignTime.Zero;
 
+        // Pay tension and backpay tracking (Phase 1 Pay System)
+        // PayTension escalates when pay is delayed; triggers events at thresholds
+        private int _payTension;
+        private int _owedBackpay;
+        private CampaignTime _lastPayDate = CampaignTime.Zero;
+        private int _consecutiveDelays;
+        private int _lanceFundBalance;
+
         /// <summary>
         ///     Currently selected duty assignment ID (e.g., "enlisted", "forager", "sentry").
         ///     Duties provide daily skill XP bonuses and may include wage multipliers.
@@ -460,6 +488,34 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public int EnlistmentXP => _enlistmentXP;
 
         /// <summary>
+        ///     Phase 7: Days since last promotion (or enlistment for T1).
+        /// </summary>
+        public int DaysInRank
+        {
+            get
+            {
+                if (_lastPromotionDate == CampaignTime.Zero)
+                {
+                    // Fall back to enlistment date if no promotion recorded
+                    return _enlistmentDate != CampaignTime.Zero 
+                        ? (int)(CampaignTime.Now - _enlistmentDate).ToDays 
+                        : 0;
+                }
+                return (int)(CampaignTime.Now - _lastPromotionDate).ToDays;
+            }
+        }
+
+        /// <summary>
+        ///     Phase 7: Number of battles survived since enlistment.
+        /// </summary>
+        public int BattlesSurvived => _battlesSurvived;
+
+        /// <summary>
+        ///     Phase 7: Number of Lance Life events completed since enlistment.
+        /// </summary>
+        public int EventsCompleted => _eventsCompleted;
+
+        /// <summary>
         ///     Currently assigned duty (e.g., "enlisted", "pathfinder", "field_medic").
         /// </summary>
         public string SelectedDuty => _selectedDuty;
@@ -488,6 +544,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public CampaignTime NextPaydaySafe => _nextPayday != CampaignTime.Zero ? _nextPayday : (_nextPayday = ComputeNextPayday());
         public string LastPayOutcome => _lastPayOutcome ?? "none";
         public bool IsPayMusterPending => _payMusterPending;
+        
+        // Pay tension properties (Phase 1 Pay System)
+        /// <summary>Pay tension level (0-100). Escalates when pay is delayed, triggers events at thresholds.</summary>
+        public int PayTension => _payTension;
+        /// <summary>Accumulated unpaid wages when lord can't afford to pay.</summary>
+        public int OwedBackpay => _owedBackpay;
+        /// <summary>Days since last successful pay. Used for pay delay detection.</summary>
+        public int DaysSincePay => _lastPayDate == CampaignTime.Zero ? 0 : (int)(CampaignTime.Now - _lastPayDate).ToDays;
+        /// <summary>True if pay is overdue (more than 7 days since last pay).</summary>
+        public bool IsPayOverdue => DaysSincePay > 7 && IsEnlisted;
+        /// <summary>Lance communal fund balance (5% deduction from pay).</summary>
+        public int LanceFundBalance => _lanceFundBalance;
+        
         public int PensionAmountPerDay => _pensionAmountPerDay;
         public bool IsPensionPaused => _isPensionPaused;
         public bool IsPendingDischarge => _isPendingDischarge;
@@ -503,6 +572,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Max fatigue for camp actions (placeholder hook; no mechanics yet).
         /// </summary>
         public int FatigueMax => _fatigueMax;
+
+        /// <summary>
+        ///     Returns true if a bag check is scheduled or in progress.
+        ///     Used to defer other events until bag check completes.
+        /// </summary>
+        public bool IsBagCheckPending => (_bagCheckScheduled || _bagCheckInProgress) && !_bagCheckCompleted;
 
         private bool ShouldRunBagCheck()
         {
@@ -650,8 +725,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             var hero = Hero.MainHero;
                             if (hero != null)
                             {
-                                var paid = Math.Min(hero.Gold, fine);
-                                hero.ChangeHeroGold(-paid);
+                                var partyGold = hero.PartyBelongedTo?.PartyTradeGold ?? 0;
+                                var paid = Math.Min(partyGold, fine);
+                                if (paid > 0)
+                                {
+                                    GiveGoldAction.ApplyBetweenCharacters(hero, null, paid);
+                                }
                                 ModLogger.Info("Enlistment",
                                     $"Commander re-entry fine paid: {paid} (configured {fine})");
                             }
@@ -943,6 +1022,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_enlistedLord", ref _enlistedLord);
             SyncKey(dataStore, "_enlistmentTier", ref _enlistmentTier);
             SyncKey(dataStore, "_enlistmentXP", ref _enlistmentXP);
+            SyncKey(dataStore, "_lastPromotionBlockedMessageTime", ref _lastPromotionBlockedMessageTime);
             SyncKey(dataStore, "_hasBackedUpEquipment", ref _hasBackedUpEquipment);
             SyncKey(dataStore, "_personalBattleEquipment", ref _personalBattleEquipment);
             SyncKey(dataStore, "_personalCivilianEquipment", ref _personalCivilianEquipment);
@@ -952,6 +1032,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_bagCheckEverCompleted", ref _bagCheckEverCompleted);
             SyncKey(dataStore, "_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
             SyncKey(dataStore, "_enlistmentDate", ref _enlistmentDate);
+            
+            // Phase 7: Promotion requirements tracking
+            SyncKey(dataStore, "_lastPromotionDate", ref _lastPromotionDate);
+            SyncKey(dataStore, "_battlesSurvived", ref _battlesSurvived);
+            SyncKey(dataStore, "_eventsCompleted", ref _eventsCompleted);
+
             SyncKey(dataStore, "_isOnLeave", ref _isOnLeave);
             SyncKey(dataStore, "_leaveStartDate", ref _leaveStartDate);
             SyncKey(dataStore, "_leaveCooldownEnds", ref _leaveCooldownEnds);
@@ -965,6 +1051,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_nextPayday", ref _nextPayday);
             SyncKey(dataStore, "_payMusterPending", ref _payMusterPending);
             SyncKey(dataStore, "_lastPayOutcome", ref _lastPayOutcome);
+            
+            // Pay tension state (Phase 1 Pay System)
+            SyncKey(dataStore, "_payTension", ref _payTension);
+            SyncKey(dataStore, "_owedBackpay", ref _owedBackpay);
+            SyncKey(dataStore, "_lastPayDate", ref _lastPayDate);
+            SyncKey(dataStore, "_consecutiveDelays", ref _consecutiveDelays);
+            SyncKey(dataStore, "_lanceFundBalance", ref _lanceFundBalance);
+            
             SyncKey(dataStore, "_pensionAmountPerDay", ref _pensionAmountPerDay);
             SyncKey(dataStore, "_pensionFactionId", ref _pensionFactionId);
             SyncKey(dataStore, "_isPensionPaused", ref _isPensionPaused);
@@ -1512,19 +1606,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 MoveEquipmentToStash(hero.BattleEquipment);
                 MoveEquipmentToStash(hero.CivilianEquipment);
 
-                if (chargeFee > 0)
+            if (chargeFee > 0)
+            {
+                // Use party gold (what the player sees in UI) not hero personal gold
+                var partyGold = Hero.MainHero?.PartyBelongedTo?.PartyTradeGold ?? 0;
+                var fee = Math.Min(chargeFee, partyGold);
+                if (fee > 0)
                 {
-                    var fee = Math.Min(chargeFee, hero.Gold);
-                    if (fee > 0)
-                    {
-                        // Use ChangeHeroGold to ensure the engine updates state/UI consistently.
-                        hero.ChangeHeroGold(-fee);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
-                                .SetTextVariable("FEE", fee).ToString()));
-                        ModLogger.Info("Gold", $"Wagon fee paid: {fee} denars");
-                    }
+                    // GiveGoldAction properly deducts from party treasury and updates UI
+                    GiveGoldAction.ApplyBetweenCharacters(hero, null, fee);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
+                            .SetTextVariable("FEE", fee).ToString()));
+                    ModLogger.Info("Gold", $"Wagon fee paid: {fee} denars");
                 }
+                else
+                {
+                    // Player has no gold - still proceed but log it
+                    ModLogger.Info("Gold", "No gold available for wagon fee - proceeding without charge.");
+                }
+            }
 
                 ModLogger.Info("Enlistment", $"Stashed belongings; stash now {_baggageStash.Count} entries.");
             }
@@ -1558,8 +1659,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var gain = (int)Math.Floor(totalValue);
                 if (gain > 0)
                 {
-                    // Use ChangeHeroGold to ensure the engine updates state/UI consistently.
-                    hero.ChangeHeroGold(gain);
+                    // GiveGoldAction properly adds to party treasury and updates UI
+                    GiveGoldAction.ApplyBetweenCharacters(null, hero, gain);
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
                             .SetTextVariable("GOLD", gain).ToString()));
@@ -1639,13 +1740,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+            // Use numeric iteration to avoid invalid enum values like NumEquipmentSetSlots
+            // which would cause IndexOutOfRangeException when used as an array index.
+            for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
             {
-                if (slot == EquipmentIndex.None)
-                {
-                    continue;
-                }
-
+                var slot = (EquipmentIndex)i;
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
@@ -1663,13 +1762,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return total;
             }
 
-            foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+            // Use numeric iteration to avoid invalid enum values like NumEquipmentSetSlots
+            for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
             {
-                if (slot == EquipmentIndex.None)
-                {
-                    continue;
-                }
-
+                var slot = (EquipmentIndex)i;
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
@@ -1689,13 +1785,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return list;
             }
 
-            foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+            // Use numeric iteration to avoid invalid enum values like NumEquipmentSetSlots
+            for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
             {
-                if (slot == EquipmentIndex.None)
-                {
-                    continue;
-                }
-
+                var slot = (EquipmentIndex)i;
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
@@ -2543,6 +2636,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentXP = 0;
                 _enlistmentDate = CampaignTime.Zero;
                 _disbandArmyAfterBattle = false; // Clear any pending army operations
+                ClearPayState("service_ended");
                 ClearLanceState();
                 if (!playerInBattleState)
                 {
@@ -2926,6 +3020,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentXP = 0;
                 _enlistmentDate = CampaignTime.Zero;
                 _disbandArmyAfterBattle = false;
+                ClearPayState("desertion");
 
                 // Clear any active grace period state
                 ClearDesertionGracePeriod();
@@ -3403,6 +3498,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Check for renewal term completion
                 CheckRenewalTermCompletion();
+                
+                // Phase 5: Check for NPC soldier desertion when pay tension is high
+                CheckNpcDesertionFromPayTension();
             }
             catch (Exception ex)
             {
@@ -3443,19 +3541,144 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var payout = _pendingMusterPay;
-            ModLogger.Info("Pay", $"Resolving pay muster: standard (PendingPay={payout})");
-            if (payout > 0)
+            var totalWithBackpay = payout + _owedBackpay;
+            var canPayFull = CanLordAffordPay(totalWithBackpay);
+            var canPayPartial = !canPayFull && CanLordAffordPartialPay(totalWithBackpay);
+            var wealthStatus = GetLordWealthStatus();
+            
+            ModLogger.Info("Pay", $"Resolving pay muster: PendingPay={payout}, Backpay={_owedBackpay}, " +
+                $"CanPayFull={canPayFull}, CanPayPartial={canPayPartial}, LordWealth={wealthStatus}");
+
+            if (canPayFull && totalWithBackpay > 0)
             {
-                Hero.MainHero.ChangeHeroGold(payout);
-                OnWagePaid?.Invoke(payout);
-                ModLogger.Info("Gold", $"Pay muster payout: {payout} (pending cleared)");
+                // Full payment including any backpay
+                ProcessFullPayment(totalWithBackpay);
             }
+            else if (canPayPartial && totalWithBackpay > 0)
+            {
+                // Partial payment - lord pays 50% of what's owed
+                ProcessPartialPayment(payout, totalWithBackpay);
+            }
+            else if (payout > 0)
+            {
+                // Lord can't afford to pay anything - accumulate backpay and tension
+                ProcessPayDelay(payout);
+            }
+            
             _pendingMusterPay = 0;
-            _lastPayOutcome = $"standard:{payout}";
             _nextPayday = ComputeNextPayday();
             _payMusterPending = false;
             ClearProbation("pay_muster_resolved");
-            ModLogger.Info("Pay", $"Pay muster resolved: standard (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+            ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
+        }
+
+        /// <summary>
+        /// Process full payment including any backpay. Reduces tension by 30.
+        /// </summary>
+        private void ProcessFullPayment(int grossAmount)
+        {
+            // Deduct lance fund (5%)
+            var lanceFundDeduction = (int)(grossAmount * 0.05f);
+            _lanceFundBalance += lanceFundDeduction;
+            var netPayout = grossAmount - lanceFundDeduction;
+            
+            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, netPayout);
+            OnWagePaid?.Invoke(netPayout);
+            
+            // Update pay tension state - successful full payment reduces tension by 30
+            _lastPayDate = CampaignTime.Now;
+            var hadBackpay = _owedBackpay > 0;
+            _payTension = Math.Max(0, _payTension - 30);
+            _owedBackpay = 0;
+            _consecutiveDelays = 0;
+            
+            _lastPayOutcome = hadBackpay ? $"backpay:{netPayout}" : $"standard:{netPayout}";
+            ModLogger.Info("Gold", $"Full payment: {netPayout} (gross={grossAmount}, lanceFund={lanceFundDeduction})");
+            
+            if (hadBackpay)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Back pay received! {netPayout} denars (including owed wages).",
+                    Colors.Green));
+            }
+        }
+
+        /// <summary>
+        /// Process partial payment - lord pays current week + 50% of backpay. Reduces tension by 10.
+        /// </summary>
+        private void ProcessPartialPayment(int currentPay, int totalOwed)
+        {
+            // Pay current week + half of backpay
+            var backpayPortion = _owedBackpay / 2;
+            var grossAmount = currentPay + backpayPortion;
+            
+            // Deduct lance fund (5%)
+            var lanceFundDeduction = (int)(grossAmount * 0.05f);
+            _lanceFundBalance += lanceFundDeduction;
+            var netPayout = grossAmount - lanceFundDeduction;
+            
+            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, netPayout);
+            OnWagePaid?.Invoke(netPayout);
+            
+            // Update state - partial payment reduces tension by 10, halves remaining backpay
+            _lastPayDate = CampaignTime.Now;
+            _owedBackpay = _owedBackpay - backpayPortion;
+            _payTension = Math.Max(0, _payTension - 10);
+            // Don't reset consecutive delays for partial payment
+            
+            _lastPayOutcome = $"partial_backpay:{netPayout}";
+            ModLogger.Info("Gold", $"Partial payment: {netPayout} (stillOwed={_owedBackpay})");
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Partial pay received: {netPayout} denars. Still owed: {_owedBackpay}.",
+                Colors.Yellow));
+        }
+
+        /// <summary>
+        /// Process pay delay - accumulate backpay and increase tension.
+        /// </summary>
+        private void ProcessPayDelay(int unpaidAmount)
+        {
+            _owedBackpay += unpaidAmount;
+            _consecutiveDelays++;
+            
+            // Tension escalates: 10 + 5 per week overdue
+            var tensionIncrease = GetPayTensionIncrease();
+            _payTension = Math.Min(100, _payTension + tensionIncrease);
+            
+            _lastPayOutcome = $"delayed:{unpaidAmount}";
+            ModLogger.Warn("Pay", $"Pay delayed: Owed={_owedBackpay}, Tension={_payTension}, Consecutive={_consecutiveDelays}");
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Pay delayed! Lord {_enlistedLord?.Name} cannot afford wages. Owed: {_owedBackpay} denars.",
+                Colors.Red));
+        }
+
+        /// <summary>
+        /// Write off backpay debt (used when transferring lords or lord goes completely broke).
+        /// Clears owed amount and tension, but damages lord relation.
+        /// </summary>
+        internal void WriteOffBackpay(string reason)
+        {
+            if (_owedBackpay <= 0) return;
+            
+            var writtenOff = _owedBackpay;
+            _owedBackpay = 0;
+            _payTension = 0;
+            _consecutiveDelays = 0;
+            
+            // Damage relation with lord for stiffing us
+            if (_enlistedLord != null)
+            {
+                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -10, false, true);
+            }
+            
+            _lastPayOutcome = $"written_off:{writtenOff}";
+            ModLogger.Warn("Pay", $"Backpay written off: {writtenOff} denars ({reason})");
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Your back pay of {writtenOff} denars has been written off. {reason}",
+                Colors.Red));
         }
 
         internal void ResolveCorruptionMuster()
@@ -3503,7 +3726,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var payout = (int)(_pendingMusterPay * 1.2f);
                         if (payout > 0)
                         {
-                            Hero.MainHero.ChangeHeroGold(payout);
+                            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                             OnWagePaid?.Invoke(payout);
                         }
                         _lastPayOutcome = $"corruption_success:{payout}";
@@ -3539,7 +3762,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var payout = (int)(_pendingMusterPay * 0.95f);
             if (payout > 0)
             {
-                Hero.MainHero.ChangeHeroGold(payout);
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                 OnWagePaid?.Invoke(payout);
             }
 
@@ -3587,7 +3810,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                Hero.MainHero.ChangeHeroGold(payout);
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                 OnWagePaid?.Invoke(payout);
 
                 // Placeholder: if no gear picker available, just log outcome.
@@ -3614,6 +3837,35 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Instead, retry soon so the player can resolve pay without losing track of it.
             _nextPayday = CampaignTime.Now + CampaignTime.Days(1f);
             ModLogger.Info("Pay", $"Pay muster deferred; retry scheduled for {_nextPayday} (Pending={_pendingMusterPay}).");
+        }
+
+        internal void ResolvePromissoryMuster()
+        {
+            try
+            {
+                if (_isPendingDischarge)
+                {
+                    // Promissory notes aren't used for final muster; resolve normally.
+                    ResolvePayMusterStandard();
+                    return;
+                }
+
+                // Keep this internal and simple:
+                // - do not pay out today
+                // - keep pending pay in the ledger
+                // - retry soon so the player can resolve when conditions improve
+                _lastPayOutcome = $"promissory:{_pendingMusterPay}";
+                _payMusterPending = false;
+                _nextPayday = CampaignTime.Now + CampaignTime.Days(3f);
+                ModLogger.Info("Pay",
+                    $"Pay muster resolved: promissory note accepted (PendingStillOwed={_pendingMusterPay}, NextRetry={_nextPayday})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Pay", $"Promissory muster failed: {ex.Message}");
+                _payMusterPending = false;
+                _nextPayday = CampaignTime.Now + CampaignTime.Days(1f);
+            }
         }
 
         public bool RequestDischarge()
@@ -3705,7 +3957,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var payout = Math.Max(0, _pendingMusterPay) + Math.Max(0, severance);
                 if (payout > 0)
                 {
-                    Hero.MainHero.ChangeHeroGold(payout);
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                 }
 
                 ModLogger.Info("Pay",
@@ -3843,7 +4095,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                Hero.MainHero?.ChangeHeroGold(_pensionAmountPerDay);
+                if (_pensionAmountPerDay > 0)
+                {
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, _pensionAmountPerDay);
+                }
                 _lastPayOutcome = $"pension:{_pensionAmountPerDay}";
                 ModLogger.Info("Gold", $"Pension paid: {_pensionAmountPerDay} denars");
             }
@@ -4077,6 +4332,425 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return Math.Max(finalWage, 24); // Minimum 24 gold/day
         }
 
+        #region Pay System (Phase 1-2)
+
+        /// <summary>
+        /// Lord's financial status affects pay reliability and amount.
+        /// </summary>
+        internal enum LordWealthStatus { Wealthy, Comfortable, Struggling, Poor, Broke }
+
+        /// <summary>
+        /// Get base daily pay by tier per pay_system.md spec.
+        /// T1 (Levy): 3, T2 (Recruit): 6, T3 (Soldier): 10, T4 (Veteran): 16,
+        /// T5 (Elite): 25, T6 (Household): 40, T7 (Lieutenant): 60, T8 (Captain): 85, T9 (Commander): 120
+        /// </summary>
+        private int GetBasePayByTier(int tier)
+        {
+            return tier switch
+            {
+                1 => 3,
+                2 => 6,
+                3 => 10,
+                4 => 16,
+                5 => 25,
+                6 => 40,
+                7 => 60,
+                8 => 85,
+                9 => 120,
+                _ => 3
+            };
+        }
+
+        /// <summary>
+        /// Get culture modifier for pay. Some cultures pay better than others.
+        /// Empire/Aserai: 1.1, Vlandia: 1.0, Sturgia: 0.9, Battania: 0.85, Khuzait: 0.8
+        /// </summary>
+        private float GetCulturePayModifier()
+        {
+            var cultureId = _enlistedLord?.Culture?.StringId?.ToLowerInvariant() ?? string.Empty;
+            return cultureId switch
+            {
+                "empire" => 1.1f,
+                "aserai" => 1.1f,
+                "vlandia" => 1.0f,
+                "sturgia" => 0.9f,
+                "battania" => 0.85f,
+                "khuzait" => 0.8f,
+                _ => 1.0f
+            };
+        }
+
+        /// <summary>
+        /// Get wartime modifier for pay. Active conflict = hazard pay.
+        /// Peacetime: 1.0, Active War: 1.15, Siege (defending): 1.25, Siege (attacking): 1.2
+        /// </summary>
+        private float GetWartimePayModifier()
+        {
+            var lordFaction = _enlistedLord?.MapFaction;
+            if (lordFaction == null) return 1.0f;
+
+            // Check if we're in a siege
+            var settlement = Settlement.CurrentSettlement;
+            if (settlement?.IsUnderSiege == true)
+            {
+                // Check if we're defending or attacking
+                var siegeEvent = settlement.SiegeEvent;
+                if (siegeEvent != null)
+                {
+                    var isDefending = siegeEvent.BesiegerCamp?.LeaderParty?.MapFaction != lordFaction;
+                    return isDefending ? 1.25f : 1.2f;
+                }
+            }
+
+            // Check if faction is at war with anyone
+            foreach (var otherFaction in Campaign.Current.Factions)
+            {
+                if (otherFaction != lordFaction && FactionManager.IsAtWarAgainstFaction(lordFaction, otherFaction))
+                {
+                    return 1.15f; // Active war hazard pay
+                }
+            }
+
+            return 1.0f; // Peacetime
+        }
+
+        /// <summary>
+        /// Get lord wealth pay modifier. Wealthy lords pay more, poor lords pay less.
+        /// Wealthy (>50k): 1.1, Comfortable: 1.0, Struggling: 0.9, Poor: 0.75, Broke: 0.5
+        /// </summary>
+        private float GetLordWealthPayModifier()
+        {
+            var status = GetLordWealthStatus();
+            return status switch
+            {
+                LordWealthStatus.Wealthy => 1.1f,
+                LordWealthStatus.Comfortable => 1.0f,
+                LordWealthStatus.Struggling => 0.9f,
+                LordWealthStatus.Poor => 0.75f,
+                LordWealthStatus.Broke => 0.5f,
+                _ => 1.0f
+            };
+        }
+
+        /// <summary>
+        /// Check if the lord has enough gold to pay the player.
+        /// Lords keep a buffer so we don't drain them completely.
+        /// </summary>
+        private bool CanLordAffordPay(int amount)
+        {
+            var lord = _enlistedLord;
+            if (lord == null) return false;
+
+            // Lord needs to keep a buffer - don't drain them to zero
+            const int minimumBuffer = 500;
+            return lord.Gold >= amount + minimumBuffer;
+        }
+
+        /// <summary>
+        /// Check if lord can afford partial pay (at least 50%).
+        /// </summary>
+        private bool CanLordAffordPartialPay(int amount)
+        {
+            var lord = _enlistedLord;
+            if (lord == null) return false;
+
+            const int minimumBuffer = 200;
+            return lord.Gold >= (amount / 2) + minimumBuffer;
+        }
+
+        /// <summary>
+        /// Get lord's financial status based on gold thresholds.
+        /// Used for pay reliability and potential pay reduction.
+        /// </summary>
+        private LordWealthStatus GetLordWealthStatus()
+        {
+            var gold = _enlistedLord?.Gold ?? 0;
+            if (gold > 50000) return LordWealthStatus.Wealthy;
+            if (gold > 20000) return LordWealthStatus.Comfortable;
+            if (gold > 5000) return LordWealthStatus.Struggling;
+            if (gold > 1000) return LordWealthStatus.Poor;
+            return LordWealthStatus.Broke;
+        }
+
+        /// <summary>
+        /// Calculate fully-modified daily pay using tier base + all modifiers.
+        /// </summary>
+        internal int CalculateModifiedDailyPay()
+        {
+            var basePay = GetBasePayByTier(_enlistmentTier);
+            var dutyMod = GetDutiesWageMultiplier();
+            var cultureMod = GetCulturePayModifier();
+            var wealthMod = GetLordWealthPayModifier();
+            var wartimeMod = GetWartimePayModifier();
+
+            var totalPay = basePay * dutyMod * cultureMod * wealthMod * wartimeMod;
+            return Math.Max(1, (int)Math.Round(totalPay));
+        }
+
+        /// <summary>
+        /// Clear pay tension state when service ends or transfers.
+        /// </summary>
+        private void ClearPayState(string reason)
+        {
+            _payTension = 0;
+            _owedBackpay = 0;
+            _lastPayDate = CampaignTime.Zero;
+            _consecutiveDelays = 0;
+            // Note: Lance fund is NOT cleared - it belongs to the lance, not the player
+            ModLogger.Debug("Pay", $"Pay state cleared: {reason}");
+        }
+
+        /// <summary>
+        /// Calculate pay tension increase based on weeks overdue.
+        /// Base 10 + 5 per week overdue, per pay_tension_events.md spec.
+        /// </summary>
+        private int GetPayTensionIncrease()
+        {
+            if (_lastPayDate == CampaignTime.Zero) return 10;
+            var weeksOverdue = Math.Max(0, (DaysSincePay - 7) / 7);
+            return 10 + (weeksOverdue * 5);
+        }
+
+        #endregion
+
+        #region Battle Loot Share (Phase 4 Pay System)
+
+        /// <summary>
+        /// Get gold share percentage based on tier per pay_system.md spec.
+        /// T1-T6: Percentage of troop pool (after lord's 50% take)
+        /// T7-T9: Percentage of total loot (before lord's take)
+        /// </summary>
+        private float GetLootSharePercent(int tier)
+        {
+            return tier switch
+            {
+                1 => 0.05f,  // 5%
+                2 => 0.10f,  // 10%
+                3 => 0.10f,  // 10%
+                4 => 0.15f,  // 15%
+                5 => 0.15f,  // 15%
+                6 => 0.15f,  // 15%
+                7 => 0.10f,  // 10% of total (commander)
+                8 => 0.15f,  // 15% of total (commander)
+                9 => 0.20f,  // 20% of total (commander)
+                _ => 0.05f
+            };
+        }
+
+        /// <summary>
+        /// Calculate and award battle loot share based on battle outcome.
+        /// Called from OnMapEventEnded when player participated in a victory.
+        /// </summary>
+        internal void AwardBattleLootShare(MapEvent mapEvent, bool playerWon)
+        {
+            try
+            {
+                if (!IsEnlisted || _enlistedLord == null)
+                {
+                    return;
+                }
+
+                if (!playerWon)
+                {
+                    ModLogger.Debug("Pay", "No loot share - battle lost");
+                    return;
+                }
+
+                // Estimate battle loot value based on enemy casualties
+                // Native doesn't expose loot value directly, so we estimate based on killed troops
+                var enemySide = mapEvent.PlayerSide == BattleSideEnum.Defender 
+                    ? BattleSideEnum.Attacker 
+                    : BattleSideEnum.Defender;
+                    
+                var enemyCasualties = mapEvent.GetMapEventSide(enemySide)?.TroopCasualties ?? 0;
+                
+                // Estimate loot value: ~20 denars per enemy killed (rough average)
+                var estimatedTotalLoot = enemyCasualties * 20;
+                
+                if (estimatedTotalLoot <= 0)
+                {
+                    ModLogger.Debug("Pay", "No loot share - no enemy casualties");
+                    return;
+                }
+
+                var tier = _enlistmentTier;
+                var sharePercent = GetLootSharePercent(tier);
+                
+                // T1-T6 get share of troop pool (50% of total after lord's take)
+                // T7-T9 get share of total loot (commander privilege)
+                var lootPool = tier >= 7 ? estimatedTotalLoot : (int)(estimatedTotalLoot * 0.5f);
+                var goldEarned = (int)(lootPool * sharePercent);
+                
+                // Battle bonuses: Victory bonus (5-20 based on battle size)
+                var battleSizeBonus = Math.Min(20, 5 + (enemyCasualties / 10));
+                
+                var totalReward = goldEarned + battleSizeBonus;
+                
+                if (totalReward <= 0)
+                {
+                    return;
+                }
+
+                // Award gold
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, totalReward);
+                
+                ModLogger.Info("Pay", $"Battle loot share: {goldEarned} (share) + {battleSizeBonus} (victory) = {totalReward} gold (T{tier}, {enemyCasualties} casualties)");
+                
+                // Notify player
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Battle spoils: {totalReward} denars ({goldEarned} loot share + {battleSizeBonus} victory bonus)",
+                    Colors.Green));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Pay", $"Error awarding battle loot share: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region PayTension Effects (Phase 5 Pay System)
+
+        /// <summary>
+        /// Get morale penalty based on PayTension level.
+        /// Higher tension = lower morale as soldiers get desperate.
+        /// </summary>
+        public int GetPayTensionMoralePenalty()
+        {
+            if (_payTension < 20) return 0;
+            if (_payTension < 40) return -3;
+            if (_payTension < 60) return -6;
+            if (_payTension < 80) return -10;
+            return -15;
+        }
+
+        /// <summary>
+        /// Get discipline incident chance modifier based on PayTension.
+        /// Higher tension = more likely discipline problems.
+        /// </summary>
+        public float GetPayTensionDisciplineModifier()
+        {
+            if (_payTension < 40) return 0f;
+            if (_payTension < 60) return 0.05f;  // +5% chance
+            if (_payTension < 80) return 0.10f;  // +10% chance
+            return 0.20f;  // +20% chance
+        }
+
+        /// <summary>
+        /// Check if free desertion is available (no penalty at 60+ tension).
+        /// When pay is severely delayed, the lord understands if soldiers leave.
+        /// </summary>
+        public bool IsFreeDesertionAvailable => _payTension >= 60 && IsEnlisted;
+
+        /// <summary>
+        /// Process free desertion when PayTension is 60+.
+        /// Minimal penalties compared to normal desertion.
+        /// </summary>
+        public void ProcessFreeDesertion()
+        {
+            if (!IsFreeDesertionAvailable)
+            {
+                ModLogger.Warn("Pay", "Free desertion not available - tension below 60");
+                return;
+            }
+
+            try
+            {
+                // Minimal relation penalty - lord understands
+                if (_enlistedLord != null)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, false, true);
+                }
+
+                // No bounty, no faction penalty
+                ModLogger.Info("Pay", $"Processing free desertion (PayTension={_payTension})");
+
+                // End enlistment cleanly
+                StopEnlist("free_desertion_pay_crisis", isHonorableDischarge: false);
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "You leave quietly. No one blames you — you weren't paid.",
+                    Colors.Yellow));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Pay", $"Error processing free desertion: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Check for NPC soldier desertion due to high pay tension.
+        /// Only applies to commanders (T7+) with retinue.
+        /// Called daily when tension is 60+.
+        /// </summary>
+        internal void CheckNpcDesertionFromPayTension()
+        {
+            try
+            {
+                // Only commanders have troops to desert
+                if (_enlistmentTier < 7 || _payTension < 60)
+                {
+                    return;
+                }
+
+                var mainParty = MobileParty.MainParty;
+                if (mainParty?.MemberRoster == null || mainParty.MemberRoster.TotalManCount <= 1)
+                {
+                    return;
+                }
+
+                // Desertion chance scales with tension
+                float desertionChance = _payTension switch
+                {
+                    >= 90 => 0.05f,  // 5% per soldier
+                    >= 80 => 0.03f,  // 3% per soldier
+                    >= 60 => 0.01f,  // 1% per soldier
+                    _ => 0f
+                };
+
+                var roster = mainParty.MemberRoster;
+                var desertersTotal = 0;
+
+                // Check each troop type (not heroes)
+                for (int i = roster.Count - 1; i >= 0; i--)
+                {
+                    var element = roster.GetElementCopyAtIndex(i);
+                    if (element.Character?.IsHero == true) continue;
+
+                    var count = element.Number;
+                    var deserters = 0;
+
+                    for (int j = 0; j < count; j++)
+                    {
+                        if (MBRandom.RandomFloat < desertionChance)
+                        {
+                            deserters++;
+                        }
+                    }
+
+                    if (deserters > 0)
+                    {
+                        roster.AddToCounts(element.Character, -deserters);
+                        desertersTotal += deserters;
+                    }
+                }
+
+                if (desertersTotal > 0)
+                {
+                    ModLogger.Info("Pay", $"NPC desertion: {desertersTotal} soldiers left due to unpaid wages (tension={_payTension})");
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{desertersTotal} soldier(s) deserted due to unpaid wages!",
+                        Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Pay", $"Error checking NPC desertion: {ex.Message}");
+            }
+        }
+
+        #endregion
+
         internal bool TryGetProjectedDailyWage(out int wage)
         {
             wage = 0;
@@ -4260,6 +4934,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Check if player has enough XP for next tier (up to max tier)
             while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
             {
+                // Phase 4: temporary promotion block at very high discipline risk.
+                // This is a relief-valve-friendly block: XP keeps accumulating and promotion will resume
+                // once discipline improves below the threshold.
+                var escalation = EscalationManager.Instance;
+                if (escalation?.IsEnabled() == true &&
+                    escalation.State != null &&
+                    escalation.State.Discipline >= EscalationThresholds.DisciplineBlocked)
+                {
+                    var show = _lastPromotionBlockedMessageTime == CampaignTime.Zero ||
+                               (CampaignTime.Now - _lastPromotionBlockedMessageTime).ToDays >= 1f;
+                    if (show)
+                    {
+                        _lastPromotionBlockedMessageTime = CampaignTime.Now;
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=enlist_promotion_blocked_discipline}Promotion blocked: your discipline is under review. Reduce discipline risk before advancing.").ToString(),
+                            Colors.Yellow));
+                    }
+                    break;
+                }
+
                 _enlistmentTier++;
                 promoted = true;
                 ModLogger.Info("Progression", $"Promoted to Tier {_enlistmentTier}");
@@ -4308,8 +5002,60 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             ValidateLanceStateOnLoad();
+            
+            // Phase 7: Migrate tracking fields for existing saves
+            MigratePhase7TrackingFields();
 
             ModLogger.Info("SaveLoad", $"Validated enlistment state - Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
+        }
+        
+        /// <summary>
+        ///     Phase 7: Migrate promotion tracking fields for existing saves.
+        ///     Initializes days in rank, events completed, and battles survived with reasonable estimates.
+        /// </summary>
+        private void MigratePhase7TrackingFields()
+        {
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            
+            try
+            {
+                // If lastPromotionDate is not set but player is T2+, estimate from enlistment date
+                if (_lastPromotionDate == CampaignTime.Zero && _enlistmentTier > 1)
+                {
+                    // Assume player was promoted fairly recently (within tier * 7 days)
+                    var estimatedDaysSincePromotion = Math.Max(7, (_enlistmentTier - 1) * 7);
+                    _lastPromotionDate = CampaignTime.Now - CampaignTime.Days(estimatedDaysSincePromotion);
+                    ModLogger.Info("SaveLoad", $"Migration: Estimated lastPromotionDate to {estimatedDaysSincePromotion} days ago");
+                }
+                
+                // If T1 and lastPromotionDate not set, use enlistment date
+                if (_lastPromotionDate == CampaignTime.Zero && _enlistmentTier == 1)
+                {
+                    _lastPromotionDate = _enlistmentDate != CampaignTime.Zero ? _enlistmentDate : CampaignTime.Now;
+                    ModLogger.Info("SaveLoad", "Migration: Set lastPromotionDate to enlistment date for T1 player");
+                }
+                
+                // If events/battles are 0 but player is T2+, estimate based on tier
+                // Players typically complete 2-3 events and survive 1-2 battles per tier
+                if (_eventsCompleted == 0 && _enlistmentTier > 1)
+                {
+                    _eventsCompleted = (_enlistmentTier - 1) * 2; // 2 events per tier
+                    ModLogger.Info("SaveLoad", $"Migration: Estimated eventsCompleted to {_eventsCompleted}");
+                }
+                
+                if (_battlesSurvived == 0 && _enlistmentTier > 1)
+                {
+                    _battlesSurvived = (_enlistmentTier - 1); // 1 battle per tier
+                    ModLogger.Info("SaveLoad", $"Migration: Estimated battlesSurvived to {_battlesSurvived}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("SaveLoad", "Phase 7 tracking migration failed", ex);
+            }
         }
 
         private void TryPauseForSettlementEntry()
@@ -5952,10 +6698,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public static event Action<int> OnPromoted;
 
         /// <summary>
-        ///     Current rank title for story systems (uses progression_config tier names).
+        ///     Current rank title for story systems (culture-specific from progression_config).
+        ///     Returns the rank name appropriate for the current lord's culture.
         /// </summary>
-        public string CurrentRankTitle =>
-            Assignments.Core.ConfigurationManager.GetTierName(_enlistmentTier);
+        public string CurrentRankTitle
+        {
+            get
+            {
+                var cultureId = CurrentLord?.Culture?.StringId ?? 
+                               CurrentLord?.Clan?.Kingdom?.Culture?.StringId ?? 
+                               "mercenary";
+                return Assignments.Core.ConfigurationManager.GetCultureRankTitle(_enlistmentTier, cultureId);
+            }
+        }
 
         /// <summary>
         ///     Fired when player starts temporary leave.
@@ -7079,6 +7834,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Phase 7: Increment the battles survived counter. Called after successfully completing a battle.
+        /// </summary>
+        public void IncrementBattlesSurvived()
+        {
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            _battlesSurvived++;
+            ModLogger.Debug("Enlistment", $"Battles survived: {_battlesSurvived}");
+        }
+
+        /// <summary>
+        ///     Phase 7: Increment the events completed counter. Called after completing a Lance Life event.
+        /// </summary>
+        public void IncrementEventsCompleted()
+        {
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            _eventsCompleted++;
+            ModLogger.Debug("Enlistment", $"Events completed: {_eventsCompleted}");
+        }
+
+        /// <summary>
         ///     Awards battle participation XP after a battle ends (called from OnMapEventEnded).
         ///     Reads values from progression_config.json for configurability.
         ///     Note: This is a fallback - OnPlayerBattleEnd awards XP first if it fires.
@@ -7121,6 +7902,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     AddEnlistmentXP(battleXP, "Battle Participation");
                     _battleXPAwardedThisBattle = true;
 
+                    // Phase 7: Track battles for promotion requirements
+                    IncrementBattlesSurvived();
+
                     // Show notification to player
                     var message = $"Battle completed! +{battleXP} XP";
                     InformationManager.DisplayMessage(new InformationMessage(message));
@@ -7148,6 +7932,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             var previousTier = _enlistmentTier;
             _enlistmentTier = tier;
+
+            // Phase 7: Track promotion date for days-in-rank requirement
+            if (tier > previousTier)
+            {
+                _lastPromotionDate = CampaignTime.Now;
+            }
+
             ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP})");
 
             // When crossing into Tier 4, reclaim companions from lord's party
@@ -7257,17 +8048,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // If we crossed from below to above a threshold
                     if (previousXP < requiredXP && currentXP >= requiredXP)
                     {
-                        // Phase 2B: Trigger troop selection system
-                        var troopSelectionManager = TroopSelectionManager.Instance;
-                        if (troopSelectionManager != null)
-                        {
-                            troopSelectionManager.ShowTroopSelectionMenu(tier + 1);
-                        }
-                        else
-                        {
-                            // Fallback: Direct promotion notification
-                            ShowPromotionNotification(tier + 1);
-                        }
+                        // Phase 7: Troop selection menu removed - promotions handled via PromotionBehavior
+                        // which triggers proving events and culture-specific notifications.
+                        // Player visits Quartermaster manually for equipment after promotion.
+                        // The PromotionBehavior.CheckForPromotion() handles the actual tier advancement.
+                        ModLogger.Info("Progression", $"XP threshold crossed for tier {tier + 1} - PromotionBehavior will handle");
 
                         break; // Only notify for the first threshold crossed
                     }
@@ -9152,6 +9937,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (!EnlistedEncounterBehavior.IsWaitingInReserve)
                     {
                         AwardBattleXP(playerParticipated);
+                        
+                        // Phase 4: Award battle loot share if we won
+                        var playerWon = effectiveMapEvent?.WinningSide == effectiveMapEvent?.PlayerSide;
+                        if (playerParticipated && playerWon)
+                        {
+                            AwardBattleLootShare(effectiveMapEvent, true);
+                        }
                     }
                     else
                     {

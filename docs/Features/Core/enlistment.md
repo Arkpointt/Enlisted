@@ -44,6 +44,10 @@ Provide the foundation for military service: enlist with a lord, follow their mo
 - Minor faction enlistment mirrors the lord faction’s active wars to the player clan and restores them to neutral on discharge
 - Minor faction desertion applies -50 relation to the lord and their clan members and blocks re-enlistment with that faction for 90 days (no crime rating)
 
+Related systems (shipping):
+- Discipline can temporarily block promotion until the player recovers (clean service / decay). (Config: `escalation.enabled`, enabled by default.)
+- The enlisted status UI can show “YOUR STANDING” and “YOUR CONDITION” sections. (Configs: `escalation.enabled`, `player_conditions.enabled`, enabled by default.)
+
 ## Behavior
 
 **Enlistment Process:**
@@ -78,38 +82,50 @@ Provide the foundation for military service: enlist with a lord, follow their mo
 - Wages accrue daily into `_pendingMusterPay`; paid out at pay muster (configurable interval ~12 days with jitter)
 - Daily wage is clamped after multipliers (minimum **24/day**, maximum **150/day**)
 
-**Tier Progression (XP thresholds from progression_config.json):**
-| Tier | Rank Name | XP Required | Key Features |
-|------|-----------|-------------|-------------|
-| 1 | Levy | 0 | Auto-issue equipment, basic duties |
-| 2 | Footman | 800 | Formation selection unlocked, better equipment access |
-| 3 | Serjeant | 3,000 | Military professions unlock, re-entry starting tier (Honorable) |
-| 4 | Man-at-Arms | 6,000 | Command 5 soldiers (retinue), re-entry starting tier (Veteran/Heroic) |
-| 5 | Banner Serjeant | 11,000 | Command 10 soldiers |
-| 6 | Household Guard | 19,000 | Command 20 soldiers (max) |
+**Tier Progression:**
+| Tier | XP Required | Key Features |
+|------|-------------|-------------|
+| 1 | 0 | Basic levy gear, Runner duty |
+| 2 | 800 | Formation choice (proving event), starter duty assigned |
+| 3 | 3,000 | Military professions unlock, re-entry starting tier (Honorable) |
+| 4 | 6,000 | Command 5 soldiers (retinue), re-entry starting tier (Veteran/Heroic) |
+| 5 | 11,000 | Command 10 soldiers |
+| 6 | 19,000 | Command 20 soldiers (max) |
 
-Rank names are configurable in `progression_config.json`.
+**Culture-Specific Ranks:**
+Rank names are determined by the enlisted lord's culture:
+- Empire: Tiro → Miles → Immunes → Principalis → Evocatus → Centurion
+- Vlandia: Peasant → Levy → Footman → Man-at-Arms → Sergeant → Knight Bachelor
+- Sturgia: Thrall → Ceorl → Fyrdman → Drengr → Huskarl → Varangian
+- (See `RankHelper.cs` for all cultures)
 
-**Immersive Promotion Notifications:**
+**Proving Events & Promotion:**
 
-Each tier has unique roleplay-focused promotion text with narrative describing the ceremony and new privileges:
+Promotions are no longer automatic upon reaching XP thresholds. Players must meet multiple requirements and complete a **proving event**.
 
-| Tier | Title | Key Unlocks |
-|------|-------|-------------|
-| 2 | "Recognized as a Soldier" | Formation selection, better equipment |
-| 3 | "Rise to Serjeant" | Military professions unlock |
-| 4 | "Sworn as Man-at-Arms" | Command 5 soldiers (retinue) |
-| 5 | "Entrusted with the Banner" | Command 10 soldiers |
-| 6 | "Welcomed to the Household" | Command 20 soldiers (max) |
+**Promotion Requirements (T2+):**
+- XP threshold (varies by tier)
+- Days in rank (minimum service time)
+- Events completed (Lance Life events)
+- Battles survived
+- Lance reputation (minimum threshold)
+- Discipline (not too high)
+- Leader relation (for higher tiers)
 
-Promotion popup features:
-- Tier-specific title showing the ceremony name
-- Narrative text describing the promotion from the lord's or serjeant's perspective
-- Player name included in the narrative for immersion
-- Context-aware button text ("Understood" for Tier 2-3, "To My Camp" for Tier 4+)
-- Short chat notification for quick feedback
+**Proving Events by Tier:**
+| Tier | Event | Theme |
+|------|-------|-------|
+| T1→T2 | "Finding Your Place" | Formation choice (Infantry/Archer/Cavalry/Horse Archer) |
+| T2→T3 | "The Sergeant's Test" | Judgment and discipline |
+| T3→T4 | "Crisis of Command" | Leadership under fire |
+| T4→T5 | "The Lance Vote" | Earning the trust of your peers |
+| T5→T6 | "Audience with the Lord" | Loyalty declaration |
 
-All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xml` with IDs like `promo_title_X`, `promo_msg_X`, and `promo_chat_X`.
+**After Promotion:**
+- Formation assigned (T1→T2)
+- Starter duty auto-assigned based on formation
+- Message prompts player to visit Quartermaster for new kit
+- New equipment unlocked (shown with [NEW] indicator)
 
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)

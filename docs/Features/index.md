@@ -37,14 +37,31 @@ Quartermaster is purchase + buyback:
 ### 5) Day-to-day: Duties, camp actions, and progression
 - Pick duties/roles for bonuses and wage modifiers
 - Use Camp (“My Camp”) for your service record, retinue (Tier 4+), and discharge actions
+- Use **Camp Activities** for action-based skill XP (training/tasks/social) with fatigue costs
 - Docs:
   - **[Duties System](Core/duties-system.md)**
-  - **[Camp](UI/command-tent.md)**
+  - **[Camp](UI/camp-tent.md)**
   - **[Formation Training](Core/formation-training.md)**
+  - **[Menu Interface](UI/menu-interface.md)** (Camp Activities)
 
-### 6) Get paid (Pay Muster) and optionally discharge (Final Muster)
-Wages accrue daily, then resolve at a **pay muster** event. Discharge is handled via **Final Muster**.
-- Doc: **[Enlistment System](Core/enlistment.md)** (Pay Muster + Discharge/Final Muster)
+### 6) Get paid (Pay Muster) and manage pay tension
+Wages accrue daily with modifiers (culture, wartime, lord wealth). Paid at **pay muster** (~12 days).
+- When pay is late, **Pay Tension** builds (0-100) with escalating effects
+- At 60+ tension, **free desertion** becomes available (no penalties)
+- **Battle loot share** compensates T1-T3 soldiers; T4+ get native loot screens
+- Docs:
+  - **[Pay System](Core/pay-system.md)**
+  - **[Enlistment System](Core/enlistment.md)** (Discharge/Final Muster)
+
+### 7) Lance Life Events
+Random events shape your military career:
+- **Camp events**: Social, training, supply issues
+- **Pay tension events**: Grumbling, theft, confrontation, mutiny
+- **Loyal path missions**: Help the lord to reduce tension
+- **Consequences**: Heat, discipline, reputation, relations
+- Docs:
+  - **[Lance Life Events](Core/lance-life-events.md)**
+  - **[Camp Life Simulation](Gameplay/camp-life-simulation.md)**
 
 ---
 
@@ -52,12 +69,14 @@ Wages accrue daily, then resolve at a **pay muster** event. Discharge is handled
 
 The foundational systems that enable military service.
 
-- **[Enlistment System](Core/enlistment.md)** - Core service mechanics: muster ledger wages, pay muster incidents, XP, kills, pending discharge + Final Muster, grace periods, army following; naval join safety (sea-state sync before PlayerEncounter) and prisoner/encounter-safe discharge recovery
-- **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment and missions
+- **[Enlistment System](Core/enlistment.md)** - Core service mechanics, army following, discharge
+- **[Pay System](Core/pay-system.md)** - Wages, pay muster, pay tension, battle loot share, tier-gated loot
+- **[Lance Life Events](Core/lance-life-events.md)** - Data-driven events for camp life, training, pay tension, narrative
 - **[Duties System](Core/duties-system.md)** - Military roles and assignments with skill bonuses
 - **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression
-- **[Implementation Roadmap](Core/implementation-roadmap.md)** - Master phased plan for Camp Life + Lance Life development (source-of-truth and scope control)
-- **[Phase 4 Corruption Checklist](Core/corruption-phase-checklist.md)** - Acceptance gate for Heat/Discipline/Corruption escalation and consequences
+- **[Lance Assignments](Core/lance-assignments.md)** - Lance roster, personas, culture-specific ranks
+- **[Camp Fatigue](Core/camp-fatigue.md)** - Daily fatigue system for activities
+- **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment
 
 ---
 
@@ -66,7 +85,7 @@ The foundational systems that enable military service.
 Menu systems and player interaction interfaces.
 
 - **[Menu Interface](UI/menu-interface.md)** - Main enlisted status menu and navigation
-- **[Camp](UI/command-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub ("My Camp" menu)
+- **[Camp](UI/camp-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub ("My Camp" menu)
 - **[Dialog System](UI/dialog-system.md)** - Conversation management with lords
 - **[Quartermaster](UI/quartermaster.md)** - Equipment selection UI and variant management
 
@@ -80,7 +99,7 @@ Additional gameplay mechanics and player choices.
 - **[Troop Selection](Gameplay/troop-selection.md)** - Real troop choice for promotions and formations
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
 - **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts (phased plan)
-- **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and theft with consequences (data-driven, modular)
+- **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and escalation/condition consequences (data-driven, modular)
 
 ---
 
@@ -98,7 +117,6 @@ Low-level systems that ensure stability and prevent issues.
 
 - **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention, reserve watchdog, prisoner-state aware activation, besiege-menu fix, and naval battle fixes (ship assignment, captain lookup, troop deployment, AI behavior creation for shipless formations)
 - **[Formation Assignment](Technical/formation-assignment.md)** - Battle formation assignment and position teleportation to lord's deployment
-- **[Night Rest & Fatigue](Technical/night-rest-fatigue.md)** - Night halt logic for lords/armies with optional enlisted fatigue when rest is impossible; phased plan and safeguards
 
 ---
 
@@ -124,14 +142,15 @@ Most feature pages follow this structure (some pages also include extra debuggin
 ## Quick Reference
 
 **By Tier Requirement:**
-- Tier 1+: Enlistment, Duties, Formation Training, Troop Selection, Companion Management, Camp (basic)
-- Tier 2+: Quartermaster, Menu Interface
-- Tier 4+: Personal Retinue (Camp), Recon Mission
+- Tier 1+: Enlistment, Duties, Formation Training, Camp Activities, Pay System
+- Tier 2+: Quartermaster, Duty Requests
+- Tier 4+: Native Loot Screens, Personal Retinue, Recon Mission
 
 **By Category:**
-- **Progression**: Enlistment, Duties, Formation Training, Troop Selection
-- **Party Management**: Companion Management, Personal Retinue (Camp)
+- **Progression**: Enlistment, Pay System, Duties, Formation Training
+- **Party Management**: Companion Management, Personal Retinue
+- **Events**: Lance Life Events, Pay Tension Events, Loyal Path Missions
 - **Interaction**: Dialog System, Menu Interface, Town Access, Camp
-- **Equipment**: Quartermaster
+- **Equipment**: Quartermaster, Tier-Gated Loot
 - **Special**: Temporary Leave, Recon Mission
-- **Technical/Safety**: Encounter Safety, Formation Assignment, Night Rest & Fatigue
+- **Technical/Safety**: Encounter Safety, Formation Assignment

@@ -12,6 +12,7 @@ using Helpers;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 
@@ -57,8 +58,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             AddTroopSelectionMenus(starter);
             
-            // DEVELOPMENT: Validate troop coverage across all factions
-            TroopDiscoveryValidator.ValidateAllCulturesAndTiers();
+            // Development-only: deep validation of troop coverage across cultures/tiers.
+            // Disabled by default to keep session logs lightweight for players.
+            if (ModConfig.Settings?.RunTroopDiscoveryValidation == true)
+            {
+                TroopDiscoveryValidator.ValidateAllCulturesAndTiers();
+            }
             
             ModLogger.Info("TroopSelection", "Troop selection system initialized with modern UI styling");
         }

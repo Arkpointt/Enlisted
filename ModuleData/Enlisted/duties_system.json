@@ -2,62 +2,112 @@
   "schemaVersion": 1,
   "enabled": true,
   "duties": {
-    "enlisted": {
-      "id": "enlisted",
-      "display_name": "Enlisted",
-      "description": "Basic military service covering all essential skills",
+    "quartermaster": {
+      "id": "quartermaster",
+      "display_name": "Quartermaster",
+      "description": "Manage supplies, inventory, and logistics for the unit.",
       "min_tier": 1,
       "max_concurrent": 1,
       "target_skill": "Multi",
       "skill_xp_daily": 0,
-      "officer_role": null,
+      "officer_role": "Quartermaster",
       "xp_share_multiplier": 0.0,
-      "wage_multiplier": 1.0,
-      "required_formations": ["infantry", "archer", "cavalry", "horsearcher"],
+      "wage_multiplier": 1.4,
+      "required_formations": ["infantry"],
       "passive_effects": {},
-      "unlock_conditions": {
-        "relationship_required": 0,
-        "skill_required": 0
-      },
-      "multi_skill_xp": {
-        "Roguery": 4,
-        "Trade": 4,
-        "Scouting": 4,
-        "Tactics": 4,
-        "Charm": 4,
-        "Steward": 4,
-        "Medicine": 4,
-        "Engineering": 4,
-        "Smithing": 4,
-        "Leadership": 4
-      }
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Steward": 30, "Trade": 20 },
+      "event_prefix": "qm_"
     },
-    "forager": {
-      "id": "forager",
-      "display_name": "Forager",
-      "description": "Hunt and gather supplies for the camp",
+    "field_medic": {
+      "id": "field_medic",
+      "display_name": "Field Medic",
+      "description": "Treat wounds and care for the sick and injured.",
       "min_tier": 1,
       "max_concurrent": 1,
       "target_skill": "Multi",
       "skill_xp_daily": 0,
-      "officer_role": null,
+      "officer_role": "Surgeon",
       "xp_share_multiplier": 0.0,
-      "wage_multiplier": 1.0,
-      "required_formations": ["infantry", "archer", "cavalry", "horsearcher"],
+      "wage_multiplier": 1.2,
+      "required_formations": ["infantry"],
       "passive_effects": {},
-      "unlock_conditions": {
-        "relationship_required": 0,
-        "skill_required": 0
-      },
-      "multi_skill_xp": {
-        "Roguery": 15,
-        "Trade": 10
-      }
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Medicine": 40, "Athletics": 10 },
+      "event_prefix": "med_"
     },
-    "sentry": {
-      "id": "sentry",
-      "display_name": "Sentry",
-      "description": "Keep watch for enemy movements and threats",
+    "armorer": {
+      "id": "armorer",
+      "display_name": "Armorer",
+      "description": "Maintain and repair weapons and armor.",
+      "min_tier": 1,
+      "max_concurrent": 1,
+      "target_skill": "Multi",
+      "skill_xp_daily": 0,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 1.3,
+      "required_formations": ["infantry"],
+      "passive_effects": {},
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Smithing": 35, "Engineering": 15 },
+      "event_prefix": "arm_"
+    },
+    "runner": {
+      "id": "runner",
+      "display_name": "Runner",
+      "description": "Carry messages, supplies, and orders around camp and battlefield.",
+      "min_tier": 1,
+      "max_concurrent": 1,
+      "target_skill": "Multi",
+      "skill_xp_daily": 0,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 0.9,
+      "required_formations": ["infantry"],
+      "passive_effects": {},
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Athletics": 40, "Scouting": 10 },
+      "event_prefix": "run_"
+    },
+    "engineer": {
+      "id": "engineer",
+      "display_name": "Engineer",
+      "description": "Build fortifications, siege works, and field repairs.",
+      "min_tier": 2,
+      "max_concurrent": 1,
+      "target_skill": "Multi",
+      "skill_xp_daily": 0,
+      "officer_role": "Engineer",
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 1.5,
+      "required_formations": ["infantry"],
+      "passive_effects": {},
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Engineering": 40, "Athletics": 10 },
+      "event_prefix": "eng_"
+    },
+    "scout": {
+      "id": "scout",
+      "display_name": "Scout",
+      "description": "Reconnaissance, pathfinding, and enemy observation.",
+      "min_tier": 1,
+      "max_concurrent": 1,
+      "target_skill": "Multi",
+      "skill_xp_daily": 0,
+      "officer_role": "Scout",
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 1.3,
+      "required_formations": ["archer", "cavalry", "horsearcher"],
+      "passive_effects": {},
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Scouting": 40, "Athletics": 10 },
+      "event_prefix": "sc_"
+    },
+    "lookout": {
+      "id": "lookout",
+      "display_name": "Lookout",
+      "description": "Watch duty, signal fires, and camp security.",
       "min_tier": 1,
       "max_concurrent": 1,
       "target_skill": "Multi",
@@ -65,61 +115,64 @@
       "officer_role": null,
       "xp_share_multiplier": 0.0,
       "wage_multiplier": 1.0,
-      "required_formations": ["infantry", "archer", "cavalry", "horsearcher"],
+      "required_formations": ["archer"],
       "passive_effects": {},
-      "unlock_conditions": {
-        "relationship_required": 0,
-        "skill_required": 0
-      },
-      "multi_skill_xp": {
-        "Scouting": 15,
-        "Tactics": 10
-      }
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Scouting": 25, "Bow": 15, "Athletics": 10 },
+      "event_prefix": "look_"
     },
     "messenger": {
       "id": "messenger",
       "display_name": "Messenger",
-      "description": "Deliver messages and handle communications",
+      "description": "Deliver urgent dispatches between units and commanders.",
       "min_tier": 1,
       "max_concurrent": 1,
       "target_skill": "Multi",
       "skill_xp_daily": 0,
       "officer_role": null,
       "xp_share_multiplier": 0.0,
-      "wage_multiplier": 1.0,
-      "required_formations": ["infantry", "archer", "cavalry", "horsearcher"],
+      "wage_multiplier": 1.2,
+      "required_formations": ["cavalry", "horsearcher"],
       "passive_effects": {},
-      "unlock_conditions": {
-        "relationship_required": 0,
-        "skill_required": 0
-      },
-      "multi_skill_xp": {
-        "Steward": 10,
-        "Charm": 10,
-        "Trade": 5
-      }
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Riding": 30, "Athletics": 10, "Charm": 10 },
+      "event_prefix": "msg_"
     },
-    "pioneer": {
-      "id": "pioneer",
-      "display_name": "Pioneer",
-      "description": "Handle construction and engineering tasks",
+    "boatswain": {
+      "id": "boatswain",
+      "display_name": "Boatswain",
+      "description": "Manage ship operations, crew, and deck work.",
       "min_tier": 1,
       "max_concurrent": 1,
       "target_skill": "Multi",
       "skill_xp_daily": 0,
       "officer_role": null,
       "xp_share_multiplier": 0.0,
-      "wage_multiplier": 1.0,
-      "required_formations": ["infantry", "archer", "cavalry", "horsearcher"],
+      "wage_multiplier": 1.3,
+      "required_formations": ["naval"],
       "passive_effects": {},
-      "unlock_conditions": {
-        "relationship_required": 0,
-        "skill_required": 0
-      },
-      "multi_skill_xp": {
-        "Engineering": 15,
-        "Smithing": 10
-      }
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Athletics": 30, "Leadership": 20 },
+      "event_prefix": "boat_",
+      "requires_expansion": "war_sails"
+    },
+    "navigator": {
+      "id": "navigator",
+      "display_name": "Navigator",
+      "description": "Chart courses, read stars, and guide the ship.",
+      "min_tier": 2,
+      "max_concurrent": 1,
+      "target_skill": "Multi",
+      "skill_xp_daily": 0,
+      "officer_role": null,
+      "xp_share_multiplier": 0.0,
+      "wage_multiplier": 1.6,
+      "required_formations": ["naval"],
+      "passive_effects": {},
+      "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
+      "multi_skill_xp": { "Scouting": 30, "Engineering": 20 },
+      "event_prefix": "nav_",
+      "requires_expansion": "war_sails"
     }
   },
   "professions": {

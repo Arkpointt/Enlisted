@@ -1,0 +1,1057 @@
+{
+  "schemaVersion": "1.0",
+  "packId": "duty_field_medic",
+  "category": "duty",
+  "events": [
+    {
+      "id": "medic_treating_wounded",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:field_medic",
+          "wounded_in_camp"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "field_medic",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 1,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medic_treating_wounded_title",
+        "setupId": "ll_evt_medic_treating_wounded_setup",
+        "title": "Battle Triage",
+        "setup": "The fighting's done. The dying isn't. Wounded soldiers everywhere — more than you can treat. You have to choose who gets help first.\n\n{VETERAN_1_NAME} is among them. So is a recruit you barely know.",
+        "options": [
+          {
+            "id": "triage_by_severity_worst_first",
+            "textId": "ll_evt_medic_treating_wounded_opt_triage_by_severity_worst_first_text",
+            "text": "Triage by severity — worst first",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 40,
+                "steward": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_treating_wounded_opt_triage_by_severity_worst_first_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "save_who_you_can_save_skip_the_h",
+            "textId": "ll_evt_medic_treating_wounded_opt_save_who_you_can_save_skip_the_h_text",
+            "text": "Save who you can save — skip the hopeless",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_treating_wounded_opt_save_who_you_can_save_skip_the_h_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "focus_on_veteran_1_name",
+            "textId": "ll_evt_medic_treating_wounded_opt_focus_on_veteran_1_name_text",
+            "text": "Focus on {VETERAN_1_NAME}",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_treating_wounded_opt_focus_on_veteran_1_name_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "work_until_you_drop",
+            "textId": "ll_evt_medic_treating_wounded_opt_work_until_you_drop_text",
+            "text": "Work until you drop",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 5,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 50,
+                "leadership": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_treating_wounded_opt_work_until_you_drop_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 10,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medic_disease_outbreak",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:field_medic"
+        ],
+        "any": [
+          "camp_crowded",
+          "days_from_town > 7"
+        ],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "field_medic",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medic_disease_outbreak_title",
+        "setupId": "ll_evt_medic_disease_outbreak_setup",
+        "title": "Camp Sickness",
+        "setup": "It started with one soldier. Now it's a dozen. Camp fever — or worse. The surgeon is overwhelmed.\n\n\"You've got steady hands, {PLAYER_NAME}. I need you in the sick tent.\"",
+        "options": [
+          {
+            "id": "work_the_sick_tent_all_day",
+            "textId": "ll_evt_medic_disease_outbreak_opt_work_the_sick_tent_all_day_text",
+            "text": "Work the sick tent all day",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 40
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_disease_outbreak_opt_work_the_sick_tent_all_day_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "focus_on_the_worst_cases",
+            "textId": "ll_evt_medic_disease_outbreak_opt_focus_on_the_worst_cases_text",
+            "text": "Focus on the worst cases",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_disease_outbreak_opt_focus_on_the_worst_cases_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "identify_the_source_stop_the_spr",
+            "textId": "ll_evt_medic_disease_outbreak_opt_identify_the_source_stop_the_spr_text",
+            "text": "Identify the source, stop the spread",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 25,
+                "steward": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_disease_outbreak_opt_identify_the_source_stop_the_spr_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "volunteer_for_plague_duty_high_e",
+            "textId": "ll_evt_medic_disease_outbreak_opt_volunteer_for_plague_duty_high_e_text",
+            "text": "Volunteer for plague duty (high exposure)",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 50
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_disease_outbreak_opt_volunteer_for_plague_duty_high_e_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 20,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medic_surgical_assist",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "incident",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:field_medic",
+          "after_battle"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "field_medic",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medic_surgical_assist_title",
+        "setupId": "ll_evt_medic_surgical_assist_setup",
+        "title": "Surgery Assistance",
+        "setup": "The surgeon's hands are full — literally. He's got a soldier on the table with an arrow in his gut. \n\n\"Hold him down. Hand me what I need. Don't look away.\"",
+        "options": [
+          {
+            "id": "assist_calmly_follow_instruction",
+            "textId": "ll_evt_medic_surgical_assist_opt_assist_calmly_follow_instruction_text",
+            "text": "Assist calmly, follow instructions",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_surgical_assist_opt_assist_calmly_follow_instruction_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "take_initiative_anticipate_needs",
+            "textId": "ll_evt_medic_surgical_assist_opt_take_initiative_anticipate_needs_text",
+            "text": "Take initiative, anticipate needs",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 45
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_surgical_assist_opt_take_initiative_anticipate_needs_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "comfort_the_patient_keep_him_cal",
+            "textId": "ll_evt_medic_surgical_assist_opt_comfort_the_patient_keep_him_cal_text",
+            "text": "Comfort the patient, keep him calm",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 25,
+                "charm": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_surgical_assist_opt_comfort_the_patient_keep_him_cal_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "ask_to_learn_show_me_how",
+            "textId": "ll_evt_medic_surgical_assist_opt_ask_to_learn_show_me_how_text",
+            "text": "Ask to learn — \"show me how\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 40,
+                "engineering": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_surgical_assist_opt_ask_to_learn_show_me_how_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medic_medicine_shortage",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:field_medic",
+          "not_in_settlement, logistics_strain > 40"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "field_medic",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medic_medicine_shortage_title",
+        "setupId": "ll_evt_medic_medicine_shortage_setup",
+        "title": "Herb Gathering",
+        "setup": "The surgeon's kit is running low. Bandages can be improvised, but medicine needs ingredients.\n\n\"Know your plants, {PLAYER_NAME}? We need wound-wort, fever-leaf, anything useful.\"",
+        "options": [
+          {
+            "id": "search_methodically_identify_car",
+            "textId": "ll_evt_medic_medicine_shortage_opt_search_methodically_identify_car_text",
+            "text": "Search methodically, identify carefully",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 30,
+                "scouting": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_medicine_shortage_opt_search_methodically_identify_car_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "quick_gathering_common_plants_on",
+            "textId": "ll_evt_medic_medicine_shortage_opt_quick_gathering_common_plants_on_text",
+            "text": "Quick gathering, common plants only",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_medicine_shortage_opt_quick_gathering_common_plants_on_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "ask_locals_for_guidance",
+            "textId": "ll_evt_medic_medicine_shortage_opt_ask_locals_for_guidance_text",
+            "text": "Ask locals for guidance",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 25,
+                "charm": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_medicine_shortage_opt_ask_locals_for_guidance_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "venture_into_dangerous_terrain_f",
+            "textId": "ll_evt_medic_medicine_shortage_opt_venture_into_dangerous_terrain_f_text",
+            "text": "Venture into dangerous terrain for rare herbs",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 40,
+                "scouting": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_medicine_shortage_opt_venture_into_dangerous_terrain_f_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 10,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medic_lance_mate_injury",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:field_medic"
+        ],
+        "any": [
+          "lance_mate_injured",
+          "after_battle"
+        ],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "field_medic",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medic_lance_mate_injury_title",
+        "setupId": "ll_evt_medic_lance_mate_injury_setup",
+        "title": "Infected Wound",
+        "setup": "{SOLDIER_NAME}'s wound isn't healing right. The skin around it is hot, angry red. You've seen this before.\n\nWithout treatment, they'll lose the arm. Maybe more.",
+        "options": [
+          {
+            "id": "clean_it_properly_treat_aggressi",
+            "textId": "ll_evt_medic_lance_mate_injury_opt_clean_it_properly_treat_aggressi_text",
+            "text": "Clean it properly, treat aggressively",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_lance_mate_injury_opt_clean_it_properly_treat_aggressi_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "bring_it_to_the_surgeon_s_attent",
+            "textId": "ll_evt_medic_lance_mate_injury_opt_bring_it_to_the_surgeon_s_attent_text",
+            "text": "Bring it to the surgeon's attention",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_lance_mate_injury_opt_bring_it_to_the_surgeon_s_attent_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "try_a_poultice_you_learned_from_",
+            "textId": "ll_evt_medic_lance_mate_injury_opt_try_a_poultice_you_learned_from__text",
+            "text": "Try a poultice you learned from home",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 40,
+                "if": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_lance_mate_injury_opt_try_a_poultice_you_learned_from__outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "prepare_them_for_amputation",
+            "textId": "ll_evt_medic_lance_mate_injury_opt_prepare_them_for_amputation_text",
+            "text": "Prepare them for amputation",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "medicine": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_medic_lance_mate_injury_opt_prepare_them_for_amputation_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    }
+  ]
+}

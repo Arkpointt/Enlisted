@@ -6,6 +6,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Helpers;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -662,8 +663,11 @@ namespace Enlisted.Features.CommandTent.Core
                 return false;
             }
 
-            // Deduct gold
-            Hero.MainHero?.ChangeHeroGold(-cost);
+            // Deduct gold using GiveGoldAction (properly affects party treasury and updates UI)
+            if (cost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost);
+            }
 
             // Add soldiers
             if (TryAddSoldiers(toAdd, _state.SelectedTypeId, out var actuallyAdded, out var addMessage))
@@ -679,7 +683,10 @@ namespace Enlisted.Features.CommandTent.Core
             }
 
             // Refund gold on failure
-            Hero.MainHero?.ChangeHeroGold(cost);
+            if (cost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, cost);
+            }
             message = addMessage;
             ModLogger.ActionResult(reqCategory, "Requisition", false, addMessage);
             return false;

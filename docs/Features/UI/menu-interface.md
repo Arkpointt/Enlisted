@@ -2,12 +2,15 @@
 
 ## Quick Reference
 
-| Menu | Purpose | Access |
-|------|---------|--------|
-| Enlisted Status | Main service menu | After enlistment, from camp |
-| Duty Selection | Choose daily assignment | Enlisted Status → "Report for Duty" |
-| Quartermaster | Equipment selection | Enlisted Status → "Visit Quartermaster" |
-| Camp ("My Camp") | Service records, pay/pension status, discharge actions, retinue | Enlisted Status → "Camp" |
+| Menu ID | Purpose | Access |
+|---------|---------|--------|
+| `enlisted_status` | Main service hub - status, navigation, culture-specific rank display | After enlistment |
+| `enlisted_lance` | My Lance - roster view, relationships | Enlisted Status → "My Lance" |
+| `enlisted_activities` | Camp Activities - training/tasks/social (data-driven) | Enlisted Status → "Camp Activities" |
+| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Enlisted Status → "Report for Duty" |
+| `enlisted_medical` | Medical Attention - treatment options | Enlisted Status → "Seek Medical Attention" (when injured/ill) |
+| `command_tent` | My Camp - service records, retinue, activity log | Enlisted Status → "My Camp" |
+| Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status → "Visit Quartermaster" |
 
 ## Index
 
@@ -18,7 +21,7 @@
   - [Main Enlisted Status Menu](#main-enlisted-status-menu)
   - [Duty Selection Interface](#duty-selection-interface)
   - [Menu Navigation](#menu-navigation)
--  - [Popups & Incidents (not menus)](#popups--incidents-not-menus)
+  - [Popups & Incidents (not menus)](#popups--incidents-not-menus)
 - [Technical Details](#technical-details) - Implementation specifics
   - [Menu Structure](#menu-structure)
   - [Dynamic Text System](#dynamic-text-system)
@@ -60,7 +63,8 @@ Professional military menu interface providing comprehensive service management 
 - Clean section organization (Duties vs. Professions)
 - Tier-based progression with helpful unlock messages
 - Real-time status updates
-- Connected daily XP processing
+- Camp status + time-of-day context in the enlisted header (days from town, camp snapshot)
+- Camp Activities menu driven by JSON (XP + fatigue, with condition gating)
 
 **File:** `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
 
@@ -76,11 +80,10 @@ Each menu option has a `LeaveType` that displays an appropriate icon:
 
 | Option | LeaveType | Icon Purpose |
 |--------|-----------|--------------|
-| Master at Arms | `TroopSelection` | Troop management |
 | Visit Quartermaster | `Trade` | Equipment/trading |
 | My Lord... | `Conversation` | Dialog |
 | Visit Settlement | `Submenu` | Navigation |
-| Report for Duty | `Manage` | Management |
+| Report for Duty | `Manage` | Management (includes duty request system) |
 | Ask for Leave | `Leave` | Exit action |
 | Desert the Army | `Escape` | Warning/danger (immediate abandonment) |
 | (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge → Final Muster) |
@@ -116,15 +119,21 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 **Menu ID:** `enlisted_status` (WaitGameMenu)
 
 **Options with Icons and Tooltips:**
-| Option | Icon | Tooltip |
-|--------|------|---------|
-| Master at Arms | TroopSelection | Select your troop type and equipment loadout based on your current tier |
-| Visit Quartermaster | Trade | Purchase equipment and manage party supplies |
-| My Lord... | Conversation | Speak with nearby lords for quests, news, and relation building |
-| Visit Settlement | Submenu | Enter the settlement while your lord is present |
-| Report for Duty | Manage | Select your daily duty and profession for bonuses and special abilities |
-| Ask commander for leave | Leave | Request temporary leave from service |
-| Desert the Army | Escape | WARNING: Immediate abandonment with severe penalties |
+| Option | Icon | Tooltip | Condition |
+|--------|------|---------|-----------|
+| Visit Quartermaster | Trade | Purchase equipment for your formation and rank | Always |
+| My Lance | Manage | View your lance roster and relationships | Always |
+| My Camp | Manage | Service records, pay status, camp activities, retinue | Always |
+| My Lord... | Conversation | Speak with nearby lords for quests and news | Lord nearby |
+| Visit Settlement | Submenu | Enter the settlement while your lord is present | In settlement |
+| Report for Duty | Manage | View/request duty assignments | Always |
+| Seek Medical Attention | Manage | Visit the surgeon's tent | When injured/ill |
+| — LEAVE OPTIONS — | | | |
+| Ask for Leave | Leave | Request temporary leave from service | Always |
+| Leave Without Penalty | Leave | Pay is too late — leave with minimal consequences | PayTension ≥ 60 |
+| Desert the Army | Escape | Abandon your post (severe penalties) | Always |
+
+**Note:** "My Camp" is accessed from the main menu but has its own menu ID (`command_tent`).
 
 **Features:**
 - Modern icons on every option for visual clarity
@@ -134,34 +143,96 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 - Professional status display with real-time updates
 - Clean navigation to sub-menus
 - Status information (tier, XP, days served, etc.)
+- Status header includes:
+  - Time-of-day (Dawn/Day/Dusk/Night)
+  - Days since last town entry
+  - Camp snapshot status line (Supplies/Morale/Pay) when Camp Life is active
+  - **Pay Status** - Shows tension level when pay is late (Grumbling → Tense → Severe → CRITICAL)
+  - **Owed Backpay** - Shows accumulated unpaid wages with gold icon
 - Pay is handled via a muster ledger and pay muster (see Pay System doc); discharge is managed from Camp.
+- When PayTension ≥ 60, the "Leave Without Penalty" option appears (free desertion).
 
 ### Duty Selection Interface
 
 **Menu ID:** `enlisted_duty_selection` (WaitGameMenu)
+
+**Implementation:** Fully data-driven from `duties_system.json`. The menu dynamically generates up to 10 duty slots based on player's formation, with tier gating, expansion checks, and duty request flow.
 
 **Section Organization:**
 - **— DUTIES —** section header with em-dash styling
 - **— PROFESSIONS —** section header with em-dash styling
 - Visual spacer between sections for clean layout
 
-**Duty Selection (Available T1+) with Icons and Tooltips:**
-| Duty | Icon | Tooltip |
-|------|------|---------|
-| Enlisted | Continue | Standard military service. Train with your formation and earn base wages |
-| Forager | Trade | Gather food and supplies for the army. Earn bonus XP and improved wages |
-| Sentry | DefendAction | Guard the camp perimeter. Improved detection and bonus lord relations |
-| Messenger | Mission | Deliver messages and scout ahead. Bonus riding/athletics XP |
-| Pioneer | SiegeAmbush | Build fortifications and siege works. Bonus engineering XP |
+**Duty Assignment Flow:**
+- **T1 Players**: Auto-assigned "Runner" duty, cannot change duties
+- **T2+ Players**: Must **request** duty changes through lance leader approval
 
-**Profession Selection (Available T3+) with Icons and Tooltips:**
-| Profession | Icon | Tooltip (Unlocked) | Tooltip (Locked) |
-|------------|------|-------------------|------------------|
-| Quarterhand | Trade | 15% better trade prices and +50 carry capacity | Requires Tier 3 |
-| Field Medic | Manage | Faster healing, bonus medicine XP, morale boost | Requires Tier 3 |
-| Siegewright's Aide | SiegeAmbush | Faster siege construction, bonus engineering XP | Requires Tier 3 |
-| Drillmaster | OrderTroopsToAttack | Bonus leadership XP and troop morale | Requires Tier 3 |
-| Saboteur | Raid | Bonus roguery XP and special mission access | Requires Tier 3 |
+**Duty Request System (T2+):**
+
+| Menu Display | Meaning |
+|--------------|---------|
+| `[Request Transfer]` | Duty available for request |
+| `[Cooldown: Xd]` | Request denied, must wait X days |
+| `[Requires {Rank}]` | Tier requirement not met (shows culture-specific rank) |
+| `(Current)` | Currently active duty |
+
+Request approval requires:
+- 14-day cooldown between requests
+- Minimum 10 lance reputation
+- Meeting the duty's tier requirement
+- Duty compatible with player's formation
+
+**Duty Selection (Available T1+; data-driven)**
+
+Duties are defined in `ModuleData/Enlisted/duties_system.json` and filtered by formation + tier. The menu uses `EnlistedDutiesBehavior.GetDutiesForCurrentFormation()` to populate slots dynamically. The canonical duty IDs (shipping) are:
+
+| Duty | Min Tier | Notes |
+|------|----------|------|
+| Runner | 1 | Infantry (starter duty) |
+| Quartermaster | 1 | Infantry |
+| Field Medic | 1 | Infantry |
+| Armorer | 1 | Infantry |
+| Engineer | 2 | Infantry |
+| Scout | 1 | Archer / Cavalry / Horse Archer |
+| Lookout | 1 | Archer (starter duty) |
+| Messenger | 1 | Cavalry / Horse Archer (starter duty) |
+| Boatswain | 1 | Naval (War Sails only, starter duty) |
+| Navigator | 2 | Naval (War Sails only) |
+
+**Starter Duties (Auto-assigned at T2):**
+| Formation | Starter Duty |
+|-----------|--------------|
+| Infantry | Runner |
+| Archer | Lookout |
+| Cavalry | Messenger |
+| Horse Archer | Scout |
+| Naval | Boatswain |
+
+**Formation-Based Filtering:**
+- Infantry: Runner, Quartermaster, Field Medic, Armorer, Engineer
+- Archer: Scout, Lookout
+- Cavalry: Scout, Messenger
+- Horse Archer: Scout, Messenger
+- Naval: Boatswain, Navigator (only when War Sails expansion detected)
+
+**Tier Locking:**
+- Duties with tier requirements above player's current tier show culture-specific rank (e.g., `[Requires Immunes]` for Empire)
+- Locked duties are grayed out but visible (shows progression path)
+- Tooltips explain unlock requirements
+
+**Profession Selection (Available T3+; data-driven)**
+
+Professions are also defined in `ModuleData/Enlisted/duties_system.json` and are tier-gated.
+
+| Profession | Min Tier | Summary |
+|------------|----------|---------|
+| Quarterhand | 3 | Logistics specialization (Steward/Trade XP) |
+| Field Medic | 3 | Medical specialization (Medicine/Charm XP) |
+| Siegewright's Aide | 3 | Engineering specialization (Engineering/Smithing XP) |
+| Drillmaster | 3 | Training specialization (Leadership/Tactics XP) |
+| Saboteur | 3 | Covert specialization (Roguery/Engineering/Smithing XP) |
+
+**Note:** The progression system now supports 9 tiers with culture-specific rank names. See [Lance Assignments](../Core/lance-assignments.md) for the full tier/track breakdown (T1-4 Enlisted, T5-6 Officer, T7-9 Commander).
 
 **Description System:**
 - Top of menu shows detailed descriptions for currently selected duty/profession
@@ -182,14 +253,55 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 
 **Flow:**
 ```
-Enlisted Status Menu
-    ├── Master at Arms → Troop Selection Popup
-    ├── Visit Quartermaster → Equipment Selection Menu
-    ├── Camp → Service Records / Pay & Pension / Discharge / Retinue / Companions
+Enlisted Status Menu (enlisted_status)
+    ├── Visit Quartermaster → Equipment Selection Menu (formation+tier+culture based)
+    ├── My Lance (enlisted_lance) → Roster / Relationships
+    ├── Camp Activities (enlisted_activities) → Training / Tasks / Social (data-driven)
+    ├── Report for Duty (enlisted_duty_selection) → Duties / Professions (request system)
+    ├── Seek Medical Attention (enlisted_medical) → Treatment options (when injured/ill)
     ├── My Lord... → Dialog System
-    ├── Report for Duty → Duty Selection Menu
-    └── Ask commander for leave → Leave Request Dialog
+    ├── Visit Settlement → Town/Castle menu
+    ├── My Camp (command_tent) → Service Records / Activity Log / XP Breakdown / Retinue / Companions
+    └── Ask for Leave → Leave Request Dialog
 ```
+
+### My Lance Menu
+
+**Menu ID:** `enlisted_lance` (WaitGameMenu)
+
+**Purpose:** View your position in your lance, see the roster, and track relationships.
+
+**Options:**
+| Option | Icon | Description |
+|--------|------|-------------|
+| View Full Roster | Submenu | Shows all 10 slots with your position based on tier |
+| Check on the Wounded | Manage | Check wounded lance mates (when available) |
+| Back | Leave | Return to Enlisted Status |
+
+**Features:**
+- Displays culture-specific rank title (e.g., "Miles" for Empire T2, "Levy" for Vlandia T2)
+- Shows your slot position based on tier (higher tier = earlier slot)
+- Days served with current lance
+
+**File:** `src/Features/Lances/Behaviors/EnlistedLanceMenuBehavior.cs`
+
+### Medical Attention Menu
+
+**Menu ID:** `enlisted_medical` (WaitGameMenu)
+
+**Purpose:** Seek treatment when injured, ill, or exhausted. Only accessible when player has an active condition.
+
+**Options:**
+| Option | Icon | Description |
+|--------|------|-------------|
+| Request Treatment from Surgeon | Manage | Full treatment, costs 2 fatigue |
+| Treat Yourself (Field Medic) | Manage | Self-treatment if you have Field Medic profession, grants Medicine XP |
+| Purchase Herbal Remedy | Trade | Costs 50 gold |
+| Rest in Camp | Wait | Light recovery option |
+| View Detailed Status | Submenu | Full condition breakdown popup |
+| Back | Leave | Return to Enlisted Status |
+
+**File:** `src/Features/Conditions/EnlistedMedicalMenuBehavior.cs`
 
 ### Popups & Incidents (not menus)
 
@@ -202,9 +314,13 @@ Key popups:
 - **Pay Muster** (periodic)
   - Fires when the muster ledger reaches payday and it is safe to show UI.
   - Doc: **[Pay System](../Core/pay-system-rework.md)**
-- **Lance Life events** (text-based camp activities)
-  - “Viking Conquest style” story popups tied to lance identity and tier gating.
-  - Doc: **[Lance Life](../Gameplay/lance-life.md)**
+- **Lance Life (Stories + Events)**
+  - **Lance Life Stories**: daily-tick “story pack” popups from `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` (inquiry UI).
+  - **Lance Life Events**: the 109-event catalog under `ModuleData/Enlisted/Events/*.json` with delivery channels:
+    - `channel: "menu"` (player-initiated training surfaced in Camp Activities)
+    - `channel: "inquiry"` (automatic events shown as inquiry popups)
+    - `channel: "incident"` (automatic “moment” events shown via native incidents)
+  - Doc: **[Lance Life](../Gameplay/lance-life.md)** and **[Implementation Roadmap](../Core/implementation-roadmap.md)**
 - **Camp Life Simulation hooks** (conditions that influence other UI)
   - Not a single popup by itself; it is the condition layer that can drive future popups and menu availability (Quartermaster mood/stockouts, delayed pay/IOUs, etc.).
   - Doc: **[Camp Life Simulation](../Gameplay/camp-life-simulation.md)**
@@ -651,14 +767,19 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 - `Modules/Enlisted/Debugging/enlisted.log`
 
 **Related Files:**
-- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
-- `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs`
+- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs` - Main enlisted status menu
+- `src/Features/Lances/Behaviors/EnlistedLanceMenuBehavior.cs` - My Lance menu
+- `src/Features/Conditions/EnlistedMedicalMenuBehavior.cs` - Medical Attention menu
+- `src/Features/Camp/CampMenuHandler.cs` - My Camp menu
+- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Core enlistment state
+- `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs` - Duty system
 
 ---
 
 ## Related Documentation
 
 - [Dialog System](dialog-system.md) - Menu activation after enlistment
-- [Camp](command-tent.md) - Service records and retinue management
+- [Camp](camp-tent.md) - Service records and retinue management
 - [Duties System](../Core/duties-system.md) - Duty/profession definitions and XP
+- [Lance Assignments](../Core/lance-assignments.md) - 9-tier progression and culture-specific ranks
+- [Camp Life Simulation](../Gameplay/camp-life-simulation.md) - Camp conditions and integrations

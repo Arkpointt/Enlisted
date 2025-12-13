@@ -1,37 +1,61 @@
 {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "enabled": true,
     "tier_progression": {
         "requirements": [
             {
                 "tier": 1,
                 "xp_required": 0,
-                "name": "{=Enlisted_Rank_Levy}Levy"
+                "name": "{=Enlisted_Rank_Follower}Follower",
+                "duration": "1-2 weeks"
             },
             {
                 "tier": 2,
                 "xp_required": 800,
-                "name": "{=Enlisted_Rank_Footman}Footman"
+                "name": "{=Enlisted_Rank_Recruit}Recruit",
+                "duration": "2-4 weeks"
             },
             {
                 "tier": 3,
                 "xp_required": 3000,
-                "name": "{=Enlisted_Rank_Serjeant}Serjeant"
+                "name": "{=Enlisted_Rank_FreeSword}Free Sword",
+                "duration": "1-2 months"
             },
             {
                 "tier": 4,
                 "xp_required": 6000,
-                "name": "{=Enlisted_Rank_ManAtArms}Man-at-Arms"
+                "name": "{=Enlisted_Rank_Veteran}Veteran",
+                "duration": "2-3 months"
             },
             {
                 "tier": 5,
                 "xp_required": 11000,
-                "name": "{=Enlisted_Rank_BannerSergeant}Banner Serjeant"
+                "name": "{=Enlisted_Rank_Blade}Blade",
+                "duration": "3-4 months"
             },
             {
                 "tier": 6,
                 "xp_required": 19000,
-                "name": "{=Enlisted_Rank_HouseholdGuard}Household Guard"
+                "name": "{=Enlisted_Rank_Chosen}Chosen",
+                "duration": "4-6 months"
+            },
+            {
+                "tier": 7,
+                "xp_required": 30000,
+                "name": "{=Enlisted_Rank_Captain}Captain",
+                "duration": "6+ months"
+            },
+            {
+                "tier": 8,
+                "xp_required": 45000,
+                "name": "{=Enlisted_Rank_Commander}Commander",
+                "duration": "Officer track"
+            },
+            {
+                "tier": 9,
+                "xp_required": 65000,
+                "name": "{=Enlisted_Rank_Marshal}Marshal",
+                "duration": "Endgame"
             }
         ],
         "formation_selection": {
@@ -41,13 +65,113 @@
             "free_changes": 1
         }
     },
+    "culture_ranks": {
+        "empire": {
+            "style": "Legion / Discipline",
+            "ranks": [
+                "{=Enlisted_Rank_Empire_T1}Tiro",
+                "{=Enlisted_Rank_Empire_T2}Miles",
+                "{=Enlisted_Rank_Empire_T3}Immunes",
+                "{=Enlisted_Rank_Empire_T4}Principalis",
+                "{=Enlisted_Rank_Empire_T5}Evocatus",
+                "{=Enlisted_Rank_Empire_T6}Centurion",
+                "{=Enlisted_Rank_Empire_T7}Primus Pilus",
+                "{=Enlisted_Rank_Empire_T8}Tribune",
+                "{=Enlisted_Rank_Empire_T9}Legate"
+            ]
+        },
+        "vlandia": {
+            "style": "Feudal / Chivalry",
+            "ranks": [
+                "{=Enlisted_Rank_Vlandia_T1}Peasant",
+                "{=Enlisted_Rank_Vlandia_T2}Levy",
+                "{=Enlisted_Rank_Vlandia_T3}Footman",
+                "{=Enlisted_Rank_Vlandia_T4}Man-at-Arms",
+                "{=Enlisted_Rank_Vlandia_T5}Sergeant",
+                "{=Enlisted_Rank_Vlandia_T6}Knight Bachelor",
+                "{=Enlisted_Rank_Vlandia_T7}Cavalier",
+                "{=Enlisted_Rank_Vlandia_T8}Banneret",
+                "{=Enlisted_Rank_Vlandia_T9}Castellan"
+            ]
+        },
+        "sturgia": {
+            "style": "Tribal / Shield Wall",
+            "ranks": [
+                "{=Enlisted_Rank_Sturgia_T1}Thrall",
+                "{=Enlisted_Rank_Sturgia_T2}Ceorl",
+                "{=Enlisted_Rank_Sturgia_T3}Fyrdman",
+                "{=Enlisted_Rank_Sturgia_T4}Drengr",
+                "{=Enlisted_Rank_Sturgia_T5}Huskarl",
+                "{=Enlisted_Rank_Sturgia_T6}Varangian",
+                "{=Enlisted_Rank_Sturgia_T7}Champion",
+                "{=Enlisted_Rank_Sturgia_T8}Thane",
+                "{=Enlisted_Rank_Sturgia_T9}High Warlord"
+            ]
+        },
+        "khuzait": {
+            "style": "Steppe / Horde",
+            "ranks": [
+                "{=Enlisted_Rank_Khuzait_T1}Outsider",
+                "{=Enlisted_Rank_Khuzait_T2}Nomad",
+                "{=Enlisted_Rank_Khuzait_T3}Noker",
+                "{=Enlisted_Rank_Khuzait_T4}Warrior",
+                "{=Enlisted_Rank_Khuzait_T5}Veteran",
+                "{=Enlisted_Rank_Khuzait_T6}Bahadur",
+                "{=Enlisted_Rank_Khuzait_T7}Arban",
+                "{=Enlisted_Rank_Khuzait_T8}Zuun",
+                "{=Enlisted_Rank_Khuzait_T9}Noyan"
+            ]
+        },
+        "battania": {
+            "style": "Celtic / Guerrilla",
+            "ranks": [
+                "{=Enlisted_Rank_Battania_T1}Woodrunner",
+                "{=Enlisted_Rank_Battania_T2}Clan Warrior",
+                "{=Enlisted_Rank_Battania_T3}Skirmisher",
+                "{=Enlisted_Rank_Battania_T4}Raider",
+                "{=Enlisted_Rank_Battania_T5}Oathsworn",
+                "{=Enlisted_Rank_Battania_T6}Fian",
+                "{=Enlisted_Rank_Battania_T7}Highland Champion",
+                "{=Enlisted_Rank_Battania_T8}Clan Chief",
+                "{=Enlisted_Rank_Battania_T9}High King's Guard"
+            ]
+        },
+        "aserai": {
+            "style": "Desert / Mercantile",
+            "ranks": [
+                "{=Enlisted_Rank_Aserai_T1}Tribesman",
+                "{=Enlisted_Rank_Aserai_T2}Skirmisher",
+                "{=Enlisted_Rank_Aserai_T3}Footman",
+                "{=Enlisted_Rank_Aserai_T4}Veteran",
+                "{=Enlisted_Rank_Aserai_T5}Guard",
+                "{=Enlisted_Rank_Aserai_T6}Faris",
+                "{=Enlisted_Rank_Aserai_T7}Emir's Chosen",
+                "{=Enlisted_Rank_Aserai_T8}Sheikh",
+                "{=Enlisted_Rank_Aserai_T9}Grand Vizier"
+            ]
+        },
+        "mercenary": {
+            "style": "Universal / Generic",
+            "ranks": [
+                "{=Enlisted_Rank_Merc_T1}Follower",
+                "{=Enlisted_Rank_Merc_T2}Recruit",
+                "{=Enlisted_Rank_Merc_T3}Free Sword",
+                "{=Enlisted_Rank_Merc_T4}Veteran",
+                "{=Enlisted_Rank_Merc_T5}Blade",
+                "{=Enlisted_Rank_Merc_T6}Chosen",
+                "{=Enlisted_Rank_Merc_T7}Captain",
+                "{=Enlisted_Rank_Merc_T8}Commander",
+                "{=Enlisted_Rank_Merc_T9}Marshal"
+            ]
+        }
+    },
     "wage_system": {
         "base_formula": {
             "daily_base": 10,
             "tier_bonus_per_level": 5,
             "hero_level_multiplier": 1,
             "xp_bonus_divisor": 200,
-            "maximum_base_wage": 150
+            "maximum_base_wage": 200
         },
         "assignment_multipliers": {
             "grunt_work": 0.8,
@@ -73,44 +197,38 @@
     "promotion_benefits": {
         "tier_2": {
             "formation_selection": true,
-            "equipment_access": [
-                "t1",
-                "t2"
-            ]
+            "equipment_access": ["t1", "t2"]
         },
         "tier_3": {
-            "equipment_access": [
-                "t1",
-                "t2",
-                "t3"
-            ]
+            "equipment_access": ["t1", "t2", "t3"]
         },
         "tier_4": {
-            "equipment_access": [
-                "t1",
-                "t2",
-                "t3",
-                "t4"
-            ]
+            "equipment_access": ["t1", "t2", "t3", "t4"]
         },
         "tier_5": {
-            "equipment_access": [
-                "t1",
-                "t2",
-                "t3",
-                "t4",
-                "t5"
-            ]
+            "officer_track": true,
+            "equipment_access": ["t1", "t2", "t3", "t4", "t5"]
         },
         "tier_6": {
-            "equipment_access": [
-                "t1",
-                "t2",
-                "t3",
-                "t4",
-                "t5",
-                "t6"
-            ]
+            "officer_track": true,
+            "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
+        },
+        "tier_7": {
+            "commander_track": true,
+            "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
+        },
+        "tier_8": {
+            "commander_track": true,
+            "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
+        },
+        "tier_9": {
+            "commander_track": true,
+            "equipment_access": ["t1", "t2", "t3", "t4", "t5", "t6"]
         }
+    },
+    "track_definitions": {
+        "enlisted": { "tiers": [1, 2, 3, 4], "description": "Raw recruit to veteran soldier" },
+        "officer": { "tiers": [5, 6], "description": "Elite soldier to NCO leader" },
+        "commander": { "tiers": [7, 8, 9], "description": "Captain to strategic leader" }
     }
 }

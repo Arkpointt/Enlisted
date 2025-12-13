@@ -275,8 +275,8 @@ int availableSpace = PartyBase.MainParty.PartySizeLimit - PartyBase.MainParty.Nu
 // Get recruitment cost
 Campaign.Current.Models.PartyWageModel.GetTroopRecruitmentCost(troop, Hero.MainHero);
 
-// Deduct gold
-Hero.MainHero.ChangeHeroGold(-amount);
+// Deduct gold (use GiveGoldAction to update party treasury visible in UI)
+GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);
 ```
 
 **Formation Control (Battle):**

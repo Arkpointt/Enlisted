@@ -1,5 +1,12 @@
 # Menu System Update — Integrated Lance Life
 
+> **Status: IMPLEMENTED**
+> 
+> This research doc has been implemented. The shipping documentation is:
+> - [Menu Interface](../Features/UI/menu-interface.md) — feature spec with current menu structure
+> - [Lance Assignments](../Features/Core/lance-assignments.md) — 9-tier progression with culture-specific ranks
+> - [Implementation Roadmap](../Features/Core/implementation-roadmap.md) — overall system status
+
 This document specifies all menu changes needed to support the Lance Life systems: lance career, camp activities, player condition, time-of-day awareness, and action-based XP.
 
 ---

@@ -8,6 +8,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
@@ -200,11 +201,11 @@ namespace Enlisted.Features.Camp
                 starter.AddGameMenuOption(
                     "enlisted_status",
                     "enlisted_command_tent",
-                    "My Camp",
+                    "{=ct_menu_enter}My Camp",
                     IsCommandTentAvailable,
                     OnCommandTentSelected,
                     false,
-                    4); // Position after Report for Duty
+                    4); // Position after Camp Activities (keeps camp-related options grouped)
 
                 ModLogger.Debug(LogCategory, "Added Command Tent option to enlisted_status menu");
             }
@@ -303,6 +304,36 @@ namespace Enlisted.Features.Camp
                 false,
                 1);
 
+            // Activity Log - Recent activities and events
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_activity_log",
+                "{=ct_activity_log}Activity Log",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=ct_activity_log_tooltip}Review recent activities and events.");
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                _ => ShowActivityLogPopup(),
+                false,
+                2);
+
+            // XP Breakdown - Progress toward next tier
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_xp_breakdown",
+                "{=ct_xp_breakdown}XP Breakdown",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=ct_xp_breakdown_tooltip}View your experience progress and sources.");
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                _ => ShowXpBreakdownPopup(),
+                false,
+                3);
+
             // Baggage Train (stash access) - Submenu icon
             starter.AddGameMenuOption(
                 CommandTentMenuId,
@@ -316,7 +347,7 @@ namespace Enlisted.Features.Camp
                 },
                 _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
                 false,
-                2);
+                4);
 
             // Request Discharge (Final Muster)
             starter.AddGameMenuOption(
@@ -430,6 +461,105 @@ namespace Enlisted.Features.Camp
             // Refresh inline icons in case they were cleared
             SetupInlineIcons();
             ModLogger.Debug(LogCategory, "Command Tent menu initialized");
+        }
+
+        /// <summary>
+        /// Shows a popup with recent activity log (battles, duties, purchases).
+        /// </summary>
+        private static void ShowActivityLogPopup()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+
+            var sb = new StringBuilder();
+            sb.AppendLine(new TextObject("{=ct_activity_log_title}Recent Activity").ToString());
+            sb.AppendLine();
+
+            var daysServed = (int)(enlistment?.DaysServed ?? 0);
+            var formation = Enlisted.Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance?.GetPlayerFormationType() ?? "Infantry";
+            var tier = enlistment?.EnlistmentTier ?? 1;
+
+            // Summary stats
+            sb.AppendLine(new TextObject("{=ct_log_summary}— SERVICE SUMMARY —").ToString());
+            sb.AppendLine($"Days Served: {daysServed}");
+            sb.AppendLine($"Current Tier: {tier}");
+            sb.AppendLine($"Formation: {formation}");
+            sb.AppendLine();
+
+            // Recent actions (placeholder - would integrate with actual activity tracking)
+            sb.AppendLine(new TextObject("{=ct_log_recent}— RECENT —").ToString());
+            sb.AppendLine("Camp activities completed this enlistment.");
+            sb.AppendLine("Check XP Breakdown for detailed progress.");
+
+            InformationManager.ShowInquiry(
+                new InquiryData(
+                    new TextObject("{=ct_activity_log_popup}Activity Log").ToString(),
+                    sb.ToString(),
+                    true,
+                    false,
+                    new TextObject("{=ct_log_close}Close").ToString(),
+                    string.Empty,
+                    () => { },
+                    null),
+                false);
+        }
+
+        /// <summary>
+        /// Shows a popup with XP breakdown and progress toward next tier.
+        /// </summary>
+        private static void ShowXpBreakdownPopup()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+
+            var sb = new StringBuilder();
+            sb.AppendLine(new TextObject("{=ct_xp_breakdown_title}Experience Breakdown").ToString());
+            sb.AppendLine();
+
+            var currentXp = enlistment?.EnlistmentXP ?? 0;
+            var tier = enlistment?.EnlistmentTier ?? 1;
+            var nextTierXp = GetNextTierXpRequirement(tier);
+
+            // Progress bar representation
+            sb.AppendLine(new TextObject("{=ct_xp_progress}— PROGRESS —").ToString());
+            sb.AppendLine($"Current XP: {currentXp}");
+            sb.AppendLine($"Current Tier: {tier}");
+
+            if (tier < 6 && nextTierXp > 0)
+            {
+                var progress = Math.Min(100, (int)(currentXp * 100.0 / nextTierXp));
+                sb.AppendLine($"Next Tier: {nextTierXp} XP ({progress}% complete)");
+            }
+            else
+            {
+                sb.AppendLine("Maximum tier reached.");
+            }
+
+            sb.AppendLine();
+
+            // XP sources explanation
+            sb.AppendLine(new TextObject("{=ct_xp_sources}— XP SOURCES —").ToString());
+            sb.AppendLine("• Battles: XP for participating in combat");
+            sb.AppendLine("• Duties: Daily XP for assigned tasks");
+            sb.AppendLine("• Activities: XP from camp activities");
+            sb.AppendLine("• Service: Passive XP for time served");
+
+            InformationManager.ShowInquiry(
+                new InquiryData(
+                    new TextObject("{=ct_xp_breakdown_popup}XP Breakdown").ToString(),
+                    sb.ToString(),
+                    true,
+                    false,
+                    new TextObject("{=ct_xp_close}Close").ToString(),
+                    string.Empty,
+                    () => { },
+                    null),
+                false);
+        }
+
+        private static int GetNextTierXpRequirement(int currentTier)
+        {
+            // Get the XP requirement for the NEXT tier from progression config
+            var nextTier = currentTier + 1;
+            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(nextTier);
         }
         
         /// <summary>
@@ -1608,8 +1738,11 @@ namespace Enlisted.Features.Camp
                 return;
             }
 
-            // Deduct gold
-            Hero.MainHero?.ChangeHeroGold(-totalCost);
+            // Deduct gold using GiveGoldAction (properly affects party treasury and updates UI)
+            if (totalCost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, totalCost);
+            }
 
             // Add soldiers
             if (manager.TryAddSoldiers(count, typeId, out var actuallyAdded, out var message))
@@ -1623,7 +1756,10 @@ namespace Enlisted.Features.Camp
             else
             {
                 // Refund gold if failed
-                Hero.MainHero?.ChangeHeroGold(totalCost);
+                if (totalCost > 0 && Hero.MainHero != null)
+                {
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, totalCost);
+                }
                 ModLogger.Warn(LogCategory, $"Purchase failed: {message}");
                 InformationManager.DisplayMessage(new InformationMessage(message, Colors.Red));
             }

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "activities": [
+    {
+      "id": "training.formation_drill",
+      "category": "training",
+      "textId": "act_training_formation_drill",
+      "hintId": "act_training_formation_drill_hint",
+      "minTier": 1,
+      "formations": [],
+      "dayParts": ["dawn", "day"],
+      "fatigueCost": 2,
+      "cooldownDays": 1,
+      "skillXp": { "Athletics": 15, "Leadership": 10 },
+      "blockOnSevereCondition": true
+    },
+    {
+      "id": "training.sparring_circle",
+      "category": "training",
+      "textId": "act_training_sparring",
+      "hintId": "act_training_sparring_hint",
+      "minTier": 1,
+      "formations": ["infantry", "cavalry"],
+      "dayParts": ["day"],
+      "fatigueCost": 2,
+      "cooldownDays": 1,
+      "skillXp": { "OneHanded": 20 },
+      "blockOnSevereCondition": true
+    },
+    {
+      "id": "tasks.help_surgeon",
+      "category": "tasks",
+      "textId": "act_task_help_surgeon",
+      "hintId": "act_task_help_surgeon_hint",
+      "minTier": 1,
+      "formations": [],
+      "dayParts": [],
+      "fatigueCost": 1,
+      "cooldownDays": 0,
+      "skillXp": { "Medicine": 15 },
+      "blockOnSevereCondition": false
+    },
+    {
+      "id": "tasks.forage_for_camp",
+      "category": "tasks",
+      "textId": "act_task_forage",
+      "hintId": "act_task_forage_hint",
+      "minTier": 1,
+      "formations": [],
+      "dayParts": ["day"],
+      "fatigueCost": 2,
+      "cooldownDays": 1,
+      "skillXp": { "Scouting": 10, "Steward": 10 },
+      "blockOnSevereCondition": true
+    },
+    {
+      "id": "social.fire_circle",
+      "category": "social",
+      "textId": "act_social_fire_circle",
+      "hintId": "act_social_fire_circle_hint",
+      "minTier": 1,
+      "formations": [],
+      "dayParts": ["dusk", "night"],
+      "fatigueCost": 0,
+      "fatigueRelief": 1,
+      "cooldownDays": 0,
+      "skillXp": { "Charm": 10 },
+      "blockOnSevereCondition": false
+    }
+  ]
+}
+
+

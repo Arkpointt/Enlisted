@@ -6,17 +6,23 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
+using Enlisted.Features.Activities;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Conversations.Behaviors;
+using Enlisted.Features.Escalation;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Lances.Behaviors;
+using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Lances.Personas;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Ranks.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core;
+using Enlisted.Mod.Core.Triggers;
 using Enlisted.Mod.GameAdapters.Patches;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
@@ -335,8 +341,38 @@ namespace Enlisted.Mod.Entry
                     // can click on individual equipment pieces to see stats and select variants
                     campaignStarter.AddBehavior(new QuartermasterEquipmentSelectorBehavior());
 
+                    // Phase 1 foundation: shared trigger vocabulary + minimal recent-history persistence (no scanning loops).
+                    campaignStarter.AddBehavior(new CampaignTriggerTrackerBehavior());
+
+                    // Phase 5 (optional): named lance role personas (text-only roster). Feature-flagged.
+                    campaignStarter.AddBehavior(new LancePersonaBehavior());
+
+                    // Phase 5: player conditions (injury/illness/exhaustion). Feature-flagged.
+                    campaignStarter.AddBehavior(new PlayerConditionBehavior());
+
+                    // Phase 2 (menu_system_update): data-driven camp activities menu. Feature-flagged.
+                    campaignStarter.AddBehavior(new CampActivitiesBehavior());
+
                     // Lance Life (text events): Viking Conquest-style camp activities and stories tied to lance identity
                     campaignStarter.AddBehavior(new LanceStoryBehavior());
+
+                    // Lance Life Events (shared state): persisted cooldowns + one-time fired ids.
+                    campaignStarter.AddBehavior(new LanceLifeEventsStateBehavior());
+
+                    // Lance Life Events (Phase 4): onboarding state machine (stage/track/variant), feature-flagged.
+                    campaignStarter.AddBehavior(new LanceLifeOnboardingBehavior());
+
+                    // Lance Life Events (Phase 2): automatic scheduler (tick evaluation + queueing), feature-flagged.
+                    campaignStarter.AddBehavior(new LanceLifeEventsAutomaticBehavior());
+
+                    // Lance Life Events (Phase 5b): incident channel delivery (MapState.NextIncident), feature-flagged.
+                    campaignStarter.AddBehavior(new LanceLifeEventsIncidentBehavior());
+
+                    // My Lance menu: roster view, relationships, wounded/fallen tracking
+                    campaignStarter.AddBehavior(new EnlistedLanceMenuBehavior());
+
+                    // Medical menu: treatment options when injured/ill/exhausted
+                    campaignStarter.AddBehavior(new EnlistedMedicalMenuBehavior());
 
                     // Battle encounter system: detects when the lord enters battle and handles player participation,
                     // manages menu transitions during battles, and provides battle wait menu options
@@ -348,6 +384,12 @@ namespace Enlisted.Mod.Entry
                     // Camp UI: provides menus for viewing service records (current posting,
                     // faction history, lifetime summary) and future retinue management
                     campaignStarter.AddBehavior(new CampMenuHandler());
+
+                    // Camp Life Simulation (Phase 3): daily snapshot + Quartermaster/Pay integrations (gated by config).
+                    campaignStarter.AddBehavior(new CampLifeBehavior());
+
+                    // Phase 4: escalation tracks (heat/discipline/lance rep/medical risk). Feature-flagged.
+                    campaignStarter.AddBehavior(new EscalationManager());
 
                     // Retinue trickle system: adds free soldiers over time (every 2-3 days)
                     campaignStarter.AddBehavior(new RetinueTrickleSystem());
@@ -387,10 +429,20 @@ namespace Enlisted.Mod.Entry
                         nameof(PromotionBehavior),
                         nameof(QuartermasterManager),
                         nameof(QuartermasterEquipmentSelectorBehavior),
+                        nameof(CampaignTriggerTrackerBehavior),
+                        nameof(LancePersonaBehavior),
+                        nameof(PlayerConditionBehavior),
+                        nameof(CampActivitiesBehavior),
                         nameof(LanceStoryBehavior),
+                        nameof(LanceLifeEventsStateBehavior),
+                        nameof(LanceLifeOnboardingBehavior),
+                        nameof(LanceLifeEventsAutomaticBehavior),
+                        nameof(LanceLifeEventsIncidentBehavior),
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),
+                        nameof(CampLifeBehavior),
+                        nameof(EscalationManager),
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),
@@ -473,6 +525,8 @@ namespace Enlisted.Mod.Entry
         ///     Processes any actions that were deferred to avoid timing conflicts during game state transitions.
         ///     Also applies deferred patches on first tick (after character creation is complete).
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local",
+            Justification = "Called by Harmony via [HarmonyPatch] postfix")]
         private static void Postfix()
         {
             // Apply deferred patches only after the campaign is *fully* ready.

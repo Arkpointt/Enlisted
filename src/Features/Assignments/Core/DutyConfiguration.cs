@@ -116,6 +116,14 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("multi_skill_xp")]
         public Dictionary<string, int> MultiSkillXp { get; set; } = new Dictionary<string, int>();
+
+        // Phase 4.5: Event prefix used by Phase 5 content conversion verification (e.g., "qm_" for quartermaster).
+        [JsonProperty("event_prefix")]
+        public string EventPrefix { get; set; }
+
+        // Phase 4.5: Optional DLC gate. Example: "war_sails" (NavalDLC).
+        [JsonProperty("requires_expansion")]
+        public string RequiresExpansion { get; set; }
     }
     
     [Serializable]

@@ -384,6 +384,6 @@ ModLogger.Debug("CompanionCommand", $"Blocked general: {name} -> Team({side}) | 
 
 ## Related Documentation
 
-- [Camp System](../UI/command-tent.md) - Companion assignments UI
+- [Camp System](../UI/camp-tent.md) - Companion assignments UI
 - [Enlistment System](enlistment.md) - Tier progression and service state
 - [Formation Training](formation-training.md) - Battle formation details

@@ -1,7 +1,7 @@
 # Feature Spec: Military Duties System
 
 ## Overview
-JSON-configured military role system where players can take on duties like Quartermaster, Scout, Field Medic, etc. with real gameplay benefits. Includes automatic formation-based skill training that provides daily XP based on player's military specialization.
+Data-driven duty + profession system that lets enlisted players pick an active role (duty) and (later tiers) a specialization (profession). Duties/professions grant daily skill XP and modify service pay via wage multipliers. This system also owns formation-based daily training XP.
 
 ## Purpose
 Add variety and specialization to military service. Different duties provide different benefits (skill bonuses, equipment access, special abilities) and make each playthrough feel different.
@@ -9,94 +9,128 @@ Add variety and specialization to military service. Different duties provide dif
 ## Inputs/Outputs
 
 **Inputs:**
-- Player's current formation type (Infantry, Archer, Cavalry, Horse Archer)
-- Available duty slots (increases with tier: 1 → 2 → 3)
-- Officer role status 
-- JSON configuration from `duties_system.json`
+- Player's current formation type (`infantry`, `archer`, `cavalry`, `horsearcher`, `naval`)
+- Player's enlistment tier (tier-gates some duties/professions)
+- Current enlisted lord party (for optional officer-role assignment)
+- JSON configuration: `ModuleData/Enlisted/duties_system.json`
 
 **Outputs:**
 - Active duty assignments with real benefits
 - Skill bonuses applied daily/on events
-- Equipment access modifications (e.g., broader Quartermaster stock / role-based access and pricing)
-- Status display in enlisted menu
+- Service wage multiplier changes (Pay System consumes these values)
+- Optional officer-role assignment (Quartermaster/Engineer/Surgeon/Scout) when enabled by the mod
+- Trigger surface for story/event systems (`has_duty:{id}` tokens)
+- Status display in the enlisted status UI
 
 ## Behavior
 
-**Duty Assignment:**
-1. Player accesses duties menu from enlisted status
-2. Shows available duties for their formation type  
-3. Player selects duties (limited by available slots)
-4. Benefits applied immediately and tracked
+### Duty Assignment
 
-**Daily Processing:**
+**T1 Players:**
+- Auto-assigned "Runner" duty (grunt work) upon enlistment
+- No duty selection available until T2
+
+**T2+ Players (Proving Event):**
+- Formation choice is made during the T1→T2 proving event
+- Starter duty is auto-assigned based on chosen formation:
+  | Formation | Starter Duty |
+  |-----------|--------------|
+  | Infantry | Runner |
+  | Archer | Lookout |
+  | Cavalry | Messenger |
+  | Horse Archer | Scout |
+  | Naval | Boatswain |
+
+**Duty Request System (T2+):**
+- Players cannot freely switch duties; they must **request a duty change**
+- Request approval depends on:
+  - **Cooldown**: 14 days between requests
+  - **Lance Reputation**: Minimum 10 required
+  - **Tier Requirement**: Duty's minimum tier must be met
+  - **Formation Requirement**: Duty must be compatible with player's formation
+- Approved requests show: "{LANCE_LEADER_SHORT} approves your transfer to {DUTY}."
+- Denied requests show the specific blocking reason
+
+**Duty Menu Display:**
+- `[Request Transfer]` - Available duties that can be requested
+- `[Cooldown: Xd]` - Duty on cooldown, shows days remaining
+- `[Requires {Rank}]` - Duty locked by tier, shows culture-specific rank name
+- `(Current)` - Currently active duty
+
+### Daily Processing
 - Skill bonuses awarded based on active duties
-- Formation-based skill training applied automatically (Infantry: Athletics, One-Handed, Two-Handed, Polearm, Throwing)
-- Role benefits calculated (wage multipliers, access gating, etc.)
-- Duty performance tracked for future advancement
+- Formation-based skill training applied automatically (see Formation Training section below)
+- Wage multipliers applied by the Pay System at pay muster time
+- Any duty/profession that is no longer valid (missing from config) is removed safely
 
-**Formation Training System:**
+### Formation Training System
 - Automatic daily skill XP based on player's military formation
-- Infantry: Athletics (+50), One-Handed (+50), Two-Handed (+50), Polearm (+50), Throwing (+25)
-- Cavalry: Riding (+50), One-Handed (+50), Polearm (+50), Athletics (+25), Two-Handed (+25)
-- Horse Archer: Riding (+50), Bow (+50), Throwing (+50), Athletics (+25), One-Handed (+25)
-- Archer: Bow (+50), Crossbow (+50), Athletics (+50), One-Handed (+25)
-- Continues during temporary leave (training doesn't stop)
+- Configured per-formation in `duties_system.json` under `formation_training`
+- Continues during temporary leave (training does not stop while on leave)
 - Uses authentic military training descriptions for immersion
 
-**Formation-Based Filtering:**
-- Infantry: Runner, Quartermaster, Field Medic, Armorer
-- Archer: Scout, Marksman, Lookout
-- Cavalry: Messenger, Pathfinder, Shock Trooper  
-- Horse Archer: Scout, Messenger, Skirmisher
+### Formation-Based Filtering
+- The canonical duties are filtered by `required_formations` in `duties_system.json`:
+  - Infantry: `runner`, `quartermaster`, `field_medic`, `armorer`, `engineer`
+  - Archer: `scout`, `lookout`
+  - Cavalry: `scout`, `messenger`
+  - Horse Archer: `scout`, `messenger`
+  - Naval (War Sails): `boatswain`, `navigator`
+
+**Expansion gating (War Sails):**
+- Naval duties (`boatswain`, `navigator`) are only available when the War Sails expansion is detected.
 
 ## Technical Implementation
 
 **Files:**
-- `EnlistedDutiesBehavior.cs` - Core duty management, benefit application, and formation training
+- `EnlistedDutiesBehavior.cs` - Core duty management, benefit application, formation training, duty request system, and duty filtering APIs
+- `EnlistedMenuBehavior.cs` - Data-driven duty selection menu with request flow
 - `DutyConfiguration.cs` - JSON loading and validation  
-- `duties_system.json` - Configuration data including formation training settings
-- `EnlistedMenuBehavior.cs` - Formation-specific training descriptions
+- `ModuleData/Enlisted/duties_system.json` - Duty/profession definitions + formation training configuration
 
 **Configuration Structure:**
 ```json
 {
-  "duties": {
-    "quartermaster": {
-      "id": "quartermaster",
-      "display_name": "Supply Sergeant",
-      "required_formations": ["infantry", "cavalry"],
-      "skill_xp_daily": 25,
-      "officer_role": "Quartermaster",
-      "wage_multiplier": 1.4
-    }
-  },
-  "formation_training": {
-    "enabled": true,
-    "formations": {
-      "infantry": {
-        "skills": {
-          "Athletics": 50,
-          "OneHanded": 50,
-          "TwoHanded": 50,
-          "Polearm": 50,
-          "Throwing": 25
-        }
-      }
-    }
-  }
+  "schemaVersion": 1,
+  "enabled": true,
+  "duties": { "...": "..." },
+  "professions": { "...": "..." },
+  "formation_training": { "enabled": true, "formations": { "...": "..." } }
 }
 ```
+
+**Duty Request APIs:**
+```csharp
+// Request a duty change (T2+ players)
+DutyRequestResult RequestDutyChange(string newDutyId);
+
+// Check if duty request is on cooldown
+bool IsDutyRequestOnCooldown();
+
+// Get days remaining on cooldown
+int GetDutyRequestCooldownRemaining();
+```
+
+**Duty Filtering APIs:**
+- `GetDutiesForCurrentFormation()` - Returns duties valid for player's formation
+- `IsExpansionActive(string)` - Checks if an expansion (e.g., "war_sails") is active
+- `IsDutySelectableByPlayer(DutyDefinition)` - Checks tier and other requirements
+- `GetDutyById(string)` - Lookup duty definition by ID
 
 **Benefit Application:**
 - Formation Training: `Hero.MainHero.AddSkillXp(skill, amount)` applied daily for all formation skills
 - Duty Skills: `Hero.MainHero.AddSkillXp(skill, bonusAmount)` for active duty assignments
-- Equipment: Access / pricing modifiers (Quartermaster is purchase-based; provisioner/Quartermaster role discounts and supply management access)
-- Officer roles: Integration with existing party role system
+- Officer roles: optional integration with the party role system (only where safe and supported)
+
+**Event integration:**
+- Duties expose a stable trigger token for event content: `has_duty:{id}`.
+- Each duty in `duties_system.json` includes an `event_prefix` to keep duty event IDs consistent (e.g. `qm_`, `med_`, `arm_`, `eng_`).
+- The `HasActiveDuty(string dutyId)` API is used by the Lance Life Events trigger evaluator.
 
 **Formation Detection:**
-- Uses player's chosen troop type from troop selection system
-- Set during initial enlistment and updated during promotions
+- Formation chosen during T1→T2 proving event (replaces old troop selection)
 - Stored in `_playerFormation` field for consistency across sessions
+- Existing saves migrate by detecting formation from troop or equipment
 
 ## Edge Cases
 
@@ -106,8 +140,8 @@ Add variety and specialization to military service. Different duties provide dif
 - Error logging with specific validation failure details
 
 **Formation Type Changes:**
-- Update available duties when player's formation changes
-- Remove duties that are no longer valid for new formation
+- Formation is locked after T1→T2 proving event
+- Incompatible duties are removed if formation somehow changes
 - Notify player of duty changes
 
 **Duty Slot Limits:**
@@ -119,16 +153,19 @@ Add variety and specialization to military service. Different duties provide dif
 - Active duties persist through save/load correctly
 - Benefits recalculated on load to handle config changes
 - Graceful handling of missing duty definitions in saves
+- Existing saves migrate: starter duty auto-assigned if T2+ with no duties
 
 ## Acceptance Criteria
 
 - ✅ JSON configuration loads and validates correctly
 - ✅ Duties filtered appropriately by formation type
 - ✅ Skill bonuses applied correctly and consistently  
-- ✅ Officer roles provide equipment discounts and enhanced access
-- ✅ Duty slots enforced based on tier progression
+- ✅ Optional officer-role assignment works safely when enabled (Quartermaster/Engineer/Surgeon/Scout)
+- ✅ Duty/profession selection constraints enforced based on tier progression (e.g., professions unlock at Tier 3+)
 - ✅ Configuration changes work without recompiling mod
 - ✅ Save/load maintains duty assignments correctly
+- ✅ Duty request system enforces cooldown and approval requirements
+- ✅ Culture-specific ranks shown in tier requirements
 
 ## Debugging
 
@@ -136,8 +173,9 @@ Add variety and specialization to military service. Different duties provide dif
 - **Duties not showing**: Check formation type detection and JSON filtering
 - **Benefits not applying**: Verify daily tick events are firing correctly
 - **Config not loading**: Check JSON syntax and file location
+- **Request denied unexpectedly**: Check lance reputation and cooldown status
 
 **Log Categories:**
-- "Duties" - Duty assignment and benefit application
+- "Duties" - Duty assignment, request approval, and benefit application
 - "ConfigManager" - JSON loading and validation
-- Look in `duties_system.json` for configuration structure
+- Look in `ModuleData/Enlisted/duties_system.json` for configuration structure

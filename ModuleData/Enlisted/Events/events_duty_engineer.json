@@ -1,0 +1,1058 @@
+{
+  "schemaVersion": "1.0",
+  "packId": "duty_engineer",
+  "category": "duty",
+  "events": [
+    {
+      "id": "eng_fortification_work",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:engineer",
+          "camp_established"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning",
+          "afternoon"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "engineer",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_eng_fortification_work_title",
+        "setupId": "ll_evt_eng_fortification_work_setup",
+        "title": "Fortification Work",
+        "setup": "{LORD_NAME} wants earthworks by nightfall. Trenches, palisades, something the enemy can't just ride through.\n\nThe ground is hard. The men are tired. The deadline is real.",
+        "options": [
+          {
+            "id": "work_alongside_the_men_lead_by_e",
+            "textId": "ll_evt_eng_fortification_work_opt_work_alongside_the_men_lead_by_e_text",
+            "text": "Work alongside the men, lead by example",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 4,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 40,
+                "athletics": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_fortification_work_opt_work_alongside_the_men_lead_by_e_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 5,
+              "severity": "minor",
+              "type": "strain"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "supervise_and_direct_maximize_ef",
+            "textId": "ll_evt_eng_fortification_work_opt_supervise_and_direct_maximize_ef_text",
+            "text": "Supervise and direct, maximize efficiency",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 35,
+                "leadership": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_fortification_work_opt_supervise_and_direct_maximize_ef_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "focus_on_the_critical_sections_o",
+            "textId": "ll_evt_eng_fortification_work_opt_focus_on_the_critical_sections_o_text",
+            "text": "Focus on the critical sections only",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 30,
+                "tactics": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_fortification_work_opt_focus_on_the_critical_sections_o_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "push_the_men_harder_get_it_done_",
+            "textId": "ll_evt_eng_fortification_work_opt_push_the_men_harder_get_it_done__text",
+            "text": "Push the men harder, get it done early",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_fortification_work_opt_push_the_men_harder_get_it_done__outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "eng_bridge_assessment",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:engineer",
+          "army_moving, river_crossing"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "engineer",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_eng_bridge_assessment_title",
+        "setupId": "ll_evt_eng_bridge_assessment_setup",
+        "title": "Siege Engine Repair",
+        "setup": "The trebuchet arm cracked. Counter-weight's bent. {LORD_NAME} wants it firing again by morning.\n\n\"Can you fix it, {PLAYER_NAME}?\"",
+        "options": [
+          {
+            "id": "full_repair_do_it_right",
+            "textId": "ll_evt_eng_bridge_assessment_opt_full_repair_do_it_right_text",
+            "text": "Full repair, do it right",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 4,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 45,
+                "smithing": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_bridge_assessment_opt_full_repair_do_it_right_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "patch_it_it_ll_hold_for_a_few_sh",
+            "textId": "ll_evt_eng_bridge_assessment_opt_patch_it_it_ll_hold_for_a_few_sh_text",
+            "text": "Patch it — it'll hold for a few shots",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_bridge_assessment_opt_patch_it_it_ll_hold_for_a_few_sh_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "improvise_with_available_materia",
+            "textId": "ll_evt_eng_bridge_assessment_opt_improvise_with_available_materia_text",
+            "text": "Improvise with available materials",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 40
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_bridge_assessment_opt_improvise_with_available_materia_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "report_it_beyond_repair",
+            "textId": "ll_evt_eng_bridge_assessment_opt_report_it_beyond_repair_text",
+            "text": "Report it beyond repair",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_bridge_assessment_opt_report_it_beyond_repair_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "eng_siege_preparation",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:engineer"
+        ],
+        "any": [
+          "siege_imminent",
+          "siege_ongoing"
+        ],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "engineer",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_eng_siege_preparation_title",
+        "setupId": "ll_evt_eng_siege_preparation_setup",
+        "title": "Bridge Assessment",
+        "setup": "The bridge looks old. The army's heavy. {LORD_NAME} needs to know — can it hold?\n\n\"Your expertise, {PLAYER_NAME}. Speak plainly.\"",
+        "options": [
+          {
+            "id": "inspect_thoroughly_give_accurate",
+            "textId": "ll_evt_eng_siege_preparation_opt_inspect_thoroughly_give_accurate_text",
+            "text": "Inspect thoroughly, give accurate assessment",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 35,
+                "scouting": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_siege_preparation_opt_inspect_thoroughly_give_accurate_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "reinforce_the_weak_points_first",
+            "textId": "ll_evt_eng_siege_preparation_opt_reinforce_the_weak_points_first_text",
+            "text": "Reinforce the weak points first",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 40
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_siege_preparation_opt_reinforce_the_weak_points_first_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "test_it_with_a_small_group_first",
+            "textId": "ll_evt_eng_siege_preparation_opt_test_it_with_a_small_group_first_text",
+            "text": "Test it with a small group first",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 25,
+                "leadership": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_siege_preparation_opt_test_it_with_a_small_group_first_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "it_ll_hold_confident_guess",
+            "textId": "ll_evt_eng_siege_preparation_opt_it_ll_hold_confident_guess_text",
+            "text": "It'll hold (confident guess)",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_siege_preparation_opt_it_ll_hold_confident_guess_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "eng_equipment_repair",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "incident",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:engineer"
+        ],
+        "any": [
+          "after_battle",
+          "after_siege"
+        ],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "engineer",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_eng_equipment_repair_title",
+        "setupId": "ll_evt_eng_equipment_repair_setup",
+        "title": "Mining Operation",
+        "setup": "{LORD_NAME} wants to mine the walls. Tunnel under, collapse it, open a breach.\n\nDangerous work. Collapses. Counter-mines. Defenders above.",
+        "options": [
+          {
+            "id": "lead_the_mining_crew_personally",
+            "textId": "ll_evt_eng_equipment_repair_opt_lead_the_mining_crew_personally_text",
+            "text": "Lead the mining crew personally",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 4,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 50,
+                "athletics": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_equipment_repair_opt_lead_the_mining_crew_personally_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 20,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "direct_from_the_surface_let_othe",
+            "textId": "ll_evt_eng_equipment_repair_opt_direct_from_the_surface_let_othe_text",
+            "text": "Direct from the surface, let others dig",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 35,
+                "leadership": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_equipment_repair_opt_direct_from_the_surface_let_othe_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "shore_up_the_tunnel_properly_slo",
+            "textId": "ll_evt_eng_equipment_repair_opt_shore_up_the_tunnel_properly_slo_text",
+            "text": "Shore up the tunnel properly, slow but safe",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 40
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_equipment_repair_opt_shore_up_the_tunnel_properly_slo_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "volunteer_for_the_breach_moment",
+            "textId": "ll_evt_eng_equipment_repair_opt_volunteer_for_the_breach_moment_text",
+            "text": "Volunteer for the breach moment",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 45
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_equipment_repair_opt_volunteer_for_the_breach_moment_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 25,
+              "severity": "moderate",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "eng_mining_operation",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:engineer",
+          "siege_ongoing"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "engineer",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_eng_mining_operation_title",
+        "setupId": "ll_evt_eng_mining_operation_setup",
+        "title": "Camp Layout",
+        "setup": "New campsite. {SECOND_SHORT} wants it organized right — latrines downhill, fires safe distance, wagons protecting the perimeter.\n\n\"You've got an eye for this. Lay it out.\"",
+        "options": [
+          {
+            "id": "plan_it_carefully_explain_to_the",
+            "textId": "ll_evt_eng_mining_operation_opt_plan_it_carefully_explain_to_the_text",
+            "text": "Plan it carefully, explain to the sergeants",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 35,
+                "steward": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_mining_operation_opt_plan_it_carefully_explain_to_the_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "quick_layout_trust_experience",
+            "textId": "ll_evt_eng_mining_operation_opt_quick_layout_trust_experience_text",
+            "text": "Quick layout, trust experience",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_mining_operation_opt_quick_layout_trust_experience_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "walk_the_ground_first_find_the_b",
+            "textId": "ll_evt_eng_mining_operation_opt_walk_the_ground_first_find_the_b_text",
+            "text": "Walk the ground first, find the best spots",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 30,
+                "scouting": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_mining_operation_opt_walk_the_ground_first_find_the_b_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "delegate_to_the_sergeants_approv",
+            "textId": "ll_evt_eng_mining_operation_opt_delegate_to_the_sergeants_approv_text",
+            "text": "Delegate to the sergeants, approve their work",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "engineering": 20,
+                "leadership": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_eng_mining_operation_opt_delegate_to_the_sergeants_approv_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    }
+  ]
+}

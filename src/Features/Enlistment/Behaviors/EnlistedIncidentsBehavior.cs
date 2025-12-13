@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Enlisted.Features.Camp;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Incidents;
@@ -204,6 +205,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info("Pay",
                     $"Pay muster prompt opened (PendingPay={pendingPay}, DischargePending={dischargePending})");
 
+                var campLife = CampLifeBehavior.Instance;
+                var payDisrupted = campLife?.IsPayTensionHigh() == true;
+
                 var options = new List<InquiryElement>();
 
                 options.Add(new InquiryElement(
@@ -216,6 +220,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     dischargePending
                         ? new TextObject("{=enlisted_final_muster_hint}Process your discharge now.").ToString()
                         : new TextObject("{=enlisted_pay_standard_hint}Take your accumulated muster pay.").ToString()));
+
+                // Promissory note (IOU) when pay tension is high (Camp Life Phase 3).
+                // This keeps pay disruption internal: we simply defer payout and retry soon.
+                if (!dischargePending && payDisrupted)
+                {
+                    options.Add(new InquiryElement(
+                        "iou",
+                        new TextObject("{=enlisted_pay_iou}Accept a promissory note (IOU)").ToString(),
+                        null,
+                        true,
+                        new TextObject("{=enlisted_pay_iou_hint}No coin today. Your pay remains owed and will be resolved at a later muster.").ToString()));
+                }
 
                 // Corruption Challenge (Option 2)
                 options.Add(new InquiryElement(
@@ -243,9 +259,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         new TextObject("{=enlisted_final_muster_smuggle_hint}Keep all gear but take deserter penalties.").ToString()));
                 }
 
+                var title = new TextObject("{=enlisted_pay_muster_title}Pay Muster");
+                var body = payDisrupted
+                    ? new TextObject("{=enlisted_pay_muster_body_tense}The paymaster calls the muster, but the strongbox is light.\n\n\"Not today,\" he mutters. \"Name on the slate. Coin later.\"")
+                    : new TextObject("{=enlisted_pay_muster_body}The paymaster calls the muster. Step forward to receive your pay.");
+
                 var inquiry = new MultiSelectionInquiryData(
-                    new TextObject("{=enlisted_pay_muster_title}Pay Muster").ToString(),
-                    new TextObject("{=enlisted_pay_muster_body}The paymaster calls the muster. Step forward to receive your pay.").ToString(),
+                    title.ToString(),
+                    body.ToString(),
                     options,
                     false,
                     1,
@@ -267,6 +288,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         else if (choice == "side_deal")
                         {
                             EnlistmentBehavior.Instance?.ResolveSideDealMuster();
+                        }
+                        else if (choice == "iou")
+                        {
+                            EnlistmentBehavior.Instance?.ResolvePromissoryMuster();
                         }
                         else if (choice == "smuggle")
                         {

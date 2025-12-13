@@ -144,6 +144,8 @@
     <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs"/>
     <Compile Include="src\Mod.Core\EnlistedActivation.cs"/>
     <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
+    <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTokens.cs"/>
+    <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTrackerBehavior.cs"/>
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
@@ -154,6 +156,22 @@
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs"/>
     <Compile Include="src\Features\Assignments\Core\LanceRegistry.cs"/>
     <Compile Include="src\Features\Lances\Behaviors\LanceStoryBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Behaviors\EnlistedLanceMenuBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventCatalog.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventCatalogLoader.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventEffectsApplier.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventInquiryPresenter.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventRuntime.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventText.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventTriggerEvaluator.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventsAutomaticBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventsIncidentBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventsStateBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeOnboardingBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Text\LanceLifeTextVariables.cs"/>
+    <Compile Include="src\Features\Lances\Stories\LanceLifeStoryCatalog.cs"/>
+    <Compile Include="src\Features\Lances\Stories\LanceLifeStoryPackLoader.cs"/>
+    <Compile Include="src\Features\Lances\Stories\LanceLifeStoryPackModels.cs"/>
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs"/>
     <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
@@ -166,6 +184,7 @@
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVm.cs"/>
+    <Compile Include="src\Features\Ranks\RankHelper.cs"/>
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
@@ -181,6 +200,16 @@
     <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
+    <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
+    <Compile Include="src\Features\Activities\*.cs"/>
+    <Compile Include="src\Features\Lances\Personas\LancePersonaModels.cs"/>
+    <Compile Include="src\Features\Lances\Personas\LancePersonaBehavior.cs"/>
+    <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
+    <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
+    <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs"/>
+    <Compile Include="src\Features\Escalation\EscalationState.cs"/>
+    <Compile Include="src\Features\Escalation\EscalationThresholds.cs"/>
+    <Compile Include="src\Features\Escalation\EscalationManager.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
@@ -224,7 +253,37 @@
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
     <Content Include="ModuleData\Enlisted\command_tent_config.json"/>
+    <!-- Lance Life story packs (Phase 2+): wildcard so new packs can be dropped in without csproj edits -->
+    <Content Include="ModuleData\Enlisted\StoryPacks\LanceLife\*.json"/>
+    <!-- Phase 5: lance persona data (content-editable) -->
+    <Content Include="ModuleData\Enlisted\LancePersonas\*.json"/>
+    <!-- Phase 5: player condition definitions (content-editable) -->
+    <Content Include="ModuleData\Enlisted\Conditions\*.json"/>
+    <!-- Phase 2: camp activities (content-editable) -->
+    <Content Include="ModuleData\Enlisted\Activities\*.json"/>
+    <!-- Phase 0+: Lance Life Events (data-driven) -->
+    <Content Include="ModuleData\Enlisted\Events\*.json"/>
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy story packs into the Bannerlord module folder -->
+    <LanceLifeStoryPacks Include="ModuleData\Enlisted\StoryPacks\LanceLife\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy lance persona data into the Bannerlord module folder -->
+    <LancePersonaData Include="ModuleData\Enlisted\LancePersonas\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy player condition definition data into the Bannerlord module folder -->
+    <PlayerConditionData Include="ModuleData\Enlisted\Conditions\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy camp activities data into the Bannerlord module folder -->
+    <CampActivitiesData Include="ModuleData\Enlisted\Activities\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy Lance Life Events data into the Bannerlord module folder -->
+    <LanceLifeEventsData Include="ModuleData\Enlisted\Events\*.json"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Documentation - All markdown files in docs folder and subfolders -->
@@ -244,6 +303,11 @@
     <MakeDir Directories="$(OutputPath)..\..\Debugging"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\StoryPacks\LanceLife"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\LancePersonas"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Conditions"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Activities"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
@@ -254,6 +318,11 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\command_tent_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="@(LanceLifeStoryPacks)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\StoryPacks\LanceLife\"/>
+    <Copy SourceFiles="@(LancePersonaData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\LancePersonas\"/>
+    <Copy SourceFiles="@(PlayerConditionData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Conditions\"/>
+    <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
+    <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>

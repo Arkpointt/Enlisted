@@ -101,15 +101,9 @@ Each crash creates a timestamped folder (e.g., `2025-12-08_03.41.58\`) containin
 
 ## API Reference
 
-When working with Bannerlord APIs, refer to the discovered documentation:
-- `docs/discovered/engine.md` - Core API signatures (v1.3.4 verified)
-- `docs/discovered/menus.md` - Menu system APIs
-- `docs/discovered/gauntlet.md` - UI system reference
-- `docs/discovered/images.md` - Image system (v1.3.4)
-- `docs/discovered/equipment.md` - Equipment APIs
-- `docs/discovered/helpers.md` - Helper methods
-
-All discovered docs are updated for Bannerlord v1.3.4 compatibility.
+When working with Bannerlord APIs, verify usage against:
+- The official API docs (`https://apidoc.bannerlord.com/v/1.2.12/`)
+- Your local decompile/reference project (repo-local or separate folder; not committed)
 
 ## Guidelines
 
@@ -117,4 +111,4 @@ All discovered docs are updated for Bannerlord v1.3.4 compatibility.
 - Comments explain *why*, not *what*
 - Use Harmony only when needed
 - Keep changes small and focused
-- Verify APIs against v1.3.4 decompile in `C:\Dev\Enlisted\DECOMPILE\`
+- Verify APIs against the official docs and your local decompile/reference project (path is developer-specific)

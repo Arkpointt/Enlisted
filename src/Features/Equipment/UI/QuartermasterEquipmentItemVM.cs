@@ -103,7 +103,9 @@ namespace Enlisted.Features.Equipment.UI
                 CostText = $"Price: {_variant.Cost} denars";
                 
                 // Set item name and basic properties
-                ItemName = item.Name?.ToString() ?? "Unknown Item";
+                // Phase 7: Add "NEW" indicator for recently unlocked items
+                var baseName = item.Name?.ToString() ?? "Unknown Item";
+                ItemName = _variant.IsNewlyUnlocked ? $"[NEW] {baseName}" : baseName;
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
                 

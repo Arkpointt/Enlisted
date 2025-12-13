@@ -3,6 +3,7 @@
   "enabled": true,
   "LogMenus": true,
   "LogCampaignEvents": true,
+  "RunTroopDiscoveryValidation": false,
   "LogModConflicts": true,
   "LogThrottleSeconds": 5,
   "LogLevels": {
@@ -18,6 +19,10 @@
     "Promotion": "Info",
     "Duties": "Info",
     "TroopSelection": "Info",
+    "LanceLifeEvents": "Info",
+    "CampActivities": "Info",
+    "PlayerConditions": "Info",
+    "TroopDiscovery": "Off",
     "KillTracker": "Info",
     "Enlistment": "Info",
     "Patch": "Warn",

@@ -49,7 +49,21 @@ src/
     ├── Ranks/              # Promotions
     ├── Conversations/      # Dialog
     ├── Combat/             # Battle participation
-    └── Interface/          # Menus
+    ├── Interface/          # Main menus (enlisted_status, enlisted_activities)
+    ├── Lances/             # Lance assignments, personas, and events
+    │   ├── Behaviors/      # LanceStoryBehavior, EnlistedLanceMenuBehavior
+    │   ├── Events/         # Lance Life Events system
+    │   └── Personas/       # Named lance role personas
+    ├── Conditions/         # Player condition system (injury/illness)
+    ├── Camp/               # My Camp menu, camp life simulation
+    ├── Activities/         # Data-driven camp activities
+    └── Escalation/         # Heat/discipline/reputation tracks
+```
+
+```
+ModuleData/
+├── Enlisted/               # JSON config + content (shipping data)
+└── Languages/              # XML localization (enlisted_strings*.xml)
 ```
 
 ## Adding New Files
@@ -68,36 +82,13 @@ Example - adding a new patch:
 
 If you forget this step, the file will exist but won't be compiled, and your code won't run.
 
-## Harmony Patches (25)
+## Harmony Patches
 
-| Patch                            | Purpose                                                              |
-|----------------------------------|----------------------------------------------------------------------|
-| ArmyCohesionExclusionPatch       | Compensates for enlisted player's cohesion impact                    |
-| ArmyDispersedMenuPatch           | Handles army dispersal menu for enlisted players                     |
-| ClanFinanceEnlistmentIncomePatch | Adds wages to tooltip                                                |
-| DischargePenaltySuppressionPatch | Prevents relation loss on discharge                                  |
-| DutiesOfficerRolePatches         | Officer role integration                                             |
-| EncounterSuppressionPatch        | Prevents unwanted encounters                                         |
-| EnlistedWaitingPatch             | Overrides ComputeIsWaiting() to allow time flow when enlisted        |
-| EnlistmentExpenseIsolationPatch  | Hides expenses while enlisted                                        |
-| FoodSystemPatches                | Skips food consumption when enlisted (lord provides food)            |
-| FormationMessageSuppressionPatch | Suppresses formation command messages                                |
-| HidePartyNamePlatePatch          | Hides player nameplate                                               |
-| IncidentsSuppressionPatch        | Suppresses random incidents (DLC/Naval)                              |
-| InfluenceMessageSuppressionPatch | Suppresses "0 influence" messages                                    |
-| JoinEncounterAutoSelectPatch     | Auto-joins lord's battle, bypasses "Help or Don't get involved" menu |
-| LootBlockPatch                   | Prevents personal loot                                               |
-| MercenaryIncomeSuppressionPatch  | Suppresses native mercenary income (players receive mod wages only)  |
-| NavalBattleShipAssignmentPatch   | Naval crash fixes: ship assignment, captain lookup, troop deployment, AI behavior creation, and mission cleanup |
-| NavalShipExclusionPatch          | Prevents lord from using enlisted player's ships for sea travel      |
-| OrderOfBattleSuppressionPatch    | Skips deployment screen                                              |
-| PlayerEncounterFinishSafetyPatch | Prevents crash when both mod and native try to finish encounter      |
-| PostDischargeProtectionPatch     | Protects after discharge                                             |
-| PrisonerActionBlockPatch         | Prevents enlisted soldiers from executing/releasing prisoner lords   |
-| ReturnToArmySuppressionPatch     | Suppresses return to army messages                                   |
-| SkillSuppressionPatch            | Blocks tactics/leadership XP                                         |
-| TownLeaveButtonPatch             | Hides Leave button                                                   |
-| VisibilityEnforcementPatch       | Controls party visibility                                            |
+Patches are intentionally kept narrow and are the exception (prefer public APIs when possible).
+
+Source of truth:
+- `src/Mod.GameAdapters/Patches/` (actual patch inventory)
+- `Modules/Enlisted/Debugging/Conflicts-*.log` (what ran, in what order, and who else patched the same methods)
 
 ## Logging
 
@@ -193,6 +184,91 @@ NextFrameDispatcher.RunNextFrame(() => { ... });  // Avoid timing conflicts
 var hero = CampaignSafetyGuard.SafeMainHero;  // Null-safe during char creation
 ```
 
+### Gold Transactions
+
+```csharp
+// ❌ WRONG: ChangeHeroGold modifies internal gold not visible in UI
+Hero.MainHero.ChangeHeroGold(-amount);
+
+// ✅ CORRECT: GiveGoldAction updates party treasury visible in UI
+GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
+GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
+```
+
+### Equipment Slot Iteration
+
+```csharp
+// ❌ WRONG: Enum.GetValues includes invalid count values (crashes)
+foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { ... }
+
+// ✅ CORRECT: Numeric iteration with NumEquipmentSetSlots
+for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+{
+    var slot = (EquipmentIndex)i;
+    // Safe access to equipment[slot]
+}
+```
+
+### Culture-Specific Ranks (Phase 7)
+
+```csharp
+// Get current rank title based on player's tier and lord's culture
+var rank = RankHelper.GetCurrentRank(enlistment);
+
+// Get rank for a specific tier
+var cultureId = enlistment.EnlistedLord?.Culture?.StringId ?? "mercenary";
+var tier3Rank = RankHelper.GetRankTitle(3, cultureId);  // "Immunes" for Empire
+
+// Get next rank for promotion display
+var nextRank = RankHelper.GetNextRank(enlistment);
+```
+
+### Duty Request System (Phase 7)
+
+```csharp
+// Request a duty change (T2+ players)
+var result = EnlistedDutiesBehavior.Instance.RequestDutyChange(dutyId);
+if (result.Approved)
+{
+    // Success - duty assigned
+}
+else
+{
+    // Denied - show result.Reason (cooldown, reputation, tier, etc.)
+}
+```
+
+### Pay System
+
+```csharp
+// Check pay tension level (0-100)
+var tension = EnlistmentBehavior.Instance.PayTension;
+
+// Get morale penalty from pay tension
+var moralePenalty = EnlistmentBehavior.Instance.GetPayTensionMoralePenalty();
+
+// Check if free desertion is available (tension >= 60)
+if (EnlistmentBehavior.Instance.IsFreeDesertionAvailable)
+{
+    EnlistmentBehavior.Instance.ProcessFreeDesertion();
+}
+
+// Award battle loot share (called post-battle)
+var goldEarned = EnlistmentBehavior.Instance.AwardBattleLootShare(mapEvent);
+
+// Get wage breakdown for tooltip
+var breakdown = EnlistmentBehavior.Instance.GetWageBreakdown();
+```
+
+### Tier-Gated Loot
+
+```csharp
+// LootBlockPatch.ShouldBlockLoot() logic:
+if (enlistment.EnlistmentTier >= 4)
+    return false;  // Allow loot for T4+
+return true;       // Block loot for T1-T3 (compensated via gold share)
+```
+
 ### Wait Menu Time Control
 
 Wait menus use `StartWait()` to enable time controls (play/pause/fast-forward buttons). Native `StartWait()` forces `UnstoppableFastForward` mode. Handle time mode conversion once in menu init, never in tick handlers:
@@ -220,11 +296,67 @@ All JSON files in `ModuleData/Enlisted/`:
 | File                    | Purpose                        |
 |-------------------------|--------------------------------|
 | settings.json           | Logging, encounter settings    |
-| enlisted_config.json    | Tiers, wages, retirement rules |
+| enlisted_config.json    | Feature flags, wages, retirement rules |
 | duties_system.json      | Duty definitions               |
-| progression_config.json | XP thresholds                  |
+| progression_config.json | 9-tier XP thresholds, culture-specific ranks (T1-4 Enlisted, T5-6 Officer, T7-9 Commander) |
+| lances_config.json      | Lance definitions, culture/style mapping |
 | equipment_pricing.json  | Gear costs                     |
 | equipment_kits.json     | Culture-specific loadouts      |
+| Activities/activities.json | Camp Activities menu actions (data-driven XP/fatigue) |
+| Conditions/condition_defs.json | Player condition definitions (injury/illness) |
+| LancePersonas/name_pools.json | Name pools for lance personas |
+| Events/*.json           | Lance Life Events catalog packs |
+
+### Event Packs (Events/*.json)
+
+| Pack | Purpose |
+|------|---------|
+| events_general.json | General camp and training events |
+| events_onboarding.json | New recruit onboarding chain |
+| events_training.json | Formation training events |
+| events_pay_tension.json | Pay grumbling, theft, confrontation, mutiny |
+| events_pay_loyal.json | Loyal path missions (debts, escort, raid) |
+| events_pay_mutiny.json | Desertion planning, mutiny resolution chains |
+
+### Culture Ranks (progression_config.json)
+
+Each culture has unique rank names for all 9 tiers:
+- **Empire**: Tiro → Miles → Immunes → Principalis → Evocatus → Centurion → Primus Pilus → Tribune → Legate
+- **Vlandia**: Peasant → Levy → Footman → Man-at-Arms → Sergeant → Knight Bachelor → Cavalier → Banneret → Castellan
+- **Sturgia**: Thrall → Ceorl → Fyrdman → Drengr → Huskarl → Varangian → Champion → Thane → High Warlord
+- **Khuzait**: Outsider → Nomad → Noker → Warrior → Veteran → Bahadur → Arban → Zuun → Noyan
+- **Battania**: Woodrunner → Clan Warrior → Skirmisher → Raider → Oathsworn → Fian → Highland Champion → Clan Chief → High King's Guard
+- **Aserai**: Tribesman → Skirmisher → Footman → Veteran → Guard → Faris → Emir's Chosen → Sheikh → Grand Vizier
+- **Mercenary**: Follower → Recruit → Free Sword → Veteran → Blade → Chosen → Captain → Commander → Marshal
+
+## Menu System
+
+| Menu ID | Purpose | Entry Point |
+|---------|---------|-------------|
+| `enlisted_status` | Main hub - status display, high-level navigation | Party while enlisted |
+| `enlisted_activities` | Camp Activities - training, tasks, social (data-driven) | From enlisted_status |
+| `enlisted_lance` | My Lance - roster view, player position, relationships | From enlisted_status |
+| `enlisted_medical` | Medical Attention - treatment options (when injured/ill) | From enlisted_status |
+| `enlisted_duty_selection` | Report for Duty - duty and profession selection | From enlisted_status |
+| `command_tent` | My Camp - service records, pay status, retinue | From enlisted_status |
+| `enlisted_desert_confirm` | Desertion confirmation with penalty display | From Desert the Army |
+
+### Status Display
+
+The `enlisted_status` menu shows:
+- Party Objective, Term Remaining, Rank (Tier)
+- Formation, Fatigue, Lance
+- Wage (with gold icon)
+- **Pay Status** (when PayTension > 0): Grumbling → Tense → Severe → CRITICAL
+- **Owed Backpay** (when > 0): Accumulated unpaid wages
+- Current XP, Next Level XP
+
+### Leave Options
+
+Grouped at bottom of menu (indices 20+):
+- **Ask for Leave** (always) - Request temporary leave
+- **Leave Without Penalty** (PayTension >= 60) - Free desertion
+- **Desert the Army** (always) - With penalties
 
 ## Guidelines
 

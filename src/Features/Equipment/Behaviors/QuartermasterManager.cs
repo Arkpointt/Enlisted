@@ -11,6 +11,7 @@ using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 using Helpers;
+using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
@@ -400,6 +401,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 _ =>
                 {
+                    // Phase 7: Clear the "NEW" markers after player visits Quartermaster
+                    ClearNewlyUnlockedMarkers();
+
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
                         try
@@ -477,10 +481,197 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
+
+        // Phase 7: Track items that became available after last promotion for "new item" indicators
+        private readonly HashSet<string> _previouslyAvailableItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _newlyUnlockedItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private int _lastPromotionTier;
+
+        /// <summary>
+        /// Phase 7: Get all equipment available for a formation+tier+culture combination.
+        /// This replaces the single-troop approach with a comprehensive scan of all matching troops.
+        /// </summary>
+        /// <param name="formation">Player's formation (infantry, archer, cavalry, horsearcher)</param>
+        /// <param name="tierCap">Maximum tier to include (player's current tier)</param>
+        /// <param name="culture">Player's enlisted lord's culture</param>
+        /// <returns>Dictionary of equipment slots to available items</returns>
+        public Dictionary<EquipmentIndex, List<ItemObject>> GetAvailableEquipmentByFormation(
+            string formation, 
+            int tierCap, 
+            BasicCultureObject culture)
+        {
+            try
+            {
+                if (culture == null || string.IsNullOrWhiteSpace(formation))
+                {
+                    return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                }
+
+                var formationLower = formation.ToLowerInvariant();
+                var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
+                var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+
+                // Scan all non-hero troops of the player's culture that match formation and are at or below tier
+                foreach (var troop in allTroops)
+                {
+                    if (troop.IsHero || troop.Culture != culture)
+                    {
+                        continue;
+                    }
+
+                    var troopTier = troop.GetBattleTier();
+                    if (troopTier < 1 || troopTier > tierCap)
+                    {
+                        continue;
+                    }
+
+                    // Check if troop matches the formation
+                    var troopFormation = DetectTroopFormation(troop).ToString().ToLowerInvariant();
+                    if (troopFormation != formationLower)
+                    {
+                        continue;
+                    }
+
+                    if (!troop.BattleEquipments.Any())
+                    {
+                        continue;
+                    }
+
+                    // Collect all equipment from this troop
+                    foreach (var equipment in troop.BattleEquipments)
+                    {
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        {
+                            var item = equipment[slot].Item;
+                            if (item == null)
+                            {
+                                continue;
+                            }
+
+                            // Culture filter: if item has a culture, it must match
+                            if (item.Culture != null && item.Culture != culture)
+                            {
+                                continue;
+                            }
+
+                            if (!variants.ContainsKey(slot))
+                            {
+                                variants[slot] = new List<ItemObject>();
+                            }
+
+                            if (!variants[slot].Contains(item))
+                            {
+                                variants[slot].Add(item);
+                            }
+                        }
+                    }
+                }
+
+                var total = variants.Sum(kvp => kvp.Value.Count);
+                ModLogger.Info("Quartermaster", 
+                    $"Formation-based equipment scan: {formation} T1-T{tierCap} {culture.Name} -> {total} items");
+
+                return variants;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error getting formation equipment", ex);
+                return new Dictionary<EquipmentIndex, List<ItemObject>>();
+            }
+        }
+
+        /// <summary>
+        /// Phase 7: Update the "newly unlocked items" set after a promotion.
+        /// Call this when the player's tier changes.
+        /// </summary>
+        public void UpdateNewlyUnlockedItems()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var duties = EnlistedDutiesBehavior.Instance;
+                if (enlistment?.IsEnlisted != true || duties == null)
+                {
+                    return;
+                }
+
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
+                var formation = duties.GetPlayerFormationType() ?? "infantry";
+
+                // Only update if tier actually changed
+                if (tier <= _lastPromotionTier)
+                {
+                    return;
+                }
+
+                // Get current available items
+                var currentEquipment = GetAvailableEquipmentByFormation(formation, tier, culture);
+                var currentItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var slot in currentEquipment.Values)
+                {
+                    foreach (var item in slot)
+                    {
+                        currentItemIds.Add(item.StringId);
+                    }
+                }
+
+                // Find newly unlocked items
+                _newlyUnlockedItems.Clear();
+                foreach (var itemId in currentItemIds)
+                {
+                    if (!_previouslyAvailableItems.Contains(itemId))
+                    {
+                        _newlyUnlockedItems.Add(itemId);
+                    }
+                }
+
+                // Update the previous set for next time
+                _previouslyAvailableItems.Clear();
+                foreach (var itemId in currentItemIds)
+                {
+                    _previouslyAvailableItems.Add(itemId);
+                }
+
+                _lastPromotionTier = tier;
+
+                if (_newlyUnlockedItems.Count > 0)
+                {
+                    ModLogger.Info("Quartermaster", $"Promotion to T{tier}: {_newlyUnlockedItems.Count} new items unlocked");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error updating newly unlocked items", ex);
+            }
+        }
+
+        /// <summary>
+        /// Phase 7: Check if an item is newly unlocked (for "NEW" indicators in UI).
+        /// </summary>
+        public bool IsNewlyUnlockedItem(ItemObject item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+            return _newlyUnlockedItems.Contains(item.StringId);
+        }
+
+        /// <summary>
+        /// Phase 7: Clear the newly unlocked items set (call when player visits QM or equips items).
+        /// </summary>
+        public void ClearNewlyUnlockedMarkers()
+        {
+            _newlyUnlockedItems.Clear();
+        }
         
         /// <summary>
         /// Get equipment variants available to a specific troop type.
         /// Uses runtime discovery from actual game data.
+        /// 
+        /// Phase 7 Note: This method is retained for backward compatibility but 
+        /// GetAvailableEquipmentByFormation() is now the preferred approach.
         /// </summary>
         public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(CharacterObject selectedTroop)
         {
@@ -544,7 +735,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Get the currently selected troop for the player (from TroopSelectionManager).
+        /// Get the currently selected troop for the player.
+        /// 
+        /// Phase 7 Note: This method now uses formation+tier+culture to find a representative troop.
+        /// The TroopSelectionManager.LastSelectedTroopId is no longer the primary lookup method.
+        /// GetAvailableEquipmentByFormation() should be preferred for equipment queries.
         /// </summary>
         public CharacterObject GetPlayerSelectedTroop()
         {
@@ -552,35 +747,15 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 var enlistment = EnlistmentBehavior.Instance;
                 var duties = EnlistedDutiesBehavior.Instance;
-                var troopSelector = TroopSelectionManager.Instance;
                 
                 if (enlistment?.IsEnlisted != true || duties == null)
                 {
                     return null;
                 }
-
-                // First, prefer the last explicitly selected troop (promotion or Master at Arms)
-                var lastTroopId = troopSelector?.LastSelectedTroopId;
-                if (!string.IsNullOrEmpty(lastTroopId))
-                {
-                    try
-                    {
-                        var remembered = MBObjectManager.Instance.GetObject<CharacterObject>(lastTroopId);
-                        if (remembered != null && remembered.BattleEquipments.Any())
-                        {
-                            ModLogger.Info("Quartermaster", $"Player troop identified from last selection: {remembered.Name}");
-                            return remembered;
-                        }
-                    }
-                    catch
-                    {
-                        // Fall through to dynamic detection
-                    }
-                }
                 
-                // Get player's current formation to help identify troop type
+                // Phase 7: Use formation+tier+culture directly
                 var formation = duties.GetPlayerFormationType() ?? "infantry";
-                var culture = enlistment.CurrentLord?.Culture;
+                var culture = enlistment.EnlistedLord?.Culture;
                 var tier = enlistment.EnlistmentTier;
                 
                 if (culture == null)
@@ -595,13 +770,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                     troop.GetBattleTier() == tier &&
                     !troop.IsHero &&
                     troop.BattleEquipments.Any() &&
-                    DetectTroopFormation(troop).ToString().ToLower() == formation).ToList();
+                    DetectTroopFormation(troop).ToString().ToLowerInvariant() == formation.ToLowerInvariant()).ToList();
                 
                 // Select first matching troop as representative
                 var selectedTroop = matchingTroops.FirstOrDefault();
                 if (selectedTroop != null)
                 {
-                    ModLogger.Info("Quartermaster", $"Player troop identified as: {selectedTroop.Name} ({formation} formation)");
+                    ModLogger.Debug("Quartermaster", $"Representative troop for {formation} T{tier}: {selectedTroop.Name}");
                 }
                 
                 return selectedTroop;
@@ -690,7 +865,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
                 var discountMultiplier = (isProvisioner || isQuartermaster) ? 0.85f : 1.0f;
 
-                var price = basePrice * soldierTax * discountMultiplier;
+                var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
+                var price = basePrice * soldierTax * discountMultiplier * campMultiplier;
                 var roundedPrice = Convert.ToInt32(MathF.Round(price));
                 return Math.Max(5, roundedPrice);
             }
@@ -712,7 +888,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
                 var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
                 var basePrice = item.Value;
-                var priceFloat = MathF.Max(0f, basePrice * buybackRate);
+                var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterBuybackMultiplier() ?? 1.0f;
+                var priceFloat = MathF.Max(0f, basePrice * buybackRate * campMultiplier);
                 var price = (int)priceFloat;
                 return Math.Max(price, 0);
             }
@@ -1108,7 +1285,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var buyback = removed ? CalculateQuartermasterBuybackPrice(item) : 0;
                 if (removed && buyback > 0)
                 {
-                    Hero.MainHero.ChangeHeroGold(buyback);
+                    // GiveGoldAction properly adds to party treasury and updates UI
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, buyback);
                 }
 
                 var message = removed
@@ -1490,7 +1668,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                             Slot = slot,
                             IsOfficerExclusive = !variants.ContainsKey(slot) || !variants[slot].Contains(item),
                             AllowsDuplicatePurchase = allowsDuplicate,
-                            IsAtLimit = isAtLimit
+                            IsAtLimit = isAtLimit,
+                            IsNewlyUnlocked = IsNewlyUnlockedItem(item)
                         });
                     }
                     
@@ -1635,8 +1814,24 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
                 var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
                 
-                // In-character quartermaster dialogue
-                var qmDialogue = new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"");
+                // In-character quartermaster dialogue (Camp Life can shift mood/pricing for the day).
+                TextObject qmDialogue;
+                if (CampLifeBehavior.Instance?.IsActiveWhileEnlisted() == true)
+                {
+                    var mood = CampLifeBehavior.Instance.QuartermasterMoodTier;
+                    qmDialogue = mood switch
+                    {
+                        QuartermasterMoodTier.Fine => new TextObject("{=qm_intro_dialogue_fine}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        QuartermasterMoodTier.Tense => new TextObject("{=qm_intro_dialogue_tense}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        QuartermasterMoodTier.Sour => new TextObject("{=qm_intro_dialogue_sour}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        QuartermasterMoodTier.Predatory => new TextObject("{=qm_intro_dialogue_predatory}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        _ => new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"")
+                    };
+                }
+                else
+                {
+                    qmDialogue = new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"");
+                }
                 sb.AppendLine(qmDialogue.ToString());
                 sb.AppendLine();
                 
@@ -1652,6 +1847,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine();
                 sb.AppendLine($"Soldier tax: x{soldierTax:0.00}");
                 sb.AppendLine($"Buyback: {(int)(buybackRate * 100f)}% of base value");
+                if (CampLifeBehavior.Instance?.IsActiveWhileEnlisted() == true)
+                {
+                    var campPurchase = CampLifeBehavior.Instance.GetQuartermasterPurchaseMultiplier();
+                    var campBuyback = CampLifeBehavior.Instance.GetQuartermasterBuybackMultiplier();
+                    var mood = CampLifeBehavior.Instance.QuartermasterMoodTier;
+                    sb.AppendLine($"Camp mood: {mood} (buy x{campPurchase:0.00}, sell x{campBuyback:0.00})");
+                }
                 sb.AppendLine();
                 
                 // Officer privileges if applicable
@@ -2014,6 +2216,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                     foreach (var variant in availableVariants)
                     {
                         var title = variant.Item.Name?.ToString() ?? "Unknown";
+                        
+                        // Phase 7: Add "NEW" indicator for recently unlocked items
+                        if (variant.IsNewlyUnlocked)
+                        {
+                            title = $"[NEW] {title}";
+                        }
+
                         var description = variant.CanAfford 
                             ? $"Cost: {variant.Cost} denars" 
                             : $"Cost: {variant.Cost} denars (Can't afford)";
@@ -3373,6 +3582,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Prevents abuse of the free equipment system.
         /// </summary>
         public bool IsAtLimit { get; set; }
+
+        /// <summary>
+        /// Phase 7: True if this item became available after the player's last promotion.
+        /// Used for "NEW" indicators in the UI.
+        /// </summary>
+        public bool IsNewlyUnlocked { get; set; }
     }
 }
 

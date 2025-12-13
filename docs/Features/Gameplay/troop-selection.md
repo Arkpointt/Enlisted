@@ -1,52 +1,49 @@
-# Feature Spec: Troop Selection (Master at Arms)
+# Feature Spec: Troop Selection (Legacy)
+
+> **Status:** DEPRECATED (Phase 7)
+> 
+> The troop selection system has been replaced by the **Proving Event** system. Formation choice now happens during the T1→T2 promotion event, providing a narrative experience instead of a menu.
 
 ## Overview
-Troop Selection lets enlisted players choose which **real Bannerlord troop template** they represent (culture + tier). This choice drives:
-- Your **troop identity** (kit source) for the Quartermaster
-- Your **formation identity** (Infantry/Archer/Cavalry/Horse Archer)
-- Tier 1 only: a one-time **auto-issue** equipment replacement
 
-## Purpose
-- Keep progression grounded in native troop trees (culture-appropriate roles)
-- Provide a single place (Master at Arms) to update your role expression without changing your tier
-- Prevent “free gear escalation” after Tier 1 by requiring **Quartermaster purchases** for Tier 2+
+The original troop selection system let enlisted players choose a Bannerlord troop template to determine their formation and equipment. This has been superseded by:
 
-## Inputs / Outputs
+- **Formation Choice**: Made during the T1→T2 proving event ("Finding Your Place")
+- **Equipment Access**: Purchased from the Quartermaster based on formation + tier + culture
+- **Starter Duty**: Auto-assigned based on chosen formation
 
-**Inputs**
-- Current enlisted lord culture
-- Current tier (Tier 1–6)
-- Promotion flow (optional) and Master at Arms access
+## Legacy Behavior (Removed)
 
-**Outputs**
-- Selected troop template stored (last selected troop ID)
-- Tier 1: immediate equipment assignment (auto-issue / full replacement)
-- Tier 2+: no auto-issue; chosen troop’s branch becomes eligible for Quartermaster purchase pools
+~~The Master at Arms popup allowed players to:~~
+- ~~Pick a troop template from the lord's culture~~
+- ~~Derive formation from troop properties (IsRanged, IsMounted)~~
+- ~~Auto-equip gear from the selected troop at Tier 1~~
 
-## Behavior
+## Current Behavior (Phase 7)
 
-### Master at Arms popup
-- Available while enlisted from the main enlisted status menu.
-- Builds a list of unlocked troops for the lord’s culture where troop tier ≤ your current tier.
-- On selection:
-  - If selected troop tier ≤ 1 → **auto-issue** the chosen kit (replaces equipment)
-  - If selected troop tier > 1 → **no auto-issue**; selection updates your “current kit identity” for Quartermaster availability
+### Formation Selection
+- **T1**: Everyone starts as Infantry
+- **T1→T2 Promotion**: Proving event presents formation options:
+  - "I fight best on foot" → Infantry
+  - "Give me a bow and I'll put arrows where they need to go" → Archer
+  - "I belong in the saddle" → Cavalry
+  - "Horse archery is my calling" → Horse Archer (Khuzait/Aserai only)
+- **T2+**: Formation is locked (cannot change)
 
-### Promotions
-On tier promotion, the same selection flow can be used to pick a troop identity appropriate to the new tier.
+### Equipment Access
+- **T1**: Basic levy gear from bag check or starter kit
+- **T2+**: Quartermaster only — buy gear for your formation/tier/culture
+- No auto-equip on promotion; player visits Quartermaster for new kit
 
-## Equipment access
-- Tier 1: auto-issued kit replacement.
-- Tier 2+: equipment is **purchased** at the Quartermaster (no accountability/issued-gear tracking).
+### Technical Notes
 
-## Technical implementation
-- `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`
-  - Builds culture troop trees and unlock lists
-  - Shows the inquiry popup
-  - Applies Tier 1 auto-issue and records last selected troop
-- `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
-  - Exposes Master at Arms entry point
+The `TroopSelectionManager.cs` class still exists for:
+- Data access (troop trees, culture lookup)
+- Migration of existing saves (deriving formation from selected troop)
 
-## Related docs
-- [Quartermaster](../UI/quartermaster.md)
-- [Enlistment](../Core/enlistment.md)
+The menu trigger in `EnlistmentBehavior.cs` is disabled. Equipment is now handled by `QuartermasterManager.GetAvailableEquipmentByFormation()`.
+
+## Related Docs
+- [Quartermaster](../UI/quartermaster.md) — Equipment purchasing
+- [Duties System](../Core/duties-system.md) — Formation-based duties
+- [Enlistment](../Core/enlistment.md) — Promotion and proving events

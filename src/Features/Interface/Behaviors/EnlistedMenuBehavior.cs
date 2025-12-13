@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Assignments.Core;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core;
@@ -75,6 +76,12 @@ namespace Enlisted.Features.Interface.Behaviors
         ///     Used to clean up encounter state when leaving settlements.
         /// </summary>
         private bool _syntheticOutsideEncounter;
+
+        /// <summary>
+        ///     Cache of duties available for the current formation, populated during menu init.
+        ///     Used to map duty slot indices to actual duty definitions.
+        /// </summary>
+        private List<DutyDefinition> _cachedDutiesForMenu = new List<DutyDefinition>();
 
         /// <summary>
         ///     Last time we logged an enlisted menu activation, used to avoid log spam
@@ -907,17 +914,23 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnDebugToolsSelected,
                 false, 0);
 
-            // Master at Arms - allows players to select troop equipment (TroopSelection icon)
+            // Master at Arms - DEPRECATED in Phase 7
+            // Formation is now chosen during T1→T2 proving event
+            // Equipment is purchased from Quartermaster based on formation+tier+culture
+            // Keeping the menu option hidden but code intact for save compatibility
+#pragma warning disable CS0618 // Intentionally using obsolete method for save compatibility
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
                 "{=Enlisted_Menu_MasterAtArms}Master at Arms",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
                     args.Tooltip = new TextObject("{=menu_tooltip_master}Select your troop type and equipment loadout based on your current tier.");
-                    return IsMasterAtArmsAvailable(args);
+                    // Phase 7: Hide this option - formation is now chosen via proving event
+                    return false;
                 },
                 OnMasterAtArmsSelected,
                 false, 1);
+#pragma warning restore CS0618
 
             // Visit Quartermaster - equipment variant selection and management (Trade icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
@@ -925,11 +938,31 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Request equipment variants and manage party supplies.");
+                    // Phase 7: Equipment based on formation + tier + culture
+                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Purchase equipment for your formation and rank. Newly unlocked items marked [NEW].");
                     return IsQuartermasterAvailable(args);
                 },
                 OnQuartermasterSelected,
                 false, 2);
+
+            // My Lance - view lance roster and relationships (Manage icon)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_my_lance",
+                "{=Enlisted_Menu_MyLance}My Lance",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=menu_tooltip_lance}View your lance roster and relationships.");
+                    return IsMyLanceAvailable(args);
+                },
+                args =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_lance");
+                },
+                false, 3);
+
+            // NOTE: My Camp (command_tent) is added by CampMenuHandler at position 4
+            // Camp Activities is accessed from within My Camp, not as a separate menu option
 
             // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
@@ -941,7 +974,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return IsTalkToAvailable(args);
                 },
                 OnTalkToSelected,
-                false, 3);
+                false, 6);
 
             // Visit Settlement - towns and castles only (Submenu icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_visit_settlement",
@@ -953,7 +986,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return IsVisitSettlementAvailable(args);
                 },
                 OnVisitTownSelected,
-                false, 4);
+                false, 7);
 
             // Report for Duty - duty and profession selection (Manage icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
@@ -961,23 +994,60 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=menu_tooltip_duty}Select your daily duty and profession for bonuses and special abilities.");
+                    // Phase 7: T1 can view duties, T2+ can request duty changes
+                    var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+                    args.Tooltip = tier >= 2
+                        ? new TextObject("{=menu_tooltip_duty_request}Request duty transfer or view current assignment. Changes require lance leader approval.")
+                        : new TextObject("{=menu_tooltip_duty_t1}View your current duty assignment. Duty changes unlock at next rank.");
                     return IsReportDutyAvailable(args);
                 },
                 OnReportDutySelected,
-                false, 5);
+                false, 8);
 
-            // Ask commander for leave - moved to bottom (Leave icon)
+            // Seek Medical Attention - only shows when injured/ill (Manage icon)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_seek_medical",
+                "{=Enlisted_Menu_SeekMedical}Seek Medical Attention",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
+                    return IsSeekMedicalAvailable(args);
+                },
+                args =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_medical");
+                },
+                false, 9);
+
+            // === LEAVE OPTIONS (grouped at bottom) ===
+
+            // Ask commander for leave (Leave icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
-                "{=Enlisted_Menu_AskLeave}Ask commander for leave",
+                "{=Enlisted_Menu_AskLeave}Ask for Leave",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service. You can return when ready.");
+                    args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service.");
                     return IsAskLeaveAvailable(args);
                 },
                 OnAskLeaveSelected,
-                false, 6);
+                false, 20);
+
+            // Free Desertion - Only appears when PayTension >= 60 (Leave icon, no penalty)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_free_desertion",
+                "{=Enlisted_Menu_FreeDesert}Leave Without Penalty",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsEnlisted != true || enlistment.PayTension < 60)
+                        return false;
+                    args.Tooltip = new TextObject("{=menu_tooltip_free_desert}Pay is too late. You can leave with no penalties — no one would blame you.");
+                    return true;
+                },
+                OnFreeDesertionSelected,
+                false, 21);
 
             // Desert Army option - allows player to voluntarily leave with penalties (Escape icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_desert_army",
@@ -989,7 +1059,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return IsDesertArmyAvailable(args);
                 },
                 OnDesertArmySelected,
-                false, 7);
+                false, 22);
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
 
@@ -1143,36 +1213,67 @@ namespace Enlisted.Features.Interface.Behaviors
                 },
                 false, 2);
 
-            // DUTY OPTIONS - Dynamic text based on current selection
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_enlisted",
-                "{DUTY_ENLISTED_TEXT}",
-                IsDutyEnlistedAvailable,
-                OnDutyEnlistedSelected,
+            // DUTY OPTIONS - Data-driven from duties_system.json
+            // Up to 10 duty slots, dynamically populated based on player's formation
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_0",
+                "{DUTY_SLOT_0_TEXT}",
+                args => IsDutySlotAvailable(args, 0),
+                args => OnDutySlotSelected(args, 0),
                 false, 3);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_forager",
-                "{DUTY_FORAGER_TEXT}",
-                IsDutyForagerAvailable,
-                OnDutyForagerSelected,
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_1",
+                "{DUTY_SLOT_1_TEXT}",
+                args => IsDutySlotAvailable(args, 1),
+                args => OnDutySlotSelected(args, 1),
                 false, 4);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_sentry",
-                "{DUTY_SENTRY_TEXT}",
-                IsDutySentryAvailable,
-                OnDutySentrySelected,
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_2",
+                "{DUTY_SLOT_2_TEXT}",
+                args => IsDutySlotAvailable(args, 2),
+                args => OnDutySlotSelected(args, 2),
                 false, 5);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_messenger",
-                "{DUTY_MESSENGER_TEXT}",
-                IsDutyMessengerAvailable,
-                OnDutyMessengerSelected,
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_3",
+                "{DUTY_SLOT_3_TEXT}",
+                args => IsDutySlotAvailable(args, 3),
+                args => OnDutySlotSelected(args, 3),
                 false, 6);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_pioneer",
-                "{DUTY_PIONEER_TEXT}",
-                IsDutyPioneerAvailable,
-                OnDutyPioneerSelected,
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_4",
+                "{DUTY_SLOT_4_TEXT}",
+                args => IsDutySlotAvailable(args, 4),
+                args => OnDutySlotSelected(args, 4),
                 false, 7);
+
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_5",
+                "{DUTY_SLOT_5_TEXT}",
+                args => IsDutySlotAvailable(args, 5),
+                args => OnDutySlotSelected(args, 5),
+                false, 8);
+
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_6",
+                "{DUTY_SLOT_6_TEXT}",
+                args => IsDutySlotAvailable(args, 6),
+                args => OnDutySlotSelected(args, 6),
+                false, 9);
+
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_7",
+                "{DUTY_SLOT_7_TEXT}",
+                args => IsDutySlotAvailable(args, 7),
+                args => OnDutySlotSelected(args, 7),
+                false, 10);
+
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_8",
+                "{DUTY_SLOT_8_TEXT}",
+                args => IsDutySlotAvailable(args, 8),
+                args => OnDutySlotSelected(args, 8),
+                false, 11);
+
+            starter.AddGameMenuOption("enlisted_duty_selection", "duty_slot_9",
+                "{DUTY_SLOT_9_TEXT}",
+                args => IsDutySlotAvailable(args, 9),
+                args => OnDutySlotSelected(args, 9),
+                false, 12);
 
             // SPACER between duties and professions
             starter.AddGameMenuOption("enlisted_duty_selection", "section_spacer",
@@ -1324,8 +1425,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     timeLine.SetTextVariable("TIME", enlistmentTime);
                     statusContent += timeLine + "\n";
 
-                    // Enlistment tier and formation
-                    var tierLine = new TextObject("{=Enlisted_Status_Tier}Enlistment Tier : {TIER}");
+                    // Enlistment rank and tier (culture-specific rank name)
+                    var rankName = Ranks.RankHelper.GetCurrentRank(enlistment);
+                    var tierLine = new TextObject("{=Enlisted_Status_TierRank}Rank : {RANK} (Tier {TIER})");
+                    tierLine.SetTextVariable("RANK", rankName);
                     tierLine.SetTextVariable("TIER", enlistment.EnlistmentTier);
                     statusContent += tierLine + "\n";
 
@@ -1386,6 +1489,33 @@ namespace Enlisted.Features.Interface.Behaviors
                     var wageLine = new TextObject("{=Enlisted_Status_Wage}Wage : {WAGE}");
                     wageLine.SetTextVariable("WAGE", dailyWage);
                     statusContent += wageLine + "<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
+
+                    // Pay status - shows tension level if pay is late
+                    if (enlistment.PayTension > 0)
+                    {
+                        var payStatusLine = new TextObject("{=Enlisted_Status_PayStatus}Pay Status : {STATUS}");
+                        string payStatus;
+                        if (enlistment.PayTension >= 80)
+                            payStatus = "CRITICAL — Mutiny risk!";
+                        else if (enlistment.PayTension >= 60)
+                            payStatus = "Severe — Free to leave";
+                        else if (enlistment.PayTension >= 40)
+                            payStatus = "Tense — Unrest growing";
+                        else if (enlistment.PayTension >= 20)
+                            payStatus = "Grumbling — Pay is late";
+                        else
+                            payStatus = "Minor delay";
+                        payStatusLine.SetTextVariable("STATUS", payStatus);
+                        statusContent += payStatusLine + "\n";
+                        
+                        // Show owed backpay if any
+                        if (enlistment.OwedBackpay > 0)
+                        {
+                            var backpayLine = new TextObject("{=Enlisted_Status_Backpay}Owed Backpay : {AMOUNT}");
+                            backpayLine.SetTextVariable("AMOUNT", enlistment.OwedBackpay);
+                            statusContent += backpayLine + "<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
+                        }
+                    }
 
                     // Experience tracking
                     var xpLine = new TextObject("{=Enlisted_Status_XP}Current Experience : {XP}");
@@ -1664,12 +1794,22 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // Menu Option Conditions and Actions
 
+        /// <summary>
+        ///     DEPRECATED: Phase 7 - Master at Arms replaced by proving events.
+        ///     Formation is now chosen during T1→T2 proving event.
+        ///     Kept for save compatibility but menu option is hidden.
+        /// </summary>
+        [System.Obsolete("Phase 7: Formation is now chosen via proving events, not Master at Arms menu.")]
         private bool IsMasterAtArmsAvailable(MenuCallbackArgs args)
         {
-            _ = args; // Required by API contract
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            _ = args;
+            return false; // Phase 7: Always hide this option
         }
 
+        /// <summary>
+        ///     DEPRECATED: Phase 7 - Master at Arms replaced by proving events.
+        /// </summary>
+        [System.Obsolete("Phase 7: Formation is now chosen via proving events, not Master at Arms menu.")]
         private void OnMasterAtArmsSelected(MenuCallbackArgs args)
         {
             try
@@ -1697,6 +1837,56 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             _ = args; // Required by API contract
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        /// <summary>
+        /// Checks if My Lance menu option is available.
+        /// Requires player to be enlisted and have a lance assigned.
+        /// </summary>
+        private static bool IsMyLanceAvailable(MenuCallbackArgs args)
+        {
+            _ = args;
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            // Must have a lance assigned (provisional or finalized)
+            if (string.IsNullOrWhiteSpace(enlistment.CurrentLanceName))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if Seek Medical Attention option is available.
+        /// Only shows when player has an injury, illness, or exhaustion condition.
+        /// </summary>
+        private static bool IsSeekMedicalAvailable(MenuCallbackArgs args)
+        {
+            _ = args;
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            var cond = PlayerConditionBehavior.Instance;
+            if (cond?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            // Only show if player has an active condition
+            if (cond.State?.HasAnyCondition != true)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void OnQuartermasterSelected(MenuCallbackArgs args)
@@ -2278,6 +2468,55 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
+        /// <summary>
+        ///     Handles free desertion when PayTension >= 60.
+        ///     Shows a confirmation dialog then processes the clean desertion.
+        /// </summary>
+        private void OnFreeDesertionSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true || enlistment.PayTension < 60)
+                {
+                    ModLogger.Warn("Interface", "Free desertion attempted but conditions not met");
+                    return;
+                }
+
+                var lordName = enlistment.CurrentLord?.Name?.ToString() ?? "your lord";
+                var confirmText = new TextObject(
+                    "Pay has been late for too long. You approach your lance-mates and explain that you can't continue like this.\n\n" +
+                    "They nod slowly. \"Can't blame you. No one would. Go — find something better.\"\n\n" +
+                    "You can leave now with minimal consequences:\n" +
+                    "• -5 relation with {LORD_NAME} (they understand)\n" +
+                    "• No crime penalty\n" +
+                    "• Keep your equipment\n\n" +
+                    "Are you sure you want to leave?");
+                confirmText.SetTextVariable("LORD_NAME", lordName);
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    new TextObject("{=Enlisted_FreeDesert_Title}Leave Without Penalty").ToString(),
+                    confirmText.ToString(),
+                    true, true,
+                    new TextObject("{=Enlisted_FreeDesert_Confirm}Leave").ToString(),
+                    new TextObject("{=Enlisted_FreeDesert_Cancel}Stay").ToString(),
+                    () =>
+                    {
+                        // Process free desertion - no major penalties
+                        enlistment.ProcessFreeDesertion();
+                        ModLogger.Info("Interface", "Player executed free desertion due to high PayTension");
+                    },
+                    () =>
+                    {
+                        // Player chose to stay
+                        ModLogger.Debug("Interface", "Player cancelled free desertion");
+                    }));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", $"Error in free desertion: {ex.Message}");
+            }
+        }
 
         /// <summary>
         ///     Creates the desertion confirmation menu with roleplay-appropriate warning text
@@ -2624,6 +2863,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         ///     Refresh duty selection display with dynamic checkmarks for current selections.
+        ///     Phase 7: Enhanced to show rank, formation, and request system status.
         /// </summary>
         private void RefreshDutySelectionDisplay(MenuCallbackArgs args = null)
         {
@@ -2635,37 +2875,58 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
+                var dutiesBehavior = EnlistedDutiesBehavior.Instance;
+                var currentTier = enlistment.EnlistmentTier;
+                var isRequestMode = currentTier >= 2;
+
                 // Build the duty selection status content string
-                // Formats information as "Label : Value" pairs displayed line by line
                 var statusContent = "";
 
-                // Current assignments with descriptions (enlistment guaranteed non-null after check above)
+                // Show rank and formation at the top for context
+                var rankName = Ranks.RankHelper.GetCurrentRank(enlistment);
+                var formationName = dutiesBehavior?.GetPlayerFormationType()?.ToTitleCase() ?? "Infantry";
+                statusContent += $"Rank : {rankName}  |  Formation : {formationName}\n";
+                
+                // Phase 7: Show request system status for T2+ players
+                if (isRequestMode)
+                {
+                    if (dutiesBehavior?.IsDutyRequestOnCooldown() == true)
+                    {
+                        var daysRemaining = dutiesBehavior.GetDutyRequestCooldownRemaining();
+                        statusContent += $"Duty Transfer : On cooldown ({daysRemaining} days remaining)\n\n";
+                    }
+                    else
+                    {
+                        statusContent += "Duty Transfer : Available (requires lance leader approval)\n\n";
+                    }
+                }
+                else
+                {
+                    statusContent += "Duty Transfer : Unlocks at next rank\n\n";
+                }
+
+                // Current assignments with descriptions
                 var currentDuty = GetDutyDisplayName(enlistment.SelectedDuty);
                 var currentProfession = enlistment.SelectedProfession == "none"
                     ? "None"
                     : GetProfessionDisplayName(enlistment.SelectedProfession);
 
                 statusContent += $"Current Duty : {currentDuty}\n";
-                statusContent += $"Current Profession : {currentProfession}\n\n";
+                if (currentTier >= 3)
+                {
+                    statusContent += $"Current Profession : {currentProfession}\n";
+                }
+                statusContent += "\n";
 
-                // Add detailed descriptions for current assignments
+                // Add duty description
                 var dutyDescription = GetDutyDescription(enlistment.SelectedDuty);
-                var professionDescription = GetProfessionDescription(enlistment.SelectedProfession);
-
-                statusContent += $"DUTY ASSIGNMENT: {dutyDescription}\n\n";
-                if (enlistment.SelectedProfession != "none")
+                statusContent += $"{dutyDescription}";
+                
+                // Add profession description if applicable
+                if (currentTier >= 3 && enlistment.SelectedProfession != "none")
                 {
-                    statusContent += $"PROFESSION: {professionDescription}\n\n";
-                }
-
-                // Show the selected profession description instead of instructions
-                if (enlistment.SelectedProfession == "none")
-                {
-                    statusContent += "None";
-                }
-                else
-                {
-                    statusContent += GetProfessionDescription(enlistment.SelectedProfession);
+                    var professionDescription = GetProfessionDescription(enlistment.SelectedProfession);
+                    statusContent += $"\n\n{professionDescription}";
                 }
 
                 // Set dynamic text variables for menu options with correct checkmarks
@@ -2720,21 +2981,50 @@ namespace Enlisted.Features.Interface.Behaviors
                 return symbol;
             }
 
-            // DUTY TEXT VARIABLES
-            MBTextManager.SetTextVariable("DUTY_ENLISTED_TEXT",
-                FormatOption("enlisted", "{=Enlisted_Duty_Name_Enlisted}Enlisted", selectedDuty));
+            // DUTY TEXT VARIABLES - Data-driven from cached duties
+            // Refresh the cached duties for current formation
+            var dutiesBehavior = EnlistedDutiesBehavior.Instance;
+            _cachedDutiesForMenu = dutiesBehavior?.GetDutiesForCurrentFormation() ?? new List<DutyDefinition>();
 
-            MBTextManager.SetTextVariable("DUTY_FORAGER_TEXT",
-                FormatOption("forager", "{=Enlisted_Duty_Name_Forager}Forager", selectedDuty));
+            // Set text variables for each duty slot (up to 10 slots)
+            // Phase 7: T2+ players see "Request Transfer" instead of direct selection
+            var currentTier = enlistment?.EnlistmentTier ?? 1;
+            var isRequestMode = currentTier >= 2;
+            var dutiesBehaviorForCooldown = EnlistedDutiesBehavior.Instance;
+            var onCooldown = dutiesBehaviorForCooldown?.IsDutyRequestOnCooldown() == true;
+            var cooldownDays = dutiesBehaviorForCooldown?.GetDutyRequestCooldownRemaining() ?? 0;
 
-            MBTextManager.SetTextVariable("DUTY_SENTRY_TEXT",
-                FormatOption("sentry", "{=Enlisted_Duty_Name_Sentry}Sentry", selectedDuty));
+            for (int i = 0; i < 10; i++)
+            {
+                var textVar = $"DUTY_SLOT_{i}_TEXT";
+                if (i < _cachedDutiesForMenu.Count)
+                {
+                    var duty = _cachedDutiesForMenu[i];
+                    var displayName = duty.DisplayName ?? duty.Id;
+                    var isCurrentDuty = duty.Id == selectedDuty;
 
-            MBTextManager.SetTextVariable("DUTY_MESSENGER_TEXT",
-                FormatOption("messenger", "{=Enlisted_Duty_Name_Messenger}Messenger", selectedDuty));
+                    // Check tier lock
+                    var tierLock = duty.MinTier > currentTier
+                        ? $" [Requires {Ranks.RankHelper.GetRankTitle(duty.MinTier, Ranks.RankHelper.GetCultureId(enlistment))}]"
+                        : "";
 
-            MBTextManager.SetTextVariable("DUTY_PIONEER_TEXT",
-                FormatOption("pioneer", "{=Enlisted_Duty_Name_Pioneer}Pioneer", selectedDuty));
+                    // Phase 7: Show request mode for T2+ players
+                    string suffix = "";
+                    if (isRequestMode && !isCurrentDuty && string.IsNullOrEmpty(tierLock))
+                    {
+                        suffix = onCooldown 
+                            ? $" [Cooldown: {cooldownDays}d]" 
+                            : " [Request Transfer]";
+                    }
+
+                    MBTextManager.SetTextVariable(textVar, FormatOption(duty.Id, displayName + tierLock + suffix, selectedDuty));
+                }
+                else
+                {
+                    // Empty slot - won't be shown due to availability check
+                    MBTextManager.SetTextVariable(textVar, " ");
+                }
+            }
 
             // PROFESSION TEXT VARIABLES
             MBTextManager.SetTextVariable("PROF_QUARTERHAND_TEXT",
@@ -2756,40 +3046,132 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #region Duty Selection Conditions and Actions
 
-        // Duty availability conditions with localized tooltips explaining bonuses
-        private bool IsDutyEnlistedAvailable(MenuCallbackArgs args)
+        /// <summary>
+        ///     Data-driven duty slot availability check.
+        ///     Phase 7: Shows all duties but controls enabled state based on tier and request system.
+        /// </summary>
+        private bool IsDutySlotAvailable(MenuCallbackArgs args, int slotIndex)
         {
-            args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-            args.Tooltip = new TextObject("{=duty_tooltip_enlisted}Standard military service. Train with your formation and earn base wages.");
+            // Hide slot if no duty assigned to this index
+            if (slotIndex < 0 || slotIndex >= _cachedDutiesForMenu.Count)
+            {
+                return false;
+            }
+
+            var duty = _cachedDutiesForMenu[slotIndex];
+            if (duty == null)
+            {
+                return false;
+            }
+
+            // Set appropriate leave type based on duty type
+            args.optionLeaveType = GetLeaveTypeForDuty(duty.Id);
+
+            var enlistment = EnlistmentBehavior.Instance;
+            var currentTier = enlistment?.EnlistmentTier ?? 1;
+            var isCurrentDuty = duty.Id == enlistment?.SelectedDuty;
+            var dutiesBehavior = EnlistedDutiesBehavior.Instance;
+
+            // Check tier requirement - show culture-specific rank in tooltip
+            if (duty.MinTier > currentTier)
+            {
+                args.IsEnabled = false;
+                var requiredRank = Ranks.RankHelper.GetRankTitle(duty.MinTier, Ranks.RankHelper.GetCultureId(enlistment));
+                args.Tooltip = new TextObject("{=duty_tooltip_rank_locked}Requires {RANK} rank to unlock this duty.")
+                    .SetTextVariable("RANK", requiredRank);
+                return true;
+            }
+
+            // Phase 7: T1 players cannot change duties (assigned automatically)
+            if (currentTier < 2 && !isCurrentDuty)
+            {
+                args.IsEnabled = false;
+                var nextRank = Ranks.RankHelper.GetNextRank(enlistment);
+                args.Tooltip = new TextObject("{=duty_tooltip_t1_locked}Duty transfers unlock when you reach {RANK}.")
+                    .SetTextVariable("RANK", nextRank);
+                return true;
+            }
+
+            // Phase 7: Check request cooldown for T2+ players
+            if (currentTier >= 2 && !isCurrentDuty && dutiesBehavior?.IsDutyRequestOnCooldown() == true)
+            {
+                args.IsEnabled = false;
+                var daysRemaining = dutiesBehavior.GetDutyRequestCooldownRemaining();
+                args.Tooltip = new TextObject("{=duty_tooltip_cooldown}Duty transfer on cooldown. {DAYS} days remaining.")
+                    .SetTextVariable("DAYS", daysRemaining);
+                return true;
+            }
+
+            // Build tooltip from duty description and skill XP
+            var skillInfo = duty.MultiSkillXp != null && duty.MultiSkillXp.Count > 0
+                ? string.Join(", ", duty.MultiSkillXp.Select(kvp => $"{kvp.Key} +{kvp.Value}"))
+                : "";
+            var wageInfo = duty.WageMultiplier != 1.0f
+                ? $" Wage: {duty.WageMultiplier:P0}"
+                : "";
+            
+            var baseTooltip = $"{duty.Description ?? duty.DisplayName}{(string.IsNullOrEmpty(skillInfo) ? "" : $" ({skillInfo})")}{wageInfo}";
+            
+            // Phase 7: Add request context for T2+ players
+            if (currentTier >= 2 && !isCurrentDuty)
+            {
+                baseTooltip += "\n\nClick to request transfer (requires lance leader approval).";
+            }
+            
+            args.Tooltip = new TextObject(baseTooltip);
             return true;
         }
 
-        private bool IsDutyForagerAvailable(MenuCallbackArgs args)
+        /// <summary>
+        ///     Data-driven duty slot selection handler.
+        /// </summary>
+        private void OnDutySlotSelected(MenuCallbackArgs args, int slotIndex)
         {
-            args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-            args.Tooltip = new TextObject("{=duty_tooltip_forager}Gather food and supplies for the army. Earn bonus XP and improved wages.");
-            return true;
+            if (slotIndex < 0 || slotIndex >= _cachedDutiesForMenu.Count)
+            {
+                return;
+            }
+
+            var duty = _cachedDutiesForMenu[slotIndex];
+            if (duty == null)
+            {
+                return;
+            }
+
+            // Check tier requirement - show culture-specific rank in message
+            var enlistment = EnlistmentBehavior.Instance;
+            var currentTier = enlistment?.EnlistmentTier ?? 1;
+            if (duty.MinTier > currentTier)
+            {
+                var requiredRank = Ranks.RankHelper.GetRankTitle(duty.MinTier, Ranks.RankHelper.GetCultureId(enlistment));
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"You need to reach {requiredRank} rank to select {duty.DisplayName}.",
+                    Colors.Red));
+                return;
+            }
+
+            SelectDuty(duty.Id, duty.DisplayName);
         }
 
-        private bool IsDutySentryAvailable(MenuCallbackArgs args)
+        /// <summary>
+        ///     Get the appropriate menu leave type icon for a duty.
+        /// </summary>
+        private GameMenuOption.LeaveType GetLeaveTypeForDuty(string dutyId)
         {
-            args.optionLeaveType = GameMenuOption.LeaveType.DefendAction;
-            args.Tooltip = new TextObject("{=duty_tooltip_sentry}Guard the camp perimeter. Improved detection of enemies and bonus relation with your lord.");
-            return true;
-        }
-
-        private bool IsDutyMessengerAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Mission;
-            args.Tooltip = new TextObject("{=duty_tooltip_messenger}Deliver messages and scout ahead. Bonus riding/athletics XP and faster travel.");
-            return true;
-        }
-
-        private bool IsDutyPioneerAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
-            args.Tooltip = new TextObject("{=duty_tooltip_pioneer}Build fortifications and siege works. Bonus engineering XP and siege effectiveness.");
-            return true;
+            return dutyId?.ToLowerInvariant() switch
+            {
+                "quartermaster" => GameMenuOption.LeaveType.Trade,
+                "field_medic" => GameMenuOption.LeaveType.Manage,
+                "armorer" => GameMenuOption.LeaveType.Craft,
+                "runner" => GameMenuOption.LeaveType.Mission,
+                "engineer" => GameMenuOption.LeaveType.SiegeAmbush,
+                "scout" => GameMenuOption.LeaveType.ForceToGiveTroops,
+                "lookout" => GameMenuOption.LeaveType.DefendAction,
+                "messenger" => GameMenuOption.LeaveType.Mission,
+                "boatswain" => GameMenuOption.LeaveType.Submenu,
+                "navigator" => GameMenuOption.LeaveType.Mission,
+                _ => GameMenuOption.LeaveType.Continue
+            };
         }
 
         // PROFESSION CONDITIONS with tier requirements shown in localized tooltips
@@ -2798,11 +3180,14 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsProfQuarterhandAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var enlistment = EnlistmentBehavior.Instance;
+            var tier = enlistment?.EnlistmentTier ?? 1;
             if (tier < ProfessionTierRequirement)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
+                    .SetTextVariable("RANK", requiredRank);
             }
             else
             {
@@ -2814,11 +3199,14 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsProfFieldMedicAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var enlistment = EnlistmentBehavior.Instance;
+            var tier = enlistment?.EnlistmentTier ?? 1;
             if (tier < ProfessionTierRequirement)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
+                    .SetTextVariable("RANK", requiredRank);
             }
             else
             {
@@ -2830,11 +3218,14 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsProfSiegewrightAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var enlistment = EnlistmentBehavior.Instance;
+            var tier = enlistment?.EnlistmentTier ?? 1;
             if (tier < ProfessionTierRequirement)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
+                    .SetTextVariable("RANK", requiredRank);
             }
             else
             {
@@ -2846,11 +3237,14 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsProfDrillmasterAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var enlistment = EnlistmentBehavior.Instance;
+            var tier = enlistment?.EnlistmentTier ?? 1;
             if (tier < ProfessionTierRequirement)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
+                    .SetTextVariable("RANK", requiredRank);
             }
             else
             {
@@ -2862,43 +3256,20 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool IsProfSaboteurAvailable(MenuCallbackArgs args)
         {
             args.optionLeaveType = GameMenuOption.LeaveType.Raid;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            var enlistment = EnlistmentBehavior.Instance;
+            var tier = enlistment?.EnlistmentTier ?? 1;
             if (tier < ProfessionTierRequirement)
             {
                 args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+                var requiredRank = Ranks.RankHelper.GetRankTitle(ProfessionTierRequirement, Ranks.RankHelper.GetCultureId(enlistment));
+                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires {RANK} rank to unlock this profession.")
+                    .SetTextVariable("RANK", requiredRank);
             }
             else
             {
                 args.Tooltip = new TextObject("{=prof_tooltip_saboteur}Conduct covert operations. Bonus roguery XP and special mission access.");
             }
             return true;
-        }
-
-        // DUTY ACTIONS
-        private void OnDutyEnlistedSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("enlisted", "{=Enlisted_Duty_Name_Enlisted}Enlisted");
-        }
-
-        private void OnDutyForagerSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("forager", "{=Enlisted_Duty_Name_Forager}Forager");
-        }
-
-        private void OnDutySentrySelected(MenuCallbackArgs args)
-        {
-            SelectDuty("sentry", "{=Enlisted_Duty_Name_Sentry}Sentry");
-        }
-
-        private void OnDutyMessengerSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("messenger", "{=Enlisted_Duty_Name_Messenger}Messenger");
-        }
-
-        private void OnDutyPioneerSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("pioneer", "{=Enlisted_Duty_Name_Pioneer}Pioneer");
         }
 
         // PROFESSION ACTIONS (with tier checking)
@@ -2942,22 +3313,51 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         ///     Select a new duty and show confirmation.
+        ///     Phase 7: For T2+ players, uses the duty request system with cooldown and approval.
         /// </summary>
         private void SelectDuty(string dutyId, string dutyName)
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted == true)
+            var duties = EnlistedDutiesBehavior.Instance;
+
+            if (enlistment?.IsEnlisted != true)
             {
-                enlistment.SetSelectedDuty(dutyId);
-
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_DutyChanged}Duty changed to {DUTY}. Your new daily skill training has begun.");
-                message.SetTextVariable("DUTY", new TextObject(dutyName));
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-
-                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
+                return;
             }
+
+            // Phase 7: T2+ players must request duty changes through the approval system
+            if (enlistment.EnlistmentTier >= 2 && duties != null)
+            {
+                var result = duties.RequestDutyChange(dutyId);
+                
+                if (result.Approved)
+                {
+                    // Also update the enlistment behavior's selected duty
+                    enlistment.SetSelectedDuty(dutyId);
+                    
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        result.Reason, Colors.Green));
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        result.Reason, Colors.Red));
+                }
+                
+                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
+                return;
+            }
+
+            // T1 players can change duty directly (no request needed)
+            enlistment.SetSelectedDuty(dutyId);
+
+            var message =
+                new TextObject(
+                    "{=Enlisted_Message_DutyChanged}Duty changed to {DUTY}. Your new daily skill training has begun.");
+            message.SetTextVariable("DUTY", new TextObject(dutyName));
+            InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+
+            GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
         }
 
         /// <summary>

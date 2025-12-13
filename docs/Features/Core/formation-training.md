@@ -9,7 +9,7 @@ Give players natural skill progression that matches their military role. Infantr
 ## Inputs/Outputs
 
 **Inputs:**
-- Player's formation type (set from chosen troop during promotion or initial enlistment)
+- Player's formation type (chosen during T1→T2 proving event)
 - JSON configuration from `duties_system.json`
 - Daily tick events while enlisted or on leave
 
@@ -20,42 +20,46 @@ Give players natural skill progression that matches their military role. Infantr
 
 ## Behavior
 
-**Daily Training Process:**
+### Daily Training Process
 1. System detects player's formation (Infantry, Cavalry, Archer, Horse Archer)
 2. Applies configured XP amounts to appropriate skills
 3. Uses `Hero.MainHero.AddSkillXp(skill, amount)` API for reliable skill progression
 4. Continues during temporary leave (training doesn't stop)
 
-**Formation Skill Mapping:**
+### Formation Skill Mapping
 - **Infantry**: Athletics (+50), One-Handed (+50), Two-Handed (+50), Polearm (+50), Throwing (+25)
 - **Cavalry**: Riding (+50), One-Handed (+50), Polearm (+50), Athletics (+25), Two-Handed (+25)
 - **Horse Archer**: Riding (+50), Bow (+50), Throwing (+50), Athletics (+25), One-Handed (+25)
 - **Archer**: Bow (+50), Crossbow (+50), Athletics (+50), One-Handed (+25)
 
-**Formation Assignment:**
-- **New Recruits**: Set to "infantry" based on lord's BasicTroop
-- **Promoted Players**: Updated when selecting new troop type
+### Formation Assignment
+- **T1 (New Recruits)**: Everyone starts as Infantry
+- **T1→T2 (Proving Event)**: Formation chosen during "Finding Your Place" event
+  - Options: Infantry, Archer, Cavalry, Horse Archer (conditional)
+  - Horse Archer only available for Khuzait and Aserai cultures
+- **T2+**: Formation locked to choice (cannot change)
 - **Persistent**: Formation choice maintained across save/load
 
 ## Technical Implementation
 
 **Files:**
 - `EnlistedDutiesBehavior.cs` - Core formation training logic and XP application
-- `EnlistmentBehavior.cs` - Initial formation assignment for new recruits
-- `TroopSelectionManager.cs` - Formation update during troop selection
-- `EnlistedMenuBehavior.cs` - Formation-specific training descriptions
+- `EnlistmentBehavior.cs` - Initial formation (Infantry) for new recruits
+- `PromotionBehavior.cs` - Triggers proving event for formation choice
+- `LanceLifeEventsStateBehavior.cs` - Applies formation effect from event
 - `duties_system.json` - Formation skill XP configuration
+- `events_promotion.json` - T1→T2 proving event with formation options
 
 **Key APIs:**
 ```csharp
-// Formation detection (stored from troop choice)
+// Formation detection (stored from proving event choice)
 string GetPlayerFormationType() => _playerFormation?.ToLower() ?? "infantry";
 
 // Apply skill XP using the native game API
 Hero.MainHero.AddSkillXp(skill, xpAmount);
 
-// Formation assignment (during enlistment/promotion)
-EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
+// Formation assignment (from proving event effect)
+EnlistedDutiesBehavior.Instance?.SetPlayerFormation("cavalry");
 ```
 
 **Configuration Structure:**
@@ -101,29 +105,35 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
 - Formation preserved when returning from leave
 - No interruption in skill progression
 
+**Existing Saves (Migration):**
+- If player has no formation set, detect from equipped troop or equipment
+- `DeriveFormationFromTroop()` checks `IsMounted` and `IsRanged` properties
+- `DetectPlayerFormation()` analyzes equipped items as fallback
+
 ## Acceptance Criteria
 
 - ✅ Daily XP applied to all formation-appropriate skills
-- ✅ Formation detection based on chosen troop type
+- ✅ Formation chosen during T1→T2 proving event
+- ✅ Horse Archer option only for Khuzait/Aserai cultures
 - ✅ Training continues during temporary leave
 - ✅ JSON configuration loads successfully
 - ✅ Formation displays correctly in enlisted menu
 - ✅ Immersive training descriptions for each formation
 - ✅ No crashes or assertion errors
 - ✅ Save/load maintains formation assignment
-- ✅ Build process copies configuration files properly
+- ✅ Existing saves migrate correctly
 
 ## Debugging
 
 **Common Issues:**
 - **No XP being applied**: Check if `duties_system.json` exists in game's ModuleData folder
-- **Wrong formation detected**: Verify `_playerFormation` field is set during enlistment
-- **Assertion errors**: Remove any special text formatting that Bannerlord can't parse
+- **Wrong formation detected**: Verify `_playerFormation` field is set during proving event
+- **Horse Archer not showing**: Check player's enlisted lord culture (Khuzait/Aserai only)
 
 **Log Categories:**
 - "Duties" - Formation training application and XP processing
 - "Config" - Configuration loading and validation
-- "Enlistment" - Initial formation assignment during enlistment
+- "Promotion" - Proving event and formation assignment
 
 **Configuration Verification:**
 - Check `Modules\Enlisted\ModuleData\Enlisted\duties_system.json` exists
@@ -131,7 +141,7 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
 - Confirm formation names match exactly ("infantry", "cavalry", "archer", "horsearcher")
 
 **Testing:**
-- Enlist with any lord, advance time one day
-- Check skills menu for XP progression
-- Verify log messages confirm XP application
-- Test with different formations by promoting and selecting different troop types
+- Enlist with any lord, advance to T2
+- Complete the "Finding Your Place" proving event
+- Verify formation is set and training XP applies daily
+- Test Horse Archer availability with Khuzait/Aserai lords

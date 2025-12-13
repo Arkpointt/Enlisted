@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Escalation;
+using Enlisted.Features.Ranks;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -12,6 +14,16 @@ using TaleWorlds.ObjectSystem;
 
 namespace Enlisted.Features.Assignments.Behaviors
 {
+    /// <summary>
+    ///     Phase 7: Result of a duty change request.
+    /// </summary>
+    public sealed class DutyRequestResult
+    {
+        public bool Approved { get; set; }
+        public string Reason { get; set; }
+        public string DutyId { get; set; }
+    }
+
     /// <summary>
     ///     Modern configuration-driven duties system with formation specializations and officer role integration.
     ///     This system provides meaningful military assignments that affect both player progression
@@ -29,6 +41,21 @@ namespace Enlisted.Features.Assignments.Behaviors
         private bool _officerRolesEnabled = true;
         private string _playerFormation;
         private int _saveVersion = 1;
+
+        /// <summary>
+        ///     Phase 7: Last time the player requested a duty change. Used for cooldown.
+        /// </summary>
+        private CampaignTime _lastDutyChangeRequest = CampaignTime.Zero;
+
+        /// <summary>
+        ///     Phase 7: Cooldown period between duty change requests (in days).
+        /// </summary>
+        private const int DutyChangeCooldownDays = 14;
+
+        /// <summary>
+        ///     Phase 7: Minimum lance reputation required to request duty change.
+        /// </summary>
+        private const int MinLanceReputationForDutyChange = 10;
 
         public EnlistedDutiesBehavior()
         {
@@ -54,12 +81,109 @@ namespace Enlisted.Features.Assignments.Behaviors
             dataStore.SyncData("_playerFormation", ref _playerFormation);
             dataStore.SyncData("_dutyStartTimes", ref _dutyStartTimes);
             dataStore.SyncData("_officerRolesEnabled", ref _officerRolesEnabled);
+            
+            // Phase 7: Duty request cooldown tracking
+            dataStore.SyncData("_lastDutyChangeRequest", ref _lastDutyChangeRequest);
 
             // Initialize config after loading if not already done
             if (dataStore.IsLoading && _config == null)
             {
                 InitializeConfig();
             }
+            
+            // Phase 7: Migration for existing saves - assign starter duty if none exists
+            if (dataStore.IsLoading)
+            {
+                MigratePhase7Data();
+            }
+        }
+        
+        /// <summary>
+        ///     Phase 7: Migrate existing save data to new Phase 7 structures.
+        ///     - Assigns starter duty if player is T2+ with no duties
+        ///     - Detects formation from equipment if not set
+        /// </summary>
+        private void MigratePhase7Data()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return;
+            }
+            
+            try
+            {
+                // If player has no formation, detect from equipment or troop selection
+                if (string.IsNullOrEmpty(_playerFormation))
+                {
+                    // Try to derive from existing troop selection
+                    var troopId = Equipment.Behaviors.TroopSelectionManager.Instance?.LastSelectedTroopId;
+                    if (!string.IsNullOrEmpty(troopId))
+                    {
+                        var troop = TaleWorlds.ObjectSystem.MBObjectManager.Instance?.GetObject<TaleWorlds.CampaignSystem.CharacterObject>(troopId);
+                        if (troop != null)
+                        {
+                            _playerFormation = DeriveFormationFromTroop(troop);
+                            ModLogger.Info("Duties", $"Migration: Derived formation '{_playerFormation}' from troop '{troopId}'");
+                        }
+                    }
+                    
+                    // Fallback to equipment detection
+                    if (string.IsNullOrEmpty(_playerFormation))
+                    {
+                        _playerFormation = DetectPlayerFormation();
+                        ModLogger.Info("Duties", $"Migration: Detected formation '{_playerFormation}' from equipment");
+                    }
+                }
+                
+                // If player is T2+ with no duties, assign starter duty for their formation
+                if (enlistment.EnlistmentTier >= 2 && _activeDuties.Count == 0)
+                {
+                    var starterDuty = GetStarterDutyForFormation(_playerFormation ?? "infantry");
+                    if (!string.IsNullOrEmpty(starterDuty))
+                    {
+                        _activeDuties.Add(starterDuty);
+                        _dutyStartTimes[starterDuty] = CampaignTime.Now;
+                        ModLogger.Info("Duties", $"Migration: Assigned starter duty '{starterDuty}' for formation '{_playerFormation}'");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Duties", "Phase 7 migration failed", ex);
+            }
+        }
+        
+        /// <summary>
+        ///     Phase 7: Derive formation from a troop's properties.
+        /// </summary>
+        private static string DeriveFormationFromTroop(TaleWorlds.CampaignSystem.CharacterObject troop)
+        {
+            if (troop == null) return "infantry";
+            
+            var isMounted = troop.IsMounted;
+            var isRanged = troop.IsRanged;
+            
+            if (isMounted && isRanged) return "horsearcher";
+            if (isMounted) return "cavalry";
+            if (isRanged) return "archer";
+            return "infantry";
+        }
+        
+        /// <summary>
+        ///     Phase 7: Get the default starter duty for a formation.
+        /// </summary>
+        private static string GetStarterDutyForFormation(string formation)
+        {
+            return formation?.ToLower() switch
+            {
+                "infantry" => "runner",
+                "archer" => "lookout",
+                "cavalry" => "messenger",
+                "horsearcher" => "scout",
+                "naval" => "boatswain",
+                _ => "runner"
+            };
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -226,14 +350,24 @@ namespace Enlisted.Features.Assignments.Behaviors
                 // Apply multi-skill XP if specified (new system)
                 if (dutyDef.MultiSkillXp is { Count: > 0 })
                 {
+                    var applied = new List<string>();
                     foreach (var skillEntry in dutyDef.MultiSkillXp)
                     {
                         var skill = GetSkillFromName(skillEntry.Key);
                         if (skill != null && skillEntry.Value > 0)
                         {
                             Hero.MainHero.AddSkillXp(skill, skillEntry.Value);
-                            ModLogger.Info("Duties", $"Applied {skillEntry.Value} duty XP to {skillEntry.Key}");
+                            if (applied.Count < 6)
+                            {
+                                applied.Add($"{skillEntry.Key}+{skillEntry.Value}");
+                            }
                         }
+                    }
+
+                    // Non-spammy: one line per duty, not one line per skill.
+                    if (applied.Count > 0)
+                    {
+                        ModLogger.Debug("Duties", $"Applied daily duty XP ({dutyId}): {string.Join(", ", applied)}");
                     }
                 }
                 else if (dutyDef.SkillXpDaily > 0 && !string.IsNullOrEmpty(dutyDef.TargetSkill))
@@ -243,7 +377,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                     if (skill != null)
                     {
                         Hero.MainHero.AddSkillXp(skill, dutyDef.SkillXpDaily);
-                        ModLogger.Info("Duties", $"Applied {dutyDef.SkillXpDaily} duty XP to {dutyDef.TargetSkill}");
+                        ModLogger.Debug("Duties", $"Applied daily duty XP ({dutyId}): {dutyDef.TargetSkill}+{dutyDef.SkillXpDaily}");
                     }
                 }
 
@@ -378,6 +512,20 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
+        /// Phase 4.5: Public API for event systems to check whether a specific duty ID is active.
+        /// Uses the persisted ID list (strings) for save compatibility.
+        /// </summary>
+        public bool HasActiveDuty(string dutyId)
+        {
+            if (!IsInitialized || string.IsNullOrWhiteSpace(dutyId))
+            {
+                return false;
+            }
+
+            return _activeDuties.Any(d => string.Equals(d, dutyId.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
         ///     Assign duty to the player if requirements are met.
         /// </summary>
         public bool AssignDuty(string dutyId)
@@ -418,6 +566,162 @@ namespace Enlisted.Features.Assignments.Behaviors
 
             ModLogger.Info("Duties", $"Assigned duty: {dutyDef.DisplayName}");
             return true;
+        }
+
+        /// <summary>
+        ///     Phase 7: Request a duty change, subject to approval.
+        ///     This replaces direct duty selection for T2+ players.
+        /// </summary>
+        /// <param name="newDutyId">The duty to request transfer to.</param>
+        /// <returns>Result containing approval status and reason.</returns>
+        public DutyRequestResult RequestDutyChange(string newDutyId)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (!IsInitialized || !_config.Enabled || enlistment?.IsEnlisted != true)
+            {
+                return new DutyRequestResult
+                {
+                    Approved = false,
+                    Reason = "Duty system is not available.",
+                    DutyId = newDutyId
+                };
+            }
+
+            // Get duty definition
+            if (!TryGetDutyOrProfession(newDutyId, out var dutyDef))
+            {
+                return new DutyRequestResult
+                {
+                    Approved = false,
+                    Reason = "Unknown duty.",
+                    DutyId = newDutyId
+                };
+            }
+
+            // Check if already assigned to this duty
+            if (_activeDuties.Contains(newDutyId))
+            {
+                return new DutyRequestResult
+                {
+                    Approved = false,
+                    Reason = $"You are already assigned to {dutyDef.DisplayName}.",
+                    DutyId = newDutyId
+                };
+            }
+
+            // Check cooldown (14 days between requests)
+            if (_lastDutyChangeRequest != CampaignTime.Zero)
+            {
+                var daysSinceLastRequest = (CampaignTime.Now - _lastDutyChangeRequest).ToDays;
+                if (daysSinceLastRequest < DutyChangeCooldownDays)
+                {
+                    var daysRemaining = DutyChangeCooldownDays - (int)daysSinceLastRequest;
+                    return new DutyRequestResult
+                    {
+                        Approved = false,
+                        Reason = $"You must wait {daysRemaining} more days before requesting another duty change.",
+                        DutyId = newDutyId
+                    };
+                }
+            }
+
+            // Check lance reputation (require at least 10)
+            var escalation = EscalationManager.Instance;
+            if (escalation?.IsEnabled() == true)
+            {
+                var lanceRep = escalation.State?.LanceReputation ?? 0;
+                if (lanceRep < MinLanceReputationForDutyChange)
+                {
+                    // Get lance leader name for personalized message
+                    var lanceLeaderName = Lances.Text.LanceLifeTextVariables.GetLanceLeaderShortName(enlistment);
+                    return new DutyRequestResult
+                    {
+                        Approved = false,
+                        Reason = $"{lanceLeaderName} doesn't think you've earned a transfer yet. (Lance reputation: {lanceRep}/{MinLanceReputationForDutyChange})",
+                        DutyId = newDutyId
+                    };
+                }
+            }
+
+            // Check tier requirements
+            var currentTier = enlistment.EnlistmentTier;
+            var requiredTier = dutyDef.MinTier > 0 ? dutyDef.MinTier : 1;
+            if (currentTier < requiredTier)
+            {
+                var cultureId = enlistment.EnlistedLord?.Culture?.StringId ?? "mercenary";
+                var requiredRank = RankHelper.GetRankTitle(requiredTier, cultureId);
+                return new DutyRequestResult
+                {
+                    Approved = false,
+                    Reason = $"{dutyDef.DisplayName} requires rank {requiredRank} or higher.",
+                    DutyId = newDutyId
+                };
+            }
+
+            // Check formation requirements
+            if (!CanPlayerPerformDuty(dutyDef))
+            {
+                return new DutyRequestResult
+                {
+                    Approved = false,
+                    Reason = $"You do not meet the requirements for {dutyDef.DisplayName}.",
+                    DutyId = newDutyId
+                };
+            }
+
+            // Check duty slot limits
+            var maxSlots = GetDutySlotsForTier(currentTier);
+            if (_activeDuties.Count >= maxSlots)
+            {
+                // Need to remove a duty first - for now, just inform the player
+                return new DutyRequestResult
+                {
+                    Approved = false,
+                    Reason = $"You have no open duty slots. ({_activeDuties.Count}/{maxSlots})",
+                    DutyId = newDutyId
+                };
+            }
+
+            // Approved! Record the request time and assign the duty
+            _lastDutyChangeRequest = CampaignTime.Now;
+            _activeDuties.Add(newDutyId);
+            _dutyStartTimes[newDutyId] = CampaignTime.Now;
+
+            var lanceLeader = Lances.Text.LanceLifeTextVariables.GetLanceLeaderShortName(enlistment);
+            ModLogger.Info("Duties", $"Duty request approved: {dutyDef.DisplayName}");
+
+            return new DutyRequestResult
+            {
+                Approved = true,
+                Reason = $"{lanceLeader} approves your transfer to {dutyDef.DisplayName}.",
+                DutyId = newDutyId
+            };
+        }
+
+        /// <summary>
+        ///     Phase 7: Check if duty request is on cooldown.
+        /// </summary>
+        public bool IsDutyRequestOnCooldown()
+        {
+            if (_lastDutyChangeRequest == CampaignTime.Zero)
+            {
+                return false;
+            }
+            var daysSinceLastRequest = (CampaignTime.Now - _lastDutyChangeRequest).ToDays;
+            return daysSinceLastRequest < DutyChangeCooldownDays;
+        }
+
+        /// <summary>
+        ///     Phase 7: Get days remaining on duty request cooldown.
+        /// </summary>
+        public int GetDutyRequestCooldownRemaining()
+        {
+            if (_lastDutyChangeRequest == CampaignTime.Zero)
+            {
+                return 0;
+            }
+            var daysSinceLastRequest = (int)(CampaignTime.Now - _lastDutyChangeRequest).ToDays;
+            return Math.Max(0, DutyChangeCooldownDays - daysSinceLastRequest);
         }
 
         /// <summary>
@@ -466,6 +770,132 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
 
             return availableDuties;
+        }
+
+        /// <summary>
+        ///     Get all duties from config that are valid for the player's current formation.
+        ///     Includes tier-locked duties (for graying out) and respects expansion requirements.
+        /// </summary>
+        public List<DutyDefinition> GetDutiesForCurrentFormation()
+        {
+            if (!IsInitialized || _config?.Duties == null)
+            {
+                return new List<DutyDefinition>();
+            }
+
+            var formation = GetPlayerFormationType();
+            var result = new List<DutyDefinition>();
+
+            foreach (var duty in _config.Duties.Values)
+            {
+                // Check formation requirement
+                if (duty.RequiredFormations != null && duty.RequiredFormations.Count > 0)
+                {
+                    if (!duty.RequiredFormations.Any(f => 
+                        string.Equals(f, formation, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        continue; // Not available for this formation
+                    }
+                }
+
+                // Check expansion requirement (e.g., war_sails for naval duties)
+                if (!string.IsNullOrEmpty(duty.RequiresExpansion))
+                {
+                    if (!IsExpansionActive(duty.RequiresExpansion))
+                    {
+                        continue; // Expansion not active
+                    }
+                }
+
+                result.Add(duty);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        ///     Check if a specific expansion/DLC is active.
+        /// </summary>
+        public bool IsExpansionActive(string expansionId)
+        {
+            if (string.IsNullOrWhiteSpace(expansionId))
+            {
+                return true; // No expansion required
+            }
+
+            // Check for War Sails / Naval War DLC
+            if (string.Equals(expansionId, "war_sails", StringComparison.OrdinalIgnoreCase))
+            {
+                return IsWarSailsActive();
+            }
+
+            return false; // Unknown expansion
+        }
+
+        /// <summary>
+        ///     Check if War Sails (Naval War) expansion is active.
+        /// </summary>
+        private bool IsWarSailsActive()
+        {
+            try
+            {
+                // Check if any Naval War related submodules are loaded
+                var subModules = TaleWorlds.MountAndBlade.Module.CurrentModule?.CollectSubModules();
+                if (subModules == null || subModules.Count == 0)
+                {
+                    return false;
+                }
+
+                return subModules.Any(m =>
+                {
+                    var name = m.GetType().FullName ?? "";
+                    return name.IndexOf("NavalWar", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                           name.IndexOf("WarSails", StringComparison.OrdinalIgnoreCase) >= 0;
+                });
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Check if a duty can be selected (meets tier and other requirements).
+        /// </summary>
+        public bool IsDutySelectableByPlayer(DutyDefinition duty)
+        {
+            if (duty == null || !IsInitialized)
+            {
+                return false;
+            }
+
+            var currentTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
+            
+            // Check tier requirement
+            if (duty.MinTier > currentTier)
+            {
+                return false;
+            }
+
+            return CanPlayerPerformDuty(duty);
+        }
+
+        /// <summary>
+        ///     Get a duty definition by ID.
+        /// </summary>
+        public DutyDefinition GetDutyById(string dutyId)
+        {
+            if (!IsInitialized || string.IsNullOrWhiteSpace(dutyId))
+            {
+                return null;
+            }
+
+            if (TryGetDutyOrProfession(dutyId, out var duty))
+            {
+                return duty;
+            }
+
+            return null;
         }
 
         /// <summary>
