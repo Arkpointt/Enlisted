@@ -53,14 +53,14 @@
 
 ## Overview
 
-Professional military menu interface providing comprehensive service management with organized duty/profession selection, detailed descriptions, and tier-based progression. All menus feature modern styling with icons, tooltips, ambient audio, and culture-appropriate backgrounds.
+Professional military menu interface providing comprehensive service management with organized duty selection, detailed descriptions, and tier-based progression. All menus feature modern styling with icons, tooltips, ambient audio, and culture-appropriate backgrounds.
 
 **Key Features:**
 - Modern icons on all menu options via `LeaveType`
 - Hover tooltips explaining each option's function and bonuses
 - Culture-appropriate background meshes
 - Ambient camp audio for immersion
-- Clean section organization (Duties vs. Professions)
+- Formation-aware duty display (incompatible duties greyed out with tooltip)
 - Tier-based progression with helpful unlock messages
 - Real-time status updates
 - Camp status + time-of-day context in the enlisted header (days from town, camp snapshot)
@@ -93,7 +93,8 @@ Each menu option has a `LeaveType` that displays an appropriate icon:
 Every menu option displays a tooltip on hover explaining its function:
 - Main menu options show brief descriptions
 - Duty options explain skill bonuses and benefits
-- Profession options show tier requirements if locked, or bonuses if unlocked
+- Formation-incompatible duties show which formations are required
+- Tier-locked duties show culture-specific rank requirements
 
 Tooltip strings are localized in `ModuleData/Languages/enlisted_strings.xml`.
 
@@ -156,12 +157,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 
 **Menu ID:** `enlisted_duty_selection` (WaitGameMenu)
 
-**Implementation:** Fully data-driven from `duties_system.json`. The menu dynamically generates up to 10 duty slots based on player's formation, with tier gating, expansion checks, and duty request flow.
-
-**Section Organization:**
-- **— DUTIES —** section header with em-dash styling
-- **— PROFESSIONS —** section header with em-dash styling
-- Visual spacer between sections for clean layout
+**Implementation:** Fully data-driven from `duties_system.json`. The menu dynamically generates up to 10 duty slots, showing all duties with formation-incompatible ones greyed out. Includes tier gating, expansion checks, and duty request flow.
 
 **Duty Assignment Flow:**
 - **T1 Players**: Auto-assigned "Runner" duty, cannot change duties
@@ -174,6 +170,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 | `[Request Transfer]` | Duty available for request |
 | `[Cooldown: Xd]` | Request denied, must wait X days |
 | `[Requires {Rank}]` | Tier requirement not met (shows culture-specific rank) |
+| `[{formations} only]` | Greyed out, duty requires different formation |
 | `(Current)` | Currently active duty |
 
 Request approval requires:
@@ -182,9 +179,14 @@ Request approval requires:
 - Meeting the duty's tier requirement
 - Duty compatible with player's formation
 
+**Formation-Based Display:**
+- All duties are shown in the menu regardless of player's formation
+- Incompatible duties are greyed out with a tooltip showing required formations
+- Example: A cavalry soldier sees "[infantry only]" on the Armorer duty
+
 **Duty Selection (Available T1+; data-driven)**
 
-Duties are defined in `ModuleData/Enlisted/duties_system.json` and filtered by formation + tier. The menu uses `EnlistedDutiesBehavior.GetDutiesForCurrentFormation()` to populate slots dynamically. The canonical duty IDs (shipping) are:
+Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `EnlistedDutiesBehavior.GetAllDuties()` to show all duties, with `IsDutyCompatibleWithFormation()` to determine which are selectable. The canonical duty IDs (shipping) are:
 
 | Duty | Min Tier | Notes |
 |------|----------|------|
@@ -220,34 +222,16 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json` and filtered by f
 - Locked duties are grayed out but visible (shows progression path)
 - Tooltips explain unlock requirements
 
-**Profession Selection (Available T3+; data-driven)**
-
-Professions are also defined in `ModuleData/Enlisted/duties_system.json` and are tier-gated.
-
-| Profession | Min Tier | Summary |
-|------------|----------|---------|
-| Quarterhand | 3 | Logistics specialization (Steward/Trade XP) |
-| Field Medic | 3 | Medical specialization (Medicine/Charm XP) |
-| Siegewright's Aide | 3 | Engineering specialization (Engineering/Smithing XP) |
-| Drillmaster | 3 | Training specialization (Leadership/Tactics XP) |
-| Saboteur | 3 | Covert specialization (Roguery/Engineering/Smithing XP) |
-
-**Note:** The progression system now supports 9 tiers with culture-specific rank names. See [Lance Assignments](../Core/lance-assignments.md) for the full tier/track breakdown (T1-4 Enlisted, T5-6 Officer, T7-9 Commander).
+**Note:** The progression system supports 9 tiers with culture-specific rank names. See [Lance Assignments](../Core/lance-assignments.md) for the full tier/track breakdown (T1-4 Enlisted, T5-6 Officer, T7-9 Commander).
 
 **Description System:**
-- Top of menu shows detailed descriptions for currently selected duty/profession
-- "None" shows simple text when no profession selected
+- Top of menu shows detailed description for currently selected duty
 - Rich military context explaining daily activities and skill training
 
 **Checkmark System:**
-- Dynamic checkmarks (✓/○) showing current selections
+- Dynamic checkmarks (✓/○) showing current selection
 - Updates in real-time when selection changes
-- Visual feedback for active assignments
-
-**Tier-Locked Professions:**
-- Options below Tier 3 are grayed out (`args.IsEnabled = false`)
-- Tooltip shows "Requires Tier 3 to unlock this profession"
-- Still visible to show players what they're working toward
+- Visual feedback for active assignment
 
 ### Menu Navigation
 
@@ -257,7 +241,7 @@ Enlisted Status Menu (enlisted_status)
     ├── Visit Quartermaster → Equipment Selection Menu (formation+tier+culture based)
     ├── My Lance (enlisted_lance) → Roster / Relationships
     ├── Camp Activities (enlisted_activities) → Training / Tasks / Social (data-driven)
-    ├── Report for Duty (enlisted_duty_selection) → Duties / Professions (request system)
+    ├── Report for Duty (enlisted_duty_selection) → Duty Selection (request system)
     ├── Seek Medical Attention (enlisted_medical) → Treatment options (when injured/ill)
     ├── My Lord... → Dialog System
     ├── Visit Settlement → Town/Castle menu
@@ -295,7 +279,7 @@ Enlisted Status Menu (enlisted_status)
 | Option | Icon | Description |
 |--------|------|-------------|
 | Request Treatment from Surgeon | Manage | Full treatment, costs 2 fatigue |
-| Treat Yourself (Field Medic) | Manage | Self-treatment if you have Field Medic profession, grants Medicine XP |
+| Treat Yourself (Field Medic) | Manage | Self-treatment if you have Field Medic duty, grants Medicine XP |
 | Purchase Herbal Remedy | Trade | Costs 50 gold |
 | Rest in Camp | Wait | Light recovery option |
 | View Detailed Status | Submenu | Full condition breakdown popup |
@@ -378,7 +362,6 @@ There are **two** ways to leave service:
 private void SetDynamicMenuText()
 {
     var currentDuty = EnlistmentBehavior.Instance?.SelectedDuty ?? "None";
-    var currentProfession = EnlistmentBehavior.Instance?.SelectedProfession ?? "None";
     
     // Update checkmarks based on current selection
     // Format: "✓ Duty Name" or "○ Duty Name"
@@ -386,34 +369,36 @@ private void SetDynamicMenuText()
 ```
 
 **Checkmark Logic:**
-- ✓ (checkmark) for currently selected duty/profession
+- ✓ (checkmark) for currently selected duty
 - ○ (circle) for available but not selected
 - Updates automatically when selection changes
 
 ### Tier-Based Availability
 
 **Duties:**
-- All available at Tier 1+
-- No restrictions
-
-**Professions:**
-- Visible at Tier 1-2 (locked with helpful messages)
-- Selectable at Tier 3+
-- Tier requirement messages: "Requires Tier 3 or higher"
+- All duties shown in menu
+- Tier-locked duties greyed out with culture-specific rank requirement
+- Formation-incompatible duties greyed out with formation requirement
 
 **Implementation:**
 ```csharp
-// Check tier requirement
-bool CanSelectProfession(string professionId)
+// Check duty availability
+bool IsDutySlotAvailable(DutyDefinition duty)
 {
-    int requiredTier = GetProfessionTierRequirement(professionId);
-    int currentTier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 0;
-    return currentTier >= requiredTier;
+    // Check formation compatibility first
+    if (!IsDutyCompatibleWithFormation(duty))
+        return false; // Show greyed with "[{formations} only]"
+    
+    // Check tier requirement
+    if (duty.MinTier > currentTier)
+        return false; // Show greyed with "[Requires {Rank}]"
+    
+    return true;
 }
 ```
 
 **XP Integration:**
-- Selected duties/professions connect to daily XP processing
+- Selected duties connect to daily XP processing
 - `EnlistedDutiesBehavior.AssignDuty()` processes selections
 - Formation training works with selections
 - Duty changes persist properly
@@ -433,10 +418,10 @@ bool CanSelectProfession(string professionId)
 
 ### Tier Progression
 
-**Scenario:** Player promotes to Tier 3 while menu is open
+**Scenario:** Player promotes while menu is open
 
 **Handling:**
-- Professions unlock automatically
+- Tier-locked duties unlock automatically
 - Menu refresh shows new availability
 - No need to close and reopen menu
 
@@ -712,11 +697,9 @@ GameMenu.ActivateGameMenu("enlisted_status");
 ```csharp
 // Get current selection
 string currentDuty = EnlistmentBehavior.Instance?.SelectedDuty;
-string currentProfession = EnlistmentBehavior.Instance?.SelectedProfession;
 
-// Set selection
-EnlistmentBehavior.Instance?.SetDuty(dutyId);
-EnlistmentBehavior.Instance?.SetProfession(professionId);
+// Set duty
+EnlistmentBehavior.Instance?.SetSelectedDuty(dutyId);
 ```
 
 ---
@@ -731,11 +714,10 @@ EnlistmentBehavior.Instance?.SetProfession(professionId);
 ```csharp
 // Menu activation
 ModLogger.Info("Interface", $"Activating menu: {menuId}");
-ModLogger.Debug("Menu", $"Menu state: duty={duty}, profession={profession}");
+ModLogger.Debug("Menu", $"Menu state: duty={duty}");
 
 // Selection changes
 ModLogger.Info("Menu", $"Duty changed: {oldDuty} → {newDuty}");
-ModLogger.Info("Menu", $"Profession changed: {oldProfession} → {newProfession}");
 
 // Tier checks
 ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, allowed={allowed}");
@@ -743,10 +725,10 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 
 **Common Issues:**
 
-**Professions not appearing:**
-- Check tier requirement and availability conditions
-- Verify `CanSelectProfession()` returns true
-- Check tier progression is working correctly
+**Duties greyed out unexpectedly:**
+- Check formation compatibility (`IsDutyCompatibleWithFormation()`)
+- Check tier requirement vs player's current tier
+- Verify expansion is active for naval duties (War Sails)
 
 **Checkmarks not updating:**
 - Verify `SetDynamicMenuText()` is called in refresh
@@ -756,7 +738,7 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 **XP not applying:**
 - Ensure selected duties connect to `EnlistedDutiesBehavior.AssignDuty()`
 - Check daily tick is processing assignments
-- Verify duty/profession IDs match configuration
+- Verify duty IDs match configuration
 
 **Menu doesn't activate:**
 - Check `NextFrameDispatcher` is not busy
@@ -780,6 +762,6 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 
 - [Dialog System](dialog-system.md) - Menu activation after enlistment
 - [Camp](camp-tent.md) - Service records and retinue management
-- [Duties System](../Core/duties-system.md) - Duty/profession definitions and XP
+- [Duties System](../Core/duties-system.md) - Duty definitions and XP
 - [Lance Assignments](../Core/lance-assignments.md) - 9-tier progression and culture-specific ranks
 - [Camp Life Simulation](../Gameplay/camp-life-simulation.md) - Camp conditions and integrations

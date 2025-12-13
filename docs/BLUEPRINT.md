@@ -337,7 +337,7 @@ Each culture has unique rank names for all 9 tiers:
 | `enlisted_activities` | Camp Activities - training, tasks, social (data-driven) | From enlisted_status |
 | `enlisted_lance` | My Lance - roster view, player position, relationships | From enlisted_status |
 | `enlisted_medical` | Medical Attention - treatment options (when injured/ill) | From enlisted_status |
-| `enlisted_duty_selection` | Report for Duty - duty and profession selection | From enlisted_status |
+| `enlisted_duty_selection` | Report for Duty - duty selection (formation-aware) | From enlisted_status |
 | `command_tent` | My Camp - service records, pay status, retinue | From enlisted_status |
 | `enlisted_desert_confirm` | Desertion confirmation with penalty display | From Desert the Army |
 

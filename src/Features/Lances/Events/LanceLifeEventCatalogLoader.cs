@@ -14,8 +14,8 @@ namespace Enlisted.Features.Lances.Events
     internal static class LanceLifeEventCatalogLoader
     {
         private const string LogCategory = "LanceLifeEvents";
-        private const int SupportedLegacySchemaVersion = 1;
-        private const string SupportedSchemaVersion = "1.0";
+        private const string SupportedSchemaVersion = "1";
+        private const string SupportedLegacySchemaVersion = "1.0"; // For backwards compatibility with older "1.0" format
 
         /// <summary>
         /// Load the full events catalog from ModuleData/Enlisted/Events/*.json (Phase 0).
@@ -729,8 +729,8 @@ namespace Enlisted.Features.Lances.Events
                 return true;
             }
 
-            // Legacy int schema version support (e.g., "1")
-            return string.Equals(normalized, SupportedLegacySchemaVersion.ToString(), StringComparison.OrdinalIgnoreCase);
+            // Legacy string schema version support (e.g., "1.0")
+            return string.Equals(normalized, SupportedLegacySchemaVersion, StringComparison.OrdinalIgnoreCase);
         }
 
         private static void ValidateTokens(
@@ -832,7 +832,7 @@ namespace Enlisted.Features.Lances.Events
 
         private sealed class LanceLifeEventsFileJsonLegacy
         {
-            [JsonProperty("schemaVersion")] public int SchemaVersion { get; set; } = SupportedLegacySchemaVersion;
+            [JsonProperty("schemaVersion")] public int SchemaVersion { get; set; } = 1;
             [JsonProperty("events")] public List<LanceLifeEventDefinition> Events { get; set; } = new List<LanceLifeEventDefinition>();
         }
     }

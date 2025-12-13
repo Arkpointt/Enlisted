@@ -197,7 +197,6 @@ if (eb?.IsEnlisted == true)
     int tier = eb.EnlistmentTier;         // 1-6
     int xp = eb.EnlistmentXP;             // Total XP
     string duty = eb.SelectedDuty;        // Current duty
-    string prof = eb.SelectedProfession;  // Profession track
     bool onLeave = eb.IsOnLeave;          // On leave?
     bool inGrace = eb.IsInDesertionGracePeriod;
 }

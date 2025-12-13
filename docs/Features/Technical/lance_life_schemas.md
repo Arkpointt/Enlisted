@@ -24,10 +24,12 @@ All data files must include a schema version for migration support:
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "...": "..."
 }
 ```
+
+> **Note:** Schema version uses numeric type (not string) for consistency across all data files.
 
 ---
 
@@ -389,7 +391,7 @@ Story packs are collections of related events.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "packId": "string (unique identifier)",
   "packName": "string (display name)",
   "description": "string",
@@ -409,7 +411,7 @@ Story packs are collections of related events.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "packId": "duty_quartermaster",
   "packName": "Quartermaster Duty Events",
   "description": "Events for soldiers assigned quartermaster duty",
@@ -434,7 +436,7 @@ Defines an escalation track and its thresholds.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "trackId": "string (heat | discipline | lance_reputation | medical_risk)",
   "trackName": "string (display name)",
   "description": "string",
@@ -485,7 +487,7 @@ Defines an escalation track and its thresholds.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "trackId": "heat",
   "trackName": "Corruption Attention",
   "description": "How much attention your corrupt activities have drawn",
@@ -519,7 +521,7 @@ Defines an escalation track and its thresholds.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "trackId": "lance_reputation",
   "trackName": "Lance Reputation",
   "description": "How your lance mates view you",
@@ -556,7 +558,7 @@ Defines a lance (squad) structure.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   
   "lance": {
     "id": "string (generated)",
@@ -636,7 +638,7 @@ Defines a lance (squad) structure.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   
   "npc": {
     "id": "string (generated)",
@@ -698,7 +700,7 @@ Defines promotion requirements, proving events, and career-shaping choices.
     "relation_lance_leader": 5,
     "relation_lance": 5,
     "gold_bonus": 0,
-    "unlocks": ["formation_selection", "duty_professions"]
+    "unlocks": ["formation_selection", "advanced_duties"]
   },
   
   "ceremony": {
@@ -713,7 +715,7 @@ Defines promotion requirements, proving events, and career-shaping choices.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "promotions": [
     {
       "promotionId": "promotion_t1_t2",
@@ -758,7 +760,7 @@ Defines promotion requirements, proving events, and career-shaping choices.
       },
       "rewards": {
         "relation_lance_leader": 5,
-        "unlocks": ["duty_professions"]
+        "unlocks": ["advanced_duties"]
       }
     },
     {
@@ -1154,7 +1156,7 @@ Defines the camp state that affects event availability and triggers.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   
   "camp_status": {
     "supplies": {
@@ -1247,7 +1249,7 @@ Defines the structure of camp activity menus.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   
   "menu": {
     "id": "enlisted_activities",
@@ -1375,7 +1377,7 @@ Defines the player's personal soldiers at Tier 7+ (Commander tier).
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   
   "retinue": {
     "enabled": false,
@@ -1488,7 +1490,7 @@ Defines camp followers the player can interact with.
 
 ```json
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   
   "camp_follower": {
     "id": "string",
@@ -1807,5 +1809,5 @@ ModuleData/Languages/
 
 ---
 
-*Schema Version: 1.0*
+*Schema Version: 1*
 *For use with: Lance Life Event System, Enlisted Mod*

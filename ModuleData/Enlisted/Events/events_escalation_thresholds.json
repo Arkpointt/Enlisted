@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.0",
+  "schemaVersion": 1,
   "packId": "escalation_thresholds",
   "category": "threshold",
   "events": [

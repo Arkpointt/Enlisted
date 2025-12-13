@@ -85,9 +85,9 @@ Related systems (shipping):
 **Tier Progression:**
 | Tier | XP Required | Key Features |
 |------|-------------|-------------|
-| 1 | 0 | Basic levy gear, Runner duty |
+| 1 | 0 | Basic levy gear, Runner duty (default) |
 | 2 | 800 | Formation choice (proving event), starter duty assigned |
-| 3 | 3,000 | Military professions unlock, re-entry starting tier (Honorable) |
+| 3 | 3,000 | Advanced duties unlock, re-entry starting tier (Honorable) |
 | 4 | 6,000 | Command 5 soldiers (retinue), re-entry starting tier (Veteran/Heroic) |
 | 5 | 11,000 | Command 10 soldiers |
 | 6 | 19,000 | Command 20 soldiers (max) |
