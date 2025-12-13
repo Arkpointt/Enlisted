@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -314,6 +315,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                     ModLogger.Warn("Promotion", $"Proving event {eventId} not found, using fallback promotion");
                     _pendingPromotionTier = 0;
                     
+                    // SetTier handles retinue grant for T7/T8/T9 promotions
                     enlistment.SetTier(targetTier);
                     Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
                     TriggerPromotionNotification(targetTier);

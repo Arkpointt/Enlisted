@@ -4,10 +4,10 @@
 
 | Feature | Tier Requirement | Location |
 |---------|-----------------|----------|
-| Companions in lord's party | Tier 1-3 | Lord's party roster |
-| Companions in player's squad | Tier 4+ | Player's party roster |
-| Battle participation toggle | Tier 4+ | Camp menu |
-| Unified squad formation | Tier 4+ | Battle missions |
+| Companions in player's squad | Tier 1+ | Player's party roster |
+| Battle participation toggle | Tier 1+ | Camp menu |
+| Unified squad formation | Tier 1+ | Battle missions |
+| Commander's retinue | Tier 7-9 | Player's party roster |
 
 ## Table of Contents
 
@@ -28,12 +28,13 @@
 
 ## Overview
 
-The companion management system handles where companions are located during enlistment and whether they participate in battles. The system adapts based on the player's military rank (tier), moving companions from the lord's party to the player's personal squad when the player gains command authority.
+The companion management system handles where companions are located during enlistment and whether they participate in battles. From the moment of enlistment (T1), companions stay with the player's party and fight in the player's formation.
 
 **Key Behaviors:**
-- **Tier 1-3**: Companions serve in the lord's party, fighting as part of the lord's army
-- **Tier 4+**: Companions join the player's personal squad, fighting together in unified formation
-- **Battle Participation**: Players can toggle which companions fight vs. stay safe (Tier 4+)
+- **Tier 1-9**: Companions always serve in the player's party, never transferred to lord
+- **Tier 1+**: Players can toggle which companions fight vs. stay safe
+- **Tier 7-9**: Companions fight alongside player's commander retinue (15/25/35 soldiers)
+- **Unified Formation**: All squad members fight together in player's assigned formation
 
 ---
 
@@ -41,23 +42,24 @@ The companion management system handles where companions are located during enli
 
 ### Tier-Based Companion Location
 
-Companion location changes automatically when the player reaches Tier 4:
+Companions remain with the player's party throughout entire enlisted career:
 
 | Tier | Companion Location | Battle Behavior |
 |------|-------------------|-----------------|
-| 1-3 | Lord's party | Fight as part of lord's army, no player control |
-| 4+ | Player's party | Fight in player's unified squad, player can command |
+| 1-6 | Player's party | Fight in player's formation, companions only |
+| 7-9 | Player's party | Fight alongside commander's retinue (15/25/35 soldiers) |
 
-**Why Tier 4+?**
-- Tier 4 unlocks personal command (Lance of 5 soldiers)
-- Companions + retinue form the player's "squad"
-- Player's invisible party joins battles natively
-- Casualties tracked by native roster system
+**Why T1+?**
+- Companions are personal assets from day one
+- Player manages battle participation immediately
+- Companions fight in unified formation with player
+- Battle toggle available from enlistment start
+- Natural progression: companions → companions + soldiers at T7
 
 **Transfer Timing:**
-- Companions move from lord's party to player's party when player reaches Tier 4
-- Transfer happens automatically during promotion
-- Companions stay with player for remainder of enlistment
+- Companions transfer to player's party immediately at enlistment (T1)
+- Never transferred to lord's party
+- Stay with player for remainder of enlistment and after discharge
 
 ### Battle Formation Assignment
 
@@ -116,26 +118,28 @@ At Tier 4+, players can control which companions fight in battles through the Ca
 
 ### Companion Transfer Logic
 
-**On Enlistment Start (Tier 1-3):**
+**On Enlistment Start (All Tiers):**
 ```csharp
-// All companions transferred to lord's party
-TransferPlayerTroopsToLord();
-// Uses MemberRoster.AddToCounts() for transfer
+// Companions immediately transfer to player's party at T1
+// Never transferred to lord's party
+TransferCompanionsToPlayer();
+// Moves all companions to MobileParty.MainParty.MemberRoster
 ```
 
-**On Tier 4 Promotion:**
+**On Tier 7-9 Promotion:**
 ```csharp
-// Companions moved FROM lord's party TO player's party
-TransferCompanionsToPlayer();
-// Scans lord's party for IsPlayerCompanion == true
-// Moves them to MobileParty.MainParty.MemberRoster
+// Companions already in player's party
+// Commander retinue (soldiers) granted separately
+// No companion transfer needed
+GrantCommanderRetinue(newTier); // 15/25/35 soldiers added
 ```
 
 **On Retirement/End Service:**
 ```csharp
-// Companions already in player's party (Tier 4+)
+// Companions already in player's party
 // No transfer needed - they stay with player
-RestoreCompanionsToPlayer(); // Only needed for Tier 1-3 edge cases
+// Commander retinue (soldiers) cleared
+ClearRetinue("discharge");
 ```
 
 ### Formation Assignment

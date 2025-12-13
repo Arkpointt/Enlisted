@@ -22,15 +22,35 @@ namespace Enlisted.Features.CommandTent.Core
     {
         private const string LogCategory = "Retinue";
 
-        // Tier unlock thresholds
-        public const int LanceTier = 4;
-        public const int SquadTier = 5;
-        public const int RetinueTier = 6;
+        // ========================================================================
+        // RETINUE SYSTEM V2.0 - Commander's Retinue at T7-T9
+        // Companions managed from T1 (via CompanionAssignmentManager)
+        // Commander retinue: 15/25/35 soldiers at T7/T8/T9
+        // ========================================================================
 
-        // Capacity by tier
-        public const int LanceCapacity = 5;
-        public const int SquadCapacity = 10;
-        public const int RetinueCapacity = 20;
+        // New tier unlock thresholds (Commander's Retinue)
+        public const int CommanderTier1 = 7;  // First retinue tier
+        public const int CommanderTier2 = 8;  // Expanded retinue
+        public const int CommanderTier3 = 9;  // Elite retinue
+
+        // New capacity by tier
+        public const int CommanderCapacity1 = 15;  // T7: 15 soldiers
+        public const int CommanderCapacity2 = 25;  // T8: 25 soldiers
+        public const int CommanderCapacity3 = 35;  // T9: 35 soldiers
+
+        // Legacy constants (for backward compatibility and gradual migration)
+        [Obsolete("Use CommanderTier1 instead. Retinue now starts at T7.")]
+        public const int LanceTier = 7;
+        [Obsolete("Use CommanderTier2 instead.")]
+        public const int SquadTier = 8;
+        [Obsolete("Use CommanderTier3 instead.")]
+        public const int RetinueTier = 9;
+        [Obsolete("Use CommanderCapacity1 instead.")]
+        public const int LanceCapacity = 15;
+        [Obsolete("Use CommanderCapacity2 instead.")]
+        public const int SquadCapacity = 25;
+        [Obsolete("Use CommanderCapacity3 instead.")]
+        public const int RetinueCapacity = 35;
 
         // Factions that don't have horse archers
         private static readonly HashSet<string> NoHorseArcherFactions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -68,36 +88,53 @@ namespace Enlisted.Features.CommandTent.Core
 
         /// <summary>
         /// Gets the maximum soldier capacity for a given tier.
+        /// T1-T6: 0 (companions only)
+        /// T7: 15 soldiers
+        /// T8: 25 soldiers  
+        /// T9: 35 soldiers
         /// </summary>
-        /// <param name="tier">Player's enlistment tier (1-6)</param>
-        /// <returns>Max soldiers allowed: 0 for tier less than 4, 5/10/20 for tier 4/5/6</returns>
+        /// <param name="tier">Player's enlistment tier (1-9)</param>
+        /// <returns>Max soldiers allowed: 0 for T1-T6, 15/25/35 for T7/T8/T9</returns>
         public static int GetTierCapacity(int tier)
         {
             return tier switch
             {
-                >= RetinueTier => RetinueCapacity,
-                SquadTier => SquadCapacity,
-                LanceTier => LanceCapacity,
-                _ => 0
+                >= CommanderTier3 => CommanderCapacity3,  // T9+: 35 soldiers
+                CommanderTier2 => CommanderCapacity2,      // T8: 25 soldiers
+                CommanderTier1 => CommanderCapacity1,      // T7: 15 soldiers
+                _ => 0  // T1-T6: companions only, no soldiers
             };
         }
 
         /// <summary>
-        /// Gets the unit name for a tier (Lance, Squad, Retinue).
+        /// Gets the unit name for a tier.
+        /// T1-T6: "Companions Only"
+        /// T7: "Command (Regular)"
+        /// T8: "Command (Veteran)"
+        /// T9: "Command (Elite)"
         /// </summary>
         public static string GetUnitName(int tier)
         {
             return tier switch
             {
-                >= RetinueTier => "Retinue",
-                SquadTier => "Squad",
-                LanceTier => "Lance",
-                _ => "None"
+                >= CommanderTier3 => "Command (Elite)",
+                CommanderTier2 => "Command (Veteran)",
+                CommanderTier1 => "Command (Regular)",
+                _ => "Companions Only"
             };
         }
 
         /// <summary>
+        /// Checks if player can have a retinue at the given tier.
+        /// </summary>
+        public static bool CanHaveRetinueAtTier(int tier)
+        {
+            return tier >= CommanderTier1;
+        }
+
+        /// <summary>
         /// Checks if the player can have a retinue at their current tier.
+        /// Retinue requires T7+ (Commander rank).
         /// </summary>
         public bool CanHaveRetinue(out string reason)
         {
@@ -109,9 +146,9 @@ namespace Enlisted.Features.CommandTent.Core
             }
 
             var currentTier = enlistment.EnlistmentTier;
-            if (currentTier < LanceTier)
+            if (currentTier < CommanderTier1)
             {
-                reason = $"Requires Tier {LanceTier} or higher. You are Tier {currentTier}.";
+                reason = $"Requires Commander rank (Tier {CommanderTier1}). You are Tier {currentTier}.";
                 return false;
             }
 
@@ -200,16 +237,25 @@ namespace Enlisted.Features.CommandTent.Core
             var targetFormation = GetFormationClass(typeId);
 
             // Determine tier range based on player tier
+            // T7: Raw recruits (tier 1-2)
+            // T8: Better quality (tier 2-3)
+            // T9: Veteran troops (tier 3-4)
             int minTier, maxTier;
-            if (playerTier >= RetinueTier)
+            if (playerTier >= CommanderTier3)
             {
                 minTier = 3;
                 maxTier = 4;
             }
-            else
+            else if (playerTier >= CommanderTier2)
             {
                 minTier = 2;
                 maxTier = 3;
+            }
+            else
+            {
+                // T7 and below: raw recruits
+                minTier = 1;
+                maxTier = 2;
             }
 
             // Get all troops from the culture's troop tree within tier range
@@ -499,7 +545,7 @@ namespace Enlisted.Features.CommandTent.Core
         {
             reason = null;
 
-            // Must be enlisted at Tier 4+
+            // Must be enlisted at Commander tier (T7+)
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
@@ -507,9 +553,9 @@ namespace Enlisted.Features.CommandTent.Core
                 return false;
             }
 
-            if (enlistment.EnlistmentTier < LanceTier)
+            if (enlistment.EnlistmentTier < CommanderTier1)
             {
-                reason = $"Requires Tier {LanceTier} or higher.";
+                reason = $"Requires Commander rank (Tier {CommanderTier1}) or higher.";
                 return false;
             }
 
@@ -713,16 +759,16 @@ namespace Enlisted.Features.CommandTent.Core
         #region Leadership Notification
 
         /// <summary>
-        /// Shows the Tier 4 leadership unlock notification dialog.
-        /// Called when player reaches Tier 4 for the first time in a session.
+        /// Shows the Commander's Retinue unlock notification dialog.
+        /// Called when player reaches Tier 7 (Commander rank) for the first time.
         /// </summary>
         public static void ShowLeadershipNotification()
         {
-            var title = new TextObject("{=ct_leadership_title}Promotion to Leadership");
-            var message = new TextObject("{=ct_leadership_message}Your service has not gone unnoticed. " +
-                "You've been granted the authority to command a small lance of soldiers in battle.\n\n" +
-                "Visit the Command Tent to request men be assigned to your command. " +
-                "Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep.");
+            var title = new TextObject("{=ct_leadership_title}Commander's Commission");
+            var message = new TextObject("{=ct_leadership_message}Your long service has been recognized. " +
+                "As a Commander, you've been granted authority over your own retinue of soldiers.\n\n" +
+                "Fifteen raw recruits have been assigned to your command. Train them well—their lives are in your hands.\n\n" +
+                "Visit the Command Tent to manage your forces.");
 
             // pauseGameActiveState = false so notifications don't freeze game time
             InformationManager.ShowInquiry(
@@ -731,12 +777,12 @@ namespace Enlisted.Features.CommandTent.Core
                     message.ToString(),
                     true,
                     false,
-                    new TextObject("{=ct_leadership_acknowledge}Understood").ToString(),
+                    new TextObject("{=ct_leadership_acknowledge}I will lead them well").ToString(),
                     string.Empty,
                     null,
                     null));
 
-            ModLogger.Info(LogCategory, "Showed Tier 4 leadership notification");
+            ModLogger.Info(LogCategory, "Showed Commander (Tier 7) leadership notification");
         }
 
         #endregion

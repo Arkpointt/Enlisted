@@ -133,6 +133,8 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
+    <Content Include="GUI\Prefabs\Events\LanceLifeEventScreen.xml"/>
+    <Content Include="GUI\Prefabs\Events\EventChoiceButton.xml"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -163,6 +165,11 @@
     <Compile Include="src\Features\Lances\Events\LanceLifeEventInquiryPresenter.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventRuntime.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventText.cs"/>
+    <!-- Modern Event UI - API fixes applied! Now using FatigueCurrent/FatigueMax and OutcomeTextId/OutcomeTextFallback -->
+    <Compile Include="src\Features\Lances\UI\LanceLifeEventVM.cs"/>
+    <Compile Include="src\Features\Lances\UI\EventChoiceVM.cs"/>
+    <Compile Include="src\Features\Lances\UI\LanceLifeEventScreen.cs"/>
+    <Compile Include="src\Features\Lances\UI\ModernEventPresenter.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventTriggerEvaluator.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventsAutomaticBehavior.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventsIncidentBehavior.cs"/>
@@ -197,6 +204,7 @@
     <Compile Include="src\Features\CommandTent\Core\RetinueManager.cs"/>
     <Compile Include="src\Features\CommandTent\Core\RetinueLifecycleHandler.cs"/>
     <Compile Include="src\Features\CommandTent\Core\CompanionAssignmentManager.cs"/>
+    <Compile Include="src\Features\CommandTent\Core\RetinueRecruitmentGrant.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>

@@ -93,15 +93,17 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Gets all player companions currently in the player's party (Tier 4+).
-        /// Returns empty list if player is below Tier 4 or not enlisted.
+        /// Gets all player companions currently in the player's party.
+        /// Available from T1 (enlistment start) - no tier restriction.
+        /// Returns empty list if player is not enlisted.
         /// </summary>
         public List<Hero> GetAssignableCompanions()
         {
             var result = new List<Hero>();
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.LanceTier)
+            // V2.0: Companions manageable from T1 (no tier gate)
+            if (enlistment?.IsEnlisted != true)
             {
                 return result;
             }

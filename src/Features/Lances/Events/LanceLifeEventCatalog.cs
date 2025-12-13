@@ -8,7 +8,7 @@ namespace Enlisted.Features.Lances.Events
     /// In-memory catalog of Lance Life Events loaded from ModuleData/Enlisted/Events/*.json.
     /// Phase 0 delivers the loader + validation only; firing/scheduling is implemented in later phases.
     /// </summary>
-    internal sealed class LanceLifeEventCatalog
+    public sealed class LanceLifeEventCatalog
     {
         public List<LanceLifeEventDefinition> Events { get; } = new List<LanceLifeEventDefinition>();
 
@@ -23,7 +23,7 @@ namespace Enlisted.Features.Lances.Events
         }
     }
 
-    internal sealed class LanceLifeEventDefinition
+    public sealed class LanceLifeEventDefinition
     {
         [JsonProperty("id")] public string Id { get; set; } = string.Empty;
         [JsonProperty("category")] public string Category { get; set; } = string.Empty;
@@ -57,7 +57,7 @@ namespace Enlisted.Features.Lances.Events
             new Dictionary<string, LanceLifeEventVariantDefinition>(StringComparer.OrdinalIgnoreCase);
     }
 
-    internal sealed class LanceLifeEventVariantDefinition
+    public sealed class LanceLifeEventVariantDefinition
     {
         [JsonProperty("setupId")] public string SetupId { get; set; } = string.Empty;
         [JsonProperty("setup")] public string SetupFallback { get; set; } = string.Empty;
@@ -65,7 +65,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("options")] public List<LanceLifeEventOptionDefinition> Options { get; set; } = new List<LanceLifeEventOptionDefinition>();
     }
 
-    internal sealed class LanceLifeEventOptionDefinition
+    public sealed class LanceLifeEventOptionDefinition
     {
         [JsonProperty("id")] public string Id { get; set; } = string.Empty;
 
@@ -103,7 +103,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("injury_risk")] public LanceLifeInjuryRiskSchema InjuryRisk { get; set; }
     }
 
-    internal sealed class LanceLifeEventDelivery
+    public sealed class LanceLifeEventDelivery
     {
         [JsonProperty("method")] public string Method { get; set; } = "automatic"; // automatic | player_initiated
         [JsonProperty("channel")] public string Channel { get; set; } = string.Empty; // menu | inquiry | incident
@@ -112,7 +112,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("menu_section")] public string MenuSection { get; set; } = string.Empty; // training | tasks | social
     }
 
-    internal sealed class LanceLifeEventTriggers
+    public sealed class LanceLifeEventTriggers
     {
         [JsonProperty("all")] public List<string> All { get; set; } = new List<string>();
         [JsonProperty("any")] public List<string> Any { get; set; } = new List<string>();
@@ -123,21 +123,21 @@ namespace Enlisted.Features.Lances.Events
             new LanceLifeEventEscalationRequirements();
     }
 
-    internal sealed class LanceLifeEventRequirements
+    public sealed class LanceLifeEventRequirements
     {
         [JsonProperty("duty")] public string Duty { get; set; } = "any";
         [JsonProperty("formation")] public string Formation { get; set; } = "any";
         [JsonProperty("tier")] public LanceLifeTierRange Tier { get; set; } = new LanceLifeTierRange();
     }
 
-    internal sealed class LanceLifeEventTiming
+    public sealed class LanceLifeEventTiming
     {
         [JsonProperty("cooldown_days")] public int CooldownDays { get; set; }
         [JsonProperty("priority")] public string Priority { get; set; } = "normal"; // normal | high | critical
         [JsonProperty("one_time")] public bool OneTime { get; set; }
     }
 
-    internal sealed class LanceLifeEventCosts
+    public sealed class LanceLifeEventCosts
     {
         [JsonProperty("fatigue")] public int Fatigue { get; set; }
         [JsonProperty("gold")] public int Gold { get; set; }
@@ -148,7 +148,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("discipline")] public int Discipline { get; set; }
     }
 
-    internal sealed class LanceLifeEventRewards
+    public sealed class LanceLifeEventRewards
     {
         // Schema: rewards.xp
         [JsonProperty("xp")]
@@ -161,7 +161,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("fatigueRelief")] public int FatigueRelief { get; set; }
     }
 
-    internal sealed class LanceLifeEventEscalationEffects
+    public sealed class LanceLifeEventEscalationEffects
     {
         [JsonProperty("heat")] public int Heat { get; set; }
         [JsonProperty("discipline")] public int Discipline { get; set; }
@@ -181,7 +181,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("starter_duty")] public string StarterDuty { get; set; } = string.Empty;
     }
 
-    internal sealed class LanceLifeEventEscalationRequirements
+    public sealed class LanceLifeEventEscalationRequirements
     {
         [JsonProperty("heat")] public LanceLifeIntRange Heat { get; set; } = new LanceLifeIntRange();
         [JsonProperty("discipline")] public LanceLifeIntRange Discipline { get; set; } = new LanceLifeIntRange();
@@ -193,19 +193,19 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("pay_tension_max")] public int? PayTensionMax { get; set; }
     }
 
-    internal sealed class LanceLifeIntRange
+    public sealed class LanceLifeIntRange
     {
         [JsonProperty("min")] public int? Min { get; set; }
         [JsonProperty("max")] public int? Max { get; set; }
     }
 
-    internal sealed class LanceLifeEventMetadata
+    public sealed class LanceLifeEventMetadata
     {
         [JsonProperty("content_doc")] public string ContentDoc { get; set; } = string.Empty;
         [JsonProperty("tier_range")] public LanceLifeTierRange TierRange { get; set; } = new LanceLifeTierRange();
     }
 
-    internal sealed class LanceLifeEventContentDefinition
+    public sealed class LanceLifeEventContentDefinition
     {
         [JsonProperty("titleId")] public string TitleId { get; set; } = string.Empty;
         [JsonProperty("setupId")] public string SetupId { get; set; } = string.Empty;
@@ -217,13 +217,13 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("options")] public List<LanceLifeEventOptionDefinition> Options { get; set; } = new List<LanceLifeEventOptionDefinition>();
     }
 
-    internal sealed class LanceLifeTierRange
+    public sealed class LanceLifeTierRange
     {
         [JsonProperty("min")] public int Min { get; set; } = 1;
         [JsonProperty("max")] public int Max { get; set; } = 999;
     }
 
-    internal sealed class LanceLifeInjuryRoll
+    public sealed class LanceLifeInjuryRoll
     {
         [JsonProperty("chance")] public float Chance { get; set; }
         [JsonProperty("types")] public List<string> Types { get; set; } = new List<string>();
@@ -234,7 +234,7 @@ namespace Enlisted.Features.Lances.Events
         public Dictionary<string, float> LocationWeights { get; set; } = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
     }
 
-    internal sealed class LanceLifeIllnessRoll
+    public sealed class LanceLifeIllnessRoll
     {
         [JsonProperty("chance")] public float Chance { get; set; }
         [JsonProperty("types")] public List<string> Types { get; set; } = new List<string>();
@@ -242,7 +242,7 @@ namespace Enlisted.Features.Lances.Events
         public Dictionary<string, float> SeverityWeights { get; set; } = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
     }
 
-    internal sealed class LanceLifeInjuryRiskSchema
+    public sealed class LanceLifeInjuryRiskSchema
     {
         [JsonProperty("chance")] public int Chance { get; set; }
         [JsonProperty("severity")] public string Severity { get; set; } = string.Empty;

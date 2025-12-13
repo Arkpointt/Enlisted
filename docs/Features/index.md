@@ -28,11 +28,14 @@ This is how the mod prevents “walk in with endgame kit on day one” without d
 Your **troop identity** is what the Quartermaster uses to determine what gear variants you’re allowed to buy.
 - Doc: **[Troop Selection](Gameplay/troop-selection.md)**
 
-### 4) Buy / sell gear at the Quartermaster
-Quartermaster is purchase + buyback:
-- Buy troop-appropriate variants (with pricing multipliers)
-- Sell eligible items back at buyback rate
-- Doc: **[Quartermaster](UI/quartermaster.md)**
+### 4) Visit the Quartermaster (NPC Hero)
+Talk to the quartermaster to access equipment, provisions, and advice:
+- **Equipment**: Buy/sell formation-appropriate gear with culture variants
+- **Provisions**: Purchase rations for morale and fatigue benefits
+- **Retinue Provisioning** (T7+): Feed your personal soldiers
+- **Relationship**: Build trust for discounts (5-15% off at high relationship)
+- **PayTension Dialogue**: Get archetype-specific advice when pay is late
+- Docs: **[Quartermaster Hero System](Core/quartermaster-hero-system.md)**, **[Quartermaster UI](UI/quartermaster.md)**, **[Provisions System](Gameplay/provisions-system.md)**
 
 ### 5) Day-to-day: Duties, camp actions, and progression
 - Pick duties/roles for bonuses and wage modifiers
@@ -47,21 +50,26 @@ Quartermaster is purchase + buyback:
 ### 6) Get paid (Pay Muster) and manage pay tension
 Wages accrue daily with modifiers (culture, wartime, lord wealth). Paid at **pay muster** (~12 days).
 - When pay is late, **Pay Tension** builds (0-100) with escalating effects
+- **Desperate Measures** (40+ tension): Corruption path - bribe clerk, skim supplies, black market, sell equipment
+- **Help the Lord** (40+ tension): Loyalty path - collect debts, escort merchants, negotiate loans, raid enemies
 - At 60+ tension, **free desertion** becomes available (no penalties)
 - **Battle loot share** compensates T1-T3 soldiers; T4+ get native loot screens
 - Docs:
   - **[Pay System](Core/pay-system.md)**
+  - **[PayTension Action Menus](Gameplay/paytension-action-menus.md)**
   - **[Enlistment System](Core/enlistment.md)** (Discharge/Final Muster)
 
-### 7) Lance Life Events
-Random events shape your military career:
-- **Camp events**: Social, training, supply issues
-- **Pay tension events**: Grumbling, theft, confrontation, mutiny
-- **Loyal path missions**: Help the lord to reduce tension
-- **Consequences**: Heat, discipline, reputation, relations
+### 7) Lance Life Events & Character Interactions
+Random events and NPC interactions shape your military career:
+- **Lance Life Events**: Camp events, training, supply issues, pay tension events
+- **Quartermaster Dialogue**: Archetype-specific advice during financial crisis
+- **Action Menus**: Choose corruption or loyalty paths when pay is late
+- **Consequences**: Heat, discipline, reputation, relations, tension reduction
 - Docs:
   - **[Lance Life Events](Core/lance-life-events.md)**
   - **[Camp Life Simulation](Gameplay/camp-life-simulation.md)**
+  - **[Quartermaster Hero System](Core/quartermaster-hero-system.md)**
+  - **[PayTension Action Menus](Gameplay/paytension-action-menus.md)**
 
 ---
 
@@ -77,6 +85,8 @@ The foundational systems that enable military service.
 - **[Lance Assignments](Core/lance-assignments.md)** - Lance roster, personas, culture-specific ranks
 - **[Camp Fatigue](Core/camp-fatigue.md)** - Daily fatigue system for activities
 - **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment
+- **[Quartermaster Hero System](Core/quartermaster-hero-system.md)** ⭐ NEW - Persistent NPC quartermaster with personality, relationship system, and PayTension dialogue
+- **[Retinue System](Core/retinue-system.md)** - Commander's personal force (T7-T9) with companion management
 
 ---
 
@@ -98,8 +108,10 @@ Additional gameplay mechanics and player choices.
 - **[Temporary Leave](Gameplay/temporary-leave.md)** - 14-day leave system with desertion penalties
 - **[Troop Selection](Gameplay/troop-selection.md)** - Real troop choice for promotions and formations
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
-- **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts (phased plan)
+- **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts
 - **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and escalation/condition consequences (data-driven, modular)
+- **[Provisions System](Gameplay/provisions-system.md)** ⭐ NEW - Personal rations and retinue provisioning with morale/fatigue benefits
+- **[PayTension Action Menus](Gameplay/paytension-action-menus.md)** ⭐ NEW - Desperate Measures (corruption) and Help the Lord (loyalty) when pay is late
 
 ---
 

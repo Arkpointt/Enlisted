@@ -1,0 +1,167 @@
+<Prefab>
+	<Constants>
+		<Constant Name="Encyclopedia.Frame.Width" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Width" />
+		<Constant Name="Encyclopedia.Frame.Height" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Height" />
+	</Constants>
+	<Window>
+		<!-- Full screen semi-transparent overlay with blur effect -->
+		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#00000099">
+			<Children>
+
+				<!-- Main event card - centered, modern design -->
+				<BrushWidget Id="EventCard" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="1100" SuggestedHeight="750" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Encyclopedia.Frame">
+					<Children>
+						
+						<!-- Top decorative header bar -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="80" HorizontalAlignment="Center" VerticalAlignment="Top" Sprite="StdAssets\tabbar_popup">
+							<Children>
+								<!-- Category badge (left) -->
+								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="120" SuggestedHeight="50" MarginLeft="30" MarginTop="15" HorizontalAlignment="Left" Sprite="General\Notifications\notification_general" Color="@CategoryColor">
+									<Children>
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="12" Text="@CategoryText" />
+									</Children>
+								</Widget>
+								
+								<!-- Event title (center) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" MarginTop="5" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="32" Brush.TextColor="#FFEECC" Text="@EventTitle" />
+								
+								<!-- Time/location indicator (right) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginRight="30" MarginTop="25" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#CCCCCC" Text="@TimeLocationText" />
+							</Children>
+						</Widget>
+
+						<!-- Main content area -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="580" MarginTop="90" MarginLeft="30" MarginRight="30">
+							<Children>
+								
+								<!-- Left panel: Scene illustration/character -->
+								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="380" HorizontalAlignment="Left">
+									<Children>
+										<!-- Background panel for image -->
+										<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
+											<Children>
+												<!-- Scene image or character portrait -->
+												<ImageWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="450" MarginTop="10" MarginLeft="10" MarginRight="10" Sprite="@SceneImagePath" />
+												
+												<!-- Character tableau (if showing a person) -->
+												<CharacterTableauWidget DataSource="{EventCharacter}" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="450" MarginTop="10" IsVisible="@ShowCharacter" BodyProperties="@BodyProperties" IsFemale="@IsFemale" EquipmentCode="@EquipmentCode" CharStringId="@CharStringId" StanceIndex="@StanceIndex" IsEnabled="false" />
+												
+												<!-- Character name plate (bottom) -->
+												<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="60" VerticalAlignment="Bottom" MarginBottom="10" MarginLeft="10" MarginRight="10" Sprite="StdAssets\round_frame" Color="#00000088">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="#FFDDBB" Text="@CharacterNameText" />
+													</Children>
+												</Widget>
+											</Children>
+										</BrushWidget>
+									</Children>
+								</Widget>
+
+								<!-- Right panel: Story text and choices -->
+								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="640" MarginLeft="400" HorizontalAlignment="Left">
+									<Children>
+										
+										<!-- Story text area with scroll -->
+										<ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="280" MarginTop="10" VerticalAlignment="Top" MouseScrollAxis="Vertical" ClipRect="StoryClipRect" InnerPanel="StoryClipRect\StoryText" AutoHideScrollBars="true">
+											<Children>
+												<Widget Id="StoryClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
+													<Children>
+														<RichTextWidget Id="StoryText" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="15" MarginRight="25" MarginTop="10" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="16" Brush.LineSpacing="24" Text="@StoryText" />
+													</Children>
+												</Widget>
+											</Children>
+										</ScrollablePanel>
+
+										<!-- Choices section -->
+										<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="270" MarginTop="300" VerticalAlignment="Top">
+											<Children>
+												<!-- "Your Choice" header -->
+												<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="5" Brush="SPGeneral.MediumText" Brush.FontSize="14" Brush.TextColor="#DDDDDD" Text="— Choose Your Action —" />
+												
+												<!-- Choice buttons list -->
+												<ListPanel DataSource="{ChoiceOptions}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginTop="35" StackLayout.LayoutMethod="VerticalBottomToTop">
+													<ItemTemplate>
+														<EventChoiceButton />
+													</ItemTemplate>
+												</ListPanel>
+											</Children>
+										</Widget>
+
+									</Children>
+								</Widget>
+
+							</Children>
+						</Widget>
+
+						<!-- Bottom status bar with escalation tracks -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="70" VerticalAlignment="Bottom" MarginBottom="10" MarginLeft="30" MarginRight="30">
+							<Children>
+								<!-- Background panel -->
+								<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
+									<Children>
+										<!-- Escalation track displays -->
+										<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="15" MarginRight="15" MarginTop="10" MarginBottom="10">
+											<Children>
+												<!-- Heat track -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="230" HorizontalAlignment="Left">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="2" Brush="SPGeneral.SmallText" Brush.FontSize="11" Text="Heat" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="180" SuggestedHeight="12" MarginTop="20" HorizontalAlignment="Left" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@HeatBarWidth" Sprite="StdAssets\progressbar_fill" Color="#FF6644" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="35" Brush="SPGeneral.SmallText" Brush.FontSize="10" Text="@HeatText" />
+													</Children>
+												</Widget>
+												
+												<!-- Discipline track -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="230" HorizontalAlignment="Center" PositionXOffset="-100">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="2" Brush="SPGeneral.SmallText" Brush.FontSize="11" Text="Discipline" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="180" SuggestedHeight="12" MarginTop="20" HorizontalAlignment="Left" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@DisciplineBarWidth" Sprite="StdAssets\progressbar_fill" Color="#4488FF" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="35" Brush="SPGeneral.SmallText" Brush.FontSize="10" Text="@DisciplineText" />
+													</Children>
+												</Widget>
+												
+												<!-- Lance Rep track -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="230" HorizontalAlignment="Center" PositionXOffset="100">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="2" Brush="SPGeneral.SmallText" Brush.FontSize="11" Text="Lance Reputation" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="180" SuggestedHeight="12" MarginTop="20" HorizontalAlignment="Left" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@LanceRepBarWidth" Sprite="StdAssets\progressbar_fill" Color="#44FF88" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="35" Brush="SPGeneral.SmallText" Brush.FontSize="10" Text="@LanceRepText" />
+													</Children>
+												</Widget>
+												
+												<!-- Fatigue indicator -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="150" HorizontalAlignment="Right">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="2" Brush="SPGeneral.SmallText" Brush.FontSize="11" Text="Fatigue" />
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="20" Brush="SPGeneral.MediumText" Brush.FontSize="18" Text="@FatigueText" />
+													</Children>
+												</Widget>
+											</Children>
+										</Widget>
+									</Children>
+								</BrushWidget>
+							</Children>
+						</Widget>
+
+					</Children>
+				</BrushWidget>
+				
+				<!-- Close button (top right) -->
+				<ButtonWidget Command.Click="ExecuteClose" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="50" SuggestedWidth="50" VerticalAlignment="Center" HorizontalAlignment="Center" PositionYOffset="-325" PositionXOffset="530" Brush="Popup.CloseButton" IsVisible="@CanClose" />
+
+			</Children>
+		</Widget>
+	</Window>
+</Prefab>

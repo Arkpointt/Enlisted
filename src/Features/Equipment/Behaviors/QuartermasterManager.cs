@@ -302,6 +302,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                 QuartermasterWaitConsequence,
                 QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Rations purchase menu (Phase 5 Food System)
+            starter.AddWaitGameMenu(
+                "quartermaster_rations",
+                "Provisions\n{RATIONS_TEXT}",
+                OnQuartermasterRationsInit,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Add rations menu options
+            AddRationsMenuOptions(starter);
                 
             // Main equipment category options with modern icons
 
@@ -363,6 +376,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                 OnSupplyManagementSelected,
                 false, 6);
 
+            // Purchase rations (Phase 5 Food System - Trade icon for food purchase)
+            starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_rations_option",
+                new TextObject("{=qm_menu_rations}Purchase provisions").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_rations"),
+                false, 7);
+
             // Sell equipment back to the quartermaster (Trade icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_sell",
                 new TextObject("{=qm_menu_return_equipment}Sell equipment").ToString(),
@@ -389,7 +413,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return true;
                 },
                 _ => ActivateMenuPreserveTime("quartermaster_returns"),
-                false, 7);
+                false, 8);
                 
             // Return to enlisted status (Leave icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",
@@ -2035,6 +2059,416 @@ namespace Enlisted.Features.Equipment.Behaviors
                 MBTextManager.SetTextVariable("RETURN_TEXT",
                     new TextObject("{=qm_return_error}Return processing unavailable.").ToString());
             }
+        }
+
+        // ========================================================================
+        // RATIONS/FOOD SYSTEM (Phase 5)
+        // ========================================================================
+
+        /// <summary>
+        /// Initialize rations purchase menu.
+        /// </summary>
+        private void OnQuartermasterRationsInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var backgroundMesh = "encounter_looter";
+
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+
+                var sb = new StringBuilder();
+                sb.AppendLine(new TextObject("{=qm_rations_intro}Purchase better rations from the quartermaster.").ToString());
+                sb.AppendLine(new TextObject("{=qm_rations_desc}Higher quality food provides morale bonuses and fatigue relief.").ToString());
+                sb.AppendLine();
+
+                // Show current status
+                if (enlistment != null)
+                {
+                    var (qualityName, moraleBonus, fatigueBonus, daysRemaining) = enlistment.GetFoodQualityInfo();
+                    
+                    if (daysRemaining > 0)
+                    {
+                        var statusText = new TextObject("{=qm_rations_current}Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining");
+                        statusText.SetTextVariable("QUALITY", qualityName);
+                        statusText.SetTextVariable("MORALE", moraleBonus);
+                        statusText.SetTextVariable("DAYS", daysRemaining.ToString("F1"));
+                        sb.AppendLine(statusText.ToString());
+                    }
+                    else
+                    {
+                        sb.AppendLine(new TextObject("{=qm_rations_standard}Current: Standard army rations (no bonus)").ToString());
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine(new TextObject("{=qm_rations_gold}Your gold: {GOLD_ICON} {GOLD}").ToString());
+                    MBTextManager.SetTextVariable("GOLD", Hero.MainHero.Gold);
+
+                    // Show retinue provisioning status (Phase 6)
+                    if (enlistment.HasRetinueToProvision())
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine("─── Retinue Provisioning ───");
+
+                        var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+                        var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
+
+                        var (retinueName, retinueMorale, retinueDays) = enlistment.GetRetinueProvisioningInfo();
+                        
+                        if (retinueDays > 0)
+                        {
+                            sb.AppendLine($"Retinue ({soldierCount} soldiers): {retinueName} ({(retinueMorale >= 0 ? "+" : "")}{retinueMorale} morale)");
+                            sb.AppendLine($"Days remaining: {retinueDays:F1}");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"Retinue ({soldierCount} soldiers): NOT PROVISIONED!");
+                            sb.AppendLine("Your soldiers are starving! (-10 morale)");
+                        }
+                    }
+                }
+
+                MBTextManager.SetTextVariable("RATIONS_TEXT", sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error initializing rations menu", ex);
+                MBTextManager.SetTextVariable("RATIONS_TEXT",
+                    new TextObject("{=qm_rations_error}Provisions unavailable.").ToString());
+            }
+        }
+
+        /// <summary>
+        /// Add rations purchase menu options.
+        /// </summary>
+        private void AddRationsMenuOptions(CampaignGameStarter starter)
+        {
+            // Supplemental Rations - 10g, +2 morale, 1 day
+            starter.AddGameMenuOption("quartermaster_rations", "rations_supplemental",
+                new TextObject("{=qm_rations_supplemental}Supplemental Rations (10{GOLD_ICON}) - +2 morale for 1 day").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var canAfford = Hero.MainHero.Gold >= 10;
+                    if (!canAfford)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_no_gold}Not enough gold.");
+                    }
+                    return true;
+                },
+                _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Supplemental, 10, 1),
+                false, 1);
+
+            // Officer's Fare - 30g, +4 morale, +2 fatigue relief, 2 days
+            starter.AddGameMenuOption("quartermaster_rations", "rations_officer",
+                new TextObject("{=qm_rations_officer}Officer's Fare (30{GOLD_ICON}) - +4 morale, +2 fatigue for 2 days").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var canAfford = Hero.MainHero.Gold >= 30;
+                    if (!canAfford)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_no_gold}Not enough gold.");
+                    }
+                    return true;
+                },
+                _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Officer, 30, 2),
+                false, 2);
+
+            // Commander's Feast - 75g, +8 morale, +5 fatigue relief, 3 days
+            starter.AddGameMenuOption("quartermaster_rations", "rations_commander",
+                new TextObject("{=qm_rations_commander}Commander's Feast (75{GOLD_ICON}) - +8 morale, +5 fatigue for 3 days").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var canAfford = Hero.MainHero.Gold >= 75;
+                    var highEnoughTier = enlistment?.EnlistmentTier >= 4;
+                    
+                    if (!canAfford)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_no_gold}Not enough gold.");
+                    }
+                    else if (!highEnoughTier)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_rank}Reserved for Tier 4+ soldiers.");
+                    }
+                    return true;
+                },
+                _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Commander, 75, 3),
+                false, 3);
+
+            // ========================================
+            // RETINUE PROVISIONING OPTIONS (Phase 6)
+            // Only shown for T7+ commanders with retinue
+            // ========================================
+
+            // Section header for retinue provisioning
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_header",
+                new TextObject("{=qm_retinue_header}— RETINUE PROVISIONING —").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Wait;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    return enlistment?.HasRetinueToProvision() == true;
+                },
+                _ => { }, // No action for header
+                false, 10);
+
+            // Bare Minimum - lowest cost, morale penalty
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_bare",
+                "{=qm_retinue_bare}Retinue: Bare Minimum (-5 morale)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.BareMinimum);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.BareMinimum),
+                false, 11);
+
+            // Standard - default quality
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_standard",
+                "{=qm_retinue_standard}Retinue: Standard Rations",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.Standard);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.Standard),
+                false, 12);
+
+            // Good Fare - morale bonus
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_good",
+                "{=qm_retinue_good}Retinue: Good Fare (+5 morale)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.GoodFare);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.GoodFare),
+                false, 13);
+
+            // Officer Quality - best morale bonus
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_officer",
+                "{=qm_retinue_officer}Retinue: Officer Quality (+10 morale)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality),
+                false, 14);
+
+            // Return to quartermaster
+            starter.AddGameMenuOption("quartermaster_rations", "rations_back",
+                new TextObject("{=qm_menu_supplies_back}Return to quartermaster").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"),
+                false, 99);
+        }
+
+        /// <summary>
+        /// Handle rations purchase.
+        /// </summary>
+        private void OnPurchaseRations(EnlistmentBehavior.FoodQualityTier tier, int cost, int durationDays)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_rations_not_enlisted}You must be enlisted to purchase provisions.").ToString()));
+                    return;
+                }
+
+                if (enlistment.PurchaseRations(tier, cost, durationDays))
+                {
+                    var tierName = tier switch
+                    {
+                        EnlistmentBehavior.FoodQualityTier.Supplemental => "Supplemental Rations",
+                        EnlistmentBehavior.FoodQualityTier.Officer => "Officer's Fare",
+                        EnlistmentBehavior.FoodQualityTier.Commander => "Commander's Feast",
+                        _ => "Rations"
+                    };
+
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Purchased {tierName} for {cost} gold ({durationDays} days).",
+                        Colors.Green));
+
+                    // Refresh menu to show updated status
+                    ActivateMenuPreserveTime("quartermaster_rations");
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_rations_no_gold}Not enough gold.").ToString(),
+                        Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error purchasing rations", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_rations_error}Failed to purchase provisions.").ToString(),
+                    Colors.Red));
+            }
+        }
+
+        // ========================================================================
+        // RETINUE PROVISIONING METHODS (Phase 6)
+        // ========================================================================
+
+        /// <summary>
+        /// Sets up a retinue provisioning menu option with dynamic cost text.
+        /// Returns true if the option should be visible.
+        /// </summary>
+        private bool SetupRetinueProvisioningOption(MenuCallbackArgs args, EnlistmentBehavior.RetinueProvisioningTier tier)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.HasRetinueToProvision())
+            {
+                return false;
+            }
+
+            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
+            var cost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+
+            // Set dynamic text with cost
+            var tierName = tier switch
+            {
+                EnlistmentBehavior.RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                EnlistmentBehavior.RetinueProvisioningTier.Standard => "Standard",
+                EnlistmentBehavior.RetinueProvisioningTier.GoodFare => "Good Fare",
+                EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                _ => "Provisions"
+            };
+
+            var moraleText = tier switch
+            {
+                EnlistmentBehavior.RetinueProvisioningTier.BareMinimum => "-5 morale",
+                EnlistmentBehavior.RetinueProvisioningTier.Standard => "neutral",
+                EnlistmentBehavior.RetinueProvisioningTier.GoodFare => "+5 morale",
+                EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality => "+10 morale",
+                _ => ""
+            };
+
+            args.Text = new TextObject($"Retinue: {tierName} ({cost}{{GOLD_ICON}}) [{soldierCount} soldiers, {moraleText}]");
+
+            var canAfford = Hero.MainHero.Gold >= cost;
+            if (!canAfford)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=qm_retinue_no_gold}Not enough gold to provision your retinue.");
+            }
+            else
+            {
+                args.Tooltip = new TextObject($"Provision your {soldierCount} soldiers for 7 days at {tierName} quality.");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Handle retinue provisioning purchase.
+        /// </summary>
+        private void OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier tier)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_retinue_not_enlisted}You must be enlisted to provision your retinue.").ToString()));
+                    return;
+                }
+
+                var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+                var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
+
+                if (soldierCount <= 0)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_retinue_no_soldiers}You have no soldiers to provision.").ToString()));
+                    return;
+                }
+
+                var cost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+
+                if (enlistment.PurchaseRetinueProvisioning(tier, soldierCount))
+                {
+                    var tierName = tier switch
+                    {
+                        EnlistmentBehavior.RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                        EnlistmentBehavior.RetinueProvisioningTier.Standard => "Standard",
+                        EnlistmentBehavior.RetinueProvisioningTier.GoodFare => "Good Fare",
+                        EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                        _ => "provisions"
+                    };
+
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Provisioned {soldierCount} soldiers with {tierName} rations for {cost} gold (7 days).",
+                        Colors.Green));
+
+                    // Refresh menu to show updated status
+                    ActivateMenuPreserveTime("quartermaster_rations");
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_retinue_no_gold}Not enough gold to provision your retinue.").ToString(),
+                        Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error purchasing retinue provisioning", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_retinue_error}Failed to provision retinue.").ToString(),
+                    Colors.Red));
+            }
+        }
+
+        /// <summary>
+        /// Menu background initialization for quartermaster_rations menu.
+        /// </summary>
+        [GameMenuInitializationHandler("quartermaster_rations")]
+        private static void OnQuartermasterRationsBackgroundInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var backgroundMesh = "encounter_looter";
+
+            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+            }
+
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
         
         /// <summary>

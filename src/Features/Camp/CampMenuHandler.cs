@@ -105,6 +105,10 @@ namespace Enlisted.Features.Camp
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "command_tent_companions";
 
+        // Phase 8: PayTension Action Menu IDs
+        private const string DesperateMeasuresMenuId = "command_tent_desperate";
+        private const string HelpTheLordMenuId = "command_tent_help_lord";
+
         // Track selected faction for detail view
         private string _selectedFactionKey;
 
@@ -190,6 +194,10 @@ namespace Enlisted.Features.Camp
 
             // Companion Assignments menu (Phase 8)
             AddCompanionAssignmentsMenu(starter);
+
+            // Phase 8: PayTension Action Menus
+            AddDesperateMeasuresMenu(starter);
+            AddHelpTheLordMenu(starter);
         }
 
         #region Enlisted Status Integration
@@ -358,6 +366,56 @@ namespace Enlisted.Features.Camp
                 false,
                 4);
 
+            // ========================================
+            // PAYTENSION ACTION MENUS (Phase 8)
+            // ========================================
+
+            // Desperate Measures (corruption path) - only visible at tension 40+
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_desperate_measures",
+                "{=ct_desperate_measures}Desperate Measures...",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 40)
+                    {
+                        return false; // Hide completely below threshold
+                    }
+                    
+                    args.Tooltip = new TextObject("{=ct_desperate_tooltip}When times are hard, some turn to... creative solutions.");
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(DesperateMeasuresMenuId),
+                false,
+                6);
+
+            // Help the Lord (loyalty path) - only visible at tension 40+
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_help_lord",
+                "{=ct_help_lord}Help the Lord with Finances",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Mission;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 40)
+                    {
+                        return false; // Hide completely below threshold
+                    }
+                    
+                    args.Tooltip = new TextObject("{=ct_help_lord_tooltip}Volunteer for missions that might help the lord pay his debts.");
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(HelpTheLordMenuId),
+                false,
+                7);
+
             // Baggage Train (stash access) - Submenu icon
             starter.AddGameMenuOption(
                 CommandTentMenuId,
@@ -371,7 +429,7 @@ namespace Enlisted.Features.Camp
                 },
                 _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
                 false,
-                5);
+                8);
 
             // Request Discharge (Final Muster)
             starter.AddGameMenuOption(
@@ -2585,6 +2643,556 @@ namespace Enlisted.Features.Camp
             }
 
             return count > 0 ? totalCost / count : 100;
+        }
+
+        #endregion
+
+        #region Phase 8: PayTension Action Menus
+
+        /// <summary>
+        /// Creates the Desperate Measures menu - corruption path options.
+        /// Options unlock at different PayTension thresholds.
+        /// </summary>
+        private void AddDesperateMeasuresMenu(CampaignGameStarter starter)
+        {
+            starter.AddWaitGameMenu(
+                DesperateMeasuresMenuId,
+                "{=dm_menu_intro}Desperate Measures\n\nWhen legitimate channels fail, some turn to darker paths. " +
+                "Choose carefully - your reputation and honor are at stake.\n\n{DESPERATE_STATUS}",
+                OnDesperateMeasuresInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Option 1: Bribe Paymaster's Clerk (40+ tension)
+            starter.AddGameMenuOption(
+                DesperateMeasuresMenuId,
+                "dm_bribe_clerk",
+                "{=dm_bribe_clerk}Bribe the Paymaster's Clerk (50{GOLD_ICON})",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 40) return false;
+                    
+                    if (Hero.MainHero.Gold < 50)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=dm_no_gold}You don't have enough gold.");
+                    }
+                    else
+                    {
+                        args.Tooltip = new TextObject("{=dm_bribe_tooltip}Slip the clerk some coin to 'adjust' the pay records. Gain 20 gold but risk getting caught.");
+                    }
+                    return true;
+                },
+                _ => OnBribeClerk(),
+                false, 1);
+
+            // Option 2: Skim Supplies (40+ tension, Quartermaster or Armorer duty)
+            starter.AddGameMenuOption(
+                DesperateMeasuresMenuId,
+                "dm_skim_supplies",
+                "{=dm_skim_supplies}Skim Supplies from the Baggage Train",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    var duty = enlistment?.SelectedDuty ?? "";
+                    
+                    if (tension < 40) return false;
+                    
+                    var isSupplyDuty = duty == "quartermaster" || duty == "armorer";
+                    if (!isSupplyDuty)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=dm_wrong_duty}Only available for Quartermaster or Armorer duties.");
+                        return true;
+                    }
+                    
+                    args.Tooltip = new TextObject("{=dm_skim_tooltip}Divert some supplies for personal gain. Gain 30 gold worth of goods.");
+                    return true;
+                },
+                _ => OnSkimSupplies(),
+                false, 2);
+
+            // Option 3: Find Black Market (50+ tension)
+            starter.AddGameMenuOption(
+                DesperateMeasuresMenuId,
+                "dm_black_market",
+                "{=dm_black_market}Find the Black Market",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 50) return false;
+                    
+                    args.Tooltip = new TextObject("{=dm_black_market_tooltip}Seek out illicit traders. Buy or sell contraband for profit.");
+                    return true;
+                },
+                _ => OnFindBlackMarket(),
+                false, 3);
+
+            // Option 4: Sell Your Gear (60+ tension)
+            starter.AddGameMenuOption(
+                DesperateMeasuresMenuId,
+                "dm_sell_gear",
+                "{=dm_sell_gear}Sell Your Issued Equipment",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 60) return false;
+                    
+                    args.Tooltip = new TextObject("{=dm_sell_gear_tooltip}Sell equipment you were issued. Risky - you'll need to replace it or face punishment.");
+                    return true;
+                },
+                _ => OnSellIssuedGear(),
+                false, 4);
+
+            // Option 5: Listen to Desertion Talk (70+ tension)
+            starter.AddGameMenuOption(
+                DesperateMeasuresMenuId,
+                "dm_desertion_talk",
+                "{=dm_desertion_talk}Listen to Desertion Talk",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Escape;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 70) return false;
+                    
+                    args.Tooltip = new TextObject("{=dm_desertion_tooltip}Some soldiers are planning to slip away. Hear what they have to say.");
+                    return true;
+                },
+                _ => OnDesertionTalk(),
+                false, 5);
+
+            // Back option
+            starter.AddGameMenuOption(
+                DesperateMeasuresMenuId,
+                "dm_back",
+                "{=dm_back}Return to Command Tent",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                true, 99);
+        }
+
+        /// <summary>
+        /// Initializes the Desperate Measures menu.
+        /// </summary>
+        private void OnDesperateMeasuresInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var tension = enlistment?.PayTension ?? 0;
+            
+            var status = $"Current PayTension: {tension}/100\n";
+            status += tension >= 70 ? "The situation is critical. Desperate times call for desperate measures."
+                    : tension >= 50 ? "The men are angry. Options are limited."
+                    : "Things are getting difficult. Some are already bending the rules.";
+            
+            MBTextManager.SetTextVariable("DESPERATE_STATUS", status);
+        }
+
+        /// <summary>
+        /// Creates the Help the Lord menu - loyalty path missions.
+        /// Missions help reduce PayTension through legitimate means.
+        /// </summary>
+        private void AddHelpTheLordMenu(CampaignGameStarter starter)
+        {
+            starter.AddWaitGameMenu(
+                HelpTheLordMenuId,
+                "{=hlm_menu_intro}Help the Lord\n\nThe lord's coffers are running low, but loyal soldiers can help. " +
+                "Volunteer for missions that bring coin to the treasury.\n\n{HELP_LORD_STATUS}",
+                OnHelpTheLordInit,
+                CommandTentWaitCondition,
+                CommandTentWaitConsequence,
+                CommandTentWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Option 1: Collect Debts (40+ tension)
+            starter.AddGameMenuOption(
+                HelpTheLordMenuId,
+                "hlm_collect_debts",
+                "{=hlm_collect_debts}Volunteer to Collect Debts",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Mission;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 40) return false;
+                    
+                    args.Tooltip = new TextObject("{=hlm_debts_tooltip}Visit merchants who owe the lord money. Persuade them to pay. (-10 PayTension on success)");
+                    return true;
+                },
+                _ => OnCollectDebts(),
+                false, 1);
+
+            // Option 2: Escort Merchant (50+ tension)
+            starter.AddGameMenuOption(
+                HelpTheLordMenuId,
+                "hlm_escort_merchant",
+                "{=hlm_escort_merchant}Escort a Merchant Caravan",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Mission;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 50) return false;
+                    
+                    args.Tooltip = new TextObject("{=hlm_escort_tooltip}Guard a friendly merchant through dangerous territory. The lord takes a cut. (-15 PayTension)");
+                    return true;
+                },
+                _ => OnEscortMerchant(),
+                false, 2);
+
+            // Option 3: Negotiate Loan (60+ tension, requires Trade/Charm skill)
+            starter.AddGameMenuOption(
+                HelpTheLordMenuId,
+                "hlm_negotiate_loan",
+                "{=hlm_negotiate_loan}Negotiate a Loan for the Lord",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 60) return false;
+                    
+                    var tradeSkill = Hero.MainHero?.GetSkillValue(DefaultSkills.Trade) ?? 0;
+                    if (tradeSkill < 50)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=hlm_loan_no_skill}Requires Trade skill 50+. Your skill: {SKILL}").SetTextVariable("SKILL", tradeSkill);
+                        return true;
+                    }
+                    
+                    args.Tooltip = new TextObject("{=hlm_loan_tooltip}Use your trade connections to secure a loan. (-20 PayTension, requires Trade 50+)");
+                    return true;
+                },
+                _ => OnNegotiateLoan(),
+                false, 3);
+
+            // Option 4: Volunteer for Raid (70+ tension, at war only)
+            starter.AddGameMenuOption(
+                HelpTheLordMenuId,
+                "hlm_volunteer_raid",
+                "{=hlm_volunteer_raid}Volunteer for a Raid",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.HostileAction;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var tension = enlistment?.PayTension ?? 0;
+                    
+                    if (tension < 70) return false;
+                    
+                    // Check if lord is at war with anyone - simplified check
+                    var lordKingdom = enlistment?.CurrentLord?.MapFaction;
+                    var atWar = lordKingdom != null && Campaign.Current?.Factions?
+                        .Any(f => f != lordKingdom && lordKingdom.IsAtWarWith(f)) == true;
+                    
+                    if (!atWar)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=hlm_no_war}Only available when the lord is at war.");
+                        return true;
+                    }
+                    
+                    args.Tooltip = new TextObject("{=hlm_raid_tooltip}Lead a raid on enemy territory. Dangerous but lucrative. (-25 PayTension, risk of injury)");
+                    return true;
+                },
+                _ => OnVolunteerRaid(),
+                false, 4);
+
+            // Back option
+            starter.AddGameMenuOption(
+                HelpTheLordMenuId,
+                "hlm_back",
+                "{=hlm_back}Return to Command Tent",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                true, 99);
+        }
+
+        /// <summary>
+        /// Initializes the Help the Lord menu.
+        /// </summary>
+        private void OnHelpTheLordInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var tension = enlistment?.PayTension ?? 0;
+            var lordName = enlistment?.CurrentLord?.Name?.ToString() ?? "the lord";
+            
+            var status = $"Current PayTension: {tension}/100\n";
+            status += $"Lord {lordName} needs your help to restore the treasury.";
+            
+            MBTextManager.SetTextVariable("HELP_LORD_STATUS", status);
+        }
+
+        // ========================================
+        // DESPERATE MEASURES CONSEQUENCES
+        // ========================================
+
+        private void OnBribeClerk()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            // Pay the bribe
+            Hero.MainHero.ChangeHeroGold(-50);
+
+            // Roll for success/caught
+            var successChance = 70; // 70% chance of success
+            var roll = MBRandom.RandomInt(100);
+
+            if (roll < successChance)
+            {
+                // Success - gain more than you paid
+                Hero.MainHero.ChangeHeroGold(70);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=dm_bribe_success}The clerk adjusts the records in your favor. You gain 20 gold net.").ToString(),
+                    Colors.Green));
+                ModLogger.Info(LogCategory, "Bribe clerk succeeded");
+            }
+            else
+            {
+                // Caught - lose the bribe and relationship
+                enlistment.ModifyQuartermasterRelationship(-10);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=dm_bribe_caught}The clerk takes your money... then reports you. Your reputation suffers.").ToString(),
+                    Colors.Red));
+                ModLogger.Info(LogCategory, "Bribe clerk failed - caught");
+            }
+
+            SwitchToMenuPreserveTime(DesperateMeasuresMenuId);
+        }
+
+        private void OnSkimSupplies()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            // Gain supplies (as gold equivalent)
+            Hero.MainHero.ChangeHeroGold(30);
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("{=dm_skim_success}You quietly divert some supplies for yourself. +30 gold worth of goods.").ToString(),
+                Colors.Yellow));
+
+            // Small reputation cost if quartermaster relationship is low
+            if (enlistment.QuartermasterRelationship < 40)
+            {
+                enlistment.ModifyQuartermasterRelationship(-5);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=dm_skim_suspicious}The quartermaster seems suspicious...").ToString(),
+                    Colors.Gray));
+            }
+
+            ModLogger.Info(LogCategory, "Skimmed supplies");
+            SwitchToMenuPreserveTime(DesperateMeasuresMenuId);
+        }
+
+        private void OnFindBlackMarket()
+        {
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("{=dm_black_market_contact}You make contact with some... entrepreneurial traders. They'll be around the camp from time to time.").ToString(),
+                Colors.Magenta));
+
+            ModLogger.Info(LogCategory, "Found black market");
+            SwitchToMenuPreserveTime(DesperateMeasuresMenuId);
+        }
+
+        private void OnSellIssuedGear()
+        {
+            // Gain gold based on current tier
+            var enlistment = EnlistmentBehavior.Instance;
+            var tier = enlistment?.EnlistmentTier ?? 1;
+            var goldGain = tier * 25; // 25-225 gold based on tier
+
+            Hero.MainHero.ChangeHeroGold(goldGain);
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("{=dm_sell_gear_success}You sell some of your issued equipment for {GOLD} gold. You'll need to replace it...")
+                    .SetTextVariable("GOLD", goldGain).ToString(),
+                Colors.Yellow));
+
+            ModLogger.Info(LogCategory, $"Sold issued gear for {goldGain}g");
+            SwitchToMenuPreserveTime(DesperateMeasuresMenuId);
+        }
+
+        private void OnDesertionTalk()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var freeDesertion = enlistment?.IsFreeDesertionAvailable == true;
+
+            if (freeDesertion)
+            {
+                InformationManager.ShowInquiry(new InquiryData(
+                    new TextObject("{=dm_desertion_title}Desertion Talk").ToString(),
+                    new TextObject("{=dm_desertion_body}Several soldiers are planning to slip away tonight. They invite you to join them.\n\n\"The lord's broken his word. We've earned our freedom. No one would blame you for coming with us.\"\n\nWill you desert with them?").ToString(),
+                    true, true,
+                    new TextObject("{=dm_desertion_accept}Desert Now").ToString(),
+                    new TextObject("{=dm_desertion_decline}Stay").ToString(),
+                    () => enlistment?.ProcessFreeDesertion(),
+                    null));
+            }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=dm_desertion_not_ready}You listen to the deserters' plans, but decide the risk isn't worth it... yet.").ToString(),
+                    Colors.Gray));
+            }
+
+            ModLogger.Info(LogCategory, $"Desertion talk (freeDesertion={freeDesertion})");
+        }
+
+        // ========================================
+        // HELP THE LORD CONSEQUENCES
+        // ========================================
+
+        private void OnCollectDebts()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            // Simple skill check based on Charm
+            var charm = Hero.MainHero?.GetSkillValue(DefaultSkills.Charm) ?? 0;
+            var successChance = 50 + (charm / 5); // 50-90% based on charm
+            var roll = MBRandom.RandomInt(100);
+
+            if (roll < successChance)
+            {
+                // Reduce PayTension
+                ReducePayTension(10);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_debts_success}You successfully collect the debts. The lord is pleased. (-10 PayTension)").ToString(),
+                    Colors.Green));
+            }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_debts_fail}The merchants refuse to pay. Perhaps they need more... persuasion.").ToString(),
+                    Colors.Yellow));
+            }
+
+            ModLogger.Info(LogCategory, "Collect debts mission");
+            SwitchToMenuPreserveTime(HelpTheLordMenuId);
+        }
+
+        private void OnEscortMerchant()
+        {
+            // Always succeeds but costs fatigue
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            // Cost fatigue
+            enlistment.TryConsumeFatigue(4, "escort_mission");
+
+            // Reduce PayTension
+            ReducePayTension(15);
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("{=hlm_escort_success}You escort the merchant safely. The lord's coffers grow. (-15 PayTension, -4 fatigue)").ToString(),
+                Colors.Green));
+
+            ModLogger.Info(LogCategory, "Escort merchant mission");
+            SwitchToMenuPreserveTime(HelpTheLordMenuId);
+        }
+
+        private void OnNegotiateLoan()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            // Skill check
+            var trade = Hero.MainHero?.GetSkillValue(DefaultSkills.Trade) ?? 0;
+            var successChance = trade; // Direct skill percentage
+            var roll = MBRandom.RandomInt(100);
+
+            if (roll < successChance)
+            {
+                ReducePayTension(20);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_loan_success}You secure a favorable loan for the lord. The treasury is replenished. (-20 PayTension)").ToString(),
+                    Colors.Green));
+            }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_loan_fail}The bankers aren't interested. Perhaps another approach...").ToString(),
+                    Colors.Yellow));
+            }
+
+            ModLogger.Info(LogCategory, "Negotiate loan mission");
+            SwitchToMenuPreserveTime(HelpTheLordMenuId);
+        }
+
+        private void OnVolunteerRaid()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            // Risky mission - chance of injury
+            var combatSkill = (Hero.MainHero?.GetSkillValue(DefaultSkills.OneHanded) ?? 0) +
+                             (Hero.MainHero?.GetSkillValue(DefaultSkills.TwoHanded) ?? 0);
+            var injuryChance = Math.Max(10, 50 - (combatSkill / 10)); // 10-50% based on skill
+            var roll = MBRandom.RandomInt(100);
+
+            if (roll < injuryChance)
+            {
+                // Injured
+                var damage = MBRandom.RandomInt(20, 50);
+                Hero.MainHero.HitPoints = Math.Max(1, Hero.MainHero.HitPoints - damage);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_raid_wounded}The raid succeeds but you're wounded! (-{DAMAGE} HP, -25 PayTension)")
+                        .SetTextVariable("DAMAGE", damage).ToString(),
+                    Colors.Yellow));
+            }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_raid_success}The raid is a complete success! Valuable loot is captured. (-25 PayTension)").ToString(),
+                    Colors.Green));
+            }
+
+            // Always reduces tension significantly
+            ReducePayTension(25);
+
+            // Gain some gold personally
+            Hero.MainHero.ChangeHeroGold(50);
+
+            ModLogger.Info(LogCategory, "Volunteer raid mission");
+            SwitchToMenuPreserveTime(HelpTheLordMenuId);
+        }
+
+        /// <summary>
+        /// Reduces the current PayTension by the specified amount.
+        /// </summary>
+        private static void ReducePayTension(int amount)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null) return;
+
+            enlistment.ReducePayTension(amount);
         }
 
         #endregion

@@ -1904,31 +1904,59 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                var troopId = TroopSelectionManager.Instance?.LastSelectedTroopId ?? "unknown";
-                ModLogger.Info("Quartermaster",
-                    $"Opening quartermaster menu (Tier={enlistment.EnlistmentTier}, Troop={troopId})");
+                // Phase 3: Try to open conversation with Quartermaster Hero
+                var qm = enlistment.GetOrCreateQuartermaster();
+                
+                if (qm != null && qm.IsAlive)
+                {
+                    ModLogger.Info("Quartermaster",
+                        $"Opening conversation with quartermaster '{qm.Name}' ({enlistment.QuartermasterArchetype})");
 
-                // Connect to new Quartermaster system
+                    // Open conversation with quartermaster Hero
+                    // The dialog tree is registered in EnlistedDialogManager
+                    CampaignMapConversation.OpenConversation(
+                        new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
+                        new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party)
+                    );
+                }
+                else
+                {
+                    // Fallback: Direct to menu if hero creation/conversation fails
+                    ModLogger.Warn("Quartermaster", "Quartermaster Hero unavailable, falling back to direct menu");
+                    OpenQuartermasterMenuDirectly();
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error opening quartermaster conversation", ex);
+                // Fallback to direct menu access
+                OpenQuartermasterMenuDirectly();
+            }
+        }
+
+        /// <summary>
+        ///     Opens the quartermaster menu directly (fallback for when Hero conversation fails).
+        /// </summary>
+        private void OpenQuartermasterMenuDirectly()
+        {
+            try
+            {
                 var quartermasterManager = QuartermasterManager.Instance;
                 if (quartermasterManager != null)
                 {
-                    // Capture time state BEFORE menu activation - the wait menu tick will restore it
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    
-                    // Show equipment variants for current troop selection
-                    // (wait menu tick handler will restore captured time state)
                     GameMenu.ActivateGameMenu("quartermaster_equipment");
                 }
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
-                    ModLogger.Error("Quartermaster", "Quartermaster open failed: QuartermasterManager.Instance was null");
+                    ModLogger.Error("Quartermaster", "Quartermaster menu failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error accessing quartermaster services", ex);
+                ModLogger.Error("Quartermaster", "Error opening quartermaster menu directly", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }

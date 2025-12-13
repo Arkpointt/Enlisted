@@ -663,6 +663,50 @@
     <string id="act_social_fire_circle" text="Join the Fire Circle" />
     <string id="act_social_fire_circle_hint" text="+Charm XP and a little rest. Dusk/night." />
 
+    <!-- Training Activities (Phase 4) -->
+    <string id="act_training_weapons" text="Weapons Practice" />
+    <string id="act_training_weapons_hint" text="Practice with your main weapon. +30 Weapon XP, +15 Athletics. Day only." />
+    <string id="act_training_archery" text="Archery Range" />
+    <string id="act_training_archery_hint" text="Practice at the camp's archery butts. +35 Bow XP. Archers only." />
+    <string id="act_training_riding" text="Riding Drills" />
+    <string id="act_training_riding_hint" text="Practice mounted combat. +25 Riding, +15 Polearm. Cavalry only." />
+
+    <!-- Task Activities (Phase 4) -->
+    <string id="act_task_forge" text="Work the Forge" />
+    <string id="act_task_forge_hint" text="Help the camp smith. +40 Smithing, +20 Athletics. Dawn/day." />
+    <string id="act_task_maintain" text="Maintain Equipment" />
+    <string id="act_task_maintain_hint" text="Clean and repair your personal gear. +25 Smithing, +10 Trade." />
+    <string id="act_task_water_horses" text="Water the Horses" />
+    <string id="act_task_water_horses_hint" text="Tend to the horses. +20 Riding, +10 Steward. Cavalry only." />
+    <string id="act_task_stand_watch" text="Stand Watch" />
+    <string id="act_task_stand_watch_hint" text="Guard the camp perimeter. +20 Scouting, +15 Athletics. Night only." />
+
+    <!-- Social Activities (Phase 4) -->
+    <string id="act_social_drink" text="Drink with the Lads" />
+    <string id="act_social_drink_hint" text="Share drinks and stories. +20 Charm, +3 fatigue relief. Dusk/night." />
+    <string id="act_social_dice" text="Play Dice" />
+    <string id="act_social_dice_hint" text="Try your luck at dice. +20 Roguery, +10 Charm. Dusk/night." />
+    <string id="act_social_letter" text="Write a Letter" />
+    <string id="act_social_letter_hint" text="Write home. +20 Charm, +15 Leadership. 3-day cooldown." />
+    <string id="act_social_meal" text="Rest and Eat" />
+    <string id="act_social_meal_hint" text="Take time for a proper meal. +2 fatigue relief." />
+    <string id="act_social_war_stories" text="Tell War Stories" />
+    <string id="act_social_war_stories_hint" text="Share tales of battles. +25 Charm, +10 Leadership. Tier 3+." />
+
+    <!-- Lance Activities (Phase 4) -->
+    <string id="act_lance_talk_leader" text="Talk to Lance Leader" />
+    <string id="act_lance_talk_leader_hint" text="Seek advice. +20 Leadership, +15 Tactics." />
+    <string id="act_lance_check_mates" text="Check on Lance Mates" />
+    <string id="act_lance_check_mates_hint" text="See how your comrades are doing. +15 Charm, +15 Leadership." />
+    <string id="act_lance_help_soldier" text="Help Struggling Soldier" />
+    <string id="act_lance_help_soldier_hint" text="Assist a comrade with their duties. +25 Leadership, +15 Charm. Tier 2+." />
+    <string id="act_lance_share_rations" text="Share Rations" />
+    <string id="act_lance_share_rations_hint" text="Give part of your meal to a lance mate. +30 Charm, +10 Leadership." />
+    <string id="act_lance_settle_dispute" text="Settle Dispute" />
+    <string id="act_lance_settle_dispute_hint" text="Mediate an argument. +25 Charm, +20 Leadership. Tier 2+." />
+    <string id="act_lance_train_recruits" text="Train Recruits" />
+    <string id="act_lance_train_recruits_hint" text="Help new soldiers. +35 Leadership, +20 Athletics. Tier 4+." />
+
     <!-- Camp Activities: failure reasons (used for red message fallback) -->
     <string id="act_fail_invalid" text="That activity is unavailable." />
     <string id="act_fail_disabled" text="Camp activities are disabled." />
@@ -855,6 +899,92 @@
     <string id="qm_already_equipped" text="You already have this equipment equipped." />
     <string id="qm_insufficient_equipment" text="Insufficient funds. You need {COST} denars for this equipment." />
     <string id="qm_error_selecting" text="Error selecting equipment. Please try again." />
+
+    <!-- Rations/Provisions System (Phase 5) -->
+    <string id="qm_menu_rations" text="Purchase provisions" />
+    <string id="qm_rations_intro" text="Purchase better rations from the quartermaster." />
+    <string id="qm_rations_desc" text="Higher quality food provides morale bonuses and fatigue relief." />
+    <string id="qm_rations_current" text="Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining" />
+    <string id="qm_rations_standard" text="Current: Standard army rations (no bonus)" />
+    <string id="qm_rations_gold" text="Your gold: {GOLD_ICON} {GOLD}" />
+    <string id="qm_rations_supplemental" text="Supplemental Rations (10 gold) - +2 morale for 1 day" />
+    <string id="qm_rations_officer" text="Officer's Fare (30 gold) - +4 morale, +2 fatigue for 2 days" />
+    <string id="qm_rations_commander" text="Commander's Feast (75 gold) - +8 morale, +5 fatigue for 3 days" />
+    <string id="qm_rations_no_gold" text="Not enough gold." />
+    <string id="qm_rations_rank" text="Reserved for Tier 4+ soldiers." />
+    <string id="qm_rations_not_enlisted" text="You must be enlisted to purchase provisions." />
+    <string id="qm_rations_error" text="Provisions unavailable." />
+
+    <!-- Quartermaster Dialog - Provisions (Phase 5) -->
+    <string id="qm_request_provisions" text="I need better provisions." />
+    <string id="qm_provisions_response" text="Let me show you what I have for rations." />
+
+    <!-- Retinue Provisioning System (Phase 6) -->
+    <string id="qm_retinue_header" text="— RETINUE PROVISIONING —" />
+    <string id="qm_retinue_bare" text="Retinue: Bare Minimum (-5 morale)" />
+    <string id="qm_retinue_standard" text="Retinue: Standard Rations" />
+    <string id="qm_retinue_good" text="Retinue: Good Fare (+5 morale)" />
+    <string id="qm_retinue_officer" text="Retinue: Officer Quality (+10 morale)" />
+    <string id="qm_retinue_no_gold" text="Not enough gold to provision your retinue." />
+    <string id="qm_retinue_not_enlisted" text="You must be enlisted to provision your retinue." />
+    <string id="qm_retinue_no_soldiers" text="You have no soldiers to provision." />
+    <string id="qm_retinue_error" text="Failed to provision retinue." />
+    <string id="qm_retinue_starving" text="Your retinue is starving! Visit the Quartermaster to provision them." />
+    <string id="qm_retinue_warning" text="Warning: Retinue provisions will run out in {DAYS} days!" />
+
+    <!-- PayTension Dialog Integration (Phase 7) -->
+    <!-- Scoundrel Black Market Option -->
+    <string id="qm_black_market" text="I need... alternative supplies." />
+    <string id="qm_black_market_response" text="[Scoundrel shares black market opportunities]" />
+    
+    <!-- Believer Moral Guidance Option -->
+    <string id="qm_moral_guidance" text="The men are losing hope. Any guidance?" />
+    <string id="qm_moral_guidance_response" text="[Believer provides spiritual guidance]" />
+    
+    <!-- Veteran Survival Advice Option -->
+    <string id="qm_survival_advice" text="Should I... consider my options?" />
+    <string id="qm_survival_advice_response" text="[Veteran gives survival advice]" />
+    
+    <!-- Help the Lord Option -->
+    <string id="qm_help_lord" text="Is there anything I can do to help with... the situation?" />
+    <string id="qm_help_lord_response" text="[Quartermaster suggests ways to help the lord]" />
+
+    <!-- Phase 8: PayTension Action Menus -->
+    <!-- Command Tent Options -->
+    <string id="ct_desperate_measures" text="Desperate Measures..." />
+    <string id="ct_desperate_tooltip" text="When times are hard, some turn to... creative solutions." />
+    <string id="ct_help_lord" text="Help the Lord with Finances" />
+    <string id="ct_help_lord_tooltip" text="Volunteer for missions that might help the lord pay his debts." />
+
+    <!-- Desperate Measures Menu -->
+    <string id="dm_menu_intro" text="Desperate Measures" />
+    <string id="dm_bribe_clerk" text="Bribe the Paymaster's Clerk (50 gold)" />
+    <string id="dm_bribe_tooltip" text="Slip the clerk some coin to 'adjust' the pay records. Gain 20 gold but risk getting caught." />
+    <string id="dm_no_gold" text="You don't have enough gold." />
+    <string id="dm_skim_supplies" text="Skim Supplies from the Baggage Train" />
+    <string id="dm_skim_tooltip" text="Divert some supplies for personal gain. Gain 30 gold worth of goods." />
+    <string id="dm_wrong_duty" text="Only available for Quartermaster or Armorer duties." />
+    <string id="dm_black_market" text="Find the Black Market" />
+    <string id="dm_black_market_tooltip" text="Seek out illicit traders. Buy or sell contraband for profit." />
+    <string id="dm_sell_gear" text="Sell Your Issued Equipment" />
+    <string id="dm_sell_gear_tooltip" text="Sell equipment you were issued. Risky - you'll need to replace it or face punishment." />
+    <string id="dm_desertion_talk" text="Listen to Desertion Talk" />
+    <string id="dm_desertion_tooltip" text="Some soldiers are planning to slip away. Hear what they have to say." />
+    <string id="dm_back" text="Return to Command Tent" />
+
+    <!-- Help the Lord Menu -->
+    <string id="hlm_menu_intro" text="Help the Lord" />
+    <string id="hlm_collect_debts" text="Volunteer to Collect Debts" />
+    <string id="hlm_debts_tooltip" text="Visit merchants who owe the lord money. Persuade them to pay. (-10 PayTension on success)" />
+    <string id="hlm_escort_merchant" text="Escort a Merchant Caravan" />
+    <string id="hlm_escort_tooltip" text="Guard a friendly merchant through dangerous territory. The lord takes a cut. (-15 PayTension)" />
+    <string id="hlm_negotiate_loan" text="Negotiate a Loan for the Lord" />
+    <string id="hlm_loan_tooltip" text="Use your trade connections to secure a loan. (-20 PayTension, requires Trade 50+)" />
+    <string id="hlm_loan_no_skill" text="Requires Trade skill 50+." />
+    <string id="hlm_volunteer_raid" text="Volunteer for a Raid" />
+    <string id="hlm_raid_tooltip" text="Lead a raid on enemy territory. Dangerous but lucrative. (-25 PayTension, risk of injury)" />
+    <string id="hlm_no_war" text="Only available when the lord is at war." />
+    <string id="hlm_back" text="Return to Command Tent" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- EQUIPMENT - Master at Arms & Upgrades -->
@@ -2732,6 +2862,40 @@
     <string id="ll_evt_desert_clean_opt_kingdom_outcome" text="A new kingdom means a clean slate. No one knows your face. No one knows your past.&#xA;&#xA;The journey is long, but when you arrive, you're just another wanderer looking for work.&#xA;&#xA;Perfect." />
     <string id="ll_evt_desert_clean_opt_bandit" text="Turn to banditry" />
     <string id="ll_evt_desert_clean_opt_bandit_outcome" text="Why work for coin when you can take it?&#xA;&#xA;The roads are full of merchants. You know how to fight. The math is simple.&#xA;&#xA;Your first robbery goes smoothly. The second, too. You're becoming someone new.&#xA;&#xA;Someone dangerous." />
+
+    <!-- Quartermaster Dialogue Player Options -->
+    <string id="qm_request_equipment" text="I need equipment." />
+    <string id="qm_sell_equipment" text="I want to sell some equipment." />
+    <string id="qm_request_provisions" text="I need better provisions." />
+    <string id="qm_black_market" text="I need... alternative supplies." />
+    <string id="qm_moral_guidance" text="The men are losing hope. Any guidance?" />
+    <string id="qm_survival_advice" text="Should I... consider my options?" />
+    <string id="qm_help_lord" text="Is there anything I can do to help with... the situation?" />
+    <string id="qm_chat" text="How did you end up as quartermaster?" />
+    <string id="qm_leave" text="I'll be going." />
+
+    <!-- Phase 9: Desperate Measures Outcome Messages -->
+    <string id="dm_bribe_success" text="The clerk adjusts the records in your favor. You gain 20 gold net." />
+    <string id="dm_bribe_caught" text="The clerk takes your money... then reports you. Your reputation suffers." />
+    <string id="dm_skim_success" text="You quietly divert some supplies for yourself. +30 gold worth of goods." />
+    <string id="dm_skim_suspicious" text="The quartermaster seems suspicious..." />
+    <string id="dm_black_market_contact" text="You make contact with some... entrepreneurial traders. They'll be around the camp from time to time." />
+    <string id="dm_sell_gear_success" text="You sell some of your issued equipment for {GOLD} gold. You'll need to replace it..." />
+    <string id="dm_desertion_title" text="Desertion Talk" />
+    <string id="dm_desertion_body" text="Several soldiers are planning to slip away tonight. They invite you to join them.&#xA;&#xA;&quot;The lord's broken his word. We've earned our freedom. No one would blame you for coming with us.&quot;&#xA;&#xA;Will you desert with them?" />
+    <string id="dm_desertion_accept" text="Desert Now" />
+    <string id="dm_desertion_decline" text="Stay" />
+    <string id="dm_desertion_not_ready" text="You listen to the deserters' plans, but decide the risk isn't worth it... yet." />
+
+    <!-- Phase 9: Help the Lord Outcome Messages -->
+    <string id="hlm_debts_success" text="You successfully collect the debts. The lord is pleased. (-10 PayTension)" />
+    <string id="hlm_debts_fail" text="The merchants refuse to pay. Perhaps they need more... persuasion." />
+    <string id="hlm_escort_success" text="You escort the merchant safely. The lord's coffers grow. (-15 PayTension, -4 fatigue)" />
+    <string id="hlm_loan_success" text="You secure a favorable loan for the lord. The treasury is replenished. (-20 PayTension)" />
+    <string id="hlm_loan_fail" text="The bankers aren't interested. Perhaps another approach..." />
+    <string id="hlm_raid_success" text="The raid is a complete success! Valuable loot is captured. (-25 PayTension)" />
+    <string id="hlm_raid_wounded" text="The raid succeeds but you're wounded! (-{DAMAGE} HP, -25 PayTension)" />
+    <string id="hlm_tension_stabilized" text="The lord's financial situation has stabilized." />
 
 </strings>
 </base>

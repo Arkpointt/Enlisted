@@ -12,6 +12,9 @@ namespace Enlisted.Features.CommandTent.Systems
     /// <summary>
     /// Handles the free, slow replenishment of retinue soldiers via daily tick.
     /// Every 2-3 days, adds one soldier to the player's retinue at no cost.
+    /// 
+    /// V2.0: Now requires Commander rank (T7+) for trickle to activate.
+    /// Recruits match player's formation and lord's culture.
     /// Includes overfill protection for both tier capacity and party size limits.
     /// </summary>
     public sealed class RetinueTrickleSystem : CampaignBehaviorBase
@@ -97,7 +100,7 @@ namespace Enlisted.Features.CommandTent.Systems
                 {
                     var currentCount = state.TotalSoldiers;
                     var enlistment = EnlistmentBehavior.Instance;
-                    var tierCapacity = RetinueManager.GetTierCapacity(enlistment?.EnlistmentTier ?? 4);
+                    var tierCapacity = RetinueManager.GetTierCapacity(enlistment?.EnlistmentTier ?? RetinueManager.CommanderTier1);
 
                     ModLogger.Info(LogCategory,
                         $"Trickle added {added} soldier ({currentCount}/{tierCapacity})");
@@ -118,6 +121,7 @@ namespace Enlisted.Features.CommandTent.Systems
 
         /// <summary>
         /// Checks if trickle replenishment can occur.
+        /// V2.0: Requires Commander rank (T7+) for retinue trickle.
         /// </summary>
         /// <param name="reason">Out: reason if cannot trickle</param>
         /// <returns>True if trickle is allowed</returns>
@@ -125,7 +129,7 @@ namespace Enlisted.Features.CommandTent.Systems
         {
             reason = null;
 
-            // Must be enlisted at Tier 4+
+            // Must be enlisted at Commander tier (T7+)
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
@@ -133,9 +137,9 @@ namespace Enlisted.Features.CommandTent.Systems
                 return false;
             }
 
-            if (enlistment.EnlistmentTier < RetinueManager.LanceTier)
+            if (enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
             {
-                reason = $"tier {enlistment.EnlistmentTier} < {RetinueManager.LanceTier}";
+                reason = $"tier {enlistment.EnlistmentTier} < {RetinueManager.CommanderTier1} (Commander rank required)";
                 return false;
             }
 

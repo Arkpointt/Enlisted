@@ -217,7 +217,7 @@ namespace Enlisted.Features.Lances.Events
             }
 
             // Don't fire if another event popup is already showing
-            if (LanceLifeEventInquiryPresenter.IsEventShowing)
+            if (LanceLifeEventInquiryPresenter.IsEventShowing || UI.ModernEventPresenter.IsEventShowing)
             {
                 return;
             }
@@ -241,7 +241,19 @@ namespace Enlisted.Features.Lances.Events
                 return;
             }
 
-            var shown = LanceLifeEventInquiryPresenter.TryShow(evt, enlistment);
+            // Use modern UI for onboarding and escalation events, fallback to basic popup for others
+            bool useModernUI = ShouldUseModernUI(evt);
+            bool shown;
+            
+            if (useModernUI)
+            {
+                shown = UI.ModernEventPresenter.TryShowWithFallback(evt, enlistment, useModernUI: true);
+            }
+            else
+            {
+                shown = LanceLifeEventInquiryPresenter.TryShow(evt, enlistment);
+            }
+            
             if (!shown)
             {
                 return;
@@ -468,6 +480,25 @@ namespace Enlisted.Features.Lances.Events
         private static int GetHourNumber()
         {
             return (int)Math.Floor(CampaignTime.Now.ToDays * 24f);
+        }
+
+        /// <summary>
+        /// Determine if this event should use modern UI.
+        /// Onboarding and escalation events get modern UI for maximum impact.
+        /// </summary>
+        private static bool ShouldUseModernUI(LanceLifeEventDefinition evt)
+        {
+            if (evt == null)
+            {
+                return false;
+            }
+
+            var category = evt.Category?.ToLowerInvariant() ?? "";
+            
+            // Use modern UI for:
+            // 1. Onboarding events (first impressions matter!)
+            // 2. Escalation events (dramatic threshold moments)
+            return category == "onboarding" || category == "escalation";
         }
     }
 }

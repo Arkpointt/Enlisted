@@ -70,7 +70,35 @@ Every ~12 days, a pay muster event occurs. The lord attempts to pay accumulated 
 |----------|--------|
 | **Full Payment** | Reset PayTension to 0, -5 per day since paid |
 | **Partial Payment** | Some backpay, PayTension reduced proportionally |
+| **Promissory Note (IOU)** | No payment today, backpay remains owed, retry in 3 days |
 | **No Payment** | Backpay accumulates, +5 PayTension per missed payment |
+
+### Promissory Notes (IOU)
+
+When camp conditions disrupt payroll (high pay tension, logistics strain, territory losses), the player can accept a promissory note instead of waiting for full payment.
+
+**How It Works:**
+- Available when `payDisrupted` flag is true (driven by camp conditions)
+- Menu option: "Accept a promissory note (IOU)"
+- No payment occurs, all backpay remains in ledger
+- Next pay muster scheduled in 3 days (instead of ~12 days)
+- Player can resolve pay when conditions improve
+
+**Benefits:**
+- Avoids long wait for next regular muster
+- No penalties or consequences
+- Backpay preserved and tracked
+- Quick retry allows flexible resolution
+
+**Implementation:**
+```csharp
+internal void ResolvePromissoryMuster()
+{
+    _lastPayOutcome = $"promissory:{_pendingMusterPay}";
+    _payMusterPending = false;
+    _nextPayday = CampaignTime.Now + CampaignTime.Days(3f);
+}
+```
 
 ### Lance Fund
 
@@ -102,6 +130,7 @@ Tracks soldier desperation when pay is late.
 |-------|--------|
 | Full payment | -5 per day since paid, reset to 0 |
 | Partial payment | Proportional reduction |
+| Promissory note (IOU) | No change (deferred, retry in 3 days) |
 | Missed payment | +5 per event |
 | Loyal path mission | -10 to -25 depending on mission |
 
@@ -205,6 +234,7 @@ Implementation: `LootBlockPatch.ShouldBlockLoot()` checks tier.
 | `GetPayTensionDisciplineModifier()` | float | 0.05 to 0.20 incident chance |
 | `ProcessFreeDesertion()` | void | Execute free desertion |
 | `AwardBattleLootShare(MapEvent)` | int | Calculate and award gold |
+| `ResolvePromissoryMuster()` | void | Accept IOU, defer payment, schedule retry in 3 days |
 
 ---
 
@@ -212,10 +242,12 @@ Implementation: `LootBlockPatch.ShouldBlockLoot()` checks tier.
 
 | File | Purpose |
 |------|---------|
-| `EnlistmentBehavior.cs` | Core pay state and methods |
+| `EnlistmentBehavior.cs` | Core pay state and methods (including `ResolvePromissoryMuster`) |
+| `EnlistedIncidentsBehavior.cs` | Pay muster inquiry presentation (IOU option) |
+| `CampLifeBehavior.cs` | Camp conditions that trigger `payDisrupted` flag |
 | `LootBlockPatch.cs` | Tier-gated loot blocking |
 | `events_pay_tension.json` | Tension event definitions |
 | `events_pay_loyal.json` | Loyal path missions |
 | `events_pay_mutiny.json` | Mutiny/desertion chains |
-| `enlisted_strings.xml` | Localization strings |
+| `enlisted_strings.xml` | Localization strings (including `enlisted_pay_iou`) |
 

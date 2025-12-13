@@ -332,6 +332,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private int _fatigueCurrent = 24;
         private int _fatigueMax = 24;
 
+        // Enhanced Fatigue System (Phase 1 - 24-point budget with health penalties)
+        // _fatigueCurrent represents REMAINING fatigue points (24 = fresh, 0 = exhausted)
+        // Health penalties trigger at LOW fatigue (8 or less remaining)
+        private CampaignTime _lastFatigueRecoveryTime = CampaignTime.Zero;
+        private float _healthBeforeExhaustion = -1f;
+        private float _accumulatedFatigueRecovery = 0f; // Fractional recovery accumulator
+
         private bool _playerCaptureCleanupScheduled;
         private CampaignTime _savedGraceEnlistmentDate = CampaignTime.Zero;
         private Hero _savedGraceLord;
@@ -389,6 +396,79 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     nameplates show correct ally/enemy colors. These are restored to neutral when service ends.
         /// </summary>
         private List<string> _minorFactionWarRelations = new List<string>();
+
+        // ========================================================================
+        // QUARTERMASTER HERO SYSTEM (Phase 3)
+        // Persistent NPC quartermaster with personality archetype
+        // ========================================================================
+
+        /// <summary>
+        ///     The quartermaster Hero assigned to the current enlisted lord.
+        ///     Created on first quartermaster access, persists for duration of service.
+        ///     Each lord has their own unique quartermaster.
+        /// </summary>
+        private Hero _quartermasterHero;
+
+        /// <summary>
+        ///     Personality archetype for the quartermaster.
+        ///     Determines dialogue style and special interactions.
+        ///     Values: "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric"
+        /// </summary>
+        private string _quartermasterArchetype;
+
+        /// <summary>
+        ///     Relationship level with quartermaster (0-100).
+        ///     Affects discounts, dialogue options, and special favors.
+        ///     Separate from lord relationship.
+        /// </summary>
+        private int _quartermasterRelationship;
+
+        /// <summary>
+        ///     Whether this is the first meeting with the current quartermaster.
+        ///     Used to trigger introduction dialogue on first visit.
+        /// </summary>
+        private bool _hasMetQuartermaster;
+
+        // ========================================================================
+        // FOOD/RATIONS SYSTEM (Phase 5)
+        // Allows player to purchase better rations for morale and fatigue bonuses
+        // ========================================================================
+
+        /// <summary>
+        ///     Current food quality tier affecting morale and fatigue recovery.
+        ///     Standard (0) = no bonus, Supplemental (1) = +2 morale, Officer (2) = +4 morale +2 fatigue,
+        ///     Commander (3) = +8 morale +5 fatigue.
+        /// </summary>
+        private int _currentFoodQuality;
+
+        /// <summary>
+        ///     When the current food quality bonus expires.
+        ///     Rations are typically purchased for 1-3 days at a time.
+        /// </summary>
+        private CampaignTime _foodQualityExpires = CampaignTime.Zero;
+
+        // ========================================================================
+        // RETINUE PROVISIONING SYSTEM (Phase 6)
+        // T7-T9 commanders must provision their retinue weekly
+        // ========================================================================
+
+        /// <summary>
+        ///     Current provisioning tier for the retinue.
+        ///     Affects retinue morale and combat effectiveness.
+        /// </summary>
+        private int _retinueProvisioningTier;
+
+        /// <summary>
+        ///     When the current retinue provisioning expires.
+        ///     Provisioning is purchased for 7 days (1 week) at a time.
+        /// </summary>
+        private CampaignTime _retinueProvisioningExpires = CampaignTime.Zero;
+
+        /// <summary>
+        ///     Whether the player has been warned about low provisions (2 days remaining).
+        ///     Resets when new provisions are purchased.
+        /// </summary>
+        private bool _retinueProvisioningWarningShown;
 
         /// <summary>
         ///     Tracks desertion cooldowns for minor factions. When a player deserts from a minor faction lord,
@@ -552,14 +632,72 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public bool IsOnProbation => _isOnProbation;
 
         /// <summary>
-        ///     Current fatigue for camp actions (placeholder hook; no mechanics yet).
+        ///     Current remaining fatigue points for camp actions.
+        ///     24 = fully rested, 0 = completely exhausted.
+        ///     Health penalties apply at 8 or below (exhausted) and 0 (severe exhaustion).
         /// </summary>
         public int FatigueCurrent => _fatigueCurrent;
 
         /// <summary>
-        ///     Max fatigue for camp actions (placeholder hook; no mechanics yet).
+        ///     Maximum fatigue points available (may be reduced by probation).
         /// </summary>
         public int FatigueMax => _fatigueMax;
+
+        /// <summary>
+        ///     Returns true if the player is in an exhausted state (low fatigue, health penalties active).
+        /// </summary>
+        public bool IsExhausted => _fatigueCurrent <= 8;
+
+        /// <summary>
+        ///     Returns true if the player is severely exhausted (critical fatigue level).
+        /// </summary>
+        public bool IsSeverelyExhausted => _fatigueCurrent <= 0;
+
+        /// <summary>
+        ///     Gets the fatigue percentage remaining (100% = fresh, 0% = exhausted).
+        ///     Useful for UI progress bars.
+        /// </summary>
+        public float FatiguePercentage => _fatigueMax > 0 ? (float)_fatigueCurrent / _fatigueMax * 100f : 0f;
+
+        /// <summary>
+        ///     Gets a localized fatigue status string for UI display.
+        /// </summary>
+        public string FatigueStatusText
+        {
+            get
+            {
+                if (_fatigueCurrent <= 0) return "Severely Exhausted";
+                if (_fatigueCurrent <= 8) return "Exhausted";
+                if (_fatigueCurrent <= 16) return "Tired";
+                return "Rested";
+            }
+        }
+
+        // ========================================================================
+        // QUARTERMASTER HERO PROPERTIES (Phase 3)
+        // ========================================================================
+
+        /// <summary>
+        ///     The current quartermaster Hero for dialog interaction.
+        ///     Returns null if not enlisted or hero hasn't been created.
+        /// </summary>
+        public Hero QuartermasterHero => _quartermasterHero;
+
+        /// <summary>
+        ///     Personality archetype of the quartermaster.
+        ///     Values: "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric"
+        /// </summary>
+        public string QuartermasterArchetype => _quartermasterArchetype ?? "veteran";
+
+        /// <summary>
+        ///     Relationship level with quartermaster (0-100).
+        /// </summary>
+        public int QuartermasterRelationship => _quartermasterRelationship;
+
+        /// <summary>
+        ///     Whether this is the first meeting with the quartermaster.
+        /// </summary>
+        public bool HasMetQuartermaster => _hasMetQuartermaster;
 
         /// <summary>
         ///     Returns true if a bag check is scheduled or in progress.
@@ -614,6 +752,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Reduce fatigue for camp actions. Clamped to 0..FatigueMax. Returns true if applied.
         ///     Safe to call by camp actions when they later consume fatigue.
+        ///     Now includes health penalty checks for exhaustion (Enhanced Fatigue System).
         /// </summary>
         public bool TryConsumeFatigue(int amount, string reason = null)
         {
@@ -631,6 +770,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _fatigueCurrent = newValue;
             SessionDiagnostics.LogEvent("Fatigue", "Consumed",
                 $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "camp_action"}");
+
+            // Check for health penalties when fatigue gets critically low
+            CheckFatigueHealthPenalty();
+
             return true;
         }
 
@@ -748,6 +891,153 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _fatigueCurrent = target;
             SessionDiagnostics.LogEvent("Fatigue", "Restored",
                 $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "rest"}");
+
+            // Check if we've recovered enough to remove health penalties
+            CheckFatigueHealthRecovery();
+        }
+
+        /// <summary>
+        ///     Gets the hourly fatigue recovery rate based on military rank/tier.
+        ///     Higher ranks recover faster due to better accommodations and rest privileges.
+        ///     See: docs/research/IMPLEMENTATION_PLAN.md lines 138-145
+        /// </summary>
+        /// <returns>Fatigue points recovered per hour during rest periods.</returns>
+        public float GetFatigueRecoveryRate()
+        {
+            // Based on tier (see IMPLEMENTATION_PLAN.md)
+            // T1-T2: 0.5/hour (8 hours to full recovery from exhausted)
+            // T3-T4: 0.75/hour (~5.3 hours to full recovery)
+            // T5-T6: 1.0/hour (4 hours to full recovery)
+            // T7+: 1.25/hour (3.2 hours to full recovery)
+            if (_enlistmentTier <= 2) return 0.5f;
+            if (_enlistmentTier <= 4) return 0.75f;
+            if (_enlistmentTier <= 6) return 1.0f;
+            return 1.25f;
+        }
+
+        /// <summary>
+        ///     Checks and applies health penalties based on current fatigue level.
+        ///     Called when fatigue is consumed. Low fatigue (high exhaustion) triggers penalties.
+        ///     - At 8 or less remaining: 15% health reduction
+        ///     - At 0 remaining: 70% health reduction (drops to 30%)
+        /// </summary>
+        private void CheckFatigueHealthPenalty()
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+
+            // Fatigue thresholds (remaining points):
+            // 0 = completely exhausted (severe penalty)
+            // 8 or less = exhausted (moderate penalty)
+            // 9+ = fine (no penalty)
+            const int SevereThreshold = 0;
+            const int ModerateThreshold = 8;
+
+            if (_fatigueCurrent <= SevereThreshold)
+            {
+                // Severe exhaustion: Drop to 30% health
+                if (_healthBeforeExhaustion < 0)
+                    _healthBeforeExhaustion = hero.HitPoints;
+
+                var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.30f));
+                if (hero.HitPoints > targetHealth)
+                {
+                    hero.HitPoints = targetHealth;
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You collapse from exhaustion! Health dropped to 30%.",
+                        Colors.Red));
+                    ModLogger.Warn("Fatigue", $"Severe exhaustion penalty applied: HP={hero.HitPoints}/{hero.MaxHitPoints}");
+                }
+            }
+            else if (_fatigueCurrent <= ModerateThreshold)
+            {
+                // Moderate exhaustion: Reduce to 85% max health
+                if (_healthBeforeExhaustion < 0)
+                    _healthBeforeExhaustion = hero.HitPoints;
+
+                var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.85f));
+                if (hero.HitPoints > targetHealth)
+                {
+                    hero.HitPoints = targetHealth;
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You're exhausted. Health reduced.",
+                        Colors.Yellow));
+                    ModLogger.Info("Fatigue", $"Moderate exhaustion penalty applied: HP={hero.HitPoints}/{hero.MaxHitPoints}");
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Checks if health should be restored after fatigue recovery.
+        ///     Called when fatigue is restored. Removes health penalties when fatigue rises above danger zones.
+        /// </summary>
+        private void CheckFatigueHealthRecovery()
+        {
+            var hero = Hero.MainHero;
+            if (hero == null || _healthBeforeExhaustion < 0) return;
+
+            const int ModerateThreshold = 8;
+
+            // Restore health if fatigue is now above the danger zone
+            if (_fatigueCurrent > ModerateThreshold)
+            {
+                var restoredHealth = (int)_healthBeforeExhaustion;
+                if (hero.HitPoints < restoredHealth)
+                {
+                    hero.HitPoints = Math.Min(restoredHealth, hero.MaxHitPoints);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You feel rested. Health restored.",
+                        Colors.Green));
+                    ModLogger.Info("Fatigue", $"Health restored after rest: HP={hero.HitPoints}/{hero.MaxHitPoints}");
+                }
+                _healthBeforeExhaustion = -1f;
+            }
+        }
+
+        /// <summary>
+        ///     Processes hourly fatigue recovery during rest periods.
+        ///     Called from OnHourlyTick. Recovery only occurs during night hours (dusk/night/dawn).
+        ///     Settlement bonus provides +2 fatigue recovery per hour.
+        /// </summary>
+        public void ProcessFatigueRecovery()
+        {
+            if (!IsEnlisted) return;
+            if (_fatigueCurrent >= _fatigueMax) return; // Already at max
+
+            // Only recover during rest hours (dusk, night, dawn)
+            // Use Campaign.Current.IsNight as a simple check, or check time of day
+            var currentHour = CampaignTime.Now.CurrentHourInDay;
+            bool isRestPeriod = currentHour >= 20 || currentHour <= 6; // 8 PM to 6 AM
+
+            if (!isRestPeriod)
+            {
+                return;
+            }
+
+            // Get rank-based recovery rate
+            float recoveryRate = GetFatigueRecoveryRate();
+
+            // Settlement bonus: +2/hour when in a town
+            if (Settlement.CurrentSettlement?.IsTown == true)
+            {
+                recoveryRate += 2.0f;
+            }
+
+            // Accumulate fractional recovery
+            _accumulatedFatigueRecovery += recoveryRate;
+
+            // Apply whole number recovery
+            if (_accumulatedFatigueRecovery >= 1.0f)
+            {
+                int wholeRecovery = (int)_accumulatedFatigueRecovery;
+                _accumulatedFatigueRecovery -= wholeRecovery;
+
+                RestoreFatigue(wholeRecovery, "night_rest");
+                ModLogger.Debug("Fatigue",
+                    $"Hourly recovery: +{wholeRecovery} (rate={recoveryRate}/hr, tier={_enlistmentTier}, now={_fatigueCurrent}/{_fatigueMax})");
+            }
+
+            _lastFatigueRecoveryTime = CampaignTime.Now;
         }
 
         public bool HasActiveGraceProtection => CampaignTime.Now < _graceProtectionEnds;
@@ -1073,6 +1363,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_isLanceLegacy", ref _isLanceLegacy);
             SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
             SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
+
+            // Enhanced Fatigue System (Phase 1)
+            SyncKey(dataStore, "_lastFatigueRecoveryTime", ref _lastFatigueRecoveryTime);
+            SyncKey(dataStore, "_healthBeforeExhaustion", ref _healthBeforeExhaustion);
+            SyncKey(dataStore, "_accumulatedFatigueRecovery", ref _accumulatedFatigueRecovery);
+
+            // Quartermaster Hero System (Phase 3)
+            SyncKey(dataStore, "_quartermasterHero", ref _quartermasterHero);
+            SyncKey(dataStore, "_quartermasterArchetype", ref _quartermasterArchetype);
+            SyncKey(dataStore, "_quartermasterRelationship", ref _quartermasterRelationship);
+            SyncKey(dataStore, "_hasMetQuartermaster", ref _hasMetQuartermaster);
+
+            // Food/Rations System (Phase 5)
+            SyncKey(dataStore, "_currentFoodQuality", ref _currentFoodQuality);
+            SyncKey(dataStore, "_foodQualityExpires", ref _foodQualityExpires);
+
+            // Retinue Provisioning System (Phase 6)
+            SyncKey(dataStore, "_retinueProvisioningTier", ref _retinueProvisioningTier);
+            SyncKey(dataStore, "_retinueProvisioningExpires", ref _retinueProvisioningExpires);
+            SyncKey(dataStore, "_retinueProvisioningWarningShown", ref _retinueProvisioningWarningShown);
 
             // Serialize kingdom state so we can restore the player's original kingdom/clan status
             SyncKey(dataStore, "_originalKingdom", ref _originalKingdom);
@@ -2617,6 +2927,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
+                // Clean up Quartermaster Hero reference (Phase 3)
+                CleanupQuartermasterOnServiceEnd();
+
+                // Clear food quality bonus (Phase 5)
+                ClearFoodQuality();
+
+                // Clear retinue provisioning (Phase 6)
+                ClearRetinueProvisioning();
+
                 _enlistedLord = null;
                 _enlistmentTier = 1;
                 _enlistmentXP = 0;
@@ -3129,6 +3448,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Hourly tick handler that runs once per in-game hour while the player is enlisted.
         ///     Maintains party following, visibility, and encounter prevention state.
+        ///     Also processes hourly fatigue recovery during rest periods.
         ///     Called automatically by the game every hour.
         /// </summary>
         private void OnHourlyTick()
@@ -3141,6 +3461,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             ProcessDeferredBagCheck();
+
+            // Process hourly fatigue recovery (Enhanced Fatigue System - Phase 1)
+            // This runs for enlisted players during rest periods (night hours)
+            ProcessFatigueRecovery();
 
             SyncActivationState("hourly_tick");
             if (!EnlistedActivation.IsActive)
@@ -3487,6 +3811,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 
                 // Phase 5: Check for NPC soldier desertion when pay tension is high
                 CheckNpcDesertionFromPayTension();
+
+                // Phase 6: Check retinue provisioning status (T7+ only)
+                CheckRetinueProvisioningStatus();
             }
             catch (Exception ex)
             {
@@ -4627,6 +4954,31 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// When pay is severely delayed, the lord understands if soldiers leave.
         /// </summary>
         public bool IsFreeDesertionAvailable => _payTension >= 60 && IsEnlisted;
+
+        /// <summary>
+        /// Reduces PayTension by the specified amount.
+        /// Used when the player helps the lord (Phase 8).
+        /// </summary>
+        /// <param name="amount">Amount to reduce (positive value)</param>
+        public void ReducePayTension(int amount)
+        {
+            if (amount <= 0 || !IsEnlisted)
+            {
+                return;
+            }
+
+            var oldTension = _payTension;
+            _payTension = Math.Max(0, _payTension - amount);
+
+            ModLogger.Info("Pay", $"PayTension reduced: {oldTension} -> {_payTension} (by {amount})");
+
+            if (_payTension < 40 && oldTension >= 40)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_tension_stabilized}The lord's financial situation has stabilized.").ToString(),
+                    Colors.Green));
+            }
+        }
 
         /// <summary>
         /// Process free desertion when PayTension is 60+.
@@ -7906,11 +8258,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Set tier directly (called by PromotionBehavior for immediate promotion).
-        ///     When crossing into Tier 4, reclaims companions from lord's party for retinue system.
+        ///     V2.0: Companions now managed from T1. Commander retinue granted at T7/T8/T9.
         /// </summary>
         public void SetTier(int tier)
         {
-            if (!IsEnlisted || tier < 1 || tier > 6)
+            // V2.0: Support T1-T9 (was T1-T6)
+            if (!IsEnlisted || tier < 1 || tier > 9)
             {
                 ModLogger.Debug("Enlistment", $"SetTier rejected - Enlisted: {IsEnlisted}, Tier: {tier}");
                 return;
@@ -7927,12 +8280,730 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP})");
 
-            // When crossing into Tier 4, reclaim companions from lord's party
-            // This enables the Companion Assignments feature in the Command Tent
+            // V2.0: Companions are now managed from T1 (enlistment start), not T4
+            // Legacy reclaim kept for backward compatibility with older saves
             if (previousTier < 4 && tier >= 4)
             {
                 ReclaimCompanionsFromLord();
             }
+
+            // V2.0: Grant commander retinue when crossing into T7/T8/T9
+            // Recruits are auto-granted based on player's formation and lord's culture
+            if (tier >= 7 && previousTier < tier)
+            {
+                try
+                {
+                    Features.CommandTent.Core.RetinueRecruitmentGrant.GrantCommanderRetinue(tier, previousTier);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.Error("Enlistment", $"Failed to grant retinue on tier change: {ex.Message}", ex);
+                }
+            }
+        }
+
+        // ========================================================================
+        // QUARTERMASTER HERO METHODS (Phase 3)
+        // ========================================================================
+
+        /// <summary>
+        ///     Get the current quartermaster Hero, creating one if necessary.
+        ///     Returns null if not enlisted or if hero creation fails.
+        /// </summary>
+        public Hero GetOrCreateQuartermaster()
+        {
+            if (!IsEnlisted || _enlistedLord == null)
+            {
+                return null;
+            }
+
+            // Check if we need to create a new quartermaster
+            if (_quartermasterHero == null || _quartermasterHero.IsDead)
+            {
+                _quartermasterHero = CreateQuartermasterForLord();
+                
+                if (_quartermasterHero != null)
+                {
+                    _hasMetQuartermaster = false; // Reset for first meeting
+                }
+            }
+
+            return _quartermasterHero;
+        }
+
+        /// <summary>
+        ///     Creates a new quartermaster Hero for the current enlisted lord.
+        ///     The quartermaster has a culture-appropriate name, appearance, equipment,
+        ///     and a randomly assigned personality archetype.
+        /// </summary>
+        private Hero CreateQuartermasterForLord()
+        {
+            if (_enlistedLord == null)
+            {
+                ModLogger.Error("Quartermaster", "Cannot create quartermaster: no enlisted lord");
+                return null;
+            }
+
+            try
+            {
+                var culture = _enlistedLord.Culture;
+                if (culture == null)
+                {
+                    ModLogger.Error("Quartermaster", "Cannot create quartermaster: lord has no culture");
+                    return null;
+                }
+
+                // 1. Get culture-appropriate troop template (sergeant/veteran tier)
+                var template = GetSergeantTierTroopTemplate(culture);
+                if (template == null)
+                {
+                    ModLogger.Error("Quartermaster", $"Cannot find troop template for culture {culture.StringId}");
+                    return null;
+                }
+
+                // 2. Get birth settlement (fallback chain for safety)
+                var birthSettlement = _enlistedLord.HomeSettlement 
+                    ?? _enlistedLord.BornSettlement 
+                    ?? Settlement.All.FirstOrDefault(s => s.Culture == culture && s.IsTown);
+
+                // 3. Create the Hero using native HeroCreator
+                var qm = HeroCreator.CreateSpecialHero(
+                    template,
+                    birthSettlement,
+                    _enlistedLord.Clan,
+                    null, // No spouse
+                    MBRandom.RandomInt(35, 55) // Experienced NCO age
+                );
+
+                if (qm == null)
+                {
+                    ModLogger.Error("Quartermaster", "HeroCreator.CreateSpecialHero returned null");
+                    return null;
+                }
+
+                // 4. Set Hero properties
+                // Use Wanderer occupation for generic camp NPCs (Quartermaster not in API)
+                qm.SetNewOccupation(Occupation.Wanderer);
+                qm.HiddenInEncyclopedia = true; // Don't clutter encyclopedia
+                qm.IsKnownToPlayer = true;
+                // Note: HasMet is read-only, but IsKnownToPlayer triggers the met status
+
+                // 5. Place in lord's party (stays in baggage train)
+                if (_enlistedLord.PartyBelongedTo != null)
+                {
+                    qm.ChangeHeroGold(-qm.Gold); // Remove default gold
+                    EnterSettlementAction.ApplyForCharacterOnly(qm, birthSettlement);
+                }
+
+                // 6. Assign personality archetype based on culture
+                _quartermasterArchetype = SelectArchetypeForCulture(culture.StringId);
+                _quartermasterRelationship = 0; // Start neutral
+                _hasMetQuartermaster = false;
+
+                ModLogger.Info("Quartermaster",
+                    $"Created quartermaster '{qm.Name}' ({_quartermasterArchetype}) for lord {_enlistedLord.Name}");
+
+                return qm;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to create quartermaster Hero", ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        ///     Gets a sergeant/veteran tier troop template from the culture.
+        ///     Used as the base for quartermaster appearance and skills.
+        /// </summary>
+        private CharacterObject GetSergeantTierTroopTemplate(CultureObject culture)
+        {
+            // Find tier 3-4 infantry troops from the lord's culture
+            var eligibleTroops = CharacterObject.All
+                .Where(t => t.Culture == culture
+                         && !t.IsHero
+                         && t.Tier >= 3 && t.Tier <= 4
+                         && t.Occupation == Occupation.Soldier
+                         && t.DefaultFormationClass == FormationClass.Infantry)
+                .ToList();
+
+            if (eligibleTroops.Count == 0)
+            {
+                // Fallback: any tier 3-4 troop
+                eligibleTroops = CharacterObject.All
+                    .Where(t => t.Culture == culture
+                             && !t.IsHero
+                             && t.Tier >= 3 && t.Tier <= 4)
+                    .ToList();
+            }
+
+            if (eligibleTroops.Count == 0)
+            {
+                // Last resort: basic troop
+                ModLogger.Warn("Quartermaster", $"No sergeant-tier troops found for {culture.StringId}, using basic troop");
+                return culture.BasicTroop;
+            }
+
+            return eligibleTroops.GetRandomElement();
+        }
+
+        /// <summary>
+        ///     Selects a personality archetype based on culture with weighted randomization.
+        ///     Different cultures favor different personality types.
+        /// </summary>
+        private string SelectArchetypeForCulture(string cultureId)
+        {
+            var archetypes = new[] { "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric" };
+
+            // Culture-specific weights (from quartermaster_hero_update.md)
+            // Format: veteran, merchant, bookkeeper, scoundrel, believer, eccentric
+            var weights = cultureId?.ToLowerInvariant() switch
+            {
+                "empire" => new[] { 30, 20, 35, 3, 10, 2 },    // Bureaucratic empire favors bookkeepers
+                "vlandia" => new[] { 25, 30, 20, 7, 15, 3 },   // Mercantile culture favors merchants
+                "sturgia" => new[] { 40, 10, 5, 5, 25, 15 },   // Warrior culture favors veterans
+                "battania" => new[] { 20, 7, 3, 30, 15, 25 },  // Tribal culture favors scoundrels/eccentrics
+                "khuzait" => new[] { 20, 30, 3, 30, 7, 10 },   // Trade/raid culture
+                "aserai" => new[] { 15, 35, 3, 15, 30, 2 },    // Merchant/faith culture
+                _ => new[] { 30, 20, 15, 10, 15, 10 }          // Mercenary/default
+            };
+
+            // Weighted random selection
+            var totalWeight = weights.Sum();
+            var roll = MBRandom.RandomInt(0, totalWeight);
+            var cumulative = 0;
+
+            for (var i = 0; i < archetypes.Length; i++)
+            {
+                cumulative += weights[i];
+                if (roll < cumulative)
+                {
+                    return archetypes[i];
+                }
+            }
+
+            return "veteran"; // Fallback
+        }
+
+        /// <summary>
+        ///     Modifies the relationship level with the quartermaster.
+        /// </summary>
+        /// <param name="change">Amount to change (positive or negative)</param>
+        public void ModifyQuartermasterRelationship(int change)
+        {
+            _quartermasterRelationship = Math.Max(0, Math.Min(100, _quartermasterRelationship + change));
+            ModLogger.Debug("Quartermaster", $"Relationship changed by {change}, now {_quartermasterRelationship}");
+        }
+
+        /// <summary>
+        ///     Marks the quartermaster as met (after first conversation).
+        /// </summary>
+        public void MarkQuartermasterMet()
+        {
+            _hasMetQuartermaster = true;
+            ModLogger.Debug("Quartermaster", "Player has met the quartermaster");
+        }
+
+        /// <summary>
+        ///     Gets the relationship level name for UI display.
+        /// </summary>
+        public string GetQuartermasterRelationshipLevel()
+        {
+            return _quartermasterRelationship switch
+            {
+                >= 80 => "Battle Brother",
+                >= 60 => "Respected",
+                >= 40 => "Trusted",
+                >= 20 => "Known",
+                _ => "Stranger"
+            };
+        }
+
+        /// <summary>
+        ///     Gets the quartermaster discount percentage based on relationship.
+        ///     Phase 8: High relationship provides discounts on equipment and rations.
+        /// </summary>
+        /// <returns>Discount percentage (0-15)</returns>
+        public int GetQuartermasterDiscount()
+        {
+            return _quartermasterRelationship switch
+            {
+                >= 80 => 15, // 15% discount for Battle Brothers
+                >= 60 => 10, // 10% discount for Respected
+                >= 40 => 5,  // 5% discount for Trusted
+                _ => 0       // No discount below Trusted
+            };
+        }
+
+        /// <summary>
+        ///     Applies the quartermaster discount to a price.
+        /// </summary>
+        /// <param name="basePrice">Original price</param>
+        /// <returns>Discounted price</returns>
+        public int ApplyQuartermasterDiscount(int basePrice)
+        {
+            var discount = GetQuartermasterDiscount();
+            if (discount <= 0)
+            {
+                return basePrice;
+            }
+
+            var reduction = (int)(basePrice * discount / 100f);
+            return Math.Max(1, basePrice - reduction);
+        }
+
+        /// <summary>
+        ///     Gets relationship milestone info for display.
+        ///     Returns (nextMilestone, pointsNeeded, reward) tuple.
+        /// </summary>
+        public (int NextMilestone, int PointsNeeded, string Reward) GetRelationshipMilestoneInfo()
+        {
+            var current = _quartermasterRelationship;
+
+            if (current < 20)
+            {
+                return (20, 20 - current, "Unlocks: Chat option");
+            }
+            else if (current < 40)
+            {
+                return (40, 40 - current, "Unlocks: 5% discount, Black market access");
+            }
+            else if (current < 60)
+            {
+                return (60, 60 - current, "Unlocks: 10% discount");
+            }
+            else if (current < 80)
+            {
+                return (80, 80 - current, "Unlocks: 15% discount, Special items");
+            }
+            else
+            {
+                return (100, 100 - current, "Maximum relationship");
+            }
+        }
+
+        /// <summary>
+        ///     Cleans up quartermaster state when service ends.
+        /// </summary>
+        private void CleanupQuartermasterOnServiceEnd()
+        {
+            // Quartermaster stays with the lord's army when player leaves
+            // Just null out our reference
+            _quartermasterHero = null;
+            _quartermasterArchetype = null;
+            _quartermasterRelationship = 0;
+            _hasMetQuartermaster = false;
+
+            ModLogger.Info("Quartermaster", "Quartermaster reference cleared on service end");
+        }
+
+        // ========================================================================
+        // FOOD/RATIONS SYSTEM METHODS (Phase 5)
+        // ========================================================================
+
+        /// <summary>
+        ///     Food quality tier enumeration for rations system.
+        ///     Values correspond to _currentFoodQuality field.
+        /// </summary>
+        public enum FoodQualityTier
+        {
+            /// <summary>Standard army rations - no bonus.</summary>
+            Standard = 0,
+            /// <summary>Supplemental rations - +2 morale for 1 day.</summary>
+            Supplemental = 1,
+            /// <summary>Officer's fare - +4 morale, +2 fatigue relief for 2 days.</summary>
+            Officer = 2,
+            /// <summary>Commander's feast - +8 morale, +5 fatigue relief for 3 days.</summary>
+            Commander = 3
+        }
+
+        /// <summary>
+        ///     Gets the current food quality tier.
+        ///     Automatically returns Standard if the current quality has expired.
+        /// </summary>
+        public FoodQualityTier CurrentFoodQuality
+        {
+            get
+            {
+                // Check if expired
+                if (_currentFoodQuality > 0 && CampaignTime.Now >= _foodQualityExpires)
+                {
+                    _currentFoodQuality = 0;
+                    _foodQualityExpires = CampaignTime.Zero;
+                    ModLogger.Debug("Food", "Food quality bonus expired");
+                }
+                return (FoodQualityTier)_currentFoodQuality;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the time remaining on the current food quality bonus.
+        ///     Returns zero if no bonus active or expired.
+        /// </summary>
+        public CampaignTime FoodQualityTimeRemaining
+        {
+            get
+            {
+                if (_currentFoodQuality <= 0 || CampaignTime.Now >= _foodQualityExpires)
+                {
+                    return CampaignTime.Zero;
+                }
+                return _foodQualityExpires - CampaignTime.Now;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the morale bonus from current food quality.
+        ///     Used by camp life behavior to adjust party morale.
+        /// </summary>
+        /// <returns>Morale bonus (0, 2, 4, or 8)</returns>
+        public int GetFoodMoraleBonus()
+        {
+            var quality = CurrentFoodQuality;
+            return quality switch
+            {
+                FoodQualityTier.Supplemental => 2,
+                FoodQualityTier.Officer => 4,
+                FoodQualityTier.Commander => 8,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets the fatigue relief bonus from current food quality.
+        ///     Applied when rations are purchased (immediate relief).
+        /// </summary>
+        /// <returns>Fatigue relief points (0, 0, 2, or 5)</returns>
+        public int GetFoodFatigueBonus()
+        {
+            var quality = CurrentFoodQuality;
+            return quality switch
+            {
+                FoodQualityTier.Officer => 2,
+                FoodQualityTier.Commander => 5,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets food quality information for display.
+        /// </summary>
+        public (string Name, int MoraleBonus, int FatigueBonus, float DaysRemaining) GetFoodQualityInfo()
+        {
+            var quality = CurrentFoodQuality;
+            var remaining = FoodQualityTimeRemaining;
+            var daysRemaining = (float)remaining.ToDays;
+
+            var name = quality switch
+            {
+                FoodQualityTier.Supplemental => "Supplemental Rations",
+                FoodQualityTier.Officer => "Officer's Fare",
+                FoodQualityTier.Commander => "Commander's Feast",
+                _ => "Standard Rations"
+            };
+
+            return (name, GetFoodMoraleBonus(), GetFoodFatigueBonus(), daysRemaining);
+        }
+
+        /// <summary>
+        ///     Purchases rations of the specified quality tier.
+        ///     Deducts gold, applies fatigue relief, sets morale bonus duration.
+        /// </summary>
+        /// <param name="tier">The food quality tier to purchase</param>
+        /// <param name="cost">Gold cost (validated before calling)</param>
+        /// <param name="durationDays">How many days the bonus lasts</param>
+        /// <returns>True if purchase successful, false if insufficient funds</returns>
+        public bool PurchaseRations(FoodQualityTier tier, int cost, int durationDays)
+        {
+            if (!IsEnlisted)
+            {
+                ModLogger.Warn("Food", "Cannot purchase rations: not enlisted");
+                return false;
+            }
+
+            if (Hero.MainHero.Gold < cost)
+            {
+                ModLogger.Debug("Food", $"Cannot purchase rations: insufficient gold ({Hero.MainHero.Gold} < {cost})");
+                return false;
+            }
+
+            // Deduct gold
+            Hero.MainHero.ChangeHeroGold(-cost);
+
+            // Set quality and duration
+            _currentFoodQuality = (int)tier;
+            _foodQualityExpires = CampaignTime.Now + CampaignTime.Days(durationDays);
+
+            // Apply immediate fatigue relief for higher tiers
+            var fatigueBonus = tier switch
+            {
+                FoodQualityTier.Officer => 2,
+                FoodQualityTier.Commander => 5,
+                _ => 0
+            };
+
+            if (fatigueBonus > 0)
+            {
+                RestoreFatigue(fatigueBonus, "rations_purchase");
+            }
+
+            // Increase quartermaster relationship
+            ModifyQuartermasterRelationship(2);
+
+            var tierName = tier switch
+            {
+                FoodQualityTier.Supplemental => "Supplemental Rations",
+                FoodQualityTier.Officer => "Officer's Fare",
+                FoodQualityTier.Commander => "Commander's Feast",
+                _ => "Rations"
+            };
+
+            ModLogger.Info("Food",
+                $"Purchased {tierName} for {cost}g, duration {durationDays} days, fatigue relief +{fatigueBonus}");
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Clears food quality bonus (used when service ends).
+        /// </summary>
+        private void ClearFoodQuality()
+        {
+            _currentFoodQuality = 0;
+            _foodQualityExpires = CampaignTime.Zero;
+        }
+
+        // ========================================================================
+        // RETINUE PROVISIONING SYSTEM METHODS (Phase 6)
+        // ========================================================================
+
+        /// <summary>
+        ///     Retinue provisioning tier enumeration.
+        ///     Higher tiers provide better morale but cost more per soldier.
+        /// </summary>
+        public enum RetinueProvisioningTier
+        {
+            /// <summary>No provisions - starvation penalties apply.</summary>
+            None = 0,
+            /// <summary>Bare minimum rations - -5 morale penalty.</summary>
+            BareMinimum = 1,
+            /// <summary>Standard army rations - no modifier.</summary>
+            Standard = 2,
+            /// <summary>Good fare - +5 morale bonus.</summary>
+            GoodFare = 3,
+            /// <summary>Officer quality - +10 morale bonus.</summary>
+            OfficerQuality = 4
+        }
+
+        /// <summary>
+        ///     Gets the current retinue provisioning tier.
+        ///     Returns None if expired.
+        /// </summary>
+        public RetinueProvisioningTier CurrentRetinueProvisioning
+        {
+            get
+            {
+                // Check if expired
+                if (_retinueProvisioningTier > 0 && CampaignTime.Now >= _retinueProvisioningExpires)
+                {
+                    _retinueProvisioningTier = 0;
+                    _retinueProvisioningExpires = CampaignTime.Zero;
+                    ModLogger.Debug("RetinueFood", "Retinue provisioning expired");
+                }
+                return (RetinueProvisioningTier)_retinueProvisioningTier;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the time remaining on retinue provisions.
+        /// </summary>
+        public CampaignTime RetinueProvisioningTimeRemaining
+        {
+            get
+            {
+                if (_retinueProvisioningTier <= 0 || CampaignTime.Now >= _retinueProvisioningExpires)
+                {
+                    return CampaignTime.Zero;
+                }
+                return _retinueProvisioningExpires - CampaignTime.Now;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the morale modifier from current retinue provisioning.
+        /// </summary>
+        /// <returns>Morale modifier (-10 to +10)</returns>
+        public int GetRetinueMoraleModifier()
+        {
+            var tier = CurrentRetinueProvisioning;
+            return tier switch
+            {
+                RetinueProvisioningTier.None => -10,       // Starvation
+                RetinueProvisioningTier.BareMinimum => -5, // Grumbling
+                RetinueProvisioningTier.Standard => 0,     // Neutral
+                RetinueProvisioningTier.GoodFare => 5,     // Satisfied
+                RetinueProvisioningTier.OfficerQuality => 10, // High morale
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets the cost per soldier for a provisioning tier.
+        /// </summary>
+        public static int GetProvisioningCostPerSoldier(RetinueProvisioningTier tier)
+        {
+            return tier switch
+            {
+                RetinueProvisioningTier.BareMinimum => 2,    // 2g per soldier per week
+                RetinueProvisioningTier.Standard => 5,       // 5g per soldier per week
+                RetinueProvisioningTier.GoodFare => 10,      // 10g per soldier per week
+                RetinueProvisioningTier.OfficerQuality => 20, // 20g per soldier per week
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets the total cost to provision the retinue for one week.
+        /// </summary>
+        /// <param name="tier">Provisioning tier</param>
+        /// <param name="soldierCount">Number of soldiers (from RetinueManager)</param>
+        public static int GetRetinueProvisioningCost(RetinueProvisioningTier tier, int soldierCount)
+        {
+            return GetProvisioningCostPerSoldier(tier) * soldierCount;
+        }
+
+        /// <summary>
+        ///     Gets retinue provisioning information for display.
+        /// </summary>
+        public (string Name, int MoraleModifier, float DaysRemaining) GetRetinueProvisioningInfo()
+        {
+            var tier = CurrentRetinueProvisioning;
+            var remaining = RetinueProvisioningTimeRemaining;
+            var daysRemaining = (float)remaining.ToDays;
+
+            var name = tier switch
+            {
+                RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                RetinueProvisioningTier.Standard => "Standard Rations",
+                RetinueProvisioningTier.GoodFare => "Good Fare",
+                RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                _ => "Not Provisioned"
+            };
+
+            return (name, GetRetinueMoraleModifier(), daysRemaining);
+        }
+
+        /// <summary>
+        ///     Purchases retinue provisions for one week.
+        /// </summary>
+        /// <param name="tier">The provisioning tier to purchase</param>
+        /// <param name="soldierCount">Number of soldiers to provision</param>
+        /// <returns>True if purchase successful</returns>
+        public bool PurchaseRetinueProvisioning(RetinueProvisioningTier tier, int soldierCount)
+        {
+            if (!IsEnlisted || _enlistmentTier < 7)
+            {
+                ModLogger.Warn("RetinueFood", "Cannot provision retinue: not a commander (T7+)");
+                return false;
+            }
+
+            var cost = GetRetinueProvisioningCost(tier, soldierCount);
+
+            if (Hero.MainHero.Gold < cost)
+            {
+                ModLogger.Debug("RetinueFood", $"Cannot provision: insufficient gold ({Hero.MainHero.Gold} < {cost})");
+                return false;
+            }
+
+            // Deduct gold
+            Hero.MainHero.ChangeHeroGold(-cost);
+
+            // Set provisioning tier and duration (7 days)
+            _retinueProvisioningTier = (int)tier;
+            _retinueProvisioningExpires = CampaignTime.Now + CampaignTime.Days(7);
+            _retinueProvisioningWarningShown = false;
+
+            // Increase quartermaster relationship
+            ModifyQuartermasterRelationship(3);
+
+            var tierName = tier switch
+            {
+                RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                RetinueProvisioningTier.Standard => "Standard",
+                RetinueProvisioningTier.GoodFare => "Good Fare",
+                RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                _ => "provisions"
+            };
+
+            ModLogger.Info("RetinueFood",
+                $"Purchased {tierName} provisioning for {soldierCount} soldiers, cost {cost}g, 7 days");
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Checks retinue provisioning status and displays warnings.
+        ///     Called from DailyTick.
+        /// </summary>
+        public void CheckRetinueProvisioningStatus()
+        {
+            // Only applies to T7+ commanders with retinue
+            if (!IsEnlisted || _enlistmentTier < 7)
+            {
+                return;
+            }
+
+            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            if (retinueManager?.State == null || retinueManager.State.TotalSoldiers <= 0)
+            {
+                return;
+            }
+
+            var remaining = RetinueProvisioningTimeRemaining;
+            var daysRemaining = remaining.ToDays;
+
+            // Check for starvation (no provisions)
+            if (_retinueProvisioningTier <= 0 || CampaignTime.Now >= _retinueProvisioningExpires)
+            {
+                // Starvation - apply penalties
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Your retinue is starving! Visit the Quartermaster to provision them.",
+                    Colors.Red));
+                return;
+            }
+
+            // Check for low provisions warning (2 days or less)
+            if (daysRemaining <= 2 && !_retinueProvisioningWarningShown)
+            {
+                _retinueProvisioningWarningShown = true;
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Warning: Retinue provisions will run out in {daysRemaining:F1} days!",
+                    Colors.Yellow));
+            }
+        }
+
+        /// <summary>
+        ///     Clears retinue provisioning (used when service ends or retinue disbanded).
+        /// </summary>
+        public void ClearRetinueProvisioning()
+        {
+            _retinueProvisioningTier = 0;
+            _retinueProvisioningExpires = CampaignTime.Zero;
+            _retinueProvisioningWarningShown = false;
+        }
+
+        /// <summary>
+        ///     Whether the player has an active retinue that needs provisioning.
+        /// </summary>
+        public bool HasRetinueToProvision()
+        {
+            if (!IsEnlisted || _enlistmentTier < 7)
+            {
+                return false;
+            }
+
+            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            return retinueManager?.State?.TotalSoldiers > 0;
         }
 
         /// <summary>

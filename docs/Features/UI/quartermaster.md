@@ -1,13 +1,16 @@
 # Quartermaster (and the Baggage Train)
 
-This page documents the full equipment loop: **Quartermaster buy/sell**, plus the **Enlistment Bag Check** and **Baggage Train** stash that keep early service grounded.
+This page documents the full equipment loop: **Quartermaster buy/sell**, the **Quartermaster Hero NPC**, plus the **Enlistment Bag Check** and **Baggage Train** stash that keep early service grounded.
 
 ## Index
 - [Overview](#overview)
+- [Quartermaster Hero](#quartermaster-hero)
 - [Access](#access)
 - [Enlistment Bag Check (first enlistment)](#enlistment-bag-check-first-enlistment)
 - [Baggage Train (stash access)](#baggage-train-stash-access)
 - [Quartermaster: How it works](#quartermaster-how-it-works)
+- [Provisions System](#provisions-system)
+- [Relationship System](#relationship-system)
 - [Discharge & gear handling](#discharge--gear-handling)
 - [Technical notes (high-level)](#technical-notes-high-level)
 
@@ -15,13 +18,40 @@ This page documents the full equipment loop: **Quartermaster buy/sell**, plus th
 The **Quartermaster** is the enlisted equipment vendor. It lets you **purchase** formation-appropriate weapons, armor, and mounts based on your **formation**, **tier**, and **culture**.
 
 Key traits:
-- **Purchase-based**: equipment costs denars.
-- **Formation-driven**: availability based on your chosen formation (Infantry/Archer/Cavalry/Horse Archer).
-- **Culture-appropriate**: gear matches your enlisted lord's culture.
-- **Tier-unlocked**: higher tiers unlock better equipment.
-- **NEW indicators**: newly unlocked items are marked with `[NEW]` after promotion.
-- **No accountability system**: the mod does not track "issued" gear or dock pay for missing items.
-- **Buyback**: you can sell gear back to the Quartermaster for a reduced price.
+- **Persistent NPC**: Each lord has a unique Quartermaster Hero with personality
+- **Three Archetypes**: Veteran, Scoundrel, or Believer - each with unique dialogue
+- **Purchase-based**: equipment costs denars
+- **Formation-driven**: availability based on your chosen formation (Infantry/Archer/Cavalry/Horse Archer)
+- **Culture-appropriate**: gear matches your enlisted lord's culture
+- **Tier-unlocked**: higher tiers unlock better equipment
+- **Relationship discounts**: Build trust for 5-15% discounts
+- **NEW indicators**: newly unlocked items are marked with `[NEW]` after promotion
+- **No accountability system**: the mod does not track "issued" gear or dock pay for missing items
+- **Buyback**: you can sell gear back to the Quartermaster for a reduced price
+
+## Quartermaster Hero
+
+Each lord has a unique, persistent Quartermaster NPC:
+
+### Archetypes
+- **Veteran**: Pragmatic old soldier, practical advice, no-nonsense attitude
+- **Scoundrel**: Opportunistic, knows black market contacts, offers "creative" solutions
+- **Believer**: Pious and moral, offers spiritual guidance, encourages loyalty
+
+### PayTension-Aware Dialogue
+When pay is late (PayTension 40+), the Quartermaster offers archetype-specific advice:
+- **Scoundrel**: Black market contacts, opportunities to make coin
+- **Believer**: Moral guidance, encouragement to stay faithful
+- **Veteran**: Practical survival advice, desertion warnings at 60+ tension
+
+### Relationship Milestones
+| Level | Relationship | Discount | Unlocks |
+|-------|-------------|----------|---------|
+| Stranger | 0-19 | 0% | Basic access |
+| Known | 20-39 | 0% | Chat option |
+| Trusted | 40-59 | 5% | Black market hints |
+| Respected | 60-79 | 10% | Better dialogue |
+| Battle Brother | 80-100 | 15% | Special items |
 
 ## Access
 - **Quartermaster**: Enlisted Status → **Visit Quartermaster**
@@ -90,20 +120,78 @@ When promoted, you are prompted to visit the Quartermaster:
 - Message displays: "Report to the Quartermaster for your new kit"
 - Newly unlocked items are marked with `[NEW]`
 
+## Provisions System
+
+Purchase rations for morale and fatigue benefits:
+
+| Tier | Cost | Duration | Morale | Fatigue |
+|------|------|----------|--------|---------|
+| Basic Rations | 25g | 3 days | +2 | - |
+| Good Fare | 50g | 3 days | +4 | -1/day |
+| Officer's Table | 100g | 3 days | +6 | -2/day |
+
+### Retinue Provisioning (T7+)
+Commanders with retinues can purchase provisions for their soldiers:
+
+| Tier | Cost/Soldier | Duration | Effect |
+|------|--------------|----------|--------|
+| Bare Minimum | 1g | 7 days | -2 morale |
+| Standard | 2g | 7 days | No modifier |
+| Good Fare | 4g | 7 days | +2 morale |
+| Officer Quality | 6g | 7 days | +4 morale |
+
+Warning at 2 days remaining; starvation penalties at expiration.
+
+## Relationship System
+
+Build trust with the Quartermaster over time:
+
+**Gaining Relationship:**
+- First meeting: +5
+- Chatting: +3
+- Buying equipment: +1 per purchase
+- Helping with PayTension options: +2 to +5
+
+**Discounts by Level:**
+- Trusted (40+): 5% off all purchases
+- Respected (60+): 10% off all purchases
+- Battle Brother (80+): 15% off all purchases
+
 ## Discharge & gear handling
 Discharge is not handled inside Quartermaster. It resolves via **Final Muster** at pay muster (see Pay System). Final Muster determines whether gear is stripped or retained.
 
 ## Technical notes (high-level)
-- Core logic: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
-- Key methods:
-  - `GetAvailableEquipmentByFormation(formation, tierCap, culture)` - discovers equipment
-  - `UpdateNewlyUnlockedItems()` - tracks NEW items after promotion
-  - `IsNewlyUnlockedItem(item)` - checks if item should show [NEW]
-  - `ClearNewlyUnlockedMarkers()` - clears markers after viewing
+
+### Core Files
+- **Equipment Logic**: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
+- **Quartermaster Hero**: `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (Quartermaster section)
+- **Dialog System**: `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs`
+- **Menu Integration**: `src/Features/Camp/CampMenuHandler.cs` (Desperate Measures, Help the Lord)
+
+### Key Methods
+**QuartermasterManager.cs:**
+- `GetAvailableEquipmentByFormation(formation, tierCap, culture)` - discovers equipment
+- `UpdateNewlyUnlockedItems()` - tracks NEW items after promotion
+- `IsNewlyUnlockedItem(item)` - checks if item should show [NEW]
+- `AddRationsMenuOptions()` - provisions menu
+
+**EnlistmentBehavior.cs (Quartermaster section):**
+- `GetOrCreateQuartermaster()` - gets or creates the QM Hero
+- `ModifyQuartermasterRelationship(change)` - adjusts trust level
+- `GetQuartermasterDiscount()` - returns discount percentage (0-15)
+- `ApplyQuartermasterDiscount(price)` - applies relationship discount
+- `PurchaseRations(tier)` - handles rations purchase
+- `PurchaseRetinueProvisioning(tier)` - handles retinue provisioning
+
+**EnlistedDialogManager.cs:**
+- `AddQuartermasterDialogs(starter)` - registers all QM dialog
+- `GetQuartermasterGreeting()` - dynamic greeting based on archetype/tension
+- PayTension-aware dialog conditions and consequences
 
 ## Related docs
 - [Troop Selection (Legacy)](../Gameplay/troop-selection.md)
 - [Enlistment](../Core/enlistment.md)
-- [Pay System](../Core/pay-system-rework.md)
+- [Pay System](../Core/pay-system.md)
 - [Camp (My Camp)](camp-tent.md)
 - [Duties System](../Core/duties-system.md)
+- [Camp Life Simulation](../Gameplay/camp-life-simulation.md)
