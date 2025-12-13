@@ -1,17 +1,20 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
@@ -218,17 +221,13 @@ namespace Enlisted.Features.Camp
 
         /// <summary>
         /// Checks if the Command Tent option should be available (player must be enlisted).
+        /// Only shows when enlisted (menu is only visible when enlisted anyway).
         /// </summary>
         private bool IsCommandTentAvailable(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true)
-            {
-                return false;
-            }
-
             args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-            return true;
+            args.Tooltip = new TextObject("{=ct_menu_tooltip}Access your personal camp area.");
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
         }
 
         /// <summary>
@@ -313,7 +312,7 @@ namespace Enlisted.Features.Camp
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     args.Tooltip = new TextObject("{=ct_activity_log_tooltip}Review recent activities and events.");
-                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                    return true;
                 },
                 _ => ShowActivityLogPopup(),
                 false,
@@ -328,11 +327,36 @@ namespace Enlisted.Features.Camp
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     args.Tooltip = new TextObject("{=ct_xp_breakdown_tooltip}View your experience progress and sources.");
-                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                    return true;
                 },
                 _ => ShowXpBreakdownPopup(),
                 false,
                 3);
+
+            // Camp Activities - Training and tasks
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_camp_activities",
+                "{=ct_camp_activities}Camp Activities",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
+                    if (activitiesBehavior?.IsEnabled() != true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_activities}Camp activities system is disabled.");
+                        return true;
+                    }
+                    var count = activitiesBehavior.GetAvailableActivityCountForCurrentContext();
+                    args.Tooltip = count > 0
+                        ? new TextObject("{=ct_activities_tooltip}Training, tasks, and social activities. ({COUNT} available)").SetTextVariable("COUNT", count)
+                        : new TextObject("{=ct_activities_tooltip_none}No activities available at this time.");
+                    return true;
+                },
+                _ => ShowCampActivitiesPopup(),
+                false,
+                4);
 
             // Baggage Train (stash access) - Submenu icon
             starter.AddGameMenuOption(
@@ -343,11 +367,11 @@ namespace Enlisted.Features.Camp
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     args.Tooltip = new TextObject("{=qm_baggage_tooltip}Access your stored belongings (fatigue cost by rank).");
-                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                    return true;
                 },
                 _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
                 false,
-                4);
+                5);
 
             // Request Discharge (Final Muster)
             starter.AddGameMenuOption(
@@ -356,19 +380,15 @@ namespace Enlisted.Features.Camp
                 "{=ct_request_discharge}Request Discharge (Final Muster)",
                 args =>
                 {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.IsEnlisted != true)
-                    {
-                        return false;
-                    }
-
-                    if (enlistment.IsPendingDischarge)
+                    if (enlistment?.IsPendingDischarge == true)
                     {
                         args.IsEnabled = false;
                         args.Tooltip = new TextObject("{=ct_discharge_pending}Discharge already pending; will resolve at next pay muster.");
+                        return true;
                     }
-
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=ct_discharge_tooltip}Request formal discharge with final pay settlement.");
                     return true;
                 },
                 _ =>
@@ -394,14 +414,16 @@ namespace Enlisted.Features.Camp
                 "{=ct_cancel_discharge}Cancel Pending Discharge",
                 args =>
                 {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.IsEnlisted == true && enlistment.IsPendingDischarge)
+                    if (enlistment?.IsPendingDischarge != true)
                     {
-                        args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=ct_no_pending_discharge}No discharge request pending.");
                         return true;
                     }
-
-                    return false;
+                    args.Tooltip = new TextObject("{=ct_cancel_discharge_tooltip}Withdraw your discharge request and remain in service.");
+                    return true;
                 },
                 _ =>
                 {
@@ -561,6 +583,191 @@ namespace Enlisted.Features.Camp
             var nextTier = currentTier + 1;
             return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(nextTier);
         }
+
+        /// <summary>
+        /// Shows a multi-selection popup with ALL camp activities.
+        /// All activities are shown (greyed out if conditions aren't met) with explanatory tooltips.
+        /// </summary>
+        private static void ShowCampActivitiesPopup()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
+
+            if (enlistment?.IsEnlisted != true || activitiesBehavior?.IsEnabled() != true)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=ct_activities_unavailable}Camp activities are not available at this time.").ToString()));
+                return;
+            }
+
+            var activities = activitiesBehavior.GetAllActivities();
+            var dayPart = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
+            var dayPartToken = dayPart?.ToString().ToLowerInvariant() ?? "day";
+            var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
+            var currentDay = (int)CampaignTime.Now.ToDays;
+
+            var options = new List<InquiryElement>();
+
+            foreach (var activity in activities)
+            {
+                // Build option text with status
+                var displayName = ResolveActivityText(activity.TextId, activity.Id);
+                var hint = ResolveActivityText(activity.HintId, "");
+
+                // Check all conditions and build tooltip explaining why disabled
+                var disableReasons = new List<string>();
+                var statusParts = new List<string>();
+
+                // Tier check
+                if (enlistment.EnlistmentTier < activity.MinTier)
+                {
+                    disableReasons.Add($"Requires Tier {activity.MinTier}");
+                }
+
+                // Formation check
+                if (activity.Formations != null && activity.Formations.Count > 0)
+                {
+                    if (string.IsNullOrWhiteSpace(formation) ||
+                        !activity.Formations.Any(f => string.Equals(f, formation, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var formationList = string.Join("/", activity.Formations.Select(f => f.ToTitleCase()));
+                        disableReasons.Add($"{formationList} only");
+                    }
+                }
+
+                // Day part check
+                if (activity.DayParts != null && activity.DayParts.Count > 0)
+                {
+                    if (string.IsNullOrWhiteSpace(dayPartToken) ||
+                        !activity.DayParts.Any(dp => string.Equals(dp, dayPartToken, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var dayPartList = string.Join("/", activity.DayParts.Select(dp => dp.ToTitleCase()));
+                        disableReasons.Add($"Available: {dayPartList}");
+                    }
+                }
+
+                // Cooldown check
+                var isOnCooldown = activitiesBehavior.TryGetCooldownDaysRemaining(activity, currentDay, out var daysRemaining);
+                if (isOnCooldown)
+                {
+                    disableReasons.Add($"On cooldown ({daysRemaining} days)");
+                }
+
+                // Fatigue check
+                var hasFatigue = enlistment.FatigueCurrent >= activity.FatigueCost;
+                if (!hasFatigue && activity.FatigueCost > 0)
+                {
+                    disableReasons.Add("Too fatigued");
+                }
+
+                var isEnabled = disableReasons.Count == 0;
+
+                // Build status suffix for tooltip
+                if (activity.FatigueCost > 0)
+                {
+                    statusParts.Add($"Fatigue: -{activity.FatigueCost}");
+                }
+                if (activity.FatigueRelief > 0)
+                {
+                    statusParts.Add($"Rest: +{activity.FatigueRelief}");
+                }
+                if (activity.SkillXp != null && activity.SkillXp.Count > 0)
+                {
+                    var xpList = activity.SkillXp.Select(kvp => $"{kvp.Key} +{kvp.Value}");
+                    statusParts.Add(string.Join(", ", xpList));
+                }
+
+                var fullHint = hint;
+                if (statusParts.Count > 0)
+                {
+                    fullHint += (string.IsNullOrEmpty(fullHint) ? "" : " | ") + string.Join(" | ", statusParts);
+                }
+
+                // Add disable reasons to tooltip
+                if (disableReasons.Count > 0)
+                {
+                    fullHint += (string.IsNullOrEmpty(fullHint) ? "" : " | ") + "[" + string.Join(", ", disableReasons) + "]";
+                }
+
+                options.Add(new InquiryElement(
+                    activity.Id,
+                    displayName,
+                    null,
+                    isEnabled,
+                    fullHint));
+            }
+
+            if (options.Count == 0)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=ct_no_activities}No activities defined.").ToString()));
+                return;
+            }
+
+            MBInformationManager.ShowMultiSelectionInquiry(
+                new MultiSelectionInquiryData(
+                    new TextObject("{=ct_activities_title}Camp Activities").ToString(),
+                    new TextObject("{=ct_activities_body}Select an activity to perform. Activities restore fatigue, provide skill XP, or offer other benefits.").ToString(),
+                    options,
+                    true,
+                    1,
+                    1,
+                    new TextObject("{=ct_activities_perform}Perform").ToString(),
+                    new TextObject("{=ct_activities_cancel}Cancel").ToString(),
+                    selectedElements =>
+                    {
+                        if (selectedElements == null || selectedElements.Count == 0)
+                        {
+                            return;
+                        }
+
+                        var selectedId = selectedElements[0].Identifier as string;
+                        if (string.IsNullOrEmpty(selectedId))
+                        {
+                            return;
+                        }
+
+                        var selectedActivity = activities.FirstOrDefault(a => a.Id == selectedId);
+                        if (selectedActivity == null)
+                        {
+                            return;
+                        }
+
+                        if (activitiesBehavior.TryExecuteActivity(selectedActivity, out var failReason))
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                new TextObject("{=ct_activity_done}Activity completed.").ToString(), Colors.Green));
+                        }
+                        else if (!string.IsNullOrEmpty(failReason))
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                new TextObject("{=ct_activity_failed}Activity failed: " + failReason).ToString(), Colors.Red));
+                        }
+                    },
+                    null),
+                false);
+        }
+
+        /// <summary>
+        /// Resolves an activity text ID to localized text.
+        /// </summary>
+        private static string ResolveActivityText(string textId, string fallback)
+        {
+            if (string.IsNullOrEmpty(textId))
+            {
+                return fallback;
+            }
+
+            try
+            {
+                var t = new TextObject("{=" + textId + "}" + fallback);
+                return t.ToString();
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
         
         /// <summary>
         /// Menu background and audio initialization for Command Tent menus.
@@ -597,21 +804,15 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private bool IsRetinueAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true)
-            {
-                return false;
-            }
-
-            var tier = enlistment.EnlistmentTier;
-
-            if (tier < 4)
+            if ((enlistment?.EnlistmentTier ?? 1) < 4)
             {
                 args.IsEnabled = false;
                 args.Tooltip = new TextObject("{=ct_warn_tier_locked}You must reach Tier 4 to command soldiers.");
+                return true;
             }
-
-            args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
+            args.Tooltip = new TextObject("{=ct_retinue_tooltip}Recruit and manage your personal retinue of soldiers.");
             return true;
         }
 
@@ -2105,31 +2306,23 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private static bool IsCompanionAssignmentsAvailable(MenuCallbackArgs args)
         {
+            args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true)
-            {
-                return false;
-            }
-
-            var tier = enlistment.EnlistmentTier;
-
-            if (tier < 4)
+            if ((enlistment?.EnlistmentTier ?? 1) < 4)
             {
                 args.IsEnabled = false;
                 args.Tooltip = new TextObject("{=ct_companions_tier_locked}You must reach Tier 4 to manage companion assignments.");
+                return true;
             }
-            else
+            var manager = CompanionAssignmentManager.Instance;
+            var companions = manager?.GetAssignableCompanions() ?? new List<Hero>();
+            if (companions.Count == 0)
             {
-                var manager = CompanionAssignmentManager.Instance;
-                var companions = manager?.GetAssignableCompanions() ?? new List<Hero>();
-                if (companions.Count == 0)
-                {
-                    args.IsEnabled = false;
-                    args.Tooltip = new TextObject("{=ct_companions_none}No companions in your command.");
-                }
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=ct_companions_none}No companions in your command.");
+                return true;
             }
-
-            args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+            args.Tooltip = new TextObject("{=ct_companions_tooltip}Assign companions to roles in your retinue.");
             return true;
         }
 

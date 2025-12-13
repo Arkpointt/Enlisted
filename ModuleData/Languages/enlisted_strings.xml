@@ -216,6 +216,7 @@
     <string id="Enlisted_Objective_Army" text="Army operations" />
     <string id="Enlisted_Objective_Patrol" text="Patrol duties" />
     <string id="Enlisted_Status_TermRemaining" text="Term Remaining : {TIME}" />
+    <string id="Enlisted_Status_DaysEnlisted" text="Days Enlisted : {DAYS}" />
     <string id="Enlisted_Status_Tier" text="Enlistment Tier : {TIER}" />
     <string id="Enlisted_Status_Formation" text="Formation : {FORMATION}" />
     <string id="enlisted_status_time_of_day" text="Time : {TIME}" />
@@ -228,6 +229,31 @@
     <string id="Enlisted_Status_MedicalRestocking" text="Medical supplies restocking ({STATUS})." />
     <string id="Enlisted_Status_OfficerRole" text="Serving as party {ROLE} - your {SKILL} skill affects the party." />
     <string id="Enlisted_Status_RetirementEligible" text="Eligible for honorable retirement with veteran benefits." />
+    <string id="Enlisted_Status_Condition" text="Condition : {CONDITION}" />
+    <string id="Enlisted_Status_LanceRep" text="Lance Standing : {STATUS}" />
+    
+    <!-- Escalation Notifications -->
+    <string id="esc_rep_changed" text="Lance Reputation: {CHANGE} ({STATUS})" />
+    <string id="esc_heat_changed" text="Heat increased (+{DELTA}) - Status: {STATUS}" />
+    <string id="esc_discipline_changed" text="Discipline issues (+{DELTA}) - Status: {STATUS}" />
+    
+    <!-- Menu Disabled Tooltips -->
+    <string id="menu_disabled_not_enlisted" text="You must be enlisted to access this." />
+    <string id="menu_disabled_lances" text="Lance system is disabled." />
+    <string id="menu_disabled_no_lords" text="No lords nearby for conversation." />
+    <string id="menu_disabled_no_settlement" text="Lord is not at a town or castle." />
+    <string id="menu_disabled_healthy" text="You are in good health. No treatment needed." />
+    <string id="menu_disabled_on_leave" text="You are already on leave." />
+    <string id="menu_disabled_pay_ok" text="Pay must be severely delayed (60+ tension) to leave without penalty." />
+    <string id="menu_disabled_activities" text="Camp activities system is disabled." />
+    <string id="ct_menu_tooltip" text="Access your personal camp area." />
+    <string id="ct_discharge_tooltip" text="Request formal discharge with final pay settlement." />
+    <string id="ct_no_pending_discharge" text="No discharge request pending." />
+    <string id="ct_cancel_discharge_tooltip" text="Withdraw your discharge request and remain in service." />
+    <string id="ct_retinue_tooltip" text="Recruit and manage your personal retinue of soldiers." />
+    <string id="ct_companions_tooltip" text="Assign companions to roles in your retinue." />
+    <string id="Enlisted_Menu_VisitSettlement" text="Visit Settlement" />
+    <string id="Enlisted_Menu_VisitSettlementNamed" text="Visit {SETTLEMENT}" />
 
     <!-- Menu Symbols & Duties -->
     <string id="Enlisted_Symbol_Selected" text="✓ {NAME}" />

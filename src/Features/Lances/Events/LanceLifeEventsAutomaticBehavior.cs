@@ -33,6 +33,7 @@ namespace Enlisted.Features.Lances.Events
         private int _autoFiresToday;
         private int _autoFiresDayNumber = -1;
         private int _lastEvaluationHour = -1;
+        private int _lastAutoFireDayNumber = -1; // Day number when last event fired (for day-based cooldown)
 
         private LanceLifeEventCatalog _catalog;
 
@@ -50,6 +51,7 @@ namespace Enlisted.Features.Lances.Events
             dataStore.SyncData("ll_evt_firesToday", ref _autoFiresToday);
             dataStore.SyncData("ll_evt_firesDay", ref _autoFiresDayNumber);
             dataStore.SyncData("ll_evt_lastEvalHour", ref _lastEvaluationHour);
+            dataStore.SyncData("ll_evt_lastFireDay", ref _lastAutoFireDayNumber);
 
             if (dataStore.IsLoading)
             {
@@ -80,6 +82,10 @@ namespace Enlisted.Features.Lances.Events
             if (_lastEvaluationHour < -1)
             {
                 _lastEvaluationHour = -1;
+            }
+            if (_lastAutoFireDayNumber < -1)
+            {
+                _lastAutoFireDayNumber = -1;
             }
         }
 
@@ -159,11 +165,19 @@ namespace Enlisted.Features.Lances.Events
                 return;
             }
 
-            var minHoursBetween = Math.Max(0, auto.MinHoursBetweenEvents);
-            if (_lastAutoFireHour >= 0 && nowHour - _lastAutoFireHour < minHoursBetween)
+            // Day-based cooldown: minimum days between ANY automatic events (hard floor)
+            var nowDay = GetDayNumber();
+            var minDaysBetween = Math.Max(0, auto.MinDaysBetweenEvents);
+            if (_lastAutoFireDayNumber >= 0 && nowDay - _lastAutoFireDayNumber < minDaysBetween)
             {
-                return;
+                return; // Too soon - minimum cooldown not met
             }
+            
+            // Target interval: events prefer to fire around this interval (soft target)
+            // If we haven't reached target interval, only fire high-priority events
+            var targetDays = Math.Max(minDaysBetween, auto.TargetDaysBetweenEvents);
+            var daysSinceLastEvent = _lastAutoFireDayNumber >= 0 ? nowDay - _lastAutoFireDayNumber : targetDays;
+            var isAtTargetInterval = daysSinceLastEvent >= targetDays;
 
             EnsureCatalogLoaded();
             if (_catalog == null || _catalog.Events.Count == 0)
@@ -171,7 +185,7 @@ namespace Enlisted.Features.Lances.Events
                 return;
             }
 
-            var picked = PickBestEligibleAutomaticEvent(enlistment);
+            var picked = PickBestEligibleAutomaticEvent(enlistment, isAtTargetInterval);
             if (picked == null)
             {
                 return;
@@ -179,7 +193,7 @@ namespace Enlisted.Features.Lances.Events
 
             _queuedEventId = picked.Id;
             _queuedAtHour = nowHour;
-            ModLogger.Info(LogCategory, $"Queued automatic Lance Life Event: {picked.Id} (category={picked.Category})");
+            ModLogger.Info(LogCategory, $"Queued automatic Lance Life Event: {picked.Id} (category={picked.Category}, targetReached={isAtTargetInterval})");
         }
 
         private void TryFireQueued(EnlistmentBehavior enlistment)
@@ -248,7 +262,12 @@ namespace Enlisted.Features.Lances.Events
             _catalog = LanceLifeEventCatalogLoader.LoadCatalog();
         }
 
-        private LanceLifeEventDefinition PickBestEligibleAutomaticEvent(EnlistmentBehavior enlistment)
+        /// <summary>
+        /// Pick the best eligible automatic event.
+        /// If we're between min and target intervals (3-7 days), only high/critical priority events fire.
+        /// Once target interval (7 days) is reached, normal priority events can also fire.
+        /// </summary>
+        private LanceLifeEventDefinition PickBestEligibleAutomaticEvent(EnlistmentBehavior enlistment, bool isAtTargetInterval)
         {
             var events = _catalog?.Events;
             if (events == null || events.Count == 0)
@@ -262,6 +281,14 @@ namespace Enlisted.Features.Lances.Events
             var cfg = ConfigurationManager.LoadLanceLifeEventsConfig();
             var incidentChannelEnabled = cfg?.IncidentChannel?.Enabled == true;
 
+            // Between min and target interval: only high/critical priority events can fire
+            // This prevents event spam while still allowing urgent events through
+            bool IsHighPriority(LanceLifeEventDefinition e)
+            {
+                var priority = e?.Timing?.Priority?.ToLowerInvariant() ?? "normal";
+                return priority == "high" || priority == "critical";
+            }
+
             // Phase 4 rule: onboarding takes priority until complete.
             // Safety: if we don't have onboarding content yet (pre-Phase 5), do not block other categories.
             if (onboarding?.IsEnabled() == true && !onboarding.IsComplete && hasOnboardingContent)
@@ -273,6 +300,7 @@ namespace Enlisted.Features.Lances.Events
                     .Where(e => !incidentChannelEnabled ||
                                 !string.Equals(e.Delivery?.Channel, "incident", StringComparison.OrdinalIgnoreCase))
                     .Where(e => IsEventEligibleNow(e, enlistment))
+                    .Where(e => isAtTargetInterval || IsHighPriority(e)) // Respect target interval for normal priority
                     .ToList();
 
                 return PickDeterministic(onboardingCandidates);
@@ -288,6 +316,7 @@ namespace Enlisted.Features.Lances.Events
                     .Where(e => !incidentChannelEnabled ||
                                 !string.Equals(e.Delivery?.Channel, "incident", StringComparison.OrdinalIgnoreCase))
                     .Where(e => IsEventEligibleNow(e, enlistment))
+                    .Where(e => isAtTargetInterval || IsHighPriority(e)) // Respect target interval for normal priority
                     .ToList();
 
                 var picked = PickDeterministic(candidates);
@@ -297,12 +326,13 @@ namespace Enlisted.Features.Lances.Events
                 }
             }
 
-            // Fallback: any other automatic category.
+            // Fallback: any other automatic category (still respect priority rules).
             var other = events
                 .Where(e => e != null && string.Equals(e.Delivery?.Method, "automatic", StringComparison.OrdinalIgnoreCase))
                 .Where(e => !incidentChannelEnabled ||
                             !string.Equals(e.Delivery?.Channel, "incident", StringComparison.OrdinalIgnoreCase))
                 .Where(e => IsEventEligibleNow(e, enlistment))
+                .Where(e => isAtTargetInterval || IsHighPriority(e)) // Respect target interval for normal priority
                 .ToList();
 
             return PickDeterministic(other);
@@ -417,6 +447,7 @@ namespace Enlisted.Features.Lances.Events
 
             var nowHour = GetHourNumber();
             _lastAutoFireHour = nowHour;
+            _lastAutoFireDayNumber = today; // Track day for day-based cooldown
 
             if (_autoFiresDayNumber != today)
             {
@@ -425,6 +456,8 @@ namespace Enlisted.Features.Lances.Events
             }
 
             _autoFiresToday++;
+            
+            ModLogger.Debug(LogCategory, $"Event fired - next eligible after {Math.Max(0, ConfigurationManager.LoadLanceLifeEventsConfig()?.Automatic?.MinDaysBetweenEvents ?? 3)} days");
         }
 
         private static int GetDayNumber()

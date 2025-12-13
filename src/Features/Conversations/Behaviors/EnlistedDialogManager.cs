@@ -1502,6 +1502,9 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Handles the consequence of accepting enlistment.
         ///     Centralized to ensure consistent behavior across all enlistment paths.
+        ///     CRITICAL: The entire enlistment process is deferred to the next frame because
+        ///     StartEnlist() calls PlayerEncounter.LeaveSettlement/Finish which crashes if
+        ///     the conversation mission is still active (MissionLocationLogic.OnRemoveBehavior fails).
         /// </summary>
         private void OnAcceptEnlistment()
         {
@@ -1522,20 +1525,40 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 ModLogger.Info("DialogManager", $"Player accepting enlistment with lord: {lord.Name}");
 
-                EnlistmentBehavior.Instance.StartEnlist(lord);
+                // Capture lord reference before conversation ends (Hero.OneToOneConversationHero will be null next frame)
+                var capturedLord = lord;
 
-                // Activate the enlisted status menu, deferred to the next frame to prevent timing conflicts
-                // This ensures the menu activates cleanly after the conversation ends and prevents
-                // any gaps that could cause encounter menus to appear
-                NextFrameDispatcher.RunNextFrame(EnlistedMenuBehavior.SafeActivateEnlistedMenu);
-                ModLogger.Debug("DialogManager",
-                    "Scheduled enlisted_status menu activation - preventing encounter gap");
+                // CRITICAL: Defer the entire enlistment to next frame to let the conversation mission
+                // finalize first. Calling StartEnlist() during the dialog consequence crashes because
+                // it tries to end the PlayerEncounter while MissionLocationLogic is still active.
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        if (EnlistmentBehavior.Instance == null)
+                        {
+                            ModLogger.Error("DialogManager", "EnlistmentBehavior.Instance became null before deferred enlistment");
+                            return;
+                        }
 
-                // Professional notification
-                var message =
-                    GetLocalizedText("{=enlisted_success_notification}You have enlisted in {LORD_NAME}'s service.");
-                message.SetTextVariable("LORD_NAME", lord.Name);
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                        EnlistmentBehavior.Instance.StartEnlist(capturedLord);
+
+                        // Activate the enlisted status menu after enlistment completes
+                        NextFrameDispatcher.RunNextFrame(EnlistedMenuBehavior.SafeActivateEnlistedMenu);
+                        ModLogger.Debug("DialogManager",
+                            "Scheduled enlisted_status menu activation - preventing encounter gap");
+
+                        // Professional notification
+                        var message =
+                            GetLocalizedText("{=enlisted_success_notification}You have enlisted in {LORD_NAME}'s service.");
+                        message.SetTextVariable("LORD_NAME", capturedLord.Name);
+                        InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("DialogManager", "Error in deferred enlistment", ex);
+                    }
+                });
             }
             catch (Exception ex)
             {

@@ -328,6 +328,21 @@ namespace Enlisted.Features.Escalation
             }
 
             LogTrackChange("Heat", oldValue, _state.Heat, reason);
+
+            // Show UI notification for heat changes (only when increasing - "attention" from authorities)
+            if (_state.Heat != oldValue && delta > 0)
+            {
+                var statusText = GetHeatStatus();
+                var color = _state.Heat >= EscalationThresholds.HeatShakedown
+                    ? TaleWorlds.Library.Colors.Red
+                    : TaleWorlds.Library.Colors.Yellow;
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_heat_changed}Heat increased (+{DELTA}) - Status: {STATUS}");
+                msg.SetTextVariable("DELTA", delta);
+                msg.SetTextVariable("STATUS", statusText);
+                TaleWorlds.Library.InformationManager.DisplayMessage(
+                    new TaleWorlds.Library.InformationMessage(msg.ToString(), color));
+            }
+
             EvaluateThresholdsAndQueueIfNeeded();
         }
 
@@ -348,6 +363,21 @@ namespace Enlisted.Features.Escalation
             }
 
             LogTrackChange("Discipline", oldValue, _state.Discipline, reason);
+
+            // Show UI notification for discipline changes (only when increasing - problems brewing)
+            if (_state.Discipline != oldValue && delta > 0)
+            {
+                var statusText = GetDisciplineStatus();
+                var color = _state.Discipline >= EscalationThresholds.DisciplineHearing
+                    ? TaleWorlds.Library.Colors.Red
+                    : TaleWorlds.Library.Colors.Yellow;
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_discipline_changed}Discipline issues (+{DELTA}) - Status: {STATUS}");
+                msg.SetTextVariable("DELTA", delta);
+                msg.SetTextVariable("STATUS", statusText);
+                TaleWorlds.Library.InformationManager.DisplayMessage(
+                    new TaleWorlds.Library.InformationMessage(msg.ToString(), color));
+            }
+
             EvaluateThresholdsAndQueueIfNeeded();
         }
 
@@ -362,6 +392,21 @@ namespace Enlisted.Features.Escalation
             var next = oldValue + delta;
             _state.LanceReputation = Clamp(next, EscalationState.LanceReputationMin, EscalationState.LanceReputationMax);
             LogTrackChange("LanceReputation", oldValue, _state.LanceReputation, reason);
+
+            // Show UI notification for lance reputation changes
+            if (_state.LanceReputation != oldValue)
+            {
+                var change = _state.LanceReputation - oldValue;
+                var sign = change > 0 ? "+" : "";
+                var statusText = GetLanceReputationStatus();
+                var color = change > 0 ? TaleWorlds.Library.Colors.Cyan : TaleWorlds.Library.Colors.Yellow;
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_rep_changed}Lance Reputation: {CHANGE} ({STATUS})");
+                msg.SetTextVariable("CHANGE", $"{sign}{change}");
+                msg.SetTextVariable("STATUS", statusText);
+                TaleWorlds.Library.InformationManager.DisplayMessage(
+                    new TaleWorlds.Library.InformationMessage(msg.ToString(), color));
+            }
+
             EvaluateThresholdsAndQueueIfNeeded();
         }
 

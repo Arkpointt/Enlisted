@@ -279,11 +279,11 @@ namespace Enlisted.Features.Assignments.Core
                 var jsonContent = File.ReadAllText(configPath);
                 var config = JsonConvert.DeserializeObject<ProgressionConfig>(jsonContent);
 
-                // Schema validation
-                if (config?.SchemaVersion != 1)
+                // Schema validation (support versions 1 and 2 - v2 adds culture_ranks)
+                if (config?.SchemaVersion != 1 && config?.SchemaVersion != 2)
                 {
                     ModLogger.Error("Config",
-                        $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1");
+                        $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1 or 2");
                     return CreateDefaultProgressionConfig();
                 }
 
@@ -1438,7 +1438,13 @@ namespace Enlisted.Features.Assignments.Core
 
         // Rate limits for automatic events.
         [JsonProperty("max_events_per_day")] public int MaxEventsPerDay { get; set; } = 1;
-        [JsonProperty("min_hours_between_events")] public int MinHoursBetweenEvents { get; set; } = 12;
+        
+        // Minimum days between ANY automatic events (hard floor - prevents spam)
+        [JsonProperty("min_days_between_events")] public int MinDaysBetweenEvents { get; set; } = 3;
+        
+        // Target days between events (soft target - events aim to fire around this interval)
+        // Events will fire after MinDaysBetweenEvents but prefer to wait until TargetDaysBetweenEvents
+        [JsonProperty("target_days_between_events")] public int TargetDaysBetweenEvents { get; set; } = 7;
 
         // Safety: if a queued event can't fire for a long time, drop it.
         [JsonProperty("queue_timeout_hours")] public int QueueTimeoutHours { get; set; } = 24;

@@ -940,7 +940,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
                     // Phase 7: Equipment based on formation + tier + culture
                     args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Purchase equipment for your formation and rank. Newly unlocked items marked [NEW].");
-                    return IsQuartermasterAvailable(args);
+                    return true;
                 },
                 OnQuartermasterSelected,
                 false, 2);
@@ -951,8 +951,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    if (!LanceRegistry.IsFeatureEnabled())
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_lances}Lance system is disabled.");
+                        return true;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_lance}View your lance roster and relationships.");
-                    return IsMyLanceAvailable(args);
+                    return true;
                 },
                 args =>
                 {
@@ -970,20 +976,39 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+                    var nearbyLords = GetNearbyLordsForConversation();
+                    if (nearbyLords.Count == 0)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_no_lords}No lords nearby for conversation.");
+                        return true;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_talk}Speak with nearby lords for quests, news, and relation building.");
-                    return IsTalkToAvailable(args);
+                    return true;
                 },
                 OnTalkToSelected,
                 false, 6);
 
             // Visit Settlement - towns and castles only (Submenu icon)
+            // HIDDEN when not at a settlement (user preference - don't show greyed out)
             starter.AddGameMenuOption("enlisted_status", "enlisted_visit_settlement",
                 "{VISIT_SETTLEMENT_TEXT}",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var lord = enlistment?.CurrentLord;
+                    var settlement = lord?.CurrentSettlement;
+                    // Hide completely when not at a settlement
+                    if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
+                    {
+                        return false;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_visit}Enter the settlement while your lord is present.");
-                    return IsVisitSettlementAvailable(args);
+                    var visitText = new TextObject("{=Enlisted_Menu_VisitSettlementNamed}Visit {SETTLEMENT}");
+                    visitText.SetTextVariable("SETTLEMENT", settlement.Name);
+                    MBTextManager.SetTextVariable("VISIT_SETTLEMENT_TEXT", visitText);
+                    return true;
                 },
                 OnVisitTownSelected,
                 false, 7);
@@ -994,24 +1019,31 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    var enlistment = EnlistmentBehavior.Instance;
                     // Phase 7: T1 can view duties, T2+ can request duty changes
-                    var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-                    args.Tooltip = tier >= 2
+                    args.Tooltip = (enlistment?.EnlistmentTier ?? 1) >= 2
                         ? new TextObject("{=menu_tooltip_duty_request}Request duty transfer or view current assignment. Changes require lance leader approval.")
                         : new TextObject("{=menu_tooltip_duty_t1}View your current duty assignment. Duty changes unlock at next rank.");
-                    return IsReportDutyAvailable(args);
+                    return true;
                 },
                 OnReportDutySelected,
                 false, 8);
 
-            // Seek Medical Attention - only shows when injured/ill (Manage icon)
+            // Seek Medical Attention - always visible, greyed out if healthy
             starter.AddGameMenuOption("enlisted_status", "enlisted_seek_medical",
                 "{=Enlisted_Menu_SeekMedical}Seek Medical Attention",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    var conditions = Conditions.PlayerConditionBehavior.Instance;
+                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
+                        return true;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
-                    return IsSeekMedicalAvailable(args);
+                    return true;
                 },
                 args =>
                 {
@@ -1028,21 +1060,32 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsOnLeave == true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_on_leave}You are already on leave.");
+                        return true;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service.");
-                    return IsAskLeaveAvailable(args);
+                    return true;
                 },
                 OnAskLeaveSelected,
                 false, 20);
 
-            // Free Desertion - Only appears when PayTension >= 60 (Leave icon, no penalty)
+            // Free Desertion - Always visible, enabled when PayTension >= 60
             starter.AddGameMenuOption("enlisted_status", "enlisted_free_desertion",
                 "{=Enlisted_Menu_FreeDesert}Leave Without Penalty",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.IsEnlisted != true || enlistment.PayTension < 60)
-                        return false;
+                    if ((enlistment?.PayTension ?? 0) < 60)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_pay_ok}Pay must be severely delayed (60+ tension) to leave without penalty.");
+                        return true;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_free_desert}Pay is too late. You can leave with no penalties — no one would blame you.");
                     return true;
                 },
@@ -1419,10 +1462,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     objectiveLine.SetTextVariable("OBJECTIVE", objective);
                     statusContent += objectiveLine + "\n";
 
-                    // Enlistment time and tier information
-                    var enlistmentTime = GetEnlistmentTimeDisplay(enlistment);
-                    var timeLine = new TextObject("{=Enlisted_Status_TermRemaining}Term Remaining : {TIME}");
-                    timeLine.SetTextVariable("TIME", enlistmentTime);
+                    // Days enlisted display (no terms - just total service time)
+                    var daysEnlisted = GetDaysEnlistedDisplay(enlistment);
+                    var timeLine = new TextObject("{=Enlisted_Status_DaysEnlisted}Days Enlisted : {DAYS}");
+                    timeLine.SetTextVariable("DAYS", daysEnlisted);
                     statusContent += timeLine + "\n";
 
                     // Enlistment rank and tier (culture-specific rank name)
@@ -1456,6 +1499,34 @@ namespace Enlisted.Features.Interface.Behaviors
                     fatigueLine.SetTextVariable("CUR", enlistment.FatigueCurrent);
                     fatigueLine.SetTextVariable("MAX", enlistment.FatigueMax);
                     statusContent += fatigueLine + "\n";
+
+                    // Condition status (injury/illness) - only show if player has a condition
+                    var condBehavior = Conditions.PlayerConditionBehavior.Instance;
+                    if (condBehavior?.IsEnabled() == true && condBehavior.State?.HasAnyCondition == true)
+                    {
+                        var conditionParts = new List<string>();
+                        if (condBehavior.State.HasInjury)
+                        {
+                            conditionParts.Add($"Injured ({condBehavior.State.InjuryDaysRemaining}d)");
+                        }
+                        if (condBehavior.State.HasIllness)
+                        {
+                            conditionParts.Add($"Ill ({condBehavior.State.IllnessDaysRemaining}d)");
+                        }
+                        var condLine = new TextObject("{=Enlisted_Status_Condition}Condition : {CONDITION}");
+                        condLine.SetTextVariable("CONDITION", string.Join(", ", conditionParts));
+                        statusContent += condLine + "\n";
+                    }
+
+                    // Lance reputation status - from escalation system
+                    var escalation = Escalation.EscalationManager.Instance;
+                    if (escalation?.IsEnabled() == true)
+                    {
+                        var repStatus = escalation.GetLanceReputationStatus();
+                        var repLine = new TextObject("{=Enlisted_Status_LanceRep}Lance Standing : {STATUS}");
+                        repLine.SetTextVariable("STATUS", repStatus);
+                        statusContent += repLine + "\n";
+                    }
 
                     // Lance display (provisional vs finalized)
                     if (LanceRegistry.IsFeatureEnabled() && !string.IsNullOrWhiteSpace(enlistment.CurrentLanceName))
@@ -1591,45 +1662,29 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Gets the enlistment time display showing remaining days in the current term.
-        ///     Displays countdown for first term or renewal terms.
+        ///     Gets display text for total days the player has been enlisted.
+        ///     There are no terms anymore - service is indefinite until player leaves.
         /// </summary>
-        private string GetEnlistmentTimeDisplay(EnlistmentBehavior enlistment)
+        private string GetDaysEnlistedDisplay(EnlistmentBehavior enlistment)
         {
             try
             {
-                var remainingDays = 0;
-                var faction = enlistment.CurrentLord?.MapFaction;
-                var isRenewal = false;
-
-                if (faction != null)
+                if (enlistment?.EnlistmentDate == null || enlistment.EnlistmentDate == CampaignTime.Zero)
                 {
-                    var record = enlistment.GetFactionVeteranRecord(faction);
-                    if (record is { IsInRenewalTerm: true } && record.CurrentTermEnd != CampaignTime.Zero)
-                    {
-                        isRenewal = true;
-                        remainingDays = (int)(record.CurrentTermEnd - CampaignTime.Now).ToDays;
-                    }
+                    return "0";
                 }
 
-                if (!isRenewal)
+                var daysServed = (int)(CampaignTime.Now - enlistment.EnlistmentDate).ToDays;
+                if (daysServed < 0)
                 {
-                    // First term calculation
-                    var retirementConfig = Assignments.Core.ConfigurationManager.LoadRetirementConfig();
-                    var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
-                    remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
+                    daysServed = 0;
                 }
 
-                if (remainingDays <= 0)
-                {
-                    return "Term Expired";
-                }
-
-                return $"{remainingDays} Days";
+                return daysServed.ToString();
             }
             catch
             {
-                return "Unknown";
+                return "0";
             }
         }
 

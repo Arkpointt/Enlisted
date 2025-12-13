@@ -989,8 +989,7 @@
             },
             "rewards": {
               "xp": {
-                "medicine": 40,
-                "if": 30
+                "medicine": 40
               },
               "gold": 0,
               "relation": {},

@@ -1835,25 +1835,42 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine(qmDialogue.ToString());
                 sb.AppendLine();
                 
-                // Current status section
-                sb.AppendLine("â€” Current Status â€”");
-                sb.AppendLine();
-                sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
-                sb.AppendLine($"Your Gold: {Hero.MainHero.Gold} denars");
+                // Current status section - use simple ASCII dividers
+                sb.AppendLine("--- Your Status ---");
                 sb.AppendLine();
                 
-                // Pricing section
-                sb.AppendLine("â€” Pricing â€”");
+                // Rank and formation info
+                var enlistment = EnlistmentBehavior.Instance;
+                var rankName = Ranks.RankHelper.GetCurrentRank(enlistment);
+                var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType() ?? "Infantry";
+                sb.AppendLine($"Rank: {rankName}");
+                sb.AppendLine($"Formation: {formation.ToTitleCase()}");
+                sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
                 sb.AppendLine();
-                sb.AppendLine($"Soldier tax: x{soldierTax:0.00}");
-                sb.AppendLine($"Buyback: {(int)(buybackRate * 100f)}% of base value");
+                sb.AppendLine($"Your Gold: {Hero.MainHero.Gold:N0} denars");
+                sb.AppendLine();
+                
+                // Pricing section - explain what affects prices
+                sb.AppendLine("--- Pricing ---");
+                sb.AppendLine();
+                
+                // Calculate final multiplier for clarity
+                var finalBuyMult = soldierTax;
+                var finalSellMult = buybackRate;
+                
                 if (CampLifeBehavior.Instance?.IsActiveWhileEnlisted() == true)
                 {
                     var campPurchase = CampLifeBehavior.Instance.GetQuartermasterPurchaseMultiplier();
                     var campBuyback = CampLifeBehavior.Instance.GetQuartermasterBuybackMultiplier();
+                    finalBuyMult *= campPurchase;
+                    finalSellMult *= campBuyback;
+                    
                     var mood = CampLifeBehavior.Instance.QuartermasterMoodTier;
-                    sb.AppendLine($"Camp mood: {mood} (buy x{campPurchase:0.00}, sell x{campBuyback:0.00})");
+                    sb.AppendLine($"Camp Mood: {mood}");
                 }
+                
+                sb.AppendLine($"Buy Price: {(int)(finalBuyMult * 100)}% of value");
+                sb.AppendLine($"Sell Price: {(int)(finalSellMult * 100)}% of value");
                 sb.AppendLine();
                 
                 // Officer privileges if applicable
@@ -1862,7 +1879,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 if (isProvisioner || isQuartermaster)
                 {
-                    sb.AppendLine("â€” Officer Access â€”");
+                    sb.AppendLine("--- Officer Access ---");
                     sb.AppendLine();
                     sb.AppendLine("Extended equipment options available.");
                     sb.AppendLine();
@@ -1943,7 +1960,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var status = option.IsCurrent ? "(Current Equipment)" :
                                 option.CanAfford ? $"Cost: {option.Cost} denars" :
                                 $"Cost: {option.Cost} denars (Insufficient funds)";
-                    var marker = option.IsCurrent ? "â—" : "â—‹";
+                    var marker = option.IsCurrent ? "[*]" : "[ ]"; // Simple ASCII markers
                     
                     sb.AppendLine($"{marker} {option.Item.Name}");
                     sb.AppendLine($"  {status}");
@@ -3529,7 +3546,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                            option.CanAfford ? $"({option.Cost} denars)" :
                            $"({option.Cost} denars - Can't afford)";
             
-            var marker = option.IsCurrent ? "*" : "-"; // Use simple ASCII characters
+            var marker = option.IsCurrent ? "[*]" : "[ ]"; // Simple ASCII markers
             return $"{marker} {option.Item.Name} {statusText}";
         }
         
