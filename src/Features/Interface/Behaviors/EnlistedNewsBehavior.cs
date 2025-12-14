@@ -1,0 +1,1547 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Logging;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
+using TaleWorlds.CampaignSystem.MapEvents;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
+using TaleWorlds.CampaignSystem.Siege;
+using TaleWorlds.Core;
+using TaleWorlds.Localization;
+
+namespace Enlisted.Features.Interface.Behaviors
+{
+    /// <summary>
+    /// Manages kingdom-wide and personal news/dispatch feeds.
+    /// Read-only observer of campaign events; generates localized headlines.
+    ///
+    /// Phase 0: Infrastructure and persistence structure.
+    /// Phase 1+: Event wiring and news generation.
+    /// </summary>
+    public sealed class EnlistedNewsBehavior : CampaignBehaviorBase
+    {
+        private const string LogCategory = "News";
+        private const int MaxKingdomFeedItems = 60;
+        private const int MaxPersonalFeedItems = 20;
+
+        /// <summary>
+        /// Singleton instance for external access (menu integration, etc.).
+        /// </summary>
+        public static EnlistedNewsBehavior Instance { get; private set; }
+
+        /// <summary>
+        /// Kingdom-wide news feed (wars, battles, settlements, prisoner fates, politics).
+        /// Displayed in the enlisted_status menu.
+        /// </summary>
+        private List<DispatchItem> _kingdomFeed = new List<DispatchItem>();
+
+        /// <summary>
+        /// Personal/army news feed (your lord's army, participation, direct orders).
+        /// Displayed in the enlisted_activities (camp) menu.
+        /// </summary>
+        private List<DispatchItem> _personalFeed = new List<DispatchItem>();
+
+        /// <summary>
+        /// Day number when the last bulletin was generated (2-day cadence).
+        /// </summary>
+        private int _lastBulletinDayNumber = -1;
+
+        /// <summary>
+        /// Cached battle initial strengths for pyrrhic detection.
+        /// Key: MapEvent hash code as string.
+        /// </summary>
+        private Dictionary<string, BattleSnapshot> _battleSnapshots = new Dictionary<string, BattleSnapshot>();
+
+        /// <summary>
+        /// Tracks if the lord had an army yesterday (for army formation detection).
+        /// </summary>
+        private bool _lordHadArmyYesterday;
+
+        public EnlistedNewsBehavior()
+        {
+            Instance = this;
+        }
+
+        /// <summary>
+        /// Current kingdom feed for read-only inspection (debugging, UI).
+        /// </summary>
+        public IReadOnlyList<DispatchItem> KingdomFeed => _kingdomFeed;
+
+        /// <summary>
+        /// Current personal feed for read-only inspection (debugging, UI).
+        /// </summary>
+        public IReadOnlyList<DispatchItem> PersonalFeed => _personalFeed;
+
+        public override void RegisterEvents()
+        {
+            // Daily tick for bulletin generation and army formation detection
+            CampaignEvents.DailyTickEvent.AddNonSerializedListener(this, OnDailyTick);
+
+            // Battle events for victory/defeat/pyrrhic detection
+            CampaignEvents.MapEventStarted.AddNonSerializedListener(this, OnMapEventStarted);
+            CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded);
+
+            // Siege events
+            CampaignEvents.OnSiegeEventStartedEvent.AddNonSerializedListener(this, OnSiegeStarted);
+
+            // Prisoner events (captures, releases, escapes)
+            CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener(this, OnHeroPrisonerTaken);
+            CampaignEvents.HeroPrisonerReleased.AddNonSerializedListener(this, OnHeroPrisonerReleased);
+
+            // Hero death/execution
+            CampaignEvents.HeroKilledEvent.AddNonSerializedListener(this, OnHeroKilled);
+
+            // Settlement ownership changes
+            CampaignEvents.OnSettlementOwnerChangedEvent.AddNonSerializedListener(this, OnSettlementOwnerChanged);
+
+            // Army dispersal (personal feed)
+            CampaignEvents.ArmyDispersed.AddNonSerializedListener(this, OnArmyDispersed);
+
+            // Village raids
+            CampaignEvents.VillageBeingRaided.AddNonSerializedListener(this, OnVillageRaided);
+
+            // War/peace declarations
+            CampaignEvents.WarDeclared.AddNonSerializedListener(this, OnWarDeclared);
+            CampaignEvents.MakePeace.AddNonSerializedListener(this, OnPeaceMade);
+
+            ModLogger.Info(LogCategory, "News behavior registered (Phase 5: personal news feed)");
+        }
+
+        public override void SyncData(IDataStore dataStore)
+        {
+            try
+            {
+                // Sync kingdom feed as individual primitives (lists of complex types require manual handling)
+                var kingdomCount = _kingdomFeed?.Count ?? 0;
+                dataStore.SyncData("en_news_kingdomCount", ref kingdomCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _kingdomFeed = new List<DispatchItem>();
+                    for (var i = 0; i < kingdomCount; i++)
+                    {
+                        var item = LoadDispatchItem(dataStore, $"en_news_k_{i}");
+                        _kingdomFeed.Add(item);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < kingdomCount; i++)
+                    {
+                        var item = _kingdomFeed[i];
+                        SaveDispatchItem(dataStore, $"en_news_k_{i}", item);
+                    }
+                }
+
+                // Sync personal feed
+                var personalCount = _personalFeed?.Count ?? 0;
+                dataStore.SyncData("en_news_personalCount", ref personalCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _personalFeed = new List<DispatchItem>();
+                    for (var i = 0; i < personalCount; i++)
+                    {
+                        var item = LoadDispatchItem(dataStore, $"en_news_p_{i}");
+                        _personalFeed.Add(item);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < personalCount; i++)
+                    {
+                        var item = _personalFeed[i];
+                        SaveDispatchItem(dataStore, $"en_news_p_{i}", item);
+                    }
+                }
+
+                // Sync bulletin tracking
+                dataStore.SyncData("en_news_lastBulletinDay", ref _lastBulletinDayNumber);
+
+                // Sync battle snapshots (for pyrrhic detection across save/load)
+                var snapshotCount = _battleSnapshots?.Count ?? 0;
+                dataStore.SyncData("en_news_snapshotCount", ref snapshotCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _battleSnapshots = new Dictionary<string, BattleSnapshot>();
+                    for (var i = 0; i < snapshotCount; i++)
+                    {
+                        var snapshot = LoadBattleSnapshot(dataStore, $"en_news_bs_{i}");
+                        if (!string.IsNullOrEmpty(snapshot.MapEventId))
+                        {
+                            _battleSnapshots[snapshot.MapEventId] = snapshot;
+                        }
+                    }
+                }
+                else
+                {
+                    var snapshotList = _battleSnapshots.Values.ToList();
+                    for (var i = 0; i < snapshotCount; i++)
+                    {
+                        SaveBattleSnapshot(dataStore, $"en_news_bs_{i}", snapshotList[i]);
+                    }
+                }
+
+                // Sync army tracking state
+                dataStore.SyncData("en_news_lordHadArmy", ref _lordHadArmyYesterday);
+
+                // Safe initialization for null collections after load
+                _kingdomFeed ??= new List<DispatchItem>();
+                _personalFeed ??= new List<DispatchItem>();
+                _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
+
+                // Trim feeds to max size
+                TrimFeeds();
+
+                ModLogger.Debug(LogCategory, $"News data synced: kingdom={_kingdomFeed.Count}, personal={_personalFeed.Count}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error syncing news data", ex);
+
+                // Safe fallback: reinitialize collections
+                _kingdomFeed = new List<DispatchItem>();
+                _personalFeed = new List<DispatchItem>();
+                _battleSnapshots = new Dictionary<string, BattleSnapshot>();
+            }
+        }
+
+        #region Public API (Menu Integration)
+
+        /// <summary>
+        /// Builds the kingdom news section for display in enlisted_status menu.
+        /// </summary>
+        /// <param name="maxItems">Maximum headlines to display (default 3).</param>
+        /// <returns>Formatted news section text, or empty string if no news.</returns>
+        public string BuildKingdomNewsSection(int maxItems = 3)
+        {
+            try
+            {
+                if (_kingdomFeed == null || _kingdomFeed.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                // Select which items are "currently visible" based on priority and backlog rules.
+                // - Every item must stay visible for at least 1 day once shown.
+                // - Important items stay visible for 2 days (MinDisplayDays = 2).
+                // - Items can be replaced by newer updates with the same StoryKey.
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var candidates = _kingdomFeed
+                    .Where(x =>
+                        x.FirstShownDay < 0 ||
+                        currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays))
+                    .OrderByDescending(x => x.FirstShownDay >= 0 && currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays)) // sticky
+                    .ThenByDescending(x => Math.Max(1, x.MinDisplayDays)) // important first
+                    .ThenByDescending(x => x.DayCreated)
+                    .ToList();
+
+                var recentItems = candidates.Take(maxItems).ToList();
+
+                if (recentItems.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                // Mark newly-shown items so they remain visible for their minimum display window.
+                for (var i = 0; i < recentItems.Count; i++)
+                {
+                    var item = recentItems[i];
+                    if (item.FirstShownDay < 0 && !string.IsNullOrEmpty(item.StoryKey))
+                    {
+                        var idx = _kingdomFeed.FindIndex(x => x.StoryKey == item.StoryKey);
+                        if (idx >= 0)
+                        {
+                            var updated = _kingdomFeed[idx];
+                            updated.FirstShownDay = currentDay;
+                            _kingdomFeed[idx] = updated;
+                        }
+                    }
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine();
+                sb.AppendLine(new TextObject("{=News_SectionHeader_Kingdom}--- Kingdom News ---").ToString());
+
+                foreach (var item in recentItems)
+                {
+                    var headline = FormatDispatchItem(item);
+                    if (!string.IsNullOrEmpty(headline))
+                    {
+                        sb.AppendLine($"- {headline}");
+                    }
+                }
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error building kingdom news section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds the personal news section for display in enlisted_activities menu.
+        /// </summary>
+        /// <param name="maxItems">Maximum headlines to display (default 2).</param>
+        /// <returns>Formatted news section text, or empty string if no news.</returns>
+        public string BuildPersonalNewsSection(int maxItems = 2)
+        {
+            try
+            {
+                if (_personalFeed == null || _personalFeed.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var candidates = _personalFeed
+                    .Where(x =>
+                        x.FirstShownDay < 0 ||
+                        currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays))
+                    .OrderByDescending(x => x.FirstShownDay >= 0 && currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays)) // sticky
+                    .ThenByDescending(x => Math.Max(1, x.MinDisplayDays))
+                    .ThenByDescending(x => x.DayCreated)
+                    .ToList();
+
+                var recentItems = candidates.Take(maxItems).ToList();
+
+                if (recentItems.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                // Mark newly-shown items.
+                for (var i = 0; i < recentItems.Count; i++)
+                {
+                    var item = recentItems[i];
+                    if (item.FirstShownDay < 0 && !string.IsNullOrEmpty(item.StoryKey))
+                    {
+                        var idx = _personalFeed.FindIndex(x => x.StoryKey == item.StoryKey);
+                        if (idx >= 0)
+                        {
+                            var updated = _personalFeed[idx];
+                            updated.FirstShownDay = currentDay;
+                            _personalFeed[idx] = updated;
+                        }
+                    }
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine(new TextObject("{=News_SectionHeader_Personal}--- Army Orders ---").ToString());
+
+                foreach (var item in recentItems)
+                {
+                    var headline = FormatDispatchItem(item);
+                    if (!string.IsNullOrEmpty(headline))
+                    {
+                        sb.AppendLine($"- {headline}");
+                    }
+                }
+
+                sb.AppendLine(); // Extra line before camp activities
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error building personal news section", ex);
+                return string.Empty;
+            }
+        }
+
+        #endregion
+
+        #region Event Handlers (Phase 1 Stubs)
+
+        /// <summary>
+        /// Daily tick: check for bulletin generation and army formation detection.
+        /// </summary>
+        private void OnDailyTick()
+        {
+            try
+            {
+                if (!IsEnlisted())
+                {
+                    // Reset army tracking when not enlisted
+                    _lordHadArmyYesterday = false;
+                    return;
+                }
+
+                CheckForArmyFormation();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnDailyTick", ex);
+            }
+        }
+
+        /// <summary>
+        /// Checks if lord's army has just formed (for personal feed).
+        /// </summary>
+        private void CheckForArmyFormation()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    return;
+                }
+
+                var lord = enlistment.EnlistedLord;
+                var hasArmyNow = lord?.PartyBelongedTo?.Army != null;
+
+                // Army just formed (wasn't there yesterday, is there now)
+                if (hasArmyNow && !_lordHadArmyYesterday)
+                {
+                    var placeholders = new Dictionary<string, string>
+                    {
+                        { "LORD", lord?.Name?.ToString() ?? "Unknown" }
+                    };
+
+                    AddPersonalNews("army", "News_ArmyForming", placeholders, $"army:{lord?.StringId}", 2);
+                }
+
+                _lordHadArmyYesterday = hasArmyNow;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error checking army formation", ex);
+            }
+        }
+
+        /// <summary>
+        /// Battle started: cache initial troop strengths for pyrrhic detection.
+        /// </summary>
+        private void OnMapEventStarted(MapEvent mapEvent, PartyBase attackerParty, PartyBase defenderParty)
+        {
+            try
+            {
+                if (mapEvent == null)
+                {
+                    return;
+                }
+
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null)
+                {
+                    return;
+                }
+
+                // Only track battles involving player's kingdom
+                var attackerFaction = attackerParty?.MapFaction;
+                var defenderFaction = defenderParty?.MapFaction;
+
+                if (attackerFaction != playerKingdom && defenderFaction != playerKingdom)
+                {
+                    return;
+                }
+
+                // Cache initial troop strengths for pyrrhic victory detection
+                var snapshot = new BattleSnapshot
+                {
+                    MapEventId = mapEvent.GetHashCode().ToString(),
+                    AttackerInitialStrength = mapEvent.AttackerSide?.TroopCount ?? 0,
+                    DefenderInitialStrength = mapEvent.DefenderSide?.TroopCount ?? 0
+                };
+
+                _battleSnapshots[snapshot.MapEventId] = snapshot;
+                ModLogger.Debug(LogCategory, $"Battle started: A={snapshot.AttackerInitialStrength}, D={snapshot.DefenderInitialStrength}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnMapEventStarted", ex);
+            }
+        }
+
+        /// <summary>
+        /// Battle ended: generate battle news with winner/loser and pyrrhic classification.
+        /// </summary>
+        private void OnMapEventEnded(MapEvent mapEvent)
+        {
+            try
+            {
+                if (mapEvent == null)
+                {
+                    return;
+                }
+
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null)
+                {
+                    return;
+                }
+
+                // Only report battles involving player's kingdom
+                var attackerFaction = mapEvent.AttackerSide?.LeaderParty?.MapFaction;
+                var defenderFaction = mapEvent.DefenderSide?.LeaderParty?.MapFaction;
+
+                if (attackerFaction != playerKingdom && defenderFaction != playerKingdom)
+                {
+                    // Clean up any orphaned snapshot
+                    _battleSnapshots.Remove(mapEvent.GetHashCode().ToString());
+                    return;
+                }
+
+                // Skip bandit/looter battles - only report kingdom vs kingdom conflicts
+                bool isAttackerBandit = attackerFaction == null || attackerFaction.IsBanditFaction;
+                bool isDefenderBandit = defenderFaction == null || defenderFaction.IsBanditFaction;
+                
+                if (isAttackerBandit || isDefenderBandit)
+                {
+                    // Don't report bandit skirmishes - they're too minor for kingdom news
+                    _battleSnapshots.Remove(mapEvent.GetHashCode().ToString());
+                    return;
+                }
+
+                // Determine winner
+                BattleSideEnum? winnerSide = null;
+                if (mapEvent.BattleState == BattleState.AttackerVictory)
+                {
+                    winnerSide = BattleSideEnum.Attacker;
+                }
+                else if (mapEvent.BattleState == BattleState.DefenderVictory)
+                {
+                    winnerSide = BattleSideEnum.Defender;
+                }
+
+                if (winnerSide == null)
+                {
+                    // Inconclusive battle
+                    AddBattleNews(mapEvent, "News_Inconclusive", null);
+                    _battleSnapshots.Remove(mapEvent.GetHashCode().ToString());
+                    return;
+                }
+
+                // Get snapshot for pyrrhic detection
+                _battleSnapshots.TryGetValue(mapEvent.GetHashCode().ToString(), out var snapshot);
+                var classification = ClassifyBattle(mapEvent, snapshot, winnerSide.Value);
+
+                AddBattleNews(mapEvent, classification, winnerSide.Value);
+
+                // Clean up snapshot
+                _battleSnapshots.Remove(mapEvent.GetHashCode().ToString());
+
+                // Check for player participation (Personal feed)
+                CheckPlayerBattleParticipation(mapEvent, winnerSide.Value);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnMapEventEnded", ex);
+            }
+        }
+
+        /// <summary>
+        /// Checks if player participated in the battle and generates personal news.
+        /// </summary>
+        private void CheckPlayerBattleParticipation(MapEvent mapEvent, BattleSideEnum winnerSide)
+        {
+            try
+            {
+                if (!IsEnlisted() || mapEvent == null)
+                {
+                    return;
+                }
+
+                var playerParty = MobileParty.MainParty;
+                if (playerParty?.Party == null)
+                {
+                    return;
+                }
+
+                // Check if player was involved in the battle
+                var playerInvolved = mapEvent.InvolvedParties?.Contains(playerParty.Party) == true;
+                if (!playerInvolved)
+                {
+                    return;
+                }
+
+                var place = mapEvent.MapEventSettlement?.Name?.ToString() ?? "the battlefield";
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "PLACE", place }
+                };
+
+                // Determine if player won or lost
+                var playerOnAttacker = mapEvent.AttackerSide?.Parties?.Any(
+                    p => p.Party == playerParty.Party) == true;
+                var playerOnDefender = mapEvent.DefenderSide?.Parties?.Any(
+                    p => p.Party == playerParty.Party) == true;
+
+                var playerWon = (winnerSide == BattleSideEnum.Attacker && playerOnAttacker)
+                             || (winnerSide == BattleSideEnum.Defender && playerOnDefender);
+
+                var headlineKey = playerWon ? "News_PlayerBattle" : "News_PlayerDefeat";
+                AddPersonalNews("participation", headlineKey, placeholders);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error checking player participation", ex);
+            }
+        }
+
+        /// <summary>
+        /// Siege started: generate siege news for kingdom settlements.
+        /// </summary>
+        private void OnSiegeStarted(SiegeEvent siegeEvent)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null || siegeEvent == null)
+                {
+                    return;
+                }
+
+                var settlement = siegeEvent.BesiegedSettlement;
+                if (settlement == null)
+                {
+                    return;
+                }
+
+                // Report if it's our kingdom's settlement being besieged OR we're the attackers
+                var isOurSettlement = settlement.MapFaction == playerKingdom;
+                var isOurSiege = siegeEvent.BesiegerCamp?.LeaderParty?.LeaderHero?.MapFaction == playerKingdom;
+
+                if (!isOurSettlement && !isOurSiege)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "SETTLEMENT", settlement.Name?.ToString() ?? "Unknown" }
+                };
+
+                AddKingdomNews("siege", "News_Siege", placeholders, $"siege:{settlement.StringId}", 2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnSiegeStarted", ex);
+            }
+        }
+
+        /// <summary>
+        /// Hero captured: generate prisoner news for kingdom lords.
+        /// </summary>
+        private void OnHeroPrisonerTaken(PartyBase captorParty, Hero prisoner)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null || prisoner == null)
+                {
+                    return;
+                }
+
+                // Only report kingdom lords being captured
+                if (prisoner.MapFaction != playerKingdom)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "LORD", prisoner.Name?.ToString() ?? "Unknown" }
+                };
+
+                if (captorParty?.LeaderHero != null)
+                {
+                    placeholders["CAPTOR"] = captorParty.LeaderHero.Name?.ToString() ?? "Unknown";
+                    AddKingdomNews("prisoner", "News_PrisonerCapturedBy", placeholders, $"prisoner:{prisoner.StringId}");
+                }
+                else
+                {
+                    AddKingdomNews("prisoner", "News_PrisonerTaken", placeholders, $"prisoner:{prisoner.StringId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnHeroPrisonerTaken", ex);
+            }
+        }
+
+        /// <summary>
+        /// Hero released/escaped: generate prisoner release news.
+        /// </summary>
+        private void OnHeroPrisonerReleased(Hero prisoner, PartyBase party, IFaction captor, EndCaptivityDetail detail, bool isTransfer)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null || prisoner == null)
+                {
+                    return;
+                }
+
+                // Only report kingdom lords being released
+                if (prisoner.MapFaction != playerKingdom)
+                {
+                    return;
+                }
+
+                // Don't report transfers as releases
+                if (isTransfer)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "LORD", prisoner.Name?.ToString() ?? "Unknown" }
+                };
+
+                // Choose headline based on how they got free
+                // Note: EndCaptivityDetail values vary by game version; use Released as default
+                var headlineKey = detail == EndCaptivityDetail.ReleasedAfterEscape
+                    ? "News_PrisonerEscaped"
+                    : "News_PrisonerReleased";
+                AddKingdomNews("prisoner", headlineKey, placeholders, $"prisoner:{prisoner.StringId}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnHeroPrisonerReleased", ex);
+            }
+        }
+
+        /// <summary>
+        /// Hero killed: generate execution news for kingdom lords.
+        /// </summary>
+        private void OnHeroKilled(Hero victim, Hero killer, KillCharacterAction.KillCharacterActionDetail detail, bool showNotification)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null || victim == null)
+                {
+                    return;
+                }
+
+                // Only report kingdom lords being executed
+                if (victim.MapFaction != playerKingdom)
+                {
+                    return;
+                }
+
+                // Only report executions, not natural deaths or battle deaths
+                if (detail != KillCharacterAction.KillCharacterActionDetail.Executed)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "LORD", victim.Name?.ToString() ?? "Unknown" }
+                };
+
+                if (killer != null)
+                {
+                    placeholders["EXECUTOR"] = killer.Name?.ToString() ?? "Unknown";
+                    AddKingdomNews("execution", "News_Executed", placeholders, $"executed:{victim.StringId}", 2);
+                }
+                else
+                {
+                    AddKingdomNews("execution", "News_ExecutedNoExecutor", placeholders, $"executed:{victim.StringId}", 2);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnHeroKilled", ex);
+            }
+        }
+
+        /// <summary>
+        /// Settlement ownership changed: generate capture/fallen news.
+        /// </summary>
+        private void OnSettlementOwnerChanged(
+            Settlement settlement,
+            bool openToClaim,
+            Hero newOwner,
+            Hero oldOwner,
+            Hero capturerHero,
+            ChangeOwnerOfSettlementAction.ChangeOwnerOfSettlementDetail detail)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null || settlement == null)
+                {
+                    return;
+                }
+
+                // Report if it was our kingdom's settlement (lost) or we captured it
+                var wasOurs = oldOwner?.MapFaction == playerKingdom;
+                var isNowOurs = newOwner?.MapFaction == playerKingdom;
+
+                if (!wasOurs && !isNowOurs)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "SETTLEMENT", settlement.Name?.ToString() ?? "Unknown" },
+                    { "KINGDOM", newOwner?.MapFaction?.Name?.ToString() ?? "Unknown" }
+                };
+
+                if (isNowOurs)
+                {
+                    AddKingdomNews("settlement", "News_Captured", placeholders, $"settlement_captured:{settlement.StringId}", 2);
+                }
+                else
+                {
+                    AddKingdomNews("settlement", "News_Fallen", placeholders, $"settlement_fallen:{settlement.StringId}", 2);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnSettlementOwnerChanged", ex);
+            }
+        }
+
+        /// <summary>
+        /// Army dispersed: generate army news for personal feed.
+        /// </summary>
+        private void OnArmyDispersed(Army army, Army.ArmyDispersionReason reason, bool isLeaderPartyRemoved)
+        {
+            try
+            {
+                if (army == null)
+                {
+                    return;
+                }
+
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    return;
+                }
+
+                var lord = enlistment.EnlistedLord;
+                var lordParty = lord?.PartyBelongedTo;
+
+                // Only report player's lord's army dispersing
+                if (army.LeaderParty != lordParty)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "LORD", lord?.Name?.ToString() ?? "Unknown" }
+                };
+
+                AddPersonalNews("army", "News_ArmyDisbanded", placeholders, $"army:{lord?.StringId}", 2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnArmyDispersed", ex);
+            }
+        }
+
+        /// <summary>
+        /// Village being raided: generate raid news for kingdom villages.
+        /// </summary>
+        private void OnVillageRaided(Village village)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null || village == null)
+                {
+                    return;
+                }
+
+                // Only report our kingdom's villages being raided
+                if (village.Settlement?.MapFaction != playerKingdom)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "SETTLEMENT", village.Name?.ToString() ?? "Unknown" }
+                };
+
+                // Use village settlement StringId for deduplication
+                var villageId = village.Settlement?.StringId ?? village.Name?.ToString() ?? "unknown";
+                AddKingdomNews("raid", "News_Raid", placeholders, $"raid:{villageId}:{(int)CampaignTime.Now.ToDays}");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnVillageRaided", ex);
+            }
+        }
+
+        /// <summary>
+        /// War declared: generate war news if player's kingdom is involved.
+        /// </summary>
+        private void OnWarDeclared(IFaction faction1, IFaction faction2, DeclareWarAction.DeclareWarDetail detail)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null)
+                {
+                    return;
+                }
+
+                // Only report if player's kingdom is involved
+                if (faction1 != playerKingdom && faction2 != playerKingdom)
+                {
+                    return;
+                }
+
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "KINGDOM_A", faction1?.Name?.ToString() ?? "Unknown" },
+                    { "KINGDOM_B", faction2?.Name?.ToString() ?? "Unknown" }
+                };
+
+                AddKingdomNews("war", "News_War", placeholders, $"war:{faction1?.StringId}:{faction2?.StringId}", 2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnWarDeclared", ex);
+            }
+        }
+
+        /// <summary>
+        /// Peace made: generate peace news if player's kingdom is involved.
+        /// </summary>
+        private void OnPeaceMade(IFaction faction1, IFaction faction2, MakePeaceAction.MakePeaceDetail detail)
+        {
+            try
+            {
+                var playerKingdom = GetPlayerEnlistedKingdom();
+                if (playerKingdom == null)
+                {
+                    return;
+                }
+
+                // Only report if player's kingdom is involved
+                if (faction1 != playerKingdom && faction2 != playerKingdom)
+                {
+                    return;
+                }
+
+                // Show the OTHER kingdom (the one we made peace with)
+                var otherKingdom = faction1 == playerKingdom ? faction2 : faction1;
+                var placeholders = new Dictionary<string, string>
+                {
+                    { "KINGDOM", otherKingdom?.Name?.ToString() ?? "Unknown" }
+                };
+
+                AddKingdomNews("peace", "News_Peace", placeholders, $"peace:{faction1?.StringId}:{faction2?.StringId}", 2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error in OnPeaceMade", ex);
+            }
+        }
+
+        #endregion
+
+        #region News Generation Helpers
+
+        /// <summary>
+        /// Adds a news item to the kingdom feed with deduplication.
+        /// </summary>
+        /// <param name="category">Category for filtering (e.g., "war", "battle", "prisoner").</param>
+        /// <param name="headlineKey">Localization string ID.</param>
+        /// <param name="placeholders">Placeholder values for the headline.</param>
+        /// <param name="storyKey">Optional key for deduplication.</param>
+        /// <param name="minDisplayDays">Minimum number of whole days this item must remain visible once shown.</param>
+        private void AddKingdomNews(
+            string category,
+            string headlineKey,
+            Dictionary<string, string> placeholders,
+            string storyKey = null,
+            int minDisplayDays = 1)
+        {
+            if (!IsEnlisted())
+            {
+                return;
+            }
+
+            var effectiveStoryKey = storyKey ?? $"{category}:{Guid.NewGuid()}";
+
+            // Story updates:
+            // If we already have an item with this storyKey, update it (this simulates "until something else happens").
+            if (!string.IsNullOrEmpty(storyKey))
+            {
+                var existingIndex = _kingdomFeed.FindIndex(x => x.StoryKey == storyKey);
+                if (existingIndex >= 0)
+                {
+                    var updated = _kingdomFeed[existingIndex];
+                    updated.DayCreated = (int)CampaignTime.Now.ToDays;
+                    updated.Category = category;
+                    updated.HeadlineKey = headlineKey;
+                    updated.PlaceholderValues = placeholders ?? new Dictionary<string, string>();
+                    updated.StoryKey = effectiveStoryKey;
+                    updated.Type = DispatchType.Report;
+                    updated.Confidence = 100;
+                    updated.MinDisplayDays = Math.Max(1, minDisplayDays);
+                    updated.FirstShownDay = -1; // reset visibility window
+
+                    _kingdomFeed[existingIndex] = updated;
+                    ModLogger.Info(LogCategory, $"Kingdom news updated: {headlineKey} ({category})");
+                    return;
+                }
+            }
+
+            var item = new DispatchItem
+            {
+                DayCreated = (int)CampaignTime.Now.ToDays,
+                Category = category,
+                HeadlineKey = headlineKey,
+                PlaceholderValues = placeholders ?? new Dictionary<string, string>(),
+                StoryKey = effectiveStoryKey,
+                Type = DispatchType.Report,
+                Confidence = 100,
+                MinDisplayDays = Math.Max(1, minDisplayDays),
+                FirstShownDay = -1
+            };
+
+            _kingdomFeed.Add(item);
+            ModLogger.Info(LogCategory, $"Kingdom news: {headlineKey} ({category})");
+        }
+
+        /// <summary>
+        /// Classifies a battle outcome based on casualty rates.
+        /// </summary>
+        /// <param name="mapEvent">The battle map event.</param>
+        /// <param name="snapshot">Cached initial troop strengths.</param>
+        /// <param name="winnerSide">Which side won the battle.</param>
+        /// <returns>Localization key for the appropriate headline.</returns>
+        private static string ClassifyBattle(MapEvent mapEvent, BattleSnapshot snapshot, BattleSideEnum winnerSide)
+        {
+            try
+            {
+                var winnerIsAttacker = winnerSide == BattleSideEnum.Attacker;
+                var winnerFinal = winnerIsAttacker
+                    ? mapEvent.AttackerSide?.TroopCount ?? 0
+                    : mapEvent.DefenderSide?.TroopCount ?? 0;
+                var loserFinal = winnerIsAttacker
+                    ? mapEvent.DefenderSide?.TroopCount ?? 0
+                    : mapEvent.AttackerSide?.TroopCount ?? 0;
+
+                var winnerInitial = winnerIsAttacker
+                    ? snapshot.AttackerInitialStrength
+                    : snapshot.DefenderInitialStrength;
+                var loserInitial = winnerIsAttacker
+                    ? snapshot.DefenderInitialStrength
+                    : snapshot.AttackerInitialStrength;
+
+                // If we don't have initial data, default to clean victory
+                if (winnerInitial == 0 || loserInitial == 0)
+                {
+                    return "News_Victory";
+                }
+
+                var winnerLosses = winnerInitial - winnerFinal;
+                var loserLosses = loserInitial - loserFinal;
+
+                var winnerLossRate = (float)winnerLosses / Math.Max(1, winnerInitial);
+                var loserLossRate = (float)loserLosses / Math.Max(1, loserInitial);
+
+                // Mutual ruin: Both sides lost 60%+ troops
+                if (winnerLossRate >= 0.60f && loserLossRate >= 0.60f)
+                {
+                    return "News_Butchery";
+                }
+
+                // Pyrrhic victory: Winner lost 45%+ and loser lost 55%+
+                if (winnerLossRate >= 0.45f && loserLossRate >= 0.55f)
+                {
+                    return "News_Pyrrhic";
+                }
+
+                // Costly victory: Winner lost 20-45%
+                if (winnerLossRate >= 0.20f && winnerLossRate < 0.45f)
+                {
+                    return "News_Costly";
+                }
+
+                // Clean victory: Winner lost <20%
+                return "News_Victory";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error classifying battle", ex);
+                return "News_Victory";
+            }
+        }
+
+        /// <summary>
+        /// Adds battle news with winner, loser, and place information.
+        /// </summary>
+        /// <param name="mapEvent">The battle map event.</param>
+        /// <param name="headlineKey">The localization key for the headline.</param>
+        /// <param name="winnerSide">Which side won (null for inconclusive).</param>
+        private void AddBattleNews(MapEvent mapEvent, string headlineKey, BattleSideEnum? winnerSide)
+        {
+            try
+            {
+                var placeholders = new Dictionary<string, string>();
+
+                if (winnerSide.HasValue)
+                {
+                    var winnerHero = winnerSide.Value == BattleSideEnum.Attacker
+                        ? mapEvent.AttackerSide?.LeaderParty?.LeaderHero
+                        : mapEvent.DefenderSide?.LeaderParty?.LeaderHero;
+                    var loserHero = winnerSide.Value == BattleSideEnum.Attacker
+                        ? mapEvent.DefenderSide?.LeaderParty?.LeaderHero
+                        : mapEvent.AttackerSide?.LeaderParty?.LeaderHero;
+
+                    placeholders["WINNER"] = winnerHero?.Name?.ToString() ?? "Unknown";
+                    placeholders["LOSER"] = loserHero?.Name?.ToString() ?? "Unknown";
+                }
+
+                // Get place name (settlement or region)
+                var place = "the countryside";
+                if (mapEvent.MapEventSettlement != null)
+                {
+                    place = mapEvent.MapEventSettlement.Name?.ToString() ?? place;
+                }
+
+                placeholders["PLACE"] = place;
+
+                // Battle news doesn't dedupe - each battle is unique
+                // Battles are high-signal: keep visible for 2 days.
+                AddKingdomNews("battle", headlineKey, placeholders, null, 2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error adding battle news", ex);
+            }
+        }
+
+        /// <summary>
+        /// Adds a news item to the personal feed with deduplication.
+        /// </summary>
+        /// <param name="category">Category for filtering (e.g., "army", "participation").</param>
+        /// <param name="headlineKey">Localization string ID.</param>
+        /// <param name="placeholders">Placeholder values for the headline.</param>
+        /// <param name="storyKey">Optional key for deduplication.</param>
+        /// <param name="minDisplayDays">Minimum number of whole days this item must remain visible once shown.</param>
+        private void AddPersonalNews(
+            string category,
+            string headlineKey,
+            Dictionary<string, string> placeholders,
+            string storyKey = null,
+            int minDisplayDays = 1)
+        {
+            if (!IsEnlisted())
+            {
+                return;
+            }
+
+            var effectiveStoryKey = storyKey ?? $"{category}:{Guid.NewGuid()}";
+
+            // Story updates (see AddKingdomNews).
+            if (!string.IsNullOrEmpty(storyKey))
+            {
+                var existingIndex = _personalFeed.FindIndex(x => x.StoryKey == storyKey);
+                if (existingIndex >= 0)
+                {
+                    var updated = _personalFeed[existingIndex];
+                    updated.DayCreated = (int)CampaignTime.Now.ToDays;
+                    updated.Category = category;
+                    updated.HeadlineKey = headlineKey;
+                    updated.PlaceholderValues = placeholders ?? new Dictionary<string, string>();
+                    updated.StoryKey = effectiveStoryKey;
+                    updated.Type = DispatchType.Report;
+                    updated.Confidence = 100;
+                    updated.MinDisplayDays = Math.Max(1, minDisplayDays);
+                    updated.FirstShownDay = -1;
+
+                    _personalFeed[existingIndex] = updated;
+                    ModLogger.Info(LogCategory, $"Personal news updated: {headlineKey} ({category})");
+                    return;
+                }
+            }
+
+            var item = new DispatchItem
+            {
+                DayCreated = (int)CampaignTime.Now.ToDays,
+                Category = category,
+                HeadlineKey = headlineKey,
+                PlaceholderValues = placeholders ?? new Dictionary<string, string>(),
+                StoryKey = effectiveStoryKey,
+                Type = DispatchType.Report,
+                Confidence = 100,
+                MinDisplayDays = Math.Max(1, minDisplayDays),
+                FirstShownDay = -1
+            };
+
+            _personalFeed.Add(item);
+            ModLogger.Info(LogCategory, $"Personal news: {headlineKey} ({category})");
+        }
+
+        #endregion
+
+        #region Internal Helpers
+
+        /// <summary>
+        /// Checks if the player is currently enlisted.
+        /// </summary>
+        private static bool IsEnlisted()
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        /// <summary>
+        /// Gets the player's enlisted kingdom (if any).
+        /// </summary>
+        private static Kingdom GetPlayerEnlistedKingdom()
+        {
+            var lord = EnlistmentBehavior.Instance?.EnlistedLord;
+            return lord?.MapFaction as Kingdom;
+        }
+
+        /// <summary>
+        /// Formats a dispatch item into display text using localization.
+        /// </summary>
+        private static string FormatDispatchItem(DispatchItem item)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(item.HeadlineKey))
+                {
+                    return string.Empty;
+                }
+
+                // WORKAROUND: Use hardcoded templates instead of localization IDs
+                // Bannerlord's LocalizedTextManager doesn't find our enlisted_strings.xml entries,
+                // possibly because the XML isn't being loaded into the translation system correctly.
+                // For now, use direct template strings with placeholders.
+                string template = GetNewsTemplate(item.HeadlineKey);
+                var textObj = new TextObject(template);
+
+                // Apply placeholder values
+                if (item.PlaceholderValues != null)
+                {
+                    foreach (var kvp in item.PlaceholderValues)
+                    {
+                        textObj.SetTextVariable(kvp.Key, kvp.Value);
+                    }
+                }
+
+                var resolved = textObj.ToString();
+                
+                return string.IsNullOrWhiteSpace(resolved) ? item.HeadlineKey : resolved;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Error formatting dispatch item {item.HeadlineKey}", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets the hardcoded news template for a given headline key.
+        /// WORKAROUND: Bannerlord's localization system doesn't load our XML strings properly.
+        /// </summary>
+        private static string GetNewsTemplate(string headlineKey)
+        {
+            return headlineKey switch
+            {
+                // Kingdom battles
+                "News_Victory" => "{WINNER} defeated {LOSER} near {PLACE}.",
+                "News_Costly" => "{WINNER} won a costly battle against {LOSER} at {PLACE}.",
+                "News_Pyrrhic" => "Pyrrhic victory at {PLACE}: {WINNER} beat {LOSER}, but at great cost.",
+                "News_Butchery" => "Butchery at {PLACE}: {WINNER} and {LOSER} bled each other dry.",
+                "News_Inconclusive" => "Inconclusive fighting near {PLACE}.",
+
+                // Kingdom diplomacy
+                "News_War" => "War declared between {KINGDOM_A} and {KINGDOM_B}.",
+                "News_Peace" => "Peace concluded with {KINGDOM}.",
+
+                // Kingdom sieges / settlements / raids
+                "News_Siege" => "Siege underway at {SETTLEMENT}.",
+                "News_Captured" => "{SETTLEMENT} captured by {KINGDOM}.",
+                "News_Fallen" => "{SETTLEMENT} fell to {KINGDOM}.",
+                "News_Raid" => "{SETTLEMENT} was raided.",
+
+                // Kingdom prisoners / executions
+                "News_PrisonerTaken" => "{LORD} was taken prisoner.",
+                "News_PrisonerCapturedBy" => "{LORD} was captured by {CAPTOR}.",
+                "News_PrisonerReleased" => "{LORD} was released from captivity.",
+                "News_PrisonerEscaped" => "{LORD} escaped captivity.",
+                "News_Executed" => "{LORD} was executed by {EXECUTOR}.",
+                "News_ExecutedNoExecutor" => "{LORD} was executed.",
+
+                // Personal feed
+                "News_PlayerBattle" => "We helped secure victory at {PLACE}.",
+                "News_PlayerDefeat" => "We were driven from {PLACE}.",
+                "News_ArmyForming" => "{LORD} is gathering an army.",
+                "News_ArmyDisbanded" => "{LORD}'s army dispersed.",
+
+                // Fallback
+                _ => headlineKey
+            };
+        }
+
+        /// <summary>
+        /// Trims both feeds to their maximum allowed sizes.
+        /// </summary>
+        private void TrimFeeds()
+        {
+            if (_kingdomFeed != null && _kingdomFeed.Count > MaxKingdomFeedItems)
+            {
+                _kingdomFeed = _kingdomFeed
+                    .OrderByDescending(x => x.DayCreated)
+                    .Take(MaxKingdomFeedItems)
+                    .ToList();
+            }
+
+            if (_personalFeed != null && _personalFeed.Count > MaxPersonalFeedItems)
+            {
+                _personalFeed = _personalFeed
+                    .OrderByDescending(x => x.DayCreated)
+                    .Take(MaxPersonalFeedItems)
+                    .ToList();
+            }
+        }
+
+        #endregion
+
+        #region Save/Load Helpers
+
+        /// <summary>
+        /// Saves a single dispatch item to the data store.
+        /// </summary>
+        private static void SaveDispatchItem(IDataStore dataStore, string prefix, DispatchItem item)
+        {
+            var dayCreated = item.DayCreated;
+            var category = item.Category ?? string.Empty;
+            var headlineKey = item.HeadlineKey ?? string.Empty;
+            var storyKey = item.StoryKey ?? string.Empty;
+            var type = (int)item.Type;
+            var confidence = item.Confidence;
+            var minDisplayDays = Math.Max(1, item.MinDisplayDays);
+            var firstShownDay = item.FirstShownDay;
+
+            dataStore.SyncData($"{prefix}_day", ref dayCreated);
+            dataStore.SyncData($"{prefix}_cat", ref category);
+            dataStore.SyncData($"{prefix}_key", ref headlineKey);
+            dataStore.SyncData($"{prefix}_story", ref storyKey);
+            dataStore.SyncData($"{prefix}_type", ref type);
+            dataStore.SyncData($"{prefix}_conf", ref confidence);
+            dataStore.SyncData($"{prefix}_minDays", ref minDisplayDays);
+            dataStore.SyncData($"{prefix}_shownDay", ref firstShownDay);
+
+            // Save placeholder values as a count + individual key-value pairs
+            var placeholderCount = item.PlaceholderValues?.Count ?? 0;
+            dataStore.SyncData($"{prefix}_phCount", ref placeholderCount);
+
+            if (item.PlaceholderValues != null)
+            {
+                var placeholderList = item.PlaceholderValues.ToList();
+                for (var i = 0; i < placeholderCount; i++)
+                {
+                    var phKey = placeholderList[i].Key;
+                    var phVal = placeholderList[i].Value ?? string.Empty;
+                    dataStore.SyncData($"{prefix}_ph_{i}_k", ref phKey);
+                    dataStore.SyncData($"{prefix}_ph_{i}_v", ref phVal);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Loads a single dispatch item from the data store.
+        /// </summary>
+        private static DispatchItem LoadDispatchItem(IDataStore dataStore, string prefix)
+        {
+            var dayCreated = 0;
+            var category = string.Empty;
+            var headlineKey = string.Empty;
+            var storyKey = string.Empty;
+            var type = 0;
+            var confidence = 100;
+            var minDisplayDays = 1;
+            var firstShownDay = -1;
+
+            dataStore.SyncData($"{prefix}_day", ref dayCreated);
+            dataStore.SyncData($"{prefix}_cat", ref category);
+            dataStore.SyncData($"{prefix}_key", ref headlineKey);
+            dataStore.SyncData($"{prefix}_story", ref storyKey);
+            dataStore.SyncData($"{prefix}_type", ref type);
+            dataStore.SyncData($"{prefix}_conf", ref confidence);
+            dataStore.SyncData($"{prefix}_minDays", ref minDisplayDays);
+            dataStore.SyncData($"{prefix}_shownDay", ref firstShownDay);
+
+            // Load placeholder values
+            var placeholderCount = 0;
+            dataStore.SyncData($"{prefix}_phCount", ref placeholderCount);
+
+            var placeholders = new Dictionary<string, string>();
+            for (var i = 0; i < placeholderCount; i++)
+            {
+                var phKey = string.Empty;
+                var phVal = string.Empty;
+                dataStore.SyncData($"{prefix}_ph_{i}_k", ref phKey);
+                dataStore.SyncData($"{prefix}_ph_{i}_v", ref phVal);
+                if (!string.IsNullOrEmpty(phKey))
+                {
+                    placeholders[phKey] = phVal;
+                }
+            }
+
+            return new DispatchItem
+            {
+                DayCreated = dayCreated,
+                Category = category,
+                HeadlineKey = headlineKey,
+                PlaceholderValues = placeholders,
+                StoryKey = storyKey,
+                Type = (DispatchType)type,
+                Confidence = confidence,
+                MinDisplayDays = Math.Max(1, minDisplayDays),
+                FirstShownDay = firstShownDay
+            };
+        }
+
+        /// <summary>
+        /// Saves a battle snapshot to the data store.
+        /// </summary>
+        private static void SaveBattleSnapshot(IDataStore dataStore, string prefix, BattleSnapshot snapshot)
+        {
+            var mapEventId = snapshot.MapEventId ?? string.Empty;
+            var attackerStrength = snapshot.AttackerInitialStrength;
+            var defenderStrength = snapshot.DefenderInitialStrength;
+
+            dataStore.SyncData($"{prefix}_id", ref mapEventId);
+            dataStore.SyncData($"{prefix}_atk", ref attackerStrength);
+            dataStore.SyncData($"{prefix}_def", ref defenderStrength);
+        }
+
+        /// <summary>
+        /// Loads a battle snapshot from the data store.
+        /// </summary>
+        private static BattleSnapshot LoadBattleSnapshot(IDataStore dataStore, string prefix)
+        {
+            var mapEventId = string.Empty;
+            var attackerStrength = 0;
+            var defenderStrength = 0;
+
+            dataStore.SyncData($"{prefix}_id", ref mapEventId);
+            dataStore.SyncData($"{prefix}_atk", ref attackerStrength);
+            dataStore.SyncData($"{prefix}_def", ref defenderStrength);
+
+            return new BattleSnapshot
+            {
+                MapEventId = mapEventId,
+                AttackerInitialStrength = attackerStrength,
+                DefenderInitialStrength = defenderStrength
+            };
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Represents a single news dispatch item.
+    /// Uses primitive-friendly structure for save/load compatibility.
+    /// </summary>
+    public struct DispatchItem
+    {
+        /// <summary>
+        /// Campaign day when this item was created.
+        /// </summary>
+        public int DayCreated { get; set; }
+
+        /// <summary>
+        /// Category for filtering/grouping (e.g., "war", "battle", "prisoner", "siege").
+        /// </summary>
+        public string Category { get; set; }
+
+        /// <summary>
+        /// Localization string ID (e.g., "News_Victory", "News_Peace").
+        /// </summary>
+        public string HeadlineKey { get; set; }
+
+        /// <summary>
+        /// Placeholder values for localization (e.g., {"WINNER": "Derthert", "PLACE": "Marunath"}).
+        /// </summary>
+        public Dictionary<string, string> PlaceholderValues { get; set; }
+
+        /// <summary>
+        /// Story key for deduplication (e.g., "siege:town_1", "prisoner:hero_123").
+        /// </summary>
+        public string StoryKey { get; set; }
+
+        /// <summary>
+        /// Type of dispatch (Report, Rumor, Bulletin).
+        /// </summary>
+        public DispatchType Type { get; set; }
+
+        /// <summary>
+        /// Confidence level 0-100 (primarily for rumors).
+        /// </summary>
+        public int Confidence { get; set; }
+
+        /// <summary>
+        /// Minimum number of whole days this item must stay visible once it is shown.
+        /// 1 = at least today; 2 = today and tomorrow.
+        /// </summary>
+        public int MinDisplayDays { get; set; }
+
+        /// <summary>
+        /// The first campaign day this item was displayed in a menu.
+        /// -1 means it has not been shown yet (backlogged).
+        /// </summary>
+        public int FirstShownDay { get; set; }
+    }
+
+    /// <summary>
+    /// Type of news dispatch.
+    /// </summary>
+    public enum DispatchType
+    {
+        /// <summary>
+        /// Factual report derived from a campaign event.
+        /// </summary>
+        Report = 0,
+
+        /// <summary>
+        /// Unconfirmed rumor that may be confirmed/denied later.
+        /// </summary>
+        Rumor = 1,
+
+        /// <summary>
+        /// Periodic summary bulletin (every 2 days).
+        /// </summary>
+        Bulletin = 2
+    }
+
+    /// <summary>
+    /// Cached battle state for pyrrhic victory detection.
+    /// Stores initial troop strengths to calculate losses after battle ends.
+    /// </summary>
+    public struct BattleSnapshot
+    {
+        /// <summary>
+        /// Unique identifier for the map event (hash code as string).
+        /// </summary>
+        public string MapEventId { get; set; }
+
+        /// <summary>
+        /// Attacker side troop count at battle start.
+        /// </summary>
+        public int AttackerInitialStrength { get; set; }
+
+        /// <summary>
+        /// Defender side troop count at battle start.
+        /// </summary>
+        public int DefenderInitialStrength { get; set; }
+    }
+}

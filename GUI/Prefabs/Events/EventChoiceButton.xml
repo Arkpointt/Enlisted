@@ -20,24 +20,24 @@
 						<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="170" MarginRight="10" HorizontalAlignment="Right">
 							<Children>
 								<!-- Rewards (green text) -->
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#88FF88" Text="@RewardsText" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#88FF88FF" Text="@RewardsText" />
 								
 								<!-- Costs (red text) -->
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="24" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#FF8888" Text="@CostsText" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="24" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#FF8888FF" Text="@CostsText" />
 							</Children>
 						</Widget>
 						
 						<!-- Risk indicator badge (if risky) -->
-						<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="45" SuggestedHeight="20" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" VerticalAlignment="Top" Sprite="StdAssets\round_frame" Color="#DD4444" IsVisible="@IsRisky">
+						<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="45" SuggestedHeight="20" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" VerticalAlignment="Top" Sprite="StdAssets\round_frame" Color="#DD4444FF" IsVisible="@IsRisky">
 							<Children>
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="9" Brush.TextColor="#FFFFFF" Text="⚠ RISK" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="9" Brush.TextColor="#FFFFFFFF" Text="⚠ RISK" />
 							</Children>
 						</Widget>
 						
 						<!-- Disabled overlay (if choice not available) -->
 						<Widget DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#00000066" IsVisible="@IsDisabled">
 							<Children>
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="12" Brush.TextColor="#FFAAAA" Text="@DisabledReasonText" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="12" Brush.TextColor="#FFAAAAFF" Text="@DisabledReasonText" />
 							</Children>
 						</Widget>
 						

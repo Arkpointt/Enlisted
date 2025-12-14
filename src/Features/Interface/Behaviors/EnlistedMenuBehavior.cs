@@ -270,17 +270,53 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                var data = new InquiryData(
-                    new TextObject("{=Enlisted_Debug_Title}Debug Tools").ToString(),
-                    new TextObject("{=Enlisted_Debug_Body}Grant testing resources.").ToString(),
-                    true,
-                    true,
-                    new TextObject("{=Enlisted_Debug_Gold}Give 1000 Gold").ToString(),
-                    new TextObject("{=Enlisted_Debug_XP}Give XP to Rank Up").ToString(),
-                    () => Debugging.Behaviors.DebugToolsBehavior.GiveGold(),
-                    () => Debugging.Behaviors.DebugToolsBehavior.GiveEnlistmentXp());
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement(
+                        "gold",
+                        new TextObject("{=Enlisted_Debug_Gold}Give 1000 Gold").ToString(),
+                        null),
+                    new InquiryElement(
+                        "xp",
+                        new TextObject("{=Enlisted_Debug_XP}Give XP to Rank Up").ToString(),
+                        null),
+                    new InquiryElement(
+                        "test_event",
+                        new TextObject("{=Enlisted_Debug_TestEvent}Test Onboarding Screen").ToString(),
+                        null)
+                };
 
-                InformationManager.ShowInquiry(data);
+                var inquiry = new MultiSelectionInquiryData(
+                    new TextObject("{=Enlisted_Debug_Title}Debug Tools").ToString(),
+                    new TextObject("{=Enlisted_Debug_Body}Select a debug action:").ToString(),
+                    options,
+                    true,
+                    1,
+                    1,
+                    new TextObject("{=str_ok}OK").ToString(),
+                    new TextObject("{=str_cancel}Cancel").ToString(),
+                    selectedElements =>
+                    {
+                        if (selectedElements != null && selectedElements.Count > 0)
+                        {
+                            var selected = selectedElements[0].Identifier as string;
+                            switch (selected)
+                            {
+                                case "gold":
+                                    Debugging.Behaviors.DebugToolsBehavior.GiveGold();
+                                    break;
+                                case "xp":
+                                    Debugging.Behaviors.DebugToolsBehavior.GiveEnlistmentXp();
+                                    break;
+                                case "test_event":
+                                    Debugging.Behaviors.DebugToolsBehavior.TestOnboardingScreen();
+                                    break;
+                            }
+                        }
+                    },
+                    null);
+
+                MBInformationManager.ShowMultiSelectionInquiry(inquiry);
             }
             catch (Exception ex)
             {
@@ -1019,29 +1055,6 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnReportDutySelected,
                 false, 8);
 
-            // Seek Medical Attention - always visible, greyed out if healthy
-            starter.AddGameMenuOption("enlisted_status", "enlisted_seek_medical",
-                "{=Enlisted_Menu_SeekMedical}Seek Medical Attention",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    var conditions = Conditions.PlayerConditionBehavior.Instance;
-                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
-                        return true;
-                    }
-                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
-                    return true;
-                },
-                args =>
-                {
-                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.SwitchToMenu("enlisted_medical");
-                },
-                false, 9);
-
             // === LEAVE OPTIONS (grouped at bottom) ===
 
             // Ask commander for leave (Leave icon)
@@ -1399,6 +1412,48 @@ namespace Enlisted.Features.Interface.Behaviors
                     objectiveLine.SetTextVariable("OBJECTIVE", objective);
                     statusContent += objectiveLine + "\n";
 
+                    // Army-wide info (shown on main menu; Camp is the personal area)
+                    try
+                    {
+                        var lordParty = lord.PartyBelongedTo;
+                        var army = lordParty?.Army;
+                        if (army != null)
+                        {
+                            var armyLeaderName = army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "Unknown";
+                            var partyCount = army.Parties?.Count ?? 0;
+                            var men = 0;
+                            try
+                            {
+                                if (army.Parties != null)
+                                {
+                                    foreach (var p in army.Parties)
+                                    {
+                                        men += p?.Party?.NumberOfAllMembers ?? 0;
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // Best-effort only; display still useful without men count.
+                            }
+
+                            var armyLine = new TextObject("{=Enlisted_Status_Army}Army : {LEADER} ({PARTIES} parties{MEN})");
+                            armyLine.SetTextVariable("LEADER", armyLeaderName);
+                            armyLine.SetTextVariable("PARTIES", partyCount);
+                            armyLine.SetTextVariable("MEN", men > 0 ? $", {men} men" : string.Empty);
+                            statusContent += armyLine + "\n";
+                        }
+                        else
+                        {
+                            var armyLine = new TextObject("{=Enlisted_Status_ArmyNone}Army : None");
+                            statusContent += armyLine + "\n";
+                        }
+                    }
+                    catch
+                    {
+                        // Don't block status display if Army API changes.
+                    }
+
                     // Days enlisted display (no terms - just total service time)
                     var daysEnlisted = GetDaysEnlistedDisplay(enlistment);
                     var timeLine = new TextObject("{=Enlisted_Status_DaysEnlisted}Days Enlisted : {DAYS}");
@@ -1573,9 +1628,12 @@ namespace Enlisted.Features.Interface.Behaviors
                         statusContent += nextXpLine + "\n";
                     }
 
-                    // Formation training description (explains daily skill development)
-                    var formationDesc = GetFormationTrainingDescription();
-                    statusContent += formationDesc;
+                    // Kingdom News section (top headlines from the war)
+                    var newsSection = EnlistedNewsBehavior.Instance?.BuildKingdomNewsSection(3);
+                    if (!string.IsNullOrWhiteSpace(newsSection))
+                    {
+                        statusContent += newsSection;
+                    }
                 }
                 catch
                 {

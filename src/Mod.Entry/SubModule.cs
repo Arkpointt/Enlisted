@@ -391,6 +391,10 @@ namespace Enlisted.Mod.Entry
                     // Phase 4: escalation tracks (heat/discipline/lance rep/medical risk). Feature-flagged.
                     campaignStarter.AddBehavior(new EscalationManager());
 
+                    // News/Dispatches: generates kingdom-wide and personal news headlines.
+                    // Read-only observer of campaign events; updates every 2 in-game days.
+                    campaignStarter.AddBehavior(new EnlistedNewsBehavior());
+
                     // Retinue trickle system: adds free soldiers over time (every 2-3 days)
                     campaignStarter.AddBehavior(new RetinueTrickleSystem());
 
@@ -443,6 +447,7 @@ namespace Enlisted.Mod.Entry
                         nameof(CampMenuHandler),
                         nameof(CampLifeBehavior),
                         nameof(EscalationManager),
+                        nameof(EnlistedNewsBehavior),
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),

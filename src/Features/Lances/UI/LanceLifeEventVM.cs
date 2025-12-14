@@ -37,6 +37,7 @@ namespace Enlisted.Features.Lances.UI
         private string _equipmentCode;
         private string _charStringId;
         private int _stanceIndex;
+        private Hero _eventCharacter;
 
         // Story text
         private string _storyText;
@@ -69,29 +70,64 @@ namespace Enlisted.Features.Lances.UI
 
         private void InitializeEvent()
         {
-            // Header setup
-            EventTitle = _event.TitleFallback ?? "Lance Activity";
-            CategoryText = FormatCategory(_event.Category);
-            CategoryColor = GetCategoryColor(_event.Category);
-            TimeLocationText = GetTimeLocationText();
+            try
+            {
+                // Header setup
+                EventTitle = _event.TitleFallback ?? "Lance Activity";
+                CategoryText = FormatCategory(_event.Category);
+                CategoryColor = GetCategoryColor(_event.Category);
+                TimeLocationText = GetTimeLocationText();
 
-            // Scene setup
-            SetupSceneVisuals();
+                // Scene setup
+                SetupSceneVisuals();
 
-            // Story text with rich formatting
-            StoryText = FormatStoryText(_event.SetupFallback);
+                // Story text with rich formatting
+                StoryText = FormatStoryText(_event.SetupFallback);
 
-            // Escalation tracks
-            UpdateEscalationTracks();
+                // Escalation tracks
+                UpdateEscalationTracks();
 
-            // Fatigue
-            FatigueText = $"{_enlistment?.FatigueCurrent ?? 0} / {_enlistment?.FatigueMax ?? 24}";
+                // Fatigue
+                FatigueText = $"{_enlistment?.FatigueCurrent ?? 0} / {_enlistment?.FatigueMax ?? 24}";
 
-            // Build choice buttons
-            BuildChoices();
+                // Build choice buttons
+                BuildChoices();
 
-            // Can close if not forced choice
-            CanClose = _event.Options?.Count > 1;
+                // Can close if not forced choice
+                CanClose = _event.Options?.Count > 1;
+            }
+            catch (Exception ex)
+            {
+                Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to initialize event display: {ex.Message}", ex);
+                
+                // Set safe defaults
+                EventTitle = "Event";
+                CategoryText = "Notice";
+                CategoryColor = "#FFFFFFFF";
+                TimeLocationText = "";
+                StoryText = _event.SetupFallback ?? "An event has occurred.";
+                ShowCharacter = false;
+                SceneImagePath = "SPGeneral\\MapBar\\camp";
+                CanClose = true;
+                
+                // Rebuild choices with safe defaults
+                ChoiceOptions.Clear();
+                if (_event?.Options != null)
+                {
+                    foreach (var option in _event.Options)
+                    {
+                        try
+                        {
+                            var vm = new EventChoiceVM(option, _enlistment, ChoiceOptions.Count, OnChoiceSelected);
+                            ChoiceOptions.Add(vm);
+                        }
+                        catch
+                        {
+                            // Skip problematic choices
+                        }
+                    }
+                }
+            }
         }
 
         private void SetupSceneVisuals()
@@ -110,25 +146,69 @@ namespace Enlisted.Features.Lances.UI
                 // Show scene image for other events
                 ShowCharacter = false;
                 SceneImagePath = GetSceneImageForEvent();
+                
+                // Initialize character properties to null - CharacterTableauWidget was removed from XML
+                // (caused binding errors during LoadMovie even with IsVisible=false)
+                EventCharacter = null;
+                CharacterNameText = "";
+                BodyProperties = null;
+                EquipmentCode = null;  
+                CharStringId = null;
+                IsFemale = false;
+                StanceIndex = 0;
             }
         }
 
         private void SetupCharacterDisplay()
         {
-            // Get relevant character (lance leader, companion, etc.)
-            var character = GetEventCharacter();
-            
-            if (character != null)
+            try
             {
-                CharacterNameText = character.Name?.ToString() ?? "Unknown";
-                BodyProperties = character.BodyProperties.ToString();
-                IsFemale = character.IsFemale;
-                EquipmentCode = GetCharacterEquipmentCode(character);
-                CharStringId = character.StringId;
-                StanceIndex = 0; // Casual stance
+                // #region agent log
+                System.IO.File.AppendAllText(@"c:\Dev\Enlisted\Enlisted\.cursor\debug.log", Newtonsoft.Json.JsonConvert.SerializeObject(new { location = "LanceLifeEventVM.cs:154", message = "SetupCharacterDisplay START", data = new { category = _event.Category }, timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), sessionId = "debug-session", runId = "initial", hypothesisId = "H2" }) + "\n");
+                // #endregion
+                
+                // Get relevant character (lance leader, companion, etc.)
+                var character = GetEventCharacter();
+                
+                if (character != null)
+                {
+                    // Store character reference for XML DataSource binding
+                    EventCharacter = character;
+                    
+                    CharacterNameText = character.Name?.ToString() ?? "Unknown";
+                    
+                    // Safely get body properties
+                    try
+                    {
+                        BodyProperties = character.BodyProperties.ToString();
+                        if (string.IsNullOrWhiteSpace(BodyProperties))
+                        {
+                            BodyProperties = "";
+                        }
+                    }
+                    catch
+                    {
+                        BodyProperties = "";
+                    }
+                    
+                    IsFemale = character.IsFemale;
+                    EquipmentCode = GetCharacterEquipmentCode(character);
+                    CharStringId = character.StringId ?? "";
+                    StanceIndex = 0; // Casual stance
+                }
+                else
+                {
+                    EventCharacter = null;
+                    CharacterNameText = "Camp Scene";
+                    ShowCharacter = false;
+                    SceneImagePath = GetSceneImageForEvent();
+                }
             }
-            else
+            catch (Exception ex)
             {
+                // Fallback to no character display on any error
+                Enlisted.Mod.Core.Logging.ModLogger.Warn("LanceLifeUI", $"Could not display character portrait, using scene image instead: {ex.Message}");
+                EventCharacter = null;
                 CharacterNameText = "Camp Scene";
                 ShowCharacter = false;
                 SceneImagePath = GetSceneImageForEvent();
@@ -194,6 +274,10 @@ namespace Enlisted.Features.Lances.UI
 
         private void BuildChoices()
         {
+            // #region agent log
+            System.IO.File.AppendAllText(@"c:\Dev\Enlisted\Enlisted\.cursor\debug.log", Newtonsoft.Json.JsonConvert.SerializeObject(new { location = "LanceLifeEventVM.cs:256", message = "BuildChoices START", data = new { optionCount = _event.Options?.Count ?? 0 }, timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), sessionId = "debug-session", runId = "initial", hypothesisId = "H3" }) + "\n");
+            // #endregion
+            
             ChoiceOptions.Clear();
 
             if (_event.Options == null || _event.Options.Count == 0)
@@ -287,7 +371,7 @@ namespace Enlisted.Features.Lances.UI
             if (cat.Contains("onboarding"))
             {
                 // Onboarding = welcoming blue/gold
-                return "#4488FF"; // Blue
+                return "#4488FFFF"; // Blue
             }
             else if (cat.Contains("escalation"))
             {
@@ -296,22 +380,22 @@ namespace Enlisted.Features.Lances.UI
                 var discipline = EscalationManager.Instance?.State?.Discipline ?? 0;
                 
                 if (heat >= 7 || discipline >= 7)
-                    return "#DD0000"; // Critical - dark red
+                    return "#DD0000FF"; // Critical - dark red
                 else if (heat >= 5 || discipline >= 5)
-                    return "#FF4444"; // Warning - red
+                    return "#FF4444FF"; // Warning - red
                 else
-                    return "#FFAA44"; // Caution - orange
+                    return "#FFAA44FF"; // Caution - orange
             }
             else if (cat.Contains("duty"))
-                return "#4488FF"; // Blue
+                return "#4488FFFF"; // Blue
             else if (cat.Contains("training"))
-                return "#44FF88"; // Green
+                return "#44FF88FF"; // Green
             else if (cat.Contains("social"))
-                return "#FF88FF"; // Purple
+                return "#FF88FFFF"; // Purple
             else if (cat.Contains("task"))
-                return "#FFAA44"; // Orange
+                return "#FFAA44FF"; // Orange
             else
-                return "#888888"; // Gray
+                return "#888888FF"; // Gray
         }
 
         private string FormatCategory(string category)
@@ -348,13 +432,25 @@ namespace Enlisted.Features.Lances.UI
             if (string.IsNullOrWhiteSpace(text))
                 return "";
 
-            // Apply rich text formatting
-            text = LanceLifeEventText.Resolve(null, text, "", _enlistment);
+            try
+            {
+                // Apply rich text formatting
+                text = LanceLifeEventText.Resolve(null, text, "", _enlistment);
 
-            // Add paragraph breaks for better readability
-            text = text.Replace("\n\n", "\n \n"); // Add spacing between paragraphs
+                // Add paragraph breaks for better readability
+                if (!string.IsNullOrEmpty(text))
+                {
+                    text = text.Replace("\n\n", "\n \n"); // Add spacing between paragraphs
+                }
 
-            return text;
+                return text ?? "";
+            }
+            catch (Exception ex)
+            {
+                Enlisted.Mod.Core.Logging.ModLogger.Warn("LanceLifeUI", $"Could not format event text, using plain text: {ex.Message}");
+                // Return original text as fallback
+                return text ?? "";
+            }
         }
 
         public void ExecuteClose()
@@ -667,6 +763,20 @@ namespace Enlisted.Features.Lances.UI
                 {
                     _canClose = value;
                     OnPropertyChangedWithValue(value, nameof(CanClose));
+                }
+            }
+        }
+
+        [DataSourceProperty]
+        public Hero EventCharacter
+        {
+            get => _eventCharacter;
+            set
+            {
+                if (_eventCharacter != value)
+                {
+                    _eventCharacter = value;
+                    OnPropertyChangedWithValue(value, nameof(EventCharacter));
                 }
             }
         }

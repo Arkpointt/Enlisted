@@ -17,11 +17,40 @@ namespace Enlisted.Features.Lances.UI
 
         // Global flag to prevent multiple events from stacking
         private static bool _isEventShowing;
+        private static double _eventShowingStartHour = -1.0;
 
         /// <summary>
         /// Returns true if an event is currently being displayed.
+        /// Includes safety timeout to prevent permanent blocking.
         /// </summary>
-        public static bool IsEventShowing => _isEventShowing;
+        public static bool IsEventShowing
+        {
+            get
+            {
+                // Safety: if the flag has been set for more than 30 minutes (game time), reset it
+                // This prevents permanent blocking if something goes wrong
+                if (_isEventShowing && Campaign.Current != null && _eventShowingStartHour >= 0)
+                {
+                    try
+                    {
+                        var elapsedHours = CampaignTime.Now.ToHours - _eventShowingStartHour;
+                        if (elapsedHours > 0.5) // 30 minutes game time
+                        {
+                            ModLogger.Warn(LogCategory, "Event showing flag timeout - resetting to prevent permanent block");
+                            _isEventShowing = false;
+                            _eventShowingStartHour = -1.0;
+                        }
+                    }
+                    catch
+                    {
+                        // If time comparison fails, reset to be safe
+                        _isEventShowing = false;
+                        _eventShowingStartHour = -1.0;
+                    }
+                }
+                return _isEventShowing;
+            }
+        }
 
         /// <summary>
         /// Show an event using the modern custom UI screen.
@@ -64,17 +93,21 @@ namespace Enlisted.Features.Lances.UI
                     return false;
                 }
 
-                // Mark as showing
-                _isEventShowing = true;
+                ModLogger.Info(LogCategory, $"Attempting to open modern event screen: {evt.Id} (category: {evt.Category})");
 
-                // Open the modern event screen
+                // Set flag immediately to prevent double-queuing during the same tick
+                _isEventShowing = true;
+                _eventShowingStartHour = CampaignTime.Now.ToHours;
+
+                // Open the modern event screen (deferred to next frame)
                 LanceLifeEventScreen.Open(evt, enlistment, onClosed: () =>
                 {
                     _isEventShowing = false;
+                    _eventShowingStartHour = -1.0;
                     ModLogger.Debug(LogCategory, $"Event screen closed: {evt.Id}");
                 });
 
-                ModLogger.Info(LogCategory, $"Opened modern event screen: {evt.Id} (category: {evt.Category})");
+                ModLogger.Info(LogCategory, $"Modern event screen queued successfully: {evt.Id}");
                 return true;
             }
             catch (Exception ex)

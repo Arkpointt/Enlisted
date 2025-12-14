@@ -70,7 +70,7 @@ namespace Enlisted.Features.Lances.UI
             CheckAvailability();
 
             // Text color
-            TextColor = IsEnabled ? "#FFFFFF" : "#888888";
+            TextColor = IsEnabled ? "#FFFFFFFF" : "#888888FF";
         }
 
         private string GetChoiceIcon()
@@ -113,20 +113,20 @@ namespace Enlisted.Features.Lances.UI
             {
                 if (_option.SuccessChance < 0.5f || _option.RiskChance > 0.5f)
                 {
-                    RiskColor = "#DD3333"; // High risk - red
+                    RiskColor = "#DD3333FF"; // High risk - red
                 }
                 else if (_option.SuccessChance < 0.7f || _option.RiskChance > 0.3f)
                 {
-                    RiskColor = "#FFAA33"; // Medium risk - orange
+                    RiskColor = "#FFAA33FF"; // Medium risk - orange
                 }
                 else
                 {
-                    RiskColor = "#FFDD44"; // Low risk - yellow
+                    RiskColor = "#FFDD44FF"; // Low risk - yellow
                 }
             }
             else
             {
-                RiskColor = "#44AA44"; // Safe - green
+                RiskColor = "#44AA44FF"; // Safe - green
             }
         }
 

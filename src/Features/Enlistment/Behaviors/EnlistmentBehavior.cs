@@ -1817,12 +1817,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             _bagCheckCompleted = true;
             _bagCheckEverCompleted = true;
-            var pendingLord = _pendingBagCheckLord;
             _pendingBagCheckLord = null;
             _bagCheckScheduled = false;
             _bagCheckDueTime = CampaignTime.Zero;
             _bagCheckInProgress = false;
-            ContinueStartEnlistInternal(pendingLord);
+            
+            // NOTE: Do NOT call ContinueStartEnlistInternal here!
+            // The player is already enlisted from StartEnlist() → ContinueStartEnlistInternal() (first call).
+            // Calling it again here causes:
+            // 1. OnEnlisted event to fire twice
+            // 2. Onboarding state to be re-initialized
+            // 3. Queued onboarding events to be dropped as "no longer eligible"
+            // The bag check should ONLY process equipment, not re-run the enlistment flow.
+            ModLogger.Info("Enlistment", "Bag check completed successfully");
         }
 
         /// <summary>

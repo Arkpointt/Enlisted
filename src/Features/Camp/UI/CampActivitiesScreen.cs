@@ -1,7 +1,7 @@
 using System;
-using Enlisted.Features.Assignments.Core;
-using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.Lances.Events;
+using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Entry;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.Engine.GauntletUI;
 using TaleWorlds.Engine.Screens;
 using TaleWorlds.GauntletUI.Data;
@@ -9,28 +9,24 @@ using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.ScreenSystem;
 
-namespace Enlisted.Features.Lances.UI
+namespace Enlisted.Features.Camp.UI
 {
     /// <summary>
-    /// Custom Gauntlet screen for modern Lance Life event presentation.
-    /// Replaces basic inquiry popups with rich, visual event screens.
+    /// Custom Gauntlet screen for the modern Camp Activities menu.
+    /// Displays all available camp activities in a visually appealing card-based interface.
     /// </summary>
-    public class LanceLifeEventScreen : ScreenBase
+    public class CampActivitiesScreen : ScreenBase
     {
-        private readonly LanceLifeEventDefinition _event;
-        private readonly EnlistmentBehavior _enlistment;
         private readonly Action _onClosed;
 
         private GauntletLayer _gauntletLayer;
         private GauntletMovieIdentifier _gauntletMovie;
-        private LanceLifeEventVM _dataSource;
+        private CampActivitiesVM _dataSource;
 
         private bool _closing;
 
-        public LanceLifeEventScreen(LanceLifeEventDefinition eventDef, EnlistmentBehavior enlistment, Action onClosed = null)
+        public CampActivitiesScreen(Action onClosed = null)
         {
-            _event = eventDef;
-            _enlistment = enlistment;
             _onClosed = onClosed;
         }
 
@@ -41,15 +37,15 @@ namespace Enlisted.Features.Lances.UI
             try
             {
                 // Create the ViewModel
-                _dataSource = new LanceLifeEventVM(_event, _enlistment, CloseScreen);
+                _dataSource = new CampActivitiesVM(CloseScreen);
 
                 // Create Gauntlet layer and load UI
                 _gauntletLayer = new GauntletLayer("GauntletLayer", 200);
-                _gauntletMovie = _gauntletLayer.LoadMovie("LanceLifeEventScreen", _dataSource);
+                _gauntletMovie = _gauntletLayer.LoadMovie("CampActivitiesScreen", _dataSource);
 
                 if (_gauntletMovie == null)
                 {
-                    throw new Exception("Failed to load event UI - XML file may be missing or invalid");
+                    throw new Exception("Failed to load Camp Activities UI - XML file may be missing or invalid");
                 }
 
                 // Add layer to screen
@@ -61,17 +57,16 @@ namespace Enlisted.Features.Lances.UI
                     InputUsageMask.All);
 
                 // Pause game time when screen is open
-                if (TaleWorlds.CampaignSystem.Campaign.Current != null)
+                if (Campaign.Current != null)
                 {
-                    TaleWorlds.CampaignSystem.Campaign.Current.TimeControlMode = 
-                        TaleWorlds.CampaignSystem.CampaignTimeControlMode.Stop;
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
                 }
 
-                Enlisted.Mod.Core.Logging.ModLogger.Info("LanceLifeUI", $"Lance event '{_event?.TitleFallback}' displayed");
+                ModLogger.Info("CampActivitiesUI", "Camp Activities screen displayed successfully");
             }
             catch (Exception ex)
             {
-                Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to display lance event: {ex.Message}", ex);
+                ModLogger.Error("CampActivitiesUI", $"Failed to display Camp Activities screen: {ex.Message}", ex);
                 
                 // Clean up partial initialization
                 if (_gauntletMovie != null && _gauntletLayer != null)
@@ -86,7 +81,7 @@ namespace Enlisted.Features.Lances.UI
                 _onClosed?.Invoke();
                 
                 // Pop this broken screen off the stack
-                Enlisted.Mod.Entry.NextFrameDispatcher.RunNextFrame(() =>
+                NextFrameDispatcher.RunNextFrame(() =>
                 {
                     try
                     {
@@ -103,8 +98,10 @@ namespace Enlisted.Features.Lances.UI
         {
             base.OnFrameTick(dt);
 
-            // Handle ESC key to close (if allowed)
-            if (_gauntletLayer.Input.IsKeyReleased(InputKey.Escape) && _dataSource.CanClose && !_closing)
+            // Handle ESC key to close
+            if (_gauntletLayer?.Input != null && 
+                _gauntletLayer.Input.IsKeyReleased(InputKey.Escape) && 
+                !_closing)
             {
                 CloseScreen();
             }
@@ -138,6 +135,8 @@ namespace Enlisted.Features.Lances.UI
 
             // Notify caller
             _onClosed?.Invoke();
+
+            ModLogger.Debug("CampActivitiesUI", "Camp Activities screen closed");
         }
 
         protected override void OnFinalize()
@@ -159,39 +158,32 @@ namespace Enlisted.Features.Lances.UI
         }
 
         /// <summary>
-        /// Static helper to open the event screen from anywhere.
-        /// Replaces ShowInquiry calls for a modern experience.
+        /// Static helper to open the Camp Activities screen from anywhere.
         /// Defers screen opening to next frame to avoid crashes during native visual updates.
         /// </summary>
-        public static void Open(LanceLifeEventDefinition eventDef, EnlistmentBehavior enlistment, Action onClosed = null)
+        public static void Open(Action onClosed = null)
         {
-            if (eventDef == null)
-            {
-                Enlisted.Mod.Core.Logging.ModLogger.Warn("LanceLifeUI", "Cannot display event - event definition is null");
-                return;
-            }
-
             // Defer screen opening to next frame to prevent crashes during native visual updates
             // (e.g., NavalMobilePartyVisual.UpdateEntityPosition crashes if we push screen mid-tick)
-            Enlisted.Mod.Entry.NextFrameDispatcher.RunNextFrame(() =>
+            NextFrameDispatcher.RunNextFrame(() =>
             {
                 try
                 {
                     // Validate campaign still exists when deferred action executes
-                    if (TaleWorlds.CampaignSystem.Campaign.Current == null)
+                    if (Campaign.Current == null)
                     {
-                        Enlisted.Mod.Core.Logging.ModLogger.Warn("LanceLifeUI", "Cannot display event - campaign session ended");
+                        ModLogger.Warn("CampActivitiesUI", "Cannot display screen - campaign session ended");
                         onClosed?.Invoke();
                         return;
                     }
 
-                    var screen = new LanceLifeEventScreen(eventDef, enlistment, onClosed);
+                    var screen = new CampActivitiesScreen(onClosed);
                     ScreenManager.PushScreen(screen);
                 }
                 catch (Exception ex)
                 {
-                    Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to display event screen: {ex.Message}", ex);
-                    // Ensure onClosed is called so the presenter can clean up
+                    ModLogger.Error("CampActivitiesUI", $"Failed to display Camp Activities screen: {ex.Message}", ex);
+                    // Ensure onClosed is called so the caller can clean up
                     onClosed?.Invoke();
                 }
             });

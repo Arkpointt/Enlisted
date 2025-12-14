@@ -2954,7 +2954,43 @@
     
     <!-- Menu Header and Navigation -->
     <string id="act_menu_intro" text="The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?" />
+    <string id="act_menu_intro_with_news" text="{PERSONAL_NEWS}The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?" />
     <string id="act_back" text="Return to Camp" />
+
+    <!-- ================== NEWS / DISPATCHES (Phase 6) ================== -->
+    <string id="News_SectionHeader_Kingdom" text="--- Kingdom News ---" />
+    <string id="News_SectionHeader_Personal" text="--- Army Orders ---" />
+
+    <!-- Kingdom battles -->
+    <string id="News_Victory" text="{WINNER} defeated {LOSER} near {PLACE}." />
+    <string id="News_Costly" text="{WINNER} won a costly battle against {LOSER} at {PLACE}." />
+    <string id="News_Pyrrhic" text="Pyrrhic victory at {PLACE}: {WINNER} beat {LOSER}, but at great cost." />
+    <string id="News_Butchery" text="Butchery at {PLACE}: {WINNER} and {LOSER} bled each other dry." />
+    <string id="News_Inconclusive" text="Inconclusive fighting near {PLACE}." />
+
+    <!-- Kingdom diplomacy -->
+    <string id="News_War" text="War declared between {KINGDOM_A} and {KINGDOM_B}." />
+    <string id="News_Peace" text="Peace concluded with {KINGDOM}." />
+
+    <!-- Kingdom sieges / settlements / raids -->
+    <string id="News_Siege" text="Siege underway at {SETTLEMENT}." />
+    <string id="News_Captured" text="{SETTLEMENT} captured by {KINGDOM}." />
+    <string id="News_Fallen" text="{SETTLEMENT} fell to {KINGDOM}." />
+    <string id="News_Raid" text="{SETTLEMENT} was raided." />
+
+    <!-- Kingdom prisoners / executions -->
+    <string id="News_PrisonerTaken" text="{LORD} was taken prisoner." />
+    <string id="News_PrisonerCapturedBy" text="{LORD} was captured by {CAPTOR}." />
+    <string id="News_PrisonerReleased" text="{LORD} was released from captivity." />
+    <string id="News_PrisonerEscaped" text="{LORD} escaped captivity." />
+    <string id="News_Executed" text="{LORD} was executed by {EXECUTOR}." />
+    <string id="News_ExecutedNoExecutor" text="{LORD} was executed." />
+
+    <!-- Personal feed -->
+    <string id="News_PlayerBattle" text="We helped secure victory at {PLACE}." />
+    <string id="News_PlayerDefeat" text="We were driven from {PLACE}." />
+    <string id="News_ArmyForming" text="{LORD} is gathering an army." />
+    <string id="News_ArmyDisbanded" text="{LORD}'s army dispersed." />
     
     <!-- Category Headers -->
     <string id="act_header_training" text="— TRAINING —" />

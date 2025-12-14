@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Camp.UI;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -296,7 +297,7 @@ namespace Enlisted.Features.Camp
             // Use wait menu with hidden progress to allow spacebar time control (like Quartermaster)
             starter.AddWaitGameMenu(
                 CommandTentMenuId,
-                "{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.",
+                "{CT_MAIN_TEXT}",
                 OnCommandTentInit,
                 CommandTentWaitCondition,
                 CommandTentWaitConsequence,
@@ -317,41 +318,38 @@ namespace Enlisted.Features.Camp
                 false,
                 1);
 
-            // Activity Log - Recent activities and events
+            // Seek Medical Attention (moved from main enlisted menu into Camp)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
-                "ct_activity_log",
-                "{=ct_activity_log}Activity Log",
+                "ct_seek_medical",
+                "{=Enlisted_Menu_SeekMedical}Seek Medical Attention",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=ct_activity_log_tooltip}Review recent activities and events.");
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    var conditions = Conditions.PlayerConditionBehavior.Instance;
+                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
+                        return true;
+                    }
+
+                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
                     return true;
                 },
-                _ => ShowActivityLogPopup(),
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_medical");
+                },
                 false,
                 2);
 
-            // XP Breakdown - Progress toward next tier
+            // Camp Activities - Visual Screen (MODERN UI)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
-                "ct_xp_breakdown",
-                "{=ct_xp_breakdown}XP Breakdown",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=ct_xp_breakdown_tooltip}View your experience progress and sources.");
-                    return true;
-                },
-                _ => ShowXpBreakdownPopup(),
-                false,
-                3);
-
-            // Camp Activities - Training and tasks (organized submenu)
-            starter.AddGameMenuOption(
-                CommandTentMenuId,
-                "ct_camp_activities",
-                "{=ct_camp_activities}Camp Activities",
+                "ct_camp_activities_visual",
+                "⚔ Camp Activities (Visual)",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
@@ -364,8 +362,41 @@ namespace Enlisted.Features.Camp
                     }
                     var count = activitiesBehavior.GetAvailableActivityCountForCurrentContext();
                     args.Tooltip = count > 0
-                        ? new TextObject("{=ct_activities_tooltip}Training, tasks, and social activities. ({COUNT} available)").SetTextVariable("COUNT", count)
-                        : new TextObject("{=ct_activities_tooltip_none}No activities available at this time.");
+                        ? new TextObject("Modern card-based activities menu. ({COUNT} available)").SetTextVariable("COUNT", count)
+                        : new TextObject("Modern activities interface - No activities available at this time.");
+                    return true;
+                },
+                _ => 
+                {
+                    // Open the new visual screen!
+                    CampActivitiesScreen.Open(() =>
+                    {
+                        // Return to camp menu when closed
+                        SwitchToMenuPreserveTime(CommandTentMenuId);
+                    });
+                },
+                false,
+                3);
+
+            // Camp Activities - Training and tasks (organized submenu) - LEGACY TEXT MENU
+            starter.AddGameMenuOption(
+                CommandTentMenuId,
+                "ct_camp_activities",
+                "{=ct_camp_activities}Camp Activities (Text)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
+                    if (activitiesBehavior?.IsEnabled() != true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_activities}Camp activities system is disabled.");
+                        return true;
+                    }
+                    var count = activitiesBehavior.GetAvailableActivityCountForCurrentContext();
+                    args.Tooltip = count > 0
+                        ? new TextObject("{=ct_activities_tooltip}Training, tasks, and social activities. ({COUNT} available) [Legacy text menu]").SetTextVariable("COUNT", count)
+                        : new TextObject("{=ct_activities_tooltip_none}No activities available at this time. [Legacy text menu]");
                     return true;
                 },
                 _ => SwitchToMenuPreserveTime(CampActivitiesMenuId),
@@ -397,7 +428,7 @@ namespace Enlisted.Features.Camp
                 },
                 _ => SwitchToMenuPreserveTime(DesperateMeasuresMenuId),
                 false,
-                6);
+                7);
 
             // Help the Lord (loyalty path) - only visible at tension 40+
             starter.AddGameMenuOption(
@@ -420,7 +451,7 @@ namespace Enlisted.Features.Camp
                 },
                 _ => SwitchToMenuPreserveTime(HelpTheLordMenuId),
                 false,
-                7);
+                8);
 
             // Baggage Train (stash access) - Submenu icon
             starter.AddGameMenuOption(
@@ -435,71 +466,50 @@ namespace Enlisted.Features.Camp
                 },
                 _ => EnlistmentBehavior.Instance?.TryOpenBaggageTrain(),
                 false,
-                8);
+                9);
 
-            // Request Discharge (Final Muster)
+            // Request Discharge (Final Muster) / Cancel (toggle)
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_request_discharge",
-                "{=ct_request_discharge}Request Discharge (Final Muster)",
+                "{CT_DISCHARGE_OPTION_TEXT}",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
                     var enlistment = EnlistmentBehavior.Instance;
                     if (enlistment?.IsPendingDischarge == true)
                     {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=ct_discharge_pending}Discharge already pending; will resolve at next pay muster.");
+                        MBTextManager.SetTextVariable("CT_DISCHARGE_OPTION_TEXT",
+                            new TextObject("{=ct_cancel_discharge_short}Cancel Discharge Request"));
+                        args.Tooltip = new TextObject("{=ct_cancel_discharge_tooltip}Withdraw your discharge request and remain in service.");
                         return true;
                     }
-                    args.Tooltip = new TextObject("{=ct_discharge_tooltip}Request formal discharge with final pay settlement.");
-                    return true;
-                },
-                _ =>
-                {
-                    var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.RequestDischarge() == true)
-                    {
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=ct_discharge_requested}Discharge requested. It will resolve at the next pay muster.")
-                                .ToString()));
-                        
-                        // Refresh menu immediately so the player sees "pending" state without leaving/re-entering.
-                        SwitchToMenuPreserveTime(CommandTentMenuId);
-                    }
-                },
-                false,
-                3);
 
-            // Cancel Pending Discharge
-            starter.AddGameMenuOption(
-                CommandTentMenuId,
-                "ct_cancel_discharge",
-                "{=ct_cancel_discharge}Cancel Pending Discharge",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.IsPendingDischarge != true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=ct_no_pending_discharge}No discharge request pending.");
-                        return true;
-                    }
-                    args.Tooltip = new TextObject("{=ct_cancel_discharge_tooltip}Withdraw your discharge request and remain in service.");
+                    MBTextManager.SetTextVariable("CT_DISCHARGE_OPTION_TEXT",
+                        new TextObject("{=ct_request_discharge_short}Request Discharge"));
+                    args.Tooltip = new TextObject("{=ct_discharge_tooltip}Request formal discharge with final pay settlement (resolves at next muster).");
                     return true;
                 },
                 _ =>
                 {
                     var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.CancelDischarge() == true)
+                    if (enlistment == null)
                     {
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=ct_discharge_cancelled}Pending discharge cancelled.").ToString()));
-                        
-                        // Refresh menu immediately so "Request Discharge" returns without leaving/re-entering.
-                        SwitchToMenuPreserveTime(CommandTentMenuId);
+                        return;
                     }
+
+                    if (enlistment.IsPendingDischarge)
+                    {
+                        if (enlistment.CancelDischarge())
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                new TextObject("{=ct_discharge_cancelled}Pending discharge cancelled.").ToString()));
+                            SwitchToMenuPreserveTime(CommandTentMenuId);
+                        }
+                        return;
+                    }
+
+                    ShowRequestDischargeConfirmPopup();
                 },
                 false,
                 4);
@@ -546,110 +556,202 @@ namespace Enlisted.Features.Camp
         {
             // Refresh inline icons in case they were cleared
             SetupInlineIcons();
+            MBTextManager.SetTextVariable("CT_MAIN_TEXT", BuildCampMainMenuText());
             ModLogger.Debug(LogCategory, "Camp menu initialized");
         }
 
         /// <summary>
-        /// Shows a popup with recent activity log (battles, duties, purchases).
+        /// Builds the main Camp menu text (overview + news + camp bulletin).
         /// </summary>
-        private static void ShowActivityLogPopup()
+        private static string BuildCampMainMenuText()
         {
-            var enlistment = EnlistmentBehavior.Instance;
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var svc = ServiceRecordManager.Instance;
+                var campLife = CampLifeBehavior.Instance;
+                var cond = Conditions.PlayerConditionBehavior.Instance;
+                var news = EnlistedNewsBehavior.Instance;
 
-            var sb = new StringBuilder();
-            sb.AppendLine(new TextObject("{=ct_activity_log_title}Recent Activity").ToString());
-            sb.AppendLine();
+                var sb = new StringBuilder();
+                sb.AppendLine(new TextObject("{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.").ToString());
+                sb.AppendLine();
 
-            var daysServed = (int)(enlistment?.DaysServed ?? 0);
-            var formation = Enlisted.Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance?.GetPlayerFormationType() ?? "Infantry";
-            var tier = enlistment?.EnlistmentTier ?? 1;
+                // News / what's happening (keep this screen focused on "what's going on")
+                var personalNews = news?.BuildPersonalNewsSection(2);
+                if (!string.IsNullOrWhiteSpace(personalNews))
+                {
+                    sb.AppendLine(personalNews.TrimEnd());
+                }
 
-            // Summary stats
-            sb.AppendLine(new TextObject("{=ct_log_summary}— SERVICE SUMMARY —").ToString());
-            sb.AppendLine($"Days Served: {daysServed}");
-            sb.AppendLine($"Current Tier: {tier}");
-            sb.AppendLine($"Formation: {formation}");
-            sb.AppendLine();
+                var kingdomNews = news?.BuildKingdomNewsSection(2);
+                if (!string.IsNullOrWhiteSpace(kingdomNews))
+                {
+                    sb.AppendLine(kingdomNews.TrimEnd());
+                }
 
-            // Recent actions (placeholder - would integrate with actual activity tracking)
-            sb.AppendLine(new TextObject("{=ct_log_recent}— RECENT —").ToString());
-            sb.AppendLine("Camp activities completed this enlistment.");
-            sb.AppendLine("Check XP Breakdown for detailed progress.");
+                // Compact personal overview (few key stats only)
+                sb.AppendLine();
+                sb.AppendLine("— Overview —");
+                sb.AppendLine();
 
-            InformationManager.ShowInquiry(
-                new InquiryData(
-                    new TextObject("{=ct_activity_log_popup}Activity Log").ToString(),
-                    sb.ToString(),
-                    true,
-                    false,
-                    new TextObject("{=ct_log_close}Close").ToString(),
-                    string.Empty,
-                    () => { },
-                    null),
-                false);
+                if (enlistment != null)
+                {
+                    sb.AppendLine($"Rank Tier: {enlistment.EnlistmentTier}");
+                    sb.AppendLine($"Days Served: {(int)enlistment.DaysServed}");
+                    sb.AppendLine($"Fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
+                }
+
+                if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
+                {
+                    var parts = new List<string>();
+                    if (cond.State.HasInjury)
+                    {
+                        parts.Add($"Injured ({cond.State.InjuryDaysRemaining}d)");
+                    }
+                    if (cond.State.HasIllness)
+                    {
+                        parts.Add($"Ill ({cond.State.IllnessDaysRemaining}d)");
+                    }
+                    if (parts.Count > 0)
+                    {
+                        sb.AppendLine($"Condition: {string.Join(", ", parts)}");
+                    }
+                }
+
+                // Keep term details in Service Records (avoid clutter here)
+                if (svc != null && svc.CurrentTermBattles > 0)
+                {
+                    sb.AppendLine($"This Term: {svc.CurrentTermBattles} battles, {svc.CurrentTermKills} kills");
+                }
+
+                // Camp bulletin / news
+                sb.AppendLine();
+                sb.AppendLine("— Camp Bulletin —");
+                sb.AppendLine();
+
+                if (campLife != null && campLife.IsActiveWhileEnlisted())
+                {
+                    sb.AppendLine($"Quartermaster Mood: {campLife.QuartermasterMoodTier}");
+
+                    // Short, readable "news" lines driven by the meters.
+                    if (campLife.IsLogisticsHigh())
+                    {
+                        sb.AppendLine("Supplies are tight. Quartermasters are getting sharp-eyed about requisitions.");
+                    }
+
+                    if (campLife.IsMoraleLow())
+                    {
+                        sb.AppendLine("The men are weary after recent fighting. Tempers are short around the fires.");
+                    }
+
+                    if (campLife.IsPayTensionHigh())
+                    {
+                        sb.AppendLine("Pay is late. Grumbling is turning into open talk.");
+                    }
+
+                    if (!campLife.IsLogisticsHigh() && !campLife.IsMoraleLow() && !campLife.IsPayTensionHigh())
+                    {
+                        sb.AppendLine("Routine holds. Drill, rations, and watch rotations grind on.");
+                    }
+                }
+                else
+                {
+                    sb.AppendLine("Camp routines continue. (CampLife is disabled.)");
+                }
+
+                return sb.ToString();
+            }
+            catch
+            {
+                return new TextObject("{=ct_menu_intro}Maps and tallies cover the makeshift table. Your small corner of the army's camp.").ToString();
+            }
         }
 
         /// <summary>
-        /// Shows a popup with XP breakdown and progress toward next tier.
+        /// Confirmation popup for requesting discharge (final muster next payday).
         /// </summary>
-        private static void ShowXpBreakdownPopup()
+        private static void ShowRequestDischargeConfirmPopup()
         {
             var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return;
+            }
+
+            var daysServed = (int)enlistment.DaysServed;
+            var pendingPay = enlistment.PendingMusterPay;
+
+            // Predict discharge "band" using the same thresholds as FinalizePendingDischarge().
+            var cfg = EnlistedConfig.LoadRetirementConfig();
+            var band = daysServed >= 200 ? "veteran" : daysServed >= 100 ? "honorable" : "washout";
+
+            var lord = enlistment.CurrentLord;
+            if ((band == "honorable" || band == "veteran") && lord != null && Hero.MainHero.GetRelation(lord) < 0)
+            {
+                band = "washout";
+            }
+
+            var lordRelation = 0;
+            var factionLeaderRelation = 0;
+            var severance = 0;
+
+            switch (band)
+            {
+                case "veteran":
+                    lordRelation = 30;
+                    factionLeaderRelation = 15;
+                    severance = Math.Max(0, cfg?.SeveranceVeteran ?? 3000);
+                    break;
+                case "honorable":
+                    lordRelation = 10;
+                    factionLeaderRelation = 5;
+                    severance = Math.Max(0, cfg?.SeveranceHonorable ?? 3000);
+                    break;
+                default:
+                    lordRelation = -10;
+                    factionLeaderRelation = -10;
+                    severance = 0;
+                    break;
+            }
+
+            var payout = Math.Max(0, pendingPay) + Math.Max(0, severance);
 
             var sb = new StringBuilder();
-            sb.AppendLine(new TextObject("{=ct_xp_breakdown_title}Experience Breakdown").ToString());
+            sb.AppendLine("Request discharge?");
             sb.AppendLine();
-
-            var currentXp = enlistment?.EnlistmentXP ?? 0;
-            var tier = enlistment?.EnlistmentTier ?? 1;
-            var nextTierXp = GetNextTierXpRequirement(tier);
-
-            // Progress bar representation
-            sb.AppendLine(new TextObject("{=ct_xp_progress}— PROGRESS —").ToString());
-            sb.AppendLine($"Current XP: {currentXp}");
-            sb.AppendLine($"Current Tier: {tier}");
-
-            if (tier < 6 && nextTierXp > 0)
-            {
-                var progress = Math.Min(100, (int)(currentXp * 100.0 / nextTierXp));
-                sb.AppendLine($"Next Tier: {nextTierXp} XP ({progress}% complete)");
-            }
-            else
-            {
-                sb.AppendLine("Maximum tier reached.");
-            }
-
+            sb.AppendLine("This will take effect at your next pay muster.");
             sb.AppendLine();
-
-            // XP sources explanation
-            sb.AppendLine(new TextObject("{=ct_xp_sources}— XP SOURCES —").ToString());
-            sb.AppendLine("• Battles: XP for participating in combat");
-            sb.AppendLine("• Duties: Daily XP for assigned tasks");
-            sb.AppendLine("• Activities: XP from camp activities");
-            sb.AppendLine("• Service: Passive XP for time served");
+            sb.AppendLine("— Expected Outcome —");
+            sb.AppendLine($"Discharge quality: {band}");
+            sb.AppendLine($"Final payout (estimate): {payout} (Pending pay {pendingPay} + Severance {severance})");
+            sb.AppendLine();
+            sb.AppendLine("— Relationship Impact (estimate) —");
+            sb.AppendLine($"Lord: {(lordRelation >= 0 ? "+" : "")}{lordRelation}");
+            sb.AppendLine($"Faction leader: {(factionLeaderRelation >= 0 ? "+" : "")}{factionLeaderRelation}");
+            sb.AppendLine();
+            sb.AppendLine("Note: If your relation with your lord is negative at discharge, honorable/veteran exit is not granted.");
 
             InformationManager.ShowInquiry(
                 new InquiryData(
-                    new TextObject("{=ct_xp_breakdown_popup}XP Breakdown").ToString(),
+                    new TextObject("{=ct_request_discharge_confirm_title}Request Discharge").ToString(),
                     sb.ToString(),
                     true,
-                    false,
-                    new TextObject("{=ct_xp_close}Close").ToString(),
-                    string.Empty,
-                    () => { },
-                    null),
+                    true,
+                    new TextObject("{=ct_yes}Yes").ToString(),
+                    new TextObject("{=ct_no}No").ToString(),
+                    () =>
+                    {
+                        if (enlistment.RequestDischarge())
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                new TextObject("{=ct_discharge_requested}Discharge requested. It will resolve at the next pay muster.").ToString()));
+                            SwitchToMenuPreserveTime(CommandTentMenuId);
+                        }
+                    },
+                    () => { }),
                 false);
         }
-
-        private static int GetNextTierXpRequirement(int currentTier)
-        {
-            // Get the XP requirement for the NEXT tier from progression config
-            var nextTier = currentTier + 1;
-            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(nextTier);
-        }
-
-        // NOTE: ShowCampActivitiesPopup() removed - replaced by the organized enlisted_activities menu
-        // which provides categorized activities under TRAINING, CAMP TASKS, SOCIAL, and LANCE headers.
 
         /// <summary>
         /// Resolves an activity text ID to localized text.
@@ -679,14 +781,15 @@ namespace Enlisted.Features.Camp
         /// <summary>
         /// Creates the Camp Activities submenu with organized categories.
         /// Replaces the flat popup with a proper menu structure matching the design docs.
-        /// Categories: Training, Camp Tasks, Social, Lance
+        /// Categories: Training, Camp Tasks, Social
         /// </summary>
         private void AddCampActivitiesMenu(CampaignGameStarter starter)
         {
             // Register the main activities menu with RP-flavored header
+            // {PERSONAL_NEWS} placeholder is populated in OnCampActivitiesMenuInit with army orders/news
             starter.AddWaitGameMenu(
                 CampActivitiesMenuId,
-                "{=act_menu_intro}The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?",
+                "{=act_menu_intro_with_news}The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?",
                 OnCampActivitiesMenuInit,
                 CommandTentWaitCondition,
                 CommandTentWaitConsequence,
@@ -710,6 +813,10 @@ namespace Enlisted.Features.Camp
             text.SetTextVariable("FATIGUE_CURRENT", enlistment?.FatigueCurrent.ToString() ?? "0");
             text.SetTextVariable("FATIGUE_MAX", enlistment?.FatigueMax.ToString() ?? "24");
             text.SetTextVariable("TIME_OF_DAY", dayPart?.ToString() ?? "Day");
+            
+            // Set personal news section (army orders, battle participation, etc.)
+            var personalNews = EnlistedNewsBehavior.Instance?.BuildPersonalNewsSection(2) ?? string.Empty;
+            text.SetTextVariable("PERSONAL_NEWS", personalNews);
             
             ModLogger.Debug(LogCategory, "Camp Activities menu initialized");
         }
@@ -773,23 +880,6 @@ namespace Enlisted.Features.Camp
 
             AddCategoryActivities(starter, "social", ref priority);
 
-            // === LANCE SECTION ===
-            starter.AddGameMenuOption(
-                CampActivitiesMenuId,
-                "act_header_lance",
-                "{=act_header_lance}— LANCE —",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.IsEnabled = false;
-                    return true;
-                },
-                _ => { },
-                false,
-                priority++);
-
-            AddCategoryActivities(starter, "lance", ref priority);
-
             // === BACK OPTION ===
             starter.AddGameMenuOption(
                 CampActivitiesMenuId,
@@ -829,7 +919,7 @@ namespace Enlisted.Features.Camp
                 starter.AddGameMenuOption(
                     CampActivitiesMenuId,
                     $"act_{activityId.Replace(".", "_")}",
-                    activity.TextFallback ?? activity.Id,
+                    ResolveActivityText(activity.TextId, activity.TextFallback ?? activity.Id),
                     args => IsActivityOptionAvailable(args, activityId),
                     _ => OnActivitySelected(activityId),
                     false,
@@ -923,18 +1013,35 @@ namespace Enlisted.Features.Camp
                 statusParts.Add(string.Join(", ", xpList));
             }
 
-            // Build full tooltip
+            // Build full tooltip (include player/context stats so the option is self-explanatory)
             var hint = ResolveActivityText(activity.HintId, activity.HintFallback ?? "");
+
+            var dayPartName = dayPart?.ToString() ?? "Day";
+            var formationName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(formation ?? "infantry");
+
+            var tooltipLines = new List<string>();
+            if (!string.IsNullOrEmpty(hint))
+            {
+                tooltipLines.Add(hint);
+            }
             if (statusParts.Count > 0)
             {
-                hint += (string.IsNullOrEmpty(hint) ? "" : "\n") + string.Join(" | ", statusParts);
-            }
-            if (disableReasons.Count > 0)
-            {
-                hint += (string.IsNullOrEmpty(hint) ? "" : "\n") + "[" + string.Join(", ", disableReasons) + "]";
+                tooltipLines.Add("Effects: " + string.Join(" | ", statusParts));
             }
 
-            args.Tooltip = new TextObject(hint);
+            tooltipLines.Add($"Your fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
+            tooltipLines.Add($"Context: Tier {enlistment.EnlistmentTier}, {formationName}, {dayPartName}");
+
+            if (disableReasons.Count > 0)
+            {
+                tooltipLines.Add("Unavailable: " + string.Join(", ", disableReasons));
+            }
+            else
+            {
+                tooltipLines.Add("Available now.");
+            }
+
+            args.Tooltip = new TextObject(string.Join("\n", tooltipLines));
             args.IsEnabled = disableReasons.Count == 0;
 
             return true; // Always show the option, but may be disabled
@@ -1556,6 +1663,58 @@ namespace Enlisted.Features.Camp
                 sb.AppendLine($"Total Enlistments: {lifetime.TotalEnlistments}");
                 sb.AppendLine($"Terms Completed: {lifetime.TermsCompleted}");
                 sb.AppendLine();
+
+                // Current service snapshot (replaces the removed Activity Log + XP Breakdown menus)
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted == true)
+                {
+                    sb.AppendLine("— Current Enlistment —");
+                    sb.AppendLine();
+                    sb.AppendLine($"Tier: {enlistment.EnlistmentTier}");
+                    sb.AppendLine($"Service XP: {enlistment.EnlistmentXP}");
+                    sb.AppendLine($"Days Served: {(int)enlistment.DaysServed}");
+                    sb.AppendLine($"Fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
+
+                    if (enlistment.EnlistmentTier < 6)
+                    {
+                        var nextTierXp = Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(enlistment.EnlistmentTier);
+                        sb.AppendLine($"Next Tier Requirement: {nextTierXp} XP");
+                    }
+                    else
+                    {
+                        sb.AppendLine("Next Tier Requirement: (Max tier)");
+                    }
+
+                    if (enlistment.IsPendingDischarge)
+                    {
+                        sb.AppendLine("Discharge: Pending (resolves at next pay muster)");
+                    }
+
+                    if (enlistment.PendingMusterPay > 0)
+                    {
+                        sb.AppendLine($"Pending Pay (next muster): {enlistment.PendingMusterPay}");
+                    }
+
+                    if (enlistment.OwedBackpay > 0)
+                    {
+                        sb.AppendLine($"Owed Backpay: {enlistment.OwedBackpay}");
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine("— XP Sources —");
+                    sb.AppendLine();
+                    sb.AppendLine("• Battles: XP for participating in combat");
+                    sb.AppendLine("• Duties: Daily XP for assigned tasks");
+                    sb.AppendLine("• Activities: Skill XP from camp and lance activities");
+                    sb.AppendLine("• Service: Passive XP for time served");
+                    sb.AppendLine();
+
+                    sb.AppendLine("— This Term —");
+                    sb.AppendLine();
+                    sb.AppendLine($"Battles: {recordManager.CurrentTermBattles}");
+                    sb.AppendLine($"Kills: {recordManager.CurrentTermKills}");
+                    sb.AppendLine();
+                }
 
                 // List factions served
                 if (lifetime.FactionsServed != null && lifetime.FactionsServed.Count > 0)

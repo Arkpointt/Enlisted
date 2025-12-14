@@ -230,7 +230,9 @@ namespace Enlisted.Features.Lances.Events
                     ModLogger.Info(LogCategory, $"Player formation set to {_formationTag} via event effect (why={reason})");
 
                     // Show formation assignment message
-                    var formationName = _formationTag.Substring(0, 1).ToUpper() + _formationTag.Substring(1);
+                    var formationName = _formationTag.Length > 0 
+                        ? char.ToUpper(_formationTag[0]) + (_formationTag.Length > 1 ? _formationTag.Substring(1) : "")
+                        : _formationTag;
                     var msg = new TaleWorlds.Localization.TextObject("{=evt_formation_assigned}You have been assigned to the {FORMATION} formation.");
                     msg.SetTextVariable("FORMATION", formationName);
                     TaleWorlds.Library.InformationManager.DisplayMessage(
