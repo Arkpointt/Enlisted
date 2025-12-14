@@ -54,7 +54,7 @@
         "titleId": "ll_evt_commander_onboard_01_commission_title",
         "setupId": "ll_evt_commander_onboard_01_commission_setup",
         "title": "Your Commission",
-        "setup": "{LORD_TITLE} {LORD_NAME}'s command tent. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+        "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
         "options": [
           {
             "id": "ready",
@@ -201,7 +201,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_commander_onboard_01_commission_setup_first_time",
-          "setup": "{LORD_TITLE} {LORD_NAME}'s command tent. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+          "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
           "options": [
             {
               "id": "ready",

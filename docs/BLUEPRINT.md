@@ -1,10 +1,10 @@
-# Blueprint
+﻿# Blueprint
 
 Architecture and standards for the Enlisted mod.
 
 ## Build
 
-- Visual Studio: config "Enlisted RETAIL" → Build
+- Visual Studio: config "Enlisted RETAIL" â†’ Build
 - CLI: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
 - Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/`
 
@@ -34,36 +34,45 @@ Architecture and standards for the Enlisted mod.
 </DependedModules>
 ```
 
+## Native Reference (Decompile)
+
+Decompiled Bannerlord 1.3.4 source for API reference:
+```
+C:\Dev\Enlisted\Decompile 1.3.4\
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md#native-decompile-location) for detailed assembly locations and common API patterns.
+
 ## Structure
 
 ```
 src/
-├── Mod.Entry/              # SubModule + Harmony init
-├── Mod.Core/               # Logging, config, helpers
-├── Mod.GameAdapters/       # Harmony patches
-│   └── Patches/            # 25 patches
-└── Features/
-    ├── Enlistment/         # Core service state, retirement
-    ├── Assignments/        # Duties system
-    ├── Equipment/          # Gear management
-    ├── Ranks/              # Promotions
-    ├── Conversations/      # Dialog
-    ├── Combat/             # Battle participation
-    ├── Interface/          # Main menus (enlisted_status, enlisted_activities)
-    ├── Lances/             # Lance assignments, personas, and events
-    │   ├── Behaviors/      # LanceStoryBehavior, EnlistedLanceMenuBehavior
-    │   ├── Events/         # Lance Life Events system
-    │   └── Personas/       # Named lance role personas
-    ├── Conditions/         # Player condition system (injury/illness)
-    ├── Camp/               # My Camp menu, camp life simulation
-    ├── Activities/         # Data-driven camp activities
-    └── Escalation/         # Heat/discipline/reputation tracks
+â”œâ”€â”€ Mod.Entry/              # SubModule + Harmony init
+â”œâ”€â”€ Mod.Core/               # Logging, config, helpers
+â”œâ”€â”€ Mod.GameAdapters/       # Harmony patches
+â”‚   â””â”€â”€ Patches/            # 25 patches
+â””â”€â”€ Features/
+    â”œâ”€â”€ Enlistment/         # Core service state, retirement
+    â”œâ”€â”€ Assignments/        # Duties system
+    â”œâ”€â”€ Equipment/          # Gear management
+    â”œâ”€â”€ Ranks/              # Promotions
+    â”œâ”€â”€ Conversations/      # Dialog
+    â”œâ”€â”€ Combat/             # Battle participation
+    â”œâ”€â”€ Interface/          # Main menus (enlisted_status, enlisted_activities)
+    â”œâ”€â”€ Lances/             # Lance assignments, personas, and events
+    â”‚   â”œâ”€â”€ Behaviors/      # LanceStoryBehavior, EnlistedLanceMenuBehavior
+    â”‚   â”œâ”€â”€ Events/         # Lance Life Events system
+    â”‚   â””â”€â”€ Personas/       # Named lance role personas
+    â”œâ”€â”€ Conditions/         # Player condition system (injury/illness)
+    â”œâ”€â”€ Camp/               # Camp menu, camp life simulation
+    â”œâ”€â”€ Activities/         # Data-driven camp activities
+    â””â”€â”€ Escalation/         # Heat/discipline/reputation tracks
 ```
 
 ```
 ModuleData/
-├── Enlisted/               # JSON config + content (shipping data)
-└── Languages/              # XML localization (enlisted_strings*.xml)
+â”œâ”€â”€ Enlisted/               # JSON config + content (shipping data)
+â””â”€â”€ Languages/              # XML localization (enlisted_strings*.xml)
 ```
 
 ## Adding New Files
@@ -187,10 +196,10 @@ var hero = CampaignSafetyGuard.SafeMainHero;  // Null-safe during char creation
 ### Gold Transactions
 
 ```csharp
-// ❌ WRONG: ChangeHeroGold modifies internal gold not visible in UI
+// âŒ WRONG: ChangeHeroGold modifies internal gold not visible in UI
 Hero.MainHero.ChangeHeroGold(-amount);
 
-// ✅ CORRECT: GiveGoldAction updates party treasury visible in UI
+// âœ… CORRECT: GiveGoldAction updates party treasury visible in UI
 GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
 GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
 ```
@@ -198,10 +207,10 @@ GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
 ### Equipment Slot Iteration
 
 ```csharp
-// ❌ WRONG: Enum.GetValues includes invalid count values (crashes)
+// âŒ WRONG: Enum.GetValues includes invalid count values (crashes)
 foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { ... }
 
-// ✅ CORRECT: Numeric iteration with NumEquipmentSetSlots
+// âœ… CORRECT: Numeric iteration with NumEquipmentSetSlots
 for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 {
     var slot = (EquipmentIndex)i;
@@ -321,13 +330,13 @@ All JSON files in `ModuleData/Enlisted/`:
 ### Culture Ranks (progression_config.json)
 
 Each culture has unique rank names for all 9 tiers:
-- **Empire**: Tiro → Miles → Immunes → Principalis → Evocatus → Centurion → Primus Pilus → Tribune → Legate
-- **Vlandia**: Peasant → Levy → Footman → Man-at-Arms → Sergeant → Knight Bachelor → Cavalier → Banneret → Castellan
-- **Sturgia**: Thrall → Ceorl → Fyrdman → Drengr → Huskarl → Varangian → Champion → Thane → High Warlord
-- **Khuzait**: Outsider → Nomad → Noker → Warrior → Veteran → Bahadur → Arban → Zuun → Noyan
-- **Battania**: Woodrunner → Clan Warrior → Skirmisher → Raider → Oathsworn → Fian → Highland Champion → Clan Chief → High King's Guard
-- **Aserai**: Tribesman → Skirmisher → Footman → Veteran → Guard → Faris → Emir's Chosen → Sheikh → Grand Vizier
-- **Mercenary**: Follower → Recruit → Free Sword → Veteran → Blade → Chosen → Captain → Commander → Marshal
+- **Empire**: Tiro â†’ Miles â†’ Immunes â†’ Principalis â†’ Evocatus â†’ Centurion â†’ Primus Pilus â†’ Tribune â†’ Legate
+- **Vlandia**: Peasant â†’ Levy â†’ Footman â†’ Man-at-Arms â†’ Sergeant â†’ Knight Bachelor â†’ Cavalier â†’ Banneret â†’ Castellan
+- **Sturgia**: Thrall â†’ Ceorl â†’ Fyrdman â†’ Drengr â†’ Huskarl â†’ Varangian â†’ Champion â†’ Thane â†’ High Warlord
+- **Khuzait**: Outsider â†’ Nomad â†’ Noker â†’ Warrior â†’ Veteran â†’ Bahadur â†’ Arban â†’ Zuun â†’ Noyan
+- **Battania**: Woodrunner â†’ Clan Warrior â†’ Skirmisher â†’ Raider â†’ Oathsworn â†’ Fian â†’ Highland Champion â†’ Clan Chief â†’ High King's Guard
+- **Aserai**: Tribesman â†’ Skirmisher â†’ Footman â†’ Veteran â†’ Guard â†’ Faris â†’ Emir's Chosen â†’ Sheikh â†’ Grand Vizier
+- **Mercenary**: Follower â†’ Recruit â†’ Free Sword â†’ Veteran â†’ Blade â†’ Chosen â†’ Captain â†’ Commander â†’ Marshal
 
 ## Menu System
 
@@ -338,7 +347,7 @@ Each culture has unique rank names for all 9 tiers:
 | `enlisted_lance` | My Lance - roster view, player position, relationships | From enlisted_status |
 | `enlisted_medical` | Medical Attention - treatment options (when injured/ill) | From enlisted_status |
 | `enlisted_duty_selection` | Report for Duty - duty selection (formation-aware) | From enlisted_status |
-| `command_tent` | My Camp - service records, pay status, retinue | From enlisted_status |
+| `command_tent` | Camp - service records, pay status, retinue | From enlisted_status |
 | `enlisted_desert_confirm` | Desertion confirmation with penalty display | From Desert the Army |
 
 ### Status Display
@@ -347,7 +356,7 @@ The `enlisted_status` menu shows:
 - Party Objective, Term Remaining, Rank (Tier)
 - Formation, Fatigue, Lance
 - Wage (with gold icon)
-- **Pay Status** (when PayTension > 0): Grumbling → Tense → Severe → CRITICAL
+- **Pay Status** (when PayTension > 0): Grumbling â†’ Tense â†’ Severe â†’ CRITICAL
 - **Owed Backpay** (when > 0): Accumulated unpaid wages
 - Current XP, Next Level XP
 

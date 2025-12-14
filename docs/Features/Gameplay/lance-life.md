@@ -1,6 +1,6 @@
-# Feature Spec: Lance Life (Stories, Camp Events, and Progression)
+﻿# Feature Spec: Lance Life (Stories, Camp Events, and Progression)
 
-This spec builds “life around the lance”: small stories, camp events, and morally gray choices that grow the player’s skills while enlisted. It is designed to be **mod-friendly** and **internal** to Enlisted by using event-driven state + Enlisted-owned incidents/menus (not rewriting vanilla economy/AI).
+This spec builds â€œlife around the lanceâ€: small stories, camp events, and morally gray choices that grow the playerâ€™s skills while enlisted. It is designed to be **mod-friendly** and **internal** to Enlisted by using event-driven state + Enlisted-owned incidents/menus (not rewriting vanilla economy/AI).
 
 ## Status (shipping)
 - **Two Lance Life content layers ship today (both data-driven):**
@@ -13,8 +13,8 @@ This spec builds “life around the lance”: small stories, camp events, and mo
   - Exhaustion is persisted and can gate training when enabled.
   - Wanderers/camp followers are intentionally not implemented yet.
 - Phase 7 is implemented:
-  - **Proving events** for T1→T6 promotions with narrative choices
-  - **Formation choice** during T1→T2 event
+  - **Proving events** for T1â†’T6 promotions with narrative choices
+  - **Formation choice** during T1â†’T2 event
   - **Starter duty** auto-assignment based on formation
   - **Duty request system** with cooldowns and lance leader approval
   - Events file: `ModuleData/Enlisted/Events/events_promotion.json`
@@ -46,7 +46,7 @@ This spec builds “life around the lance”: small stories, camp events, and mo
 - [Technical implementation (high-level)](#technical-implementation-high-level)
 
 ## Overview
-“Lance Life” is a story layer that uses the player’s **lance identity** (from the existing lance system) and **camp conditions** (from Camp Life Simulation) to trigger small events with choices. Outcomes grant:
+â€œLance Lifeâ€ is a story layer that uses the playerâ€™s **lance identity** (from the existing lance system) and **camp conditions** (from Camp Life Simulation) to trigger small events with choices. Outcomes grant:
 - Skill XP (Roguery, Charm, Leadership, Stewardship, Medicine, Athletics, Riding, Polearm, etc.)
 - Fatigue changes (costs for extra work, or relief from revelry)
 - Pay/ledger changes (IOUs, bribes, lost coin)
@@ -55,11 +55,11 @@ This spec builds “life around the lance”: small stories, camp events, and mo
 ## Purpose
 - Make the lance feel like a real sub-unit with routines, temptations, and consequences.
 - Create a path to grow skills during enlistment that feels grounded (drills, errands, scrounging).
-- Add “camp crime” stories (theft/contraband) in a way that is readable, optional, and doesn’t break the campaign.
+- Add â€œcamp crimeâ€ stories (theft/contraband) in a way that is readable, optional, and doesnâ€™t break the campaign.
 
 ## Design goals
 - **Modular content**: stories are data-defined; add/remove without code edits.
-- **Rare but memorable**: low frequency, strong flavor, clear causes (“after that raid…”, “we haven’t seen town in days…”).
+- **Rare but memorable**: low frequency, strong flavor, clear causes (â€œafter that raidâ€¦â€, â€œwe havenâ€™t seen town in daysâ€¦â€).
 - **Meaningful choices**: at least one safe option and one risky option; avoid forced punishment.
 - **Internal integration**: outcomes only touch Enlisted-owned systems (Quartermaster menus, muster ledger, fatigue, incidents).
 
@@ -67,7 +67,7 @@ This spec builds “life around the lance”: small stories, camp events, and mo
 - Prefer **CampaignEvents** + daily tick aggregation.
 - Prefer Enlisted-owned UI patterns:
   - Incidents/inquiry prompts (like bag check / pay muster prompts)
-  - Camp menu entries (“My Camp”)
+  - Camp menu entries (â€œCampâ€)
   - Quartermaster menus
 - Avoid changing global town markets, vanilla crime systems, or AI behaviors.
 - No Harmony patches required for the story system itself; keep it contained in Enlisted behaviors.
@@ -90,7 +90,7 @@ This spec builds “life around the lance”: small stories, camp events, and mo
   - (Phase 5) Player conditions: current injury/illness/exhaustion (when enabled)
 
 ## Quick start (text-based, low complexity)
-This feature is intentionally “Viking Conquest”-style: short text scenes with a few options.
+This feature is intentionally â€œViking Conquestâ€-style: short text scenes with a few options.
 
 Configuration (rollback-friendly):
 - The shipped `ModuleData/Enlisted/enlisted_config.json` enables the Lance Life layers by default.
@@ -123,20 +123,20 @@ These are longer, more free-form drafts that can inform future expansion:
   - Fatigue
   - Pending muster pay / promissory pay (ledger)
   - Quartermaster mood/stockout flags for the day
-  - “Heat/discipline” risk accumulation
+  - â€œHeat/disciplineâ€ risk accumulation
 
 ## Core concepts
 
 ### Lance identity as a story anchor
 Every lance has a `storyId` already (catalog placeholder). Lance Life uses that as the primary hook:
-- “This story belongs to *The Iron Spur*,” or
-- “This story belongs to the *Feudal cavalry* archetype,” or
-- “This story belongs to any lance with roleHint=cavalry.”
+- â€œThis story belongs to *The Iron Spur*,â€ or
+- â€œThis story belongs to the *Feudal cavalry* archetype,â€ or
+- â€œThis story belongs to any lance with roleHint=cavalry.â€
 
 This prevents stories from feeling generic and makes the lance matter.
 
 ### Lance Life Stories (StoryPacks)
-The “StoryPacks” layer is the original Lance Life system: daily-tick story popups sourced from a folder of themed JSON packs.
+The â€œStoryPacksâ€ layer is the original Lance Life system: daily-tick story popups sourced from a folder of themed JSON packs.
 
 Shipping content path:
 - `ModuleData/Enlisted/StoryPacks/LanceLife/*.json`
@@ -164,21 +164,21 @@ Rules (contracted):
 - Raw text fields may exist only as **fallback English** (so missing translations never crash).
 
 **Contract (source of truth):**
-- **[Content Pack Contract — Lance Life Story Packs](../Core/story-pack-contract.md)** defines the required folder layout, schema, ID rules, localization mapping, and validation behavior.
+- **[Content Pack Contract â€” Lance Life Story Packs](../Core/story-pack-contract.md)** defines the required folder layout, schema, ID rules, localization mapping, and validation behavior.
 
 Each story entry should be self-contained and removable:
 - `id`, `tags`, `lanceStoryIds[]` or `roleHints[]` or `styleIds[]`
-- `requirements` (tier range, min skills, “must be enlisted”, “must be final lance”)
-- `triggers` (cooldowns, chance, required camp conditions, “after battle”, “after raid”, “after X days away from town”)
+- `requirements` (tier range, min skills, â€œmust be enlistedâ€, â€œmust be final lanceâ€)
+- `triggers` (cooldowns, chance, required camp conditions, â€œafter battleâ€, â€œafter raidâ€, â€œafter X days away from townâ€)
 - `options[]` with:
   - player-facing label + hint
   - optional skill checks
   - effects (XP, fatigue, gold/ledger adjustments, heat changes, relation impacts)
 
-This structure keeps the system “easy to add on and take away.”
+This structure keeps the system â€œeasy to add on and take away.â€
 
 ### Lance Life Events (Events Catalog)
-The “Events Catalog” layer is the newer Lance Life content system: a unified event schema + loader + scheduler + delivery channels.
+The â€œEvents Catalogâ€ layer is the newer Lance Life content system: a unified event schema + loader + scheduler + delivery channels.
 
 Shipping content path:
 - `ModuleData/Enlisted/Events/*.json` (packs)
@@ -194,7 +194,7 @@ Key differences vs StoryPacks:
 
 Schema and validation:
 - Schema reference: **`docs/Features/Technical/lance_life_schemas.md`**
-- Loader validates unique IDs, 2–4 options, and trigger token vocabulary; invalid entries are skipped safely.
+- Loader validates unique IDs, 2â€“4 options, and trigger token vocabulary; invalid entries are skipped safely.
 
 ### Triggers and cooldowns
 To avoid spam and keep realism:
@@ -204,7 +204,7 @@ To avoid spam and keep realism:
   - `maxTimesPerTerm` (optional)
   - `minDaysSinceEnlist` or `minDaysSinceLanceFinalized` (optional)
 - A global limiter:
-  - `maxLanceStoriesPerWeek` (default 1–2)
+  - `maxLanceStoriesPerWeek` (default 1â€“2)
 
 ### Escalation: heat, discipline, reputation, medical risk
 Phase 4 adds Enlisted-owned escalation tracks that create readable, reversible long-term consequences:
@@ -216,7 +216,7 @@ Phase 4 adds Enlisted-owned escalation tracks that create readable, reversible l
 How it works (shipping):
 - Story options can apply deltas via `effects` (e.g., `effects.heat = +2`).
 - Thresholds queue dedicated consequence stories (e.g., shakedown/audit/hearing) via the `escalation_thresholds.json` pack.
-- Tracks decay over time (enabled by default; can be disabled via config) so “clean service” is a recovery path.
+- Tracks decay over time (enabled by default; can be disabled via config) so â€œclean serviceâ€ is a recovery path.
 
 ### Player conditions: injury, illness, exhaustion
 Phase 5 adds a lightweight player condition layer (all internal to Enlisted):
@@ -232,20 +232,20 @@ Phase 5 adds deterministic, text-only personas for lance roles (leader/second/ve
 ## Story types (what we can ship)
 
 ### 1) Skills & drills
-Short events that build “soldier skills”:
+Short events that build â€œsoldier skillsâ€:
 - Night lance drill (Leadership + Polearm XP, fatigue cost)
 - Formation sparring (Athletics, weapon skill XP; risk of minor injury)
 - Mounted practice (Riding, Polearm; only if cavalry/horse archer)
 
 ### 2) Logistics & scrounging
 Stories driven by `LogisticsStrain`:
-- “No bread in the wagons.” → forage choice (Steward/Scouting), fatigue cost, food gained
-- “Broken tack and loose rivets.” → repair/scrounge (Engineering), small gear outcome later (future hook)
+- â€œNo bread in the wagons.â€ â†’ forage choice (Steward/Scouting), fatigue cost, food gained
+- â€œBroken tack and loose rivets.â€ â†’ repair/scrounge (Engineering), small gear outcome later (future hook)
 
 ### 3) Corruption and theft (quartermaster tent)
 Stories driven by `PayTension` + `ContrabandHeat`:
-- “Ledger skim”: quartermaster offers an under-the-table deal (Roguery/Charm)
-- “Supply tent theft”: your lance mates propose lifting a crate
+- â€œLedger skimâ€: quartermaster offers an under-the-table deal (Roguery/Charm)
+- â€œSupply tent theftâ€: your lance mates propose lifting a crate
   - Options:
     - Refuse (discipline improves; maybe morale hit)
     - Participate (Roguery check; gain supplies/coin; heat rises)
@@ -256,16 +256,16 @@ Critical design rule:
 
 ### 4) Morale and revelry (smuggling drink)
 Stories driven by `MoraleShock`:
-- “The lads need drink after losses.”
-  - Smuggle beer (Roguery) → morale relief / fatigue relief, heat rises
-  - Buy legally (gold) → smaller effect
-  - Refuse → no heat, morale stays low
+- â€œThe lads need drink after losses.â€
+  - Smuggle beer (Roguery) â†’ morale relief / fatigue relief, heat rises
+  - Buy legally (gold) â†’ smaller effect
+  - Refuse â†’ no heat, morale stays low
 
 ### 5) Rivalries and discipline
 Stories that build relationships and hard choices:
 - Rival lance accuses yours of theft (Charm/Leadership/Intimidation)
 - Guard rotation dispute (Leadership/Charm; fatigue redistribution)
-- “Pinned blame” incident (Roguery to evade; honor path to accept punishment)
+- â€œPinned blameâ€ incident (Roguery to evade; honor path to accept punishment)
 
 ## Phased plan
 
@@ -273,17 +273,17 @@ This feature follows the master phased rollout plan:
 - **[Implementation Roadmap](../Core/implementation-roadmap.md)**
 
 ## Edge Cases
-- Player has no lance (or only provisional): only allow “generic camp” stories; prefer final-lance gating for lance-specific stories.
+- Player has no lance (or only provisional): only allow â€œgeneric campâ€ stories; prefer final-lance gating for lance-specific stories.
 - Player is on leave / grace / prisoner: never fire stories.
 - Too many popups: enforce the weekly limiter and cooldowns strictly.
-- Save/load: cooldowns and “last fired” timestamps must persist and not double-trigger on load.
+- Save/load: cooldowns and â€œlast firedâ€ timestamps must persist and not double-trigger on load.
 
 ## Acceptance Criteria
 - Stories can be enabled/disabled by config without code changes.
 - Story content is organized as multiple packs (folder-based) and validated on load (bad entries skipped safely).
 - At least one story type exists for:
   - skill/drill, logistics, corruption, theft, morale
-- Story triggers correlate with camp conditions (e.g., high logistics strain → forage story appears).
+- Story triggers correlate with camp conditions (e.g., high logistics strain â†’ forage story appears).
 - Theft stories affect Quartermaster/pay outcomes in a readable way (mood/price change, small punishments), without breaking vanilla systems.
 - If escalation is enabled, some stories apply `effects` and threshold consequence stories can occur at appropriate track levels.
 - If player conditions are enabled, some stories can apply injury/illness rolls and the status UI reflects it.

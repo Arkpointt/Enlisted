@@ -1,4 +1,4 @@
-# Documentation Index
+﻿# Documentation Index
 
 This is the main documentation entry point for the Enlisted mod.
 
@@ -14,18 +14,18 @@ Use it two ways:
 - You enlist with a lord and become an embedded soldier: you follow their movements, join their battles, and your wages accrue into the **muster ledger**.
 - Doc: **[Enlistment System](Core/enlistment.md)**
 
-### 2) First enlistment: Bag Check → Baggage Train
+### 2) First enlistment: Bag Check â†’ Baggage Train
 About **12 in-game hours** after enlisting (when safe), a bag check runs with choices:
 - **Stow it all (50g)**: stash inventory + equipped items into the **baggage train** and pay the wagon fee.
 - **Sell it all (60%)**: liquidate gear and receive denars.
 - **I'm keeping one thing (Roguery 30+)**: attempt to keep a single item.
 
-This is how the mod prevents “walk in with endgame kit on day one” without deleting your gear.
+This is how the mod prevents â€œwalk in with endgame kit on day oneâ€ without deleting your gear.
 - Doc: **[Enlistment System](Core/enlistment.md)** (Bag Check section)
 - Equipment vending is separate: **[Quartermaster](UI/quartermaster.md)**
 
 ### 3) Pick your troop identity (Master at Arms)
-Your **troop identity** is what the Quartermaster uses to determine what gear variants you’re allowed to buy.
+Your **troop identity** is what the Quartermaster uses to determine what gear variants youâ€™re allowed to buy.
 - Doc: **[Troop Selection](Gameplay/troop-selection.md)**
 
 ### 4) Visit the Quartermaster (NPC Hero)
@@ -39,7 +39,7 @@ Talk to the quartermaster to access equipment, provisions, and advice:
 
 ### 5) Day-to-day: Duties, camp actions, and progression
 - Pick duties/roles for bonuses and wage modifiers
-- Use Camp (“My Camp”) for your service record, retinue (Tier 4+), and discharge actions
+- Use Camp (â€œCampâ€) for your service record, retinue (Tier 4+), and discharge actions
 - Use **Camp Activities** for action-based skill XP (training/tasks/social) with fatigue costs
 - Docs:
   - **[Duties System](Core/duties-system.md)**
@@ -85,7 +85,7 @@ The foundational systems that enable military service.
 - **[Lance Assignments](Core/lance-assignments.md)** - Lance roster, personas, culture-specific ranks
 - **[Camp Fatigue](Core/camp-fatigue.md)** - Daily fatigue system for activities
 - **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment
-- **[Quartermaster Hero System](Core/quartermaster-hero-system.md)** ⭐ NEW - Persistent NPC quartermaster with personality, relationship system, and PayTension dialogue
+- **[Quartermaster Hero System](Core/quartermaster-hero-system.md)** â­ NEW - Persistent NPC quartermaster with personality, relationship system, and PayTension dialogue
 - **[Retinue System](Core/retinue-system.md)** - Commander's personal force (T7-T9) with companion management
 
 ---
@@ -95,7 +95,7 @@ The foundational systems that enable military service.
 Menu systems and player interaction interfaces.
 
 - **[Menu Interface](UI/menu-interface.md)** - Main enlisted status menu and navigation
-- **[Camp](UI/camp-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub ("My Camp" menu)
+- **[Camp](UI/camp-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub ("Camp" menu)
 - **[Dialog System](UI/dialog-system.md)** - Conversation management with lords
 - **[Quartermaster](UI/quartermaster.md)** - Equipment selection UI and variant management
 
@@ -110,8 +110,8 @@ Additional gameplay mechanics and player choices.
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
 - **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts
 - **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and escalation/condition consequences (data-driven, modular)
-- **[Provisions System](Gameplay/provisions-system.md)** ⭐ NEW - Personal rations and retinue provisioning with morale/fatigue benefits
-- **[PayTension Action Menus](Gameplay/paytension-action-menus.md)** ⭐ NEW - Desperate Measures (corruption) and Help the Lord (loyalty) when pay is late
+- **[Provisions System](Gameplay/provisions-system.md)** â­ NEW - Personal rations and retinue provisioning with morale/fatigue benefits
+- **[PayTension Action Menus](Gameplay/paytension-action-menus.md)** â­ NEW - Desperate Measures (corruption) and Help the Lord (loyalty) when pay is late
 
 ---
 

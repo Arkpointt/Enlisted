@@ -28,23 +28,23 @@
     
     <string id="promo_msg_3" text="You're summoned to the camp headquarters as evening falls over the camp.\n\n'Word of your deeds has reached my ears, soldier. You've shown courage and cunning where others showed cowardice. From this day, you bear the rank of Serjeant.'\n\nAs Serjeant, you may now choose a military profession—Quarterhand, Field Medic, Drillmaster, or other specialized roles that grant unique abilities and bonuses." />
     
-    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, Serjeant. You have proven yourself worthy of greater trust. I hereby swear you into my service as a Man-at-Arms. You shall command a lance of five soldiers in battle—their lives are now your responsibility.'\n\nVisit My Camp to muster your personal retinue. Each soldier costs 2 denars per day in upkeep." />
+    <string id="promo_msg_4" text="Before the assembled company at the morning muster, your lord speaks:\n\n'Step forward, Serjeant. You have proven yourself worthy of greater trust. I hereby swear you into my service as a Man-at-Arms. You shall command a lance of five soldiers in battle—their lives are now your responsibility.'\n\nVisit Camp to muster your personal retinue. Each soldier costs 2 denars per day in upkeep." />
     
-    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I entrust you with the company banner. You are now Banner Serjeant—a veteran of the highest order. Your command extends to ten soldiers.'\n\nYour retinue capacity has increased. Visit My Camp to expand your forces." />
+    <string id="promo_msg_5" text="At dusk, as the camp settles, a runner summons you to your lord's tent.\n\n'For valor shown and battles won, I entrust you with the company banner. You are now Banner Serjeant—a veteran of the highest order. Your command extends to ten soldiers.'\n\nYour retinue capacity has increased. Visit Camp to expand your forces." />
     
     <string id="promo_msg_6" text="Around the officers' fire, with the camp spread beneath the stars, your lord addresses the gathered veterans.\n\n'Few soldiers ever stand where you stand today. By your blood and your blade, you have earned a place among my Household Guard—the finest warriors under my banner. Twenty men shall march beneath your command.'\n\nYou have reached the pinnacle of enlisted service. Your retinue capacity is now at maximum." />
 
     <!-- Promotion Chat Messages (shorter, for notification bar) -->
     <string id="promo_chat_2" text="Your service is recognized! You have been promoted to Footman. Visit the quartermaster for new equipment." />
     <string id="promo_chat_3" text="By order of your captain, you have been promoted to Serjeant! Professions are now available." />
-    <string id="promo_chat_4" text="You have been sworn in as a Man-at-Arms! You may now command soldiers. Visit My Camp." />
+    <string id="promo_chat_4" text="You have been sworn in as a Man-at-Arms! You may now command soldiers. Visit Camp." />
     <string id="promo_chat_5" text="The banner is yours to bear! Promoted to Banner Serjeant. Your retinue capacity has increased." />
     <string id="promo_chat_6" text="You have joined the Household Guard! Maximum retinue capacity unlocked." />
     <string id="promo_chat_default" text="You have been promoted!" />
 
     <!-- Promotion Button Text -->
     <string id="promo_btn_understood" text="Understood" />
-    <string id="promo_btn_command" text="To My Camp" />
+    <string id="promo_btn_command" text="To Camp" />
 
     <!-- Promotion Fallbacks -->
     <string id="promo_title_default" text="Promotion!" />
@@ -64,6 +64,56 @@
     <string id="Lance_StylePrompt_Body" text="Choose a tradition for your lance." />
     <string id="Lance_StylePrompt_Confirm" text="Choose" />
     <string id="Lance_StylePrompt_Cancel" text="Cancel" />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LANCE MENU - My Lance screen with roster and interactions -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Menu Options -->
+    <string id="lance_view_roster" text="View Full Roster" />
+    <string id="lance_roster_tooltip" text="See all members of your lance with relationship indicators." />
+    <string id="lance_talk_leader" text="Talk to Lance Leader" />
+    <string id="lance_talk_leader_hint" text="Speak with {LEADER}. {REL_DESC}\n\nRelationship: {REL}" />
+    <string id="lance_talk_second" text="Talk to Second" />
+    <string id="lance_talk_second_hint" text="Speak with {SECOND}, the second-in-command." />
+    <string id="lance_check_wounded" text="Check on the Wounded" />
+    <string id="lance_wounded_tooltip_active" text="{COUNT} lance mate(s) are recovering from wounds.\n\n+1 Lance Rep for showing concern." />
+    <string id="lance_wounded_tooltip_none" text="No wounded lance mates at this time." />
+    <string id="lance_honor_fallen" text="Honor the Fallen" />
+    <string id="lance_honor_fallen_hint" text="{COUNT} comrade(s) have fallen in battle.\n\nTake a moment to remember them.\n+2 Lance Rep" />
+    <string id="lance_no_fallen" text="No fallen to honor. May fortune continue to favor your lance." />
+    <string id="lance_view_stats" text="View Lance History" />
+    <string id="lance_stats_tooltip" text="Review your lance's battle record, reputation, and achievements." />
+    <string id="lance_back" text="Return to Camp" />
+    <string id="lance_back_hint" text="Return to the main camp menu." />
+    
+    <!-- Roster Display -->
+    <string id="lance_position" text="Your Position: {RANK}" />
+    <string id="lance_stats" text="Days with Lance: {DAYS}" />
+    <string id="lance_roster_header" text="— ROSTER —" />
+    <string id="lance_roster_full_header" text="Full Lance Roster with Relationships" />
+    <string id="lance_roster_title" text="Lance Roster" />
+    <string id="lance_roster_close" text="Close" />
+    
+    <!-- Talk to Leader/Second -->
+    <string id="lance_talk_leader_title" text="Speaking with {LEADER}" />
+    <string id="lance_talk_leader_body" text="You approach {LEADER} respectfully.\n\nRelationship: {REL}\n\n&quot;{MESSAGE}&quot;" />
+    <string id="lance_talk_second_title" text="Speaking with {SECOND}" />
+    <string id="lance_talk_second_body" text="You find {SECOND} near the lance's kit.\n\n&quot;{MESSAGE}&quot;" />
+    <string id="lance_talk_close" text="Take your leave" />
+    
+    <!-- Wounded -->
+    <string id="lance_wounded_title" text="Checking on the Wounded" />
+    <string id="lance_wounded_body_active" text="You visit the wounded lance mates and offer words of encouragement. They appreciate your concern.\n\n+1 Lance Reputation" />
+    <string id="lance_wounded_body_none" text="No wounded to check on. The lance is in fighting shape." />
+    <string id="lance_wounded_close" text="Close" />
+    
+    <!-- Honor Fallen -->
+    <string id="lance_honor_title" text="Honoring the Fallen" />
+    <string id="lance_close" text="Continue" />
+    
+    <!-- Lance Stats/History -->
+    <string id="lance_stats_title" text="Lance History" />
 
     <!-- Enlistment Messages -->
     <string id="enlisted_success_notification" text="You have enlisted in {LORD_NAME}'s service." />
@@ -156,7 +206,7 @@
     <string id="Enlisted_Menu_TalkToLord" text="My Lord..." />
     <string id="Enlisted_Menu_ReportDuty" text="Report for Duty" />
     <string id="Enlisted_Menu_CampActivities" text="Camp Activities" />
-    <string id="Enlisted_Menu_MyCamp" text="My Camp" />
+    <string id="Enlisted_Menu_MyCamp" text="Camp" />
     <string id="Enlisted_Menu_AskLeave" text="Ask for Leave" />
     <string id="Enlisted_Menu_FreeDesert" text="Leave Without Penalty" />
     <string id="Enlisted_Menu_DesertArmy" text="Desert the Army" />
@@ -230,7 +280,10 @@
     <string id="Enlisted_Status_OfficerRole" text="Serving as party {ROLE} - your {SKILL} skill affects the party." />
     <string id="Enlisted_Status_RetirementEligible" text="Eligible for honorable retirement with veteran benefits." />
     <string id="Enlisted_Status_Condition" text="Condition : {CONDITION}" />
-    <string id="Enlisted_Status_LanceRep" text="Lance Standing : {STATUS}" />
+    <string id="Enlisted_Status_LanceRep" text="Lance Rep : {VALUE} ({STATUS})" />
+    <string id="Enlisted_Status_Heat" text="Heat : {BAR} {VALUE}/10{WARNING}" />
+    <string id="Enlisted_Status_Discipline" text="Discipline : {BAR} {VALUE}/10{WARNING}" />
+    <string id="Enlisted_Status_CampStatus" text="Time: {DAYPART} | Days from Town: {DAYS}" />
     
     <!-- Escalation Notifications -->
     <string id="esc_rep_changed" text="Lance Reputation: {CHANGE} ({STATUS})" />
@@ -256,8 +309,8 @@
     <string id="Enlisted_Menu_VisitSettlementNamed" text="Visit {SETTLEMENT}" />
 
     <!-- Menu Symbols & Duties -->
-    <string id="Enlisted_Symbol_Selected" text="✓ {NAME}" />
-    <string id="Enlisted_Symbol_Unselected" text="○ {NAME}" />
+    <string id="Enlisted_Symbol_Selected" text="âœ“ {NAME}" />
+    <string id="Enlisted_Symbol_Unselected" text="â—‹ {NAME}" />
     <string id="Enlisted_Duty_Name_Enlisted" text="Enlisted" />
     <string id="Enlisted_Duty_Name_Forager" text="Forager" />
     <string id="Enlisted_Duty_Name_Sentry" text="Sentry" />
@@ -298,7 +351,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- COMMAND TENT - Main Menu -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="ct_menu_enter" text="My Camp" />
+    <string id="ct_menu_enter" text="Camp" />
     <string id="ct_menu_intro" text="The canvas flaps in the breeze. Maps and tallies cover a makeshift table. Your small corner of the army's camp." />
     <string id="ct_option_records" text="Review service records" />
     <string id="ct_option_retinue" text="Muster personal retinue" />
@@ -312,7 +365,7 @@
     <string id="ct_option_current" text="Current Posting" />
     <string id="ct_option_faction" text="Faction Records" />
     <string id="ct_option_lifetime" text="Lifetime Summary" />
-    <string id="ct_back_tent" text="Back to My Camp" />
+    <string id="ct_back_tent" text="Back to Camp" />
     <string id="ct_back_records" text="Back to Service Records" />
     <string id="ct_back_factions" text="Back to Faction Records" />
     <string id="ct_not_enlisted" text="You are not currently enlisted." />
@@ -331,7 +384,7 @@
     <!-- COMMAND TENT - Leadership Notification (Tier 4) -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <string id="ct_leadership_title" text="Promotion to Leadership" />
-    <string id="ct_leadership_message" text="Your service has not gone unnoticed. You've been granted the authority to command a small lance of soldiers in battle.\n\nVisit My Camp to request men be assigned to your command. Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep." />
+    <string id="ct_leadership_message" text="Your service has not gone unnoticed. You've been granted the authority to command a small lance of soldiers in battle.\n\nVisit Camp to request men be assigned to your command. Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep." />
     <string id="ct_leadership_acknowledge" text="Understood" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -457,12 +510,12 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- QUARTERMASTER - Purchase & Buyback -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="qm_intro_dialogue" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, I’ll buy it back.&quot;" />
-    <string id="qm_intro_dialogue_fine" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, I’ll buy it back.&quot;" />
-    <string id="qm_intro_dialogue_tense" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. Don’t waste my time.&quot;" />
-    <string id="qm_intro_dialogue_sour" text="&quot;Need kit? Buy it here. Supply’s tight and my patience is thinner. Pay what the ledger says.&quot;" />
-    <string id="qm_intro_dialogue_predatory" text="&quot;Need kit? Buy it here. Wagons are dry and prices rise. If you don’t like it, march naked.&quot;" />
-    <string id="qm_cannot_afford" text="You can’t afford this. Cost: {COST} denars." />
+    <string id="qm_intro_dialogue" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, Iâ€™ll buy it back.&quot;" />
+    <string id="qm_intro_dialogue_fine" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, Iâ€™ll buy it back.&quot;" />
+    <string id="qm_intro_dialogue_tense" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. Donâ€™t waste my time.&quot;" />
+    <string id="qm_intro_dialogue_sour" text="&quot;Need kit? Buy it here. Supplyâ€™s tight and my patience is thinner. Pay what the ledger says.&quot;" />
+    <string id="qm_intro_dialogue_predatory" text="&quot;Need kit? Buy it here. Wagons are dry and prices rise. If you donâ€™t like it, march naked.&quot;" />
+    <string id="qm_cannot_afford" text="You canâ€™t afford this. Cost: {COST} denars." />
     <string id="qm_equipment_issued_buy" text="Purchased {ITEM_NAME} for {COST} denars." />
     <string id="qm_item_limit_reached" text="You already have {COUNT} of {ITEM_NAME}." />
     <string id="qm_equipment_issued" text="Purchased: {ITEM_NAME}." />
@@ -517,7 +570,7 @@
 
     <!-- Story: After Hours — Lance Drill -->
     <string id="ll_story_lance_drill_night_sparring_title" text="After Hours — Lance Drill" />
-    <string id="ll_story_lance_drill_night_sparring_body" text="The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someone’s bleeding. Still… good practice is hard to come by on campaign." />
+    <string id="ll_story_lance_drill_night_sparring_body" text="The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someoneâ€™s bleeding. Stillâ€¦ good practice is hard to come by on campaign." />
     <string id="ll_story_lance_drill_night_sparring_opt_lead_text" text="Lead the drill (Athletics + Polearm)" />
     <string id="ll_story_lance_drill_night_sparring_opt_lead_hint" text="Spend a little energy to build real soldiering skills." />
     <string id="ll_story_lance_drill_night_sparring_opt_delegate_text" text="Let them run it without you (Leadership)" />
@@ -537,15 +590,15 @@
 
     <!-- Story: The Ledger and the Smile -->
     <string id="ll_story_lance_quartermaster_ledger_skim_title" text="The Ledger and the Smile" />
-    <string id="ll_story_lance_quartermaster_ledger_skim_body" text="The quartermaster’s clerk doesn’t look up as you approach. He just taps the ledger with a dirty nail.\n\n&quot;There’s the price,&quot; he says. Then, quieter: &quot;Unless we’re friends.&quot;" />
+    <string id="ll_story_lance_quartermaster_ledger_skim_body" text="The quartermasterâ€™s clerk doesnâ€™t look up as you approach. He just taps the ledger with a dirty nail.\n\n&quot;Thereâ€™s the price,&quot; he says. Then, quieter: &quot;Unless weâ€™re friends.&quot;" />
     <string id="ll_story_lance_quartermaster_ledger_skim_opt_refuse_text" text="Refuse. Pay the posted price." />
     <string id="ll_story_lance_quartermaster_ledger_skim_opt_refuse_hint" text="No heat. No favors owed." />
     <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_text" text="Slip him a little (Roguery)" />
-    <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_hint" text="A small bribe. Lower prices today… and eyes on you tomorrow." />
+    <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_hint" text="A small bribe. Lower prices todayâ€¦ and eyes on you tomorrow." />
 
     <!-- Story: A Song for the Cold -->
     <string id="ll_story_morale_campfire_song_title" text="A Song for the Cold" />
-    <string id="ll_story_morale_campfire_song_body" text="The night wind cuts through the tents. Someone in your lance starts a low song to keep spirits up.\n\nA few voices join in—awkward at first—then steadier. You can let it happen… or you can take the lead." />
+    <string id="ll_story_morale_campfire_song_body" text="The night wind cuts through the tents. Someone in your lance starts a low song to keep spirits up.\n\nA few voices join in—awkward at first—then steadier. You can let it happenâ€¦ or you can take the lead." />
     <string id="ll_story_morale_campfire_song_opt_lead_text" text="Lead the song (Charm + Leadership)" />
     <string id="ll_story_morale_campfire_song_opt_lead_hint" text="Spend a little energy to lift the lance." />
     <string id="ll_story_morale_campfire_song_opt_listen_text" text="Let the lads carry it" />
@@ -563,7 +616,7 @@
 
     <!-- Story: The Mess Line -->
     <string id="ll_story_discipline_mess_line_fight_title" text="The Mess Line" />
-    <string id="ll_story_discipline_mess_line_fight_body" text="The cook’s pot is thin and tempers are thinner. Two men from your lance start shoving in the line.\n\nIf this turns into a brawl, the serjeant will make an example of someone—maybe the whole lance." />
+    <string id="ll_story_discipline_mess_line_fight_body" text="The cookâ€™s pot is thin and tempers are thinner. Two men from your lance start shoving in the line.\n\nIf this turns into a brawl, the serjeant will make an example of someone—maybe the whole lance." />
     <string id="ll_story_discipline_mess_line_fight_opt_stepin_text" text="Step in and put a stop to it (Leadership)" />
     <string id="ll_story_discipline_mess_line_fight_opt_stepin_hint" text="Set the tone before the camp does it for you." />
     <string id="ll_story_discipline_mess_line_fight_opt_breakit_text" text="Pull them apart and move on" />
@@ -573,7 +626,7 @@
 
     <!-- Story: Dawn Inspection -->
     <string id="ll_story_discipline_dawn_inspection_title" text="Dawn Inspection" />
-    <string id="ll_story_discipline_dawn_inspection_body" text="The serjeant’s boots crunch frost as he walks the line. He’s looking for any excuse to punish slackness.\n\nYour kit is serviceable… but you could make it sharp enough that he doesn’t linger on your lance." />
+    <string id="ll_story_discipline_dawn_inspection_body" text="The serjeantâ€™s boots crunch frost as he walks the line. Heâ€™s looking for any excuse to punish slackness.\n\nYour kit is serviceableâ€¦ but you could make it sharp enough that he doesnâ€™t linger on your lance." />
     <string id="ll_story_discipline_dawn_inspection_opt_polish_text" text="Put in the extra work (Steward)" />
     <string id="ll_story_discipline_dawn_inspection_opt_polish_hint" text="Costs energy, but keeps attention off your men." />
     <string id="ll_story_discipline_dawn_inspection_opt_standard_text" text="Do the standard checks" />
@@ -581,7 +634,7 @@
 
     <!-- Story: The Aid Tent -->
     <string id="ll_story_medical_aid_tent_shift_title" text="The Aid Tent" />
-    <string id="ll_story_medical_aid_tent_shift_body" text="The aid tent stinks of boiled linen and old blood. The medic is short-handed, and your lance is close enough to be asked.\n\nYou can spare the time… or you can pretend you didn’t hear." />
+    <string id="ll_story_medical_aid_tent_shift_body" text="The aid tent stinks of boiled linen and old blood. The medic is short-handed, and your lance is close enough to be asked.\n\nYou can spare the timeâ€¦ or you can pretend you didnâ€™t hear." />
     <string id="ll_story_medical_aid_tent_shift_opt_help_text" text="Help for a while (Medicine)" />
     <string id="ll_story_medical_aid_tent_shift_opt_help_hint" text="Costs energy. You learn useful work." />
     <string id="ll_story_medical_aid_tent_shift_opt_watch_text" text="Watch and take notes" />
@@ -591,7 +644,7 @@
 
     <!-- Story: Bandage Drill -->
     <string id="ll_story_medical_bandage_drill_title" text="Bandage Drill" />
-    <string id="ll_story_medical_bandage_drill_body" text="As dusk settles, the medic shows your lance how to bind a wound properly.\n\nIt’s not glory, but it’s the difference between a man walking tomorrow and a man rotting in a ditch." />
+    <string id="ll_story_medical_bandage_drill_body" text="As dusk settles, the medic shows your lance how to bind a wound properly.\n\nItâ€™s not glory, but itâ€™s the difference between a man walking tomorrow and a man rotting in a ditch." />
     <string id="ll_story_medical_bandage_drill_opt_serious_text" text="Take it seriously (Medicine)" />
     <string id="ll_story_medical_bandage_drill_opt_serious_hint" text="A little effort now saves pain later." />
     <string id="ll_story_medical_bandage_drill_opt_half_text" text="Half-listen and nod" />
@@ -768,18 +821,18 @@
     <string id="lp_rank_vlandia_soldier" text="Soldier" />
     <string id="lp_rank_vlandia_recruit" text="Recruit" />
 
-    <string id="lp_rank_sturgia_leader" text="Húskarl-Leader" />
-    <string id="lp_rank_sturgia_second" text="Second Húskarl" />
+    <string id="lp_rank_sturgia_leader" text="HÃºskarl-Leader" />
+    <string id="lp_rank_sturgia_second" text="Second HÃºskarl" />
     <string id="lp_rank_sturgia_senior_veteran" text="Veteran Drengr" />
     <string id="lp_rank_sturgia_veteran" text="Drengr" />
     <string id="lp_rank_sturgia_soldier" text="Karl" />
     <string id="lp_rank_sturgia_recruit" text="Recruit" />
 
     <string id="lp_rank_battania_leader" text="Cennaire" />
-    <string id="lp_rank_battania_second" text="Tánaise" />
-    <string id="lp_rank_battania_senior_veteran" text="Laoch Mór" />
+    <string id="lp_rank_battania_second" text="TÃ¡naise" />
+    <string id="lp_rank_battania_senior_veteran" text="Laoch MÃ³r" />
     <string id="lp_rank_battania_veteran" text="Laoch" />
-    <string id="lp_rank_battania_soldier" text="Fénnid" />
+    <string id="lp_rank_battania_soldier" text="FÃ©nnid" />
     <string id="lp_rank_battania_recruit" text="Dalta" />
 
     <string id="lp_rank_khuzait_leader" text="Arban-u Darga" />
@@ -822,7 +875,7 @@
     <string id="cond_treat_herbal_hint" text="Costs coin. Solid recovery boost." />
 
     <string id="cond_treatment_applied" text="Treatment applied." />
-    <string id="cond_recovered" text="You’ve recovered." />
+    <string id="cond_recovered" text="Youâ€™ve recovered." />
 
     <string id="cond_injury_generic" text="Injury" />
     <string id="cond_illness_generic" text="Illness" />
@@ -950,7 +1003,7 @@
     <string id="qm_help_lord_response" text="[Quartermaster suggests ways to help the lord]" />
 
     <!-- Phase 8: PayTension Action Menus -->
-    <!-- Command Tent Options -->
+    <!-- Camp Options -->
     <string id="ct_desperate_measures" text="Desperate Measures..." />
     <string id="ct_desperate_tooltip" text="When times are hard, some turn to... creative solutions." />
     <string id="ct_help_lord" text="Help the Lord with Finances" />
@@ -970,7 +1023,7 @@
     <string id="dm_sell_gear_tooltip" text="Sell equipment you were issued. Risky - you'll need to replace it or face punishment." />
     <string id="dm_desertion_talk" text="Listen to Desertion Talk" />
     <string id="dm_desertion_tooltip" text="Some soldiers are planning to slip away. Hear what they have to say." />
-    <string id="dm_back" text="Return to Command Tent" />
+    <string id="dm_back" text="Return to Camp" />
 
     <!-- Help the Lord Menu -->
     <string id="hlm_menu_intro" text="Help the Lord" />
@@ -984,7 +1037,7 @@
     <string id="hlm_volunteer_raid" text="Volunteer for a Raid" />
     <string id="hlm_raid_tooltip" text="Lead a raid on enemy territory. Dangerous but lucrative. (-25 PayTension, risk of injury)" />
     <string id="hlm_no_war" text="Only available when the lord is at war." />
-    <string id="hlm_back" text="Return to Command Tent" />
+    <string id="hlm_back" text="Return to Camp" />
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- EQUIPMENT - Master at Arms & Upgrades -->
@@ -1040,16 +1093,16 @@
 
     <!-- Heat thresholds -->
     <string id="ll_thr_heat_warning_title" text="Watched Eyes" />
-    <string id="ll_thr_heat_warning_body" text="A clerk’s gaze lingers a little too long. Your name is on the slate now—and the slate gets read." />
+    <string id="ll_thr_heat_warning_body" text="A clerkâ€™s gaze lingers a little too long. Your name is on the slate now—and the slate gets read." />
     <string id="ll_thr_heat_warning_opt_clean_text" text="Keep your nose clean." />
     <string id="ll_thr_heat_warning_opt_clean_hint" text="Back away from the easy angles." />
     <string id="ll_thr_heat_warning_opt_clean_result" text="You make a point of being seen doing things right." />
     <string id="ll_thr_heat_warning_opt_shrug_text" text="Smile and move on." />
-    <string id="ll_thr_heat_warning_opt_shrug_hint" text="If they’re watching, let them watch." />
-    <string id="ll_thr_heat_warning_opt_shrug_result" text="You carry on, but the eyes don’t leave." />
+    <string id="ll_thr_heat_warning_opt_shrug_hint" text="If theyâ€™re watching, let them watch." />
+    <string id="ll_thr_heat_warning_opt_shrug_result" text="You carry on, but the eyes donâ€™t leave." />
 
     <string id="ll_thr_heat_shakedown_title" text="Shakedown" />
-    <string id="ll_thr_heat_shakedown_body" text="A hard hand stops you by the wagons. “Inspection. Now.” This isn’t random. Someone remembered your name." />
+    <string id="ll_thr_heat_shakedown_body" text="A hard hand stops you by the wagons. â€œInspection. Now.â€ This isnâ€™t random. Someone remembered your name." />
     <string id="ll_thr_heat_shakedown_opt_comply_text" text="Comply." />
     <string id="ll_thr_heat_shakedown_opt_comply_hint" text="Take the heat and keep it survivable." />
     <string id="ll_thr_heat_shakedown_opt_comply_result" text="They find nothing worth hanging you for. This time." />
@@ -1058,29 +1111,29 @@
     <string id="ll_thr_heat_shakedown_opt_pay_result" text="The hand relaxes. The inspection ends early." />
 
     <string id="ll_thr_heat_audit_title" text="Audit" />
-    <string id="ll_thr_heat_audit_body" text="A thin man with ink-stained fingers presents a list of numbers that don’t add up. “Explain this.”" />
+    <string id="ll_thr_heat_audit_body" text="A thin man with ink-stained fingers presents a list of numbers that donâ€™t add up. â€œExplain this.â€" />
     <string id="ll_thr_heat_audit_opt_cooperate_text" text="Cooperate and explain." />
     <string id="ll_thr_heat_audit_opt_cooperate_hint" text="Make it boring. Make it plausible." />
-    <string id="ll_thr_heat_audit_opt_cooperate_result" text="The questions end. The suspicion doesn’t." />
+    <string id="ll_thr_heat_audit_opt_cooperate_result" text="The questions end. The suspicion doesnâ€™t." />
     <string id="ll_thr_heat_audit_opt_confess_text" text="Confess the smallest version of it." />
     <string id="ll_thr_heat_audit_opt_confess_hint" text="Offer a clean ending to a dirty thread." />
     <string id="ll_thr_heat_audit_opt_confess_result" text="You take the hit, and the ledger closes—mostly." />
 
     <string id="ll_thr_heat_exposed_title" text="Exposed" />
-    <string id="ll_thr_heat_exposed_body" text="They have the proof. The room is quiet enough to hear the quill scratch. “Sign here.”" />
+    <string id="ll_thr_heat_exposed_body" text="They have the proof. The room is quiet enough to hear the quill scratch. â€œSign here.â€" />
     <string id="ll_thr_heat_exposed_opt_fine_text" text="Pay the fine and accept the punishment." />
     <string id="ll_thr_heat_exposed_opt_fine_hint" text="Lose coin now to keep your legs." />
     <string id="ll_thr_heat_exposed_opt_fine_result" text="It hurts, but it ends. For now." />
     <string id="ll_thr_heat_exposed_opt_deny_text" text="Deny it." />
     <string id="ll_thr_heat_exposed_opt_deny_hint" text="Make them work for it." />
-    <string id="ll_thr_heat_exposed_opt_deny_result" text="You walk out, but you don’t walk away clean." />
+    <string id="ll_thr_heat_exposed_opt_deny_result" text="You walk out, but you donâ€™t walk away clean." />
 
     <!-- Discipline thresholds -->
     <string id="ll_thr_disc_extra_title" text="Extra Duty" />
-    <string id="ll_thr_disc_extra_body" text="Someone hands you a task nobody volunteers for. “You’ll learn punctuality the hard way.”" />
+    <string id="ll_thr_disc_extra_body" text="Someone hands you a task nobody volunteers for. â€œYouâ€™ll learn punctuality the hard way.â€" />
     <string id="ll_thr_disc_extra_opt_do_text" text="Do the duty." />
     <string id="ll_thr_disc_extra_opt_do_hint" text="Take your lumps and move on." />
-    <string id="ll_thr_disc_extra_opt_do_result" text="You finish it. You’re tired, but the mark eases." />
+    <string id="ll_thr_disc_extra_opt_do_result" text="You finish it. Youâ€™re tired, but the mark eases." />
     <string id="ll_thr_disc_extra_opt_mouth_text" text="Mouth off." />
     <string id="ll_thr_disc_extra_opt_mouth_hint" text="Turn a punishment into a statement." />
     <string id="ll_thr_disc_extra_opt_mouth_result" text="The statement is noted. So is your name." />
@@ -1089,7 +1142,7 @@
     <string id="ll_thr_disc_hearing_body" text="You stand before a small circle of authority. No shouting. Just questions." />
     <string id="ll_thr_disc_hearing_opt_own_text" text="Own it." />
     <string id="ll_thr_disc_hearing_opt_own_hint" text="Straight answers, fewer surprises." />
-    <string id="ll_thr_disc_hearing_opt_own_result" text="They don’t forgive, but they move on." />
+    <string id="ll_thr_disc_hearing_opt_own_result" text="They donâ€™t forgive, but they move on." />
     <string id="ll_thr_disc_hearing_opt_blame_text" text="Blame someone else." />
     <string id="ll_thr_disc_hearing_opt_blame_hint" text="Save yourself. Pay later." />
     <string id="ll_thr_disc_hearing_opt_blame_result" text="You keep your skin. You lose some of your people." />
@@ -1098,7 +1151,7 @@
     <string id="ll_thr_disc_blocked_body" text="Word comes down: no advancement while your discipline is in question. The road forward is closed—for now." />
     <string id="ll_thr_disc_blocked_opt_accept_text" text="Accept it." />
     <string id="ll_thr_disc_blocked_opt_accept_hint" text="Keep your head down. Serve clean." />
-    <string id="ll_thr_disc_blocked_opt_accept_result" text="It stings, but it’s clear what you must do." />
+    <string id="ll_thr_disc_blocked_opt_accept_result" text="It stings, but itâ€™s clear what you must do." />
     <string id="ll_thr_disc_blocked_opt_volunteer_text" text="Volunteer for an unpleasant duty." />
     <string id="ll_thr_disc_blocked_opt_volunteer_hint" text="Earn your way back fast." />
     <string id="ll_thr_disc_blocked_opt_volunteer_result" text="You pay in sweat, and the pressure eases." />
@@ -1107,14 +1160,14 @@
     <string id="ll_thr_disc_discharge_body" text="You get one chance to speak before the paper is signed. The room waits." />
     <string id="ll_thr_disc_discharge_opt_plead_text" text="Plead your case." />
     <string id="ll_thr_disc_discharge_opt_plead_hint" text="Promise clean service and mean it." />
-    <string id="ll_thr_disc_discharge_opt_plead_result" text="They choose punishment over discharge. You’re still in it." />
+    <string id="ll_thr_disc_discharge_opt_plead_result" text="They choose punishment over discharge. Youâ€™re still in it." />
     <string id="ll_thr_disc_discharge_opt_defy_text" text="Defy them." />
     <string id="ll_thr_disc_discharge_opt_defy_hint" text="If they want your respect, they can earn it." />
     <string id="ll_thr_disc_discharge_opt_defy_result" text="The decision hardens. So do the consequences." />
 
     <!-- Reputation thresholds -->
     <string id="ll_thr_rep_trusted_title" text="Trusted" />
-    <string id="ll_thr_rep_trusted_body" text="A lance mate pulls you aside. “I trust you. Don’t make me regret it.”" />
+    <string id="ll_thr_rep_trusted_body" text="A lance mate pulls you aside. â€œI trust you. Donâ€™t make me regret it.â€" />
     <string id="ll_thr_rep_trusted_opt_help_text" text="Help." />
     <string id="ll_thr_rep_trusted_opt_help_hint" text="Pay trust forward." />
     <string id="ll_thr_rep_trusted_opt_help_result" text="The bond tightens." />
@@ -1123,13 +1176,13 @@
     <string id="ll_thr_rep_trusted_opt_decline_result" text="Trust is still there—thinner." />
 
     <string id="ll_thr_rep_bonded_title" text="Bonded" />
-    <string id="ll_thr_rep_bonded_body" text="Someone warns you before trouble finds you. “Heads up,” they whisper. “They’re looking for you.”" />
+    <string id="ll_thr_rep_bonded_body" text="Someone warns you before trouble finds you. â€œHeads up,â€ they whisper. â€œTheyâ€™re looking for you.â€" />
     <string id="ll_thr_rep_bonded_opt_accept_text" text="Accept the warning and listen." />
-    <string id="ll_thr_rep_bonded_opt_accept_hint" text="Use it. Don’t waste it." />
-    <string id="ll_thr_rep_bonded_opt_accept_result" text="You’re not alone in this lance." />
+    <string id="ll_thr_rep_bonded_opt_accept_hint" text="Use it. Donâ€™t waste it." />
+    <string id="ll_thr_rep_bonded_opt_accept_result" text="Youâ€™re not alone in this lance." />
     <string id="ll_thr_rep_bonded_opt_wave_text" text="Wave it off." />
     <string id="ll_thr_rep_bonded_opt_wave_hint" text="Pride over prudence." />
-    <string id="ll_thr_rep_bonded_opt_wave_result" text="You still have friends. You act like you don’t." />
+    <string id="ll_thr_rep_bonded_opt_wave_result" text="You still have friends. You act like you donâ€™t." />
 
     <string id="ll_thr_rep_isolated_title" text="Isolated" />
     <string id="ll_thr_rep_isolated_body" text="The fire circle closes without you. Conversations die when you approach." />
@@ -1138,20 +1191,20 @@
     <string id="ll_thr_rep_isolated_opt_head_result" text="You swallow your pride and keep working." />
     <string id="ll_thr_rep_isolated_opt_snap_text" text="Snap back." />
     <string id="ll_thr_rep_isolated_opt_snap_hint" text="Make it worse, faster." />
-    <string id="ll_thr_rep_isolated_opt_snap_result" text="Now it’s not just cold. It’s hostile." />
+    <string id="ll_thr_rep_isolated_opt_snap_result" text="Now itâ€™s not just cold. Itâ€™s hostile." />
 
     <string id="ll_thr_rep_sabotage_title" text="Sabotage" />
     <string id="ll_thr_rep_sabotage_body" text="Something you need is missing. Not lost—taken. The message is plain." />
     <string id="ll_thr_rep_sabotage_opt_loss_text" text="Eat the loss." />
     <string id="ll_thr_rep_sabotage_opt_loss_hint" text="Pay coin to move on." />
-    <string id="ll_thr_rep_sabotage_opt_loss_result" text="You replace what was stolen. You don’t forget." />
+    <string id="ll_thr_rep_sabotage_opt_loss_result" text="You replace what was stolen. You donâ€™t forget." />
     <string id="ll_thr_rep_sabotage_opt_confront_text" text="Confront them." />
     <string id="ll_thr_rep_sabotage_opt_confront_hint" text="Make it public. Make it messy." />
     <string id="ll_thr_rep_sabotage_opt_confront_result" text="You get answers—or you get trouble." />
 
     <!-- Medical thresholds -->
     <string id="ll_thr_med_worsening_title" text="Worsening" />
-    <string id="ll_thr_med_worsening_body" text="Something aches in a way that isn’t normal. You can feel it getting worse." />
+    <string id="ll_thr_med_worsening_body" text="Something aches in a way that isnâ€™t normal. You can feel it getting worse." />
     <string id="ll_thr_med_worsening_opt_rest_text" text="Rest and recover." />
     <string id="ll_thr_med_worsening_opt_rest_hint" text="Slow down before it forces you." />
     <string id="ll_thr_med_worsening_opt_rest_result" text="You breathe, you rest, and the edge fades." />
@@ -1165,7 +1218,7 @@
     <string id="ll_thr_med_complication_opt_seek_hint" text="Time, fatigue, and a little coin—worth it." />
     <string id="ll_thr_med_complication_opt_seek_result" text="Clean bandages and bitter herbs. It starts to turn." />
     <string id="ll_thr_med_complication_opt_push_text" text="Push on." />
-    <string id="ll_thr_med_complication_opt_push_hint" text="You can’t afford to look weak." />
+    <string id="ll_thr_med_complication_opt_push_hint" text="You canâ€™t afford to look weak." />
     <string id="ll_thr_med_complication_opt_push_result" text="You stay upright. Barely." />
 
     <string id="ll_thr_med_emergency_title" text="Emergency" />
@@ -1175,7 +1228,7 @@
     <string id="ll_thr_med_emergency_opt_rest_result" text="You lose time. You keep your life." />
     <string id="ll_thr_med_emergency_opt_stumble_text" text="Stumble onward." />
     <string id="ll_thr_med_emergency_opt_stumble_hint" text="Refuse to stop." />
-    <string id="ll_thr_med_emergency_opt_stumble_result" text="You don’t collapse—but everyone sees you close to it." />
+    <string id="ll_thr_med_emergency_opt_stumble_result" text="You donâ€™t collapse—but everyone sees you close to it." />
   
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -2250,7 +2303,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: commander_onboard_01_commission — commander_onboard_01_commission -->
     <string id="ll_evt_commander_onboard_01_commission_title" text="Your Commission" />
-    <string id="ll_evt_commander_onboard_01_commission_setup" text="{LORD_TITLE} {LORD_NAME}&#x27;s command tent. You&#x27;ve been summoned.\n\nThey don&#x27;t waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n&quot;I&#x27;m giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.&quot;\n\nThey look up from the map. Eyes weighing you.\n\n&quot;These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?&quot;\n\nThis isn&#x27;t a lance anymore. This is real command. Real soldiers in your party. Real consequences." />
+    <string id="ll_evt_commander_onboard_01_commission_setup" text="{LORD_TITLE} {LORD_NAME}&#x27;s pavilion. You&#x27;ve been summoned.\n\nThey don&#x27;t waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n&quot;I&#x27;m giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.&quot;\n\nThey look up from the map. Eyes weighing you.\n\n&quot;These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?&quot;\n\nThis isn&#x27;t a lance anymore. This is real command. Real soldiers in your party. Real consequences." />
     <string id="ll_evt_commander_onboard_01_commission_opt_first_time_ready_text" text="&quot;I understand, {LORD_TITLE}. I won&#x27;t waste them.&quot;" />
     <string id="ll_evt_commander_onboard_01_commission_opt_first_time_ready_outcome" text="{LORD_NAME} nods slowly. &quot;See that you don&#x27;t.&quot;\n\nThey return to the map, pointing out your area of responsibility. You listen. You learn. When you leave, you&#x27;re carrying the weight of {TROOP_COUNT} lives.\n\nIt feels heavier than you expected." />
     <string id="ll_evt_commander_onboard_01_commission_opt_first_time_questions_text" text="&quot;What resources do I have? What&#x27;s the chain of command?&quot;" />
@@ -2259,7 +2312,7 @@
     <string id="ll_evt_commander_onboard_01_commission_opt_first_time_confident_outcome" text="You take the risk and see it through." />
     <string id="ll_evt_commander_onboard_01_commission_opt_first_time_honest_text" text="&quot;I&#x27;ll do my best, {LORD_TITLE}. That&#x27;s all I can promise.&quot;" />
     <string id="ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome" text="A hint of something — respect? — flickers across {LORD_NAME}&#x27;s face.\n\n&quot;Honest. I like that. Most commanders promise victory. Few deliver.&quot;\n\nThey tap the map. &quot;Your best will have to be enough. Now let me show you what I need.&quot;" />
-    <string id="ll_evt_commander_onboard_01_commission_setup_first_time" text="{LORD_TITLE} {LORD_NAME}&#x27;s command tent. You&#x27;ve been summoned.\n\nThey don&#x27;t waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n&quot;I&#x27;m giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.&quot;\n\nThey look up from the map. Eyes weighing you.\n\n&quot;These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?&quot;\n\nThis isn&#x27;t a lance anymore. This is real command. Real soldiers in your party. Real consequences." />
+    <string id="ll_evt_commander_onboard_01_commission_setup_first_time" text="{LORD_TITLE} {LORD_NAME}&#x27;s pavilion. You&#x27;ve been summoned.\n\nThey don&#x27;t waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n&quot;I&#x27;m giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.&quot;\n\nThey look up from the map. Eyes weighing you.\n\n&quot;These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?&quot;\n\nThis isn&#x27;t a lance anymore. This is real command. Real soldiers in your party. Real consequences." />
     <string id="ll_evt_commander_onboard_01_commission_setup_return" text="You&#x27;ve done this before. Stood in a lord&#x27;s tent. Been given soldiers. Carried that weight.\n\nYou&#x27;d put it down. Walked away. Tried to be something else.\n\nNow here you are again.\n\n{LORD_TITLE} {LORD_NAME} watches you. They know your history — someone with your experience doesn&#x27;t appear from nowhere.\n\n&quot;Back in harness, Commander?&quot;\n\n{TROOP_COUNT} soldiers. Yours again." />
     <string id="ll_evt_commander_onboard_01_commission_opt_return_needed_text" text="&quot;Couldn&#x27;t stay away. Some men aren&#x27;t meant for peace.&quot;" />
     <string id="ll_evt_commander_onboard_01_commission_opt_return_needed_outcome" text="{LORD_NAME} nods slowly. &quot;I know the type.&quot;\n\nDo they? Maybe. Or maybe they just know soldiers.\n\n&quot;Your men are waiting. Try not to get them killed.&quot;\n\nThe old weight settles onto your shoulders. Familiar. Heavy. Home." />
@@ -2896,6 +2949,84 @@
     <string id="hlm_raid_success" text="The raid is a complete success! Valuable loot is captured. (-25 PayTension)" />
     <string id="hlm_raid_wounded" text="The raid succeeds but you're wounded! (-{DAMAGE} HP, -25 PayTension)" />
     <string id="hlm_tension_stabilized" text="The lord's financial situation has stabilized." />
+
+    <!-- ================== CAMP ACTIVITIES MENU ================== -->
+    
+    <!-- Menu Header and Navigation -->
+    <string id="act_menu_intro" text="The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?" />
+    <string id="act_back" text="Return to Camp" />
+    
+    <!-- Category Headers -->
+    <string id="act_header_training" text="— TRAINING —" />
+    <string id="act_header_tasks" text="— CAMP TASKS —" />
+    <string id="act_header_social" text="— SOCIAL —" />
+    <string id="act_header_lance" text="— LANCE —" />
+    
+    <!-- Success Messages (by category) -->
+    <string id="act_success_training" text="You complete the training. Your muscles ache, but you feel stronger." />
+    <string id="act_success_tasks" text="You finish the task. The camp runs a little smoother for your effort." />
+    <string id="act_success_social" text="Time passes pleasantly. The bonds of camaraderie strengthen." />
+    <string id="act_success_lance" text="You spend time with your lance mates. They appreciate your attention." />
+    <string id="act_success_generic" text="Activity completed." />
+    
+    <!-- Error Messages -->
+    <string id="act_not_found" text="Activity not found." />
+    <string id="act_failed" text="Could not complete activity: {REASON}" />
+    <string id="act_failed_generic" text="Could not complete the activity." />
+    
+    <!-- Training Activities -->
+    <string id="act_training_formation_drill" text="Formation Drill [+15 Athletics, +10 Leadership | -2 Fatigue]" />
+    <string id="act_training_formation_drill_hint" text="Practice military formations with your unit. Builds discipline and coordination." />
+    <string id="act_training_sparring" text="Sparring Circle [+20 One-Handed | -2 Fatigue]" />
+    <string id="act_training_sparring_hint" text="Practice sword work against training partners. The circle gathers to watch." />
+    <string id="act_training_weapons" text="Weapons Practice [+30 Weapon XP, +15 Athletics | -2 Fatigue]" />
+    <string id="act_training_weapons_hint" text="Practice with your main weapon at the training posts." />
+    <string id="act_training_archery" text="Archery Range [+35 Bow | -2 Fatigue]" />
+    <string id="act_training_archery_hint" text="Practice at the camp's archery butts. Draw, aim, loose." />
+    <string id="act_training_riding" text="Riding Drills [+25 Riding, +15 Polearm | -3 Fatigue]" />
+    <string id="act_training_riding_hint" text="Practice mounted combat maneuvers with the cavalry." />
+    
+    <!-- Camp Task Activities -->
+    <string id="act_task_help_surgeon" text="Help the Surgeon [+15 Medicine]" />
+    <string id="act_task_help_surgeon_hint" text="Assist the camp surgeon with wounded soldiers. Hold down, fetch bandages, clean wounds." />
+    <string id="act_task_forage" text="Forage for Camp [+10 Scouting, +10 Steward | -2 Fatigue]" />
+    <string id="act_task_forage_hint" text="Search the surrounding area for food and supplies. Every bit helps." />
+    <string id="act_task_forge" text="Work the Forge [+40 Smithing, +20 Athletics | -3 Fatigue]" />
+    <string id="act_task_forge_hint" text="Help the camp smith with repairs and maintenance. Hot, hard work." />
+    <string id="act_task_maintain" text="Maintain Equipment [+25 Smithing, +10 Trade | -2 Fatigue]" />
+    <string id="act_task_maintain_hint" text="Clean, oil, and repair your personal gear. A soldier's best friend is well-kept kit." />
+    <string id="act_task_water_horses" text="Water the Horses [+20 Riding, +10 Steward | -2 Fatigue]" />
+    <string id="act_task_water_horses_hint" text="Lead the horses to water and tend to their needs. They serve us well." />
+    <string id="act_task_stand_watch" text="Stand Watch [+20 Scouting, +15 Athletics | -3 Fatigue]" />
+    <string id="act_task_stand_watch_hint" text="Take a shift guarding the camp perimeter. Stay alert. Stay alive." />
+    
+    <!-- Social Activities -->
+    <string id="act_social_fire_circle" text="Fire Circle [+10 Charm | +1 Fatigue Relief]" />
+    <string id="act_social_fire_circle_hint" text="Gather around the campfire and share stories. The flames drive back the darkness." />
+    <string id="act_social_drink" text="Drink with the Lads [+20 Charm | +3 Fatigue Relief]" />
+    <string id="act_social_drink_hint" text="Share drinks and stories with your lance mates. Tomorrow might be your last." />
+    <string id="act_social_dice" text="Play Dice [+20 Roguery, +10 Charm]" />
+    <string id="act_social_dice_hint" text="Try your luck at the dice game behind the wagons. Fortune favors the bold." />
+    <string id="act_social_letter" text="Write a Letter [+20 Charm, +15 Leadership]" />
+    <string id="act_social_letter_hint" text="Write home to family or friends. Words on paper are all they have of you." />
+    <string id="act_social_meal" text="Rest and Eat [+2 Fatigue Relief]" />
+    <string id="act_social_meal_hint" text="Take time to eat a proper meal and rest your legs. Simple pleasures." />
+    <string id="act_social_war_stories" text="Tell War Stories [+25 Charm, +10 Leadership]" />
+    <string id="act_social_war_stories_hint" text="Share tales of past battles with your comrades. Veterans listen. Recruits learn." />
+    
+    <!-- Lance Activities -->
+    <string id="act_lance_talk_leader" text="Talk to Lance Leader [+20 Leadership, +15 Tactics]" />
+    <string id="act_lance_talk_leader_hint" text="Seek advice and guidance from your lance leader. They've seen it all." />
+    <string id="act_lance_check_mates" text="Check on Lance Mates [+15 Charm, +15 Leadership | -2 Fatigue]" />
+    <string id="act_lance_check_mates_hint" text="Make the rounds and see how your comrades are doing. We look after our own." />
+    <string id="act_lance_help_soldier" text="Help Struggling Soldier [+25 Leadership, +15 Charm | -2 Fatigue]" />
+    <string id="act_lance_help_soldier_hint" text="Assist a comrade who's having trouble with their duties. Strength shared is strength multiplied." />
+    <string id="act_lance_share_rations" text="Share Rations [+30 Charm, +10 Leadership | -1 Fatigue]" />
+    <string id="act_lance_share_rations_hint" text="Give part of your meal to a hungry lance mate. They won't forget." />
+    <string id="act_lance_settle_dispute" text="Settle Dispute [+25 Charm, +20 Leadership | -1 Fatigue]" />
+    <string id="act_lance_settle_dispute_hint" text="Mediate an argument between lance mates before it escalates. Keep the peace." />
+    <string id="act_lance_train_recruits" text="Train Recruits [+35 Leadership, +20 Athletics | -3 Fatigue]" />
+    <string id="act_lance_train_recruits_hint" text="Help new soldiers learn the basics of military life. Pass on what you know." />
 
 </strings>
 </base>

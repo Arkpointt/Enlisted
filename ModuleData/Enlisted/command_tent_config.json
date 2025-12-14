@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "enabled": true,
-  "description": "Configuration for Command Tent system - retinue management, tier capacities, and faction availability",
+  "description": "Configuration for Camp system - retinue management, tier capacities, and faction availability",
 
   "capacity_by_tier": {
     "4": {

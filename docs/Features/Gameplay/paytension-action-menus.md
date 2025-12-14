@@ -1,14 +1,14 @@
-# PayTension Action Menus
+﻿# PayTension Action Menus
 
-**Status**: ✅ Implemented (v3.0)  
+**Status**: âœ… Implemented (v3.0)  
 **Category**: Gameplay Feature  
-**Dependencies**: Pay System, Command Tent, Quartermaster Hero
+**Dependencies**: Pay System, Camp, Quartermaster Hero
 
 ---
 
 ## Overview
 
-When pay is severely delayed (PayTension 40+), two special action menus appear in the Command Tent: **Desperate Measures** (corruption path) and **Help the Lord** (loyalty path). These menus offer ways to earn gold or reduce PayTension through morally gray or honorable actions.
+When pay is severely delayed (PayTension 40+), two special action menus appear in **Camp**: **Desperate Measures** (corruption path) and **Help the Lord** (loyalty path). These menus offer ways to earn gold or reduce PayTension through morally gray or honorable actions.
 
 ---
 
@@ -17,14 +17,14 @@ When pay is severely delayed (PayTension 40+), two special action menus appear i
 ### Prerequisites
 - **Enlisted** status active
 - **PayTension 40+** (pay delayed/disrupted)
-- Access to **Command Tent** ("My Camp" from Enlisted Status)
+- Access to **Camp** (from Enlisted Status)
 
 ### Menu Location
-1. **Enlisted Status** → **My Camp**
-2. Command Tent menu opens
+1. **Enlisted Status** â†’ **Camp**
+2. Camp menu opens
 3. Two new options appear (if PayTension 40+):
-   - 🔴 **"Desperate Measures..."** (HostileAction icon)
-   - 🟢 **"Help the Lord with Finances"** (Mission icon)
+   - ðŸ”´ **"Desperate Measures..."** (HostileAction icon)
+   - ðŸŸ¢ **"Help the Lord with Finances"** (Mission icon)
 
 ### Visibility
 - **Below 40 tension**: Menus completely hidden
@@ -91,7 +91,7 @@ Current PayTension: {tension}/100"
 
 ### Option 4: Sell Issued Equipment
 **Unlocks at**: PayTension 60+  
-**Gain**: Tier × 25 denars (25-225 depending on rank)
+**Gain**: Tier Ã— 25 denars (25-225 depending on rank)
 
 **Effects:**
 - Immediate gold based on rank
@@ -222,7 +222,7 @@ injuryChance = Max(10%, 50% - (combatSkill / 10))
 ## PayTension Reduction
 
 ### Stabilization Threshold
-When PayTension drops **below 40** (from ≥40):
+When PayTension drops **below 40** (from â‰¥40):
 - Special message: "The lord's financial situation has stabilized."
 - Desperate Measures and Help the Lord menus disappear
 - Normal operations resume

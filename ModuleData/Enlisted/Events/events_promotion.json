@@ -255,7 +255,7 @@
       },
       "content": {
         "title": "Audience with the Lord",
-        "setup": "{LORD_NAME} summons you to the command tent. The banner of {FACTION_NAME} hangs behind the campaign table where the lord sits reviewing dispatches.\n\n'You've served well, {PLAYER_NAME}. Your name comes up often in the reports. The rank of {NEXT_RANK} is mine to give — but first, I must know where your loyalty lies.'",
+        "setup": "{LORD_NAME} summons you to the pavilion. The banner of {FACTION_NAME} hangs behind the campaign table where the lord sits reviewing dispatches.\n\n'You've served well, {PLAYER_NAME}. Your name comes up often in the reports. The rank of {NEXT_RANK} is mine to give — but first, I must know where your loyalty lies.'",
         "options": [
           {
             "id": "loyal_to_lord",

@@ -220,15 +220,9 @@ namespace Enlisted.Features.Conditions
         [GameMenuInitializationHandler(MedicalMenuId)]
         public static void OnMedicalMenuBackgroundInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            // Medical attention is a grounded "camp support" activity.
+            // Use a more civilian/common backdrop instead of a combat encounter background.
+            args.MenuContext.SetBackgroundMeshName("encounter_peasant");
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
         }
 

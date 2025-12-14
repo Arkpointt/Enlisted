@@ -1,4 +1,4 @@
-# Temporary Leave System
+﻿# Temporary Leave System
 
 ## Overview
 Temporary Leave lets enlisted players suspend active service for a limited time, returning to normal (vanilla) world interaction while preserving enlistment progression for later return.
@@ -37,7 +37,7 @@ If leave exceeds the maximum duration:
 
 ## Leave vs Discharge vs Desert
 - **Leave**: Temporary suspension; you must return before the timer expires.
-- **Request Discharge (Final Muster)**: Managed separation requested from Camp ("My Camp"); resolves at the next pay muster and can award severance/pension.
+- **Request Discharge (Final Muster)**: Managed separation requested from Camp ("Camp"); resolves at the next pay muster and can award severance/pension.
 - **Desert the Army**: Immediate abandonment from the enlisted status menu with severe penalties.
 
 ## Related docs

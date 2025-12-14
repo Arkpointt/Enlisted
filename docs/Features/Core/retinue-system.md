@@ -1,12 +1,12 @@
-# Retinue System — Commander's Personal Force
+﻿# Retinue System â€” Commander's Personal Force
 
-**Status**: ✅ Implemented (v3.0)  
+**Status**: âœ… Implemented (v3.0)  
 **Category**: Core Feature  
 **Dependencies**: Formation Training, Companion Management, Provisions System
 
 ## Overview
 
-The retinue system provides enlisted players with a personal military force that grows with their rank. Companions can be managed from T1, and at T7+ (Commander track) players receive personal command of regular soldiers—starting with raw recruits that must be trained and developed through combat.
+The retinue system provides enlisted players with a personal military force that grows with their rank. Companions can be managed from T1, and at T7+ (Commander track) players receive personal command of regular soldiersâ€”starting with raw recruits that must be trained and developed through combat.
 
 ## System (v3.0)
 
@@ -40,17 +40,17 @@ The retinue system provides enlisted players with a personal military force that
 
 | Tier | Rank Track | Companions | Soldiers | Total Force | Grant Method |
 |------|------------|------------|----------|-------------|--------------|
-| T1-T6 | Enlisted/Officer | ✅ Managed | 0 | Companions only | N/A |
-| T7 | Commander I | ✅ Managed | 15 | 15 + companions | Auto-grant raw recruits |
-| T8 | Commander II | ✅ Managed | 25 | 25 + companions | +10 recruits on promotion |
-| T9 | Commander III | ✅ Managed | 35 | 35 + companions | +10 recruits on promotion |
+| T1-T6 | Enlisted/Officer | âœ… Managed | 0 | Companions only | N/A |
+| T7 | Commander I | âœ… Managed | 15 | 15 + companions | Auto-grant raw recruits |
+| T8 | Commander II | âœ… Managed | 25 | 25 + companions | +10 recruits on promotion |
+| T9 | Commander III | âœ… Managed | 35 | 35 + companions | +10 recruits on promotion |
 
 **Key Features:**
 - Companions managed from day one (T1)
 - Soldiers granted as raw recruits, not purchased
 - Automatic reinforcement via trickle system (2-3 days per soldier)
 - Formation-specific recruit types match player's specialization
-- Training progression: Recruit → Regular → Veteran
+- Training progression: Recruit â†’ Regular â†’ Veteran
 - Battle participation toggle for companions
 - Unified formation command in battles
 
@@ -90,17 +90,17 @@ From the moment of enlistment (T1), players can manage their companions' battle 
 | T1-T9 | Player's party roster | Full toggle control |
 
 **Key Changes from Previous System:**
-- ❌ **Removed**: T1-T3 companions in lord's party
-- ✅ **New**: Companions always in player's party from T1
-- ✅ **Enhanced**: Battle participation toggle available immediately
+- âŒ **Removed**: T1-T3 companions in lord's party
+- âœ… **New**: Companions always in player's party from T1
+- âœ… **Enhanced**: Battle participation toggle available immediately
 
 ### Battle Participation Toggle
 
-**Location**: My Camp → Companion Assignments
+**Location**: Camp â†’ Companion Assignments
 
 **Options per companion:**
-- ⚔️ **Fight**: Spawns in battle, faces all risks, gains experience
-- 🏕️ **Stay Back**: Remains in roster, immune to casualties, no XP gain
+- âš”ï¸ **Fight**: Spawns in battle, faces all risks, gains experience
+- ðŸ•ï¸ **Stay Back**: Remains in roster, immune to casualties, no XP gain
 
 **Use Cases:**
 - Protect valuable companions during dangerous battles
@@ -122,13 +122,13 @@ At T7+, companions fight alongside the player's retinue in unified squad:
 
 ### Unlock & Initial Grant
 
-**T6→T7 Promotion Event: "Commander's Commission"**
+**T6â†’T7 Promotion Event: "Commander's Commission"**
 
 When promoted to T7, player receives initial command:
 - **15 raw recruits** automatically added to roster
 - Recruit type matches player's formation specialization
 - Event narrative: Lord recognizes leadership, assigns first command
-- No cost, no shopping — command is granted as reward
+- No cost, no shopping â€” command is granted as reward
 
 **Example Flow:**
 1. Player reaches T7 XP threshold
@@ -140,9 +140,9 @@ When promoted to T7, player receives initial command:
 
 | Tier | Capacity | Grant on Promotion | Existing Soldiers |
 |------|----------|-------------------|-------------------|
-| T7 | 15 | +15 raw recruits | 0 → 15 |
-| T8 | 25 | +10 recruits | 15 → 25 |
-| T9 | 35 | +10 recruits | 25 → 35 |
+| T7 | 15 | +15 raw recruits | 0 â†’ 15 |
+| T8 | 25 | +10 recruits | 15 â†’ 25 |
+| T9 | 35 | +10 recruits | 25 â†’ 35 |
 
 **Promotion Grants:**
 - T7: Initial grant of 15
@@ -153,7 +153,7 @@ When promoted to T7, player receives initial command:
 
 ### Formation Specialization
 
-Recruit type determined by player's formation choice (made at T1→T2):
+Recruit type determined by player's formation choice (made at T1â†’T2):
 
 | Player Formation | Recruit Type | Example Troops |
 |-----------------|--------------|----------------|
@@ -176,8 +176,8 @@ Recruit type determined by player's formation choice (made at T1→T2):
 Raw recruits develop through combat experience and time served:
 
 ```
-Recruit I (raw) → Recruit II (trained) → Regular I → Regular II → Veteran I → Veteran II
-    │                  │                    │             │             │            │
+Recruit I (raw) â†’ Recruit II (trained) â†’ Regular I â†’ Regular II â†’ Veteran I â†’ Veteran II
+    â”‚                  â”‚                    â”‚             â”‚             â”‚            â”‚
   Grant          +100 XP            +200 XP      +400 XP       +800 XP     +1600 XP
   (free)        7-14 days          2-3 battles  4-6 battles  10+ battles  Elite status
 ```
@@ -192,10 +192,10 @@ Recruit I (raw) → Recruit II (trained) → Regular I → Regular II → Vetera
 ### Training Events (Optional Flavor)
 
 **Lance Life Integration:**
-- "Recruit Hazing" — Veterans test new arrivals (Discipline check)
-- "Field Promotion" — Exceptional recruit earns early upgrade
-- "Training Accident" — Recruit injured during drills (Medical event)
-- "Veteran Mentorship" — Experienced soldier trains recruits (+XP boost)
+- "Recruit Hazing" â€” Veterans test new arrivals (Discipline check)
+- "Field Promotion" â€” Exceptional recruit earns early upgrade
+- "Training Accident" â€” Recruit injured during drills (Medical event)
+- "Veteran Mentorship" â€” Experienced soldier trains recruits (+XP boost)
 
 **Benefits:**
 - Creates narrative attachment to retinue
@@ -205,7 +205,7 @@ Recruit I (raw) → Recruit II (trained) → Regular I → Regular II → Vetera
 
 ### Manual Training
 
-**Location**: My Camp → Retinue Management → Train Soldiers
+**Location**: Camp â†’ Retinue Management â†’ Train Soldiers
 
 **Options:**
 - **Drill Soldiers** (costs gold): Grants bonus XP to all recruits
@@ -233,9 +233,9 @@ Recruit I (raw) → Recruit II (trained) → Regular I → Regular II → Vetera
 ### Casualty Replacement
 
 **Smart Trickle Priority:**
-1. If below capacity due to casualties → priority trickle (2 days)
-2. If near capacity → normal trickle (2-3 days)
-3. If at capacity → trickle paused
+1. If below capacity due to casualties â†’ priority trickle (2 days)
+2. If near capacity â†’ normal trickle (2-3 days)
+3. If at capacity â†’ trickle paused
 
 **Example:**
 - Player has 12/15 soldiers (3 casualties)
@@ -267,11 +267,11 @@ When soldiers desert due to high pay tension (80-100):
 **Formation Assignment:**
 ```
 Player Formation = Infantry
-  ├─ Player (Infantry)
-  ├─ Companion 1 (Infantry, reassigned from their natural class)
-  ├─ Companion 2 (Infantry, reassigned)
-  ├─ 15x Infantry Retinue Soldiers
-  └─ Total: 18 units in player's command
+  â”œâ”€ Player (Infantry)
+  â”œâ”€ Companion 1 (Infantry, reassigned from their natural class)
+  â”œâ”€ Companion 2 (Infantry, reassigned)
+  â”œâ”€ 15x Infantry Retinue Soldiers
+  â””â”€ Total: 18 units in player's command
 ```
 
 ### Battle Behavior
@@ -325,7 +325,7 @@ Player Formation = Infantry
 
 ## Implementation Phases
 
-### Phase 1: Companion Management Update (T1+) ⭐ Priority
+### Phase 1: Companion Management Update (T1+) â­ Priority
 
 **Goal**: Move companions to player party at T1, enable battle toggle immediately
 
@@ -357,7 +357,7 @@ Player Formation = Infantry
 
 ---
 
-### Phase 2: Capacity & Tier Updates (T7-T9) ⭐ Required
+### Phase 2: Capacity & Tier Updates (T7-T9) â­ Required
 
 **Goal**: Update tier capacity system for new T7-T9 commander structure
 
@@ -417,7 +417,7 @@ Player Formation = Infantry
 
 ---
 
-### Phase 3: Auto-Grant System (T7 Initial, T8-T9 Expansion) ⭐ Core Feature
+### Phase 3: Auto-Grant System (T7 Initial, T8-T9 Expansion) â­ Core Feature
 
 **Goal**: Automatically grant raw recruits on promotion instead of requiring purchase
 
@@ -501,7 +501,7 @@ Player Formation = Infantry
 
 ---
 
-### Phase 4: Raw Recruit Identification & Progression ⭐ Quality of Life
+### Phase 4: Raw Recruit Identification & Progression â­ Quality of Life
 
 **Goal**: Ensure granted recruits are lowest tier, track progression visually
 
@@ -535,7 +535,7 @@ Player Formation = Infantry
    }
    ```
 
-3. **UI enhancements** (My Camp → Retinue Management)
+3. **UI enhancements** (Camp â†’ Retinue Management)
    - Show troop progression: "5 Recruits, 7 Regulars, 3 Veterans"
    - Color-code by experience: Green (recruit), Blue (regular), Gold (veteran)
    - Display average retinue level
@@ -555,17 +555,17 @@ Player Formation = Infantry
 
 ---
 
-### Phase 5: Training Events & Flavor (Optional) 🎨 Enhancement
+### Phase 5: Training Events & Flavor (Optional) ðŸŽ¨ Enhancement
 
 **Goal**: Add narrative flavor to recruit development, integrate with lance life system
 
 **Tasks:**
 1. **Create training event pack** (`events_retinue_training.json`)
-   - "First Blood" — Recruit's first kill (+morale, +XP)
-   - "Veteran's Lesson" — Old soldier trains recruits (+XP to all recruits)
-   - "Training Accident" — Recruit injured during drills (Medical event)
-   - "Promotion Ceremony" — Soldier reaches Regular status (morale event)
-   - "Deserter Contemplates" — Low morale recruit considers leaving (tension tie-in)
+   - "First Blood" â€” Recruit's first kill (+morale, +XP)
+   - "Veteran's Lesson" â€” Old soldier trains recruits (+XP to all recruits)
+   - "Training Accident" â€” Recruit injured during drills (Medical event)
+   - "Promotion Ceremony" â€” Soldier reaches Regular status (morale event)
+   - "Deserter Contemplates" â€” Low morale recruit considers leaving (tension tie-in)
 
 2. **Add retinue triggers to event system**
    ```json
@@ -595,12 +595,12 @@ Player Formation = Infantry
 
 ---
 
-### Phase 6: Documentation & Polish 📖 Required
+### Phase 6: Documentation & Polish ðŸ“– Required
 
 **Goal**: Update all documentation to reflect new system
 
 **Tasks:**
-1. **Create this document** (`retinue-system.md`) ✅
+1. **Create this document** (`retinue-system.md`) âœ…
 2. **Update existing docs**
    - `companion-management.md`: T1+ changes
    - `README.md`: Commander retinue section
@@ -624,7 +624,7 @@ Player Formation = Infantry
    - Support for other languages
 
 **Testing:**
-- Full playthrough T1→T9
+- Full playthrough T1â†’T9
 - Test all companion management features
 - Verify auto-grant at T7/T8/T9
 - Check UI displays correctly
@@ -989,9 +989,9 @@ public int DaysSinceLastTrickle { get; }
 - [ ] Trickle system respects new capacities
 
 ### Phase 3: Auto-Grant
-- [ ] T6→T7: 15 raw recruits granted automatically
-- [ ] T7→T8: +10 more recruits granted
-- [ ] T8→T9: +10 more recruits granted
+- [ ] T6â†’T7: 15 raw recruits granted automatically
+- [ ] T7â†’T8: +10 more recruits granted
+- [ ] T8â†’T9: +10 more recruits granted
 - [ ] Recruits match player formation type
 - [ ] Recruits match enlisted lord's culture
 - [ ] Recruits are lowest tier (raw)
@@ -1011,7 +1011,7 @@ public int DaysSinceLastTrickle { get; }
 - [ ] Events integrate with heat/discipline/medical
 
 ### Phase 6: Full Integration
-- [ ] Complete T1→T9 playthrough
+- [ ] Complete T1â†’T9 playthrough
 - [ ] All documentation updated
 - [ ] All UI strings localized
 - [ ] No console errors or crashes
@@ -1021,11 +1021,11 @@ public int DaysSinceLastTrickle { get; }
 
 ## Related Documentation
 
-- [Companion Management](companion-management.md) — Detailed companion system
-- [Lance Assignments](lance-assignments.md) — Culture ranks and unit identity
-- [Formation Training](formation-training.md) — Daily skill XP by formation
-- [Pay System](pay-system.md) — Wages and financial management
-- [Lance Life Events](../Gameplay/lance-life.md) — Story event system
+- [Companion Management](companion-management.md) â€” Detailed companion system
+- [Lance Assignments](lance-assignments.md) â€” Culture ranks and unit identity
+- [Formation Training](formation-training.md) â€” Daily skill XP by formation
+- [Pay System](pay-system.md) â€” Wages and financial management
+- [Lance Life Events](../Gameplay/lance-life.md) â€” Story event system
 
 ---
 
@@ -1033,16 +1033,16 @@ public int DaysSinceLastTrickle { get; }
 
 | Phase | Priority | Effort | Dependencies | Deliverable |
 |-------|----------|--------|--------------|-------------|
-| 1 | ⭐⭐⭐ | 4-6h | None | Companions at T1 |
-| 2 | ⭐⭐⭐ | 3-4h | Phase 1 | T7-T9 capacities |
-| 3 | ⭐⭐⭐ | 8-12h | Phase 2 | Auto-grant recruits |
-| 4 | ⭐⭐ | 6-8h | Phase 3 | Progression tracking |
-| 5 | ⭐ | 12-16h | Phase 4 | Training events (optional) |
-| 6 | ⭐⭐ | 6-8h | All phases | Documentation & polish |
+| 1 | â­â­â­ | 4-6h | None | Companions at T1 |
+| 2 | â­â­â­ | 3-4h | Phase 1 | T7-T9 capacities |
+| 3 | â­â­â­ | 8-12h | Phase 2 | Auto-grant recruits |
+| 4 | â­â­ | 6-8h | Phase 3 | Progression tracking |
+| 5 | â­ | 12-16h | Phase 4 | Training events (optional) |
+| 6 | â­â­ | 6-8h | All phases | Documentation & polish |
 
 **Total Estimated Effort**: 39-54 hours (27-38 hours if Phase 5 skipped)
 
-**Recommended Order**: Phase 1 → Phase 2 → Phase 3 → Phase 6 (skip Phase 4-5 for MVP)
+**Recommended Order**: Phase 1 â†’ Phase 2 â†’ Phase 3 â†’ Phase 6 (skip Phase 4-5 for MVP)
 
 ---
 

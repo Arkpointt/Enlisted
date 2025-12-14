@@ -29,8 +29,8 @@
     },
     "command_tent": {
       "id": "command_tent",
-      "title_key": "{=ct_title}Command Tent",
-      "description": "Player's personal command space for service records and retinue management",
+      "title_key": "{=ct_title}Camp",
+      "description": "Player's personal camp space for service records and retinue management",
       "text": "{=ct_menu_intro}The canvas flaps in the breeze. Maps and tallies cover a makeshift table. Your small corner of the army's camp.",
       "overlay": "None",
       "flags": "None"
@@ -157,7 +157,7 @@
     },
     "command_tent": {
       "id": "enlisted_command_tent",
-      "display_text": "{=ct_menu_enter}Enter the Command Tent",
+      "display_text": "{=ct_menu_enter}Camp",
       "description": "Access service records, retinue management, and companion assignments",
       "leave_type": "Submenu",
       "priority": 45,
@@ -226,8 +226,8 @@
     },
     "ct_back_tent": {
       "id": "ct_back_tent",
-      "display_text": "{=ct_back_tent}Back to Command Tent",
-      "description": "Return to command tent menu",
+      "display_text": "{=ct_back_tent}Back to Camp",
+      "description": "Return to Camp menu",
       "leave_type": "Leave",
       "priority": 100,
       "target_menu": "command_tent"

@@ -376,11 +376,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private int _lanceFundBalance;
 
         /// <summary>
-        ///     Currently selected duty assignment ID (e.g., "enlisted", "forager", "sentry").
+        ///     Currently selected duty assignment ID (e.g., "runner", "scout", "field_medic").
         ///     Duties provide daily skill XP bonuses and may include wage multipliers.
         ///     Changed via the duty selection menu.
         /// </summary>
-        private string _selectedDuty = "enlisted";
+        private string _selectedDuty = "runner";
 
         /// <summary>
         ///     Whether the player's clan was independent (no kingdom) before enlistment.
@@ -589,7 +589,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public int EventsCompleted => _eventsCompleted;
 
         /// <summary>
-        ///     Currently assigned duty (e.g., "enlisted", "pathfinder", "field_medic").
+        ///     Currently assigned duty (e.g., "runner", "scout", "field_medic").
         /// </summary>
         public string SelectedDuty => _selectedDuty;
 
@@ -2170,19 +2170,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
 
-                TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
-
                 // Assign provisional lance on enlist (or restore from grace)
                 // If culture is unknown, prompt for style before assigning provisional lance
                 TryPromptUnknownCultureStyle();
                 AssignProvisionalLance(resumedFromGrace);
 
-                // Register the default "enlisted" duty with the duties system
+                // Register the formation-appropriate starter duty with the duties system
                 // This ensures daily XP processing begins immediately for the basic duty
                 var dutiesBehavior = EnlistedDutiesBehavior.Instance;
                 if (dutiesBehavior != null)
                 {
-                    dutiesBehavior.AssignDuty("enlisted");
+                    var formation = dutiesBehavior.PlayerFormation ?? "infantry";
+                    var starterDuty = EnlistedDutiesBehavior.GetStarterDutyForFormation(formation);
+                    dutiesBehavior.AssignDuty(starterDuty);
+                    _selectedDuty = starterDuty;
                 }
 
                 // Log enlistment start for diagnostics
@@ -2330,11 +2331,35 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 ModLogger.Error("Enlistment",
                     $"Failed to start enlistment with {lord?.Name?.ToString() ?? "null"} - {ex.Message}", ex);
+                
+                // CRITICAL: Reset enlistment state to prevent partial enlistment
+                // Without this, IsEnlisted would return true and hide the enlistment dialog
+                _enlistedLord = null;
+                _enlistmentTier = 1;
+                _enlistmentXP = 0;
+                _enlistmentDate = CampaignTime.Zero;
+                _selectedDuty = "runner";
+                _isOnLeave = false;
+                
                 // Restore equipment if backup was created
                 if (_hasBackedUpEquipment)
                 {
                     RestorePersonalEquipment();
+                    _hasBackedUpEquipment = false;
                 }
+                
+                // Deactivate enlisted mode
+                SyncActivationState("enlistment_failed");
+                
+                // Restore party visibility
+                var main = MobileParty.MainParty;
+                if (main != null)
+                {
+                    main.IsVisible = true;
+                    main.IsActive = true;
+                }
+                
+                ModLogger.Info("Enlistment", "Enlistment state reset after failure - dialog should be available again");
             }
         }
 
@@ -2888,7 +2913,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // If retaining kingdom for grace period, save progression state BEFORE clearing it
                 // This preserves tier/XP so player can resume at their previous rank when re-enlisting
                 // CRITICAL: Must happen before _enlistmentTier and _enlistmentXP are reset below
-                if (retainKingdomDuringGrace && _enlistedLord != null)
+                // BUG FIX: Removed _enlistedLord != null check - lord may be dead but we still need
+                // to save progression state so player can resume at their previous rank
+                if (retainKingdomDuringGrace)
                 {
                     _savedGraceTier = _enlistmentTier;
                     _savedGraceXP = _enlistmentXP;
@@ -2899,10 +2926,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _savedGraceLanceStyle = _currentLanceStyle;
                     _savedGraceLanceStoryId = _currentLanceStoryId;
                     _savedGraceLanceProvisional = _isLanceProvisional;
-                _savedGraceManualLanceStyleId = _manualLanceStyleId;
-            _savedGraceLanceLegacy = _isLanceLegacy;
+                    _savedGraceManualLanceStyleId = _manualLanceStyleId;
+                    _savedGraceLanceLegacy = _isLanceLegacy;
                     ModLogger.Info("Enlistment",
-                        $"Saved grace progression state: Tier={_savedGraceTier}, XP={_savedGraceXP}");
+                        $"Saved grace progression state: Tier={_savedGraceTier}, XP={_savedGraceXP}, Lord={((_enlistedLord?.Name?.ToString()) ?? "deceased")}");
                 }
                 else
                 {
@@ -3014,6 +3041,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Debug("Desertion",
                         $"Using pre-saved grace state: Tier={_savedGraceTier}, XP={_savedGraceXP}");
                 }
+                
+                // BUG FIX: Also record reservist data when starting grace period
+                // This ensures player can resume service later even if grace period expires
+                // Uses "grace" band to give better treatment than deserter on re-enlistment
+                var daysServed = _enlistmentDate != CampaignTime.Zero 
+                    ? (int)(CampaignTime.Now - _enlistmentDate).ToDays 
+                    : 0;
+                ServiceRecordManager.Instance?.RecordReservist(
+                    "grace", // New band type for grace period exits
+                    daysServed,
+                    _savedGraceTier > 0 ? _savedGraceTier : _enlistmentTier,
+                    _savedGraceXP > 0 ? _savedGraceXP : _enlistmentXP,
+                    _savedGraceLord ?? _enlistedLord);
 
                 ModLogger.Info("Desertion", $"Started {graceDays}-day grace period to rejoin {kingdom.Name}");
 
@@ -3454,8 +3494,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void OnHourlyTick()
         {
             // Check if grace period expired (even if not enlisted)
-            if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
+            // BUG FIX: Previous check used IsInDesertionGracePeriod which requires CampaignTime.Now < _desertionGracePeriodEnd
+            // This was contradictory with the >= check, meaning expiration NEVER triggered.
+            // Fixed: Check if grace period WAS active (kingdom set, deadline set) but has now expired
+            if (_pendingDesertionKingdom != null && 
+                _desertionGracePeriodEnd != CampaignTime.Zero && 
+                CampaignTime.Now >= _desertionGracePeriodEnd)
             {
+                ModLogger.Info("Desertion", $"Grace period expired - {(CampaignTime.Now - _desertionGracePeriodEnd).ToDays:F1} days overdue");
                 ApplyDesertionPenalties();
                 return;
             }
@@ -5188,13 +5234,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var activeDuties = dutiesBehavior.ActiveDuties;
                 if (activeDuties != null && activeDuties.Count > 0)
                 {
-                    // Return the first duty that has a wage modifier
+                    // Return the first active duty for display
                     foreach (var duty in activeDuties)
                     {
-                        if (duty != "enlisted") // Skip default duty
-                        {
-                            return FormatDutyName(duty);
-                        }
+                        return FormatDutyName(duty);
                     }
                 }
 

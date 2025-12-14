@@ -75,19 +75,9 @@ namespace Enlisted.Features.Equipment.Behaviors
         [GameMenuInitializationHandler("enlisted_troop_selection")]
         private static void OnTroopSelectionBackgroundInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-            
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
-            }
-            
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            // Troop selection/promotion is a logistics/supply-facing flow (Quartermaster vibe).
+            // Use a known "trade/logistics" encounter mesh instead of a generic battle encounter.
+            args.MenuContext.SetBackgroundMeshName("encounter_caravan");
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }

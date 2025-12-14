@@ -461,19 +461,9 @@ namespace Enlisted.Features.Interface.Behaviors
         [GameMenuInitializationHandler("enlisted_desert_confirm")]
         private static void OnDesertConfirmBackgroundInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-            
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
-            }
-            
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            // Desertion confirmation should feel ominous/decisive, not "normal encounter".
+            // Use a known base-game mesh intended for negative outcomes.
+            args.MenuContext.SetBackgroundMeshName("encounter_lose");
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             // Time control left untouched - respects player's current pause/speed setting
         }
@@ -967,8 +957,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 },
                 false, 3);
 
-            // NOTE: My Camp (command_tent) is added by CampMenuHandler at position 4
-            // Camp Activities is accessed from within My Camp, not as a separate menu option
+            // NOTE: Camp (command_tent) is added by CampMenuHandler at position 4
+            // Camp Activities is accessed from within Camp, not as a separate menu option
 
             // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
@@ -1465,15 +1455,47 @@ namespace Enlisted.Features.Interface.Behaviors
                         statusContent += condLine + "\n";
                     }
 
-                    // Lance reputation status - from escalation system
+                    // === ESCALATION TRACKS ===
                     var escalation = Escalation.EscalationManager.Instance;
                     if (escalation?.IsEnabled() == true)
                     {
+                        var state = escalation.State;
+                        
+                        // Heat track with visual bar and threshold warning
+                        var heatBar = BuildTrackBar(state.Heat, 10);
+                        var heatWarning = GetHeatWarning(state.Heat);
+                        var heatLine = new TextObject("{=Enlisted_Status_Heat}Heat : {BAR} {VALUE}/10{WARNING}");
+                        heatLine.SetTextVariable("BAR", heatBar);
+                        heatLine.SetTextVariable("VALUE", state.Heat);
+                        heatLine.SetTextVariable("WARNING", string.IsNullOrEmpty(heatWarning) ? "" : $" [{heatWarning}]");
+                        statusContent += heatLine + "\n";
+                        
+                        // Discipline track with visual bar and threshold warning
+                        var discBar = BuildTrackBar(state.Discipline, 10);
+                        var discWarning = GetDisciplineWarning(state.Discipline);
+                        var discLine = new TextObject("{=Enlisted_Status_Discipline}Discipline : {BAR} {VALUE}/10{WARNING}");
+                        discLine.SetTextVariable("BAR", discBar);
+                        discLine.SetTextVariable("VALUE", state.Discipline);
+                        discLine.SetTextVariable("WARNING", string.IsNullOrEmpty(discWarning) ? "" : $" [{discWarning}]");
+                        statusContent += discLine + "\n";
+                        
+                        // Lance reputation with numeric value and status
                         var repStatus = escalation.GetLanceReputationStatus();
-                        var repLine = new TextObject("{=Enlisted_Status_LanceRep}Lance Standing : {STATUS}");
+                        var repValue = state.LanceReputation;
+                        var repLine = new TextObject("{=Enlisted_Status_LanceRep}Lance Rep : {VALUE} ({STATUS})");
+                        repLine.SetTextVariable("VALUE", repValue >= 0 ? $"+{repValue}" : repValue.ToString());
                         repLine.SetTextVariable("STATUS", repStatus);
                         statusContent += repLine + "\n";
                     }
+
+                    // === CAMP STATUS ===
+                    var dayPart = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
+                    var dayPartName = dayPart?.ToString() ?? "Day";
+                    var daysFromTown = CalculateDaysFromTown(lord);
+                    var campStatusLine = new TextObject("{=Enlisted_Status_CampStatus}Time: {DAYPART} | Days from Town: {DAYS}");
+                    campStatusLine.SetTextVariable("DAYPART", dayPartName);
+                    campStatusLine.SetTextVariable("DAYS", daysFromTown);
+                    statusContent += campStatusLine + "\n";
 
                     // Lance display (provisional vs finalized)
                     if (LanceRegistry.IsFeatureEnabled() && !string.IsNullOrWhiteSpace(enlistment.CurrentLanceName))
@@ -1632,6 +1654,87 @@ namespace Enlisted.Features.Interface.Behaviors
             catch
             {
                 return "0";
+            }
+        }
+
+        /// <summary>
+        ///     Builds a visual progress bar for escalation tracks.
+        ///     Uses filled (▓) and empty (░) blocks for ASCII-compatible display.
+        /// </summary>
+        private static string BuildTrackBar(int current, int max)
+        {
+            const int barLength = 10;
+            var filled = Math.Min(barLength, Math.Max(0, current));
+            var empty = barLength - filled;
+            return new string('▓', filled) + new string('░', empty);
+        }
+
+        /// <summary>
+        ///     Gets a warning label for the current Heat level based on threshold events.
+        /// </summary>
+        private static string GetHeatWarning(int heat)
+        {
+            return heat switch
+            {
+                >= 10 => "EXPOSED",
+                >= 7 => "Audit",
+                >= 5 => "Shakedown",
+                >= 3 => "Watched",
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        ///     Gets a warning label for the current Discipline level based on threshold events.
+        /// </summary>
+        private static string GetDisciplineWarning(int discipline)
+        {
+            return discipline switch
+            {
+                >= 10 => "DISCHARGE",
+                >= 7 => "Blocked",
+                >= 5 => "Hearing",
+                >= 3 => "Extra Duty",
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        ///     Calculates the number of days since the party was last in a settlement.
+        ///     Returns 0 if currently in a settlement.
+        /// </summary>
+        private static int CalculateDaysFromTown(Hero lord)
+        {
+            try
+            {
+                if (lord?.PartyBelongedTo?.CurrentSettlement != null)
+                {
+                    return 0; // Currently in settlement
+                }
+
+                var party = lord?.PartyBelongedTo;
+                if (party == null)
+                {
+                    return 0;
+                }
+
+                // Check if there's a nearby settlement using correct API (GetPosition2D)
+                var partyPos = party.GetPosition2D;
+                var nearestSettlement = Settlement.FindFirst(s => 
+                    (s.IsTown || s.IsCastle) && 
+                    partyPos.DistanceSquared(s.GetPosition2D) < 10f);
+                
+                if (nearestSettlement != null)
+                {
+                    return 1; // Near a settlement
+                }
+
+                // Estimate based on distance to nearest settlement
+                return 3; // Default to 3 days if far from settlements
+            }
+            catch
+            {
+                return 0;
             }
         }
 
@@ -3252,45 +3355,21 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Get display name for duty ID.
+        ///     Get display name for duty ID from the duties system config.
         /// </summary>
         private string GetDutyDisplayName(string dutyId)
         {
-            return dutyId switch
-            {
-                "enlisted" => new TextObject("{=Enlisted_Duty_Name_Enlisted}Enlisted").ToString(),
-                "forager" => new TextObject("{=Enlisted_Duty_Name_Forager}Forager").ToString(),
-                "sentry" => new TextObject("{=Enlisted_Duty_Name_Sentry}Sentry").ToString(),
-                "messenger" => new TextObject("{=Enlisted_Duty_Name_Messenger}Messenger").ToString(),
-                "pioneer" => new TextObject("{=Enlisted_Duty_Name_Pioneer}Pioneer").ToString(),
-                _ => "Unknown"
-            };
+            var duty = EnlistedDutiesBehavior.Instance?.GetDutyById(dutyId);
+            return duty?.DisplayName ?? dutyId ?? "Unknown";
         }
 
         /// <summary>
-        ///     Get detailed description for duty ID.
+        ///     Get detailed description for duty ID from the duties system config.
         /// </summary>
         private string GetDutyDescription(string dutyId)
         {
-            return dutyId switch
-            {
-                "enlisted" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Enlisted}You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)")
-                    .ToString(),
-                "forager" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Forager}Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)")
-                    .ToString(),
-                "sentry" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Sentry}Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)")
-                    .ToString(),
-                "messenger" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Messenger}Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)")
-                    .ToString(),
-                "pioneer" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Pioneer}Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)")
-                    .ToString(),
-                _ => "Military service duties."
-            };
+            var duty = EnlistedDutiesBehavior.Instance?.GetDutyById(dutyId);
+            return duty?.Description ?? "Military service duties.";
         }
 
         #endregion

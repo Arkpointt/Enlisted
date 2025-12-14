@@ -377,7 +377,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 // Get appropriate button text based on tier
                 var buttonText = newTier >= 4 
-                    ? new TextObject("{=promo_btn_command}To the Command Tent").ToString()
+                    ? new TextObject("{=promo_btn_command}To Camp").ToString()
                     : new TextObject("{=promo_btn_understood}Understood").ToString();
 
                 var data = new InquiryData(

@@ -371,6 +371,16 @@ namespace Enlisted.Features.CommandTent.Core
                         relationBonus = 0;
                         probation = true;
                         break;
+                    case "grace":
+                        // BUG FIX: "grace" band means player's lord died/captured but they're re-enlisting
+                        // Restore their previous tier and partial XP as a veteran returning to service
+                        targetTier = Math.Max(1, _reservistRecord.TierAtExit);
+                        bonusXp = _reservistRecord.XpAtExit / 2; // Half XP retained
+                        relationBonus = 3;
+                        probation = false;
+                        ModLogger.Info(LogCategory, 
+                            $"Grace re-entry: restoring tier {targetTier} with {bonusXp} bonus XP");
+                        break;
                     case "honorable":
                         targetTier = 3;
                         bonusXp = 500;

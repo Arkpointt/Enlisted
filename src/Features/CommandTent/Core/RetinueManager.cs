@@ -768,7 +768,7 @@ namespace Enlisted.Features.CommandTent.Core
             var message = new TextObject("{=ct_leadership_message}Your long service has been recognized. " +
                 "As a Commander, you've been granted authority over your own retinue of soldiers.\n\n" +
                 "Fifteen raw recruits have been assigned to your command. Train them well—their lives are in your hands.\n\n" +
-                "Visit the Command Tent to manage your forces.");
+                "Visit Camp to manage your forces.");
 
             // pauseGameActiveState = false so notifications don't freeze game time
             InformationManager.ShowInquiry(

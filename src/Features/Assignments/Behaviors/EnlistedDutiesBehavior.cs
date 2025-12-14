@@ -173,7 +173,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         /// <summary>
         ///     Phase 7: Get the default starter duty for a formation.
         /// </summary>
-        private static string GetStarterDutyForFormation(string formation)
+        public static string GetStarterDutyForFormation(string formation)
         {
             return formation?.ToLower() switch
             {
