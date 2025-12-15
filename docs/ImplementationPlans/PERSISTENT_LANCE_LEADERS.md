@@ -1009,6 +1009,54 @@ private void TriggerMemorialEvent(PersistentLanceLeader deceased)
 
 ## Integration Points
 
+### Integration with Lance Life Simulation System
+
+**Responsibility Division:**
+
+This system works in tandem with the Lance Life Simulation system, with clear boundaries:
+
+**Persistent Lance Leaders (this system) owns:**
+- ✅ Leader personality generation (traits, strictness, pragmatism, loyalty)
+- ✅ Memory system (tracking last 15 player events)
+- ✅ Dynamic reactions and dialogue based on player history
+- ✅ Replacement generation when leader dies/leaves
+- ✅ Relationship progression with player
+
+**Lance Life Simulation owns:**
+- ✅ Promotion timing and eligibility tracking
+- ✅ Creating leader vacancies (escalation paths)
+- ✅ Death triggers in combat/events
+- ✅ Promotion ceremony timing
+- ✅ Integration with AI Camp Schedule
+
+**Integration Flow:**
+```csharp
+// Lance Life Simulation detects player readiness
+LanceLifeSimulation.IsPlayerReadyForLanceLeader() == true
+    ↓
+// Lance Life chooses escalation path (promotion/injury/death/etc.)
+LanceLifeSimulation.ExecuteEscalation(path: "battle_casualty")
+    ↓
+// Notifies this system of vacancy
+PersistentLanceLeaders.OnLeaderVacancy(reason: "battle_casualty", predecessorInfo)
+    ↓
+// This system decides: promote player or generate new leader
+IF player_ready:
+    GeneratePromotionCeremony(predecessor);
+ELSE:
+    var newLeader = GenerateLeader(lord, predecessor);
+    TriggerIntroductionEvent(newLeader, predecessor);
+```
+
+**Lookup Authority:**
+- This system is the **single source of truth** for current lance leader identity
+- Lance Life Simulation queries: `PersistentLanceLeaders.GetCurrentLanceLeader()`
+- Death triggers flow: Lance Life → Persistent Leaders → New personality generated
+
+**See:** `lance-life-simulation.md` for promotion escalation and vacancy creation mechanics.
+
+---
+
 ### 1. Duty Events System
 
 **Integration:** Lance leader comments on duty event choices

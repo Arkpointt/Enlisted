@@ -115,20 +115,30 @@ namespace Enlisted.Mod.Core.Triggers
                 hourOfDay = 0;
             }
 
-            // Simple, readable windows:
-            // - Dawn: 5–7
-            // - Day: 7–18
-            // - Dusk: 18–20
-            // - Night: everything else
+            // Enhanced 6-period camp schedule:
+            // - Dawn:      5–7   (morning muster, wake-up)
+            // - Morning:   7–12  (active duty, training)
+            // - Afternoon: 12–17 (continued duty, maintenance)
+            // - Evening:   17–20 (wind-down, meals)
+            // - Dusk:      20–22 (campfire, prep for night)
+            // - Night:     22–5  (watch duty, sleep)
             if (hourOfDay >= 5 && hourOfDay < 7)
             {
                 return DayPart.Dawn;
             }
-            if (hourOfDay >= 7 && hourOfDay < 18)
+            if (hourOfDay >= 7 && hourOfDay < 12)
             {
-                return DayPart.Day;
+                return DayPart.Morning;
             }
-            if (hourOfDay >= 18 && hourOfDay < 20)
+            if (hourOfDay >= 12 && hourOfDay < 17)
+            {
+                return DayPart.Afternoon;
+            }
+            if (hourOfDay >= 17 && hourOfDay < 20)
+            {
+                return DayPart.Evening;
+            }
+            if (hourOfDay >= 20 && hourOfDay < 22)
             {
                 return DayPart.Dusk;
             }
@@ -251,9 +261,11 @@ namespace Enlisted.Mod.Core.Triggers
     {
         Unknown = 0,
         Dawn = 1,
-        Day = 2,
-        Dusk = 3,
-        Night = 4
+        Morning = 2,
+        Afternoon = 3,
+        Evening = 4,
+        Dusk = 5,
+        Night = 6
     }
 }
 

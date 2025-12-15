@@ -18,6 +18,9 @@ namespace Enlisted.Features.Activities
         [JsonProperty("id")] public string Id { get; set; }
         [JsonProperty("category")] public string Category { get; set; }
 
+        // Phase 2: Camp Hub - Location field for spatial navigation
+        [JsonProperty("location")] public string Location { get; set; }
+
         [JsonProperty("textId")] public string TextId { get; set; }
         [JsonProperty("text")] public string Text { get; set; }
 
@@ -29,7 +32,7 @@ namespace Enlisted.Features.Activities
         // Formation types: "infantry", "archer", "cavalry", "horsearcher" (same vocabulary as duties).
         [JsonProperty("formations")] public List<string> Formations { get; set; } = new List<string>();
 
-        // Day parts: "dawn", "day", "dusk", "night" (same vocabulary as CampaignTriggerTokens).
+        // Day parts: "dawn", "morning", "afternoon", "evening", "dusk", "night" (6-period system).
         [JsonProperty("dayParts")] public List<string> DayParts { get; set; } = new List<string>();
 
         [JsonProperty("fatigueCost")] public int FatigueCost { get; set; } = 0;
@@ -50,6 +53,11 @@ namespace Enlisted.Features.Activities
     {
         public string Id { get; set; }
         public string Category { get; set; }
+
+        // Phase 2: Camp Hub - Location for spatial navigation
+        // Valid values: "medical_tent", "training_grounds", "lords_tent", 
+        //               "quartermaster", "personal_quarters", "camp_fire"
+        public string Location { get; set; }
 
         public string TextId { get; set; }
         public string TextFallback { get; set; }

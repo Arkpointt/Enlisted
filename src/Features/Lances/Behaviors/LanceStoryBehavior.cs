@@ -421,14 +421,26 @@ namespace Enlisted.Features.Lances.Behaviors
 
             switch (token.Trim().ToLowerInvariant())
             {
+                // 6-period camp schedule
                 case CampaignTriggerTokens.Dawn:
                     return tracker.GetDayPart() == DayPart.Dawn;
-                case CampaignTriggerTokens.Day:
-                    return tracker.GetDayPart() == DayPart.Day;
+                case CampaignTriggerTokens.Morning:
+                    return tracker.GetDayPart() == DayPart.Morning;
+                case CampaignTriggerTokens.Afternoon:
+                    return tracker.GetDayPart() == DayPart.Afternoon;
+                case CampaignTriggerTokens.Evening:
+                    return tracker.GetDayPart() == DayPart.Evening;
                 case CampaignTriggerTokens.Dusk:
                     return tracker.GetDayPart() == DayPart.Dusk;
                 case CampaignTriggerTokens.Night:
                     return tracker.GetDayPart() == DayPart.Night;
+                
+                // Legacy "day" token - map to all daytime periods for backwards compatibility
+                case CampaignTriggerTokens.Day:
+                {
+                    var part = tracker.GetDayPart();
+                    return part == DayPart.Morning || part == DayPart.Afternoon;
+                }
 
                 case CampaignTriggerTokens.EnteredSettlement:
                     return tracker.IsWithinDays(tracker.LastSettlementEnteredTime, eventWindowDays);

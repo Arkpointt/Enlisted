@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Camp.UI;
+using Enlisted.Features.Camp.UI.Hub;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -45,8 +46,6 @@ namespace Enlisted.Features.Camp
         private const string RetinueDismissMenuId = "command_tent_retinue_dismiss";
         private const string RetinueRequisitionMenuId = "command_tent_retinue_requisition";
 
-        // Camp Activities Menu ID (organized submenu replacing the popup)
-        private const string CampActivitiesMenuId = "enlisted_activities";
 
         // Ensure Camp dialogs never pause the campaign clock.
         private static bool ShouldPauseDuringCommandTentInquiry() => false;
@@ -202,9 +201,6 @@ namespace Enlisted.Features.Camp
             // Phase 8: PayTension Action Menus
             AddDesperateMeasuresMenu(starter);
             AddHelpTheLordMenu(starter);
-
-            // Camp Activities organized menu (replaces popup)
-            AddCampActivitiesMenu(starter);
         }
 
         #region Enlisted Status Integration
@@ -349,7 +345,7 @@ namespace Enlisted.Features.Camp
             starter.AddGameMenuOption(
                 CommandTentMenuId,
                 "ct_camp_activities_visual",
-                "⚔ Camp Activities (Visual)",
+                "🏕️ Visit Camp",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
@@ -368,8 +364,8 @@ namespace Enlisted.Features.Camp
                 },
                 _ => 
                 {
-                    // Open the new visual screen!
-                    CampActivitiesScreen.Open(() =>
+                    // Phase 2: Open the new Camp Hub screen (with 6 location buttons)
+                    CampHubScreen.Open(() =>
                     {
                         // Return to camp menu when closed
                         SwitchToMenuPreserveTime(CommandTentMenuId);
@@ -378,30 +374,6 @@ namespace Enlisted.Features.Camp
                 false,
                 3);
 
-            // Camp Activities - Training and tasks (organized submenu) - LEGACY TEXT MENU
-            starter.AddGameMenuOption(
-                CommandTentMenuId,
-                "ct_camp_activities",
-                "{=ct_camp_activities}Camp Activities (Text)",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
-                    if (activitiesBehavior?.IsEnabled() != true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=menu_disabled_activities}Camp activities system is disabled.");
-                        return true;
-                    }
-                    var count = activitiesBehavior.GetAvailableActivityCountForCurrentContext();
-                    args.Tooltip = count > 0
-                        ? new TextObject("{=ct_activities_tooltip}Training, tasks, and social activities. ({COUNT} available) [Legacy text menu]").SetTextVariable("COUNT", count)
-                        : new TextObject("{=ct_activities_tooltip_none}No activities available at this time. [Legacy text menu]");
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(CampActivitiesMenuId),
-                false,
-                4);
 
             // ========================================
             // PAYTENSION ACTION MENUS (Phase 8)
@@ -776,346 +748,6 @@ namespace Enlisted.Features.Camp
 
         #endregion
 
-        #region Camp Activities Menu
-
-        /// <summary>
-        /// Creates the Camp Activities submenu with organized categories.
-        /// Replaces the flat popup with a proper menu structure matching the design docs.
-        /// Categories: Training, Camp Tasks, Social
-        /// </summary>
-        private void AddCampActivitiesMenu(CampaignGameStarter starter)
-        {
-            // Register the main activities menu with RP-flavored header
-            // {PERSONAL_NEWS} placeholder is populated in OnCampActivitiesMenuInit with army orders/news
-            starter.AddWaitGameMenu(
-                CampActivitiesMenuId,
-                "{=act_menu_intro_with_news}The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?",
-                OnCampActivitiesMenuInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            // Add category headers and activity options
-            AddActivitiesMenuOptions(starter);
-        }
-
-        /// <summary>
-        /// Initializes the Camp Activities menu, setting up dynamic text variables.
-        /// </summary>
-        private void OnCampActivitiesMenuInit(MenuCallbackArgs args)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            var dayPart = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
-            
-            // Set header text variables for fatigue and time display
-            var text = args.MenuContext.GameMenu.GetText();
-            text.SetTextVariable("FATIGUE_CURRENT", enlistment?.FatigueCurrent.ToString() ?? "0");
-            text.SetTextVariable("FATIGUE_MAX", enlistment?.FatigueMax.ToString() ?? "24");
-            text.SetTextVariable("TIME_OF_DAY", dayPart?.ToString() ?? "Day");
-            
-            // Set personal news section (army orders, battle participation, etc.)
-            var personalNews = EnlistedNewsBehavior.Instance?.BuildPersonalNewsSection(2) ?? string.Empty;
-            text.SetTextVariable("PERSONAL_NEWS", personalNews);
-            
-            ModLogger.Debug(LogCategory, "Camp Activities menu initialized");
-        }
-
-        /// <summary>
-        /// Adds all activity menu options organized by category.
-        /// </summary>
-        private void AddActivitiesMenuOptions(CampaignGameStarter starter)
-        {
-            // Priority counter for menu ordering
-            var priority = 0;
-
-            // === TRAINING SECTION ===
-            starter.AddGameMenuOption(
-                CampActivitiesMenuId,
-                "act_header_training",
-                "{=act_header_training}— TRAINING —",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.IsEnabled = false; // Header, not clickable
-                    return true;
-                },
-                _ => { },
-                false,
-                priority++);
-
-            AddCategoryActivities(starter, "training", ref priority);
-
-            // === CAMP TASKS SECTION ===
-            starter.AddGameMenuOption(
-                CampActivitiesMenuId,
-                "act_header_tasks",
-                "{=act_header_tasks}— CAMP TASKS —",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.IsEnabled = false;
-                    return true;
-                },
-                _ => { },
-                false,
-                priority++);
-
-            AddCategoryActivities(starter, "tasks", ref priority);
-
-            // === SOCIAL SECTION ===
-            starter.AddGameMenuOption(
-                CampActivitiesMenuId,
-                "act_header_social",
-                "{=act_header_social}— SOCIAL —",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                    args.IsEnabled = false;
-                    return true;
-                },
-                _ => { },
-                false,
-                priority++);
-
-            AddCategoryActivities(starter, "social", ref priority);
-
-            // === BACK OPTION ===
-            starter.AddGameMenuOption(
-                CampActivitiesMenuId,
-                "act_back",
-                "{=act_back}Return to Camp",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    return true;
-                },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
-                true,
-                100);
-        }
-
-        /// <summary>
-        /// Adds all activities for a specific category as clickable menu options.
-        /// </summary>
-        private void AddCategoryActivities(CampaignGameStarter starter, string category, ref int priority)
-        {
-            var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
-            if (activitiesBehavior == null)
-            {
-                return;
-            }
-
-            var allActivities = activitiesBehavior.GetAllActivities();
-            var categoryActivities = allActivities
-                .Where(a => string.Equals(a.Category, category, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            foreach (var activity in categoryActivities)
-            {
-                var activityId = activity.Id;
-                var currentPriority = priority++;
-
-                starter.AddGameMenuOption(
-                    CampActivitiesMenuId,
-                    $"act_{activityId.Replace(".", "_")}",
-                    ResolveActivityText(activity.TextId, activity.TextFallback ?? activity.Id),
-                    args => IsActivityOptionAvailable(args, activityId),
-                    _ => OnActivitySelected(activityId),
-                    false,
-                    currentPriority);
-            }
-        }
-
-        /// <summary>
-        /// Checks if an activity option should be available and sets tooltip/icon.
-        /// </summary>
-        private bool IsActivityOptionAvailable(MenuCallbackArgs args, string activityId)
-        {
-            var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
-            var enlistment = EnlistmentBehavior.Instance;
-
-            if (activitiesBehavior == null || enlistment?.IsEnlisted != true)
-            {
-                return false;
-            }
-
-            var activity = activitiesBehavior.GetAllActivities().FirstOrDefault(a => a.Id == activityId);
-            if (activity == null)
-            {
-                return false;
-            }
-
-            // Set appropriate icon based on category
-            args.optionLeaveType = GetLeaveTypeForCategory(activity.Category);
-
-            var dayPart = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
-            var dayPartToken = dayPart?.ToString().ToLowerInvariant() ?? "day";
-            var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
-            var currentDay = (int)CampaignTime.Now.ToDays;
-
-            // Check all conditions and build tooltip
-            var disableReasons = new List<string>();
-            var statusParts = new List<string>();
-
-            // Tier check
-            if (enlistment.EnlistmentTier < activity.MinTier)
-            {
-                disableReasons.Add($"Requires Tier {activity.MinTier}");
-            }
-
-            // Formation check
-            if (activity.Formations != null && activity.Formations.Count > 0)
-            {
-                if (string.IsNullOrWhiteSpace(formation) ||
-                    !activity.Formations.Any(f => string.Equals(f, formation, StringComparison.OrdinalIgnoreCase)))
-                {
-                    var formationList = string.Join("/", activity.Formations.Select(f => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(f)));
-                    disableReasons.Add($"{formationList} only");
-                }
-            }
-
-            // Day part check
-            if (activity.DayParts != null && activity.DayParts.Count > 0)
-            {
-                if (string.IsNullOrWhiteSpace(dayPartToken) ||
-                    !activity.DayParts.Any(dp => string.Equals(dp, dayPartToken, StringComparison.OrdinalIgnoreCase)))
-                {
-                    var dayPartList = string.Join("/", activity.DayParts.Select(dp => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dp)));
-                    disableReasons.Add($"Available: {dayPartList}");
-                }
-            }
-
-            // Cooldown check
-            if (activitiesBehavior.TryGetCooldownDaysRemaining(activity, currentDay, out var daysRemaining))
-            {
-                disableReasons.Add($"Cooldown: {daysRemaining} day{(daysRemaining > 1 ? "s" : "")}");
-            }
-
-            // Fatigue check
-            if (activity.FatigueCost > 0 && enlistment.FatigueCurrent < activity.FatigueCost)
-            {
-                disableReasons.Add("Too fatigued");
-            }
-
-            // Build status for tooltip
-            if (activity.FatigueCost > 0)
-            {
-                statusParts.Add($"Fatigue: -{activity.FatigueCost}");
-            }
-            if (activity.FatigueRelief > 0)
-            {
-                statusParts.Add($"Rest: +{activity.FatigueRelief}");
-            }
-            if (activity.SkillXp != null && activity.SkillXp.Count > 0)
-            {
-                var xpList = activity.SkillXp.Select(kvp => $"{kvp.Key} +{kvp.Value}");
-                statusParts.Add(string.Join(", ", xpList));
-            }
-
-            // Build full tooltip (include player/context stats so the option is self-explanatory)
-            var hint = ResolveActivityText(activity.HintId, activity.HintFallback ?? "");
-
-            var dayPartName = dayPart?.ToString() ?? "Day";
-            var formationName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(formation ?? "infantry");
-
-            var tooltipLines = new List<string>();
-            if (!string.IsNullOrEmpty(hint))
-            {
-                tooltipLines.Add(hint);
-            }
-            if (statusParts.Count > 0)
-            {
-                tooltipLines.Add("Effects: " + string.Join(" | ", statusParts));
-            }
-
-            tooltipLines.Add($"Your fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
-            tooltipLines.Add($"Context: Tier {enlistment.EnlistmentTier}, {formationName}, {dayPartName}");
-
-            if (disableReasons.Count > 0)
-            {
-                tooltipLines.Add("Unavailable: " + string.Join(", ", disableReasons));
-            }
-            else
-            {
-                tooltipLines.Add("Available now.");
-            }
-
-            args.Tooltip = new TextObject(string.Join("\n", tooltipLines));
-            args.IsEnabled = disableReasons.Count == 0;
-
-            return true; // Always show the option, but may be disabled
-        }
-
-        /// <summary>
-        /// Gets the appropriate LeaveType icon for an activity category.
-        /// </summary>
-        private static GameMenuOption.LeaveType GetLeaveTypeForCategory(string category)
-        {
-            return category?.ToLowerInvariant() switch
-            {
-                "training" => GameMenuOption.LeaveType.OrderTroopsToAttack,
-                "tasks" => GameMenuOption.LeaveType.Manage,
-                "social" => GameMenuOption.LeaveType.Conversation,
-                "lance" => GameMenuOption.LeaveType.TroopSelection,
-                _ => GameMenuOption.LeaveType.Continue
-            };
-        }
-
-        /// <summary>
-        /// Handles activity selection from the menu.
-        /// </summary>
-        private void OnActivitySelected(string activityId)
-        {
-            var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
-            if (activitiesBehavior == null)
-            {
-                return;
-            }
-
-            var activity = activitiesBehavior.GetAllActivities().FirstOrDefault(a => a.Id == activityId);
-            if (activity == null)
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=act_not_found}Activity not found.").ToString(), Colors.Red));
-                return;
-            }
-
-            if (activitiesBehavior.TryExecuteActivity(activity, out var failReason))
-            {
-                // Show success message with RP flavor
-                var successMsg = GetActivitySuccessMessage(activity);
-                InformationManager.DisplayMessage(new InformationMessage(successMsg, Colors.Green));
-
-                // Refresh the menu to update availability
-                SwitchToMenuPreserveTime(CampActivitiesMenuId);
-            }
-            else
-            {
-                var failMsg = !string.IsNullOrEmpty(failReason)
-                    ? new TextObject("{=act_failed}Could not complete activity: {REASON}").SetTextVariable("REASON", failReason).ToString()
-                    : new TextObject("{=act_failed_generic}Could not complete the activity.").ToString();
-                InformationManager.DisplayMessage(new InformationMessage(failMsg, Colors.Red));
-            }
-        }
-
-        /// <summary>
-        /// Gets an RP-flavored success message for completing an activity.
-        /// </summary>
-        private static string GetActivitySuccessMessage(Features.Activities.CampActivityDefinition activity)
-        {
-            var category = activity.Category?.ToLowerInvariant() ?? "";
-            return category switch
-            {
-                "training" => new TextObject("{=act_success_training}You complete the training. Your muscles ache, but you feel stronger.").ToString(),
-                "tasks" => new TextObject("{=act_success_tasks}You finish the task. The camp runs a little smoother for your effort.").ToString(),
-                "social" => new TextObject("{=act_success_social}Time passes pleasantly. The bonds of camaraderie strengthen.").ToString(),
-                "lance" => new TextObject("{=act_success_lance}You spend time with your lance mates. They appreciate your attention.").ToString(),
-                _ => new TextObject("{=act_success_generic}Activity completed.").ToString()
-            };
-        }
-
-        #endregion
 
         #region Menu Background and Audio
         
@@ -1135,7 +767,6 @@ namespace Enlisted.Features.Camp
         [GameMenuInitializationHandler(RetinueDismissMenuId)]
         [GameMenuInitializationHandler(RetinueRequisitionMenuId)]
         [GameMenuInitializationHandler(CompanionAssignmentsMenuId)]
-        [GameMenuInitializationHandler(CampActivitiesMenuId)]
         public static void CommandTentMenuBackgroundInit(MenuCallbackArgs args)
         {
             // Use a military meeting/camp background

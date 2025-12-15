@@ -137,6 +137,7 @@
     <Content Include="GUI\Prefabs\Events\EventChoiceButton.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampActivitiesScreen.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampActivityCard.xml"/>
+    <Content Include="GUI\Prefabs\Camp\Hub\CampHubScreen.xml"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -214,8 +215,13 @@
     <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
     <Compile Include="src\Features\Camp\UI\ActivityCardVM.cs"/>
     <Compile Include="src\Features\Camp\UI\ActivityCardRowVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\CampActivitiesVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\CampActivitiesScreen.cs"/>
+    <Compile Include="src\Features\Camp\UI\Hub\CampLocations.cs"/>
+    <Compile Include="src\Features\Camp\UI\Hub\LocationButtonVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Hub\LocationButtonRowVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Hub\CampHubVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Hub\CampHubScreen.cs"/>
+    <Compile Include="src\Features\Camp\UI\Areas\CampAreaVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Areas\CampAreaScreen.cs"/>
     <Compile Include="src\Features\Activities\*.cs"/>
     <Compile Include="src\Features\Lances\Personas\LancePersonaModels.cs"/>
     <Compile Include="src\Features\Lances\Personas\LancePersonaBehavior.cs"/>
@@ -347,6 +353,7 @@
     <Copy SourceFiles="GUI\Prefabs\Events\EventChoiceButton.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Events\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampActivitiesScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampActivityCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\Hub\CampHubScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\Hub\"/>
     <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>

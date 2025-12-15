@@ -30,11 +30,45 @@ AI Camp Schedule (duties/activities)
         ↕
 Lance Life Simulation (member states)
         ↓
-┌───────┴────────┬───────────────┬──────────────┐
-↓                ↓               ↓              ↓
-Escalation    Lance Life    Menu System    Pay System
-(Heat/Disc)   Events JSON   (roster view)  (morale)
+┌───────┴────────┬───────────────┬──────────────┬──────────────────┐
+↓                ↓               ↓              ↓                  ↓
+Escalation    Lance Life    Menu System    Pay System    Persistent Lance
+(Heat/Disc)   Events JSON   (roster view)  (morale)      Leaders (personality)
 ```
+
+### Integration with Persistent Lance Leaders System
+
+**Responsibility Division:**
+
+**Lance Life Simulation owns:**
+- ✅ Promotion timing and eligibility tracking
+- ✅ Creating leader vacancies (when leader leaves/dies/promoted)
+- ✅ Escalation paths (promotion/transfer/injury/death/retirement)
+- ✅ Integration with AI Camp Schedule for member availability
+
+**Persistent Lance Leaders owns:**
+- ✅ Leader personality generation and traits
+- ✅ Memory system (tracking last 15 player events)
+- ✅ Dynamic reactions and dialogue based on history
+- ✅ Replacement personality generation after death
+
+**Integration Flow:**
+```csharp
+// Lance Life Simulation creates vacancy
+LanceLifeSimulation.CreateLeaderVacancy(reason: "battle_casualty");
+    ↓
+// Triggers Persistent Lance Leaders
+PersistentLanceLeaders.OnLeaderVacancy(reason);
+    ↓
+// Checks if player ready for promotion
+IF (LanceLifeSimulation.IsPlayerReadyForLanceLeader()):
+    PersistentLanceLeaders.OfferPlayerPromotion();
+ELSE:
+    var newLeader = PersistentLanceLeaders.GenerateLeader(lord, predecessorInfo);
+    PersistentLanceLeaders.TriggerIntroductionEvent(newLeader);
+```
+
+**See:** `PERSISTENT_LANCE_LEADERS.md` for leader personality and memory system details.
 
 **Event Delivery**: Lance Life Simulation generates events using the existing `LanceLifeEventsAutomaticBehavior` with delivery channels:
 - `channel: "inquiry"` - Cover requests, welfare checks, promotion foreshadowing

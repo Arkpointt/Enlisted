@@ -669,3 +669,4 @@ pay_tension.stand_with_officers (-50)
 - Escalation design: `docs/research/escalation_system.md`
 - Pay Tension: `docs/research/pay_tension_events.md`
 - Event metadata: `docs/research/event_metadata_index.md`
+

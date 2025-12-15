@@ -788,3 +788,4 @@ NEW STORY BLOCK
 - **Flow Diagrams:** This document
 - **System Design:** `docs/research/escalation_system.md`
 - **Pay Tension:** `docs/research/pay_tension_events.md`
+

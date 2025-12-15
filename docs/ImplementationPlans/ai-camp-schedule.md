@@ -50,6 +50,29 @@
 
 ## System Overview
 
+### ⚡ Critical Dependency: Time System Expansion
+
+**BEFORE implementing this system, you MUST complete the time system expansion:**
+
+**Required:** Expand time periods from 4 to 6 (Dawn, Morning, Afternoon, Evening, Dusk, Night)  
+**File:** `src/Mod.Core/Triggers/CampaignTriggerTrackerBehavior.cs`  
+**Duration:** 1-2 hours  
+**See:** `camp_schedule_system_analysis.md` for implementation steps
+
+**Why Required:**
+- This system assigns duties by **6 time blocks** per day
+- Schedule uses: Morning (7-12), Afternoon (12-17), Evening (17-20), etc.
+- Current 4-period system (Dawn/Day/Dusk/Night) too coarse
+- Must expand time system first or schedule will not work correctly
+
+**Build Order:**
+```
+1. ⚡ Expand time system (1-2 hours)
+2. Then: Begin AI Camp Schedule implementation
+```
+
+---
+
 ### Command Hierarchy (How Orders Flow Down)
 
 The schedule isn't abstract - it reflects **military chain of command**:

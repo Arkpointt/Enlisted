@@ -165,11 +165,21 @@ namespace Enlisted.Features.Lances.Events
                 }
 
                 var token = t.Trim().ToLowerInvariant();
+                
+                // 6-period camp schedule - direct mappings
                 if (token == CampaignTriggerTokens.Dawn && dayPart == DayPart.Dawn)
                 {
                     return true;
                 }
-                if (token == CampaignTriggerTokens.Day && dayPart == DayPart.Day)
+                if (token == CampaignTriggerTokens.Morning && dayPart == DayPart.Morning)
+                {
+                    return true;
+                }
+                if (token == CampaignTriggerTokens.Afternoon && dayPart == DayPart.Afternoon)
+                {
+                    return true;
+                }
+                if (token == CampaignTriggerTokens.Evening && dayPart == DayPart.Evening)
                 {
                     return true;
                 }
@@ -181,21 +191,15 @@ namespace Enlisted.Features.Lances.Events
                 {
                     return true;
                 }
-
-                // Best-effort mappings for the extended schema vocabulary:
-                // We only track Dawn/Day/Dusk/Night today, so map finer buckets into Day/Night.
-                if (token == CampaignTriggerTokens.Morning && dayPart == DayPart.Day)
+                
+                // Legacy "day" token - map to all daytime periods for backwards compatibility
+                if (token == CampaignTriggerTokens.Day && 
+                    (dayPart == DayPart.Morning || dayPart == DayPart.Afternoon))
                 {
                     return true;
                 }
-                if (token == CampaignTriggerTokens.Afternoon && dayPart == DayPart.Day)
-                {
-                    return true;
-                }
-                if (token == CampaignTriggerTokens.Evening && dayPart == DayPart.Dusk)
-                {
-                    return true;
-                }
+                
+                // "late_night" - map to night period
                 if (token == CampaignTriggerTokens.LateNight && dayPart == DayPart.Night)
                 {
                     return true;
@@ -319,15 +323,26 @@ namespace Enlisted.Features.Lances.Events
                 case CampaignTriggerTokens.EnemyNearby:
                     return IsEnemyNearbyFast();
 
-                // Dayparts
+                // Dayparts (6-period camp schedule)
                 case CampaignTriggerTokens.Dawn:
                     return tracker.GetDayPart() == DayPart.Dawn;
-                case CampaignTriggerTokens.Day:
-                    return tracker.GetDayPart() == DayPart.Day;
+                case CampaignTriggerTokens.Morning:
+                    return tracker.GetDayPart() == DayPart.Morning;
+                case CampaignTriggerTokens.Afternoon:
+                    return tracker.GetDayPart() == DayPart.Afternoon;
+                case CampaignTriggerTokens.Evening:
+                    return tracker.GetDayPart() == DayPart.Evening;
                 case CampaignTriggerTokens.Dusk:
                     return tracker.GetDayPart() == DayPart.Dusk;
                 case CampaignTriggerTokens.Night:
                     return tracker.GetDayPart() == DayPart.Night;
+                
+                // Legacy "day" token - map to all daytime periods for backwards compatibility
+                case CampaignTriggerTokens.Day:
+                {
+                    var part = tracker.GetDayPart();
+                    return part == DayPart.Morning || part == DayPart.Afternoon;
+                }
 
                 // Settlement events (recent)
                 case CampaignTriggerTokens.EnteredSettlement:

@@ -4,7 +4,27 @@
 
 **Question**: Can we set a camp schedule for the Enlisted mod where events are available during specific times of the day?
 
-**Answer**: **YES** - The foundation is already built. You currently have 4 time periods (Dawn, Day, Dusk, Night) and can expand to 6-7 granular periods with minimal changes.
+**Answer**: **YES** - The foundation is already built. You currently have 4 time periods (Dawn, Day, Dusk, Night) and can expand to 6 granular periods with minimal changes.
+
+---
+
+## 🔴 CRITICAL PRIORITY - BLOCKING ITEM
+
+**This time system expansion is a PREREQUISITE for multiple major systems:**
+
+**Blocks:**
+- ❌ AI Camp Schedule implementation
+- ❌ Camp Activities Hub Phase 2
+- ❌ Duty Events proper timing
+- ❌ Lance Life Simulation time-aware events
+
+**Duration:** 1-2 hours  
+**Complexity:** Low (straightforward enum + logic changes)  
+**Impact:** Unblocks 4+ major systems
+
+**DO THIS FIRST before starting any other major implementation work.**
+
+See `MASTER_IMPLEMENTATION_ROADMAP.md` for full dependency graph.
 
 ---
 

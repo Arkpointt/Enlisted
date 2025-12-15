@@ -380,6 +380,7 @@ namespace Enlisted.Features.Activities
                     {
                         Id = a.Id.Trim(),
                         Category = (a.Category ?? string.Empty).Trim(),
+                        Location = (a.Location ?? "camp_fire").Trim(), // Default to camp_fire if not specified
                         TextId = (a.TextId ?? string.Empty).Trim(),
                         TextFallback = a.Text ?? string.Empty,
                         HintId = (a.HintId ?? string.Empty).Trim(),

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Activities;
 using Enlisted.Features.Assignments.Behaviors;
+using Enlisted.Features.Camp.UI.Hub;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -11,14 +12,15 @@ using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Library;
 
-namespace Enlisted.Features.Camp.UI
+namespace Enlisted.Features.Camp.UI.Areas
 {
     /// <summary>
-    /// Main ViewModel for the Camp Activities screen.
-    /// Displays all available camp activities in a modern card-based interface.
+    /// ViewModel for the Camp Area screen - displays activities for a specific location.
+    /// Phase 2: Refactored from CampActivitiesVM to support location-based filtering.
     /// </summary>
-    public class CampActivitiesVM : ViewModel
+    public class CampAreaVM : ViewModel
     {
+        private readonly string _locationId;
         private readonly Action _onClose;
         private readonly EnlistmentBehavior _enlistment;
         private readonly CampActivitiesBehavior _activitiesBehavior;
@@ -31,7 +33,7 @@ namespace Enlisted.Features.Camp.UI
         private string _availableCountText;
         private int _totalCount;
         
-        // Status bar
+        // Status bar properties
         private int _fatigue;
         private int _maxFatigue;
         private string _fatigueText;
@@ -44,9 +46,10 @@ namespace Enlisted.Features.Camp.UI
         private string _lanceRepColor;
         private int _payOwed;
         private string _payOwedText;
-
-        public CampActivitiesVM(Action onClose)
+        
+        public CampAreaVM(string locationId, Action onClose)
         {
+            _locationId = locationId;
             _onClose = onClose;
             _enlistment = EnlistmentBehavior.Instance;
             _activitiesBehavior = CampActivitiesBehavior.Instance;
@@ -54,15 +57,16 @@ namespace Enlisted.Features.Camp.UI
             Activities = new MBBindingList<ActivityCardVM>();
             ActivityRows = new MBBindingList<ActivityCardRowVM>();
             
-            HeaderTitle = "⚔ CAMP ACTIVITIES";
+            // Set header based on location
+            HeaderTitle = CampLocations.GetLocationHeaderTitle(locationId);
             
             RefreshActivities();
             RefreshStatusBar();
             UpdateCurrentTime();
         }
-
+        
         #region Properties
-
+        
         [DataSourceProperty]
         public MBBindingList<ActivityCardVM> Activities
         {
@@ -76,7 +80,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public MBBindingList<ActivityCardRowVM> ActivityRows
         {
@@ -90,7 +94,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string HeaderTitle
         {
@@ -104,7 +108,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string CurrentTimeText
         {
@@ -118,7 +122,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int AvailableCount
         {
@@ -132,7 +136,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string AvailableCountText
         {
@@ -146,7 +150,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int TotalCount
         {
@@ -160,7 +164,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int Fatigue
         {
@@ -174,7 +178,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int MaxFatigue
         {
@@ -188,7 +192,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string FatigueText
         {
@@ -202,7 +206,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string FatigueColor
         {
@@ -216,7 +220,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int Heat
         {
@@ -230,7 +234,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string HeatText
         {
@@ -244,7 +248,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string HeatColor
         {
@@ -258,7 +262,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int LanceRep
         {
@@ -272,7 +276,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string LanceRepText
         {
@@ -286,7 +290,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string LanceRepColor
         {
@@ -300,7 +304,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public int PayOwed
         {
@@ -314,7 +318,7 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         [DataSourceProperty]
         public string PayOwedText
         {
@@ -328,25 +332,29 @@ namespace Enlisted.Features.Camp.UI
                 }
             }
         }
-
+        
         #endregion
-
+        
         #region Commands
-
+        
         public void ExecuteClose()
         {
             _onClose?.Invoke();
         }
-
+        
         public void ExecuteSelectActivity(ActivityCardVM activityCard)
         {
             if (activityCard == null)
+            {
                 return;
-
+            }
+            
             var activity = activityCard.GetActivity();
             if (activity == null)
+            {
                 return;
-
+            }
+            
             if (!activityCard.GetIsAvailable())
             {
                 // Show why it's unavailable
@@ -354,7 +362,7 @@ namespace Enlisted.Features.Camp.UI
                     new InformationMessage(activityCard.AvailabilityText, new Color(0.8f, 0.3f, 0.3f)));
                 return;
             }
-
+            
             // Execute the activity
             try
             {
@@ -363,7 +371,6 @@ namespace Enlisted.Features.Camp.UI
                 if (success)
                 {
                     // Success! Show feedback
-                    var successMsg = _activitiesBehavior.GetActivityText(activity);
                     InformationManager.DisplayMessage(
                         new InformationMessage($"✓ {activityCard.Title} completed!", new Color(0.3f, 0.8f, 0.3f)));
                     
@@ -380,51 +387,56 @@ namespace Enlisted.Features.Camp.UI
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampActivitiesUI", $"Failed to execute activity {activity.Id}: {ex.Message}", ex);
+                ModLogger.Error("CampAreaUI", $"Failed to execute activity {activity.Id}: {ex.Message}", ex);
                 InformationManager.DisplayMessage(
                     new InformationMessage("Failed to complete activity", new Color(0.8f, 0.3f, 0.3f)));
             }
         }
-
+        
         #endregion
-
+        
         #region Refresh Methods
-
+        
         private void RefreshActivities()
         {
             try
             {
                 Activities.Clear();
-
+                
                 if (_activitiesBehavior == null || !_activitiesBehavior.IsEnabled())
                 {
-                    ModLogger.Warn("CampActivitiesUI", "Activities system not enabled");
+                    ModLogger.Warn("CampAreaUI", "Activities system not enabled");
                     return;
                 }
-
+                
                 var allActivities = _activitiesBehavior.GetAllActivities();
                 if (allActivities == null || !allActivities.Any())
                 {
-                    ModLogger.Warn("CampActivitiesUI", "No activities loaded");
+                    ModLogger.Warn("CampAreaUI", "No activities loaded");
                     return;
                 }
-
+                
+                // FILTER BY LOCATION - This is the key difference from CampActivitiesVM
+                var activitiesAtLocation = allActivities
+                    .Where(a => a.Location == _locationId)
+                    .ToList();
+                
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 var dayPart = CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
                 var dayPartToken = dayPart?.ToString().ToLowerInvariant() ?? "day";
                 var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
-
+                
                 var availableActivities = new List<ActivityCardVM>();
                 var unavailableActivities = new List<ActivityCardVM>();
-
-                foreach (var activity in allActivities)
+                
+                foreach (var activity in activitiesAtLocation)
                 {
-                    // Check visibility (formation, time of day)
+                    // Check visibility (formation, time of day, rank)
                     if (!CampActivitiesBehavior.IsActivityVisibleFor(activity, _enlistment, formation, dayPartToken))
                     {
                         continue;
                     }
-
+                    
                     // Check availability (fatigue, cooldown, conditions)
                     var isEnabled = IsActivityEnabled(activity, currentDay, out var unavailableReason);
                     
@@ -439,49 +451,49 @@ namespace Enlisted.Features.Camp.UI
                         unavailableActivities.Add(card);
                     }
                 }
-
+                
                 // Add available activities first (sorted by category)
                 foreach (var card in availableActivities.OrderBy(a => a.CategoryBadgeText))
                 {
                     Activities.Add(card);
                 }
-
+                
                 // Then unavailable activities
                 foreach (var card in unavailableActivities.OrderBy(a => a.CategoryBadgeText))
                 {
                     Activities.Add(card);
                 }
-
+                
                 AvailableCount = availableActivities.Count;
                 TotalCount = Activities.Count;
                 AvailableCountText = $"{AvailableCount} Available";
-
+                
                 // Organize cards into rows of 3 for grid layout
                 OrganizeCardsIntoRows();
-
-                ModLogger.Debug("CampActivitiesUI", $"Loaded {TotalCount} activities ({AvailableCount} available) in {ActivityRows.Count} rows");
+                
+                ModLogger.Debug("CampAreaUI", $"Loaded {TotalCount} activities ({AvailableCount} available) at {_locationId} in {ActivityRows.Count} rows");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampActivitiesUI", $"Failed to refresh activities: {ex.Message}", ex);
+                ModLogger.Error("CampAreaUI", $"Failed to refresh activities: {ex.Message}", ex);
             }
         }
-
+        
         private bool IsActivityEnabled(CampActivityDefinition activity, int currentDay, out string unavailableReason)
         {
             unavailableReason = null;
-
+            
             // Check severe conditions
             if (activity.BlockOnSevereCondition)
             {
                 var conditionState = PlayerConditionBehavior.Instance?.State;
                 if (conditionState != null && (conditionState.InjuryDaysRemaining > 7 || conditionState.IllnessDaysRemaining > 7))
                 {
-                    unavailableReason = $"Too injured (severe condition)";
+                    unavailableReason = "Too injured (severe condition)";
                     return false;
                 }
             }
-
+            
             // Check fatigue
             if (activity.FatigueCost > 0)
             {
@@ -494,7 +506,7 @@ namespace Enlisted.Features.Camp.UI
                     return false;
                 }
             }
-
+            
             // Check cooldown
             if (_activitiesBehavior.TryGetCooldownDaysRemaining(activity, currentDay, out var daysRemaining))
             {
@@ -503,10 +515,10 @@ namespace Enlisted.Features.Camp.UI
                     : $"Cooldown: {daysRemaining} days";
                 return false;
             }
-
+            
             return true;
         }
-
+        
         private void RefreshStatusBar()
         {
             try
@@ -518,37 +530,37 @@ namespace Enlisted.Features.Camp.UI
                 Fatigue = (int)(200.0f * fatigueCurrent / Math.Max(1, fatigueMax));
                 FatigueText = $"{fatigueCurrent} / {fatigueMax}";
                 FatigueColor = GetFatigueColor(fatigueCurrent, fatigueMax);
-
+                
                 // Heat - calculate pixel width for 200px bar (max 10)
                 var escalation = EscalationManager.Instance;
                 var heatValue = escalation?.State?.Heat ?? 0;
                 Heat = (int)(200.0f * heatValue / 10.0f);
                 HeatText = $"{heatValue} / 10";
                 HeatColor = GetHeatColor(heatValue);
-
+                
                 // Lance Rep - calculate pixel width for 200px bar (range -50 to +50, normalize to 0-200)
                 var repValue = escalation?.State?.LanceReputation ?? 0;
                 var repNormalized = (repValue + 50) / 100.0f; // Map -50..50 to 0..1
                 LanceRep = (int)(200.0f * Math.Max(0f, Math.Min(1f, repNormalized)));
                 LanceRepText = $"{repValue:+#;-#;0}";
                 LanceRepColor = GetLanceRepColor(repValue);
-
+                
                 // Pay
                 PayOwed = _enlistment?.PendingMusterPay ?? 0;
                 PayOwedText = $"{PayOwed} denars";
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampActivitiesUI", $"Failed to refresh status bar: {ex.Message}", ex);
+                ModLogger.Error("CampAreaUI", $"Failed to refresh status bar: {ex.Message}", ex);
             }
         }
-
+        
         private void OrganizeCardsIntoRows()
         {
             ActivityRows.Clear();
-
+            
             ActivityCardRowVM currentRow = null;
-
+            
             foreach (var card in Activities)
             {
                 if (currentRow == null || currentRow.IsFull)
@@ -556,11 +568,11 @@ namespace Enlisted.Features.Camp.UI
                     currentRow = new ActivityCardRowVM();
                     ActivityRows.Add(currentRow);
                 }
-
+                
                 currentRow.AddCard(card);
             }
         }
-
+        
         private void UpdateCurrentTime()
         {
             try
@@ -574,57 +586,79 @@ namespace Enlisted.Features.Camp.UI
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampActivitiesUI", $"Failed to update time: {ex.Message}", ex);
+                ModLogger.Error("CampAreaUI", $"Failed to update time: {ex.Message}", ex);
                 CurrentTimeText = "Time Unknown";
             }
         }
-
+        
         #endregion
-
+        
         #region Helper Methods
-
+        
         private string GetDayPartName()
         {
             var dayPart = CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
             return dayPart?.ToString() ?? "Day";
         }
-
+        
         private string GetFatigueColor(int fatigue, int maxFatigue)
         {
             var ratio = (float)fatigue / maxFatigue;
             
             if (ratio >= 0.8f)
+            {
                 return "#DD4444FF"; // Red - exhausted
+            }
             if (ratio >= 0.6f)
+            {
                 return "#FFAA33FF"; // Orange - tired
+            }
             
             return "#FFFFFFFF"; // White - okay
         }
-
+        
         private string GetHeatColor(int heat)
         {
             if (heat >= 7)
+            {
                 return "#DD4444FF"; // Red - danger
+            }
             if (heat >= 5)
+            {
                 return "#FFAA33FF"; // Orange - warning
+            }
             if (heat >= 3)
+            {
                 return "#FFCC44FF"; // Yellow - caution
+            }
             
             return "#FFFFFFFF"; // White - safe
         }
-
+        
         private string GetLanceRepColor(int rep)
         {
             if (rep >= 20)
+            {
                 return "#44FF88FF"; // Bright green - trusted
+            }
             if (rep >= 0)
+            {
                 return "#FFFFFFFF"; // White - neutral
+            }
             if (rep >= -20)
+            {
                 return "#FFAA33FF"; // Orange - strained
+            }
             
             return "#DD4444FF"; // Red - hostile
         }
-
+        
+        public override void OnFinalize()
+        {
+            // Cleanup if needed
+        }
+        
         #endregion
     }
 }
+

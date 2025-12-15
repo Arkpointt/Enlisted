@@ -518,6 +518,31 @@ GUI/Prefabs/Camp/
 **Complexity**: Medium (refactoring existing + new hub screen)  
 **Value**: Very High (major UX improvement, sets foundation for Phase 3-4)
 
+### ⚡ Prerequisites
+
+**BEFORE starting Phase 2:**
+
+1. **Time System Expansion (CRITICAL)**
+   - **Must expand time periods 4→6** (Dawn, Morning, Afternoon, Evening, Dusk, Night)
+   - **File:** `src/Mod.Core/Triggers/CampaignTriggerTrackerBehavior.cs`
+   - **Duration:** 1-2 hours
+   - **See:** `camp_schedule_system_analysis.md`
+   - **Why:** Activities filter by time-of-day; 6 periods enable proper filtering
+
+**Without time system expansion:**
+- Activities will not filter correctly by time
+- Location-based activities may appear at wrong times
+- "Day" period too broad (13 hours) for meaningful filtering
+
+**Build Order:**
+```
+✅ Phase 1: Camp Activities Foundation (DONE)
+    ↓
+⚡ Expand Time System (1-2 hours) ← DO BEFORE PHASE 2
+    ↓
+🔷 Phase 2: Camp Hub & Location System
+```
+
 ### What It Looks Like
 
 ```
@@ -1367,157 +1392,63 @@ From your existing event/story packs:
 
 ---
 
-## Phase 2.5: Duty Cover Request System (FUTURE - BRAINSTORM)
+## Phase 2.5: Duty Cover Request System (REFERENCE)
 
-**Goal**: Allow players to swap duties with lance mates to access Camp during assigned duty times.
+**Goal**: UI/UX for lance mate cover request system.
 
-**Status**: 🤔 Conceptual - For future brainstorming  
-**Estimated Effort**: 2-3 weeks (requires AI Schedule + Lance Life integration)  
-**Dependencies**: AI Camp Schedule (Phase from AI Schedule doc), Lance Life Simulation
+**Status**: 📖 Reference to existing design  
+**System Owner**: Lance Life Simulation system  
+**See:** `lance-life-simulation.md` - Cover Request System (fully designed)
 
-### Concept: Swapping Duties with Lance Mates
+### Note: Cover Requests Are Part of Lance Life Simulation
 
-**Problem:** Player has assigned duty but wants to visit camp.  
-**Solution:** Request a lance mate to cover your duty in exchange for favors.
+**This section is a reference only.** The duty cover request system is fully designed and owned by the Lance Life Simulation system.
 
-### Game Flow
+**What Cover Requests Do:**
+- Lance mates ask player to cover their duties
+- Player can accept (builds relationship, costs fatigue) or refuse (damages relationship)
+- Integrated with AI Camp Schedule via `ILanceScheduleModifier` interface
+- Uses existing Lance Life event infrastructure
 
-```
-┌─────────────────────────────────────────────────┐
-│ 1. PLAYER ON DUTY (Current State)              │
-├─────────────────────────────────────────────────┤
-│ Morning: Sentry Duty - North Gate              │
-│ Status: ASSIGNED (cannot visit camp)            │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 2. REQUEST COVER (New Action)                  │
-├─────────────────────────────────────────────────┤
-│ Menu Option: [Request Cover for Duty]          │
-│                                                 │
-│ Opens dialog with available lance mates:       │
-│  • Wilhelm (Off Duty) - Relationship: +15      │
-│  • Hans (Off Duty) - Relationship: -5          │
-│  • Friedrich (On Different Duty) - Unavailable │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 3. NEGOTIATION EVENT                            │
-├─────────────────────────────────────────────────┤
-│ "{LANCE_MATE}, can you cover my sentry duty?"  │
-│                                                 │
-│ Options depend on relationship:                │
-│  • [Ask as favor] (Relationship ≥ +10)         │
-│    → Costs Lance Rep, owes you nothing         │
-│  • [Offer to trade] (Any relationship)         │
-│    → You cover their duty later (favor owed)   │
-│  • [Bribe with gold] (Low relationship)        │
-│    → Costs 50-100 gold                          │
-│  • [Pull rank] (T5+ only)                      │
-│    → Costs Discipline, damages relationship    │
-└─────────────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────────────┐
-│ 4. OUTCOME                                      │
-├─────────────────────────────────────────────────┤
-│ SUCCESS:                                        │
-│  • Your duty assigned to lance mate             │
-│  • You gain FREE TIME for this block           │
-│  • "Visit Camp" becomes available               │
-│  • Consequences tracked (favor owed, etc.)     │
-│                                                 │
-│ FAILURE:                                        │
-│  • Lance mate refuses                           │
-│  • Still on duty (menu greyed out)             │
-│  • May damage relationship                      │
-└─────────────────────────────────────────────────┘
-```
+**Integration with Camp Hub:**
 
-### Lance Mate Requests (Reverse Flow)
+**Camp Hub Display When Cover Request Active:**
 
-**Lance mates can also ask player to cover:**
+When a lance mate has requested the player cover their duty, the Camp Hub can show:
 
 ```
-Event: "lance_cover_request_player" (already in Lance Life Simulation design)
-
-Wilhelm approaches:
-"Hey, remember when I covered your sentry duty? I need you to take 
- my patrol this afternoon."
-
-Options:
- [Accept] - Clears favor, adds duty to player schedule
- [Refuse] - Damages relationship, keeps favor owed
- [Negotiate] - Try to delay or modify terms
+╔═══════════════════════════════════════════════════════════════╗
+║  🏕️ CAMP OVERVIEW                        🕐 Evening, 18:45   ║
+╠═══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║  📋 PENDING REQUEST: Wilhelm asked you to cover his patrol   ║
+║     tomorrow morning. Visit Lord's Tent to respond.          ║
+║                                                               ║
+║  Where do you want to go?                                    ║
+║  ...                                                          ║
+╚═══════════════════════════════════════════════════════════════╝
 ```
 
-### Integration with Existing Systems
+**Technical Implementation:**
+- Cover request events use `channel: "inquiry"` (popup dialog)
+- Triggered by Lance Life Simulation at appropriate moments
+- Player response modifies both Lance Life state and AI Camp Schedule
+- No new event system needed - uses existing infrastructure
 
-**AI Camp Schedule:**
-- `SwapDutyAssignment(player, lanceMate, dutyBlock)` method
-- Updates both character schedules
-- Notifies both of assignment change
-- Validates swap is allowed (not critical duties)
+**For Full Design Details:**
+- See `lance-life-simulation.md` - Section 2: "Cover Request System"
+- See `LANCE_LIFE_SIMULATION_INTEGRATION_GUIDE.md` - Integration patterns
+- Event JSON examples in `ModuleData/Enlisted/Events/events_lance_simulation.json`
 
-**Lance Life Simulation:**
-- Cover requests affect lance relationships (already designed)
-- Refusals trigger resentment events
-- Successful trades build trust
-- This is **already in the Lance Life design** as "Cover Request System"
+**Camp Hub Role:**
+- Display pending requests as notifications
+- Provide convenient navigation to where requests can be resolved
+- Show consequences of accepting/refusing in status bar (fatigue impact)
+- That's it - logic lives in Lance Life Simulation
 
-**Escalation Systems:**
-- Bribing = +Heat
-- Pulling rank = +Discipline
-- Repeated requests without reciprocating = -Lance Rep
+---
 
-**Favor Tracking:**
-```csharp
-public class DutyCoverTracker
-{
-    private Dictionary<string, List<FavorOweRecord>> _favorsOwed;
-    
-    public class FavorOweRecord
-    {
-        public string DebtorId { get; set; }      // Who owes
-        public string CreditorId { get; set; }    // Who is owed
-        public string DutyType { get; set; }      // What duty
-        public CampaignTime Date { get; set; }    // When incurred
-    }
-    
-    public void AddFavor(string debtor, string creditor, string dutyType);
-    public void CollectFavor(string creditor, string debtor);
-}
-```
-
-### Balance Considerations
-
-**Frequency Limits:**
-- Max 1-2 cover requests per week
-- Can't request cover for same duty type repeatedly
-- Lance mates refuse if player never reciprocates
-
-**Consequences:**
-- Favors MUST be repaid or relationship tanks
-- Using rank authority damages morale
-- Bribing creates corruption paper trail
-
-**Edge Cases:**
-- Lance mate injured during covered duty → Player partially blamed
-- Critical duties (Lord's direct orders) → Cover requests refused
-- No available lance mates → Option greyed out
-
-### Why This is Phase 2.5 (Not Immediate)
-
-**Prerequisites:**
-1. AI Camp Schedule must be fully implemented first
-2. Lance Life Simulation needs to track member states
-3. Cover Request events already designed in Lance Life doc
-4. This bridges two major systems - do it carefully
-
-**Brainstorm Later:**
-- Implementation details once both systems are stable
-- UI/UX for selecting lance mates
-- Event text and negotiation options
-- Testing how duty swaps affect gameplay balance
+**Implementation Note:** Phase 2.5 is not a separate build phase. Cover requests are part of Lance Life Simulation. This section exists only to document how they appear in the Camp Hub UI.
 
 ---
 

@@ -1,0 +1,150 @@
+<Prefab>
+	<Constants>
+		<Constant Name="Encyclopedia.Frame.Width" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Width" />
+		<Constant Name="Encyclopedia.Frame.Height" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Height" />
+	</Constants>
+	<Window>
+		<!-- Full screen semi-transparent overlay -->
+		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#00000099">
+			<Children>
+
+				<!-- Main panel (optimized for 6 locations, 2 rows × 3 columns) -->
+				<BrushWidget Id="MainPanel" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="1400" SuggestedHeight="900" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Encyclopedia.Frame">
+					<Children>
+						
+						<!-- Header bar -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="90" VerticalAlignment="Top" Sprite="StdAssets\tabbar_popup">
+							<Children>
+								<!-- Title -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" MarginTop="8" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="40" Brush.TextColor="#FFEECCFF" Text="@HeaderTitle" />
+								
+								<!-- Time display -->
+								<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="260" SuggestedHeight="55" MarginRight="35" MarginTop="18" HorizontalAlignment="Right" Sprite="General\Notifications\notification_general" Color="#4488FFFF">
+									<Children>
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="17" Text="@CurrentTimeText" />
+									</Children>
+								</Widget>
+							</Children>
+						</Widget>
+
+						<!-- Location buttons grid (2 rows × 3 columns = 6 locations) -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="590" MarginTop="110" MarginLeft="50" MarginRight="50" VerticalAlignment="Top">
+							<Children>
+								<ListPanel DataSource="{LocationRows}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop">
+									<ItemTemplate>
+										<!-- Single row of location buttons (3 per row) -->
+										<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="270" MarginBottom="25">
+											<Children>
+												<ListPanel DataSource="{Buttons}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="HorizontalLeftToRight">
+													<ItemTemplate>
+														<!-- Single location button (larger cards for 6 locations) -->
+														<ButtonWidget Command.Click="ExecuteSelect" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="380" SuggestedHeight="240" MarginRight="30" Brush="Encyclopedia.SubPage.Element" UpdateChildrenStates="true">
+															<Children>
+																<!-- Darker background for contrast -->
+																<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#00000060" />
+																
+																<!-- Top colored bar (accent) -->
+																<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="4" VerticalAlignment="Top" Color="@LocationColor" Sprite="BlankWhiteSquare_9" />
+																
+																<!-- Content area -->
+																<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="20" MarginRight="20" MarginTop="20" MarginBottom="20">
+																	<Children>
+																		<!-- Icon (large, centered top) -->
+																		<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="52" Text="@LocationIcon" />
+																		
+																		<!-- Name -->
+																		<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="85" HorizontalAlignment="Center" VerticalAlignment="Top" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="24" Brush.TextColor="#FFFFFFFF" Text="@LocationName" />
+																		
+																		<!-- Activity count (total) -->
+																		<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="125" HorizontalAlignment="Center" VerticalAlignment="Top" Brush="SPGeneral.MediumText" Brush.FontSize="15" Brush.TextColor="#CCCCCCFF" Text="@ActivityCountText" />
+																		
+																		<!-- Available count (highlighted badge) -->
+																		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="180" SuggestedHeight="38" HorizontalAlignment="Center" VerticalAlignment="Bottom" Sprite="General\Notifications\notification_general" Color="@LocationColor">
+																			<Children>
+																				<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="#FFFFFFFF" Text="@AvailabilityText" />
+																			</Children>
+																		</Widget>
+																	</Children>
+																</Widget>
+															</Children>
+														</ButtonWidget>
+													</ItemTemplate>
+												</ListPanel>
+											</Children>
+										</Widget>
+									</ItemTemplate>
+								</ListPanel>
+							</Children>
+						</Widget>
+
+						<!-- Bottom status bar (same as Camp Activities) -->
+						<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="80" VerticalAlignment="Bottom" MarginBottom="15" MarginLeft="40" MarginRight="40">
+							<Children>
+								<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
+									<Children>
+										<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="25" MarginRight="25" MarginTop="12" MarginBottom="12">
+											<Children>
+												<!-- Fatigue -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="240" HorizontalAlignment="Left">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="3" Brush="SPGeneral.MediumText" Brush.FontSize="14" Text="Fatigue" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="200" SuggestedHeight="16" MarginTop="24" HorizontalAlignment="Left" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget HeightSizePolicy="StretchToParent" WidthSizePolicy="Fixed" SuggestedWidth="@Fatigue" Sprite="StdAssets\progressbar_fill" Color="@FatigueColor" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="45" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="@FatigueText" />
+													</Children>
+												</Widget>
+												
+												<!-- Heat -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="240" HorizontalAlignment="Center" PositionXOffset="-190">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="3" Brush="SPGeneral.MediumText" Brush.FontSize="14" Text="Heat (Corruption)" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="200" SuggestedHeight="16" MarginTop="24" HorizontalAlignment="Left" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget HeightSizePolicy="StretchToParent" WidthSizePolicy="Fixed" SuggestedWidth="@Heat" Sprite="StdAssets\progressbar_fill" Color="@HeatColor" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="45" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="@HeatText" />
+													</Children>
+												</Widget>
+												
+												<!-- Lance Rep -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="240" HorizontalAlignment="Center" PositionXOffset="190">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="3" Brush="SPGeneral.MediumText" Brush.FontSize="14" Text="Lance Reputation" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="200" SuggestedHeight="16" MarginTop="24" HorizontalAlignment="Left" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget HeightSizePolicy="StretchToParent" WidthSizePolicy="Fixed" SuggestedWidth="@LanceRep" Sprite="StdAssets\progressbar_fill" Color="@LanceRepColor" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="45" Brush="SPGeneral.MediumText" Brush.FontSize="13" Text="@LanceRepText" />
+													</Children>
+												</Widget>
+												
+												<!-- Pay Owed -->
+												<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="180" HorizontalAlignment="Right">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="3" Brush="SPGeneral.MediumText" Brush.FontSize="14" Text="Pay Owed" />
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="24" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="26" Brush.TextColor="#FFCC44FF" Text="@PayOwedText" />
+													</Children>
+												</Widget>
+											</Children>
+										</Widget>
+									</Children>
+								</BrushWidget>
+							</Children>
+						</Widget>
+
+						<!-- Close button -->
+						<ButtonWidget Command.Click="ExecuteClose" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="55" SuggestedWidth="55" VerticalAlignment="Center" HorizontalAlignment="Center" PositionYOffset="-395" PositionXOffset="665" Brush="Popup.CloseButton" />
+
+					</Children>
+				</BrushWidget>
+
+			</Children>
+		</Widget>
+	</Window>
+</Prefab>
+

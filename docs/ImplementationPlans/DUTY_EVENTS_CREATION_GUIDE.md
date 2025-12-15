@@ -33,6 +33,42 @@ Duty events are **mini-stories** that occur while the player is performing their
 - **Create meaningful choices** with real consequences
 - **Stay engaging** without becoming repetitive or annoying
 
+### Relationship to Schedule Block Events
+
+**Important Distinction:**
+
+**Duty Events (this guide):**
+- Frequency: Every 3-5 days
+- Scope: Role-specific (tied to player's **assigned duty role** like Quartermaster)
+- Trigger: `has_duty:quartermaster`
+- Purpose: Advance duty role skills and career progression
+- Quantity: 15-20 per duty × 10 duties = 150-200 total
+
+**Schedule Block Events (from AI Camp Schedule system):**
+- Frequency: During each scheduled duty block (multiple per day)
+- Scope: Task-specific (tied to **specific scheduled assignment** like "Guard Duty - North Gate")
+- Trigger: `schedule_block:guard_duty`
+- Purpose: Handle specific daily assignments
+- Quantity: Many per block type
+
+**Example: Quartermaster player on typical day:**
+```
+Morning Block: Guard Duty (from AI Schedule)
+    → Schedule Block Event: "Sentry encounters rider" (fires during this block)
+
+Afternoon Block: Free Time
+    → Player visits Camp Hub, chooses activities
+
+Evening Block: Inventory Check (from AI Schedule)
+    → Duty Event: "Supplier Negotiation" (fires because player is Quartermaster, on 3-day cooldown)
+```
+
+**These systems are complementary:**
+- Schedule Block Events = immediate daily tasks
+- Duty Events = ongoing role development
+
+**See:** `ai-camp-schedule.md` for schedule block event design.
+
 ### Integration with Existing Systems
 
 ```
