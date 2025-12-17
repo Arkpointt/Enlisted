@@ -177,6 +177,6 @@ Config must support disabling without editing packs:
 
 ## References
 - `docs/Features/Gameplay/lance-life.md` (Feature Spec)
-- `docs/Features/Core/implementation-roadmap.md` (Phased plan)
+- `docs/ImplementationPlans/master-implementation-roadmap.md` (phased plan)
 - `ModuleData/Languages/enlisted_strings.xml` (translations)
 

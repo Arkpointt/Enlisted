@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "general",
   "category": "general",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -213,7 +213,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -416,7 +416,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -458,7 +458,7 @@
         "titleId": "ll_evt_gen_dawn_early_duty_title",
         "setupId": "ll_evt_gen_dawn_early_duty_setup",
         "title": "Sick Call",
-        "setup": "The surgeon's tent is open at dawn. A line forms — the coughers, the limpers, the quietly desperate.\n\n{LANCE_MATE_NAME} nudges you. \"You should go.\"",
+        "setup": "The surgeon's tent is open at dawn. A line forms â€” the coughers, the limpers, the quietly desperate.\n\n{LANCE_MATE_NAME} nudges you. \"You should go.\"",
         "options": [
           {
             "id": "go_get_checked_out",
@@ -618,7 +618,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -821,7 +821,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1028,7 +1028,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1233,7 +1233,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1274,7 +1274,7 @@
         "titleId": "ll_evt_gen_evening_fire_circle_title",
         "setupId": "ll_evt_gen_evening_fire_circle_setup",
         "title": "Evening Mess",
-        "setup": "The cook bangs the pot. Evening meal. The line forms quickly — those at the back get the dregs.\n\n{VETERAN_1_NAME} is already near the front.",
+        "setup": "The cook bangs the pot. Evening meal. The line forms quickly â€” those at the back get the dregs.\n\n{VETERAN_1_NAME} is already near the front.",
         "options": [
           {
             "id": "get_in_line_early",
@@ -1432,7 +1432,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1632,7 +1632,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1832,7 +1832,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2033,7 +2033,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2237,7 +2237,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2445,7 +2445,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2652,7 +2652,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2855,7 +2855,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -3069,7 +3069,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -3280,7 +3280,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -3485,7 +3485,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -3527,7 +3527,7 @@
         "titleId": "ll_evt_gen_late_night_watch_end_title",
         "setupId": "ll_evt_gen_late_night_watch_end_setup",
         "title": "Deserter Spotted",
-        "setup": "Movement at the edge of camp. Someone's leaving — pack on their back, moving quiet.\n\nYou recognize them. {SOLDIER_NAME}. Running.",
+        "setup": "Movement at the edge of camp. Someone's leaving â€” pack on their back, moving quiet.\n\nYou recognize them. {SOLDIER_NAME}. Running.",
         "options": [
           {
             "id": "sound_the_alarm",
@@ -3686,3 +3686,5 @@
     }
   ]
 }
+
+

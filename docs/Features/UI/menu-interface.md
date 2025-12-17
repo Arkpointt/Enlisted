@@ -5,12 +5,12 @@
 | Menu ID | Purpose | Access |
 |---------|---------|--------|
 | `enlisted_status` | Main service hub - status with escalation tracks (Heat/Discipline/Lance Rep), navigation | After enlistment |
-| `enlisted_lance` | My Lance - roster with relationship indicators, interactions, welfare tracking | Enlisted Status â†’ "My Lance" |
-| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Camp â†’ "Camp Activities" |
-| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Enlisted Status â†’ "Report for Duty" |
-| `enlisted_medical` | Medical Attention - treatment options | Enlisted Status â†’ "Seek Medical Attention" (when injured/ill) |
-| `command_tent` | Camp - service records, retinue, camp activities, activity log | Enlisted Status â†’ "Camp" |
-| Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status â†’ "Visit Quartermaster" |
+| `enlisted_lance` | My Lance - roster with relationship indicators, interactions, welfare tracking | Enlisted Status → "My Lance" |
+| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Camp → "Camp Activities" |
+| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Enlisted Status → "Report for Duty" |
+| `enlisted_medical` | Medical Attention - treatment options | Enlisted Status → "Seek Medical Attention" (when injured/ill) |
+| `command_tent` | Camp - service records, retinue, camp activities, activity log | Enlisted Status → "Camp" |
+| Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status → "Visit Quartermaster" |
 
 ## Index
 
@@ -88,7 +88,7 @@ Each menu option has a `LeaveType` that displays an appropriate icon:
 | Report for Duty | `Manage` | Management (includes duty request system) |
 | Ask for Leave | `Leave` | Exit action |
 | Desert the Army | `Escape` | Warning/danger (immediate abandonment) |
-| (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge â†’ Final Muster) |
+| (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge → Final Muster) |
 
 ### Tooltips
 
@@ -109,9 +109,9 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 
 ### Text Formatting
 
-- Section headers use em-dashes: `â€” DUTIES â€”` instead of ASCII box characters
+- Section headers use em-dashes: `— DUTIES —` instead of ASCII box characters
 - Currency displays use inline gold icons: `{GOLD_ICON}`
-- Bullet lists use modern markers: `â€¢` for selected, `â—‹` for available
+- Bullet lists use modern markers: `•` for selected, `○` for available
 
 ---
 
@@ -131,9 +131,9 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 | Visit Settlement | Submenu | Enter the settlement while your lord is present | In settlement |
 | Report for Duty | Manage | View/request duty assignments | Always |
 | Seek Medical Attention | Manage | Visit the surgeon's tent | When injured/ill |
-| â€” LEAVE OPTIONS â€” | | | |
+| — LEAVE OPTIONS — | | | |
 | Ask for Leave | Leave | Request temporary leave from service | Always |
-| Leave Without Penalty | Leave | Pay is too late â€” leave with minimal consequences | PayTension â‰¥ 60 |
+| Leave Without Penalty | Leave | Pay is too late — leave with minimal consequences | PayTension ≥ 60 |
 | Desert the Army | Escape | Abandon your post (severe penalties) | Always |
 
 **Note:** "Camp" is accessed from the main menu but has its own menu ID (`command_tent`).
@@ -148,16 +148,16 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 - Status information (tier, XP, days served, etc.)
 - Status header includes:
   - **Escalation Tracks:**
-    - **Heat** with visual bar `â–“â–“â–“â–‘â–‘â–‘â–‘â–‘â–‘â–‘ 3/10 [Watched]` and threshold warnings
+    - **Heat** with visual bar `▓▓▓░░░░░░░ 3/10 [Watched]` and threshold warnings
     - **Discipline** with visual bar and threshold warnings
     - **Lance Rep** with numeric value and status text `+15 (Trusted)`
   - Time-of-day (Dawn/Day/Dusk/Night)
   - Days since last town entry
   - Camp snapshot status line (Supplies/Morale/Pay) when Camp Life is active
-  - **Pay Status** - Shows tension level when pay is late (Grumbling â†’ Tense â†’ Severe â†’ CRITICAL)
+  - **Pay Status** - Shows tension level when pay is late (Grumbling → Tense → Severe → CRITICAL)
   - **Owed Backpay** - Shows accumulated unpaid wages with gold icon
 - Pay is handled via a muster ledger and pay muster (see Pay System doc); discharge is managed from Camp.
-- When PayTension â‰¥ 60, the "Leave Without Penalty" option appears (free desertion).
+- When PayTension ≥ 60, the "Leave Without Penalty" option appears (free desertion).
 
 **Escalation Track Thresholds:**
 | Track | Threshold | Warning Label | Effect |
@@ -247,33 +247,31 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 - Rich military context explaining daily activities and skill training
 
 **Checkmark System:**
-- Dynamic checkmarks (âœ“/â—‹) showing current selection
+- Dynamic checkmarks (✓/○) showing current selection
 - Updates in real-time when selection changes
 - Visual feedback for active assignment
 
 ### Menu Navigation
 
 **Flow:**
-```
-Enlisted Status Menu (enlisted_status)
-    â”œâ”€â”€ Visit Quartermaster â†’ Equipment Selection Menu (formation+tier+culture based)
-    â”œâ”€â”€ My Lance (enlisted_lance) â†’ Roster / Relationships
-    â”œâ”€â”€ Report for Duty (enlisted_duty_selection) â†’ Duty Selection (request system)
-    â”œâ”€â”€ Seek Medical Attention (enlisted_medical) â†’ Treatment options (when injured/ill)
-    â”œâ”€â”€ My Lord... â†’ Dialog System
-    â”œâ”€â”€ Visit Settlement â†’ Town/Castle menu
-    â”œâ”€â”€ Camp (command_tent)
-    â”‚       â”œâ”€â”€ Service Records
-    â”‚       â”œâ”€â”€ Activity Log / XP Breakdown
-    â”‚       â”œâ”€â”€ Camp Activities (enlisted_activities)
-    â”‚       â”‚       â”œâ”€â”€ â€” TRAINING â€” (Formation Drill, Sparring, etc.)
-    â”‚       â”‚       â”œâ”€â”€ â€” CAMP TASKS â€” (Help Surgeon, Forge, etc.)
-    â”‚       â”‚       â”œâ”€â”€ â€” SOCIAL â€” (Fire Circle, Dice, etc.)
-    â”‚       â”‚       â””â”€â”€ â€” LANCE â€” (Talk to Leader, Check Mates, etc.)
-    â”‚       â”œâ”€â”€ Retinue / Companions
-    â”‚       â””â”€â”€ Request Discharge
-    â””â”€â”€ Ask for Leave â†’ Leave Request Dialog
-```
+- Enlisted Status (`enlisted_status`)
+  - Visit Quartermaster → equipment selection (formation + tier + culture)
+  - My Lance (`enlisted_lance`) → roster / relationships
+  - Report for Duty (`enlisted_duty_selection`) → duty selection (request system)
+  - Seek Medical Attention (`enlisted_medical`) → treatment options (when injured/ill)
+  - My Lord... → dialog system
+  - Visit Settlement → town/castle menu
+  - Camp (`command_tent`)
+    - Service Records
+    - Activity Log / XP Breakdown
+    - Camp Activities (`enlisted_activities`)
+      - — TRAINING — (Formation Drill, Sparring, etc.)
+      - — CAMP TASKS — (Help Surgeon, Forge, etc.)
+      - — SOCIAL — (Fire Circle, Dice, etc.)
+      - — LANCE — (Talk to Leader, Check Mates, etc.)
+    - Retinue / Companions
+    - Request Discharge
+  - Ask for Leave → leave request dialog
 
 ### My Lance Menu
 
@@ -302,12 +300,12 @@ Enlisted Status Menu (enlisted_status)
 **Relationship Indicators:**
 | Indicator | Meaning | Rep Range |
 |-----------|---------|-----------|
-| `[+++]` | Bonded | â‰¥ +40 |
+| `[+++]` | Bonded | ≥ +40 |
 | `[++]` | Trusted | +20 to +39 |
 | `[+]` | Friendly | +5 to +19 |
 | `[ ]` | Neutral | -5 to +4 |
 | `[-]` | Wary | -20 to -6 |
-| `[--]` | Hostile | â‰¤ -21 |
+| `[--]` | Hostile | ≤ -21 |
 
 **Features:**
 - Displays culture-specific rank title (e.g., "Miles" for Empire T2, "Levy" for Vlandia T2)
@@ -343,7 +341,7 @@ Enlisted Status Menu (enlisted_status)
 
 **Purpose:** Organized menu for player-initiated activities. Earn XP, manage fatigue, and build relationships through structured camp actions. Activities are organized by category with section headers.
 
-**Access:** Camp â†’ "Camp Activities"
+**Access:** Camp → "Camp Activities"
 
 **Menu Header (RP-flavored):**
 > The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?
@@ -352,10 +350,10 @@ Enlisted Status Menu (enlisted_status)
 
 | Category | Icon | Purpose |
 |----------|------|---------|
-| â€” TRAINING â€” | OrderTroopsToAttack | Combat drills, sparring, weapons practice |
-| â€” CAMP TASKS â€” | Manage | Help surgeon, forge work, foraging, maintenance |
-| â€” SOCIAL â€” | Conversation | Fire circle, drinking, dice, letter writing |
-| â€” LANCE â€” | TroopSelection | Talk to leader, check on mates, help struggling soldiers |
+| — TRAINING — | OrderTroopsToAttack | Combat drills, sparring, weapons practice |
+| — CAMP TASKS — | Manage | Help surgeon, forge work, foraging, maintenance |
+| — SOCIAL — | Conversation | Fire circle, drinking, dice, letter writing |
+| — LANCE — | TroopSelection | Talk to leader, check on mates, help struggling soldiers |
 
 **Activity Options:**
 - Each activity shows as a clickable menu item under its category header
@@ -383,7 +381,7 @@ Enlisted Status Menu (enlisted_status)
 
 ### Popups & Incidents (not menus)
 
-Some player-facing UI in Enlisted is **not** a GameMenu. These are inquiry/incident-style popups that fire when it is safe (no battle/encounter/captivity), and they exist to simulate â€œcamp lifeâ€ without requiring scenes.
+Some player-facing UI in Enlisted is **not** a GameMenu. These are inquiry/incident-style popups that fire when it is safe (no battle/encounter/captivity), and they exist to simulate “camp life” without requiring scenes.
 
 Key popups:
 - **Enlistment Bag Check** (first enlistment)
@@ -391,14 +389,14 @@ Key popups:
   - Doc: **[Enlistment System](../Core/enlistment.md)** (Bag Check section) and **[Quartermaster](quartermaster.md)**
 - **Pay Muster** (periodic)
   - Fires when the muster ledger reaches payday and it is safe to show UI.
-  - Doc: **[Pay System](../Core/pay-system-rework.md)**
+  - Doc: **[Pay System](../Core/pay-system.md)**
 - **Lance Life (Stories + Events)**
-  - **Lance Life Stories**: daily-tick â€œstory packâ€ popups from `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` (inquiry UI).
+  - **Lance Life Stories**: daily-tick “story pack” popups from `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` (inquiry UI).
   - **Lance Life Events**: the 109-event catalog under `ModuleData/Enlisted/Events/*.json` with delivery channels:
     - `channel: "menu"` (player-initiated training surfaced in Camp Activities)
     - `channel: "inquiry"` (automatic events shown as inquiry popups)
-    - `channel: "incident"` (automatic â€œmomentâ€ events shown via native incidents)
-  - Doc: **[Lance Life](../Gameplay/lance-life.md)** and **[Implementation Roadmap](../Core/implementation-roadmap.md)**
+    - `channel: "incident"` (automatic “moment” events shown via native incidents)
+  - Doc: **[lance life](../Gameplay/lance-life.md)** and **[master roadmap](../../ImplementationPlans/master-implementation-roadmap.md)**
 - **Camp Life Simulation hooks** (conditions that influence other UI)
   - Not a single popup by itself; it is the condition layer that can drive future popups and menu availability (Quartermaster mood/stockouts, delayed pay/IOUs, etc.).
   - Doc: **[Camp Life Simulation](../Gameplay/camp-life-simulation.md)**
@@ -408,11 +406,11 @@ Key popups:
 There are **two** ways to leave service:
 
 1. **Desert the Army** (from `enlisted_status`)
-   - Immediate exit with penalties (crime/relation). This is the â€œpanic buttonâ€.
+   - Immediate exit with penalties (crime/relation). This is the “panic button”.
 
 2. **Request Discharge (Final Muster)** (from Camp)
-   - Sets a pending discharge state and resolves at the next pay muster (â€œFinal Musterâ€).
-   - This is the intended â€œretire properlyâ€ path and is where pensions/severance are awarded.
+   - Sets a pending discharge state and resolves at the next pay muster (“Final Muster”).
+   - This is the intended “retire properly” path and is where pensions/severance are awarded.
 
 **Navigation Features:**
 - Back button at top for easy access
@@ -458,13 +456,13 @@ private void SetDynamicMenuText()
     var currentDuty = EnlistmentBehavior.Instance?.SelectedDuty ?? "None";
     
     // Update checkmarks based on current selection
-    // Format: "âœ“ Duty Name" or "â—‹ Duty Name"
+    // Format: "✓ Duty Name" or "○ Duty Name"
 }
 ```
 
 **Checkmark Logic:**
-- âœ“ (checkmark) for currently selected duty
-- â—‹ (circle) for available but not selected
+- ✓ (checkmark) for currently selected duty
+- ○ (circle) for available but not selected
 - Updates automatically when selection changes
 
 ### Tier-Based Availability
@@ -811,7 +809,7 @@ ModLogger.Info("Interface", $"Activating menu: {menuId}");
 ModLogger.Debug("Menu", $"Menu state: duty={duty}");
 
 // Selection changes
-ModLogger.Info("Menu", $"Duty changed: {oldDuty} â†’ {newDuty}");
+ModLogger.Info("Menu", $"Duty changed: {oldDuty} → {newDuty}");
 
 // Tier checks
 ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, allowed={allowed}");
@@ -854,24 +852,24 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 
 ## Menu Backgrounds (Reference)
 
-Enlistedâ€™s game-menus use **menu background meshes** (not `.png` images inside this repo) via:
+Enlisted’s game-menus use **menu background meshes** (not `.png` images inside this repo) via:
 
 - `args.MenuContext.SetBackgroundMeshName("<mesh_name>");`
 
 ### Where this mod sets menu backgrounds
 
-- **Enlisted status / duty menus**: choose the current lord/kingdom cultureâ€™s encounter background mesh, with a fallback.
+- **Enlisted status / duty menus**: choose the current lord/kingdom culture’s encounter background mesh, with a fallback.
   - **File**: `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
   - **Fallback**: `encounter_looter`
   - **Typical source**: `CultureObject.EncounterBackgroundMesh`
 
-- **Camp menus**: fixed â€œmeetingâ€ background.
+- **Camp menus**: fixed “meeting” background.
   - **File**: `src/Features/Camp/CampMenuHandler.cs`
   - **Mesh**: `encounter_meeting`
 
 ### Culture encounter background meshes (vanilla)
 
-These come from Bannerlordâ€™s culture XML (`Modules/SandBoxCore/ModuleData/spcultures.xml`), attribute:
+These come from Bannerlord’s culture XML (`Modules/SandBoxCore/ModuleData/spcultures.xml`), attribute:
 `encounter_background_mesh="..."`
 
 - `encounter_aserai`
@@ -888,7 +886,7 @@ These come from Bannerlordâ€™s culture XML (`Modules/SandBoxCore/ModuleData
 
 ### Other background meshes used by base-game menus (observed)
 
-These are mesh names used by other native menu handlers (useful as â€œknown goodâ€ candidates):
+These are mesh names used by other native menu handlers (useful as “known good” candidates):
 
 - `encounter_caravan`
 - `encounter_peasant`
@@ -905,7 +903,7 @@ These are mesh names used by other native menu handlers (useful as â€œknown 
 ### Notes / gotchas
 
 - **This repo does not ship menu background textures**: currently only `preview.png` exists in-repo; menu backdrops are engine meshes.
-- **Mesh availability depends on game install / DLC**: if a mesh name is missing in the userâ€™s install, it may render incorrectly or fall back.
+- **Mesh availability depends on game install / DLC**: if a mesh name is missing in the user’s install, it may render incorrectly or fall back.
 - **Culture-driven menus** will change depending on the lord/kingdom the player is serving.
 
 ---

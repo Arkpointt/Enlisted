@@ -83,8 +83,16 @@ namespace Enlisted.Mod.Core.Triggers
         public const string LanceReputation = "lance_reputation";
         public const string MedicalRisk = "medical_risk";
 
-        // Prefix tokens (planned; pattern-based)
+        // Prefix tokens (pattern-based)
         public const string HasDutyPrefix = "has_duty:";
+
+        // Decision Events (Track D2): Activity-aware event tokens
+        // Used by decision events to match the player's current schedule activity
+        public const string CurrentActivityPrefix = "current_activity:";
+
+        // Decision Events (Track D2): Duty-aware event tokens
+        // Used by decision events to match the player's assigned duty role
+        public const string OnDutyPrefix = "on_duty:";
 
         // Camp conditions (planned; provided by Camp Life snapshot in later phases)
         public const string LogisticsHigh = "logistics_high";
@@ -179,6 +187,18 @@ namespace Enlisted.Mod.Core.Triggers
                 return trimmed.Length > HasDutyPrefix.Length;
             }
 
+            // Activity-aware tokens (Track D2: Decision Events)
+            if (trimmed.StartsWith(CurrentActivityPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed.Length > CurrentActivityPrefix.Length;
+            }
+
+            // Duty-aware tokens (Track D2: Decision Events)
+            if (trimmed.StartsWith(OnDutyPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed.Length > OnDutyPrefix.Length;
+            }
+
             // Support comparison-style tokens used in onboarding packs, e.g. "days_since_enlistment < 1".
             if (trimmed.StartsWith(DaysSinceEnlistment, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(DaysSincePromotion, StringComparison.OrdinalIgnoreCase) ||
@@ -209,6 +229,18 @@ namespace Enlisted.Mod.Core.Triggers
 
             // Prefix tokens: implemented when we have an evaluator/provider.
             if (trimmed.StartsWith(HasDutyPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Activity-aware tokens (Track D2: Decision Events)
+            if (trimmed.StartsWith(CurrentActivityPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Duty-aware tokens (Track D2: Decision Events)
+            if (trimmed.StartsWith(OnDutyPrefix, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

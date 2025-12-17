@@ -1,0 +1,446 @@
+{
+  "pack_id": "decisions_core",
+  "pack_version": 1,
+  "description": "Core decision events - CK3-style decisions and invitations",
+  "events": [
+    {
+      "id": "decision_lord_hunt_invitation",
+      "category": "decision",
+      "narrative_source": "lord",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "not_in_settlement"],
+        "time_of_day": ["morning", "afternoon"]
+      },
+      "requirements": {
+        "tier": { "min": 5, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "titleId": "decision_lord_hunt_title",
+      "titleFallback": "Invitation to Hunt",
+      "bodyId": "decision_lord_hunt_body",
+      "bodyFallback": "{LORD_NAME} is organizing a hunting party. A messenger approaches you with an invitation. The Lord's hunts are known for good sport and fine company - though they can be tiring affairs.",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "decision_lord_hunt_accept",
+          "textFallback": "\"I am honored, my Lord. I shall attend.\"",
+          "costs": { "fatigue": 2 },
+          "rewards": { "gold": 15 },
+          "effects": { "lance_reputation": 2, "heat": -1 },
+          "outcomeTextId": "decision_lord_hunt_accept_outcome",
+          "outcomeTextFallback": "You spend the day riding with {LORD_NAME}'s party. The hunt is successful, and you return with new connections and a share of the catch."
+        },
+        {
+          "id": "decline_politely",
+          "textId": "decision_lord_hunt_decline",
+          "textFallback": "\"I am grateful for the honor, but duty keeps me at camp.\"",
+          "outcomeTextId": "decision_lord_hunt_decline_outcome",
+          "outcomeTextFallback": "The messenger nods and departs. Perhaps another time."
+        }
+      ]
+    },
+    {
+      "id": "decision_lance_mate_dice",
+      "category": "decision",
+      "narrative_source": "lance_mate",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "current_activity:rest"],
+        "time_of_day": ["dusk", "night"]
+      },
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "low"
+      },
+      "titleId": "decision_dice_title",
+      "titleFallback": "Evening Dice Game",
+      "bodyId": "decision_dice_body",
+      "bodyFallback": "{LANCE_MATE} waves you over to a group gathered around a small fire. \"Come on, {PLAYER_RANK}! We need fresh gold in the pot.\" The dice game looks lively, and you could use some relaxation.",
+      "options": [
+        {
+          "id": "join_careful",
+          "textId": "decision_dice_join_careful",
+          "textFallback": "\"Deal me in - small stakes only.\"",
+          "costs": { "gold": 10 },
+          "rewards": { "gold": 20 },
+          "effects": { "lance_reputation": 1, "heat": 1 },
+          "outcomeTextId": "decision_dice_join_outcome",
+          "outcomeTextFallback": "Lady luck favors you tonight. You walk away with your stake doubled and a few new friends."
+        },
+        {
+          "id": "join_bold",
+          "textId": "decision_dice_join_bold",
+          "textFallback": "\"I'm feeling lucky. High stakes.\"",
+          "costs": { "gold": 50 },
+          "condition": "gold >= 50",
+          "rewards": { "gold": 120 },
+          "effects": { "lance_reputation": 2, "heat": 2, "discipline": 1 },
+          "outcomeTextId": "decision_dice_bold_outcome",
+          "outcomeTextFallback": "The dice fly, the gold flows. You take the pot with a winning streak that has the whole lance talking."
+        },
+        {
+          "id": "decline",
+          "textId": "decision_dice_decline",
+          "textFallback": "\"Not tonight. I need my rest.\"",
+          "outcomeTextId": "decision_dice_decline_outcome",
+          "outcomeTextFallback": "You retire to your tent. The sounds of laughter and curses drift through the night."
+        }
+      ]
+    },
+    {
+      "id": "decision_training_offer",
+      "category": "decision",
+      "narrative_source": "lance_leader",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "current_activity:training"],
+        "time_of_day": ["morning", "afternoon"]
+      },
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal"
+      },
+      "titleId": "decision_training_offer_title",
+      "titleFallback": "Training Opportunity",
+      "bodyId": "decision_training_offer_body",
+      "bodyFallback": "{SERGEANT} approaches during training. \"You show promise, soldier. I could work with you after the regular session - push you harder than the rest. It'll be exhausting, but you'll improve faster.\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "decision_training_accept",
+          "textFallback": "\"I'm ready for whatever you can teach me, Sergeant.\"",
+          "costs": { "fatigue": 3 },
+          "rewards": {
+            "xp": { "enlisted": 25 },
+            "skillXp": { "OneHanded": 15 }
+          },
+          "effects": { "discipline": -1 },
+          "outcomeTextId": "decision_training_accept_outcome",
+          "outcomeTextFallback": "The additional training is brutal, but effective. Your muscles ache, but your blade moves faster."
+        },
+        {
+          "id": "decline",
+          "textId": "decision_training_decline",
+          "textFallback": "\"I appreciate the offer, but I need to pace myself.\"",
+          "outcomeTextId": "decision_training_decline_outcome",
+          "outcomeTextFallback": "{SERGEANT} shrugs. \"Your choice. The offer stands.\" You continue with the standard regimen."
+        }
+      ]
+    },
+    {
+      "id": "decision_scout_assignment",
+      "category": "decision",
+      "narrative_source": "lance_leader",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "on_duty:scout"],
+        "time_of_day": ["morning"]
+      },
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal"
+      },
+      "titleId": "decision_scout_assignment_title",
+      "titleFallback": "Special Scouting Assignment",
+      "bodyId": "decision_scout_assignment_body",
+      "bodyFallback": "{LANCE_LEADER} pulls you aside. \"I need someone reliable for a longer patrol. Two days out, mapping the terrain ahead. It's harder work, but I'll make sure you're compensated.\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "decision_scout_accept",
+          "textFallback": "\"Consider it done. I'll have a full report for you.\"",
+          "costs": { "fatigue": 4 },
+          "rewards": { 
+            "gold": 35,
+            "xp": { "enlisted": 30 },
+            "skillXp": { "Scouting": 25 }
+          },
+          "effects": { "lance_reputation": 3 },
+          "outcomeTextId": "decision_scout_accept_outcome",
+          "outcomeTextFallback": "You ride out at dawn and return two days later with detailed reports. {LANCE_LEADER} nods with approval and hands you a pouch of coins."
+        },
+        {
+          "id": "decline",
+          "textId": "decision_scout_decline",
+          "textFallback": "\"I'm not in condition for extended patrol right now.\"",
+          "outcomeTextId": "decision_scout_decline_outcome",
+          "outcomeTextFallback": "{LANCE_LEADER} frowns slightly but accepts your answer. Someone else will take the assignment."
+        }
+      ]
+    },
+    {
+      "id": "decision_medic_emergency",
+      "category": "decision",
+      "narrative_source": "situation",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "on_duty:field_medic", "wounded_in_camp"]
+      },
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high"
+      },
+      "titleId": "decision_medic_emergency_title",
+      "titleFallback": "Medical Emergency",
+      "bodyId": "decision_medic_emergency_body",
+      "bodyFallback": "A commotion breaks out near the medical tent. One of the wounded has taken a turn for the worse - fever and infection. The other medics look to you. \"What do we do? The surgeon isn't here!\"",
+      "options": [
+        {
+          "id": "take_charge",
+          "textId": "decision_medic_charge",
+          "textFallback": "\"Get me clean water and fresh bandages. I'll handle this.\"",
+          "costs": { "fatigue": 3 },
+          "rewards": {
+            "xp": { "enlisted": 40 },
+            "skillXp": { "Medicine": 30 }
+          },
+          "effects": { "lance_reputation": 4, "medical_risk": -2 },
+          "outcomeTextId": "decision_medic_charge_outcome",
+          "outcomeTextFallback": "You work through the night, applying poultices and monitoring the soldier's condition. By dawn, the fever breaks. Word spreads of your skill."
+        },
+        {
+          "id": "seek_help",
+          "textId": "decision_medic_help",
+          "textFallback": "\"We need the surgeon. Someone ride to find him - I'll stabilize the patient.\"",
+          "costs": { "fatigue": 1 },
+          "rewards": {
+            "xp": { "enlisted": 15 },
+            "skillXp": { "Medicine": 10 }
+          },
+          "effects": { "lance_reputation": 1 },
+          "outcomeTextId": "decision_medic_help_outcome",
+          "outcomeTextFallback": "You keep the soldier stable until the surgeon arrives. A prudent choice - the surgeon handles the complication expertly."
+        }
+      ]
+    },
+    {
+      "id": "decision_quartermaster_deal",
+      "category": "decision",
+      "narrative_source": "situation",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "on_duty:quartermaster"],
+        "time_of_day": ["afternoon"]
+      },
+      "requirements": {
+        "tier": { "min": 3, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal"
+      },
+      "titleId": "decision_qm_deal_title",
+      "titleFallback": "Merchant's Proposition",
+      "bodyId": "decision_qm_deal_body",
+      "bodyFallback": "A traveling merchant approaches with a wagon of surplus goods. \"I've got quality supplies here - arrows, blankets, preserved meat. I can give you a good price, but I need to move quickly. The captain doesn't need to know the details...\"",
+      "options": [
+        {
+          "id": "official_purchase",
+          "textId": "decision_qm_official",
+          "textFallback": "\"I'll need to clear any purchase through proper channels.\"",
+          "effects": { "discipline": -1, "lance_reputation": 1 },
+          "outcomeTextId": "decision_qm_official_outcome",
+          "outcomeTextFallback": "The merchant grumbles but agrees to wait. You get authorization, and the company gains quality supplies through legitimate means."
+        },
+        {
+          "id": "unofficial_deal",
+          "textId": "decision_qm_unofficial",
+          "textFallback": "\"Show me what you've got. We can work something out.\"",
+          "costs": { "gold": 30 },
+          "rewards": { "gold": 50 },
+          "effects": { "heat": 3, "discipline": 2 },
+          "outcomeTextId": "decision_qm_unofficial_outcome",
+          "outcomeTextFallback": "You skim a little off the top while getting the company a good deal. Risky, but profitable."
+        },
+        {
+          "id": "report_suspicious",
+          "textId": "decision_qm_report",
+          "textFallback": "\"Something seems off here. I should report this.\"",
+          "effects": { "discipline": -2, "lance_reputation": 2 },
+          "outcomeTextId": "decision_qm_report_outcome",
+          "outcomeTextFallback": "You alert the captain. The merchant's goods turn out to be stolen from a nearby village. Your vigilance is noted."
+        }
+      ]
+    },
+    {
+      "id": "decision_lance_mate_favor",
+      "category": "decision",
+      "narrative_source": "lance_mate",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted"],
+        "none": ["lance_mate_favor_active"],
+        "time_of_day": ["morning", "afternoon"]
+      },
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "max_per_term": 2
+      },
+      "titleId": "decision_favor_title",
+      "titleFallback": "A Favor Asked",
+      "bodyId": "decision_favor_body",
+      "bodyFallback": "{LANCE_MATE} pulls you aside with a troubled look. \"I need to ask a favor. My family... they've fallen behind on their debts. I need coin, and quickly. Could you lend me something? I swear I'll repay you when I can.\"",
+      "options": [
+        {
+          "id": "lend_generously",
+          "textId": "decision_favor_generous",
+          "textFallback": "\"Take what you need, friend. We look after our own.\"",
+          "costs": { "gold": 100 },
+          "effects": { "lance_reputation": 5 },
+          "set_flags": ["lance_mate_favor_active", "lance_mate_owes_favor"],
+          "flag_duration_days": 30,
+          "chains_to": "decision_lance_mate_favor_repayment",
+          "chain_delay_hours": 168,
+          "outcomeTextId": "decision_favor_generous_outcome",
+          "outcomeTextFallback": "{LANCE_MATE}'s face floods with relief. \"You're a good soldier, {PLAYER_NAME}. I won't forget this.\" He takes the coin and hurries off to send it to his family."
+        },
+        {
+          "id": "lend_modest",
+          "textId": "decision_favor_modest",
+          "textFallback": "\"I can spare a little. It's not much, but take it.\"",
+          "costs": { "gold": 30 },
+          "effects": { "lance_reputation": 2 },
+          "set_flags": ["lance_mate_favor_active"],
+          "flag_duration_days": 30,
+          "chains_to": "decision_lance_mate_favor_gratitude",
+          "chain_delay_hours": 48,
+          "outcomeTextId": "decision_favor_modest_outcome",
+          "outcomeTextFallback": "{LANCE_MATE} nods gratefully. \"Every bit helps. Thank you, {PLAYER_NAME}.\" He pockets the coins with a small smile."
+        },
+        {
+          "id": "refuse",
+          "textId": "decision_favor_refuse",
+          "textFallback": "\"I can't afford to give away my coin. I'm sorry.\"",
+          "effects": { "lance_reputation": -1 },
+          "outcomeTextId": "decision_favor_refuse_outcome",
+          "outcomeTextFallback": "{LANCE_MATE}'s expression hardens slightly, but he nods. \"I understand. Times are hard for everyone.\" He walks away without another word."
+        }
+      ]
+    },
+    {
+      "id": "decision_lance_mate_favor_repayment",
+      "category": "decision",
+      "narrative_source": "lance_mate",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "lance_mate_owes_favor"]
+      },
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true
+      },
+      "titleId": "decision_repayment_title",
+      "titleFallback": "A Debt Repaid",
+      "bodyId": "decision_repayment_body",
+      "bodyFallback": "{LANCE_MATE} approaches with a grin and a pouch of coins. \"I told you I'd repay you, didn't I? My sister sold some of the family land - we're back on our feet. Here's what I owe, and a little extra for your trust.\"",
+      "options": [
+        {
+          "id": "accept_repayment",
+          "textId": "decision_repayment_accept",
+          "textFallback": "\"I'm glad things worked out. Thank you.\"",
+          "rewards": { "gold": 120 },
+          "effects": { "lance_reputation": 2 },
+          "clear_flags": ["lance_mate_favor_active", "lance_mate_owes_favor"],
+          "outcomeTextId": "decision_repayment_accept_outcome",
+          "outcomeTextFallback": "You pocket the coins with a nod. {LANCE_MATE} claps you on the shoulder. \"If you ever need anything, just ask.\" A bond has been strengthened."
+        },
+        {
+          "id": "refuse_repayment",
+          "textId": "decision_repayment_refuse",
+          "textFallback": "\"Keep it. Consider it a gift between lance mates.\"",
+          "effects": { "lance_reputation": 5 },
+          "clear_flags": ["lance_mate_favor_active", "lance_mate_owes_favor"],
+          "outcomeTextId": "decision_repayment_refuse_outcome",
+          "outcomeTextFallback": "{LANCE_MATE} stares at you in surprise, then breaks into a broad smile. \"You're one of the good ones, {PLAYER_NAME}. I'll remember this.\" Your reputation in the lance soars."
+        }
+      ]
+    },
+    {
+      "id": "decision_lance_mate_favor_gratitude",
+      "category": "decision",
+      "narrative_source": "lance_mate",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "lance_mate_favor_active"],
+        "none": ["lance_mate_owes_favor"]
+      },
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "normal",
+        "one_time": true
+      },
+      "titleId": "decision_gratitude_title",
+      "titleFallback": "A Small Thanks",
+      "bodyId": "decision_gratitude_body",
+      "bodyFallback": "{LANCE_MATE} finds you during a rest break and hands you a small bundle. \"It's not much, but I found this while foraging. Thought you might want it, after what you did for me.\"",
+      "options": [
+        {
+          "id": "accept_gift",
+          "textId": "decision_gratitude_accept",
+          "textFallback": "\"Thank you. It means a lot.\"",
+          "rewards": { "gold": 15 },
+          "effects": { "lance_reputation": 1 },
+          "clear_flags": ["lance_mate_favor_active"],
+          "outcomeTextId": "decision_gratitude_accept_outcome",
+          "outcomeTextFallback": "You unwrap the bundle to find a few useful supplies. Small gestures, but they build trust within the lance."
+        }
+      ]
+    }
+  ]
+}
+

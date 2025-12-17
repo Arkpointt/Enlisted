@@ -692,26 +692,38 @@ namespace Enlisted.Features.Lances.Events
             }
 
             // Common schema keys -> Bannerlord SkillObject StringId
+            // Supports snake_case (one_handed), lowercase (onehanded), and PascalCase (OneHanded)
             return s.ToLowerInvariant() switch
             {
-                "one_handed" => "OneHanded",
-                "two_handed" => "TwoHanded",
+                // Combat skills
+                "one_handed" or "onehanded" => "OneHanded",
+                "two_handed" or "twohanded" => "TwoHanded",
                 "polearm" => "Polearm",
                 "throwing" => "Throwing",
                 "bow" => "Bow",
                 "crossbow" => "Crossbow",
+                
+                // Movement skills
                 "riding" => "Riding",
                 "athletics" => "Athletics",
+                
+                // Cunning skills
                 "scouting" => "Scouting",
                 "tactics" => "Tactics",
                 "roguery" => "Roguery",
+                
+                // Social skills
                 "charm" => "Charm",
                 "leadership" => "Leadership",
                 "trade" => "Trade",
+                
+                // Intelligence skills
                 "steward" => "Steward",
                 "medicine" => "Medicine",
                 "engineering" => "Engineering",
-                "smithing" => "Smithing",
+                "smithing" or "crafting" => "Smithing",
+                
+                // Passthrough for PascalCase or already correct IDs
                 _ => s
             };
         }

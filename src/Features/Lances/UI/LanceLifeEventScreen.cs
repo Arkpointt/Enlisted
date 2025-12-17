@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Lances.Events;
@@ -17,6 +18,23 @@ namespace Enlisted.Features.Lances.UI
     /// </summary>
     public class LanceLifeEventScreen : ScreenBase
     {
+        // Crash guard for Naval DLC worker-thread map visuals:
+        // NavalDLC_View updates party visuals on background threads. Pushing a screen while those threads are in-flight
+        // can trip native code (seen as crashes in NavalMobilePartyVisual.UpdateEntityPosition).
+        // We expose a simple, thread-safe flag that Naval crash-guard patches can read without touching ScreenManager.
+        // 0 = inactive, 1 = opening (scheduled), 2 = open (initialized).
+        private static int _navalVisualCrashGuardState;
+
+        /// <summary>
+        /// True while this screen is opening or open. Safe to read from background threads.
+        /// </summary>
+        public static bool IsNavalVisualCrashGuardActive => Volatile.Read(ref _navalVisualCrashGuardState) != 0;
+
+        private static void SetNavalVisualCrashGuardState(int state)
+        {
+            Interlocked.Exchange(ref _navalVisualCrashGuardState, state);
+        }
+
         private readonly LanceLifeEventDefinition _event;
         private readonly EnlistmentBehavior _enlistment;
         private readonly Action _onClosed;
@@ -40,6 +58,9 @@ namespace Enlisted.Features.Lances.UI
 
             try
             {
+                // Mark as open as early as possible so background-thread crash guards can react immediately.
+                SetNavalVisualCrashGuardState(2);
+
                 // Create the ViewModel
                 _dataSource = new LanceLifeEventVM(_event, _enlistment, CloseScreen);
 
@@ -72,6 +93,9 @@ namespace Enlisted.Features.Lances.UI
             catch (Exception ex)
             {
                 Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to display lance event: {ex.Message}", ex);
+
+                // Ensure crash guard doesn't remain stuck on if initialization fails.
+                SetNavalVisualCrashGuardState(0);
                 
                 // Clean up partial initialization
                 if (_gauntletMovie != null && _gauntletLayer != null)
@@ -116,6 +140,7 @@ namespace Enlisted.Features.Lances.UI
                 return;
 
             _closing = true;
+            SetNavalVisualCrashGuardState(0);
 
             // Clean up
             if (_gauntletMovie != null)
@@ -144,6 +169,9 @@ namespace Enlisted.Features.Lances.UI
         {
             base.OnFinalize();
 
+            // Safety: if the screen is finalized unexpectedly, clear crash guard.
+            SetNavalVisualCrashGuardState(0);
+
             // Cleanup if not already done
             if (_dataSource != null)
             {
@@ -171,6 +199,9 @@ namespace Enlisted.Features.Lances.UI
                 return;
             }
 
+            // Activate crash guard immediately so background-thread Naval visuals can skip while we transition.
+            SetNavalVisualCrashGuardState(1);
+
             // Defer screen opening to next frame to prevent crashes during native visual updates
             // (e.g., NavalMobilePartyVisual.UpdateEntityPosition crashes if we push screen mid-tick)
             Enlisted.Mod.Entry.NextFrameDispatcher.RunNextFrame(() =>
@@ -181,6 +212,7 @@ namespace Enlisted.Features.Lances.UI
                     if (TaleWorlds.CampaignSystem.Campaign.Current == null)
                     {
                         Enlisted.Mod.Core.Logging.ModLogger.Warn("LanceLifeUI", "Cannot display event - campaign session ended");
+                        SetNavalVisualCrashGuardState(0);
                         onClosed?.Invoke();
                         return;
                     }
@@ -191,6 +223,7 @@ namespace Enlisted.Features.Lances.UI
                 catch (Exception ex)
                 {
                     Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to display event screen: {ex.Message}", ex);
+                    SetNavalVisualCrashGuardState(0);
                     // Ensure onClosed is called so the presenter can clean up
                     onClosed?.Invoke();
                 }

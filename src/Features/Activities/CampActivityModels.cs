@@ -28,6 +28,8 @@ namespace Enlisted.Features.Activities
         [JsonProperty("hint")] public string Hint { get; set; }
 
         [JsonProperty("minTier")] public int MinTier { get; set; } = 1;
+        [JsonProperty("maxTier")] public int MaxTier { get; set; } // 0 = no limit
+        [JsonProperty("requiresLanceLeader")] public bool RequiresLanceLeader { get; set; }
 
         // Formation types: "infantry", "archer", "cavalry", "horsearcher" (same vocabulary as duties).
         [JsonProperty("formations")] public List<string> Formations { get; set; } = new List<string>();
@@ -35,10 +37,10 @@ namespace Enlisted.Features.Activities
         // Day parts: "dawn", "morning", "afternoon", "evening", "dusk", "night" (6-period system).
         [JsonProperty("dayParts")] public List<string> DayParts { get; set; } = new List<string>();
 
-        [JsonProperty("fatigueCost")] public int FatigueCost { get; set; } = 0;
-        [JsonProperty("fatigueRelief")] public int FatigueRelief { get; set; } = 0;
+        [JsonProperty("fatigueCost")] public int FatigueCost { get; set; }
+        [JsonProperty("fatigueRelief")] public int FatigueRelief { get; set; }
 
-        [JsonProperty("cooldownDays")] public int CooldownDays { get; set; } = 0;
+        [JsonProperty("cooldownDays")] public int CooldownDays { get; set; }
 
         [JsonProperty("skillXp")] public Dictionary<string, int> SkillXp { get; set; } = new Dictionary<string, int>();
 
@@ -66,6 +68,8 @@ namespace Enlisted.Features.Activities
         public string HintFallback { get; set; }
 
         public int MinTier { get; set; }
+        public int MaxTier { get; set; }
+        public bool RequiresLanceLeader { get; set; }
         public List<string> Formations { get; set; } = new List<string>();
         public List<string> DayParts { get; set; } = new List<string>();
 

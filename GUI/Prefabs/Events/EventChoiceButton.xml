@@ -1,7 +1,7 @@
 <Prefab>
 	<Window>
 		<!-- Modern choice button with hover effects and icon -->
-		<ButtonWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="52" MarginBottom="8" Brush="ButtonBrush1" Command.Click="ExecuteSelectChoice" IsEnabled="@IsEnabled" UpdateChildrenStates="true">
+		<ButtonWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="56" MarginBottom="10" Brush="ButtonBrush1" Command.Click="ExecuteSelectChoice" IsEnabled="@IsEnabled" UpdateChildrenStates="true">
 			<Children>
 				<!-- Button background with gradient -->
 				<BrushWidget DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
@@ -20,17 +20,17 @@
 						<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="170" MarginRight="10" HorizontalAlignment="Right">
 							<Children>
 								<!-- Rewards (green text) -->
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#88FF88FF" Text="@RewardsText" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#7EBB6CFF" Text="@RewardsText" />
 								
 								<!-- Costs (red text) -->
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="24" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#FF8888FF" Text="@CostsText" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="24" MarginRight="5" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#C97A6AFF" Text="@CostsText" />
 							</Children>
 						</Widget>
 						
 						<!-- Risk indicator badge (if risky) -->
-						<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="45" SuggestedHeight="20" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" VerticalAlignment="Top" Sprite="StdAssets\round_frame" Color="#DD4444FF" IsVisible="@IsRisky">
+						<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="45" SuggestedHeight="20" MarginTop="6" MarginRight="5" HorizontalAlignment="Right" VerticalAlignment="Top" Sprite="StdAssets\round_frame" Color="@RiskColor" IsVisible="@IsRisky">
 							<Children>
-								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="9" Brush.TextColor="#FFFFFFFF" Text="⚠ RISK" />
+								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="9" Brush.TextColor="#FFFFFFFF" Text="RISK" />
 							</Children>
 						</Widget>
 						

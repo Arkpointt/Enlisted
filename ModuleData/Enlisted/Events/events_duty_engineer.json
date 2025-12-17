@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_engineer",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -224,7 +224,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -310,7 +310,7 @@
           {
             "id": "patch_it_it_ll_hold_for_a_few_sh",
             "textId": "ll_evt_eng_bridge_assessment_opt_patch_it_it_ll_hold_for_a_few_sh_text",
-            "text": "Patch it — it'll hold for a few shots",
+            "text": "Patch it â€” it'll hold for a few shots",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -428,7 +428,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -473,7 +473,7 @@
         "titleId": "ll_evt_eng_siege_preparation_title",
         "setupId": "ll_evt_eng_siege_preparation_setup",
         "title": "Bridge Assessment",
-        "setup": "The bridge looks old. The army's heavy. {LORD_NAME} needs to know — can it hold?\n\n\"Your expertise, {PLAYER_NAME}. Speak plainly.\"",
+        "setup": "The bridge looks old. The army's heavy. {LORD_NAME} needs to know â€” can it hold?\n\n\"Your expertise, {PLAYER_NAME}. Speak plainly.\"",
         "options": [
           {
             "id": "inspect_thoroughly_give_accurate",
@@ -637,7 +637,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -854,7 +854,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -897,7 +897,7 @@
         "titleId": "ll_evt_eng_mining_operation_title",
         "setupId": "ll_evt_eng_mining_operation_setup",
         "title": "Camp Layout",
-        "setup": "New campsite. {SECOND_SHORT} wants it organized right — latrines downhill, fires safe distance, wagons protecting the perimeter.\n\n\"You've got an eye for this. Lay it out.\"",
+        "setup": "New campsite. {SECOND_SHORT} wants it organized right â€” latrines downhill, fires safe distance, wagons protecting the perimeter.\n\n\"You've got an eye for this. Lay it out.\"",
         "options": [
           {
             "id": "plan_it_carefully_explain_to_the",
@@ -1056,3 +1056,5 @@
     }
   ]
 }
+
+

@@ -1,0 +1,14 @@
+<Prefab>
+  <!-- Schedule Active Tuple - Matches native PolicyActiveTuple.xml exactly -->
+  <Constants>
+    <Constant Name="Kingdom.Policy.Active.Tuple.Width" BrushLayer="Default" BrushName="Kingdom.Policy.Active.Tuple" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policy.Active.Tuple.Height" BrushLayer="Default" BrushName="Kingdom.Policy.Active.Tuple" BrushValueType="Height" />
+  </Constants>
+  <Window>
+    <ButtonWidget DoNotPassEventsToChildren="true" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="!Kingdom.Policy.Active.Tuple.Height" SuggestedWidth="!Kingdom.Policy.Active.Tuple.Width" Brush="Kingdom.Policy.Active.Tuple" Command.Click="OnSelect" IsSelected="@IsSelected">
+      <Children>
+        <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Kingdom.PoliciesItem.Text" Text="@Name"/>
+      </Children>
+    </ButtonWidget>
+  </Window>
+</Prefab>

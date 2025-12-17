@@ -43,4 +43,4 @@ If leave exceeds the maximum duration:
 ## Related docs
 - [Enlistment](../Core/enlistment.md)
 - [Menu Interface](../UI/menu-interface.md)
-- [Pay System](../Core/pay-system-rework.md)
+- [Pay System](../Core/pay-system.md)

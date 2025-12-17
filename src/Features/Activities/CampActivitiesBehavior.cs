@@ -34,7 +34,7 @@ namespace Enlisted.Features.Activities
 
         // Per-activity cooldown tracking (day number of last completion).
         // Use int to keep save container definitions simple and version-stable.
-        [SaveableField(1)]
+        // Synced via SyncData, not SaveableField
         private Dictionary<string, int> _lastCompletedDayByActivityId = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         private List<CampActivityDefinition> _cachedDefinitions;
@@ -386,6 +386,8 @@ namespace Enlisted.Features.Activities
                         HintId = (a.HintId ?? string.Empty).Trim(),
                         HintFallback = a.Hint ?? string.Empty,
                         MinTier = Math.Max(1, a.MinTier),
+                        MaxTier = a.MaxTier, // 0 = no limit
+                        RequiresLanceLeader = a.RequiresLanceLeader,
                         Formations = a.Formations?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToList() ??
                                      new List<string>(),
                         DayParts = a.DayParts?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToList() ??

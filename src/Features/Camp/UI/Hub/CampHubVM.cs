@@ -48,7 +48,7 @@ namespace Enlisted.Features.Camp.UI.Hub
             _activitiesBehavior = CampActivitiesBehavior.Instance;
             
             LocationRows = new MBBindingList<LocationButtonRowVM>();
-            HeaderTitle = "🏕️ CAMP OVERVIEW";
+            HeaderTitle = "CAMP OVERVIEW";
             
             RefreshLocations();
             RefreshStatusBar();

@@ -1,48 +1,37 @@
-# Camp & Lance Activities — Lance Life
+﻿# Camp & Lance Activities — Lance Life
 
 This document defines player-initiated activities available in the Camp Activities menu. These are things the player can **click on and do** to recover, socialize, earn XP, and build relationships.
 
 ---
 
-## Menu Structure
+## Menu Structure (high level)
 
-```
-Enlisted Status Menu (enlisted_status)
-│
-├── [🏃] Camp Activities (enlisted_activities)
-│       │
-│       ├── — TRAINING —
-│       │   ├── Formation Drill
-│       │   ├── Sparring Circle
-│       │   ├── Weapons Practice
-│       │   └── [formation-specific options]
-│       │
-│       ├── — CAMP TASKS —
-│       │   ├── Help the Surgeon
-│       │   ├── Work the Forge
-│       │   ├── Forage for Camp
-│       │   └── Maintain Equipment
-│       │
-│       ├── — SOCIAL —
-│       │   ├── Fire Circle (evening/dusk)
-│       │   ├── Drink with the Lads
-│       │   ├── Play Dice
-│       │   ├── Rest and Relax
-│       │   └── Write a Letter
-│       │
-│       ├── — LANCE —
-│       │   ├── Talk to Lance Leader
-│       │   ├── Check on Lance Mates
-│       │   ├── Help a Struggling Soldier
-│       │   ├── Share Your Rations
-│       │   └── Settle a Dispute
-│       │
-│       ├── — DESPERATE MEASURES — [Only if PayTension >= 40]
-│       │   └── [see pay_tension_events.md]
-│       │
-│       └── — HELP THE LORD — [Only if PayTension >= 40]
-│           └── [see pay_tension_events.md]
-```
+- Enlisted Status (`enlisted_status`)
+  - Camp Activities (`enlisted_activities`)
+    - — TRAINING —
+      - Formation Drill
+      - Sparring Circle
+      - Weapons Practice
+      - [formation-specific options]
+    - — CAMP TASKS —
+      - Help the Surgeon
+      - Work the Forge
+      - Forage for Camp
+      - Maintain Equipment
+    - — SOCIAL —
+      - Fire Circle (evening/dusk)
+      - Drink with the Lads
+      - Play Dice
+      - Rest and Relax
+      - Write a Letter
+    - — LANCE —
+      - Talk to Lance Leader
+      - Check on Lance Mates
+      - Help a Struggling Soldier
+      - Share Your Rations
+      - Settle a Dispute
+    - — DESPERATE MEASURES — (only if PayTension ≥ 40)
+    - — HELP THE LORD — (only if PayTension ≥ 40)
 
 ---
 
@@ -121,16 +110,16 @@ This lets players do **4-5 medium activities** or **2-3 heavy ones** before hitt
 Camp Activities menu header shows current fatigue:
 
 ```
-═══════════════════════════════════════════════════════════════
+----------------------------------------
                     CAMP ACTIVITIES
-═══════════════════════════════════════════════════════════════
+- - - - - - - - - - - - - - - - - - -
 
-Fatigue: 11/24 ██████████████░░░░░░░░░░
-⚠ 5 more until health loss
+Fatigue: 11/24 [###########-------------]
+! 5 more until health loss
 
 Recovery Rate: 0.75/hour (Rank T3)
 
-═══════════════════════════════════════════════════════════════
+----------------------------------------
 ```
 
 ---
@@ -889,14 +878,14 @@ void BuildCampActivitiesMenu(CampaignGameStarter starter)
     if (PayTension >= 40)
     {
         AddSectionHeader(starter, "desperate_header", "— DESPERATE MEASURES —");
-        // ... see pay_tension_events.md
+        // ... see docs/StoryBlocks/StoryBlock.md
     }
     
     // === HELP THE LORD (pay tension) ===
     if (PayTension >= 40)
     {
         AddSectionHeader(starter, "help_lord_header", "— HELP THE LORD —");
-        // ... see pay_tension_events.md
+        // ... see docs/StoryBlocks/StoryBlock.md
     }
 }
 ```
@@ -1132,10 +1121,10 @@ void LaunchActivity(string activityId)
 ## Cross-References
 
 - **Menu System:** `menu_system_update.md` — Menu structure
-- **Pay Tension Events:** `pay_tension_events.md` — Desperate Measures and Help Lord sections
-- **Events Library:** `lance_life_events_content_library.md` — Related random events
+- **Pay Tension / Help Lord / Mutiny Events:** `docs/StoryBlocks/StoryBlock.md`
 
 ---
 
 *Document Version: 1.0*
 *For use with: Lance Life Camp Activities Menu*
+

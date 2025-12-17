@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -43,7 +44,10 @@ namespace Enlisted.Features.Lances.Events
         /// </summary>
         private static void ShowEffectFeedback(LanceLifeEventOptionDefinition option)
         {
-            if (option == null) return;
+            if (option == null)
+            {
+                return;
+            }
 
             // Gold rewards
             if (option.Rewards?.Gold > 0)
@@ -52,18 +56,9 @@ namespace Enlisted.Features.Lances.Events
                     $"Received {option.Rewards.Gold} gold", Colors.Yellow));
             }
 
-            // Skill XP
-            if (option.Rewards?.SkillXp != null)
-            {
-                foreach (var kvp in option.Rewards.SkillXp)
-                {
-                    if (kvp.Value > 0)
-                    {
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            $"+{kvp.Value} {kvp.Key} experience", Colors.Cyan));
-                    }
-                }
-            }
+            // XP rewards (both SchemaXp and SkillXp, distinguishing enlistment from skill XP)
+            ShowXpFeedback(option.Rewards?.SchemaXp);
+            ShowXpFeedback(option.Rewards?.SkillXp);
 
             // Heat changes
             var totalHeat = (option.Costs?.Heat ?? 0) + (option.Effects?.Heat ?? 0);
@@ -115,6 +110,40 @@ namespace Enlisted.Features.Lances.Events
             {
                 InformationManager.DisplayMessage(new InformationMessage(
                     $"Spent {option.Costs.Gold} gold", new Color(1f, 0.5f, 0f)));
+            }
+        }
+
+        /// <summary>
+        /// Shows feedback for XP rewards, distinguishing between enlistment XP and skill XP.
+        /// </summary>
+        private static void ShowXpFeedback(Dictionary<string, int> xpDict)
+        {
+            if (xpDict == null || xpDict.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var kvp in xpDict)
+            {
+                if (kvp.Value <= 0 || string.IsNullOrWhiteSpace(kvp.Key))
+                {
+                    continue;
+                }
+
+                var key = kvp.Key.Trim();
+
+                // Check if this is enlistment XP (show differently from skill XP)
+                if (string.Equals(key, "enlisted", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(key, "enlistment", StringComparison.OrdinalIgnoreCase))
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"+{kvp.Value} Enlistment experience", Color.FromUint(0xFF88FF88))); // Light green
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"+{kvp.Value} {key} experience", Colors.Cyan));
+                }
             }
         }
 
@@ -206,18 +235,9 @@ namespace Enlisted.Features.Lances.Events
                 enlistment?.RestoreFatigue(option.Rewards.FatigueRelief, $"lance_life_event:{evt.Id}");
             }
 
-            if (option.Rewards.SkillXp != null && option.Rewards.SkillXp.Count > 0)
-            {
-                foreach (var kvp in option.Rewards.SkillXp)
-                {
-                    var skill = ResolveSkill(kvp.Key);
-                    var amount = kvp.Value;
-                    if (skill != null && amount > 0)
-                    {
-                        Hero.MainHero?.AddSkillXp(skill, amount);
-                    }
-                }
-            }
+            // Process XP rewards: both enlistment XP and Bannerlord skill XP
+            // SchemaXp from JSON is merged into SkillXp by the catalog loader, so we check both
+            ApplyXpRewards(evt, option, enlistment);
 
             // Escalation effects
             if (escalation?.IsEnabled() == true && option.Effects != null)
@@ -284,6 +304,11 @@ namespace Enlisted.Features.Lances.Events
                 TryApplyIllnessRoll(evt, option, conditions);
             }
 
+            // Phase 3 (Decision Events): Handle chain events and story flags
+            // This is done here in the applier to ensure consistent behavior regardless of which
+            // presentation path (VM, Inquiry, Incident) fires the event.
+            ApplyDecisionEventEffects(evt, option);
+
             // Result/outcome text (best-effort).
             var resultText = ResolveOptionResultText(option, enlistment, success);
             return resultText ?? string.Empty;
@@ -317,6 +342,167 @@ namespace Enlisted.Features.Lances.Events
             return LanceLifeEventText.Resolve(option.OutcomeTextId, option.OutcomeTextFallback, string.Empty, enlistment);
         }
 
+        /// <summary>
+        /// Applies Phase 3 Decision Event effects: chain events and story flags.
+        /// Moved here from LanceLifeEventVM to ensure consistent handling across all presentation paths.
+        /// </summary>
+        private static void ApplyDecisionEventEffects(LanceLifeEventDefinition evt, LanceLifeEventOptionDefinition option)
+        {
+            if (option == null)
+            {
+                return;
+            }
+
+            try
+            {
+                var decisionBehavior = Decisions.DecisionEventBehavior.Instance;
+                if (decisionBehavior == null)
+                {
+                    // Decision events system not active - skip flag/chain handling
+                    return;
+                }
+
+                // Handle chain events: queue the next event in the chain
+                if (!string.IsNullOrWhiteSpace(option.ChainsTo))
+                {
+                    // Use specified delay or default to random 12-36 hours
+                    var delayHours = option.ChainDelayHours > 0 
+                        ? option.ChainDelayHours 
+                        : MBRandom.RandomFloatRanged(12f, 36f);
+
+                    decisionBehavior.QueueChainEvent(option.ChainsTo, delayHours);
+
+                    ModLogger.Info(LogCategory, 
+                        $"Chain event queued: {option.ChainsTo} (delay: {delayHours:F1}h) from {evt?.Id}");
+                }
+
+                // Handle story flags to set
+                if (option.SetFlags != null && option.SetFlags.Count > 0)
+                {
+                    foreach (var flag in option.SetFlags)
+                    {
+                        if (!string.IsNullOrWhiteSpace(flag))
+                        {
+                            decisionBehavior.SetFlag(flag, option.FlagDurationDays);
+                            ModLogger.Debug(LogCategory, $"Flag set: {flag} (expires in {option.FlagDurationDays} days)");
+                        }
+                    }
+                }
+
+                // Handle story flags to clear
+                if (option.ClearFlags != null && option.ClearFlags.Count > 0)
+                {
+                    foreach (var flag in option.ClearFlags)
+                    {
+                        if (!string.IsNullOrWhiteSpace(flag))
+                        {
+                            decisionBehavior.ClearFlag(flag);
+                            ModLogger.Debug(LogCategory, $"Flag cleared: {flag}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn(LogCategory, 
+                    $"Failed to apply decision event effects for {evt?.Id}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Applies XP rewards from the event option, handling both:
+        /// - "enlisted" key: Awards mod enlistment XP (for progression/promotions)
+        /// - All other keys: Treated as Bannerlord skill names (Athletics, OneHanded, etc.)
+        /// 
+        /// This fixes the bug where "enlisted" XP was silently dropped because ResolveSkill
+        /// returned null for non-existent Bannerlord skills.
+        /// </summary>
+        private static void ApplyXpRewards(
+            LanceLifeEventDefinition evt,
+            LanceLifeEventOptionDefinition option,
+            EnlistmentBehavior enlistment)
+        {
+            if (option?.Rewards == null)
+            {
+                return;
+            }
+
+            // Combine both SchemaXp (from rewards.xp in JSON) and SkillXp (from rewards.skillXp)
+            // The catalog loader normalizes SchemaXp into SkillXp, but we handle both for safety
+            var allXp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            if (option.Rewards.SchemaXp != null)
+            {
+                foreach (var kvp in option.Rewards.SchemaXp)
+                {
+                    if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value > 0)
+                    {
+                        allXp[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+
+            if (option.Rewards.SkillXp != null)
+            {
+                foreach (var kvp in option.Rewards.SkillXp)
+                {
+                    if (!string.IsNullOrWhiteSpace(kvp.Key) && kvp.Value > 0)
+                    {
+                        // SkillXp takes precedence if both are present (unlikely but handle it)
+                        allXp[kvp.Key] = kvp.Value;
+                    }
+                }
+            }
+
+            if (allXp.Count == 0)
+            {
+                return;
+            }
+
+            var eventSource = $"Event:{evt?.Id ?? "unknown"}";
+
+            foreach (var kvp in allXp)
+            {
+                var key = kvp.Key.Trim();
+                var amount = kvp.Value;
+
+                if (amount <= 0)
+                {
+                    continue;
+                }
+
+                // Check if this is enlistment XP (the mod's internal progression system)
+                if (string.Equals(key, "enlisted", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(key, "enlistment", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (enlistment != null)
+                    {
+                        enlistment.AddEnlistmentXP(amount, eventSource);
+                        ModLogger.Info(LogCategory, $"Awarded {amount} enlistment XP from {eventSource}");
+                    }
+                    else
+                    {
+                        ModLogger.Warn(LogCategory, $"Cannot award enlistment XP - EnlistmentBehavior not available");
+                    }
+                }
+                else
+                {
+                    // Treat as Bannerlord skill XP
+                    var skill = ResolveSkill(key);
+                    if (skill != null)
+                    {
+                        Hero.MainHero?.AddSkillXp(skill, amount);
+                        ModLogger.Debug(LogCategory, $"Awarded {amount} {skill.Name} XP from {eventSource}");
+                    }
+                    else
+                    {
+                        ModLogger.Warn(LogCategory, 
+                            $"Unknown XP key '{key}' in event {evt?.Id} - not 'enlisted' and not a valid Bannerlord skill");
+                    }
+                }
+            }
+        }
+
         private static SkillObject ResolveSkill(string skillName)
         {
             if (string.IsNullOrWhiteSpace(skillName))
@@ -324,18 +510,69 @@ namespace Enlisted.Features.Lances.Events
                 return null;
             }
 
+            // Normalize skill name to Bannerlord's PascalCase SkillObject IDs
+            var normalizedName = NormalizeSkillName(skillName);
+
             try
             {
-                return MBObjectManager.Instance.GetObject<SkillObject>(skillName);
+                return MBObjectManager.Instance.GetObject<SkillObject>(normalizedName);
             }
             catch
             {
                 ModLogger.LogOnce(
                     key: $"ll_evt_unknown_skill:{skillName}",
                     category: LogCategory,
-                    message: $"Unknown skill referenced by Lance Life Event content: {skillName}");
+                    message: $"Unknown skill referenced by Lance Life Event content: {skillName} (normalized: {normalizedName})");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Normalizes skill names from various formats (snake_case, lowercase, PascalCase)
+        /// to Bannerlord's expected SkillObject string IDs (PascalCase).
+        /// </summary>
+        private static string NormalizeSkillName(string raw)
+        {
+            var s = (raw ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(s))
+            {
+                return string.Empty;
+            }
+
+            // Map common formats to Bannerlord skill IDs
+            return s.ToLowerInvariant() switch
+            {
+                // Combat skills
+                "one_handed" or "onehanded" => "OneHanded",
+                "two_handed" or "twohanded" => "TwoHanded",
+                "polearm" => "Polearm",
+                "throwing" => "Throwing",
+                "bow" => "Bow",
+                "crossbow" => "Crossbow",
+                
+                // Movement skills
+                "riding" => "Riding",
+                "athletics" => "Athletics",
+                
+                // Cunning skills
+                "scouting" => "Scouting",
+                "tactics" => "Tactics",
+                "roguery" => "Roguery",
+                
+                // Social skills
+                "charm" => "Charm",
+                "leadership" => "Leadership",
+                "trade" => "Trade",
+                
+                // Intelligence skills
+                "steward" => "Steward",
+                "medicine" => "Medicine",
+                "engineering" => "Engineering",
+                "smithing" or "crafting" => "Smithing",
+                
+                // Passthrough for PascalCase or already correct IDs
+                _ => s
+            };
         }
 
         private static void TryApplyInjuryRoll(LanceLifeEventDefinition evt, LanceLifeEventOptionDefinition option, PlayerConditionBehavior conditions)

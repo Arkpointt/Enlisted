@@ -18,7 +18,7 @@ namespace Enlisted.Features.CommandTent.Core
 
         // Track battle participation per companion
         // Key: Hero.StringId, Value: true = fight (default), false = stay back
-        [SaveableField(1)]
+        // Synced via SyncData, not SaveableField
         private Dictionary<string, bool> _companionBattleParticipation;
 
         public static CompanionAssignmentManager Instance { get; private set; }

@@ -262,6 +262,40 @@ namespace Enlisted.Features.Lances.Events
                 return duties.ActiveDuties?.Any(d => string.Equals(d, dutyId, StringComparison.OrdinalIgnoreCase)) == true;
             }
 
+            // Track D2 (Decision Events): current_activity:X - matches player's current scheduled activity
+            if (t.StartsWith(CampaignTriggerTokens.CurrentActivityPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var activityId = t.Substring(CampaignTriggerTokens.CurrentActivityPrefix.Length).Trim();
+                if (string.IsNullOrWhiteSpace(activityId))
+                {
+                    return false;
+                }
+
+                var schedule = Features.Schedule.Behaviors.ScheduleBehavior.Instance;
+                if (schedule == null)
+                {
+                    return false;
+                }
+
+                var currentBlock = schedule.GetCurrentActiveBlock();
+                var currentActivity = currentBlock?.ActivityId ?? string.Empty;
+
+                return string.Equals(currentActivity, activityId, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // Track D2 (Decision Events): on_duty:X - matches player's selected duty role
+            if (t.StartsWith(CampaignTriggerTokens.OnDutyPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var dutyId = t.Substring(CampaignTriggerTokens.OnDutyPrefix.Length).Trim();
+                if (string.IsNullOrWhiteSpace(dutyId))
+                {
+                    return false;
+                }
+
+                var selectedDuty = enlistment?.SelectedDuty ?? string.Empty;
+                return string.Equals(selectedDuty, dutyId, StringComparison.OrdinalIgnoreCase);
+            }
+
             var tracker = CampaignTriggerTrackerBehavior.Instance;
             if (tracker == null)
             {

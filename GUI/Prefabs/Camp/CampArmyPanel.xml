@@ -1,0 +1,11 @@
+<Prefab>
+  <!-- Army Panel - Other lance statuses (T5+ only) -->
+  <Window>
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" IsVisible="@Show">
+      <Children>
+        <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Kingdom.TitleMedium.Text" Text="Army Lance Status (v1.0.0)" />
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>
+

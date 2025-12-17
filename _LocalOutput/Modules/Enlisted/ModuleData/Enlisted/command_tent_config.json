@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "description": "Configuration for Camp system - retinue management, tier capacities, and faction availability",
+
+  "capacity_by_tier": {
+    "4": {
+      "name": "Lance",
+      "max_soldiers": 5,
+      "tier_distribution": {
+        "infantry": { "2": 40, "3": 60 },
+        "archers": { "2": 40, "3": 60 },
+        "cavalry": { "3": 100 },
+        "horse_archers": { "2": 30, "3": 70 }
+      }
+    },
+    "5": {
+      "name": "Squad",
+      "max_soldiers": 10,
+      "tier_distribution": {
+        "infantry": { "2": 30, "3": 70 },
+        "archers": { "2": 30, "3": 70 },
+        "cavalry": { "2": 20, "3": 80 },
+        "horse_archers": { "2": 20, "3": 80 }
+      }
+    },
+    "6": {
+      "name": "Retinue",
+      "max_soldiers": 20,
+      "tier_distribution": {
+        "infantry": { "3": 60, "4": 40 },
+        "archers": { "3": 60, "4": 40 },
+        "cavalry": { "3": 50, "4": 50 },
+        "horse_archers": { "3": 50, "4": 50 }
+      }
+    }
+  },
+
+  "soldier_types": {
+    "infantry": {
+      "id": "infantry",
+      "display_key": "{=ct_type_infantry}Men-at-Arms",
+      "description_key": "{=ct_type_infantry_desc}Foot soldiers with sword and shield. Steady in the line.",
+      "formation_class": "Infantry",
+      "available_all_factions": true
+    },
+    "archers": {
+      "id": "archers",
+      "display_key": "{=ct_type_archers}Bowmen",
+      "description_key": "{=ct_type_archers_desc}Skilled archers to loose volleys upon your command.",
+      "formation_class": "Ranged",
+      "available_all_factions": true
+    },
+    "cavalry": {
+      "id": "cavalry",
+      "display_key": "{=ct_type_cavalry}Mounted Lancers",
+      "description_key": "{=ct_type_cavalry_desc}Horsemen with lance and sword. Swift and deadly.",
+      "formation_class": "Cavalry",
+      "available_all_factions": true
+    },
+    "horse_archers": {
+      "id": "horse_archers",
+      "display_key": "{=ct_type_horse_archers}Mounted Bowmen",
+      "description_key": "{=ct_type_horse_archers_desc}Riders who loose arrows from the saddle.",
+      "formation_class": "HorseArcher",
+      "available_all_factions": false,
+      "faction_whitelist": ["empire", "khuzait", "aserai"]
+    }
+  },
+
+  "faction_overrides": {
+    "vlandia": {
+      "archers_display_key": "{=ct_type_crossbowmen}Crossbowmen",
+      "archers_description_key": "{=ct_type_crossbowmen_desc}Armored crossbowmen with deadly bolts.",
+      "unavailable_types": ["horse_archers"]
+    },
+    "battania": {
+      "archers_display_key": "{=ct_type_fians}Fian Archers",
+      "archers_description_key": "{=ct_type_fians_desc}Legendary woodland archers of Battania.",
+      "unavailable_types": ["horse_archers"],
+      "tier_distribution_override": {
+        "archers": { "3": 80, "4": 20 }
+      }
+    },
+    "sturgia": {
+      "unavailable_types": ["horse_archers"]
+    },
+    "khuzait": {
+      "horse_archers_display_key": "{=ct_type_khuzait_ha}Steppe Riders",
+      "tier_distribution_override": {
+        "horse_archers": { "2": 40, "3": 60 }
+      }
+    },
+    "aserai": {
+      "horse_archers_display_key": "{=ct_type_mameluke}Mameluke Cavalry"
+    }
+  },
+
+  "replenishment": {
+    "trickle": {
+      "enabled": true,
+      "min_days": 2,
+      "max_days": 3,
+      "soldiers_per_tick": 1
+    },
+    "requisition": {
+      "enabled": true,
+      "cooldown_days": 14,
+      "cost_multiplier": 1.0
+    }
+  },
+
+  "economics": {
+    "daily_upkeep_per_soldier": 2,
+    "desertion_enabled": true
+  },
+
+  "tier_unlock": {
+    "lance_tier": 4,
+    "squad_tier": 5,
+    "retinue_tier": 6
+  }
+}
+

@@ -4,8 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
-using Enlisted.Features.Camp.UI;
-using Enlisted.Features.Camp.UI.Hub;
+using Enlisted.Features.Camp.UI.Bulletin;
+using Enlisted.Features.Camp.UI.Management;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -33,18 +33,21 @@ namespace Enlisted.Features.Camp
         private const string LogCategory = "Camp";
 
         // Menu IDs
-        private const string CommandTentMenuId = "command_tent";
-        private const string ServiceRecordsMenuId = "command_tent_service_records";
-        private const string CurrentPostingMenuId = "command_tent_current_posting";
-        private const string FactionRecordsMenuId = "command_tent_faction_records";
-        private const string FactionDetailMenuId = "command_tent_faction_detail";
-        private const string LifetimeSummaryMenuId = "command_tent_lifetime_summary";
+        // NOTE: "Command Tent" is no longer a concept in the UI.
+        // The player-facing hub is "Camp" and the hub menu id is `enlisted_camp_hub`.
+        // This class only registers submenus that the Camp hub can route to.
+        private const string CampHubMenuId = "enlisted_camp_hub";
+        private const string ServiceRecordsMenuId = "enlisted_service_records";
+        private const string CurrentPostingMenuId = "enlisted_current_posting";
+        private const string FactionRecordsMenuId = "enlisted_faction_records";
+        private const string FactionDetailMenuId = "enlisted_faction_detail";
+        private const string LifetimeSummaryMenuId = "enlisted_lifetime_summary";
 
-        // Retinue Menu IDs
-        private const string RetinueMenuId = "command_tent_retinue";
-        private const string RetinuePurchaseMenuId = "command_tent_retinue_purchase";
-        private const string RetinueDismissMenuId = "command_tent_retinue_dismiss";
-        private const string RetinueRequisitionMenuId = "command_tent_retinue_requisition";
+        // Retinue Menu IDs (kept for now; still routed from Camp)
+        private const string RetinueMenuId = "enlisted_retinue";
+        private const string RetinuePurchaseMenuId = "enlisted_retinue_purchase";
+        private const string RetinueDismissMenuId = "enlisted_retinue_dismiss";
+        private const string RetinueRequisitionMenuId = "enlisted_retinue_requisition";
 
 
         // Ensure Camp dialogs never pause the campaign clock.
@@ -106,11 +109,11 @@ namespace Enlisted.Features.Camp
         #endregion
 
         // Companion Assignment Menu IDs
-        private const string CompanionAssignmentsMenuId = "command_tent_companions";
+        private const string CompanionAssignmentsMenuId = "enlisted_companions";
 
         // Phase 8: PayTension Action Menu IDs
-        private const string DesperateMeasuresMenuId = "command_tent_desperate";
-        private const string HelpTheLordMenuId = "command_tent_help_lord";
+        private const string DesperateMeasuresMenuId = "enlisted_desperate";
+        private const string HelpTheLordMenuId = "enlisted_help_lord";
 
         // Track selected faction for detail view
         private string _selectedFactionKey;
@@ -139,7 +142,7 @@ namespace Enlisted.Features.Camp
                 // Set up inline icons for use in menu text (Bannerlord's rich text system)
                 SetupInlineIcons();
                 
-                AddCommandTentMenus(starter);
+                AddCampMenus(starter);
                 ModLogger.Info(LogCategory, "Camp menus registered successfully");
             }
             catch (Exception ex)
@@ -162,16 +165,11 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Registers all camp menus and options with the game.
+        /// Registers Camp submenus with the game.
+        /// The Camp hub (`enlisted_camp_hub`) is defined in `EnlistedMenuBehavior`.
         /// </summary>
-        private void AddCommandTentMenus(CampaignGameStarter starter)
+        private void AddCampMenus(CampaignGameStarter starter)
         {
-            // Add "Camp" option to enlisted_status menu (entry point)
-            AddCommandTentOptionToEnlistedMenu(starter);
-
-            // Main camp menu
-            AddMainCommandTentMenu(starter);
-
             // Service Records submenu
             AddServiceRecordsMenu(starter);
 
@@ -203,86 +201,6 @@ namespace Enlisted.Features.Camp
             AddHelpTheLordMenu(starter);
         }
 
-        #region Enlisted Status Integration
-
-        /// <summary>
-        /// Adds the Camp option to the main enlisted status menu.
-        /// </summary>
-        private void AddCommandTentOptionToEnlistedMenu(CampaignGameStarter starter)
-        {
-            try
-            {
-                starter.AddGameMenuOption(
-                    "enlisted_status",
-                    "enlisted_command_tent",
-                    "{=ct_menu_enter}Camp",
-                    IsCommandTentAvailable,
-                    OnCommandTentSelected,
-                    false,
-                    4); // Position after Camp Activities (keeps camp-related options grouped)
-
-                ModLogger.Debug(LogCategory, "Added Camp option to enlisted_status menu");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, $"Failed to add Camp option: {ex.Message}");
-            }
-        }
-
-
-        /// <summary>
-        /// Checks if the Camp option should be available (player must be enlisted).
-        /// Only shows when enlisted (menu is only visible when enlisted anyway).
-        /// </summary>
-        private bool IsCommandTentAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-            args.Tooltip = new TextObject("{=ct_menu_tooltip}Access your personal camp area.");
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
-        }
-
-        /// <summary>
-        /// Opens the Camp main menu.
-        /// </summary>
-        private void OnCommandTentSelected(MenuCallbackArgs args)
-        {
-            try
-            {
-                // Capture time mode before SwitchToMenu changes it
-                if (Campaign.Current != null)
-                {
-                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
-                }
-
-                // If we're inside a settlement encounter, finish it first so the engine
-                // doesn't immediately re-enter the town/castle menu when we switch.
-                var encounterSettlement = PlayerEncounter.EncounterSettlement;
-                if (encounterSettlement != null)
-                {
-                    var lordParty = EnlistmentBehavior.Instance?.CurrentLord?.PartyBelongedTo;
-                    var inBattleOrSiege = lordParty?.Party.MapEvent != null ||
-                                          lordParty?.Party.SiegeEvent != null ||
-                                          lordParty?.BesiegedSettlement != null;
-
-                    if (!inBattleOrSiege)
-                    {
-                        PlayerEncounter.Finish();
-                        ModLogger.Info(LogCategory,
-                            $"Finished settlement encounter ({encounterSettlement.Name}) before opening Camp");
-                    }
-                }
-
-                SwitchToMenuPreserveTime(CommandTentMenuId);
-                ModLogger.Debug(LogCategory, "Player entered Camp");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, $"Failed to switch to Camp menu: {ex.Message}");
-            }
-        }
-
-        #endregion
-
         #region Main Camp Menu
 
         /// <summary>
@@ -292,7 +210,7 @@ namespace Enlisted.Features.Camp
         {
             // Use wait menu with hidden progress to allow spacebar time control (like Quartermaster)
             starter.AddWaitGameMenu(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "{CT_MAIN_TEXT}",
                 OnCommandTentInit,
                 CommandTentWaitCondition,
@@ -302,7 +220,7 @@ namespace Enlisted.Features.Camp
 
             // Service Records option - Manage icon (scroll/quill)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_service_records",
                 "Review Service Records",
                 args =>
@@ -316,7 +234,7 @@ namespace Enlisted.Features.Camp
 
             // Seek Medical Attention (moved from main enlisted menu into Camp)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_seek_medical",
                 "{=Enlisted_Menu_SeekMedical}Seek Medical Attention",
                 args =>
@@ -341,38 +259,43 @@ namespace Enlisted.Features.Camp
                 false,
                 2);
 
-            // Camp Activities - Visual Screen (MODERN UI)
+            // Visit Camp - Visual camp hub (settlement-style UI with Reports, Lance, Activities, etc.)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
-                "ct_camp_activities_visual",
-                "🏕️ Visit Camp",
+                CampHubMenuId,
+                "ct_visit_camp",
+                "Reports",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    var activitiesBehavior = Features.Activities.CampActivitiesBehavior.Instance;
-                    if (activitiesBehavior?.IsEnabled() != true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=menu_disabled_activities}Camp activities system is disabled.");
-                        return true;
-                    }
-                    var count = activitiesBehavior.GetAvailableActivityCountForCurrentContext();
-                    args.Tooltip = count > 0
-                        ? new TextObject("Modern card-based activities menu. ({COUNT} available)").SetTextVariable("COUNT", count)
-                        : new TextObject("Modern activities interface - No activities available at this time.");
+                    args.Tooltip = new TextObject("{=ct_visit_camp_tooltip}Enter the camp area - view reports, manage lance, and access camp activities.");
                     return true;
                 },
                 _ => 
                 {
-                    // Phase 2: Open the new Camp Hub screen (with 6 location buttons)
-                    CampHubScreen.Open(() =>
-                    {
-                        // Return to camp menu when closed
-                        SwitchToMenuPreserveTime(CommandTentMenuId);
-                    });
+                    CampBulletinScreen.Open();
                 },
                 false,
                 3);
+            
+            // TEST: Kingdom-style Camp Management Screen
+            // This is a test menu option for the new full-screen camp management UI.
+            // Will replace the overlay bulletin eventually.
+            starter.AddGameMenuOption(
+                CampHubMenuId,
+                "ct_camp_management_test",
+                "[TEST] Camp Management (Kingdom-style)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=ct_camp_mgmt_test}Test the new Kingdom-style Camp Management screen with policy-based scheduling.");
+                    return true;
+                },
+                _ => 
+                {
+                    CampManagementScreen.Open(1); // Open to Schedule tab
+                },
+                false,
+                4);
 
 
             // ========================================
@@ -381,7 +304,7 @@ namespace Enlisted.Features.Camp
 
             // Desperate Measures (corruption path) - only visible at tension 40+
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_desperate_measures",
                 "{=ct_desperate_measures}Desperate Measures...",
                 args =>
@@ -404,7 +327,7 @@ namespace Enlisted.Features.Camp
 
             // Help the Lord (loyalty path) - only visible at tension 40+
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_help_lord",
                 "{=ct_help_lord}Help the Lord with Finances",
                 args =>
@@ -427,7 +350,7 @@ namespace Enlisted.Features.Camp
 
             // Baggage Train (stash access) - Submenu icon
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_baggage_train",
                 "{=enlisted_baggage_train}Visit Baggage Train",
                 args =>
@@ -442,7 +365,7 @@ namespace Enlisted.Features.Camp
 
             // Request Discharge (Final Muster) / Cancel (toggle)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_request_discharge",
                 "{CT_DISCHARGE_OPTION_TEXT}",
                 args =>
@@ -476,7 +399,7 @@ namespace Enlisted.Features.Camp
                         {
                             InformationManager.DisplayMessage(new InformationMessage(
                                 new TextObject("{=ct_discharge_cancelled}Pending discharge cancelled.").ToString()));
-                            SwitchToMenuPreserveTime(CommandTentMenuId);
+                            SwitchToMenuPreserveTime(CampHubMenuId);
                         }
                         return;
                     }
@@ -488,7 +411,7 @@ namespace Enlisted.Features.Camp
 
             // Personal Retinue option - TroopSelection icon (soldiers)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_retinue",
                 "{=ct_option_retinue}Muster Personal Retinue",
                 IsRetinueAvailable,
@@ -498,7 +421,7 @@ namespace Enlisted.Features.Camp
 
             // Companion Assignments option - Conversation icon (speech)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_companions",
                 "{=ct_option_companions}Companion Assignments",
                 IsCompanionAssignmentsAvailable,
@@ -508,7 +431,7 @@ namespace Enlisted.Features.Camp
 
             // Back to camp option - Leave icon (door)
             starter.AddGameMenuOption(
-                CommandTentMenuId,
+                CampHubMenuId,
                 "ct_back",
                 "{=ct_option_back}Return to Camp",
                 args =>
@@ -718,7 +641,7 @@ namespace Enlisted.Features.Camp
                         {
                             InformationManager.DisplayMessage(new InformationMessage(
                                 new TextObject("{=ct_discharge_requested}Discharge requested. It will resolve at the next pay muster.").ToString()));
-                            SwitchToMenuPreserveTime(CommandTentMenuId);
+                            SwitchToMenuPreserveTime(CampHubMenuId);
                         }
                     },
                     () => { }),
@@ -756,7 +679,7 @@ namespace Enlisted.Features.Camp
         /// Sets military-themed background and ambient audio for immersion.
         /// Resumes time so it continues passing while browsing menus.
         /// </summary>
-        [GameMenuInitializationHandler(CommandTentMenuId)]
+        [GameMenuInitializationHandler(CampHubMenuId)]
         [GameMenuInitializationHandler(ServiceRecordsMenuId)]
         [GameMenuInitializationHandler(CurrentPostingMenuId)]
         [GameMenuInitializationHandler(FactionRecordsMenuId)]
@@ -807,7 +730,6 @@ namespace Enlisted.Features.Camp
         /// </summary>
         private void AddServiceRecordsMenu(CampaignGameStarter starter)
         {
-            // Keep the menu registration minimal; service records now go straight to LifetimeSummary
             starter.AddWaitGameMenu(
                 ServiceRecordsMenuId,
                 "{=ct_records_intro}Your service history and military records.",
@@ -816,6 +738,62 @@ namespace Enlisted.Features.Camp
                 CommandTentWaitConsequence,
                 CommandTentWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Current Posting
+            starter.AddGameMenuOption(
+                ServiceRecordsMenuId,
+                "records_current_posting",
+                "{=ct_option_current}Current Posting",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(CurrentPostingMenuId),
+                false,
+                1);
+
+            // Faction Records
+            starter.AddGameMenuOption(
+                ServiceRecordsMenuId,
+                "records_faction_records",
+                "{=ct_option_faction}Faction Records",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(FactionRecordsMenuId),
+                false,
+                2);
+
+            // Lifetime Summary
+            starter.AddGameMenuOption(
+                ServiceRecordsMenuId,
+                "records_lifetime_summary",
+                "{=ct_option_lifetime}Lifetime Summary",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(LifetimeSummaryMenuId),
+                false,
+                3);
+
+            // Back to Camp hub
+            starter.AddGameMenuOption(
+                ServiceRecordsMenuId,
+                "records_back",
+                "{=ct_back_tent}Back to Camp",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => SwitchToMenuPreserveTime(CampHubMenuId),
+                true,
+                100);
         }
 
         private void OnServiceRecordsInit(MenuCallbackArgs args)
@@ -1233,7 +1211,7 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CampHubMenuId),
                 true,
                 100);
         }
@@ -1495,7 +1473,7 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CampHubMenuId),
                 true,
                 100);
         }
@@ -2400,7 +2378,7 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CampHubMenuId),
                 true,
                 100);
         }
@@ -2763,7 +2741,7 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CampHubMenuId),
                 true, 99);
         }
 
@@ -2905,7 +2883,7 @@ namespace Enlisted.Features.Camp
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                _ => SwitchToMenuPreserveTime(CommandTentMenuId),
+                _ => SwitchToMenuPreserveTime(CampHubMenuId),
                 true, 99);
         }
 

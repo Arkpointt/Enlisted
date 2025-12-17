@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Newtonsoft.Json;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
+using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using Enlisted.Features.Assignments.Core;
+using EnlistedConfigMgr = Enlisted.Features.Assignments.Core.ConfigurationManager;
 
 namespace Enlisted.Features.Lances.Personas
 {
@@ -85,6 +88,9 @@ namespace Enlisted.Features.Lances.Personas
                         var rankFallback = string.Empty;
                         var first = string.Empty;
                         var epithet = string.Empty;
+                        var daysInService = 0;
+                        var battlesParticipated = 0;
+                        var xp = 0;
 
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_slot", ref slot);
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_pos", ref posInt);
@@ -93,6 +99,9 @@ namespace Enlisted.Features.Lances.Personas
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_rankFallback", ref rankFallback);
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_first", ref first);
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_epithet", ref epithet);
+                        dataStore.SyncData($"lp_roster_{i}_m_{m}_days", ref daysInService);
+                        dataStore.SyncData($"lp_roster_{i}_m_{m}_battles", ref battlesParticipated);
+                        dataStore.SyncData($"lp_roster_{i}_m_{m}_xp", ref xp);
 
                         roster.Members.Add(new LancePersonaMember
                         {
@@ -102,7 +111,10 @@ namespace Enlisted.Features.Lances.Personas
                             RankTitleId = rankId ?? string.Empty,
                             RankTitleFallback = rankFallback ?? string.Empty,
                             FirstName = first ?? string.Empty,
-                            Epithet = epithet ?? string.Empty
+                            Epithet = epithet ?? string.Empty,
+                            DaysInService = daysInService,
+                            BattlesParticipated = battlesParticipated,
+                            ExperiencePoints = xp
                         });
                     }
 
@@ -141,6 +153,9 @@ namespace Enlisted.Features.Lances.Personas
                         var rankFallback = member.RankTitleFallback ?? string.Empty;
                         var first = member.FirstName ?? string.Empty;
                         var epithet = member.Epithet ?? string.Empty;
+                        var daysInService = member.DaysInService;
+                        var battlesParticipated = member.BattlesParticipated;
+                        var xp = member.ExperiencePoints;
 
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_slot", ref slot);
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_pos", ref posInt);
@@ -149,6 +164,9 @@ namespace Enlisted.Features.Lances.Personas
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_rankFallback", ref rankFallback);
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_first", ref first);
                         dataStore.SyncData($"lp_roster_{i}_m_{m}_epithet", ref epithet);
+                        dataStore.SyncData($"lp_roster_{i}_m_{m}_days", ref daysInService);
+                        dataStore.SyncData($"lp_roster_{i}_m_{m}_battles", ref battlesParticipated);
+                        dataStore.SyncData($"lp_roster_{i}_m_{m}_xp", ref xp);
                     }
                 }
             }
@@ -156,7 +174,7 @@ namespace Enlisted.Features.Lances.Personas
 
         public bool IsEnabled()
         {
-            return ConfigurationManager.LoadLancePersonasConfig()?.Enabled == true;
+            return EnlistedConfigMgr.LoadLancePersonasConfig()?.Enabled == true;
         }
 
         private void OnDailyTick()
@@ -174,12 +192,184 @@ namespace Enlisted.Features.Lances.Personas
                     return;
                 }
 
-                EnsureRosterFor(enlistment.CurrentLord, enlistment.CurrentLanceId);
+                var roster = EnsureRosterFor(enlistment.CurrentLord, enlistment.CurrentLanceId);
+                if (roster == null) return;
+                
+                // Increment days in service for all living members
+                foreach (var member in roster.Members)
+                {
+                    if (member.IsAlive)
+                    {
+                        member.DaysInService++;
+                    }
+                }
+                
+                // Check for promotions once per day
+                ProcessPromotions(roster, enlistment.CurrentLord?.Culture?.StringId ?? "empire");
             }
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Daily tick failed", ex);
             }
+        }
+        
+        /// <summary>
+        /// Process promotions for eligible lance members.
+        /// Promotions happen when a member has served 30+ days and been in 3+ battles.
+        /// Only one promotion per day to create story moments.
+        /// </summary>
+        private void ProcessPromotions(LancePersonaRoster roster, string cultureId)
+        {
+            if (roster?.Members == null) return;
+            
+            // Find the most eligible member for promotion (highest XP among eligible)
+            LancePersonaMember promotionCandidate = null;
+            foreach (var member in roster.Members)
+            {
+                if (!member.IsAlive) continue;
+                if (!member.IsPromotionEligible) continue;
+                
+                if (promotionCandidate == null || member.ExperiencePoints > promotionCandidate.ExperiencePoints)
+                {
+                    promotionCandidate = member;
+                }
+            }
+            
+            if (promotionCandidate == null) return;
+            
+            // Try to promote to the next position if slot is available
+            var nextPosition = GetNextPosition(promotionCandidate.Position);
+            if (nextPosition == promotionCandidate.Position) return; // Already at max
+            
+            // Check if there's room (the position above them needs to be vacant or they outrank that person)
+            var canPromote = CanPromoteToPosition(roster, promotionCandidate, nextPosition);
+            if (!canPromote) return;
+            
+            // Perform the promotion
+            var oldPosition = promotionCandidate.Position;
+            promotionCandidate.Position = nextPosition;
+            
+            // Update rank title based on new position
+            var pools = LoadNamePools();
+            string newRankDisplay = GetDefaultRankName(nextPosition);
+            if (pools != null && pools.Cultures.TryGetValue(cultureId, out var pool))
+            {
+                var rankKey = GetRankKeyForPosition(nextPosition);
+                if (pool.RankTitles.TryGetValue(rankKey, out var rankTitle))
+                {
+                    promotionCandidate.RankTitleId = rankTitle.Id ?? string.Empty;
+                    promotionCandidate.RankTitleFallback = rankTitle.Fallback ?? GetDefaultRankName(nextPosition);
+                    newRankDisplay = rankTitle.Fallback ?? GetDefaultRankName(nextPosition);
+                }
+            }
+            
+            // Reset the counters for next promotion
+            promotionCandidate.DaysInService = 0;
+            promotionCandidate.BattlesParticipated = 0;
+            
+            // Show in-game notification to player
+            var promotionMessage = $"{promotionCandidate.FirstName} has been promoted to {newRankDisplay}!";
+            InformationManager.DisplayMessage(new InformationMessage(promotionMessage, Colors.Green));
+            
+            // Log the promotion event for diagnostics
+            ModLogger.Info(LogCategory, $"PROMOTION: {promotionCandidate.FirstName} promoted from {oldPosition} to {nextPosition}");
+        }
+        
+        /// <summary>
+        /// Record a battle participation for all living lance members.
+        /// Call this after a battle ends.
+        /// </summary>
+        public void RecordBattleParticipation(string lanceKey, int xpGain = 10)
+        {
+            if (!_rosters.TryGetValue(lanceKey, out var roster)) return;
+            
+            foreach (var member in roster.Members)
+            {
+                if (member.IsAlive)
+                {
+                    member.BattlesParticipated++;
+                    member.ExperiencePoints += xpGain;
+                }
+            }
+            
+            ModLogger.Debug(LogCategory, $"Battle recorded for lance {lanceKey}: +{xpGain} XP to all living members");
+        }
+        
+        /// <summary>
+        /// Get the next position up the lance hierarchy.
+        /// </summary>
+        private LancePosition GetNextPosition(LancePosition current)
+        {
+            return current switch
+            {
+                LancePosition.Recruit => LancePosition.Soldier,
+                LancePosition.Soldier => LancePosition.Veteran,
+                LancePosition.Veteran => LancePosition.SeniorVeteran,
+                LancePosition.SeniorVeteran => LancePosition.Second,
+                LancePosition.Second => LancePosition.Leader,
+                _ => current // Leader stays Leader
+            };
+        }
+        
+        /// <summary>
+        /// Check if a member can be promoted to a position.
+        /// Ensures we don't have too many people at senior ranks.
+        /// </summary>
+        private bool CanPromoteToPosition(LancePersonaRoster roster, LancePersonaMember candidate, LancePosition targetPosition)
+        {
+            // Count how many people are at or above the target position (excluding dead)
+            int countAtOrAbove = 0;
+            foreach (var m in roster.Members)
+            {
+                if (m.IsAlive && m != candidate && (int)m.Position <= (int)targetPosition)
+                {
+                    countAtOrAbove++;
+                }
+            }
+            
+            // Limits: 1 Leader, 1 Second, 2 Senior Veterans, 3 Veterans, rest are Soldiers/Recruits
+            return targetPosition switch
+            {
+                LancePosition.Leader => countAtOrAbove == 0, // Only one leader
+                LancePosition.Second => roster.Members.FindAll(m => m.IsAlive && m.Position == LancePosition.Second && m != candidate).Count == 0,
+                LancePosition.SeniorVeteran => roster.Members.FindAll(m => m.IsAlive && m.Position == LancePosition.SeniorVeteran && m != candidate).Count < 2,
+                LancePosition.Veteran => roster.Members.FindAll(m => m.IsAlive && m.Position == LancePosition.Veteran && m != candidate).Count < 3,
+                _ => true // Soldier has no limit
+            };
+        }
+        
+        /// <summary>
+        /// Map position to rank key for looking up titles.
+        /// </summary>
+        private string GetRankKeyForPosition(LancePosition position)
+        {
+            return position switch
+            {
+                LancePosition.Leader => "leader",
+                LancePosition.Second => "second",
+                LancePosition.SeniorVeteran => "senior_veteran",
+                LancePosition.Veteran => "veteran",
+                LancePosition.Soldier => "soldier",
+                LancePosition.Recruit => "recruit",
+                _ => "soldier"
+            };
+        }
+        
+        /// <summary>
+        /// Get default English rank name for a position (fallback).
+        /// </summary>
+        private string GetDefaultRankName(LancePosition position)
+        {
+            return position switch
+            {
+                LancePosition.Leader => "Lance Leader",
+                LancePosition.Second => "Lance Second",
+                LancePosition.SeniorVeteran => "Senior Veteran",
+                LancePosition.Veteran => "Veteran",
+                LancePosition.Soldier => "Soldier",
+                LancePosition.Recruit => "Recruit",
+                _ => "Soldier"
+            };
         }
 
         internal LancePersonaRoster GetRosterFor(Hero lord, string lanceId)
@@ -255,7 +445,7 @@ namespace Enlisted.Features.Lances.Personas
 
         private int ComputeSeed(string lanceKey, string cultureId)
         {
-            var cfg = ConfigurationManager.LoadLancePersonasConfig() ?? new LancePersonasConfig();
+            var cfg = EnlistedConfigMgr.LoadLancePersonasConfig() ?? new LancePersonasConfig();
             var salt = cfg.SeedSalt ?? "enlisted";
             var input = $"{salt}|{cultureId}|{lanceKey}";
             return Fnv1a32(input);
@@ -270,7 +460,7 @@ namespace Enlisted.Features.Lances.Personas
 
             try
             {
-                var path = ConfigurationManager.GetModuleDataPathForConsumers(Path.Combine("LancePersonas", "name_pools.json"));
+                var path = EnlistedConfigMgr.GetModuleDataPathForConsumers(Path.Combine("LancePersonas", "name_pools.json"));
                 if (!File.Exists(path))
                 {
                     ModLogger.Warn(LogCategory, $"Name pools file missing at: {path}");
@@ -303,7 +493,7 @@ namespace Enlisted.Features.Lances.Personas
             LanceCulturePersonaPoolJson pool)
         {
             var rng = new Random(seed);
-            var cfg = ConfigurationManager.LoadLancePersonasConfig() ?? new LancePersonasConfig();
+            var cfg = EnlistedConfigMgr.LoadLancePersonasConfig() ?? new LancePersonasConfig();
 
             var roster = new LancePersonaRoster
             {
@@ -314,20 +504,23 @@ namespace Enlisted.Features.Lances.Personas
                 Members = new List<LancePersonaMember>()
             };
 
+            // Track used first names to ensure uniqueness within the lance
+            var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
             // Slot layout (doc): 1 leader, 1 second, 2 veterans, 4 soldiers, 2 recruits
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleLeaderChance, 1, 0, LancePosition.Leader, epithetChance: 0.9f));
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSecondChance, 2, 1, LancePosition.Second, epithetChance: 0.2f));
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, 3, 2, LancePosition.SeniorVeteran, epithetChance: 0.7f));
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, 4, 3, LancePosition.Veteran, epithetChance: 0.6f));
+            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleLeaderChance, 1, 0, LancePosition.Leader, epithetChance: 0.9f, usedNames));
+            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSecondChance, 2, 1, LancePosition.Second, epithetChance: 0.2f, usedNames));
+            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, 3, 2, LancePosition.SeniorVeteran, epithetChance: 0.7f, usedNames));
+            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, 4, 3, LancePosition.Veteran, epithetChance: 0.6f, usedNames));
 
             for (var i = 0; i < 4; i++)
             {
-                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSoldierChance, 5 + i, 4, LancePosition.Soldier, epithetChance: 0.2f));
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSoldierChance, 5 + i, 4, LancePosition.Soldier, epithetChance: 0.2f, usedNames));
             }
 
             for (var i = 0; i < 2; i++)
             {
-                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleRecruitChance, 9 + i, 5, LancePosition.Recruit, epithetChance: 0.0f));
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleRecruitChance, 9 + i, 5, LancePosition.Recruit, epithetChance: 0.0f, usedNames));
             }
 
             return roster;
@@ -340,10 +533,48 @@ namespace Enlisted.Features.Lances.Personas
             int slotIndex,
             int rankKeyIndex,
             LancePosition position,
-            float epithetChance)
+            float epithetChance,
+            HashSet<string> usedNames)
         {
             var isFemale = rng.NextDouble() < Clamp01(femaleChance);
-            var first = Pick(isFemale ? pool?.FemaleFirst : pool?.MaleFirst, rng) ?? "Soldier";
+            
+            // Generate unique first name within this lance
+            // Try up to 50 times to find a unique name before giving up
+            var namePool = isFemale ? pool?.FemaleFirst : pool?.MaleFirst;
+            string first = "Soldier";
+            bool foundUniqueName = false;
+            
+            if (namePool != null && namePool.Count > 0)
+            {
+                const int maxAttempts = 50;
+                for (int attempt = 0; attempt < maxAttempts; attempt++)
+                {
+                    var candidateName = Pick(namePool, rng);
+                    if (!usedNames.Contains(candidateName))
+                    {
+                        first = candidateName;
+                        foundUniqueName = true;
+                        break;
+                    }
+                }
+                
+                // If we couldn't find a unique name after 50 attempts,
+                // append a Roman numeral to make it unique (e.g., "John II")
+                if (!foundUniqueName)
+                {
+                    // Use the last candidate as base
+                    var baseName = first;
+                    int suffix = 2;
+                    while (usedNames.Contains(first))
+                    {
+                        first = $"{baseName} {ToRomanNumeral(suffix)}";
+                        suffix++;
+                    }
+                }
+            }
+            
+            // Add the final unique name to the set
+            usedNames.Add(first);
 
             var epithet = string.Empty;
             if (epithetChance > 0f && rng.NextDouble() < epithetChance)
@@ -450,6 +681,27 @@ namespace Enlisted.Features.Lances.Personas
             }
 
             return value > 1f ? 1f : value;
+        }
+
+        /// <summary>
+        /// Convert a number to Roman numerals for name suffixes (e.g., II, III, IV).
+        /// Only supports numbers 2-10 since we shouldn't need more than that for lance names.
+        /// </summary>
+        private static string ToRomanNumeral(int number)
+        {
+            return number switch
+            {
+                2 => "II",
+                3 => "III",
+                4 => "IV",
+                5 => "V",
+                6 => "VI",
+                7 => "VII",
+                8 => "VIII",
+                9 => "IX",
+                10 => "X",
+                _ => number.ToString() // Fallback to Arabic if out of range
+            };
         }
 
         private static int Fnv1a32(string input)

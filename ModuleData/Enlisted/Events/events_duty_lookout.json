@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_lookout",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -223,7 +223,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -438,7 +438,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -481,7 +481,7 @@
         "titleId": "ll_evt_look_signal_fire_title",
         "setupId": "ll_evt_look_signal_fire_setup",
         "title": "Signal Fire",
-        "setup": "{LORD_NAME}'s orders: watch for the signal fire. When you see it, we move.\n\nHours pass. No fire. Then — is that it? Or just a farmhouse burning?",
+        "setup": "{LORD_NAME}'s orders: watch for the signal fire. When you see it, we move.\n\nHours pass. No fire. Then â€” is that it? Or just a farmhouse burning?",
         "options": [
           {
             "id": "report_it_as_the_signal",
@@ -646,7 +646,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -695,7 +695,7 @@
           {
             "id": "report_honestly_uncertain",
             "textId": "ll_evt_look_weather_watch_opt_report_honestly_uncertain_text",
-            "text": "Report honestly — uncertain",
+            "text": "Report honestly â€” uncertain",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -732,7 +732,7 @@
           {
             "id": "predict_clear_advise_movement",
             "textId": "ll_evt_look_weather_watch_opt_predict_clear_advise_movement_text",
-            "text": "Predict clear — advise movement",
+            "text": "Predict clear â€” advise movement",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -770,7 +770,7 @@
           {
             "id": "predict_storm_advise_waiting",
             "textId": "ll_evt_look_weather_watch_opt_predict_storm_advise_waiting_text",
-            "text": "Predict storm — advise waiting",
+            "text": "Predict storm â€” advise waiting",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -855,7 +855,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1021,7 +1021,7 @@
           {
             "id": "round_up_better_safe_than_sorry",
             "textId": "ll_evt_look_relief_late_opt_round_up_better_safe_than_sorry_text",
-            "text": "Round up — better safe than sorry",
+            "text": "Round up â€” better safe than sorry",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1061,3 +1061,5 @@
     }
   ]
 }
+
+

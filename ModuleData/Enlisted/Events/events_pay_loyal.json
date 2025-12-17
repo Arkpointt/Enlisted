@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "pay_loyal",
   "category": "pay",
@@ -8,7 +8,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -56,7 +56,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_mission_debts_opt_polite_outcome",
-            "outcome": "You knock on doors. Remind them of obligations. Most pay — eventually. The lord gets their coin, and you get noticed."
+            "outcome": "You knock on doors. Remind them of obligations. Most pay â€” eventually. The lord gets their coin, and you get noticed."
           },
           {
             "id": "collect_aggressive",
@@ -116,7 +116,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -148,7 +148,7 @@
         "titleId": "ll_evt_mission_escort_title",
         "setupId": "ll_evt_mission_escort_setup",
         "title": "Escort Merchant",
-        "setup": "A merchant owes the lord goods, not gold. Cloth, iron, supplies. They're willing to deliver — but the roads are dangerous.\n\n\"Need an escort,\" {LANCE_LEADER_SHORT} says. \"Three days, maybe five. Volunteer, and the lord owes you a favor.\"",
+        "setup": "A merchant owes the lord goods, not gold. Cloth, iron, supplies. They're willing to deliver â€” but the roads are dangerous.\n\n\"Need an escort,\" {LANCE_LEADER_SHORT} says. \"Three days, maybe five. Volunteer, and the lord owes you a favor.\"",
         "options": [
           {
             "id": "volunteer",
@@ -191,7 +191,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -229,7 +229,7 @@
         "titleId": "ll_evt_mission_loan_title",
         "setupId": "ll_evt_mission_loan_setup",
         "title": "Negotiate a Loan",
-        "setup": "The lord needs coin. Badly. A moneylender in town might help — but they need convincing.\n\n\"Your reputation precedes you,\" {LANCE_LEADER_SHORT} says. \"The lord thinks you could tip the scales. Interested?\"",
+        "setup": "The lord needs coin. Badly. A moneylender in town might help â€” but they need convincing.\n\n\"Your reputation precedes you,\" {LANCE_LEADER_SHORT} says. \"The lord thinks you could tip the scales. Interested?\"",
         "options": [
           {
             "id": "use_charm",
@@ -305,7 +305,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -378,4 +378,6 @@
     }
   ]
 }
+
+
 

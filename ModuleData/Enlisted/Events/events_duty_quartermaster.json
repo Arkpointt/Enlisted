@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_quartermaster",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -222,7 +222,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -428,7 +428,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -471,7 +471,7 @@
         "titleId": "ll_evt_qm_spoiled_supplies_title",
         "setupId": "ll_evt_qm_spoiled_supplies_setup",
         "title": "Spoiled Supplies",
-        "setup": "The smell hits you before you open the barrel. Rot. A third of the salted meat has gone bad — either the salt wasn't enough or someone sold us garbage.\n\n{SECOND_SHORT} is already there. \"How bad?\"",
+        "setup": "The smell hits you before you open the barrel. Rot. A third of the salted meat has gone bad â€” either the salt wasn't enough or someone sold us garbage.\n\n{SECOND_SHORT} is already there. \"How bad?\"",
         "options": [
           {
             "id": "report_it_honestly_take_the_blam",
@@ -635,7 +635,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -685,7 +685,7 @@
           {
             "id": "veterans_first_they_ve_earned_it",
             "textId": "ll_evt_qm_requisition_request_opt_veterans_first_they_ve_earned_it_text",
-            "text": "Veterans first — they've earned it",
+            "text": "Veterans first â€” they've earned it",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -722,7 +722,7 @@
           {
             "id": "recruits_first_they_ll_die_witho",
             "textId": "ll_evt_qm_requisition_request_opt_recruits_first_they_ll_die_witho_text",
-            "text": "Recruits first — they'll die without it",
+            "text": "Recruits first â€” they'll die without it",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -843,7 +843,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1043,3 +1043,5 @@
     }
   ]
 }
+
+

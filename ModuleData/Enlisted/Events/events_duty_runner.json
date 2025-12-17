@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_runner",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -136,7 +136,7 @@
           {
             "id": "sprint_race_the_rain",
             "textId": "ll_evt_run_supply_run_opt_sprint_race_the_rain_text",
-            "text": "Sprint — race the rain",
+            "text": "Sprint â€” race the rain",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -223,7 +223,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -273,7 +273,7 @@
           {
             "id": "sprint_every_second_counts",
             "textId": "ll_evt_run_battle_runner_opt_sprint_every_second_counts_text",
-            "text": "Sprint — every second counts",
+            "text": "Sprint â€” every second counts",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -435,7 +435,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -478,7 +478,7 @@
         "titleId": "ll_evt_run_night_summons_title",
         "setupId": "ll_evt_run_night_summons_setup",
         "title": "Lost Orders",
-        "setup": "The orders got confused somewhere. Third company went left when they should've gone right. Someone needs to sort this out — on foot, through a camp that's half-packed and chaotic.\n\n{SECOND_SHORT} points at you. \"Go.\"",
+        "setup": "The orders got confused somewhere. Third company went left when they should've gone right. Someone needs to sort this out â€” on foot, through a camp that's half-packed and chaotic.\n\n{SECOND_SHORT} points at you. \"Go.\"",
         "options": [
           {
             "id": "find_each_unit_deliver_correctio",
@@ -648,7 +648,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -863,7 +863,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1069,3 +1069,5 @@
     }
   ]
 }
+
+

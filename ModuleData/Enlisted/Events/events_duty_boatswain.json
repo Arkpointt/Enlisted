@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_boatswain",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -55,12 +55,12 @@
         "titleId": "ll_evt_boat_deck_management_title",
         "setupId": "ll_evt_boat_deck_management_setup",
         "title": "Deck Discipline",
-        "setup": "{CAPTAIN_NAME} runs a tight ship. That's your job — making sure the crew follows orders.\n\nSomeone slacked on the night watch. Everyone knows who. Now they're watching to see what you do.",
+        "setup": "{CAPTAIN_NAME} runs a tight ship. That's your job â€” making sure the crew follows orders.\n\nSomeone slacked on the night watch. Everyone knows who. Now they're watching to see what you do.",
         "options": [
           {
             "id": "public_discipline_make_an_exampl",
             "textId": "ll_evt_boat_deck_management_opt_public_discipline_make_an_exampl_text",
-            "text": "Public discipline — make an example",
+            "text": "Public discipline â€” make an example",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -98,7 +98,7 @@
           {
             "id": "private_warning_give_them_one_ch",
             "textId": "ll_evt_boat_deck_management_opt_private_warning_give_them_one_ch_text",
-            "text": "Private warning — give them one chance",
+            "text": "Private warning â€” give them one chance",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -136,7 +136,7 @@
           {
             "id": "extra_duty_punishment_through_wo",
             "textId": "ll_evt_boat_deck_management_opt_extra_duty_punishment_through_wo_text",
-            "text": "Extra duty — punishment through work",
+            "text": "Extra duty â€” punishment through work",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -173,7 +173,7 @@
           {
             "id": "ignore_it_not_worth_the_trouble",
             "textId": "ll_evt_boat_deck_management_opt_ignore_it_not_worth_the_trouble_text",
-            "text": "Ignore it — not worth the trouble",
+            "text": "Ignore it â€” not worth the trouble",
             "tooltip": null,
             "condition": null,
             "risk": "corrupt",
@@ -217,7 +217,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -429,7 +429,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -637,7 +637,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -802,7 +802,7 @@
           {
             "id": "he_s_gone_don_t_risk_more_lives",
             "textId": "ll_evt_boat_man_overboard_opt_he_s_gone_don_t_risk_more_lives_text",
-            "text": "He's gone — don't risk more lives",
+            "text": "He's gone â€” don't risk more lives",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -848,7 +848,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -891,7 +891,7 @@
         "titleId": "ll_evt_boat_crew_dispute_title",
         "setupId": "ll_evt_boat_crew_dispute_setup",
         "title": "Crew Dispute",
-        "setup": "Two sailors at each other's throats. Something about stolen rations, a woman back home, some old grudge. Doesn't matter — it's spreading.\n\nThe crew's watching you.",
+        "setup": "Two sailors at each other's throats. Something about stolen rations, a woman back home, some old grudge. Doesn't matter â€” it's spreading.\n\nThe crew's watching you.",
         "options": [
           {
             "id": "separate_them_hear_both_sides",
@@ -971,7 +971,7 @@
           {
             "id": "punish_both_no_fighting_aboard",
             "textId": "ll_evt_boat_crew_dispute_opt_punish_both_no_fighting_aboard_text",
-            "text": "Punish both — no fighting aboard",
+            "text": "Punish both â€” no fighting aboard",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1049,3 +1049,5 @@
     }
   ]
 }
+
+

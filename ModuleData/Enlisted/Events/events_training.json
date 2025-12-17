@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "training",
   "category": "training",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -53,7 +53,7 @@
         "titleId": "ll_evt_inf_train_shield_wall_title",
         "setupId": "ll_evt_inf_train_shield_wall_setup",
         "title": "Shield Wall Drill",
-        "setup": "{SERGEANT_NAME} forms up {LANCE_NAME}. \"Shield wall! Tight formation! I want to hear those shields lock!\"\n\nThe drill is brutal — hours holding the wall, taking practice blows, advancing as one.",
+        "setup": "{SERGEANT_NAME} forms up {LANCE_NAME}. \"Shield wall! Tight formation! I want to hear those shields lock!\"\n\nThe drill is brutal â€” hours holding the wall, taking practice blows, advancing as one.",
         "options": [
           {
             "id": "hold_the_line_no_breaks",
@@ -227,7 +227,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -442,7 +442,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -652,7 +652,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -817,7 +817,7 @@
           {
             "id": "partner_drill_strike_and_counter",
             "textId": "ll_evt_inf_train_twohanded_opt_partner_drill_strike_and_counter_text",
-            "text": "Partner drill — strike and counter",
+            "text": "Partner drill â€” strike and counter",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -868,7 +868,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -1077,7 +1077,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -1293,7 +1293,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -1335,7 +1335,7 @@
         "titleId": "ll_evt_cav_train_charge_title",
         "setupId": "ll_evt_cav_train_charge_setup",
         "title": "Charge Practice",
-        "setup": "The infantry holds a line of dummies. Your job — hit it at full gallop without dying.\n\n{LANCE_LEADER_SHORT}: \"Control. Timing. Impact. In that order.\"",
+        "setup": "The infantry holds a line of dummies. Your job â€” hit it at full gallop without dying.\n\n{LANCE_LEADER_SHORT}: \"Control. Timing. Impact. In that order.\"",
         "options": [
           {
             "id": "standard_charge_proper_form",
@@ -1509,7 +1509,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -1722,7 +1722,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -1848,7 +1848,7 @@
           {
             "id": "speed_shooting_loose_fast",
             "textId": "ll_evt_arch_train_target_opt_speed_shooting_loose_fast_text",
-            "text": "Speed shooting — loose fast",
+            "text": "Speed shooting â€” loose fast",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1933,7 +1933,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -2094,7 +2094,7 @@
           {
             "id": "high_arc_shots_hit_behind_cover",
             "textId": "ll_evt_arch_train_volley_opt_high_arc_shots_hit_behind_cover_text",
-            "text": "High arc shots — hit behind cover",
+            "text": "High arc shots â€” hit behind cover",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -2141,7 +2141,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -2264,7 +2264,7 @@
           {
             "id": "speed_over_accuracy_volume_fire",
             "textId": "ll_evt_arch_train_moving_opt_speed_over_accuracy_volume_fire_text",
-            "text": "Speed over accuracy — volume fire",
+            "text": "Speed over accuracy â€” volume fire",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -2301,7 +2301,7 @@
           {
             "id": "mixed_practice_various_targets",
             "textId": "ll_evt_arch_train_moving_opt_mixed_practice_various_targets_text",
-            "text": "Mixed practice — various targets",
+            "text": "Mixed practice â€” various targets",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -2348,7 +2348,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -2561,7 +2561,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -2776,7 +2776,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -2987,7 +2987,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -3194,7 +3194,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "player_initiated",
@@ -3399,3 +3399,5 @@
     }
   ]
 }
+
+

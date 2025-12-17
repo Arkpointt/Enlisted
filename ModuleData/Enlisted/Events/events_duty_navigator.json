@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_navigator",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -60,7 +60,7 @@
           {
             "id": "safe_route_longer_but_reliable",
             "textId": "ll_evt_nav_course_setting_opt_safe_route_longer_but_reliable_text",
-            "text": "Safe route — longer but reliable",
+            "text": "Safe route â€” longer but reliable",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -98,7 +98,7 @@
           {
             "id": "direct_route_fastest_but_riskier",
             "textId": "ll_evt_nav_course_setting_opt_direct_route_fastest_but_riskier_text",
-            "text": "Direct route — fastest but riskier",
+            "text": "Direct route â€” fastest but riskier",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -140,7 +140,7 @@
           {
             "id": "coastal_route_landmarks_safe_har",
             "textId": "ll_evt_nav_course_setting_opt_coastal_route_landmarks_safe_har_text",
-            "text": "Coastal route — landmarks, safe harbors",
+            "text": "Coastal route â€” landmarks, safe harbors",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -224,7 +224,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -269,12 +269,12 @@
         "titleId": "ll_evt_nav_dead_reckoning_title",
         "setupId": "ll_evt_nav_dead_reckoning_setup",
         "title": "Storm Navigation",
-        "setup": "The storm hit hard. Stars are gone. Landmarks — what landmarks? {SHIP_NAME} is somewhere in a lot of angry water.\n\n{CAPTAIN_NAME} needs a heading. Now.",
+        "setup": "The storm hit hard. Stars are gone. Landmarks â€” what landmarks? {SHIP_NAME} is somewhere in a lot of angry water.\n\n{CAPTAIN_NAME} needs a heading. Now.",
         "options": [
           {
             "id": "dead_reckoning_trust_your_calcul",
             "textId": "ll_evt_nav_dead_reckoning_opt_dead_reckoning_trust_your_calcul_text",
-            "text": "Dead reckoning — trust your calculations",
+            "text": "Dead reckoning â€” trust your calculations",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -311,7 +311,7 @@
           {
             "id": "heave_to_ride_out_the_storm_reca",
             "textId": "ll_evt_nav_dead_reckoning_opt_heave_to_ride_out_the_storm_reca_text",
-            "text": "Heave to — ride out the storm, recalculate after",
+            "text": "Heave to â€” ride out the storm, recalculate after",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -348,7 +348,7 @@
           {
             "id": "run_before_the_wind_go_where_it_",
             "textId": "ll_evt_nav_dead_reckoning_opt_run_before_the_wind_go_where_it__text",
-            "text": "Run before the wind — go where it takes us",
+            "text": "Run before the wind â€” go where it takes us",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -431,7 +431,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -474,12 +474,12 @@
         "titleId": "ll_evt_nav_reef_warning_title",
         "setupId": "ll_evt_nav_reef_warning_setup",
         "title": "Unknown Waters",
-        "setup": "The charts end here. {CAPTAIN_NAME} wants to push on — profit in unknown ports, they say.\n\nYour charts are blank. Your instruments are useless. Now it's just experience.",
+        "setup": "The charts end here. {CAPTAIN_NAME} wants to push on â€” profit in unknown ports, they say.\n\nYour charts are blank. Your instruments are useless. Now it's just experience.",
         "options": [
           {
             "id": "map_as_you_go_careful_progress",
             "textId": "ll_evt_nav_reef_warning_opt_map_as_you_go_careful_progress_text",
-            "text": "Map as you go — careful progress",
+            "text": "Map as you go â€” careful progress",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -638,7 +638,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -846,7 +846,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1047,3 +1047,5 @@
     }
   ]
 }
+
+

@@ -51,6 +51,20 @@ namespace Enlisted.Features.Interface.Behaviors
         private int _lastBulletinDayNumber = -1;
 
         /// <summary>
+        /// Day number when the current Daily Brief was generated.
+        /// The brief is intentionally stable for the whole in-game day (light RP flavor).
+        /// </summary>
+        private int _lastDailyBriefDayNumber = -1;
+
+        /// <summary>
+        /// Daily Brief lines (stable for the day).
+        /// Stored as raw values (without "Company:"/"Lance:"/"Kingdom:" prefixes) so UIs can format as needed.
+        /// </summary>
+        private string _dailyBriefCompany = string.Empty;
+        private string _dailyBriefLance = string.Empty;
+        private string _dailyBriefKingdom = string.Empty;
+
+        /// <summary>
         /// Cached battle initial strengths for pyrrhic detection.
         /// Key: MapEvent hash code as string.
         /// </summary>
@@ -162,6 +176,17 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Sync bulletin tracking
                 dataStore.SyncData("en_news_lastBulletinDay", ref _lastBulletinDayNumber);
 
+                // Sync Daily Brief (once-per-day RP digest)
+                // Ensure strings are never null before syncing (Bannerlord SyncData requires non-null refs)
+                _dailyBriefCompany ??= string.Empty;
+                _dailyBriefLance ??= string.Empty;
+                _dailyBriefKingdom ??= string.Empty;
+                
+                dataStore.SyncData("en_news_dailyBriefDay", ref _lastDailyBriefDayNumber);
+                dataStore.SyncData("en_news_dailyBriefCompany", ref _dailyBriefCompany);
+                dataStore.SyncData("en_news_dailyBriefLance", ref _dailyBriefLance);
+                dataStore.SyncData("en_news_dailyBriefKingdom", ref _dailyBriefKingdom);
+
                 // Sync battle snapshots (for pyrrhic detection across save/load)
                 var snapshotCount = _battleSnapshots?.Count ?? 0;
                 dataStore.SyncData("en_news_snapshotCount", ref snapshotCount);
@@ -195,6 +220,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 _personalFeed ??= new List<DispatchItem>();
                 _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
 
+                _dailyBriefCompany ??= string.Empty;
+                _dailyBriefLance ??= string.Empty;
+                _dailyBriefKingdom ??= string.Empty;
+
                 // Trim feeds to max size
                 TrimFeeds();
 
@@ -212,6 +241,163 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         #region Public API (Menu Integration)
+
+        /// <summary>
+        /// Builds the once-per-day Daily Brief section (Company/Lance/Kingdom).
+        /// This replaces the old "Kingdom News" block on the main enlisted menu.
+        /// </summary>
+        public string BuildDailyBriefSection()
+        {
+            try
+            {
+                if (!IsEnlisted())
+                {
+                    return string.Empty;
+                }
+
+                EnsureDailyBriefGenerated();
+
+                // If generation produced no content (should be rare), hide the section rather than showing empties.
+                if (string.IsNullOrWhiteSpace(_dailyBriefCompany) &&
+                    string.IsNullOrWhiteSpace(_dailyBriefLance) &&
+                    string.IsNullOrWhiteSpace(_dailyBriefKingdom))
+                {
+                    return string.Empty;
+                }
+
+                var sb = new StringBuilder();
+                sb.AppendLine(new TextObject("{=en_daily_brief_header}--- Daily Brief (Today) ---").ToString());
+
+                if (!string.IsNullOrWhiteSpace(_dailyBriefCompany))
+                {
+                    sb.AppendLine($"Company: {_dailyBriefCompany}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(_dailyBriefLance))
+                {
+                    sb.AppendLine($"Lance:   {_dailyBriefLance}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
+                {
+                    sb.AppendLine($"Kingdom: {_dailyBriefKingdom}");
+                }
+
+                return sb.ToString().TrimEnd();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error building Daily Brief section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Returns the current "visible" kingdom dispatch items using the same rules as the enlisted_status menu.
+        /// This is useful for other UIs (e.g. Camp Bulletin) that want the same cadence and dedupe behavior.
+        /// </summary>
+        public List<DispatchItem> GetVisibleKingdomFeedItems(int maxItems = 3)
+        {
+            try
+            {
+                if (_kingdomFeed == null || _kingdomFeed.Count == 0)
+                {
+                    return new List<DispatchItem>();
+                }
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var candidates = _kingdomFeed
+                    .Where(x =>
+                        x.FirstShownDay < 0 ||
+                        currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays))
+                    .OrderByDescending(x => x.FirstShownDay >= 0 && currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays)) // sticky
+                    .ThenByDescending(x => Math.Max(1, x.MinDisplayDays)) // important first
+                    .ThenByDescending(x => x.DayCreated)
+                    .ToList();
+
+                var recentItems = candidates.Take(maxItems).ToList();
+
+                // Mark newly-shown items so they remain visible for their minimum display window.
+                for (var i = 0; i < recentItems.Count; i++)
+                {
+                    var item = recentItems[i];
+                    if (item.FirstShownDay < 0 && !string.IsNullOrEmpty(item.StoryKey))
+                    {
+                        var idx = _kingdomFeed.FindIndex(x => x.StoryKey == item.StoryKey);
+                        if (idx >= 0)
+                        {
+                            var updated = _kingdomFeed[idx];
+                            updated.FirstShownDay = currentDay;
+                            _kingdomFeed[idx] = updated;
+                        }
+                    }
+                }
+
+                return recentItems;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error selecting visible kingdom feed items", ex);
+                return new List<DispatchItem>();
+            }
+        }
+
+        /// <summary>
+        /// Returns the current "visible" personal dispatch items using the same rules as the enlisted_activities menu.
+        /// </summary>
+        public List<DispatchItem> GetVisiblePersonalFeedItems(int maxItems = 2)
+        {
+            try
+            {
+                if (_personalFeed == null || _personalFeed.Count == 0)
+                {
+                    return new List<DispatchItem>();
+                }
+
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                var candidates = _personalFeed
+                    .Where(x =>
+                        x.FirstShownDay < 0 ||
+                        currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays))
+                    .OrderByDescending(x => x.FirstShownDay >= 0 && currentDay - x.FirstShownDay < Math.Max(1, x.MinDisplayDays)) // sticky
+                    .ThenByDescending(x => Math.Max(1, x.MinDisplayDays))
+                    .ThenByDescending(x => x.DayCreated)
+                    .ToList();
+
+                var recentItems = candidates.Take(maxItems).ToList();
+
+                // Mark newly-shown items so they remain visible for their minimum display window.
+                for (var i = 0; i < recentItems.Count; i++)
+                {
+                    var item = recentItems[i];
+                    if (item.FirstShownDay < 0 && !string.IsNullOrEmpty(item.StoryKey))
+                    {
+                        var idx = _personalFeed.FindIndex(x => x.StoryKey == item.StoryKey);
+                        if (idx >= 0)
+                        {
+                            var updated = _personalFeed[idx];
+                            updated.FirstShownDay = currentDay;
+                            _personalFeed[idx] = updated;
+                        }
+                    }
+                }
+
+                return recentItems;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error selecting visible personal feed items", ex);
+                return new List<DispatchItem>();
+            }
+        }
+
+        /// <summary>
+        /// Formats a dispatch item into display text using the same localization/template rules used by the menus.
+        /// </summary>
+        public static string FormatDispatchForDisplay(DispatchItem item)
+        {
+            return FormatDispatchItem(item);
+        }
 
         /// <summary>
         /// Builds the kingdom news section for display in enlisted_status menu.
@@ -374,6 +560,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
+                // Generate the daily brief once per day while enlisted so the main menu can display it without jitter.
+                EnsureDailyBriefGenerated();
+
                 CheckForArmyFormation();
             }
             catch (Exception ex)
@@ -414,6 +603,155 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Error checking army formation", ex);
+            }
+        }
+
+        /// <summary>
+        /// Ensures the Daily Brief is generated for the current in-game day.
+        /// Stable for the day; regenerated at most once per day.
+        /// </summary>
+        private void EnsureDailyBriefGenerated()
+        {
+            try
+            {
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                if (_lastDailyBriefDayNumber == currentDay &&
+                    (!string.IsNullOrWhiteSpace(_dailyBriefCompany) ||
+                     !string.IsNullOrWhiteSpace(_dailyBriefLance) ||
+                     !string.IsNullOrWhiteSpace(_dailyBriefKingdom)))
+                {
+                    return;
+                }
+
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    _lastDailyBriefDayNumber = currentDay;
+                    _dailyBriefCompany = string.Empty;
+                    _dailyBriefLance = string.Empty;
+                    _dailyBriefKingdom = string.Empty;
+                    return;
+                }
+
+                _lastDailyBriefDayNumber = currentDay;
+                _dailyBriefCompany = BuildDailyCompanyLine(enlistment);
+                _dailyBriefLance = BuildDailyLanceLine(enlistment);
+                _dailyBriefKingdom = BuildDailyKingdomLine(enlistment);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Error generating Daily Brief", ex);
+            }
+        }
+
+        private static string BuildDailyCompanyLine(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var lord = enlistment?.CurrentLord;
+                var party = lord?.PartyBelongedTo;
+                if (party == null)
+                {
+                    return "No company details available.";
+                }
+
+                if (party.Party?.MapEvent != null)
+                {
+                    return "Engaged in battle.";
+                }
+
+                if (party.Party?.SiegeEvent != null)
+                {
+                    return "Committed to siege operations.";
+                }
+
+                if (party.CurrentSettlement != null)
+                {
+                    return $"Camped at {party.CurrentSettlement.Name}.";
+                }
+
+                if (party.Army != null)
+                {
+                    var leader = party.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "the army leader";
+                    return $"Marching with the army of {leader}.";
+                }
+
+                if (party.TargetSettlement != null)
+                {
+                    return $"Marching toward {party.TargetSettlement.Name}.";
+                }
+
+                return "On the march.";
+            }
+            catch
+            {
+                return "On the march.";
+            }
+        }
+
+        private static string BuildDailyLanceLine(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var lanceName = enlistment?.CurrentLanceName;
+                if (string.IsNullOrWhiteSpace(lanceName))
+                {
+                    return "No lance assigned.";
+                }
+
+                // Keep this light and RP-flavored; detailed stats belong in Camp screens.
+                var cond = Enlisted.Features.Conditions.PlayerConditionBehavior.Instance;
+                if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
+                {
+                    if (cond.State.HasInjury)
+                    {
+                        return $"{lanceName} keeps a slower pace while you recover.";
+                    }
+                    if (cond.State.HasIllness)
+                    {
+                        return $"{lanceName} covers for you while sickness runs its course.";
+                    }
+                }
+
+                if (enlistment != null && enlistment.FatigueMax > 0 && enlistment.FatigueCurrent <= enlistment.FatigueMax / 4)
+                {
+                    return $"{lanceName} looks worn down after long days.";
+                }
+
+                return $"{lanceName} holds steady and in good order.";
+            }
+            catch
+            {
+                return "Your lance holds steady.";
+            }
+        }
+
+        private string BuildDailyKingdomLine(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                // Prefer a real headline if we have one (keeps the brief grounded in actual events).
+                if (_kingdomFeed != null && _kingdomFeed.Count > 0)
+                {
+                    var latest = _kingdomFeed.OrderByDescending(x => x.DayCreated).FirstOrDefault();
+                    var headline = FormatDispatchItem(latest);
+                    if (!string.IsNullOrWhiteSpace(headline))
+                    {
+                        return headline;
+                    }
+                }
+
+                var kingdom = enlistment?.CurrentLord?.MapFaction as Kingdom;
+                if (kingdom?.Name != null)
+                {
+                    return $"The banners of {kingdom.Name} remain in the field.";
+                }
+
+                return "The realm is quiet, for now.";
+            }
+            catch
+            {
+                return "The realm is quiet, for now.";
             }
         }
 

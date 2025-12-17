@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "cultures": {
+    "empire": {
+      "male_first": ["Marcus", "Lucius", "Gaius", "Tiberius", "Quintus", "Servius", "Decimus", "Publius", "Aulus", "Sextus"],
+      "female_first": ["Livia", "Julia", "Claudia", "Flavia", "Valeria", "Cassia", "Lucia", "Serena", "Prisca"],
+      "epithets": ["the Wall", "Iron-Arm", "the Grim", "One-Eye", "Twice-Wounded", "the Younger"],
+      "rank_titles": {
+        "leader": { "id": "lp_rank_empire_leader", "fallback": "Decanus" },
+        "second": { "id": "lp_rank_empire_second", "fallback": "Tesserarius" },
+        "senior_veteran": { "id": "lp_rank_empire_senior_veteran", "fallback": "Veteranus Primus" },
+        "veteran": { "id": "lp_rank_empire_veteran", "fallback": "Veteranus" },
+        "soldier": { "id": "lp_rank_empire_soldier", "fallback": "Miles" },
+        "recruit": { "id": "lp_rank_empire_recruit", "fallback": "Tiro" }
+      }
+    },
+    "vlandia": {
+      "male_first": ["Aldric", "Baldwin", "Conrad", "Edmund", "Geoffrey", "Hugh", "Lambert", "Raymond", "Roland", "William"],
+      "female_first": ["Adela", "Beatrice", "Eleanor", "Giselle", "Helena", "Ingrid", "Mathilde", "Rosamund", "Sybil"],
+      "epithets": ["the Red", "the Black", "One-Eye", "Ironfist", "the Bold", "the Quiet"],
+      "rank_titles": {
+        "leader": { "id": "lp_rank_vlandia_leader", "fallback": "Sergeant" },
+        "second": { "id": "lp_rank_vlandia_second", "fallback": "Corporal" },
+        "senior_veteran": { "id": "lp_rank_vlandia_senior_veteran", "fallback": "Senior Man-at-Arms" },
+        "veteran": { "id": "lp_rank_vlandia_veteran", "fallback": "Man-at-Arms" },
+        "soldier": { "id": "lp_rank_vlandia_soldier", "fallback": "Soldier" },
+        "recruit": { "id": "lp_rank_vlandia_recruit", "fallback": "Recruit" }
+      }
+    },
+    "sturgia": {
+      "male_first": ["Arik", "Boris", "Dimitri", "Fyodor", "Grigori", "Ivan", "Mikhail", "Oleg", "Sigurd", "Ragnar"],
+      "female_first": ["Anja", "Darya", "Helga", "Irina", "Katya", "Ludmila", "Nadia", "Olga", "Svana", "Yrsa"],
+      "epithets": ["Bear-Hand", "Frost-Born", "Storm-Eye", "Wolf-Slayer", "the Silent", "Blood-Axe"],
+      "rank_titles": {
+        "leader": { "id": "lp_rank_sturgia_leader", "fallback": "Húskarl-Leader" },
+        "second": { "id": "lp_rank_sturgia_second", "fallback": "Second Húskarl" },
+        "senior_veteran": { "id": "lp_rank_sturgia_senior_veteran", "fallback": "Veteran Drengr" },
+        "veteran": { "id": "lp_rank_sturgia_veteran", "fallback": "Drengr" },
+        "soldier": { "id": "lp_rank_sturgia_soldier", "fallback": "Karl" },
+        "recruit": { "id": "lp_rank_sturgia_recruit", "fallback": "Recruit" }
+      }
+    },
+    "battania": {
+      "male_first": ["Aeron", "Brennus", "Cadan", "Drest", "Erwan", "Findan", "Luern", "Morcant", "Nevin", "Talwyn"],
+      "female_first": ["Aeryn", "Brigid", "Caela", "Deirdre", "Efa", "Fiona", "Gwyneth", "Moira", "Niamh", "Seren"],
+      "epithets": ["of the Oak", "Wolfborn", "Storm-Singer", "the Painted", "Thornhand", "the Wild"],
+      "rank_titles": {
+        "leader": { "id": "lp_rank_battania_leader", "fallback": "Cennaire" },
+        "second": { "id": "lp_rank_battania_second", "fallback": "Tánaise" },
+        "senior_veteran": { "id": "lp_rank_battania_senior_veteran", "fallback": "Laoch Mór" },
+        "veteran": { "id": "lp_rank_battania_veteran", "fallback": "Laoch" },
+        "soldier": { "id": "lp_rank_battania_soldier", "fallback": "Fénnid" },
+        "recruit": { "id": "lp_rank_battania_recruit", "fallback": "Dalta" }
+      }
+    },
+    "khuzait": {
+      "male_first": ["Batu", "Chagatai", "Dayan", "Erden", "Gerel", "Jochi", "Mongke", "Nokhor", "Sübedei", "Temur"],
+      "female_first": ["Altani", "Borte", "Erdene", "Khulan", "Naran", "Oyuun", "Saran", "Yesui"],
+      "epithets": ["the Swift", "Horse-Master", "Arrow-Eye", "Wind-Rider", "the Fearless", "Eagle-Eye"],
+      "rank_titles": {
+        "leader": { "id": "lp_rank_khuzait_leader", "fallback": "Arban-u Darga" },
+        "second": { "id": "lp_rank_khuzait_second", "fallback": "Baghatur" },
+        "senior_veteran": { "id": "lp_rank_khuzait_senior_veteran", "fallback": "Akh Duu" },
+        "veteran": { "id": "lp_rank_khuzait_veteran", "fallback": "Duu" },
+        "soldier": { "id": "lp_rank_khuzait_soldier", "fallback": "Cherbi" },
+        "recruit": { "id": "lp_rank_khuzait_recruit", "fallback": "Koke" }
+      }
+    },
+    "aserai": {
+      "male_first": ["Adnan", "Bahir", "Farid", "Hassan", "Ibrahim", "Jalal", "Karim", "Malik", "Nasir", "Omar"],
+      "female_first": ["Amira", "Dalila", "Fatima", "Jamila", "Layla", "Nadia", "Samira", "Yasmina", "Zahra"],
+      "epithets": ["al-Sayf", "the Lion", "Sun-Blessed", "Sand-Walker", "the Hawk", "the Patient"],
+      "rank_titles": {
+        "leader": { "id": "lp_rank_aserai_leader", "fallback": "Arif" },
+        "second": { "id": "lp_rank_aserai_second", "fallback": "Naqib" },
+        "senior_veteran": { "id": "lp_rank_aserai_senior_veteran", "fallback": "Muqatil Kabir" },
+        "veteran": { "id": "lp_rank_aserai_veteran", "fallback": "Muqatil" },
+        "soldier": { "id": "lp_rank_aserai_soldier", "fallback": "Jundi" },
+        "recruit": { "id": "lp_rank_aserai_recruit", "fallback": "Mubdi" }
+      }
+    }
+  }
+}
+
+

@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_messenger",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -226,7 +226,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -274,7 +274,7 @@
           {
             "id": "avoid_detour_through_rough_terra",
             "textId": "ll_evt_msg_enemy_lines_opt_avoid_detour_through_rough_terra_text",
-            "text": "Avoid — detour through rough terrain",
+            "text": "Avoid â€” detour through rough terrain",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -435,7 +435,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -478,7 +478,7 @@
         "titleId": "ll_evt_msg_verbal_orders_title",
         "setupId": "ll_evt_msg_verbal_orders_setup",
         "title": "Wrong Place, Wrong Time",
-        "setup": "You rode into a battle. Not your battle — two lords fighting over something that doesn't concern you.\n\nYour message won't deliver itself. But riding through that mess might kill you.",
+        "setup": "You rode into a battle. Not your battle â€” two lords fighting over something that doesn't concern you.\n\nYour message won't deliver itself. But riding through that mess might kill you.",
         "options": [
           {
             "id": "wait_for_it_to_end",
@@ -650,7 +650,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -857,7 +857,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1059,3 +1059,5 @@
     }
   ]
 }
+
+

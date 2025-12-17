@@ -48,6 +48,20 @@ namespace Enlisted.Features.Lances.Personas
 
         public string FirstName { get; set; } = string.Empty;
         public string Epithet { get; set; } = string.Empty;
+        
+        // Progression tracking for promotions
+        public int DaysInService { get; set; } = 0;
+        public int BattlesParticipated { get; set; } = 0;
+        public int ExperiencePoints { get; set; } = 0;
+        
+        /// <summary>
+        /// Check if this member is eligible for promotion based on time and battles.
+        /// Requires 30+ days in service AND 3+ battles for consideration.
+        /// </summary>
+        public bool IsPromotionEligible => 
+            Position != LancePosition.Leader &&
+            DaysInService >= 30 && 
+            BattlesParticipated >= 3;
     }
 
     internal sealed class LancePersonaRoster

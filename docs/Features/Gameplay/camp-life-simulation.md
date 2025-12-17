@@ -1,6 +1,6 @@
-﻿# Feature Spec: Camp Life Simulation
+# Feature Spec: Camp Life Simulation
 
-This spec proposes an **internal, mod-friendly** â€œcamp lifeâ€ simulation layer that reacts to the campaign and makes enlisted service feel like a lived-in army: shortages, bad news, delayed pay, corruption, and small camp incidents.
+This spec proposes an **internal, mod-friendly** “camp life” simulation layer that reacts to the campaign and makes enlisted service feel like a lived-in army: shortages, bad news, delayed pay, corruption, and small camp incidents.
 
 ## Status (shipping)
 - The daily **Camp Conditions Snapshot** is implemented and persisted (**enabled by default**; can be disabled via config).
@@ -21,7 +21,7 @@ This spec proposes an **internal, mod-friendly** â€œcamp lifeâ€ simulat
   - [Pay Muster: delayed pay and promissory notes](#pay-muster-delayed-pay-and-promissory-notes)
   - [Quartermaster: mood, prices, and stockouts](#quartermaster-mood-prices-and-stockouts)
   - [Duties & camp actions: foraging, errands, contraband](#duties--camp-actions-foraging-errands-contraband)
-  - [Incidents: camp events and â€œsmall storiesâ€](#incidents-camp-events-and-small-stories)
+  - [Incidents: camp events and “small stories”](#incidents-camp-events-and-small-stories)
 - [Phased plan](#phased-plan)
 - [Edge Cases](#edge-cases)
 - [Acceptance Criteria](#acceptance-criteria)
@@ -31,12 +31,12 @@ This spec proposes an **internal, mod-friendly** â€œcamp lifeâ€ simulat
 While enlisted, maintain a small set of **camp condition meters** (logistics, morale shock, territory pressure, pay tension, contraband heat). Update them mostly **once per day** and use them to:
 - Vary Quartermaster mood/prices/availability.
 - Add Pay Muster outcomes like **delayed pay** and **promissory notes**.
-- Encourage â€œsoldier survivalâ€ loops (forage when supply wagons are dry, smuggle drink when camp needs morale).
+- Encourage “soldier survival” loops (forage when supply wagons are dry, smuggle drink when camp needs morale).
 
 ## Purpose
-- Make enlisted play feel like youâ€™re living in an army, not just clicking menus.
-- Create story hooks that still respect Bannerlordâ€™s systems (raids, sieges, settlement loss).
-- Keep changes **contained** inside Enlisted so we donâ€™t destabilize vanilla finance, trading, or AI.
+- Make enlisted play feel like you’re living in an army, not just clicking menus.
+- Create story hooks that still respect Bannerlord’s systems (raids, sieges, settlement loss).
+- Keep changes **contained** inside Enlisted so we don’t destabilize vanilla finance, trading, or AI.
 
 ## Design goals
 - **Believable, not random**: mood and shortages should follow recognizable causes (recent losses, long time away from towns, villages raided).
@@ -48,13 +48,13 @@ While enlisted, maintain a small set of **camp condition meters** (logistics, mo
 This feature should be implemented as a new Enlisted behavior that:
 - **Only runs while enlisted**.
 - Subscribes to **native campaign events** and keeps minimal state.
-- Exposes a single â€œsnapshotâ€ API to Enlisted systems (Quartermaster, Pay Muster, incidents).
+- Exposes a single “snapshot” API to Enlisted systems (Quartermaster, Pay Muster, incidents).
 - Does **not** patch or replace:
   - `DefaultClanFinanceModel` (your pay system already avoids this).
   - The global item economy or town markets.
   - AI decision making.
 
-In other words: we simulate â€œcamp lifeâ€ by changing **Enlisted-owned menus/outcomes**, not by rewriting Bannerlord.
+In other words: we simulate “camp life” by changing **Enlisted-owned menus/outcomes**, not by rewriting Bannerlord.
 
 ## Localization (required)
 All Camp Life player-facing text must be translatable:
@@ -71,7 +71,7 @@ All Camp Life player-facing text must be translatable:
 ### Inputs
 
 #### Native events (Bannerlord)
-These exist in Bannerlordâ€™s API (confirmed from decompiled `CampaignEvents`):
+These exist in Bannerlord’s API (confirmed from decompiled `CampaignEvents`):
 - `CampaignEvents.VillageBeingRaided`
 - `CampaignEvents.VillageLooted`
 - `CampaignEvents.VillageStateChanged`
@@ -96,19 +96,19 @@ Current implementation note:
   - `IsPayDisrupted`
   - `IsContrabandRiskHigh`
   - `QuartermasterMoodTier`
-- Optional: a short `CampStatusLine` (1â€“3 lines) for UI flavor.
+- Optional: a short `CampStatusLine` (1–3 lines) for UI flavor.
 
 ## Core model: Camp Conditions Snapshot
 Define a small snapshot object, stored and saved with the campaign:
-- **LogisticsStrain (0â€“100)**: supply line stretch; worsens when away from settlements, during sieges, after villages are looted, and when food is low.
-- **MoraleShock (0â€“100)**: trauma/low spirits after recent battles/losses; decays over time.
-- **TerritoryPressure (0â€“100)**: â€œweâ€™re losing ground / hostile territoryâ€; increases on nearby settlement loss, frequent raids, or siege failures.
-- **PayTension (0â€“100)**: payroll disruption; increases when key fiefs are lost/raided and when payday is due but cash is tight.
-- **ContrabandHeat (0â€“100)**: crackdowns and risk; rises after smuggling/bribes, falls with time or â€œlaying lowâ€.
+- **LogisticsStrain (0–100)**: supply line stretch; worsens when away from settlements, during sieges, after villages are looted, and when food is low.
+- **MoraleShock (0–100)**: trauma/low spirits after recent battles/losses; decays over time.
+- **TerritoryPressure (0–100)**: “we’re losing ground / hostile territory”; increases on nearby settlement loss, frequent raids, or siege failures.
+- **PayTension (0–100)**: payroll disruption; increases when key fiefs are lost/raided and when payday is due but cash is tight.
+- **ContrabandHeat (0–100)**: crackdowns and risk; rises after smuggling/bribes, falls with time or “laying low”.
 
 ### Local vs lord-holdings signals
-Support two â€œsignal scopesâ€:
-- **Local-to-army** (default): events within a radius of the armyâ€™s current position matter most.
+Support two “signal scopes”:
+- **Local-to-army** (default): events within a radius of the army’s current position matter most.
 - **Lord-holdings** (optional): if the enlisted lord owns specific settlements/villages, losses/raids of those holdings directly spike `PayTension`.
 
 This keeps the system believable without requiring constant world scans.
@@ -121,10 +121,10 @@ When `PayTension` is high (examples: key fief lost, villages looted, recent sieg
   - **Standard Pay** (may be reduced/partial, or unavailable in extreme cases)
   - **Promissory Note (IOU)**: records owed pay and pays later when conditions improve
   - **Demand a Recount** (existing corruption challenge): becomes more tempting but riskier
-  - **Side Deal** (existing): can be reframed as â€œgear/coin under the tableâ€
+  - **Side Deal** (existing): can be reframed as “gear/coin under the table”
 
 Design details:
-- Keep â€œIOUâ€ **internal**: store `PendingPromissoryPay` as a number in the muster ledger, shown in text.
+- Keep “IOU” **internal**: store `PendingPromissoryPay` as a number in the muster ledger, shown in text.
 - When conditions stabilize (pay tension drops or town access resumes), resolve IOUs at muster.
 
 Shipping note:
@@ -141,20 +141,20 @@ Mood should be **stable for the day** (not rerolled every menu open).
 
 #### Prices
 Apply small multipliers (example tuning):
-- Fine: purchase Ã—0.98, buyback Ã—1.00
-- Tense: purchase Ã—1.00, buyback Ã—0.95
-- Sour: purchase Ã—1.07, buyback Ã—0.85
-- Predatory: purchase Ã—1.15, buyback Ã—0.75
+- Fine: purchase ×0.98, buyback ×1.00
+- Tense: purchase ×1.00, buyback ×0.95
+- Sour: purchase ×1.07, buyback ×0.85
+- Predatory: purchase ×1.15, buyback ×0.75
 
 #### Stockouts / gating
 When `LogisticsStrain` is high:
-- Quartermaster stops offering certain supply actions (e.g., â€œno food in the wagonsâ€).
+- Quartermaster stops offering certain supply actions (e.g., “no food in the wagons”).
 - Push the player into **foraging** or **town resupply** loops.
 
-Important: stockouts should be framed as â€œcamp supply realityâ€ and backed by alternative actions (forage duty, rationing choices), not a hard soft-lock.
+Important: stockouts should be framed as “camp supply reality” and backed by alternative actions (forage duty, rationing choices), not a hard soft-lock.
 
 Shipping note:
-- Current integrations are intentionally â€œminimum but realâ€: mood/pricing + localized intro dialogue, driven by the daily snapshot.
+- Current integrations are intentionally “minimum but real”: mood/pricing + localized intro dialogue, driven by the daily snapshot.
 
 ### Duties & camp actions: foraging, errands, contraband
 Use the snapshot to make duties feel necessary:
@@ -164,15 +164,15 @@ Use the snapshot to make duties feel necessary:
 
 Examples of actions:
 - **Forage**: convert time/fatigue into food/supplies when wagons are empty.
-- **Smuggle drink**: â€œbeer into revelryâ€ event chain (Roguery/Charm gated), affects morale/fatigue.
+- **Smuggle drink**: “beer into revelry” event chain (Roguery/Charm gated), affects morale/fatigue.
 - **Bribe the clerk**: reduces Quartermaster predatory pricing for the day, but raises contraband heat.
 
-### Incidents: camp events and â€œsmall storiesâ€
+### Incidents: camp events and “small stories”
 Add small incidents that fire rarely and only when conditions support them:
-- â€œAfter the raid, the camp is hungry.â€
-- â€œPaymaster says the strongbox never arrived.â€
-- â€œQuartermaster offers an under-the-table bundle.â€
-- â€œThe lads want drink after the last slaughter.â€
+- “After the raid, the camp is hungry.”
+- “Paymaster says the strongbox never arrived.”
+- “Quartermaster offers an under-the-table bundle.”
+- “The lads want drink after the last slaughter.”
 
 Prefer existing incident UI patterns (inquiries/menus) over mission scenes to keep this mod-friendly.
 
@@ -182,39 +182,39 @@ Camp conditions should also feed **lance-specific stories** (drills, scrounging,
 
 ## Phased plan
 
-### Phase 0 â€” Documentation + scaffolding (safe)
+### Phase 0 — Documentation + scaffolding (safe)
 - Add this spec.
 - Add a new behavior shell: `CampLifeBehavior` (or similar) that can store a daily snapshot and log it.
 - Shipping note: Camp Life is enabled by default in `ModuleData/Enlisted/enlisted_config.json`, and can be disabled safely via `camp_life.enabled`.
 
-### Phase 1 â€” Data collection (event-driven; no gameplay changes)
-- Subscribe to the relevant `CampaignEvents` and record â€œrecent historyâ€:
+### Phase 1 — Data collection (event-driven; no gameplay changes)
+- Subscribe to the relevant `CampaignEvents` and record “recent history”:
   - Last town visit time
   - Recent raids/loots near the army
   - Recent settlement owner changes (local radius or lord-holdings)
   - Recent sieges / battles
 - Compute the snapshot daily and expose it to other Enlisted systems.
 
-### Phase 2 â€” Quartermaster mood + price modifiers (small, contained)
+### Phase 2 — Quartermaster mood + price modifiers (small, contained)
 - Drive `qm_intro_dialogue` (or new localized strings) from the daily mood.
 - Apply purchase/buyback multipliers in Quartermaster price calculations.
 - Add very light stockouts (start with food/supplies gating only).
 
-### Phase 3 â€” Pay Muster: delayed pay + promissory notes (story hook)
+### Phase 3 — Pay Muster: delayed pay + promissory notes (story hook)
 - Add IOU tracking to the muster ledger and new Pay Muster options.
 - Conditions-based text changes (short, grounded).
 - Ensure resolution paths exist (IOUs eventually pay out when conditions ease).
 
 Status: implemented baseline (enabled by default; can be disabled via config).
 
-### Phase 4 â€” Incidents + contraband loops
+### Phase 4 — Incidents + contraband loops
 - Add camp incidents tied to snapshot triggers.
-- Add â€œsmuggle beerâ€ and â€œbribe the clerkâ€ options with risks and consequences.
+- Add “smuggle beer” and “bribe the clerk” options with risks and consequences.
 - Add small positive relief valves (successful foraging reduces strain; morale events reduce shock).
 
-### Phase 5 â€” Polish + tuning
+### Phase 5 — Polish + tuning
 - Expose weights/thresholds in `enlisted_config.json`.
-- Add short â€œcamp reportâ€ lines in the Camp / status UI.
+- Add short “camp report” lines in the Camp / status UI.
 - Logging: one-session diagnostics in `Modules/Enlisted/Debugging` for balancing (optional).
 
 ## Edge Cases
@@ -222,7 +222,7 @@ Status: implemented baseline (enabled by default; can be disabled via config).
 - **Army teleport / naval transitions**: use simple radius checks and clamps; avoid fragile distance math.
 - **Player not enlisted**: do nothing.
 - **No current lord / weird states**: fall back to local-to-party signals only.
-- **Avoid soft-lock**: if Quartermaster is â€œout of foodâ€, always provide at least one alternate path (forage duty, town access when available, or a rationing choice).
+- **Avoid soft-lock**: if Quartermaster is “out of food”, always provide at least one alternate path (forage duty, town access when available, or a rationing choice).
 
 ## Acceptance Criteria
 - When a nearby village is looted/raided, `LogisticsStrain` increases within 1 day and Quartermaster flavor reflects it.
@@ -235,7 +235,7 @@ Status: implemented baseline (enabled by default; can be disabled via config).
 - New behavior: `CampLifeBehavior` (or similar) registered on session launch.
 - Event subscriptions via `CampaignEvents.*.AddNonSerializedListener`.
 - Storage:
-  - Small â€œrecent historyâ€ fields (timestamps, counters, last-known ownership changes).
+  - Small “recent history” fields (timestamps, counters, last-known ownership changes).
   - Daily `CampConditionsSnapshot` saved with `SyncData`.
 - Consumers:
   - Quartermaster: price multipliers + localized mood text.

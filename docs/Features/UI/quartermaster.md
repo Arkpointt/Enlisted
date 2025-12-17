@@ -1,4 +1,4 @@
-﻿# Quartermaster (and the Baggage Train)
+# Quartermaster (and the Baggage Train)
 
 This page documents the full equipment loop: **Quartermaster buy/sell**, the **Quartermaster Hero NPC**, plus the **Enlistment Bag Check** and **Baggage Train** stash that keep early service grounded.
 
@@ -54,8 +54,8 @@ When pay is late (PayTension 40+), the Quartermaster offers archetype-specific a
 | Battle Brother | 80-100 | 15% | Special items |
 
 ## Access
-- **Quartermaster**: Enlisted Status â†’ **Visit Quartermaster**
-- **Baggage Train**: Enlisted Status â†’ **Baggage Train**
+- **Quartermaster**: Enlisted Status → **Visit Quartermaster**
+- **Baggage Train**: Enlisted Status → **Baggage Train**
 
 ## Enlistment Bag Check (first enlistment)
 About **12 in-game hours** after enlisting (when safe: not in battle/encounter/captivity), the quartermaster runs a bag check.
@@ -71,15 +71,15 @@ This is separate from Quartermaster trade: it's part of the **Enlistment** flow.
 The Baggage Train is the stash created by the bag check.
 
 **Fatigue cost by tier:**
-- Tier 1â€“2: **4 fatigue**
-- Tier 3â€“4: **2 fatigue**
+- Tier 1–2: **4 fatigue**
+- Tier 3–4: **2 fatigue**
 - Tier 5+: **0 fatigue**
 
 ## Quartermaster: How it works
 
 ### 1) Formation + Tier + Culture drives availability
 Your equipment availability is determined by:
-- **Formation**: Chosen during T1â†’T2 proving event (Infantry/Archer/Cavalry/Horse Archer)
+- **Formation**: Chosen during T1→T2 proving event (Infantry/Archer/Cavalry/Horse Archer)
 - **Tier**: Equipment up to your current tier is available
 - **Culture**: Your enlisted lord's culture determines the gear aesthetics
 
@@ -96,7 +96,7 @@ After a promotion:
 - Markers clear after viewing the item selection
 
 ### 4) Purchasing & equipping
-- **Weapons**: placed into the first empty weapon slot (Weapon0â€“Weapon3). If all weapon slots are full, the item is placed into party inventory.
+- **Weapons**: placed into the first empty weapon slot (Weapon0–Weapon3). If all weapon slots are full, the item is placed into party inventory.
 - **Armor / mount slots**: equipped into the relevant slot; any replaced item is moved into party inventory.
 
 ### 5) Selling (buyback)
@@ -105,9 +105,9 @@ Quartermaster offers a **Sell Equipment** menu that lists eligible items from yo
 Selling removes **one** item and pays the buyback amount.
 
 ### 6) Pricing
-- **Purchase price**: `item.Value Ã— quartermaster.soldier_tax`
+- **Purchase price**: `item.Value × quartermaster.soldier_tax`
 - **Provisioner / Quartermaster role discount**: 15% off quartermaster prices.
-- **Buyback price**: `item.Value Ã— quartermaster.buyback_rate`
+- **Buyback price**: `item.Value × quartermaster.buyback_rate`
 
 ### 7) Provisioner / Quartermaster duty perks
 - Expanded equipment availability (culture-wide additions beyond your exact formation kit).

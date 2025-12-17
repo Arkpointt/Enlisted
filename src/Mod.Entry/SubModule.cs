@@ -8,6 +8,7 @@ using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
 using Enlisted.Features.Activities;
 using Enlisted.Features.Camp;
+using Enlisted.Features.Camp.UI.Bulletin;
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -16,9 +17,13 @@ using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Lances.Behaviors;
 using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Lances.Events.Decisions;
 using Enlisted.Features.Lances.Personas;
+using Enlisted.Features.Lances.Leaders;
+using Enlisted.Features.Lances.Simulation;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Ranks.Behaviors;
+using Enlisted.Features.Schedule.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core;
@@ -368,6 +373,13 @@ namespace Enlisted.Mod.Entry
                     // Lance Life Events (Phase 5b): incident channel delivery (MapState.NextIncident), feature-flagged.
                     campaignStarter.AddBehavior(new LanceLifeEventsIncidentBehavior());
 
+                    // Decision Events (Track D2): CK3-style decision system with activity-aware events,
+                    // 8-layer pacing protections, and player-initiated decisions. Feature-flagged.
+                    campaignStarter.AddBehavior(new DecisionEventBehavior());
+
+                    // Lance banner persistence: manages unique banners for each lance under each lord
+                    campaignStarter.AddBehavior(new LanceBannerManager());
+
                     // My Lance menu: roster view, relationships, wounded/fallen tracking
                     campaignStarter.AddBehavior(new EnlistedLanceMenuBehavior());
 
@@ -384,6 +396,9 @@ namespace Enlisted.Mod.Entry
                     // Camp UI: provides menus for viewing service records (current posting,
                     // faction history, lifetime summary) and future retinue management
                     campaignStarter.AddBehavior(new CampMenuHandler());
+
+                    // Camp Bulletin Board UI: tick bridge for overlay close handling (ESC / Done).
+                    campaignStarter.AddBehavior(new CampBulletinUiTickBehavior());
 
                     // Camp Life Simulation (Phase 3): daily snapshot + Quartermaster/Pay integrations (gated by config).
                     campaignStarter.AddBehavior(new CampLifeBehavior());
@@ -407,6 +422,18 @@ namespace Enlisted.Mod.Entry
                     // Companion assignment manager: tracks which companions should fight vs stay back
                     // Companions marked "stay back" don't spawn in battle, keeping them safe
                     campaignStarter.AddBehavior(new CompanionAssignmentManager());
+
+                    // AI Camp Schedule (Track B Phase 0): foundation - data models, config loading, save/load
+                    // Manages daily duty schedules and lance needs for T1-T6 enlisted gameplay
+                    campaignStarter.AddBehavior(new ScheduleBehavior());
+
+                    // Lance Life Simulation (Track C1): member states, injuries, deaths, cover requests, promotions
+                    // Creates dynamic lance environment with member availability affecting AI Schedule
+                    campaignStarter.AddBehavior(new LanceLifeSimulationBehavior());
+
+                    // Persistent Lance Leaders (Track C2): unique leaders per lord with memory and personality
+                    // Leaders remember player actions, react based on traits, and persist across save/load
+                    campaignStarter.AddBehavior(new PersistentLanceLeadersBehavior());
 
                     // Save/load diagnostics end marker: registered last so it runs after all other behaviors
                     // during save/load serialization passes.
@@ -451,7 +478,9 @@ namespace Enlisted.Mod.Entry
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),
-                        nameof(CompanionAssignmentManager)
+                        nameof(CompanionAssignmentManager),
+                        nameof(LanceLifeSimulationBehavior),
+                        nameof(PersistentLanceLeadersBehavior)
                     });
                 }
             }
@@ -562,6 +591,7 @@ namespace Enlisted.Mod.Entry
                     // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
                     RaftStateSuppressionPatch.TryApplyPatch(harmony);
                     RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
+                    NavalMobilePartyVisualUpdateEntityPositionCrashGuardPatch.TryApplyPatch(harmony);
 
                     ModLogger.Info("Bootstrap", "Deferred patches applied (campaign ready)");
 

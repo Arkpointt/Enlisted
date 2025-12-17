@@ -332,15 +332,15 @@ namespace Enlisted.Features.Lances.Events
             if (opt.SuccessChance.HasValue && opt.SuccessChance < 1.0f)
             {
                 var failChance = (int)((1.0f - opt.SuccessChance.Value) * 100);
-                lines.Add($"⚠ Risk: {failChance}% chance of failure");
+                lines.Add($"Risk: {failChance}% chance of failure");
             }
             else if (opt.RiskChance.HasValue && opt.RiskChance > 0)
             {
-                lines.Add($"⚠ Risk: {opt.RiskChance}% chance of failure");
+                lines.Add($"Risk: {opt.RiskChance}% chance of failure");
             }
             else if (!string.IsNullOrWhiteSpace(opt.Risk) && opt.Risk.ToLowerInvariant() == "risky")
             {
-                lines.Add("⚠ Risky action");
+                lines.Add("Risky action");
             }
 
             var effectParts = new List<string>();

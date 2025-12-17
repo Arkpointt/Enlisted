@@ -861,7 +861,7 @@ namespace Enlisted.Features.Lances.Behaviors
             if (member == null) return "";
 
             if (!member.IsAlive)
-                return " ⚔ FALLEN";
+                return " FALLEN";
 
             // Could add wounded status here when implemented
             return "";

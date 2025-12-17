@@ -31,19 +31,19 @@ namespace Enlisted.Features.Camp.UI.Hub
         }
 
         /// <summary>
-        /// Returns icon (Unicode emoji) for location ID.
+        /// Returns a short ASCII icon tag for location ID.
         /// </summary>
         public static string GetLocationIcon(string locationId)
         {
             return locationId switch
             {
-                MedicalTent => "🏥",
-                TrainingGrounds => "⚔️",
-                LordsTent => "🎪",
-                Quartermaster => "📦",
-                PersonalQuarters => "🛏️",
-                CampFire => "🔥",
-                _ => "📍"
+                MedicalTent => "[MED]",
+                TrainingGrounds => "[TRN]",
+                LordsTent => "[LORD]",
+                Quartermaster => "[QM]",
+                PersonalQuarters => "[QTRS]",
+                CampFire => "[FIRE]",
+                _ => "[CAMP]"
             };
         }
 
@@ -71,13 +71,13 @@ namespace Enlisted.Features.Camp.UI.Hub
         {
             return locationId switch
             {
-                MedicalTent => "🏥 MEDICAL TENT",
-                TrainingGrounds => "⚔️ TRAINING GROUNDS",
-                LordsTent => "🎪 LORD'S TENT",
-                Quartermaster => "📦 QUARTERMASTER",
-                PersonalQuarters => "🛏️ PERSONAL QUARTERS",
-                CampFire => "🔥 CAMP FIRE",
-                _ => "⚔ CAMP ACTIVITIES"
+                MedicalTent => "MEDICAL TENT",
+                TrainingGrounds => "TRAINING GROUNDS",
+                LordsTent => "LORD'S TENT",
+                Quartermaster => "QUARTERMASTER",
+                PersonalQuarters => "PERSONAL QUARTERS",
+                CampFire => "CAMP FIRE",
+                _ => "CAMP"
             };
         }
 

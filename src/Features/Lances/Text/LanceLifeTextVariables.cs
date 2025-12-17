@@ -28,6 +28,31 @@ namespace Enlisted.Features.Lances.Text
             text.SetTextVariable("LANCE_NAME",
                 !string.IsNullOrWhiteSpace(enlistment?.CurrentLanceName) ? new TextObject(enlistment.CurrentLanceName) : new TextObject(string.Empty));
 
+            // Always set sensible fallbacks for lance-role variables so authoring placeholders never leak to the UI,
+            // even when the Persona system is disabled/unavailable.
+            // These may be overwritten below if we successfully resolve a roster persona.
+            try
+            {
+                var leaderShort = GetLanceLeaderShortName(enlistment);
+                text.SetTextVariable("LANCE_LEADER_SHORT", new TextObject(leaderShort ?? "The Sergeant"));
+                text.SetTextVariable("LANCE_LEADER_NAME", new TextObject(leaderShort ?? "The Sergeant"));
+                text.SetTextVariable("LANCE_LEADER_RANK", new TextObject("Sergeant"));
+
+                text.SetTextVariable("SECOND_RANK", new TextObject(string.Empty));
+                text.SetTextVariable("SECOND_NAME", new TextObject(string.Empty));
+                text.SetTextVariable("SECOND_SHORT", new TextObject(string.Empty));
+
+                text.SetTextVariable("VETERAN_1_NAME", new TextObject(string.Empty));
+                text.SetTextVariable("VETERAN_2_NAME", new TextObject(string.Empty));
+                text.SetTextVariable("LANCE_MATE_NAME", new TextObject(string.Empty));
+                text.SetTextVariable("SOLDIER_NAME", new TextObject(string.Empty));
+                text.SetTextVariable("RECRUIT_NAME", new TextObject(string.Empty));
+            }
+            catch
+            {
+                // Best effort only.
+            }
+
             var factionName = enlistment?.EnlistedLord?.MapFaction?.Name ?? new TextObject("{=Enlisted_Term_ThisFaction}this faction");
             text.SetTextVariable("FACTION_NAME", factionName);
 

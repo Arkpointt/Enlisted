@@ -372,7 +372,7 @@ namespace Enlisted.Features.Camp.UI.Areas
                 {
                     // Success! Show feedback
                     InformationManager.DisplayMessage(
-                        new InformationMessage($"✓ {activityCard.Title} completed!", new Color(0.3f, 0.8f, 0.3f)));
+                        new InformationMessage($"Completed: {activityCard.Title}", new Color(0.3f, 0.8f, 0.3f)));
                     
                     // Refresh the screen to show new cooldowns/availability
                     RefreshActivities();

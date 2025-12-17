@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "pay_mutiny",
   "category": "pay",
@@ -8,7 +8,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md",
+        "content_doc": "docs/StoryBlocks/StoryBlock.md",
         "chain": "desertion",
         "chain_step": 1
       },
@@ -92,7 +92,7 @@
             "flags_clear": ["desertion_plot_joined"],
             "resultTextId": "ll_evt_desert_plan_when_opt_battle_outcome",
             "outcome": "\"After the fight,\" you say. \"Everyone's tired, distracted. Perfect cover.\"\n\nThe battle comes. When it's over, in the chaos of the aftermath, you simply walk away.\n\nNo one notices one more body missing from the count.",
-            "outcome_failure": "The battle goes badly. There's no clean escape — just running for your life.\n\nYou survive. Barely. But you're still with the army."
+            "outcome_failure": "The battle goes badly. There's no clean escape â€” just running for your life.\n\nYou survive. Barely. But you're still with the army."
           },
           {
             "id": "change_mind",
@@ -118,7 +118,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md",
+        "content_doc": "docs/StoryBlocks/StoryBlock.md",
         "chain": "mutiny",
         "chain_step": 1
       },
@@ -185,13 +185,13 @@
             "flags_set": ["mutiny_success"],
             "flags_clear": ["mutiny_joined"],
             "resultTextId": "ll_evt_mutiny_res_opt_hold_outcome",
-            "outcome": "You hang back. Let the eager ones take the risks.\n\nThe assault succeeds without you at the front. {VETERAN_1_NAME} gives you a look — they noticed. But you're alive, and that's what matters.",
+            "outcome": "You hang back. Let the eager ones take the risks.\n\nThe assault succeeds without you at the front. {VETERAN_1_NAME} gives you a look â€” they noticed. But you're alive, and that's what matters.",
             "outcome_failure": "Even in the rear, you're not safe. A loyalist patrol finds you.\n\n\"With the mutineers!\" they shout. You fight, but you're overwhelmed."
           },
           {
             "id": "switch_sides",
             "textId": "ll_evt_mutiny_res_opt_switch",
-            "text": "Switch sides — warn the lord",
+            "text": "Switch sides â€” warn the lord",
             "tooltip": "Betray the mutineers",
             "condition": null,
             "risk": "risky",
@@ -230,7 +230,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md",
+        "content_doc": "docs/StoryBlocks/StoryBlock.md",
         "chain": "mutiny",
         "chain_step": 2
       },
@@ -262,7 +262,7 @@
         "titleId": "ll_evt_mutiny_after_title",
         "setupId": "ll_evt_mutiny_after_setup",
         "title": "What Now?",
-        "setup": "Dawn breaks over a changed world.\n\n{LORD_NAME} is bound. Their loyalists are dead or scattered. The army — what's left of it — looks to {VETERAN_1_NAME}. And to you.\n\n\"We did it,\" {VETERAN_1_NAME} says quietly. \"Now what?\"\n\nThe soldiers are already arguing. Some want to kill the lord. Others want to ransom them. Some just want to take what they can and scatter.\n\nWhat do you want?",
+        "setup": "Dawn breaks over a changed world.\n\n{LORD_NAME} is bound. Their loyalists are dead or scattered. The army â€” what's left of it â€” looks to {VETERAN_1_NAME}. And to you.\n\n\"We did it,\" {VETERAN_1_NAME} says quietly. \"Now what?\"\n\nThe soldiers are already arguing. Some want to kill the lord. Others want to ransom them. Some just want to take what they can and scatter.\n\nWhat do you want?",
         "options": [
           {
             "id": "execute_lord",
@@ -294,7 +294,7 @@
             "flags_set": ["lord_ransomed"],
             "flags_clear": ["mutiny_success"],
             "resultTextId": "ll_evt_mutiny_after_opt_ransom_outcome",
-            "outcome": "\"They're worth more alive,\" you say. \"Send word to their family.\"\n\nA week later, a chest of gold arrives. {LORD_NAME} goes free — humiliated but breathing.\n\nThe money gets split. You take your share and disappear."
+            "outcome": "\"They're worth more alive,\" you say. \"Send word to their family.\"\n\nA week later, a chest of gold arrives. {LORD_NAME} goes free â€” humiliated but breathing.\n\nThe money gets split. You take your share and disappear."
           },
           {
             "id": "release_lord",
@@ -310,7 +310,7 @@
             "flags_set": ["lord_released"],
             "flags_clear": ["mutiny_success"],
             "resultTextId": "ll_evt_mutiny_after_opt_release_outcome",
-            "outcome": "\"Let them go,\" you say. \"We're not murderers.\"\n\n{LORD_NAME} stares at you with undisguised hatred. \"I will not forget this.\"\n\n\"Neither will I,\" you reply.\n\nThey ride away. The army scatters. You're free — but you've made an enemy for life."
+            "outcome": "\"Let them go,\" you say. \"We're not murderers.\"\n\n{LORD_NAME} stares at you with undisguised hatred. \"I will not forget this.\"\n\n\"Neither will I,\" you reply.\n\nThey ride away. The army scatters. You're free â€” but you've made an enemy for life."
           },
           {
             "id": "take_command",
@@ -337,7 +337,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md",
+        "content_doc": "docs/StoryBlocks/StoryBlock.md",
         "chain": "mutiny",
         "chain_step": 2
       },
@@ -446,7 +446,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md",
+        "content_doc": "docs/StoryBlocks/StoryBlock.md",
         "chain": "desertion",
         "chain_step": 3
       },
@@ -478,7 +478,7 @@
         "titleId": "ll_evt_desert_clean_title",
         "setupId": "ll_evt_desert_clean_setup",
         "title": "Free at Last",
-        "setup": "The army is gone. The war is behind you.\n\nYou stand at a crossroads — literally. One path leads to the nearest town. Another to the wilderness. A third toward a different kingdom entirely.\n\nFor the first time in months, no one is giving you orders. No one is watching. No one cares where you go.\n\nYou're free.\n\nWhat now?",
+        "setup": "The army is gone. The war is behind you.\n\nYou stand at a crossroads â€” literally. One path leads to the nearest town. Another to the wilderness. A third toward a different kingdom entirely.\n\nFor the first time in months, no one is giving you orders. No one is watching. No one cares where you go.\n\nYou're free.\n\nWhat now?",
         "options": [
           {
             "id": "nearest_town",
@@ -533,4 +533,6 @@
     }
   ]
 }
+
+
 

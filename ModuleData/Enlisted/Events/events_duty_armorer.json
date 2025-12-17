@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_armorer",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -56,7 +56,7 @@
         "titleId": "ll_evt_arm_equipment_inspection_title",
         "setupId": "ll_evt_arm_equipment_inspection_setup",
         "title": "Pre-Battle Inspection",
-        "setup": "Battle tomorrow — maybe today. {LANCE_LEADER_SHORT} wants every blade sharp, every strap tight.\n\n\"Check everything, {PLAYER_NAME}. I don't want anyone dying because their buckle broke.\"",
+        "setup": "Battle tomorrow â€” maybe today. {LANCE_LEADER_SHORT} wants every blade sharp, every strap tight.\n\n\"Check everything, {PLAYER_NAME}. I don't want anyone dying because their buckle broke.\"",
         "options": [
           {
             "id": "thorough_inspection_fix_everythi",
@@ -224,7 +224,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -268,7 +268,7 @@
         "titleId": "ll_evt_arm_battle_repairs_title",
         "setupId": "ll_evt_arm_battle_repairs_setup",
         "title": "Broken Blade",
-        "setup": "{VETERAN_1_NAME} brings you a sword — snapped clean in half. Good steel, but it failed at the wrong moment.\n\n\"Can you fix it? It was my father's.\"",
+        "setup": "{VETERAN_1_NAME} brings you a sword â€” snapped clean in half. Good steel, but it failed at the wrong moment.\n\n\"Can you fix it? It was my father's.\"",
         "options": [
           {
             "id": "reforge_it_properly_takes_time",
@@ -310,7 +310,7 @@
           {
             "id": "patch_it_functional_but_not_pret",
             "textId": "ll_evt_arm_battle_repairs_opt_patch_it_functional_but_not_pret_text",
-            "text": "Patch it — functional but not pretty",
+            "text": "Patch it â€” functional but not pretty",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -429,7 +429,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -515,7 +515,7 @@
           {
             "id": "work_around_it_adapt_your_techni",
             "textId": "ll_evt_arm_material_shortage_opt_work_around_it_adapt_your_techni_text",
-            "text": "Work around it — adapt your technique",
+            "text": "Work around it â€” adapt your technique",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -636,7 +636,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -846,7 +846,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -889,12 +889,12 @@
         "titleId": "ll_evt_arm_captured_equipment_title",
         "setupId": "ll_evt_arm_captured_equipment_setup",
         "title": "Armor Fitting",
-        "setup": "{RECRUIT_NAME} got new armor — but it doesn't fit. Too loose in the shoulders, too tight at the waist.\n\n\"Can't fight in this. Feels like I'm wearing a barrel.\"",
+        "setup": "{RECRUIT_NAME} got new armor â€” but it doesn't fit. Too loose in the shoulders, too tight at the waist.\n\n\"Can't fight in this. Feels like I'm wearing a barrel.\"",
         "options": [
           {
             "id": "adjust_it_properly_takes_hours",
             "textId": "ll_evt_arm_captured_equipment_opt_adjust_it_properly_takes_hours_text",
-            "text": "Adjust it properly — takes hours",
+            "text": "Adjust it properly â€” takes hours",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1045,3 +1045,5 @@
     }
   ]
 }
+
+

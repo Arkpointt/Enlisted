@@ -1716,12 +1716,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Run enlistment bag check (stash/sell/smuggle) before proceeding
             // If the incidents behavior is unavailable, fail open so enlistment can continue.
-            // For stability, schedule the bag check 12 in-game hours later so it never blocks enlistment.
+            // For stability, schedule the bag check 1 in-game hour later so it never blocks enlistment.
             if (ShouldRunBagCheck() && !_bagCheckScheduled)
             {
                 _pendingBagCheckLord = lord;
                 _bagCheckScheduled = true;
-                _bagCheckDueTime = CampaignTime.Now + CampaignTime.Hours(12f);
+                _bagCheckDueTime = CampaignTime.Now + CampaignTime.Hours(1f);
                 ModLogger.Info("Enlistment", $"Deferred bag check scheduled for {_bagCheckDueTime}");
             }
 
@@ -3936,6 +3936,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _payMusterPending = false;
             ClearProbation("pay_muster_resolved");
             ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
+            
+            // Phase 6: Notify Schedule system to reset 12-day cycle
+            Schedule.Behaviors.ScheduleBehavior.Instance?.OnPayMusterCompleted();
         }
 
         /// <summary>
@@ -11208,6 +11211,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (participated)
                 {
                     AwardBattleXP(killsThisBattle);
+                    
+                    // Record battle for lance persona progression (promotions require 3+ battles)
+                    var lancePersonas = Lances.Personas.LancePersonaBehavior.Instance;
+                    if (lancePersonas != null && !string.IsNullOrEmpty(CurrentLanceId))
+                    {
+                        var lanceKey = $"{CurrentLord?.StringId}_{CurrentLanceId}";
+                        lancePersonas.RecordBattleParticipation(lanceKey, 10);
+                        ModLogger.Debug("Battle", $"Lance battle recorded for {lanceKey}");
+                    }
                 }
 
                 // Add kills to current term total (persists to faction record on retirement)

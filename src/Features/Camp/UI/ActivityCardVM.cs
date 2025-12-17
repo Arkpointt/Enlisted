@@ -53,7 +53,7 @@ namespace Enlisted.Features.Camp.UI
             
             if (isAvailable)
             {
-                AvailabilityText = "⭐ AVAILABLE NOW";
+                AvailabilityText = "AVAILABLE NOW";
                 AvailabilityColor = "#44FF88FF"; // Bright green
             }
             else
@@ -289,14 +289,15 @@ namespace Enlisted.Features.Camp.UI
             // CRITICAL: All hex colors must be 8-digit (#RRGGBBAA) as required by TaleWorlds.Library.Color.ConvertStringToColor()
             return category?.ToLowerInvariant() switch
             {
-                "training" => "⚔",
-                "tasks" => "📋",
-                "social" => "🔥",
-                "duty" => "⚙",
-                "medical" => "❤",
-                "leisure" => "🎲",
-                "lance" => "⛺",
-                _ => "•"
+                // Keep this ASCII-only; Bannerlord fonts can render emoji/unicode symbols as tofu boxes.
+                "training" => "TRN",
+                "tasks" => "TSK",
+                "social" => "SOC",
+                "duty" => "DTY",
+                "medical" => "MED",
+                "leisure" => "FUN",
+                "lance" => "LNC",
+                _ => "-"
             };
         }
 

@@ -30,6 +30,7 @@ namespace Enlisted.Features.Assignments.Core
         private static CampActivitiesConfig _cachedCampActivitiesConfig;
         private static LanceCatalogConfig _cachedLanceCatalogConfig;
         private static LanceLifeEventsConfig _cachedLanceLifeEventsConfig;
+        private static Lances.Events.Decisions.DecisionEventConfig _cachedDecisionEventsConfig;
 
         /// <summary>
         ///     Load duties system configuration with comprehensive error handling and schema validation.
@@ -1090,6 +1091,41 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
+        /// Decision Events (Track D2): CK3-style decision system configuration.
+        /// Loaded from the decision_events section of enlisted_config.json.
+        /// </summary>
+        public static Lances.Events.Decisions.DecisionEventConfig LoadDecisionEventsConfig()
+        {
+            if (_cachedDecisionEventsConfig != null)
+            {
+                return _cachedDecisionEventsConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for decision events");
+                    _cachedDecisionEventsConfig = new Lances.Events.Decisions.DecisionEventConfig();
+                    return _cachedDecisionEventsConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedDecisionEventsConfig = fullConfig?.DecisionEvents ?? new Lances.Events.Decisions.DecisionEventConfig();
+                return _cachedDecisionEventsConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Config", $"Failed to load decision events config, using defaults. Error: {ex.Message}");
+                _cachedDecisionEventsConfig = new Lances.Events.Decisions.DecisionEventConfig();
+                return _cachedDecisionEventsConfig;
+            }
+        }
+
+        /// <summary>
         ///     Load lance catalog configuration from lances_config.json.
         ///     Provides style definitions, lance names, and culture mapping.
         /// </summary>
@@ -1391,6 +1427,8 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("lance_life")] public LanceLifeConfig LanceLife { get; set; }
 
         [JsonProperty("lance_life_events")] public LanceLifeEventsConfig LanceLifeEvents { get; set; }
+
+        [JsonProperty("decision_events")] public Lances.Events.Decisions.DecisionEventConfig DecisionEvents { get; set; }
     }
 
     /// <summary>

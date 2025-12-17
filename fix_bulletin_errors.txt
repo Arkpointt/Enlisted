@@ -1,0 +1,27 @@
+# Comprehensive fix list for Camp Bulletin Board errors
+
+## Key API corrections needed:
+1. CampActivityDefinition properties:
+   - Use: TextFallback (NOT ActivityName)
+   - Use: HintFallback (NOT Description)
+   - Use: MinTier (NOT TierRequired)
+   - Use: FatigueRelief (NOT FatigueRestore)
+   - Use: DayParts list (NOT TimePeriod string)
+   - Use: SkillXp dictionary (NOT MeleeXP, RangedXP directly)
+   
+2. CampActivitiesBehavior methods:
+   - Use: GetAllActivities() (NOT GetAllActivityDefinitions())
+   - Use: TryExecuteActivity(def, out reason) (NOT ExecuteActivity(def))
+
+3. EnlistmentBehavior:
+   - Add: using Enlisted.Features.Enlistment;
+   - Use: EnlistmentBehavior.Instance
+
+4. Native API:
+   - ScreenManager.PushScreen() (NOT AddOrReplaceScreen())
+   - GauntletLayer constructor: ("name", sortOrder, "category")
+   - Hero.GetTraitLevel() (NOT GetHeroTraits())
+   - MobileParty.Party.MemberRoster (NOT LimitedPartySize)
+
+5. Additional fixes needed in XML for portrait display
+

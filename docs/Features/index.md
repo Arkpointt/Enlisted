@@ -1,10 +1,37 @@
-﻿# Documentation Index
+﻿# enlisted documentation index
 
-This is the main documentation entry point for the Enlisted mod.
+**last updated:** december 17, 2025
 
-Use it two ways:
-- **If you're playing**: start with **How it all works** (the end-to-end loop).
-- **If you're modding/debugging**: use the feature pages under each category for deeper details and file references.
+This is the **single entry point** for all Enlisted mod documentation.
+
+---
+
+## index
+
+- [quick links](#quick-links)
+- [how it all works (end-to-end)](#how-it-all-works-end-to-end)
+- [core systems](#core-systems)
+- [user interface](#user-interface)
+- [gameplay features](#gameplay-features)
+- [missions](#missions)
+- [technical systems](#technical-systems)
+- [story content & events](#story-content--events)
+- [implementation status](#implementation-status)
+- [spec structure](#spec-structure)
+- [quick reference](#quick-reference)
+
+## Quick Links
+
+| What You Need | Where To Go |
+|---------------|-------------|
+| **Understand the core gameplay (recommended)** | [Core Gameplay (Consolidated)](core-gameplay.md) |
+| **Understand the mod (legacy index page)** | [How It All Works](#how-it-all-works-end-to-end) (below) |
+| **Add story content** | [story systems master](../StoryBlocks/story-systems-master.md) |
+| **Add decision events** | [decision events spec](../StoryBlocks/decision-events-spec.md) |
+| **Check implementation status** | [implementation status](../ImplementationPlans/implementation-status.md) |
+| **See full roadmap** | [master roadmap](../ImplementationPlans/master-implementation-roadmap.md) |
+
+---
 
 ---
 
@@ -14,18 +41,18 @@ Use it two ways:
 - You enlist with a lord and become an embedded soldier: you follow their movements, join their battles, and your wages accrue into the **muster ledger**.
 - Doc: **[Enlistment System](Core/enlistment.md)**
 
-### 2) First enlistment: Bag Check â†’ Baggage Train
+### 2) First enlistment: Bag Check → Baggage Train
 About **12 in-game hours** after enlisting (when safe), a bag check runs with choices:
 - **Stow it all (50g)**: stash inventory + equipped items into the **baggage train** and pay the wagon fee.
 - **Sell it all (60%)**: liquidate gear and receive denars.
 - **I'm keeping one thing (Roguery 30+)**: attempt to keep a single item.
 
-This is how the mod prevents â€œwalk in with endgame kit on day oneâ€ without deleting your gear.
+This is how the mod prevents “walk in with endgame kit on day one” without deleting your gear.
 - Doc: **[Enlistment System](Core/enlistment.md)** (Bag Check section)
 - Equipment vending is separate: **[Quartermaster](UI/quartermaster.md)**
 
 ### 3) Pick your troop identity (Master at Arms)
-Your **troop identity** is what the Quartermaster uses to determine what gear variants youâ€™re allowed to buy.
+Your **troop identity** is what the Quartermaster uses to determine what gear variants you’re allowed to buy.
 - Doc: **[Troop Selection](Gameplay/troop-selection.md)**
 
 ### 4) Visit the Quartermaster (NPC Hero)
@@ -39,7 +66,7 @@ Talk to the quartermaster to access equipment, provisions, and advice:
 
 ### 5) Day-to-day: Duties, camp actions, and progression
 - Pick duties/roles for bonuses and wage modifiers
-- Use Camp (â€œCampâ€) for your service record, retinue (Tier 4+), and discharge actions
+- Use Camp (“Camp”) for your service record, retinue (Tier 4+), and discharge actions
 - Use **Camp Activities** for action-based skill XP (training/tasks/social) with fatigue costs
 - Docs:
   - **[Duties System](Core/duties-system.md)**
@@ -85,7 +112,7 @@ The foundational systems that enable military service.
 - **[Lance Assignments](Core/lance-assignments.md)** - Lance roster, personas, culture-specific ranks
 - **[Camp Fatigue](Core/camp-fatigue.md)** - Daily fatigue system for activities
 - **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment
-- **[Quartermaster Hero System](Core/quartermaster-hero-system.md)** â­ NEW - Persistent NPC quartermaster with personality, relationship system, and PayTension dialogue
+- **[Quartermaster Hero System](Core/quartermaster-hero-system.md)** - Persistent NPC quartermaster with personality, relationship system, and PayTension dialogue
 - **[Retinue System](Core/retinue-system.md)** - Commander's personal force (T7-T9) with companion management
 
 ---
@@ -110,8 +137,8 @@ Additional gameplay mechanics and player choices.
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
 - **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts
 - **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and escalation/condition consequences (data-driven, modular)
-- **[Provisions System](Gameplay/provisions-system.md)** â­ NEW - Personal rations and retinue provisioning with morale/fatigue benefits
-- **[PayTension Action Menus](Gameplay/paytension-action-menus.md)** â­ NEW - Desperate Measures (corruption) and Help the Lord (loyalty) when pay is late
+- **[Provisions System](Gameplay/provisions-system.md)** - Personal rations and retinue provisioning with morale/fatigue benefits
+- **[PayTension Action Menus](Gameplay/paytension-action-menus.md)** - Desperate Measures (corruption) and Help the Lord (loyalty) when pay is late
 
 ---
 
@@ -132,22 +159,30 @@ Low-level systems that ensure stability and prevent issues.
 
 ---
 
-## Research / Design Drafts
+## Story Content & Events
 
-Working notes and design drafts live under `docs/research`:
-- **[Research Index](../research/index.md)** - Entry point for prompts, design drafts, and API notes
+For adding or modifying story content:
+
+- **[story systems master](../StoryBlocks/story-systems-master.md)** - consolidated reference for all story systems, escalation mechanics, and content indexes
+- **[decision events spec](../StoryBlocks/decision-events-spec.md)** - ck3-style decision events (active development)
+
+## Implementation Status
+
+Track implementation progress:
+
+- **[implementation status](../ImplementationPlans/implementation-status.md)** - current state of all tracks
+- **[master roadmap](../ImplementationPlans/master-implementation-roadmap.md)** - full implementation roadmap
 
 ## Spec Structure
 
-Most feature pages follow this structure (some pages also include extra debugging/API reference sections):
+Feature pages follow this structure:
 
-- **Overview**: One sentence summary of what the feature does
-- **Purpose**: Why the feature exists and what problem it solves
-- **Inputs/Outputs**: What data flows in and out of the system
-- **Behavior**: Detailed description of how the feature works
-- **Technical Implementation**: Key files, APIs, and code patterns
-- **Edge Cases**: What can go wrong and how it's handled
-- **Acceptance Criteria**: Checklist for implementation verification
+- **Overview**: One sentence summary
+- **Purpose**: Why it exists
+- **Inputs/Outputs**: Data flow
+- **Behavior**: How it works
+- **Edge Cases**: Error handling
+- **Acceptance Criteria**: Verification checklist
 
 ---
 

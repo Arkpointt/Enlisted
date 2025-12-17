@@ -1,0 +1,582 @@
+{
+  "schemaVersion": 1,
+  "packId": "pay_tension",
+  "category": "pay",
+  "events": [
+    {
+      "id": "pay_tension_grumbling",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "LeavingBattle"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 20
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": { "max_per_week": 1, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_pay_grumbling_title",
+        "setupId": "ll_evt_pay_grumbling_setup",
+        "title": "Pay Complaints",
+        "setup": "Complaints about pay have become the main topic around the fire. Every conversation circles back to it.\n\n\"Two weeks now,\" {VETERAN_1_NAME} mutters. \"Two bloody weeks.\"\n\nEyes turn to you. Where do you stand?",
+        "options": [
+          {
+            "id": "join_grumbling",
+            "textId": "ll_evt_pay_grumbling_opt_join",
+            "text": "Join the grumbling",
+            "tooltip": "Show solidarity with your lance mates",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 5, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_grumbling_opt_join_outcome",
+            "outcome": "You add your voice to the chorus of complaints. The others nod — you're one of them."
+          },
+          {
+            "id": "stay_quiet",
+            "textId": "ll_evt_pay_grumbling_opt_quiet",
+            "text": "Stay quiet",
+            "tooltip": "Keep your head down",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_grumbling_opt_quiet_outcome",
+            "outcome": "You say nothing. The conversation moves on without you."
+          },
+          {
+            "id": "defend_lord",
+            "textId": "ll_evt_pay_grumbling_opt_defend",
+            "text": "Defend the lord",
+            "tooltip": "Speak up for your employer",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 10 }, "gold": 0, "relation": { "lord": 5 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -5, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_grumbling_opt_defend_outcome",
+            "outcome": "\"Times are hard for everyone,\" you say. The others look at you with cold eyes. {LANCE_LEADER_SHORT} nods approvingly."
+          },
+          {
+            "id": "rabble_rouse",
+            "textId": "ll_evt_pay_grumbling_opt_rabble",
+            "text": "\"Maybe we should do something about it\"",
+            "tooltip": "Plant seeds of action",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 15 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 10, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["pay_rabble_rouser"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_grumbling_opt_rabble_outcome",
+            "outcome": "The words hang in the air. {VETERAN_1_NAME} meets your eyes. \"Maybe we should.\""
+          }
+        ]
+      }
+    },
+    {
+      "id": "pay_tension_loot_the_dead",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "LeavingBattle"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 50
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": false,
+        "once_per_battle": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_pay_loot_dead_title",
+        "setupId": "ll_evt_pay_loot_dead_setup",
+        "title": "Spoils of War",
+        "setup": "The battle's done. Bodies everywhere — enemy and our own. The burial detail hasn't started yet.\n\nNobody's watching the dead too closely. Not yet.\n\nYou could check their pockets. Coin, rings, anything valuable. Pay's late anyway — consider it compensation.",
+        "options": [
+          {
+            "id": "loot_enemy",
+            "textId": "ll_evt_pay_loot_dead_opt_enemy",
+            "text": "Search enemy dead only",
+            "tooltip": "Acceptable battlefield scavenging",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.10,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 15 }, "gold": 30, "relation": {}, "items": [] },
+            "effects": { "heat": 2, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_loot_dead_opt_enemy_outcome",
+            "outcome": "You move among the fallen, quick and quiet. A few coins here. A ring there. Nobody notices. Nobody cares.",
+            "outcome_failure": "{LANCE_LEADER_SHORT} catches you elbow-deep in a dead man's kit.\n\n\"The hell are you doing?\""
+          },
+          {
+            "id": "loot_everyone",
+            "textId": "ll_evt_pay_loot_dead_opt_everyone",
+            "text": "Search everyone",
+            "tooltip": "Taboo — even our own dead",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.15,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 25 }, "gold": 55, "relation": {}, "items": [] },
+            "effects": { "heat": 4, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_loot_dead_opt_everyone_outcome",
+            "outcome": "Even our own dead have coin. Had coin. You try not to look at faces you recognize.\n\n{LANCE_MATE_NAME}'s purse is heavy. Was heavy. Now it's yours.",
+            "outcome_failure": "{LANCE_LEADER_SHORT} catches you going through {LANCE_MATE_NAME}'s kit.\n\n\"That was one of ours, you bastard.\""
+          },
+          {
+            "id": "take_weapon",
+            "textId": "ll_evt_pay_loot_dead_opt_weapon",
+            "text": "Take a dead man's weapon",
+            "tooltip": "Practical scavenging",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.05,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 10 }, "gold": 0, "relation": {}, "items": ["random_weapon_t2"] },
+            "effects": { "heat": 1, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_loot_dead_opt_weapon_outcome",
+            "outcome": "A decent blade. The previous owner won't need it anymore."
+          },
+          {
+            "id": "leave_dead",
+            "textId": "ll_evt_pay_loot_dead_opt_leave",
+            "text": "Leave the dead in peace",
+            "tooltip": "Respectful",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_loot_dead_opt_leave_outcome",
+            "outcome": "You walk away. Some lines you won't cross. Not yet."
+          },
+          {
+            "id": "stop_others",
+            "textId": "ll_evt_pay_loot_dead_opt_stop",
+            "text": "Stop others from looting",
+            "tooltip": "Enforce discipline",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 15 }, "gold": 0, "relation": { "lord": 5 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -10, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_loot_dead_opt_stop_outcome",
+            "outcome": "\"Leave them,\" you say, loud enough to be heard. The scavengers scatter. You've made enemies tonight."
+          }
+        ]
+      }
+    },
+    {
+      "id": "pay_tension_confrontation",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "LeavingBattle"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 60
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": false,
+        "once_per_crisis": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_pay_confrontation_title",
+        "setupId": "ll_evt_pay_confrontation_setup",
+        "title": "Pay Delegation",
+        "setup": "{VETERAN_1_NAME} is gathering soldiers. Quietly, but with purpose.\n\n\"We're going to the paymaster. All of us. Demand what we're owed.\" They look at you. \"You coming?\"\n\nIt's not mutiny. Not yet. Just soldiers asking for what they earned. But it's close to the line.",
+        "options": [
+          {
+            "id": "join_delegation",
+            "textId": "ll_evt_pay_confrontation_opt_join",
+            "text": "Join the delegation",
+            "tooltip": "Stand with your comrades",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": null,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": { "lord": -10 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 15, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["pay_delegation_joined"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_confrontation_opt_join_outcome",
+            "outcome": "The paymaster sees you coming. Forty soldiers, armed, angry. He goes pale.\n\n\"The coin's coming,\" he stammers. \"Three days. I swear it.\"\n\nThree days. You'll hold him to that."
+          },
+          {
+            "id": "lead_delegation",
+            "textId": "ll_evt_pay_confrontation_opt_lead",
+            "text": "Lead the delegation",
+            "tooltip": "Take charge of the situation",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": null,
+            "costs": { "fatigue": 2, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 20 }, "gold": 0, "relation": { "lord": -15 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 25, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["pay_delegation_led"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_confrontation_opt_lead_outcome",
+            "outcome": "You step to the front. Your voice carries: \"We've bled for this lord. We've earned our pay. Where is it?\"\n\nThe paymaster trembles. \"Three days! I promise!\"\n\nYou've made yourself a leader. For better or worse."
+          },
+          {
+            "id": "talk_down",
+            "textId": "ll_evt_pay_confrontation_opt_calm",
+            "text": "Talk them down",
+            "tooltip": "Prevent escalation",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "charm": 15 }, "gold": 0, "relation": { "lord": 10 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -10, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_confrontation_opt_calm_outcome",
+            "outcome": "\"This won't help,\" you say. \"They'll call it mutiny. We'll hang.\"\n\nThe anger deflates. They know you're right. But they won't forget you sided with the lords."
+          },
+          {
+            "id": "stay_out",
+            "textId": "ll_evt_pay_confrontation_opt_out",
+            "text": "Stay out of it",
+            "tooltip": "Not your problem",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_confrontation_opt_out_outcome",
+            "outcome": "You find somewhere else to be. Whatever happens, you weren't part of it."
+          },
+          {
+            "id": "warn_officers",
+            "textId": "ll_evt_pay_confrontation_opt_warn",
+            "text": "Warn the officers",
+            "tooltip": "Inform on your comrades",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 15 }, "gold": 0, "relation": { "lord": 20 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -30, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["pay_informant"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_confrontation_opt_warn_outcome",
+            "outcome": "You slip away to the officer's tent. By morning, the ringleaders are in chains.\n\n{VETERAN_1_NAME} looks at you with murder in their eyes as they're dragged past. You've chosen your side."
+          }
+        ]
+      }
+    },
+    {
+      "id": "pay_tension_mutiny_brewing",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "LeavingBattle"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 85
+        }
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "critical",
+        "one_time": false,
+        "once_per_crisis": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_pay_mutiny_title",
+        "setupId": "ll_evt_pay_mutiny_setup",
+        "title": "Mutiny",
+        "setup": "It's gone beyond talk. Beyond delegation. Beyond asking.\n\nSoldiers are gathering. Weapons drawn. Not pointed at the enemy — pointed at the officer's tents.\n\n{VETERAN_1_NAME} finds you. \"It's happening. Tonight. Either you're with us, or you're with them.\"\n\nThere's no middle ground now.",
+        "options": [
+          {
+            "id": "join_mutiny",
+            "textId": "ll_evt_pay_mutiny_opt_join",
+            "text": "Join the mutiny",
+            "tooltip": "Stand against the lord",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 30, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["mutiny_joined"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_mutiny_opt_join_outcome",
+            "outcome": "You draw your weapon. Around you, others do the same.\n\nWhatever comes next, you're in it now.",
+            "triggers_event": "mutiny_resolution"
+          },
+          {
+            "id": "stop_mutiny",
+            "textId": "ll_evt_pay_mutiny_opt_stop",
+            "text": "Try to stop it",
+            "tooltip": "Dangerous — could go badly",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.40,
+            "costs": { "fatigue": 2, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 30 }, "gold": 0, "relation": { "lord": 25 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -40, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_mutiny_opt_stop_outcome",
+            "outcome": "\"ENOUGH!\" Your voice cuts through the chaos. \"This ends with all of us dead or worse!\"\n\nThe mob hesitates. Some lower their weapons. Others don't.",
+            "outcome_failure": "You step forward to speak and someone's fist catches your jaw. You go down hard.\n\nWhen you wake, the mutiny is over — and you're in chains with the officers."
+          },
+          {
+            "id": "slip_away",
+            "textId": "ll_evt_pay_mutiny_opt_slip",
+            "text": "Slip away in the chaos",
+            "tooltip": "Desert while no one's watching",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.10,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 20 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["clean_desertion"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_mutiny_opt_slip_outcome",
+            "outcome": "In the confusion, you grab your kit and vanish into the darkness.\n\nBy morning, you're miles away. Free. Alone.",
+            "triggers_event": "desertion_clean"
+          },
+          {
+            "id": "stand_officers",
+            "textId": "ll_evt_pay_mutiny_opt_officers",
+            "text": "Stand with the officers",
+            "tooltip": "Fight for your lord",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.30,
+            "costs": { "fatigue": 2, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 20, "one_handed": 20 }, "gold": 50, "relation": { "lord": 40 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -50, "medical_risk": 0.2, "fatigue_relief": 0 },
+            "flags_set": ["loyalist_mutiny"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_mutiny_opt_officers_outcome",
+            "outcome": "You run to the officer's tents. Blade drawn. Ready to fight your own.\n\nThe night is long and bloody. But by dawn, the mutiny is crushed — and you've proven your loyalty.",
+            "outcome_failure": "You make it to the officer's tents, but the mutineers are already there.\n\n{VETERAN_1_NAME} sees you. \"Traitor.\"\n\nThe blade finds you before you can raise your own."
+          }
+        ]
+      }
+    },
+    {
+      "id": "pay_tension_theft_invitation",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "LeavingBattle"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {
+          "pay_tension_min": 45
+        },
+        "random_chance": 0.15
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_pay_theft_invite_title",
+        "setupId": "ll_evt_pay_theft_invite_setup",
+        "title": "Midnight Opportunity",
+        "setup": "{SOLDIER_NAME} pulls you aside after evening meal. Checks that no one's watching.\n\n\"Supply wagon. Third one from the end. Guard changes at midnight — there's a gap. Five minutes, maybe more.\"\n\nThey look at you. \"We grab some, sell it in town, split the coin. You in?\"\n\nPay's late. Lords don't care about us. Why should we care about their supplies?",
+        "options": [
+          {
+            "id": "join_theft",
+            "textId": "ll_evt_pay_theft_invite_opt_join",
+            "text": "\"I'm in. Let's do it.\"",
+            "tooltip": "Partner in crime",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.15,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 25 }, "gold": 55, "relation": {}, "items": [] },
+            "effects": { "heat": 3, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["theft_partner"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_theft_invite_opt_join_outcome",
+            "outcome": "Midnight. The gap's there, just like they said. You move fast, quiet. A sack of goods into the shadows.\n\nBy morning, it's coin in your pocket. {SOLDIER_NAME} grins. \"Not bad, eh? Same time next week?\"",
+            "outcome_failure": "The guard comes back early. You freeze. They see you.\n\n\"Hey! What are you—\"\n\nYou run. Behind you, shouting. The alarm goes up."
+          },
+          {
+            "id": "keep_watch",
+            "textId": "ll_evt_pay_theft_invite_opt_watch",
+            "text": "\"I'll keep watch. You do the work.\"",
+            "tooltip": "Accomplice with less risk",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.10,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 15 }, "gold": 28, "relation": {}, "items": [] },
+            "effects": { "heat": 2, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_theft_invite_opt_watch_outcome",
+            "outcome": "You stand in the shadows, watching for guards. {SOLDIER_NAME} does the dirty work.\n\nHalf the coin. But you didn't have to touch anything.",
+            "outcome_failure": "A patrol you didn't see. They spot you first.\n\n\"What are you doing here?\"\n\nNo good answer for that."
+          },
+          {
+            "id": "decline",
+            "textId": "ll_evt_pay_theft_invite_opt_decline",
+            "text": "\"Too risky. Count me out.\"",
+            "tooltip": "Stay clean",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_theft_invite_opt_decline_outcome",
+            "outcome": "{SOLDIER_NAME} shrugs. \"Suit yourself. More for me.\"\n\nThey walk away. You hope they don't get caught."
+          },
+          {
+            "id": "report",
+            "textId": "ll_evt_pay_theft_invite_opt_report",
+            "text": "Report them",
+            "tooltip": "Inform on your comrade",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 20 }, "gold": 0, "relation": { "lord": 15 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -25, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["informant"],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_pay_theft_invite_opt_report_outcome",
+            "outcome": "You go straight to {LANCE_LEADER_SHORT}. By morning, {SOLDIER_NAME} is in chains.\n\nThey don't know who informed. But the lance is quieter around you now."
+          }
+        ]
+      }
+    }
+  ]
+}
+

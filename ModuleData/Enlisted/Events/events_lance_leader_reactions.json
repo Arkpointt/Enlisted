@@ -1,0 +1,449 @@
+{
+  "$schema": "../../../src/Features/Lances/Events/lance-events-schema.json",
+  "version": "1.0.0",
+  "description": "Lance leader reaction events - dynamic dialogue based on personality and memory",
+  "events": [
+    {
+      "id": "lance_leader_greeting_first_meeting",
+      "category": "lance_leader",
+      "channel": "menu",
+      "weight": 100,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["first_meeting_leader"]
+      },
+      "cooldown_hours": 0,
+      "titleId": "ll_first_meeting_title",
+      "title": "Meeting the Lance Leader",
+      "bodyId": "ll_first_meeting_body",
+      "body": "You're brought before {LANCE_LEADER_FULL_NAME}, the leader of your lance.\n\n{LANCE_LEADER_FIRST} regards you with a measuring gaze.\n\n\"{OPENING_LINE}\"",
+      "options": [
+        {
+          "id": "salute",
+          "textId": "ll_first_salute",
+          "text": "[Salute] \"Reporting for duty, {LANCE_LEADER_RANK}.\"",
+          "effects": {
+            "lance_reputation": 2
+          },
+          "resultText": "{LANCE_LEADER_FIRST} nods. \"Good. We'll see what you're made of.\""
+        },
+        {
+          "id": "confident",
+          "textId": "ll_first_confident",
+          "text": "[Confident] \"Ready to prove myself.\"",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "{LANCE_LEADER_FIRST} raises an eyebrow. \"We'll see.\""
+        },
+        {
+          "id": "humble",
+          "textId": "ll_first_humble",
+          "text": "[Humble] \"I'm here to learn and serve.\"",
+          "effects": {
+            "lance_reputation": 3
+          },
+          "resultText": "{LANCE_LEADER_FIRST} seems pleased. \"Good attitude. Don't lose it.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_stern_heat_warning",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 20,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "leader_trait": ["stern"],
+        "min_heat": 5
+      },
+      "cooldown_hours": 168,
+      "titleId": "ll_stern_heat_title",
+      "title": "A Word in Private",
+      "bodyId": "ll_stern_heat_body",
+      "body": "{LANCE_LEADER_FIRST} catches you after formation.\n\n\"We need to talk. Privately.\" Their eyes are cold as iron.\n\n\"I've heard whispers about your... activities. Quartermaster supplies going missing. Gold changing hands. I don't know the details, and I don't want to.\"\n\n\"But I'm telling you now: in my lance, we follow the code. Always. This is your only warning.\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "ll_stern_heat_accept",
+          "text": "[Accept] \"Understood, {LANCE_LEADER_RANK}. It won't happen again.\"",
+          "effects": {
+            "heat": -1,
+            "lance_reputation": 1
+          },
+          "resultText": "{LANCE_LEADER_FIRST} holds your gaze for a long moment. \"See that it doesn't.\""
+        },
+        {
+          "id": "deny",
+          "textId": "ll_stern_heat_deny",
+          "text": "[Deny] \"I don't know what you're talking about.\"",
+          "effects": {
+            "lance_reputation": -2
+          },
+          "resultText": "\"Don't insult me.\" The words cut like a blade. \"I wasn't born yesterday.\""
+        },
+        {
+          "id": "defiant",
+          "textId": "ll_stern_heat_defiant",
+          "text": "[Defiant] \"Everyone does it.\"",
+          "effects": {
+            "discipline": 2,
+            "lance_reputation": -5
+          },
+          "resultText": "{LANCE_LEADER_FIRST}'s face hardens. \"Then everyone can share your punishment detail.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_fatherly_heat_warning",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 20,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "leader_trait": ["fatherly"],
+        "min_heat": 5
+      },
+      "cooldown_hours": 168,
+      "titleId": "ll_fatherly_heat_title",
+      "title": "A Concerned Talk",
+      "bodyId": "ll_fatherly_heat_body",
+      "body": "{LANCE_LEADER_FIRST} finds you during the evening meal, sitting down heavily beside you.\n\n\"Look, I'm not going to lecture you. You're not a child. But I've been around long enough to know what certain... patterns... look like.\"\n\nThey sigh. \"I've seen good soldiers destroy their careers over petty greed. Soldiers with more promise than you. Don't become another one of those stories.\"",
+      "options": [
+        {
+          "id": "appreciate",
+          "textId": "ll_fatherly_heat_appreciate",
+          "text": "[Appreciate] \"Thank you for the warning. I'll be more careful.\"",
+          "effects": {
+            "heat": -1,
+            "lance_reputation": 2
+          },
+          "resultText": "{LANCE_LEADER_FIRST} claps you on the shoulder. \"That's all I ask.\""
+        },
+        {
+          "id": "explain",
+          "textId": "ll_fatherly_heat_explain",
+          "text": "[Explain] \"It's not what it looks like...\"",
+          "effects": {
+            "lance_reputation": 0
+          },
+          "resultText": "\"I don't need explanations. Just... be smarter about it. Or stop entirely.\""
+        },
+        {
+          "id": "dismiss",
+          "textId": "ll_fatherly_heat_dismiss",
+          "text": "[Dismiss] \"I can handle my own affairs.\"",
+          "effects": {
+            "lance_reputation": -2
+          },
+          "resultText": "Disappointment flickers across their face. \"I hope so. For your sake.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_pragmatic_heat_reaction",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 20,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "leader_trait": ["pragmatic"],
+        "min_heat": 5
+      },
+      "cooldown_hours": 168,
+      "titleId": "ll_pragmatic_heat_title",
+      "title": "A Professional Discussion",
+      "bodyId": "ll_pragmatic_heat_body",
+      "body": "{LANCE_LEADER_FIRST} intercepts you during duty change.\n\n\"I notice things go missing around you. Gold finds its way into your pockets. I don't care—as long as the job gets done and the lord doesn't notice.\"\n\n\"But if this blows back on the lance, you'll answer for it. Not me. Understand?\"",
+      "options": [
+        {
+          "id": "understand",
+          "textId": "ll_pragmatic_heat_understand",
+          "text": "[Understand] \"Crystal clear. I'll keep it quiet.\"",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "{LANCE_LEADER_FIRST} nods curtly. \"Good. We understand each other.\""
+        },
+        {
+          "id": "assure",
+          "textId": "ll_pragmatic_heat_assure",
+          "text": "[Assure] \"It won't come back on anyone.\"",
+          "effects": {
+            "lance_reputation": 0
+          },
+          "resultText": "\"See that it doesn't. Now get back to work.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_heroic_praise_stern",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 15,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "leader_trait": ["stern"],
+        "flags": ["recent_heroic_action"]
+      },
+      "cooldown_hours": 336,
+      "titleId": "ll_stern_praise_title",
+      "title": "Rare Acknowledgment",
+      "bodyId": "ll_stern_praise_body",
+      "body": "After formation, {LANCE_LEADER_FIRST} approaches. This is unusual—they rarely seek anyone out.\n\n\"What you did yesterday. In the battle.\" A pause. \"That was... acceptable.\"\n\nFrom them, this is effusive praise.",
+      "options": [
+        {
+          "id": "humble",
+          "textId": "ll_stern_praise_humble",
+          "text": "[Humble] \"Just doing my duty, {LANCE_LEADER_RANK}.\"",
+          "effects": {
+            "lance_reputation": 3
+          },
+          "resultText": "The faintest ghost of approval crosses their face. \"Keep it up.\""
+        },
+        {
+          "id": "accept",
+          "textId": "ll_stern_praise_accept",
+          "text": "[Accept] \"Thank you, {LANCE_LEADER_RANK}.\"",
+          "effects": {
+            "lance_reputation": 2
+          },
+          "resultText": "They nod once and turn away. High praise indeed."
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_fatherly_praise",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 15,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "leader_trait": ["fatherly"],
+        "flags": ["recent_heroic_action"]
+      },
+      "cooldown_hours": 336,
+      "titleId": "ll_fatherly_praise_title",
+      "title": "Proud Mentor",
+      "bodyId": "ll_fatherly_praise_body",
+      "body": "{LANCE_LEADER_FIRST} finds you at the fire, a rare smile on their weathered face.\n\n\"My old wolf heart nearly stopped when I heard what you did. Bold. Dangerous. But you knew what you were doing.\"\n\n\"That's why you're one of my best. You know when to take risks.\"",
+      "options": [
+        {
+          "id": "grateful",
+          "textId": "ll_fatherly_praise_grateful",
+          "text": "[Grateful] \"I learned from watching you.\"",
+          "effects": {
+            "lance_reputation": 4
+          },
+          "resultText": "Their smile broadens. \"Ha! Flattery. But I'll take it.\""
+        },
+        {
+          "id": "modest",
+          "textId": "ll_fatherly_praise_modest",
+          "text": "[Modest] \"I got lucky.\"",
+          "effects": {
+            "lance_reputation": 2
+          },
+          "resultText": "\"Luck favors the prepared. And you were prepared.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_discipline_warning",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 25,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "min_discipline": 5
+      },
+      "cooldown_hours": 168,
+      "titleId": "ll_discipline_title",
+      "title": "Discipline Issues",
+      "bodyId": "ll_discipline_body",
+      "body": "{LANCE_LEADER_FIRST} summons you to the command tent. Their expression is serious.\n\n\"Your discipline record is becoming a problem. Fighting. Insubordination. Complaints from other lances.\"\n\n\"I've defended you so far, but my patience has limits.\"",
+      "options": [
+        {
+          "id": "apologize",
+          "textId": "ll_discipline_apologize",
+          "text": "[Apologize] \"I'll do better. I give you my word.\"",
+          "effects": {
+            "discipline": -1,
+            "lance_reputation": 1
+          },
+          "resultText": "{LANCE_LEADER_FIRST} studies you. \"Words are cheap. Show me with actions.\""
+        },
+        {
+          "id": "explain",
+          "textId": "ll_discipline_explain",
+          "text": "[Explain] \"The other soldiers started it—\"",
+          "effects": {
+            "lance_reputation": -1
+          },
+          "resultText": "\"I don't care who started it. I care about who ends up in front of me.\""
+        },
+        {
+          "id": "defiant",
+          "textId": "ll_discipline_defiant",
+          "text": "[Defiant] \"Maybe they deserved it.\"",
+          "effects": {
+            "discipline": 2,
+            "lance_reputation": -3
+          },
+          "resultText": "Their eyes harden. \"Then you can all share punishment detail.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_remembers_corruption",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 10,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["corruption_pattern_detected"]
+      },
+      "cooldown_hours": 504,
+      "titleId": "ll_corruption_memory_title",
+      "title": "A Pattern Noticed",
+      "bodyId": "ll_corruption_memory_body",
+      "body": "{LANCE_LEADER_FIRST} pulls you aside after duty.\n\n\"I've been watching you. I remember the quartermaster incident. And the supply 'discrepancy.' And the gold that vanished during the last supply run.\"\n\n\"I remember everything, soldier. Don't think I've forgotten.\"",
+      "options": [
+        {
+          "id": "reform",
+          "textId": "ll_corruption_reform",
+          "text": "[Reform] \"Those days are behind me.\"",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "\"Prove it. Actions, not words.\""
+        },
+        {
+          "id": "deny",
+          "textId": "ll_corruption_deny",
+          "text": "[Deny] \"You can't prove anything.\"",
+          "effects": {
+            "lance_reputation": -3
+          },
+          "resultText": "\"I don't need to prove it to a magistrate. I just need to know. And I do.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_trust_milestone",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 8,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "min_trust": 60,
+        "min_days_served": 30
+      },
+      "cooldown_hours": 720,
+      "titleId": "ll_trust_milestone_title",
+      "title": "Earned Trust",
+      "bodyId": "ll_trust_milestone_body",
+      "body": "{LANCE_LEADER_FIRST} stops you one evening, their manner less formal than usual.\n\n\"You've been with us for a while now. I've watched you. Seen how you handle yourself.\"\n\n\"You've earned my trust. That's not something I give lightly.\"",
+      "options": [
+        {
+          "id": "honored",
+          "textId": "ll_trust_honored",
+          "text": "[Honored] \"That means a great deal to me, {LANCE_LEADER_RANK}.\"",
+          "effects": {
+            "lance_reputation": 5
+          },
+          "resultText": "A rare smile. \"Just keep being who you are.\""
+        },
+        {
+          "id": "committed",
+          "textId": "ll_trust_committed",
+          "text": "[Committed] \"I won't let you down.\"",
+          "effects": {
+            "lance_reputation": 4
+          },
+          "resultText": "\"I know you won't. That's why I'm telling you this.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_reenlistment_welcome",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 50,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["just_reenlisted"]
+      },
+      "cooldown_hours": 0,
+      "titleId": "ll_reenlist_title",
+      "title": "A Familiar Face",
+      "bodyId": "ll_reenlist_body",
+      "body": "{LANCE_LEADER_FIRST} looks up from their work as you enter the tent.\n\n\"Well. Look who's back.\" {REENLIST_REACTION}\n\n\"Thought you'd had enough of this life. What changed your mind?\"",
+      "options": [
+        {
+          "id": "missed",
+          "textId": "ll_reenlist_missed",
+          "text": "[Honest] \"I missed the life. The lance.\"",
+          "effects": {
+            "lance_reputation": 3
+          },
+          "resultText": "{LANCE_LEADER_FIRST} nods slowly. \"The road always calls us back.\""
+        },
+        {
+          "id": "practical",
+          "textId": "ll_reenlist_practical",
+          "text": "[Practical] \"Civilian life didn't suit me.\"",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "\"Fair enough. At least you're honest about it.\""
+        },
+        {
+          "id": "opportunity",
+          "textId": "ll_reenlist_opportunity",
+          "text": "[Opportunity] \"Heard you needed good soldiers.\"",
+          "effects": {
+            "lance_reputation": 2
+          },
+          "resultText": "\"We always need good soldiers. Question is, are you still one?\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_new_replacement",
+      "category": "lance_leader",
+      "channel": "inquiry",
+      "weight": 100,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["new_lance_leader"]
+      },
+      "cooldown_hours": 0,
+      "titleId": "ll_new_leader_title",
+      "title": "New Leadership",
+      "bodyId": "ll_new_leader_body",
+      "body": "The lance has gathered. A new face stands before you—{LANCE_LEADER_FULL_NAME}.\n\n{LANCE_LEADER_FIRST} surveys the assembled soldiers.\n\n\"{NEW_LEADER_INTRO}\"\n\n\"Any questions, ask them now. Otherwise, we have work to do.\"",
+      "options": [
+        {
+          "id": "salute",
+          "textId": "ll_new_salute",
+          "text": "[Salute] Stand at attention and salute.",
+          "effects": {
+            "lance_reputation": 2
+          },
+          "resultText": "{LANCE_LEADER_FIRST} returns the salute crisply. \"Good. Discipline.\""
+        },
+        {
+          "id": "observe",
+          "textId": "ll_new_observe",
+          "text": "[Observe] Watch and take measure of the new leader.",
+          "effects": {
+            "lance_reputation": 0
+          },
+          "resultText": "{LANCE_LEADER_FIRST} notices your measuring gaze and returns it. Time will tell."
+        }
+      ]
+    }
+  ]
+}
+

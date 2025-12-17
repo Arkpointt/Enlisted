@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_field_medic",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -54,12 +54,12 @@
         "titleId": "ll_evt_medic_treating_wounded_title",
         "setupId": "ll_evt_medic_treating_wounded_setup",
         "title": "Battle Triage",
-        "setup": "The fighting's done. The dying isn't. Wounded soldiers everywhere — more than you can treat. You have to choose who gets help first.\n\n{VETERAN_1_NAME} is among them. So is a recruit you barely know.",
+        "setup": "The fighting's done. The dying isn't. Wounded soldiers everywhere â€” more than you can treat. You have to choose who gets help first.\n\n{VETERAN_1_NAME} is among them. So is a recruit you barely know.",
         "options": [
           {
             "id": "triage_by_severity_worst_first",
             "textId": "ll_evt_medic_treating_wounded_opt_triage_by_severity_worst_first_text",
-            "text": "Triage by severity — worst first",
+            "text": "Triage by severity â€” worst first",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -97,7 +97,7 @@
           {
             "id": "save_who_you_can_save_skip_the_h",
             "textId": "ll_evt_medic_treating_wounded_opt_save_who_you_can_save_skip_the_h_text",
-            "text": "Save who you can save — skip the hopeless",
+            "text": "Save who you can save â€” skip the hopeless",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -222,7 +222,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -267,7 +267,7 @@
         "titleId": "ll_evt_medic_disease_outbreak_title",
         "setupId": "ll_evt_medic_disease_outbreak_setup",
         "title": "Camp Sickness",
-        "setup": "It started with one soldier. Now it's a dozen. Camp fever — or worse. The surgeon is overwhelmed.\n\n\"You've got steady hands, {PLAYER_NAME}. I need you in the sick tent.\"",
+        "setup": "It started with one soldier. Now it's a dozen. Camp fever â€” or worse. The surgeon is overwhelmed.\n\n\"You've got steady hands, {PLAYER_NAME}. I need you in the sick tent.\"",
         "options": [
           {
             "id": "work_the_sick_tent_all_day",
@@ -434,7 +434,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -477,7 +477,7 @@
         "titleId": "ll_evt_medic_surgical_assist_title",
         "setupId": "ll_evt_medic_surgical_assist_setup",
         "title": "Surgery Assistance",
-        "setup": "The surgeon's hands are full — literally. He's got a soldier on the table with an arrow in his gut. \n\n\"Hold him down. Hand me what I need. Don't look away.\"",
+        "setup": "The surgeon's hands are full â€” literally. He's got a soldier on the table with an arrow in his gut. \n\n\"Hold him down. Hand me what I need. Don't look away.\"",
         "options": [
           {
             "id": "assist_calmly_follow_instruction",
@@ -594,7 +594,7 @@
           {
             "id": "ask_to_learn_show_me_how",
             "textId": "ll_evt_medic_surgical_assist_opt_ask_to_learn_show_me_how_text",
-            "text": "Ask to learn — \"show me how\"",
+            "text": "Ask to learn â€” \"show me how\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -641,7 +641,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -853,7 +853,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1054,3 +1054,5 @@
     }
   ]
 }
+
+

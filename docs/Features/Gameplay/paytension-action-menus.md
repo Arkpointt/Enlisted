@@ -1,6 +1,6 @@
-﻿# PayTension Action Menus
+# PayTension Action Menus
 
-**Status**: âœ… Implemented (v3.0)  
+**Status**: ✅ Implemented (v3.0)  
 **Category**: Gameplay Feature  
 **Dependencies**: Pay System, Camp, Quartermaster Hero
 
@@ -20,11 +20,11 @@ When pay is severely delayed (PayTension 40+), two special action menus appear i
 - Access to **Camp** (from Enlisted Status)
 
 ### Menu Location
-1. **Enlisted Status** â†’ **Camp**
+1. **Enlisted Status** → **Camp**
 2. Camp menu opens
 3. Two new options appear (if PayTension 40+):
-   - ðŸ”´ **"Desperate Measures..."** (HostileAction icon)
-   - ðŸŸ¢ **"Help the Lord with Finances"** (Mission icon)
+   - 🔴 **"Desperate Measures..."** (HostileAction icon)
+   - 🟢 **"Help the Lord with Finances"** (Mission icon)
 
 ### Visibility
 - **Below 40 tension**: Menus completely hidden
@@ -91,7 +91,7 @@ Current PayTension: {tension}/100"
 
 ### Option 4: Sell Issued Equipment
 **Unlocks at**: PayTension 60+  
-**Gain**: Tier Ã— 25 denars (25-225 depending on rank)
+**Gain**: Tier × 25 denars (25-225 depending on rank)
 
 **Effects:**
 - Immediate gold based on rank
@@ -222,7 +222,7 @@ injuryChance = Max(10%, 50% - (combatSkill / 10))
 ## PayTension Reduction
 
 ### Stabilization Threshold
-When PayTension drops **below 40** (from â‰¥40):
+When PayTension drops **below 40** (from ≥40):
 - Special message: "The lord's financial situation has stabilized."
 - Desperate Measures and Help the Lord menus disappear
 - Normal operations resume

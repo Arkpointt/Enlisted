@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "escalation_thresholds",
   "category": "threshold",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -53,7 +53,7 @@
         "titleId": "ll_evt_discipline_blocked_title",
         "setupId": "ll_evt_discipline_blocked_setup",
         "title": "Promotion Blocked",
-        "setup": "The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it's not there.\n\n{LANCE_LEADER_SHORT} finds you staring at the roster.\n\n\"Your record, {PLAYER_NAME}. Too many marks. The captain won't sign off on promoting someone with your... history.\" They actually look sympathetic. \"Clean it up. Prove them wrong. Maybe next time.\"\n\nNext time. If there is one.",
+        "setup": "The promotion list goes up. Your name should be on it â€” the experience, the time served, the battles. But it's not there.\n\n{LANCE_LEADER_SHORT} finds you staring at the roster.\n\n\"Your record, {PLAYER_NAME}. Too many marks. The captain won't sign off on promoting someone with your... history.\" They actually look sympathetic. \"Clean it up. Prove them wrong. Maybe next time.\"\n\nNext time. If there is one.",
         "options": [
           {
             "id": "accept",
@@ -228,7 +228,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -270,7 +270,7 @@
         "titleId": "ll_evt_discipline_discharge_title",
         "setupId": "ll_evt_discipline_discharge_setup",
         "title": "Facing Discharge",
-        "setup": "\"Dishonorable discharge.\"\n\nThe words hang in the air. The captain doesn't look pleased to say them — or maybe they do. Hard to tell.\n\n\"Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You've left us no choice.\"\n\n{LANCE_NAME} watches from the edge of the assembly. {LANCE_LEADER_SHORT}'s face is stone.\n\n\"You have one opportunity to speak before the sentence is carried out. Make it count.\"",
+        "setup": "\"Dishonorable discharge.\"\n\nThe words hang in the air. The captain doesn't look pleased to say them â€” or maybe they do. Hard to tell.\n\n\"Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You've left us no choice.\"\n\n{LANCE_NAME} watches from the edge of the assembly. {LANCE_LEADER_SHORT}'s face is stone.\n\n\"You have one opportunity to speak before the sentence is carried out. Make it count.\"",
         "options": [
           {
             "id": "accept",
@@ -311,7 +311,7 @@
           },
           {
             "id": "beg",
-            "text": "\"Please — one more chance. I'll be different. I swear it.\"",
+            "text": "\"Please â€” one more chance. I'll be different. I swear it.\"",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -398,7 +398,7 @@
           },
           {
             "id": "service",
-            "text": "\"My service record — the battles, the duties, the blood I've shed for {LORD_NAME}—\"",
+            "text": "\"My service record â€” the battles, the duties, the blood I've shed for {LORD_NAME}â€”\"",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -458,7 +458,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -500,7 +500,7 @@
         "titleId": "ll_evt_discipline_extra_duty_title",
         "setupId": "ll_evt_discipline_extra_duty_setup",
         "title": "Extra Duty",
-        "setup": "The duty roster goes up. Your name's on it. Again. And again. And twice more after that.\n\nExtra duty — the army's favorite corrective measure. Latrine digging, night watch, hauling water, whatever's worst. Your infractions have been noticed, and this is the price.\n\n{LANCE_LEADER_SHORT} shrugs when you look at them. \"Out of my hands. Sergeant's orders.\"\n\nA week of this, minimum.",
+        "setup": "The duty roster goes up. Your name's on it. Again. And again. And twice more after that.\n\nExtra duty â€” the army's favorite corrective measure. Latrine digging, night watch, hauling water, whatever's worst. Your infractions have been noticed, and this is the price.\n\n{LANCE_LEADER_SHORT} shrugs when you look at them. \"Out of my hands. Sergeant's orders.\"\n\nA week of this, minimum.",
         "options": [
           {
             "id": "accept",
@@ -578,7 +578,7 @@
           },
           {
             "id": "excel",
-            "text": "Not just do it — do it better than anyone. Make a point.",
+            "text": "Not just do it â€” do it better than anyone. Make a point.",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -662,7 +662,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -795,7 +795,7 @@
           },
           {
             "id": "blame",
-            "text": "Point fingers. Others share responsibility — maybe more than you.",
+            "text": "Point fingers. Others share responsibility â€” maybe more than you.",
             "tooltip": null,
             "condition": null,
             "risk": "corrupt",
@@ -892,7 +892,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -934,7 +934,7 @@
         "titleId": "ll_evt_discipline_warning_title",
         "setupId": "ll_evt_discipline_warning_setup",
         "title": "On Notice",
-        "setup": "{LANCE_LEADER_SHORT} doesn't look happy.\n\n\"You're on notice, {PLAYER_NAME}. The sergeant's been keeping track — late to muster, sloppy kit, that business with the—\" they wave a hand. \"Doesn't matter. Point is, you're building a reputation, and not the good kind.\"\n\nThey lower their voice.\n\n\"I can only cover for you so many times. Get it together.\"",
+        "setup": "{LANCE_LEADER_SHORT} doesn't look happy.\n\n\"You're on notice, {PLAYER_NAME}. The sergeant's been keeping track â€” late to muster, sloppy kit, that business with theâ€”\" they wave a hand. \"Doesn't matter. Point is, you're building a reputation, and not the good kind.\"\n\nThey lower their voice.\n\n\"I can only cover for you so many times. Get it together.\"",
         "options": [
           {
             "id": "apologize",
@@ -975,7 +975,7 @@
           },
           {
             "id": "excuse",
-            "text": "\"It's not my fault — there were circumstances—\"",
+            "text": "\"It's not my fault â€” there were circumstancesâ€”\"",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -1012,7 +1012,7 @@
           },
           {
             "id": "resentful",
-            "text": "\"Maybe if the duties weren't so—\"",
+            "text": "\"Maybe if the duties weren't soâ€”\"",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -1096,7 +1096,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1138,7 +1138,7 @@
         "titleId": "ll_evt_heat_audit_title",
         "setupId": "ll_evt_heat_audit_setup",
         "title": "The Audit",
-        "setup": "The captain's clerk finds you after morning muster. His smile doesn't reach his eyes.\n\n\"The captain's ordered a review of supply records. Your name came up several times — requisitions, distributions, inventory counts.\" He produces a ledger. \"Some discrepancies need explaining.\"\n\nThis is it. The numbers don't add up because you made sure they wouldn't. The question is whether you can talk your way out, or if the noose is already tightening.\n\n\"The captain will see you at midday. I suggest you have answers ready.\"",
+        "setup": "The captain's clerk finds you after morning muster. His smile doesn't reach his eyes.\n\n\"The captain's ordered a review of supply records. Your name came up several times â€” requisitions, distributions, inventory counts.\" He produces a ledger. \"Some discrepancies need explaining.\"\n\nThis is it. The numbers don't add up because you made sure they wouldn't. The question is whether you can talk your way out, or if the noose is already tightening.\n\n\"The captain will see you at midday. I suggest you have answers ready.\"",
         "options": [
           {
             "id": "honest",
@@ -1218,7 +1218,7 @@
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "The captain frowns, reviews the ledger. \"This is a shambles. Someone needs to sort this properly.\" You've dodged — for now.",
+            "outcome": "The captain frowns, reviews the ledger. \"This is a shambles. Someone needs to sort this properly.\" You've dodged â€” for now.",
             "outcome_failure": "\"Funny how the errors all favor you,\" the captain observes. \"I wasn't born yesterday, soldier.\"",
             "injury_risk": null,
             "triggers_event": null,
@@ -1256,7 +1256,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "The captain's eyes narrow. \"Names.\" You give them — true or not, it doesn't matter. The investigation widens. You're a witness now, not a suspect. But you've made powerful enemies.",
+            "outcome": "The captain's eyes narrow. \"Names.\" You give them â€” true or not, it doesn't matter. The investigation widens. You're a witness now, not a suspect. But you've made powerful enemies.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1266,7 +1266,7 @@
           },
           {
             "id": "records",
-            "text": "You've been keeping your own records. Produce them — doctored to tell a better story.",
+            "text": "You've been keeping your own records. Produce them â€” doctored to tell a better story.",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -1326,7 +1326,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1409,7 +1409,7 @@
           },
           {
             "id": "beg",
-            "text": "\"Please — I'll return everything, I'll work it off, anything—\"",
+            "text": "\"Please â€” I'll return everything, I'll work it off, anythingâ€”\"",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -1498,7 +1498,7 @@
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "You burst through — luck, desperation, they weren't expecting it. You're running now. A deserter and a thief. But you're free.",
+            "outcome": "You burst through â€” luck, desperation, they weren't expecting it. You're running now. A deserter and a thief. But you're free.",
             "outcome_failure": "They're ready for it. A club to the back of the head. You wake in chains, charges now including resisting arrest.",
             "injury_risk": null,
             "triggers_event": null,
@@ -1548,7 +1548,7 @@
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "A pause. Whispered consultation. \"The captain will hear you. But this better be good.\" You've bought an audience, maybe your freedom — at the cost of becoming an informant.",
+            "outcome": "A pause. Whispered consultation. \"The captain will hear you. But this better be good.\" You've bought an audience, maybe your freedom â€” at the cost of becoming an informant.",
             "outcome_failure": "\"Save it for the hearing.\" They don't care what you know. Into the stockade you go.",
             "injury_risk": null,
             "triggers_event": null,
@@ -1569,7 +1569,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1611,7 +1611,7 @@
         "titleId": "ll_evt_heat_shakedown_title",
         "setupId": "ll_evt_heat_shakedown_setup",
         "title": "The Shakedown",
-        "setup": "\"Kit inspection! Everyone out, gear on the ground, NOW!\"\n\n{SERGEANT_NAME} — not your lance's sergeant, one of the captain's dogs — is tearing through the camp with two soldiers. Random inspection, they're calling it. But the way they looked at you when they announced it... this isn't random.\n\nYour kit is laid out. There's nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack...",
+        "setup": "\"Kit inspection! Everyone out, gear on the ground, NOW!\"\n\n{SERGEANT_NAME} â€” not your lance's sergeant, one of the captain's dogs â€” is tearing through the camp with two soldiers. Random inspection, they're calling it. But the way they looked at you when they announced it... this isn't random.\n\nYour kit is laid out. There's nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack...",
         "options": [
           {
             "id": "comply",
@@ -1654,7 +1654,7 @@
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "They search. Find nothing incriminating — you got lucky, or they weren't looking hard enough. {SERGEANT_NAME} grunts, moves on.",
+            "outcome": "They search. Find nothing incriminating â€” you got lucky, or they weren't looking hard enough. {SERGEANT_NAME} grunts, moves on.",
             "outcome_failure": "{SERGEANT_NAME}'s hand closes on the coin pouch. \"What's this then?\" The extra weight gives you away. \"Skimming, are we?\"",
             "injury_risk": null,
             "triggers_event": null,
@@ -1704,7 +1704,7 @@
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "A slight nod. The inspection of your kit is perfunctory at best. {SERGEANT_NAME} moves on. You've bought time — and a new problem.",
+            "outcome": "A slight nod. The inspection of your kit is perfunctory at best. {SERGEANT_NAME} moves on. You've bought time â€” and a new problem.",
             "outcome_failure": "\"Are you trying to BRIBE me, soldier?\" {SERGEANT_NAME}'s voice carries. Everyone's looking now. This just got much worse.",
             "injury_risk": null,
             "triggers_event": null,
@@ -1715,7 +1715,7 @@
           },
           {
             "id": "distraction",
-            "text": "\"Sergeant! {SOLDIER_NAME}'s kit — I saw them hiding something earlier!\"",
+            "text": "\"Sergeant! {SOLDIER_NAME}'s kit â€” I saw them hiding something earlier!\"",
             "tooltip": null,
             "condition": null,
             "risk": "corrupt",
@@ -1791,7 +1791,7 @@
             },
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "The incriminating items vanish into the latrine trench. When they search your kit, there's nothing to find. Clean — for now.",
+            "outcome": "The incriminating items vanish into the latrine trench. When they search your kit, there's nothing to find. Clean â€” for now.",
             "outcome_failure": "{VETERAN_1_NAME} sees you. Their eyes meet yours. They don't say anything. But they saw.",
             "injury_risk": null,
             "triggers_event": null,
@@ -1812,7 +1812,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1854,7 +1854,7 @@
         "titleId": "ll_evt_heat_warning_title",
         "setupId": "ll_evt_heat_warning_setup",
         "title": "The Warning",
-        "setup": "{LANCE_LEADER_SHORT} pulls you aside after evening meal. Their voice is low, eyes checking that no one's close enough to hear.\n\n\"I'm going to say this once, {PLAYER_NAME}. Whatever you're doing — the extra coins, the supply discrepancies, the 'gifts' from merchants — people are starting to notice.\"\n\nThey lean closer.\n\n\"I don't care what you do on your own time. But if it comes back on {LANCE_NAME}, we're going to have a problem. Understand?\"",
+        "setup": "{LANCE_LEADER_SHORT} pulls you aside after evening meal. Their voice is low, eyes checking that no one's close enough to hear.\n\n\"I'm going to say this once, {PLAYER_NAME}. Whatever you're doing â€” the extra coins, the supply discrepancies, the 'gifts' from merchants â€” people are starting to notice.\"\n\nThey lean closer.\n\n\"I don't care what you do on your own time. But if it comes back on {LANCE_NAME}, we're going to have a problem. Understand?\"",
         "options": [
           {
             "id": "deny",
@@ -1922,7 +1922,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "A curt nod. \"See that you are.\" {LANCE_LEADER_SHORT} leaves. You've been warned — by someone who could've reported you instead. That's worth something.",
+            "outcome": "A curt nod. \"See that you are.\" {LANCE_LEADER_SHORT} leaves. You've been warned â€” by someone who could've reported you instead. That's worth something.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2016,7 +2016,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2058,7 +2058,7 @@
         "titleId": "ll_evt_lance_bonded_title",
         "setupId": "ll_evt_lance_bonded_setup",
         "title": "Bonded",
-        "setup": "{LANCE_LEADER_SHORT} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n\"The sergeant's planning a kit inspection tomorrow. The captain's hound — looking for contraband, extra rations, anything they can nail someone for.\"\n\nThey meet your eyes.\n\n\"Thought you should know. In case you've got anything that needs... relocating.\"\n\nThis is a warning. The kind you don't give to just anyone. The kind that could get {LANCE_LEADER_SHORT} in serious trouble if anyone found out.\n\nYou're family now. {LANCE_NAME} protects its own.",
+        "setup": "{LANCE_LEADER_SHORT} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n\"The sergeant's planning a kit inspection tomorrow. The captain's hound â€” looking for contraband, extra rations, anything they can nail someone for.\"\n\nThey meet your eyes.\n\n\"Thought you should know. In case you've got anything that needs... relocating.\"\n\nThis is a warning. The kind you don't give to just anyone. The kind that could get {LANCE_LEADER_SHORT} in serious trouble if anyone found out.\n\nYou're family now. {LANCE_NAME} protects its own.",
         "options": [
           {
             "id": "grateful",
@@ -2089,7 +2089,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_LEADER_SHORT} nods. \"Just don't make me regret it.\" You won't. This is what a lance is supposed to be — watching each other's backs. Even when the enemy wears the same uniform.",
+            "outcome": "{LANCE_LEADER_SHORT} nods. \"Just don't make me regret it.\" You won't. This is what a lance is supposed to be â€” watching each other's backs. Even when the enemy wears the same uniform.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2220,7 +2220,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2430,7 +2430,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "They don't sugarcoat it. \"You've lost their trust. The way you handled—\" they list examples. Each one a small betrayal you barely remember. \"You want back in? Start making different choices.\" A path forward. Hard, but real.",
+            "outcome": "They don't sugarcoat it. \"You've lost their trust. The way you handledâ€”\" they list examples. Each one a small betrayal you barely remember. \"You want back in? Start making different choices.\" A path forward. Hard, but real.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2450,7 +2450,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2492,7 +2492,7 @@
         "titleId": "ll_evt_lance_sabotage_title",
         "setupId": "ll_evt_lance_sabotage_setup",
         "title": "Sabotage",
-        "setup": "Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn't notice until half your water was gone.\n\nSomeone did this. Someone in {LANCE_NAME}.\n\n{LANCE_LEADER_SHORT} isn't going to help. They're part of this, or they're looking the other way. Same result.\n\nYou're on your own. In a unit that wants you gone — or worse.",
+        "setup": "Your kit is wrong.\n\nNothing obvious â€” nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn't notice until half your water was gone.\n\nSomeone did this. Someone in {LANCE_NAME}.\n\n{LANCE_LEADER_SHORT} isn't going to help. They're part of this, or they're looking the other way. Same result.\n\nYou're on your own. In a unit that wants you gone â€” or worse.",
         "options": [
           {
             "id": "endure",
@@ -2667,7 +2667,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2709,7 +2709,7 @@
         "titleId": "ll_evt_lance_trusted_title",
         "setupId": "ll_evt_lance_trusted_setup",
         "title": "Trusted",
-        "setup": "{VETERAN_1_NAME} corners you after the evening meal. They look around, making sure no one's listening.\n\n\"Got a problem, {PLAYER_NAME}. Need help from someone I can trust.\" They pause. \"That's you.\"\n\nThey explain: a debt from before the army. Collector's coming. If {VETERAN_1_NAME} doesn't have the coin, things get ugly — for them, maybe for their family back home.\n\n\"I'm not asking for money. Just... watch my back when the collector shows. Make sure things stay... civil.\"",
+        "setup": "{VETERAN_1_NAME} corners you after the evening meal. They look around, making sure no one's listening.\n\n\"Got a problem, {PLAYER_NAME}. Need help from someone I can trust.\" They pause. \"That's you.\"\n\nThey explain: a debt from before the army. Collector's coming. If {VETERAN_1_NAME} doesn't have the coin, things get ugly â€” for them, maybe for their family back home.\n\n\"I'm not asking for money. Just... watch my back when the collector shows. Make sure things stay... civil.\"",
         "options": [
           {
             "id": "help",
@@ -2777,7 +2777,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{VETERAN_1_NAME} hesitates. \"Twenty denars. I know it's a lot—\" You hand it over. They stare at the coins like they're made of gold. \"I'll pay you back. Every copper, I swear.\"",
+            "outcome": "{VETERAN_1_NAME} hesitates. \"Twenty denars. I know it's a lotâ€”\" You hand it over. They stare at the coins like they're made of gold. \"I'll pay you back. Every copper, I swear.\"",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2871,7 +2871,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -2913,7 +2913,7 @@
         "titleId": "ll_evt_medical_complication_title",
         "setupId": "ll_evt_medical_complication_setup",
         "title": "Complication",
-        "setup": "Fever hits in the night.\n\nThe {CONDITION_TYPE} has become something else — something worse. {COMPLICATION_NAME}, the surgeon would probably call it. Infection, inflammation, your body turning against itself.\n\nYou wake drenched in sweat, shaking. {LANCE_MATE_NAME} is there, looking worried.\n\n\"You're burning up. Can you walk?\"\n\nWalking sounds impossible. The surgeon's tent sounds very far away.",
+        "setup": "Fever hits in the night.\n\nThe {CONDITION_TYPE} has become something else â€” something worse. {COMPLICATION_NAME}, the surgeon would probably call it. Infection, inflammation, your body turning against itself.\n\nYou wake drenched in sweat, shaking. {LANCE_MATE_NAME} is there, looking worried.\n\n\"You're burning up. Can you walk?\"\n\nWalking sounds impossible. The surgeon's tent sounds very far away.",
         "options": [
           {
             "id": "help",
@@ -2944,7 +2944,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "{LANCE_MATE_NAME} half-carries you across camp. The surgeon takes one look and starts working. Treatment is aggressive — and necessary. You're going to be out for a while. But you're going to live.",
+            "outcome": "{LANCE_MATE_NAME} half-carries you across camp. The surgeon takes one look and starts working. Treatment is aggressive â€” and necessary. You're going to be out for a while. But you're going to live.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2994,7 +2994,7 @@
             "flags_set": [],
             "flags_clear": [],
             "outcome": "Somehow, impossibly, you ride it out. The fever breaks by morning. You're weak as a kitten, but alive. The surgeon will call it a miracle.",
-            "outcome_failure": "You're not fine. The fever spikes. You lose consciousness. When you wake, you're in the surgeon's tent anyway — in worse shape than before.",
+            "outcome_failure": "You're not fine. The fever spikes. You lose consciousness. When you wake, you're in the surgeon's tent anyway â€” in worse shape than before.",
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
@@ -3101,7 +3101,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -3294,7 +3294,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research/escalation_threshold_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -3518,3 +3518,5 @@
     }
   ]
 }
+
+

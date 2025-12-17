@@ -31,6 +31,11 @@ namespace Enlisted.Features.Lances.Events
         // Phase 4/5: onboarding track filter ("enlisted" | "officer" | "commander"). Optional for non-onboarding events.
         [JsonProperty("track")] public string Track { get; set; } = string.Empty;
 
+        // Phase 6: Tier-Based Narrative Access - who initiates this event
+        // Values: "lord", "lance_leader", "lance_mate", "situation"
+        // Used to filter events based on player tier (e.g., T1-2 can't get lord invitations)
+        [JsonProperty("narrative_source")] public string NarrativeSource { get; set; } = string.Empty;
+
         // Schema (Phase 5a): optional metadata block (authoring aid)
         [JsonProperty("metadata")] public LanceLifeEventMetadata Metadata { get; set; } = new LanceLifeEventMetadata();
 
@@ -101,6 +106,23 @@ namespace Enlisted.Features.Lances.Events
 
         // Schema injury format (Phase 5a) normalized into Injury/Illness by loader.
         [JsonProperty("injury_risk")] public LanceLifeInjuryRiskSchema InjuryRisk { get; set; }
+
+        // Phase 3 (Decision Events): Event chains - selecting this option queues another event
+        // The chained event will fire after the specified delay (default: 12-36 hours)
+        [JsonProperty("chains_to")] public string ChainsTo { get; set; } = string.Empty;
+
+        // Phase 3 (Decision Events): Delay in hours before the chained event fires (0 = use random default)
+        [JsonProperty("chain_delay_hours")] public float ChainDelayHours { get; set; }
+
+        // Phase 3 (Decision Events): Story flags to set when this option is selected
+        // These can be checked by future events using triggers.all/any/none
+        [JsonProperty("set_flags")] public List<string> SetFlags { get; set; } = new List<string>();
+
+        // Phase 3 (Decision Events): Story flags to clear when this option is selected
+        [JsonProperty("clear_flags")] public List<string> ClearFlags { get; set; } = new List<string>();
+
+        // Phase 3 (Decision Events): Duration in days for set_flags (0 = permanent until cleared)
+        [JsonProperty("flag_duration_days")] public float FlagDurationDays { get; set; }
     }
 
     public sealed class LanceLifeEventDelivery
@@ -117,6 +139,9 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("all")] public List<string> All { get; set; } = new List<string>();
         [JsonProperty("any")] public List<string> Any { get; set; } = new List<string>();
         [JsonProperty("time_of_day")] public List<string> TimeOfDay { get; set; } = new List<string>();
+
+        // Phase 3 (Decision Events): blocking flags - event won't fire if any of these flags are active
+        [JsonProperty("none")] public List<string> None { get; set; } = new List<string>();
 
         // Phase 5a: range constraints for escalation tracks
         [JsonProperty("escalation_requirements")] public LanceLifeEventEscalationRequirements EscalationRequirements { get; set; } =
@@ -135,6 +160,12 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("cooldown_days")] public int CooldownDays { get; set; }
         [JsonProperty("priority")] public string Priority { get; set; } = "normal"; // normal | high | critical
         [JsonProperty("one_time")] public bool OneTime { get; set; }
+
+        // Phase 3 (Decision Events): max times this event can fire per enlistment term
+        [JsonProperty("max_per_term")] public int MaxPerTerm { get; set; }
+
+        // Phase 3 (Decision Events): list of event IDs that cannot fire same day as this event
+        [JsonProperty("excludes")] public List<string> Excludes { get; set; } = new List<string>();
     }
 
     public sealed class LanceLifeEventCosts

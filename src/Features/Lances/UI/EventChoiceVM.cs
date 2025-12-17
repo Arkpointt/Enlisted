@@ -113,20 +113,20 @@ namespace Enlisted.Features.Lances.UI
             {
                 if (_option.SuccessChance < 0.5f || _option.RiskChance > 0.5f)
                 {
-                    RiskColor = "#DD3333FF"; // High risk - red
+                    RiskColor = "#A33A2BFF"; // High risk - muted red (CK3-ish)
                 }
                 else if (_option.SuccessChance < 0.7f || _option.RiskChance > 0.3f)
                 {
-                    RiskColor = "#FFAA33FF"; // Medium risk - orange
+                    RiskColor = "#A06B2EFF"; // Medium risk - muted amber
                 }
                 else
                 {
-                    RiskColor = "#FFDD44FF"; // Low risk - yellow
+                    RiskColor = "#9A8A3AFF"; // Low risk - muted yellow
                 }
             }
             else
             {
-                RiskColor = "#44AA44FF"; // Safe - green
+                RiskColor = "#3F6A3FFF"; // Safe - muted green
             }
         }
 
@@ -139,10 +139,10 @@ namespace Enlisted.Features.Lances.UI
             if (_option.Rewards != null)
             {
                 if (_option.Rewards.Gold > 0)
-                    rewards.Add($"+{_option.Rewards.Gold}🪙");
+                    rewards.Add($"+{_option.Rewards.Gold} Gold");
 
                 if (_option.Rewards.FatigueRelief > 0)
-                    rewards.Add($"-{_option.Rewards.FatigueRelief} fatigue");
+                    rewards.Add($"-{_option.Rewards.FatigueRelief} Fatigue");
 
                 if (_option.Rewards.SkillXp != null && _option.Rewards.SkillXp.Count > 0)
                 {
@@ -165,10 +165,10 @@ namespace Enlisted.Features.Lances.UI
             if (_option.Costs != null)
             {
                 if (_option.Costs.Gold > 0)
-                    costs.Add($"-{_option.Costs.Gold}🪙");
+                    costs.Add($"-{_option.Costs.Gold} Gold");
 
                 if (_option.Costs.Fatigue > 0)
-                    costs.Add($"+{_option.Costs.Fatigue} fatigue");
+                    costs.Add($"+{_option.Costs.Fatigue} Fatigue");
 
                 if (_option.Costs.Heat > 0)
                     costs.Add($"+{_option.Costs.Heat} Heat");

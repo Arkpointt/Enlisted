@@ -1,5 +1,8 @@
 ﻿# Feature Spec: Enlistment System
 
+> Note: This page is still valid, but the **high-level “how the core loop fits together”** now lives in  
+> `docs/Features/core-gameplay.md`. Use this file for the deep-dive details.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -41,27 +44,27 @@ Provide the foundation for military service: enlist with a lord, follow their mo
 - Camp-based pending discharge + Final Muster flow (managed discharge) resolves at pay muster with service-length-based rewards (Washout/Honorable/Veteran/Heroic bands), pensions, and gear handling
 - No loot access (spoils go to the lord)
 - No food consumption (lord provides food - party skips food calculations entirely)
-- Minor faction enlistment mirrors the lord factionâ€™s active wars to the player clan and restores them to neutral on discharge
+- Minor faction enlistment mirrors the lord faction’s active wars to the player clan and restores them to neutral on discharge
 - Minor faction desertion applies -50 relation to the lord and their clan members and blocks re-enlistment with that faction for 90 days (no crime rating)
 
 Related systems (shipping):
 - Discipline can temporarily block promotion until the player recovers (clean service / decay). (Config: `escalation.enabled`, enabled by default.)
-- The enlisted status UI can show â€œYOUR STANDINGâ€ and â€œYOUR CONDITIONâ€ sections. (Configs: `escalation.enabled`, `player_conditions.enabled`, enabled by default.)
+- The enlisted status UI can show “YOUR STANDING” and “YOUR CONDITION” sections. (Configs: `escalation.enabled`, `player_conditions.enabled`, enabled by default.)
 
 ## Behavior
 
 **Enlistment Process:**
-1. Talk to lord â†’ Express interest in military service (kingdom flow or minor-faction mercenary flow)
+1. Talk to lord → Express interest in military service (kingdom flow or minor-faction mercenary flow)
 2. Lord evaluates player (relationship, faction status)
 3. **Army Leader Restriction**: If player is leading their own army, lord will refuse with roleplay dialog explaining they must disband their army first
-4. Player confirms â†’ Immediate enlistment with safety measures
+4. Player confirms → Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
 7. Bag check is deferred ~12 in-game hours after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
    - **Stow it all (50g)**: stashes all inventory + equipped items into the baggage train and charges a **50 denar wagon fee** (clamped to what you can afford).
    - **Sell it all (60%)**: liquidates inventory + equipped items at **60%** and gives you the resulting denars.
    - **I'm keeping one thing (Roguery 30+)**: attempts to keep a single item (currently selects the highest-value item). If Roguery < 30, it is confiscated.
-7. **Minor factions only:** Mirror the lord factionâ€™s current wars to the player clan so ally/enemy colors and battle joins work; relations are reverted to neutral on discharge
+7. **Minor factions only:** Mirror the lord faction’s current wars to the player clan so ally/enemy colors and battle joins work; relations are reverted to neutral on discharge
 
 **Daily Service:**
 - Follow enlisted lord's army movements
@@ -94,9 +97,9 @@ Related systems (shipping):
 
 **Culture-Specific Ranks:**
 Rank names are determined by the enlisted lord's culture:
-- Empire: Tiro â†’ Miles â†’ Immunes â†’ Principalis â†’ Evocatus â†’ Centurion
-- Vlandia: Peasant â†’ Levy â†’ Footman â†’ Man-at-Arms â†’ Sergeant â†’ Knight Bachelor
-- Sturgia: Thrall â†’ Ceorl â†’ Fyrdman â†’ Drengr â†’ Huskarl â†’ Varangian
+- Empire: Tiro → Miles → Immunes → Principalis → Evocatus → Centurion
+- Vlandia: Peasant → Levy → Footman → Man-at-Arms → Sergeant → Knight Bachelor
+- Sturgia: Thrall → Ceorl → Fyrdman → Drengr → Huskarl → Varangian
 - (See `RankHelper.cs` for all cultures)
 
 **Proving Events & Promotion:**
@@ -115,14 +118,14 @@ Promotions are no longer automatic upon reaching XP thresholds. Players must mee
 **Proving Events by Tier:**
 | Tier | Event | Theme |
 |------|-------|-------|
-| T1â†’T2 | "Finding Your Place" | Formation choice (Infantry/Archer/Cavalry/Horse Archer) |
-| T2â†’T3 | "The Sergeant's Test" | Judgment and discipline |
-| T3â†’T4 | "Crisis of Command" | Leadership under fire |
-| T4â†’T5 | "The Lance Vote" | Earning the trust of your peers |
-| T5â†’T6 | "Audience with the Lord" | Loyalty declaration |
+| T1→T2 | "Finding Your Place" | Formation choice (Infantry/Archer/Cavalry/Horse Archer) |
+| T2→T3 | "The Sergeant's Test" | Judgment and discipline |
+| T3→T4 | "Crisis of Command" | Leadership under fire |
+| T4→T5 | "The Lance Vote" | Earning the trust of your peers |
+| T5→T6 | "Audience with the Lord" | Loyalty declaration |
 
 **After Promotion:**
-- Formation assigned (T1â†’T2)
+- Formation assigned (T1→T2)
 - Starter duty auto-assigned based on formation
 - Message prompts player to visit Quartermaster for new kit
 - New equipment unlocked (shown with [NEW] indicator)
@@ -145,8 +148,8 @@ Promotions are no longer automatic upon reaching XP thresholds. Players must mee
 - Enlisted player's party doesn't negatively affect army cohesion
 - Native game counts each party in army, causing cohesion penalties:
   - -1 cohesion/day per party
-  - Additional penalty for parties with â‰¤10 healthy members
-  - Additional penalty for parties with morale â‰¤25
+  - Additional penalty for parties with ≤10 healthy members
+  - Additional penalty for parties with morale ≤25
   - Additional penalty for starving parties
 - `ArmyCohesionExclusionPatch` adds compensating bonus to offset these penalties
 - Compensation also offsets starvation penalty for the enlisted party (covers timing gaps and cases where the lord temporarily has no food)
@@ -163,8 +166,8 @@ Promotions are no longer automatic upon reaching XP thresholds. Players must mee
   - Minimum check: must currently be enlisted and in good standing (no active desertion/crime penalties with the faction).
 - Discharge bands (resolved at Final Muster):
   - **Washout** (<100 days): -10 lord / -10 faction leader; no pension; gear stripped (moved to inventory or deleted); probation on re-entry.
-  - **Honorable** (100-199 days, relation â‰¥ 0): +10 lord / +5 faction leader; severance gold (config); pension 50/day; gear: keep armor (slots 6-9), remove weapons (0-3) and mount/harness (10-11) to inventory.
-  - **Veteran/Heroic** (200+ days, relation â‰¥ 0): +30 lord / +15 faction leader; severance gold (config); pension 100/day; same gear handling as Honorable.
+  - **Honorable** (100-199 days, relation ≥ 0): +10 lord / +5 faction leader; severance gold (config); pension 50/day; gear: keep armor (slots 6-9), remove weapons (0-3) and mount/harness (10-11) to inventory.
+  - **Veteran/Heroic** (200+ days, relation ≥ 0): +30 lord / +15 faction leader; severance gold (config); pension 100/day; same gear handling as Honorable.
   - **Smuggle** (deserter path): keep all gear; crime +30; -50 relation lord/leader; no pension; probation on re-entry.
 - Pension system:
   - Pauses on re-enlistment (no double-dipping); updates on next retirement to new band; no top-up option.
@@ -269,7 +272,7 @@ _currentTermKills += kills;  // Track for faction record
 
 **Safety Systems:**
 - Lord status validation before any operations
-- Graceful service termination on lord death/capture â†’ 14-day grace period
+- Graceful service termination on lord death/capture → 14-day grace period
 - Army disbandment detection and handling
 - Settlement/battle state awareness
 - **Grace Period Shield**: After defeat, one-day ignore window prevents re-engagement
@@ -337,7 +340,7 @@ mainParty.IsVisible = true;
 - Failing to re-enlist triggers desertion penalties
 
 **Minor Factions (Mercenary Clans):**
-- When enlisting with minor factions, player clan mirrors the lord factionâ€™s active wars; nameplate colors and battle joins work as allies/enemies.
+- When enlisting with minor factions, player clan mirrors the lord faction’s active wars; nameplate colors and battle joins work as allies/enemies.
 - On discharge, mirrored wars are reset to neutral.
 - Deserting a minor faction applies -50 relation to the lord and their clan members and blocks re-enlistment with that faction for 90 in-game days (no crime rating).
 - Minor faction lords remain `Clan.IsMinorFaction == true` even while mercenaries for a kingdom; `MapFaction` is the kingdom they serve.
@@ -445,26 +448,26 @@ When the battle ends, the Naval DLC's `OnShipRemoved` iterates through agents an
 
 ## Acceptance Criteria
 
-- âœ… Can enlist with any lord that accepts player
-- âœ… Army leader restriction prevents crash and shows roleplay dialog
-- âœ… Player party safely hidden from map during service (UI Nameplate hidden)
-- âœ… Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
-- âœ… Daily XP progression (+25 per day)
-- âœ… Battle XP (+25 per battle, +1 per kill)
-- âœ… Kill tracking per faction (persists across terms)
-- âœ… Vanilla clan finances untouched; muster ledger separate from clan finance UI
-- âœ… Lord death/capture triggers 14-day grace period (not immediate discharge)
-- âœ… Army disbandment detected and grace period started
-- âœ… Service state persists through save/load cycles
-- âœ… Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
-- âœ… Re-enlistment with preserved tier and kill count; reservist re-entry system:
+- ✅ Can enlist with any lord that accepts player
+- ✅ Army leader restriction prevents crash and shows roleplay dialog
+- ✅ Player party safely hidden from map during service (UI Nameplate hidden)
+- ✅ Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
+- ✅ Daily XP progression (+25 per day)
+- ✅ Battle XP (+25 per battle, +1 per kill)
+- ✅ Kill tracking per faction (persists across terms)
+- ✅ Vanilla clan finances untouched; muster ledger separate from clan finance UI
+- ✅ Lord death/capture triggers 14-day grace period (not immediate discharge)
+- ✅ Army disbandment detected and grace period started
+- ✅ Service state persists through save/load cycles
+- ✅ Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
+- ✅ Re-enlistment with preserved tier and kill count; reservist re-entry system:
   - Washout/Deserter: Tier 1 start, probation status
   - Honorable: Tier 3 start, +500 XP, +5 relation
   - Veteran/Heroic: Tier 4 start, +1,000 XP, +10 relation
-- âœ… Per-faction veteran tracking
-- âœ… Service transfer to different lord while on leave/grace (preserves all progression)
-- âœ… Voluntary desertion with confirmation menu and penalties
-- âœ… No pathfinding crashes or encounter system conflicts
+- ✅ Per-faction veteran tracking
+- ✅ Service transfer to different lord while on leave/grace (preserves all progression)
+- ✅ Voluntary desertion with confirmation menu and penalties
+- ✅ No pathfinding crashes or encounter system conflicts
 
 ## Debugging
 

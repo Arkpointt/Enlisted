@@ -73,7 +73,7 @@ namespace Enlisted.Features.Lances.UI
             try
             {
                 // Header setup
-                EventTitle = _event.TitleFallback ?? "Lance Activity";
+                EventTitle = LanceLifeEventText.Resolve(_event.TitleId, _event.TitleFallback, "Lance Activity", _enlistment);
                 CategoryText = FormatCategory(_event.Category);
                 CategoryColor = GetCategoryColor(_event.Category);
                 TimeLocationText = GetTimeLocationText();
@@ -82,7 +82,7 @@ namespace Enlisted.Features.Lances.UI
                 SetupSceneVisuals();
 
                 // Story text with rich formatting
-                StoryText = FormatStoryText(_event.SetupFallback);
+                StoryText = FormatStoryText(_event.SetupId, _event.SetupFallback);
 
                 // Escalation tracks
                 UpdateEscalationTracks();
@@ -105,7 +105,7 @@ namespace Enlisted.Features.Lances.UI
                 CategoryText = "Notice";
                 CategoryColor = "#FFFFFFFF";
                 TimeLocationText = "";
-                StoryText = _event.SetupFallback ?? "An event has occurred.";
+                StoryText = FormatStoryText(_event?.SetupId, _event?.SetupFallback) ?? "An event has occurred.";
                 ShowCharacter = false;
                 SceneImagePath = "SPGeneral\\MapBar\\camp";
                 CanClose = true;
@@ -305,10 +305,11 @@ namespace Enlisted.Features.Lances.UI
 
         private void ApplyChoiceEffects(LanceLifeEventOptionDefinition option)
         {
-            // Apply through existing effects applier
+            // Apply through the centralized effects applier
+            // This handles all effects including XP, escalation, flags, and chain events
             LanceLifeEventEffectsApplier.Apply(_event, option, _enlistment);
 
-            // Update display
+            // Update display after effects are applied
             UpdateEscalationTracks();
             FatigueText = $"{_enlistment?.FatigueCurrent ?? 0} / {_enlistment?.FatigueMax ?? 24}";
         }
@@ -427,15 +428,15 @@ namespace Enlisted.Features.Lances.UI
             else return "Night";
         }
 
-        private string FormatStoryText(string text)
+        private string FormatStoryText(string textId, string text)
         {
-            if (string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrWhiteSpace(text) && string.IsNullOrWhiteSpace(textId))
                 return "";
 
             try
             {
                 // Apply rich text formatting
-                text = LanceLifeEventText.Resolve(null, text, "", _enlistment);
+                text = LanceLifeEventText.Resolve(textId, text, "", _enlistment);
 
                 // Add paragraph breaks for better readability
                 if (!string.IsNullOrEmpty(text))

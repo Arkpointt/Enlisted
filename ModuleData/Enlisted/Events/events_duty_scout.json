@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "duty_scout",
   "category": "duty",
@@ -11,7 +11,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -229,7 +229,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -272,7 +272,7 @@
         "titleId": "ll_evt_scout_enemy_contact_title",
         "setupId": "ll_evt_scout_enemy_contact_setup",
         "title": "Enemy Patrol Spotted",
-        "setup": "Movement ahead. {ENEMY_FACTION_ADJECTIVE} patrol — four riders, maybe five. They haven't seen you yet.\n\nYou're alone out here. Your choice.",
+        "setup": "Movement ahead. {ENEMY_FACTION_ADJECTIVE} patrol â€” four riders, maybe five. They haven't seen you yet.\n\nYou're alone out here. Your choice.",
         "options": [
           {
             "id": "stay_hidden_observe_and_count",
@@ -444,7 +444,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -488,7 +488,7 @@
         "titleId": "ll_evt_scout_night_patrol_title",
         "setupId": "ll_evt_scout_night_patrol_setup",
         "title": "Foraging Route",
-        "setup": "Supplies are tight. {SECOND_SHORT} needs you to find foraging opportunities — farms, orchards, game trails, anything.\n\n\"Don't come back empty-handed.\"",
+        "setup": "Supplies are tight. {SECOND_SHORT} needs you to find foraging opportunities â€” farms, orchards, game trails, anything.\n\n\"Don't come back empty-handed.\"",
         "options": [
           {
             "id": "systematic_search_cover_all_grou",
@@ -658,7 +658,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -702,12 +702,12 @@
         "titleId": "ll_evt_scout_route_finding_title",
         "setupId": "ll_evt_scout_route_finding_setup",
         "title": "Night Infiltration",
-        "setup": "{LORD_NAME} wants someone inside. Not to fight — just to look. Guard rotations, weak points, supply levels.\n\n\"You're small enough to slip through. Interested?\"",
+        "setup": "{LORD_NAME} wants someone inside. Not to fight â€” just to look. Guard rotations, weak points, supply levels.\n\n\"You're small enough to slip through. Interested?\"",
         "options": [
           {
             "id": "accept_move_careful_observe_only",
             "textId": "ll_evt_scout_route_finding_opt_accept_move_careful_observe_only_text",
-            "text": "Accept — move careful, observe only",
+            "text": "Accept â€” move careful, observe only",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -749,7 +749,7 @@
           {
             "id": "accept_try_to_sabotage_something",
             "textId": "ll_evt_scout_route_finding_opt_accept_try_to_sabotage_something_text",
-            "text": "Accept — try to sabotage something while inside",
+            "text": "Accept â€” try to sabotage something while inside",
             "tooltip": null,
             "condition": null,
             "risk": "risky",
@@ -791,7 +791,7 @@
           {
             "id": "decline_too_dangerous",
             "textId": "ll_evt_scout_route_finding_opt_decline_too_dangerous_text",
-            "text": "Decline — too dangerous",
+            "text": "Decline â€” too dangerous",
             "tooltip": null,
             "condition": null,
             "risk": "safe",
@@ -870,7 +870,7 @@
           "min": 1,
           "max": 6
         },
-        "content_doc": "docs/research"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -1076,3 +1076,5 @@
     }
   ]
 }
+
+

@@ -1,0 +1,536 @@
+{
+  "schemaVersion": 1,
+  "packId": "pay_mutiny",
+  "category": "pay",
+  "events": [
+    {
+      "id": "desertion_planning_when",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md",
+        "chain": "desertion",
+        "chain_step": 1
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "flag_triggered",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "has_flag:desertion_plot_joined"],
+        "any": [],
+        "time_of_day": ["night"],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_desert_plan_when_title",
+        "setupId": "ll_evt_desert_plan_when_setup",
+        "title": "When Do We Leave?",
+        "setup": "Night. A quiet corner of camp. {SOLDIER_NAME} and two others huddle close.\n\n\"So you're with us,\" they whisper. \"Good. Now we need to plan.\"\n\nThey look at the distant campfires. \"When do we go? Tonight? Wait for the next town? After the next battle when everyone's distracted?\"\n\nEvery option has risks.",
+        "options": [
+          {
+            "id": "tonight",
+            "textId": "ll_evt_desert_plan_when_opt_tonight",
+            "text": "Tonight. Before they notice.",
+            "tooltip": "Immediate escape, high risk",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.30,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 25 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["desertion_tonight"],
+            "flags_clear": ["desertion_plot_joined"],
+            "resultTextId": "ll_evt_desert_plan_when_opt_tonight_outcome",
+            "outcome": "\"Tonight,\" you agree. \"Pack light. Move fast.\"\n\nYou slip away in the darkness. The camp shrinks behind you. By dawn, you're miles away.\n\nFree.",
+            "outcome_failure": "You're barely past the perimeter when the alarm sounds. Someone saw you.\n\n\"DESERTERS! Stop them!\"\n\nYou run. But they're faster.",
+            "triggers_event": null
+          },
+          {
+            "id": "next_town",
+            "textId": "ll_evt_desert_plan_when_opt_town",
+            "text": "Wait for the next town.",
+            "tooltip": "Safer, blend into crowds",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.15,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 20 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["desertion_town"],
+            "flags_clear": ["desertion_plot_joined"],
+            "resultTextId": "ll_evt_desert_plan_when_opt_town_outcome",
+            "outcome": "\"Town,\" you say. \"We wait, blend in, disappear.\"\n\nThree days later, the army enters {SETTLEMENT_NAME}. You simply... don't leave with them.\n\nBy the time anyone notices, you're long gone.",
+            "outcome_failure": "{LANCE_LEADER_SHORT} is watching. They've been suspicious for days.\n\n\"Going somewhere?\" they ask as you try to slip away."
+          },
+          {
+            "id": "after_battle",
+            "textId": "ll_evt_desert_plan_when_opt_battle",
+            "text": "After the next battle.",
+            "tooltip": "Chaos provides cover",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.20,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 20, "tactics": 10 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0.1, "fatigue_relief": 0 },
+            "flags_set": ["desertion_battle"],
+            "flags_clear": ["desertion_plot_joined"],
+            "resultTextId": "ll_evt_desert_plan_when_opt_battle_outcome",
+            "outcome": "\"After the fight,\" you say. \"Everyone's tired, distracted. Perfect cover.\"\n\nThe battle comes. When it's over, in the chaos of the aftermath, you simply walk away.\n\nNo one notices one more body missing from the count.",
+            "outcome_failure": "The battle goes badly. There's no clean escape — just running for your life.\n\nYou survive. Barely. But you're still with the army."
+          },
+          {
+            "id": "change_mind",
+            "textId": "ll_evt_desert_plan_when_opt_stay",
+            "text": "Actually... I've changed my mind.",
+            "tooltip": "Back out of the plot",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -10, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": ["desertion_plot_joined"],
+            "resultTextId": "ll_evt_desert_plan_when_opt_stay_outcome",
+            "outcome": "{SOLDIER_NAME}'s face hardens. \"Cold feet? Fine. But you didn't hear any of this. Understand?\"\n\nYou nod. They slip away into the darkness without you.\n\nYou're still here. For better or worse."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mutiny_resolution",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md",
+        "chain": "mutiny",
+        "chain_step": 1
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "flag_triggered",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "has_flag:mutiny_joined"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "critical",
+        "one_time": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_mutiny_resolution_title",
+        "setupId": "ll_evt_mutiny_resolution_setup",
+        "title": "The Mutiny",
+        "setup": "The night erupts.\n\nTorches. Shouting. Steel on steel. The mutineers surge toward the officer's tents. Guards fall back, outnumbered.\n\nYou're in the thick of it now. {VETERAN_1_NAME} is beside you, blade drawn. \"No turning back,\" they say. \"We finish this.\"\n\nAhead, you see {LORD_NAME}'s tent. Guards are forming a last line of defense.",
+        "options": [
+          {
+            "id": "storm_tent",
+            "textId": "ll_evt_mutiny_res_opt_storm",
+            "text": "Storm the lord's tent",
+            "tooltip": "Lead the final assault",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.40,
+            "costs": { "fatigue": 3, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "one_handed": 30, "athletics": 20 }, "gold": 200, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0.3, "fatigue_relief": 0 },
+            "flags_set": ["mutiny_success"],
+            "flags_clear": ["mutiny_joined"],
+            "resultTextId": "ll_evt_mutiny_res_opt_storm_outcome",
+            "outcome": "You charge. The guards fall. The tent flap tears open.\n\n{LORD_NAME} stands there, sword in hand. \"Traitors!\" they snarl.\n\nThe fight is brutal but brief. When it's over, the lord is bound. The army is yours.\n\nFor now.",
+            "outcome_failure": "The guards are better than you expected. A blade finds your side. You go down.\n\nWhen you wake, you're in chains. The mutiny failed.",
+            "triggers_event": "mutiny_aftermath_success",
+            "injury_risk": { "chance": 0.4, "severity": "serious" }
+          },
+          {
+            "id": "hold_back",
+            "textId": "ll_evt_mutiny_res_opt_hold",
+            "text": "Hold back, let others lead",
+            "tooltip": "Stay in the rear, less risk",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.25,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 15 }, "gold": 50, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -10, "medical_risk": 0.1, "fatigue_relief": 0 },
+            "flags_set": ["mutiny_success"],
+            "flags_clear": ["mutiny_joined"],
+            "resultTextId": "ll_evt_mutiny_res_opt_hold_outcome",
+            "outcome": "You hang back. Let the eager ones take the risks.\n\nThe assault succeeds without you at the front. {VETERAN_1_NAME} gives you a look — they noticed. But you're alive, and that's what matters.",
+            "outcome_failure": "Even in the rear, you're not safe. A loyalist patrol finds you.\n\n\"With the mutineers!\" they shout. You fight, but you're overwhelmed."
+          },
+          {
+            "id": "switch_sides",
+            "textId": "ll_evt_mutiny_res_opt_switch",
+            "text": "Switch sides — warn the lord",
+            "tooltip": "Betray the mutineers",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.35,
+            "costs": { "fatigue": 2, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 25 }, "gold": 100, "relation": { "lord": 50 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": -50, "medical_risk": 0.2, "fatigue_relief": 0 },
+            "flags_set": ["mutiny_betrayed"],
+            "flags_clear": ["mutiny_joined"],
+            "resultTextId": "ll_evt_mutiny_res_opt_switch_outcome",
+            "outcome": "You break from the mob. Sprint toward the lord's tent.\n\n\"AMBUSH!\" you scream. \"They're coming!\"\n\nThe guards react instantly. When the mutineers arrive, they meet organized resistance. The fight is bloody, but the lord survives.\n\nYou've made enemies tonight. But powerful friends too.",
+            "outcome_failure": "{VETERAN_1_NAME} sees you run. They're faster.\n\n\"TRAITOR!\" The blade catches you before you reach the guards."
+          },
+          {
+            "id": "flee_chaos",
+            "textId": "ll_evt_mutiny_res_opt_flee",
+            "text": "Use the chaos to escape",
+            "tooltip": "Desert during the confusion",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.15,
+            "costs": { "fatigue": 2, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 30, "athletics": 15 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["clean_desertion"],
+            "flags_clear": ["mutiny_joined"],
+            "resultTextId": "ll_evt_mutiny_res_opt_flee_outcome",
+            "outcome": "Everyone's focused on the fighting. No one's watching the perimeter.\n\nYou grab your kit and vanish into the night. By morning, you're miles away. Free.\n\nLet them sort out their own mess.",
+            "triggers_event": "desertion_clean"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mutiny_aftermath_success",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md",
+        "chain": "mutiny",
+        "chain_step": 2
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "flag_triggered",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "has_flag:mutiny_success"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "critical",
+        "one_time": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_mutiny_after_title",
+        "setupId": "ll_evt_mutiny_after_setup",
+        "title": "What Now?",
+        "setup": "Dawn breaks over a changed world.\n\n{LORD_NAME} is bound. Their loyalists are dead or scattered. The army — what's left of it — looks to {VETERAN_1_NAME}. And to you.\n\n\"We did it,\" {VETERAN_1_NAME} says quietly. \"Now what?\"\n\nThe soldiers are already arguing. Some want to kill the lord. Others want to ransom them. Some just want to take what they can and scatter.\n\nWhat do you want?",
+        "options": [
+          {
+            "id": "execute_lord",
+            "textId": "ll_evt_mutiny_after_opt_execute",
+            "text": "Execute the lord",
+            "tooltip": "No witnesses, no mercy",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 30 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 10, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["lord_killed_mutiny"],
+            "flags_clear": ["mutiny_success"],
+            "resultTextId": "ll_evt_mutiny_after_opt_execute_outcome",
+            "outcome": "\"Dead men tell no tales,\" you say.\n\nThe blade falls. {LORD_NAME} dies with a curse on their lips.\n\nYou're a murderer now. A kingslayer. There's no going back.\n\nThe faction will hunt you forever."
+          },
+          {
+            "id": "ransom_lord",
+            "textId": "ll_evt_mutiny_after_opt_ransom",
+            "text": "Ransom the lord",
+            "tooltip": "Profit from the chaos",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "trade": 25 }, "gold": 500, "relation": {}, "items": [] },
+            "effects": { "heat": 5, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["lord_ransomed"],
+            "flags_clear": ["mutiny_success"],
+            "resultTextId": "ll_evt_mutiny_after_opt_ransom_outcome",
+            "outcome": "\"They're worth more alive,\" you say. \"Send word to their family.\"\n\nA week later, a chest of gold arrives. {LORD_NAME} goes free — humiliated but breathing.\n\nThe money gets split. You take your share and disappear."
+          },
+          {
+            "id": "release_lord",
+            "textId": "ll_evt_mutiny_after_opt_release",
+            "text": "Release the lord",
+            "tooltip": "Show mercy",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "charm": 20, "leadership": 15 }, "gold": 0, "relation": { "lord": -30 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 10, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["lord_released"],
+            "flags_clear": ["mutiny_success"],
+            "resultTextId": "ll_evt_mutiny_after_opt_release_outcome",
+            "outcome": "\"Let them go,\" you say. \"We're not murderers.\"\n\n{LORD_NAME} stares at you with undisguised hatred. \"I will not forget this.\"\n\n\"Neither will I,\" you reply.\n\nThey ride away. The army scatters. You're free — but you've made an enemy for life."
+          },
+          {
+            "id": "take_command",
+            "textId": "ll_evt_mutiny_after_opt_command",
+            "text": "Take command of the army",
+            "tooltip": "Become the leader",
+            "condition": "tier >= 5",
+            "risk": "risky",
+            "risk_chance": 0.30,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 40 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 20, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["army_commander"],
+            "flags_clear": ["mutiny_success"],
+            "resultTextId": "ll_evt_mutiny_after_opt_command_outcome",
+            "outcome": "\"The army needs a leader,\" you say. \"I'm taking command.\"\n\n{VETERAN_1_NAME} stares. Then nods slowly. \"You've got the stones for it. Let's see if you've got the brains.\"\n\nThe soldiers fall in. For now, they follow you.\n\nBut keeping command is harder than taking it.",
+            "outcome_failure": "{VETERAN_1_NAME} laughs. \"You? Lead us? You've barely led yourself.\"\n\nThe soldiers don't follow. The army fragments. You're left with nothing."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mutiny_arrested",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md",
+        "chain": "mutiny",
+        "chain_step": 2
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "flag_triggered",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["is_enlisted", "has_flag:mutiny_failed_arrested"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "critical",
+        "one_time": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_mutiny_trial_title",
+        "setupId": "ll_evt_mutiny_trial_setup",
+        "title": "The Trial",
+        "setup": "You wake in chains.\n\nThe mutiny failed. {VETERAN_1_NAME} is dead. The ringleaders are hanging from the nearest tree. And you're next.\n\n{LORD_NAME} stands before you, flanked by guards. Their face is cold.\n\n\"Mutineer,\" they say. \"You have one chance to speak. Make it count.\"\n\nYour life hangs by a thread.",
+        "options": [
+          {
+            "id": "beg_mercy",
+            "textId": "ll_evt_mutiny_trial_opt_beg",
+            "text": "Beg for mercy",
+            "tooltip": "Grovel and hope",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.50,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": { "lord": -20 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 5, "lance_reputation": -20, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": ["mutiny_failed_arrested"],
+            "resultTextId": "ll_evt_mutiny_trial_opt_beg_outcome",
+            "outcome": "\"Please,\" you say. \"I was swept up in it. I never wanted... please.\"\n\n{LORD_NAME} stares at you for a long moment. \"Pathetic,\" they say. \"But I need soldiers more than corpses.\"\n\nThey cut your bonds. \"You live. But you're on probation. One wrong step...\"\n\nYou crawl away, alive. Barely.",
+            "outcome_failure": "{LORD_NAME} spits. \"Coward AND traitor.\"\n\nThe noose tightens around your neck."
+          },
+          {
+            "id": "blame_others",
+            "textId": "ll_evt_mutiny_trial_opt_blame",
+            "text": "Blame the ringleaders",
+            "tooltip": "Shift responsibility",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.40,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 20 }, "gold": 0, "relation": { "lord": -10 }, "items": [] },
+            "effects": { "heat": 0, "discipline": 3, "lance_reputation": -30, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": ["mutiny_failed_arrested"],
+            "resultTextId": "ll_evt_mutiny_trial_opt_blame_outcome",
+            "outcome": "\"It was {VETERAN_1_NAME},\" you say quickly. \"They threatened me. Said they'd kill me if I didn't join. I never wanted this.\"\n\n{LORD_NAME}'s eyes narrow. They don't fully believe you. But the ringleaders are already dead, and your story can't be disproven.\n\n\"Flogging,\" they say finally. \"Fifty lashes. Then back to duty.\"",
+            "outcome_failure": "A soldier steps forward. \"That's a lie, my lord. I saw them leading the charge.\"\n\nYour story falls apart. So does your future."
+          },
+          {
+            "id": "defiant",
+            "textId": "ll_evt_mutiny_trial_opt_defiant",
+            "text": "Stand defiant",
+            "tooltip": "Die with dignity",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "leadership": 20 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 20, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["executed_mutiny"],
+            "flags_clear": ["mutiny_failed_arrested"],
+            "resultTextId": "ll_evt_mutiny_trial_opt_defiant_outcome",
+            "outcome": "\"We were owed,\" you say. \"Every man here was owed. You didn't pay. We took what was due.\"\n\n{LORD_NAME}'s face darkens. \"Then you die for your principles.\"\n\nThe rope. The drop. The end.\n\nBut in the crowd, soldiers whisper your name. They remember."
+          },
+          {
+            "id": "offer_service",
+            "textId": "ll_evt_mutiny_trial_opt_service",
+            "text": "Offer valuable service",
+            "tooltip": "Trade information for life",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 0.35,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 15, "charm": 15 }, "gold": 0, "relation": { "lord": -5 }, "items": [] },
+            "effects": { "heat": 2, "discipline": 2, "lance_reputation": -15, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["informant_lord"],
+            "flags_clear": ["mutiny_failed_arrested"],
+            "resultTextId": "ll_evt_mutiny_trial_opt_service_outcome",
+            "outcome": "\"I know things,\" you say quickly. \"I know who else was planning to join. I know where they hid the stolen supplies. I can be useful.\"\n\n{LORD_NAME} pauses. \"An informant?\"\n\n\"A loyal servant,\" you correct. \"Who made one mistake.\"\n\nThey cut your bonds. \"Prove your worth. Names. Now.\"\n\nYou talk. Others hang. You live.",
+            "outcome_failure": "\"I don't need your information,\" {LORD_NAME} says coldly. \"I need an example.\"\n\nThe rope awaits."
+          }
+        ]
+      }
+    },
+    {
+      "id": "desertion_clean",
+      "category": "pay",
+      "metadata": {
+        "tier_range": { "min": 1, "max": 9 },
+        "content_doc": "docs/research/pay_tension_events.md",
+        "chain": "desertion",
+        "chain_step": 3
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": "flag_triggered",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": ["has_flag:clean_desertion"],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": { "min": 1, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": { "max_per_week": 0, "category_cooldown_days": 0 }
+      },
+      "content": {
+        "titleId": "ll_evt_desert_clean_title",
+        "setupId": "ll_evt_desert_clean_setup",
+        "title": "Free at Last",
+        "setup": "The army is gone. The war is behind you.\n\nYou stand at a crossroads — literally. One path leads to the nearest town. Another to the wilderness. A third toward a different kingdom entirely.\n\nFor the first time in months, no one is giving you orders. No one is watching. No one cares where you go.\n\nYou're free.\n\nWhat now?",
+        "options": [
+          {
+            "id": "nearest_town",
+            "textId": "ll_evt_desert_clean_opt_town",
+            "text": "Head to the nearest town",
+            "tooltip": "Find work, lay low",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 1, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": {}, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": ["clean_desertion"],
+            "resultTextId": "ll_evt_desert_clean_opt_town_outcome",
+            "outcome": "Towns mean work. Work means money. Money means survival.\n\nYou set off toward the nearest settlement. Time to start over."
+          },
+          {
+            "id": "new_kingdom",
+            "textId": "ll_evt_desert_clean_opt_kingdom",
+            "text": "Travel to a different kingdom",
+            "tooltip": "Fresh start, no history",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 3, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "scouting": 15 }, "gold": 0, "relation": {}, "items": [] },
+            "effects": { "heat": 0, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": [],
+            "flags_clear": ["clean_desertion"],
+            "resultTextId": "ll_evt_desert_clean_opt_kingdom_outcome",
+            "outcome": "A new kingdom means a clean slate. No one knows your face. No one knows your past.\n\nThe journey is long, but when you arrive, you're just another wanderer looking for work.\n\nPerfect."
+          },
+          {
+            "id": "become_bandit",
+            "textId": "ll_evt_desert_clean_opt_bandit",
+            "text": "Turn to banditry",
+            "tooltip": "Take what you need",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": { "fatigue": 0, "gold": 0, "time_hours": 0 },
+            "rewards": { "xp": { "roguery": 25 }, "gold": 50, "relation": {}, "items": [] },
+            "effects": { "heat": 5, "discipline": 0, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0 },
+            "flags_set": ["bandit_path"],
+            "flags_clear": ["clean_desertion"],
+            "resultTextId": "ll_evt_desert_clean_opt_bandit_outcome",
+            "outcome": "Why work for coin when you can take it?\n\nThe roads are full of merchants. You know how to fight. The math is simple.\n\nYour first robbery goes smoothly. The second, too. You're becoming someone new.\n\nSomeone dangerous."
+          }
+        ]
+      }
+    }
+  ]
+}
+

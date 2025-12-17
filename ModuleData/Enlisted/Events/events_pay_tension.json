@@ -1,4 +1,4 @@
-{
+﻿{
   "schemaVersion": 1,
   "packId": "pay_tension",
   "category": "pay",
@@ -8,7 +8,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -56,7 +56,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_pay_grumbling_opt_join_outcome",
-            "outcome": "You add your voice to the chorus of complaints. The others nod — you're one of them."
+            "outcome": "You add your voice to the chorus of complaints. The others nod â€” you're one of them."
           },
           {
             "id": "stay_quiet",
@@ -114,7 +114,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -147,7 +147,7 @@
         "titleId": "ll_evt_pay_loot_dead_title",
         "setupId": "ll_evt_pay_loot_dead_setup",
         "title": "Spoils of War",
-        "setup": "The battle's done. Bodies everywhere — enemy and our own. The burial detail hasn't started yet.\n\nNobody's watching the dead too closely. Not yet.\n\nYou could check their pockets. Coin, rings, anything valuable. Pay's late anyway — consider it compensation.",
+        "setup": "The battle's done. Bodies everywhere â€” enemy and our own. The burial detail hasn't started yet.\n\nNobody's watching the dead too closely. Not yet.\n\nYou could check their pockets. Coin, rings, anything valuable. Pay's late anyway â€” consider it compensation.",
         "options": [
           {
             "id": "loot_enemy",
@@ -170,7 +170,7 @@
             "id": "loot_everyone",
             "textId": "ll_evt_pay_loot_dead_opt_everyone",
             "text": "Search everyone",
-            "tooltip": "Taboo — even our own dead",
+            "tooltip": "Taboo â€” even our own dead",
             "condition": null,
             "risk": "risky",
             "risk_chance": 0.15,
@@ -239,7 +239,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -362,7 +362,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -395,7 +395,7 @@
         "titleId": "ll_evt_pay_mutiny_title",
         "setupId": "ll_evt_pay_mutiny_setup",
         "title": "Mutiny",
-        "setup": "It's gone beyond talk. Beyond delegation. Beyond asking.\n\nSoldiers are gathering. Weapons drawn. Not pointed at the enemy — pointed at the officer's tents.\n\n{VETERAN_1_NAME} finds you. \"It's happening. Tonight. Either you're with us, or you're with them.\"\n\nThere's no middle ground now.",
+        "setup": "It's gone beyond talk. Beyond delegation. Beyond asking.\n\nSoldiers are gathering. Weapons drawn. Not pointed at the enemy â€” pointed at the officer's tents.\n\n{VETERAN_1_NAME} finds you. \"It's happening. Tonight. Either you're with us, or you're with them.\"\n\nThere's no middle ground now.",
         "options": [
           {
             "id": "join_mutiny",
@@ -418,7 +418,7 @@
             "id": "stop_mutiny",
             "textId": "ll_evt_pay_mutiny_opt_stop",
             "text": "Try to stop it",
-            "tooltip": "Dangerous — could go badly",
+            "tooltip": "Dangerous â€” could go badly",
             "condition": null,
             "risk": "risky",
             "risk_chance": 0.40,
@@ -429,7 +429,7 @@
             "flags_clear": [],
             "resultTextId": "ll_evt_pay_mutiny_opt_stop_outcome",
             "outcome": "\"ENOUGH!\" Your voice cuts through the chaos. \"This ends with all of us dead or worse!\"\n\nThe mob hesitates. Some lower their weapons. Others don't.",
-            "outcome_failure": "You step forward to speak and someone's fist catches your jaw. You go down hard.\n\nWhen you wake, the mutiny is over — and you're in chains with the officers."
+            "outcome_failure": "You step forward to speak and someone's fist catches your jaw. You go down hard.\n\nWhen you wake, the mutiny is over â€” and you're in chains with the officers."
           },
           {
             "id": "slip_away",
@@ -462,7 +462,7 @@
             "flags_set": ["loyalist_mutiny"],
             "flags_clear": [],
             "resultTextId": "ll_evt_pay_mutiny_opt_officers_outcome",
-            "outcome": "You run to the officer's tents. Blade drawn. Ready to fight your own.\n\nThe night is long and bloody. But by dawn, the mutiny is crushed — and you've proven your loyalty.",
+            "outcome": "You run to the officer's tents. Blade drawn. Ready to fight your own.\n\nThe night is long and bloody. But by dawn, the mutiny is crushed â€” and you've proven your loyalty.",
             "outcome_failure": "You make it to the officer's tents, but the mutineers are already there.\n\n{VETERAN_1_NAME} sees you. \"Traitor.\"\n\nThe blade finds you before you can raise your own."
           }
         ]
@@ -473,7 +473,7 @@
       "category": "pay",
       "metadata": {
         "tier_range": { "min": 1, "max": 9 },
-        "content_doc": "docs/research/pay_tension_events.md"
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
       },
       "delivery": {
         "method": "automatic",
@@ -506,7 +506,7 @@
         "titleId": "ll_evt_pay_theft_invite_title",
         "setupId": "ll_evt_pay_theft_invite_setup",
         "title": "Midnight Opportunity",
-        "setup": "{SOLDIER_NAME} pulls you aside after evening meal. Checks that no one's watching.\n\n\"Supply wagon. Third one from the end. Guard changes at midnight — there's a gap. Five minutes, maybe more.\"\n\nThey look at you. \"We grab some, sell it in town, split the coin. You in?\"\n\nPay's late. Lords don't care about us. Why should we care about their supplies?",
+        "setup": "{SOLDIER_NAME} pulls you aside after evening meal. Checks that no one's watching.\n\n\"Supply wagon. Third one from the end. Guard changes at midnight â€” there's a gap. Five minutes, maybe more.\"\n\nThey look at you. \"We grab some, sell it in town, split the coin. You in?\"\n\nPay's late. Lords don't care about us. Why should we care about their supplies?",
         "options": [
           {
             "id": "join_theft",
@@ -523,7 +523,7 @@
             "flags_clear": [],
             "resultTextId": "ll_evt_pay_theft_invite_opt_join_outcome",
             "outcome": "Midnight. The gap's there, just like they said. You move fast, quiet. A sack of goods into the shadows.\n\nBy morning, it's coin in your pocket. {SOLDIER_NAME} grins. \"Not bad, eh? Same time next week?\"",
-            "outcome_failure": "The guard comes back early. You freeze. They see you.\n\n\"Hey! What are you—\"\n\nYou run. Behind you, shouting. The alarm goes up."
+            "outcome_failure": "The guard comes back early. You freeze. They see you.\n\n\"Hey! What are youâ€”\"\n\nYou run. Behind you, shouting. The alarm goes up."
           },
           {
             "id": "keep_watch",
@@ -579,4 +579,6 @@
     }
   ]
 }
+
+
 

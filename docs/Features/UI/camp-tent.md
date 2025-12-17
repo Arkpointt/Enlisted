@@ -1,4 +1,4 @@
-﻿# Camp ("Camp")
+# Camp ("Camp")
 
 ## Quick Reference
 
@@ -34,25 +34,25 @@ The **Camp ("Camp")** is the player's personal hub within the enlisted army. It 
 **Menu Structure:**
 ```
 [Camp]
-â”œâ”€â”€ Service Records
-â”‚   â”œâ”€â”€ Current Posting (this enlistment)
-â”‚   â”œâ”€â”€ Faction Records (per-faction history)
-â”‚   â””â”€â”€ Lifetime Summary (cross-faction totals)
-â”œâ”€â”€ Pay & Pension (this enlistment)
-â”‚   â”œâ”€â”€ Pending Muster Pay
-â”‚   â”œâ”€â”€ Next Payday
-â”‚   â”œâ”€â”€ Last Pay Outcome / Pay Muster Pending
-â”‚   â””â”€â”€ Pension Amount / Pension Paused
-â”œâ”€â”€ Discharge
-â”‚   â”œâ”€â”€ Request Discharge (Final Muster)
-â”‚   â””â”€â”€ Cancel Pending Discharge
-â”œâ”€â”€ Personal Retinue (Tier 4+ only)
-â”‚   â”œâ”€â”€ Current Muster
-â”‚   â”œâ”€â”€ Purchase Soldiers
-â”‚   â”œâ”€â”€ Replenish Losses
-â”‚   â””â”€â”€ Dismiss Soldiers
-â””â”€â”€ Companion Assignments
-    â””â”€â”€ Battle Roster (Fight / Stay Back toggle)
+├── Service Records
+│   ├── Current Posting (this enlistment)
+│   ├── Faction Records (per-faction history)
+│   └── Lifetime Summary (cross-faction totals)
+├── Pay & Pension (this enlistment)
+│   ├── Pending Muster Pay
+│   ├── Next Payday
+│   ├── Last Pay Outcome / Pay Muster Pending
+│   └── Pension Amount / Pension Paused
+├── Discharge
+│   ├── Request Discharge (Final Muster)
+│   └── Cancel Pending Discharge
+├── Personal Retinue (Tier 4+ only)
+│   ├── Current Muster
+│   ├── Purchase Soldiers
+│   ├── Replenish Losses
+│   └── Dismiss Soldiers
+└── Companion Assignments
+    └── Battle Roster (Fight / Stay Back toggle)
 ```
 
 ---
@@ -91,7 +91,7 @@ Camp surfaces the pay-system state so players always know where they stand:
 
 ### Discharge Actions (Final Muster)
 
-Discharge is handled as **Pending Discharge â†’ Final Muster**:
+Discharge is handled as **Pending Discharge → Final Muster**:
 - **Request Discharge (Final Muster)** sets pending discharge.
 - **Cancel Pending Discharge** clears it.
 - Final Muster resolves at the **next pay muster** and is where severance, pension, and gear handling occur.
@@ -138,7 +138,7 @@ At Tier 4+, players can command soldiers that fight alongside them in battle.
 
 2. **Instant Requisition** (Costly, Fast):
    - Instant fill of all missing soldiers
-   - Cost: `GetTroopRecruitmentCost() Ã— missing soldiers`
+   - Cost: `GetTroopRecruitmentCost() × missing soldiers`
    - 14-day cooldown between requisitions
 
 **Party Size Safeguards:**
@@ -181,8 +181,8 @@ Manage which companions fight in battles (Tier 4+).
 - Applies to all companions regardless of "Fight" or "Stay Back" setting
 
 **UI:**
-- Camp â†’ Companion Assignments
-- Shows list of companions with toggle (âš”ï¸ Fight / ðŸ•ï¸ Stay Back)
+- Camp → Companion Assignments
+- Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
 - Changes saved immediately
 
 See [Companion Management](../Core/companion-management.md) for full details.
@@ -196,21 +196,21 @@ See [Companion Management](../Core/companion-management.md) for full details.
 **File Structure:**
 ```
 src/Features/CommandTent/
-â”œâ”€â”€ Core/
-â”‚   â”œâ”€â”€ ServiceRecordManager.cs      # Faction record tracking
-â”‚   â”œâ”€â”€ RetinueManager.cs            # Soldier management
-â”‚   â”œâ”€â”€ RetinueLifecycleHandler.cs   # Event handling (capture, defeat, etc.)
-â”‚   â””â”€â”€ CompanionAssignmentManager.cs # Companion participation state
-â”œâ”€â”€ Data/
-â”‚   â”œâ”€â”€ FactionServiceRecord.cs      # Per-faction data
-â”‚   â”œâ”€â”€ LifetimeServiceRecord.cs     # Cross-faction totals
-â”‚   â””â”€â”€ RetinueState.cs              # Current retinue state
-â”œâ”€â”€ Systems/
-â”‚   â”œâ”€â”€ RetinueTrickleSystem.cs     # Free, slow replenishment
-â”‚   â”œâ”€â”€ RetinueCasualtyTracker.cs   # Battle casualties + daily wounded sync
-â”‚   â””â”€â”€ ServiceStatisticsSystem.cs   # Kill/battle tracking
-â””â”€â”€ UI/
-    â””â”€â”€ CommandTentMenuHandler.cs    # Menu integration
+├── Core/
+│   ├── ServiceRecordManager.cs      # Faction record tracking
+│   ├── RetinueManager.cs            # Soldier management
+│   ├── RetinueLifecycleHandler.cs   # Event handling (capture, defeat, etc.)
+│   └── CompanionAssignmentManager.cs # Companion participation state
+├── Data/
+│   ├── FactionServiceRecord.cs      # Per-faction data
+│   ├── LifetimeServiceRecord.cs     # Cross-faction totals
+│   └── RetinueState.cs              # Current retinue state
+├── Systems/
+│   ├── RetinueTrickleSystem.cs     # Free, slow replenishment
+│   ├── RetinueCasualtyTracker.cs   # Battle casualties + daily wounded sync
+│   └── ServiceStatisticsSystem.cs   # Kill/battle tracking
+└── UI/
+    └── CommandTentMenuHandler.cs    # Menu integration
 ```
 
 **Design Principles:**
@@ -233,12 +233,12 @@ private List<string> _factionsServed;
 
 // Retinue State
 private string _retinueSelectedTypeId;  // "infantry", "archers", etc.
-private Dictionary<string, int> _retinueTroopCounts;  // CharacterObject.StringId â†’ count
+private Dictionary<string, int> _retinueTroopCounts;  // CharacterObject.StringId → count
 private int _daysSinceLastTrickle;
 private CampaignTime _requisitionCooldownEnd;
 
 // Companion Assignments
-private Dictionary<string, bool> _companionBattleParticipation;  // Hero.StringId â†’ fight/stay back
+private Dictionary<string, bool> _companionBattleParticipation;  // Hero.StringId → fight/stay back
 ```
 
 **RetinueState Class:**
@@ -426,7 +426,7 @@ ModLogger.Debug("CommandTent", $"Service record updated for {factionId}");
 ModLogger.Info("Retinue", $"Spawning {count} {type} soldiers");
 ModLogger.Debug("Retinue", $"Trickle skipped: already at capacity");
 ModLogger.Info("Retinue", $"Battle started with {GetRetinueCount()} soldiers");
-ModLogger.Debug("Retinue", $"Lost {lost}Ã— {character.Name} in battle");
+ModLogger.Debug("Retinue", $"Lost {lost}× {character.Name} in battle");
 
 // Upkeep
 ModLogger.Debug("Upkeep", $"Deducted {cost} gold for {soldierCount} soldiers");
@@ -456,4 +456,4 @@ ModLogger.Info("CasualtyTracker", $"Wounded casualties: {lost} soldiers succumbe
 - [Companion Management](../Core/companion-management.md) - Companion battle participation details
 - [Enlistment System](../Core/enlistment.md) - Tier progression and service state
 - [Menu Interface](menu-interface.md) - Parent menu system
-- [Pay System](../Core/pay-system-rework.md) - Muster ledger, pay muster, discharge, pensions
+- [Pay System](../Core/pay-system.md) - Muster ledger, pay muster, discharge, pensions
