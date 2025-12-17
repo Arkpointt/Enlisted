@@ -20,7 +20,7 @@ Like CK3's **Decisions tab** — the player can always access these from the Mai
 | Aspect | Description |
 |--------|-------------|
 | **Delivery** | `player_initiated` via menu |
-| **Access** | Main Menu → Decisions section |
+| **Access** | Main Menu -> Decisions section |
 | **Availability** | Shows when requirements met (tier, gold, cooldown) |
 | **Examples** | Throw a party, organize a hunt, challenge someone to spar |
 
@@ -48,6 +48,31 @@ The lance is a living, breathing unit. Events and decisions reflect this:
 | **Lance Mates** | Offer to train together, share rations | Ask for loan, invite to dice game, need cover |
 | **Self** | Practice skills, maintain equipment | Get sick, have nightmare, receive letter |
 | **Situation** | — | Equipment breaks, opportunity arises |
+
+---
+
+## “Make it fun” patterns: delegation + operations with real consequences
+Some of the most engaging decisions are ones the player *can’t* simply order at low rank — they must persuade or earn trust.
+
+### Pattern A: Delegation (low-rank persuasion → action)
+- Low-tier version: “Convince {LANCE_LEADER} to screen the enemy”
+- Success chains into the real operational decision (or executes it), failure has consequences (discipline, reputation, fatigue).
+
+Example (conceptual):
+- T1–T2: player can request, but must persuade
+- T3+: player can lead the screen directly
+
+### Pattern B: Operations (combat/intel) with bounded world effects
+Operations decisions can have **real campaign-map consequences**, but must be:
+- **Local** (only affects nearby parties)
+- **Temporary** (TTL measured in hours/days)
+- **Small** (no “delete armies” outcomes)
+- **Safe** (avoid long-lived overrides; prefer modeled effects and story flags when possible)
+
+Examples of acceptable consequences:
+- **Slow** a nearby enemy party for a short window after a successful screen/harass.
+- **Inflict minor skirmish casualties** (remove a few low-tier troops) with risk of injuries on our side.
+- **Reveal intel** (reports: party name, estimated strength/route) even when we don’t alter the world state.
 
 ### Placeholder Variables
 
@@ -79,6 +104,28 @@ The lance is a living, breathing unit. Events and decisions reflect this:
 ```
 
 The player sees these in the Main Menu's Decisions section. They're always there (when conditions met), not random.
+
+---
+
+## Decision Categories (Menu Sections)
+We want the Decisions list to feel like a “camp life board” that is organized by theme instead of a flat list.
+
+In code, the event schema already supports this via:
+- `delivery.menu_section`
+
+We will treat `delivery.menu_section` as the **canonical UI category** for player-initiated decisions (and for browsing decision content in Reports).
+
+Recommended `menu_section` values (initial):
+- `camp_life` — pay tension, sickness, discipline, shortages, camp incidents
+- `combat` — battle prep, volunteering, aftermath, salvage
+- `intel` — scouting, screening, patrol adjustments, enemy sightings
+- `training` — drills, mentorship, sparring, formation practice
+- `social` — dice, drinks, letters, favors, disputes
+- `logistics` — requisitions, rations, equipment upkeep, quartermaster favors
+
+Notes:
+- Automatic/pushed decisions can still set `menu_section` to support reporting/archives, even if they are not “browsed” first.
+- Categories should be kept small and legible; avoid a taxonomy explosion.
 
 ### Pushed (Automatic Popup)
 
@@ -230,7 +277,7 @@ Player chooses "I'll go"
     ↓
 Roll for success (risk_chance: 0.15 failure)
     │
-    ├─ SUCCESS → [Follow-up: Hunting Return]
+    ├─ SUCCESS -> [Follow-up: Hunting Return]
     │     ↓
     │     "The hunt went well. You've earned 15 denars."
     │     "A lance mate asks to borrow some coin..."
@@ -238,7 +285,7 @@ Roll for success (risk_chance: 0.15 failure)
     │     ├─ Decline politely
     │     └─ Spend it on drinks for the lads (+Charm, +Lance Rep)
     │
-    └─ FAILURE → [Follow-up: Hunting Mishap]
+    └─ FAILURE -> [Follow-up: Hunting Mishap]
           ↓
           "You've twisted your ankle. Miles from camp."
           ├─ Push through (worsens injury)
@@ -917,21 +964,21 @@ For non-urgent decisions, include a dismiss option that doesn't penalize the pla
 ```
 EVENT ELIGIBLE?
      ↓
-[1] Individual cooldown passed? → No → Skip
+[1] Individual cooldown passed? -> No -> Skip
      ↓ Yes
-[2] Category cooldown passed? → No → Skip
+[2] Category cooldown passed? -> No -> Skip
      ↓ Yes
-[3] Global daily limit not reached? → No → Queue for tomorrow
+[3] Global daily limit not reached? -> No -> Queue for tomorrow
      ↓ Yes
-[4] Min hours since last popup? → No → Queue for later
+[4] Min hours since last popup? -> No -> Queue for later
      ↓ Yes
-[5] One-time already fired? → Yes → Skip forever
+[5] One-time already fired? -> Yes -> Skip forever
      ↓ No
-[6] Max-per-term reached? → Yes → Skip this term
+[6] Max-per-term reached? -> Yes -> Skip this term
      ↓ No
-[7] Excluded by recent event? → Yes → Skip
+[7] Excluded by recent event? -> Yes -> Skip
      ↓ No
-[8] Blocked by story flags? → Yes → Skip
+[8] Blocked by story flags? -> Yes -> Skip
      ↓ No
 ADD TO ELIGIBLE POOL
      ↓
@@ -986,12 +1033,12 @@ The system should actively produce quiet days:
 
 ```
 Base chance of any pushed event per day: 60%
-→ 40% of days have NO pushed decisions naturally
+-> 40% of days have NO pushed decisions naturally
 
 After an event fires:
-→ min_hours_between: 4 (can't spam)
-→ If event fired in morning, evening event is still possible
-→ If event fired in evening, next event is tomorrow at earliest
+-> min_hours_between: 4 (can't spam)
+-> If event fired in morning, evening event is still possible
+-> If event fired in evening, next event is tomorrow at earliest
 ```
 
 ### Event Density by Game State
@@ -1182,7 +1229,7 @@ Events can now specify activity requirements:
 
 ---
 
-### Activity → Event Pool Mapping
+### Activity -> Event Pool Mapping
 
 Which events should fire during which activities:
 
@@ -1274,7 +1321,7 @@ The Main Menu shows current activity, connecting player awareness to events:
 │   Fatigue: 12/30                        │
 │                                         │
 │ ► Pending Decisions [1]                 │
-│   • Challenge from a lance mate         │  ← Training-related!
+│   - Challenge from a lance mate         │  ← Training-related!
 └─────────────────────────────────────────┘
 ```
 
@@ -1294,7 +1341,7 @@ Camp Activities (the repeatable options in `activities.json`) also set activity 
 **Flow:**
 
 ```
-Player selects activity    →    Activity context set    →    Matching events prioritized
+Player selects activity    ->    Activity context set    ->    Matching events prioritized
      (Camp Menu)                   (ScheduleBehavior)            (Event Evaluator)
 ```
 
@@ -1955,24 +2002,24 @@ The Enlisted mod has two primary UI surfaces for player interaction:
 │                    ENLISTED MAIN MENU                           │
 │              (enlisted_status game menu)                        │
 │                                                                 │
-│  • Always accessible when enlisted                              │
-│  • Lightweight, quick access                                    │
-│  • Uses native Bannerlord game menu system                      │
-│  • Options: Quartermaster, Talk to Lord, Duties, etc.           │
+│  - Always accessible when enlisted                              │
+│  - Lightweight, quick access                                    │
+│  - Uses native Bannerlord game menu system                      │
+│  - Options: Quartermaster, Talk to Lord, Duties, etc.           │
 │                                                                 │
-│  ➤ DECISIONS GO HERE (player-initiated, quick access)          │
+│   DECISIONS GO HERE (player-initiated, quick access)          │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                    CAMP MANAGEMENT SCREEN                       │
 │              (CampManagementScreen Gauntlet UI)                 │
 │                                                                 │
-│  • Deep management screen                                       │
-│  • Visited every ~12 days during Muster                         │
-│  • Full Gauntlet UI with tabs                                   │
-│  • Tabs: Lance, Orders, Activities, Reports, Army               │
+│  - Deep management screen                                       │
+│  - Visited every ~12 days during Muster                         │
+│  - Full Gauntlet UI with tabs                                   │
+│  - Tabs: Lance, Orders, Activities, Reports, Army               │
 │                                                                 │
-│  ➤ Schedule/Activities configured here (not decisions)         │
+│   Schedule/Activities configured here (not decisions)         │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1980,7 +2027,7 @@ The Enlisted mod has two primary UI surfaces for player interaction:
 
 | Decision Type | UI Location | Rationale |
 |---------------|-------------|-----------|
-| **Player-Initiated** | Enlisted Main Menu → "Pending Decisions" submenu | Quick access, always available |
+| **Player-Initiated** | Enlisted Main Menu -> "Pending Decisions" submenu | Quick access, always available |
 | **Pushed/Automatic** | `LanceLifeEventScreen` popup | Comes to player, narrative immersion |
 
 ### Recommended Implementation: Phase 4
@@ -2017,7 +2064,7 @@ enlisted_status (existing menu)
 - Fast to implement (~2 hours)
 - Matches existing patterns (duty selection, settlement access)
 - No new Gauntlet screens needed
-- Player selects decision → opens `LanceLifeEventScreen`
+- Player selects decision -> opens `LanceLifeEventScreen`
 
 **Cons:**
 - Limited visual richness (text only, no icons)
@@ -2033,7 +2080,7 @@ Create a dedicated `DecisionsScreen` similar to `LanceLifeEventScreen`:
 │                                                                 │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │ 🎯 Request Training Leave                               │    │
+│  │  Request Training Leave                               │    │
 │  │ Ask the Lance Leader for extra training time.           │    │
 │  │ ▸ Requirements: Tier 2+                                 │    │
 │  │ ▸ Status: Ready                                         │    │
@@ -2041,7 +2088,7 @@ Create a dedicated `DecisionsScreen` similar to `LanceLifeEventScreen`:
 │  └─────────────────────────────────────────────────────────┘    │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │ 🎲 Organize Dice Game                                   │    │
+│  │  Organize Dice Game                                   │    │
 │  │ Gather the lads for a night of gambling.                │    │
 │  │ ▸ Cost: 10 gold                                         │    │
 │  │ ▸ Cooldown: 3 days remaining                            │    │
@@ -2128,7 +2175,7 @@ Player selects option
 | `LanceLifeEventVM` | `src/Features/Lances/UI/` | ViewModel for event screen |
 | `EventChoiceVM` | `src/Features/Lances/UI/` | Individual choice button VM |
 | `LanceLifeEventScreen.xml` | `GUI/Prefabs/Events/` | Gauntlet XML for event popup |
-| `EventChoiceButton.xml` | `GUI/Prefabs/Events/` | Choice button XML |
+| `LanceLifeEventScreen.xml` | `GUI/Prefabs/Events/` | Choice button template (inlined in the same prefab) |
 | `ModernEventPresenter` | `src/Features/Lances/UI/` | Entry point to show events |
 
 ### Key Files to Modify for Phase 4
@@ -2187,7 +2234,7 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
 
 ## Implementation Checklist
 
-### Phase 1: Core Infrastructure (Week 1) ✅ COMPLETE
+### Phase 1: Core Infrastructure (Week 1) COMPLETE
 
 - [x] **DecisionEventState** — Persistence class for cooldowns, flags, counters
   - `src/Features/Lances/Events/Decisions/DecisionEventState.cs`
@@ -2201,7 +2248,7 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
 - [x] **Persistence** — Save/load state via `IDataStore.SyncData`
 - [x] **Registration** — `DecisionEventBehavior` registered in `SubModule.cs`
 
-### Phase 1.5: Activity-Aware Events (Week 1-2) ✅ COMPLETE
+### Phase 1.5: Activity-Aware Events (Week 1-2) COMPLETE
 
 **Connect events to the schedule/activity system so events match what the player is doing.**
 
@@ -2218,7 +2265,7 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
 - [x] Created sample decision events: `ModuleData/Enlisted/Events/events_decisions.json`
   - 6 example events: Lord hunt invitation, dice game, training offer, scout assignment, medic emergency, QM deal
 
-### Phase 2: Pacing System (Week 2) ✅ COMPLETE (built into Phase 1)
+### Phase 2: Pacing System (Week 2) COMPLETE (built into Phase 1)
 
 - [x] Individual event cooldowns
 - [x] Category cooldowns
@@ -2229,7 +2276,7 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
 - [x] Mutual exclusion checking
 - [x] Story flag blocking
 
-### Phase 3: Event Chains (Week 3) ✅ COMPLETE
+### Phase 3: Event Chains (Week 3) COMPLETE
 
 - [x] `chains_to` field support in schema
   - Added `chains_to`, `chain_delay_hours` to `LanceLifeEventOptionDefinition`
@@ -2246,9 +2293,9 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
   - `LanceLifeEventVM.ApplyDecisionEventEffects` queues chain events
 - [x] Chain events bypass daily limits (via priority sorting)
 - [x] Story flags integration in UI (set/clear on option selection)
-- [x] Sample chain events created: Lance Mate Favor → Repayment chain
+- [x] Sample chain events created: Lance Mate Favor -> Repayment chain
 
-### Phase 4: Player-Initiated Decisions Menu (Week 3) ✅ COMPLETE
+### Phase 4: Player-Initiated Decisions Menu (Week 3) COMPLETE
 
 **Add "Pending Decisions" submenu to the Enlisted Main Menu.**
 
@@ -2264,7 +2311,7 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
   - Creates menu option for each decision (up to 10)
   - Shows cooldown/requirement status in tooltip
 - [x] **Decision option handler**
-  - On select → calls `DecisionEventBehavior.FirePlayerDecision(eventId)`
+  - On select -> calls `DecisionEventBehavior.FirePlayerDecision(eventId)`
   - Opens `LanceLifeEventScreen` with full event experience
 - [x] **Availability gating**
   - Decisions filtered by evaluator (cooldown, requirements, flags)
@@ -2292,7 +2339,7 @@ bool IsDecisionAvailable(LanceLifeEventDefinition decision)
 - [ ] Quality modifier selection
 - [ ] `{LOOT_ITEM}` and `{LOOT_LIST}` placeholders
 
-### Phase 6: Tier-Based Narrative Access (Week 5) ✅ COMPLETE
+### Phase 6: Tier-Based Narrative Access (Week 5) COMPLETE
 
 **Ensure roleplay authenticity: a T1 peasant won't hunt with the lord.**
 
@@ -2338,8 +2385,8 @@ Noble activities (hunts, feasts, councils) require sufficient rank to participat
 - `ModuleData/Enlisted/Events/events_player_decisions.json` - All events tagged
   - Petitioning lord: T3+
 - [ ] **Create tier-appropriate alternative events**
-  - T1-2 alternative to "hunt with lord" → "help with horse lines"
-  - T1-2 alternative to "feast invitation" → "serve at feast" (kitchen duty)
+  - T1-2 alternative to "hunt with lord" -> "help with horse lines"
+  - T1-2 alternative to "feast invitation" -> "serve at feast" (kitchen duty)
 - [ ] **Narrative source tokens for triggers**
   - `tier_allows:lord_invitation`, `tier_allows:noble_events`
   - Evaluator checks against player tier
@@ -2690,7 +2737,7 @@ FATIGUE ───────────► MEDICAL RISK
 
 ---
 
-### Enhancement 1: Heat → Quartermaster Trust
+### Enhancement 1: Heat -> Quartermaster Trust
 
 **Current State:** Heat only triggers punishment events at thresholds (3, 5, 7, 10).
 
@@ -2722,7 +2769,7 @@ FATIGUE ───────────► MEDICAL RISK
 
 ---
 
-### Enhancement 2: Discipline → Duty Access
+### Enhancement 2: Discipline -> Duty Access
 
 **Current State:** High discipline blocks promotion.
 
@@ -2755,7 +2802,7 @@ FATIGUE ───────────► MEDICAL RISK
 
 ---
 
-### Enhancement 3: Lance Rep → Protection from Consequences
+### Enhancement 3: Lance Rep -> Protection from Consequences
 
 **Current State:** Lance Rep has threshold events but limited gameplay impact.
 
@@ -2791,7 +2838,7 @@ FATIGUE ───────────► MEDICAL RISK
 
 ---
 
-### Enhancement 4: Lord Relation → Officer Track Gate
+### Enhancement 4: Lord Relation -> Officer Track Gate
 
 **Current State:** Lord relation exists but doesn't gate progression.
 
@@ -2834,7 +2881,7 @@ FATIGUE ───────────► MEDICAL RISK
 
 ---
 
-### Enhancement 5: Fatigue → Medical Risk Link
+### Enhancement 5: Fatigue -> Medical Risk Link
 
 **Current State:** Fatigue is just a cost limiter with no consequences.
 
@@ -3023,7 +3070,7 @@ Events should check multiple systems for richer outcomes.
 - [ ] Duty access based on Discipline level
 - [ ] Lance protection based on Lance Rep
 - [ ] Officer track gating by Lord Relation
-- [ ] Fatigue → Medical Risk at high levels
+- [ ] Fatigue -> Medical Risk at high levels
 
 **Phase 3: Active Recovery Decisions**
 - [ ] Add recovery decisions to player-initiated menu
@@ -3055,7 +3102,7 @@ Events should check multiple systems for richer outcomes.
 ## Version History
 
 **v1.9** (December 17, 2025) — PHASE 6 IMPLEMENTED (Tier-Based Narrative Access)
-- ✅ Implemented Phase 6: Tier-Based Narrative Access
+- Implemented Phase 6: Tier-Based Narrative Access
   - Added `narrative_source` field to `LanceLifeEventDefinition`
   - Added `tier_gates` config with `GetMinTierForSource()` lookup
   - Added `PassesNarrativeSourceCheck()` as Protection Layer 9
@@ -3070,11 +3117,11 @@ Events should check multiple systems for richer outcomes.
   - `CampNewsGenerator.GenerateDecisionNews()` method spec
   - News categories: `decision`, `lance_life`, `escalation`
   - Creates "personal journal" feel in Camp Bulletin
-- Fixed phase numbering (duplicate Phase 6 → now correctly numbered 6-9)
+- Fixed phase numbering (duplicate Phase 6 -> now correctly numbered 6-9)
 
 **v1.7** (December 17, 2025) — PHASE 6 DOCUMENTED (Tier-Based Narrative Access)
 - Added Phase 6: Tier-Based Narrative Access
-  - Tier access matrix (T1-2 → Lance Leader, T5+ → Lord interactions)
+  - Tier access matrix (T1-2 -> Lance Leader, T5+ -> Lord interactions)
   - `narrative_source` field concept for events
   - Content guidelines by tier range
   - Tier-appropriate alternative event pattern
@@ -3083,7 +3130,7 @@ Events should check multiple systems for richer outcomes.
 - Fixed dual serialization issue (`[SaveableField]` + `SyncData` conflict)
 
 **v1.6** (December 16, 2025) — PHASE 4 IMPLEMENTED
-- ✅ Implemented Phase 4: Player-Initiated Decisions Menu
+- Implemented Phase 4: Player-Initiated Decisions Menu
   - Added `enlisted_decisions` submenu to `EnlistedMenuBehavior.cs`
   - Added "Pending Decisions" option with decision count
   - Dynamic decision slots (up to 10)
@@ -3103,29 +3150,29 @@ Events should check multiple systems for richer outcomes.
 - Updated Phase 4 checklist with specific implementation tasks
 
 **v1.4** (December 16, 2025) — PHASE 3 IMPLEMENTED
-- ✅ Implemented Phase 3: Event Chains
+- [x] Implemented Phase 3: Event Chains
   - Added `chains_to`, `chain_delay_hours` to option schema
   - Added `set_flags`, `clear_flags`, `flag_duration_days` for story state
   - Added `triggers.none` for story flag blocking
   - Added `timing.excludes` for mutual exclusion
   - Added `timing.max_per_term` for term-based limits
   - Chain event queueing integrated into UI option selection
-  - Sample chain: Lance Mate Favor → Repayment (3 events)
-- ✅ Updated `events_decisions.json` with 9 total events
+  - Sample chain: Lance Mate Favor -> Repayment (3 events)
+- [x] Updated `events_decisions.json` with 9 total events
 
 **v1.3** (December 16, 2025) — PHASE 1 + 1.5 IMPLEMENTED
-- ✅ Implemented Phase 1: Core Infrastructure
+- [x] Implemented Phase 1: Core Infrastructure
   - `DecisionEventState` persistence class
   - `DecisionEventConfig` with JSON config loading
   - `DecisionEventEvaluator` with 8 protection layers
   - `DecisionEventBehavior` with hourly tick and event firing
   - Registered in `SubModule.cs`
-- ✅ Implemented Phase 1.5: Activity-Aware Events
+- [x] Implemented Phase 1.5: Activity-Aware Events
   - Added `current_activity:X` and `on_duty:X` tokens to `CampaignTriggerTokens`
   - Implemented token evaluation in `LanceLifeEventTriggerEvaluator`
   - Activity weight boost (2x for activity match, 1.5x for duty match)
-- ✅ Created sample events: `events_decisions.json` (6 events)
-- ✅ Phase 2 (Pacing) built into Phase 1 evaluator
+- [x] Created sample events: `events_decisions.json` (6 events)
+- [x] Phase 2 (Pacing) built into Phase 1 evaluator
 
 **v1.2** (December 16, 2025)
 - Added Activity-Aware Events section
@@ -3138,7 +3185,7 @@ Events should check multiple systems for richer outcomes.
 
 **v1.1** (December 16, 2025)
 - Added Systems Enhancement section
-- Documented system interactions (Heat→QM, Discipline→Duty, etc.)
+- Documented system interactions (Heat->QM, Discipline->Duty, etc.)
 - Added positive threshold events
 - Added active recovery decisions
 - Added cross-system event examples
