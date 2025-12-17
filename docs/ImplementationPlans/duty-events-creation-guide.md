@@ -54,13 +54,13 @@ Duty events are **mini-stories** that occur while the player is performing their
 **Example: Quartermaster player on typical day:**
 ```
 Morning Block: Guard Duty (from AI Schedule)
-    → Schedule Block Event: "Sentry encounters rider" (fires during this block)
+    -> Schedule Block Event: "Sentry encounters rider" (fires during this block)
 
 Afternoon Block: Free Time
-    → Player visits Camp Hub, chooses activities
+    -> Player visits Camp Hub, chooses activities
 
 Evening Block: Inventory Check (from AI Schedule)
-    → Duty Event: "Supplier Negotiation" (fires because player is Quartermaster, on 3-day cooldown)
+    -> Duty Event: "Supplier Negotiation" (fires because player is Quartermaster, on 3-day cooldown)
 ```
 
 **These systems are complementary:**
@@ -312,27 +312,27 @@ All duty events follow this JSON structure:
 **Every duty event should offer three paths:**
 
 1. **Safe/Professional** - By-the-book approach
-   - ✅ Reliable XP gains
-   - ✅ Small rep boost
-   - ✅ No negative effects
-   - ⚠️ Lower XP rewards
-   - ⚠️ No material gains
+   - [x] Reliable XP gains
+   - [x] Small rep boost
+   - [x] No negative effects
+   - WARNING Lower XP rewards
+   - WARNING No material gains
 
 2. **Risky/Clever** - Smart but dangerous approach
-   - ✅ High XP rewards
-   - ✅ Significant rep boost
-   - ✅ Potential for great outcomes
-   - ⚠️ Risk of failure (20-40% chance)
-   - ⚠️ Higher fatigue cost
-   - ⚠️ Possible injury
+   - [x] High XP rewards
+   - [x] Significant rep boost
+   - [x] Potential for great outcomes
+   - WARNING Risk of failure (20-40% chance)
+   - WARNING Higher fatigue cost
+   - WARNING Possible injury
 
 3. **Corrupt/Shortcut** - Easy way with consequences
-   - ✅ Low effort (less fatigue)
-   - ✅ Material gains (gold, items)
-   - ⚠️ Adds Heat
-   - ⚠️ Damages reputation
-   - ⚠️ Minimal skill growth
-   - ⚠️ Long-term problems
+   - [x] Low effort (less fatigue)
+   - [x] Material gains (gold, items)
+   - WARNING Adds Heat
+   - WARNING Damages reputation
+   - WARNING Minimal skill growth
+   - WARNING Long-term problems
 
 This structure ensures **player agency** while making consequences **clear and meaningful**.
 
@@ -1087,16 +1087,16 @@ surgery yourself, you might save him... or kill him faster."
 Challenge: Lord orders you to falsify supply records to hide waste
 
 Honorable: "I won't do it. I'll report the waste honestly."
-  → +30 Lance Rep, -10 Lord Relation, +Heat 0
+  -> +30 Lance Rep, -10 Lord Relation, +Heat 0
 
 Pragmatic: "I'll present the facts diplomatically, minimize the damage."
-  → +15 Lance Rep, +0 Lord Relation, +Heat 0
+  -> +15 Lance Rep, +0 Lord Relation, +Heat 0
 
 Rebellious: "I'll tell him exactly how incompetent his logistics are."
-  → +10 Lance Rep, -20 Lord Relation, +Discipline 2
+  -> +10 Lance Rep, -20 Lord Relation, +Discipline 2
 
 Corrupt: "I'll falsify the records and skim extra for myself."
-  → -20 Lance Rep, +10 Lord Relation, +Heat 4, +Gold 150
+  -> -20 Lance Rep, +10 Lord Relation, +Heat 4, +Gold 150
 ```
 
 ### 6. Use Placeholder System
@@ -1164,18 +1164,18 @@ Failure: Patient dies, -100 Lance Rep, +10 Discipline, kicked from lance
 **Style:** Gritty military realism with human moments
 
 **DO:**
-- ✅ Use military vocabulary naturally (muster, formation, requisition)
-- ✅ Show physical details (tired eyes, muddy boots, bloody bandages)
-- ✅ Include soldier banter and dark humor
-- ✅ Reference weather, time of day, physical conditions
-- ✅ Keep it brief (2-3 paragraphs max)
+- [x] Use military vocabulary naturally (muster, formation, requisition)
+- [x] Show physical details (tired eyes, muddy boots, bloody bandages)
+- [x] Include soldier banter and dark humor
+- [x] Reference weather, time of day, physical conditions
+- [x] Keep it brief (2-3 paragraphs max)
 
 **DON'T:**
-- ❌ Be overly formal or Shakespearean
-- ❌ Use modern slang or anachronisms
-- ❌ Write long exposition dumps
-- ❌ Explain mechanics in-character ("This will cost you 3 fatigue")
-- ❌ Break immersion with meta-references
+- X Be overly formal or Shakespearean
+- X Use modern slang or anachronisms
+- X Write long exposition dumps
+- X Explain mechanics in-character ("This will cost you 3 fatigue")
+- X Break immersion with meta-references
 
 **Example (Good Voice):**
 ```
@@ -1215,7 +1215,7 @@ posthaste, lest the men grow wroth?
 
 ### Outcome Text Guidelines
 
-**Structure:** Consequence → Immediate Result → Future Implication
+**Structure:** Consequence -> Immediate Result -> Future Implication
 
 **Example:**
 ```
@@ -1915,7 +1915,7 @@ ll_evt_qm_merchant_negotiation_opt_negotiate_outcome
 
 **Multi-Stage Events:**
 - Events that span multiple sessions
-- "Part 1: Problem arises" → "Part 2: Deal with consequences" (3-5 days later)
+- "Part 1: Problem arises" -> "Part 2: Deal with consequences" (3-5 days later)
 
 ---
 
@@ -1935,12 +1935,12 @@ ll_evt_qm_merchant_negotiation_opt_negotiate_outcome
 ### Review Criteria
 
 Events should be:
-- ✅ **Context-aware** (references lord actions, army state)
-- ✅ **Choice-driven** (player agency matters)
-- ✅ **Balanced** (XP/Heat/Rep appropriate)
-- ✅ **Immersive** (good writing, military voice)
-- ✅ **Progression-focused** (advances skills and character)
-- ✅ **Fun** (not annoying, not repetitive)
+- [x] **Context-aware** (references lord actions, army state)
+- [x] **Choice-driven** (player agency matters)
+- [x] **Balanced** (XP/Heat/Rep appropriate)
+- [x] **Immersive** (good writing, military voice)
+- [x] **Progression-focused** (advances skills and character)
+- [x] **Fun** (not annoying, not repetitive)
 
 ---
 

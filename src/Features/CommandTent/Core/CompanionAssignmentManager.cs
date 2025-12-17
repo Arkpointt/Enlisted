@@ -36,10 +36,13 @@ namespace Enlisted.Features.CommandTent.Core
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_companionBattleParticipation", ref _companionBattleParticipation);
-            _companionBattleParticipation ??= new Dictionary<string, bool>();
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_companionBattleParticipation", ref _companionBattleParticipation);
+                _companionBattleParticipation ??= new Dictionary<string, bool>();
 
-            ModLogger.Debug(LogCategory, $"SyncData: {_companionBattleParticipation.Count} companion assignments loaded");
+                ModLogger.Debug(LogCategory, $"SyncData: {_companionBattleParticipation.Count} companion assignments loaded");
+            });
         }
 
         /// <summary>

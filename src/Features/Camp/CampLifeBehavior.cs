@@ -66,20 +66,23 @@ namespace Enlisted.Features.Camp
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("cl_logisticsStrain", ref _logisticsStrain);
-            dataStore.SyncData("cl_moraleShock", ref _moraleShock);
-            dataStore.SyncData("cl_territoryPressure", ref _territoryPressure);
-            dataStore.SyncData("cl_payTension", ref _payTension);
-            dataStore.SyncData("cl_contrabandHeat", ref _contrabandHeat);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("cl_logisticsStrain", ref _logisticsStrain);
+                dataStore.SyncData("cl_moraleShock", ref _moraleShock);
+                dataStore.SyncData("cl_territoryPressure", ref _territoryPressure);
+                dataStore.SyncData("cl_payTension", ref _payTension);
+                dataStore.SyncData("cl_contrabandHeat", ref _contrabandHeat);
 
-            var mood = (int)_quartermasterMoodTier;
-            dataStore.SyncData("cl_qmMoodTier", ref mood);
-            _quartermasterMoodTier = (QuartermasterMoodTier)mood;
+                var mood = (int)_quartermasterMoodTier;
+                dataStore.SyncData("cl_qmMoodTier", ref mood);
+                _quartermasterMoodTier = (QuartermasterMoodTier)mood;
 
-            dataStore.SyncData("cl_lastSnapshotDayNumber", ref _lastSnapshotDayNumber);
-            dataStore.SyncData("cl_weekNumber", ref _weekNumber);
-            dataStore.SyncData("cl_battlesThisWeek", ref _battlesThisWeek);
-            dataStore.SyncData("cl_villagesLootedThisWeek", ref _villagesLootedThisWeek);
+                dataStore.SyncData("cl_lastSnapshotDayNumber", ref _lastSnapshotDayNumber);
+                dataStore.SyncData("cl_weekNumber", ref _weekNumber);
+                dataStore.SyncData("cl_battlesThisWeek", ref _battlesThisWeek);
+                dataStore.SyncData("cl_villagesLootedThisWeek", ref _villagesLootedThisWeek);
+            });
         }
 
         public bool IsEnabled()

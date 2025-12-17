@@ -19,12 +19,12 @@ The **Quartermaster** is the enlisted equipment vendor. It lets you **purchase**
 
 Key traits:
 - **Persistent NPC**: Each lord has a unique Quartermaster Hero with personality
-- **Three Archetypes**: Veteran, Scoundrel, or Believer - each with unique dialogue
+- **Multiple Archetypes**: Veteran, Merchant, Bookkeeper, Scoundrel, Believer, or Eccentric - each with unique dialogue
 - **Purchase-based**: equipment costs denars
 - **Formation-driven**: availability based on your chosen formation (Infantry/Archer/Cavalry/Horse Archer)
 - **Culture-appropriate**: gear matches your enlisted lord's culture
 - **Tier-unlocked**: higher tiers unlock better equipment
-- **Relationship discounts**: Build trust for 5-15% discounts
+- **Relationship discounts**: Build trust for 5-15% discounts (applies to equipment + provisions)
 - **NEW indicators**: newly unlocked items are marked with `[NEW]` after promotion
 - **No accountability system**: the mod does not track "issued" gear or dock pay for missing items
 - **Buyback**: you can sell gear back to the Quartermaster for a reduced price
@@ -35,8 +35,11 @@ Each lord has a unique, persistent Quartermaster NPC:
 
 ### Archetypes
 - **Veteran**: Pragmatic old soldier, practical advice, no-nonsense attitude
+- **Merchant**: Trade-minded and opportunistic, treats the armory like a market
+- **Bookkeeper**: Bureaucratic clerk type, obsessed with forms and ledgers
 - **Scoundrel**: Opportunistic, knows black market contacts, offers "creative" solutions
 - **Believer**: Pious and moral, offers spiritual guidance, encourages loyalty
+- **Eccentric**: Superstitious and odd, speaks in omens and strange observations
 
 ### PayTension-Aware Dialogue
 When pay is late (PayTension 40+), the Quartermaster offers archetype-specific advice:
@@ -54,8 +57,8 @@ When pay is late (PayTension 40+), the Quartermaster offers archetype-specific a
 | Battle Brother | 80-100 | 15% | Special items |
 
 ## Access
-- **Quartermaster**: Enlisted Status → **Visit Quartermaster**
-- **Baggage Train**: Enlisted Status → **Baggage Train**
+- **Quartermaster**: Enlisted Status -> **Visit Quartermaster**
+- **Baggage Train**: Enlisted Status -> **Baggage Train**
 
 ## Enlistment Bag Check (first enlistment)
 About **12 in-game hours** after enlisting (when safe: not in battle/encounter/captivity), the quartermaster runs a bag check.
@@ -79,7 +82,7 @@ The Baggage Train is the stash created by the bag check.
 
 ### 1) Formation + Tier + Culture drives availability
 Your equipment availability is determined by:
-- **Formation**: Chosen during T1→T2 proving event (Infantry/Archer/Cavalry/Horse Archer)
+- **Formation**: Chosen during T1->T2 proving event (Infantry/Archer/Cavalry/Horse Archer)
 - **Tier**: Equipment up to your current tier is available
 - **Culture**: Your enlisted lord's culture determines the gear aesthetics
 
@@ -107,6 +110,7 @@ Selling removes **one** item and pays the buyback amount.
 ### 6) Pricing
 - **Purchase price**: `item.Value × quartermaster.soldier_tax`
 - **Provisioner / Quartermaster role discount**: 15% off quartermaster prices.
+- **Relationship discount**: 0–15% off based on Quartermaster relationship milestones.
 - **Buyback price**: `item.Value × quartermaster.buyback_rate`
 
 ### 7) Provisioner / Quartermaster duty perks
@@ -120,25 +124,36 @@ When promoted, you are prompted to visit the Quartermaster:
 - Message displays: "Report to the Quartermaster for your new kit"
 - Newly unlocked items are marked with `[NEW]`
 
+## Quartermaster Loop (CK3 / Viking Conquest style)
+
+Beyond the equipment shop, Quartermaster duty feeds a repeating “company logistics” loop:
+
+- **Weekly Supply Run (Quartermaster duty)**: A decision event can fire while you are `on_duty:quartermaster` (weekly cadence).
+  - You can do it **cleanly** (costs gold + fatigue, lowers PayTension modestly) or **quietly** (profit + bigger PayTension relief, but adds Heat/Discipline risk).
+- **Audit Pressure**: If Heat rises high enough, an audit-style decision can trigger. You can cooperate (cool Heat) or bury the trail (reduce PayTension but deepen corruption flags).
+- **Quartermaster Favor**: Clean, competent handling can set a temporary favor flag you can later cash in via a player-initiated decision for a one-time relief.
+
+This loop is implemented in data (Decision Events + flags), so expanding it is mostly content authoring: add more `decision_qm_*` events with chains, flags, and escalation gates.
+
 ## Provisions System
 
 Purchase rations for morale and fatigue benefits:
 
-| Tier | Cost | Duration | Morale | Fatigue |
-|------|------|----------|--------|---------|
-| Basic Rations | 25g | 3 days | +2 | - |
-| Good Fare | 50g | 3 days | +4 | -1/day |
-| Officer's Table | 100g | 3 days | +6 | -2/day |
+| Tier | Base Cost | Duration | Morale | Fatigue |
+|------|-----------|----------|--------|---------|
+| Supplemental Rations | 10g | 1 day | +2 | - |
+| Officer's Fare | 30g | 2 days | +4 | +2 (immediate) |
+| Commander's Feast | 75g | 3 days | +8 | +5 (immediate) |
 
 ### Retinue Provisioning (T7+)
 Commanders with retinues can purchase provisions for their soldiers:
 
-| Tier | Cost/Soldier | Duration | Effect |
-|------|--------------|----------|--------|
-| Bare Minimum | 1g | 7 days | -2 morale |
-| Standard | 2g | 7 days | No modifier |
-| Good Fare | 4g | 7 days | +2 morale |
-| Officer Quality | 6g | 7 days | +4 morale |
+| Tier | Base Cost/Soldier | Duration | Effect |
+|------|-------------------|----------|--------|
+| Bare Minimum | 2g | 7 days | -5 morale |
+| Standard | 5g | 7 days | No modifier |
+| Good Fare | 10g | 7 days | +5 morale |
+| Officer Quality | 20g | 7 days | +10 morale |
 
 Warning at 2 days remaining; starvation penalties at expiration.
 

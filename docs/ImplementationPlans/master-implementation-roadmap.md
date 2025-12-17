@@ -12,19 +12,19 @@
 
 **When starting development, read in this order:**
 
-1. **this document (master-implementation-roadmap.md)** 🗺️
-   - read "quick reference" → know what to build next
-   - read "dependency graph" → understand build order
-   - read your track section → see weekly breakdown
+1. **this document (master-implementation-roadmap.md)** 
+   - read "quick reference" -> know what to build next
+   - read "dependency graph" -> understand build order
+   - read your track section -> see weekly breakdown
    - **purpose:** answers "what do i build and when?"
 
-2. **the feature docs** 📖
+2. **the feature docs** 
    - For system behavior and where things live in code/data:
      - `docs/Features/core-gameplay.md`
      - `docs/Features/index.md`
    - For content authoring:
-     - decision events → `docs/StoryBlocks/decision-events-spec.md`
-     - duty events → `docs/ImplementationPlans/duty-events-creation-guide.md`
+     - decision events -> `docs/StoryBlocks/decision-events-spec.md`
+     - duty events -> `docs/ImplementationPlans/duty-events-creation-guide.md`
    - For UI work:
      - `docs/ImplementationPlans/gauntlet-ui-screens-playbook.md`
 
@@ -32,12 +32,12 @@
 
 | your question | use this document |
 |---------------|-------------------|
-| "what should i build on monday?" | **this roadmap** 🗺️ |
-| "how long will this take?" | **this roadmap** 🗺️ |
-| "what's the detailed implementation?" | **feature-specific doc** 📖 |
-| "how does this integrate with x?" | **feature-specific doc** 📖 |
-| "what are the dependencies?" | **this roadmap** 🗺️ |
-| "what code structure do i need?" | **feature-specific doc** 📖 |
+| "what should i build on monday?" | **this roadmap**  |
+| "how long will this take?" | **this roadmap**  |
+| "what's the detailed implementation?" | **feature-specific doc**  |
+| "how does this integrate with x?" | **feature-specific doc**  |
+| "what are the dependencies?" | **this roadmap**  |
+| "what code structure do i need?" | **feature-specific doc**  |
 
 ### for ai implementation
 
@@ -60,20 +60,20 @@
 
 ## quick reference
 
-### what's done ✅
+### what's done [x]
 see `docs/ImplementationPlans/implementation-status.md` for the up-to-date completion list.
 
-### what's next 🔴
+### what's next 
 - **decision events**: phase 7 content creation, phase 9 debug commands, optional phase 8 news integration.
 
-### what's waiting 📋
+### what's waiting 
 - duty event content expansion (authoring) and any optional integrations listed in `docs/ImplementationPlans/implementation-status.md`.
 
 ---
 
 ## critical path
 
-### ✅ PRIORITY 0: Foundation (COMPLETE)
+### [x] PRIORITY 0: Foundation (COMPLETE)
 
 This used to be the primary blocker. It is now complete and kept here for reference.
 
@@ -82,7 +82,7 @@ This used to be the primary blocker. It is now complete and kept here for refere
 - **Changes:** Implemented 4-block schedule system (Morning, Afternoon, Dusk, Night)
 - **Duration:** Complete
 - **doc:** see `docs/Features/core-gameplay.md` (schedule) and `docs/ImplementationPlans/implementation-status.md` (status).
-- **Status:** ✅ IMPLEMENTED
+- **Status:** [x] IMPLEMENTED
 
 **Why Critical:**
 - Previous system had inconsistent time handling
@@ -92,10 +92,10 @@ This used to be the primary blocker. It is now complete and kept here for refere
 **What We Built:**
 - `TimeBlock` enum with 4 periods
 - `GetCurrentTimeBlock()` mapping in `ScheduleBehavior`
-- Activity preferences per time block (e.g., rest → Night, training → Morning)
+- Activity preferences per time block (e.g., rest -> Night, training -> Morning)
 - Context-aware flexibility (allows rest outside preferred block if player exhausted)
 
-**Success Criteria:** ✅ Complete
+**Success Criteria:** [x] Complete
 - Schedule generates for all 4 time blocks
 - Activities respect time block preferences
 - Context-aware overrides work correctly
@@ -105,17 +105,17 @@ This used to be the primary blocker. It is now complete and kept here for refere
 
 ## build tracks
 
-### Track A: Camp Management Screen (COMPLETE ✅)
+### Track A: Camp Management Screen (COMPLETE [x])
 
 **Status:** FULLY COMPLETE including Phase 4 Activities Tab
 
-**Phase 1: Foundation (COMPLETE ✅)**
-- ✅ Activity card components
-- ✅ Camp activities screen
-- ✅ Status bar integration
-- ✅ Data loading from JSON
+**Phase 1: Foundation (COMPLETE [x])**
+- [x] Activity card components
+- [x] Camp activities screen
+- [x] Status bar integration
+- [x] Data loading from JSON
 
-**Phase 2: Camp Management Screen - Kingdom Pattern (COMPLETE ✅)**
+**Phase 2: Camp Management Screen - Kingdom Pattern (COMPLETE [x])**
 - **Doc:** `KINGDOM_STYLE_CAMP_SCREEN.md`
 - **Architecture:** Full-screen layer-based UI with tabbed interface (matches native Kingdom screen)
 - **Deliverable:** Kingdom-style camp management screen with:
@@ -127,224 +127,224 @@ This used to be the primary blocker. It is now complete and kept here for refere
   - Party Tab: planned for v1.0.0 (NPC lances)
 
 **Tasks:**
-1. ✅ `CampManagementScreen.cs` - Static layer-based screen
-2. ✅ `CampManagementVM.cs` - Tab controller with navigation
-3. ✅ `CampLanceVM.cs` - Lance roster + needs + progression
-4. ✅ `CampScheduleVM.cs` - Schedule display + policy interactions
-5. ✅ `CampReportsVM.cs` - Diplomacy pattern reports + categories
-6. ✅ Load required sprite categories and use native UI patterns
-7. ✅ Menu hook in Command Tent ("[TEST] Camp Management")
+1. [x] `CampManagementScreen.cs` - Static layer-based screen
+2. [x] `CampManagementVM.cs` - Tab controller with navigation
+3. [x] `CampLanceVM.cs` - Lance roster + needs + progression
+4. [x] `CampScheduleVM.cs` - Schedule display + policy interactions
+5. [x] `CampReportsVM.cs` - Diplomacy pattern reports + categories
+6. [x] Load required sprite categories and use native UI patterns
+7. [x] Menu hook in Command Tent ("[TEST] Camp Management")
 
-**Phase 3: Tab-Specific Features (COMPLETE ✅)**
+**Phase 3: Tab-Specific Features (COMPLETE [x])**
 
 **Lance Tab:**
-- ✅ Lance needs visual display (Readiness, Equipment, Morale, Rest, Supplies)
-- ✅ Status bars with color-coded levels (Excellent/Good/Fair/Poor/Critical)
-- ✅ Culture-specific rank display from `name_pools.json`
-- ✅ Lance banner persistence (unique per lord/lance, saved)
-- ✅ Banner randomization for AI-led lances
-- ✅ Member progression tracking (DaysInService, Battles, XP)
-- ✅ Auto-promotion system with notifications
+- [x] Lance needs visual display (Readiness, Equipment, Morale, Rest, Supplies)
+- [x] Status bars with color-coded levels (Excellent/Good/Fair/Poor/Critical)
+- [x] Culture-specific rank display from `name_pools.json`
+- [x] Lance banner persistence (unique per lord/lance, saved)
+- [x] Banner randomization for AI-led lances
+- [x] Member progression tracking (DaysInService, Battles, XP)
+- [x] Auto-promotion system with notifications
 
 **Orders Tab (Schedule):**
-- ✅ 4 time block display (Morning, Afternoon, Dusk, Night)
-- ✅ Policy-style clickable time blocks
-- ✅ Available activities list with filtering
-- ✅ Context-aware AI schedule generation
-- ✅ Hardship days logic (increased tempo during war)
-- ✅ Activity uniqueness tracking (once-per-day duties)
-- ✅ Permission-based UI (T1-T6 authority levels)
-- ✅ Dynamic hover hints for disabled buttons
-- ⏳ T5-T6 schedule SETTING (UI exists, action handlers not wired)
+- [x] 4 time block display (Morning, Afternoon, Dusk, Night)
+- [x] Policy-style clickable time blocks
+- [x] Available activities list with filtering
+- [x] Context-aware AI schedule generation
+- [x] Hardship days logic (increased tempo during war)
+- [x] Activity uniqueness tracking (once-per-day duties)
+- [x] Permission-based UI (T1-T6 authority levels)
+- [x] Dynamic hover hints for disabled buttons
+- IN PROGRESS T5-T6 schedule SETTING (UI exists, action handlers not wired)
 
 **Reports Tab:**
-- ✅ Diplomacy-style category selection (4 categories as clickable buttons)
-- ✅ General Orders narrative generation (RP military dispatches)
-- ✅ Lance Reports feed (schedule, activities, needs warnings)
-- ✅ Company Reports feed (lord status, army info, party strength)
-- ✅ Kingdom Reports feed (wars, peace, battles from game logs)
-- ✅ Two-panel layout: categories left, feed + details right
-- ✅ Native UI patterns (`ReportCategoryTuple`, `ReportTuple`)
+- [x] Diplomacy-style category selection (4 categories as clickable buttons)
+- [x] General Orders narrative generation (RP military dispatches)
+- [x] Lance Reports feed (schedule, activities, needs warnings)
+- [x] Company Reports feed (lord status, army info, party strength)
+- [x] Kingdom Reports feed (wars, peace, battles from game logs)
+- [x] Two-panel layout: categories left, feed + details right
+- [x] Native UI patterns (`ReportCategoryTuple`, `ReportTuple`)
 
-**Phase 4: Activities Tab & Schedule Actions (COMPLETE ✅)**
-- ✅ Activities Tab implementation (location-based activity selection)
-- ✅ T5-T6 schedule action handlers (Set Activity, Request Change)
-- ✅ Activity execution with feedback messages
-- ✅ CampActivitiesVM with full location navigation
-- ⏳ Decision overlay system for events/requests
-- ⏳ Party Tab for NPC lance statuses (v1.0.0 feature)
+**Phase 4: Activities Tab & Schedule Actions (COMPLETE [x])**
+- [x] Activities Tab implementation (location-based activity selection)
+- [x] T5-T6 schedule action handlers (Set Activity, Request Change)
+- [x] Activity execution with feedback messages
+- [x] CampActivitiesVM with full location navigation
+- IN PROGRESS Decision overlay system for events/requests
+- IN PROGRESS Party Tab for NPC lance statuses (v1.0.0 feature)
 
 ---
 
-### Track B: AI Camp Schedule (7-8 weeks) - COMPLETE ✅
+### Track B: AI Camp Schedule (7-8 weeks) - COMPLETE [x]
 
 **doc:** see `docs/ImplementationPlans/implementation-status.md` for current status and key files.  
-**Prerequisite:** Time system expansion ✅ complete
+**Prerequisite:** Time system expansion [x] complete
 **Status:** ALL PHASES (0-7) FULLY IMPLEMENTED  
 **Status:** Core AI scheduling complete, T5-T6 interaction UI pending
 
-**Phase 0: Foundation (COMPLETE ✅)**
-- ✅ Data models (`ScheduledBlock`, `ScheduleDay`, `LanceNeeds`)
-- ✅ Configuration loading from `schedule_config.json`
-- ✅ Save/load support via `ScheduleBehavior.SyncData()`
-- ✅ 4 time block system (Morning, Afternoon, Dusk, Night)
+**Phase 0: Foundation (COMPLETE [x])**
+- [x] Data models (`ScheduledBlock`, `ScheduleDay`, `LanceNeeds`)
+- [x] Configuration loading from `schedule_config.json`
+- [x] Save/load support via `ScheduleBehavior.SyncData()`
+- [x] 4 time block system (Morning, Afternoon, Dusk, Night)
 
-**Phase 1: Basic Scheduling (COMPLETE ✅)**
-- ✅ Schedule generation algorithm (`ScheduleGenerator`)
-- ✅ Lord objective → duty assignment logic
-- ✅ Formation and tier-based activity filtering
-- ✅ Player duty filtering (required_duties field)
-- ✅ Default activity fallbacks
+**Phase 1: Basic Scheduling (COMPLETE [x])**
+- [x] Schedule generation algorithm (`ScheduleGenerator`)
+- [x] Lord objective -> duty assignment logic
+- [x] Formation and tier-based activity filtering
+- [x] Player duty filtering (required_duties field)
+- [x] Default activity fallbacks
 
-**Phase 2: Lance Needs System (COMPLETE ✅)**
-- ✅ Lance need tracking (Readiness, Equipment, Morale, Rest, Supplies)
-- ✅ Need degradation system (`LanceNeedsManager`)
-- ✅ Recovery mechanics (per-activity effects)
-- ✅ Need-aware UI display (Lance tab status bars)
-- ✅ Status levels (Excellent/Good/Fair/Poor/Critical)
+**Phase 2: Lance Needs System (COMPLETE [x])**
+- [x] Lance need tracking (Readiness, Equipment, Morale, Rest, Supplies)
+- [x] Need degradation system (`LanceNeedsManager`)
+- [x] Recovery mechanics (per-activity effects)
+- [x] Need-aware UI display (Lance tab status bars)
+- [x] Status levels (Excellent/Good/Fair/Poor/Critical)
 
-**Phase 3: AI Schedule Logic (COMPLETE ✅)**
-- ✅ Context-aware scheduling (war/peace/siege)
-- ✅ Need-balancing algorithm
-- ✅ Duty distribution optimization
-- ✅ Hardship days simulation (increased tempo)
-- ✅ Activity uniqueness tracking (once-per-day)
-- ✅ Time block preferences (rest → Night, training → Morning, etc.)
-- ✅ Context-aware flexibility (allows rest override if player exhausted)
-- ✅ Free time scheduling (2 slots peacetime, 1 wartime, overrideable)
+**Phase 3: AI Schedule Logic (COMPLETE [x])**
+- [x] Context-aware scheduling (war/peace/siege)
+- [x] Need-balancing algorithm
+- [x] Duty distribution optimization
+- [x] Hardship days simulation (increased tempo)
+- [x] Activity uniqueness tracking (once-per-day)
+- [x] Time block preferences (rest -> Night, training -> Morning, etc.)
+- [x] Context-aware flexibility (allows rest override if player exhausted)
+- [x] Free time scheduling (2 slots peacetime, 1 wartime, overrideable)
 
-**Phase 4: Schedule Block Execution (COMPLETE ✅)**
-- ✅ Block activation system
-- ✅ Event triggering during blocks (`ScheduleExecutor`)
-- ✅ Completion tracking
-- ✅ Skill-appropriate XP rewards (Leadership, Scouting, One Handed, etc.)
-- ✅ Auto-resume after event popups (game no longer stays paused)
-- ✅ Need recovery/degradation application
+**Phase 4: Schedule Block Execution (COMPLETE [x])**
+- [x] Block activation system
+- [x] Event triggering during blocks (`ScheduleExecutor`)
+- [x] Completion tracking
+- [x] Skill-appropriate XP rewards (Leadership, Scouting, One Handed, etc.)
+- [x] Auto-resume after event popups (game no longer stays paused)
+- [x] Need recovery/degradation application
 
-**Phase 5: T5-T6 Leadership (COMPLETE ✅)**
-- ✅ Player authority level detection (`ScheduleAuthorityLevel` enum)
-- ✅ Permission-based UI (buttons enabled/disabled by authority)
-- ✅ Dynamic hover hints explaining why buttons are disabled
-- ✅ T3-T4 request approval likelihood calculation (`CalculateApprovalLikelihood()`)
-- ✅ Display of available activities filtered by player tier/duty
-- ✅ "Set Activity" action handler (`ExecuteSetSchedule()` → `SetManualSchedule()`)
-- ✅ "Request Change" action handler (`ExecuteRequestChange()` → `RequestScheduleChange()`)
-- ✅ Approval slider display for T3-T4 (`ShowApprovalSlider`, `ApprovalLikelihood`)
-- ✅ Manual schedule override for Lance Leaders (`IsManualScheduleMode`, `RevertToAutoSchedule()`)
+**Phase 5: T5-T6 Leadership (COMPLETE [x])**
+- [x] Player authority level detection (`ScheduleAuthorityLevel` enum)
+- [x] Permission-based UI (buttons enabled/disabled by authority)
+- [x] Dynamic hover hints explaining why buttons are disabled
+- [x] T3-T4 request approval likelihood calculation (`CalculateApprovalLikelihood()`)
+- [x] Display of available activities filtered by player tier/duty
+- [x] "Set Activity" action handler (`ExecuteSetSchedule()` -> `SetManualSchedule()`)
+- [x] "Request Change" action handler (`ExecuteRequestChange()` -> `RequestScheduleChange()`)
+- [x] Approval slider display for T3-T4 (`ShowApprovalSlider`, `ApprovalLikelihood`)
+- [x] Manual schedule override for Lance Leaders (`IsManualScheduleMode`, `RevertToAutoSchedule()`)
 
-**Phase 6: Pay Muster Integration (COMPLETE ✅)**
-- ✅ 12-day schedule cycle (`_cycleStartTime`, `_nextMusterTime`, `CurrentCycleDay`)
-- ✅ Order refresh at muster (`OnPayMusterCompleted()`)
-- ✅ Muster sync with enlistment (`SyncMusterTimeWithEnlistment()`)
-- ✅ Performance tracking and consequences (`ApplyPerformanceConsequences()`)
-- ✅ UI display of cycle info (`CampScheduleVM.RefreshCycleInfo()`)
+**Phase 6: Pay Muster Integration (COMPLETE [x])**
+- [x] 12-day schedule cycle (`_cycleStartTime`, `_nextMusterTime`, `CurrentCycleDay`)
+- [x] Order refresh at muster (`OnPayMusterCompleted()`)
+- [x] Muster sync with enlistment (`SyncMusterTimeWithEnlistment()`)
+- [x] Performance tracking and consequences (`ApplyPerformanceConsequences()`)
+- [x] UI display of cycle info (`CampScheduleVM.RefreshCycleInfo()`)
 
-**Phase 7: Polish (COMPLETE ✅)**
-- ✅ Combat interrupt handling (`OnMapEventStarted/Ended`)
-- ✅ Time skip recovery (`HandleTimeSkipRecovery()`)
-- ✅ Camp bulletin integration (`CampBulletinIntegration.OnBlockStart/Complete`)
-- ✅ Performance feedback news (`CampNewsGenerator.GeneratePerformanceFeedbackNews`)
-- ✅ Comprehensive integration testing (builds successfully)
+**Phase 7: Polish (COMPLETE [x])**
+- [x] Combat interrupt handling (`OnMapEventStarted/Ended`)
+- [x] Time skip recovery (`HandleTimeSkipRecovery()`)
+- [x] Camp bulletin integration (`CampBulletinIntegration.OnBlockStart/Complete`)
+- [x] Performance feedback news (`CampNewsGenerator.GeneratePerformanceFeedbackNews`)
+- [x] Comprehensive integration testing (builds successfully)
 
 **Current Status Summary:**
 - **Core AI scheduling:** 100% complete (Phases 0-7)
 - **UI for viewing:** 100% complete (Orders tab fully functional)
 - **UI for interaction:** 100% complete (all action handlers wired)
-- **Track B Status:** FULLY COMPLETE ✅
+- **Track B Status:** FULLY COMPLETE [x]
 
 ---
 
 ### Track C: Lance Systems (14-16 weeks total, overlapping builds)
 
-**Dependencies:** AI Camp Schedule must be complete first ✅
+**Dependencies:** AI Camp Schedule must be complete first [x]
 
-#### C1: Lance Life Simulation (12 weeks) - COMPLETE ✅
+#### C1: Lance Life Simulation (12 weeks) - COMPLETE [x]
 
 **doc:** see `docs/ImplementationPlans/implementation-status.md` for current status and key files.  
-**Prerequisite:** AI Camp Schedule (provides `ILanceScheduleModifier` interface) ✅
+**Prerequisite:** AI Camp Schedule (provides `ILanceScheduleModifier` interface) [x]
 **Status:** FULLY IMPLEMENTED
 
-**Weeks 1-2: Foundation ✅**
-- ✅ `LanceLifeSimulationBehavior` with state tracking
-- ✅ `LanceMemberState` struct with save/load
-- ✅ Daily processing hooks
-- ✅ Integration with AI Schedule via `ILanceScheduleModifier`
+**Weeks 1-2: Foundation [x]**
+- [x] `LanceLifeSimulationBehavior` with state tracking
+- [x] `LanceMemberState` struct with save/load
+- [x] Daily processing hooks
+- [x] Integration with AI Schedule via `ILanceScheduleModifier`
 
-**Weeks 3-4: Injury System ✅**
-- ✅ Injury probability checks (base + context modifiers)
-- ✅ Health state progression (Healthy → Minor → Major → Incapacitated)
-- ✅ Recovery tracking with CampaignTime
-- ✅ Medical tent integration via SickBay activity state
+**Weeks 3-4: Injury System [x]**
+- [x] Injury probability checks (base + context modifiers)
+- [x] Health state progression (Healthy -> Minor -> Major -> Incapacitated)
+- [x] Recovery tracking with CampaignTime
+- [x] Medical tent integration via SickBay activity state
 
-**Weeks 5-6: Death & Memorial ✅**
-- ✅ Death mechanics (combat, disease, accidents)
-- ✅ Memorial service events JSON
-- ✅ Roster management (ActiveMembers, AvailableMembers)
-- ✅ Morale impact via LanceNeeds
+**Weeks 5-6: Death & Memorial [x]**
+- [x] Death mechanics (combat, disease, accidents)
+- [x] Memorial service events JSON
+- [x] Roster management (ActiveMembers, AvailableMembers)
+- [x] Morale impact via LanceNeeds
 
-**Weeks 7-8: Cover Request System ✅**
-- ✅ Cover request evaluation (LastCoverRequestTime cooldown)
-- ✅ Player decision events (9 events in events_lance_simulation.json)
-- ✅ Favor tracking (FavorsOwed, FavorsOwedToPlayer)
-- ✅ Relationship impacts (ModifyRelation)
+**Weeks 7-8: Cover Request System [x]**
+- [x] Cover request evaluation (LastCoverRequestTime cooldown)
+- [x] Player decision events (9 events in events_lance_simulation.json)
+- [x] Favor tracking (FavorsOwed, FavorsOwedToPlayer)
+- [x] Relationship impacts (ModifyRelation)
 
-**Weeks 9-11: Promotion Escalation ✅**
-- ✅ Player readiness tracking (CheckPlayerReadinessForLanceLeader)
-- ✅ Escalation path selection (weighted random)
-- ✅ Vacancy creation (5 paths: Promotion, Transfer, Injury, Death, Retirement)
-- ✅ Promotion ceremony events
+**Weeks 9-11: Promotion Escalation [x]**
+- [x] Player readiness tracking (CheckPlayerReadinessForLanceLeader)
+- [x] Escalation path selection (weighted random)
+- [x] Vacancy creation (5 paths: Promotion, Transfer, Injury, Death, Retirement)
+- [x] Promotion ceremony events
 
-**Week 12: Polish ✅**
-- ✅ Balance probabilities (configurable base rates)
-- ✅ Integration testing (compiles, registered in SubModule)
-- ✅ Content variety (9 event types in JSON)
+**Week 12: Polish [x]**
+- [x] Balance probabilities (configurable base rates)
+- [x] Integration testing (compiles, registered in SubModule)
+- [x] Content variety (9 event types in JSON)
 
 **Integration Points:**
 - Provides member availability to AI Schedule
 - Triggers Persistent Lance Leaders on vacancy
 - Uses existing event infrastructure
 
-#### C2: Persistent Lance Leaders (10 weeks, starts Week 7) - COMPLETE ✅
+#### C2: Persistent Lance Leaders (10 weeks, starts Week 7) - COMPLETE [x]
 
 **doc:** see `docs/ImplementationPlans/implementation-status.md` for current status and key files.  
-**Prerequisite:** Lance Life Simulation foundation (Week 6) ✅  
+**Prerequisite:** Lance Life Simulation foundation (Week 6) [x]  
 **Status:** FULLY IMPLEMENTED
 
-**Weeks 7-8: Core Generation ✅**
-- ✅ `PersistentLanceLeader` data class with all fields
-- ✅ `PersistentLanceLeadersBehavior` with save/load
-- ✅ Name generation (culture-specific male/female names + epithets)
-- ✅ Personality trait system (6 primary + 8 secondary traits)
+**Weeks 7-8: Core Generation [x]**
+- [x] `PersistentLanceLeader` data class with all fields
+- [x] `PersistentLanceLeadersBehavior` with save/load
+- [x] Name generation (culture-specific male/female names + epithets)
+- [x] Personality trait system (6 primary + 8 secondary traits)
 
-**Weeks 9-10: Memory System ✅**
-- ✅ `MemoryEntry` structure with 9 memory types
-- ✅ Memory queue (15 max, FIFO via AddMemory)
-- ✅ Event recording hooks (RecordEventChoice, RecordBattlePerformance, RecordPromotion)
-- ✅ Memory decay (30 days via ProcessMemoryDecay)
+**Weeks 9-10: Memory System [x]**
+- [x] `MemoryEntry` structure with 9 memory types
+- [x] Memory queue (15 max, FIFO via AddMemory)
+- [x] Event recording hooks (RecordEventChoice, RecordBattlePerformance, RecordPromotion)
+- [x] Memory decay (30 days via ProcessMemoryDecay)
 
-**Weeks 11-12: Reaction System ✅**
-- ✅ Tone determination logic (8 dialog tones)
-- ✅ Dynamic dialogue generation (personality-based greetings)
-- ✅ Reaction event templates (11 events in JSON)
-- ✅ Personality-based responses (Stern/Fair/Pragmatic/Fatherly/Ambitious/Cynical)
+**Weeks 11-12: Reaction System [x]**
+- [x] Tone determination logic (8 dialog tones)
+- [x] Dynamic dialogue generation (personality-based greetings)
+- [x] Reaction event templates (11 events in JSON)
+- [x] Personality-based responses (Stern/Fair/Pragmatic/Fatherly/Ambitious/Cynical)
 
-**Weeks 13-14: Death & Replacement ✅**
-- ✅ Death processing (MarkDead, OnLanceLeaderDeath)
-- ✅ Replacement generation (GetOrCreateLanceLeader)
-- ✅ Memorial system (via LanceLifeSimulation)
-- ✅ Introduction events (TriggerIntroductionEvent)
+**Weeks 13-14: Death & Replacement [x]**
+- [x] Death processing (MarkDead, OnLanceLeaderDeath)
+- [x] Replacement generation (GetOrCreateLanceLeader)
+- [x] Memorial system (via LanceLifeSimulation)
+- [x] Introduction events (TriggerIntroductionEvent)
 
-**Weeks 15-16: Integration & Polish ✅**
-- ✅ Camp news integration (via InformationManager messages)
-- ✅ Promotion system hooks (OnLeaderVacancy, OfferPlayerPromotion)
-- ✅ 11 reaction events (heat warnings, praise, discipline, trust milestones)
-- ✅ Comprehensive testing (compiles, registered in SubModule)
+**Weeks 15-16: Integration & Polish [x]**
+- [x] Camp news integration (via InformationManager messages)
+- [x] Promotion system hooks (OnLeaderVacancy, OfferPlayerPromotion)
+- [x] 11 reaction events (heat warnings, praise, discipline, trust milestones)
+- [x] Comprehensive testing (compiles, registered in SubModule)
 
 **Integration Points:**
-- ✅ Receives vacancy notifications from Lance Life
-- ✅ Provides leader identity to all systems (CurrentLeader property)
-- ✅ Comments on duty events (RecordEventChoice)
-- ✅ Reacts to escalation thresholds (Heat/Discipline warnings)
+- [x] Receives vacancy notifications from Lance Life
+- [x] Provides leader identity to all systems (CurrentLeader property)
+- [x] Comments on duty events (RecordEventChoice)
+- [x] Reacts to escalation thresholds (Heat/Discipline warnings)
 
 ---
 
@@ -356,7 +356,7 @@ This used to be the primary blocker. It is now complete and kept here for refere
 
 **Doc:** (Not active) If revived, document it under `docs/Features/` and update this roadmap.  
 **Prerequisites:** AI Camp Schedule + Lance Life Simulation + News/Dispatches System (must be complete and stable)  
-**Priority:** 🟡 Medium (Should-Have for immersion and mechanical depth)
+**Priority:**  Medium (Should-Have for immersion and mechanical depth)
 
 **Purpose:**
 Simulate 8-15 NPC lances in player's army with realistic routine operations and optional attrition warfare.
@@ -374,7 +374,7 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
    - **Universal:** Guard duty, equipment maintenance, recovery, discipline
    - Dynamic assignment based on lord's objectives and army context
 
-3. **🔴 Real Party Casualty System** (Major New Feature)
+3. ** Real Party Casualty System** (Major New Feature)
    - **What It Does:** Simulated casualties from routine operations actually affect party rosters
    - **What It Simulates:**
      - Patrols encountering bandits (5-15 enemies, small skirmishes)
@@ -383,7 +383,7 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
      - Guard duty accidents, disease, desertion
      - **NOT full battles** (Bannerlord handles those normally)
    - **How It Works:**
-     - Lance on patrol encounters bandits → Event: "2 killed, 3 wounded"
+     - Lance on patrol encounters bandits -> Event: "2 killed, 3 wounded"
      - System removes 2 troops from party roster (killed)
      - Moves 3 troops to wounded status (recover in 7 days)
      - News reports: "3rd Lance ambushed on patrol - 2 killed, 3 wounded"
@@ -447,16 +447,16 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
 - Assignment advancement (daily tick, days remaining)
 - Readiness degradation (-5 per day on assignment, -20 per combat)
 - Readiness recovery (+10 per day resting, +15 in medical tent)
-- Lance status transitions (Ready → OnAssignment → Exhausted → Recovery → Ready)
+- Lance status transitions (Ready -> OnAssignment -> Exhausted -> Recovery -> Ready)
 - **Deliverable:** Lances get assigned, states update correctly
 
-**Week 22: Phase 2 - Event Generation + 🔴 Casualty System**
+**Week 22: Phase 2 - Event Generation +  Casualty System**
 - Probability system (danger level × context × readiness)
 - Event type weights (success 50%+reliability, neutral 30%, negative 20%-reliability)
 - Event consequence application
-- **🔴 Casualty calculation** (event type → casualty count → roster application)
-- **🔴 Troop selection** (tier matching, hero exclusion)
-- **🔴 Wounded tracking** (move troops to wounded status)
+- ** Casualty calculation** (event type -> casualty count -> roster application)
+- ** Troop selection** (tier matching, hero exclusion)
+- ** Wounded tracking** (move troops to wounded status)
 - Event history tracking (last 7 days)
 - **Deliverable:** Events fire, casualties apply to party roster
 
@@ -465,7 +465,7 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
 - Headline templates (success, enemy contact, casualties, failures)
 - Priority system (high: casualties/failures, medium: delays, low: routine)
 - Camp Bulletin submenu (7-day history display)
-- **🔴 Casualty attribution** ("lost in patrol ambush" vs "battle")
+- ** Casualty attribution** ("lost in patrol ambush" vs "battle")
 - StoryKey deduplication
 - **Deliverable:** Lance activities visible in news and bulletin
 
@@ -483,7 +483,7 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
 - Army strength calculation (available vs absent lances)
 - Post-battle news noting absent lances
 - Lance state updates (readiness, undermanned)
-- **🔴 Battle casualty vs simulation casualty** tracking
+- ** Battle casualty vs simulation casualty** tracking
 - **Deliverable:** Battles reflect lance availability
 
 **Week 26: Phase 6 - Polish & Balance (Basic)**
@@ -493,7 +493,7 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
 - Configuration file creation
 - **Deliverable:** System balanced for basic play
 
-**Week 27: Phase 6 Extended - 🔴 Casualty Balance Playtesting**
+**Week 27: Phase 6 Extended -  Casualty Balance Playtesting**
 - **CRITICAL:** Playtest each configuration preset
 - Casualty rate analysis (30-day campaigns)
 - AI recruitment behavior monitoring
@@ -574,11 +574,11 @@ Simulate 8-15 NPC lances in player's army with realistic routine operations and 
 
 ---
 
-#### D2: Decision Events Framework (5-6 weeks, Week 7-12) 🆕 NEW
+#### D2: Decision Events Framework (5-6 weeks, Week 7-12)  NEW
 
 **doc:** `docs/StoryBlocks/decision-events-spec.md`  
 **Prerequisites:** Track B AI Schedule (for activity context), existing Events system  
-**Priority:** 🔴 P1 (Core for CK3 feel)
+**Priority:**  P1 (Core for CK3 feel)
 
 **Purpose:**
 Create a Crusader Kings-style decision system where:
@@ -596,7 +596,7 @@ Create a Crusader Kings-style decision system where:
 - [ ] Save/load via `IDataStore.SyncData`
 - **Deliverable:** Framework can evaluate and fire events
 
-**Week 7-8: Phase 1.5 - Activity-Aware Events ⭐**
+**Week 7-8: Phase 1.5 - Activity-Aware Events ***
 - [ ] Add `current_activity:X` tokens to `CampaignTriggerTokens`
 - [ ] Add `on_duty:X` tokens to `CampaignTriggerTokens`
 - [ ] Implement token evaluation in `LanceLifeEventTriggerEvaluator.cs`
@@ -645,7 +645,7 @@ Create a Crusader Kings-style decision system where:
 - **With Camp Activities:** Activities set context for matching events
 
 **Key Features:**
-1. **Activity-Aware Events** — Training block → training events prioritized
+1. **Activity-Aware Events** — Training block -> training events prioritized
 2. **CK3 Pacing** — Quiet days, cooldowns, weight decay
 3. **Main Menu Decisions** — Always-available player choices
 4. **Pushed Invitations** — Lord invites, lance mate requests pop up
@@ -661,15 +661,15 @@ Create a Crusader Kings-style decision system where:
 
 ### Track E: Enhancement Systems (Build After Core - Week 20+)
 
-#### E1: Army Lance Activity Simulation (7-8 weeks, Week 20-27) 🔴 UPDATED
+#### E1: Army Lance Activity Simulation (7-8 weeks, Week 20-27)  UPDATED
 
 **Doc:** (Not active) If revived, document it under `docs/Features/` and update this roadmap.  
 **Prerequisites:** AI Camp Schedule + Lance Life Simulation + News/Dispatches System  
-**Priority:** 🟡 Medium (Should-Have for immersion)
+**Priority:**  Medium (Should-Have for immersion)
 
 **Purpose:**
 - Simulate NPC lances in player's army
-- **🔴 NEW: Real party casualty system** (optional)
+- ** NEW: Real party casualty system** (optional)
 - Cover requests from other lances
 - Camp bulletin with lance activities
 - Resource strain scenarios
@@ -679,14 +679,14 @@ Create a Crusader Kings-style decision system where:
 **Weeks 20-27: Full Implementation (UPDATED)**
 - Week 20: Phase 0 - Foundation (roster generation, save/load)
 - Week 21: Phase 1 - Assignment & state tracking
-- Week 22: Phase 2 - Event generation with **casualty application system** 🔴
+- Week 22: Phase 2 - Event generation with **casualty application system** 
 - Week 23: Phase 3 - News integration (bulletin, personal feed, casualty attribution)
 - Week 24: Phase 4 - Cover requests (player choices, prevent real casualties)
 - Week 25: Phase 5 - Battle integration (availability, real casualty distribution)
 - Week 26: Phase 6 - Polish & balance (basic tuning)
-- Week 27: Phase 6 Extended - **Casualty balance playtesting** 🔴
+- Week 27: Phase 6 Extended - **Casualty balance playtesting** 
 
-**🔴 Casualty System Features:**
+** Casualty System Features:**
 - Simulates small encounters (patrols, foraging, NOT full battles)
 - Optional: affects actual party troop counts
 - Wounded recovery tracking (3-14 days)
@@ -702,13 +702,13 @@ Create a Crusader Kings-style decision system where:
 
 **Value:** Creates feeling of being part of larger military organization + real attrition warfare simulation
 
-**🔴 Major Enhancement:** Now includes optional real party casualty system
+** Major Enhancement:** Now includes optional real party casualty system
 - Patrol ambushes apply actual casualties
 - Armies weaken through routine operations
 - Strategic depth (timing matters, army management)
 - Fully configurable (casual to hardcore)
 
-**🔴 Major Features (NEW):**
+** Major Features (NEW):**
 
 1. **Real Party Casualty System** (Optional)
    - Simulated casualties **actually affect** party troop counts
@@ -763,7 +763,7 @@ Create a Crusader Kings-style decision system where:
 - Company status display
 - Intelligence gathering feature
 
-**Priority:** 🌟 Low (nice-to-have, not critical path)
+**Priority:**  Low (nice-to-have, not critical path)
 
 **Recommendation:** Build this LAST after core systems are stable and tested.
 
@@ -776,16 +776,16 @@ Create a Crusader Kings-style decision system where:
 ```
 Week   | Track A: Camp       | Track B: Schedule      | Track C: Lance    | Track D: Content+Decisions    | Track E: Enhancement
 -------|---------------------|------------------------|-------------------|-------------------------------|----------------------
-   0   | Time System ✅ (4-block schedule complete)                                                               |
-   1   | CampScreen ✅       | Phase 0 ✅ (Foundation) |                   | Ongoing                       |
-   2   | Lance Tab ✅        | Phase 1 ✅ (Scheduling) |                   | Ongoing                       |
-   3   | Orders Tab ✅       | Phase 2 ✅ (Needs)      |                   | Ongoing                       |
-   4   | Reports Tab ✅      | Phase 3 ✅ (AI Logic)   |                   | Ongoing                       |
-   5   | Activities stub ✅  | Phase 4 ✅ (Execution)  |                   | Ongoing                       |
-→ 6   | Activities Tab ⏳   | Phase 5 ⏳ (T5-T6 UI)   | (Blocked)         | Ongoing                       | (Not started)
-   7   |                     | Phase 6 (Muster)       | C1: Foundation    | D2: Decision Core 🆕          |
-   8   |                     | Phase 7 (Polish)       | C1: Injury        | D2: Activity-Aware 🆕         |
-   9   |                     | ✅                     | C1: Death         | D2: Pacing System             |
+   0   | Time System [x] (4-block schedule complete)                                                               |
+   1   | CampScreen [x]       | Phase 0 [x] (Foundation) |                   | Ongoing                       |
+   2   | Lance Tab [x]        | Phase 1 [x] (Scheduling) |                   | Ongoing                       |
+   3   | Orders Tab [x]       | Phase 2 [x] (Needs)      |                   | Ongoing                       |
+   4   | Reports Tab [x]      | Phase 3 [x] (AI Logic)   |                   | Ongoing                       |
+   5   | Activities stub [x]  | Phase 4 [x] (Execution)  |                   | Ongoing                       |
+-> 6   | Activities Tab IN PROGRESS   | Phase 5 IN PROGRESS (T5-T6 UI)   | (Blocked)         | Ongoing                       | (Not started)
+   7   |                     | Phase 6 (Muster)       | C1: Foundation    | D2: Decision Core           |
+   8   |                     | Phase 7 (Polish)       | C1: Injury        | D2: Activity-Aware          |
+   9   |                     | [x]                     | C1: Death         | D2: Pacing System             |
   10   |                     |                        | C1: Cover         | D2: Event Chains              |
   11   |                     |                        | C1: Cover         | D2: Main Menu Decisions       |
        |                     |                        | C2: Generation    |                               |
@@ -802,29 +802,29 @@ Week   | Track A: Camp       | Track B: Schedule      | Track C: Lance    | Trac
   18-22|                     |                        |                   | Ongoing polish                | (Wait for C complete)
   23   |                     |                        |                   |                               | E1: Foundation
   24   |                     |                        |                   |                               | E1: Assignment
-  25   |                     |                        |                   |                               | E1: Events+Casualties🔴
+  25   |                     |                        |                   |                               | E1: Events+Casualties
   26   |                     |                        |                   |                               | E1: News+Attribution
   27   |                     |                        |                   |                               | E1: Cover Requests
   28   |                     |                        |                   |                               | E1: Battle
   29   |                     |                        |                   |                               | E1: Polish
-  30   |                     |                        |                   |                               | E1: Balance Testing🔴
+  30   |                     |                        |                   |                               | E1: Balance Testing
 -------|---------------------|------------------------|-------------------|-------------------------------|----------------------
-Status:| MOSTLY COMPLETE ✅  | 80% COMPLETE ⏳        | NOT STARTED ❌    | ONGOING ⏳ + D2 NEW 🆕        | NOT STARTED ❌
+Status:| MOSTLY COMPLETE [x]  | 80% COMPLETE IN PROGRESS        | NOT STARTED X    | ONGOING IN PROGRESS + D2 NEW         | NOT STARTED X
        | (Activities pending)| (Phases 0-4 done,     | (Blocked on      | (D1 continuous, D2 Week 7-12)  | (Blocked on Track C)
        |                     |  Phase 5 in progress) |  Track B)        |                               |
 ```
 
-**Current Week:** 6 (→ marker shows where we are now)
+**Current Week:** 6 (-> marker shows where we are now)
 
 **Key Observations:**
-- ✅ **Track A:** Core Camp Management Screen complete (Lance/Orders/Reports tabs)
-- ⏳ **Track A:** Activities Tab stub exists, needs full implementation
-- ✅ **Track B:** Core AI scheduling system 100% functional (Phases 0-4)
-- ⏳ **Track B:** T5-T6 interaction UI 60% done (buttons exist, action handlers not wired)
-- ❌ **Track C:** Blocked until Track B Phase 5 completes
-- ⏳ **Track D1:** Ongoing duty events content creation
-- 🆕 **Track D2:** Decision Events Framework ready to start Week 7 (CK3-style decisions)
-- ❌ **Track E:** Not started, blocked on Track C completion
+- [x] **Track A:** Core Camp Management Screen complete (Lance/Orders/Reports tabs)
+- IN PROGRESS **Track A:** Activities Tab stub exists, needs full implementation
+- [x] **Track B:** Core AI scheduling system 100% functional (Phases 0-4)
+- IN PROGRESS **Track B:** T5-T6 interaction UI 60% done (buttons exist, action handlers not wired)
+- X **Track C:** Blocked until Track B Phase 5 completes
+- IN PROGRESS **Track D1:** Ongoing duty events content creation
+-  **Track D2:** Decision Events Framework ready to start Week 7 (CK3-style decisions)
+- X **Track E:** Not started, blocked on Track C completion
 - **Critical path shift:** Track B Phase 5 is now the blocker for Track C
 - **New parallel work:** Decision Events can start Week 7 alongside Lance Life
 - **Estimated remaining:** 2-3 weeks to complete Track A + Track B, then Track C + D2 begin
@@ -836,27 +836,27 @@ Status:| MOSTLY COMPLETE ✅  | 80% COMPLETE ⏳        | NOT STARTED ❌    | O
 ### Visual Dependency Map - CURRENT STATUS
 
 ```
-                    [Time System (4 blocks) ✅]
+                    [Time System (4 blocks) [x]]
                     (COMPLETE)
                             ↓
         ┌───────────────────┴────────────────────┐
         ↓                                        ↓
-[Camp Management Screen ✅]          [AI Camp Schedule ⏳ 80%]
-(Kingdom-style tabs)                 (Phases 0-4 complete ✅)
-Lance/Orders/Reports done            (Phase 5 in progress ⏳)
+[Camp Management Screen [x]]          [AI Camp Schedule IN PROGRESS 80%]
+(Kingdom-style tabs)                 (Phases 0-4 complete [x])
+Lance/Orders/Reports done            (Phase 5 in progress IN PROGRESS)
 Activities stub exists               T5-T6 action handlers needed
         ↓                                        ↓
-[Activities Tab ⏳]                    ├──────────────────────────────────┐
+[Activities Tab IN PROGRESS]                    ├──────────────────────────────────┐
 (1-2 weeks pending)                   ↓                                  ↓
-        │                   [Lance Life Simulation ❌]    [Decision Events 🆕]
+        │                   [Lance Life Simulation X]    [Decision Events ]
         │                   (12 weeks, blocked)          (6 weeks, Week 7-12)
         │                             ↓                  Activity-aware events
-        │                   [Persistent Lance Leaders ❌] CK3-style pacing
+        │                   [Persistent Lance Leaders X] CK3-style pacing
         │                   (10 weeks, overlaps weeks 7-16)     │
         │                             ↓                         │
         │                   ┌─────────┴─────────┐               │
         │                   ↓                   ↓               │
-        │           [Duty Events ⏳]    [Army Lance Activity ❌] │
+        │           [Duty Events IN PROGRESS]    [Army Lance Activity X] │
         │           (150-200 events)   (7 weeks, Week 20-26)    │
         │           (ongoing)                  ↓                │
         │                            [Enhancement Complete]     │
@@ -864,58 +864,58 @@ Activities stub exists               T5-T6 action handlers needed
         └──────────────────► [Main Menu Decisions] ◄────────────┘
                              (Status + Quick Actions)
 
-[AI Lord Lance Simulation ❌] ← Independent, can build anytime (10 weeks)
+[AI Lord Lance Simulation X] ← Independent, can build anytime (10 weeks)
 ```
 
 **Legend:**
-- ✅ = Complete
-- ⏳ = In Progress
-- ❌ = Not Started / Blocked
-- 🆕 = New Track (Decision Events)
+- [x] = Complete
+- IN PROGRESS = In Progress
+- X = Not Started / Blocked
+-  = New Track (Decision Events)
 
 ---
 
 ## Risk Assessment
 
-### High Risk Items 🔴
+### High Risk Items 
 
 **1. UI Instability During Menu Context (Known Risk Area)**
 - **Risk:** Freezes/invisible screens due to layer/screen misuse, missing sprite categories, or binding pitfalls
-- **Impact:** 🔴 HIGH - breaks core player flow (camp/menus)
+- **Impact:**  HIGH - breaks core player flow (camp/menus)
 - **mitigation:** follow `gauntlet-ui-screens-playbook.md` strictly (layer-based overlays, NextFrameDispatcher, sprite categories, cleanup, 8-digit colors)
-- **Status:** ✅ Actively mitigated - Camp Bulletin XML bugs fixed, Playbook updated with "Critical XML Layout Pitfalls" section documenting all discovered issues (vertical text, missing tags, spacing, alignment)
+- **Status:** [x] Actively mitigated - Camp Bulletin XML bugs fixed, Playbook updated with "Critical XML Layout Pitfalls" section documenting all discovered issues (vertical text, missing tags, spacing, alignment)
 
 **2. AI Camp Schedule Complexity**
 - **Risk:** System is complex with many integration points
-- **Impact:** 🟡 MEDIUM - Lance systems wait for this
+- **Impact:**  MEDIUM - Lance systems wait for this
 - **Mitigation:** Follow phased implementation, test each phase
-- **Status:** ✅ 80% Complete - Phases 0-4 done, Phase 5 in progress
+- **Status:** [x] 80% Complete - Phases 0-4 done, Phase 5 in progress
 
-### Medium Risk Items 🟡
+### Medium Risk Items 
 
 **3. Lance Life + Persistent Leaders Integration**
 - **Risk:** Two systems managing lance leaders could conflict
-- **Impact:** 🟡 MEDIUM - Could cause confusion
+- **Impact:**  MEDIUM - Could cause confusion
 - **Mitigation:** Clear ownership documented (now clarified in this review)
-- **Status:** ✅ Resolved
+- **Status:** [x] Resolved
 
 **4. Cover Request System Duplication**
 - **Risk:** Camp Activities and Lance Life both designing cover requests
-- **Impact:** 🟡 MEDIUM - Wasted effort
+- **Impact:**  MEDIUM - Wasted effort
 - **Mitigation:** Consolidated under Lance Life (fixed in this review)
-- **Status:** ✅ Resolved
+- **Status:** [x] Resolved
 
-### Low Risk Items 🟢
+### Low Risk Items 
 
 **5. Event Content Volume**
 - **Risk:** 150-200 duty events is a lot of writing
-- **Impact:** 🟢 LOW - Can be done over time
+- **Impact:**  LOW - Can be done over time
 - **Mitigation:** Continuous creation, reuse templates
 - **Status:** Manageable
 
 **6. AI Lord Lance Simulation Scope**
 - **Risk:** Feature creep, large optional feature
-- **Impact:** 🟢 LOW - Completely optional
+- **Impact:**  LOW - Completely optional
 - **Mitigation:** Build last, can be cut if needed
 - **Status:** Low priority
 
@@ -923,9 +923,9 @@ Activities stub exists               T5-T6 action handlers needed
 
 ## Phase Gates & Decision Points
 
-### Gate 1: Time System Complete ✅
+### Gate 1: Time System Complete [x]
 
-**Status:** ✅ PASSED (Week 0)
+**Status:** [x] PASSED (Week 0)
 
 **Criteria:**
 - [x] 4-block `TimeBlock` enum defined (Morning/Afternoon/Dusk/Night)
@@ -934,13 +934,13 @@ Activities stub exists               T5-T6 action handlers needed
 - [x] Activity preferences per time block working
 - [x] Documentation updated
 
-**Decision:** ✅ Proceeded to Track A & B in parallel (both now mostly complete)
+**Decision:** [x] Proceeded to Track A & B in parallel (both now mostly complete)
 
 ---
 
-### Gate 2: Track A & B Core Complete ✅/⏳
+### Gate 2: Track A & B Core Complete [x]/IN PROGRESS
 
-**Status:** ⏳ 90% PASSED (Week 6)
+**Status:** IN PROGRESS 90% PASSED (Week 6)
 
 **Criteria:**
 - [x] Camp Management Screen fully functional
@@ -951,11 +951,11 @@ Activities stub exists               T5-T6 action handlers needed
 - [x] AI Schedule Phases 0-4 complete (generation, needs, execution)
 - [ ] AI Schedule Phase 5 complete (T5-T6 action handlers)
 
-**Decision:** ⏳ Can proceed to Track C once Phase 5 completes, or build Activities Tab in parallel
+**Decision:** IN PROGRESS Can proceed to Track C once Phase 5 completes, or build Activities Tab in parallel
 
 ---
 
-### Gate 2: AI Camp Schedule Phase 4 Complete ✅/❌
+### Gate 2: AI Camp Schedule Phase 4 Complete [x]/X
 
 **Criteria:**
 - [ ] Schedule generation works
@@ -968,7 +968,7 @@ Activities stub exists               T5-T6 action handlers needed
 
 ---
 
-### Gate 3: Lance Life Foundation Complete ✅/❌
+### Gate 3: Lance Life Foundation Complete [x]/X
 
 **Criteria:**
 - [ ] Member state tracking works
@@ -981,7 +981,7 @@ Activities stub exists               T5-T6 action handlers needed
 
 ---
 
-### Gate 4: Core Systems Complete ✅/❌
+### Gate 4: Core Systems Complete [x]/X
 
 **Criteria:**
 - [ ] Camp Hub with locations working
@@ -1048,31 +1048,31 @@ Dev C: Content creation (Weeks 1+, then Lance systems Weeks 9+)
 
 ## Feature Priority Matrix
 
-### Must-Have (Core Experience) 🔴
+### Must-Have (Core Experience) 
 
 | Feature | Priority | Reason |
 |---------|----------|--------|
-| Time System Expansion | 🔴 P0 | Blocks everything |
-| AI Camp Schedule | 🔴 P1 | Core gameplay loop |
-| Lance Life Simulation | 🔴 P1 | Core immersion |
-| Camp Hub Phase 2 | 🔴 P1 | Major UX improvement |
+| Time System Expansion |  P0 | Blocks everything |
+| AI Camp Schedule |  P1 | Core gameplay loop |
+| Lance Life Simulation |  P1 | Core immersion |
+| Camp Hub Phase 2 |  P1 | Major UX improvement |
 
-### Should-Have (Rich Experience) 🟡
-
-| Feature | Priority | Reason |
-|---------|----------|--------|
-| Persistent Lance Leaders | 🟡 P2 | Adds depth, not critical |
-| **Army Lance Activity + Casualties** | 🟡 P2 | **Major immersion & mechanical depth** |
-| Camp Hub Phase 3 | 🟡 P2 | Polish, not functional |
-| Duty Events (100+) | 🟡 P2 | Good with 50-75, great with 150+ |
-
-### Nice-to-Have (Enhancement) 🟢
+### Should-Have (Rich Experience) 
 
 | Feature | Priority | Reason |
 |---------|----------|--------|
-| AI Lord Lance Simulation | 🟢 P3 | Intelligence feature, optional |
-| Camp Hub Phase 4 (War Room) | 🟢 P3 | Signature feature but not critical |
-| Duty Events (200+) | 🟢 P3 | Diminishing returns after 150 |
+| Persistent Lance Leaders |  P2 | Adds depth, not critical |
+| **Army Lance Activity + Casualties** |  P2 | **Major immersion & mechanical depth** |
+| Camp Hub Phase 3 |  P2 | Polish, not functional |
+| Duty Events (100+) |  P2 | Good with 50-75, great with 150+ |
+
+### Nice-to-Have (Enhancement) 
+
+| Feature | Priority | Reason |
+|---------|----------|--------|
+| AI Lord Lance Simulation |  P3 | Intelligence feature, optional |
+| Camp Hub Phase 4 (War Room) |  P3 | Signature feature but not critical |
+| Duty Events (200+) |  P3 | Diminishing returns after 150 |
 
 ---
 
@@ -1081,11 +1081,11 @@ Dev C: Content creation (Weeks 1+, then Lance systems Weeks 9+)
 **Goal:** Playable, immersive enlisted experience
 
 **Must Include:**
-1. ✅ Time system expansion (foundation)
-2. ✅ Camp Hub Phase 2 (6 locations)
-3. ✅ AI Camp Schedule (through Phase 4)
-4. ✅ Lance Life Simulation (through Phase 4 - Cover Requests)
-5. ✅ Duty Events library (75-100 events minimum)
+1. [x] Time system expansion (foundation)
+2. [x] Camp Hub Phase 2 (6 locations)
+3. [x] AI Camp Schedule (through Phase 4)
+4. [x] Lance Life Simulation (through Phase 4 - Cover Requests)
+5. [x] Duty Events library (75-100 events minimum)
 
 **Can Skip:**
 - Persistent Lance Leaders (generic leaders OK for MVP)
@@ -1104,7 +1104,7 @@ Dev C: Content creation (Weeks 1+, then Lance systems Weeks 9+)
 **Goal:** Rich immersion with attrition warfare simulation
 
 **Add to MVP:**
-6. ✅ Army Lance Activity Simulation (Phases 0-3 minimum)
+6. [x] Army Lance Activity Simulation (Phases 0-3 minimum)
    - NPC lance roster and assignments
    - Event generation with casualty system
    - News integration and bulletin
@@ -1147,7 +1147,7 @@ Each system doc includes testing phases. Follow those.
 
 **Test Suite 5: All Systems**
 - [ ] Full day cycle (dawn to night)
-- [ ] Schedule → duty event → camp activity → lance event
+- [ ] Schedule -> duty event -> camp activity -> lance event
 - [ ] Escalation tracks update correctly
 - [ ] Save/load preserves all state
 - [ ] 30+ day playthrough without crashes
@@ -1156,7 +1156,7 @@ Each system doc includes testing phases. Follow those.
 
 ## Success Metrics
 
-### Technical Success ✅
+### Technical Success [x]
 
 - [ ] All systems build without errors
 - [ ] No crashes during normal gameplay
@@ -1164,7 +1164,7 @@ Each system doc includes testing phases. Follow those.
 - [ ] Performance acceptable (no lag)
 - [ ] All integration points functional
 
-### Gameplay Success ✅
+### Gameplay Success [x]
 
 - [ ] Time system feels natural (not too granular or too coarse)
 - [ ] Schedule assignments make sense for context
@@ -1173,7 +1173,7 @@ Each system doc includes testing phases. Follow those.
 - [ ] Duty events engaging and varied
 - [ ] Player agency preserved throughout
 
-### Content Success ✅
+### Content Success [x]
 
 - [ ] 100+ duty events (150-200 target)
 - [ ] All 10 duty roles have event coverage
@@ -1261,7 +1261,7 @@ Each system doc includes testing phases. Follow those.
 
 **You're ready to start implementing. Here's your action plan:**
 
-### Step 1: Time System Expansion (Monday Morning, 1-2 hours) 🔴
+### Step 1: Time System Expansion (Monday Morning, 1-2 hours) 
 
 **File:** `src/Mod.Core/Triggers/CampaignTriggerTrackerBehavior.cs`
 
@@ -1276,7 +1276,7 @@ Each system doc includes testing phases. Follow those.
 
 ---
 
-### Step 2: Choose Your Track (Monday Afternoon) 🔷
+### Step 2: Choose Your Track (Monday Afternoon) 
 
 **Option A: Camp Hub Phase 2 (1 week, user-facing)**
 - Immediate visible progress
@@ -1302,7 +1302,7 @@ Each system doc includes testing phases. Follow those.
 # Create feature branch
 git checkout -b feature/time-system-expansion
 
-# After completing time system (ALREADY DONE ✅)
+# After completing time system (ALREADY DONE [x])
 git commit -m "feat: implement 4-block schedule system (Morning/Afternoon/Dusk/Night)"
 git push -u origin feature/time-system-expansion
 
@@ -1317,7 +1317,7 @@ git checkout -b feature/schedule-t5t6-actions
 ## FAQ
 
 **Q: Can I skip the time system expansion?**  
-A: ✅ Already complete! 4-block schedule system is implemented and working.
+A: [x] Already complete! 4-block schedule system is implemented and working.
 
 **Q: Can I build Camp Activities Tab and T5-T6 Schedule Actions in parallel?**  
 A: Yes! They're independent features. Both can be developed simultaneously.
@@ -1342,22 +1342,22 @@ A: Phase 0-4 are critical (6 weeks). Phase 5-7 can be deferred if needed.
 ## Version History
 
 **v3.1** (December 16, 2025) - DECISION EVENTS ADDED
-- 🆕 Added Track D2: Decision Events Framework (6 weeks, Week 7-12)
-- 🆕 Added Activity-Aware Events system (events tied to schedule/activities)
-- 🆕 Added Main Menu Decisions integration plan
-- 🆕 Updated Gantt chart to include Decision Events track
-- 🆕 Updated dependency graph to show Decision Events flow
-- 🆕 Updated Complete System Summary (now 12 systems)
-- 🆕 cross-referenced `decision-events-spec.md` as primary doc
+-  Added Track D2: Decision Events Framework (6 weeks, Week 7-12)
+-  Added Activity-Aware Events system (events tied to schedule/activities)
+-  Added Main Menu Decisions integration plan
+-  Updated Gantt chart to include Decision Events track
+-  Updated dependency graph to show Decision Events flow
+-  Updated Complete System Summary (now 12 systems)
+-  cross-referenced `decision-events-spec.md` as primary doc
 
 **v3.0** (December 16, 2025) - FULL AUDIT
-- ✅ Audited all tracks against actual implementation
-- ✅ Updated Track A to reflect Camp Management Screen (Kingdom pattern)
-- ✅ Updated Track B to show Phases 0-4 complete, Phase 5 in progress
-- ✅ Updated Gantt chart to show actual current status (Week 6)
-- ✅ Corrected time system to reflect 4 time blocks (not 6)
-- ✅ Updated "What's Done" section with all completed features
-- ✅ Marked remaining work clearly (Activities Tab, T5-T6 action handlers)
+- [x] Audited all tracks against actual implementation
+- [x] Updated Track A to reflect Camp Management Screen (Kingdom pattern)
+- [x] Updated Track B to show Phases 0-4 complete, Phase 5 in progress
+- [x] Updated Gantt chart to show actual current status (Week 6)
+- [x] Corrected time system to reflect 4 time blocks (not 6)
+- [x] Updated "What's Done" section with all completed features
+- [x] Marked remaining work clearly (Activities Tab, T5-T6 action handlers)
 
 **v2.2** (December 15, 2025)
 - Updated "What's Done" with Camp features completion
@@ -1393,18 +1393,18 @@ A: Phase 0-4 are critical (6 weeks). Phase 5-7 can be deferred if needed.
 
 | # | System | Duration | Priority | Dependencies | Key Features |
 |---|--------|----------|----------|--------------|--------------|
-| 1 | Menu Overhaul | - | ✅ Done | None | Clean menu structure |
-| 2 | **Time System** | ✅ **Done** | **✅ P0** | **None** | **4 time blocks (M/A/D/N)** |
-| 3 | Camp Management Screen | ✅ **Done** | ✅ P1 | Time system | Kingdom-style tabs (Lance/Orders/Reports) |
-| 4 | AI Camp Schedule | ⏳ **80%** | ⏳ P1 | Time system | Daily duty AI, context-aware ✅, T5-T6 UI ⏳ |
-| 5 | Lance Life Simulation | ❌ 12 wks | 🔴 P1 | AI Schedule | Member injury/death/cover |
-| 6 | Persistent Leaders | ❌ 10 wks | 🟡 P2 | Lance Life | Leader memory/personality |
-| 7 | **Decision Events** 🆕 | ❌ **6 wks** | **🔴 P1** | **AI Schedule** | **CK3 decisions, activity-aware events** |
-| 8 | **Army Lance Activity** | ❌ **7-8 wks** | **🟡 P2** | **AI+Lance+News** | **NPC sim + REAL casualties** |
-| 9 | Duty Events | ⏳ Ongoing | 🟡 P2 | Duties exist | 150-200 event content |
-| 10 | Camp Activities Tab | ⏳ 1-2 wks | 🟢 P3 | Camp Screen | Location-based activity selection |
-| 11 | AI Lord Lance Sim | ❌ 10 wks | 🟢 P3 | None | Enemy army lances |
-| 12 | Integration Guides | ✅ Ref | 📖 Ref | - | Technical specs |
+| 1 | Menu Overhaul | - | [x] Done | None | Clean menu structure |
+| 2 | **Time System** | [x] **Done** | **[x] P0** | **None** | **4 time blocks (M/A/D/N)** |
+| 3 | Camp Management Screen | [x] **Done** | [x] P1 | Time system | Kingdom-style tabs (Lance/Orders/Reports) |
+| 4 | AI Camp Schedule | IN PROGRESS **80%** | IN PROGRESS P1 | Time system | Daily duty AI, context-aware [x], T5-T6 UI IN PROGRESS |
+| 5 | Lance Life Simulation | X 12 wks |  P1 | AI Schedule | Member injury/death/cover |
+| 6 | Persistent Leaders | X 10 wks |  P2 | Lance Life | Leader memory/personality |
+| 7 | **Decision Events**  | X **6 wks** | ** P1** | **AI Schedule** | **CK3 decisions, activity-aware events** |
+| 8 | **Army Lance Activity** | X **7-8 wks** | ** P2** | **AI+Lance+News** | **NPC sim + REAL casualties** |
+| 9 | Duty Events | IN PROGRESS Ongoing |  P2 | Duties exist | 150-200 event content |
+| 10 | Camp Activities Tab | IN PROGRESS 1-2 wks |  P3 | Camp Screen | Location-based activity selection |
+| 11 | AI Lord Lance Sim | X 10 wks |  P3 | None | Enemy army lances |
+| 12 | Integration Guides | [x] Ref |  Ref | - | Technical specs |
 
 ---
 
@@ -1413,24 +1413,24 @@ A: Phase 0-4 are critical (6 weeks). Phase 5-7 can be deferred if needed.
 ### What It Simulates
 
 **Routine Military Operations (The Small Stuff):**
-- ✅ Patrols encountering bandits/scouts (5-15 enemies, small skirmishes)
-- ✅ Foraging missions ambushed by looters (5-20 enemies)
-- ✅ Scouting parties spotted by enemy patrols (brief contacts)
-- ✅ Guard duty incidents (infiltrators, deserters, accidents)
-- ✅ Tax collection resistance (villagers, bandits)
-- ✅ Training accidents (minor injuries)
-- ✅ Disease outbreaks in camp
-- ✅ Desertion and discipline issues
+- [x] Patrols encountering bandits/scouts (5-15 enemies, small skirmishes)
+- [x] Foraging missions ambushed by looters (5-20 enemies)
+- [x] Scouting parties spotted by enemy patrols (brief contacts)
+- [x] Guard duty incidents (infiltrators, deserters, accidents)
+- [x] Tax collection resistance (villagers, bandits)
+- [x] Training accidents (minor injuries)
+- [x] Disease outbreaks in camp
+- [x] Desertion and discipline issues
 
 **What It Does NOT Simulate:**
-- ❌ Full battles (Bannerlord handles normally)
-- ❌ Large-scale army combat (real battles only)
-- ❌ Player-fought encounters
+- X Full battles (Bannerlord handles normally)
+- X Large-scale army combat (real battles only)
+- X Player-fought encounters
 
 ### The Casualty System (NEW)
 
 **Casualties Are REAL:**
-- When patrol gets ambushed → actual troops removed from party roster
+- When patrol gets ambushed -> actual troops removed from party roster
 - 40% killed (permanent), 60% wounded (recover in 7 days default)
 - Troops selected by tier (match lance tier ±1)
 - Heroes NEVER affected by simulation
@@ -1441,9 +1441,9 @@ A: Phase 0-4 are critical (6 weeks). Phase 5-7 can be deferred if needed.
 Starting Army: 547 troops
 
 Week 1 Operations:
-- Day 2: Patrol ambush → 2 killed, 3 wounded (545 active, 3 recovering)
-- Day 4: Foraging incident → 1 killed, 2 wounded (544 active, 5 recovering)
-- Day 6: Guard accident → 0 killed, 1 wounded (544 active, 6 recovering)
+- Day 2: Patrol ambush -> 2 killed, 3 wounded (545 active, 3 recovering)
+- Day 4: Foraging incident -> 1 killed, 2 wounded (544 active, 5 recovering)
+- Day 6: Guard accident -> 0 killed, 1 wounded (544 active, 6 recovering)
 
 Week 2: Real Battle Happens
 - Available Forces: 544 troops (3 killed permanently, 6 wounded unavailable)
@@ -1572,7 +1572,7 @@ Adjustments based on data:
 
 ### Risk Assessment (Casualty System)
 
-**🟡 Medium Risks:**
+** Medium Risks:**
 
 1. **Balance Difficulty**
    - Risk: Too punishing or too weak
@@ -1586,7 +1586,7 @@ Adjustments based on data:
    - Risk: AI doesn't recruit enough
    - Mitigation: Monitor, possible AI boost, player-only default
 
-**🟢 Low Risks:**
+** Low Risks:**
 
 1. **Technical Implementation**
    - Uses existing Bannerlord systems
@@ -1598,7 +1598,7 @@ Adjustments based on data:
    - 8-15 lances per army max
    - Minimal overhead
 
-**Overall Risk:** 🟡 Medium (manageable with testing)
+**Overall Risk:**  Medium (manageable with testing)
 
 ---
 
@@ -1607,13 +1607,13 @@ Adjustments based on data:
 **The Full 27-Week Journey:**
 
 ```
-Week 0:   🔴 Time System (1-2 hours) ← START HERE
-Week 1:   🔷 Camp Hub Phase 2 AND/OR 🔷 AI Schedule Phase 0-1
-Weeks 2-8: 🔷 AI Camp Schedule (Phases 2-7)
-Weeks 9-20: 🔶 Lance Life Simulation
-Weeks 15-30: 🔶 Persistent Lance Leaders (overlaps with Lance Life)
-Weeks 20-27: 🟡 Army Lance Activity (with casualty system)
-Throughout: 📝 Duty Events content (150-200 events)
+Week 0:    Time System (1-2 hours) ← START HERE
+Week 1:    Camp Hub Phase 2 AND/OR  AI Schedule Phase 0-1
+Weeks 2-8:  AI Camp Schedule (Phases 2-7)
+Weeks 9-20:  Lance Life Simulation
+Weeks 15-30:  Persistent Lance Leaders (overlaps with Lance Life)
+Weeks 20-27:  Army Lance Activity (with casualty system)
+Throughout:  Duty Events content (150-200 events)
 ```
 
 **MVP (12-16 weeks):** Stop after Lance Life Phase 4  
@@ -1626,7 +1626,7 @@ Throughout: 📝 Duty Events content (150-200 events)
 **Review Date:** December 16, 2025  
 **Last Updated:** December 16, 2025  
 **Next Review:** After Decision Events Phase 1 complete  
-**Status:** 📋 Complete Implementation Guide  
+**Status:**  Complete Implementation Guide  
 **Maintained By:** Enlisted Development Team
 
 **Recent Changes (v3.1):**

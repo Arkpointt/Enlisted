@@ -156,7 +156,7 @@ namespace Enlisted.Features.Equipment.UI
             }
             catch (Exception ex)
             {
-                ModLogger.Error("QuartermasterUI", $"Error refreshing character model: {ex.Message}");
+                ModLogger.ErrorCode("QuartermasterUI", "E-QMUI-001", "Error refreshing character model", ex);
             }
         }
         
@@ -198,7 +198,7 @@ namespace Enlisted.Features.Equipment.UI
             }
             catch (Exception ex)
             {
-                ModLogger.Error("QuartermasterUI", $"Error recalculating variant states: {ex.Message}");
+                ModLogger.ErrorCode("QuartermasterUI", "E-QMUI-002", "Error recalculating variant states", ex);
             }
         }
         
@@ -212,7 +212,7 @@ namespace Enlisted.Features.Equipment.UI
             {
                 if (selectedVariant?.Item == null)
                 {
-                    ModLogger.Error("QuartermasterUI", "Cannot select equipment - variant or item is null");
+                    ModLogger.ErrorCode("QuartermasterUI", "E-QMUI-003", "Cannot select equipment - variant or item is null");
                     return;
                 }
                 

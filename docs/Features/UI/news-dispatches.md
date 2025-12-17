@@ -1,6 +1,6 @@
 # News / Dispatches (UI Feed)
 
-## Status: ✅ **IMPLEMENTED**
+## Status: [x] **IMPLEMENTED**
 The news/dispatches system is fully functional as of the latest version.
 
 ## Overview
@@ -200,11 +200,11 @@ Bannerlord-style variables in templates:
 
 ### Fallback rules
 If a placeholder can't be resolved:
-- `{PLACE}` → "the countryside"
-- `{SETTLEMENT}` → `{PLACE}`
-- `{KINGDOM}` → "the realm"
-- `{LORD}` → "a noble"
-- `{TOWN}` / `{CASTLE}` / `{VILLAGE}` → `{SETTLEMENT}`
+- `{PLACE}` -> "the countryside"
+- `{SETTLEMENT}` -> `{PLACE}`
+- `{KINGDOM}` -> "the realm"
+- `{LORD}` -> "a noble"
+- `{TOWN}` / `{CASTLE}` / `{VILLAGE}` -> `{SETTLEMENT}`
 
 Never emit broken fragments like `near ` with nothing after it.
 
@@ -545,7 +545,7 @@ Follow the existing pattern of feature flags in `ModuleData/Enlisted/enlisted_co
 ## Content expansion ideas (optional)
 The following are **potential additions** that could make the feed richer. Evaluate each against your feature priorities.
 
-### ✅ Natural fits (align with existing systems)
+### [x] Natural fits (align with existing systems)
 These integrate cleanly with what you already have:
 
 - **Personal mentions** (Personal feed): when player party participates in reported events, add flavor.
@@ -553,9 +553,9 @@ These integrate cleanly with what you already have:
   - Already tracked: you have kill tracking, retinue participation, enlistment context.
 
 - **Consequences & follow-ups** (Kingdom feed): after major events, generate cascading headlines.
-  - Settlement falls → refugees / garrison / economic impact lines.
-  - Capture → ransom/rescue rumors.
-  - Fits your **rumor→confirmed** model perfectly.
+  - Settlement falls -> refugees / garrison / economic impact lines.
+  - Capture -> ransom/rescue rumors.
+  - Fits your **rumor->confirmed** model perfectly.
 
 - **Strategic intel (army movements)** (Personal feed): you already subscribe to `ArmyDispersed`; add `ArmyCreated` for:
   - `"{=News_ArmyForming}Large host gathering under {LORD}'s banner."`
@@ -585,11 +585,11 @@ These integrate cleanly with what you already have:
 - **Contribution tracking** (Personal feed): show player's role tier in reported battles ("minor role" / "decisive").
   - You already have kill tracking and retinue casualty tracking; extracting participation tier is straightforward.
 
-### ⚠ Moderate complexity (possible, but consider ROI)
+### WARNING Moderate complexity (possible, but consider ROI)
 These are feasible but add non-trivial work:
 
 - **Actionable intelligence**: dispatches with associated actions.
-  - **Safe approach**: link to **existing** systems only (ex: "reinforcements needed" → vanilla fast-travel, or link to an existing duty/camp action).
+  - **Safe approach**: link to **existing** systems only (ex: "reinforcements needed" -> vanilla fast-travel, or link to an existing duty/camp action).
   - **Risk**: don't create new gameplay loops (raid caravans, rescue missions) just for dispatches—those need their own design.
 
 - **Dispatch pins/priorities**: let players filter or highlight certain news types.
@@ -604,7 +604,7 @@ These are feasible but add non-trivial work:
 - **Statistics dashboard**: aggregates over time (most active lord, win/loss ratio).
   - Data collection is easy; presenting it is moderate.
 
-### ❌ Scope creep / conflicts (avoid or defer)
+### X Scope creep / conflicts (avoid or defer)
 These either break the read-only contract, duplicate existing systems, or add heavy complexity:
 
 - **Allied kingdom news**: more world scanning; harder to filter/prioritize. Defer unless it's a key player request.
@@ -625,8 +625,8 @@ If you decide to expand beyond the baseline spec:
 A separate feature that uses the Personal News feed but is primarily a **social/lance relationship mechanic**:
 
 **Concept:**
-- **Player asks lance mate to cover duty** → allows training different skill for the day
-- **Lance mate asks player to cover** → builds relationship, fatigue cost
+- **Player asks lance mate to cover duty** -> allows training different skill for the day
+- **Lance mate asks player to cover** -> builds relationship, fatigue cost
 
 **Integration with News:**
 - Reports coverage requests in Personal feed: *"{LANCEMATE} asks if you can cover their duty."*
@@ -667,7 +667,7 @@ A separate feature that uses the Personal News feed but is primarily a **social/
 - [x] Bandit/looter battles filtered out automatically.
 
 ### Known Limitations
-- ⚠ Localization uses hardcoded templates instead of XML due to Bannerlord's localization system behavior
-- ⚠ Rumor/followup system not yet implemented (just direct reports)
-- ⚠ Bulletin system not implemented (news is event-driven only, no periodic digests)
-- ⚠ Some optional features from spec not implemented: prisoner transport rumors, consequence chains, commander tone flavoring
+- WARNING Localization uses hardcoded templates instead of XML due to Bannerlord's localization system behavior
+- WARNING Rumor/followup system not yet implemented (just direct reports)
+- WARNING Bulletin system not implemented (news is event-driven only, no periodic digests)
+- WARNING Some optional features from spec not implemented: prisoner transport rumors, consequence chains, commander tone flavoring

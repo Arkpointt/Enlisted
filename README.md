@@ -28,7 +28,7 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
    - `bannerlord.harmony`
    - `enlisted`
 4. recommended load order:
-   - harmony → native → sandboxcore → sandbox → storymode → custombattle → enlisted
+   - harmony -> native -> sandboxcore -> sandbox -> storymode -> custombattle -> enlisted
 
 ### update
 
@@ -37,10 +37,11 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
 
 ### quick start (first time)
 
-1. talk to a lord → choose the enlistment dialog option.
+1. talk to a lord -> choose the enlistment dialog option.
 2. after you enlist, use the **enlisted status** menu as your hub:
    - quartermaster, camp, duty selection, leave, etc.
-3. at the t1→t2 proving event, choose your formation (infantry/archer/cavalry/horse archer when available).
+   - to leave service properly: **camp -> request discharge** (resolves at next pay muster: **final muster**)
+3. at the t1->t2 proving event, choose your formation (infantry/archer/cavalry/horse archer when available).
 
 ### features (high level)
 
@@ -50,9 +51,9 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
 - **bag check / baggage train**
   - early enlistment inventory handling to prevent “walk in with endgame kit” without deleting your stuff.
 - **rank + proving events**
-  - promotion is not just xp; key ranks use narrative “proving” events (including formation choice at t1→t2).
+  - promotion is not just xp; key ranks use narrative “proving” events (including formation choice at t1->t2).
 - **formation training**
-  - automatic daily skill xp based on your chosen formation (infantry/archer/cavalry/horse archer).
+  - small daily skill xp baseline while actively enlisted, based on your chosen formation (infantry/archer/cavalry/horse archer).
 - **duties system**
   - pick/request military duties for bonuses and pay modifiers (tier/formations gate options).
 - **pay system (muster ledger)**
@@ -120,14 +121,37 @@ fallback location (if the game can’t write into the module folder):
 bannerlord crash dumps (when the game hard-crashes):
 - `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
 
+#### error codes (important)
+
+when something breaks, enlisted will often log a **stable error code** like:
+- `[E-CAMPUI-031] Failed to display Camp Area screen`
+
+these codes are meant to be searchable and consistent across versions.
+when reporting an issue, please include:
+- the **error code(s)** you see (copy/paste the lines)
+- `Session-A_*.log`
+
+note: exceptions include **full stack traces**, but they’re **de-duplicated** (the first occurrence per unique exception in a session) to avoid log spam.
+
+also note: some issues are intentionally logged **once per session** (look for codes beginning with `E-` or `W-` in a single line), especially for:
+- **dlc missing / feature gating** (example: `W-DLC-001`, `W-DLC-002`)
+- **reflection / api drift** where a patch can’t apply (example: `W-REFLECT-001`)
+- **ui fallback paths** (example: `E-QM-014`)
+- **save/load wrappers + migrations** (example: `E-SAVELOAD-001`, `E-SAVELOAD-002`)
+
 #### common issues
 
 - **mod menu options don’t show**
   - confirm `bannerlord.harmony` is enabled and loaded before enlisted.
+- **war sails / naval features don’t work**
+  - if you don’t have the War Sails (NavalDLC) expansion enabled, naval-only features will be gated.
+  - check the session log for a `W-DLC-*` warning.
 - **events don’t fire**
   - confirm the event systems are enabled in `enlisted_config.json`.
 - **something feels “stuck” after leaving a menu/encounter**
   - send `Session-A_*.log` + your mod list/load order.
+- **save won’t load / loads into broken state**
+  - check for `E-SAVELOAD-*` in `Session-A_*.log`, then share the session log + conflicts log (and the save file if possible).
 
 ### more docs
 

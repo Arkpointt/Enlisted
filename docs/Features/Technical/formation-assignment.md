@@ -6,7 +6,7 @@
 |-----------|----------|
 | Formation Assignment | Player automatically assigned to duty-based formation (Infantry/Ranged/Cavalry/Horse Archer) at battle start |
 | Position Teleportation | Player and squad teleported to their assigned formation's position (5m behind for field battles, center for sieges) |
-| Teleport Priority | Formation position → Lord position → Any allied agent |
+| Teleport Priority | Formation position -> Lord position -> Any allied agent |
 | Retry Window | 120 attempts (~2 seconds at 60fps) to allow formations to populate |
 
 ## Table of Contents

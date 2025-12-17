@@ -50,52 +50,55 @@ namespace Enlisted.Features.Conditions
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Injury
-            var injSeverity = (int)_state.CurrentInjury;
-            var injType = _state.InjuryType ?? string.Empty;
-            var injDays = _state.InjuryDaysRemaining;
-
-            // Illness
-            var illSeverity = (int)_state.CurrentIllness;
-            var illType = _state.IllnessType ?? string.Empty;
-            var illDays = _state.IllnessDaysRemaining;
-
-            // Exhaustion
-            var exhaustion = (int)_state.Exhaustion;
-
-            // Treatment
-            var underCare = _state.UnderMedicalCare;
-            var recoveryMult = _state.RecoveryRateModifier;
-
-            dataStore.SyncData("pc_injSeverity", ref injSeverity);
-            dataStore.SyncData("pc_injType", ref injType);
-            dataStore.SyncData("pc_injDays", ref injDays);
-
-            dataStore.SyncData("pc_illSeverity", ref illSeverity);
-            dataStore.SyncData("pc_illType", ref illType);
-            dataStore.SyncData("pc_illDays", ref illDays);
-
-            dataStore.SyncData("pc_exhaust", ref exhaustion);
-            dataStore.SyncData("pc_underCare", ref underCare);
-            dataStore.SyncData("pc_recoveryMult", ref recoveryMult);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _state.CurrentInjury = (InjurySeverity)ClampEnum(injSeverity, 0, 4);
-                _state.InjuryType = injType ?? string.Empty;
-                _state.InjuryDaysRemaining = Math.Max(0, injDays);
+                // Injury
+                var injSeverity = (int)_state.CurrentInjury;
+                var injType = _state.InjuryType ?? string.Empty;
+                var injDays = _state.InjuryDaysRemaining;
 
-                _state.CurrentIllness = (IllnessSeverity)ClampEnum(illSeverity, 0, 4);
-                _state.IllnessType = illType ?? string.Empty;
-                _state.IllnessDaysRemaining = Math.Max(0, illDays);
+                // Illness
+                var illSeverity = (int)_state.CurrentIllness;
+                var illType = _state.IllnessType ?? string.Empty;
+                var illDays = _state.IllnessDaysRemaining;
 
-                _state.Exhaustion = (ExhaustionLevel)ClampEnum(exhaustion, 0, 4);
+                // Exhaustion
+                var exhaustion = (int)_state.Exhaustion;
 
-                _state.UnderMedicalCare = underCare;
-                _state.RecoveryRateModifier = Math.Max(0.1f, recoveryMult);
+                // Treatment
+                var underCare = _state.UnderMedicalCare;
+                var recoveryMult = _state.RecoveryRateModifier;
 
-                NormalizeState();
-            }
+                dataStore.SyncData("pc_injSeverity", ref injSeverity);
+                dataStore.SyncData("pc_injType", ref injType);
+                dataStore.SyncData("pc_injDays", ref injDays);
+
+                dataStore.SyncData("pc_illSeverity", ref illSeverity);
+                dataStore.SyncData("pc_illType", ref illType);
+                dataStore.SyncData("pc_illDays", ref illDays);
+
+                dataStore.SyncData("pc_exhaust", ref exhaustion);
+                dataStore.SyncData("pc_underCare", ref underCare);
+                dataStore.SyncData("pc_recoveryMult", ref recoveryMult);
+
+                if (dataStore.IsLoading)
+                {
+                    _state.CurrentInjury = (InjurySeverity)ClampEnum(injSeverity, 0, 4);
+                    _state.InjuryType = injType ?? string.Empty;
+                    _state.InjuryDaysRemaining = Math.Max(0, injDays);
+
+                    _state.CurrentIllness = (IllnessSeverity)ClampEnum(illSeverity, 0, 4);
+                    _state.IllnessType = illType ?? string.Empty;
+                    _state.IllnessDaysRemaining = Math.Max(0, illDays);
+
+                    _state.Exhaustion = (ExhaustionLevel)ClampEnum(exhaustion, 0, 4);
+
+                    _state.UnderMedicalCare = underCare;
+                    _state.RecoveryRateModifier = Math.Max(0.1f, recoveryMult);
+
+                    NormalizeState();
+                }
+            });
         }
 
         private void NormalizeState()

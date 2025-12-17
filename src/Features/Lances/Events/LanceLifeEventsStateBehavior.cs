@@ -38,124 +38,127 @@ namespace Enlisted.Features.Lances.Events
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Map<string,int>
-            var firedCount = dataStore.IsLoading ? 0 : _eventLastFiredDay.Count;
-            dataStore.SyncData("ll_evt_state_firedCount", ref firedCount);
-            if (!dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                var keys = _eventLastFiredDay.Keys.ToList();
-                keys.Sort(StringComparer.OrdinalIgnoreCase);
-                firedCount = keys.Count;
-                for (var i = 0; i < keys.Count; i++)
+                // Map<string,int>
+                var firedCount = dataStore.IsLoading ? 0 : _eventLastFiredDay.Count;
+                dataStore.SyncData("ll_evt_state_firedCount", ref firedCount);
+                if (!dataStore.IsLoading)
                 {
-                    var k = keys[i];
-                    var v = _eventLastFiredDay.TryGetValue(k, out var day) ? day : -1;
-                    dataStore.SyncData($"ll_evt_state_fired_{i}_id", ref k);
-                    dataStore.SyncData($"ll_evt_state_fired_{i}_day", ref v);
-                }
-            }
-            else
-            {
-                _eventLastFiredDay.Clear();
-                for (var i = 0; i < firedCount; i++)
-                {
-                    var k = string.Empty;
-                    var v = -1;
-                    dataStore.SyncData($"ll_evt_state_fired_{i}_id", ref k);
-                    dataStore.SyncData($"ll_evt_state_fired_{i}_day", ref v);
-                    if (!string.IsNullOrWhiteSpace(k) && v >= 0)
+                    var keys = _eventLastFiredDay.Keys.ToList();
+                    keys.Sort(StringComparer.OrdinalIgnoreCase);
+                    firedCount = keys.Count;
+                    for (var i = 0; i < keys.Count; i++)
                     {
-                        _eventLastFiredDay[k] = v;
+                        var k = keys[i];
+                        var v = _eventLastFiredDay.TryGetValue(k, out var day) ? day : -1;
+                        dataStore.SyncData($"ll_evt_state_fired_{i}_id", ref k);
+                        dataStore.SyncData($"ll_evt_state_fired_{i}_day", ref v);
                     }
                 }
-            }
-
-            // Set<string>
-            var oneTimeCount = dataStore.IsLoading ? 0 : _oneTimeFired.Count;
-            dataStore.SyncData("ll_evt_state_oneTimeCount", ref oneTimeCount);
-            if (!dataStore.IsLoading)
-            {
-                var ids = _oneTimeFired.ToList();
-                ids.Sort(StringComparer.OrdinalIgnoreCase);
-                oneTimeCount = ids.Count;
-                for (var i = 0; i < ids.Count; i++)
+                else
                 {
-                    var id = ids[i];
-                    dataStore.SyncData($"ll_evt_state_oneTime_{i}_id", ref id);
-                }
-            }
-            else
-            {
-                _oneTimeFired.Clear();
-                for (var i = 0; i < oneTimeCount; i++)
-                {
-                    var id = string.Empty;
-                    dataStore.SyncData($"ll_evt_state_oneTime_{i}_id", ref id);
-                    if (!string.IsNullOrWhiteSpace(id))
+                    _eventLastFiredDay.Clear();
+                    for (var i = 0; i < firedCount; i++)
                     {
-                        _oneTimeFired.Add(id);
+                        var k = string.Empty;
+                        var v = -1;
+                        dataStore.SyncData($"ll_evt_state_fired_{i}_id", ref k);
+                        dataStore.SyncData($"ll_evt_state_fired_{i}_day", ref v);
+                        if (!string.IsNullOrWhiteSpace(k) && v >= 0)
+                        {
+                            _eventLastFiredDay[k] = v;
+                        }
                     }
                 }
-            }
 
-            // Character tags
-            var charCount = dataStore.IsLoading ? 0 : _characterTags.Count;
-            dataStore.SyncData("ll_evt_state_charTagCount", ref charCount);
-            if (!dataStore.IsLoading)
-            {
-                var ids = _characterTags.ToList();
-                ids.Sort(StringComparer.OrdinalIgnoreCase);
-                charCount = ids.Count;
-                for (var i = 0; i < ids.Count; i++)
+                // Set<string>
+                var oneTimeCount = dataStore.IsLoading ? 0 : _oneTimeFired.Count;
+                dataStore.SyncData("ll_evt_state_oneTimeCount", ref oneTimeCount);
+                if (!dataStore.IsLoading)
                 {
-                    var id = ids[i];
-                    dataStore.SyncData($"ll_evt_state_charTag_{i}", ref id);
-                }
-            }
-            else
-            {
-                _characterTags.Clear();
-                for (var i = 0; i < charCount; i++)
-                {
-                    var id = string.Empty;
-                    dataStore.SyncData($"ll_evt_state_charTag_{i}", ref id);
-                    if (!string.IsNullOrWhiteSpace(id))
+                    var ids = _oneTimeFired.ToList();
+                    ids.Sort(StringComparer.OrdinalIgnoreCase);
+                    oneTimeCount = ids.Count;
+                    for (var i = 0; i < ids.Count; i++)
                     {
-                        _characterTags.Add(id);
+                        var id = ids[i];
+                        dataStore.SyncData($"ll_evt_state_oneTime_{i}_id", ref id);
                     }
                 }
-            }
-
-            // Loyalty tags
-            var loyCount = dataStore.IsLoading ? 0 : _loyaltyTags.Count;
-            dataStore.SyncData("ll_evt_state_loyTagCount", ref loyCount);
-            if (!dataStore.IsLoading)
-            {
-                var ids = _loyaltyTags.ToList();
-                ids.Sort(StringComparer.OrdinalIgnoreCase);
-                loyCount = ids.Count;
-                for (var i = 0; i < ids.Count; i++)
+                else
                 {
-                    var id = ids[i];
-                    dataStore.SyncData($"ll_evt_state_loyTag_{i}", ref id);
-                }
-            }
-            else
-            {
-                _loyaltyTags.Clear();
-                for (var i = 0; i < loyCount; i++)
-                {
-                    var id = string.Empty;
-                    dataStore.SyncData($"ll_evt_state_loyTag_{i}", ref id);
-                    if (!string.IsNullOrWhiteSpace(id))
+                    _oneTimeFired.Clear();
+                    for (var i = 0; i < oneTimeCount; i++)
                     {
-                        _loyaltyTags.Add(id);
+                        var id = string.Empty;
+                        dataStore.SyncData($"ll_evt_state_oneTime_{i}_id", ref id);
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            _oneTimeFired.Add(id);
+                        }
                     }
                 }
-            }
 
-            // Formation tag
-            dataStore.SyncData("ll_evt_state_formationTag", ref _formationTag);
+                // Character tags
+                var charCount = dataStore.IsLoading ? 0 : _characterTags.Count;
+                dataStore.SyncData("ll_evt_state_charTagCount", ref charCount);
+                if (!dataStore.IsLoading)
+                {
+                    var ids = _characterTags.ToList();
+                    ids.Sort(StringComparer.OrdinalIgnoreCase);
+                    charCount = ids.Count;
+                    for (var i = 0; i < ids.Count; i++)
+                    {
+                        var id = ids[i];
+                        dataStore.SyncData($"ll_evt_state_charTag_{i}", ref id);
+                    }
+                }
+                else
+                {
+                    _characterTags.Clear();
+                    for (var i = 0; i < charCount; i++)
+                    {
+                        var id = string.Empty;
+                        dataStore.SyncData($"ll_evt_state_charTag_{i}", ref id);
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            _characterTags.Add(id);
+                        }
+                    }
+                }
+
+                // Loyalty tags
+                var loyCount = dataStore.IsLoading ? 0 : _loyaltyTags.Count;
+                dataStore.SyncData("ll_evt_state_loyTagCount", ref loyCount);
+                if (!dataStore.IsLoading)
+                {
+                    var ids = _loyaltyTags.ToList();
+                    ids.Sort(StringComparer.OrdinalIgnoreCase);
+                    loyCount = ids.Count;
+                    for (var i = 0; i < ids.Count; i++)
+                    {
+                        var id = ids[i];
+                        dataStore.SyncData($"ll_evt_state_loyTag_{i}", ref id);
+                    }
+                }
+                else
+                {
+                    _loyaltyTags.Clear();
+                    for (var i = 0; i < loyCount; i++)
+                    {
+                        var id = string.Empty;
+                        dataStore.SyncData($"ll_evt_state_loyTag_{i}", ref id);
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            _loyaltyTags.Add(id);
+                        }
+                    }
+                }
+
+                // Formation tag
+                dataStore.SyncData("ll_evt_state_formationTag", ref _formationTag);
+            });
         }
 
         public bool IsOneTimeFired(string eventId)
@@ -277,6 +280,22 @@ namespace Enlisted.Features.Lances.Events
                     var qmMsg = new TaleWorlds.Localization.TextObject("{=evt_promotion_qm}Report to the Quartermaster for your new kit.");
                     TaleWorlds.Library.InformationManager.DisplayMessage(
                         new TaleWorlds.Library.InformationMessage(qmMsg.ToString(), TaleWorlds.Library.Colors.Cyan));
+
+                    // Tier 2: prompt lance finalization after promotion (once player has chosen a formation)
+                    if (newTier == 2)
+                    {
+                        Mod.Entry.NextFrameDispatcher.RunNextFrame(() =>
+                        {
+                            try
+                            {
+                                enlistment.TryPromptLanceSelection();
+                            }
+                            catch
+                            {
+                                // best-effort
+                            }
+                        });
+                    }
                 }
             }
 

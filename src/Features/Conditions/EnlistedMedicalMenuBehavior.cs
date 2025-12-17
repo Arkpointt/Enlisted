@@ -50,7 +50,7 @@ namespace Enlisted.Features.Conditions
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to register medical menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-MEDICAL-001", "Failed to register medical menu", ex);
             }
         }
 
@@ -75,7 +75,7 @@ namespace Enlisted.Features.Conditions
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to add medical menu option: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-MEDICAL-002", "Failed to add medical menu option", ex);
             }
         }
 
@@ -123,7 +123,7 @@ namespace Enlisted.Features.Conditions
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to switch to medical menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-MEDICAL-003", "Failed to switch to medical menu", ex);
             }
         }
 
@@ -242,7 +242,7 @@ namespace Enlisted.Features.Conditions
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing medical menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-MEDICAL-004", "Error initializing medical menu", ex);
             }
         }
 

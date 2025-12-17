@@ -34,17 +34,20 @@ namespace Enlisted.Features.Lances.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_lanceBannerCodes", ref _lanceBannerCodes);
-            _lanceBannerCodes ??= new Dictionary<string, string>();
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_lanceBannerCodes", ref _lanceBannerCodes);
+                _lanceBannerCodes ??= new Dictionary<string, string>();
 
-            if (dataStore.IsLoading)
-            {
-                ModLogger.Info(LogCategory, $"Loaded {_lanceBannerCodes.Count} persistent lance banners");
-            }
-            else
-            {
-                ModLogger.Debug(LogCategory, $"Saving {_lanceBannerCodes.Count} persistent lance banners");
-            }
+                if (dataStore.IsLoading)
+                {
+                    ModLogger.Info(LogCategory, $"Loaded {_lanceBannerCodes.Count} persistent lance banners");
+                }
+                else
+                {
+                    ModLogger.Debug(LogCategory, $"Saving {_lanceBannerCodes.Count} persistent lance banners");
+                }
+            });
         }
 
         /// <summary>

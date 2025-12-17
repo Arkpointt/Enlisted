@@ -1,6 +1,6 @@
 # Quartermaster Hero System
 
-**Status**: ✅ Implemented (v3.0)  
+**Status**: Implemented (v3.0)  
 **Category**: Core Feature  
 **Dependencies**: Camp Life Simulation, Dialog System, Pay System
 
@@ -12,7 +12,7 @@ The **Quartermaster Hero System** transforms equipment management from a menu-ba
 
 ### Key Features
 - **Persistent NPC**: Same quartermaster for your entire service with that lord
-- **Three Archetypes**: Veteran, Scoundrel, or Believer - each with unique dialogue
+- **Multiple Archetypes**: Veteran, Merchant, Bookkeeper, Scoundrel, Believer, or Eccentric - each with unique dialogue
 - **Relationship System**: Build trust (0-100) for discounts and special interactions
 - **Mood Integration**: Reacts to camp conditions and pay tension
 - **Provisions Shop**: Purchase rations for morale and fatigue benefits
@@ -23,9 +23,15 @@ The **Quartermaster Hero System** transforms equipment management from a menu-ba
 
 ## Quartermaster Archetypes
 
-Each lord's quartermaster is assigned one of three archetypes:
+Each lord's quartermaster is assigned one of several archetypes:
+- Veteran
+- Merchant
+- Bookkeeper
+- Scoundrel
+- Believer
+- Eccentric
 
-### Veteran (40% chance)
+### Veteran
 **Personality**: Pragmatic old soldier, no-nonsense attitude  
 **Dialogue Style**: Direct, practical, focused on survival  
 **Backstory**: Lost their sword arm in battle, given quartermaster posting by lord  
@@ -36,7 +42,27 @@ Each lord's quartermaster is assigned one of three archetypes:
 - "Lost my sword arm at Pendraic. The lord gave me this posting. Beats starving."
 - "Things are bad, I won't lie. Keep your head down and watch your purse."
 
-### Scoundrel (30% chance)
+### Merchant
+**Personality**: Trade-minded and opportunistic  
+**Dialogue Style**: Salesmanship, prices, “everything has a cost”  
+**Backstory**: Former caravan/trader who “knows the market”  
+**PayTension Advice**: Business-like warnings and “opportunities”
+
+**Sample Lines:**
+- "Everything here has a price, soldier. Even loyalty."
+- "Prices are up. Supply issues. What do you need?"
+
+### Bookkeeper
+**Personality**: Bureaucratic clerk type, obsessed with forms and ledgers  
+**Dialogue Style**: Dry, procedural, paperwork-driven  
+**Backstory**: Former clerk/bureaucrat drafted into wartime logistics  
+**PayTension Advice**: “The ledgers don’t balance” warnings
+
+**Sample Lines:**
+- "Please familiarize yourself with Form 14-C for equipment requisitions."
+- "The accounts... they're a disaster."
+
+### Scoundrel
 **Personality**: Opportunistic, knows the black market  
 **Dialogue Style**: Sly, hints at "creative solutions"  
 **Backstory**: Disagreements with city guard, chose quartermaster duty over the noose  
@@ -47,7 +73,7 @@ Each lord's quartermaster is assigned one of three archetypes:
 - "Let's just say I had some disagreements with the city guard."
 - "Alternative supplies? I might know some people. For a cut, of course."
 
-### Believer (30% chance)
+### Believer
 **Personality**: Pious and moral, offers spiritual guidance  
 **Dialogue Style**: Thoughtful, appeals to honor and faith  
 **Backstory**: Former priest, now serves by feeding and arming the faithful  
@@ -57,6 +83,16 @@ Each lord's quartermaster is assigned one of three archetypes:
 - "The armory is open. May you choose wisely."
 - "I served as a priest before the war. Faith without works is dead."
 - "These are trying times, but faith endures. Remember why you serve."
+
+### Eccentric
+**Personality**: Superstitious and odd  
+**Dialogue Style**: Omens, strange observations, unsettling humor  
+**Backstory**: “The stars told me…” type, but still reliable at the job  
+**PayTension Advice**: Ominous warnings framed as fate/fortune
+
+**Sample Lines:**
+- "The stars say you'll need good armor."
+- "Dark omens everywhere. What?"
 
 ---
 
@@ -95,26 +131,26 @@ Purchase rations to boost morale and restore fatigue:
 
 ### Personal Rations
 
-| Tier | Cost | Duration | Morale | Fatigue Recovery |
+| Tier | Base Cost | Duration | Morale | Fatigue Recovery |
 |------|------|----------|--------|------------------|
-| **Basic Rations** | 25g | 3 days | +2 | None |
-| **Good Fare** | 50g | 3 days | +4 | -1 per day |
-| **Officer's Table** | 100g | 3 days | +6 | -2 per day |
+| **Supplemental Rations** | 10g | 1 day | +2 | None |
+| **Officer's Fare** | 30g | 2 days | +4 | +2 (immediate) |
+| **Commander's Feast** | 75g | 3 days | +8 | +5 (immediate) |
 
 - **Stacking**: Only one rations tier active at a time
 - **Expiration**: Benefits expire after duration
-- **Fatigue**: Good/Officer tiers restore fatigue daily
+- **Fatigue**: Higher tiers grant immediate fatigue relief on purchase
 
 ### Retinue Provisioning (T7+)
 
 Feed your personal soldiers to maintain morale:
 
-| Tier | Cost per Soldier | Duration | Morale Effect |
+| Tier | Base Cost per Soldier | Duration | Morale Effect |
 |------|------------------|----------|---------------|
-| **Bare Minimum** | 1g | 7 days | -2 morale |
-| **Standard** | 2g | 7 days | No modifier |
-| **Good Fare** | 4g | 7 days | +2 morale |
-| **Officer Quality** | 6g | 7 days | +4 morale |
+| **Bare Minimum** | 2g | 7 days | -5 morale |
+| **Standard** | 5g | 7 days | No modifier |
+| **Good Fare** | 10g | 7 days | +5 morale |
+| **Officer Quality** | 20g | 7 days | +10 morale |
 
 **Warning System:**
 - Warning at **2 days** before expiration
@@ -153,15 +189,15 @@ When pay is late (PayTension 40+), the quartermaster offers archetype-specific d
 ## Accessing the Quartermaster
 
 ### Menu Flow
-1. **Enlisted Status** → **Visit Quartermaster**
+1. **Enlisted Status** -> **Visit Quartermaster**
 2. Opens **conversation** with quartermaster Hero
 3. Choose from dialogue options:
-   - "I need equipment" → Opens equipment menu
-   - "I want to sell some equipment" → Opens sell menu
-   - "I need better provisions" → Opens rations menu
-   - "How did you end up as quartermaster?" → Chat (relationship +3)
+   - "I need equipment" -> Opens equipment menu
+   - "I want to sell some equipment" -> Opens sell menu
+   - "I need better provisions" -> Opens rations menu
+   - "How did you end up as quartermaster?" -> Chat (relationship +3)
    - PayTension options (if applicable)
-   - "I'll be going" → Ends conversation
+   - "I'll be going" -> Ends conversation
 
 ### Equipment Menu Integration
 - Dialogue seamlessly opens existing equipment menus

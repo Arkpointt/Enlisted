@@ -347,6 +347,31 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddRetirementDialogs(CampaignGameStarter starter)
         {
+            // Retirement/discharge is requested via Camp -> Leave Service -> Request Discharge (Pending Discharge -> Final Muster).
+            // Conversations only provide guidance so we don't maintain a second conflicting retirement system here.
+            starter.AddPlayerLine(
+                "enlisted_discuss_discharge_guidance",
+                "enlisted_service_options",
+                "enlisted_discharge_guidance",
+                GetLocalizedText(
+                        "{=enlisted_discuss_discharge_guidance}My lord, if I wished to leave your service, how would I do so properly?")
+                    .ToString(),
+                CanDiscussDischargeGuidance,
+                null,
+                109);
+
+            starter.AddDialogLine(
+                "enlisted_discharge_guidance_text",
+                "enlisted_discharge_guidance",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_discharge_guidance_text}If you wish to leave my service, do it properly. Make camp and request discharge. Your final pay and discharge papers will be handled at the next muster.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+#if false
             // First-term retirement discussion (available after 3 years) - kingdom lords
             starter.AddPlayerLine(
                 "enlisted_discuss_retirement",
@@ -992,6 +1017,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnGrantEarlyDischarge,
                 110);
+#endif
 
             // Exit option - always available as fallback from service options
             // Uses default priority (100) - shows last among service options (others use 110-115)
@@ -2003,7 +2029,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("DialogManager", $"Error cleaning up menu after discharge: {ex.Message}");
+                ModLogger.ErrorCode("DialogManager", "E-DIALOG-003", "Error cleaning up menu after discharge", ex);
             }
         }
 
@@ -2270,6 +2296,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                    !enlistment.IsInDesertionGracePeriod;
         }
 
+        private bool CanDiscussDischargeGuidance()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            return enlistment?.IsEnlisted == true &&
+                   enlistment.CurrentLord == lord &&
+                   !enlistment.IsInDesertionGracePeriod;
+        }
+
         /// <summary>
         ///     Checks if the player can discuss retirement with a minor faction lord.
         ///     Same eligibility as kingdom lords but uses mercenary-themed dialog.
@@ -2485,13 +2521,15 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var lord = Hero.OneToOneConversationHero;
                 if (lord == null)
                 {
-                    ModLogger.Error("DialogManager", "No conversation hero found during enlistment acceptance");
+                    ModLogger.LogOnce("dialog_accept_enlistment_no_conversation_hero", "DialogManager",
+                        "[E-DIALOG-001] No conversation hero found during enlistment acceptance", LogLevel.Error);
                     return;
                 }
 
                 if (EnlistmentBehavior.Instance == null)
                 {
-                    ModLogger.Error("DialogManager", "EnlistmentBehavior.Instance is null during enlistment");
+                    ModLogger.LogOnce("dialog_accept_enlistment_enlistment_instance_null", "DialogManager",
+                        "[E-DIALOG-002] EnlistmentBehavior.Instance is null during enlistment", LogLevel.Error);
                     return;
                 }
 
@@ -2509,7 +2547,8 @@ namespace Enlisted.Features.Conversations.Behaviors
                     {
                         if (EnlistmentBehavior.Instance == null)
                         {
-                            ModLogger.Error("DialogManager", "EnlistmentBehavior.Instance became null before deferred enlistment");
+                            ModLogger.LogOnce("dialog_deferred_enlistment_instance_null", "DialogManager",
+                                "[E-DIALOG-004] EnlistmentBehavior.Instance became null before deferred enlistment", LogLevel.Error);
                             return;
                         }
 
@@ -2616,7 +2655,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("DialogManager", $"Failed to add retirement supplies: {ex.Message}");
+                ModLogger.ErrorCode("DialogManager", "E-DIALOG-004", "Failed to add retirement supplies", ex);
             }
         }
 
@@ -2848,7 +2887,8 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 if (newLord == null || enlistment == null)
                 {
-                    ModLogger.Error("DialogManager", "Cannot transfer service - missing lord or enlistment instance");
+                    ModLogger.LogOnce("dialog_transfer_service_missing_inputs", "DialogManager",
+                        "[E-DIALOG-003] Cannot transfer service - missing lord or enlistment instance", LogLevel.Error);
                     return;
                 }
 

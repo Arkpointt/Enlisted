@@ -57,6 +57,10 @@ namespace Enlisted.Mod.Core.Logging
 		// Summary tracking - accumulates counts for periodic summaries
 		private static readonly Dictionary<string, SummaryEntry> SummaryData = new Dictionary<string, SummaryEntry>();
 
+		// Exception detail de-duplication: only write each unique exception detail once per session.
+		// This gives end-user logs real stack traces without requiring Debug log level, but avoids spam.
+		private static readonly HashSet<string> LoggedExceptionDetails = new HashSet<string>();
+
 		/// <summary>
 		/// Tracks repeated messages for throttling.
 		/// </summary>
@@ -66,6 +70,7 @@ namespace Enlisted.Mod.Core.Logging
 			public int SuppressedCount { get; set; }
 			public string Level { get; set; }
 			public string Category { get; set; }
+			public string LastMessage { get; set; }
 		}
 
 		/// <summary>
@@ -219,15 +224,45 @@ namespace Enlisted.Mod.Core.Logging
 			{
 				return;
 			}
-				
+
 			var text = ex == null ? message : $"{message} | Exception: {ex.GetType().Name}: {ex.Message}";
 			WriteInternal("ERROR", category, text);
-			
-			// Also log stack trace at debug level if exception provided
-			if (ex != null && IsEnabled(category, LogLevel.Debug))
+
+			// End-user diagnostics: include full exception details once per unique exception.
+			// (ex.ToString() includes stack trace and inner exceptions.)
+			if (ex != null)
 			{
-				WriteInternal("DEBUG", category, $"Stack trace: {ex.StackTrace}");
+				var detail = ex.ToString();
+				if (!string.IsNullOrWhiteSpace(detail))
+				{
+					lock (Sync)
+					{
+						if (LoggedExceptionDetails.Add(detail))
+						{
+							WriteInternal("ERROR", category, "Exception detail (first occurrence this session):");
+							WriteInternal("ERROR", category, detail);
+						}
+					}
+				}
 			}
+		}
+
+		/// <summary>
+		/// Log an error with a stable support code (searchable in user logs).
+		/// </summary>
+		public static void ErrorCode(string category, string code, string message, Exception ex = null)
+		{
+			var prefix = string.IsNullOrWhiteSpace(code) ? string.Empty : $"[{code}] ";
+			Error(category, $"{prefix}{message}", ex);
+		}
+
+		/// <summary>
+		/// Log a warning with a stable support code (searchable in user logs).
+		/// </summary>
+		public static void WarnCode(string category, string code, string message)
+		{
+			var prefix = string.IsNullOrWhiteSpace(code) ? string.Empty : $"[{code}] ";
+			Warn(category, $"{prefix}{message}");
 		}
 
 		#endregion
@@ -258,6 +293,56 @@ namespace Enlisted.Mod.Core.Logging
 			
 			var levelStr = level.ToString().ToUpper();
 			WriteInternal(levelStr, category, message);
+		}
+
+		/// <summary>
+		/// Log a coded warning only once per session.
+		/// Useful for DLC missing / reflection guardrails where repetition would spam logs.
+		/// </summary>
+		public static void WarnCodeOnce(string key, string category, string code, string message)
+		{
+			if (!IsEnabled(category, LogLevel.Warn))
+			{
+				return;
+			}
+
+			bool shouldLog;
+			lock (Sync)
+			{
+				shouldLog = LoggedOnceKeys.Add(key);
+			}
+
+			if (!shouldLog)
+			{
+				return;
+			}
+
+			WarnCode(category, code, message);
+		}
+
+		/// <summary>
+		/// Log a coded error (with full exception details) only once per session.
+		/// Intended for high-signal failures that can recur frequently (e.g., UI fallback exceptions).
+		/// </summary>
+		public static void ErrorCodeOnce(string key, string category, string code, string message, Exception ex = null)
+		{
+			if (!IsEnabled(category, LogLevel.Error))
+			{
+				return;
+			}
+
+			bool shouldLog;
+			lock (Sync)
+			{
+				shouldLog = LoggedOnceKeys.Add(key);
+			}
+
+			if (!shouldLog)
+			{
+				return;
+			}
+
+			ErrorCode(category, code, message, ex);
 		}
 
 		/// <summary>
@@ -353,6 +438,29 @@ namespace Enlisted.Mod.Core.Logging
 			LogWithThrottle(levelStr, category, message);
 		}
 
+		/// <summary>
+		/// Keyed throttling: throttle by a stable key rather than the full message.
+		/// Useful for "same event, changing details" without spamming.
+		/// </summary>
+		public static void LogKeyedThrottled(string level, string category, string key, string message)
+		{
+			if (string.Equals(level, "TRACE", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Trace)) return;
+			if (string.Equals(level, "DEBUG", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Debug)) return;
+			if (string.Equals(level, "INFO", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Info)) return;
+			if (string.Equals(level, "WARN", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Warn)) return;
+			if (string.Equals(level, "ERROR", StringComparison.OrdinalIgnoreCase) && !IsEnabled(category, LogLevel.Error)) return;
+
+			LogWithKeyedThrottle(level, category, key, message);
+		}
+
+		/// <summary>
+		/// Convenience for INFO-level keyed throttling.
+		/// </summary>
+		public static void InfoThrottled(string category, string key, string message)
+		{
+			LogKeyedThrottled("INFO", category, key, message);
+		}
+
 		#endregion
 
 		#region Internal Methods
@@ -411,6 +519,61 @@ namespace Enlisted.Mod.Core.Logging
 			}
 			
 			// Periodically clean old entries to prevent memory growth
+			CleanThrottleCache();
+		}
+
+		private static void LogWithKeyedThrottle(string level, string category, string key, string message)
+		{
+			if (_throttleSeconds <= 0)
+			{
+				WriteInternal(level, category, message);
+				return;
+			}
+
+			var safeKey = string.IsNullOrWhiteSpace(key) ? message : key;
+			var cacheKey = $"{level}|{category}|{safeKey}";
+			var now = DateTime.Now;
+
+			lock (Sync)
+			{
+				if (ThrottleCache.TryGetValue(cacheKey, out var entry))
+				{
+					var elapsed = (now - entry.LastLogTime).TotalSeconds;
+					if (elapsed < _throttleSeconds)
+					{
+						entry.SuppressedCount++;
+						entry.LastMessage = message;
+						return;
+					}
+
+					var toWrite = entry.LastMessage ?? message;
+					if (entry.SuppressedCount > 0)
+					{
+						WriteInternal(level, category, $"{toWrite} (repeated {entry.SuppressedCount}x)");
+					}
+					else
+					{
+						WriteInternal(level, category, toWrite);
+					}
+
+					entry.LastLogTime = now;
+					entry.SuppressedCount = 0;
+					entry.LastMessage = message;
+				}
+				else
+				{
+					ThrottleCache[cacheKey] = new ThrottleEntry
+					{
+						LastLogTime = now,
+						SuppressedCount = 0,
+						Level = level,
+						Category = category,
+						LastMessage = message
+					};
+					WriteInternal(level, category, message);
+				}
+			}
+
 			CleanThrottleCache();
 		}
 
@@ -496,7 +659,8 @@ namespace Enlisted.Mod.Core.Logging
 
 		private static string FormatLine(string level, string category, string message)
 		{
-			var timestamp = DateTime.Now.ToString("HH:mm:ss");
+			// Include full date to make multi-session logs easier to correlate.
+			var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
 			// User-friendly format: [time] [LEVEL] [Category] Message
 			return $"[{timestamp}] [{level,-5}] [{category}] {message}\r\n";
 		}

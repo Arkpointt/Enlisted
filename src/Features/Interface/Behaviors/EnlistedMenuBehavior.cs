@@ -179,7 +179,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Interface", $"Error handling battle menu transition: {ex.Message}");
+                            ModLogger.ErrorCode("Interface", "E-UI-001", "Error handling battle menu transition", ex);
                         }
                     }
                 }
@@ -267,7 +267,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in siege battle detection: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-002", "Error in siege battle detection", ex);
                 return false;
             }
         }
@@ -326,7 +326,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening debug tools: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-003", "Error opening debug tools", ex);
             }
         }
 
@@ -617,7 +617,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("Interface", $"Deferred enlisted menu activation error: {ex.Message}");
+                    ModLogger.ErrorCode("Interface", "E-UI-004", "Deferred enlisted menu activation error", ex);
                     _pendingReturnToEnlistedMenu = false; // Clear flag to prevent endless retries
                 }
             }
@@ -731,7 +731,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Failed to add emergency siege battle option: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-005", "Failed to add emergency siege battle option", ex);
             }
 
             // Add "Return to camp" options to native town/castle menus for enlisted players
@@ -811,7 +811,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Failed to add Return to camp options: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-006", "Failed to add Return to camp options", ex);
             }
         }
 
@@ -858,7 +858,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error returning to camp: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-007", "Error returning to camp", ex);
             }
         }
 
@@ -933,7 +933,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in emergency siege battle: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-008", "Error in emergency siege battle", ex);
             }
         }
 
@@ -1213,7 +1213,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"OnSettlementLeftReturnToCamp error: {ex}");
+                ModLogger.ErrorCode("Interface", "E-UI-009", "OnSettlementLeftReturnToCamp error", ex);
                 // Ensure we don't get stuck in pending state
                 _pendingReturnToEnlistedMenu = false;
             }
@@ -1497,7 +1497,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error initializing Camp hub: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-010", "Error initializing Camp hub", ex);
                 MBTextManager.SetTextVariable("CAMP_HUB_TEXT", "Camp hub unavailable.");
             }
         }
@@ -1600,7 +1600,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error initializing enlisted status menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-011", "Error initializing enlisted status menu", ex);
             }
         }
 
@@ -1655,7 +1655,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error refreshing enlisted status", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-036", "Error refreshing enlisted status", ex);
 
                 // Error fallback
                 var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
@@ -1907,7 +1907,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error getting formation training description", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-037", "Error getting formation training description", ex);
                 return "You perform basic military duties and training.";
             }
         }
@@ -2027,7 +2027,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error refreshing menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-012", "Error refreshing menu", ex);
             }
         }
 
@@ -2080,7 +2080,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening Master at Arms: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-013", "Error opening Master at Arms", ex);
             }
         }
 
@@ -2157,7 +2157,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error opening quartermaster conversation", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-038", "Error opening quartermaster conversation", ex);
                 // Fallback to direct menu access
                 OpenQuartermasterMenuDirectly();
             }
@@ -2180,12 +2180,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
-                    ModLogger.Error("Quartermaster", "Quartermaster menu failed: QuartermasterManager.Instance was null");
+                    ModLogger.ErrorCode("Quartermaster", "E-QM-001",
+                        "Quartermaster menu failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Error opening quartermaster menu directly", ex);
+                ModLogger.ErrorCode("Quartermaster", "E-QM-002", "Error opening quartermaster menu directly", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }
@@ -2217,13 +2218,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
-                    ModLogger.Error("Quartermaster",
+                    ModLogger.ErrorCode("Quartermaster", "E-QM-003",
                         "Quartermaster (horse/tack) open failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error accessing quartermaster horse/tack services", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-039", "Error accessing quartermaster horse/tack services", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }
@@ -2265,7 +2266,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in Talk to My Lord: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-014", "Error in Talk to My Lord", ex);
             }
         }
 
@@ -2315,7 +2316,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error finding nearby lords: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-015", "Error finding nearby lords", ex);
             }
 
             return nearbyLords;
@@ -2361,7 +2362,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Interface", $"Error starting lord conversation: {ex.Message}");
+                            ModLogger.ErrorCode("Interface", "E-UI-016", "Error starting lord conversation", ex);
                         }
                     },
                     negativeAction: _ =>
@@ -2375,7 +2376,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error showing lord selection: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-017", "Error showing lord selection", ex);
             }
         }
 
@@ -2415,7 +2416,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening conversation with {lord?.Name}: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-018", $"Error opening conversation with {lord?.Name}", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_conversation_error}Unable to start conversation. Please try again.").ToString()));
             }
@@ -2478,7 +2479,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in settlement entered tracking: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-019", "Error in settlement entered tracking", ex);
             }
         }
 
@@ -2583,7 +2584,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"VisitTown failed: {ex}");
+                ModLogger.ErrorCode("Interface", "E-UI-020", "VisitTown failed", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_town_interface_error}Couldn't open the town interface.").ToString()));
             }
@@ -2642,7 +2643,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Interface", $"Error requesting leave: {ex.Message}");
+                            ModLogger.ErrorCode("Interface", "E-UI-021", "Error requesting leave", ex);
                         }
                     },
                     negativeAction: () =>
@@ -2655,7 +2656,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in Ask for Leave: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-022", "Error in Ask for Leave", ex);
             }
         }
 
@@ -2693,7 +2694,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error granting temporary leave: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-023", "Error granting temporary leave", ex);
             }
         }
 
@@ -2723,7 +2724,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening desertion menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-024", "Error opening desertion menu", ex);
             }
         }
 
@@ -2773,7 +2774,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in free desertion: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-025", "Error in free desertion", ex);
             }
         }
 
@@ -2845,7 +2846,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error initializing desertion menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-026", "Error initializing desertion menu", ex);
                 MBTextManager.SetTextVariable("DESERT_WARNING_TEXT",
                     "Are you sure you want to desert? This will have serious consequences.");
             }
@@ -2864,7 +2865,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error returning from desertion menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-027", "Error returning from desertion menu", ex);
             }
         }
 
@@ -2879,7 +2880,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment == null)
                 {
-                    ModLogger.Error("Interface", "Cannot desert - EnlistmentBehavior not available");
+                    ModLogger.ErrorCode("Interface", "E-UI-040", "Cannot desert - EnlistmentBehavior not available", null);
                     return;
                 }
 
@@ -2898,7 +2899,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("Interface", $"Error exiting menu after desertion: {ex.Message}");
+                        ModLogger.ErrorCode("Interface", "E-UI-028", "Error exiting menu after desertion", ex);
                     }
                 });
 
@@ -2906,7 +2907,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error confirming desertion: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-029", "Error confirming desertion", ex);
             }
         }
 
@@ -2978,7 +2979,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error during enlisted status tick: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-030", "Error during enlisted status tick", ex);
             }
         }
 
@@ -3006,7 +3007,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening Report for Duty: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-031", "Error opening Report for Duty", ex);
             }
         }
 
@@ -3058,7 +3059,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error initializing duty selection menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-032", "Error initializing duty selection menu", ex);
             }
         }
 
@@ -3116,7 +3117,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error during duty selection tick: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-033", "Error during duty selection tick", ex);
             }
         }
 
@@ -3192,7 +3193,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error refreshing duty selection display", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-041", "Error refreshing duty selection display", ex);
 
                 // Error fallback
                 var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
@@ -3447,7 +3448,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Failed to open decisions menu", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-042", "Failed to open decisions menu", ex);
             }
         }
 
@@ -3495,7 +3496,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Failed to initialize decisions menu", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-043", "Failed to initialize decisions menu", ex);
                 MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", "Error loading decisions.");
             }
         }
@@ -3681,7 +3682,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in Leave Service discharge option: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-034", "Error in Leave Service discharge option", ex);
             }
         }
 
@@ -3742,7 +3743,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Failed to select decision slot {slotIndex}", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-035", $"Failed to select decision slot {slotIndex}", ex);
             }
         }
 

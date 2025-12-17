@@ -123,6 +123,10 @@ namespace Enlisted.Features.Lances.Events
 
         // Phase 3 (Decision Events): Duration in days for set_flags (0 = permanent until cleared)
         [JsonProperty("flag_duration_days")] public float FlagDurationDays { get; set; }
+
+        // Phase 4/5: onboarding stage advancement control.
+        // If true and the event is an onboarding event, selecting this option advances the onboarding stage.
+        [JsonProperty("advances_onboarding")] public bool AdvancesOnboarding { get; set; }
     }
 
     public sealed class LanceLifeEventDelivery

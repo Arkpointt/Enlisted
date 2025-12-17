@@ -76,88 +76,91 @@ namespace Enlisted.Features.Escalation
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Track values
-            var heat = _state.Heat;
-            var discipline = _state.Discipline;
-            var rep = _state.LanceReputation;
-            var medical = _state.MedicalRisk;
-
-            dataStore.SyncData("esc_heat", ref heat);
-            dataStore.SyncData("esc_discipline", ref discipline);
-            dataStore.SyncData("esc_rep", ref rep);
-            dataStore.SyncData("esc_medical", ref medical);
-
-            // Timestamps
-            var lastHeatRaised = _state.LastHeatRaisedTime;
-            var lastHeatDecay = _state.LastHeatDecayTime;
-            var lastDiscRaised = _state.LastDisciplineRaisedTime;
-            var lastDiscDecay = _state.LastDisciplineDecayTime;
-            var lastRepDecay = _state.LastLanceReputationDecayTime;
-            var lastMedicalDecay = _state.LastMedicalRiskDecayTime;
-            var lastThresholdEvent = _state.LastThresholdEventTime;
-
-            dataStore.SyncData("esc_lastHeatRaised", ref lastHeatRaised);
-            dataStore.SyncData("esc_lastHeatDecay", ref lastHeatDecay);
-            dataStore.SyncData("esc_lastDiscRaised", ref lastDiscRaised);
-            dataStore.SyncData("esc_lastDiscDecay", ref lastDiscDecay);
-            dataStore.SyncData("esc_lastRepDecay", ref lastRepDecay);
-            dataStore.SyncData("esc_lastMedicalDecay", ref lastMedicalDecay);
-            dataStore.SyncData("esc_lastThresholdEvent", ref lastThresholdEvent);
-
-            // Pending threshold event
-            var pendingThreshold = _state.PendingThresholdStoryId ?? string.Empty;
-            dataStore.SyncData("esc_pendingThreshold", ref pendingThreshold);
-
-            // Per-threshold cooldown map
-            var thresholdKeys = (_state.ThresholdStoryLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
-                .Select(k => k.Key)
-                .ToList();
-            var thresholdCount = thresholdKeys.Count;
-            dataStore.SyncData("esc_thresholdCount", ref thresholdCount);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _state.Heat = heat;
-                _state.Discipline = discipline;
-                _state.LanceReputation = rep;
-                _state.MedicalRisk = medical;
+                // Track values
+                var heat = _state.Heat;
+                var discipline = _state.Discipline;
+                var rep = _state.LanceReputation;
+                var medical = _state.MedicalRisk;
 
-                _state.LastHeatRaisedTime = lastHeatRaised;
-                _state.LastHeatDecayTime = lastHeatDecay;
-                _state.LastDisciplineRaisedTime = lastDiscRaised;
-                _state.LastDisciplineDecayTime = lastDiscDecay;
-                _state.LastLanceReputationDecayTime = lastRepDecay;
-                _state.LastMedicalRiskDecayTime = lastMedicalDecay;
-                _state.LastThresholdEventTime = lastThresholdEvent;
+                dataStore.SyncData("esc_heat", ref heat);
+                dataStore.SyncData("esc_discipline", ref discipline);
+                dataStore.SyncData("esc_rep", ref rep);
+                dataStore.SyncData("esc_medical", ref medical);
 
-                _state.PendingThresholdStoryId = pendingThreshold;
-                _state.ThresholdStoryLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
-                for (var i = 0; i < thresholdCount; i++)
+                // Timestamps
+                var lastHeatRaised = _state.LastHeatRaisedTime;
+                var lastHeatDecay = _state.LastHeatDecayTime;
+                var lastDiscRaised = _state.LastDisciplineRaisedTime;
+                var lastDiscDecay = _state.LastDisciplineDecayTime;
+                var lastRepDecay = _state.LastLanceReputationDecayTime;
+                var lastMedicalDecay = _state.LastMedicalRiskDecayTime;
+                var lastThresholdEvent = _state.LastThresholdEventTime;
+
+                dataStore.SyncData("esc_lastHeatRaised", ref lastHeatRaised);
+                dataStore.SyncData("esc_lastHeatDecay", ref lastHeatDecay);
+                dataStore.SyncData("esc_lastDiscRaised", ref lastDiscRaised);
+                dataStore.SyncData("esc_lastDiscDecay", ref lastDiscDecay);
+                dataStore.SyncData("esc_lastRepDecay", ref lastRepDecay);
+                dataStore.SyncData("esc_lastMedicalDecay", ref lastMedicalDecay);
+                dataStore.SyncData("esc_lastThresholdEvent", ref lastThresholdEvent);
+
+                // Pending threshold event
+                var pendingThreshold = _state.PendingThresholdStoryId ?? string.Empty;
+                dataStore.SyncData("esc_pendingThreshold", ref pendingThreshold);
+
+                // Per-threshold cooldown map
+                var thresholdKeys = (_state.ThresholdStoryLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
+                    .Select(k => k.Key)
+                    .ToList();
+                var thresholdCount = thresholdKeys.Count;
+                dataStore.SyncData("esc_thresholdCount", ref thresholdCount);
+
+                if (dataStore.IsLoading)
                 {
-                    var key = string.Empty;
-                    var time = CampaignTime.Zero;
-                    dataStore.SyncData($"esc_threshold_{i}_id", ref key);
-                    dataStore.SyncData($"esc_threshold_{i}_time", ref time);
-                    if (!string.IsNullOrWhiteSpace(key))
+                    _state.Heat = heat;
+                    _state.Discipline = discipline;
+                    _state.LanceReputation = rep;
+                    _state.MedicalRisk = medical;
+
+                    _state.LastHeatRaisedTime = lastHeatRaised;
+                    _state.LastHeatDecayTime = lastHeatDecay;
+                    _state.LastDisciplineRaisedTime = lastDiscRaised;
+                    _state.LastDisciplineDecayTime = lastDiscDecay;
+                    _state.LastLanceReputationDecayTime = lastRepDecay;
+                    _state.LastMedicalRiskDecayTime = lastMedicalDecay;
+                    _state.LastThresholdEventTime = lastThresholdEvent;
+
+                    _state.PendingThresholdStoryId = pendingThreshold;
+                    _state.ThresholdStoryLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < thresholdCount; i++)
                     {
-                        _state.ThresholdStoryLastFired[key] = time;
+                        var key = string.Empty;
+                        var time = CampaignTime.Zero;
+                        dataStore.SyncData($"esc_threshold_{i}_id", ref key);
+                        dataStore.SyncData($"esc_threshold_{i}_time", ref time);
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            _state.ThresholdStoryLastFired[key] = time;
+                        }
+                    }
+
+                    _state.ClampAll();
+                }
+                else
+                {
+                    // Store in a stable order to reduce churn
+                    thresholdKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < thresholdKeys.Count; i++)
+                    {
+                        var key = thresholdKeys[i];
+                        var time = _state.ThresholdStoryLastFired.TryGetValue(key, out var t) ? t : CampaignTime.Zero;
+                        dataStore.SyncData($"esc_threshold_{i}_id", ref key);
+                        dataStore.SyncData($"esc_threshold_{i}_time", ref time);
                     }
                 }
-
-                _state.ClampAll();
-            }
-            else
-            {
-                // Store in a stable order to reduce churn
-                thresholdKeys.Sort(StringComparer.OrdinalIgnoreCase);
-                for (var i = 0; i < thresholdKeys.Count; i++)
-                {
-                    var key = thresholdKeys[i];
-                    var time = _state.ThresholdStoryLastFired.TryGetValue(key, out var t) ? t : CampaignTime.Zero;
-                    dataStore.SyncData($"esc_threshold_{i}_id", ref key);
-                    dataStore.SyncData($"esc_threshold_{i}_time", ref time);
-                }
-            }
+            });
         }
 
         public bool IsEnabled()

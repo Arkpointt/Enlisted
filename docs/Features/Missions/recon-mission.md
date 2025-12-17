@@ -246,8 +246,8 @@ Parties are despawned immediately (not delayed) if:
 
 **State Machine:**
 ```
-Inactive → OfferPending → Active → Warning ↔ Active → Completing → Completed
-                              ↘ Critical → Failed
+Inactive -> OfferPending -> Active -> Warning ↔ Active -> Completing -> Completed
+                              ↘ Critical -> Failed
                               ↘ Cancelled (any time due to external events)
                                   
 Cancelled triggers:

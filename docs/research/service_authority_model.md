@@ -12,8 +12,8 @@ The player is **enlisted in** the lord's party, not commanding it. This is the f
 
 ### The Misconception to Avoid
 
-❌ **WRONG:** "Your company" / "Your army" / "Manage your party"  
-✅ **RIGHT:** "Serving in [Lord]'s party" / "Leadership assigns" / "Earn command authority"
+X **WRONG:** "Your company" / "Your army" / "Manage your party"  
+[x] **RIGHT:** "Serving in [Lord]'s party" / "Leadership assigns" / "Earn command authority"
 
 ---
 
@@ -22,20 +22,20 @@ The player is **enlisted in** the lord's party, not commanding it. This is the f
 ```
 Lord/Commander
     │
-    ├─→ Strategic Decisions (where party goes, who to fight)
+    ├─-> Strategic Decisions (where party goes, who to fight)
     │   Player has ZERO input here
     │
-    └─→ Leadership (AI or senior officers)
+    └─-> Leadership (AI or senior officers)
         │
-        ├─→ Tactical Decisions (daily schedule, resource allocation)
+        ├─-> Tactical Decisions (daily schedule, resource allocation)
         │   Player earns input here through progression
         │
-        └─→ Player's Lance
+        └─-> Player's Lance
             │
-            ├─→ Lance Leader (player if T6+, or NPC if lower)
+            ├─-> Lance Leader (player if T6+, or NPC if lower)
             │   Controls schedule IF player has authority
             │
-            └─→ Lance Members (player's immediate unit)
+            └─-> Lance Members (player's immediate unit)
                 Player is one of these until T6+
 ```
 
@@ -54,7 +54,7 @@ Lord/Commander
 
 ### What NOT to Use
 
-| ❌ Avoid | Why It's Wrong | ✅ Use Instead |
+| X Avoid | Why It's Wrong | [x] Use Instead |
 |---------|----------------|----------------|
 | "Your army" | Player doesn't own an army | "The lord's party you serve in" |
 | "Your company" | Implies ownership | "Your lance" (for player's squad) |
@@ -119,8 +119,8 @@ You cannot modify this schedule at your current rank.
 Today's Orders
 Leadership has assigned your lance these duties:
 
-Dawn: Morning Drill → [Request Change] (35% approval)
-Morning: Guard Duty → [Request Change] (50% approval)
+Dawn: Morning Drill -> [Request Change] (35% approval)
+Morning: Guard Duty -> [Request Change] (50% approval)
 
 [Approval based on lord relation, activity fit, and lance needs]
 ```
@@ -130,8 +130,8 @@ Morning: Guard Duty → [Request Change] (50% approval)
 Today's Orders
 Recommended schedule based on leadership objectives:
 
-Dawn: Morning Drill → [Approve] [Change]
-Morning: Guard Duty → [Approve] [Change]
+Dawn: Morning Drill -> [Approve] [Change]
+Morning: Guard Duty -> [Approve] [Change]
 
 [AI explains why each activity is recommended]
 ```
@@ -141,8 +141,8 @@ Morning: Guard Duty → [Approve] [Change]
 Lance Schedule (You are in command)
 Set your lance's activities for today:
 
-Dawn: Morning Drill → [Set Activity]
-Morning: Guard Duty → [Set Activity]
+Dawn: Morning Drill -> [Set Activity]
+Morning: Guard Duty -> [Set Activity]
 
 [Full control, no restrictions, no approval rolls]
 [Requires Lance Leader promotion - not automatic with tier]
@@ -156,10 +156,10 @@ Morning: Guard Duty → [Set Activity]
 - "Command activities" (T5+ only activities, like "Brief Squad" or "Coordinate Patrols")
 
 **Gating Messages:**
-- ❌ "You don't have permission to do this"
-- ✅ "Requires Lance Leader promotion"
-- ✅ "This activity is for lance leaders and officers"
-- ✅ "This activity is for senior NCOs and officers"
+- X "You don't have permission to do this"
+- [x] "Requires Lance Leader promotion"
+- [x] "This activity is for lance leaders and officers"
+- [x] "This activity is for senior NCOs and officers"
 
 ### Party Tab (T5+ Only)
 

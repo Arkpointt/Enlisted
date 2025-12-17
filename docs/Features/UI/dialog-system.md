@@ -4,8 +4,8 @@
 
 | Feature | Purpose | Location |
 |---------|---------|----------|
-| Enlistment Dialog | Join lord's warband | Talk to lord → "I wish to serve" |
-| Status Dialog | Check current service | Talk to lord → "How goes my service?" |
+| Enlistment Dialog | Join lord's warband | Talk to lord -> "I wish to serve" |
+| Status Dialog | Check current service | Talk to lord -> "How goes my service?" |
 | Management Dialogs | Promotions, equipment | Context-dependent conversations |
 
 ## Table of Contents
@@ -45,15 +45,16 @@ Centralized conversation manager that handles all military service dialogs. Prev
 ### Enlistment Flow
 
 **Standard Flow (kingdom lords):**
-1. Talk to any lord → "I have something else to discuss" → "I wish to serve in your warband"
+1. Talk to any lord -> "I have something else to discuss" -> "I wish to serve in your warband"
 2. Lord responds based on relationship and faction status
-3. Player confirms → Immediate enlistment with `IsActive = false` and menu switch
+3. Player confirms -> Immediate enlistment with `IsActive = false` and menu switch
 4. No encounter gaps - player goes straight to enlisted status menu
 
 **Minor Faction Flow:**
 - Uses the same conversation states but with higher-priority mercenary-themed lines when `lord.Clan?.IsMinorFaction == true` (works even if they are mercenaries for a kingdom).
 - Text themes: contract/payment focus, company camaraderie.
-- Retirement/renewal/leave/early-discharge also have minor-faction variants; consequences are shared (same code paths).
+- Leave and early-discharge have minor-faction variants; consequences are shared (same code paths).
+- Retirement/discharge is **not** executed via dialog. Dialogs may provide guidance, but the action is requested via **Camp -> Request Discharge** and resolves at **pay muster** (Final Muster).
 
 **Army Leader Restriction:**
 If player is leading their own army, special dialog appears:
@@ -67,7 +68,7 @@ If player is leading their own army, special dialog appears:
 **Purpose:** Check current military service status
 
 **Flow:**
-- Talk to lord → "How goes my service?"
+- Talk to lord -> "How goes my service?"
 - Shows current enlistment information
 - Displays tier, XP, days served, etc.
 
@@ -81,7 +82,7 @@ If player is leading their own army, special dialog appears:
 **Types:**
 - Promotion notifications
 - Equipment management conversations
-- Retirement and departure dialogs (kingdom + minor variants)
+- Discharge guidance (kingdom + minor variants)
 - Leave/return and early discharge (kingdom + minor variants)
 
 **Behavior:**
@@ -151,7 +152,7 @@ starter.AddPlayerLine("enlisted_wish_to_serve",
 - `StartEnlistment()` - Initiates enlistment process
 - `ShowStatus()` - Displays service information
 - `RequestLeave()` - Starts leave process
-- `EndEnlistment()` - Handles retirement/discharge
+- `EndEnlistment()` - Ends enlistment state (used by systems like Final Muster and desertion; not invoked directly by retirement dialog)
 
 ---
 

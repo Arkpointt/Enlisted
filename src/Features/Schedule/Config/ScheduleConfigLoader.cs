@@ -32,7 +32,8 @@ namespace Enlisted.Features.Schedule.Config
                 string configPath = FindConfigFile();
                 if (string.IsNullOrEmpty(configPath))
                 {
-                    ModLogger.Error(LogCategory, $"Could not find {ConfigFileName} in ModuleData/Enlisted/");
+                    ModLogger.ErrorCode(LogCategory, "E-SCHED-001",
+                        $"Could not find {ConfigFileName} in ModuleData/Enlisted/");
                     return CreateDefaultConfig();
                 }
 
@@ -75,7 +76,7 @@ namespace Enlisted.Features.Schedule.Config
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to load schedule config: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-SCHED-002", "Failed to load schedule config", ex);
                 return CreateDefaultConfig();
             }
         }
@@ -204,7 +205,7 @@ namespace Enlisted.Features.Schedule.Config
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Warn(LogCategory, $"Failed to parse activity: {ex.Message}");
+                    ModLogger.WarnCode(LogCategory, "W-SCHED-001", $"Failed to parse activity: {ex.Message}");
                 }
             }
 

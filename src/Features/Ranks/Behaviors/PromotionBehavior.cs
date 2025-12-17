@@ -86,9 +86,12 @@ namespace Enlisted.Features.Ranks.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_lastPromotionCheck", ref _lastPromotionCheck);
-            dataStore.SyncData("_formationSelectionPending", ref _formationSelectionPending);
-            dataStore.SyncData("_pendingPromotionTier", ref _pendingPromotionTier);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_lastPromotionCheck", ref _lastPromotionCheck);
+                dataStore.SyncData("_formationSelectionPending", ref _formationSelectionPending);
+                dataStore.SyncData("_pendingPromotionTier", ref _pendingPromotionTier);
+            });
         }
 
         /// <summary>
@@ -146,11 +149,15 @@ namespace Enlisted.Features.Ranks.Behaviors
             var targetTier = currentTier + 1;
             var req = PromotionRequirements.GetForTier(targetTier);
             var escalation = EscalationManager.Instance;
+            
+            // XP thresholds are owned by progression_config.json (single source of truth).
+            var tierXp = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];
 
             // Check XP threshold
-            if (enlistment.EnlistmentXP < req.XP)
+            if (enlistment.EnlistmentXP < requiredXp)
             {
-                reasons.Add($"XP: {enlistment.EnlistmentXP}/{req.XP}");
+                reasons.Add($"XP: {enlistment.EnlistmentXP}/{requiredXp}");
             }
 
             // Check days in rank
@@ -221,9 +228,11 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             var req = PromotionRequirements.GetForTier(enlistment.EnlistmentTier + 1);
             var escalation = EscalationManager.Instance;
+            var tierXp = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var requiredXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
 
             // Calculate progress for each requirement
-            var xpProgress = Math.Min(100, enlistment.EnlistmentXP * 100 / Math.Max(1, req.XP));
+            var xpProgress = Math.Min(100, enlistment.EnlistmentXP * 100 / Math.Max(1, requiredXp));
             var daysProgress = Math.Min(100, enlistment.DaysInRank * 100 / Math.Max(1, req.DaysInRank));
             var eventsProgress = Math.Min(100, enlistment.EventsCompleted * 100 / Math.Max(1, req.EventsRequired));
             var battlesProgress = Math.Min(100, enlistment.BattlesSurvived * 100 / Math.Max(1, req.BattlesRequired));
@@ -302,12 +311,6 @@ namespace Enlisted.Features.Ranks.Behaviors
                 if (Lances.Events.LanceLifeEventRuntime.TryShowEventById(eventId))
                 {
                     ModLogger.Info("Promotion", $"Triggered proving event for T{currentTier}→T{targetTier}: {eventId}");
-                    
-                    // Prompt lance selection for T1→T2
-                    if (currentTier == 1)
-                    {
-                        enlistment.TryPromptLanceSelection();
-                    }
                 }
                 else
                 {

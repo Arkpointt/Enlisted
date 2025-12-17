@@ -78,8 +78,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             catch (Exception ex)
             {
                 // Log full exception for troubleshooting, but don't break the game
-                ModLogger.Error("NavalShipDamageProtection",
-                    $"Error in ship damage protection patch: {ex.Message}\nStack: {ex.StackTrace}");
+                ModLogger.ErrorCode("NavalShipDamageProtection", "E-NAVALPATCH-021",
+                    "Error in ship damage protection patch", ex);
 
                 return true; // Fail-safe: let original method run on error
             }

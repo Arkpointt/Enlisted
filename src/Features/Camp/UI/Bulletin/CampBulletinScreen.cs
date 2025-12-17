@@ -127,7 +127,7 @@ namespace Enlisted.Features.Camp.UI.Bulletin
                 {
                     // Bannerlord menu callbacks often fail "quietly" when exceptions occur.
                     // Log + show an in-game hint so we can diagnose quickly without guessing.
-                    ModLogger.Error(LogCategory, "Exception while opening Camp Bulletin UI.", ex);
+                    ModLogger.ErrorCode(LogCategory, "E-CAMPUI-050", "Exception while opening Camp Bulletin UI.", ex);
                     InformationManager.DisplayMessage(new InformationMessage("Enlisted: Camp UI failed to open. Check Modules/Enlisted/Debugging for details."));
                     Close();
                 }

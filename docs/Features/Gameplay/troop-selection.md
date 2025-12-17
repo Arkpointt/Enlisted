@@ -2,13 +2,13 @@
 
 > **Status:** DEPRECATED (Phase 7)
 > 
-> The troop selection system has been replaced by the **Proving Event** system. Formation choice now happens during the T1→T2 promotion event, providing a narrative experience instead of a menu.
+> The troop selection system has been replaced by the **Proving Event** system. Formation choice now happens during the T1->T2 promotion event, providing a narrative experience instead of a menu.
 
 ## Overview
 
 The original troop selection system let enlisted players choose a Bannerlord troop template to determine their formation and equipment. This has been superseded by:
 
-- **Formation Choice**: Made during the T1→T2 proving event ("Finding Your Place")
+- **Formation Choice**: Made during the T1->T2 proving event ("Finding Your Place")
 - **Equipment Access**: Purchased from the Quartermaster based on formation + tier + culture
 - **Starter Duty**: Auto-assigned based on chosen formation
 
@@ -23,11 +23,11 @@ The original troop selection system let enlisted players choose a Bannerlord tro
 
 ### Formation Selection
 - **T1**: Everyone starts as Infantry
-- **T1→T2 Promotion**: Proving event presents formation options:
-  - "I fight best on foot" → Infantry
-  - "Give me a bow and I'll put arrows where they need to go" → Archer
-  - "I belong in the saddle" → Cavalry
-  - "Horse archery is my calling" → Horse Archer (Khuzait/Aserai only)
+- **T1->T2 Promotion**: Proving event presents formation options:
+  - "I fight best on foot" -> Infantry
+  - "Give me a bow and I'll put arrows where they need to go" -> Archer
+  - "I belong in the saddle" -> Cavalry
+  - "Horse archery is my calling" -> Horse Archer (Khuzait/Aserai only)
 - **T2+**: Formation is locked (cannot change)
 
 ### Equipment Access

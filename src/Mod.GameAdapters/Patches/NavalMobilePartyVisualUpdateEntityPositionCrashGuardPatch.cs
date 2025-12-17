@@ -67,7 +67,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to apply UpdateEntityPosition crash guard patch: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-004",
+                    "Failed to apply UpdateEntityPosition crash guard patch", ex);
             }
         }
 
@@ -110,7 +111,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             catch (Exception ex)
             {
                 // Never allow a crash guard to crash the game. If something goes wrong, just allow original.
-                ModLogger.Error(LogCategory, $"Error in UpdateEntityPosition crash guard prefix: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-005",
+                    "Error in UpdateEntityPosition crash guard prefix", ex);
             }
 
             return true;

@@ -9,9 +9,9 @@ Give players natural skill progression that matches their military role. Infantr
 ## Inputs/Outputs
 
 **Inputs:**
-- Player's formation type (chosen during T1→T2 proving event)
+- Player's formation type (chosen during T1->T2 proving event)
 - JSON configuration from `duties_system.json`
-- Daily tick events while enlisted or on leave
+- Daily tick events while actively enlisted
 
 **Outputs:**
 - Daily skill XP applied to formation-appropriate skills
@@ -24,17 +24,17 @@ Give players natural skill progression that matches their military role. Infantr
 1. System detects player's formation (Infantry, Cavalry, Archer, Horse Archer)
 2. Applies configured XP amounts to appropriate skills
 3. Uses `Hero.MainHero.AddSkillXp(skill, amount)` API for reliable skill progression
-4. Continues during temporary leave (training doesn't stop)
+4. Runs only while actively enlisted (training is paused while on leave)
 
 ### Formation Skill Mapping
-- **Infantry**: Athletics (+50), One-Handed (+50), Two-Handed (+50), Polearm (+50), Throwing (+25)
-- **Cavalry**: Riding (+50), One-Handed (+50), Polearm (+50), Athletics (+25), Two-Handed (+25)
-- **Horse Archer**: Riding (+50), Bow (+50), Throwing (+50), Athletics (+25), One-Handed (+25)
-- **Archer**: Bow (+50), Crossbow (+50), Athletics (+50), One-Handed (+25)
+- **Infantry**: Athletics (+5), One-Handed (+5), Two-Handed (+5), Polearm (+5), Throwing (+2)
+- **Cavalry**: Riding (+5), One-Handed (+5), Polearm (+5), Athletics (+2), Two-Handed (+2)
+- **Horse Archer**: Riding (+5), Bow (+5), Throwing (+5), Athletics (+2), One-Handed (+2)
+- **Archer**: Bow (+5), Crossbow (+5), Athletics (+5), One-Handed (+2)
 
 ### Formation Assignment
 - **T1 (New Recruits)**: Everyone starts as Infantry
-- **T1→T2 (Proving Event)**: Formation chosen during "Finding Your Place" event
+- **T1->T2 (Proving Event)**: Formation chosen during "Finding Your Place" event
   - Options: Infantry, Archer, Cavalry, Horse Archer (conditional)
   - Horse Archer only available for Khuzait and Aserai cultures
 - **T2+**: Formation locked to choice (cannot change)
@@ -48,7 +48,7 @@ Give players natural skill progression that matches their military role. Infantr
 - `PromotionBehavior.cs` - Triggers proving event for formation choice
 - `LanceLifeEventsStateBehavior.cs` - Applies formation effect from event
 - `duties_system.json` - Formation skill XP configuration
-- `events_promotion.json` - T1→T2 proving event with formation options
+- `events_promotion.json` - T1->T2 proving event with formation options
 
 **Key APIs:**
 ```csharp
@@ -71,11 +71,11 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("cavalry");
       "infantry": {
         "description": "Foot soldiers - ground combat and conditioning",
         "skills": {
-          "Athletics": 50,
-          "OneHanded": 50,
-          "TwoHanded": 50,
-          "Polearm": 50,
-          "Throwing": 25
+          "Athletics": 5,
+          "OneHanded": 5,
+          "TwoHanded": 5,
+          "Polearm": 5,
+          "Throwing": 2
         }
       }
     }
@@ -101,9 +101,8 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("cavalry");
 - Uses `MBObjectManager.Instance.GetObject<SkillObject>(skillName)` for resolution
 
 **Leave/Rejoin Scenarios:**
-- Training continues during temporary leave
-- Formation preserved when returning from leave
-- No interruption in skill progression
+- Training is paused during temporary leave
+- Formation is preserved when returning from leave
 
 **Existing Saves (Migration):**
 - If player has no formation set, detect from equipped troop or equipment
@@ -112,16 +111,15 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("cavalry");
 
 ## Acceptance Criteria
 
-- ✅ Daily XP applied to all formation-appropriate skills
-- ✅ Formation chosen during T1→T2 proving event
-- ✅ Horse Archer option only for Khuzait/Aserai cultures
-- ✅ Training continues during temporary leave
-- ✅ JSON configuration loads successfully
-- ✅ Formation displays correctly in enlisted menu
-- ✅ Immersive training descriptions for each formation
-- ✅ No crashes or assertion errors
-- ✅ Save/load maintains formation assignment
-- ✅ Existing saves migrate correctly
+- [x] Daily XP applied to all formation-appropriate skills
+- [x] Formation chosen during T1->T2 proving event
+- [x] Horse Archer option only for Khuzait/Aserai cultures
+- [x] JSON configuration loads successfully
+- [x] Formation displays correctly in enlisted menu
+- [x] Immersive training descriptions for each formation
+- [x] No crashes or assertion errors
+- [x] Save/load maintains formation assignment
+- [x] Existing saves migrate correctly
 
 ## Debugging
 

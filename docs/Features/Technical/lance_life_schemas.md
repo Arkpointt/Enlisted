@@ -844,7 +844,7 @@ Defines promotion requirements, proving events, and career-shaping choices.
 
 ### Character Tags
 
-Set during T3→T4 promotion event based on player choice:
+Set during T3->T4 promotion event based on player choice:
 
 ```json
 {
@@ -882,7 +882,7 @@ Set during T3→T4 promotion event based on player choice:
 
 ### Loyalty Tags
 
-Set during T5→T6 promotion event based on player choice:
+Set during T5->T6 promotion event based on player choice:
 
 ```json
 {
@@ -918,9 +918,9 @@ Set during T5→T6 promotion event based on player choice:
 }
 ```
 
-### Command Style Tags (T7→T8)
+### Command Style Tags (T7->T8)
 
-Set during T7→T8 promotion event based on player choice:
+Set during T7->T8 promotion event based on player choice:
 
 ```json
 {
@@ -956,9 +956,9 @@ Set during T7→T8 promotion event based on player choice:
 }
 ```
 
-### Strategic Style Tags (T8→T9)
+### Strategic Style Tags (T8->T9)
 
-Set during T8→T9 promotion event based on player choice:
+Set during T8->T9 promotion event based on player choice:
 
 ```json
 {
@@ -987,7 +987,7 @@ Set during T8→T9 promotion event based on player choice:
 
 ### Rival Tracking
 
-Created on T4→T5 failure:
+Created on T4->T5 failure:
 
 ```json
 {
@@ -1095,11 +1095,11 @@ Added trigger conditions for promotion events:
 
 | Condition | Description |
 |-----------|-------------|
-| `promotion_eligible_t2` | Meets all T1→T2 requirements |
-| `promotion_eligible_t3` | Meets all T2→T3 requirements |
-| `promotion_eligible_t4` | Meets all T3→T4 requirements |
-| `promotion_eligible_t5` | Meets all T4→T5 requirements |
-| `promotion_eligible_t6` | Meets all T5→T6 requirements |
+| `promotion_eligible_t2` | Meets all T1->T2 requirements |
+| `promotion_eligible_t3` | Meets all T2->T3 requirements |
+| `promotion_eligible_t4` | Meets all T3->T4 requirements |
+| `promotion_eligible_t5` | Meets all T4->T5 requirements |
+| `promotion_eligible_t6` | Meets all T5->T6 requirements |
 | `promotion_retry_ready:{tier}` | Retry cooldown has expired |
 | `has_character_tag:{tag}` | Player has specific character tag |
 | `has_loyalty_tag:{tag}` | Player has specific loyalty tag |
@@ -1612,12 +1612,12 @@ Defines camp followers the player can interact with.
 
 | Culture | Infantry | Archer | Cavalry | Horse Archer |
 |---------|----------|--------|---------|--------------|
-| `vlandia` | ✅ | ✅ | ✅ | ❌ |
-| `sturgia` | ✅ | ✅ | ✅ | ❌ |
-| `empire` | ✅ | ✅ | ✅ | ❌ |
-| `battania` | ✅ | ✅ | ✅ | ❌ |
-| `aserai` | ✅ | ✅ | ✅ | ✅ |
-| `khuzait` | ✅ | ✅ | ✅ | ✅ |
+| `vlandia` | [x] | [x] | [x] | X |
+| `sturgia` | [x] | [x] | [x] | X |
+| `empire` | [x] | [x] | [x] | X |
+| `battania` | [x] | [x] | [x] | X |
+| `aserai` | [x] | [x] | [x] | [x] |
+| `khuzait` | [x] | [x] | [x] | [x] |
 
 ---
 

@@ -115,7 +115,7 @@ namespace Enlisted.Features.CommandTent.Systems
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in daily trickle tick: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-RETINUE-001", "Error in daily trickle tick", ex);
             }
         }
 

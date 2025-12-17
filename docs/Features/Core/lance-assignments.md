@@ -189,9 +189,9 @@ Data:
   - `ConfigurationManager.GetCultureRankTitle(tier, cultureId)` — get any culture's rank
   - `ConfigurationManager.GetTierName(tier)` — generic/mercenary fallback
 - Registry helpers:
-  - `LanceRegistry.ResolveLanceById(lanceId)` → latest name/style/storyId or null.
-  - `LanceRegistry.GetCandidateLances(lord, formation, count, overrideStyleId)` → selection pool for UI.
-  - `LanceRegistry.GetLancesForCultureAndRole(cultureId, roleHint)` → filtered list for consumers (story/camp).
+  - `LanceRegistry.ResolveLanceById(lanceId)` -> latest name/style/storyId or null.
+  - `LanceRegistry.GetCandidateLances(lord, formation, count, overrideStyleId)` -> selection pool for UI.
+  - `LanceRegistry.GetLancesForCultureAndRole(cultureId, roleHint)` -> filtered list for consumers (story/camp).
 
 ## Diagnostics
 - Session logs: provisional assignment, finalization, unknown-culture cancel, fatigue consume/restore.

@@ -1,7 +1,7 @@
 # implementation status
 
 **last updated:** december 17, 2025  
-**build status:** ✅ compiles with 0 errors
+**build status:** [x] compiles with 0 errors
 
 ## index
 
@@ -21,21 +21,21 @@
 
 | Track | Name | Status | Next Step |
 |-------|------|--------|-----------|
-| **A** | Camp & Activities | ✅ Complete | UI polish (optional) |
-| **B** | AI Camp Schedule | ✅ Complete | Integrated |
-| **C** | Lance Life Simulation | ✅ Complete | Content creation |
-| **D2** | Decision Events | ✅ Phase 6 Complete | Phase 7-9 |
+| **A** | Camp & Activities | [x] Complete | UI polish (optional) |
+| **B** | AI Camp Schedule | [x] Complete | Integrated |
+| **C** | Lance Life Simulation | [x] Complete | Content creation |
+| **D2** | Decision Events | [x] Phase 6 Complete | Phase 7-9 |
 
 ---
 
-## Track A: Camp & Activities ✅ COMPLETE
+## Track A: Camp & Activities [x] COMPLETE
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 1: Foundation | ✅ | Activity cards, screen, data loading |
-| Phase 2: Camp Bulletin | ✅ | Settlement-style UI, location activities |
-| Phase 3: UI Polish | ✅ | Spacing/alignment |
-| Phase 3.5: Authority | ✅ | Tier + Lance Leader filtering |
+| Phase 1: Foundation | [x] | Activity cards, screen, data loading |
+| Phase 2: Camp Bulletin | [x] | Settlement-style UI, location activities |
+| Phase 3: UI Polish | [x] | Spacing/alignment |
+| Phase 3.5: Authority | [x] | Tier + Lance Leader filtering |
 
 **Key Files:**
 - `src/Features/Camp/UI/Bulletin/CampBulletinVM.cs`
@@ -43,19 +43,19 @@
 
 ---
 
-## Track B: AI Camp Schedule ✅ COMPLETE
+## Track B: AI Camp Schedule [x] COMPLETE
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 0: Foundation | ✅ | Data models, config, save/load |
-| Phase 1: Basic Scheduling | ✅ | Generation algorithm, lord objectives |
-| Phase 2: Lance Needs | ✅ | Degradation, recovery mechanics |
-| Phase 3: AI Logic | ✅ | Context-aware scheduling |
-| Phase 4: Block Execution | ✅ | Activation, completion tracking |
-| Phase 4.5: Authority | ✅ | 4-level authority, approval system |
-| Phase 5: T5-T6 Leadership | ✅ | Performance tracking, consequences |
-| Phase 6: Pay Muster | ✅ | 12-day cycle integration |
-| Phase 7: Polish | ✅ | Combat interrupts, bulletin integration |
+| Phase 0: Foundation | [x] | Data models, config, save/load |
+| Phase 1: Basic Scheduling | [x] | Generation algorithm, lord objectives |
+| Phase 2: Lance Needs | [x] | Degradation, recovery mechanics |
+| Phase 3: AI Logic | [x] | Context-aware scheduling |
+| Phase 4: Block Execution | [x] | Activation, completion tracking |
+| Phase 4.5: Authority | [x] | 4-level authority, approval system |
+| Phase 5: T5-T6 Leadership | [x] | Performance tracking, consequences |
+| Phase 6: Pay Muster | [x] | 12-day cycle integration |
+| Phase 7: Polish | [x] | Combat interrupts, bulletin integration |
 
 **Key Files:**
 - `src/Features/Schedule/Behaviors/ScheduleBehavior.cs`
@@ -64,14 +64,14 @@
 
 ---
 
-## Track C: Lance Life Simulation ✅ COMPLETE
+## Track C: Lance Life Simulation [x] COMPLETE
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 1: Member Tracking | ✅ | Health states, activity states |
-| Phase 2: Leader System | ✅ | Persistent leaders, personalities, memory |
-| Phase 3: Events | ✅ | Cover requests, injuries, deaths |
-| Phase 4: Integration | ✅ | UI events, notifications |
+| Phase 1: Member Tracking | [x] | Health states, activity states |
+| Phase 2: Leader System | [x] | Persistent leaders, personalities, memory |
+| Phase 3: Events | [x] | Cover requests, injuries, deaths |
+| Phase 4: Integration | [x] | UI events, notifications |
 
 **Key Files:**
 - `src/Features/Lances/Simulation/LanceLifeSimulationBehavior.cs`
@@ -85,16 +85,16 @@
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 1: Core Infrastructure | ✅ | State, Evaluator, Behavior, Config |
-| Phase 1.5: Activity-Aware | ✅ | `current_activity:X`, `on_duty:X` tokens |
-| Phase 2: Pacing System | ✅ | 8 protection layers built into Phase 1 |
-| Phase 3: Event Chains | ✅ | `chains_to`, `set_flags`, `clear_flags` |
-| Phase 4: Player Menu | ✅ | "Pending Decisions" submenu |
-| Phase 5: Loot System | ⏳ | Optional, not started |
-| Phase 6: Tier-Based Narrative | ✅ | `narrative_source`, tier gates |
-| Phase 7: Content Creation | ⏳ | Ongoing (14 events created) |
-| Phase 8: News Integration | ⏳ | Documented, not started |
-| Phase 9: Testing & Debug | ⏳ | Debug commands needed |
+| Phase 1: Core Infrastructure | [x] | State, Evaluator, Behavior, Config |
+| Phase 1.5: Activity-Aware | [x] | `current_activity:X`, `on_duty:X` tokens |
+| Phase 2: Pacing System | [x] | 8 protection layers built into Phase 1 |
+| Phase 3: Event Chains | [x] | `chains_to`, `set_flags`, `clear_flags` |
+| Phase 4: Player Menu | [x] | "Pending Decisions" submenu |
+| Phase 5: Loot System | IN PROGRESS | Optional, not started |
+| Phase 6: Tier-Based Narrative | [x] | `narrative_source`, tier gates |
+| Phase 7: Content Creation | IN PROGRESS | Ongoing (14 events created) |
+| Phase 8: News Integration | IN PROGRESS | Documented, not started |
+| Phase 9: Testing & Debug | IN PROGRESS | Debug commands needed |
 
 ### Decision Events Created: 14
 
@@ -102,7 +102,7 @@
 |------|-------|----------|
 | Automatic (pushed) | 9 | Lord hunt, dice game, training offer |
 | Player-initiated | 5 | Organize dice, petition lord, write letter |
-| Chain events | 3 | Lance mate favor → repayment |
+| Chain events | 3 | Lance mate favor -> repayment |
 
 ### Next Actions
 
@@ -125,20 +125,20 @@
 
 | Tab | Backend | Frontend |
 |-----|---------|----------|
-| Activities | ✅ Complete | ✅ Bulletin UI |
-| Orders | ✅ Complete | ⏳ Needs authority integration |
-| Lance | ✅ Complete | ⏳ Empty stub |
-| Reports | ✅ Complete | ⏳ Basic |
-| Party | ✅ Complete | ⏳ Empty stub |
+| Activities | [x] Complete | [x] Bulletin UI |
+| Orders | [x] Complete | IN PROGRESS Needs authority integration |
+| Lance | [x] Complete | IN PROGRESS Empty stub |
+| Reports | [x] Complete | IN PROGRESS Basic |
+| Party | [x] Complete | IN PROGRESS Empty stub |
 
 ### Enlisted Main Menu
 
 | Feature | Status |
 |---------|--------|
-| Status display | ✅ Complete |
-| News dispatches | ✅ Complete |
-| Pending Decisions | ✅ Complete (Phase 4) |
-| Duty selection | ✅ Complete |
+| Status display | [x] Complete |
+| News dispatches | [x] Complete |
+| Pending Decisions | [x] Complete (Phase 4) |
+| Duty selection | [x] Complete |
 
 ---
 

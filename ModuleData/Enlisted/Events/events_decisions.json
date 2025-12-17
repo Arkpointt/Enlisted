@@ -284,6 +284,8 @@
           "costs": { "gold": 30 },
           "rewards": { "gold": 50 },
           "effects": { "heat": 3, "discipline": 2 },
+          "set_flags": ["corruption_pattern_detected"],
+          "flag_duration_days": 30,
           "outcomeTextId": "decision_qm_unofficial_outcome",
           "outcomeTextFallback": "You skim a little off the top while getting the company a good deal. Risky, but profitable."
         },
@@ -294,6 +296,120 @@
           "effects": { "discipline": -2, "lance_reputation": 2 },
           "outcomeTextId": "decision_qm_report_outcome",
           "outcomeTextFallback": "You alert the captain. The merchant's goods turn out to be stolen from a nearby village. Your vigilance is noted."
+        }
+      ]
+    },
+    {
+      "id": "decision_qm_weekly_supply_run",
+      "category": "decision",
+      "narrative_source": "situation",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "on_duty:quartermaster", "weekly_tick"],
+        "time_of_day": ["morning"]
+      },
+      "requirements": {
+        "tier": { "min": 2, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal"
+      },
+      "titleId": "decision_qm_supply_run_title",
+      "titleFallback": "Supply Run",
+      "bodyId": "decision_qm_supply_run_body",
+      "bodyFallback": "The wagons are light and the men are counting days between towns. You can make a run to secure supplies â€” properly, quietly, or harshly.",
+      "options": [
+        {
+          "id": "official",
+          "textId": "decision_qm_supply_run_official",
+          "textFallback": "Do it properly: pay a fair price, record it cleanly.",
+          "costs": { "fatigue": 2, "gold": 25 },
+          "effects": { "heat": 0, "discipline": -1, "lance_reputation": 2, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -5 },
+          "set_flags": ["qm_owes_favor"],
+          "flag_duration_days": 21,
+          "outcomeTextId": "decision_qm_supply_run_official_outcome",
+          "outcomeTextFallback": "You spend coin and time, but the wagons come back heavier and the ledger stays clean. The quartermaster gives you a rare, approving nod."
+        },
+        {
+          "id": "quiet",
+          "textId": "decision_qm_supply_run_quiet",
+          "textFallback": "Make it work: buy cheap, skim a little, keep everyone fed.",
+          "costs": { "fatigue": 1, "gold": 20 },
+          "rewards": { "gold": 60 },
+          "effects": { "heat": 3, "discipline": 1, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -10 },
+          "set_flags": ["corruption_pattern_detected"],
+          "flag_duration_days": 30,
+          "outcomeTextId": "decision_qm_supply_run_quiet_outcome",
+          "outcomeTextFallback": "You get the supplies. You also get paid. For now, nobody asks how the numbers work out."
+        },
+        {
+          "id": "ration",
+          "textId": "decision_qm_supply_run_ration",
+          "textFallback": "Ration hard: stretch what we have and keep the wagons moving.",
+          "costs": { "fatigue": 1 },
+          "effects": { "heat": 0, "discipline": 0, "lance_reputation": -2, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -3 },
+          "outcomeTextId": "decision_qm_supply_run_ration_outcome",
+          "outcomeTextFallback": "You tighten belts and enforce rationing. The men grumble, but the supplies last longer."
+        }
+      ]
+    },
+    {
+      "id": "decision_qm_audit_pressure",
+      "category": "decision",
+      "narrative_source": "situation",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "on_duty:quartermaster", "corruption_pattern_detected", "heat >= 5"],
+        "time_of_day": ["afternoon"]
+      },
+      "requirements": {
+        "tier": { "min": 3, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "high"
+      },
+      "titleId": "decision_qm_audit_pressure_title",
+      "titleFallback": "Audit Pressure",
+      "bodyId": "decision_qm_audit_pressure_body",
+      "bodyFallback": "A clerk is sniffing around the ledgers, asking careful questions. If anything is wrong, they'll find it. You can face it, bury it, or buy time.",
+      "options": [
+        {
+          "id": "cooperate",
+          "textId": "decision_qm_audit_cooperate",
+          "textFallback": "Cooperate: fix what you can and take the hit.",
+          "costs": { "fatigue": 1 },
+          "effects": { "heat": -2, "discipline": -1, "lance_reputation": 1, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -5 },
+          "clear_flags": ["corruption_pattern_detected"],
+          "outcomeTextId": "decision_qm_audit_cooperate_outcome",
+          "outcomeTextFallback": "You swallow pride and clean up the mess. It costs you standing, but the investigation cools â€” for now."
+        },
+        {
+          "id": "burn",
+          "textId": "decision_qm_audit_burn",
+          "textFallback": "Burn the paper trail: make the problem disappear.",
+          "costs": { "fatigue": 2 },
+          "effects": { "heat": 2, "discipline": 2, "lance_reputation": -1, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -10 },
+          "set_flags": ["corruption_pattern_detected"],
+          "flag_duration_days": 60,
+          "outcomeTextId": "decision_qm_audit_burn_outcome",
+          "outcomeTextFallback": "The ledger pages curl to ash. The questions stop. But you've crossed a line that doesn't uncross."
+        },
+        {
+          "id": "bribe",
+          "textId": "decision_qm_audit_bribe",
+          "textFallback": "Buy time: pay a quiet bribe and keep things moving.",
+          "costs": { "gold": 50 },
+          "effects": { "heat": -1, "discipline": 1, "lance_reputation": 0, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -5 },
+          "outcomeTextId": "decision_qm_audit_bribe_outcome",
+          "outcomeTextFallback": "Coin changes hands. The clerk loses interest. You gain a few weeks of breathing room."
         }
       ]
     },

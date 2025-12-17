@@ -309,6 +309,14 @@ namespace Enlisted.Features.Lances.Events
             // presentation path (VM, Inquiry, Incident) fires the event.
             ApplyDecisionEventEffects(evt, option);
 
+            // Phase 4/5: Onboarding stage advancement (data-driven via option flag).
+            // This runs on option selection so "close without choosing" cannot accidentally advance stages.
+            if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase) &&
+                option.AdvancesOnboarding)
+            {
+                LanceLifeOnboardingBehavior.Instance?.AdvanceStage($"option:{evt.Id}:{option.Id}");
+            }
+
             // Result/outcome text (best-effort).
             var resultText = ResolveOptionResultText(option, enlistment, success);
             return resultText ?? string.Empty;

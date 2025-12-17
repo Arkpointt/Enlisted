@@ -1,4 +1,4 @@
-﻿# enlisted documentation index
+# enlisted documentation index
 
 **last updated:** december 17, 2025
 
@@ -41,7 +41,7 @@ This is the **single entry point** for all Enlisted mod documentation.
 - You enlist with a lord and become an embedded soldier: you follow their movements, join their battles, and your wages accrue into the **muster ledger**.
 - Doc: **[Enlistment System](Core/enlistment.md)**
 
-### 2) First enlistment: Bag Check → Baggage Train
+### 2) First enlistment: Bag Check -> Baggage Train
 About **12 in-game hours** after enlisting (when safe), a bag check runs with choices:
 - **Stow it all (50g)**: stash inventory + equipped items into the **baggage train** and pay the wagon fee.
 - **Sell it all (60%)**: liquidate gear and receive denars.

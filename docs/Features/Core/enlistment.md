@@ -1,4 +1,4 @@
-﻿# Feature Spec: Enlistment System
+# Feature Spec: Enlistment System
 
 > Note: This page is still valid, but the **high-level “how the core loop fits together”** now lives in  
 > `docs/Features/core-gameplay.md`. Use this file for the deep-dive details.
@@ -54,10 +54,10 @@ Related systems (shipping):
 ## Behavior
 
 **Enlistment Process:**
-1. Talk to lord → Express interest in military service (kingdom flow or minor-faction mercenary flow)
+1. Talk to lord -> Express interest in military service (kingdom flow or minor-faction mercenary flow)
 2. Lord evaluates player (relationship, faction status)
 3. **Army Leader Restriction**: If player is leading their own army, lord will refuse with roleplay dialog explaining they must disband their army first
-4. Player confirms → Immediate enlistment with safety measures
+4. Player confirms -> Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
 7. Bag check is deferred ~12 in-game hours after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
@@ -97,9 +97,9 @@ Related systems (shipping):
 
 **Culture-Specific Ranks:**
 Rank names are determined by the enlisted lord's culture:
-- Empire: Tiro → Miles → Immunes → Principalis → Evocatus → Centurion
-- Vlandia: Peasant → Levy → Footman → Man-at-Arms → Sergeant → Knight Bachelor
-- Sturgia: Thrall → Ceorl → Fyrdman → Drengr → Huskarl → Varangian
+- Empire: Tiro -> Miles -> Immunes -> Principalis -> Evocatus -> Centurion
+- Vlandia: Peasant -> Levy -> Footman -> Man-at-Arms -> Sergeant -> Knight Bachelor
+- Sturgia: Thrall -> Ceorl -> Fyrdman -> Drengr -> Huskarl -> Varangian
 - (See `RankHelper.cs` for all cultures)
 
 **Proving Events & Promotion:**
@@ -118,14 +118,14 @@ Promotions are no longer automatic upon reaching XP thresholds. Players must mee
 **Proving Events by Tier:**
 | Tier | Event | Theme |
 |------|-------|-------|
-| T1→T2 | "Finding Your Place" | Formation choice (Infantry/Archer/Cavalry/Horse Archer) |
-| T2→T3 | "The Sergeant's Test" | Judgment and discipline |
-| T3→T4 | "Crisis of Command" | Leadership under fire |
-| T4→T5 | "The Lance Vote" | Earning the trust of your peers |
-| T5→T6 | "Audience with the Lord" | Loyalty declaration |
+| T1->T2 | "Finding Your Place" | Formation choice (Infantry/Archer/Cavalry/Horse Archer) |
+| T2->T3 | "The Sergeant's Test" | Judgment and discipline |
+| T3->T4 | "Crisis of Command" | Leadership under fire |
+| T4->T5 | "The Lance Vote" | Earning the trust of your peers |
+| T5->T6 | "Audience with the Lord" | Loyalty declaration |
 
 **After Promotion:**
-- Formation assigned (T1→T2)
+- Formation assigned (T1->T2)
 - Starter duty auto-assigned based on formation
 - Message prompts player to visit Quartermaster for new kit
 - New equipment unlocked (shown with [NEW] indicator)
@@ -216,7 +216,7 @@ When re-enlisting with a faction you've previously served, your reservist record
 - `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, retire incident entry point, service transfer, naval position sync, minor faction war mirroring, minor faction desertion cooldowns
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
-- `EnlistedDialogManager.cs` - Retire dialog routing, service transfer dialogs, minor faction dialog variants
+- `EnlistedDialogManager.cs` - Service transfer dialogs, leave/return, and discharge guidance (retirement is requested via Camp and resolves at Final Muster)
 - `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident and pay muster incident; schedules deferred native map incidents via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable; pay muster presents options (Standard, Corruption, Side Deal, Final Muster/Smuggle)
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
@@ -247,9 +247,6 @@ public CampaignTime LeaveStartDate { get; }  // When current leave started
 // Minor faction war mirroring and desertion cooldown
 private List<string> _minorFactionWarRelations;                 // wars mirrored from minor faction lord
 private Dictionary<string, CampaignTime> _minorFactionDesertionCooldowns; // re-enlist block per minor faction
-
-// Veteran retirement system (per-faction)
-private Dictionary<string, FactionVeteranRecord> _veteranRecords;
 private Hero _savedGraceLord;  // Tracks lord during grace period for map marker cleanup
 
 // Real-time monitoring (runs every frame)
@@ -272,7 +269,7 @@ _currentTermKills += kills;  // Track for faction record
 
 **Safety Systems:**
 - Lord status validation before any operations
-- Graceful service termination on lord death/capture → 14-day grace period
+- Graceful service termination on lord death/capture -> 14-day grace period
 - Army disbandment detection and handling
 - Settlement/battle state awareness
 - **Grace Period Shield**: After defeat, one-day ignore window prevents re-engagement
@@ -448,26 +445,26 @@ When the battle ends, the Naval DLC's `OnShipRemoved` iterates through agents an
 
 ## Acceptance Criteria
 
-- ✅ Can enlist with any lord that accepts player
-- ✅ Army leader restriction prevents crash and shows roleplay dialog
-- ✅ Player party safely hidden from map during service (UI Nameplate hidden)
-- ✅ Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
-- ✅ Daily XP progression (+25 per day)
-- ✅ Battle XP (+25 per battle, +1 per kill)
-- ✅ Kill tracking per faction (persists across terms)
-- ✅ Vanilla clan finances untouched; muster ledger separate from clan finance UI
-- ✅ Lord death/capture triggers 14-day grace period (not immediate discharge)
-- ✅ Army disbandment detected and grace period started
-- ✅ Service state persists through save/load cycles
-- ✅ Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
-- ✅ Re-enlistment with preserved tier and kill count; reservist re-entry system:
+- [x] Can enlist with any lord that accepts player
+- [x] Army leader restriction prevents crash and shows roleplay dialog
+- [x] Player party safely hidden from map during service (UI Nameplate hidden)
+- [x] Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
+- [x] Daily XP progression (+25 per day)
+- [x] Battle XP (+25 per battle, +1 per kill)
+- [x] Kill tracking per faction (persists across terms)
+- [x] Vanilla clan finances untouched; muster ledger separate from clan finance UI
+- [x] Lord death/capture triggers 14-day grace period (not immediate discharge)
+- [x] Army disbandment detected and grace period started
+- [x] Service state persists through save/load cycles
+- [x] Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
+- [x] Re-enlistment with preserved tier and kill count; reservist re-entry system:
   - Washout/Deserter: Tier 1 start, probation status
   - Honorable: Tier 3 start, +500 XP, +5 relation
   - Veteran/Heroic: Tier 4 start, +1,000 XP, +10 relation
-- ✅ Per-faction veteran tracking
-- ✅ Service transfer to different lord while on leave/grace (preserves all progression)
-- ✅ Voluntary desertion with confirmation menu and penalties
-- ✅ No pathfinding crashes or encounter system conflicts
+- [x] Per-faction veteran tracking
+- [x] Service transfer to different lord while on leave/grace (preserves all progression)
+- [x] Voluntary desertion with confirmation menu and penalties
+- [x] No pathfinding crashes or encounter system conflicts
 
 ## Debugging
 

@@ -52,6 +52,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
             var navalDlcType = AccessTools.TypeByName("NavalDLC.GameComponents.NavalDLCShipDeploymentModel");
             if (navalDlcType == null)
             {
+                // Non-spammy: if War Sails isn't loaded (or API changed), this patch won't apply.
+                ModLogger.WarnCodeOnce("reflect_naval_ship_deploy_model_missing", "Reflection", "W-REFLECT-001",
+                    "NavalDLCShipDeploymentModel not found; naval enlisted crash guards will be disabled (War Sails not loaded or API changed).");
                 return null;
             }
 
@@ -160,7 +163,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"GetSuitablePlayerShip EXCEPTION: {ex.Message}\nStack: {ex.StackTrace}");
+                // Stable support code + full exception detail (stack trace written once per unique exception).
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-006", "GetSuitablePlayerShip threw an exception", ex);
                 return true;
             }
         }
@@ -279,7 +283,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"GetOrderedCaptains EXCEPTION: {ex.Message}\nStack: {ex.StackTrace}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-007",
+                    "GetOrderedCaptainsForPlayerTeamShips prefix threw an exception", ex);
                 return true;
             }
         }
@@ -817,7 +822,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"OnShipRemoved error: {ex.Message}\n{ex.StackTrace}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-008", "OnShipRemoved prefix threw an exception", ex);
                 return true; // Fall back to original on error
             }
         }
@@ -854,7 +859,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"BattleObserver OnAgentRemoved error: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-009", "BattleObserverMissionLogic.OnAgentRemoved prefix threw an exception", ex);
                 return false;
             }
         }
@@ -907,7 +912,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"NavalAgents OnAgentRemoved error: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-010", "NavalAgentsLogic.OnAgentRemoved prefix threw an exception", ex);
                 return false;
             }
         }

@@ -27,10 +27,10 @@ Enlisted has **four** story content systems:
 
 | System | Location | Status | Use Case |
 |--------|----------|--------|----------|
-| **Events** | `ModuleData/Enlisted/Events/*.json` | ✅ CANONICAL | All story content |
-| **Decision Events** | `Events/*.json` (category: "decision") | ✅ ACTIVE | CK3-style pushed choices |
-| **Activities** | `ModuleData/Enlisted/Activities/activities.json` | ✅ ACTIVE | Camp location actions |
-| **Story Packs** | `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` | ⚠️ DEPRECATED | Legacy system, migrate to Events |
+| **Events** | `ModuleData/Enlisted/Events/*.json` | CANONICAL | All story content |
+| **Decision Events** | `Events/*.json` (category: "decision") | ACTIVE | CK3-style pushed choices |
+| **Activities** | `ModuleData/Enlisted/Activities/activities.json` | ACTIVE | Camp location actions |
+| **Story Packs** | `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` | DEPRECATED | Legacy system, migrate to Events |
 
 ### Source of Truth
 
@@ -93,7 +93,7 @@ When enlisted, the mod simulates lance life through three interconnected systems
 | Decision Events | `src/Features/Lances/Events/Decisions/DecisionEventBehavior.cs` |
 | Event Presentation | `src/Features/Lances/UI/ModernEventPresenter.cs` |
 
-### Lord Objectives → Schedule
+### Lord Objectives -> Schedule
 
 The lord's current activity determines daily schedules:
 
@@ -197,16 +197,16 @@ decision events push narrative choices to the player during gameplay. see `docs/
 
 | Phase | Status |
 |-------|--------|
-| Phase 1: Core Infrastructure | ✅ Complete |
-| Phase 1.5: Activity-Aware | ✅ Complete |
-| Phase 2: Pacing System | ✅ Complete |
-| Phase 3: Event Chains | ✅ Complete |
-| Phase 4: Player Menu | ✅ Complete |
-| Phase 5: Loot System | ⏳ Optional |
-| Phase 6: Tier-Based Narrative | ✅ Complete |
-| Phase 7: Content Creation | ⏳ Ongoing |
-| Phase 8: News Integration | ⏳ Documented |
-| Phase 9: Testing & Debug | ⏳ Pending |
+| Phase 1: Core Infrastructure | [x] Complete |
+| Phase 1.5: Activity-Aware | [x] Complete |
+| Phase 2: Pacing System | [x] Complete |
+| Phase 3: Event Chains | [x] Complete |
+| Phase 4: Player Menu | [x] Complete |
+| Phase 5: Loot System | IN PROGRESS Optional |
+| Phase 6: Tier-Based Narrative | [x] Complete |
+| Phase 7: Content Creation | IN PROGRESS Ongoing |
+| Phase 8: News Integration | IN PROGRESS Documented |
+| Phase 9: Testing & Debug | IN PROGRESS Pending |
 
 ---
 

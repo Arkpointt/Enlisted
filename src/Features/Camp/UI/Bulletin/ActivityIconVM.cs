@@ -165,12 +165,6 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         /// </summary>
         public void ExecuteSelect()
         {
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"ActivityIconVM.cs:ExecuteSelect\",\"message\":\"Activity clicked\",\"activity\":\"{ActivityName}\",\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug7\",\"hypothesisId\":\"Act\"}}\n");
-            // #endregion
-
             _onSelectAction?.Invoke(this);
         }
 

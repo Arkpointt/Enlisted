@@ -9,6 +9,7 @@ using TaleWorlds.GauntletUI.Data;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
 using TaleWorlds.ScreenSystem;
+using TaleWorlds.TwoDimension;
 
 namespace Enlisted.Features.Lances.UI
 {
@@ -43,6 +44,11 @@ namespace Enlisted.Features.Lances.UI
         private GauntletMovieIdentifier _gauntletMovie;
         private LanceLifeEventVM _dataSource;
 
+        // The prefab uses TownManagement divider sprites; load categories explicitly like our other Gauntlet screens
+        // so those sprites don't come up blank on some setups.
+        private SpriteCategory _townManagementSpriteCategory;
+        private SpriteCategory _encyclopediaSpriteCategory;
+
         private bool _closing;
 
         public LanceLifeEventScreen(LanceLifeEventDefinition eventDef, EnlistmentBehavior enlistment, Action onClosed = null)
@@ -63,6 +69,8 @@ namespace Enlisted.Features.Lances.UI
 
                 // Create the ViewModel
                 _dataSource = new LanceLifeEventVM(_event, _enlistment, CloseScreen);
+
+                LoadSpriteCategories();
 
                 // Create Gauntlet layer and load UI
                 _gauntletLayer = new GauntletLayer("GauntletLayer", 200);
@@ -92,7 +100,8 @@ namespace Enlisted.Features.Lances.UI
             }
             catch (Exception ex)
             {
-                Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to display lance event: {ex.Message}", ex);
+                Enlisted.Mod.Core.Logging.ModLogger.ErrorCode("LanceLifeUI", "E-LANCEUI-001",
+                    "Failed to display lance event", ex);
 
                 // Ensure crash guard doesn't remain stuck on if initialization fails.
                 SetNavalVisualCrashGuardState(0);
@@ -105,6 +114,7 @@ namespace Enlisted.Features.Lances.UI
                 _gauntletMovie = null;
                 _gauntletLayer = null;
                 _dataSource = null;
+                UnloadSpriteCategories();
 
                 // Close immediately and notify
                 _onClosed?.Invoke();
@@ -157,6 +167,7 @@ namespace Enlisted.Features.Lances.UI
 
             _dataSource?.OnFinalize();
             _dataSource = null;
+            UnloadSpriteCategories();
 
             // Close the screen
             ScreenManager.PopScreen();
@@ -184,6 +195,32 @@ namespace Enlisted.Features.Lances.UI
                 _gauntletLayer?.ReleaseMovie(_gauntletMovie);
                 _gauntletMovie = null;
             }
+
+            UnloadSpriteCategories();
+        }
+
+        private void LoadSpriteCategories()
+        {
+            _townManagementSpriteCategory = UIResourceManager.LoadSpriteCategory("ui_town_management");
+            if (_townManagementSpriteCategory != null && !_townManagementSpriteCategory.IsLoaded)
+            {
+                _townManagementSpriteCategory.Load();
+            }
+
+            _encyclopediaSpriteCategory = UIResourceManager.LoadSpriteCategory("ui_encyclopedia");
+            if (_encyclopediaSpriteCategory != null && !_encyclopediaSpriteCategory.IsLoaded)
+            {
+                _encyclopediaSpriteCategory.Load();
+            }
+        }
+
+        private void UnloadSpriteCategories()
+        {
+            _townManagementSpriteCategory?.Unload();
+            _townManagementSpriteCategory = null;
+
+            _encyclopediaSpriteCategory?.Unload();
+            _encyclopediaSpriteCategory = null;
         }
 
         /// <summary>
@@ -222,7 +259,8 @@ namespace Enlisted.Features.Lances.UI
                 }
                 catch (Exception ex)
                 {
-                    Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to display event screen: {ex.Message}", ex);
+                    Enlisted.Mod.Core.Logging.ModLogger.ErrorCode("LanceLifeUI", "E-LANCEUI-002",
+                        "Failed to display event screen", ex);
                     SetNavalVisualCrashGuardState(0);
                     // Ensure onClosed is called so the presenter can clean up
                     onClosed?.Invoke();

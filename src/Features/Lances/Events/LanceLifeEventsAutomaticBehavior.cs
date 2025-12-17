@@ -44,19 +44,22 @@ namespace Enlisted.Features.Lances.Events
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("ll_evt_q_id", ref _queuedEventId);
-            dataStore.SyncData("ll_evt_q_hour", ref _queuedAtHour);
-
-            dataStore.SyncData("ll_evt_lastFireHour", ref _lastAutoFireHour);
-            dataStore.SyncData("ll_evt_firesToday", ref _autoFiresToday);
-            dataStore.SyncData("ll_evt_firesDay", ref _autoFiresDayNumber);
-            dataStore.SyncData("ll_evt_lastEvalHour", ref _lastEvaluationHour);
-            dataStore.SyncData("ll_evt_lastFireDay", ref _lastAutoFireDayNumber);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                NormalizeLoadedState();
-            }
+                dataStore.SyncData("ll_evt_q_id", ref _queuedEventId);
+                dataStore.SyncData("ll_evt_q_hour", ref _queuedAtHour);
+
+                dataStore.SyncData("ll_evt_lastFireHour", ref _lastAutoFireHour);
+                dataStore.SyncData("ll_evt_firesToday", ref _autoFiresToday);
+                dataStore.SyncData("ll_evt_firesDay", ref _autoFiresDayNumber);
+                dataStore.SyncData("ll_evt_lastEvalHour", ref _lastEvaluationHour);
+                dataStore.SyncData("ll_evt_lastFireDay", ref _lastAutoFireDayNumber);
+
+                if (dataStore.IsLoading)
+                {
+                    NormalizeLoadedState();
+                }
+            });
         }
 
         private void NormalizeLoadedState()
@@ -450,12 +453,6 @@ namespace Enlisted.Features.Lances.Events
 
             var today = GetDayNumber();
             LanceLifeEventsStateBehavior.Instance?.MarkFired(evt);
-
-            // Phase 4: advance onboarding stage after an onboarding event is delivered.
-            if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase))
-            {
-                LanceLifeOnboardingBehavior.Instance?.AdvanceStage($"event_fired:{evt.Id}");
-            }
 
             var nowHour = GetHourNumber();
             _lastAutoFireHour = nowHour;

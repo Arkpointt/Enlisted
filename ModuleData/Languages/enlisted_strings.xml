@@ -719,8 +719,16 @@
     <!-- Training Activities (Phase 4) -->
     <string id="act_training_weapons" text="Weapons Practice" />
     <string id="act_training_weapons_hint" text="Practice with your main weapon. +30 Weapon XP, +15 Athletics. Day only." />
+    <string id="act_training_two_handed_drill" text="Two-Handed Drill" />
+    <string id="act_training_two_handed_drill_hint" text="Practice with a larger weapon. +Two-Handed XP, costs fatigue. Day only." />
+    <string id="act_training_polearm_drill" text="Polearm Drill" />
+    <string id="act_training_polearm_drill_hint" text="Work reach and formation spacing. +Polearm XP, costs fatigue. Day only." />
+    <string id="act_training_throwing_practice" text="Throwing Practice" />
+    <string id="act_training_throwing_practice_hint" text="Practice with javelins and axes. +Throwing XP, costs fatigue. Dawn/day." />
     <string id="act_training_archery" text="Archery Range" />
     <string id="act_training_archery_hint" text="Practice at the camp's archery butts. +35 Bow XP. Archers only." />
+    <string id="act_training_crossbow_range" text="Crossbow Range" />
+    <string id="act_training_crossbow_range_hint" text="Practice loading speed and aim. +Crossbow XP, costs fatigue. Dawn/day." />
     <string id="act_training_riding" text="Riding Drills" />
     <string id="act_training_riding_hint" text="Practice mounted combat. +25 Riding, +15 Polearm. Cavalry only." />
 
@@ -3017,8 +3025,16 @@
     <string id="act_training_sparring_hint" text="Practice sword work against training partners. The circle gathers to watch." />
     <string id="act_training_weapons" text="Weapons Practice [+30 Weapon XP, +15 Athletics | -2 Fatigue]" />
     <string id="act_training_weapons_hint" text="Practice with your main weapon at the training posts." />
+    <string id="act_training_two_handed_drill" text="Two-Handed Drill [+20 Two-Handed | -2 Fatigue]" />
+    <string id="act_training_two_handed_drill_hint" text="Practice swings, footwork, and spacing with a larger weapon." />
+    <string id="act_training_polearm_drill" text="Polearm Drill [+20 Polearm | -2 Fatigue]" />
+    <string id="act_training_polearm_drill_hint" text="Work thrusts, hooks, and formation reach with polearms." />
+    <string id="act_training_throwing_practice" text="Throwing Practice [+20 Throwing | -2 Fatigue]" />
+    <string id="act_training_throwing_practice_hint" text="Practice with javelins and throwing axes at close targets." />
     <string id="act_training_archery" text="Archery Range [+35 Bow | -2 Fatigue]" />
     <string id="act_training_archery_hint" text="Practice at the camp's archery butts. Draw, aim, loose." />
+    <string id="act_training_crossbow_range" text="Crossbow Range [+20 Crossbow | -2 Fatigue]" />
+    <string id="act_training_crossbow_range_hint" text="Practice loading speed and aim with a crossbow." />
     <string id="act_training_riding" text="Riding Drills [+25 Riding, +15 Polearm | -3 Fatigue]" />
     <string id="act_training_riding_hint" text="Practice mounted combat maneuvers with the cavalry." />
     

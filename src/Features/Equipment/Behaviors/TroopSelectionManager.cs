@@ -49,9 +49,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_promotionPending", ref _promotionPending);
-            dataStore.SyncData("_pendingTier", ref _pendingTier);
-            dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_promotionPending", ref _promotionPending);
+                dataStore.SyncData("_pendingTier", ref _pendingTier);
+                dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
+            });
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -101,7 +104,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var cultureId = enlistment?.CurrentLord?.Culture?.StringId;
                 if (string.IsNullOrEmpty(cultureId))
                 {
-                    ModLogger.Error("Equipment", "Master at Arms: Missing culture on current lord");
+                    ModLogger.ErrorCode("Equipment", "E-TROOPSEL-001", "Master at Arms: Missing culture on current lord");
                     return;
                 }
 
@@ -154,7 +157,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Equipment", $"Master at Arms apply failed: {ex.Message}", ex);
+                            ModLogger.ErrorCode("Equipment", "E-TROOPSEL-002", "Master at Arms apply failed", ex);
                         }
                     },
                     _ =>
@@ -168,7 +171,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Master at Arms popup failed: {ex.Message}");
+                ModLogger.ErrorCode("Equipment", "E-TROOPSEL-003", "Master at Arms popup failed", ex);
             }
         }
 
@@ -215,7 +218,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"GetUnlockedTroops failed: {ex.Message}");
+                ModLogger.ErrorCode("Equipment", "E-TROOPSEL-004", "GetUnlockedTroops failed", ex);
                 return new List<CharacterObject>();
             }
         }
@@ -305,7 +308,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("TroopSelection", $"Failed to open Master at Arms popup: {ex.Message}");
+                            ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-005", "Failed to open Master at Arms popup", ex);
                         }
                     });
                 },
@@ -330,7 +333,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("TroopSelection", $"Failed to switch back to enlisted status: {ex.Message}");
+                            ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-006", "Failed to switch back to enlisted status", ex);
                             // Fallback to safe activation if direct switch failed
                             EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
@@ -349,14 +352,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
-                    ModLogger.Error("TroopSelection", "Cannot show troop selection - player not enlisted");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-007", "Cannot show troop selection - player not enlisted");
                     return;
                 }
 
                 var cultureId = enlistment.CurrentLord?.Culture?.StringId;
                 if (string.IsNullOrEmpty(cultureId))
                 {
-                    ModLogger.Error("TroopSelection", "Cannot show troop selection - missing culture on current lord");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-008", "Cannot show troop selection - missing culture on current lord");
                     return;
                 }
                 _availableTroops = GetTroopsForCultureAndTier(cultureId, newTier);
@@ -365,7 +368,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 if (_availableTroops.Count == 0)
                 {
-                    ModLogger.Error("TroopSelection", $"No troops found for culture {cultureId} tier {newTier}");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-009", $"No troops found for culture {cultureId} tier {newTier}");
                     
                     // Fallback - apply basic tier progression without equipment change
                     enlistment.ApplyBasicPromotion(newTier);
@@ -572,7 +575,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", $"BuildCultureTroopTree failed: {ex.Message}");
+                ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-010", "BuildCultureTroopTree failed", ex);
             }
             return results;
         }
@@ -599,7 +602,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
                     if (troopEquipment == null)
                     {
-                        ModLogger.Error("TroopSelection", $"No equipment found for {selectedTroop.Name}");
+                        ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-011", $"No equipment found for {selectedTroop.Name}");
                         return;
                     }
 
@@ -629,7 +632,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}: {ex.Message}", ex);
+                ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-012",
+                    $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}", ex);
             }
         }
         
@@ -683,12 +687,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 else
                 {
-                    ModLogger.Error("TroopSelection", $"No {formationType} troop available");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-013", $"No {formationType} troop available");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", "Error in troop selection", ex);
+                ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-014", "Error in troop selection", ex);
             }
         }
         

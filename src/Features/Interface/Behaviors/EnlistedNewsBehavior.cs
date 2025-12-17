@@ -127,7 +127,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            try
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
                 // Sync kingdom feed as individual primitives (lists of complex types require manual handling)
                 var kingdomCount = _kingdomFeed?.Count ?? 0;
@@ -181,7 +181,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 _dailyBriefCompany ??= string.Empty;
                 _dailyBriefLance ??= string.Empty;
                 _dailyBriefKingdom ??= string.Empty;
-                
+
                 dataStore.SyncData("en_news_dailyBriefDay", ref _lastDailyBriefDayNumber);
                 dataStore.SyncData("en_news_dailyBriefCompany", ref _dailyBriefCompany);
                 dataStore.SyncData("en_news_dailyBriefLance", ref _dailyBriefLance);
@@ -228,16 +228,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 TrimFeeds();
 
                 ModLogger.Debug(LogCategory, $"News data synced: kingdom={_kingdomFeed.Count}, personal={_personalFeed.Count}");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Error syncing news data", ex);
-
-                // Safe fallback: reinitialize collections
-                _kingdomFeed = new List<DispatchItem>();
-                _personalFeed = new List<DispatchItem>();
-                _battleSnapshots = new Dictionary<string, BattleSnapshot>();
-            }
+            });
         }
 
         #region Public API (Menu Integration)

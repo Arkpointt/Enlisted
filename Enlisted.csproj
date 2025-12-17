@@ -138,7 +138,6 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
     <Content Include="GUI\Prefabs\Events\LanceLifeEventScreen.xml"/>
-    <Content Include="GUI\Prefabs\Events\EventChoiceButton.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampScreen.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampActivityCard.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampManagement.xml"/>
@@ -413,7 +412,6 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Events\LanceLifeEventScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Events\"/>
-    <Copy SourceFiles="GUI\Prefabs\Events\EventChoiceButton.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Events\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampBulletin.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampBulletinSimple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampActivityCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>

@@ -91,7 +91,7 @@ Camp surfaces the pay-system state so players always know where they stand:
 
 ### Discharge Actions (Final Muster)
 
-Discharge is handled as **Pending Discharge → Final Muster**:
+Discharge is handled as **Pending Discharge -> Final Muster**:
 - **Request Discharge (Final Muster)** sets pending discharge.
 - **Cancel Pending Discharge** clears it.
 - Final Muster resolves at the **next pay muster** and is where severance, pension, and gear handling occur.
@@ -181,8 +181,8 @@ Manage which companions fight in battles (Tier 4+).
 - Applies to all companions regardless of "Fight" or "Stay Back" setting
 
 **UI:**
-- Camp → Companion Assignments
-- Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
+- Camp -> Companion Assignments
+- Shows list of companions with toggle ( Fight /  Stay Back)
 - Changes saved immediately
 
 See [Companion Management](../Core/companion-management.md) for full details.
@@ -233,12 +233,12 @@ private List<string> _factionsServed;
 
 // Retinue State
 private string _retinueSelectedTypeId;  // "infantry", "archers", etc.
-private Dictionary<string, int> _retinueTroopCounts;  // CharacterObject.StringId → count
+private Dictionary<string, int> _retinueTroopCounts;  // CharacterObject.StringId -> count
 private int _daysSinceLastTrickle;
 private CampaignTime _requisitionCooldownEnd;
 
 // Companion Assignments
-private Dictionary<string, bool> _companionBattleParticipation;  // Hero.StringId → fight/stay back
+private Dictionary<string, bool> _companionBattleParticipation;  // Hero.StringId -> fight/stay back
 ```
 
 **RetinueState Class:**

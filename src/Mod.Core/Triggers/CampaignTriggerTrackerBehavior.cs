@@ -69,20 +69,23 @@ namespace Enlisted.Mod.Core.Triggers
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Settlements
-            dataStore.SyncData("tr_lastSettlementEnteredTime", ref _lastSettlementEnteredTime);
-            dataStore.SyncData("tr_lastSettlementEnteredId", ref _lastSettlementEnteredId);
-            dataStore.SyncData("tr_lastSettlementLeftTime", ref _lastSettlementLeftTime);
-            dataStore.SyncData("tr_lastSettlementLeftId", ref _lastSettlementLeftId);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                // Settlements
+                dataStore.SyncData("tr_lastSettlementEnteredTime", ref _lastSettlementEnteredTime);
+                dataStore.SyncData("tr_lastSettlementEnteredId", ref _lastSettlementEnteredId);
+                dataStore.SyncData("tr_lastSettlementLeftTime", ref _lastSettlementLeftTime);
+                dataStore.SyncData("tr_lastSettlementLeftId", ref _lastSettlementLeftId);
 
-            dataStore.SyncData("tr_lastTownEnteredTime", ref _lastTownEnteredTime);
-            dataStore.SyncData("tr_lastCastleEnteredTime", ref _lastCastleEnteredTime);
-            dataStore.SyncData("tr_lastVillageEnteredTime", ref _lastVillageEnteredTime);
+                dataStore.SyncData("tr_lastTownEnteredTime", ref _lastTownEnteredTime);
+                dataStore.SyncData("tr_lastCastleEnteredTime", ref _lastCastleEnteredTime);
+                dataStore.SyncData("tr_lastVillageEnteredTime", ref _lastVillageEnteredTime);
 
-            // Battles / map events
-            dataStore.SyncData("tr_lastMapEventStartedTime", ref _lastMapEventStartedTime);
-            dataStore.SyncData("tr_lastMapEventEndedTime", ref _lastMapEventEndedTime);
-            dataStore.SyncData("tr_lastMapEventType", ref _lastMapEventType);
+                // Battles / map events
+                dataStore.SyncData("tr_lastMapEventStartedTime", ref _lastMapEventStartedTime);
+                dataStore.SyncData("tr_lastMapEventEndedTime", ref _lastMapEventEndedTime);
+                dataStore.SyncData("tr_lastMapEventType", ref _lastMapEventType);
+            });
         }
 
         /// <summary>

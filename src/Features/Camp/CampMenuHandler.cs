@@ -147,7 +147,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to register camp menus: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-001", "Failed to register camp menus", ex);
             }
         }
         
@@ -849,7 +849,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing Current Posting: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-002", "Error initializing Current Posting", ex);
                 MBTextManager.SetTextVariable("CURRENT_POSTING_TEXT", "Error loading current posting data.");
             }
         }
@@ -945,31 +945,17 @@ namespace Enlisted.Features.Camp
         }
 
         /// <summary>
-        /// Calculates days remaining in current term based on term type (first term vs renewal).
+        /// Calculates days remaining until first-term completion (used as a simple progress indicator).
         /// </summary>
         private static string GetDaysRemaining(EnlistmentBehavior enlistment)
         {
             try
             {
                 var remainingDays = 0;
-                var faction = enlistment.CurrentLord?.MapFaction;
 
-                if (faction != null)
-                {
-                    // Check if in renewal term first
-                    var record = enlistment.GetFactionVeteranRecord(faction);
-                    if (record is { IsInRenewalTerm: true } && record.CurrentTermEnd != CampaignTime.Zero)
-                    {
-                        remainingDays = (int)(record.CurrentTermEnd - CampaignTime.Now).ToDays;
-                    }
-                    else
-                    {
-                        // First term calculation
-                        var retirementConfig = EnlistedConfig.LoadRetirementConfig();
-                        var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
-                        remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
-                    }
-                }
+                var retirementConfig = EnlistedConfig.LoadRetirementConfig();
+                var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
+                remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
 
                 if (remainingDays <= 0)
                 {
@@ -980,7 +966,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error calculating days remaining: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-003", "Error calculating days remaining", ex);
                 return "Unknown";
             }
         }
@@ -1033,7 +1019,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing Faction Records: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-004", "Error initializing Faction Records", ex);
                 MBTextManager.SetTextVariable("FACTION_RECORDS_TEXT", "Error loading faction records.");
             }
         }
@@ -1135,7 +1121,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing Faction Detail: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-005", "Error initializing Faction Detail", ex);
                 MBTextManager.SetTextVariable("FACTION_DETAIL_TEXT", "Error loading faction detail.");
             }
         }
@@ -1230,7 +1216,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing Lifetime Summary: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-006", "Error initializing Lifetime Summary", ex);
                 MBTextManager.SetTextVariable("LIFETIME_SUMMARY_TEXT", "Error loading lifetime summary.");
             }
         }
@@ -1496,7 +1482,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing Retinue menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-007", "Error initializing Retinue menu", ex);
                 MBTextManager.SetTextVariable("RETINUE_STATUS_TEXT", "Error loading retinue status.");
             }
         }
@@ -1709,7 +1695,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing purchase menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-008", "Error initializing purchase menu", ex);
                 MBTextManager.SetTextVariable("RETINUE_PURCHASE_TEXT", "Error loading purchase options.");
             }
         }
@@ -1947,7 +1933,7 @@ namespace Enlisted.Features.Camp
 
             if (manager == null)
             {
-                ModLogger.Error(LogCategory, "ExecutePurchase: manager null");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-009", "ExecutePurchase: manager null");
                 return;
             }
 
@@ -2092,7 +2078,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing dismiss menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-010", "Error initializing dismiss menu", ex);
                 MBTextManager.SetTextVariable("RETINUE_DISMISS_TEXT", "Error loading dismiss options.");
             }
         }
@@ -2272,7 +2258,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing requisition menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-011", "Error initializing requisition menu", ex);
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT", "Error loading requisition details.");
                 MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", "Requisition");
             }
@@ -2286,7 +2272,7 @@ namespace Enlisted.Features.Camp
             var manager = RetinueManager.Instance;
             if (manager == null)
             {
-                ModLogger.Error(LogCategory, "ExecuteRequisition: manager null");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-012", "ExecuteRequisition: manager null");
                 SwitchToMenuPreserveTime(RetinueMenuId);
                 return;
             }
@@ -2439,7 +2425,7 @@ namespace Enlisted.Features.Camp
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing companion assignments: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-CAMP-013", "Error initializing companion assignments", ex);
                 MBTextManager.SetTextVariable("COMPANION_ASSIGNMENTS_TEXT", "Error loading companion data.");
             }
         }

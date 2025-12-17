@@ -44,132 +44,135 @@ namespace Enlisted.Features.Lances.Personas
 
         public override void SyncData(IDataStore dataStore)
         {
-            var rosterKeys = new List<string>(_rosters.Keys);
-            rosterKeys.Sort(StringComparer.OrdinalIgnoreCase);
-            var rosterCount = rosterKeys.Count;
-            dataStore.SyncData("lp_rosterCount", ref rosterCount);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _rosters.Clear();
-                for (var i = 0; i < rosterCount; i++)
+                var rosterKeys = new List<string>(_rosters.Keys);
+                rosterKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                var rosterCount = rosterKeys.Count;
+                dataStore.SyncData("lp_rosterCount", ref rosterCount);
+
+                if (dataStore.IsLoading)
                 {
-                    var key = string.Empty;
-                    var lordId = string.Empty;
-                    var cultureId = string.Empty;
-                    var seed = 0;
-                    var memberCount = 0;
-                    dataStore.SyncData($"lp_roster_{i}_key", ref key);
-                    dataStore.SyncData($"lp_roster_{i}_lord", ref lordId);
-                    dataStore.SyncData($"lp_roster_{i}_culture", ref cultureId);
-                    dataStore.SyncData($"lp_roster_{i}_seed", ref seed);
-                    dataStore.SyncData($"lp_roster_{i}_memberCount", ref memberCount);
-
-                    if (string.IsNullOrWhiteSpace(key))
+                    _rosters.Clear();
+                    for (var i = 0; i < rosterCount; i++)
                     {
-                        continue;
-                    }
+                        var key = string.Empty;
+                        var lordId = string.Empty;
+                        var cultureId = string.Empty;
+                        var seed = 0;
+                        var memberCount = 0;
+                        dataStore.SyncData($"lp_roster_{i}_key", ref key);
+                        dataStore.SyncData($"lp_roster_{i}_lord", ref lordId);
+                        dataStore.SyncData($"lp_roster_{i}_culture", ref cultureId);
+                        dataStore.SyncData($"lp_roster_{i}_seed", ref seed);
+                        dataStore.SyncData($"lp_roster_{i}_memberCount", ref memberCount);
 
-                    var roster = new LancePersonaRoster
-                    {
-                        LanceKey = key,
-                        LordId = lordId ?? string.Empty,
-                        CultureId = cultureId ?? string.Empty,
-                        Seed = seed,
-                        Members = new List<LancePersonaMember>()
-                    };
-
-                    for (var m = 0; m < memberCount; m++)
-                    {
-                        var slot = 0;
-                        var posInt = 0;
-                        var alive = true;
-                        var rankId = string.Empty;
-                        var rankFallback = string.Empty;
-                        var first = string.Empty;
-                        var epithet = string.Empty;
-                        var daysInService = 0;
-                        var battlesParticipated = 0;
-                        var xp = 0;
-
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_slot", ref slot);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_pos", ref posInt);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_alive", ref alive);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_rankId", ref rankId);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_rankFallback", ref rankFallback);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_first", ref first);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_epithet", ref epithet);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_days", ref daysInService);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_battles", ref battlesParticipated);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_xp", ref xp);
-
-                        roster.Members.Add(new LancePersonaMember
+                        if (string.IsNullOrWhiteSpace(key))
                         {
-                            SlotIndex = slot,
-                            Position = (LancePosition)posInt,
-                            IsAlive = alive,
-                            RankTitleId = rankId ?? string.Empty,
-                            RankTitleFallback = rankFallback ?? string.Empty,
-                            FirstName = first ?? string.Empty,
-                            Epithet = epithet ?? string.Empty,
-                            DaysInService = daysInService,
-                            BattlesParticipated = battlesParticipated,
-                            ExperiencePoints = xp
-                        });
-                    }
+                            continue;
+                        }
 
-                    _rosters[key] = roster;
+                        var roster = new LancePersonaRoster
+                        {
+                            LanceKey = key,
+                            LordId = lordId ?? string.Empty,
+                            CultureId = cultureId ?? string.Empty,
+                            Seed = seed,
+                            Members = new List<LancePersonaMember>()
+                        };
+
+                        for (var m = 0; m < memberCount; m++)
+                        {
+                            var slot = 0;
+                            var posInt = 0;
+                            var alive = true;
+                            var rankId = string.Empty;
+                            var rankFallback = string.Empty;
+                            var first = string.Empty;
+                            var epithet = string.Empty;
+                            var daysInService = 0;
+                            var battlesParticipated = 0;
+                            var xp = 0;
+
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_slot", ref slot);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_pos", ref posInt);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_alive", ref alive);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_rankId", ref rankId);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_rankFallback", ref rankFallback);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_first", ref first);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_epithet", ref epithet);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_days", ref daysInService);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_battles", ref battlesParticipated);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_xp", ref xp);
+
+                            roster.Members.Add(new LancePersonaMember
+                            {
+                                SlotIndex = slot,
+                                Position = (LancePosition)posInt,
+                                IsAlive = alive,
+                                RankTitleId = rankId ?? string.Empty,
+                                RankTitleFallback = rankFallback ?? string.Empty,
+                                FirstName = first ?? string.Empty,
+                                Epithet = epithet ?? string.Empty,
+                                DaysInService = daysInService,
+                                BattlesParticipated = battlesParticipated,
+                                ExperiencePoints = xp
+                            });
+                        }
+
+                        _rosters[key] = roster;
+                    }
                 }
-            }
-            else
-            {
-                for (var i = 0; i < rosterKeys.Count; i++)
+                else
                 {
-                    var key = rosterKeys[i];
-                    if (!_rosters.TryGetValue(key, out var roster) || roster == null)
+                    for (var i = 0; i < rosterKeys.Count; i++)
                     {
-                        continue;
-                    }
+                        var key = rosterKeys[i];
+                        if (!_rosters.TryGetValue(key, out var roster) || roster == null)
+                        {
+                            continue;
+                        }
 
-                    var lordId = roster.LordId ?? string.Empty;
-                    var cultureId = roster.CultureId ?? string.Empty;
-                    var seed = roster.Seed;
-                    var members = roster.Members ?? new List<LancePersonaMember>();
-                    var memberCount = members.Count;
+                        var lordId = roster.LordId ?? string.Empty;
+                        var cultureId = roster.CultureId ?? string.Empty;
+                        var seed = roster.Seed;
+                        var members = roster.Members ?? new List<LancePersonaMember>();
+                        var memberCount = members.Count;
 
-                    dataStore.SyncData($"lp_roster_{i}_key", ref key);
-                    dataStore.SyncData($"lp_roster_{i}_lord", ref lordId);
-                    dataStore.SyncData($"lp_roster_{i}_culture", ref cultureId);
-                    dataStore.SyncData($"lp_roster_{i}_seed", ref seed);
-                    dataStore.SyncData($"lp_roster_{i}_memberCount", ref memberCount);
+                        dataStore.SyncData($"lp_roster_{i}_key", ref key);
+                        dataStore.SyncData($"lp_roster_{i}_lord", ref lordId);
+                        dataStore.SyncData($"lp_roster_{i}_culture", ref cultureId);
+                        dataStore.SyncData($"lp_roster_{i}_seed", ref seed);
+                        dataStore.SyncData($"lp_roster_{i}_memberCount", ref memberCount);
 
-                    for (var m = 0; m < memberCount; m++)
-                    {
-                        var member = members[m] ?? new LancePersonaMember();
-                        var slot = member.SlotIndex;
-                        var posInt = (int)member.Position;
-                        var alive = member.IsAlive;
-                        var rankId = member.RankTitleId ?? string.Empty;
-                        var rankFallback = member.RankTitleFallback ?? string.Empty;
-                        var first = member.FirstName ?? string.Empty;
-                        var epithet = member.Epithet ?? string.Empty;
-                        var daysInService = member.DaysInService;
-                        var battlesParticipated = member.BattlesParticipated;
-                        var xp = member.ExperiencePoints;
+                        for (var m = 0; m < memberCount; m++)
+                        {
+                            var member = members[m] ?? new LancePersonaMember();
+                            var slot = member.SlotIndex;
+                            var posInt = (int)member.Position;
+                            var alive = member.IsAlive;
+                            var rankId = member.RankTitleId ?? string.Empty;
+                            var rankFallback = member.RankTitleFallback ?? string.Empty;
+                            var first = member.FirstName ?? string.Empty;
+                            var epithet = member.Epithet ?? string.Empty;
+                            var daysInService = member.DaysInService;
+                            var battlesParticipated = member.BattlesParticipated;
+                            var xp = member.ExperiencePoints;
 
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_slot", ref slot);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_pos", ref posInt);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_alive", ref alive);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_rankId", ref rankId);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_rankFallback", ref rankFallback);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_first", ref first);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_epithet", ref epithet);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_days", ref daysInService);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_battles", ref battlesParticipated);
-                        dataStore.SyncData($"lp_roster_{i}_m_{m}_xp", ref xp);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_slot", ref slot);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_pos", ref posInt);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_alive", ref alive);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_rankId", ref rankId);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_rankFallback", ref rankFallback);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_first", ref first);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_epithet", ref epithet);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_days", ref daysInService);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_battles", ref battlesParticipated);
+                            dataStore.SyncData($"lp_roster_{i}_m_{m}_xp", ref xp);
+                        }
                     }
                 }
-            }
+            });
         }
 
         public bool IsEnabled()
@@ -192,20 +195,55 @@ namespace Enlisted.Features.Lances.Personas
                     return;
                 }
 
-                var roster = EnsureRosterFor(enlistment.CurrentLord, enlistment.CurrentLanceId);
-                if (roster == null) return;
-                
-                // Increment days in service for all living members
-                foreach (var member in roster.Members)
+                var lord = enlistment.CurrentLord;
+                if (lord == null)
                 {
-                    if (member.IsAlive)
-                    {
-                        member.DaysInService++;
-                    }
+                    return;
                 }
-                
-                // Check for promotions once per day
-                ProcessPromotions(roster, enlistment.CurrentLord?.Culture?.StringId ?? "empire");
+
+                // Simulate all lances in the lord's party (not just the player's current lance).
+                // This keeps Camp UI "other lances" from being static placeholders.
+                var partyLances = LanceRegistry.GetLordPartyLances(
+                    lord,
+                    playerCurrentLanceId: enlistment.CurrentLanceId,
+                    maxLances: 3);
+
+                if (partyLances == null || partyLances.Count == 0)
+                {
+                    // Fallback: at least ensure the player's current lance exists.
+                    partyLances = new List<LanceAssignment>
+                    {
+                        LanceRegistry.ResolveLanceById(enlistment.CurrentLanceId)
+                    };
+                }
+
+                var cultureId = lord.Culture?.StringId ?? "empire";
+                foreach (var lance in partyLances)
+                {
+                    var lanceId = lance?.Id ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(lanceId))
+                    {
+                        continue;
+                    }
+
+                    var roster = EnsureRosterFor(lord, lanceId);
+                    if (roster?.Members == null)
+                    {
+                        continue;
+                    }
+
+                    // Increment days in service for all living members
+                    foreach (var member in roster.Members)
+                    {
+                        if (member.IsAlive)
+                        {
+                            member.DaysInService++;
+                        }
+                    }
+
+                    // Check for promotions once per day (one per roster/day)
+                    ProcessPromotions(roster, cultureId);
+                }
             }
             catch (Exception ex)
             {

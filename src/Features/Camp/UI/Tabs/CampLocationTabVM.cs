@@ -199,7 +199,7 @@ namespace Enlisted.Features.Camp.UI.Tabs
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampLocationTab", $"Failed to refresh activities: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampLocationTab", "E-CAMPUI-020", "Failed to refresh activities", ex);
             }
         }
 

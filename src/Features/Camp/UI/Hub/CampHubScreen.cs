@@ -67,7 +67,7 @@ namespace Enlisted.Features.Camp.UI.Hub
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampHubUI", $"Failed to display Camp Hub screen: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampHubUI", "E-CAMPUI-040", "Failed to display Camp Hub screen", ex);
                 
                 // Clean up partial initialization
                 if (_gauntletMovie != null && _gauntletLayer != null)
@@ -180,7 +180,7 @@ namespace Enlisted.Features.Camp.UI.Hub
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("CampHubUI", $"Failed to display Camp Hub screen: {ex.Message}", ex);
+                    ModLogger.ErrorCode("CampHubUI", "E-CAMPUI-041", "Failed to display Camp Hub screen", ex);
                     // Ensure onClosed is called so the caller can clean up
                     onClosed?.Invoke();
                 }

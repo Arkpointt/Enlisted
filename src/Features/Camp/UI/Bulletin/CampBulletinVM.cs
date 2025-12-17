@@ -173,12 +173,6 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         /// </summary>
         public void ExecuteShowBulletin()
         {
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"CampBulletinVM.cs:ExecuteShowBulletin\",\"message\":\"Return to bulletin\",\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug5\",\"hypothesisId\":\"Loc\"}}\n");
-            // #endregion
-
             ShowingBulletin = true;
             CurrentLocationId = string.Empty;
             HasSelectedActivity = false;
@@ -221,12 +215,6 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         {
             if (activityIcon == null) return;
 
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"CampBulletinVM.cs:ExecuteSelectActivity\",\"message\":\"Selected activity\",\"activity\":\"{activityIcon.ActivityName}\",\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug7\",\"hypothesisId\":\"Act\"}}\n");
-            // #endregion
-
             SelectedActivity = new ActivityDetailVM(activityIcon.Activity);
             HasSelectedActivity = true;
 
@@ -268,28 +256,9 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         /// </summary>
         public void ExecuteDone()
         {
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"CampBulletinVM.cs:ExecuteDone\",\"message\":\"ExecuteDone called\",\"showBefore\":{Show.ToString().ToLower()},\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug3\",\"hypothesisId\":\"C\"}}\n");
-            // #endregion
-
             Show = false;
-
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"CampBulletinVM.cs:ExecuteDone\",\"message\":\"ExecuteDone finished\",\"showAfter\":{Show.ToString().ToLower()},\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug3\",\"hypothesisId\":\"C\"}}\n");
-            // #endregion
-
             // TownManagement pattern is "Show=false then view closes itself".
             // In our overlay, campaign ticks may be suspended while the menu is open, so we also close directly.
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"CampBulletinVM.cs:ExecuteDone\",\"message\":\"Calling CampBulletinScreen.Close()\",\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug6\",\"hypothesisId\":\"Close\"}}\n");
-            // #endregion
-
             CampBulletinScreen.Close();
         }
 

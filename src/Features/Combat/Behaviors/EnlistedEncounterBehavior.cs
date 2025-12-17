@@ -77,7 +77,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Combat", $"Failed to initialize encounter behavior: {ex.Message}");
+                ModLogger.ErrorCode("Combat", "E-COMBAT-001", "Failed to initialize encounter behavior", ex);
             }
         }
         
@@ -278,7 +278,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error entering reserve mode: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLEWAIT-001", "Error entering reserve mode", ex);
             }
         }
 
@@ -314,7 +314,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error initializing battle wait menu: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLEWAIT-002", "Error initializing battle wait menu", ex);
             }
         }
 
@@ -562,7 +562,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in battle wait tick: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLEWAIT-003", "Error in battle wait tick", ex);
             }
         }
 
@@ -642,21 +642,21 @@ namespace Enlisted.Features.Combat.Behaviors
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("Battle", $"Error in rejoin menu switch: {ex.Message}");
+                        ModLogger.ErrorCode("Battle", "E-BATTLEWAIT-004", "Error in rejoin menu switch", ex);
                         try
                         {
                             GameMenu.ExitToLast();
                         }
                         catch (Exception fallbackEx)
                         {
-                            ModLogger.Error("Battle", $"Error during fallback exit: {fallbackEx.Message}");
+                            ModLogger.ErrorCode("Battle", "E-BATTLEWAIT-006", "Error during fallback exit", fallbackEx);
                         }
                     }
                 });
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error rejoining battle: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLEWAIT-005", "Error rejoining battle", ex);
             }
         }
 

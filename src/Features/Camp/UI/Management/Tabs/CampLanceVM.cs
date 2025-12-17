@@ -46,7 +46,7 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         
         /// <summary>
         /// Refresh list of lances from enlistment and persona data.
-        /// Currently shows player's lance + demo lances (until AI Lord Lance Simulation is implemented).
+        /// Shows a deterministic set of lances for the enlisted lord (player lance + other party lances).
         /// </summary>
         private void RefreshLanceList()
         {
@@ -76,105 +76,62 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                 ? new BannerImageIdentifierVM(bannerManager.GetOrCreateLanceBanner(lord, playerLanceId, isPlayerLanceLeader))
                 : new BannerImageIdentifierVM(lord.ClanBanner);
             
-            // Get actual lance name from lance registry
-            var lanceAssignment = Enlisted.Features.Assignments.Core.LanceRegistry.ResolveLanceById(playerLanceId);
-            var lanceName = lanceAssignment?.Name ?? "The Red Chevron"; // Fallback
-            
-            // Get player's lance roster
-            var playerRoster = personaBehavior?.GetRosterFor(lord, playerLanceId);
-            
-            if (playerRoster != null)
+            // Determine the lord's party lances (stable per lord).
+            var partyLances = Enlisted.Features.Assignments.Core.LanceRegistry.GetLordPartyLances(
+                lord,
+                playerCurrentLanceId: playerLanceId,
+                maxLances: 3);
+
+            foreach (var lance in partyLances)
             {
-                var playerLance = new LanceItemVM(
-                    playerRoster.LanceKey,
-                    lanceName,
-                    0, // Infantry
-                    playerRoster.Members.Count(m => m.IsAlive),
-                    playerRoster.Members.Count(m => !m.IsAlive),
-                    playerLanceBanner,
-                    OnLanceSelect
-                );
-                
-                // Load members from roster
-                foreach (var member in playerRoster.Members)
+                if (lance == null || string.IsNullOrWhiteSpace(lance.Id))
                 {
-                    // Use persona's culture-specific rank, or fallback to position-based rank
-                    var displayRank = !string.IsNullOrEmpty(member.RankTitleFallback)
-                        ? member.RankTitleFallback
-                        : GetLancePositionRank(member.Position, lord?.Culture?.StringId ?? "empire");
-                    
-                    playerLance.AddMember(new LanceMemberItemVM(
-                        member.FirstName + (string.IsNullOrEmpty(member.Epithet) ? "" : $" {member.Epithet}"),
-                        displayRank,
-                        (int)member.Position,
-                        member.IsAlive
-                    ));
+                    continue;
                 }
-                
-                Lances.Add(playerLance);
+
+                // Formation type mapping for UI (matches ClanType-like layout):
+                // 0=Infantry, 1=Cavalry (incl. horsearcher), 2=Archer/Ranged
+                var role = (lance.RoleHint ?? string.Empty).ToLowerInvariant();
+                var formationType = role == "ranged" ? 2 : (role == "cavalry" || role == "horsearcher" ? 1 : 0);
+
+                var isThisPlayerLance = string.Equals(lance.Id, playerLanceId, StringComparison.OrdinalIgnoreCase);
+                var banner = bannerManager != null
+                    ? new BannerImageIdentifierVM(bannerManager.GetOrCreateLanceBanner(lord, lance.Id, isThisPlayerLance && isPlayerLanceLeader))
+                    : new BannerImageIdentifierVM(lord.ClanBanner);
+
+                var roster = personaBehavior?.GetRosterFor(lord, lance.Id);
+                var memberCount = roster?.Members?.Count(m => m.IsAlive) ?? 0;
+                var fallenCount = roster?.Members?.Count(m => !m.IsAlive) ?? 0;
+
+                var item = new LanceItemVM(
+                    lanceKey: roster?.LanceKey ?? $"{lord.StringId}:{lance.Id}",
+                    name: lance.Name ?? lance.Id,
+                    formationType: formationType,
+                    memberCount: memberCount,
+                    fallenCount: fallenCount,
+                    banner: banner,
+                    onSelect: OnLanceSelect);
+
+                // Populate members if we have personas; otherwise keep list empty (still shows counts/banners).
+                if (roster?.Members != null)
+                {
+                    var cultureId = lord?.Culture?.StringId ?? "empire";
+                    foreach (var member in roster.Members)
+                    {
+                        var displayRank = !string.IsNullOrEmpty(member.RankTitleFallback)
+                            ? member.RankTitleFallback
+                            : GetLancePositionRank(member.Position, cultureId);
+
+                        item.AddMember(new LanceMemberItemVM(
+                            member.FirstName + (string.IsNullOrEmpty(member.Epithet) ? "" : $" {member.Epithet}"),
+                            displayRank,
+                            (int)member.Position,
+                            member.IsAlive));
+                    }
+                }
+
+                Lances.Add(item);
             }
-            else
-            {
-                // Fallback: Show basic player lance without personas
-                // Uses culture-specific rank names from lance persona system
-                var lordCulture = lord?.Culture?.StringId ?? "empire";
-                var playerLance = new LanceItemVM("player_lance", lanceName, 0, 6, 0, playerLanceBanner, OnLanceSelect);
-                playerLance.AddMember(new LanceMemberItemVM("Aldric", GetLancePositionRank(LancePosition.Leader, lordCulture), 0, true));
-                playerLance.AddMember(new LanceMemberItemVM("Megenhelda", GetLancePositionRank(LancePosition.Second, lordCulture), 1, true));
-                playerLance.AddMember(new LanceMemberItemVM("Elthild", GetLancePositionRank(LancePosition.Veteran, lordCulture), 2, true));
-                playerLance.AddMember(new LanceMemberItemVM("Furnhard", GetLancePositionRank(LancePosition.Veteran, lordCulture), 3, true));
-                playerLance.AddMember(new LanceMemberItemVM("Liena", GetLancePositionRank(LancePosition.Soldier, lordCulture), 4, true));
-                playerLance.AddMember(new LanceMemberItemVM("You (Player)", GetLancePositionRank(LancePosition.Recruit, lordCulture), 5, true));
-                Lances.Add(playerLance);
-            }
-            
-            // Demo lances (until AI Lord Lance Simulation is implemented)
-            // Each lance gets a persistent unique banner
-            var catalog = Enlisted.Features.Assignments.Core.ConfigurationManager.LoadLanceCatalog();
-            var availableLances = catalog?.StyleDefinitions?.FirstOrDefault()?.Lances ?? new List<Enlisted.Features.Assignments.Core.LanceDefinition>();
-            
-            var lance2Name = availableLances.Count > 1 ? availableLances[1].Name : "The Iron Column";
-            var lance3Name = availableLances.Count > 2 ? availableLances[2].Name : "The Eagle's Talons";
-            
-            // Use unique demo lance IDs that won't collide with real lance assignments
-            // Format: "demo_{lordStringId}_2" ensures uniqueness per lord and won't match player's lance ID
-            var lance2Id = $"demo_{lord.StringId}_2";
-            var lance3Id = $"demo_{lord.StringId}_3";
-            
-            Enlisted.Mod.Core.Logging.ModLogger.Debug("CampLance", $"Player lance ID: {playerLanceId}");
-            Enlisted.Mod.Core.Logging.ModLogger.Debug("CampLance", $"Demo lance 2 ID: {lance2Id}");
-            Enlisted.Mod.Core.Logging.ModLogger.Debug("CampLance", $"Demo lance 3 ID: {lance3Id}");
-            
-            var lance2Banner = bannerManager != null
-                ? new BannerImageIdentifierVM(bannerManager.GetOrCreateLanceBanner(lord, lance2Id, false))
-                : new BannerImageIdentifierVM(lord.ClanBanner);
-            var lance3Banner = bannerManager != null
-                ? new BannerImageIdentifierVM(bannerManager.GetOrCreateLanceBanner(lord, lance3Id, false))
-                : new BannerImageIdentifierVM(lord.ClanBanner);
-            
-            // Demo lances use the lord's culture for rank names
-            var demoCulture = lord?.Culture?.StringId ?? "empire";
-            
-            // Demo lance 2 - uses culture-specific ranks
-            var lance2 = new LanceItemVM("demo_2", lance2Name, 1, 7, 2, lance2Banner, OnLanceSelect); // Cavalry, 2 fallen
-            lance2.AddMember(new LanceMemberItemVM("Draconis", GetLancePositionRank(LancePosition.Leader, demoCulture), 0, true));
-            lance2.AddMember(new LanceMemberItemVM("Valerius", GetLancePositionRank(LancePosition.Second, demoCulture), 1, true));
-            lance2.AddMember(new LanceMemberItemVM("Cassius", GetLancePositionRank(LancePosition.Veteran, demoCulture), 2, true));
-            lance2.AddMember(new LanceMemberItemVM("Maximus", GetLancePositionRank(LancePosition.Soldier, demoCulture), 4, true));
-            lance2.AddMember(new LanceMemberItemVM("Brutus", GetLancePositionRank(LancePosition.Soldier, demoCulture), 4, true));
-            lance2.AddMember(new LanceMemberItemVM("Titus", GetLancePositionRank(LancePosition.Soldier, demoCulture), 4, true));
-            lance2.AddMember(new LanceMemberItemVM("Gaius", GetLancePositionRank(LancePosition.Recruit, demoCulture), 5, true));
-            Lances.Add(lance2);
-            
-            // Demo lance 3 - uses culture-specific ranks
-            var lance3 = new LanceItemVM("demo_3", lance3Name, 2, 6, 1, lance3Banner, OnLanceSelect); // Archer, 1 fallen
-            lance3.AddMember(new LanceMemberItemVM("Aelric", GetLancePositionRank(LancePosition.Leader, demoCulture), 0, true));
-            lance3.AddMember(new LanceMemberItemVM("Wulfric", GetLancePositionRank(LancePosition.Second, demoCulture), 1, true));
-            lance3.AddMember(new LanceMemberItemVM("Eadric", GetLancePositionRank(LancePosition.Veteran, demoCulture), 2, true));
-            lance3.AddMember(new LanceMemberItemVM("Leofric", GetLancePositionRank(LancePosition.Soldier, demoCulture), 4, true));
-            lance3.AddMember(new LanceMemberItemVM("Beorn", GetLancePositionRank(LancePosition.Soldier, demoCulture), 4, true));
-            lance3.AddMember(new LanceMemberItemVM("Wulfgar", GetLancePositionRank(LancePosition.Recruit, demoCulture), 5, true));
-            Lances.Add(lance3);
             
             // Select player's lance by default
             if (Lances.Count > 0)

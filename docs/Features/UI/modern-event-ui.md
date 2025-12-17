@@ -40,7 +40,7 @@ This system replaces basic inquiry popups with **stunning custom Gauntlet screen
 
 ### 5. Rich Text Formatting
 - **Colored text** for emphasis (gold for rewards, red for costs)
-- **Inline icons** (🪙 for gold, ⚠ for warnings)
+- **Inline markers** (text labels for gold/warnings)
 - **Paragraph spacing** for readability
 - **Scrollable story text** for long narratives
 
@@ -121,11 +121,11 @@ Choice buttons automatically select appropriate icons:
 
 | Icon | Used For | Path |
 |------|----------|------|
-| ✓ Check | Safe choices (>90% success) | `General\\Icons\\icon_check` |
-| ⚠ Warning | Risky choices (<70% success) | `General\\Icons\\icon_warning` |
-| 🪙 Coin | Choices with gold cost/reward | `General\\Icons\\icon_coin` |
-| ⭐ XP | Choices granting skill XP | `General\\Icons\\icon_experience` |
-| → Arrow | Default/neutral choices | `General\\Icons\\icon_arrow_right` |
+| Check | Safe choices (>90% success) | `General\\Icons\\icon_check` |
+| Warning | Risky choices (<70% success) | `General\\Icons\\icon_warning` |
+| Coin | Choices with gold cost/reward | `General\\Icons\\icon_coin` |
+| XP | Choices granting skill XP | `General\\Icons\\icon_experience` |
+| Arrow | Default/neutral choices | `General\\Icons\\icon_arrow_right` |
 
 ## Scene Images
 
@@ -231,7 +231,8 @@ Edit `GUI/Prefabs/Events/LanceLifeEventScreen.xml` to customize:
 
 ### Custom Choice Button Styles
 
-Edit `GUI/Prefabs/Events/EventChoiceButton.xml` to:
+The choice button template is now **inlined** inside `GUI/Prefabs/Events/LanceLifeEventScreen.xml` (single prefab).
+Edit `GUI/Prefabs/Events/LanceLifeEventScreen.xml` to:
 
 - Change button heights
 - Modify hover effects
@@ -457,8 +458,8 @@ LanceLifeEventScreen.Open(customEvent, enlistment);
 ├─────────────────────────┤
 │ Plain text story...     │
 │                         │
-│ ○ Choice 1              │
-│ ○ Choice 2              │
+│ [ ] Choice 1            │
+│ [ ] Choice 2            │
 └─────────────────────────┘
 ```
 
@@ -475,10 +476,10 @@ LanceLifeEventScreen.Open(customEvent, enlistment);
 ║   Image       ║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
 ║               ║  — Choose Your Action —                   ║
 ║  [Lance       ║                                           ║
-║   Leader]     ║  [✓] Accept bribe      +50🪙 | +2 Heat   ║
-║               ║  [⚠] Report superior   +Honor | -rel     ║
-║               ║  [→] Decline politely  No effects        ║
-║               ║  [!] Threaten (-50🪙)  +Intimidate [⚠]   ║
+║   Leader]     ║  [X] Accept bribe      +50 denars | +2 Heat ║
+║               ║  [!] Report superior   +Honor | -rel     ║
+║               ║  [->] Decline politely  No effects       ║
+║               ║  [!] Threaten (-50 denars)  +Intimidate [!]║
 ╠═══════════════╩═══════════════════════════════════════════╣
 ║ Heat ▓▓▓▓░░░░░░ 4/10  │  Discipline ▓▓▓▓▓░░░░░ 5/10  │ 7/10 ║
 ╚═══════════════════════════════════════════════════════════╝
@@ -499,7 +500,7 @@ Simply replace `LanceLifeEventInquiryPresenter.TryShow()` with `ModernEventPrese
 
 **Files:**
 - `GUI/Prefabs/Events/LanceLifeEventScreen.xml` - Main screen layout
-- `GUI/Prefabs/Events/EventChoiceButton.xml` - Choice button template
+- `GUI/Prefabs/Events/LanceLifeEventScreen.xml` - Choice button template (inlined in the same prefab)
 - `src/Features/Lances/UI/LanceLifeEventVM.cs` - Main ViewModel
 - `src/Features/Lances/UI/EventChoiceVM.cs` - Choice ViewModel
 - `src/Features/Lances/UI/LanceLifeEventScreen.cs` - Screen class

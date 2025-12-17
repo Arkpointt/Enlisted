@@ -387,7 +387,7 @@ namespace Enlisted.Features.Camp.UI.Areas
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampAreaUI", $"Failed to execute activity {activity.Id}: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampAreaUI", "E-CAMPUI-001", $"Failed to execute activity {activity.Id}", ex);
                 InformationManager.DisplayMessage(
                     new InformationMessage("Failed to complete activity", new Color(0.8f, 0.3f, 0.3f)));
             }
@@ -475,7 +475,7 @@ namespace Enlisted.Features.Camp.UI.Areas
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampAreaUI", $"Failed to refresh activities: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampAreaUI", "E-CAMPUI-002", "Failed to refresh activities", ex);
             }
         }
         
@@ -551,7 +551,7 @@ namespace Enlisted.Features.Camp.UI.Areas
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampAreaUI", $"Failed to refresh status bar: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampAreaUI", "E-CAMPUI-003", "Failed to refresh status bar", ex);
             }
         }
         
@@ -586,7 +586,7 @@ namespace Enlisted.Features.Camp.UI.Areas
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampAreaUI", $"Failed to update time: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampAreaUI", "E-CAMPUI-004", "Failed to update time", ex);
                 CurrentTimeText = "Time Unknown";
             }
         }

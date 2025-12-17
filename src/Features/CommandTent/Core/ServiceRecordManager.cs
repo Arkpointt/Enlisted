@@ -76,106 +76,109 @@ namespace Enlisted.Features.CommandTent.Core
 
         public override void SyncData(IDataStore dataStore)
         {
-            var lifetimeKills = _lifetimeRecord.LifetimeKills;
-            var totalDays = _lifetimeRecord.TotalDaysServed;
-            var termsComplete = _lifetimeRecord.TermsCompleted;
-            var totalEnlist = _lifetimeRecord.TotalEnlistments;
-            var totalBattles = _lifetimeRecord.TotalBattlesFought;
-
-            dataStore.SyncData("svc_lifetimeKills", ref lifetimeKills);
-            dataStore.SyncData("svc_totalDaysServed", ref totalDays);
-            dataStore.SyncData("svc_termsCompleted", ref termsComplete);
-            dataStore.SyncData("svc_totalEnlistments", ref totalEnlist);
-            dataStore.SyncData("svc_totalBattles", ref totalBattles);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _lifetimeRecord.LifetimeKills = lifetimeKills;
-                _lifetimeRecord.TotalDaysServed = totalDays;
-                _lifetimeRecord.TermsCompleted = termsComplete;
-                _lifetimeRecord.TotalEnlistments = totalEnlist;
-                _lifetimeRecord.TotalBattlesFought = totalBattles;
-            }
+                var lifetimeKills = _lifetimeRecord.LifetimeKills;
+                var totalDays = _lifetimeRecord.TotalDaysServed;
+                var termsComplete = _lifetimeRecord.TermsCompleted;
+                var totalEnlist = _lifetimeRecord.TotalEnlistments;
+                var totalBattles = _lifetimeRecord.TotalBattlesFought;
 
-            var factionsServedList = _lifetimeRecord.FactionsServed ?? new List<string>();
-            var factionCount = factionsServedList.Count;
-            dataStore.SyncData("svc_factionServedCount", ref factionCount);
+                dataStore.SyncData("svc_lifetimeKills", ref lifetimeKills);
+                dataStore.SyncData("svc_totalDaysServed", ref totalDays);
+                dataStore.SyncData("svc_termsCompleted", ref termsComplete);
+                dataStore.SyncData("svc_totalEnlistments", ref totalEnlist);
+                dataStore.SyncData("svc_totalBattles", ref totalBattles);
 
-            if (dataStore.IsLoading)
-            {
-                factionsServedList.Clear();
-                for (var i = 0; i < factionCount; i++)
+                if (dataStore.IsLoading)
                 {
-                    var factionId = string.Empty;
-                    dataStore.SyncData($"svc_factionServed_{i}", ref factionId);
-                    if (!string.IsNullOrEmpty(factionId))
+                    _lifetimeRecord.LifetimeKills = lifetimeKills;
+                    _lifetimeRecord.TotalDaysServed = totalDays;
+                    _lifetimeRecord.TermsCompleted = termsComplete;
+                    _lifetimeRecord.TotalEnlistments = totalEnlist;
+                    _lifetimeRecord.TotalBattlesFought = totalBattles;
+                }
+
+                var factionsServedList = _lifetimeRecord.FactionsServed ?? new List<string>();
+                var factionCount = factionsServedList.Count;
+                dataStore.SyncData("svc_factionServedCount", ref factionCount);
+
+                if (dataStore.IsLoading)
+                {
+                    factionsServedList.Clear();
+                    for (var i = 0; i < factionCount; i++)
                     {
-                        factionsServedList.Add(factionId);
+                        var factionId = string.Empty;
+                        dataStore.SyncData($"svc_factionServed_{i}", ref factionId);
+                        if (!string.IsNullOrEmpty(factionId))
+                        {
+                            factionsServedList.Add(factionId);
+                        }
+                    }
+                    _lifetimeRecord.FactionsServed = factionsServedList;
+                }
+                else
+                {
+                    for (var i = 0; i < factionCount; i++)
+                    {
+                        var factionId = factionsServedList[i];
+                        dataStore.SyncData($"svc_factionServed_{i}", ref factionId);
                     }
                 }
-                _lifetimeRecord.FactionsServed = factionsServedList;
-            }
-            else
-            {
-                for (var i = 0; i < factionCount; i++)
+
+                dataStore.SyncData("svc_currentTermBattles", ref _currentTermBattles);
+                dataStore.SyncData("svc_currentTermKills", ref _currentTermKills);
+                dataStore.SyncData("svc_currentFactionId", ref _currentFactionId);
+                dataStore.SyncData("svc_currentLordId", ref _currentLordId);
+
+                // Reservist snapshot
+                var resLord = _reservistRecord.LastLordId;
+                var resFaction = _reservistRecord.LastFactionId;
+                var resDays = _reservistRecord.DaysServed;
+                var resTier = _reservistRecord.TierAtExit;
+                var resXp = _reservistRecord.XpAtExit;
+                var resBand = _reservistRecord.DischargeBand;
+                var resRel = _reservistRecord.RelationAtExit;
+                var resAt = _reservistRecord.RecordedAt;
+                var resConsumed = _reservistRecord.Consumed;
+                var resGrantedProbation = _reservistRecord.GrantedProbation;
+
+                dataStore.SyncData("svc_reservist_lastLord", ref resLord);
+                dataStore.SyncData("svc_reservist_lastFaction", ref resFaction);
+                dataStore.SyncData("svc_reservist_daysServed", ref resDays);
+                dataStore.SyncData("svc_reservist_tier", ref resTier);
+                dataStore.SyncData("svc_reservist_xp", ref resXp);
+                dataStore.SyncData("svc_reservist_band", ref resBand);
+                dataStore.SyncData("svc_reservist_relation", ref resRel);
+                dataStore.SyncData("svc_reservist_recordedAt", ref resAt);
+                dataStore.SyncData("svc_reservist_consumed", ref resConsumed);
+                dataStore.SyncData("svc_reservist_grantedProbation", ref resGrantedProbation);
+
+                if (dataStore.IsLoading)
                 {
-                    var factionId = factionsServedList[i];
-                    dataStore.SyncData($"svc_factionServed_{i}", ref factionId);
+                    _reservistRecord.LastLordId = resLord;
+                    _reservistRecord.LastFactionId = resFaction;
+                    _reservistRecord.DaysServed = resDays;
+                    _reservistRecord.TierAtExit = resTier;
+                    _reservistRecord.XpAtExit = resXp;
+                    _reservistRecord.DischargeBand = resBand;
+                    _reservistRecord.RelationAtExit = resRel;
+                    _reservistRecord.RecordedAt = resAt;
+                    _reservistRecord.Consumed = resConsumed;
+                    _reservistRecord.GrantedProbation = resGrantedProbation;
                 }
-            }
 
-            dataStore.SyncData("svc_currentTermBattles", ref _currentTermBattles);
-            dataStore.SyncData("svc_currentTermKills", ref _currentTermKills);
-            dataStore.SyncData("svc_currentFactionId", ref _currentFactionId);
-            dataStore.SyncData("svc_currentLordId", ref _currentLordId);
+                SerializeFactionRecords(dataStore);
+                SerializeRetinueState(dataStore);
 
-            // Reservist snapshot
-            var resLord = _reservistRecord.LastLordId;
-            var resFaction = _reservistRecord.LastFactionId;
-            var resDays = _reservistRecord.DaysServed;
-            var resTier = _reservistRecord.TierAtExit;
-            var resXp = _reservistRecord.XpAtExit;
-            var resBand = _reservistRecord.DischargeBand;
-            var resRel = _reservistRecord.RelationAtExit;
-            var resAt = _reservistRecord.RecordedAt;
-            var resConsumed = _reservistRecord.Consumed;
-            var resGrantedProbation = _reservistRecord.GrantedProbation;
-
-            dataStore.SyncData("svc_reservist_lastLord", ref resLord);
-            dataStore.SyncData("svc_reservist_lastFaction", ref resFaction);
-            dataStore.SyncData("svc_reservist_daysServed", ref resDays);
-            dataStore.SyncData("svc_reservist_tier", ref resTier);
-            dataStore.SyncData("svc_reservist_xp", ref resXp);
-            dataStore.SyncData("svc_reservist_band", ref resBand);
-            dataStore.SyncData("svc_reservist_relation", ref resRel);
-            dataStore.SyncData("svc_reservist_recordedAt", ref resAt);
-            dataStore.SyncData("svc_reservist_consumed", ref resConsumed);
-            dataStore.SyncData("svc_reservist_grantedProbation", ref resGrantedProbation);
-
-            if (dataStore.IsLoading)
-            {
-                _reservistRecord.LastLordId = resLord;
-                _reservistRecord.LastFactionId = resFaction;
-                _reservistRecord.DaysServed = resDays;
-                _reservistRecord.TierAtExit = resTier;
-                _reservistRecord.XpAtExit = resXp;
-                _reservistRecord.DischargeBand = resBand;
-                _reservistRecord.RelationAtExit = resRel;
-                _reservistRecord.RecordedAt = resAt;
-                _reservistRecord.Consumed = resConsumed;
-                _reservistRecord.GrantedProbation = resGrantedProbation;
-            }
-
-            SerializeFactionRecords(dataStore);
-            SerializeRetinueState(dataStore);
-
-            if (dataStore.IsLoading)
-            {
-                // Reinitialize retinue manager with loaded state
-                _retinueManager = new RetinueManager(_retinueState);
-                ModLogger.Debug(LogCategory, $"Loaded {_factionRecords.Count} faction records, lifetime: {_lifetimeRecord}");
-                ModLogger.Debug("Retinue", $"Loaded retinue state: {_retinueState}");
-            }
+                if (dataStore.IsLoading)
+                {
+                    // Reinitialize retinue manager with loaded state
+                    _retinueManager = new RetinueManager(_retinueState);
+                    ModLogger.Debug(LogCategory, $"Loaded {_factionRecords.Count} faction records, lifetime: {_lifetimeRecord}");
+                    ModLogger.Debug("Retinue", $"Loaded retinue state: {_retinueState}");
+                }
+            });
         }
 
         /// <summary>
@@ -506,7 +509,7 @@ namespace Enlisted.Features.CommandTent.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error handling promotion for retinue: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-SRM-002", "Error handling promotion for retinue", ex);
             }
         }
 

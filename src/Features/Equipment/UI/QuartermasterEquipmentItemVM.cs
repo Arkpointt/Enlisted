@@ -212,7 +212,7 @@ namespace Enlisted.Features.Equipment.UI
                 
                 if (_variant.Item == null)
                 {
-                    ModLogger.Error("QuartermasterUI", "Cannot select item - variant item is null");
+                    ModLogger.ErrorCode("QuartermasterUI", "E-QMUI-004", "Cannot select item - variant item is null");
                     return;
                 }
                 

@@ -1,6 +1,6 @@
 # Provisions & Food System
 
-**Status**: ✅ Implemented (v3.0)  
+**Status**: [x] Implemented (v3.0)  
 **Category**: Gameplay Feature  
 **Dependencies**: Quartermaster Hero, Retinue System, Fatigue System
 
@@ -26,7 +26,7 @@ Purchase food for yourself to gain temporary benefits:
 
 ### How It Works
 
-1. **Purchase**: Visit quartermaster → "I need better provisions"
+1. **Purchase**: Visit quartermaster -> "I need better provisions"
 2. **Activation**: Rations immediately take effect
 3. **Duration**: Benefits last for specified days
 4. **Stacking**: Only one rations tier active at a time (purchasing new tier replaces old)
@@ -118,7 +118,7 @@ At Commander ranks, players gain a personal retinue that requires feeding:
 
 ### Menu Navigation
 
-1. **Enlisted Status** → **Visit Quartermaster**
+1. **Enlisted Status** -> **Visit Quartermaster**
 2. Open dialogue with quartermaster
 3. Choose: **"I need better provisions"**
 4. Quartermaster responds with archetype-appropriate line

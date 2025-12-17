@@ -47,17 +47,20 @@ namespace Enlisted.Features.Lances.Events
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("ll_on_stage", ref _stage);
-            dataStore.SyncData("ll_on_track", ref _track);
-            dataStore.SyncData("ll_on_variant", ref _variant);
-            dataStore.SyncData("ll_on_enlistDay", ref _enlistDay);
-            dataStore.SyncData("ll_on_promoDay", ref _promotionDay);
-            dataStore.SyncData("ll_on_entryLord", ref _entryLordId);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                NormalizeLoadedState();
-            }
+                dataStore.SyncData("ll_on_stage", ref _stage);
+                dataStore.SyncData("ll_on_track", ref _track);
+                dataStore.SyncData("ll_on_variant", ref _variant);
+                dataStore.SyncData("ll_on_enlistDay", ref _enlistDay);
+                dataStore.SyncData("ll_on_promoDay", ref _promotionDay);
+                dataStore.SyncData("ll_on_entryLord", ref _entryLordId);
+
+                if (dataStore.IsLoading)
+                {
+                    NormalizeLoadedState();
+                }
+            });
         }
 
         public bool IsEnabled()

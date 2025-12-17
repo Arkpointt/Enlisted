@@ -65,7 +65,7 @@ namespace Enlisted.Mod.Core.Logging
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Diagnostics", $"Failed to run startup diagnostics: {ex.Message}");
+                ModLogger.ErrorCode("Diagnostics", "E-DIAG-002", "Failed to run startup diagnostics", ex);
             }
         }
 
@@ -105,7 +105,7 @@ namespace Enlisted.Mod.Core.Logging
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Diagnostics", $"Failed to refresh deferred patch diagnostics: {ex.Message}");
+                ModLogger.ErrorCode("Diagnostics", "E-DIAG-003", "Failed to refresh deferred patch diagnostics", ex);
             }
         }
 
@@ -138,7 +138,7 @@ namespace Enlisted.Mod.Core.Logging
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Diagnostics", $"Failed to log behaviors: {ex.Message}");
+                ModLogger.ErrorCode("Diagnostics", "E-DIAG-004", "Failed to log behaviors", ex);
             }
         }
 

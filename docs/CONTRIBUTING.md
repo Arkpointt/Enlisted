@@ -102,8 +102,8 @@ Each crash creates a timestamped folder (e.g., `2025-12-08_03.41.58\`) containin
 ## API Reference
 
 When working with Bannerlord APIs, verify usage against:
-- The official API docs (`https://apidoc.bannerlord.com/v/1.2.12/`)
-- Your local decompile/reference project
+- The local native decompile included with this repository (authoritative)
+- The official API docs for the project's target version (currently **v1.3.4**) when needed for quick lookups
 
 ### Native Decompile Location
 
@@ -127,9 +127,9 @@ Key decompiled assemblies:
 C:\Dev\Enlisted\Decompile 1.3.4\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\Party\MobileParty.cs
 ```
 Key APIs:
-- `MobileParty.GetPosition2D` → `Vec2` (not `Position2D`)
-- `Settlement.GetPosition2D` → `Vec2`
-- `MobileParty.Position` → `CampaignVec2`
+- `MobileParty.GetPosition2D` -> `Vec2` (not `Position2D`)
+- `Settlement.GetPosition2D` -> `Vec2`
+- `MobileParty.Position` -> `CampaignVec2`
 
 ## Guidelines
 

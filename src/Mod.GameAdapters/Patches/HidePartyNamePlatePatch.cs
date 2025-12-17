@@ -73,7 +73,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("HidePartyNamePlatePatch", $"Failed to apply patch: {ex.Message}");
+                ModLogger.ErrorCode("HidePartyNamePlatePatch", "E-PATCH-019", "Failed to apply patch", ex);
             }
         }
         
@@ -134,7 +134,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 // Only log errors occasionally to avoid spam
                 if (_updateCallCount % 1000 == 1)
                 {
-                    ModLogger.Error("HidePartyNamePlatePatch", $"Error: {ex.Message}");
+                    ModLogger.ErrorCode("HidePartyNamePlatePatch", "E-PATCH-020", "Error in UpdatePostfix", ex);
                 }
             }
         }

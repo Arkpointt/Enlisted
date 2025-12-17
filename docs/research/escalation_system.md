@@ -28,16 +28,16 @@ Escalations connect individual event choices to longer-term consequences. When a
 
 **Core Loop:**
 ```
-Player makes choice → Track increments → Threshold reached → Consequence event fires
+Player makes choice -> Track increments -> Threshold reached -> Consequence event fires
                                               ↓
                                Track decrements or resets based on outcome
 ```
 
 **Example:**
 ```
-Player hides supply shortage (QM event)     → Heat +2
-Player adjusts ledger again (QM event)      → Heat +2
-Player takes bribe from merchant            → Heat +3
+Player hides supply shortage (QM event)     -> Heat +2
+Player adjusts ledger again (QM event)      -> Heat +2
+Player takes bribe from merchant            -> Heat +3
                                               ───────
                                               Heat = 7 (threshold: 5)
                                               ↓
@@ -68,7 +68,7 @@ Every track has ways to decrease:
 
 ### 4. Consequences Match Scale
 
-Camp-scale choices → camp-scale consequences. Stealing from the quartermaster doesn't alert the king. It alerts the sergeant.
+Camp-scale choices -> camp-scale consequences. Stealing from the quartermaster doesn't alert the king. It alerts the sergeant.
 
 ### 5. Tracks Are Internal
 
@@ -238,7 +238,7 @@ Escalation tracks are Enlisted-internal. They don't modify vanilla reputation, c
 
 | Threshold | Event | Description |
 |-----------|-------|-------------|
-| Risk ≥ 3 | `medical_worsening` | Condition gets worse. Minor → Moderate. |
+| Risk ≥ 3 | `medical_worsening` | Condition gets worse. Minor -> Moderate. |
 | Risk ≥ 4 | `medical_complication` | New complication. Infection, fever, etc. |
 | Risk = 5 | `medical_emergency` | Collapse. Forced bed rest, possible lasting effect. |
 
@@ -337,23 +337,23 @@ All tracks slowly decay toward neutral over time:
 Players can take actions to reduce tracks faster:
 
 **Heat:**
-- Report corruption you witness → −2 Heat
-- Refuse bribe publicly → −1 Heat
-- Pass audit cleanly → −3 Heat
+- Report corruption you witness -> −2 Heat
+- Refuse bribe publicly -> −1 Heat
+- Pass audit cleanly -> −3 Heat
 
 **Discipline:**
-- Complete extra duty → −1 Discipline
-- Take blame for lance mate → −2 Discipline (but +Lance Rep)
-- Volunteer for dangerous duty → −2 Discipline
+- Complete extra duty -> −1 Discipline
+- Take blame for lance mate -> −2 Discipline (but +Lance Rep)
+- Volunteer for dangerous duty -> −2 Discipline
 
 **Lance Rep:**
-- Help wounded lance mate → +3 Rep
-- Share supplies when short → +2 Rep
-- Stand up for lance mate → +3 Rep
+- Help wounded lance mate -> +3 Rep
+- Share supplies when short -> +2 Rep
+- Stand up for lance mate -> +3 Rep
 
 **Medical:**
-- Seek treatment → Reset to 0
-- Rest (skip activities) → −1 per day
+- Seek treatment -> Reset to 0
+- Rest (skip activities) -> −1 per day
 
 ---
 

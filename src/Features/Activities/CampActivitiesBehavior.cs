@@ -51,8 +51,11 @@ namespace Enlisted.Features.Activities
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("ca_lastCompletedDayById", ref _lastCompletedDayByActivityId);
-            _lastCompletedDayByActivityId ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("ca_lastCompletedDayById", ref _lastCompletedDayByActivityId);
+                _lastCompletedDayByActivityId ??= new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            });
         }
 
         public bool IsEnabled()

@@ -123,7 +123,7 @@ public static class PlayerEncounterFinishSafetyPatch
         }
         catch (Exception ex)
         {
-            ModLogger.Error(LogCategory, $"Error in Finish prefix ({context}): {ex.Message}");
+            ModLogger.ErrorCode(LogCategory, "E-PATCH-006", $"Error in Finish prefix ({context})", ex);
             SafeCleanupEncounter("prefix exception");
             return false;
         }
@@ -163,8 +163,8 @@ public static class PlayerEncounterFinishSafetyPatch
         var exceptionType = __exception.GetType().Name;
         var message = __exception.Message;
         
-        ModLogger.Error(LogCategory, 
-            $"PlayerEncounter.Finish crashed while enlisted: {exceptionType}: {message}");
+        ModLogger.ErrorCode(LogCategory, "E-PATCH-008",
+            $"PlayerEncounter.Finish crashed while enlisted: {exceptionType}: {message}", __exception);
         ModLogger.Debug(LogCategory, 
             $"Crash context: {_lastFinishContext}");
         
@@ -263,7 +263,7 @@ public static class PlayerEncounterFinishSafetyPatch
         }
         catch (Exception ex)
         {
-            ModLogger.Error(LogCategory, $"SafeCleanupEncounter failed: {ex.Message}");
+            ModLogger.ErrorCode(LogCategory, "E-PATCH-007", "SafeCleanupEncounter failed", ex);
             // Last resort - set the flag if we can
             try
             {

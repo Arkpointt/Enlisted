@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.SaveSystem;
 
 namespace Enlisted.Features.Schedule.Models
 {
@@ -11,24 +12,31 @@ namespace Enlisted.Features.Schedule.Models
     public class DailySchedule
     {
         /// <summary>The day this schedule is for (campaign time)</summary>
+        [SaveableProperty(1)]
         public CampaignTime ScheduleDate { get; set; }
         
         /// <summary>Day number in the current 12-day cycle (1-12)</summary>
+        [SaveableProperty(2)]
         public int CycleDay { get; set; }
         
         /// <summary>List of 6 scheduled blocks (one per time period)</summary>
+        [SaveableProperty(3)]
         public List<ScheduledBlock> Blocks { get; set; }
         
         /// <summary>Lord's current objective that influenced this schedule</summary>
+        [SaveableProperty(4)]
         public string LordObjective { get; set; }
         
         /// <summary>Lord's orders text (displayed to player for context)</summary>
+        [SaveableProperty(5)]
         public string LordOrders { get; set; }
         
         /// <summary>Whether this schedule has been shown to the player</summary>
+        [SaveableProperty(6)]
         public bool HasBeenViewed { get; set; }
 
         /// <summary>AI decision log explaining why each activity was assigned (Phase 3)</summary>
+        [SaveableProperty(7)]
         public string DecisionLog { get; set; }
 
         public DailySchedule()

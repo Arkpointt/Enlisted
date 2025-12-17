@@ -112,7 +112,7 @@ namespace Enlisted.Features.Lances.UI
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error showing modern event screen: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-LANCEUI-004", "Error showing modern event screen", ex);
                 _isEventShowing = false;
                 return false;
             }

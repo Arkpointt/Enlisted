@@ -3,6 +3,7 @@ using System.Text;
 using Enlisted.Features.Assignments.Core;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.SaveSystem;
 
 namespace Enlisted.Mod.Core.Logging
 {
@@ -120,7 +121,7 @@ namespace Enlisted.Mod.Core.Logging
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to log configuration values: {ex.Message}");
+                ModLogger.Error("Config", "Failed to log configuration values", ex);
             }
         }
 
@@ -248,6 +249,45 @@ namespace Enlisted.Mod.Core.Logging
 
             var elapsedMs = (int)Math.Max(0, (DateTime.UtcNow - startUtc).TotalMilliseconds);
             ModLogger.Info("SaveLoad", $"Load finished. (#{seq}, {elapsedMs} ms)");
+        }
+
+        /// <summary>
+        /// Wrap a behavior SyncData() body so save/load failures always produce a clear log line
+        /// identifying the exact behavior that broke serialization.
+        ///
+        /// IMPORTANT:
+        /// - We rethrow after logging. Swallowing save/load exceptions can silently corrupt state.
+        /// - This method only logs when something actually fails (no spam).
+        /// </summary>
+        public static void SafeSyncData(CampaignBehaviorBase behavior, IDataStore dataStore, Action syncAction)
+        {
+            if (dataStore == null || syncAction == null)
+            {
+                return;
+            }
+
+            try
+            {
+                syncAction();
+            }
+            catch (Exception ex)
+            {
+                var phase = dataStore.IsSaving
+                    ? "Saving"
+                    : dataStore.IsLoading
+                        ? "Loading"
+                        : "SyncData";
+
+                var behaviorName = behavior?.GetType().FullName ?? "UnknownBehavior";
+
+                ModLogger.ErrorCode(
+                    "SaveLoad",
+                    "E-SAVELOAD-001",
+                    $"Save/load failed in {behaviorName} during {phase}. This can break saves. Try: load an older save, disable recently-added mods, then share your latest Session log + Conflicts log (and the save file if possible).",
+                    ex);
+
+                throw;
+            }
         }
     }
 

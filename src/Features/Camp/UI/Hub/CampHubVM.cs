@@ -353,7 +353,7 @@ namespace Enlisted.Features.Camp.UI.Hub
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampHubUI", $"Failed to refresh locations: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampHubUI", "E-CAMPUI-010", "Failed to refresh locations", ex);
             }
         }
         
@@ -417,7 +417,7 @@ namespace Enlisted.Features.Camp.UI.Hub
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampHubUI", $"Failed to open area screen: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampHubUI", "E-CAMPUI-011", "Failed to open area screen", ex);
             }
         }
         
@@ -456,7 +456,7 @@ namespace Enlisted.Features.Camp.UI.Hub
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampHubUI", $"Failed to refresh status bar: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampHubUI", "E-CAMPUI-012", "Failed to refresh status bar", ex);
             }
         }
         
@@ -476,7 +476,7 @@ namespace Enlisted.Features.Camp.UI.Hub
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampHubUI", $"Failed to update time: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampHubUI", "E-CAMPUI-013", "Failed to update time", ex);
                 CurrentTimeText = "Time Unknown";
             }
         }

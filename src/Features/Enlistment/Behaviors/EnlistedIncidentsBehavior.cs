@@ -124,7 +124,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Incident", $"Failed to register bag-check incident: {ex.Message}");
+                ModLogger.ErrorCode("Incident", "E-INCIDENT-001", "Failed to register bag-check incident", ex);
             }
         }
 
@@ -148,7 +148,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Incident", $"Failed to register pay muster incident: {ex.Message}");
+                ModLogger.ErrorCode("Incident", "E-INCIDENT-002", "Failed to register pay muster incident", ex);
             }
         }
 
@@ -176,7 +176,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Incident", $"Error triggering bag-check incident: {ex.Message}");
+                ModLogger.ErrorCode("Incident", "E-INCIDENT-003", "Error triggering bag-check incident", ex);
                 EnlistmentBehavior.Instance?.ShowBagCheckInquiryFallback();
             }
         }
@@ -190,7 +190,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Incident", $"Error triggering pay muster incident: {ex.Message}");
+                ModLogger.ErrorCode("Incident", "E-INCIDENT-004", "Error triggering pay muster incident", ex);
                 ShowPayMusterInquiryFallback();
             }
         }
@@ -304,7 +304,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Incident", $"Pay muster inquiry failed: {ex.Message}");
+                ModLogger.ErrorCode("Incident", "E-INCIDENT-005", "Pay muster inquiry failed", ex);
             }
         }
 

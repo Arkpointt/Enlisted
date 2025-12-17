@@ -56,17 +56,20 @@ namespace Enlisted.Features.Lances.Leaders
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("pll_leadersByLord", ref _lanceLeadersByLord);
-            dataStore.SyncData("pll_currentLordId", ref _currentLordId);
-            dataStore.SyncData("pll_initialized", ref _isInitialized);
-
-            _lanceLeadersByLord ??= new Dictionary<string, PersistentLanceLeader>();
-
-            // Rebuild cache after load
-            if (dataStore.IsLoading && !string.IsNullOrEmpty(_currentLordId))
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _lanceLeadersByLord.TryGetValue(_currentLordId, out _currentLanceLeader);
-            }
+                dataStore.SyncData("pll_leadersByLord", ref _lanceLeadersByLord);
+                dataStore.SyncData("pll_currentLordId", ref _currentLordId);
+                dataStore.SyncData("pll_initialized", ref _isInitialized);
+
+                _lanceLeadersByLord ??= new Dictionary<string, PersistentLanceLeader>();
+
+                // Rebuild cache after load
+                if (dataStore.IsLoading && !string.IsNullOrEmpty(_currentLordId))
+                {
+                    _lanceLeadersByLord.TryGetValue(_currentLordId, out _currentLanceLeader);
+                }
+            });
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)

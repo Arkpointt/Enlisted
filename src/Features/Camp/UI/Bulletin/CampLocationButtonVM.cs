@@ -101,12 +101,6 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         /// </summary>
         public void ExecuteSelect()
         {
-            // #region agent log
-            System.IO.File.AppendAllText(
-                @"c:\Dev\Enlisted\Enlisted\.cursor\debug.log",
-                $"{{\"location\":\"CampLocationButtonVM.cs:ExecuteSelect\",\"message\":\"Location clicked\",\"locationId\":\"{LocationId}\",\"timestamp\":{DateTime.UtcNow.Ticks},\"sessionId\":\"debug-session\",\"runId\":\"debug5\",\"hypothesisId\":\"Loc\"}}\n");
-            // #endregion
-
             _onSelect?.Invoke(LocationId);
         }
 

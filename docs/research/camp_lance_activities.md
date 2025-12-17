@@ -1,4 +1,4 @@
-﻿# Camp & Lance Activities — Lance Life
+# Camp & Lance Activities — Lance Life
 
 This document defines player-initiated activities available in the Camp Activities menu. These are things the player can **click on and do** to recover, socialize, earn XP, and build relationships.
 
@@ -302,12 +302,12 @@ void ProcessShirkDuty(string option)
 ### Fatigue at Day Boundary
 - Recovery is hour-by-hour from dusk to dawn
 - Whatever fatigue remains at dawn carries over
-- Example: T3 player at 14 fatigue recovers 9 overnight → starts next day at 5
+- Example: T3 player at 14 fatigue recovers 9 overnight -> starts next day at 5
 
 ### Fatigue + Battle
 - Battles cost fatigue: +3 (skirmish), +4 (battle), +6 (major battle/siege)
 - This happens automatically after combat
-- Can push player over 16 threshold → health loss after victory
+- Can push player over 16 threshold -> health loss after victory
 
 ### Hangover + Shirk Stacking
 - Yes, penalties stack
@@ -325,7 +325,7 @@ void ProcessShirkDuty(string option)
 
 ### Drinking Cooldown
 - "1/day" limit is shared across all drinking sources
-- Can't do "Drink with Lads" AND "Rest → Buy a drink" same day
+- Can't do "Drink with Lads" AND "Rest -> Buy a drink" same day
 - Pick one
 
 ### Minimum/Maximum Values

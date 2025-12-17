@@ -54,7 +54,7 @@ Companions remain with the player's party throughout entire enlisted career:
 - Player manages battle participation immediately
 - Companions fight in unified formation with player
 - Battle toggle available from enlistment start
-- Natural progression: companions → companions + soldiers at T7
+- Natural progression: companions -> companions + soldiers at T7
 
 **Transfer Timing:**
 - Companions transfer to player's party immediately at enlistment (T1)
@@ -108,8 +108,8 @@ At Tier 4+, players can control which companions fight in battles through the Ca
   - All battle outcomes (not subject to casualty tracking)
 
 **UI Location:**
-- Camp → Companion Assignments
-- Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
+- Camp -> Companion Assignments
+- Shows list of companions with toggle ( Fight /  Stay Back)
 - Changes saved immediately (no save button needed)
 
 ---
@@ -169,7 +169,7 @@ Detect spawn type (initial vs reinforcement):
   - Initial spawn: teleport if > 5m from formation
   - Reinforcement: always teleport (spawns at map edge)
     ↓
-Find all agents from player's party → assign to SAME formation
+Find all agents from player's party -> assign to SAME formation
     ↓
 Teleport reassigned squad members to player's position
     ↓

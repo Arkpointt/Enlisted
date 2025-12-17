@@ -290,7 +290,7 @@ public class CampTentVisualBehavior : CampaignBehaviorBase
    - Option to show tent when waiting anytime (not just at night)
 
 3. **Test Cases**:
-   - Resting at night in open terrain ✓
+   - Resting at night in open terrain [x]
    - Moving during night (should hide tent)
    - Entering settlement (should hide tent)
    - Starting battle (should hide tent)

@@ -31,7 +31,7 @@ Add variety and specialization to military service. Different duties provide dif
 - No duty selection available until T2
 
 **T2+ Players (Proving Event):**
-- Formation choice is made during the T1→T2 proving event
+- Formation choice is made during the T1->T2 proving event
 - Starter duty is auto-assigned based on chosen formation:
   | Formation | Starter Duty |
   |-----------|--------------|
@@ -131,7 +131,7 @@ int GetDutyRequestCooldownRemaining();
 - The `HasActiveDuty(string dutyId)` API is used by the Lance Life Events trigger evaluator.
 
 **Formation Detection:**
-- Formation chosen during T1→T2 proving event (replaces old troop selection)
+- Formation chosen during T1->T2 proving event (replaces old troop selection)
 - Stored in `_playerFormation` field for consistency across sessions
 - Existing saves migrate by detecting formation from troop or equipment
 
@@ -143,7 +143,7 @@ int GetDutyRequestCooldownRemaining();
 - Error logging with specific validation failure details
 
 **Formation Type Changes:**
-- Formation is locked after T1→T2 proving event
+- Formation is locked after T1->T2 proving event
 - Incompatible duties are removed if formation somehow changes
 - Notify player of duty changes
 
@@ -160,15 +160,15 @@ int GetDutyRequestCooldownRemaining();
 
 ## Acceptance Criteria
 
-- ✅ JSON configuration loads and validates correctly
-- ✅ All duties shown in menu (incompatible ones greyed out with tooltip)
-- ✅ Skill bonuses applied correctly and consistently  
-- ✅ Optional officer-role assignment works safely when enabled (Quartermaster/Engineer/Surgeon/Scout)
-- ✅ Duty selection constraints enforced based on tier and formation
-- ✅ Configuration changes work without recompiling mod
-- ✅ Save/load maintains duty assignments correctly
-- ✅ Duty request system enforces cooldown and approval requirements
-- ✅ Culture-specific ranks shown in tier requirements
+- [x] JSON configuration loads and validates correctly
+- [x] All duties shown in menu (incompatible ones greyed out with tooltip)
+- [x] Skill bonuses applied correctly and consistently  
+- [x] Optional officer-role assignment works safely when enabled (Quartermaster/Engineer/Surgeon/Scout)
+- [x] Duty selection constraints enforced based on tier and formation
+- [x] Configuration changes work without recompiling mod
+- [x] Save/load maintains duty assignments correctly
+- [x] Duty request system enforces cooldown and approval requirements
+- [x] Culture-specific ranks shown in tier requirements
 
 ## Debugging
 

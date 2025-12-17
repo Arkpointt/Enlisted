@@ -430,7 +430,7 @@ dir "C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\M
 
 **When to use:** You have multiple categories of items and want users to click a category to see its contents.
 
-**Native example:** Kingdom → Diplomacy screen (click "At War" to see list of wars, click a war to see details)
+**Native example:** Kingdom -> Diplomacy screen (click "At War" to see list of wars, click a war to see details)
 
 **Our implementation:** Camp Reports tab
 
@@ -482,7 +482,7 @@ public void OnCategorySelect(CategoryItemVM category)
 
 **When to use:** Displaying a scrollable feed of news/events with timestamps.
 
-**Native example:** Kingdom → Diplomacy → Select a war → See recent events
+**Native example:** Kingdom -> Diplomacy -> Select a war -> See recent events
 
 **Our implementation:** Camp Reports feed (right panel after selecting category)
 
@@ -524,7 +524,7 @@ public class ReportItemVM : ViewModel
 
 **When to use:** List of items users can click to select (policies, activities, schedule blocks).
 
-**Native example:** Kingdom → Policies → Active Policies / Other Policies lists
+**Native example:** Kingdom -> Policies -> Active Policies / Other Policies lists
 
 **Our implementation:** Schedule tab activities, Reports categories
 
@@ -564,7 +564,7 @@ public class ActivityItemVM : ViewModel
 
 **When to use:** Organizing related items under expandable headers (like "At War" / "At Peace" in Diplomacy).
 
-**Native example:** Kingdom → Diplomacy (expand "At War" to see wars list)
+**Native example:** Kingdom -> Diplomacy (expand "At War" to see wars list)
 
 **Key widget:** `PartyHeaderToggleWidget`
 
@@ -613,8 +613,8 @@ public class ActivityItemVM : ViewModel
 1. `PartyHeaderToggleWidget` = just the header (not clickable for selection)
 2. Inside the collapsible section = `NavigatableListPanel` with `ButtonWidget` items (these are clickable)
 
-**Wrong mental model:** "Click header → select category"
-**Correct mental model:** "Click header → expand/collapse → click inner button → select item"
+**Wrong mental model:** "Click header -> select category"
+**Correct mental model:** "Click header -> expand/collapse -> click inner button -> select item"
 
 ## Reference Implementations in This Repo
 

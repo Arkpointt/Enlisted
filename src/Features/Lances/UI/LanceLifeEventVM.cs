@@ -82,7 +82,8 @@ namespace Enlisted.Features.Lances.UI
                 SetupSceneVisuals();
 
                 // Story text with rich formatting
-                StoryText = FormatStoryText(_event.SetupId, _event.SetupFallback);
+                var (setupId, setupFallback) = ResolveEffectiveSetup(_event);
+                StoryText = FormatStoryText(setupId, setupFallback);
 
                 // Escalation tracks
                 UpdateEscalationTracks();
@@ -93,12 +94,15 @@ namespace Enlisted.Features.Lances.UI
                 // Build choice buttons
                 BuildChoices();
 
-                // Can close if not forced choice
-                CanClose = _event.Options?.Count > 1;
+                // Onboarding should be a forced choice: the player must pick an option to advance.
+                // Also gate closing for escalation events (they represent threshold moments).
+                var cat = (_event.Category ?? string.Empty).Trim().ToLowerInvariant();
+                CanClose = cat != "onboarding" && cat != "escalation";
             }
             catch (Exception ex)
             {
-                Enlisted.Mod.Core.Logging.ModLogger.Error("LanceLifeUI", $"Failed to initialize event display: {ex.Message}", ex);
+                Enlisted.Mod.Core.Logging.ModLogger.ErrorCode("LanceLifeUI", "E-LANCEUI-003",
+                    "Failed to initialize event display", ex);
                 
                 // Set safe defaults
                 EventTitle = "Event";
@@ -163,10 +167,6 @@ namespace Enlisted.Features.Lances.UI
         {
             try
             {
-                // #region agent log
-                System.IO.File.AppendAllText(@"c:\Dev\Enlisted\Enlisted\.cursor\debug.log", Newtonsoft.Json.JsonConvert.SerializeObject(new { location = "LanceLifeEventVM.cs:154", message = "SetupCharacterDisplay START", data = new { category = _event.Category }, timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), sessionId = "debug-session", runId = "initial", hypothesisId = "H2" }) + "\n");
-                // #endregion
-                
                 // Get relevant character (lance leader, companion, etc.)
                 var character = GetEventCharacter();
                 
@@ -207,7 +207,8 @@ namespace Enlisted.Features.Lances.UI
             catch (Exception ex)
             {
                 // Fallback to no character display on any error
-                Enlisted.Mod.Core.Logging.ModLogger.Warn("LanceLifeUI", $"Could not display character portrait, using scene image instead: {ex.Message}");
+                Enlisted.Mod.Core.Logging.ModLogger.WarnCode("LanceLifeUI", "W-LANCEUI-001",
+                    $"Could not display character portrait, using scene image instead: {ex.Message}");
                 EventCharacter = null;
                 CharacterNameText = "Camp Scene";
                 ShowCharacter = false;
@@ -274,24 +275,100 @@ namespace Enlisted.Features.Lances.UI
 
         private void BuildChoices()
         {
-            // #region agent log
-            System.IO.File.AppendAllText(@"c:\Dev\Enlisted\Enlisted\.cursor\debug.log", Newtonsoft.Json.JsonConvert.SerializeObject(new { location = "LanceLifeEventVM.cs:256", message = "BuildChoices START", data = new { optionCount = _event.Options?.Count ?? 0 }, timestamp = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), sessionId = "debug-session", runId = "initial", hypothesisId = "H3" }) + "\n");
-            // #endregion
-            
             ChoiceOptions.Clear();
 
-            if (_event.Options == null || _event.Options.Count == 0)
+            var options = ResolveEffectiveOptions(_event, _enlistment);
+            if (options.Count == 0)
             {
                 return;
             }
 
             int index = 0;
-            foreach (var option in _event.Options)
+            foreach (var option in options)
             {
                 var vm = new EventChoiceVM(option, _enlistment, index, OnChoiceSelected);
                 ChoiceOptions.Add(vm);
                 index++;
             }
+        }
+
+        private static (string SetupId, string SetupFallback) ResolveEffectiveSetup(LanceLifeEventDefinition evt)
+        {
+            if (evt == null)
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            var onboarding = LanceLifeOnboardingBehavior.Instance;
+            if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase) &&
+                onboarding != null &&
+                !string.IsNullOrWhiteSpace(onboarding.Variant) &&
+                evt.Variants != null &&
+                evt.Variants.TryGetValue(onboarding.Variant, out var variant) &&
+                variant != null)
+            {
+                // Prefer variant setup if present; otherwise fallback to base setup.
+                if (!string.IsNullOrWhiteSpace(variant.SetupId) || !string.IsNullOrWhiteSpace(variant.SetupFallback))
+                {
+                    return (variant.SetupId, variant.SetupFallback);
+                }
+            }
+
+            return (evt.SetupId, evt.SetupFallback);
+        }
+
+        private static List<LanceLifeEventOptionDefinition> ResolveEffectiveOptions(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment)
+        {
+            if (evt == null)
+            {
+                return new List<LanceLifeEventOptionDefinition>();
+            }
+
+            // Base options
+            var baseOptions = evt.Options ?? new List<LanceLifeEventOptionDefinition>();
+
+            // Onboarding variant override (first_time/transfer/return)
+            var onboarding = LanceLifeOnboardingBehavior.Instance;
+            if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase) &&
+                onboarding != null &&
+                !string.IsNullOrWhiteSpace(onboarding.Variant) &&
+                evt.Variants != null &&
+                evt.Variants.TryGetValue(onboarding.Variant, out var variant) &&
+                variant?.Options != null &&
+                variant.Options.Count > 0)
+            {
+                baseOptions = variant.Options;
+            }
+
+            // Option.condition filtering (match InquiryPresenter behavior)
+            if (enlistment == null)
+            {
+                return baseOptions.Where(o => o != null).ToList();
+            }
+
+            var eval = new LanceLifeEventTriggerEvaluator();
+            var result = new List<LanceLifeEventOptionDefinition>();
+            foreach (var opt in baseOptions)
+            {
+                if (opt == null)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(opt.Condition))
+                {
+                    result.Add(opt);
+                    continue;
+                }
+
+                if (eval.IsConditionTrue(opt.Condition, enlistment))
+                {
+                    result.Add(opt);
+                }
+            }
+
+            // Safety: never return an empty set if the event had options but conditions filtered everything out.
+            return result.Count > 0 ? result : baseOptions.Where(o => o != null).ToList();
         }
 
         private void OnChoiceSelected(EventChoiceVM choice)

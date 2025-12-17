@@ -49,10 +49,13 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);
-            dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment);
-            dataStore.SyncData("_personalInventory", ref _personalInventory);
-            dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);
+                dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment);
+                dataStore.SyncData("_personalInventory", ref _personalInventory);
+                dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
+            });
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -160,7 +163,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Error backing up personal equipment: {ex.Message}", ex);
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-001", "Error backing up personal equipment", ex);
                 throw;
             }
         }
@@ -206,7 +209,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Error restoring personal equipment: {ex.Message}", ex);
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-002", "Error restoring personal equipment", ex);
             }
         }
         
@@ -277,7 +280,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Error restoring equipment to inventory for retirement: {ex.Message}", ex);
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-003", "Error restoring equipment to inventory for retirement", ex);
             }
         }
         

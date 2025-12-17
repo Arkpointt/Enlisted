@@ -96,19 +96,22 @@ namespace Enlisted.Features.Lances.Simulation
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("lls_members", ref _lanceMembers);
-            dataStore.SyncData("lls_playerReady", ref _playerReadyForPromotion);
-            dataStore.SyncData("lls_weeksWaiting", ref _weeksWaitingForVacancy);
-            dataStore.SyncData("lls_escalationPath", ref _selectedEscalationPath);
-            dataStore.SyncData("lls_escalationStart", ref _escalationStartTime);
-            dataStore.SyncData("lls_escalationActive", ref _escalationInProgress);
-            dataStore.SyncData("lls_lastDailyProcess", ref _lastDailyProcessTime);
-            dataStore.SyncData("lls_pendingCover", ref _pendingCoverRequestMemberId);
-            dataStore.SyncData("lls_memorialPending", ref _memorialPending);
-            dataStore.SyncData("lls_memorialMember", ref _pendingMemorialMemberId);
-            dataStore.SyncData("lls_initialized", ref _isInitialized);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("lls_members", ref _lanceMembers);
+                dataStore.SyncData("lls_playerReady", ref _playerReadyForPromotion);
+                dataStore.SyncData("lls_weeksWaiting", ref _weeksWaitingForVacancy);
+                dataStore.SyncData("lls_escalationPath", ref _selectedEscalationPath);
+                dataStore.SyncData("lls_escalationStart", ref _escalationStartTime);
+                dataStore.SyncData("lls_escalationActive", ref _escalationInProgress);
+                dataStore.SyncData("lls_lastDailyProcess", ref _lastDailyProcessTime);
+                dataStore.SyncData("lls_pendingCover", ref _pendingCoverRequestMemberId);
+                dataStore.SyncData("lls_memorialPending", ref _memorialPending);
+                dataStore.SyncData("lls_memorialMember", ref _pendingMemorialMemberId);
+                dataStore.SyncData("lls_initialized", ref _isInitialized);
 
-            _lanceMembers ??= new List<LanceMemberState>();
+                _lanceMembers ??= new List<LanceMemberState>();
+            });
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)

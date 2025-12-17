@@ -154,7 +154,7 @@ public class LanceLifeEventVM : ViewModel
 Add sparkles when choices grant XP:
 
 ```xml
-<!-- In EventChoiceButton.xml -->
+<!-- In LanceLifeEventScreen.xml (choice template is inlined) -->
 <ParticleEmitterWidget Id="RewardSparkles" 
                        ParticleEffect="sparkle_gold"
                        IsVisible="@HasSkillRewards"

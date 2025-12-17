@@ -112,7 +112,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error in AfterStart: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-001", "Error in AfterStart", ex);
             }
         }
         
@@ -147,7 +147,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error in OnDeploymentFinished: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-002", "Error in OnDeploymentFinished", ex);
             }
         }
 
@@ -173,7 +173,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error in OnAgentBuild: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-003", "Error in OnAgentBuild", ex);
             }
         }
 
@@ -303,7 +303,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("FormationAssignment", $"Error removing stay-back companion: {ex.Message}");
+                    ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-004",
+                        "Error removing stay-back companion", ex);
                 }
             }
             
@@ -697,7 +698,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"[{caller}] Error during lord attach: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-007", "Error during lord attach", ex);
                 return false;
             }
         }
@@ -882,7 +883,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error teleporting player to formation: {ex.Message}\n{ex.StackTrace}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-005", "Error teleporting player to formation", ex);
                 _needsPositionFix = false;
             }
         }
@@ -967,7 +968,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error teleporting squad: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-006", "Error teleporting squad to formation", ex);
             }
 
             return teleportedCount;
@@ -1203,7 +1204,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error assigning player party to formation: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-008", "Error assigning player party to formation", ex);
                 _partyAssignmentComplete = true; // Stop trying on error
             }
         }
@@ -1282,7 +1283,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error setting up squad command: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-009", "Error setting up squad command", ex);
             }
         }
         
@@ -1328,7 +1329,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error transferring army command: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-010", "Error transferring army command", ex);
             }
         }
 
@@ -1421,7 +1422,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FormationAssignment", $"Error in OnEndMission: {ex.Message}");
+                ModLogger.ErrorCode("FormationAssignment", "E-FORMASSIGN-011", "Error in OnEndMission", ex);
             }
         }
     }

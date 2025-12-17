@@ -1,16 +1,16 @@
-﻿# Menu Interface System
+# Menu Interface System
 
 ## Quick Reference
 
 | Menu ID | Purpose | Access |
 |---------|---------|--------|
 | `enlisted_status` | Main service hub - status with escalation tracks (Heat/Discipline/Lance Rep), navigation | After enlistment |
-| `enlisted_lance` | My Lance - roster with relationship indicators, interactions, welfare tracking | Enlisted Status → "My Lance" |
-| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Camp → "Camp Activities" |
-| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Enlisted Status → "Report for Duty" |
-| `enlisted_medical` | Medical Attention - treatment options | Enlisted Status → "Seek Medical Attention" (when injured/ill) |
-| `command_tent` | Camp - service records, retinue, camp activities, activity log | Enlisted Status → "Camp" |
-| Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status → "Visit Quartermaster" |
+| `enlisted_lance` | My Lance - roster with relationship indicators, interactions, welfare tracking | Enlisted Status -> "My Lance" |
+| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Camp -> "Camp Activities" |
+| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Enlisted Status -> "Report for Duty" |
+| `enlisted_medical` | Medical Attention - treatment options | Enlisted Status -> "Seek Medical Attention" (when injured/ill) |
+| `command_tent` | Camp - service records, retinue, camp activities, activity log | Enlisted Status -> "Camp" |
+| Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status -> "Visit Quartermaster" |
 
 ## Index
 
@@ -88,7 +88,7 @@ Each menu option has a `LeaveType` that displays an appropriate icon:
 | Report for Duty | `Manage` | Management (includes duty request system) |
 | Ask for Leave | `Leave` | Exit action |
 | Desert the Army | `Escape` | Warning/danger (immediate abandonment) |
-| (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge → Final Muster) |
+| (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge -> Final Muster) |
 
 ### Tooltips
 
@@ -111,7 +111,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 
 - Section headers use em-dashes: `— DUTIES —` instead of ASCII box characters
 - Currency displays use inline gold icons: `{GOLD_ICON}`
-- Bullet lists use modern markers: `•` for selected, `○` for available
+- Bullet lists use simple markers: `[x]` for selected, `[ ]` for available
 
 ---
 
@@ -154,7 +154,7 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
   - Time-of-day (Dawn/Day/Dusk/Night)
   - Days since last town entry
   - Camp snapshot status line (Supplies/Morale/Pay) when Camp Life is active
-  - **Pay Status** - Shows tension level when pay is late (Grumbling → Tense → Severe → CRITICAL)
+  - **Pay Status** - Shows tension level when pay is late (Grumbling -> Tense -> Severe -> CRITICAL)
   - **Owed Backpay** - Shows accumulated unpaid wages with gold icon
 - Pay is handled via a muster ledger and pay muster (see Pay System doc); discharge is managed from Camp.
 - When PayTension ≥ 60, the "Leave Without Penalty" option appears (free desertion).
@@ -247,7 +247,7 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 - Rich military context explaining daily activities and skill training
 
 **Checkmark System:**
-- Dynamic checkmarks (✓/○) showing current selection
+- Dynamic markers (`[x]`/`[ ]`) showing current selection
 - Updates in real-time when selection changes
 - Visual feedback for active assignment
 
@@ -255,12 +255,12 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 
 **Flow:**
 - Enlisted Status (`enlisted_status`)
-  - Visit Quartermaster → equipment selection (formation + tier + culture)
-  - My Lance (`enlisted_lance`) → roster / relationships
-  - Report for Duty (`enlisted_duty_selection`) → duty selection (request system)
-  - Seek Medical Attention (`enlisted_medical`) → treatment options (when injured/ill)
-  - My Lord... → dialog system
-  - Visit Settlement → town/castle menu
+  - Visit Quartermaster -> equipment selection (formation + tier + culture)
+  - My Lance (`enlisted_lance`) -> roster / relationships
+  - Report for Duty (`enlisted_duty_selection`) -> duty selection (request system)
+  - Seek Medical Attention (`enlisted_medical`) -> treatment options (when injured/ill)
+  - My Lord... -> dialog system
+  - Visit Settlement -> town/castle menu
   - Camp (`command_tent`)
     - Service Records
     - Activity Log / XP Breakdown
@@ -271,7 +271,7 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
       - — LANCE — (Talk to Leader, Check Mates, etc.)
     - Retinue / Companions
     - Request Discharge
-  - Ask for Leave → leave request dialog
+  - Ask for Leave -> leave request dialog
 
 ### My Lance Menu
 
@@ -341,7 +341,7 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 
 **Purpose:** Organized menu for player-initiated activities. Earn XP, manage fatigue, and build relationships through structured camp actions. Activities are organized by category with section headers.
 
-**Access:** Camp → "Camp Activities"
+**Access:** Camp -> "Camp Activities"
 
 **Menu Header (RP-flavored):**
 > The camp stirs with activity. Soldiers drill, fires crackle, and the smell of cooking fills the air. What will you do with your time?
@@ -456,13 +456,13 @@ private void SetDynamicMenuText()
     var currentDuty = EnlistmentBehavior.Instance?.SelectedDuty ?? "None";
     
     // Update checkmarks based on current selection
-    // Format: "✓ Duty Name" or "○ Duty Name"
+    // Format: "[x] Duty Name" or "[ ] Duty Name"
 }
 ```
 
 **Checkmark Logic:**
-- ✓ (checkmark) for currently selected duty
-- ○ (circle) for available but not selected
+- `[x]` for currently selected duty
+- `[ ]` for available but not selected
 - Updates automatically when selection changes
 
 ### Tier-Based Availability
@@ -809,7 +809,7 @@ ModLogger.Info("Interface", $"Activating menu: {menuId}");
 ModLogger.Debug("Menu", $"Menu state: duty={duty}");
 
 // Selection changes
-ModLogger.Info("Menu", $"Duty changed: {oldDuty} → {newDuty}");
+ModLogger.Info("Menu", $"Duty changed: {oldDuty} -> {newDuty}");
 
 // Tier checks
 ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, allowed={allowed}");

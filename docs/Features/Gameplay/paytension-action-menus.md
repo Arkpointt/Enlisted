@@ -1,6 +1,6 @@
 # PayTension Action Menus
 
-**Status**: ✅ Implemented (v3.0)  
+**Status**: [x] Implemented (v3.0)  
 **Category**: Gameplay Feature  
 **Dependencies**: Pay System, Camp, Quartermaster Hero
 
@@ -20,11 +20,11 @@ When pay is severely delayed (PayTension 40+), two special action menus appear i
 - Access to **Camp** (from Enlisted Status)
 
 ### Menu Location
-1. **Enlisted Status** → **Camp**
+1. **Enlisted Status** -> **Camp**
 2. Camp menu opens
 3. Two new options appear (if PayTension 40+):
-   - 🔴 **"Desperate Measures..."** (HostileAction icon)
-   - 🟢 **"Help the Lord with Finances"** (Mission icon)
+   -  **"Desperate Measures..."** (HostileAction icon)
+   -  **"Help the Lord with Finances"** (Mission icon)
 
 ### Visibility
 - **Below 40 tension**: Menus completely hidden

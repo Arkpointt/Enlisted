@@ -142,7 +142,7 @@ namespace Enlisted.Features.Camp.UI.Management
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error(LogCategory, "Exception while opening Camp Management UI.", ex);
+                    ModLogger.ErrorCode(LogCategory, "E-CAMPUI-060", "Exception while opening Camp Management UI.", ex);
                     InformationManager.DisplayMessage(new InformationMessage("Enlisted: Camp Management UI failed to open."));
                     Close();
                 }

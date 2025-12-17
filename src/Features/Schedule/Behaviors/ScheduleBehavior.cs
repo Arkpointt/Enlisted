@@ -134,52 +134,55 @@ namespace Enlisted.Features.Schedule.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Manual serialization via SyncData - do NOT use [SaveableField] attributes
-            // as mixing both causes save corruption
-            dataStore.SyncData("_currentSchedule", ref _currentSchedule);
-            dataStore.SyncData("_currentCycleDay", ref _currentCycleDay);
-            
-            // Manually serialize LanceNeedsState properties since it's a custom class
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _lanceNeeds = new LanceNeedsState();
-                int readiness = 60, equipment = 60, morale = 60, rest = 60, supplies = 60;
-                dataStore.SyncData("_lanceNeeds_Readiness", ref readiness);
-                dataStore.SyncData("_lanceNeeds_Equipment", ref equipment);
-                dataStore.SyncData("_lanceNeeds_Morale", ref morale);
-                dataStore.SyncData("_lanceNeeds_Rest", ref rest);
-                dataStore.SyncData("_lanceNeeds_Supplies", ref supplies);
-                
-                _lanceNeeds.Readiness = readiness;
-                _lanceNeeds.Equipment = equipment;
-                _lanceNeeds.Morale = morale;
-                _lanceNeeds.Rest = rest;
-                _lanceNeeds.Supplies = supplies;
-            }
-            else
-            {
-                // Saving
-                if (_lanceNeeds == null) _lanceNeeds = new LanceNeedsState();
-                int readiness = _lanceNeeds.Readiness;
-                int equipment = _lanceNeeds.Equipment;
-                int morale = _lanceNeeds.Morale;
-                int rest = _lanceNeeds.Rest;
-                int supplies = _lanceNeeds.Supplies;
-                
-                dataStore.SyncData("_lanceNeeds_Readiness", ref readiness);
-                dataStore.SyncData("_lanceNeeds_Equipment", ref equipment);
-                dataStore.SyncData("_lanceNeeds_Morale", ref morale);
-                dataStore.SyncData("_lanceNeeds_Rest", ref rest);
-                dataStore.SyncData("_lanceNeeds_Supplies", ref supplies);
-            }
-            
-            dataStore.SyncData("_lastScheduleGeneration", ref _lastScheduleGeneration);
-            dataStore.SyncData("_isInitialized", ref _isInitialized);
-            dataStore.SyncData("_lastDegradationTime", ref _lastDegradationTime);
-            dataStore.SyncData("_previousTimeBlock", ref _previousTimeBlock);
-            dataStore.SyncData("_cachedPlayerTier", ref _cachedPlayerTier);
-            dataStore.SyncData("_isManualScheduleMode", ref _isManualScheduleMode);
-            dataStore.SyncData("_performanceTracker", ref _performanceTracker);
+                // Manual serialization via SyncData - do NOT use [SaveableField] attributes
+                // as mixing both causes save corruption
+                dataStore.SyncData("_currentSchedule", ref _currentSchedule);
+                dataStore.SyncData("_currentCycleDay", ref _currentCycleDay);
+
+                // Manually serialize LanceNeedsState properties since it's a custom class
+                if (dataStore.IsLoading)
+                {
+                    _lanceNeeds = new LanceNeedsState();
+                    int readiness = 60, equipment = 60, morale = 60, rest = 60, supplies = 60;
+                    dataStore.SyncData("_lanceNeeds_Readiness", ref readiness);
+                    dataStore.SyncData("_lanceNeeds_Equipment", ref equipment);
+                    dataStore.SyncData("_lanceNeeds_Morale", ref morale);
+                    dataStore.SyncData("_lanceNeeds_Rest", ref rest);
+                    dataStore.SyncData("_lanceNeeds_Supplies", ref supplies);
+
+                    _lanceNeeds.Readiness = readiness;
+                    _lanceNeeds.Equipment = equipment;
+                    _lanceNeeds.Morale = morale;
+                    _lanceNeeds.Rest = rest;
+                    _lanceNeeds.Supplies = supplies;
+                }
+                else
+                {
+                    // Saving
+                    if (_lanceNeeds == null) _lanceNeeds = new LanceNeedsState();
+                    int readiness = _lanceNeeds.Readiness;
+                    int equipment = _lanceNeeds.Equipment;
+                    int morale = _lanceNeeds.Morale;
+                    int rest = _lanceNeeds.Rest;
+                    int supplies = _lanceNeeds.Supplies;
+
+                    dataStore.SyncData("_lanceNeeds_Readiness", ref readiness);
+                    dataStore.SyncData("_lanceNeeds_Equipment", ref equipment);
+                    dataStore.SyncData("_lanceNeeds_Morale", ref morale);
+                    dataStore.SyncData("_lanceNeeds_Rest", ref rest);
+                    dataStore.SyncData("_lanceNeeds_Supplies", ref supplies);
+                }
+
+                dataStore.SyncData("_lastScheduleGeneration", ref _lastScheduleGeneration);
+                dataStore.SyncData("_isInitialized", ref _isInitialized);
+                dataStore.SyncData("_lastDegradationTime", ref _lastDegradationTime);
+                dataStore.SyncData("_previousTimeBlock", ref _previousTimeBlock);
+                dataStore.SyncData("_cachedPlayerTier", ref _cachedPlayerTier);
+                dataStore.SyncData("_isManualScheduleMode", ref _isManualScheduleMode);
+                dataStore.SyncData("_performanceTracker", ref _performanceTracker);
+            });
         }
 
         private void OnSessionLaunched(CampaignGameStarter starter)

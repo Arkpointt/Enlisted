@@ -5,7 +5,7 @@
 
 ---
 
-## 🎯 v0.6.1 - Kingdom-Style Camp Management Screen (In Progress)
+##  v0.6.1 - Kingdom-Style Camp Management Screen (In Progress)
 
 **Release:** Q1 2026
 
@@ -23,7 +23,7 @@ This matches native Bannerlord UI patterns (like Kingdom Screen) and sets the fo
 
 ---
 
-## 🤖 v0.7.0 - AI Daily Schedule
+##  v0.7.0 - AI Daily Schedule
 
 **Release:** Q2 2026 (~2 months)
 
@@ -65,7 +65,7 @@ Today's Schedule (Day 7 of 12)
 
 ---
 
-## 👥 v0.8.0 - Lance Life Simulation
+##  v0.8.0 - Lance Life Simulation
 
 **Release:** Q3 2026 (~3 months)
 
@@ -77,7 +77,7 @@ Your lance feels like actual people who need each other.
 
 ---
 
-## 🎭 v0.9.0 - Persistent Lance Leaders
+##  v0.9.0 - Persistent Lance Leaders
 
 **Release:** Q4 2026 (~2.5 months)
 
@@ -91,7 +91,7 @@ When your leader dies, you get a new one with a different personality. Start fre
 
 ---
 
-## 🎖️ Version 1.0.0 - Party Lance Activity Simulation (Optional Feature)
+##  Version 1.0.0 - Party Lance Activity Simulation (Optional Feature)
 
 **Status:** Planned for after core systems complete  
 **Release:** Q1 2027 (estimated 2 months development)
@@ -118,9 +118,9 @@ When your leader dies, you get a new one with a different personality. Start fre
 This feature can be DISABLED entirely if you prefer arcade gameplay. When enabled:
 
 - **Routine Operations Have Consequences:**
-  - Patrols can encounter bandits → small casualties (1-5 troops)
-  - Foraging runs can get ambushed → wounded troops (recover in 7 days)
-  - Scout missions can get spotted → brief combat
+  - Patrols can encounter bandits -> small casualties (1-5 troops)
+  - Foraging runs can get ambushed -> wounded troops (recover in 7 days)
+  - Scout missions can get spotted -> brief combat
   - Guard duty accidents, disease, desertion
 - **Your Army Weakens Over Time** - Armies lose troops to routine operations, not just battles
 - **Strategic Depth** - Can't send lances on dangerous missions constantly
@@ -151,7 +151,7 @@ Your army feels like a real military organization with multiple units operating 
 
 ---
 
-## 📊 Release Timeline Summary
+##  Release Timeline Summary
 
 | Version | Feature | Timeline | Development Time |
 |---------|---------|----------|------------------|
@@ -165,27 +165,27 @@ Your army feels like a real military organization with multiple units operating 
 
 ---
 
-## 🎮 What's Already in the Mod (v0.6.0)
+##  What's Already in the Mod (v0.6.0)
 
 Don't forget what you already have access to:
 
-✅ **Core Military Service** - Enlist, ranks, formations, pay system  
-✅ **Lance System** - Join culture-specific military units  
-✅ **Duties System** - Formation-based job assignments  
-✅ **Fatigue & Camp Activities** - Stamina management and camp interaction  
-✅ **Pay Tension System** - Financial crisis gameplay with moral choices  
-✅ **Companion Management** - Battle participation toggle  
-✅ **Commander's Retinue** - Personal troops at T7-T9  
-✅ **Formation Training** - Daily skill XP  
-✅ **Lance Life Events** - Random military life events  
-✅ **Camp Life Simulation** - Dynamic camp conditions  
-✅ **Quartermaster System** - Equipment, provisions, personality  
-✅ **Story Packs** - Modular event content  
-✅ **Full Localization** - Translation support
+[x] **Core Military Service** - Enlist, ranks, formations, pay system  
+[x] **Lance System** - Join culture-specific military units  
+[x] **Duties System** - Formation-based job assignments  
+[x] **Fatigue & Camp Activities** - Stamina management and camp interaction  
+[x] **Pay Tension System** - Financial crisis gameplay with moral choices  
+[x] **Companion Management** - Battle participation toggle  
+[x] **Commander's Retinue** - Personal troops at T7-T9  
+[x] **Formation Training** - Daily skill XP  
+[x] **Lance Life Events** - Random military life events  
+[x] **Camp Life Simulation** - Dynamic camp conditions  
+[x] **Quartermaster System** - Equipment, provisions, personality  
+[x] **Story Packs** - Modular event content  
+[x] **Full Localization** - Translation support
 
 ---
 
-## 🤔 Frequently Asked Questions
+##  Frequently Asked Questions
 
 **Q: Will these features be free updates?**  
 A: Yes! All planned features are free updates to the existing mod.
@@ -207,7 +207,7 @@ A: That's a separate feature we've designed but it's low priority. Focus is on m
 
 ---
 
-## 💬 Stay Updated
+##  Stay Updated
 
 - **Development Updates:** Watch this file for status changes
 - **Testing Opportunities:** We'll announce beta testing for major releases

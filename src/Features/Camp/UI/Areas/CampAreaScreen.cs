@@ -69,7 +69,7 @@ namespace Enlisted.Features.Camp.UI.Areas
             }
             catch (Exception ex)
             {
-                ModLogger.Error("CampAreaUI", $"Failed to display Camp Area screen: {ex.Message}", ex);
+                ModLogger.ErrorCode("CampAreaUI", "E-CAMPUI-030", "Failed to display Camp Area screen", ex);
                 
                 // Clean up partial initialization
                 if (_gauntletMovie != null && _gauntletLayer != null)
@@ -184,7 +184,7 @@ namespace Enlisted.Features.Camp.UI.Areas
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("CampAreaUI", $"Failed to display Camp Area screen: {ex.Message}", ex);
+                    ModLogger.ErrorCode("CampAreaUI", "E-CAMPUI-031", "Failed to display Camp Area screen", ex);
                     // Ensure onClosed is called so the caller can clean up
                     onClosed?.Invoke();
                 }

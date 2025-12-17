@@ -437,7 +437,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Quartermaster", $"Failed to switch back to enlisted status: {ex.Message}");
+                            ModLogger.ErrorCode("Quartermaster", "E-QM-004",
+                                "Failed to switch back to enlisted status", ex);
                             EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
                     });
@@ -892,7 +893,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
                 var price = basePrice * soldierTax * discountMultiplier * campMultiplier;
                 var roundedPrice = Convert.ToInt32(MathF.Round(price));
-                return Math.Max(5, roundedPrice);
+                
+                // Relationship discount (0–15%) comes from the Quartermaster Hero relationship system.
+                // This is intentionally applied AFTER soldier-tax and role/mood multipliers so the discount is predictable.
+                var enlistment = EnlistmentBehavior.Instance;
+                var discounted = enlistment?.IsEnlisted == true
+                    ? enlistment.ApplyQuartermasterDiscount(roundedPrice)
+                    : roundedPrice;
+
+                return Math.Max(5, discounted);
             }
             catch
             {
@@ -933,7 +942,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"Error charging gold: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-005", "Error charging gold", ex);
             }
         }
         
@@ -953,7 +962,10 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 if (variant?.Item == null)
                 {
-                    ModLogger.Error("Quartermaster", "Equipment request failed - variant or item is null");
+                    // This is a genuine bad state but can be hit repeatedly via UI retry flows.
+                    // Keep it high-signal: log once per session with a stable code.
+                    ModLogger.LogOnce("qm_variant_null", "Quartermaster",
+                        "[E-QM-012] Equipment request failed - variant or item is null", LogLevel.Error);
                     return;
                 }
 
@@ -1065,7 +1077,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"Error processing equipment variant request for {variant?.Item?.Name?.ToString() ?? "null"} in slot {variant?.Slot}: {ex.Message}", ex);
+                ModLogger.ErrorCode("Quartermaster", "E-QM-006",
+                    $"Error processing equipment variant request for {variant?.Item?.Name?.ToString() ?? "null"} in slot {variant?.Slot}", ex);
             }
         }
         
@@ -1516,7 +1529,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     sb.AppendLine("or try again after your next promotion.");
                     
                     MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", sb.ToString());
-                    ModLogger.Error("Quartermaster", "Unable to identify player troop type");
+                    ModLogger.LogOnce("qm_player_troop_unknown", "Quartermaster",
+                        "[E-QM-013] Unable to identify player troop type", LogLevel.Error);
                     return;
                 }
                 
@@ -1820,7 +1834,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"GetCultureHorseGear failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-007", "GetCultureHorseGear failed", ex);
                 return result;
             }
         }
@@ -2158,7 +2172,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    var canAfford = Hero.MainHero.Gold >= 10;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(10) : 10;
+                    args.Text = new TextObject($"Supplemental Rations ({cost}{{GOLD_ICON}}) - +2 morale for 1 day");
+
+                    var canAfford = Hero.MainHero.Gold >= cost;
                     if (!canAfford)
                     {
                         args.IsEnabled = false;
@@ -2175,7 +2193,11 @@ namespace Enlisted.Features.Equipment.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    var canAfford = Hero.MainHero.Gold >= 30;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(30) : 30;
+                    args.Text = new TextObject($"Officer's Fare ({cost}{{GOLD_ICON}}) - +4 morale, +2 fatigue for 2 days");
+
+                    var canAfford = Hero.MainHero.Gold >= cost;
                     if (!canAfford)
                     {
                         args.IsEnabled = false;
@@ -2193,7 +2215,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Trade;
                     var enlistment = EnlistmentBehavior.Instance;
-                    var canAfford = Hero.MainHero.Gold >= 75;
+                    var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(75) : 75;
+                    args.Text = new TextObject($"Commander's Feast ({cost}{{GOLD_ICON}}) - +8 morale, +5 fatigue for 3 days");
+
+                    var canAfford = Hero.MainHero.Gold >= cost;
                     var highEnoughTier = enlistment?.EnlistmentTier >= 4;
                     
                     if (!canAfford)
@@ -2299,6 +2324,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
+                // Cost shown to the player should reflect relationship discount (if any).
+                var effectiveCost = enlistment.ApplyQuartermasterDiscount(cost);
+
                 if (enlistment.PurchaseRations(tier, cost, durationDays))
                 {
                     var tierName = tier switch
@@ -2310,7 +2338,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     };
 
                     InformationManager.DisplayMessage(new InformationMessage(
-                        $"Purchased {tierName} for {cost} gold ({durationDays} days).",
+                        $"Purchased {tierName} for {effectiveCost} gold ({durationDays} days).",
                         Colors.Green));
 
                     // Refresh menu to show updated status
@@ -2350,7 +2378,8 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
             var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
-            var cost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+            var baseCost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+            var cost = enlistment.ApplyQuartermasterDiscount(baseCost);
 
             // Set dynamic text with cost
             var tierName = tier switch
@@ -2381,7 +2410,9 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             else
             {
-                args.Tooltip = new TextObject($"Provision your {soldierCount} soldiers for 7 days at {tierName} quality.");
+                args.Tooltip = baseCost != cost
+                    ? new TextObject($"Provision your {soldierCount} soldiers for 7 days at {tierName} quality (base {baseCost}, discounted {cost}).")
+                    : new TextObject($"Provision your {soldierCount} soldiers for 7 days at {tierName} quality.");
             }
 
             return true;
@@ -2412,7 +2443,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
-                var cost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+                var baseCost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+                var cost = enlistment.ApplyQuartermasterDiscount(baseCost);
 
                 if (enlistment.PurchaseRetinueProvisioning(tier, soldierCount))
                 {
@@ -2633,7 +2665,10 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Gauntlet UI failed, using conversation-based selection", ex);
+                // The Gauntlet VM can fail due to mod UI conflicts; we still provide a safe fallback.
+                // Non-spammy: log once per session with full exception detail.
+                ModLogger.ErrorCodeOnce("qm_gauntlet_ui_failed", "Quartermaster", "E-QM-014",
+                    "Gauntlet UI failed; using conversation-based selection. This can indicate a UI mod conflict.", ex);
                 
                 // Fallback to conversation-based individual selection
                 ShowConversationBasedEquipmentSelection(variants, equipmentType);
@@ -2929,7 +2964,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildArmorOptionsFromCurrentTroop failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-100", "BuildArmorOptionsFromCurrentTroop failed", ex);
             }
             return result;
         }
@@ -3012,7 +3047,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildWeaponOptionsFromCurrentTroop failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-101", "BuildWeaponOptionsFromCurrentTroop failed", ex);
             }
             return result;
         }
@@ -3059,8 +3094,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectWeaponVariantsFromNodes failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-102",
+                    $"CollectWeaponVariantsFromNodes failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -3117,8 +3152,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectWeaponVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-103",
+                    $"CollectWeaponVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -3174,7 +3209,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildVariantOptionsForWeapons failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-104", "BuildVariantOptionsForWeapons failed", ex);
             }
             return finalOptions;
         }
@@ -3237,8 +3272,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectArmorVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-105",
+                    $"CollectArmorVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -3294,7 +3329,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildVariantOptionsForArmor failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-106", "BuildVariantOptionsForArmor failed", ex);
             }
             return finalOptions;
         }
@@ -3353,7 +3388,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildTroopBranchNodes failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-107", "BuildTroopBranchNodes failed", ex);
             }
             return branch;
         }
@@ -3404,8 +3439,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectArmorVariantsFromNodes failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-108",
+                    $"CollectArmorVariantsFromNodes failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -3459,7 +3494,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildVariantOptionsExact failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-109", "BuildVariantOptionsExact failed", ex);
             }
             return finalOptions;
         }
@@ -3501,7 +3536,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"ShowArmorSlotPicker failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-110", "ShowArmorSlotPicker failed", ex);
             }
         }
 
@@ -3691,7 +3726,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildShieldOptionsFromWeapons failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-111", "BuildShieldOptionsFromWeapons failed", ex);
             }
             return shields;
         }

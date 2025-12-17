@@ -1,4 +1,4 @@
-﻿# blueprint
+# blueprint
 
 architecture and standards for the enlisted mod.
 
@@ -13,7 +13,7 @@ architecture and standards for the enlisted mod.
 
 ## Build
 
-- Visual Studio: config "Enlisted RETAIL" → Build
+- Visual Studio: config "Enlisted RETAIL" -> Build
 - CLI: `dotnet build -c "Enlisted RETAIL" /p:Platform=x64`
 - Output: `<Bannerlord>/Modules/Enlisted/bin/Win64_Shipping_Client/`
 
@@ -205,10 +205,10 @@ var hero = CampaignSafetyGuard.SafeMainHero;  // Null-safe during char creation
 ### Gold Transactions
 
 ```csharp
-// ❌ WRONG: ChangeHeroGold modifies internal gold not visible in UI
+// X WRONG: ChangeHeroGold modifies internal gold not visible in UI
 Hero.MainHero.ChangeHeroGold(-amount);
 
-// ✅ CORRECT: GiveGoldAction updates party treasury visible in UI
+// [x] CORRECT: GiveGoldAction updates party treasury visible in UI
 GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
 GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
 ```
@@ -216,10 +216,10 @@ GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
 ### Equipment Slot Iteration
 
 ```csharp
-// ❌ WRONG: Enum.GetValues includes invalid count values (crashes)
+// X WRONG: Enum.GetValues includes invalid count values (crashes)
 foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { ... }
 
-// ✅ CORRECT: Numeric iteration with NumEquipmentSetSlots
+// [x] CORRECT: Numeric iteration with NumEquipmentSetSlots
 for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 {
     var slot = (EquipmentIndex)i;
@@ -339,13 +339,13 @@ All JSON files in `ModuleData/Enlisted/`:
 ### Culture Ranks (progression_config.json)
 
 Each culture has unique rank names for all 9 tiers:
-- **Empire**: Tiro → Miles → Immunes → Principalis → Evocatus → Centurion → Primus Pilus → Tribune → Legate
-- **Vlandia**: Peasant → Levy → Footman → Man-at-Arms → Sergeant → Knight Bachelor → Cavalier → Banneret → Castellan
-- **Sturgia**: Thrall → Ceorl → Fyrdman → Drengr → Huskarl → Varangian → Champion → Thane → High Warlord
-- **Khuzait**: Outsider → Nomad → Noker → Warrior → Veteran → Bahadur → Arban → Zuun → Noyan
-- **Battania**: Woodrunner → Clan Warrior → Skirmisher → Raider → Oathsworn → Fian → Highland Champion → Clan Chief → High King's Guard
-- **Aserai**: Tribesman → Skirmisher → Footman → Veteran → Guard → Faris → Emir's Chosen → Sheikh → Grand Vizier
-- **Mercenary**: Follower → Recruit → Free Sword → Veteran → Blade → Chosen → Captain → Commander → Marshal
+- **Empire**: Tiro -> Miles -> Immunes -> Principalis -> Evocatus -> Centurion -> Primus Pilus -> Tribune -> Legate
+- **Vlandia**: Peasant -> Levy -> Footman -> Man-at-Arms -> Sergeant -> Knight Bachelor -> Cavalier -> Banneret -> Castellan
+- **Sturgia**: Thrall -> Ceorl -> Fyrdman -> Drengr -> Huskarl -> Varangian -> Champion -> Thane -> High Warlord
+- **Khuzait**: Outsider -> Nomad -> Noker -> Warrior -> Veteran -> Bahadur -> Arban -> Zuun -> Noyan
+- **Battania**: Woodrunner -> Clan Warrior -> Skirmisher -> Raider -> Oathsworn -> Fian -> Highland Champion -> Clan Chief -> High King's Guard
+- **Aserai**: Tribesman -> Skirmisher -> Footman -> Veteran -> Guard -> Faris -> Emir's Chosen -> Sheikh -> Grand Vizier
+- **Mercenary**: Follower -> Recruit -> Free Sword -> Veteran -> Blade -> Chosen -> Captain -> Commander -> Marshal
 
 ## Menu System
 
@@ -365,7 +365,7 @@ The `enlisted_status` menu shows:
 - Party Objective, Term Remaining, Rank (Tier)
 - Formation, Fatigue, Lance
 - Wage (with gold icon)
-- **Pay Status** (when PayTension > 0): Grumbling → Tense → Severe → CRITICAL
+- **Pay Status** (when PayTension > 0): Grumbling -> Tense -> Severe -> CRITICAL
 - **Owed Backpay** (when > 0): Accumulated unpaid wages
 - Current XP, Next Level XP
 

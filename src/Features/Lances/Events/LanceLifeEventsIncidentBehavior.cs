@@ -52,9 +52,12 @@ namespace Enlisted.Features.Lances.Events
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Safe persistence: strings/ints only.
-            dataStore.SyncData("ll_inc_pendingEventId", ref _pendingEventId);
-            dataStore.SyncData("ll_inc_pendingAtHour", ref _pendingAtHour);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                // Safe persistence: strings/ints only.
+                dataStore.SyncData("ll_inc_pendingEventId", ref _pendingEventId);
+                dataStore.SyncData("ll_inc_pendingAtHour", ref _pendingAtHour);
+            });
         }
 
         private static bool IsEnabled()
@@ -271,10 +274,6 @@ namespace Enlisted.Features.Lances.Events
                             {
                                 var txt = LanceLifeEventEffectsApplier.ApplyAndGetResultText(evt, opt, EnlistmentBehavior.Instance, showResultMessage: false);
                                 LanceLifeEventsStateBehavior.Instance?.MarkFired(evt);
-                                if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    LanceLifeOnboardingBehavior.Instance?.AdvanceStage($"incident:{evt.Id}");
-                                }
 
                                 if (string.IsNullOrWhiteSpace(txt))
                                 {

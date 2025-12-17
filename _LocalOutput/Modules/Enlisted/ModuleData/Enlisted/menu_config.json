@@ -236,10 +236,10 @@
   "text_variables": {
     "icons": {
       "gold": "<img src=\"General\\\\Icons\\\\Coin@2x\" extend=\"8\">",
-      "formation_infantry": "⚔️",
-      "formation_archer": "🏹", 
-      "formation_cavalry": "🐎",
-      "formation_horsearcher": "🏇"
+      "formation_infantry": "",
+      "formation_archer": "", 
+      "formation_cavalry": "",
+      "formation_horsearcher": ""
     },
     "cooldown_messages": {
       "available": "Available",
@@ -248,9 +248,9 @@
     },
     "equipment_status": {
       "equipped": "[EQUIPPED]",
-      "available": "✓",
-      "too_expensive": "❌ (Too expensive)",
-      "tier_locked": "🔒 (Tier {REQUIRED} required)"
+      "available": "[x]",
+      "too_expensive": "X (Too expensive)",
+      "tier_locked": " (Tier {REQUIRED} required)"
     }
   },
   "ui_settings": {

@@ -76,26 +76,29 @@ namespace Enlisted.Features.Assignments.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_saveVersion", ref _saveVersion);
-            dataStore.SyncData("_activeDuties", ref _activeDuties);
-            dataStore.SyncData("_playerFormation", ref _playerFormation);
-            dataStore.SyncData("_dutyStartTimes", ref _dutyStartTimes);
-            dataStore.SyncData("_officerRolesEnabled", ref _officerRolesEnabled);
-            
-            // Phase 7: Duty request cooldown tracking
-            dataStore.SyncData("_lastDutyChangeRequest", ref _lastDutyChangeRequest);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_saveVersion", ref _saveVersion);
+                dataStore.SyncData("_activeDuties", ref _activeDuties);
+                dataStore.SyncData("_playerFormation", ref _playerFormation);
+                dataStore.SyncData("_dutyStartTimes", ref _dutyStartTimes);
+                dataStore.SyncData("_officerRolesEnabled", ref _officerRolesEnabled);
 
-            // Initialize config after loading if not already done
-            if (dataStore.IsLoading && _config == null)
-            {
-                InitializeConfig();
-            }
-            
-            // Phase 7: Migration for existing saves - assign starter duty if none exists
-            if (dataStore.IsLoading)
-            {
-                MigratePhase7Data();
-            }
+                // Phase 7: Duty request cooldown tracking
+                dataStore.SyncData("_lastDutyChangeRequest", ref _lastDutyChangeRequest);
+
+                // Initialize config after loading if not already done
+                if (dataStore.IsLoading && _config == null)
+                {
+                    InitializeConfig();
+                }
+
+                // Phase 7: Migration for existing saves - assign starter duty if none exists
+                if (dataStore.IsLoading)
+                {
+                    MigratePhase7Data();
+                }
+            });
         }
         
         /// <summary>
@@ -150,7 +153,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Phase 7 migration failed", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-001", "Phase 7 migration failed", ex);
             }
         }
         
@@ -217,7 +220,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Failed to initialize duties system", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-002", "Failed to initialize duties system", ex);
                 // Create a fallback configuration with default values
                 _config = new DutiesSystemConfig { Enabled = false };
             }
@@ -258,7 +261,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error detecting player formation", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-003", "Error detecting player formation", ex);
                 return "infantry";
             }
         }
@@ -294,16 +297,20 @@ namespace Enlisted.Features.Assignments.Behaviors
                     UpdateOfficerRoles();
                 }
 
-                // Process formation training for both enlisted and leave status
-                // (Military training continues even during temporary leave)
-                if (enlistment.IsEnlisted || enlistment.IsOnLeave)
+                // Process formation training only while actively enlisted.
+                //
+                // Rationale:
+                // - We want "time in the army" to feel productive, but we also want battles and player-initiated training
+                //   (Camp Activities, training events, etc.) to matter over a long career.
+                // - Continuing automatic daily training while on leave made skill growth feel overly passive.
+                if (enlistment.IsEnlisted)
                 {
                     ProcessFormationTraining();
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error during daily duties processing", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-004", "Error during daily duties processing", ex);
             }
         }
 
@@ -334,7 +341,8 @@ namespace Enlisted.Features.Assignments.Behaviors
                 // Fix: Check both Duties and Professions dictionaries
                 if (!TryGetDuty(dutyId, out var dutyDef))
                 {
-                    ModLogger.Error("Duties", $"Unknown duty/profession in active duties: {dutyId}");
+                    ModLogger.LogOnce($"duties_unknown_active_{dutyId}", "Duties",
+                        $"[E-DUTIES-005] Unknown duty/profession in active duties: {dutyId}", LogLevel.Error);
                     _activeDuties.Remove(dutyId);
                     continue;
                 }
@@ -395,7 +403,8 @@ namespace Enlisted.Features.Assignments.Behaviors
 
                 if (!_config.FormationTraining.Formations.TryGetValue(playerFormation, out var formationConfig))
                 {
-                    ModLogger.Error("Duties", $"No formation training configuration for: {playerFormation}");
+                    ModLogger.LogOnce($"duties_no_formation_training_{playerFormation}", "Duties",
+                        $"[E-DUTIES-006] No formation training configuration for: {playerFormation}", LogLevel.Error);
                     return;
                 }
 
@@ -413,13 +422,14 @@ namespace Enlisted.Features.Assignments.Behaviors
                     }
                     else
                     {
-                        ModLogger.Error("Duties", $"Unknown skill in formation training: {skillName}");
+                        ModLogger.LogOnce($"duties_unknown_training_skill_{skillName}", "Duties",
+                            $"[E-DUTIES-007] Unknown skill in formation training: {skillName}", LogLevel.Error);
                     }
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error processing formation training", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-008", "Error processing formation training", ex);
             }
         }
 
@@ -481,7 +491,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error assigning officer roles via public API", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-009", "Error assigning officer roles via public API", ex);
             }
         }
 
@@ -524,14 +534,16 @@ namespace Enlisted.Features.Assignments.Behaviors
         {
             if (!IsInitialized || !_config.Enabled)
             {
-                ModLogger.Error("Duties", "Duties system not initialized");
+                ModLogger.LogOnce("duties_not_initialized", "Duties",
+                    "[E-DUTIES-010] Duties system not initialized", LogLevel.Error);
                 return false;
             }
 
             // Fix: Check both Duties and Professions dictionaries
             if (!TryGetDuty(dutyId, out var dutyDef))
             {
-                ModLogger.Error("Duties", $"Unknown duty/profession: {dutyId}");
+                ModLogger.LogOnce($"duties_unknown_assign_{dutyId}", "Duties",
+                    $"[E-DUTIES-011] Unknown duty/profession: {dutyId}", LogLevel.Error);
                 return false;
             }
 
@@ -890,12 +902,21 @@ namespace Enlisted.Features.Assignments.Behaviors
                     return false;
                 }
 
-                return subModules.Any(m =>
+                var active = subModules.Any(m =>
                 {
                     var name = m.GetType().FullName ?? "";
                     return name.IndexOf("NavalWar", StringComparison.OrdinalIgnoreCase) >= 0 ||
                            name.IndexOf("WarSails", StringComparison.OrdinalIgnoreCase) >= 0;
                 });
+
+                if (!active)
+                {
+                    // Non-spammy: only once per session, and only when we actually check for War Sails.
+                    ModLogger.WarnCodeOnce("warsails_missing_duties_behavior_check", "Duties", "W-DLC-002",
+                        "War Sails (NavalDLC) not detected; naval duties/features will be disabled.");
+                }
+
+                return active;
             }
             catch
             {
@@ -1005,7 +1026,8 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch
             {
-                ModLogger.Error("Duties", $"Unknown skill: {skillName}");
+                ModLogger.LogOnce($"duties_unknown_skill_{skillName}", "Duties",
+                    $"[E-DUTIES-012] Unknown skill: {skillName}", LogLevel.Error);
                 return null;
             }
         }
@@ -1066,7 +1088,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error calculating wage multiplier", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-013", "Error calculating wage multiplier", ex);
                 return 1.0f;
             }
         }
@@ -1194,7 +1216,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error getting formation training display", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-014", "Error getting formation training display", ex);
                 return "Error loading formation training";
             }
         }
@@ -1230,7 +1252,7 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Duties", "Error getting formation skill XP configuration", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-015", "Error getting formation skill XP configuration", ex);
             }
 
             return new Dictionary<string, int>();

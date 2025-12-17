@@ -36,22 +36,22 @@ Provide seamless town and castle access for enlisted soldiers while maintaining 
 ## Behavior
 
 **Settlement Detection:**
-1. Lord enters town/castle → Settlement entry event detected
+1. Lord enters town/castle -> Settlement entry event detected
 2. "Visit Town/Castle" option becomes available in enlisted menu
 3. Button text dynamically updates based on settlement type
 
 **Town Access Flow:**
-1. Player clicks "Visit Town/Castle" → Initiate synthetic encounter sequence
-2. Clean existing menu stack → Exit from enlisted menus safely
-3. Create synthetic outside encounter → Temporary party activation for encounter
-4. Switch to outside menu → town_outside or castle_outside
-5. Player uses vanilla town options → "Enter through gates", "Visit tavern", etc.
+1. Player clicks "Visit Town/Castle" -> Initiate synthetic encounter sequence
+2. Clean existing menu stack -> Exit from enlisted menus safely
+3. Create synthetic outside encounter -> Temporary party activation for encounter
+4. Switch to outside menu -> town_outside or castle_outside
+5. Player uses vanilla town options -> "Enter through gates", "Visit tavern", etc.
 
 **Return Flow:**
 1. Player clicks "Return to Army Camp" from any settlement menu
-2. Clean up synthetic encounter → End encounter and deactivate party
-3. Restore invisible enlisted state → Return to hidden party following
-4. Return to enlisted menu → Resume normal military service
+2. Clean up synthetic encounter -> End encounter and deactivate party
+3. Restore invisible enlisted state -> Return to hidden party following
+4. Return to enlisted menu -> Resume normal military service
 
 ## Technical Implementation
 
@@ -114,14 +114,14 @@ GameMenu.SwitchToMenu(settlement.IsTown ? "town_outside" : "castle_outside");
 
 ## Acceptance Criteria
 
-- ✅ "Visit Town/Castle" button appears only when lord is in appropriate settlement
-- ✅ Button text updates dynamically ("Visit Town" vs "Visit Castle")
-- ✅ No "Player encounter must be null!" assertion errors
-- ✅ No "LocationEncounter should be TownEncounter" assertion errors  
-- ✅ Full access to all settlement locations (tavern, arena, trade, smithy)
-- ✅ Seamless return navigation from all settlement menus
-- ✅ Proper state restoration (invisible party, enlisted status)
-- ✅ Works for both individual lords and army scenarios
+- [x] "Visit Town/Castle" button appears only when lord is in appropriate settlement
+- [x] Button text updates dynamically ("Visit Town" vs "Visit Castle")
+- [x] No "Player encounter must be null!" assertion errors
+- [x] No "LocationEncounter should be TownEncounter" assertion errors  
+- [x] Full access to all settlement locations (tavern, arena, trade, smithy)
+- [x] Seamless return navigation from all settlement menus
+- [x] Proper state restoration (invisible party, enlisted status)
+- [x] Works for both individual lords and army scenarios
 
 ## Debugging
 

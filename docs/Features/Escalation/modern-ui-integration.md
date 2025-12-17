@@ -6,7 +6,7 @@ The escalation system automatically uses modern UI for dramatic visual presentat
 
 **Flow:**
 ```
-1. Daily tick → EscalationManager.EvaluateThresholdsAndQueueIfNeeded()
+1. Daily tick -> EscalationManager.EvaluateThresholdsAndQueueIfNeeded()
 2. Checks Heat, Discipline, Lance Rep, Medical thresholds
 3. Queues event ID (e.g., "heat_shakedown")
 4. LanceLifeEventsAutomaticBehavior picks up the queued event
@@ -30,17 +30,17 @@ The escalation system automatically uses modern UI for dramatic visual presentat
 │ "Kit inspection!         │
 │  Everyone out..."        │
 │                          │
-│ ○ Comply and let search  │
-│ ○ Bribe the sergeant     │
-│ ○ Create a distraction   │
-│ ○ Confront directly      │
+│ [ ] Comply and let search │
+│ [ ] Bribe the sergeant    │
+│ [ ] Create a distraction  │
+│ [ ] Confront directly     │
 └──────────────────────────┘
 ```
 
 **AFTER (Modern Custom Screen):**
 ```
 ╔════════════════════════════════════════════════════════════╗
-║  [ESCALATION]     The Shakedown          Evening • Camp   ║
+║  [ESCALATION]     The Shakedown          Evening - Camp   ║
 ╠═══════════════╦════════════════════════════════════════════╣
 ║               ║ "Kit inspection! Everyone out, NOW!"      ║
 ║  [Sergeant    ║                                            ║
@@ -52,19 +52,19 @@ The escalation system automatically uses modern UI for dramatic visual presentat
 ║  {Name}       ║                                            ║
 ║               ║ — Choose Your Action —                     ║
 ║               ║                                            ║
-║               ║ [✓] Comply - Let them search              ║
-║               ║     ⚠ 50% risk | Possible exposure        ║
+║               ║ [X] Comply - Let them search              ║
+║               ║     WARNING: 50% risk | Possible exposure  ║
 ║               ║                                            ║
-║               ║ [🪙] Bribe sergeant (100 gold)            ║
-║               ║     -100🪙 | −3 Heat if successful        ║
+║               ║ [GOLD] Bribe sergeant (100 gold)          ║
+║               ║     -100 gold | -3 Heat if successful      ║
 ║               ║                                            ║
-║               ║ [⚠] Create distraction (Roguery)          ║
+║               ║ [!] Create distraction (Roguery)           ║
 ║               ║     +25 Roguery | 40% chance caught       ║
 ║               ║                                            ║
 ║               ║ [!] Confront them directly                ║
 ║               ║     +1 Discipline | Stops search          ║
 ╠═══════════════╩════════════════════════════════════════════╣
-║ Heat ▓▓▓▓▓░░░░░ 5/10 ⚠  │ Discipline ▓▓░░░░░░░ 2/10      ║
+║ Heat ▓▓▓▓▓░░░░░ 5/10 !  │ Discipline ▓▓░░░░░░░ 2/10      ║
 ║              "SHAKEDOWN" │                                 ║
 ╚════════════════════════════════════════════════════════════╝
 ```
@@ -75,7 +75,7 @@ The escalation system automatically uses modern UI for dramatic visual presentat
 2. **Character Display**: Show the sergeant/authority figure
 3. **Current Heat Level**: Highlighted with warning color at 5/10
 4. **Threshold Indicator**: "SHAKEDOWN" label under Heat bar
-5. **Risk Warnings**: Visual ⚠ icons on risky choices
+5. **Risk Warnings**: Visual WARNING markers on risky choices
 6. **Cost Preview**: Shows gold/effects before selection
 7. **Dramatic Framing**: Red accent bars, warning colors
 
@@ -187,22 +187,22 @@ Choice buttons automatically display risk level:
 ## Testing Checklist
 
 ### Heat Events
-- [ ] Heat = 3 → "The Warning" shows in modern UI
-- [ ] Heat = 5 → "The Shakedown" shows with dramatic red theme
-- [ ] Heat = 7 → "The Audit" shows with pulsing warnings
-- [ ] Heat = 10 → "Exposed" shows with critical styling
+- [ ] Heat = 3 -> "The Warning" shows in modern UI
+- [ ] Heat = 5 -> "The Shakedown" shows with dramatic red theme
+- [ ] Heat = 7 -> "The Audit" shows with pulsing warnings
+- [ ] Heat = 10 -> "Exposed" shows with critical styling
 
 ### Discipline Events  
-- [ ] Discipline = 3 → "Extra Duty" modern UI
-- [ ] Discipline = 5 → "Hearing" dramatic presentation
-- [ ] Discipline = 7 → "Blocked" warning theme
-- [ ] Discipline = 10 → "Discharge" critical alert
+- [ ] Discipline = 3 -> "Extra Duty" modern UI
+- [ ] Discipline = 5 -> "Hearing" dramatic presentation
+- [ ] Discipline = 7 -> "Blocked" warning theme
+- [ ] Discipline = 10 -> "Discharge" critical alert
 
 ### Lance Reputation Events
-- [ ] Rep = +20 → "Trusted" positive colors (green/cyan)
-- [ ] Rep = +40 → "Bonded" celebration theme
-- [ ] Rep = -20 → "Isolated" warning colors
-- [ ] Rep = -40 → "Sabotage" critical red
+- [ ] Rep = +20 -> "Trusted" positive colors (green/cyan)
+- [ ] Rep = +40 -> "Bonded" celebration theme
+- [ ] Rep = -20 -> "Isolated" warning colors
+- [ ] Rep = -40 -> "Sabotage" critical red
 
 ### Visual Checks
 - [ ] Escalation bars update after choice
@@ -254,7 +254,7 @@ Choice buttons automatically display risk level:
 
 **UI Prefabs:**
 - `GUI/Prefabs/Events/LanceLifeEventScreen.xml` - Main layout
-- `GUI/Prefabs/Events/EventChoiceButton.xml` - Button template
+- `GUI/Prefabs/Events/LanceLifeEventScreen.xml` - Choice button template (inlined; no separate prefab)
 
 ### Performance
 

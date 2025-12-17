@@ -74,7 +74,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("SkillSuppression", $"Error in skill suppression patch: {ex.Message}");
+                ModLogger.ErrorCode("SkillSuppression", "E-PATCH-016", "Error in skill suppression patch", ex);
                 return true; // Fail open - allow normal behavior on error
             }
         }

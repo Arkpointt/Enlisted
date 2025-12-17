@@ -16,7 +16,7 @@
       "required_formations": ["infantry"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Steward": 30, "Trade": 20 },
+      "multi_skill_xp": { "Steward": 3, "Trade": 2 },
       "event_prefix": "qm_"
     },
     "field_medic": {
@@ -33,7 +33,7 @@
       "required_formations": ["infantry"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Medicine": 40, "Athletics": 10 },
+      "multi_skill_xp": { "Medicine": 4, "Athletics": 1 },
       "event_prefix": "med_"
     },
     "armorer": {
@@ -50,7 +50,7 @@
       "required_formations": ["infantry"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Smithing": 35, "Engineering": 15 },
+      "multi_skill_xp": { "Smithing": 4, "Engineering": 2 },
       "event_prefix": "arm_"
     },
     "runner": {
@@ -67,7 +67,7 @@
       "required_formations": ["infantry"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Athletics": 40, "Scouting": 10 },
+      "multi_skill_xp": { "Athletics": 4, "Scouting": 1 },
       "event_prefix": "run_"
     },
     "engineer": {
@@ -84,7 +84,7 @@
       "required_formations": ["infantry"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Engineering": 40, "Athletics": 10 },
+      "multi_skill_xp": { "Engineering": 4, "Athletics": 1 },
       "event_prefix": "eng_"
     },
     "scout": {
@@ -101,7 +101,7 @@
       "required_formations": ["archer", "cavalry", "horsearcher"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Scouting": 40, "Athletics": 10 },
+      "multi_skill_xp": { "Scouting": 4, "Athletics": 1 },
       "event_prefix": "sc_"
     },
     "lookout": {
@@ -118,7 +118,7 @@
       "required_formations": ["archer"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Scouting": 25, "Bow": 15, "Athletics": 10 },
+      "multi_skill_xp": { "Scouting": 3, "Bow": 2, "Athletics": 1 },
       "event_prefix": "look_"
     },
     "messenger": {
@@ -135,7 +135,7 @@
       "required_formations": ["cavalry", "horsearcher"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Riding": 30, "Athletics": 10, "Charm": 10 },
+      "multi_skill_xp": { "Riding": 3, "Athletics": 1, "Charm": 1 },
       "event_prefix": "msg_"
     },
     "boatswain": {
@@ -152,7 +152,7 @@
       "required_formations": ["naval"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Athletics": 30, "Leadership": 20 },
+      "multi_skill_xp": { "Athletics": 3, "Leadership": 2 },
       "event_prefix": "boat_",
       "requires_expansion": "war_sails"
     },
@@ -170,7 +170,7 @@
       "required_formations": ["naval"],
       "passive_effects": {},
       "unlock_conditions": { "relationship_required": 0, "skill_required": 0 },
-      "multi_skill_xp": { "Scouting": 30, "Engineering": 20 },
+      "multi_skill_xp": { "Scouting": 3, "Engineering": 2 },
       "event_prefix": "nav_",
       "requires_expansion": "war_sails"
     }
@@ -229,40 +229,40 @@
       "infantry": {
         "description": "Foot soldiers - focus on ground combat and physical conditioning",
         "skills": {
-          "Athletics": 50,
-          "OneHanded": 50,
-          "TwoHanded": 50,
-          "Polearm": 50,
-          "Throwing": 25
+          "Athletics": 5,
+          "OneHanded": 5,
+          "TwoHanded": 5,
+          "Polearm": 5,
+          "Throwing": 2
         }
       },
       "cavalry": {
         "description": "Mounted warriors - focus on horsemanship and mounted combat",
         "skills": {
-          "Riding": 50,
-          "OneHanded": 50,
-          "Polearm": 50,
-          "Athletics": 25,
-          "TwoHanded": 25
+          "Riding": 5,
+          "OneHanded": 5,
+          "Polearm": 5,
+          "Athletics": 2,
+          "TwoHanded": 2
         }
       },
       "horsearcher": {
         "description": "Mounted skirmishers - focus on mobility and ranged combat",
         "skills": {
-          "Riding": 50,
-          "Bow": 50,
-          "Throwing": 50,
-          "Athletics": 25,
-          "OneHanded": 25
+          "Riding": 5,
+          "Bow": 5,
+          "Throwing": 5,
+          "Athletics": 2,
+          "OneHanded": 2
         }
       },
       "archer": {
         "description": "Foot archers - focus on ranged combat and support skills",
         "skills": {
-          "Bow": 50,
-          "Crossbow": 50,
-          "Athletics": 50,
-          "OneHanded": 25
+          "Bow": 5,
+          "Crossbow": 5,
+          "Athletics": 5,
+          "OneHanded": 2
         }
       }
     }

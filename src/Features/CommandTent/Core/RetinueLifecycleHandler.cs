@@ -234,7 +234,7 @@ namespace Enlisted.Features.CommandTent.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in daily lifecycle tick: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-LIFECYCLE-001", "Error in daily lifecycle tick", ex);
             }
         }
 

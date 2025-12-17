@@ -268,6 +268,48 @@
           "outcomeTextFallback": "You set aside the parchment. The words aren't coming today."
         }
       ]
+    },
+    {
+      "id": "player_call_in_quartermaster_favor",
+      "category": "decision",
+      "narrative_source": "situation",
+      "delivery": {
+        "method": "player_initiated",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["is_enlisted", "qm_owes_favor"]
+      },
+      "requirements": {
+        "tier": { "min": 1, "max": 999 }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "normal"
+      },
+      "titleId": "player_qm_favor_title",
+      "titleFallback": "Call in a Quartermaster Favor",
+      "setupId": "player_qm_favor_setup",
+      "setupFallback": "The quartermaster owes you one. You could call in that favor to ease the pressure â€” or keep it for later.",
+      "options": [
+        {
+          "id": "call_in",
+          "textId": "player_qm_favor_call_in",
+          "textFallback": "Call it in: smooth things over and keep the company steady.",
+          "rewards": { "gold": 25 },
+          "effects": { "heat": -1, "discipline": 0, "lance_reputation": 1, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -10 },
+          "clear_flags": ["qm_owes_favor"],
+          "outcomeTextId": "player_qm_favor_call_in_outcome",
+          "outcomeTextFallback": "A quiet word, a quiet exchange. The wagons run smoother for a while, and the men complain a little less. The quartermaster's favor is spent."
+        },
+        {
+          "id": "hold",
+          "textId": "player_qm_favor_hold",
+          "textFallback": "Hold it: I'll save that favor for a worse day.",
+          "outcomeTextId": "player_qm_favor_hold_outcome",
+          "outcomeTextFallback": "You keep the favor in your pocket. In this life, leverage is a kind of coin."
+        }
+      ]
     }
   ]
 }

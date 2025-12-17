@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 1,
   "packId": "onboarding",
   "category": "onboarding",
@@ -89,7 +89,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "questions",
@@ -124,7 +124,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "confident",
@@ -159,7 +159,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "honest",
@@ -194,7 +194,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -236,7 +236,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "questions",
@@ -271,7 +271,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "confident",
@@ -306,7 +306,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "honest",
@@ -341,7 +341,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -382,7 +382,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "record",
@@ -417,7 +417,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "humble",
@@ -452,7 +452,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "why_here",
@@ -487,7 +487,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -528,7 +528,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "rusty",
@@ -563,7 +563,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "sharp",
@@ -598,7 +598,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "reasons",
@@ -633,7 +633,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -727,7 +727,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "speech",
@@ -762,7 +762,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "defer",
@@ -797,7 +797,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "train",
@@ -832,7 +832,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -874,7 +874,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "speech",
@@ -909,7 +909,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "defer",
@@ -944,7 +944,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "train",
@@ -979,7 +979,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -1070,7 +1070,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "practical",
@@ -1105,7 +1105,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "drink",
@@ -1140,7 +1140,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "talk",
@@ -1175,7 +1175,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -1217,7 +1217,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "practical",
@@ -1252,7 +1252,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "drink",
@@ -1287,7 +1287,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "talk",
@@ -1322,7 +1322,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -1413,7 +1413,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "eager",
@@ -1448,7 +1448,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "quiet",
@@ -1483,7 +1483,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "cocky",
@@ -1518,7 +1518,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -1560,7 +1560,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "eager",
@@ -1595,7 +1595,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "quiet",
@@ -1630,7 +1630,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "cocky",
@@ -1665,7 +1665,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -1706,7 +1706,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "professional",
@@ -1741,7 +1741,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "mention_experience",
@@ -1776,7 +1776,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "quiet",
@@ -1811,7 +1811,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -1852,7 +1852,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "humble",
@@ -1887,7 +1887,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "confident",
@@ -1922,7 +1922,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "private",
@@ -1957,7 +1957,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -2050,7 +2050,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "veterans",
@@ -2085,7 +2085,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "help_serve",
@@ -2120,7 +2120,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "alone",
@@ -2155,7 +2155,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -2197,7 +2197,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "veterans",
@@ -2232,7 +2232,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "help_serve",
@@ -2267,7 +2267,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "alone",
@@ -2302,7 +2302,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -2343,7 +2343,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "tell_stories",
@@ -2378,7 +2378,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "listen",
@@ -2413,7 +2413,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "bring_drink",
@@ -2448,7 +2448,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -2489,7 +2489,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "share_wisdom",
@@ -2524,7 +2524,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "mentor",
@@ -2559,7 +2559,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "ghosts",
@@ -2594,7 +2594,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -2687,7 +2687,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "wood",
@@ -2722,7 +2722,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "latrine",
@@ -2757,7 +2757,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "ask",
@@ -2792,7 +2792,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -2834,7 +2834,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "wood",
@@ -2869,7 +2869,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "latrine",
@@ -2904,7 +2904,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "ask",
@@ -2939,7 +2939,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -2980,7 +2980,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "hardest",
@@ -3015,7 +3015,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "efficient",
@@ -3050,7 +3050,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "delegate",
@@ -3085,7 +3085,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -3126,7 +3126,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "skills",
@@ -3161,7 +3161,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "problem",
@@ -3196,7 +3196,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "all",
@@ -3231,7 +3231,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -3324,7 +3324,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "formal",
@@ -3359,7 +3359,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "acknowledge",
@@ -3394,7 +3394,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "uncertain",
@@ -3429,7 +3429,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -3471,7 +3471,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "formal",
@@ -3506,7 +3506,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "acknowledge",
@@ -3541,7 +3541,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "uncertain",
@@ -3576,7 +3576,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -3617,7 +3617,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "assert",
@@ -3652,7 +3652,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "prove_yourself",
@@ -3687,7 +3687,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "inspect",
@@ -3722,7 +3722,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         },
@@ -3763,7 +3763,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "rusty",
@@ -3798,7 +3798,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "sharp",
@@ -3833,7 +3833,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "private",
@@ -3868,7 +3868,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -3963,7 +3963,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "trees",
@@ -3998,7 +3998,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "ask_sergeant",
@@ -4033,7 +4033,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "ask_then_opposite",
@@ -4068,7 +4068,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -4110,7 +4110,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "trees",
@@ -4145,7 +4145,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "ask_sergeant",
@@ -4180,7 +4180,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "ask_then_opposite",
@@ -4215,7 +4215,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }
@@ -4311,7 +4311,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "harsh",
@@ -4346,7 +4346,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "understand",
@@ -4381,7 +4381,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           },
           {
             "id": "let_sergeant",
@@ -4416,7 +4416,7 @@
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
-            "advances_onboarding": false
+            "advances_onboarding": true
           }
         ]
       },
@@ -4458,7 +4458,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "harsh",
@@ -4493,7 +4493,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "understand",
@@ -4528,7 +4528,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             },
             {
               "id": "let_sergeant",
@@ -4563,7 +4563,7 @@
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
-              "advances_onboarding": false
+              "advances_onboarding": true
             }
           ]
         }

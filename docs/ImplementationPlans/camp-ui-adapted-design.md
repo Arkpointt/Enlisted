@@ -12,14 +12,14 @@
 - **User Role:** Lord/Administrator viewing owned property
 - **Interaction:** Occasional decisions (assign governor, queue project)
 - **Information Density:** Medium - distinct sections, not too many options
-- **Flow:** Overview → Select section → Make decision → Return to overview
+- **Flow:** Overview -> Select section -> Make decision -> Return to overview
 
 ### Our Camp Activities System
 **Purpose:** Choose what to do during soldier's downtime
 - **User Role:** Soldier/Enlisted member with limited authority
 - **Interaction:** Frequent action selection (choose activity, execute, see results)
 - **Information Density:** High - 23 activities across 6 locations
-- **Flow:** Check status → Pick location → Choose activity → Execute → See result
+- **Flow:** Check status -> Pick location -> Choose activity -> Execute -> See result
 
 ## Proposed Hybrid Design: "Settlement-Style Camp Screen"
 
@@ -29,34 +29,34 @@
 ┌──────────────────────────────────────────────────────────────────────────┐
 │  CAMP OVERVIEW                        Evening, 18:00              [Done] │
 ├──────────────────────────────────────────────────────────────────────────┤
-│  📋 Reports  🏥 Medical  ⚔️ Training  👑 Lord's  📦 Quarter  🏠 Quarters  🔥 Fire │
+│   Reports   Medical   Training   Lord's   Quarter   Quarters   Fire │
 │  [Active location highlighted with underline/glow]                      │
 ├────────────────┬────────────────────────────────────┬──────────────────┤
 │                │                                    │                  │
 │ SOLDIER STATUS │     ACTIVITIES (Selected Location) │   REPORTS FEED   │
 │                │                                    │                  │
-│ 💤 Fatigue     │  Available Activities (Grid):      │ 📰 Recent News  │
+│  Fatigue     │  Available Activities (Grid):      │  Recent News  │
 │ 12 / 24        │                                    │                  │
-│ ▓▓▓▓▓░░░ (50%) │  [ 🩺 ]  [ 💉 ]  [ 🍵 ]  [ 📖 ]  │ ⚠️ Cover needed │
+│ ▓▓▓▓▓░░░ (50%) │  [  ]  [  ]  [  ]  [  ]  │ WARNING Cover needed │
 │                │     1        2        3        4    │  for watch duty │
-│ 🔥 Heat        │                                    │  (2 hours ago)  │
-│ 3 / 10         │  [ 🍺 ]  [ 💪 ]  [ 🎲 ]  [ 🛏️ ]  │                  │
-│ ▓▓▓░░░░░ (30%) │     5        6        7        8    │ ✅ Training     │
+│  Heat        │                                    │  (2 hours ago)  │
+│ 3 / 10         │  [  ]  [  ]  [  ]  [  ]  │                  │
+│ ▓▓▓░░░░░ (30%) │     5        6        7        8    │ [x] Training     │
 │                │                                    │  completed      │
-│ ⭐ Lance Rep   │  [Empty if no more activities]      │  (+2 Melee)     │
+│ * Lance Rep   │  [Empty if no more activities]      │  (+2 Melee)     │
 │ +5             │                                    │  (5 hours ago)  │
 │                │  ┌─────────────────────────────┐  │                  │
-│ 🕐 Time        │  │ SELECTED ACTIVITY DETAILS  │  │ 📋 Duty alert:  │
+│  Time        │  │ SELECTED ACTIVITY DETAILS  │  │  Duty alert:  │
 │ Evening        │  │                             │  │  Report to      │
-│ (18:00)        │  │ 🩺 Visit Medical Tent      │  │  commander      │
+│ (18:00)        │  │  Visit Medical Tent      │  │  commander      │
 │                │  │                             │  │  (6 hours ago)  │
 │ Current Loc:   │  │ Check in with the medic     │  │                  │
 │ Medical Tent   │  │ and tend to any wounds.     │  │ [Scroll for     │
 │ (2 available)  │  │                             │  │  more news...]  │
-│                │  │ 💰 Rewards: +1 Health      │  │                  │
-│                │  │ 💤 Cost: 2 Fatigue         │  │                  │
+│                │  │  Rewards: +1 Health      │  │                  │
+│                │  │  Cost: 2 Fatigue         │  │                  │
 │                │  │                             │  │                  │
-│                │  │      [⚡ EXECUTE ⚡]        │  │                  │
+│                │  │      [ EXECUTE ]        │  │                  │
 │                │  │                             │  │                  │
 │                │  └─────────────────────────────┘  │                  │
 │                │                                    │                  │
@@ -70,7 +70,7 @@
 - All locations visible at once
 - Click to switch (no Q/E needed, though we can keep it)
 - Current location highlighted
-- Shows activity count per location `🏥 Medical (2)`
+- Shows activity count per location ` Medical (2)`
 
 **Pattern from Settlement:** Top row of icons for quick navigation
 **Adaptation:** Locations instead of villages, but same visual language
@@ -79,7 +79,7 @@
 **Why:** Like "Projects" grid in settlement screen
 - Scan available activities at a glance
 - Icons with numbers (not full cards)
-- Click icon → details appear below
+- Click icon -> details appear below
 - Unavailable activities shown dimmed/locked
 
 **Pattern from Settlement:** Grid of circular project icons
@@ -122,7 +122,7 @@
 2. View all aspects simultaneously
 3. Click section needing attention
 4. Make decision (assign governor, queue building)
-5. Done → Exit
+5. Done -> Exit
 ```
 
 ### Adapted Camp (Action Selection)
@@ -130,8 +130,8 @@
 1. Enter camp screen
 2. See: current status + available locations + recent news
 3. Click location of interest (or Reports for news details)
-4. Scan activity icons → click one
-5. Review details → Execute
+4. Scan activity icons -> click one
+5. Review details -> Execute
 6. See result in news feed
 7. Repeat or Done
 ```
@@ -139,33 +139,33 @@
 ## Advantages Over Tab Design
 
 ### Information Architecture
-- ✅ **No hidden information** - locations always visible
-- ✅ **Faster navigation** - one click vs tab+scroll
-- ✅ **Better spatial memory** - locations map to physical camp
-- ✅ **Persistent context** - player status always visible
+- [x] **No hidden information** - locations always visible
+- [x] **Faster navigation** - one click vs tab+scroll
+- [x] **Better spatial memory** - locations map to physical camp
+- [x] **Persistent context** - player status always visible
 
 ### User Experience
-- ✅ **Familiar to Bannerlord players** - settlement pattern
-- ✅ **Less cognitive load** - no remembering what's in each tab
-- ✅ **Better for discovery** - can see activity counts per location
-- ✅ **News integration** - reports visible without switching tabs
+- [x] **Familiar to Bannerlord players** - settlement pattern
+- [x] **Less cognitive load** - no remembering what's in each tab
+- [x] **Better for discovery** - can see activity counts per location
+- [x] **News integration** - reports visible without switching tabs
 
 ### Implementation
-- ✅ **Same ViewModels** - `CampLocationTabVM` becomes sections
-- ✅ **Reuse activity cards** - just shown as icons initially
-- ✅ **Native patterns** - more widgets we can reference
+- [x] **Same ViewModels** - `CampLocationTabVM` becomes sections
+- [x] **Reuse activity cards** - just shown as icons initially
+- [x] **Native patterns** - more widgets we can reference
 
 ## Disadvantages vs Tabs
 
 ### Screen Real Estate
-- ⚠️ More complex layout management
-- ⚠️ Activity cards can't be as large (icons first, then expand)
-- ⚠️ May feel cramped on smaller resolutions
+- WARNING More complex layout management
+- WARNING Activity cards can't be as large (icons first, then expand)
+- WARNING May feel cramped on smaller resolutions
 
 ### Implementation Complexity
-- ⚠️ More sections to coordinate
-- ⚠️ Need icon versions of all activities
-- ⚠️ Details panel collapse/expand logic
+- WARNING More sections to coordinate
+- WARNING Need icon versions of all activities
+- WARNING Details panel collapse/expand logic
 
 ## Recommended Approach: "Evolved Settlement Pattern"
 
@@ -173,14 +173,14 @@
 ```
 Top:    Location buttons (horizontal bar)
 Left:   Player status (always visible)
-Center: Activity icons → selected activity details
+Center: Activity icons -> selected activity details
 Right:  Reports feed (scrollable)
 ```
 
 ### Phase 2: Interactions
-- Click location button → center updates with that location's activities
+- Click location button -> center updates with that location's activities
 - Activities shown as circular icons (like your screenshot's projects)
-- Click activity icon → details panel expands below
+- Click activity icon -> details panel expands below
 - Execute button in details panel
 - Result appears in reports feed
 
@@ -193,12 +193,12 @@ Right:  Reports feed (scrollable)
 ## Critical Insight: Two-Stage Interaction
 
 **Settlement Screen:**
-1. **Browse** (scan projects) → 2. **Select** (see details) → 3. **Confirm** (queue building)
+1. **Browse** (scan projects) -> 2. **Select** (see details) -> 3. **Confirm** (queue building)
 
 **Camp Screen (Adapted):**
-1. **Browse** (scan locations & counts) → 2. **Focus** (click location, see activity icons) → 3. **Select** (click activity) → 4. **Execute** (perform action)
+1. **Browse** (scan locations & counts) -> 2. **Focus** (click location, see activity icons) -> 3. **Select** (click activity) -> 4. **Execute** (perform action)
 
-The extra step (Focus on location) is natural because camp has **more granular organization** (6 locations vs settlement's single space). But once focused, the select→execute flow matches the settlement pattern.
+The extra step (Focus on location) is natural because camp has **more granular organization** (6 locations vs settlement's single space). But once focused, the select->execute flow matches the settlement pattern.
 
 ## Design Philosophy
 

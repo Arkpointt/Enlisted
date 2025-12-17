@@ -1,4 +1,4 @@
-﻿# Feature Spec: Lance Life (Stories, Camp Events, and Progression)
+# Feature Spec: Lance Life (Stories, Camp Events, and Progression)
 
 This spec builds “life around the lance”: small stories, camp events, and morally gray choices that grow the player’s skills while enlisted. It is designed to be **mod-friendly** and **internal** to Enlisted by using event-driven state + Enlisted-owned incidents/menus (not rewriting vanilla economy/AI).
 
@@ -13,8 +13,8 @@ This spec builds “life around the lance”: small stories, camp events, and mo
   - Exhaustion is persisted and can gate training when enabled.
   - Wanderers/camp followers are intentionally not implemented yet.
 - Phase 7 is implemented:
-  - **Proving events** for T1→T6 promotions with narrative choices
-  - **Formation choice** during T1→T2 event
+  - **Proving events** for T1->T6 promotions with narrative choices
+  - **Formation choice** during T1->T2 event
   - **Starter duty** auto-assignment based on formation
   - **Duty request system** with cooldowns and lance leader approval
   - Events file: `ModuleData/Enlisted/Events/events_promotion.json`
@@ -239,8 +239,8 @@ Short events that build “soldier skills”:
 
 ### 2) Logistics & scrounging
 Stories driven by `LogisticsStrain`:
-- “No bread in the wagons.” → forage choice (Steward/Scouting), fatigue cost, food gained
-- “Broken tack and loose rivets.” → repair/scrounge (Engineering), small gear outcome later (future hook)
+- “No bread in the wagons.” -> forage choice (Steward/Scouting), fatigue cost, food gained
+- “Broken tack and loose rivets.” -> repair/scrounge (Engineering), small gear outcome later (future hook)
 
 ### 3) Corruption and theft (quartermaster tent)
 Stories driven by `PayTension` + `ContrabandHeat`:
@@ -257,9 +257,9 @@ Critical design rule:
 ### 4) Morale and revelry (smuggling drink)
 Stories driven by `MoraleShock`:
 - “The lads need drink after losses.”
-  - Smuggle beer (Roguery) → morale relief / fatigue relief, heat rises
-  - Buy legally (gold) → smaller effect
-  - Refuse → no heat, morale stays low
+  - Smuggle beer (Roguery) -> morale relief / fatigue relief, heat rises
+  - Buy legally (gold) -> smaller effect
+  - Refuse -> no heat, morale stays low
 
 ### 5) Rivalries and discipline
 Stories that build relationships and hard choices:
@@ -283,7 +283,7 @@ This feature follows the master phased rollout plan:
 - Story content is organized as multiple packs (folder-based) and validated on load (bad entries skipped safely).
 - At least one story type exists for:
   - skill/drill, logistics, corruption, theft, morale
-- Story triggers correlate with camp conditions (e.g., high logistics strain → forage story appears).
+- Story triggers correlate with camp conditions (e.g., high logistics strain -> forage story appears).
 - Theft stories affect Quartermaster/pay outcomes in a readable way (mood/price change, small punishments), without breaking vanilla systems.
 - If escalation is enabled, some stories apply `effects` and threshold consequence stories can occur at appropriate track levels.
 - If player conditions are enabled, some stories can apply injury/illness rolls and the status UI reflects it.

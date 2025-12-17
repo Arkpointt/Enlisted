@@ -55,7 +55,7 @@ namespace Enlisted.Features.Lances.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to register lance menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-LANCE-001", "Failed to register lance menu", ex);
             }
         }
 
@@ -262,7 +262,7 @@ namespace Enlisted.Features.Lances.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing lance activities menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-LANCE-002", "Error initializing lance activities menu", ex);
             }
         }
 
@@ -557,7 +557,7 @@ namespace Enlisted.Features.Lances.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error initializing lance menu: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-LANCE-003", "Error initializing lance menu", ex);
             }
         }
 

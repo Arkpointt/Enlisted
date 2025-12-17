@@ -146,7 +146,7 @@ New recruits go through a 3-stage onboarding:
 | Stage | Event | Purpose |
 |-------|-------|---------|
 | 1 | First night in camp | Lance introduction |
-| 2 | Finding your place | Choose formation (T1→T2) |
+| 2 | Finding your place | Choose formation (T1->T2) |
 | 3 | Meeting the sergeant | Duty orientation |
 
 ### Track Selection

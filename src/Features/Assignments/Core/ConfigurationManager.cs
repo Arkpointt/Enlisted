@@ -49,7 +49,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Duties config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-001", $"Duties config not found at: {configPath}");
                     return CreateDefaultDutiesConfig();
                 }
 
@@ -59,7 +59,8 @@ namespace Enlisted.Features.Assignments.Core
                 // Schema validation
                 if (config?.SchemaVersion != 1)
                 {
-                    ModLogger.Error("Config",
+                    ModLogger.ErrorCode("Config",
+                        "E-CONFIG-002",
                         $"Unsupported duties config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultDutiesConfig();
                 }
@@ -67,7 +68,7 @@ namespace Enlisted.Features.Assignments.Core
                 // Validate configuration structure and required fields
                 if (config.Duties == null || config.Duties.Count == 0)
                 {
-                    ModLogger.Error("Config", "Duties config contains no duty definitions");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-003", "Duties config contains no duty definitions");
                     return CreateDefaultDutiesConfig();
                 }
 
@@ -80,12 +81,12 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (JsonException ex)
             {
-                ModLogger.Error("Config", "JSON parsing error in duties config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-004", "JSON parsing error in duties config", ex);
                 return CreateDefaultDutiesConfig();
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Unexpected error loading duties config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-005", "Unexpected error loading duties config", ex);
                 return CreateDefaultDutiesConfig();
             }
         }
@@ -152,6 +153,13 @@ namespace Enlisted.Features.Assignments.Core
                         .Select(kvp => kvp.Key)
                         .ToList();
 
+                    if (!hasWarSails && toRemove.Count > 0)
+                    {
+                        // Non-spammy: log once per session, but only when we actually disable content.
+                        ModLogger.WarnCodeOnce("warsails_missing_gated_duties", "Config", "W-DLC-001",
+                            $"War Sails (NavalDLC) not detected; disabled {toRemove.Count} naval duty definition(s).");
+                    }
+
                     foreach (var key in toRemove)
                     {
                         config.Duties.Remove(key);
@@ -163,7 +171,8 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Config", $"Expansion gating failed; proceeding without gating: {ex.Message}");
+                ModLogger.WarnCode("Config", "W-CONFIG-001",
+                    $"Expansion gating failed; proceeding without gating: {ex.Message}");
             }
         }
 
@@ -230,7 +239,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Error determining config path for {fileName}", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-006", $"Error determining config path for {fileName}", ex);
                 // Fallback to a safe non-null default under application base directory
                 return Path.Combine(AppContext.BaseDirectory, "ModuleData", "Enlisted", fileName);
             }
@@ -262,7 +271,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Progression config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-007", $"Progression config not found at: {configPath}");
                     return CreateDefaultProgressionConfig();
                 }
 
@@ -272,7 +281,7 @@ namespace Enlisted.Features.Assignments.Core
                 // Schema validation (support versions 1 and 2 - v2 adds culture_ranks)
                 if (config?.SchemaVersion != 1 && config?.SchemaVersion != 2)
                 {
-                    ModLogger.Error("Config",
+                    ModLogger.ErrorCode("Config", "E-CONFIG-008",
                         $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1 or 2");
                     return CreateDefaultProgressionConfig();
                 }
@@ -280,7 +289,7 @@ namespace Enlisted.Features.Assignments.Core
                 // Basic validation
                 if (config.TierProgression?.Requirements == null || config.TierProgression.Requirements.Count == 0)
                 {
-                    ModLogger.Error("Config", "Progression config contains no tier requirements");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-009", "Progression config contains no tier requirements");
                     return CreateDefaultProgressionConfig();
                 }
 
@@ -291,12 +300,12 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (JsonException ex)
             {
-                ModLogger.Error("Config", "JSON parsing error in progression config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-010", "JSON parsing error in progression config", ex);
                 return CreateDefaultProgressionConfig();
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Unexpected error loading progression config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-011", "Unexpected error loading progression config", ex);
                 return CreateDefaultProgressionConfig();
             }
         }
@@ -579,7 +588,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-012", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultFinanceConfig();
                 }
 
@@ -598,7 +607,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading finance config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-013", "Error loading finance config", ex);
                 return CreateDefaultFinanceConfig();
             }
         }
@@ -640,7 +649,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-014", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultGameplayConfig();
                 }
 
@@ -691,7 +700,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading gameplay config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-015", "Error loading gameplay config", ex);
                 return CreateDefaultGameplayConfig();
             }
         }
@@ -721,7 +730,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-016", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultRetirementConfig();
                 }
 
@@ -773,7 +782,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading retirement config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-017", "Error loading retirement config", ex);
                 return CreateDefaultRetirementConfig();
             }
         }
@@ -803,7 +812,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-018", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultLancesFeatureConfig();
                 }
 
@@ -823,7 +832,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading lances feature config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-019", "Error loading lances feature config", ex);
                 return CreateDefaultLancesFeatureConfig();
             }
         }
@@ -853,7 +862,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load quartermaster config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-020", "Failed to load quartermaster config; using defaults", ex);
                 _cachedQuartermasterConfig = new QuartermasterConfig();
                 return _cachedQuartermasterConfig;
             }
@@ -884,7 +893,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load lance life config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-021", "Failed to load lance life config; using defaults", ex);
                 _cachedLanceLifeConfig = new LanceLifeConfig();
                 return _cachedLanceLifeConfig;
             }
@@ -915,7 +924,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load camp life config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-022", "Failed to load camp life config; using defaults", ex);
                 _cachedCampLifeConfig = new CampLifeConfig();
                 return _cachedCampLifeConfig;
             }
@@ -946,7 +955,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load escalation config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-023", "Failed to load escalation config; using defaults", ex);
                 _cachedEscalationConfig = new EscalationConfig();
                 return _cachedEscalationConfig;
             }
@@ -977,7 +986,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load lance personas config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-024", "Failed to load lance personas config; using defaults", ex);
                 _cachedLancePersonasConfig = new LancePersonasConfig();
                 return _cachedLancePersonasConfig;
             }
@@ -1008,7 +1017,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load player conditions config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-025", "Failed to load player conditions config; using defaults", ex);
                 _cachedPlayerConditionsConfig = new PlayerConditionsConfig();
                 return _cachedPlayerConditionsConfig;
             }
@@ -1039,7 +1048,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load camp activities config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-026", "Failed to load camp activities config; using defaults", ex);
                 _cachedCampActivitiesConfig = new CampActivitiesConfig();
                 return _cachedCampActivitiesConfig;
             }
@@ -1074,7 +1083,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load lance life events config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-027", "Failed to load lance life events config; using defaults", ex);
                 _cachedLanceLifeEventsConfig = new LanceLifeEventsConfig();
                 return _cachedLanceLifeEventsConfig;
             }
@@ -1119,7 +1128,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load decision events config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-028", "Failed to load decision events config; using defaults", ex);
                 _cachedDecisionEventsConfig = new Lances.Events.Decisions.DecisionEventConfig();
                 return _cachedDecisionEventsConfig;
             }
@@ -1151,14 +1160,14 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (config?.SchemaVersion != 1)
                 {
-                    ModLogger.Error("Config",
+                    ModLogger.ErrorCode("Config", "E-CONFIG-029",
                         $"Unsupported lances config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultLanceCatalog();
                 }
 
                 if (config.StyleDefinitions == null || config.StyleDefinitions.Count == 0)
                 {
-                    ModLogger.Error("Config", "Lances config contains no style definitions");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-030", "Lances config contains no style definitions");
                     return CreateDefaultLanceCatalog();
                 }
 
@@ -1169,12 +1178,12 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (JsonException ex)
             {
-                ModLogger.Error("Config", "JSON parsing error in lances config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-031", "JSON parsing error in lances config", ex);
                 return CreateDefaultLanceCatalog();
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Unexpected error loading lances config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-032", "Unexpected error loading lances config", ex);
                 return CreateDefaultLanceCatalog();
             }
         }

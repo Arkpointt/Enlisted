@@ -54,73 +54,76 @@ namespace Enlisted.Features.Lances.Behaviors
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Persist global limiter
-            dataStore.SyncData("ll_nextGlobalEligibleTime", ref _nextGlobalEligibleTime);
-            dataStore.SyncData("ll_storiesFiredThisWeek", ref _storiesFiredThisWeek);
-            dataStore.SyncData("ll_storiesFiredWeekNumber", ref _storiesFiredWeekNumber);
-            dataStore.SyncData("ll_trackedEnlistmentDate", ref _trackedEnlistmentDate);
-
-            // Persist per-story last-fired timestamps
-            var keys = _storyLastFired.Keys.ToList();
-            var count = keys.Count;
-            dataStore.SyncData("ll_storyCount", ref count);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _storyLastFired.Clear();
-                for (var i = 0; i < count; i++)
+                // Persist global limiter
+                dataStore.SyncData("ll_nextGlobalEligibleTime", ref _nextGlobalEligibleTime);
+                dataStore.SyncData("ll_storiesFiredThisWeek", ref _storiesFiredThisWeek);
+                dataStore.SyncData("ll_storiesFiredWeekNumber", ref _storiesFiredWeekNumber);
+                dataStore.SyncData("ll_trackedEnlistmentDate", ref _trackedEnlistmentDate);
+
+                // Persist per-story last-fired timestamps
+                var keys = _storyLastFired.Keys.ToList();
+                var count = keys.Count;
+                dataStore.SyncData("ll_storyCount", ref count);
+
+                if (dataStore.IsLoading)
                 {
-                    var id = string.Empty;
-                    var time = CampaignTime.Zero;
-                    dataStore.SyncData($"ll_story_{i}_id", ref id);
-                    dataStore.SyncData($"ll_story_{i}_time", ref time);
-                    if (!string.IsNullOrWhiteSpace(id))
+                    _storyLastFired.Clear();
+                    for (var i = 0; i < count; i++)
                     {
-                        _storyLastFired[id] = time;
+                        var id = string.Empty;
+                        var time = CampaignTime.Zero;
+                        dataStore.SyncData($"ll_story_{i}_id", ref id);
+                        dataStore.SyncData($"ll_story_{i}_time", ref time);
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            _storyLastFired[id] = time;
+                        }
                     }
                 }
-            }
-            else
-            {
-                for (var i = 0; i < keys.Count; i++)
+                else
                 {
-                    var id = keys[i];
-                    var time = _storyLastFired[id];
-                    dataStore.SyncData($"ll_story_{i}_id", ref id);
-                    dataStore.SyncData($"ll_story_{i}_time", ref time);
-                }
-            }
-
-            // Persist per-term counts (only for stories we've incremented, to avoid save bloat)
-            var termKeys = _storyFiredThisTerm.Keys.ToList();
-            var termCount = termKeys.Count;
-            dataStore.SyncData("ll_termStoryCount", ref termCount);
-
-            if (dataStore.IsLoading)
-            {
-                _storyFiredThisTerm.Clear();
-                for (var i = 0; i < termCount; i++)
-                {
-                    var id = string.Empty;
-                    var value = 0;
-                    dataStore.SyncData($"ll_term_story_{i}_id", ref id);
-                    dataStore.SyncData($"ll_term_story_{i}_count", ref value);
-                    if (!string.IsNullOrWhiteSpace(id))
+                    for (var i = 0; i < keys.Count; i++)
                     {
-                        _storyFiredThisTerm[id] = Math.Max(0, value);
+                        var id = keys[i];
+                        var time = _storyLastFired[id];
+                        dataStore.SyncData($"ll_story_{i}_id", ref id);
+                        dataStore.SyncData($"ll_story_{i}_time", ref time);
                     }
                 }
-            }
-            else
-            {
-                for (var i = 0; i < termKeys.Count; i++)
+
+                // Persist per-term counts (only for stories we've incremented, to avoid save bloat)
+                var termKeys = _storyFiredThisTerm.Keys.ToList();
+                var termCount = termKeys.Count;
+                dataStore.SyncData("ll_termStoryCount", ref termCount);
+
+                if (dataStore.IsLoading)
                 {
-                    var id = termKeys[i];
-                    var value = _storyFiredThisTerm[id];
-                    dataStore.SyncData($"ll_term_story_{i}_id", ref id);
-                    dataStore.SyncData($"ll_term_story_{i}_count", ref value);
+                    _storyFiredThisTerm.Clear();
+                    for (var i = 0; i < termCount; i++)
+                    {
+                        var id = string.Empty;
+                        var value = 0;
+                        dataStore.SyncData($"ll_term_story_{i}_id", ref id);
+                        dataStore.SyncData($"ll_term_story_{i}_count", ref value);
+                        if (!string.IsNullOrWhiteSpace(id))
+                        {
+                            _storyFiredThisTerm[id] = Math.Max(0, value);
+                        }
+                    }
                 }
-            }
+                else
+                {
+                    for (var i = 0; i < termKeys.Count; i++)
+                    {
+                        var id = termKeys[i];
+                        var value = _storyFiredThisTerm[id];
+                        dataStore.SyncData($"ll_term_story_{i}_id", ref id);
+                        dataStore.SyncData($"ll_term_story_{i}_count", ref value);
+                    }
+                }
+            });
         }
 
         private void RefreshCache()

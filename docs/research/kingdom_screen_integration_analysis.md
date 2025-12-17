@@ -164,9 +164,9 @@ The Schedule tab uses the **exact same pattern** as Policies:
 │  │   Aft:  Patrol │    │  watch the northern approach.          │ │
 │  │   Eve:  Free   │    │                                        │ │
 │  │   Dusk: Watch  │    │  Effects:                              │ │
-│  │   Night: Rest  │    │  • +5 Combat Readiness                 │ │
-│  │                 │    │  • -10 Fatigue                         │ │
-│  │ ─────────────── │    │  • 2 hours duration                    │ │
+│  │   Night: Rest  │    │  - +5 Combat Readiness                 │ │
+│  │                 │    │  - -10 Fatigue                         │ │
+│  │ ─────────────── │    │  - 2 hours duration                    │ │
 │  │ AVAILABLE       │    │                                        │ │
 │  │                 │    │  [Set Schedule]     [Request Change]  │ │
 │  │   Training     │    │                                        │ │

@@ -2,6 +2,12 @@
 
 Quick reference for extending or modifying Enlisted.
 
+## Game / API Version
+
+This project targets **Bannerlord v1.3.4**.
+
+When you need to confirm Bannerlord APIs, prefer the **local native decompile** included with this repository (it matches the target version). Use the official API docs only as a secondary convenience reference.
+
 ## Build
 ```bash
 dotnet build -c "Enlisted RETAIL" /p:Platform=x64
@@ -122,20 +128,20 @@ party.IsVisible = false;
 
 **Gold transactions** - Use `GiveGoldAction` (not `ChangeHeroGold`):
 ```csharp
-// ❌ WRONG: ChangeHeroGold modifies internal gold not visible in UI
+// X WRONG: ChangeHeroGold modifies internal gold not visible in UI
 Hero.MainHero.ChangeHeroGold(-amount);
 
-// ✅ CORRECT: GiveGoldAction updates party treasury visible in UI
+// [x] CORRECT: GiveGoldAction updates party treasury visible in UI
 GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
 GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
 ```
 
 **Equipment slot iteration** - Use numeric loop (not `Enum.GetValues`):
 ```csharp
-// ❌ WRONG: Includes invalid count values, causes IndexOutOfRangeException
+// X WRONG: Includes invalid count values, causes IndexOutOfRangeException
 foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { ... }
 
-// ✅ CORRECT: Iterate valid indices only (0-11)
+// [x] CORRECT: Iterate valid indices only (0-11)
 for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 {
     var slot = (EquipmentIndex)i;
@@ -220,5 +226,5 @@ All Enlisted patches use default priority (400). If your mod patches the same me
 ### API Reference
 
 When extending Enlisted, verify Bannerlord API usage against:
-- The official API docs (`https://apidoc.bannerlord.com/v/1.2.12/`)
-- Your local decompile/reference project (repo-local or separate folder; not committed)
+- The local native decompile included with this repository (authoritative; matches v1.3.4)
+- The official API docs for v1.3.4 as a secondary convenience reference

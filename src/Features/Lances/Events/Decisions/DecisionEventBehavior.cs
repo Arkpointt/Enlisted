@@ -55,24 +55,27 @@ namespace Enlisted.Features.Lances.Events.Decisions
 
         public override void SyncData(IDataStore dataStore)
         {
-            // Sync the state object
-            _state ??= new DecisionEventState();
-            _state.SyncData(dataStore);
-
-            // Sync queue state
-            dataStore.SyncData("de_queuedEventId", ref _queuedEventId);
-            dataStore.SyncData("de_queuedAtHour", ref _queuedAtHour);
-            dataStore.SyncData("de_lastEvalHour", ref _lastEvaluationHour);
-            dataStore.SyncData("de_initialized", ref _initialized);
-
-            if (dataStore.IsLoading)
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
-                _queuedEventId ??= string.Empty;
-                if (_queuedAtHour < -1)
+                // Sync the state object
+                _state ??= new DecisionEventState();
+                _state.SyncData(dataStore);
+
+                // Sync queue state
+                dataStore.SyncData("de_queuedEventId", ref _queuedEventId);
+                dataStore.SyncData("de_queuedAtHour", ref _queuedAtHour);
+                dataStore.SyncData("de_lastEvalHour", ref _lastEvaluationHour);
+                dataStore.SyncData("de_initialized", ref _initialized);
+
+                if (dataStore.IsLoading)
                 {
-                    _queuedAtHour = -1;
+                    _queuedEventId ??= string.Empty;
+                    if (_queuedAtHour < -1)
+                    {
+                        _queuedAtHour = -1;
+                    }
                 }
-            }
+            });
         }
 
         /// <summary>

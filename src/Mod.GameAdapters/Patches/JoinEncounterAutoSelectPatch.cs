@@ -143,13 +143,13 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 {
                     // JoinBattle can fail for parties with no troops
                     // Fall back to letting native menu show
-                    ModLogger.Error("JoinEncounter", $"Failed to auto-join battle: {joinEx.Message}");
+                    ModLogger.ErrorCode("JoinEncounter", "E-PATCH-013", "Failed to auto-join battle", joinEx);
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("JoinEncounter", $"Error in join_encounter patch: {ex.Message}");
+                ModLogger.ErrorCode("JoinEncounter", "E-PATCH-014", "Error in join_encounter patch", ex);
                 // Fail open - let native menu show
                 return true;
             }
