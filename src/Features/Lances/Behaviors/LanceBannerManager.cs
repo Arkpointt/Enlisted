@@ -67,18 +67,18 @@ namespace Enlisted.Features.Lances.Behaviors
                 return new Banner();
             }
 
-            ModLogger.Info(LogCategory, $"GetOrCreateLanceBanner called: lord={lord.Name}, lanceId={lanceId}, isLeader={isPlayerLanceLeader}");
+            ModLogger.Debug(LogCategory, $"GetOrCreateLanceBanner: lord={lord.Name}, lanceId={lanceId}, isLeader={isPlayerLanceLeader}");
 
             // If player is lance leader, use the lord's banner to show authority
             if (isPlayerLanceLeader)
             {
-                ModLogger.Info(LogCategory, $"Player is lance leader for {lanceId}, using lord's banner");
+                ModLogger.Debug(LogCategory, $"Player is lance leader for {lanceId}, using lord's banner");
                 return new Banner(lord.ClanBanner);
             }
 
             // Generate cache key
             string cacheKey = $"{lord.StringId}_{lanceId}";
-            ModLogger.Info(LogCategory, $"Banner cache key: {cacheKey}");
+            ModLogger.Debug(LogCategory, $"Banner cache key: {cacheKey}");
 
             // Check if we already have a banner for this lance
             if (_lanceBannerCodes.TryGetValue(cacheKey, out string bannerCode))
@@ -96,11 +96,12 @@ namespace Enlisted.Features.Lances.Behaviors
                 }
             }
 
-            // Generate new unique banner and cache it
+            // Generate new unique random banner and cache it
+            // Each lance gets its own unique banner that persists across saves
             var newBanner = Banner.CreateRandomBanner();
             _lanceBannerCodes[cacheKey] = newBanner.Serialize();
             
-            ModLogger.Info(LogCategory, $"Generated and cached new banner for {cacheKey}");
+            ModLogger.Info(LogCategory, $"Generated and cached new unique banner for {cacheKey}");
             return newBanner;
         }
 

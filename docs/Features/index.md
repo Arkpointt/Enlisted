@@ -42,7 +42,7 @@ This is the **single entry point** for all Enlisted mod documentation.
 - Doc: **[Enlistment System](Core/enlistment.md)**
 
 ### 2) First enlistment: Bag Check -> Baggage Train
-About **12 in-game hours** after enlisting (when safe), a bag check runs with choices:
+About **1 in-game hour** after enlisting (when safe), a bag check runs with choices:
 - **Stow it all (50g)**: stash inventory + equipped items into the **baggage train** and pay the wagon fee.
 - **Sell it all (60%)**: liquidate gear and receive denars.
 - **I'm keeping one thing (Roguery 30+)**: attempt to keep a single item.
@@ -65,11 +65,12 @@ Talk to the quartermaster to access equipment, provisions, and advice:
 - Docs: **[Quartermaster Hero System](Core/quartermaster-hero-system.md)**, **[Quartermaster UI](UI/quartermaster.md)**, **[Provisions System](Gameplay/provisions-system.md)**
 
 ### 5) Day-to-day: Duties, camp actions, and progression
-- Pick duties/roles for bonuses and wage modifiers
-- Use Camp (“Camp”) for your service record, retinue (Tier 4+), and discharge actions
-- Use **Camp Activities** for action-based skill XP (training/tasks/social) with fatigue costs
+- **Request duty assignments** via Camp Management → Duties (orders-screen style with persistent assignments)
+- Use **Camp Hub** for quick access to activities, medical tent, quartermaster, and retinue
+- Use **Camp Activities** (organized game menu) for quick action selection: training, tasks, social activities with fatigue costs, organized by category with stats display
+- Use Camp Management (deep UI) for your service record, retinue (T7+), and discharge actions
 - Docs:
-  - **[Duties System](Core/duties-system.md)**
+  - **[Duties System](Core/duties-system.md)** - Persistent duty assignments with request system
   - **[Camp](UI/camp-tent.md)**
   - **[Formation Training](Core/formation-training.md)**
   - **[Menu Interface](UI/menu-interface.md)** (Camp Activities)
@@ -108,7 +109,7 @@ The foundational systems that enable military service.
 - **[Pay System](Core/pay-system.md)** - Wages, pay muster, pay tension, battle loot share, tier-gated loot
 - **[Lance Life Events](Core/lance-life-events.md)** - Data-driven events for camp life, training, pay tension, narrative
 - **[Duties System](Core/duties-system.md)** - Military roles and assignments with skill bonuses
-- **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression
+- **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression (includes native skill XP systems: track detection, travel XP, hideout spotting, trade profit)
 - **[Lance Assignments](Core/lance-assignments.md)** - Lance roster, personas, culture-specific ranks
 - **[Camp Fatigue](Core/camp-fatigue.md)** - Daily fatigue system for activities
 - **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment

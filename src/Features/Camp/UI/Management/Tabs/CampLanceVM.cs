@@ -47,6 +47,7 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         /// <summary>
         /// Refresh list of lances from enlistment and persona data.
         /// Shows a deterministic set of lances for the enlisted lord (player lance + other party lances).
+        /// Lance count is calculated dynamically: 1 lance per ~10 living members, rounded up.
         /// </summary>
         private void RefreshLanceList()
         {
@@ -76,14 +77,23 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                 ? new BannerImageIdentifierVM(bannerManager.GetOrCreateLanceBanner(lord, playerLanceId, isPlayerLanceLeader))
                 : new BannerImageIdentifierVM(lord.ClanBanner);
             
+            // Calculate lance count dynamically based on party size.
+            // Rule: 1 lance per 10 living members, rounded up (e.g., 87 troops = 9 lances).
+            int lanceCount = CalculateLanceCount(lord);
+            
             // Determine the lord's party lances (stable per lord).
             var partyLances = Enlisted.Features.Assignments.Core.LanceRegistry.GetLordPartyLances(
                 lord,
                 playerCurrentLanceId: playerLanceId,
-                maxLances: 3);
+                maxLances: lanceCount);
 
-            foreach (var lance in partyLances)
+            // Calculate member distribution across lances based on actual party size
+            // This ensures rosters are created/updated with correct member counts
+            var memberDistribution = CalculateMemberDistributionForUI(lord, partyLances.Count);
+
+            for (int i = 0; i < partyLances.Count; i++)
             {
+                var lance = partyLances[i];
                 if (lance == null || string.IsNullOrWhiteSpace(lance.Id))
                 {
                     continue;
@@ -99,6 +109,10 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                     ? new BannerImageIdentifierVM(bannerManager.GetOrCreateLanceBanner(lord, lance.Id, isThisPlayerLance && isPlayerLanceLeader))
                     : new BannerImageIdentifierVM(lord.ClanBanner);
 
+                // Ensure roster exists with correct member count before retrieving it
+                var targetMemberCount = i < memberDistribution.Count ? memberDistribution[i] : 10;
+                personaBehavior?.EnsureRosterWithMemberCount(lord, lance.Id, targetMemberCount);
+                
                 var roster = personaBehavior?.GetRosterFor(lord, lance.Id);
                 var memberCount = roster?.Members?.Count(m => m.IsAlive) ?? 0;
                 var fallenCount = roster?.Members?.Count(m => !m.IsAlive) ?? 0;
@@ -166,6 +180,82 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         {
             // Simple heuristic - in real implementation, read from lance config
             return "Infantry";
+        }
+        
+        /// <summary>
+        /// Calculate the number of lances based on party size.
+        /// Rule: 1 lance per 10 living members, rounded up.
+        /// Example: 87 troops = 9 lances (8 full + 1 for the 7 remainder).
+        /// Minimum of 1 lance, maximum capped at 15 for performance.
+        /// </summary>
+        private int CalculateLanceCount(TaleWorlds.CampaignSystem.Hero lord)
+        {
+            const int MembersPerLance = 10;
+            const int MaxLances = 15;
+            const int MinLances = 1;
+            
+            if (lord?.PartyBelongedTo == null)
+            {
+                return MinLances;
+            }
+            
+            // Get living (healthy) members count from the lord's party
+            int livingMembers = lord.PartyBelongedTo.Party.NumberOfHealthyMembers;
+            
+            if (livingMembers <= 0)
+            {
+                return MinLances;
+            }
+            
+            // Calculate: ceiling division (members / 10, rounded up)
+            int lanceCount = (livingMembers + MembersPerLance - 1) / MembersPerLance;
+            
+            // Clamp to reasonable bounds
+            return Math.Max(MinLances, Math.Min(MaxLances, lanceCount));
+        }
+
+        /// <summary>
+        /// Calculate how to distribute party members across lances for UI display.
+        /// Example: 87 members with 9 lances = [10,10,10,10,10,10,10,10,7]
+        /// </summary>
+        private List<int> CalculateMemberDistributionForUI(TaleWorlds.CampaignSystem.Hero lord, int lanceCount)
+        {
+            var distribution = new List<int>();
+            
+            if (lord?.PartyBelongedTo == null || lanceCount <= 0)
+            {
+                // Fallback: standard 10-member lances
+                for (int i = 0; i < Math.Max(1, lanceCount); i++)
+                {
+                    distribution.Add(10);
+                }
+                return distribution;
+            }
+
+            int totalMembers = lord.PartyBelongedTo.Party.NumberOfHealthyMembers;
+            if (totalMembers <= 0)
+            {
+                // No members - give each lance 1 member (the leader placeholder)
+                for (int i = 0; i < lanceCount; i++)
+                {
+                    distribution.Add(1);
+                }
+                return distribution;
+            }
+
+            // Distribute members evenly, with remainder going to earlier lances
+            int baseCount = totalMembers / lanceCount;
+            int remainder = totalMembers % lanceCount;
+
+            for (int i = 0; i < lanceCount; i++)
+            {
+                int memberCount = baseCount + (i < remainder ? 1 : 0);
+                // Ensure at least 1 member per lance, max 20 for sanity
+                memberCount = Math.Max(1, Math.Min(20, memberCount));
+                distribution.Add(memberCount);
+            }
+
+            return distribution;
         }
         
         /// <summary>

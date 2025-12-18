@@ -218,15 +218,21 @@ namespace Enlisted.Features.Lances.Personas
                 }
 
                 var cultureId = lord.Culture?.StringId ?? "empire";
-                foreach (var lance in partyLances)
+                
+                // Calculate membercount distribution across lances based on actual party size
+                var memberCountDistribution = CalculateMemberDistribution(lord, partyLances.Count);
+                
+                for (int i = 0; i < partyLances.Count; i++)
                 {
+                    var lance = partyLances[i];
                     var lanceId = lance?.Id ?? string.Empty;
                     if (string.IsNullOrWhiteSpace(lanceId))
                     {
                         continue;
                     }
 
-                    var roster = EnsureRosterFor(lord, lanceId);
+                    var targetMemberCount = i < memberCountDistribution.Count ? memberCountDistribution[i] : 10;
+                    var roster = EnsureRosterFor(lord, lanceId, targetMemberCount);
                     if (roster?.Members == null)
                     {
                         continue;
@@ -410,6 +416,21 @@ namespace Enlisted.Features.Lances.Personas
             };
         }
 
+        /// <summary>
+        /// Ensure a roster exists with the specified member count.
+        /// If the roster exists with a different member count, it will be regenerated.
+        /// Called by UI to ensure rosters match current party composition.
+        /// </summary>
+        internal void EnsureRosterWithMemberCount(Hero lord, string lanceId, int memberCount)
+        {
+            if (!IsEnabled() || lord == null || string.IsNullOrWhiteSpace(lanceId))
+            {
+                return;
+            }
+
+            EnsureRosterFor(lord, lanceId, memberCount);
+        }
+
         internal LancePersonaRoster GetRosterFor(Hero lord, string lanceId)
         {
             if (!IsEnabled() || lord == null || string.IsNullOrWhiteSpace(lanceId))
@@ -431,7 +452,7 @@ namespace Enlisted.Features.Lances.Personas
             return EnsureRosterFor(lord, lanceId);
         }
 
-        private LancePersonaRoster EnsureRosterFor(Hero lord, string lanceId)
+        private LancePersonaRoster EnsureRosterFor(Hero lord, string lanceId, int targetMemberCount = 10)
         {
             if (lord == null || string.IsNullOrWhiteSpace(lanceId))
             {
@@ -444,9 +465,18 @@ namespace Enlisted.Features.Lances.Personas
                 return null;
             }
 
-            if (_rosters.TryGetValue(key, out var existing) && existing != null && existing.Members?.Count == 10)
+            // Check if roster exists and has the correct member count
+            if (_rosters.TryGetValue(key, out var existing) && existing != null && existing.Members != null)
             {
-                return existing;
+                // If member count matches target, return existing roster
+                if (existing.Members.Count == targetMemberCount)
+                {
+                    return existing;
+                }
+                
+                // If member count is different, regenerate the roster
+                // This handles party size changes (e.g., lord recruited more troops)
+                ModLogger.Info(LogCategory, $"Roster {key} member count changed from {existing.Members.Count} to {targetMemberCount}, regenerating");
             }
 
             var cultureId = lord.Culture?.StringId ?? "empire";
@@ -464,10 +494,55 @@ namespace Enlisted.Features.Lances.Personas
                 pools.Cultures.TryGetValue("empire", out pool);
             }
 
-            var roster = GenerateRoster(key, lord.StringId ?? string.Empty, cultureId, seed, pool);
+            var roster = GenerateRoster(key, lord.StringId ?? string.Empty, cultureId, seed, pool, targetMemberCount);
             _rosters[key] = roster;
-            ModLogger.Info(LogCategory, $"Generated roster for {key} (culture={cultureId})");
+            ModLogger.Info(LogCategory, $"Generated roster for {key} (culture={cultureId}, members={targetMemberCount})");
             return roster;
+        }
+
+        /// <summary>
+        /// Calculate how to distribute party members across lances.
+        /// Example: 87 members with 9 lances = [10,10,10,10,10,10,10,10,7]
+        /// </summary>
+        private List<int> CalculateMemberDistribution(Hero lord, int lanceCount)
+        {
+            var distribution = new List<int>();
+            
+            if (lord?.PartyBelongedTo == null || lanceCount <= 0)
+            {
+                // Fallback: standard 10-member lances
+                for (int i = 0; i < Math.Max(1, lanceCount); i++)
+                {
+                    distribution.Add(10);
+                }
+                return distribution;
+            }
+
+            int totalMembers = lord.PartyBelongedTo.Party.NumberOfHealthyMembers;
+            if (totalMembers <= 0)
+            {
+                // No members - give each lance 1 member (the leader placeholder)
+                for (int i = 0; i < lanceCount; i++)
+                {
+                    distribution.Add(1);
+                }
+                return distribution;
+            }
+
+            // Distribute members evenly, with remainder going to earlier lances
+            int baseCount = totalMembers / lanceCount;
+            int remainder = totalMembers % lanceCount;
+
+            for (int i = 0; i < lanceCount; i++)
+            {
+                int memberCount = baseCount + (i < remainder ? 1 : 0);
+                // Ensure at least 1 member per lance, max 20 for sanity
+                memberCount = Math.Max(1, Math.Min(20, memberCount));
+                distribution.Add(memberCount);
+            }
+
+            ModLogger.Debug(LogCategory, $"Distributed {totalMembers} members across {lanceCount} lances: {string.Join(", ", distribution)}");
+            return distribution;
         }
 
         private static string BuildLanceKey(Hero lord, string lanceId)
@@ -528,7 +603,8 @@ namespace Enlisted.Features.Lances.Personas
             string lordId,
             string cultureId,
             int seed,
-            LanceCulturePersonaPoolJson pool)
+            LanceCulturePersonaPoolJson pool,
+            int memberCount = 10)
         {
             var rng = new Random(seed);
             var cfg = EnlistedConfigMgr.LoadLancePersonasConfig() ?? new LancePersonasConfig();
@@ -545,20 +621,49 @@ namespace Enlisted.Features.Lances.Personas
             // Track used first names to ensure uniqueness within the lance
             var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Slot layout (doc): 1 leader, 1 second, 2 veterans, 4 soldiers, 2 recruits
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleLeaderChance, 1, 0, LancePosition.Leader, epithetChance: 0.9f, usedNames));
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSecondChance, 2, 1, LancePosition.Second, epithetChance: 0.2f, usedNames));
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, 3, 2, LancePosition.SeniorVeteran, epithetChance: 0.7f, usedNames));
-            roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, 4, 3, LancePosition.Veteran, epithetChance: 0.6f, usedNames));
+            // Ensure at least 1 member (the leader)
+            memberCount = Math.Max(1, Math.Min(memberCount, 20)); // Cap at 20 for sanity
 
-            for (var i = 0; i < 4; i++)
+            // Dynamic position distribution based on member count
+            // Standard full lance (10): 1 leader, 1 second, 2 veterans, 4 soldiers, 2 recruits
+            // Smaller lances: prioritize higher ranks first
+            
+            int slotIndex = 1;
+            
+            // Always have a leader
+            if (slotIndex <= memberCount)
             {
-                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSoldierChance, 5 + i, 4, LancePosition.Soldier, epithetChance: 0.2f, usedNames));
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleLeaderChance, slotIndex++, 0, LancePosition.Leader, epithetChance: 0.9f, usedNames));
             }
-
-            for (var i = 0; i < 2; i++)
+            
+            // Second (if 2+ members)
+            if (slotIndex <= memberCount)
             {
-                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleRecruitChance, 9 + i, 5, LancePosition.Recruit, epithetChance: 0.0f, usedNames));
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSecondChance, slotIndex++, 1, LancePosition.Second, epithetChance: 0.2f, usedNames));
+            }
+            
+            // Veterans (up to 2 if 3+ members)
+            int veteranCount = Math.Min(2, Math.Max(0, memberCount - slotIndex + 1));
+            for (int i = 0; i < veteranCount && slotIndex <= memberCount; i++)
+            {
+                var position = i == 0 ? LancePosition.SeniorVeteran : LancePosition.Veteran;
+                var epithet = i == 0 ? 0.7f : 0.6f;
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleVeteranChance, slotIndex++, 2, position, epithetChance: epithet, usedNames));
+            }
+            
+            // Soldiers (fill middle ranks)
+            int soldierCount = Math.Max(0, memberCount - slotIndex - 2); // Leave room for 2 recruits if possible
+            if (memberCount < 6) soldierCount = Math.Max(0, memberCount - slotIndex); // For small lances, use all remaining slots
+            
+            for (int i = 0; i < soldierCount && slotIndex <= memberCount; i++)
+            {
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleSoldierChance, slotIndex++, 4, LancePosition.Soldier, epithetChance: 0.2f, usedNames));
+            }
+            
+            // Recruits (fill remaining slots)
+            while (slotIndex <= memberCount)
+            {
+                roster.Members.Add(GenerateMember(pool, rng, cfg.FemaleRecruitChance, slotIndex++, 5, LancePosition.Recruit, epithetChance: 0.0f, usedNames));
             }
 
             return roster;
