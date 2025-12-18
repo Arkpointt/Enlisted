@@ -121,12 +121,85 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("cavalry");
 - [x] Save/load maintains formation assignment
 - [x] Existing saves migrate correctly
 
+## Native Skill XP Systems
+
+Bannerlord includes several native systems that award skill XP independently of the mod's Formation Training. These run alongside Formation Training and affect skill progression:
+
+### Track Detection (Footprints)
+- **Trigger**: Every 15 minutes if you have an effective scout with Scouting > 0
+- **XP Formula**: Base 0.2 × (1 + hours elapsed) × (1 + 0.02 × max(0, 100 - party size))
+- **Enemy Multiplier**: Lord (10x), Bandit (4x), Caravan (3x), Other (2x)
+- **Typical Range**: 2-30 XP for most tracks, 50-200+ XP for enemy lord tracks
+- **Detection Difficulty**: Based on track age, distance, party size, time of day (night is 10x harder)
+- **Code**: `MapTracksCampaignBehavior`, `DefaultMapTrackModel.GetSkillFromTrackDetected()`
+- **Visual**: Colored arrows on map (no text notification by default)
+
+### Finding Items on Map
+- **Trigger**: Daily tick for each party
+- **Requirement**: Beast Whisperer perk (Scouting 275)
+- **Chance**: 3% per day
+- **Terrain**: Plains or Steppe only
+- **Reward**: Random mountable animal added to inventory
+- **Notification**: "{COUNT} {ANIMAL_NAME} is added to your party"
+- **Code**: `FindingItemOnMapBehavior`
+
+### Travel-Based Skill XP
+- **Scouting**: Passive XP while traveling, based on terrain type
+- **Athletics**: XP when on foot without horse equipped
+- **Riding**: XP when mounted or horse equipped
+- **Navigation**: XP when at sea (Naval DLC)
+- **Frequency**: Hourly tick, movement skills checked every 4 hours
+- **Rate**: Based on party movement speed
+- **Code**: `MobilePartyTrainingBehavior.WorkSkills()`
+
+### Trade Profit XP
+- **Trigger**: When selling items you previously purchased
+- **XP Amount**: Equal to profit margin (sell price - buy price)
+- **Notification**: Silent (XP bar fills without message)
+- **Note**: Not relevant for T1-T3 soldiers (no trade access)
+- **Code**: `TradeSkillCampaignBehavior`
+
+### Hideout Spotting
+- **XP Reward**: 100 Scouting XP to scout
+- **Trigger**: When your party spots a bandit hideout on the map
+- **Code**: `SkillLevelingManager.OnHideoutSpotted()`
+
+### Daily Party Training
+- **Trigger**: Daily tick for all non-hero troops
+- **Calculation**: `PartyTrainingModel.GetEffectiveDailyExperience()`
+- **Modified By**: Party training perks
+- **Special**: Bow Trainer perk (Bow 225) gives XP to lowest Bow skill hero daily
+- **Code**: `MobilePartyTrainingBehavior.OnDailyTickParty()`
+
+### Interaction with Formation Training
+
+**Current Behavior:**
+- Native systems run independently and stack with Formation Training
+- Both systems award XP simultaneously
+- No conflicts or redundancy issues
+
+**Design Notes:**
+- Formation Training is intentionally additive (doesn't replace native systems)
+- Native travel XP provides baseline passive progression
+- Formation Training provides role-specific military training on top
+- Track detection rewards active scouting and situational awareness
+- Combined effect: Faster, more focused skill progression for enlisted soldiers
+
+**Future Considerations:**
+- Could add event notifications for track detection ("You found enemy tracks! +12 Scouting XP")
+- Could tie track detection to lance roles/duties (scout duty bonus)
+- Could trigger lance life events when finding significant tracks (enemy army)
+- Could optionally scale down native travel XP if progression feels too fast
+
+---
+
 ## Debugging
 
 **Common Issues:**
 - **No XP being applied**: Check if `duties_system.json` exists in game's ModuleData folder
 - **Wrong formation detected**: Verify `_playerFormation` field is set during proving event
 - **Horse Archer not showing**: Check player's enlisted lord culture (Khuzait/Aserai only)
+- **Unexpected XP gains**: Check native systems (tracks, travel, trade) - not all XP is from Formation Training
 
 **Log Categories:**
 - "Duties" - Formation training application and XP processing
@@ -143,3 +216,4 @@ EnlistedDutiesBehavior.Instance?.SetPlayerFormation("cavalry");
 - Complete the "Finding Your Place" proving event
 - Verify formation is set and training XP applies daily
 - Test Horse Archer availability with Khuzait/Aserai lords
+- Monitor for native XP sources (check for tracks on map, travel on different terrains)

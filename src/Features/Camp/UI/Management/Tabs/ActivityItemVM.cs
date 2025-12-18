@@ -1,6 +1,7 @@
 using System;
 using Enlisted.Features.Schedule.Config;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp.UI.Management
 {
@@ -32,7 +33,7 @@ namespace Enlisted.Features.Camp.UI.Management
             
             if (_activity == null)
             {
-                Name = "Unknown Activity";
+                Name = new TextObject("{=enl_schedule_unknown_activity}Unknown Activity").ToString();
                 Description = "";
                 return;
             }

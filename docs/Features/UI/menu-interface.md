@@ -20,8 +20,8 @@ We use these names consistently in docs:
 |---------|---------|--------|
 | `enlisted_status` | Main service menu - status with escalation tracks (Heat/Discipline/Lance Rep), navigation | After enlistment |
 | `enlisted_lance` | My Lance - roster with relationship indicators, interactions, welfare tracking | Enlisted Status -> "My Lance" |
-| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Enlisted Status -> "Camp" -> "Camp Activities" |
-| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Camp Management -> "Duties" (primary entry) |
+| `enlisted_camp_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Enlisted Status -> "Camp" -> "Camp Activities" |
+| Camp Management Screen | Full-screen Gauntlet UI with tabs: Lance, Orders, Duties, Reports, Army | Enlisted Status -> "Camp Management" |
 | `enlisted_medical` | Medical Attention - treatment options | Enlisted Status -> "Seek Medical Attention" (when injured/ill) |
 | `enlisted_camp_hub` | Camp Menu (text) - camp-facing navigation (medical, reports, records, camp activities entry points) | Enlisted Status -> "Camp" |
 | Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status -> "Visit Quartermaster" |
@@ -187,23 +187,24 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 
 ### Duty Selection Interface
 
-**Menu ID:** `enlisted_duty_selection` (WaitGameMenu)
+**Location:** Camp Management Screen → Duties Tab (Gauntlet UI)
 
-**Implementation:** Fully data-driven from `duties_system.json`. The menu dynamically generates up to 10 duty slots, showing all duties with formation-incompatible ones greyed out. Includes tier gating, expansion checks, and duty request flow.
+**Access:** Enlisted Status → "Camp Management" → Duties tab OR Enlisted Status → "Report for Duty"
+
+**Implementation:** Orders-screen style interface with persistent duty assignments. Left panel shows available duties, right panel shows selected duty details. Data-driven from `duties_system.json`.
 
 **Duty Assignment Flow:**
-- **T1 Players**: Auto-assigned "Runner" duty, cannot change duties
+- **T1 Players**: Auto-assigned "Runner" duty, can change duties freely (no approval needed)
 - **T2+ Players**: Must **request** duty changes through lance leader approval
 
 **Duty Request System (T2+):**
 
-| Menu Display | Meaning |
-|--------------|---------|
-| `[Request Transfer]` | Duty available for request |
-| `[Cooldown: Xd]` | Request denied, must wait X days |
-| `[Requires {Rank}]` | Tier requirement not met (shows culture-specific rank) |
-| `[{formations} only]` | Greyed out, duty requires different formation |
-| `(Current)` | Currently active duty |
+| UI Element | Meaning |
+|------------|---------|
+| "Request Assignment" button | Duty available for request |
+| "On Cooldown" button (disabled) | Request denied, must wait X days |
+| "Locked" | Tier or formation requirement not met |
+| "(Current)" badge in list | Currently active duty (persists until changed) |
 
 Request approval requires:
 - 14-day cooldown between requests
@@ -211,10 +212,10 @@ Request approval requires:
 - Meeting the duty's tier requirement
 - Duty compatible with player's formation
 
-**Formation-Based Display:**
-- All duties are shown in the menu regardless of player's formation
-- Incompatible duties are greyed out with a tooltip showing required formations
-- Example: A cavalry soldier sees "[infantry only]" on the Armorer duty
+**Persistence:**
+- Duties persist across sessions - your assigned duty stays active until you successfully request a change
+- Current duty clearly displayed at top of panel with transfer availability status
+- Similar to giving orders to troops - select, assign, and it stays
 
 **Duty Selection (Available T1+; data-driven)**
 
@@ -256,14 +257,11 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 
 **Note:** The progression system supports 9 tiers with culture-specific rank names. See [Lance Assignments](../Core/lance-assignments.md) for the full tier/track breakdown (T1-4 Enlisted, T5-6 Officer, T7-9 Commander).
 
-**Description System:**
-- Top of menu shows detailed description for currently selected duty
-- Rich military context explaining daily activities and skill training
-
-**Checkmark System:**
-- Dynamic markers (`[x]`/`[ ]`) showing current selection
-- Updates in real-time when selection changes
-- Visual feedback for active assignment
+**Details Panel:**
+- Right panel shows full duty information when selected
+- Duty title, description, effects (skill XP, wage modifiers, special abilities)
+- Requirements display (tier, formation, special conditions)
+- Status-aware button text ("Request Assignment" / "Current Duty" / "On Cooldown")
 
 ### Menu Navigation
 
@@ -272,11 +270,11 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
   - Visit Quartermaster -> equipment selection (formation + tier + culture)
   - My Lance (`enlisted_lance`) -> roster / relationships
   - Camp (`enlisted_camp_hub`) -> Camp Menu (text)
-    - Camp Activities (`enlisted_activities`) -> activity selection (data-driven)
+    - Camp Activities (`enlisted_camp_activities`) -> activity selection (data-driven)
     - Medical Tent (`enlisted_medical`) -> treatment options (when injured/ill)
     - Reports -> Camp Bulletin (Gauntlet overlay)
     - Camp Management (Gauntlet) -> deep configure/manage surface
-      - Duties -> duty selection (request system; `enlisted_duty_selection` or camp management panel routing)
+      - Duties tab -> duty selection (orders-screen style with persistent assignments)
   - Seek Medical Attention (`enlisted_medical`) -> treatment options (when injured/ill)
   - My Lord... -> dialog system
   - Visit Settlement -> town/castle menu
@@ -346,7 +344,7 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 
 ### Camp Activities Menu
 
-**Menu ID:** `enlisted_activities` (WaitGameMenu)
+**Menu ID:** `enlisted_camp_activities` (WaitGameMenu)
 
 **Purpose:** Organized menu for player-initiated activities. Earn XP, manage fatigue, and build relationships through structured camp actions. Activities are organized by category with section headers.
 
@@ -442,53 +440,51 @@ There are **two** ways to leave service:
 
 **Duty Selection:**
 ```csharp
-// Menu ID: enlisted_duty_selection
-// Type: WaitGameMenu
-// Purpose: Choose daily assignment
-// Features: Section headers, checkmarks, descriptions
+// Screen: CampManagementScreen (Gauntlet UI)
+// Tab: Duties (CampDutiesVM)
+// Type: Full-screen Gauntlet layer
+// Purpose: Manage duty assignments (orders-screen style)
+// Features: Persistent assignments, duty list, details panel, request system
 ```
 
-**Menu Registration:**
-- Registered in `EnlistedMenuBehavior.OnSessionLaunched()`
-- Menu options added via `AddGameMenuOption()`
-- Dynamic text variables set via `SetDynamicMenuText()`
+**UI Registration:**
+- Opened via `CampManagementScreen.Open(2)` (index 2 = Duties tab)
+- ViewModel: `CampDutiesVM` (manages duty list and details)
+- Data-driven from `duties_system.json`
 
-### Dynamic Text System
+### Duty List System
 
-**Purpose:** Real-time updates showing current selections
+**Purpose:** Display all available duties with current status
 
 **Implementation:**
 ```csharp
-// Set dynamic text for menu options
-private void SetDynamicMenuText()
+// CampDutiesVM.cs
+private void RefreshDutyList()
 {
-    var currentDuty = EnlistmentBehavior.Instance?.SelectedDuty ?? "None";
+    var allDuties = dutiesBehavior.GetAllDuties();
     
-    // Update checkmarks based on current selection
-    // Format: "[x] Duty Name" or "[ ] Duty Name"
+    // Sort: current first, then available, then locked
+    // For each duty: create DutyItemVM with status info
 }
 ```
 
-**Checkmark Logic:**
-- `[x]` for currently selected duty
-- `[ ]` for available but not selected
-- Updates automatically when selection changes
+**Duty Item States:**
+- **(Current)** badge for active duty
+- **(Locked)** for unavailable duties
+- Selectable appearance for available duties
 
 ### Tier-Based Availability
 
 **Duties:**
-- All duties shown in menu
-- Tier-locked duties greyed out with culture-specific rank requirement
-- Formation-incompatible duties greyed out with formation requirement
+- All duties shown in list
+- Tier-locked duties show "Requires Tier X" in unavailable reason
+- Formation-incompatible duties show "Incompatible with your formation"
 
 **Implementation:**
 ```csharp
-// Check duty availability
-bool IsDutySlotAvailable(DutyDefinition duty)
-{
-    // Check formation compatibility first
-    if (!IsDutyCompatibleWithFormation(duty))
-        return false; // Show greyed with "[{formations} only]"
+// CampDutiesVM.cs - Check duty selectability
+bool IsSelectable = dutiesBehavior.IsDutySelectableByPlayer(duty)
+                 && dutiesBehavior.IsDutyCompatibleWithFormation(duty)
     
     // Check tier requirement
     if (duty.MinTier > currentTier)
@@ -531,8 +527,8 @@ bool IsDutySlotAvailable(DutyDefinition duty)
 **Scenario:** Player changes duty, then navigates away and back
 
 **Handling:**
-- Selection persists in `EnlistmentBehavior`
-- Menu shows correct checkmark on return
+- Selection persists in `EnlistmentBehavior` and `EnlistedDutiesBehavior`
+- Camp Management UI shows current duty with "(Current)" badge
 - XP processing uses persisted selection
 
 ### Menu Activation Timing
@@ -831,10 +827,10 @@ ModLogger.Debug("Menu", $"Tier check: required={required}, current={current}, al
 - Check tier requirement vs player's current tier
 - Verify expansion is active for naval duties (War Sails)
 
-**Checkmarks not updating:**
-- Verify `SetDynamicMenuText()` is called in refresh
-- Check selection persistence in `EnlistmentBehavior`
-- Ensure menu refresh happens after selection changes
+**Current duty not showing:**
+- Verify `CampDutiesVM.RefreshValues()` is called when tab opens
+- Check duty persistence in `EnlistedDutiesBehavior.ActiveDuties`
+- Ensure UI updates after duty assignment
 
 **XP not applying:**
 - Ensure selected duties connect to `EnlistedDutiesBehavior.AssignDuty()`

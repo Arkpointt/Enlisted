@@ -5,6 +5,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Engine.GauntletUI;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 using TaleWorlds.ScreenSystem;
 using TaleWorlds.TwoDimension;
 
@@ -101,7 +102,8 @@ namespace Enlisted.Features.Camp.UI.Management
                     if (_movie == null)
                     {
                         ModLogger.Error(LogCategory, "LoadMovie returned null for 'CampManagement'. Check prefab.");
-                        InformationManager.DisplayMessage(new InformationMessage("Enlisted: Camp Management UI failed to load."));
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=enl_camp_ui_failed_to_load}Enlisted: Camp Management UI failed to load.").ToString()));
                         Close();
                         return;
                     }
@@ -143,7 +145,8 @@ namespace Enlisted.Features.Camp.UI.Management
                 catch (Exception ex)
                 {
                     ModLogger.ErrorCode(LogCategory, "E-CAMPUI-060", "Exception while opening Camp Management UI.", ex);
-                    InformationManager.DisplayMessage(new InformationMessage("Enlisted: Camp Management UI failed to open."));
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=enl_camp_ui_failed_to_open}Enlisted: Camp Management UI failed to open.").ToString()));
                     Close();
                 }
             });

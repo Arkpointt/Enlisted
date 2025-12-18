@@ -1,6 +1,7 @@
 using System;
 using Enlisted.Features.Schedule.Models;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp.UI.Management
 {
@@ -40,7 +41,7 @@ namespace Enlisted.Features.Camp.UI.Management
             
             if (_block == null)
             {
-                Title = "Unknown";
+                Title = new TextObject("{=enl_schedule_unknown}Unknown").ToString();
                 TimeBlockText = "--";
                 Description = "";
                 return;
@@ -57,37 +58,52 @@ namespace Enlisted.Features.Camp.UI.Management
                 // Convert BlockType enum to friendly text
                 activityName = _block.BlockType switch
                 {
-                    ScheduleBlockType.FreeTime => "Free Time",
-                    ScheduleBlockType.SentryDuty => "Sentry Duty",
-                    ScheduleBlockType.PatrolDuty => "Patrol Duty",
-                    ScheduleBlockType.ScoutingMission => "Scouting Mission",
-                    ScheduleBlockType.ForagingDuty => "Foraging Duty",
+                    ScheduleBlockType.FreeTime => new TextObject("{=enl_sched_block_free_time}Free Time").ToString(),
+                    ScheduleBlockType.SentryDuty => new TextObject("{=enl_sched_block_sentry_duty}Sentry Duty").ToString(),
+                    ScheduleBlockType.PatrolDuty => new TextObject("{=enl_sched_block_patrol_duty}Patrol Duty").ToString(),
+                    ScheduleBlockType.ScoutingMission => new TextObject("{=enl_sched_block_scouting_mission}Scouting Mission").ToString(),
+                    ScheduleBlockType.ForagingDuty => new TextObject("{=enl_sched_block_foraging_duty}Foraging Duty").ToString(),
                     _ => _block.BlockType.ToString()
                 };
             }
             
             Title = $"{TimeBlockText}: {activityName}";
             
-            Description = _block.Description ?? $"Activity for {TimeBlockText}";
+            if (!string.IsNullOrWhiteSpace(_block.Description))
+            {
+                Description = _block.Description;
+            }
+            else
+            {
+                var t = new TextObject("{=enl_sched_block_desc_fallback}Activity for {TIME_BLOCK}");
+                t.SetTextVariable("TIME_BLOCK", TimeBlockText ?? string.Empty);
+                Description = t.ToString();
+            }
             IsActive = _block.IsActive;
             IsCompleted = _block.IsCompleted;
             
             // Load effects
             Effects.Clear();
-            Effects.Add(new EffectItemVM($"Fatigue Cost: {_block.FatigueCost}"));
-            Effects.Add(new EffectItemVM($"XP Reward: {_block.XPReward}"));
+
+            var fatigue = new TextObject("{=enl_sched_effect_fatigue}Fatigue Cost: {COST}");
+            fatigue.SetTextVariable("COST", _block.FatigueCost);
+            Effects.Add(new EffectItemVM(fatigue.ToString()));
+
+            var xp = new TextObject("{=enl_sched_effect_xp}XP Reward: {XP}");
+            xp.SetTextVariable("XP", _block.XPReward);
+            Effects.Add(new EffectItemVM(xp.ToString()));
             
             if (_block.IsCompleted)
             {
-                Effects.Add(new EffectItemVM("Status: Completed"));
+                Effects.Add(new EffectItemVM(new TextObject("{=enl_sched_status_completed}Status: Completed").ToString()));
             }
             else if (_block.IsActive)
             {
-                Effects.Add(new EffectItemVM("Status: In Progress"));
+                Effects.Add(new EffectItemVM(new TextObject("{=enl_sched_status_in_progress}Status: In Progress").ToString()));
             }
             else
             {
-                Effects.Add(new EffectItemVM("Status: Pending"));
+                Effects.Add(new EffectItemVM(new TextObject("{=enl_sched_status_pending}Status: Pending").ToString()));
             }
         }
         
@@ -95,11 +111,11 @@ namespace Enlisted.Features.Camp.UI.Management
         {
             return timeBlock switch
             {
-                TimeBlock.Morning => "Morning",
-                TimeBlock.Afternoon => "Afternoon",
-                TimeBlock.Dusk => "Dusk",
-                TimeBlock.Night => "Night",
-                _ => "Unknown"
+                TimeBlock.Morning => new TextObject("{=enl_timeblock_morning}Morning").ToString(),
+                TimeBlock.Afternoon => new TextObject("{=enl_timeblock_afternoon}Afternoon").ToString(),
+                TimeBlock.Dusk => new TextObject("{=enl_timeblock_dusk}Dusk").ToString(),
+                TimeBlock.Night => new TextObject("{=enl_timeblock_night}Night").ToString(),
+                _ => new TextObject("{=enl_schedule_unknown}Unknown").ToString()
             };
         }
         

@@ -3,6 +3,7 @@ using Enlisted.Features.Camp.UI.Management.Tabs;
 using TaleWorlds.CampaignSystem.ViewModelCollection.Input;
 using TaleWorlds.InputSystem;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp.UI.Management
 {
@@ -63,13 +64,13 @@ namespace Enlisted.Features.Camp.UI.Management
         {
             base.RefreshValues();
             
-            TitleText = "CAMP MANAGEMENT";
-            DoneText = "Done";
-            LanceText = "Lance";
-            ScheduleText = "Orders";
-            DutiesText = "Duties";
-            ReportsText = "Reports";
-            ArmyText = "Army";
+            TitleText = new TextObject("{=enl_camp_mgmt_title}CAMP MANAGEMENT").ToString();
+            DoneText = new TextObject("{=enl_ui_done}Done").ToString();
+            LanceText = new TextObject("{=enl_camp_tab_lance}Lance").ToString();
+            ScheduleText = new TextObject("{=enl_camp_tab_orders}Orders").ToString();
+            DutiesText = new TextObject("{=enl_camp_tab_duties}Duties").ToString();
+            ReportsText = new TextObject("{=enl_camp_tab_reports}Reports").ToString();
+            ArmyText = new TextObject("{=enl_camp_tab_army}Army").ToString();
             
             // Refresh sub-VMs
             Lance?.RefreshValues();

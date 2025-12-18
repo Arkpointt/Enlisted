@@ -141,28 +141,31 @@ namespace Enlisted.Features.CommandTent.Core
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                reason = "You must be enlisted to command soldiers.";
+                reason = new TextObject("{=enl_retinue_reason_must_be_enlisted}You must be enlisted to command soldiers.").ToString();
                 return false;
             }
 
             var currentTier = enlistment.EnlistmentTier;
             if (currentTier < CommanderTier1)
             {
-                reason = $"Requires Commander rank (Tier {CommanderTier1}). You are Tier {currentTier}.";
+                var t = new TextObject("{=enl_retinue_reason_requires_commander}Requires Commander rank (Tier {REQ}). You are Tier {CUR}.");
+                t.SetTextVariable("REQ", CommanderTier1);
+                t.SetTextVariable("CUR", currentTier);
+                reason = t.ToString();
                 return false;
             }
 
             var party = PartyBase.MainParty;
             if (party == null)
             {
-                reason = "No party found.";
+                reason = new TextObject("{=enl_retinue_reason_no_party}No party found.").ToString();
                 return false;
             }
 
             var availableSpace = party.PartySizeLimit - party.NumberOfAllMembers;
             if (availableSpace <= 0)
             {
-                reason = "No party space available. Your companions fill your party.";
+                reason = new TextObject("{=enl_retinue_reason_no_space_companions}No party space available. Your companions fill your party.").ToString();
                 return false;
             }
 
@@ -319,7 +322,7 @@ namespace Enlisted.Features.CommandTent.Core
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                message = "You must be enlisted to command soldiers.";
+                message = new TextObject("{=enl_retinue_msg_must_be_enlisted}You must be enlisted to command soldiers.").ToString();
                 ModLogger.Warn(LogCategory, "AddSoldiers blocked: not enlisted");
                 return false;
             }
@@ -327,7 +330,7 @@ namespace Enlisted.Features.CommandTent.Core
             var party = MobileParty.MainParty;
             if (party == null)
             {
-                message = "No party available.";
+                message = new TextObject("{=enl_retinue_msg_no_party}No party available.").ToString();
                 ModLogger.Warn(LogCategory, "AddSoldiers blocked: no party");
                 return false;
             }
@@ -337,7 +340,7 @@ namespace Enlisted.Features.CommandTent.Core
 
             if (culture == null)
             {
-                message = "Cannot determine faction culture.";
+                message = new TextObject("{=enl_retinue_msg_no_culture}Cannot determine faction culture.").ToString();
                 ModLogger.Warn(LogCategory, "AddSoldiers blocked: no culture");
                 return false;
             }
@@ -359,15 +362,15 @@ namespace Enlisted.Features.CommandTent.Core
             {
                 if (partyAvailable <= 0)
                 {
-                    message = "Party is full. Dismiss troops or increase party size.";
+                    message = new TextObject("{=enl_retinue_msg_party_full}Party is full. Dismiss troops or increase party size.").ToString();
                 }
                 else if (tierAvailable <= 0)
                 {
-                    message = "Retinue is at full capacity for your rank.";
+                    message = new TextObject("{=enl_retinue_msg_full_capacity}Retinue is at full capacity for your rank.").ToString();
                 }
                 else
                 {
-                    message = "Cannot add soldiers.";
+                    message = new TextObject("{=enl_retinue_msg_cannot_add}Cannot add soldiers.").ToString();
                 }
 
                 ModLogger.Warn(LogCategory, $"AddSoldiers blocked: {message}");
@@ -402,7 +405,9 @@ namespace Enlisted.Features.CommandTent.Core
 
             if (actuallyAdded < count)
             {
-                message = $"Party limit reached. Only {actuallyAdded} soldiers assigned.";
+                var t = new TextObject("{=enl_retinue_msg_party_limit_reached}Party limit reached. Only {COUNT} soldiers assigned.");
+                t.SetTextVariable("COUNT", actuallyAdded);
+                message = t.ToString();
                 ModLogger.Info(LogCategory, message);
             }
             else
@@ -549,20 +554,22 @@ namespace Enlisted.Features.CommandTent.Core
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                reason = "You must be enlisted to requisition soldiers.";
+                reason = new TextObject("{=enl_retinue_reason_must_be_enlisted_requisition}You must be enlisted to requisition soldiers.").ToString();
                 return false;
             }
 
             if (enlistment.EnlistmentTier < CommanderTier1)
             {
-                reason = $"Requires Commander rank (Tier {CommanderTier1}) or higher.";
+                var t = new TextObject("{=enl_retinue_reason_requires_commander_min}Requires Commander rank (Tier {REQ}) or higher.");
+                t.SetTextVariable("REQ", CommanderTier1);
+                reason = t.ToString();
                 return false;
             }
 
             // Must have a retinue type selected
             if (!_state.HasTypeSelected)
             {
-                reason = "You must select a soldier type first.";
+                reason = new TextObject("{=enl_retinue_reason_select_type}You must select a soldier type first.").ToString();
                 return false;
             }
 
@@ -570,7 +577,9 @@ namespace Enlisted.Features.CommandTent.Core
             if (!_state.IsRequisitionAvailable())
             {
                 var daysRemaining = _state.GetRequisitionCooldownDays();
-                reason = $"Requisition on cooldown: {daysRemaining} days remaining.";
+                var t = new TextObject("{=enl_retinue_reason_requisition_cooldown}Requisition on cooldown: {DAYS} days remaining.");
+                t.SetTextVariable("DAYS", daysRemaining);
+                reason = t.ToString();
                 return false;
             }
 
@@ -578,7 +587,7 @@ namespace Enlisted.Features.CommandTent.Core
             var missing = GetMissingSoldierCount();
             if (missing <= 0)
             {
-                reason = "Your retinue is at full strength.";
+                reason = new TextObject("{=enl_retinue_reason_full_strength}Your retinue is at full strength.").ToString();
                 return false;
             }
 
@@ -587,7 +596,10 @@ namespace Enlisted.Features.CommandTent.Core
             var playerGold = Hero.MainHero?.Gold ?? 0;
             if (playerGold < cost)
             {
-                reason = $"Not enough gold. Need {cost} denars, have {playerGold}.";
+                var t = new TextObject("{=enl_retinue_reason_not_enough_gold}Not enough gold. Need {NEED} denars, have {HAVE}.");
+                t.SetTextVariable("NEED", cost);
+                t.SetTextVariable("HAVE", playerGold);
+                reason = t.ToString();
                 return false;
             }
 

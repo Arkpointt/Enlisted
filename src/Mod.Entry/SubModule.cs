@@ -8,7 +8,7 @@ using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
 using Enlisted.Features.Activities;
 using Enlisted.Features.Camp;
-using Enlisted.Features.Camp.UI.Bulletin;
+// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -356,9 +356,6 @@ namespace Enlisted.Mod.Entry
                     // Phase 5: player conditions (injury/illness/exhaustion). Feature-flagged.
                     campaignStarter.AddBehavior(new PlayerConditionBehavior());
 
-                    // Phase 2 (menu_system_update): data-driven camp activities menu. Feature-flagged.
-                    campaignStarter.AddBehavior(new CampActivitiesBehavior());
-
                     // Lance Life (text events): Viking Conquest-style camp activities and stories tied to lance identity
                     campaignStarter.AddBehavior(new LanceStoryBehavior());
 
@@ -398,8 +395,8 @@ namespace Enlisted.Mod.Entry
                     // faction history, lifetime summary) and future retinue management
                     campaignStarter.AddBehavior(new CampMenuHandler());
 
-                    // Camp Bulletin Board UI: tick bridge for overlay close handling (ESC / Done).
-                    campaignStarter.AddBehavior(new CampBulletinUiTickBehavior());
+                    // Camp Activities: data-driven activity system for training, tasks, social, and lance activities
+                    campaignStarter.AddBehavior(new CampActivitiesBehavior());
 
                     // Camp Life Simulation (Phase 3): daily snapshot + Quartermaster/Pay integrations (gated by config).
                     campaignStarter.AddBehavior(new CampLifeBehavior());
@@ -464,7 +461,6 @@ namespace Enlisted.Mod.Entry
                         nameof(CampaignTriggerTrackerBehavior),
                         nameof(LancePersonaBehavior),
                         nameof(PlayerConditionBehavior),
-                        nameof(CampActivitiesBehavior),
                         nameof(LanceStoryBehavior),
                         nameof(LanceLifeEventsStateBehavior),
                         nameof(LanceLifeOnboardingBehavior),
@@ -473,6 +469,7 @@ namespace Enlisted.Mod.Entry
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),
+                        nameof(CampActivitiesBehavior),
                         nameof(CampLifeBehavior),
                         nameof(EscalationManager),
                         nameof(EnlistedNewsBehavior),

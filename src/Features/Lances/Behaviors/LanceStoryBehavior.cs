@@ -10,6 +10,7 @@ using Enlisted.Features.Lances.Text;
 using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Lances.Stories;
+using Enlisted.Features.Schedule.Models;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
@@ -424,25 +425,23 @@ namespace Enlisted.Features.Lances.Behaviors
 
             switch (token.Trim().ToLowerInvariant())
             {
-                // 6-period camp schedule
+                // 4-block schedule
                 case CampaignTriggerTokens.Dawn:
-                    return tracker.GetDayPart() == DayPart.Dawn;
                 case CampaignTriggerTokens.Morning:
-                    return tracker.GetDayPart() == DayPart.Morning;
+                    return tracker.GetTimeBlock() == TimeBlock.Morning;
                 case CampaignTriggerTokens.Afternoon:
-                    return tracker.GetDayPart() == DayPart.Afternoon;
+                    return tracker.GetTimeBlock() == TimeBlock.Afternoon;
                 case CampaignTriggerTokens.Evening:
-                    return tracker.GetDayPart() == DayPart.Evening;
                 case CampaignTriggerTokens.Dusk:
-                    return tracker.GetDayPart() == DayPart.Dusk;
+                    return tracker.GetTimeBlock() == TimeBlock.Dusk;
                 case CampaignTriggerTokens.Night:
-                    return tracker.GetDayPart() == DayPart.Night;
+                    return tracker.GetTimeBlock() == TimeBlock.Night;
                 
                 // Legacy "day" token - map to all daytime periods for backwards compatibility
                 case CampaignTriggerTokens.Day:
                 {
-                    var part = tracker.GetDayPart();
-                    return part == DayPart.Morning || part == DayPart.Afternoon;
+                    var block = tracker.GetTimeBlock();
+                    return block == TimeBlock.Morning || block == TimeBlock.Afternoon;
                 }
 
                 case CampaignTriggerTokens.EnteredSettlement:
@@ -532,7 +531,7 @@ namespace Enlisted.Features.Lances.Behaviors
 
                 // Keep this small and stable (INFO line). This is called only when a story fires,
                 // and stories are already rate-limited (weekly cap + min days between).
-                var dayPart = tracker.GetDayPart().ToString();
+                var timeBlock = tracker.GetTimeBlock().ToString();
                 var all = story.TriggerAll ?? new List<string>();
                 var any = story.TriggerAny ?? new List<string>();
 
@@ -545,7 +544,7 @@ namespace Enlisted.Features.Lances.Behaviors
                     ? -1f
                     : (CampaignTime.Now.ToDays - tracker.LastSettlementEnteredTime.ToDays);
 
-                return $"daypart={dayPart};all=[{allEval}];any=[{anyEval}];lastEnter={enteredId};enterAgeDays={enteredAgeDays:0.0}";
+                return $"timeblock={timeBlock};all=[{allEval}];any=[{anyEval}];lastEnter={enteredId};enterAgeDays={enteredAgeDays:0.0}";
             }
             catch (Exception ex)
             {

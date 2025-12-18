@@ -139,15 +139,12 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
     <Content Include="GUI\Prefabs\Events\LanceLifeEventScreen.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampDutiesPanel.xml"/>
-    <Content Include="GUI\Prefabs\Camp\CampActivityCard.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampManagement.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampSchedulePanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\ScheduleActiveTuple.xml"/>
     <Content Include="GUI\Prefabs\Camp\ScheduleOtherTuple.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampLancePanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\LanceTuple.xml"/>
-    <!-- CampActivitiesPanel.xml kept for reference but deprecated - Duties panel is used now -->
-    <Content Include="GUI\Prefabs\Camp\CampActivitiesPanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampReportsPanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampArmyPanel.xml"/>
   </ItemGroup>
@@ -248,6 +245,8 @@
     <Compile Include="src\Features\Schedule\Config\LanceNeedsConfig.cs"/>
     <Compile Include="src\Features\Schedule\Config\ScheduleConfig.cs"/>
     <Compile Include="src\Features\Schedule\Config\ScheduleConfigLoader.cs"/>
+    <Compile Include="src\Features\Schedule\Events\SchedulePopupEventCatalog.cs"/>
+    <Compile Include="src\Features\Schedule\Events\SchedulePopupEventCatalogLoader.cs"/>
     <Compile Include="src\Features\Schedule\Behaviors\ScheduleBehavior.cs"/>
     <Compile Include="src\Features\Schedule\Models\LordObjective.cs"/>
     <Compile Include="src\Features\Schedule\Core\ArmyStateAnalyzer.cs"/>
@@ -270,24 +269,7 @@
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
     <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
-    <Compile Include="src\Features\Camp\UI\ActivityCardVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\ActivityCardRowVM.cs"/>
-    <!-- Camp Bulletin Board UI (settlement-style) -->
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampBulletinVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampBulletinScreen.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampBulletinUiTickBehavior.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampLocationButtonVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\LanceLeaderVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampPlayerStatusVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\ActivityIconVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\ActivityDetailVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampBulletinFeedVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampBulletinNewsItemVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampDailyScheduleVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampScheduleQueueItemVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampLanceLocationVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampNewsGenerator.cs"/>
-    <Compile Include="src\Features\Camp\UI\Bulletin\CampBulletinIntegration.cs"/>
+    <!-- Old Bulletin Board UI deleted: replaced by Game Menu + Camp Management -->
     <!-- Camp Management Screen (Kingdom-style full-screen UI) -->
     <Compile Include="src\Features\Camp\UI\Management\CampManagementScreen.cs"/>
     <Compile Include="src\Features\Camp\UI\Management\CampManagementVM.cs"/>
@@ -430,9 +412,6 @@
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Events\LanceLifeEventScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Events\"/>
-    <Copy SourceFiles="GUI\Prefabs\Camp\CampBulletin.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
-    <Copy SourceFiles="GUI\Prefabs\Camp\CampBulletinSimple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
-    <Copy SourceFiles="GUI\Prefabs\Camp\CampActivityCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampManagement.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampSchedulePanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\ScheduleActiveTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>

@@ -916,7 +916,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     var placeholders = new Dictionary<string, string>
                     {
-                        { "LORD", lord?.Name?.ToString() ?? "Unknown" }
+                        { "LORD", lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                     };
 
                     AddPersonalNews("army", "News_ArmyForming", placeholders, $"army:{lord?.StringId}", 2);
@@ -1279,7 +1279,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "SETTLEMENT", settlement.Name?.ToString() ?? "Unknown" }
+                    { "SETTLEMENT", settlement.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 AddKingdomNews("siege", "News_Siege", placeholders, $"siege:{settlement.StringId}", 2);
@@ -1311,12 +1311,12 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "LORD", prisoner.Name?.ToString() ?? "Unknown" }
+                    { "LORD", prisoner.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 if (captorParty?.LeaderHero != null)
                 {
-                    placeholders["CAPTOR"] = captorParty.LeaderHero.Name?.ToString() ?? "Unknown";
+                    placeholders["CAPTOR"] = captorParty.LeaderHero.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     AddKingdomNews("prisoner", "News_PrisonerCapturedBy", placeholders, $"prisoner:{prisoner.StringId}");
                 }
                 else
@@ -1357,7 +1357,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "LORD", prisoner.Name?.ToString() ?? "Unknown" }
+                    { "LORD", prisoner.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 // Choose headline based on how they got free
@@ -1400,12 +1400,12 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "LORD", victim.Name?.ToString() ?? "Unknown" }
+                    { "LORD", victim.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 if (killer != null)
                 {
-                    placeholders["EXECUTOR"] = killer.Name?.ToString() ?? "Unknown";
+                    placeholders["EXECUTOR"] = killer.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     AddKingdomNews("execution", "News_Executed", placeholders, $"executed:{victim.StringId}", 2);
                 }
                 else
@@ -1449,8 +1449,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "SETTLEMENT", settlement.Name?.ToString() ?? "Unknown" },
-                    { "KINGDOM", newOwner?.MapFaction?.Name?.ToString() ?? "Unknown" }
+                    { "SETTLEMENT", settlement.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() },
+                    { "KINGDOM", newOwner?.MapFaction?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 if (isNowOurs)
@@ -1497,7 +1497,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "LORD", lord?.Name?.ToString() ?? "Unknown" }
+                    { "LORD", lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 AddPersonalNews("army", "News_ArmyDisbanded", placeholders, $"army:{lord?.StringId}", 2);
@@ -1529,7 +1529,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "SETTLEMENT", village.Name?.ToString() ?? "Unknown" }
+                    { "SETTLEMENT", village.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 // Use village settlement StringId for deduplication
@@ -1563,8 +1563,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "KINGDOM_A", faction1?.Name?.ToString() ?? "Unknown" },
-                    { "KINGDOM_B", faction2?.Name?.ToString() ?? "Unknown" }
+                    { "KINGDOM_A", faction1?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() },
+                    { "KINGDOM_B", faction2?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 AddKingdomNews("war", "News_War", placeholders, $"war:{faction1?.StringId}:{faction2?.StringId}", 2);
@@ -1598,7 +1598,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var otherKingdom = faction1 == playerKingdom ? faction2 : faction1;
                 var placeholders = new Dictionary<string, string>
                 {
-                    { "KINGDOM", otherKingdom?.Name?.ToString() ?? "Unknown" }
+                    { "KINGDOM", otherKingdom?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
                 };
 
                 AddKingdomNews("peace", "News_Peace", placeholders, $"peace:{faction1?.StringId}:{faction2?.StringId}", 2);
@@ -1767,14 +1767,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     // Use hero name if available, otherwise fall back to party name (handles bandits, looters, etc.)
                     placeholders["WINNER"] = winnerSideData?.LeaderParty?.LeaderHero?.Name?.ToString()
                                              ?? winnerSideData?.LeaderParty?.Name?.ToString()
-                                             ?? "unknown forces";
+                                             ?? new TextObject("{=enl_news_unknown_forces}unknown forces").ToString();
                     placeholders["LOSER"] = loserSideData?.LeaderParty?.LeaderHero?.Name?.ToString()
                                             ?? loserSideData?.LeaderParty?.Name?.ToString()
-                                            ?? "unknown forces";
+                                            ?? new TextObject("{=enl_news_unknown_forces}unknown forces").ToString();
                 }
 
                 // Get place name (settlement or region)
-                var place = "the countryside";
+                var place = new TextObject("{=enl_news_countryside}the countryside").ToString();
                 if (mapEvent.MapEventSettlement != null)
                 {
                     place = mapEvent.MapEventSettlement.Name?.ToString() ?? place;

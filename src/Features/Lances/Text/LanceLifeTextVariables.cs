@@ -37,10 +37,12 @@ namespace Enlisted.Features.Lances.Text
             text.SetTextVariable("LORD_NAME", enlistment?.EnlistedLord?.Name ?? new TextObject("{=enlist_fallback_army}the army"));
             
             // LORD_TITLE: "Lord" or "Lady" based on gender
-            var lordTitle = "Lord";
+            var lordTitle = new TextObject("{=enl_term_lord}Lord").ToString();
             if (enlistment?.EnlistedLord != null)
             {
-                lordTitle = enlistment.EnlistedLord.IsFemale ? "Lady" : "Lord";
+                lordTitle = enlistment.EnlistedLord.IsFemale
+                    ? new TextObject("{=enl_term_lady}Lady").ToString()
+                    : new TextObject("{=enl_term_lord}Lord").ToString();
             }
             text.SetTextVariable("LORD_TITLE", new TextObject(lordTitle));
             
@@ -53,9 +55,10 @@ namespace Enlisted.Features.Lances.Text
             try
             {
                 var leaderShort = GetLanceLeaderShortName(enlistment);
-                text.SetTextVariable("LANCE_LEADER_SHORT", new TextObject(leaderShort ?? "The Sergeant"));
-                text.SetTextVariable("LANCE_LEADER_NAME", new TextObject(leaderShort ?? "The Sergeant"));
-                text.SetTextVariable("LANCE_LEADER_RANK", new TextObject("Sergeant"));
+                var fallbackLeader = new TextObject("{=enl_term_the_sergeant}The Sergeant").ToString();
+                text.SetTextVariable("LANCE_LEADER_SHORT", new TextObject(leaderShort ?? fallbackLeader));
+                text.SetTextVariable("LANCE_LEADER_NAME", new TextObject(leaderShort ?? fallbackLeader));
+                text.SetTextVariable("LANCE_LEADER_RANK", new TextObject("{=enl_term_sergeant}Sergeant"));
 
                 text.SetTextVariable("SECOND_RANK", new TextObject(string.Empty));
                 text.SetTextVariable("SECOND_NAME", new TextObject(string.Empty));

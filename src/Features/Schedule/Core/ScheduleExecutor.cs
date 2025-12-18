@@ -1,12 +1,15 @@
 using System;
-using Enlisted.Features.Camp.UI.Bulletin;
+// Removed: CampBulletinIntegration no longer used - bulletin screen deleted
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Lances.Events;
 using Enlisted.Features.Schedule.Behaviors;
+using Enlisted.Features.Schedule.Events;
 using Enlisted.Features.Schedule.Models;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 
 namespace Enlisted.Features.Schedule.Core
@@ -49,8 +52,7 @@ namespace Enlisted.Features.Schedule.Core
             // Mark block as active
             block.Activate();
 
-            // Phase 7: Notify bulletin that block has started
-            CampBulletinIntegration.OnBlockStart(block);
+            // Block activated - bulletin integration removed
 
             // Apply fatigue cost (if positive)
             if (block.FatigueCost > 0)
@@ -134,11 +136,48 @@ namespace Enlisted.Features.Schedule.Core
         {
             ModLogger.Info(LogCategory, $"Schedule event triggered: {block.BlockType} during {block.TimeBlock}");
 
-            string eventTitle = GetEventTitle(block.BlockType);
-            string eventMessage = GetPlaceholderEventMessage(block.BlockType);
-            var (skill, xpAmount) = GetEventReward(block.BlockType);
-            
-            ModLogger.Debug(LogCategory, $"Event: {eventMessage} (Reward: {xpAmount} {skill.Name} XP)");
+            // Data-driven catalog for "Continue-only" popups.
+            // If the catalog is missing or has no matching entries, we fall back to the original hardcoded placeholder mapping.
+            var popup = SchedulePopupEventCatalogLoader.TryPickFor(block);
+            var enlistment = EnlistmentBehavior.Instance;
+
+            string eventTitle;
+            string eventMessage;
+            SkillObject skill;
+            int xpAmount;
+
+            if (popup != null)
+            {
+                eventTitle = LanceLifeEventText.Resolve(popup.TitleId, popup.TitleFallback, GetEventTitle(block.BlockType), enlistment);
+                eventMessage = LanceLifeEventText.Resolve(popup.BodyId, popup.BodyFallback, GetPlaceholderEventMessage(block.BlockType), enlistment);
+
+                skill = SchedulePopupEventCatalogLoader.TryResolveSkill(popup.Skill);
+                xpAmount = popup.Xp;
+
+                // If authors omit skill/xp, keep the experience behavior consistent by falling back to the block-type mapping.
+                if (skill == null || xpAmount <= 0)
+                {
+                    var fallback = GetEventReward(block.BlockType);
+                    skill ??= fallback.skill;
+                    if (xpAmount <= 0)
+                    {
+                        xpAmount = fallback.xpAmount;
+                    }
+                }
+
+                ModLogger.Debug(LogCategory, $"Schedule popup picked: {popup.Id} (activity={block.ActivityId}, blockType={block.BlockType})");
+            }
+            else
+            {
+                eventTitle = GetEventTitle(block.BlockType);
+                eventMessage = GetPlaceholderEventMessage(block.BlockType);
+                (skill, xpAmount) = GetEventReward(block.BlockType);
+            }
+
+            var rewardLine = (skill != null && xpAmount > 0) ? $"\n\n[+{xpAmount} {skill.Name} Experience]" : string.Empty;
+
+            ModLogger.Debug(LogCategory,
+                $"Event: {eventMessage} (Reward: {(skill != null ? $"{xpAmount} {skill.Name} XP" : "none")})");
             
             // Store time control mode before showing inquiry so we can restore it after
             var previousTimeMode = Campaign.Current?.TimeControlMode ?? CampaignTimeControlMode.Stop;
@@ -148,15 +187,15 @@ namespace Enlisted.Features.Schedule.Core
             InformationManager.ShowInquiry(
                 new InquiryData(
                     titleText: eventTitle,
-                    text: $"{eventMessage}\n\n[+{xpAmount} {skill.Name} Experience]",
+                    text: $"{eventMessage}{rewardLine}",
                     isAffirmativeOptionShown: true,
                     isNegativeOptionShown: false,
-                    affirmativeText: "Continue",
+                    affirmativeText: new TextObject("{=ll_default_continue}Continue").ToString(),
                     negativeText: null,
                     affirmativeAction: () => 
                     {
                         // Award XP based on event type
-                        if (player != null && xpAmount > 0)
+                        if (player != null && skill != null && xpAmount > 0)
                         {
                             player.AddSkillXp(skill, xpAmount);
                             ModLogger.Info(LogCategory, $"Event XP awarded: +{xpAmount} {skill.Name}");
@@ -164,7 +203,7 @@ namespace Enlisted.Features.Schedule.Core
                             // Show notification
                             InformationManager.DisplayMessage(
                                 new InformationMessage(
-                                    $"Gained {xpAmount} {skill.Name} experience from {eventTitle}",
+                                    BuildXpGainedMessage(xpAmount, skill, eventTitle),
                                     Color.FromUint(0xFF88FF88) // Light green
                                 )
                             );
@@ -176,6 +215,15 @@ namespace Enlisted.Features.Schedule.Core
                     negativeAction: null
                 )
             );
+        }
+
+        private static string BuildXpGainedMessage(int xpAmount, SkillObject skill, string eventTitle)
+        {
+            var t = new TextObject("{=enl_sched_popup_xp_gained}Gained {XP} {SKILL} experience from {EVENT_TITLE}");
+            t.SetTextVariable("XP", xpAmount);
+            t.SetTextVariable("SKILL", skill?.Name?.ToString() ?? string.Empty);
+            t.SetTextVariable("EVENT_TITLE", eventTitle ?? string.Empty);
+            return t.ToString();
         }
         
         /// <summary>

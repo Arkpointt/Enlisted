@@ -46,7 +46,7 @@ The news system is split into **two separate feeds** based on relevance and cont
 - **Optional submenu**: dedicated `enlisted_news` screen for full 10–30 item history
 
 ### 2. Personal & Army News (camp menu)
-- **Location**: `enlisted_activities` menu (camp activities screen)
+- **Location**: `enlisted_camp_activities` menu (camp activities screen)
 - **Integration**: Prepended to the **top of the menu text** (before camp activities list)
 - **Scope**: Your immediate service context
   - Personal mentions (your party's participation in battles/sieges)
@@ -55,7 +55,7 @@ The news system is split into **two separate feeds** based on relevance and cont
   - Direct orders or changes to your posting
 - **Display**: Top 2–3 items, more immediate/actionable than kingdom news
 
-**Visual example (Personal News in `enlisted_activities`):**
+**Visual example (Personal News in `enlisted_camp_activities`):**
 ```
 --- Army Orders ---
 Host forming under Lord Derthert's banner.
@@ -118,7 +118,7 @@ Reports kingdom-wide strategic events:
 - **Politics**: clan defections, succession, fief grants
 - **Frontier** (optional, config): neighboring kingdom events
 
-### Personal & Army News Feed (`enlisted_activities`)
+### Personal & Army News Feed (`enlisted_camp_activities`)
 Reports your immediate service context:
 - **Personal participation**: your party's role in battles/sieges
 - **Your lord's army**: forming, dispersing, moving, regrouping after costly battles
@@ -160,7 +160,7 @@ Anti-spam:
 - Feed maintains max 60 items in history (trimmed automatically)
 - News items naturally age out after their minimum display duration expires
 
-### Personal News (`enlisted_activities`)
+### Personal News (`enlisted_camp_activities`)
 Baseline:
 - Only generate while enlisted.
 - Focus on **player party**, **player lord**, and **player's army** exclusively.
@@ -653,7 +653,7 @@ A separate feature that uses the Personal News feed but is primarily a **social/
 - [x] News items have priority system (2-day important news, 1-day minor news).
 
 ### Personal News Feed
-- [x] While enlisted, `enlisted_activities` shows top 2 personal headlines at the top of the menu.
+- [x] While enlisted, `enlisted_camp_activities` shows top 2 personal headlines at the top of the menu.
 - [x] Player participation in battles generates a personal mention (victory or defeat).
 - [x] Player lord's army movements (forming, dispersing) are detected and reported.
 - [x] Feed auto-expires items after their minimum display duration.

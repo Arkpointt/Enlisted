@@ -247,7 +247,7 @@ namespace Enlisted.Features.Lances.Events
                 var trigger = ParseIncidentTrigger(evt.Delivery?.IncidentTrigger);
 
                 // Title/body are TextObject-tagged strings so they localize and support placeholders.
-                var title = BuildTextObjectTaggedString(evt.TitleId, evt.TitleFallback, "Lance Activity");
+                var title = BuildTextObjectTaggedString(evt.TitleId, evt.TitleFallback, "{=ll_default_title}Lance Activity");
                 var body = BuildTextObjectTaggedString(evt.SetupId, evt.SetupFallback, string.Empty);
 
                 incident.Initialize(
@@ -265,7 +265,7 @@ namespace Enlisted.Features.Lances.Events
                         continue;
                     }
 
-                    var optionText = BuildTextObjectTaggedString(opt.TextId, opt.TextFallback, "Continue");
+                    var optionText = BuildTextObjectTaggedString(opt.TextId, opt.TextFallback, "{=ll_default_continue}Continue");
                     incident.AddOption(optionText, new List<IncidentEffect>
                     {
                         IncidentEffect.Custom(
@@ -496,6 +496,13 @@ namespace Enlisted.Features.Lances.Events
             if (string.IsNullOrWhiteSpace(id))
             {
                 var txt = !string.IsNullOrWhiteSpace(fallback) ? fallback : (defaultText ?? string.Empty);
+
+                // If the default text is already a TextObject tag (e.g. "{=some_id}Continue"),
+                // keep it as-is so it can localize through the XML string table.
+                if (!string.IsNullOrWhiteSpace(txt) && txt.StartsWith("{=", StringComparison.Ordinal))
+                {
+                    return txt;
+                }
                 return "{=!}" + txt;
             }
 

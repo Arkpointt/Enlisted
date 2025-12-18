@@ -122,21 +122,21 @@ namespace Enlisted.Features.Equipment.Behaviors
                 foreach (var troop in unlocked)
                 {
                     var hint = BuildTroopLoadoutHint(troop);
-                    var name = troop.Name?.ToString() ?? "Unknown";
+                    var name = troop.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     // 1.3.4 API: ImageIdentifier is now abstract, use CharacterImageIdentifier
                     var portrait = new CharacterImageIdentifier(CharacterCode.CreateFrom(troop));
                     options.Add(new InquiryElement(troop, name, portrait, true, hint));
                 }
 
                 var data = new MultiSelectionInquiryData(
-                    "Select equipment to use",
-                    "Gear will not be auto-issued after Tier 1. Your chosen kit becomes purchasable at the Quartermaster.",
+                    new TextObject("{=enl_ui_select_equipment_to_use_title}Select equipment to use").ToString(),
+                    new TextObject("{=enl_ui_select_equipment_to_use_desc}Gear will not be auto-issued after Tier 1. Your chosen kit becomes purchasable at the Quartermaster.").ToString(),
                     options,
                     true, // Enable close button (X) like lord selection dialog
                     1,
                     1,
-                    "Continue",
-                    "Cancel",
+                    new TextObject("{=ll_default_continue}Continue").ToString(),
+                    new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     selected =>
                     {
                         try
@@ -235,7 +235,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 try
                 {
-                    var title = troop?.Name?.ToString() ?? "Unknown";
+                    var title = troop?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     var element = new InquiryElement(
                         troop,
                         title,
@@ -419,10 +419,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistmentRef = EnlistmentBehavior.Instance;
                 var rankName = enlistmentRef?.GetRankName(_pendingTier) ?? $"Tier {_pendingTier}";
                 
-                var statusText = "You've been summoned before the Master at Arms.\n\n";
-                statusText += $"\"Soldier, your service has not gone unnoticed. You've earned promotion to {rankName}.\"\n\n";
-                statusText += "After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster.\n\n";
-                statusText += $"({_availableTroops.Count} troop specializations available)";
+                var intro = new TextObject("{=enl_master_at_arms_summons_intro}You've been summoned before the Master at Arms.");
+                var promo = new TextObject("{=enl_master_at_arms_promotion_line}\"Soldier, your service has not gone unnoticed. You've earned promotion to {RANK_NAME}.\"");
+                promo.SetTextVariable("RANK_NAME", rankName ?? string.Empty);
+                var note = new TextObject("{=enl_master_at_arms_after_t1_note}After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster.");
+                var count = new TextObject("{=enl_master_at_arms_specializations_count}({COUNT} troop specializations available)");
+                count.SetTextVariable("COUNT", _availableTroops.Count);
+
+                var statusText = $"{intro}\n\n{promo}\n\n{note}\n\n{count}";
                 
                 MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", statusText);
                 

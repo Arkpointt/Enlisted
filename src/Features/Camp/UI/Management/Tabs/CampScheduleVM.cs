@@ -4,7 +4,9 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Ranks;
 using Enlisted.Features.Schedule.Behaviors;
 using Enlisted.Features.Schedule.Models;
+using TaleWorlds.CampaignSystem;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp.UI.Management
 {
@@ -96,7 +98,7 @@ namespace Enlisted.Features.Camp.UI.Management
             TodaysScheduleText = "Schedule";
             AvailableActivitiesText = "Available Activities";
             NoItemSelectedText = "Select a time block to see details";
-            ApprovalText = "Lord's Approval";
+            ApprovalText = "Lord Relation";
             SetScheduleText = "Set Activity";
             RequestChangeText = "Request Change";
             
@@ -104,6 +106,46 @@ namespace Enlisted.Features.Camp.UI.Management
             RefreshPermissions();
             RefreshCycleInfo();
             RefreshActionButtonState();
+            RefreshLordRelation();
+        }
+
+        /// <summary>
+        /// Refresh the Lord Relation bar.
+        /// Shows the player's relation with the enlisted lord (-100 to +100).
+        /// </summary>
+        private void RefreshLordRelation()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || enlistment.CurrentLord == null)
+            {
+                ApprovalLikelihood = 50; // Neutral center
+                ApprovalLikelihoodText = "Unknown";
+                return;
+            }
+
+            var lord = enlistment.CurrentLord;
+            var relation = Hero.MainHero.GetRelation(lord);
+
+            // Normalize -100..+100 to 0..100 for slider
+            // -100 -> 0
+            // 0 -> 50
+            // +100 -> 100
+            ApprovalLikelihood = (relation + 100) / 2;
+
+            // Text display
+            string status = relation switch
+            {
+                >= 80 => "Devoted",
+                >= 50 => "Loyal",
+                >= 20 => "Friendly",
+                >= 5 => "Favorable",
+                >= -5 => "Neutral",
+                >= -20 => "Cold",
+                >= -50 => "Resentful",
+                _ => "Hostile"
+            };
+
+            ApprovalLikelihoodText = $"{relation} ({status})";
         }
         
         /// <summary>
@@ -298,69 +340,14 @@ namespace Enlisted.Features.Camp.UI.Management
                 IsBlockSelected = CurrentSelectedBlock != null;
                 IsActivitySelected = CurrentSelectedActivity != null;
                 
-                // Calculate real approval likelihood if player can request changes
-                if (CanRequestChange && CurrentSelectedActivity != null)
-                {
-                    var scheduleBehavior = ScheduleBehavior.Instance;
-                    if (scheduleBehavior != null)
-                    {
-                        // Use real approval calculation
-                        ApprovalLikelihood = scheduleBehavior.CalculateApprovalLikelihood(
-                            CurrentSelectedBlock.Block,
-                            CurrentSelectedActivity.Activity
-                        );
-                        ApprovalLikelihoodText = $"{ApprovalLikelihood}%";
-                    }
-                }
-                else if (CanSetWithGuidance)
-                {
-                    // For guided control, show AI recommendation strength
-                    ApprovalLikelihood = CalculateAiRecommendationStrength(block);
-                    ApprovalLikelihoodText = $"AI Confidence: {ApprovalLikelihood}%";
-                }
-                else
-                {
-                    // No approval system for other authority levels
-                    ApprovalLikelihood = 0;
-                    ApprovalLikelihoodText = "";
-                }
+                // Ensure relation is shown
+                RefreshLordRelation();
             }
             
             IsAcceptableItemSelected = CurrentSelectedBlock != null || CurrentSelectedActivity != null;
             RefreshActionButtonState();
         }
         
-        /// <summary>
-        /// Calculate AI recommendation strength for guided control (T5-T6 non-Leader).
-        /// Shows how confident the AI is in its recommendation.
-        /// </summary>
-        private int CalculateAiRecommendationStrength(ScheduleBlockItemVM block)
-        {
-            // For now, return a high confidence if activity matches needs
-            // In full implementation, this would analyze lance needs vs activity benefits
-            var scheduleBehavior = ScheduleBehavior.Instance;
-            if (scheduleBehavior == null) return 50;
-            
-            var lanceNeeds = scheduleBehavior.LanceNeeds;
-            if (lanceNeeds == null) return 50;
-            
-            // Simple heuristic: higher confidence if addressing critical needs
-            int confidence = 60;
-            
-            // Boost confidence if any need is critical (< 30)
-            if (lanceNeeds.Readiness < 30 || lanceNeeds.Morale < 30 || lanceNeeds.Rest < 30)
-            {
-                confidence += 20;
-            }
-            
-            // Reduce if all needs are good (> 70)
-            if (lanceNeeds.Readiness > 70 && lanceNeeds.Morale > 70 && lanceNeeds.Rest > 70)
-            {
-                confidence -= 10;
-            }
-            
-            return Math.Min(95, Math.Max(30, confidence));
-        }
         
         /// <summary>
         /// Handle activity selection for assignment.
@@ -389,19 +376,8 @@ namespace Enlisted.Features.Camp.UI.Management
                 IsBlockSelected = CurrentSelectedBlock != null;
                 IsActivitySelected = CurrentSelectedActivity != null;
                 
-                // Recalculate approval if we have a selected block
-                if (CurrentSelectedBlock != null && CanRequestChange)
-                {
-                    var scheduleBehavior = ScheduleBehavior.Instance;
-                    if (scheduleBehavior != null)
-                    {
-                        ApprovalLikelihood = scheduleBehavior.CalculateApprovalLikelihood(
-                            CurrentSelectedBlock.Block,
-                            CurrentSelectedActivity.Activity
-                        );
-                        ApprovalLikelihoodText = $"{ApprovalLikelihood}%";
-                    }
-                }
+                // Ensure relation is shown
+                RefreshLordRelation();
             }
             
             IsAcceptableItemSelected = CurrentSelectedBlock != null || CurrentSelectedActivity != null;
@@ -611,8 +587,8 @@ namespace Enlisted.Features.Camp.UI.Management
         /// </summary>
         private void UpdateSelectedDisplay(string title, string description, MBBindingList<EffectItemVM> effects)
         {
-            SelectedTitle = title ?? "Unknown";
-            SelectedDescription = description ?? "No description available.";
+            SelectedTitle = title ?? new TextObject("{=enl_schedule_unknown}Unknown").ToString();
+            SelectedDescription = description ?? new TextObject("{=enl_schedule_no_description}No description available.").ToString();
             
             SelectedEffects.Clear();
             if (effects != null)
@@ -631,15 +607,15 @@ namespace Enlisted.Features.Camp.UI.Management
         {
             if (activity?.Activity == null)
             {
-                SelectedTitle = "Unknown Activity";
-                SelectedDescription = "No description available.";
+                SelectedTitle = new TextObject("{=enl_schedule_unknown_activity}Unknown Activity").ToString();
+                SelectedDescription = new TextObject("{=enl_schedule_no_description}No description available.").ToString();
                 SelectedEffects.Clear();
                 return;
             }
             
             var def = activity.Activity;
-            SelectedTitle = def.Title ?? def.TitleKey ?? def.Id ?? "Activity";
-            SelectedDescription = def.Description ?? def.DescriptionKey ?? "This activity can be assigned during Free Time.";
+            SelectedTitle = def.Title ?? def.TitleKey ?? def.Id ?? new TextObject("{=enl_schedule_activity_default_title}Activity").ToString();
+            SelectedDescription = def.Description ?? def.DescriptionKey ?? new TextObject("{=enl_schedule_activity_default_desc}This activity can be assigned during Free Time.").ToString();
             
             // Build effects list from activity definition
             SelectedEffects.Clear();

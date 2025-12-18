@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using Enlisted.Features.Camp.UI.Bulletin;
+// Removed: CampBulletinIntegration no longer used - bulletin screen deleted
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Schedule.Config;
 using Enlisted.Features.Schedule.Core;
@@ -187,7 +187,24 @@ namespace Enlisted.Features.Schedule.Behaviors
 
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
-            // Initialize on first run
+            // Always load config and reinitialize runtime objects on session launch
+            // Config is not serialized, so we need to reload it after loading a save
+            if (_config == null)
+            {
+                _config = ScheduleConfigLoader.LoadConfig();
+                if (_config == null)
+                {
+                    ModLogger.Error(LogCategory, "Failed to load schedule configuration on session launch");
+                }
+            }
+            
+            // Create generator if needed (not serialized)
+            if (_generator == null && _config != null)
+            {
+                _generator = new ScheduleGenerator(_config);
+            }
+            
+            // Full initialization on first run
             if (!_isInitialized)
             {
                 Initialize();
@@ -276,7 +293,8 @@ namespace Enlisted.Features.Schedule.Behaviors
         /// </summary>
         private void OnHourlyTick()
         {
-            if (!_isInitialized || !_config.EnableSchedule)
+            // Guard against null config (can happen if hourly tick fires before session launch completes)
+            if (!_isInitialized || _config == null || !_config.EnableSchedule)
                 return;
 
             // Check if player is enlisted
@@ -395,8 +413,7 @@ namespace Enlisted.Features.Schedule.Behaviors
                     ModLogger.Warn(LogCategory, warning.Value);
                 }
                 
-                // Post critical needs to bulletin
-                CampBulletinIntegration.OnCriticalNeedsDetected(_lanceNeeds);
+                // Critical needs logged above - bulletin integration removed
             }
         }
 
@@ -454,8 +471,7 @@ namespace Enlisted.Features.Schedule.Behaviors
                 _currentSchedule = _generator.GenerateSchedule(lordParty, _currentCycleDay);
                 _lastScheduleGeneration = CampaignTime.Now;
 
-                // Phase 6: Notify bulletin of new schedule
-                CampBulletinIntegration.OnScheduleGenerated(_currentSchedule);
+                // Schedule generated - bulletin integration removed
 
                 // Advance cycle day
                 _currentCycleDay++;
@@ -534,8 +550,7 @@ namespace Enlisted.Features.Schedule.Behaviors
                 _performanceTracker.TotalFatigueAccumulated += Math.Max(0, block.FatigueCost);
             }
 
-            // Notify bulletin of block completion
-            CampBulletinIntegration.OnBlockComplete(block);
+            // Block completed - bulletin integration removed
 
             // Log final needs state
             ModLogger.Debug(LogCategory, $"Needs after completion - Readiness: {_lanceNeeds.Readiness}%, " +
@@ -957,8 +972,7 @@ namespace Enlisted.Features.Schedule.Behaviors
 
                 ModLogger.Info(LogCategory, $"Performance Review: Score={score}, Rating={rating}");
 
-                // Post performance feedback to bulletin board
-                CampBulletinIntegration.OnPerformanceReview(score, rating);
+                // Performance feedback - bulletin integration removed
 
                 // Show feedback message to player
                 string feedbackMessage = GetPerformanceFeedbackMessage(score, rating);

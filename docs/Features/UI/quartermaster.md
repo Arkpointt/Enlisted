@@ -61,7 +61,7 @@ When pay is late (PayTension 40+), the Quartermaster offers archetype-specific a
 - **Baggage Train**: Enlisted Status -> **Baggage Train**
 
 ## Enlistment Bag Check (first enlistment)
-About **12 in-game hours** after enlisting (when safe: not in battle/encounter/captivity), the quartermaster runs a bag check.
+About **1 in-game hour** after enlisting (when safe: not in battle/encounter/captivity), the quartermaster runs a bag check.
 
 **Options:**
 - **"Stow it all" (50g)**: moves inventory + equipped items into the baggage train stash and charges a **50 denar wagon fee** (clamped to what you can afford).

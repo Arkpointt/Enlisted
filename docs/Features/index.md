@@ -171,8 +171,15 @@ For adding or modifying story content:
 
 Track implementation progress:
 
-- **[implementation status](../ImplementationPlans/implementation-status.md)** - current state of all tracks
-- **[master roadmap](../ImplementationPlans/master-implementation-roadmap.md)** - full implementation roadmap
+- **[implementation status](../ImplementationPlans/implementation-status.md)** - current state (what's done)
+- **[implementation roadmap](../ImplementationPlans/implementation-roadmap.md)** - future work (what's NOT done)
+
+## Guides & Research
+
+For creating content and technical reference:
+
+- **[duty events creation guide](../research/duty-events-creation-guide.md)** - how to create duty events
+- **[gauntlet ui playbook](../research/gauntlet-ui-screens-playbook.md)** - how to build UI safely
 
 ## Spec Structure
 

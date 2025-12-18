@@ -6,6 +6,7 @@ using Enlisted.Features.Lances.Personas;
 using Enlisted.Features.Ranks;
 using TaleWorlds.Core.ViewModelCollection.ImageIdentifiers;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp.UI.Management.Tabs
 {
@@ -35,11 +36,11 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         {
             base.RefreshValues();
             BannerText = TaleWorlds.Core.GameTexts.FindText("str_banner").ToString();
-            TypeText = "Type";
+            TypeText = new TextObject("{=enl_camp_lance_type}Type").ToString();
             NameText = TaleWorlds.Core.GameTexts.FindText("str_scoreboard_header", "name").ToString();
             MembersText = TaleWorlds.Core.GameTexts.FindText("str_members").ToString();
-            FallenText = "Fallen";
-            MembersHeaderText = "Lance Members";
+            FallenText = new TextObject("{=enl_camp_lance_fallen}Fallen").ToString();
+            MembersHeaderText = new TextObject("{=enl_camp_lance_members_header}Lance Members").ToString();
             
             RefreshLanceList();
         }
@@ -58,7 +59,7 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             {
                 // Not enlisted - show placeholder with empty banner
                 var placeholderBanner = new BannerImageIdentifierVM(new TaleWorlds.Core.Banner());
-                var placeholder = new LanceItemVM("none", "Not Enlisted", 0, 0, 0, placeholderBanner, OnLanceSelect);
+                var placeholder = new LanceItemVM("none", new TextObject("{=enl_camp_not_enlisted}Not Enlisted").ToString(), 0, 0, 0, placeholderBanner, OnLanceSelect);
                 Lances.Add(placeholder);
                 return;
             }

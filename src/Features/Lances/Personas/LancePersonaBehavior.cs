@@ -684,7 +684,7 @@ namespace Enlisted.Features.Lances.Personas
             // Generate unique first name within this lance
             // Try up to 50 times to find a unique name before giving up
             var namePool = isFemale ? pool?.FemaleFirst : pool?.MaleFirst;
-            string first = "Soldier";
+            string first = new TextObject("{=enl_persona_default_first_name}Soldier").ToString();
             bool foundUniqueName = false;
             
             if (namePool != null && namePool.Count > 0)

@@ -44,7 +44,7 @@ The lance is a living, breathing unit. Events and decisions reflect this:
 | Source | Player-Initiated | Pushed Events |
 |--------|------------------|---------------|
 | **The Lord** | Request audience, petition for favor | Lord invites you to hunt, rewards your service |
-| **Lance Leader** | Report for duty, request transfer | Sends you on assignment, offers advice |
+| **Lance Leader** | Request duty transfer, seek advice | Approves/denies transfer, offers guidance |
 | **Lance Mates** | Offer to train together, share rations | Ask for loan, invite to dice game, need cover |
 | **Self** | Practice skills, maintain equipment | Get sick, have nightmare, receive letter |
 | **Situation** | — | Equipment breaks, opportunity arises |
@@ -2041,7 +2041,7 @@ enlisted_status (existing menu)
 ├── Master at Arms
 ├── Visit Quartermaster
 ├── My Lord...
-├── Report for Duty
+├── Report for Duty (opens Camp Management → Duties)
 ├── Pending Decisions (3)  ← NEW
 │   ├── Request Training Leave     [Ready]
 │   ├── Organize Dice Game         [3 days cooldown]

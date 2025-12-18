@@ -62,6 +62,7 @@ Enlisted turns Bannerlord into a “soldier career” loop:
 - **Progression**: `ModuleData/Enlisted/progression_config.json`
 - **Duties**: `ModuleData/Enlisted/duties_system.json`
 - **Schedule**: `ModuleData/Enlisted/schedule_config.json`
+- **Schedule popup events (Continue-only)**: `ModuleData/Enlisted/schedule_popup_events.json`
 - **Activities**: `ModuleData/Enlisted/Activities/activities.json`
 - **Events catalog**: `ModuleData/Enlisted/Events/*.json`
 - **Decision events**: `ModuleData/Enlisted/Events/events_decisions.json`, `events_player_decisions.json`

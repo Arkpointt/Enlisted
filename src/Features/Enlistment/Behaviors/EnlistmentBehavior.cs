@@ -1317,6 +1317,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_baggageStash", ref _baggageStash);
             SyncKey(dataStore, "_bagCheckCompleted", ref _bagCheckCompleted);
             SyncKey(dataStore, "_bagCheckEverCompleted", ref _bagCheckEverCompleted);
+            SyncKey(dataStore, "_bagCheckScheduled", ref _bagCheckScheduled);
+            SyncKey(dataStore, "_bagCheckDueTime", ref _bagCheckDueTime);
+            SyncKey(dataStore, "_pendingBagCheckLord", ref _pendingBagCheckLord);
             SyncKey(dataStore, "_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
             SyncKey(dataStore, "_enlistmentDate", ref _enlistmentDate);
             
@@ -1805,41 +1808,193 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ShowBagCheckInquiry(_pendingBagCheckLord);
         }
 
-        public void HandleBagCheckChoice(string choice)
+        /// <summary>
+        /// Bag-check processing when the player's personal belongings have already been backed up by <see cref="EquipmentManager"/>.
+        /// This is the normal flow: equipment backup happens during enlistment, then the bag-check prompt
+        /// decides what happens to the *stored* personal inventory (stash/sell/smuggle) without touching military-issued kit.
+        ///
+        /// IMPORTANT: This only processes the backed-up personal INVENTORY (party item roster).
+        /// Personal equipped sets (battle/civilian) are still restored on discharge via <see cref="EquipmentManager"/>.
+        /// </summary>
+        private bool TryHandleBagCheckUsingBackedUpPersonalInventory(Hero hero, string choice)
         {
-            // CRITICAL: Skip bag check if equipment was already backed up by EquipmentManager
-            // This happens when equipment backup runs BEFORE bag check fires (normal flow)
-            // In this case, the "personal equipment" has already been secured by EquipmentManager,
-            // and the player now has military-issued gear that should NOT be touched by bag check
             var equipmentManager = EquipmentManager.Instance;
-            if (equipmentManager?.HasBackedUpEquipment == true)
+            if (equipmentManager?.HasBackedUpEquipment != true)
             {
-                ModLogger.Info("Enlistment", "Skipping bag check - equipment already secured by EquipmentManager before military gear was issued");
-                _bagCheckCompleted = true;
-                _bagCheckEverCompleted = true;
-                _pendingBagCheckLord = null;
-                _bagCheckScheduled = false;
-                _bagCheckDueTime = CampaignTime.Zero;
-                _bagCheckInProgress = false;
-                return;
+                return false;
             }
-            
+
+            // Snapshot what was removed from the player's inventory at enlistment time.
+            var backedUpInventory = equipmentManager.GetBackedUpPersonalInventorySnapshot();
+
+            // If there's nothing to process, treat it as handled (and clear the snapshot store to avoid restoring "ghost" items later).
+            if (backedUpInventory == null || backedUpInventory.Count == 0)
+            {
+                equipmentManager.ClearBackedUpPersonalInventory();
+                ModLogger.Info("Enlistment", "Bag check: no backed-up personal inventory found to process.");
+                return true;
+            }
+
             EnsureBaggageStash();
+
+            // Local helper: add an item roster into baggage stash.
+            void AddRosterToBaggage(ItemRoster roster)
+            {
+                foreach (var element in roster)
+                {
+                    if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    // Quest items are excluded from the backup inventory, but keep this guard anyway for safety.
+                    if (element.EquipmentElement.IsQuestItem)
+                    {
+                        continue;
+                    }
+
+                    _baggageStash.AddToCounts(element.EquipmentElement, element.Amount);
+                }
+            }
+
+            // Local helper: charge a wagon fee using party gold.
+            void TryChargeWagonFee(int feeAmount)
+            {
+                if (feeAmount <= 0)
+                {
+                    return;
+                }
+
+                var partyGold = Hero.MainHero?.PartyBelongedTo?.PartyTradeGold ?? 0;
+                var fee = Math.Min(feeAmount, partyGold);
+                if (fee <= 0)
+                {
+                    ModLogger.Info("Gold", "No gold available for wagon fee - proceeding without charge.");
+                    return;
+                }
+
+                GiveGoldAction.ApplyBetweenCharacters(hero, null, fee);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
+                        .SetTextVariable("FEE", fee).ToString()));
+            }
+
+            // Execute choice using backed-up inventory.
             switch (choice)
             {
                 case "stash":
-                    StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                {
+                    AddRosterToBaggage(backedUpInventory);
+                    TryChargeWagonFee(50);
                     break;
+                }
                 case "sell":
-                    LiquidateAllBelongings(Hero.MainHero, 0.60f);
+                {
+                    var totalValue = 0f;
+                    foreach (var element in backedUpInventory)
+                    {
+                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                        {
+                            continue;
+                        }
+
+                        if (element.EquipmentElement.IsQuestItem)
+                        {
+                            continue;
+                        }
+
+                        totalValue += element.EquipmentElement.Item.Value * element.Amount * 0.60f;
+                    }
+
+                    var gain = (int)Math.Floor(totalValue);
+                    if (gain > 0)
+                    {
+                        GiveGoldAction.ApplyBetweenCharacters(null, hero, gain);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
+                                .SetTextVariable("GOLD", gain).ToString()));
+                    }
+
                     break;
+                }
                 case "smuggle":
-                    SmuggleOneItem(Hero.MainHero);
+                {
+                    var best = backedUpInventory
+                        .Where(e => e.EquipmentElement.Item != null && e.Amount > 0 && !e.EquipmentElement.IsQuestItem)
+                        .OrderByDescending(e => e.EquipmentElement.Item.Value)
+                        .FirstOrDefault();
+
+                    // Default: if nothing meaningful, just stash.
+                    if (best.EquipmentElement.Item == null)
+                    {
+                        AddRosterToBaggage(backedUpInventory);
+                        break;
+                    }
+
+                    // Stash everything first, then decide what happens to the one item the player tried to keep.
+                    AddRosterToBaggage(backedUpInventory);
+
+                    var roguery = hero.GetSkillValue(DefaultSkills.Roguery);
+                    var success = roguery >= 30;
+
+                    if (success)
+                    {
+                        // Move 1 copy back into the player's inventory.
+                        _baggageStash.AddToCounts(best.EquipmentElement, -1);
+                        MobileParty.MainParty?.ItemRoster.AddToCounts(best.EquipmentElement, 1);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=qm_smuggle_success}You tuck away your {ITEM} without being caught.")
+                                .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString()));
+                    }
+                    else
+                    {
+                        // Confiscated: remove 1 copy from the wagon stash.
+                        _baggageStash.AddToCounts(best.EquipmentElement, -1);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=qm_smuggle_fail}Caught smuggling. Your {ITEM} is confiscated.")
+                                .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString(),
+                            Colors.Red));
+                    }
+
                     break;
+                }
                 default:
-                    // Default to stow to avoid enlistment without cleanup
-                    StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                    AddRosterToBaggage(backedUpInventory);
+                    TryChargeWagonFee(50);
                     break;
+            }
+
+            // The backed up inventory has now been handled (moved to baggage/sold/confiscated).
+            // Clear it so discharge restoration doesn't duplicate items.
+            equipmentManager.ClearBackedUpPersonalInventory();
+            return true;
+        }
+
+        public void HandleBagCheckChoice(string choice)
+        {
+            // Preferred flow: operate on the backed-up personal inventory so we never touch military-issued kit.
+            // Fallback: if no backup exists (unexpected), operate on the live roster/equipment.
+            var handledViaBackup = TryHandleBagCheckUsingBackedUpPersonalInventory(Hero.MainHero, choice);
+
+            if (!handledViaBackup)
+            {
+                EnsureBaggageStash();
+                switch (choice)
+                {
+                    case "stash":
+                        StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                        break;
+                    case "sell":
+                        LiquidateAllBelongings(Hero.MainHero, 0.60f);
+                        break;
+                    case "smuggle":
+                        SmuggleOneItem(Hero.MainHero);
+                        break;
+                    default:
+                        // Default to stow to avoid enlistment without cleanup
+                        StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                        break;
+                }
             }
 
             _bagCheckCompleted = true;
@@ -1862,29 +2017,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Processes a deferred enlistment bag check after a cooldown so enlistment flow is never blocked.
         /// </summary>
-        private void ProcessDeferredBagCheck()
+        private void ProcessDeferredBagCheck(bool force = false)
         {
             if (!_bagCheckScheduled || _bagCheckCompleted || _bagCheckInProgress)
             {
                 return;
             }
 
-            if (CampaignTime.Now < _bagCheckDueTime)
+            if (!force && CampaignTime.Now < _bagCheckDueTime)
             {
-                return;
-            }
-
-            // CRITICAL: Skip bag check if equipment was already backed up by EquipmentManager
-            // This prevents the bag check from clearing military-issued equipment
-            var equipmentManager = EquipmentManager.Instance;
-            if (equipmentManager?.HasBackedUpEquipment == true)
-            {
-                ModLogger.Info("Enlistment", "Skipping bag check - equipment already secured by EquipmentManager before military gear was issued");
-                _bagCheckCompleted = true;
-                _bagCheckEverCompleted = true;
-                _bagCheckScheduled = false;
-                _bagCheckDueTime = CampaignTime.Zero;
-                _pendingBagCheckLord = null;
                 return;
             }
 
@@ -1927,6 +2068,45 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void EnsureBaggageStash()
         {
             _baggageStash ??= new ItemRoster();
+        }
+
+        /// <summary>
+        /// Return any items left in the baggage train stash to the player's party inventory.
+        /// This prevents "stored belongings" from becoming inaccessible after discharge.
+        /// </summary>
+        private void ReturnBaggageStashToPlayerInventory()
+        {
+            try
+            {
+                if (_baggageStash == null || _baggageStash.Count == 0)
+                {
+                    return;
+                }
+
+                var partyRoster = MobileParty.MainParty?.ItemRoster;
+                if (partyRoster == null)
+                {
+                    return;
+                }
+
+                var elements = _baggageStash.ToList();
+                foreach (var element in elements)
+                {
+                    if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    partyRoster.AddToCounts(element.EquipmentElement, element.Amount);
+                    _baggageStash.AddToCounts(element.EquipmentElement, -element.Amount);
+                }
+
+                ModLogger.Info("Enlistment", $"Returned baggage train stash to player inventory ({elements.Count} stacks).");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-015", "Error returning baggage train stash to inventory", ex);
+            }
         }
 
         private void StashAllBelongings(Hero hero, int chargeFee)
@@ -2446,6 +2626,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.ErrorCode("LanceLeaders", "E-LANCELEAD-001",
                         "Failed to notify persistent lance leader system on enlist", ex);
                 }
+
+                // Trigger the deferred bag-check as soon as enlistment finishes (best-effort).
+                // The bag-check uses backed-up personal inventory, so this is safe even after military gear issuance.
+                // If the player is in a vulnerable state (battle/encounter/prisoner), this will simply no-op
+                // and the hourly tick will retry later.
+                try
+                {
+                    ProcessDeferredBagCheck(force: true);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.ErrorCode("Enlistment", "E-ENLIST-014", "Error triggering post-enlist bag check", ex);
+                }
             }
             catch (Exception ex)
             {
@@ -2909,6 +3102,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
                 }
+
+                // Return any stowed belongings from the baggage train stash so they are not stranded behind the camp UI.
+                ReturnBaggageStashToPlayerInventory();
 
                 // Restore player's ships to normal vulnerability after full discharge
                 // During grace period, ships remain protected in case player re-enlists

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
-using Enlisted.Features.Camp.UI.Bulletin;
+// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Camp.UI.Management;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -272,7 +272,8 @@ namespace Enlisted.Features.Camp
                 },
                 _ => 
                 {
-                    CampBulletinScreen.Open();
+                    // Camp Activities moved to Camp Management - open Reports tab (tab 3)
+                    Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(3);
                 },
                 false,
                 3);
@@ -850,7 +851,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-002", "Error initializing Current Posting", ex);
-                MBTextManager.SetTextVariable("CURRENT_POSTING_TEXT", "Error loading current posting data.");
+                MBTextManager.SetTextVariable("CURRENT_POSTING_TEXT",
+                    new TextObject("{=enl_camp_error_current_posting}Error loading current posting data.").ToString());
             }
         }
 
@@ -866,7 +868,7 @@ namespace Enlisted.Features.Camp
 
             if (enlistment?.IsEnlisted != true)
             {
-                return "You are not currently enlisted.";
+                return new TextObject("{=enl_posting_not_enlisted}You are not currently enlisted.").ToString();
             }
 
             var lord = enlistment.CurrentLord;
@@ -874,8 +876,8 @@ namespace Enlisted.Features.Camp
             var tier = enlistment.EnlistmentTier;
             var daysServed = (int)enlistment.DaysServed;
             var daysRemaining = GetDaysRemaining(enlistment);
-            var factionName = faction?.Name?.ToString() ?? "Unknown";
-            var lordName = lord?.Name?.ToString() ?? "Unknown";
+            var factionName = faction?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
+            var lordName = lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
             var rankName = GetRankName(tier);
             var termBattles = recordManager?.CurrentTermBattles ?? 0;
             var termKills = recordManager?.CurrentTermKills ?? 0;
@@ -888,38 +890,75 @@ namespace Enlisted.Features.Camp
             var pensionStatus = GetPensionStatus(enlistment);
 
             sb.AppendLine();
-            sb.AppendLine("— Current Service Record —");
+            sb.AppendLine(new TextObject("{=enl_posting_header_record}— Current Service Record —").ToString());
             sb.AppendLine();
-            sb.AppendLine($"Posting: Army of {factionName}");
-            sb.AppendLine($"Commander: {lordName}");
-            sb.AppendLine($"Rank: {rankName} (Tier {tier})");
+
+            var postingLine = new TextObject("{=enl_posting_line_posting}Posting: Army of {FACTION}");
+            postingLine.SetTextVariable("FACTION", factionName);
+            sb.AppendLine(postingLine.ToString());
+
+            var commanderLine = new TextObject("{=enl_posting_line_commander}Commander: {LORD}");
+            commanderLine.SetTextVariable("LORD", lordName);
+            sb.AppendLine(commanderLine.ToString());
+
+            var rankLine = new TextObject("{=enl_posting_line_rank}Rank: {RANK} (Tier {TIER})");
+            rankLine.SetTextVariable("RANK", rankName ?? string.Empty);
+            rankLine.SetTextVariable("TIER", tier);
+            sb.AppendLine(rankLine.ToString());
             sb.AppendLine();
-            sb.AppendLine($"Days Served: {daysServed}");
-            sb.AppendLine($"Contract: {daysRemaining}");
+
+            var daysLine = new TextObject("{=enl_posting_line_days_served}Days Served: {DAYS}");
+            daysLine.SetTextVariable("DAYS", daysServed);
+            sb.AppendLine(daysLine.ToString());
+
+            var contractLine = new TextObject("{=enl_posting_line_contract}Contract: {CONTRACT}");
+            contractLine.SetTextVariable("CONTRACT", daysRemaining ?? string.Empty);
+            sb.AppendLine(contractLine.ToString());
             sb.AppendLine();
-            sb.AppendLine("— Pay Muster —");
+            sb.AppendLine(new TextObject("{=enl_posting_header_pay}— Pay Muster —").ToString());
             sb.AppendLine();
-            sb.AppendLine($"Pending Muster Pay: {pendingPay} denars");
-            sb.AppendLine($"Next Payday: in {daysToPay:F1} days");
-            sb.AppendLine($"Last Outcome: {lastPay}");
+
+            var pendingLine = new TextObject("{=enl_posting_line_pending_pay}Pending Muster Pay: {PAY} denars");
+            pendingLine.SetTextVariable("PAY", pendingPay);
+            sb.AppendLine(pendingLine.ToString());
+
+            var nextPayLine = new TextObject("{=enl_posting_line_next_payday}Next Payday: in {DAYS} days");
+            nextPayLine.SetTextVariable("DAYS", $"{daysToPay:F1}");
+            sb.AppendLine(nextPayLine.ToString());
+
+            var lastOutcomeLine = new TextObject("{=enl_posting_line_last_outcome}Last Outcome: {OUTCOME}");
+            lastOutcomeLine.SetTextVariable("OUTCOME", lastPay ?? string.Empty);
+            sb.AppendLine(lastOutcomeLine.ToString());
             if (musterQueued)
             {
-                sb.AppendLine("Status: Muster queued");
+                sb.AppendLine(new TextObject("{=enl_posting_status_muster_queued}Status: Muster queued").ToString());
             }
             if (enlistment.IsPendingDischarge)
             {
-                sb.AppendLine("Status: Discharge pending (will resolve at next pay muster)");
+                sb.AppendLine(new TextObject("{=enl_posting_status_discharge_pending}Status: Discharge pending (will resolve at next pay muster)").ToString());
             }
             sb.AppendLine();
-            sb.AppendLine("— Pension —");
+            sb.AppendLine(new TextObject("{=enl_posting_header_pension}— Pension —").ToString());
             sb.AppendLine();
-            sb.AppendLine($"Daily Pension: {pensionDaily} denars");
-            sb.AppendLine($"Status: {pensionStatus}");
+
+            var pensionLine = new TextObject("{=enl_posting_line_pension_daily}Daily Pension: {PAY} denars");
+            pensionLine.SetTextVariable("PAY", pensionDaily);
+            sb.AppendLine(pensionLine.ToString());
+
+            var pensionStatusLine = new TextObject("{=enl_posting_line_status}Status: {STATUS}");
+            pensionStatusLine.SetTextVariable("STATUS", pensionStatus ?? string.Empty);
+            sb.AppendLine(pensionStatusLine.ToString());
             sb.AppendLine();
-            sb.AppendLine("— This Term —");
+            sb.AppendLine(new TextObject("{=enl_posting_header_term}— This Term —").ToString());
             sb.AppendLine();
-            sb.AppendLine($"Battles Fought: {termBattles}");
-            sb.AppendLine($"Enemies Slain: {termKills}");
+
+            var battlesLine = new TextObject("{=enl_posting_line_battles}Battles Fought: {COUNT}");
+            battlesLine.SetTextVariable("COUNT", termBattles);
+            sb.AppendLine(battlesLine.ToString());
+
+            var killsLine = new TextObject("{=enl_posting_line_kills}Enemies Slain: {COUNT}");
+            killsLine.SetTextVariable("COUNT", termKills);
+            sb.AppendLine(killsLine.ToString());
 
             return sb.ToString();
         }
@@ -933,15 +972,15 @@ namespace Enlisted.Features.Camp
         {
             if (enlistment == null)
             {
-                return "Unknown";
+                return new TextObject("{=enl_posting_pension_unknown}Unknown").ToString();
             }
 
             if (enlistment.IsPensionPaused)
             {
-                return "Paused";
+                return new TextObject("{=enl_posting_pension_paused}Paused").ToString();
             }
 
-            return "Active";
+            return new TextObject("{=enl_posting_pension_active}Active").ToString();
         }
 
         /// <summary>
@@ -959,15 +998,17 @@ namespace Enlisted.Features.Camp
 
                 if (remainingDays <= 0)
                 {
-                    return "Term complete";
+                    return new TextObject("{=enl_term_complete}Term complete").ToString();
                 }
 
-                return $"{remainingDays} days";
+                var t = new TextObject("{=enl_days_count}{DAYS} days");
+                t.SetTextVariable("DAYS", remainingDays);
+                return t.ToString();
             }
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-003", "Error calculating days remaining", ex);
-                return "Unknown";
+                return new TextObject("{=enl_unknown}Unknown").ToString();
             }
         }
 
@@ -1020,7 +1061,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-004", "Error initializing Faction Records", ex);
-                MBTextManager.SetTextVariable("FACTION_RECORDS_TEXT", "Error loading faction records.");
+                MBTextManager.SetTextVariable("FACTION_RECORDS_TEXT",
+                    new TextObject("{=enl_camp_error_faction_records}Error loading faction records.").ToString());
             }
         }
 
@@ -1066,12 +1108,12 @@ namespace Enlisted.Features.Camp
         {
             return factionType switch
             {
-                "kingdom" => "Kingdom",
-                "minor" => "Minor Faction",
-                "merc" => "Mercenary Company",
-                "clan" => "Noble Clan",
-                "bandit" => "Bandit Clan",
-                _ => "Unknown"
+                "kingdom" => new TextObject("{=enl_faction_type_kingdom}Kingdom").ToString(),
+                "minor" => new TextObject("{=enl_faction_type_minor}Minor Faction").ToString(),
+                "merc" => new TextObject("{=enl_faction_type_merc}Mercenary Company").ToString(),
+                "clan" => new TextObject("{=enl_faction_type_clan}Noble Clan").ToString(),
+                "bandit" => new TextObject("{=enl_faction_bandit_clan}Bandit Clan").ToString(),
+                _ => new TextObject("{=enl_unknown}Unknown").ToString()
             };
         }
 
@@ -1122,7 +1164,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-005", "Error initializing Faction Detail", ex);
-                MBTextManager.SetTextVariable("FACTION_DETAIL_TEXT", "Error loading faction detail.");
+                MBTextManager.SetTextVariable("FACTION_DETAIL_TEXT",
+                    new TextObject("{=enl_camp_error_faction_detail}Error loading faction detail.").ToString());
             }
         }
 
@@ -1217,7 +1260,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-006", "Error initializing Lifetime Summary", ex);
-                MBTextManager.SetTextVariable("LIFETIME_SUMMARY_TEXT", "Error loading lifetime summary.");
+                MBTextManager.SetTextVariable("LIFETIME_SUMMARY_TEXT",
+                    new TextObject("{=enl_camp_error_lifetime_summary}Error loading lifetime summary.").ToString());
             }
         }
 
@@ -1483,7 +1527,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-007", "Error initializing Retinue menu", ex);
-                MBTextManager.SetTextVariable("RETINUE_STATUS_TEXT", "Error loading retinue status.");
+                MBTextManager.SetTextVariable("RETINUE_STATUS_TEXT",
+                    new TextObject("{=enl_retinue_error_loading_status}Error loading retinue status.").ToString());
             }
         }
 
@@ -1496,7 +1541,8 @@ namespace Enlisted.Features.Camp
             var manager = RetinueManager.Instance;
             if (manager == null)
             {
-                MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT", "Requisition Men");
+                MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT",
+                    new TextObject("{=enl_retinue_option_requisition}Requisition Men").ToString());
                 return;
             }
 
@@ -1507,16 +1553,22 @@ namespace Enlisted.Features.Camp
             string optionText;
             if (cooldownDays > 0)
             {
-                optionText = $"Requisition Men ({cooldownDays}d cooldown)";
+                var t = new TextObject("{=enl_retinue_option_requisition_cooldown}Requisition Men ({DAYS}d cooldown)");
+                t.SetTextVariable("DAYS", cooldownDays);
+                optionText = t.ToString();
             }
             else if (missing <= 0)
             {
-                optionText = "Requisition Men (at capacity)";
+                optionText = new TextObject("{=enl_retinue_option_requisition_at_capacity}Requisition Men (at capacity)").ToString();
             }
             else
             {
                 // Use inline gold icon for cost display
-                optionText = $"Requisition Men ({cost}{{GOLD_ICON}})";
+                var t = new TextObject("{=enl_retinue_option_requisition_cost}Requisition Men ({COST}{GOLD_ICON})");
+                t.SetTextVariable("COST", cost);
+                // GOLD_ICON is expected as an inline icon token in menu text.
+                t.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
+                optionText = t.ToString();
             }
 
             MBTextManager.SetTextVariable("REQUISITION_OPTION_TEXT", optionText);
@@ -1534,7 +1586,7 @@ namespace Enlisted.Features.Camp
 
             if (enlistment?.IsEnlisted != true)
             {
-                return "You are not currently enlisted.";
+                return new TextObject("{=enl_retinue_not_enlisted}You are not currently enlisted.").ToString();
             }
 
             var tier = enlistment.EnlistmentTier;
@@ -1549,38 +1601,65 @@ namespace Enlisted.Features.Camp
             var currentMembers = PartyBase.MainParty?.NumberOfAllMembers ?? 0;
 
             sb.AppendLine();
-            sb.AppendLine("— Personal Retinue —");
+            sb.AppendLine(new TextObject("{=enl_retinue_header_personal}— Personal Retinue —").ToString());
             sb.AppendLine();
-            sb.AppendLine($"Rank: {rankName} (Tier {tier})");
-            sb.AppendLine($"Command Limit: {unitName}");
+
+            var rankLine = new TextObject("{=enl_retinue_line_rank}Rank: {RANK_NAME} (Tier {TIER})");
+            rankLine.SetTextVariable("RANK_NAME", rankName ?? string.Empty);
+            rankLine.SetTextVariable("TIER", tier);
+            sb.AppendLine(rankLine.ToString());
+
+            var limitLine = new TextObject("{=enl_retinue_line_command_limit}Command Limit: {UNIT_NAME}");
+            limitLine.SetTextVariable("UNIT_NAME", unitName ?? string.Empty);
+            sb.AppendLine(limitLine.ToString());
             sb.AppendLine();
-            sb.AppendLine("— Current Muster —");
+            sb.AppendLine(new TextObject("{=enl_retinue_header_current_muster}— Current Muster —").ToString());
             sb.AppendLine();
 
             if (string.IsNullOrEmpty(selectedType))
             {
-                sb.AppendLine("No soldiers mustered.");
-                sb.AppendLine("Select a soldier type to begin.");
+                sb.AppendLine(new TextObject("{=enl_retinue_none_mustered}No soldiers mustered.").ToString());
+                sb.AppendLine(new TextObject("{=enl_retinue_select_type_prompt}Select a soldier type to begin.").ToString());
             }
             else
             {
                 var typeName = GetSoldierTypeName(selectedType, enlistment.CurrentLord?.Culture);
-                sb.AppendLine($"Type: {typeName}");
-                sb.AppendLine($"Soldiers: {currentSoldiers} / {tierCapacity}");
-                sb.AppendLine($"Daily Upkeep: {dailyUpkeep}{{GOLD_ICON}}");
+
+                var typeLine = new TextObject("{=enl_retinue_line_type}Type: {TYPE_NAME}");
+                typeLine.SetTextVariable("TYPE_NAME", typeName ?? string.Empty);
+                sb.AppendLine(typeLine.ToString());
+
+                var soldiersLine = new TextObject("{=enl_retinue_line_soldiers}Soldiers: {CUR} / {MAX}");
+                soldiersLine.SetTextVariable("CUR", currentSoldiers);
+                soldiersLine.SetTextVariable("MAX", tierCapacity);
+                sb.AppendLine(soldiersLine.ToString());
+
+                var upkeepLine = new TextObject("{=enl_retinue_line_upkeep}Daily Upkeep: {UPKEEP}{GOLD_ICON}");
+                upkeepLine.SetTextVariable("UPKEEP", dailyUpkeep);
+                upkeepLine.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
+                sb.AppendLine(upkeepLine.ToString());
             }
 
             sb.AppendLine();
-            sb.AppendLine("— Party Capacity —");
+            sb.AppendLine(new TextObject("{=enl_retinue_header_party_capacity}— Party Capacity —").ToString());
             sb.AppendLine();
-            sb.AppendLine($"Party Limit: {partyLimit}");
-            sb.AppendLine($"Current Members: {currentMembers}");
-            sb.AppendLine($"Available Space: {partySpace}");
+
+            var partyLimitLine = new TextObject("{=enl_retinue_line_party_limit}Party Limit: {LIMIT}");
+            partyLimitLine.SetTextVariable("LIMIT", partyLimit);
+            sb.AppendLine(partyLimitLine.ToString());
+
+            var partyMembersLine = new TextObject("{=enl_retinue_line_party_members}Current Members: {COUNT}");
+            partyMembersLine.SetTextVariable("COUNT", currentMembers);
+            sb.AppendLine(partyMembersLine.ToString());
+
+            var partySpaceLine = new TextObject("{=enl_retinue_line_party_space}Available Space: {SPACE}");
+            partySpaceLine.SetTextVariable("SPACE", partySpace);
+            sb.AppendLine(partySpaceLine.ToString());
 
             if (partySpace < tierCapacity - currentSoldiers)
             {
                 sb.AppendLine();
-                sb.AppendLine("Party size limits your retinue.");
+                sb.AppendLine(new TextObject("{=enl_retinue_party_limits_retinue}Party size limits your retinue.").ToString());
             }
 
             return sb.ToString();
@@ -1696,7 +1775,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-008", "Error initializing purchase menu", ex);
-                MBTextManager.SetTextVariable("RETINUE_PURCHASE_TEXT", "Error loading purchase options.");
+                MBTextManager.SetTextVariable("RETINUE_PURCHASE_TEXT",
+                    new TextObject("{=enl_camp_error_retinue_purchase}Error loading purchase options.").ToString());
             }
         }
 
@@ -2079,7 +2159,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-010", "Error initializing dismiss menu", ex);
-                MBTextManager.SetTextVariable("RETINUE_DISMISS_TEXT", "Error loading dismiss options.");
+                MBTextManager.SetTextVariable("RETINUE_DISMISS_TEXT",
+                    new TextObject("{=enl_camp_error_retinue_dismiss}Error loading dismiss options.").ToString());
             }
         }
 
@@ -2251,16 +2332,21 @@ namespace Enlisted.Features.Camp
                 MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT", sb.ToString());
 
                 // Set confirm button text with gold icon
-                var confirmText = $"Requisition {missing} soldiers ({cost}{{GOLD_ICON}})";
-                MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", confirmText);
+                var confirmText = new TextObject("{=enl_camp_retinue_requisition_confirm_full}Requisition {COUNT} soldiers ({COST}{GOLD_ICON})");
+                confirmText.SetTextVariable("COUNT", missing);
+                confirmText.SetTextVariable("COST", cost);
+                confirmText.SetTextVariable("GOLD_ICON", "{GOLD_ICON}");
+                MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", confirmText.ToString());
 
                 ModLogger.Debug(LogCategory, "Requisition menu initialized");
             }
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-011", "Error initializing requisition menu", ex);
-                MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT", "Error loading requisition details.");
-                MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT", "Requisition");
+                MBTextManager.SetTextVariable("REQUISITION_MENU_TEXT",
+                    new TextObject("{=enl_camp_error_retinue_requisition}Error loading requisition details.").ToString());
+                MBTextManager.SetTextVariable("REQUISITION_CONFIRM_TEXT",
+                    new TextObject("{=enl_camp_retinue_requisition_confirm}Requisition").ToString());
             }
         }
 
@@ -2412,7 +2498,9 @@ namespace Enlisted.Features.Camp
                     {
                         var companion = _cachedCompanions[i];
                         var shouldFight = manager.ShouldCompanionFight(companion);
-                        var statusText = shouldFight ? "[Fight]" : "[Stay Back]";
+                        var statusText = shouldFight
+                            ? new TextObject("{=enl_camp_status_fight}[Fight]").ToString()
+                            : new TextObject("{=enl_camp_status_stay_back}[Stay Back]").ToString();
                         MBTextManager.SetTextVariable($"COMPANION_{i}_TEXT", $"{companion.Name} {statusText}");
                     }
                     else
@@ -2426,7 +2514,8 @@ namespace Enlisted.Features.Camp
             catch (Exception ex)
             {
                 ModLogger.ErrorCode(LogCategory, "E-CAMP-013", "Error initializing companion assignments", ex);
-                MBTextManager.SetTextVariable("COMPANION_ASSIGNMENTS_TEXT", "Error loading companion data.");
+                MBTextManager.SetTextVariable("COMPANION_ASSIGNMENTS_TEXT",
+                    new TextObject("{=enl_camp_error_companion_assignments}Error loading companion data.").ToString());
             }
         }
 

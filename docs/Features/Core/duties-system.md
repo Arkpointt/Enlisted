@@ -51,13 +51,40 @@ Add variety and specialization to military service. Different duties provide dif
 - Approved requests show: "{LANCE_LEADER_SHORT} approves your transfer to {DUTY}."
 - Denied requests show the specific blocking reason
 
-**Duty Menu Display:**
-- All duties are shown in the menu regardless of formation
-- `[Request Transfer]` - Available duties that can be requested
-- `[Cooldown: Xd]` - Duty on cooldown, shows days remaining
-- `[Requires {Rank}]` - Duty locked by tier, shows culture-specific rank name
-- `[{formations} only]` - Greyed out, duty requires different formation (shows required formations)
-- `(Current)` - Currently active duty
+**Duty Selection UI (Camp Management → Duties tab):**
+
+The Duties tab uses a **Kingdom/Policies style pattern** with select-then-confirm:
+- Left panel: List of all duties as selectable items
+- Right panel: Selected duty's detailed description, effects, and requirements
+- **Click a duty to view details** - does NOT assign automatically
+- **Click "Request Assignment" button** to actually change your duty
+- **Lance Rep bar at bottom** - shows your current lance reputation (affects approval)
+- **Current duty persists** until you successfully request a change
+
+**Duty List Display:**
+| State | Display | Behavior |
+|-------|---------|----------|
+| Current duty | Highlighted/selected, "(Current)" badge | Shows "This is your current duty assignment. It persists until you request a change." |
+| Available | Normal style, clickable | Click → request assignment (T2+) or immediate assignment (T1) |
+| Tier locked | Greyed out, "Requires {Rank}" | Click shows requirements in details panel |
+| Formation locked | Greyed out, "{Formations} only" | Click shows requirements in details panel |
+| On cooldown | Greyed out, "Cooldown: Xd" | Shows cooldown time remaining |
+
+**Details Panel (always visible on right):**
+- Duty name and description (fluff text for immersion)
+- Effects list: skill XP bonuses, wage multipliers, special abilities
+- Requirements: tier, formation, reputation needed
+- Current status: why it's locked (if applicable)
+- Request button with context-appropriate text
+
+**Assignment Flow:**
+- Select a duty from the list to view its details in the right panel
+- Review effects, requirements, and your current Lance Reputation
+- **T1 Players**: Click "Assign Duty" button (no approval needed, free to change)
+- **T2+ Players**: Click "Request Assignment" button (requires lance leader approval)
+- Success message shows approval: "{LANCE_LEADER_SHORT} approves your transfer to {DUTY}."
+- Failure shows specific blocking reason (cooldown, reputation, tier, etc.)
+- **Duties persist** across sessions - your current duty stays active until changed
 
 ### Daily Processing
 - Skill bonuses awarded based on active duties
@@ -87,7 +114,8 @@ Add variety and specialization to military service. Different duties provide dif
 
 **Files:**
 - `EnlistedDutiesBehavior.cs` - Core duty management, benefit application, formation training, duty request system, and duty filtering APIs
-- `EnlistedMenuBehavior.cs` - Data-driven duty selection menu with request flow
+- `CampDutiesVM.cs` - Camp Management Duties tab ViewModel (orders-screen style UI)
+- `CampManagementScreen.cs` - Full-screen Camp Management interface
 - `DutyConfiguration.cs` - JSON loading and validation  
 - `ModuleData/Enlisted/duties_system.json` - Duty definitions + formation training configuration
 

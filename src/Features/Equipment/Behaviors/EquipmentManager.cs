@@ -380,6 +380,41 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Check if personal equipment has been backed up.
         /// </summary>
         public bool HasBackedUpEquipment => _hasBackedUpEquipment;
+
+        /// <summary>
+        /// Snapshot of the backed up personal inventory (items removed from the party roster during enlistment).
+        /// Used by the enlistment bag-check ("stowage") onboarding prompt so it can operate on
+        /// the *pre-service* belongings even after military equipment has been issued.
+        /// </summary>
+        public ItemRoster GetBackedUpPersonalInventorySnapshot()
+        {
+            var snapshot = new ItemRoster();
+            if (_personalInventory == null)
+            {
+                return snapshot;
+            }
+
+            foreach (var element in _personalInventory)
+            {
+                if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                {
+                    continue;
+                }
+
+                snapshot.AddToCounts(element.EquipmentElement, element.Amount);
+            }
+
+            return snapshot;
+        }
+
+        /// <summary>
+        /// Clear the backed up personal inventory only.
+        /// This does NOT clear the backed up equipment sets (battle/civilian) which are still needed for discharge restoration.
+        /// </summary>
+        public void ClearBackedUpPersonalInventory()
+        {
+            _personalInventory?.Clear();
+        }
         
         /// <summary>
         /// Get culture-appropriate equipment for a specific tier and formation.

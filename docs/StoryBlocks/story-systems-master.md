@@ -32,6 +32,36 @@ Enlisted has **four** story content systems:
 | **Activities** | `ModuleData/Enlisted/Activities/activities.json` | ACTIVE | Camp location actions |
 | **Story Packs** | `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` | DEPRECATED | Legacy system, migrate to Events |
 
+### Schedule Popup Events (Continue-only)
+
+These are the simple **one-button (“Continue”)** popups you see during scheduled blocks (e.g. “Work Detail” → +10 Engineering XP).
+
+- **Data file**: `ModuleData/Enlisted/schedule_popup_events.json`
+- **Code**: `src/Features/Schedule/Core/ScheduleExecutor.cs` (`TriggerScheduleEvent`)
+- **Status**: ACTIVE (lightweight flavor + small skill XP)
+- **Important**: This is **not** part of the canonical StoryBlocks Events pipeline. It has no cooldown system, no per-day caps, no trigger language. It is purely “roll a chance when a schedule block starts”.
+
+#### How often do they fire?
+
+Pacing is controlled by the schedule activity’s `event_chance` in `ModuleData/Enlisted/schedule_config.json`.
+
+- Each time a schedule block starts, `ScheduleExecutor` rolls \(MBRandom.RandomFloat < event\_chance\).
+- Example: if `work_detail` has `event_chance: 0.1`, then **each time Work Detail starts** it has a 10% chance to show one of its matching popups.
+
+#### How to add / edit one
+
+1. Pick the schedule activity you want the popup to attach to (from `schedule_config.json`, field `id`, e.g. `work_detail`).
+2. Add an entry to `schedule_popup_events.json`:
+   - **Match selector**: set `activity_id` (preferred) and/or `block_type`
+   - **Text**: `title` + `body` (optional `titleId` / `bodyId` for localization)
+   - **Reward**: `skill` + `xp` (use `engineering`, `one_handed`, `scouting`, etc.)
+   - **Weight**: `weight` controls random selection if multiple entries match the same activity/block
+3. Make sure the schedule activity’s `event_chance` is > 0, otherwise it will never roll.
+
+Notes:
+- If a popup entry omits/invalidates `skill` or `xp`, `ScheduleExecutor` falls back to the old block-type mapping (so you still get “something reasonable”).
+- Text is run through `TextObject` + common variables (same placeholder system as Lance Life Events), so you can use common placeholders like `{PLAYER_NAME}` / `{LANCE_LEADER_SHORT}`.
+
 ### Source of Truth
 
 ```
@@ -253,6 +283,23 @@ decision events push narrative choices to the player during gameplay. see `docs/
 | `mess_tent` | 3 | Eat, Socialize, Rest |
 | `quartermaster` | 2 | Check supplies, Trade |
 | `medical_tent` | 2 | Rest, Visit wounded |
+
+### Schedule Popup Events (Continue-only)
+
+These are the lightweight, one-button schedule popups (not canonical StoryBlocks Events).  
+Source of truth: `ModuleData/Enlisted/schedule_popup_events.json`
+
+| Popup ID | Selector | Reward |
+|----------|----------|--------|
+| `sched_training_form_correction` | `activity_id: training` / `block_type: TrainingDrill` | +15 OneHanded XP |
+| `sched_patrol_tracks` | `activity_id: patrol` / `block_type: PatrolDuty` | +12 Scouting XP |
+| `sched_sentry_disturbance` | `activity_id: sentry_duty` / `block_type: SentryDuty` | +10 Scouting XP |
+| `sched_scouting_enemy_camp` | `activity_id: scouting_mission` / `block_type: ScoutingMission` | +20 Scouting XP |
+| `sched_foraging_cache` | `activity_id: foraging` / `block_type: ForagingDuty` | +10 Scouting XP |
+| `sched_work_detail_improvement` | `activity_id: work_detail` / `block_type: WorkDetail` | +10 Engineering XP |
+| `sched_watch_inspection` | `block_type: WatchDuty` | +8 Scouting XP |
+| `sched_rest_gossip` | `block_type: Rest` | +5 Leadership XP |
+| `sched_free_time_camaraderie` | `block_type: FreeTime` | +8 Charm XP |
 
 ---
 

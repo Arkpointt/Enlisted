@@ -348,8 +348,8 @@ namespace Enlisted.Features.Lances.Behaviors
 
             args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
 
-            var dayPart = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
-            var dayPartToken = dayPart?.ToString().ToLowerInvariant() ?? "day";
+            var timeBlock = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? Schedule.Models.TimeBlock.Morning;
+            var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
             var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
             var currentDay = (int)CampaignTime.Now.ToDays;
 
@@ -374,15 +374,15 @@ namespace Enlisted.Features.Lances.Behaviors
                 }
             }
 
-            // Day part check
+            // Time block check (uses DayParts property for backward compatibility)
             if (activity.DayParts != null && activity.DayParts.Count > 0)
             {
-                if (string.IsNullOrWhiteSpace(dayPartToken) ||
-                    !activity.DayParts.Any(dp => string.Equals(dp, dayPartToken, StringComparison.OrdinalIgnoreCase)))
+                if (string.IsNullOrWhiteSpace(timeBlockToken) ||
+                    !activity.DayParts.Any(dp => string.Equals(dp, timeBlockToken, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var dayPartList = string.Join("/", activity.DayParts.Select(dp =>
+                    var timeBlockList = string.Join("/", activity.DayParts.Select(dp =>
                         CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dp)));
-                    disableReasons.Add($"Available: {dayPartList}");
+                    disableReasons.Add($"Available: {timeBlockList}");
                 }
             }
 
@@ -466,8 +466,8 @@ namespace Enlisted.Features.Lances.Behaviors
                     return 0;
                 }
 
-                var dayPart = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
-                var dayPartToken = dayPart?.ToString().ToLowerInvariant() ?? "day";
+                var timeBlock = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? Schedule.Models.TimeBlock.Morning;
+                var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
                 var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
                 var currentDay = (int)CampaignTime.Now.ToDays;
 
@@ -475,7 +475,7 @@ namespace Enlisted.Features.Lances.Behaviors
                 foreach (var def in activitiesBehavior.GetAllActivities()
                              .Where(a => string.Equals(a.Category, "lance", StringComparison.OrdinalIgnoreCase)))
                 {
-                    if (!CampActivitiesBehavior.IsActivityVisibleFor(def, enlistment, formation, dayPartToken))
+                    if (!CampActivitiesBehavior.IsActivityVisibleFor(def, enlistment, formation, timeBlockToken))
                     {
                         continue;
                     }

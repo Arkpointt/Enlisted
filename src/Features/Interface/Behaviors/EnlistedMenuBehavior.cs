@@ -13,6 +13,7 @@ using Enlisted.Features.Escalation;
 using Enlisted.Features.Lances.Events;
 using Enlisted.Features.Lances.Events.Decisions;
 using Enlisted.Features.Lances.UI;
+using Enlisted.Features.Schedule.Models;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
@@ -1447,32 +1448,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnCampActivitiesTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // Category headers (non-clickable text)
-            starter.AddGameMenuOption("enlisted_camp_activities", "header_training",
-                "{HEADER_TRAINING}",
-                args => IsHeaderVisible("HEADER_TRAINING"),
-                null,
-                false, 0, false);
-
-            starter.AddGameMenuOption("enlisted_camp_activities", "header_tasks",
-                "{HEADER_TASKS}",
-                args => IsHeaderVisible("HEADER_TASKS"),
-                null,
-                false, 20, false);
-
-            starter.AddGameMenuOption("enlisted_camp_activities", "header_social",
-                "{HEADER_SOCIAL}",
-                args => IsHeaderVisible("HEADER_SOCIAL"),
-                null,
-                false, 40, false);
-
-            starter.AddGameMenuOption("enlisted_camp_activities", "header_lance",
-                "{HEADER_LANCE}",
-                args => IsHeaderVisible("HEADER_LANCE"),
-                null,
-                false, 60, false);
-
-            // Dynamic activity slots (50 total to support all categories)
+            // Dynamic activity slots (50 total to support all categories + headers + spacers)
             for (var i = 0; i < 50; i++)
             {
                 var slotIndex = i;
@@ -1498,14 +1474,17 @@ namespace Enlisted.Features.Interface.Behaviors
                 false, 100);
         }
 
-        private static List<CampActivityDefinition> _cachedActivitySlots = new List<CampActivityDefinition>();
-        private static Dictionary<string, int> _categoryStartSlots = new Dictionary<string, int>();
-        private static Dictionary<string, bool> _headerVisibility = new Dictionary<string, bool>();
-
-        private static bool IsHeaderVisible(string headerKey)
+        private class CampMenuSlot
         {
-            return _headerVisibility.TryGetValue(headerKey, out var visible) && visible;
+            public CampActivityDefinition Activity { get; set; }
+            public Enlisted.Features.Lances.Events.LanceLifeEventDefinition DecisionEvent { get; set; }
+            public string Text { get; set; }
+            public bool IsHeader { get; set; }
+            public bool IsSpacer { get; set; }
+            public bool IsEnabled { get; set; } = true;
         }
+
+        private static List<CampMenuSlot> _cachedMenuSlots = new List<CampMenuSlot>();
 
         private void OnCampActivitiesInit(MenuCallbackArgs args)
         {
@@ -1532,55 +1511,105 @@ namespace Enlisted.Features.Interface.Behaviors
                 var allActivities = behavior.GetAllActivities();
                 var enlistment = EnlistmentBehavior.Instance;
                 var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
-                var dayPartEnum = CampaignTriggerTrackerBehavior.Instance?.GetDayPart() ?? DayPart.Morning;
-                var dayPart = dayPartEnum.ToString().ToLowerInvariant();
+                var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+                var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
 
                 // Group activities by category
+                // Robust grouping: Trust ID prefix if it matches a known category, 
+                // to handle cases where JSON 'category' might be malformed or defaulted.
                 var byCategory = allActivities
-                    .GroupBy(a => a.Category?.ToLowerInvariant() ?? "misc")
+                    .GroupBy(a => 
+                    {
+                        var cat = a.Category?.ToLowerInvariant() ?? "misc";
+                        // Fallback: use ID prefix (e.g. "social.drink" -> "social") if it's a known category
+                        if (!string.IsNullOrEmpty(a.Id) && a.Id.Contains("."))
+                        {
+                            var prefix = a.Id.Split('.')[0].ToLowerInvariant();
+                            if (prefix == "training" || prefix == "tasks" || prefix == "social" || prefix == "lance")
+                            {
+                                cat = prefix;
+                            }
+                        }
+                        return cat;
+                    })
                     .OrderBy(g => GetCategoryOrder(g.Key))
                     .ToList();
 
+                ModLogger.Info("Interface", $"CampActivities: Found {byCategory.Count} categories: {string.Join(", ", byCategory.Select(g => g.Key))}");
+
                 // Clear all slots
-                _cachedActivitySlots.Clear();
-                _categoryStartSlots.Clear();
-                _headerVisibility.Clear();
+                _cachedMenuSlots.Clear();
                 for (var i = 0; i < 50; i++)
                 {
                     MBTextManager.SetTextVariable($"ACTIVITY_SLOT_{i}_TEXT", "");
                 }
 
-                // Clear headers
-                MBTextManager.SetTextVariable("HEADER_TRAINING", "");
-                MBTextManager.SetTextVariable("HEADER_TASKS", "");
-                MBTextManager.SetTextVariable("HEADER_SOCIAL", "");
-                MBTextManager.SetTextVariable("HEADER_LANCE", "");
-                _headerVisibility["HEADER_TRAINING"] = false;
-                _headerVisibility["HEADER_TASKS"] = false;
-                _headerVisibility["HEADER_SOCIAL"] = false;
-                _headerVisibility["HEADER_LANCE"] = false;
-
-                var slotIndex = 0;
-                
-                foreach (var categoryGroup in byCategory)
+                // Build virtual slots (Headers -> Activities -> Spacers)
+                for (var catIndex = 0; catIndex < byCategory.Count; catIndex++)
                 {
+                    // Check limit
+                    if (_cachedMenuSlots.Count >= 50) break;
+
+                    var categoryGroup = byCategory[catIndex];
                     var categoryKey = categoryGroup.Key;
                     var categoryName = GetCategoryDisplayName(categoryKey);
-                    
-                    // Set header for this category
-                    SetCategoryHeader(categoryKey, $"— {categoryName.ToUpperInvariant()} —");
-                    _categoryStartSlots[categoryKey] = slotIndex;
 
-                    // Add activities in this category
-                    foreach (var activity in categoryGroup.OrderBy(a => a.TextFallback))
+                    // Add Header
+                    var headerText = $"— {categoryName.ToUpperInvariant()} —";
+                    ModLogger.Info("Interface", $"CampActivities: Adding header '{headerText}' at slot {_cachedMenuSlots.Count}");
+                    
+                    _cachedMenuSlots.Add(new CampMenuSlot
                     {
-                        if (slotIndex >= 50) break;
+                        Text = headerText,
+                        IsHeader = true,
+                        IsEnabled = false
+                    });
+
+                    // Sort activities
+                    var ordered = categoryGroup
+                        .Select(a =>
+                        {
+                            var reason = GetUnavailableReason(a, enlistment, formation, timeBlockToken);
+                            return new
+                            {
+                                Activity = a,
+                                IsAvailable = string.IsNullOrEmpty(reason),
+                                DisplayText = GetActivityDisplayTextWithAvailability(a, enlistment, formation, timeBlockToken)
+                            };
+                        })
+                        .OrderBy(x => x.IsAvailable ? 0 : 1)
+                        .ThenBy(x => x.DisplayText, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    // Add Activities
+                    foreach (var item in ordered)
+                    {
+                        if (_cachedMenuSlots.Count >= 50) break;
                         
-                        _cachedActivitySlots.Add(activity);
-                        var displayText = GetActivityDisplayTextWithAvailability(activity, enlistment, formation, dayPart);
-                        MBTextManager.SetTextVariable($"ACTIVITY_SLOT_{slotIndex}_TEXT", displayText);
-                        slotIndex++;
+                        _cachedMenuSlots.Add(new CampMenuSlot
+                        {
+                            Activity = item.Activity,
+                            Text = item.DisplayText,
+                            IsEnabled = item.IsAvailable
+                        });
                     }
+
+                    // Add Spacer (if not last and space available)
+                    if (catIndex < byCategory.Count - 1 && _cachedMenuSlots.Count < 50)
+                    {
+                        _cachedMenuSlots.Add(new CampMenuSlot
+                        {
+                            Text = " ", // Space to ensure it renders a gap
+                            IsSpacer = true,
+                            IsEnabled = false
+                        });
+                    }
+                }
+
+                // Map to text variables
+                for (var i = 0; i < _cachedMenuSlots.Count; i++)
+                {
+                    MBTextManager.SetTextVariable($"ACTIVITY_SLOT_{i}_TEXT", _cachedMenuSlots[i].Text);
                 }
             }
             catch (Exception ex)
@@ -1614,24 +1643,6 @@ namespace Enlisted.Features.Interface.Behaviors
             };
         }
 
-        private static void SetCategoryHeader(string category, string headerText)
-        {
-            var headerKey = category switch
-            {
-                "training" => "HEADER_TRAINING",
-                "tasks" => "HEADER_TASKS",
-                "social" => "HEADER_SOCIAL",
-                "lance" => "HEADER_LANCE",
-                _ => null
-            };
-
-            if (headerKey != null)
-            {
-                MBTextManager.SetTextVariable(headerKey, headerText);
-                _headerVisibility[headerKey] = !string.IsNullOrEmpty(headerText);
-            }
-        }
-
         private static void OnCampActivitiesTick(MenuCallbackArgs args, CampaignTime dt)
         {
             _ = args;
@@ -1651,14 +1662,14 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var escalation = EscalationManager.Instance;
                 var conditions = PlayerConditionBehavior.Instance;
-                var dayPart = CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
-                var dayPartStr = dayPart.HasValue ? dayPart.Value.ToString() : "Day";
+                var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+                var timeBlockStr = timeBlock.ToString();
                 var time = CampaignTime.Now.GetHourOfDay;
 
                 var sb = new System.Text.StringBuilder();
                 
                 // Light RP status header
-                sb.AppendLine($"Time: {dayPartStr}, {time:00}:00");
+                sb.AppendLine($"Time: {timeBlockStr}, {time:00}:00");
                 
                 if (conditions?.State?.HasAnyCondition == true)
                 {
@@ -1693,7 +1704,7 @@ namespace Enlisted.Features.Interface.Behaviors
             CampActivityDefinition activity, 
             EnlistmentBehavior enlistment, 
             string formation, 
-            string dayPart)
+            string timeBlockToken)
         {
             try
             {
@@ -1705,13 +1716,8 @@ namespace Enlisted.Features.Interface.Behaviors
                     text = text.Substring(0, bracketIndex).Trim();
                 }
 
-                // Check if unavailable and add reason
-                var unavailableReason = GetUnavailableReason(activity, enlistment, formation, dayPart);
-                if (!string.IsNullOrEmpty(unavailableReason))
-                {
-                    return $"{text} [{unavailableReason}]";
-                }
-
+                // Intentionally do NOT append availability/requirements suffixes here.
+                // The menu list should stay minimal; requirements belong in the tooltip.
                 return text;
             }
             catch
@@ -1724,7 +1730,7 @@ namespace Enlisted.Features.Interface.Behaviors
             CampActivityDefinition activity,
             EnlistmentBehavior enlistment,
             string formation,
-            string dayPart)
+            string timeBlockToken)
         {
             if (activity == null || enlistment == null)
             {
@@ -1734,7 +1740,9 @@ namespace Enlisted.Features.Interface.Behaviors
             // Check tier requirement
             if (enlistment.EnlistmentTier < activity.MinTier)
             {
-                return $"Requires Tier {activity.MinTier}";
+                // Prefer culture-specific rank names (looks better than raw tier numbers).
+                var requiredRank = Ranks.RankHelper.GetRankTitle(activity.MinTier, Ranks.RankHelper.GetCultureId(enlistment));
+                return $"Requires {requiredRank}";
             }
 
             // Check formation requirement
@@ -1749,11 +1757,11 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
             }
 
-            // Check time of day requirement
+            // Check time block requirement (uses DayParts property name for backward compatibility)
             if (activity.DayParts != null && activity.DayParts.Count > 0)
             {
-                if (string.IsNullOrWhiteSpace(dayPart) ||
-                    !activity.DayParts.Any(d => string.Equals(d, dayPart, StringComparison.OrdinalIgnoreCase)))
+                if (string.IsNullOrWhiteSpace(timeBlockToken) ||
+                    !activity.DayParts.Any(d => string.Equals(d, timeBlockToken, StringComparison.OrdinalIgnoreCase)))
                 {
                     var timeList = string.Join("/", activity.DayParts.Select(d => 
                         char.ToUpperInvariant(d[0]) + d.Substring(1).ToLowerInvariant()));
@@ -1790,19 +1798,32 @@ namespace Enlisted.Features.Interface.Behaviors
 
         private static bool IsActivitySlotAvailable(MenuCallbackArgs args, int slotIndex)
         {
-            if (slotIndex >= _cachedActivitySlots.Count)
+            if (slotIndex >= _cachedMenuSlots.Count)
             {
                 return false;
             }
 
-            var activity = _cachedActivitySlots[slotIndex];
+            var slot = _cachedMenuSlots[slotIndex];
+
+            // Set enabled state (Headers/Spacers are disabled)
+            args.IsEnabled = slot.IsEnabled;
+
+            if (slot.IsHeader || slot.IsSpacer)
+            {
+                args.Tooltip = new TextObject("");
+                args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+                return true;
+            }
+
+            var activity = slot.Activity;
+            if (activity == null) return false;
+
             var enlistment = EnlistmentBehavior.Instance;
             var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
-            var dayPartEnum = CampaignTriggerTrackerBehavior.Instance?.GetDayPart() ?? DayPart.Morning;
-            var dayPart = dayPartEnum.ToString().ToLowerInvariant();
+            var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+            var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
             
-            var unavailableReason = GetUnavailableReason(activity, enlistment, formation, dayPart);
-            var isAvailable = string.IsNullOrEmpty(unavailableReason);
+            var unavailableReason = GetUnavailableReason(activity, enlistment, formation, timeBlockToken);
 
             // Set icon based on category
             args.optionLeaveType = GetCategoryIcon(activity.Category);
@@ -1810,84 +1831,58 @@ namespace Enlisted.Features.Interface.Behaviors
             // Build detailed tooltip
             var tooltip = BuildActivityTooltip(activity, enlistment, unavailableReason);
             args.Tooltip = new TextObject(tooltip);
-
-            // If unavailable, still show it but it won't be clickable
-            args.IsEnabled = isAvailable;
             
             return true;
         }
 
         private static GameMenuOption.LeaveType GetCategoryIcon(string category)
         {
-            return (category?.ToLowerInvariant()) switch
+            return category?.ToLowerInvariant() switch
             {
-                "training" => GameMenuOption.LeaveType.OrderTroopsToAttack,
-                "tasks" => GameMenuOption.LeaveType.Manage,
-                "social" => GameMenuOption.LeaveType.Conversation,
-                "lance" => GameMenuOption.LeaveType.TroopSelection,
-                _ => GameMenuOption.LeaveType.Continue
+                "training" => GameMenuOption.LeaveType.HostileAction, // Sword icon
+                "tasks" => GameMenuOption.LeaveType.Trade, // Trade/Work icon
+                "social" => GameMenuOption.LeaveType.Conversation, // Speech bubble
+                "lance" => GameMenuOption.LeaveType.Submenu, // Menu/List icon
+                _ => GameMenuOption.LeaveType.Default
             };
         }
 
-        private static string BuildActivityTooltip(
-            CampActivityDefinition activity,
-            EnlistmentBehavior enlistment,
-            string unavailableReason)
+        private static string BuildActivityTooltip(CampActivityDefinition activity, EnlistmentBehavior enlistment, string unavailableReason)
         {
-            var sb = new StringBuilder();
-            
-            // Description
-            sb.AppendLine(activity.HintFallback ?? activity.TextFallback ?? "");
-            sb.AppendLine();
-
-            // Effects
-            if (activity.SkillXp != null && activity.SkillXp.Count > 0)
-            {
-                sb.Append("Rewards: ");
-                var skills = activity.SkillXp.Select(kvp => $"+{kvp.Value} {kvp.Key}");
-                sb.AppendLine(string.Join(", ", skills));
-            }
+            var sb = new System.Text.StringBuilder();
+            sb.Append(activity.TextFallback ?? "Activity");
 
             if (activity.FatigueCost > 0)
             {
-                sb.AppendLine($"Cost: -{activity.FatigueCost} Fatigue");
+                sb.AppendLine();
+                sb.Append($"Fatigue Cost: {activity.FatigueCost}");
             }
 
-            if (activity.FatigueRelief > 0)
-            {
-                sb.AppendLine($"Relief: +{activity.FatigueRelief} Fatigue");
-            }
-
-            if (activity.CooldownDays > 0)
-            {
-                sb.AppendLine($"Cooldown: {activity.CooldownDays} day{(activity.CooldownDays > 1 ? "s" : "")}");
-            }
-
-            // Requirements
             if (!string.IsNullOrEmpty(unavailableReason))
             {
                 sb.AppendLine();
-                sb.AppendLine($"Unavailable: {unavailableReason}");
-            }
-            else if (enlistment != null)
-            {
-                sb.AppendLine();
-                sb.AppendLine($"Current Fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax}");
+                sb.Append($"Unavailable: {unavailableReason}");
             }
 
-            return sb.ToString().TrimEnd();
+            return sb.ToString();
         }
 
         private static void OnActivitySlotSelected(MenuCallbackArgs args, int slotIndex)
         {
             try
             {
-                if (slotIndex >= _cachedActivitySlots.Count)
+                if (slotIndex >= _cachedMenuSlots.Count)
                 {
                     return;
                 }
 
-                var activity = _cachedActivitySlots[slotIndex];
+                var slot = _cachedMenuSlots[slotIndex];
+                if (slot.IsHeader || slot.IsSpacer || slot.Activity == null)
+                {
+                    return;
+                }
+
+                var activity = slot.Activity;
                 var behavior = CampActivitiesBehavior.Instance;
                 
                 if (behavior != null)
@@ -1941,17 +1936,17 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             if (string.IsNullOrEmpty(textId))
             {
-                return "Activity not available";
+                return new TextObject("{=enl_act_fail_default}Activity not available").ToString();
             }
 
             return textId switch
             {
-                "act_fail_invalid" => "Activity not available",
-                "act_fail_disabled" => "Activities system disabled",
-                "act_fail_not_enlisted" => "Not enlisted",
-                "act_fail_cooldown" => "On cooldown",
-                "act_fail_too_fatigued" => "Too fatigued",
-                "act_fail_condition" => "Too injured or ill",
+                "act_fail_invalid" => new TextObject("{=enl_act_fail_default}Activity not available").ToString(),
+                "act_fail_disabled" => new TextObject("{=enl_act_fail_disabled}Activities system disabled").ToString(),
+                "act_fail_not_enlisted" => new TextObject("{=enl_act_fail_not_enlisted}Not enlisted").ToString(),
+                "act_fail_cooldown" => new TextObject("{=enl_act_fail_cooldown}On cooldown").ToString(),
+                "act_fail_too_fatigued" => new TextObject("{=enl_act_fail_too_fatigued}Too fatigued").ToString(),
+                "act_fail_condition" => new TextObject("{=enl_act_fail_condition}Too injured or ill").ToString(),
                 _ => textId
             };
         }
@@ -1963,23 +1958,23 @@ namespace Enlisted.Features.Interface.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
-                    return "You are not currently enlisted.";
+                    return new TextObject("{=enl_camp_hub_not_enlisted}You are not currently enlisted.").ToString();
                 }
 
                 var lord = enlistment.CurrentLord;
-                var lordName = lord?.Name?.ToString() ?? "Unknown";
+                var lordName = lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
 
-                var objective = "Unknown";
+                var objective = new TextObject("{=enl_ui_unknown}Unknown").ToString();
                 try
                 {
-                    objective = Instance?.GetCurrentObjectiveDisplay(lord) ?? "Unknown";
+                    objective = Instance?.GetCurrentObjectiveDisplay(lord) ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                 }
                 catch
                 {
                     /* best-effort */
                 }
 
-                var rank = "Unknown";
+                var rank = new TextObject("{=enl_ui_unknown}Unknown").ToString();
                 try
                 {
                     rank = Ranks.RankHelper.GetCurrentRank(enlistment);
@@ -1992,16 +1987,34 @@ namespace Enlisted.Features.Interface.Behaviors
                 var decisions = DecisionEventBehavior.Instance?.GetAvailablePlayerDecisions()?.Count ?? 0;
 
                 var sb = new StringBuilder();
-                sb.AppendLine("Service Status");
-                sb.AppendLine($"Lord: {lordName}");
-                sb.AppendLine($"Fatigue: {enlistment.FatigueCurrent}/{enlistment.FatigueMax} | {rank} (T{enlistment.EnlistmentTier})");
-                sb.AppendLine($"Lord's Work: {objective}");
-                sb.AppendLine($"Now: {BuildCurrentSituationLine(enlistment)} | Decisions: {decisions}");
+
+                sb.AppendLine(new TextObject("{=enl_camp_hub_title}Service Status").ToString());
+
+                var lordLine = new TextObject("{=enl_camp_hub_lord_line}Lord: {LORD_NAME}");
+                lordLine.SetTextVariable("LORD_NAME", lordName);
+                sb.AppendLine(lordLine.ToString());
+
+                var fatigueLine = new TextObject("{=enl_camp_hub_fatigue_line}Fatigue: {FAT_CUR}/{FAT_MAX} | {RANK} (T{TIER})");
+                fatigueLine.SetTextVariable("FAT_CUR", enlistment.FatigueCurrent);
+                fatigueLine.SetTextVariable("FAT_MAX", enlistment.FatigueMax);
+                fatigueLine.SetTextVariable("RANK", rank);
+                fatigueLine.SetTextVariable("TIER", enlistment.EnlistmentTier);
+                sb.AppendLine(fatigueLine.ToString());
+
+                var workLine = new TextObject("{=enl_camp_hub_objective_line}Lord's Work: {OBJECTIVE}");
+                workLine.SetTextVariable("OBJECTIVE", objective);
+                sb.AppendLine(workLine.ToString());
+
+                var nowLine = new TextObject("{=enl_camp_hub_now_line}Now: {SITUATION} | Decisions: {COUNT}");
+                nowLine.SetTextVariable("SITUATION", BuildCurrentSituationLine(enlistment) ?? string.Empty);
+                nowLine.SetTextVariable("COUNT", decisions);
+                sb.AppendLine(nowLine.ToString());
+
                 return sb.ToString().TrimEnd();
             }
             catch
             {
-                return "Service Status unavailable.";
+                return new TextObject("{=enl_camp_hub_unavailable}Service Status unavailable.").ToString();
             }
         }
 
@@ -2779,26 +2792,27 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var options = new List<InquiryElement>();
+                var unknown = new TextObject("{=enl_ui_unknown}Unknown").ToString();
                 foreach (var lord in lords)
                 {
-                    var name = lord.Name?.ToString() ?? "Unknown Lord";
+                    var name = lord.Name?.ToString() ?? unknown;
                     // 1.3.4 API: ImageIdentifier is now abstract, use CharacterImageIdentifier
                     var portrait = new CharacterImageIdentifier(CharacterCode.CreateFrom(lord.CharacterObject));
                     var description =
-                        $"{lord.Clan?.Name?.ToString() ?? "Unknown Clan"}\n{lord.MapFaction?.Name?.ToString() ?? "Unknown Faction"}";
+                        $"{lord.Clan?.Name?.ToString() ?? unknown}\n{lord.MapFaction?.Name?.ToString() ?? unknown}";
 
                     options.Add(new InquiryElement(lord, name, portrait, true, description));
                 }
 
                 var data = new MultiSelectionInquiryData(
-                    titleText: "Select lord to speak with",
+                    titleText: new TextObject("{=enl_ui_select_lord_title}Select lord to speak with").ToString(),
                     descriptionText: string.Empty,
                     inquiryElements: options,
                     isExitShown: true,
                     minSelectableOptionCount: 1,
                     maxSelectableOptionCount: 1,
-                    affirmativeText: "Talk",
-                    negativeText: "Cancel",
+                    affirmativeText: new TextObject("{=enl_ui_talk}Talk").ToString(),
+                    negativeText: new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     affirmativeAction: selected =>
                     {
                         try
@@ -3073,17 +3087,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Show leave request confirmation
-                var titleText = "Request Leave from Commander";
-                var descriptionText =
-                    "Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 7-day cooldown after you come back.";
+                var titleText = new TextObject("{=enl_ui_request_leave_title}Request Leave from Commander").ToString();
+                var descriptionText = new TextObject("{=enl_ui_request_leave_desc}Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 7-day cooldown after you come back.").ToString();
 
                 var confirmData = new InquiryData(
                     titleText,
                     descriptionText,
                     isAffirmativeOptionShown: true,
                     isNegativeOptionShown: true,
-                    affirmativeText: "Request Leave",
-                    negativeText: "Cancel",
+                    affirmativeText: new TextObject("{=enl_ui_request_leave}Request Leave").ToString(),
+                    negativeText: new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     affirmativeAction: () =>
                     {
                         try
@@ -3125,9 +3138,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Use temporary leave instead of permanent discharge
                 enlistment?.StartTemporaryLeave();
 
-                var message =
-                    new TextObject(
-                        "Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty.");
+                var message = new TextObject("{=enl_ui_leave_granted}Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty.");
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                 // Exit menu to campaign map (deferred to next frame)
@@ -3241,7 +3252,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Back button - returns to Leave Service submenu (Leave icon)
             starter.AddGameMenuOption("enlisted_desert_confirm", "desert_back",
-                "Back",
+                "{=enl_ui_back}Back",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
@@ -3252,7 +3263,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Continue with Desertion button - executes the desertion (Escape icon - already set)
             starter.AddGameMenuOption("enlisted_desert_confirm", "desert_confirm",
-                "Desert the Army (Accept Penalties)",
+                "{=enl_ui_desert_confirm}Desert the Army (Accept Penalties)",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Escape;

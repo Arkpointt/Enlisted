@@ -568,6 +568,286 @@
   <string id="ll_evt_not_enough_fatigue" text="You are too exhausted." />
     <string id="ll_term_camp" text="camp" />
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMMON UI (generic buttons, prompts, and short messages) -->
+    <!-- Keep these generic so menus/inquiries across systems share IDs. -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <string id="enl_ui_cancel" text="Cancel" />
+    <string id="enl_ui_back" text="Back" />
+    <string id="enl_ui_done" text="Done" />
+    <string id="enl_ui_talk" text="Talk" />
+    <string id="enl_ui_unknown" text="Unknown" />
+    
+    <string id="enl_ui_request_leave" text="Request Leave" />
+    <string id="enl_ui_select_lord_title" text="Select lord to speak with" />
+    <string id="enl_ui_request_leave_title" text="Request Leave from Commander" />
+    <string id="enl_ui_request_leave_desc" text="Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 7-day cooldown after you come back." />
+    <string id="enl_ui_leave_granted" text="Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty." />
+
+    <string id="enl_ui_desert_confirm" text="Desert the Army (Accept Penalties)" />
+
+    <string id="enl_ui_outcome_title" text="Outcome" />
+    <string id="enl_ui_outcome_default" text="The situation resolves..." />
+    <string id="enl_ui_event_title_default" text="Event" />
+    <string id="enl_ui_notice" text="Notice" />
+    <string id="enl_ui_event_occurred" text="An event has occurred." />
+    <string id="enl_ui_camp_scene" text="Camp Scene" />
+    <string id="enl_ui_na" text="N/A" />
+    <string id="enl_ui_opportunity" text="Opportunity" />
+    <string id="enl_ui_available" text="Available" />
+    <string id="enl_reports_no_recent_outcomes" text="No recent outcomes." />
+    <string id="enl_reports_outcomes_placeholder" text="Resolved decision outcomes will appear here." />
+    <string id="enl_reports_chosen_line" text="Chosen: {CHOICE}" />
+    <string id="enl_reports_no_opportunities_not_enlisted" text="No opportunities while not enlisted." />
+    <string id="enl_reports_opportunities_not_enlisted_detail" text="Opportunities appear when you are enlisted and there are player-initiated decisions available." />
+    <string id="enl_reports_no_matters_today" text="No matters await your decision today." />
+    <string id="enl_reports_no_player_decisions" text="No player-initiated decisions are currently available." />
+    <string id="enl_reports_title" text="Reports" />
+    <string id="enl_reports_general_orders" text="General Orders" />
+    <string id="enl_reports_opportunities" text="Opportunities" />
+    <string id="enl_reports_recent_outcomes" text="Recent Outcomes" />
+    <string id="enl_reports_lance_reports" text="Lance Reports" />
+    <string id="enl_reports_company_reports" text="Company Reports" />
+    <string id="enl_reports_kingdom_reports" text="Kingdom Reports" />
+
+    <!-- Camp Lance tab -->
+    <string id="enl_camp_lance_type" text="Type" />
+    <string id="enl_camp_lance_fallen" text="Fallen" />
+    <string id="enl_camp_lance_members_header" text="Lance Members" />
+    <string id="enl_camp_not_enlisted" text="Not Enlisted" />
+
+    <!-- Camp hub (enlisted_camp_hub / enlisted_status menu body text) -->
+    <string id="enl_camp_hub_not_enlisted" text="You are not currently enlisted." />
+    <string id="enl_camp_hub_unavailable" text="Service Status unavailable." />
+    <string id="enl_camp_hub_title" text="Service Status" />
+    <string id="enl_camp_hub_lord_line" text="Lord: {LORD_NAME}" />
+    <string id="enl_camp_hub_fatigue_line" text="Fatigue: {FAT_CUR}/{FAT_MAX} | {RANK} (T{TIER})" />
+    <string id="enl_camp_hub_objective_line" text="Lord's Work: {OBJECTIVE}" />
+    <string id="enl_camp_hub_now_line" text="Now: {SITUATION} | Decisions: {COUNT}" />
+
+    <!-- Activity failure reasons (camp activities menu) -->
+    <string id="enl_act_fail_default" text="Activity not available" />
+    <string id="enl_act_fail_disabled" text="Activities system disabled" />
+    <string id="enl_act_fail_not_enlisted" text="Not enlisted" />
+    <string id="enl_act_fail_cooldown" text="On cooldown" />
+    <string id="enl_act_fail_too_fatigued" text="Too fatigued" />
+    <string id="enl_act_fail_condition" text="Too injured or ill" />
+
+    <!-- News placeholders -->
+    <string id="enl_news_unknown_forces" text="unknown forces" />
+    <string id="enl_news_countryside" text="the countryside" />
+
+    <!-- Command Tent - Retinue UI strings -->
+    <string id="enl_retinue_error_loading_status" text="Error loading retinue status." />
+    <string id="enl_retinue_option_requisition" text="Requisition Men" />
+    <string id="enl_retinue_option_requisition_cooldown" text="Requisition Men ({DAYS}d cooldown)" />
+    <string id="enl_retinue_option_requisition_at_capacity" text="Requisition Men (at capacity)" />
+    <string id="enl_retinue_option_requisition_cost" text="Requisition Men ({COST}{GOLD_ICON})" />
+    <string id="enl_retinue_not_enlisted" text="You are not currently enlisted." />
+
+    <string id="enl_retinue_header_personal" text="— Personal Retinue —" />
+    <string id="enl_retinue_line_rank" text="Rank: {RANK_NAME} (Tier {TIER})" />
+    <string id="enl_retinue_line_command_limit" text="Command Limit: {UNIT_NAME}" />
+    <string id="enl_retinue_header_current_muster" text="— Current Muster —" />
+    <string id="enl_retinue_none_mustered" text="No soldiers mustered." />
+    <string id="enl_retinue_select_type_prompt" text="Select a soldier type to begin." />
+    <string id="enl_retinue_line_type" text="Type: {TYPE_NAME}" />
+    <string id="enl_retinue_line_soldiers" text="Soldiers: {CUR} / {MAX}" />
+    <string id="enl_retinue_line_upkeep" text="Daily Upkeep: {UPKEEP}{GOLD_ICON}" />
+    <string id="enl_retinue_header_party_capacity" text="— Party Capacity —" />
+    <string id="enl_retinue_line_party_limit" text="Party Limit: {LIMIT}" />
+    <string id="enl_retinue_line_party_members" text="Current Members: {COUNT}" />
+    <string id="enl_retinue_line_party_space" text="Available Space: {SPACE}" />
+    <string id="enl_retinue_party_limits_retinue" text="Party size limits your retinue." />
+
+    <string id="enl_retinue_reason_must_be_enlisted" text="You must be enlisted to command soldiers." />
+    <string id="enl_retinue_reason_requires_commander" text="Requires Commander rank (Tier {REQ}). You are Tier {CUR}." />
+    <string id="enl_retinue_reason_no_party" text="No party found." />
+    <string id="enl_retinue_reason_no_space_companions" text="No party space available. Your companions fill your party." />
+    <string id="enl_retinue_msg_must_be_enlisted" text="You must be enlisted to command soldiers." />
+    <string id="enl_retinue_msg_no_party" text="No party available." />
+    <string id="enl_retinue_msg_no_culture" text="Cannot determine faction culture." />
+    <string id="enl_retinue_msg_party_full" text="Party is full. Dismiss troops or increase party size." />
+    <string id="enl_retinue_msg_full_capacity" text="Retinue is at full capacity for your rank." />
+    <string id="enl_retinue_msg_cannot_add" text="Cannot add soldiers." />
+    <string id="enl_retinue_reason_must_be_enlisted_requisition" text="You must be enlisted to requisition soldiers." />
+    <string id="enl_retinue_reason_select_type" text="You must select a soldier type first." />
+    <string id="enl_retinue_reason_full_strength" text="Your retinue is at full strength." />
+    <string id="enl_retinue_msg_no_soldiers_needed" text="No soldiers needed." />
+    <string id="enl_retinue_msg_party_limit_reached" text="Party limit reached. Only {COUNT} soldiers assigned." />
+    <string id="enl_retinue_reason_requires_commander_min" text="Requires Commander rank (Tier {REQ}) or higher." />
+    <string id="enl_retinue_reason_requisition_cooldown" text="Requisition on cooldown: {DAYS} days remaining." />
+    <string id="enl_retinue_reason_not_enough_gold" text="Not enough gold. Need {NEED} denars, have {HAVE}." />
+
+    <!-- Camp MenuHandler generic error texts -->
+    <string id="enl_camp_error_current_posting" text="Error loading current posting data." />
+    <string id="enl_camp_error_faction_records" text="Error loading faction records." />
+    <string id="enl_camp_error_faction_detail" text="Error loading faction detail." />
+    <string id="enl_camp_error_lifetime_summary" text="Error loading lifetime summary." />
+    <string id="enl_camp_error_retinue_purchase" text="Error loading purchase options." />
+    <string id="enl_camp_error_retinue_dismiss" text="Error loading dismiss options." />
+    <string id="enl_camp_error_retinue_requisition" text="Error loading requisition details." />
+    <string id="enl_camp_retinue_requisition_confirm" text="Requisition" />
+    <string id="enl_camp_retinue_requisition_confirm_full" text="Requisition {COUNT} soldiers ({COST}{GOLD_ICON})" />
+    <string id="enl_camp_error_companion_assignments" text="Error loading companion data." />
+    <string id="enl_camp_status_fight" text="[Fight]" />
+    <string id="enl_camp_status_stay_back" text="[Stay Back]" />
+
+    <!-- Camp schedule UI -->
+    <string id="enl_schedule_unknown" text="Unknown" />
+    <string id="enl_schedule_no_description" text="No description available." />
+    <string id="enl_schedule_unknown_activity" text="Unknown Activity" />
+    <string id="enl_schedule_activity_default_title" text="Activity" />
+    <string id="enl_schedule_activity_default_desc" text="This activity can be assigned during Free Time." />
+    <string id="enl_duty_no_description" text="No description available." />
+    <string id="enl_sched_block_free_time" text="Free Time" />
+    <string id="enl_sched_block_sentry_duty" text="Sentry Duty" />
+    <string id="enl_sched_block_patrol_duty" text="Patrol Duty" />
+    <string id="enl_sched_block_scouting_mission" text="Scouting Mission" />
+    <string id="enl_sched_block_foraging_duty" text="Foraging Duty" />
+    <string id="enl_sched_block_desc_fallback" text="Activity for {TIME_BLOCK}" />
+    <string id="enl_sched_effect_fatigue" text="Fatigue Cost: {COST}" />
+    <string id="enl_sched_effect_xp" text="XP Reward: {XP}" />
+    <string id="enl_sched_status_complete" text="Status: Complete" />
+    <string id="enl_sched_status_completed" text="Status: Completed" />
+    <string id="enl_sched_status_in_progress" text="Status: In Progress" />
+    <string id="enl_sched_status_pending" text="Status: Pending" />
+    <string id="enl_timeblock_morning" text="Morning" />
+    <string id="enl_timeblock_afternoon" text="Afternoon" />
+    <string id="enl_timeblock_dusk" text="Dusk" />
+    <string id="enl_timeblock_night" text="Night" />
+
+    <!-- Personas -->
+    <string id="enl_persona_default_first_name" text="Soldier" />
+
+    <!-- Common terms used in placeholder substitution -->
+    <string id="enl_term_lord" text="Lord" />
+    <string id="enl_term_lady" text="Lady" />
+    <string id="enl_term_sergeant" text="Sergeant" />
+    <string id="enl_term_the_sergeant" text="The Sergeant" />
+
+    <!-- Current Posting (Camp Menu) -->
+    <string id="enl_posting_not_enlisted" text="You are not currently enlisted." />
+    <string id="enl_posting_header_record" text="— Current Service Record —" />
+    <string id="enl_posting_line_posting" text="Posting: Army of {FACTION}" />
+    <string id="enl_posting_line_commander" text="Commander: {LORD}" />
+    <string id="enl_posting_line_rank" text="Rank: {RANK} (Tier {TIER})" />
+    <string id="enl_posting_line_days_served" text="Days Served: {DAYS}" />
+    <string id="enl_posting_line_contract" text="Contract: {CONTRACT}" />
+    <string id="enl_posting_header_pay" text="— Pay Muster —" />
+    <string id="enl_posting_line_pending_pay" text="Pending Muster Pay: {PAY} denars" />
+    <string id="enl_posting_line_next_payday" text="Next Payday: in {DAYS} days" />
+    <string id="enl_posting_line_last_outcome" text="Last Outcome: {OUTCOME}" />
+    <string id="enl_posting_status_muster_queued" text="Status: Muster queued" />
+    <string id="enl_posting_status_discharge_pending" text="Status: Discharge pending (will resolve at next pay muster)" />
+    <string id="enl_posting_header_pension" text="— Pension —" />
+    <string id="enl_posting_line_pension_daily" text="Daily Pension: {PAY} denars" />
+    <string id="enl_posting_line_status" text="Status: {STATUS}" />
+    <string id="enl_posting_pension_unknown" text="Unknown" />
+    <string id="enl_posting_pension_paused" text="Paused" />
+    <string id="enl_posting_pension_active" text="Active" />
+    <string id="enl_posting_header_term" text="— This Term —" />
+    <string id="enl_posting_line_battles" text="Battles Fought: {COUNT}" />
+    <string id="enl_posting_line_kills" text="Enemies Slain: {COUNT}" />
+    <string id="enl_term_complete" text="Term complete" />
+    <string id="enl_days_count" text="{DAYS} days" />
+    <string id="enl_unknown" text="Unknown" />
+
+    <!-- Faction records helper terms -->
+    <string id="enl_faction_bandit_clan" text="Bandit Clan" />
+    <string id="enl_faction_type_kingdom" text="Kingdom" />
+    <string id="enl_faction_type_minor" text="Minor Faction" />
+    <string id="enl_faction_type_merc" text="Mercenary Company" />
+    <string id="enl_faction_type_clan" text="Noble Clan" />
+
+    <string id="enl_sched_popup_xp_gained" text="Gained {XP} {SKILL} experience from {EVENT_TITLE}" />
+    <string id="enl_sched_popup_training_title" text="Training Moment" />
+    <string id="enl_sched_popup_training_body" text="During training, your lance leader notices your improved form." />
+    <string id="enl_sched_popup_patrol_title" text="Patrol Encounter" />
+    <string id="enl_sched_popup_patrol_body" text="While on patrol, you spot suspicious tracks in the distance." />
+    <string id="enl_sched_popup_sentry_title" text="Night Watch" />
+    <string id="enl_sched_popup_sentry_body" text="A late-night disturbance alerts you to movement near the camp." />
+    <string id="enl_sched_popup_scout_title" text="Scout Report" />
+    <string id="enl_sched_popup_scout_body" text="Your scouting mission reveals an enemy camp ahead." />
+    <string id="enl_sched_popup_foraging_title" text="Foraging Discovery" />
+    <string id="enl_sched_popup_foraging_body" text="You discover a hidden cache of supplies in the woods." />
+    <string id="enl_sched_popup_work_detail_title" text="Work Detail" />
+    <string id="enl_sched_popup_work_detail_body" text="While maintaining equipment, you notice a potential improvement." />
+    <string id="enl_sched_popup_watch_title" text="Camp Watch" />
+    <string id="enl_sched_popup_watch_body" text="During your watch, an officer makes an inspection round." />
+    <string id="enl_sched_popup_rest_title" text="Camp Gossip" />
+    <string id="enl_sched_popup_rest_body" text="You overhear interesting camp gossip during your rest." />
+    <string id="enl_sched_popup_free_time_title" text="Soldiers' Talk" />
+    <string id="enl_sched_popup_free_time_body" text="You spend your free time with fellow soldiers, building camaraderie." />
+
+    <!-- Camp Management UI (Gauntlet) -->
+    <string id="enl_camp_mgmt_title" text="CAMP MANAGEMENT" />
+    <string id="enl_camp_tab_lance" text="Lance" />
+    <string id="enl_camp_tab_orders" text="Orders" />
+    <string id="enl_camp_tab_duties" text="Duties" />
+    <string id="enl_camp_tab_reports" text="Reports" />
+    <string id="enl_camp_tab_army" text="Army" />
+    <string id="enl_camp_ui_failed_to_load" text="Enlisted: Camp Management UI failed to load." />
+    <string id="enl_camp_ui_failed_to_open" text="Enlisted: Camp Management UI failed to open." />
+
+    <!-- Quartermaster / equipment selection inquiries -->
+    <string id="enl_ui_tag_new" text="[NEW]" />
+    <string id="enl_qm_select_equipment_title" text="Select {EQUIPMENT_TYPE}" />
+    <string id="enl_qm_select_equipment_desc" text="Choose equipment variant to request:" />
+    <string id="enl_qm_request_equipment" text="Request Equipment" />
+    <string id="enl_qm_cost_line" text="Cost: {COST} denars" />
+    <string id="enl_qm_cost_line_cant_afford" text="Cost: {COST} denars (Can't afford)" />
+    <string id="enl_qm_select_armor_slot_title" text="Select armor slot" />
+    <string id="enl_qm_select_armor_slot_desc" text="Choose which armor piece to request" />
+
+    <!-- Master at Arms / troop kit selection -->
+    <string id="enl_ui_select_equipment_to_use_title" text="Select equipment to use" />
+    <string id="enl_ui_select_equipment_to_use_desc" text="Gear will not be auto-issued after Tier 1. Your chosen kit becomes purchasable at the Quartermaster." />
+
+    <!-- Master at Arms (troop selection) -->
+    <string id="enl_master_at_arms_summons_intro" text="You've been summoned before the Master at Arms." />
+    <string id="enl_master_at_arms_promotion_line" text="&quot;Soldier, your service has not gone unnoticed. You've earned promotion to {RANK_NAME}.&quot;" />
+    <string id="enl_master_at_arms_after_t1_note" text="After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster." />
+    <string id="enl_master_at_arms_specializations_count" text="({COUNT} troop specializations available)" />
+
+    <!-- Camp Duties -->
+    <string id="enl_duty_assigned_to" text="Assigned to: {DUTY_TITLE}" />
+    <string id="enl_duty_change_failed" text="Duty change failed unexpectedly. Check mod log for details." />
+    <string id="enl_duty_not_found" text="Duty not found." />
+    <string id="enl_duty_locked_tier" text="Your rank is too low for this duty." />
+    <string id="enl_duty_wrong_formation" text="This duty requires a different formation." />
+    <string id="enl_duty_on_cooldown" text="You recently changed duties. Wait before requesting again." />
+    <string id="enl_duty_same" text="You already have this duty." />
+    <string id="enl_duty_not_selectable" text="This duty is not available to you." />
+    <string id="enl_duty_request_denied" text="Request denied." />
+    <string id="enl_camp_duties_header" text="Available Duties" />
+    <string id="enl_camp_duties_none_for_rank" text="No duties available for your rank." />
+    <string id="enl_camp_duties_select_prompt" text="Select a duty to view details and request assignment." />
+    <string id="enl_camp_duties_request_assignment" text="Request Assignment" />
+    <string id="enl_camp_duties_lance_rep_label" text="Lance Reputation" />
+    <string id="enl_camp_duties_not_enlisted" text="Not enlisted" />
+    <string id="enl_camp_duties_current_prefix" text="Current: {DUTIES}" />
+    <string id="enl_camp_duties_current_none" text="Current: None assigned" />
+    <string id="enl_camp_duties_formation_line" text="Formation: {FORMATION} | Tier {TIER}{TRANSFER_STATUS}" />
+    <string id="enl_camp_duties_transfer_unlock" text=" (Transfers unlock at T2)" />
+    <string id="enl_camp_duties_transfer_cooldown" text=" (Transfer cooldown: {DAYS}d)" />
+    <string id="enl_camp_duties_transfer_available" text=" (Transfer available)" />
+    <string id="enl_formation_infantry" text="Infantry" />
+    <string id="enl_duty_requires_tier" text="Requires Tier {TIER}" />
+    <string id="enl_duty_incompatible_formation" text="Incompatible with your formation" />
+    <string id="enl_duty_not_available" text="Not available" />
+    <string id="enl_duty_current_hint" text="This is your current duty assignment. It persists until you request a change." />
+    <string id="enl_duty_current_label" text="Current Duty" />
+    <string id="enl_duty_locked_label" text="Locked" />
+    <string id="enl_duty_on_cooldown_label" text="On Cooldown" />
+    <string id="enl_duty_request_hint" text="Request assignment to this duty. Requires lance leader approval." />
+    <string id="enl_duty_assign_hint" text="Assign this duty (T1 soldiers can change duties freely)." />
+    <string id="enl_duty_assign_label" text="Assign Duty" />
+    <string id="enl_duty_requirements_line" text="Requirements: {REQS}" />
+    <string id="enl_duty_requirements_none" text="Requirements: No special requirements" />
+    <string id="enl_duty_cooldown_hint" text="Duty change requests are on cooldown. {DAYS} days remaining." />
+    <string id="enl_duty_not_available_dot" text="Not available." />
+
     <!-- Story: After Hours — Lance Drill -->
     <string id="ll_story_lance_drill_night_sparring_title" text="After Hours — Lance Drill" />
     <string id="ll_story_lance_drill_night_sparring_body" text="The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someone's bleeding. Still... good practice is hard to come by on campaign." />

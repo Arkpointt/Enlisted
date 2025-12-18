@@ -105,11 +105,11 @@ namespace Enlisted.Features.Lances.UI
                     "Failed to initialize event display", ex);
                 
                 // Set safe defaults
-                EventTitle = "Event";
-                CategoryText = "Notice";
+                EventTitle = new TextObject("{=enl_ui_event_title_default}Event").ToString();
+                CategoryText = new TextObject("{=enl_ui_notice}Notice").ToString();
                 CategoryColor = "#FFFFFFFF";
                 TimeLocationText = "";
-                StoryText = FormatStoryText(_event?.SetupId, _event?.SetupFallback) ?? "An event has occurred.";
+                StoryText = FormatStoryText(_event?.SetupId, _event?.SetupFallback) ?? new TextObject("{=enl_ui_event_occurred}An event has occurred.").ToString();
                 ShowCharacter = false;
                 SceneImagePath = "SPGeneral\\MapBar\\camp";
                 CanClose = true;
@@ -175,7 +175,7 @@ namespace Enlisted.Features.Lances.UI
                     // Store character reference for XML DataSource binding
                     EventCharacter = character;
                     
-                    CharacterNameText = character.Name?.ToString() ?? "Unknown";
+                    CharacterNameText = character.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     
                     // Safely get body properties
                     try
@@ -199,7 +199,7 @@ namespace Enlisted.Features.Lances.UI
                 else
                 {
                     EventCharacter = null;
-                    CharacterNameText = "Camp Scene";
+                    CharacterNameText = new TextObject("{=enl_ui_camp_scene}Camp Scene").ToString();
                     ShowCharacter = false;
                     SceneImagePath = GetSceneImageForEvent();
                 }
@@ -210,7 +210,7 @@ namespace Enlisted.Features.Lances.UI
                 Enlisted.Mod.Core.Logging.ModLogger.WarnCode("LanceLifeUI", "W-LANCEUI-001",
                     $"Could not display character portrait, using scene image instead: {ex.Message}");
                 EventCharacter = null;
-                CharacterNameText = "Camp Scene";
+                CharacterNameText = new TextObject("{=enl_ui_camp_scene}Camp Scene").ToString();
                 ShowCharacter = false;
                 SceneImagePath = GetSceneImageForEvent();
             }
@@ -397,16 +397,16 @@ namespace Enlisted.Features.Lances.UI
             var outcomeText = LanceLifeEventText.Resolve(
                 option.OutcomeTextId, 
                 option.OutcomeTextFallback, 
-                "The situation resolves...", 
+                new TextObject("{=enl_ui_outcome_default}The situation resolves...").ToString(), 
                 _enlistment);
 
             InformationManager.ShowInquiry(
                 new InquiryData(
-                    "Outcome",
+                    new TextObject("{=enl_ui_outcome_title}Outcome").ToString(),
                     outcomeText,
                     isAffirmativeOptionShown: true,
                     isNegativeOptionShown: false,
-                    affirmativeText: "Continue",
+                    affirmativeText: new TextObject("{=ll_default_continue}Continue").ToString(),
                     negativeText: null,
                     affirmativeAction: () => ExecuteClose(),
                     negativeAction: null),
@@ -436,9 +436,9 @@ namespace Enlisted.Features.Lances.UI
                 HeatBarWidth = 0;
                 DisciplineBarWidth = 0;
                 LanceRepBarWidth = 0;
-                HeatText = "N/A";
-                DisciplineText = "N/A";
-                LanceRepText = "N/A";
+                HeatText = new TextObject("{=enl_ui_na}N/A").ToString();
+                DisciplineText = new TextObject("{=enl_ui_na}N/A").ToString();
+                LanceRepText = new TextObject("{=enl_ui_na}N/A").ToString();
             }
         }
 

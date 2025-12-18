@@ -204,7 +204,9 @@
                     <SliderWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="350" SuggestedHeight="65" HorizontalAlignment="Center" Brush="Kingdom.Support.Fill" DoNotUpdateHandleSize="true" Handle="SliderHandle" IsDiscrete="true" Locked="false" MaxValueInt="100" MinValueInt="0" ValueInt="@ApprovalLikelihood" MarginTop="10" IsEnabled="false">
                       <Children>
                         <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="400" SuggestedHeight="65" HorizontalAlignment="Center" Sprite="SPKingdom\progress_bar_frame" PositionYOffset="0" PositionXOffset="2" />
-                        <ImageWidget Id="SliderHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Conversation.Relation.Handle.Width" SuggestedHeight="75" HorizontalAlignment="Left" VerticalAlignment="Center" Brush="Kingdom.Support.Handle" IsEnabled="false">
+                        <!-- Center line marker for 50% (Neutral) -->
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="2" SuggestedHeight="45" HorizontalAlignment="Center" VerticalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#FFFFFFAA" />
+                        <ImageWidget Id="SliderHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="16" SuggestedHeight="75" HorizontalAlignment="Left" VerticalAlignment="Center" Brush="Kingdom.Support.Handle" IsEnabled="false">
                           <Children>
                             <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" PositionYOffset="65" MarginTop="10" Text="@ApprovalLikelihoodText" Brush="Kingdom.ParagraphSmall.Text"/>
                           </Children>

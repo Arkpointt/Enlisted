@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.Camp.UI.Bulletin;
+// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Camp.UI.Management;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
@@ -15,6 +15,7 @@ using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Core.ViewModelCollection.ImageIdentifiers;
 using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Camp.UI.Management.Tabs
 {
@@ -92,13 +93,13 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         {
             base.RefreshValues();
 
-            ReportsText = "Reports";
-            GeneralOrdersText = "General Orders";
-            OpportunitiesText = "Opportunities";
-            RecentOutcomesText = "Recent Outcomes";
-            LanceNewsText = "Lance Reports";
-            CompanyNewsText = "Company Reports";
-            KingdomNewsText = "Kingdom Reports";
+            ReportsText = new TextObject("{=enl_reports_title}Reports").ToString();
+            GeneralOrdersText = new TextObject("{=enl_reports_general_orders}General Orders").ToString();
+            OpportunitiesText = new TextObject("{=enl_reports_opportunities}Opportunities").ToString();
+            RecentOutcomesText = new TextObject("{=enl_reports_recent_outcomes}Recent Outcomes").ToString();
+            LanceNewsText = new TextObject("{=enl_reports_lance_reports}Lance Reports").ToString();
+            CompanyNewsText = new TextObject("{=enl_reports_company_reports}Company Reports").ToString();
+            KingdomNewsText = new TextObject("{=enl_reports_kingdom_reports}Kingdom Reports").ToString();
             
             RefreshAllNews();
         }
@@ -445,12 +446,12 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             if (enlistment?.IsEnlisted != true)
             {
                 Opportunities.Add(new ReportItemVM(
-                    "No opportunities while not enlisted.",
+                    new TextObject("{=enl_reports_no_opportunities_not_enlisted}No opportunities while not enlisted.").ToString(),
                     "",
-                    "Opportunity",
+                    new TextObject("{=enl_ui_opportunity}Opportunity").ToString(),
                     OnReportSelect,
                     factionBanner,
-                    detailText: "Opportunities appear when you are enlisted and there are player-initiated decisions available."
+                    detailText: new TextObject("{=enl_reports_opportunities_not_enlisted_detail}Opportunities appear when you are enlisted and there are player-initiated decisions available.").ToString()
                 ));
 
                 return 0;
@@ -463,12 +464,12 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             if (availableCount == 0)
             {
                 Opportunities.Add(new ReportItemVM(
-                    "No matters await your decision today.",
+                    new TextObject("{=enl_reports_no_matters_today}No matters await your decision today.").ToString(),
                     "",
-                    "Opportunity",
+                    new TextObject("{=enl_ui_opportunity}Opportunity").ToString(),
                     OnReportSelect,
                     factionBanner,
-                    detailText: "No player-initiated decisions are currently available."
+                    detailText: new TextObject("{=enl_reports_no_player_decisions}No player-initiated decisions are currently available.").ToString()
                 ));
 
                 return 0;
@@ -496,8 +497,8 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
 
                 Opportunities.Add(new ReportItemVM(
                     logText: ShortenSingleLine(title, 110),
-                    logTimeText: "Available",
-                    category: "Opportunity",
+                    logTimeText: new TextObject("{=enl_ui_available}Available").ToString(),
+                    category: new TextObject("{=enl_ui_opportunity}Opportunity").ToString(),
                     onSelect: OnReportSelect,
                     banner: factionBanner,
                     detailText: detail,
@@ -520,12 +521,12 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             if (items == null || items.Length == 0)
             {
                 RecentOutcomes.Add(new ReportItemVM(
-                    "No recent outcomes.",
+                    new TextObject("{=enl_reports_no_recent_outcomes}No recent outcomes.").ToString(),
                     "",
-                    "Outcome",
+                    new TextObject("{=enl_ui_outcome_title}Outcome").ToString(),
                     OnReportSelect,
                     factionBanner,
-                    detailText: "Resolved decision outcomes will appear here."
+                    detailText: new TextObject("{=enl_reports_outcomes_placeholder}Resolved decision outcomes will appear here.").ToString()
                 ));
 
                 return 0;
@@ -543,12 +544,12 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             if (records.Count == 0)
             {
                 RecentOutcomes.Add(new ReportItemVM(
-                    "No recent outcomes.",
+                    new TextObject("{=enl_reports_no_recent_outcomes}No recent outcomes.").ToString(),
                     "",
-                    "Outcome",
+                    new TextObject("{=enl_ui_outcome_title}Outcome").ToString(),
                     OnReportSelect,
                     factionBanner,
-                    detailText: "Resolved decision outcomes will appear here."
+                    detailText: new TextObject("{=enl_reports_outcomes_placeholder}Resolved decision outcomes will appear here.").ToString()
                 ));
 
                 return 0;
@@ -594,13 +595,15 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                 var detail = ShortenWithNewlines(rec.ResultText ?? string.Empty, 500);
                 if (!string.IsNullOrWhiteSpace(optText))
                 {
-                    detail = $"Chosen: {optText}\n\n{detail}";
+                    var chosen = new TextObject("{=enl_reports_chosen_line}Chosen: {CHOICE}");
+                    chosen.SetTextVariable("CHOICE", optText);
+                    detail = $"{chosen}\n\n{detail}";
                 }
 
                 RecentOutcomes.Add(new ReportItemVM(
                     logText: heading,
                     logTimeText: timeText,
-                    category: "Outcome",
+                    category: new TextObject("{=enl_ui_outcome_title}Outcome").ToString(),
                     onSelect: OnReportSelect,
                     banner: factionBanner,
                     detailText: detail

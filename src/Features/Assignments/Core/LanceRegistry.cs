@@ -163,8 +163,9 @@ namespace Enlisted.Features.Assignments.Core
         ///     This is intentionally lightweight and does not attempt to infer "real" troop composition from the party roster.
         ///
         ///     Rules:
-        ///     - Picks up to <paramref name="maxLances"/> distinct lances from the lord's culture-mapped style.
-        ///     - Prefers one lance per role in the order: infantry → ranged → cavalry → horsearcher.
+        ///     - Calculates up to <paramref name="maxLances"/> lances from the lord's culture-mapped style.
+        ///     - First pass: Picks one lance per role (infantry → ranged → cavalry → horsearcher).
+        ///     - Subsequent passes: Cycles through roles again to fill remaining slots (e.g., "2nd Infantry", "2nd Ranged").
         ///     - Ensures the player's current lance is included when provided (without duplication).
         ///
         ///     This replaces the previous "demo lances" placeholder in Camp UI and gives us stable per-lord lances
@@ -197,8 +198,9 @@ namespace Enlisted.Features.Assignments.Core
 
             var result = new List<LanceAssignment>();
             var usedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var cap = Math.Max(1, maxLances);
 
-            // Build role buckets from the style.
+            // Build role buckets from the style (each role may have multiple lance definitions).
             var byRole = new Dictionary<string, List<LanceDefinition>>(StringComparer.OrdinalIgnoreCase);
             foreach (var lance in lances)
             {
@@ -211,72 +213,148 @@ namespace Enlisted.Features.Assignments.Core
                 list.Add(lance);
             }
 
-            // Prefer 1-per-role (stable order).
-            var preferredRoles = new[] { "infantry", "ranged", "cavalry", "horsearcher" };
-            foreach (var role in preferredRoles)
-            {
-                if (result.Count >= Math.Max(1, maxLances))
-                {
-                    break;
-                }
-
-                if (!byRole.TryGetValue(role, out var bucket) || bucket == null || bucket.Count == 0)
-                {
-                    continue;
-                }
-
-                var picked = PickDeterministic(bucket, seedKey: $"{lord.StringId}|{styleId}|{role}");
-                if (picked == null)
-                {
-                    continue;
-                }
-
-                var assignment = BuildAssignment(picked, styleId, cultureId, usedFallback: false);
-                if (usedIds.Add(assignment.Id))
-                {
-                    result.Add(assignment);
-                }
-            }
-
-            // Ensure player's current lance is included (if it resolves).
+            // Ensure player's current lance is included first (if it resolves).
             if (!string.IsNullOrWhiteSpace(playerCurrentLanceId))
             {
                 var playerAssignment = ResolveLanceById(playerCurrentLanceId);
                 if (playerAssignment != null && usedIds.Add(playerAssignment.Id))
                 {
-                    result.Insert(0, playerAssignment);
+                    result.Add(playerAssignment);
                 }
             }
 
-            // If we still have room, fill from the remaining lances deterministically.
-            if (result.Count < Math.Max(1, maxLances))
+            // Role cycling order - we'll loop through these repeatedly to fill lances.
+            var preferredRoles = new[] { "infantry", "ranged", "cavalry", "horsearcher" };
+            
+            // Track how many lances we've picked from each role bucket for deterministic selection.
+            var rolePickIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var role in preferredRoles)
             {
-                var remaining = lances
-                    .Where(l => l != null)
-                    .OrderBy(l => l.Id ?? l.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+                rolePickIndex[role] = 0;
+            }
 
-                var start = Math.Abs(StableHash32($"{lord.StringId}|{styleId}|fill")) % Math.Max(1, remaining.Count);
-                for (var i = 0; i < remaining.Count && result.Count < Math.Max(1, maxLances); i++)
+            // Keep cycling through roles until we have enough lances.
+            // This gives us balanced distribution: Infantry1, Ranged1, Cavalry1, Horse1, Infantry2, Ranged2, etc.
+            var cycleCount = 0;
+            var maxCycles = cap; // Safety limit to prevent infinite loops
+            
+            while (result.Count < cap && cycleCount < maxCycles)
+            {
+                var addedThisCycle = false;
+                
+                foreach (var role in preferredRoles)
                 {
-                    var idx = (start + i) % remaining.Count;
-                    var def = remaining[idx];
-                    var a = BuildAssignment(def, styleId, cultureId, usedFallback: false);
-                    if (usedIds.Add(a.Id))
+                    if (result.Count >= cap)
                     {
-                        result.Add(a);
+                        break;
+                    }
+
+                    if (!byRole.TryGetValue(role, out var bucket) || bucket == null || bucket.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // Sort bucket deterministically for stable picking
+                    var sortedBucket = bucket
+                        .OrderBy(l => l.Id ?? l.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    var pickIdx = rolePickIndex[role];
+                    
+                    // Try to pick the next lance from this role that we haven't used yet
+                    for (var attempt = 0; attempt < sortedBucket.Count; attempt++)
+                    {
+                        var candidateIdx = (pickIdx + attempt) % sortedBucket.Count;
+                        var candidate = sortedBucket[candidateIdx];
+                        var assignment = BuildAssignment(candidate, styleId, cultureId, usedFallback: false);
+                        
+                        if (usedIds.Add(assignment.Id))
+                        {
+                            result.Add(assignment);
+                            rolePickIndex[role] = candidateIdx + 1;
+                            addedThisCycle = true;
+                            break;
+                        }
                     }
                 }
+                
+                // If we couldn't add any lances this cycle, all unique lances are exhausted.
+                // Generate synthetic lances with ordinal suffixes for larger parties.
+                if (!addedThisCycle)
+                {
+                    // Create synthetic lances by re-using definitions with ordinal suffixes
+                    var ordinal = cycleCount + 2; // "2nd", "3rd", etc.
+                    foreach (var role in preferredRoles)
+                    {
+                        if (result.Count >= cap)
+                        {
+                            break;
+                        }
+
+                        if (!byRole.TryGetValue(role, out var bucket) || bucket == null || bucket.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        // Pick deterministically based on lord + role + ordinal
+                        var sortedBucket = bucket
+                            .OrderBy(l => l.Id ?? l.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                        var idx = Math.Abs(StableHash32($"{lord.StringId}|{styleId}|{role}|{ordinal}")) % sortedBucket.Count;
+                        var baseLance = sortedBucket[idx];
+                        
+                        // Create a synthetic lance with ordinal suffix
+                        var syntheticId = $"{baseLance.Id}_{ordinal}";
+                        if (usedIds.Add(syntheticId))
+                        {
+                            var syntheticName = $"{baseLance.Name} ({GetOrdinalSuffix(ordinal)})";
+                            result.Add(new LanceAssignment
+                            {
+                                Id = syntheticId,
+                                Name = syntheticName,
+                                StyleId = styleId,
+                                StoryId = baseLance.StoryId ?? string.Empty,
+                                RoleHint = NormalizeRole(baseLance.RoleHint),
+                                SourceCultureId = string.IsNullOrWhiteSpace(cultureId) ? "unknown" : cultureId,
+                                UsedFallback = false
+                            });
+                        }
+                    }
+                }
+                
+                cycleCount++;
             }
 
-            // Hard cap to maxLances (but keep player lance if present at index 0).
-            var cap = Math.Max(1, maxLances);
+            // Hard cap to maxLances.
             if (result.Count > cap)
             {
                 result = result.Take(cap).ToList();
             }
 
             return result;
+        }
+        
+        /// <summary>
+        /// Get ordinal suffix for lance numbering (2nd, 3rd, 4th, etc.).
+        /// </summary>
+        private static string GetOrdinalSuffix(int number)
+        {
+            if (number <= 0) return number.ToString();
+            
+            // Special cases for 11th, 12th, 13th
+            var lastTwoDigits = number % 100;
+            if (lastTwoDigits >= 11 && lastTwoDigits <= 13)
+            {
+                return $"{number}th";
+            }
+            
+            return (number % 10) switch
+            {
+                1 => $"{number}st",
+                2 => $"{number}nd",
+                3 => $"{number}rd",
+                _ => $"{number}th"
+            };
         }
 
         private static string GetCultureId(Hero lord)

@@ -2699,19 +2699,28 @@ namespace Enlisted.Features.Equipment.Behaviors
                     // Create inquiry for equipment selection
                     var inquiryElements = new List<InquiryElement>();
                     
+                    var unknown = new TextObject("{=enl_ui_unknown}Unknown").ToString();
+                    var newTag = new TextObject("{=enl_ui_tag_new}[NEW]").ToString();
+
                     foreach (var variant in availableVariants)
                     {
-                        var title = variant.Item.Name?.ToString() ?? "Unknown";
+                        var title = variant.Item.Name?.ToString() ?? unknown;
                         
                         // Phase 7: Add "NEW" indicator for recently unlocked items
                         if (variant.IsNewlyUnlocked)
                         {
-                            title = $"[NEW] {title}";
+                            title = $"{newTag} {title}";
                         }
 
-                        var description = variant.CanAfford 
-                            ? $"Cost: {variant.Cost} denars" 
-                            : $"Cost: {variant.Cost} denars (Can't afford)";
+                        var costOk = new TextObject("{=enl_qm_cost_line}Cost: {COST} denars");
+                        costOk.SetTextVariable("COST", variant.Cost);
+
+                        var costCant = new TextObject("{=enl_qm_cost_line_cant_afford}Cost: {COST} denars (Can't afford)");
+                        costCant.SetTextVariable("COST", variant.Cost);
+
+                        var description = variant.CanAfford
+                            ? costOk.ToString()
+                            : costCant.ToString();
                         
                         inquiryElements.Add(new InquiryElement(
                             variant, 
@@ -2722,12 +2731,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                     }
                     
                     // Show selection inquiry
+                    var titleText = new TextObject("{=enl_qm_select_equipment_title}Select {EQUIPMENT_TYPE}");
+                    titleText.SetTextVariable("EQUIPMENT_TYPE", equipmentType ?? string.Empty);
+
+                    var descText = new TextObject("{=enl_qm_select_equipment_desc}Choose equipment variant to request:");
+
                     MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                        $"Select {equipmentType}",
-                        "Choose equipment variant to request:",
+                        titleText.ToString(),
+                        descText.ToString(),
                         inquiryElements,
                         true, 1, 1, // Single selection
-                        "Request Equipment", "Cancel",
+                        new TextObject("{=enl_qm_request_equipment}Request Equipment").ToString(),
+                        new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                         OnEquipmentVariantSelected,
                         null)); // Default parameters are sufficient
                         
@@ -3526,11 +3541,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                    "Select armor slot",
-                    "Choose which armor piece to request",
+                    new TextObject("{=enl_qm_select_armor_slot_title}Select armor slot").ToString(),
+                    new TextObject("{=enl_qm_select_armor_slot_desc}Choose which armor piece to request").ToString(),
                     elements,
                     false, 1, 1,
-                    "Continue", "Cancel",
+                    new TextObject("{=ll_default_continue}Continue").ToString(),
+                    new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     OnDone,
                     _ => { }));
             }

@@ -5,6 +5,7 @@ using System.Linq;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Schedule.Models;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using Newtonsoft.Json;
@@ -89,8 +90,8 @@ namespace Enlisted.Features.Activities
                     return 0;
                 }
 
-                var dayPart = CampaignTriggerTrackerBehavior.Instance?.GetDayPart();
-                var dayPartToken = dayPart?.ToString().ToLowerInvariant() ?? "day";
+                var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+                var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
                 var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
 
                 var currentDay = (int)CampaignTime.Now.ToDays;
@@ -98,7 +99,7 @@ namespace Enlisted.Features.Activities
                 var count = 0;
                 foreach (var def in defs)
                 {
-                    if (!IsActivityVisibleFor(def, enlistment, formation, dayPartToken))
+                    if (!IsActivityVisibleFor(def, enlistment, formation, timeBlockToken))
                     {
                         continue;
                     }
@@ -226,7 +227,7 @@ namespace Enlisted.Features.Activities
             return true;
         }
 
-        public static bool IsActivityVisibleFor(CampActivityDefinition def, EnlistmentBehavior enlistment, string formation, string dayPartToken)
+        public static bool IsActivityVisibleFor(CampActivityDefinition def, EnlistmentBehavior enlistment, string formation, string timeBlockToken)
         {
             if (def == null || enlistment == null)
             {
@@ -247,10 +248,11 @@ namespace Enlisted.Features.Activities
                 }
             }
 
+            // Filter by time block (uses the same DayParts property for backward compatibility)
             if (def.DayParts != null && def.DayParts.Count > 0)
             {
-                if (string.IsNullOrWhiteSpace(dayPartToken) ||
-                    !def.DayParts.Any(d => string.Equals(d, dayPartToken, StringComparison.OrdinalIgnoreCase)))
+                if (string.IsNullOrWhiteSpace(timeBlockToken) ||
+                    !def.DayParts.Any(d => string.Equals(d, timeBlockToken, StringComparison.OrdinalIgnoreCase)))
                 {
                     return false;
                 }

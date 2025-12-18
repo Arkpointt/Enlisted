@@ -60,7 +60,7 @@ Related systems (shipping):
 4. Player confirms -> Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
-7. Bag check is deferred ~12 in-game hours after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
+7. Bag check is deferred **1 in-game hour** after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
    - **Stow it all (50g)**: stashes all inventory + equipped items into the baggage train and charges a **50 denar wagon fee** (clamped to what you can afford).
    - **Sell it all (60%)**: liquidates inventory + equipped items at **60%** and gives you the resulting denars.
    - **I'm keeping one thing (Roguery 30+)**: attempts to keep a single item (currently selects the highest-value item). If Roguery < 30, it is confiscated.

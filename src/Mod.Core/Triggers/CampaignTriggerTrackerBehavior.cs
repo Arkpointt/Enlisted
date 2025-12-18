@@ -5,6 +5,7 @@ using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Features.Schedule.Models;
 
 namespace Enlisted.Mod.Core.Triggers
 {
@@ -108,17 +109,52 @@ namespace Enlisted.Mod.Core.Triggers
             return deltaDays >= 0f && deltaDays <= windowDays;
         }
 
-        public DayPart GetDayPart()
+        /// <summary>
+        /// Returns the current time block (4-block system: Morning, Afternoon, Dusk, Night).
+        /// This is the preferred method for schedule and activity filtering.
+        /// </summary>
+        public TimeBlock GetTimeBlock()
         {
-            // Avoid relying on potentially version-specific helpers; derive hour-of-day from ToDays.
-            // Note: this is "campaign time" hours, which is what matters for story pacing.
             var hourOfDay = (int)Math.Floor((CampaignTime.Now.ToDays * 24f) % 24f);
             if (hourOfDay < 0)
             {
                 hourOfDay = 0;
             }
 
-            // Enhanced 6-period camp schedule:
+            // 4-block schedule:
+            // - Morning:   6–12  (training, patrols, primary duties)
+            // - Afternoon: 12–18 (work details, secondary duties)
+            // - Dusk:      18–22 (free time, social activities)
+            // - Night:     22–6  (rest, watch rotation)
+            if (hourOfDay >= 6 && hourOfDay < 12)
+            {
+                return TimeBlock.Morning;
+            }
+            if (hourOfDay >= 12 && hourOfDay < 18)
+            {
+                return TimeBlock.Afternoon;
+            }
+            if (hourOfDay >= 18 && hourOfDay < 22)
+            {
+                return TimeBlock.Dusk;
+            }
+            return TimeBlock.Night;
+        }
+
+        /// <summary>
+        /// Legacy method for backward compatibility. Use GetTimeBlock() instead.
+        /// Maps the 4-block TimeBlock system to the old 6-block DayPart enum.
+        /// </summary>
+        [Obsolete("Use GetTimeBlock() instead. DayPart enum is deprecated.")]
+        public DayPart GetDayPart()
+        {
+            var hourOfDay = (int)Math.Floor((CampaignTime.Now.ToDays * 24f) % 24f);
+            if (hourOfDay < 0)
+            {
+                hourOfDay = 0;
+            }
+
+            // Enhanced 6-period camp schedule (legacy):
             // - Dawn:      5–7   (morning muster, wake-up)
             // - Morning:   7–12  (active duty, training)
             // - Afternoon: 12–17 (continued duty, maintenance)
@@ -260,6 +296,10 @@ namespace Enlisted.Mod.Core.Triggers
         }
     }
 
+    /// <summary>
+    /// Legacy 6-block day period enum. Use TimeBlock (4-block system) instead.
+    /// </summary>
+    [Obsolete("Use TimeBlock enum instead. This 6-block system is deprecated in favor of the 4-block schedule.")]
     public enum DayPart
     {
         Unknown = 0,
