@@ -18,9 +18,9 @@ namespace Enlisted.Features.Combat.Behaviors
     ///     Mission behavior that automatically assigns enlisted players to their designated formation
     ///     (Infantry, Ranged, Cavalry, Horse Archer) based on their duty when a battle starts.
     ///     
-    ///     At Tier 4+, players can command their own formation (sergeant mode) - their retinue and
+    ///     At Commander tier (T7+), players can command their own formation (sergeant mode) - their retinue and
     ///     companions are assigned to the same formation and the formation is made player-controllable.
-    ///     Below Tier 4, players join the formation but cannot issue commands.
+    ///     Below T7, players join the formation but cannot issue commands.
     ///     
     ///     FIX: Also teleports the player to the correct position within their formation to handle
     ///     cases where the player's map party was slightly behind the lord when battle started,
@@ -185,9 +185,9 @@ namespace Enlisted.Features.Combat.Behaviors
         /// </summary>
         private void TryRemoveStayBackCompanion(Agent agent)
         {
-            // Only process companions from player's party at Tier 4+
+            // Only process companions from player's party at Commander tier (T7+).
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.LanceTier)
+            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
             {
                 return;
             }
@@ -452,9 +452,9 @@ namespace Enlisted.Features.Combat.Behaviors
             }
 
             // All tiers use the duty-based formation (Infantry/Ranged/Cavalry/HorseArcher)
-            // At Tier 4+, the formation will be made player-controllable for squad commands
+            // At Commander tier (T7+), the formation will be made player-controllable for squad commands
             var enlistmentTier = enlistment.EnlistmentTier;
-            var isTier4Plus = enlistmentTier >= RetinueManager.LanceTier;
+            var isTier4Plus = enlistmentTier >= RetinueManager.CommanderTier1;
             
             var duties = EnlistedDutiesBehavior.Instance;
             var formationString = duties?.PlayerFormation ?? "infantry";
@@ -494,7 +494,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     _positionFixAttempts = 0;
                 }
                 
-                // At Tier 4+, still need to assign party members to the same formation
+                // At Commander tier (T7+), still need to assign party members to the same formation
                 if (isTier4Plus && !_partyAssignmentComplete)
                 {
                     _needsPartyAssignment = true;
@@ -531,7 +531,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 _needsPositionFix = true;
                 _positionFixAttempts = 0;
                 
-                // At Tier 4+, player has companions and retinue soldiers
+                // At Commander tier (T7+), player has companions and retinue soldiers
                 // Mark that we need to assign all player party members to the same formation
                 if (isTier4Plus)
                 {
@@ -704,10 +704,10 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        ///     Attempts to teleport the player (and their squad at Tier 4+) to the correct position 
+        ///     Attempts to teleport the player (and their squad at Commander tier (T7+)) to the correct position 
         ///     within their assigned formation. This fixes the issue where the player's party spawns 
         ///     behind the formation when their map party was slightly behind the lord when battle started.
-        ///     At Tier 4+, the entire squad (player + retinue + companions) is teleported together.
+        ///     At Commander tier (T7+), the entire squad (player + retinue + companions) is teleported together.
         ///     
         ///     CRITICAL: We find an ARMY agent (not from player's party) to use as reference position,
         ///     because CachedMedianPosition includes our own party members who spawned at the wrong spot.
@@ -741,7 +741,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     return;
                 }
 
-                var isTier4Plus = enlistment.EnlistmentTier >= RetinueManager.LanceTier;
+                var isTier4Plus = enlistment.EnlistmentTier >= RetinueManager.CommanderTier1;
                 var playerPosition = playerAgent.Position;
                 var mainParty = PartyBase.MainParty;
 
@@ -852,7 +852,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     var postPos = playerAgent.Position;
                     var actualMovement = prePos.Distance(postPos);
 
-                    // At Tier 4+, also teleport the squad
+                    // At Commander tier (T7+), also teleport the squad
                     var squadTeleported = 0;
                     if (isTier4Plus)
                     {
@@ -976,7 +976,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
         /// <summary>
         ///     Phase 7: Assigns all agents from the player's party (companions + retinue) to the same formation.
-        ///     At Tier 4+, the player commands a unified squad of their personal troops.
+        ///     At Commander tier (T7+), the player commands a unified squad of their personal troops.
         ///     This ensures companions and retinue soldiers fight together with the player.
         ///     FIX: Now also teleports reassigned soldiers to the player's position, since they may have
         ///     spawned in a different formation's location (e.g., infantry retinue spawns with Infantry
@@ -1006,8 +1006,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     return;
                 }
 
-                // Check tier requirement
-                if (enlistment.EnlistmentTier < RetinueManager.LanceTier)
+                // Check tier requirement (Commander tier / T7+)
+                if (enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
                 {
                     _needsPartyAssignment = false;
                     return;
@@ -1211,9 +1211,9 @@ namespace Enlisted.Features.Combat.Behaviors
 
         /// <summary>
         ///     Sets up command authority for the enlisted player based on their tier.
-        ///     At Tier 4+: Player becomes sergeant and can command their own formation.
-        ///                 The formation is made player-controllable via SetControlledByAI(false).
-        ///     Below Tier 4: Player has no command authority - just a soldier in the ranks.
+        ///     At Commander tier (T7+): Player becomes sergeant and can command their own formation.
+        ///                             The formation is made player-controllable via SetControlledByAI(false).
+        ///     Below T7: Player has no command authority - just a soldier in the ranks.
         /// </summary>
         private void SetupSquadCommand(Agent playerAgent, Formation formation, bool isTier4Plus)
         {
@@ -1232,7 +1232,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
                 if (isTier4Plus)
                 {
-                    // TIER 4+ SQUAD COMMAND SETUP
+                    // COMMANDER TIER (T7+) SQUAD COMMAND SETUP
                     // The player can command their own formation like a sergeant
                     
                     // CRITICAL: Make this specific formation player-controlled
@@ -1252,11 +1252,11 @@ namespace Enlisted.Features.Combat.Behaviors
                     }
                     
                     ModLogger.Info("FormationAssignment",
-                        $"Command Setup: Tier 4+ sergeant mode - formation {formation.FormationIndex} is player-controlled");
+                        $"Command Setup: Commander tier (T7+) sergeant mode - formation {formation.FormationIndex} is player-controlled");
                 }
                 else
                 {
-                    // BELOW TIER 4: NO COMMAND AUTHORITY
+                    // BELOW T7: NO COMMAND AUTHORITY
                     // Player is just a soldier in the formation, cannot issue orders
                     
                     // Strip any command roles
@@ -1278,7 +1278,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     }
                     
                     ModLogger.Info("FormationAssignment",
-                        $"Command Setup: Below Tier 4 - no command authority");
+                        $"Command Setup: Below T7 - no command authority");
                 }
             }
             catch (Exception ex)
@@ -1289,7 +1289,7 @@ namespace Enlisted.Features.Combat.Behaviors
         
         /// <summary>
         ///     Transfers army-wide command from player to the lord or another suitable agent.
-        ///     Used for enlisted soldiers below Tier 4 who shouldn't have command authority.
+        ///     Used for enlisted soldiers below T7 who shouldn't have command authority.
         /// </summary>
         private void TransferArmyCommandToLord(Agent playerAgent, Team team)
         {

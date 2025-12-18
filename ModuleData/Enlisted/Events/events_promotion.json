@@ -290,6 +290,49 @@
           }
         ]
       }
+    },
+    {
+      "id": "promotion_t6_t7_commanders_commission",
+      "category": "promotion",
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry"
+      },
+      "triggers": {
+        "all": ["ai_safe"]
+      },
+      "requirements": {
+        "tier": { "min": 6, "max": 6 }
+      },
+      "timing": {
+        "priority": "critical",
+        "one_time": true
+      },
+      "content": {
+        "title": "Commander's Commission",
+        "setup": "{LORD_NAME} calls you to the command tent. Maps are spread across the table, markers showing troop positions.\n\n'You've proven yourself, {PLAYER_NAME}. The rank of {NEXT_RANK} comes with command — twenty soldiers, yours to lead. This is no small responsibility. Are you ready?'",
+        "options": [
+          {
+            "id": "accept_command",
+            "text": "\"I'm ready, my lord. Give me the command.\"",
+            "tooltip": "Accept promotion to Commander and receive your first retinue of 20 soldiers.",
+            "effects": {
+              "character_tag": "leader",
+              "promotes": true
+            },
+            "outcome": "{LORD_NAME} nods with satisfaction. 'Good. I've assigned twenty recruits to your command. Train them well — they're green, but they're yours. Make them into soldiers worthy of {FACTION_NAME}.'"
+          },
+          {
+            "id": "not_ready",
+            "text": "\"I'm honored, but I'm not ready to lead men yet.\"",
+            "tooltip": "Decline the promotion and remain at your current rank. No penalties. You can be promoted later when ready.",
+            "effects": {
+              "character_tag": "cautious"
+            },
+            "outcome": "{LORD_NAME} studies you carefully. 'An honest answer. Command isn't for everyone, and it's better to know that now than in battle. The offer stands — when you're ready, speak to me.'"
+          }
+        ]
+      }
     }
   ]
 }

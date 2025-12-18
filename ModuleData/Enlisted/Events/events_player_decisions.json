@@ -1,7 +1,7 @@
 {
-  "pack_id": "player_decisions_core",
-  "pack_version": 1,
-  "description": "Player-initiated decisions - always available from the Pending Decisions menu",
+  "schemaVersion": 1,
+  "packId": "player_decisions_core",
+  "category": "decision",
   "events": [
     {
       "id": "player_organize_dice_game",
@@ -9,54 +9,102 @@
       "narrative_source": "situation",
       "delivery": {
         "method": "player_initiated",
-        "channel": "inquiry"
+        "channel": "inquiry",
+        "menu_section": "social"
       },
       "triggers": {
-        "all": ["is_enlisted"],
-        "time_of_day": ["evening", "night"]
+        "all": [
+          "is_enlisted"
+        ],
+        "time_of_day": [
+          "evening",
+          "night"
+        ]
       },
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": {
+          "min": 1,
+          "max": 999
+        }
       },
       "timing": {
         "cooldown_days": 7,
         "priority": "normal"
       },
       "titleId": "player_dice_title",
-      "titleFallback": "Organize a Dice Game",
       "setupId": "player_dice_setup",
-      "setupFallback": "The evening settles over camp, and you consider gathering some lance mates for a round of dice. It's a good way to pass the time and build camaraderie - though gambling always carries some risk.",
       "options": [
         {
           "id": "small_stakes",
           "textId": "player_dice_small",
-          "textFallback": "\"Who's up for a friendly game? Small stakes only.\"",
-          "costs": { "gold": 10 },
-          "rewards": { "gold": 25 },
-          "effects": { "lance_reputation": 2 },
-          "outcomeTextId": "player_dice_small_outcome",
-          "outcomeTextFallback": "The game goes well. You win a few coins and share some laughs with your lance mates. Bonds are strengthened over the rattle of dice."
+          "costs": {
+            "gold": 10
+          },
+          "text": "\"Who's up for a friendly game? Small stakes only.\"",
+          "outcome": "The dice favor you tonight. You rake in a modest pot as your lance mates good-naturedly grumble about their losses.",
+          "reward_choices": {
+            "type": "compensation",
+            "prompt": "What do you do with your winnings?",
+            "options": [
+              {
+                "id": "keep_winnings",
+                "text": "Keep the winnings (+15 gold)",
+                "tooltip": "Pocket the coin - you earned it fair and square",
+                "rewards": {
+                  "gold": 15
+                }
+              },
+              {
+                "id": "buy_rounds",
+                "text": "Buy rounds for everyone (+4 Lance Rep)",
+                "tooltip": "Spend your winnings to treat the lance - builds camaraderie",
+                "effects": {
+                  "lance_reputation": 4
+                }
+              },
+              {
+                "id": "split_difference",
+                "text": "Keep half, treat the lance (+7 gold, +2 Lance Rep)",
+                "tooltip": "A balanced approach - profit and goodwill",
+                "rewards": {
+                  "gold": 7
+                },
+                "effects": {
+                  "lance_reputation": 2
+                }
+              }
+            ]
+          }
         },
         {
           "id": "high_stakes",
           "textId": "player_dice_high",
-          "textFallback": "\"Let's make this interesting. High stakes tonight.\"",
-          "costs": { "gold": 50 },
+          "costs": {
+            "gold": 50
+          },
           "success_chance": 0.6,
-          "rewards": { "gold": 150 },
-          "effects": { "lance_reputation": 3, "heat": 1 },
-          "outcomeTextId": "player_dice_high_success",
-          "outcomeTextFallback": "Lady luck smiles upon you! You rake in a substantial pot, earning respect for your boldness. Some grumble about their losses, but such is the game.",
-          "outcome_failure": "The dice betray you utterly. You lose your stake and then some. A few lance mates shoot you sympathetic looks as you count your remaining coins."
+          "rewards": {
+            "gold": 150
+          },
+          "effects": {
+            "lance_reputation": 3,
+            "heat": 1
+          },
+          "outcome_failure": "The dice betray you utterly. You lose your stake and then some. A few lance mates shoot you sympathetic looks as you count your remaining coins.",
+          "text": "\"Let's make this interesting. High stakes tonight.\"",
+          "resultTextId": "player_dice_high_success",
+          "resultText": "Lady luck smiles upon you! You rake in a substantial pot, earning respect for your boldness. Some grumble about their losses, but such is the game."
         },
         {
           "id": "cancel",
           "textId": "player_dice_cancel",
-          "textFallback": "Actually, maybe another night.",
-          "outcomeTextId": "player_dice_cancel_outcome",
-          "outcomeTextFallback": "You decide to save your coin for another evening. Rest is more valuable tonight."
+          "text": "Actually, maybe another night.",
+          "resultTextId": "player_dice_cancel_outcome",
+          "resultText": "You decide to save your coin for another evening. Rest is more valuable tonight."
         }
-      ]
+      ],
+      "title": "Organize a Dice Game",
+      "setup": "The evening settles over camp, and you consider gathering some lance mates for a round of dice. It's a good way to pass the time and build camaraderie - though gambling always carries some risk."
     },
     {
       "id": "player_request_training",
@@ -64,67 +112,149 @@
       "narrative_source": "situation",
       "delivery": {
         "method": "player_initiated",
-        "channel": "inquiry"
+        "channel": "inquiry",
+        "menu_section": "training"
       },
       "triggers": {
-        "all": ["is_enlisted", "not_in_settlement"]
+        "all": [
+          "is_enlisted",
+          "not_in_settlement"
+        ]
       },
       "requirements": {
-        "tier": { "min": 2, "max": 999 }
+        "tier": {
+          "min": 2,
+          "max": 999
+        }
       },
       "timing": {
         "cooldown_days": 5,
         "priority": "normal"
       },
       "titleId": "player_training_title",
-      "titleFallback": "Request Extra Training",
       "setupId": "player_training_setup",
-      "setupFallback": "The drillmaster is available, and you could ask for some additional instruction. It would be exhausting, but the improvement might be worth it.",
       "options": [
         {
-          "id": "weapon_training",
-          "textId": "player_training_weapon",
-          "textFallback": "\"Sergeant, I'd like to work on my sword arm.\"",
-          "costs": { "fatigue": 3 },
-          "rewards": {
-            "xp": { "enlisted": 20 },
-            "skillXp": { "OneHanded": 25 }
+          "id": "request_training",
+          "textId": "player_training_request",
+          "costs": {
+            "fatigue": 3
           },
-          "outcomeTextId": "player_training_weapon_outcome",
-          "outcomeTextFallback": "The drillmaster puts you through your paces for hours. Your muscles burn, but you can feel the improvement in your stance and technique."
-        },
-        {
-          "id": "riding_training",
-          "textId": "player_training_riding",
-          "textFallback": "\"I need work on my horsemanship.\"",
-          "costs": { "fatigue": 3 },
-          "rewards": {
-            "xp": { "enlisted": 20 },
-            "skillXp": { "Riding": 25 }
-          },
-          "outcomeTextId": "player_training_riding_outcome",
-          "outcomeTextFallback": "Hours in the saddle leave you sore but more confident. The horse responds better to your commands now."
-        },
-        {
-          "id": "athletics_training",
-          "textId": "player_training_athletics",
-          "textFallback": "\"Put me through conditioning drills.\"",
-          "costs": { "fatigue": 4 },
-          "rewards": {
-            "xp": { "enlisted": 25 },
-            "skillXp": { "Athletics": 30 }
-          },
-          "outcomeTextId": "player_training_athletics_outcome",
-          "outcomeTextFallback": "Running, climbing, carrying loads - the sergeant pushes you to your limits. You collapse into your bedroll that night completely spent, but stronger."
+          "text": "\"Sergeant, I'd like some extra training.\"",
+          "outcome": "The drillmaster nods. \"Right then. What do you want to work on?\"",
+          "reward_choices": {
+            "type": "weapon_focus",
+            "prompt": "Which area do you want to train?",
+            "options": [
+              {
+                "id": "one_handed",
+                "text": "One-Handed Weapons (+40 One-Handed)",
+                "tooltip": "Sword and shield technique, strikes and parries",
+                "rewards": {
+                  "xp": {
+                    "enlisted": 20
+                  },
+                  "skillXp": {
+                    "OneHanded": 40
+                  }
+                }
+              },
+              {
+                "id": "two_handed",
+                "text": "Two-Handed Weapons (+40 Two-Handed)",
+                "tooltip": "Great axes, swords, and hammers - powerful strikes",
+                "rewards": {
+                  "xp": {
+                    "enlisted": 20
+                  },
+                  "skillXp": {
+                    "TwoHanded": 40
+                  }
+                }
+              },
+              {
+                "id": "polearm",
+                "text": "Polearms (+40 Polearm)",
+                "tooltip": "Spears, pikes, and glaives - reach and formation combat",
+                "rewards": {
+                  "xp": {
+                    "enlisted": 20
+                  },
+                  "skillXp": {
+                    "Polearm": 40
+                  }
+                }
+              },
+              {
+                "id": "bow",
+                "text": "Archery (+40 Bow)",
+                "tooltip": "Precision shooting with bow",
+                "condition": "formation:ranged",
+                "rewards": {
+                  "xp": {
+                    "enlisted": 20
+                  },
+                  "skillXp": {
+                    "Bow": 40
+                  }
+                }
+              },
+              {
+                "id": "crossbow",
+                "text": "Crossbow (+40 Crossbow)",
+                "tooltip": "Powerful mechanical crossbow techniques",
+                "condition": "formation:ranged",
+                "rewards": {
+                  "xp": {
+                    "enlisted": 20
+                  },
+                  "skillXp": {
+                    "Crossbow": 40
+                  }
+                }
+              },
+              {
+                "id": "riding",
+                "text": "Horsemanship (+40 Riding)",
+                "tooltip": "Mounted combat and control",
+                "rewards": {
+                  "xp": {
+                    "enlisted": 20
+                  },
+                  "skillXp": {
+                    "Riding": 40
+                  }
+                }
+              },
+              {
+                "id": "athletics",
+                "text": "Physical Conditioning (+40 Athletics)",
+                "tooltip": "Running, climbing, endurance - the foundation of soldiering",
+                "costs": {
+                  "fatigue": 1
+                },
+                "rewards": {
+                  "xp": {
+                    "enlisted": 25
+                  },
+                  "skillXp": {
+                    "Athletics": 40
+                  }
+                }
+              }
+            ]
+          }
         },
         {
           "id": "cancel",
           "textId": "player_training_cancel",
-          "textFallback": "On second thought, I'll rest instead.",
-          "outcomeTextId": "player_training_cancel_outcome",
-          "outcomeTextFallback": "You decide to conserve your energy. Training can wait for another day."
+          "text": "On second thought, I'll rest instead.",
+          "resultTextId": "player_training_cancel_outcome",
+          "resultText": "You decide to conserve your energy. Training can wait for another day."
         }
-      ]
+      ],
+      "title": "Request Extra Training",
+      "setup": "The drillmaster is available, and you could ask for some additional instruction. It would be exhausting, but the improvement might be worth it."
     },
     {
       "id": "player_visit_wounded",
@@ -132,40 +262,52 @@
       "narrative_source": "situation",
       "delivery": {
         "method": "player_initiated",
-        "channel": "inquiry"
+        "channel": "inquiry",
+        "menu_section": "camp_life"
       },
       "triggers": {
-        "all": ["is_enlisted", "wounded_in_camp"]
+        "all": [
+          "is_enlisted",
+          "wounded_in_camp"
+        ]
       },
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": {
+          "min": 1,
+          "max": 999
+        }
       },
       "timing": {
         "cooldown_days": 3,
         "priority": "normal"
       },
       "titleId": "player_wounded_title",
-      "titleFallback": "Visit the Wounded",
       "setupId": "player_wounded_setup",
-      "setupFallback": "The medical tent holds several of your wounded comrades. A visit might lift their spirits - and yours. It's the right thing to do.",
       "options": [
         {
           "id": "visit",
           "textId": "player_wounded_visit",
-          "textFallback": "Spend time with the wounded, offering what comfort you can.",
-          "costs": { "fatigue": 1 },
-          "effects": { "lance_reputation": 3, "medical_risk": -1 },
-          "outcomeTextId": "player_wounded_visit_outcome",
-          "outcomeTextFallback": "You sit with the wounded, sharing stories and checking on their recovery. The medics appreciate the help keeping spirits up. Word spreads that you're the sort who looks after their own."
+          "costs": {
+            "fatigue": 1
+          },
+          "effects": {
+            "lance_reputation": 3,
+            "medical_risk": -1
+          },
+          "text": "Spend time with the wounded, offering what comfort you can.",
+          "resultTextId": "player_wounded_visit_outcome",
+          "resultText": "You sit with the wounded, sharing stories and checking on their recovery. The medics appreciate the help keeping spirits up. Word spreads that you're the sort who looks after their own."
         },
         {
           "id": "cancel",
           "textId": "player_wounded_cancel",
-          "textFallback": "I'll visit another time.",
-          "outcomeTextId": "player_wounded_cancel_outcome",
-          "outcomeTextFallback": "Duty calls elsewhere. Perhaps tomorrow."
+          "text": "I'll visit another time.",
+          "resultTextId": "player_wounded_cancel_outcome",
+          "resultText": "Duty calls elsewhere. Perhaps tomorrow."
         }
-      ]
+      ],
+      "title": "Visit the Wounded",
+      "setup": "The medical tent holds several of your wounded comrades. A visit might lift their spirits - and yours. It's the right thing to do."
     },
     {
       "id": "player_petition_lord",
@@ -173,50 +315,67 @@
       "narrative_source": "lord_direct",
       "delivery": {
         "method": "player_initiated",
-        "channel": "inquiry"
+        "channel": "inquiry",
+        "menu_section": "social"
       },
       "triggers": {
-        "all": ["is_enlisted"]
+        "all": [
+          "is_enlisted"
+        ]
       },
       "requirements": {
-        "tier": { "min": 3, "max": 999 }
+        "tier": {
+          "min": 3,
+          "max": 999
+        }
       },
       "timing": {
         "cooldown_days": 14,
         "priority": "normal"
       },
       "titleId": "player_petition_title",
-      "titleFallback": "Petition the Lord",
       "setupId": "player_petition_setup",
-      "setupFallback": "Your rank allows you to request a brief audience with the Lord. This is not something to do lightly - you must have a purpose, or risk wasting his time.",
       "options": [
         {
           "id": "request_pay_advance",
           "textId": "player_petition_pay",
-          "textFallback": "\"My Lord, I humbly request an advance on my wages.\"",
           "condition": "gold < 100",
-          "rewards": { "gold": 50 },
-          "effects": { "heat": 2 },
-          "outcomeTextId": "player_petition_pay_outcome",
-          "outcomeTextFallback": "{LORD_NAME} considers your request, then nods. \"I trust you'll repay this faith with loyal service.\" A purse of coins is handed to you. The quartermaster notes it down."
+          "rewards": {
+            "gold": 50
+          },
+          "effects": {
+            "heat": 2
+          },
+          "text": "\"My Lord, I humbly request an advance on my wages.\"",
+          "resultTextId": "player_petition_pay_outcome",
+          "resultText": "{LORD_NAME} considers your request, then nods. \"I trust you'll repay this faith with loyal service.\" A purse of coins is handed to you. The quartermaster notes it down."
         },
         {
           "id": "request_recognition",
           "textId": "player_petition_recognition",
-          "textFallback": "\"My Lord, I wish to bring my service to your attention.\"",
-          "effects": { "lance_reputation": 5, "heat": -2 },
-          "rewards": { "xp": { "enlisted": 50 } },
-          "outcomeTextId": "player_petition_recognition_outcome",
-          "outcomeTextFallback": "{LORD_NAME} listens as you recount your recent actions. \"Your dedication is noted, soldier. Continue to serve well.\" You feel the weight of his regard - a valuable thing."
+          "effects": {
+            "lance_reputation": 5,
+            "heat": -2
+          },
+          "rewards": {
+            "xp": {
+              "enlisted": 50
+            }
+          },
+          "text": "\"My Lord, I wish to bring my service to your attention.\"",
+          "resultTextId": "player_petition_recognition_outcome",
+          "resultText": "{LORD_NAME} listens as you recount your recent actions. \"Your dedication is noted, soldier. Continue to serve well.\" You feel the weight of his regard - a valuable thing."
         },
         {
           "id": "cancel",
           "textId": "player_petition_cancel",
-          "textFallback": "Perhaps this is not the right time.",
-          "outcomeTextId": "player_petition_cancel_outcome",
-          "outcomeTextFallback": "You step back without making your request. Better to wait for a more opportune moment."
+          "text": "Perhaps this is not the right time.",
+          "resultTextId": "player_petition_cancel_outcome",
+          "resultText": "You step back without making your request. Better to wait for a more opportune moment."
         }
-      ]
+      ],
+      "title": "Petition the Lord",
+      "setup": "Your rank allows you to request a brief audience with the Lord. This is not something to do lightly - you must have a purpose, or risk wasting his time."
     },
     {
       "id": "player_write_letter",
@@ -224,50 +383,66 @@
       "narrative_source": "situation",
       "delivery": {
         "method": "player_initiated",
-        "channel": "inquiry"
+        "channel": "inquiry",
+        "menu_section": "social"
       },
       "triggers": {
-        "all": ["is_enlisted"]
+        "all": [
+          "is_enlisted"
+        ]
       },
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": {
+          "min": 1,
+          "max": 999
+        }
       },
       "timing": {
         "cooldown_days": 10,
         "priority": "low"
       },
       "titleId": "player_letter_title",
-      "titleFallback": "Write a Letter Home",
       "setupId": "player_letter_setup",
-      "setupFallback": "You have a moment of quiet. Perhaps it's time to send word home - to family, friends, or whoever waits for your return. Ink and parchment aren't hard to come by.",
       "options": [
         {
           "id": "write_reassuring",
           "textId": "player_letter_reassuring",
-          "textFallback": "Write a reassuring letter, downplaying the dangers.",
-          "costs": { "gold": 5 },
-          "rewards": { "fatigueRelief": 2 },
-          "outcomeTextId": "player_letter_reassuring_outcome",
-          "outcomeTextFallback": "You craft a letter full of small triumphs and omitted hardships. It feels good to write, to remember there's a world beyond war. You hand it to the camp courier."
+          "costs": {
+            "gold": 5
+          },
+          "rewards": {
+            "fatigueRelief": 2
+          },
+          "text": "Write a reassuring letter, downplaying the dangers.",
+          "resultTextId": "player_letter_reassuring_outcome",
+          "resultText": "You craft a letter full of small triumphs and omitted hardships. It feels good to write, to remember there's a world beyond war. You hand it to the camp courier."
         },
         {
           "id": "write_honest",
           "textId": "player_letter_honest",
-          "textFallback": "Write an honest account of your experiences.",
-          "costs": { "gold": 5 },
-          "rewards": { "fatigueRelief": 1 },
-          "effects": { "discipline": -1 },
-          "outcomeTextId": "player_letter_honest_outcome",
-          "outcomeTextFallback": "The words flow more freely than expected. It's cathartic to put the truth on paper, even if it might worry those who read it."
+          "costs": {
+            "gold": 5
+          },
+          "rewards": {
+            "fatigueRelief": 1
+          },
+          "effects": {
+            "discipline": -1
+          },
+          "text": "Write an honest account of your experiences.",
+          "resultTextId": "player_letter_honest_outcome",
+          "resultText": "The words flow more freely than expected. It's cathartic to put the truth on paper, even if it might worry those who read it."
         },
         {
           "id": "cancel",
           "textId": "player_letter_cancel",
-          "textFallback": "I'll write when I have more to say.",
-          "outcomeTextId": "player_letter_cancel_outcome",
-          "outcomeTextFallback": "You set aside the parchment. The words aren't coming today."
+          "text": "I'll write when I have more to say.",
+          "resultTextId": "player_letter_cancel_outcome",
+          "resultText": "You set aside the parchment. The words aren't coming today."
         }
-      ]
+      ],
+      "title": "Write a Letter Home",
+      "setup": "You have a moment of quiet. Perhaps it's time to send word home - to family, friends, or whoever waits for your return. Ink and parchment aren't hard to come by."
     },
     {
       "id": "player_call_in_quartermaster_favor",
@@ -275,42 +450,60 @@
       "narrative_source": "situation",
       "delivery": {
         "method": "player_initiated",
-        "channel": "inquiry"
+        "channel": "inquiry",
+        "menu_section": "logistics"
       },
       "triggers": {
-        "all": ["is_enlisted", "qm_owes_favor"]
+        "all": [
+          "is_enlisted",
+          "flag:qm_owes_favor"
+        ]
       },
       "requirements": {
-        "tier": { "min": 1, "max": 999 }
+        "tier": {
+          "min": 1,
+          "max": 999
+        }
       },
       "timing": {
         "cooldown_days": 0,
         "priority": "normal"
       },
       "titleId": "player_qm_favor_title",
-      "titleFallback": "Call in a Quartermaster Favor",
       "setupId": "player_qm_favor_setup",
-      "setupFallback": "The quartermaster owes you one. You could call in that favor to ease the pressure â€” or keep it for later.",
       "options": [
         {
           "id": "call_in",
           "textId": "player_qm_favor_call_in",
-          "textFallback": "Call it in: smooth things over and keep the company steady.",
-          "rewards": { "gold": 25 },
-          "effects": { "heat": -1, "discipline": 0, "lance_reputation": 1, "medical_risk": 0, "fatigue_relief": 0, "pay_tension_change": -10 },
-          "clear_flags": ["qm_owes_favor"],
-          "outcomeTextId": "player_qm_favor_call_in_outcome",
-          "outcomeTextFallback": "A quiet word, a quiet exchange. The wagons run smoother for a while, and the men complain a little less. The quartermaster's favor is spent."
+          "rewards": {
+            "gold": 25
+          },
+          "effects": {
+            "heat": -1,
+            "discipline": 0,
+            "lance_reputation": 1,
+            "medical_risk": 0,
+            "fatigue_relief": 0,
+            "pay_tension_change": -10
+          },
+          "clear_flags": [
+            "qm_owes_favor"
+          ],
+          "text": "Call it in: smooth things over and keep the company steady.",
+          "resultTextId": "player_qm_favor_call_in_outcome",
+          "resultText": "A quiet word, a quiet exchange. The wagons run smoother for a while, and the men complain a little less. The quartermaster's favor is spent."
         },
         {
           "id": "hold",
           "textId": "player_qm_favor_hold",
-          "textFallback": "Hold it: I'll save that favor for a worse day.",
-          "outcomeTextId": "player_qm_favor_hold_outcome",
-          "outcomeTextFallback": "You keep the favor in your pocket. In this life, leverage is a kind of coin."
+          "text": "Hold it: I'll save that favor for a worse day.",
+          "resultTextId": "player_qm_favor_hold_outcome",
+          "resultText": "You keep the favor in your pocket. In this life, leverage is a kind of coin."
         }
-      ]
+      ],
+      "title": "Call in a Quartermaster Favor",
+      "setup": "The quartermaster owes you one. You could call in that favor to ease the pressure — or keep it for later."
     }
-  ]
+  ],
+  "description": "Player-initiated decisions - always available from the Pending Decisions menu"
 }
-

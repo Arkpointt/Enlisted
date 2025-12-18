@@ -2,8 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Interface.News.Generation;
+using Enlisted.Features.Interface.News.Generation.Producers;
+using Enlisted.Features.Interface.News.Models;
+using Enlisted.Features.Interface.News.State;
+using Enlisted.Features.Schedule.Behaviors;
+using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Lances.Events.Decisions;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.MapEvents;
@@ -74,6 +83,22 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Tracks if the lord had an army yesterday (for army formation detection).
         /// </summary>
         private bool _lordHadArmyYesterday;
+
+        // Camp News (Phase 2): persisted Daily Report + rolling ledger.
+        private CampNewsState _campNewsState = new CampNewsState();
+
+        // Phase 5: expose the last generated snapshot to other systems (Decisions) without forcing recomputation.
+        // This snapshot contains primitives only; it is safe to cache and share as read-only.
+        private DailyReportSnapshot _lastDailyReportSnapshot;
+        private int _lastDailyReportSnapshotDayNumber = -1;
+
+        // Phase 4: producer pattern to populate snapshot facts without sprawl.
+        private static readonly IDailyReportFactProducer[] DailyReportFactProducers =
+        {
+            new CompanyMovementObjectiveProducer(),
+            new LanceStatusFactProducer(),
+            new KingdomHeadlineFactProducer()
+        };
 
         public EnlistedNewsBehavior()
         {
@@ -214,6 +239,10 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Sync army tracking state
                 dataStore.SyncData("en_news_lordHadArmy", ref _lordHadArmyYesterday);
+
+                // Phase 2: Camp News state (Daily Report archive + ledger)
+                _campNewsState ??= new CampNewsState();
+                _campNewsState.SyncData(dataStore);
 
                 // Safe initialization for null collections after load
                 _kingdomFeed ??= new List<DispatchItem>();
@@ -554,11 +583,315 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Generate the daily brief once per day while enlisted so the main menu can display it without jitter.
                 EnsureDailyBriefGenerated();
 
+                // Phase 2: Generate the Daily Report once per in-game day (persisted, stable).
+                EnsureDailyReportGenerated();
+
                 CheckForArmyFormation();
             }
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Error in OnDailyTick", ex);
+            }
+        }
+
+        /// <summary>
+        /// Phase 2: Ensure we have a persisted Daily Report for the current day.
+        /// This does not change UI yet; Phase 3 consumes the record to show an excerpt on the main menu.
+        /// </summary>
+        private void EnsureDailyReportGenerated()
+        {
+            try
+            {
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+
+                _campNewsState ??= new CampNewsState();
+                _campNewsState.EnsureInitialized();
+
+                if (_campNewsState.LastGeneratedDayNumber == dayNumber &&
+                    _campNewsState.TryGetReportForDay(dayNumber) != null)
+                {
+                    return;
+                }
+
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    _campNewsState.MarkGenerated(dayNumber);
+                    return;
+                }
+
+                var snapshot = BuildDailyReportSnapshot(enlistment, dayNumber, out var aggregate, out var context);
+
+                // Cache snapshot for other systems (Phase 5 situation flags).
+                _lastDailyReportSnapshot = snapshot;
+                _lastDailyReportSnapshotDayNumber = dayNumber;
+
+                // Generate final report lines (templated strings) and persist them.
+                var lines = DailyReportGenerator.Generate(snapshot, context, maxLines: 8);
+
+                var record = new DailyReportRecord
+                {
+                    HasValue = true,
+                    DayNumber = dayNumber,
+                    Lines = lines?.ToArray() ?? Array.Empty<string>()
+                };
+
+                _campNewsState.AppendReport(record);
+                _campNewsState.MarkGenerated(dayNumber);
+
+                // Update ledger (best-effort; mostly zero until later producers).
+                if (aggregate.HasValue)
+                {
+                    _campNewsState.Ledger.RecordDay(aggregate);
+                }
+
+                ModLogger.Debug(LogCategory, $"Daily Report generated for day {dayNumber} (lines={record.Lines.Length})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "EnsureDailyReportGenerated failed", ex);
+            }
+        }
+
+        /// <summary>
+        /// Phase 5: provides the current day’s Daily Report snapshot (facts), ensuring it exists first.
+        /// Intended for systems like Decisions that need the same “day facts” without duplicating producer logic.
+        /// </summary>
+        public DailyReportSnapshot GetTodayDailyReportSnapshot()
+        {
+            try
+            {
+                EnsureDailyReportGenerated();
+
+                var today = (int)CampaignTime.Now.ToDays;
+                if (_lastDailyReportSnapshot != null && _lastDailyReportSnapshotDayNumber == today)
+                {
+                    return _lastDailyReportSnapshot;
+                }
+
+                return _lastDailyReportSnapshot;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Phase 5: posts a short high-signal personal dispatch line (used by decision outcomes).
+        /// </summary>
+        public void PostPersonalDispatchText(string category, string text, string storyKey, int minDisplayDays = 2)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(text))
+                {
+                    return;
+                }
+
+                AddPersonalNews(category ?? "personal", text.Trim(), new Dictionary<string, string>(), storyKey, minDisplayDays);
+                TrimFeeds();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to post personal dispatch text", ex);
+            }
+        }
+
+        private DailyReportSnapshot BuildDailyReportSnapshot(
+            EnlistmentBehavior enlistment,
+            int dayNumber,
+            out DailyAggregate aggregate,
+            out DailyReportGenerationContext context)
+        {
+            aggregate = default;
+            context = new DailyReportGenerationContext { DayNumber = dayNumber };
+
+            var snapshot = new DailyReportSnapshot
+            {
+                DayNumber = dayNumber
+            };
+
+            try
+            {
+                var ctx = new CampNewsContext
+                {
+                    DayNumber = dayNumber,
+                    Enlistment = enlistment,
+                    Lord = enlistment?.CurrentLord,
+                    LordParty = enlistment?.CurrentLord?.PartyBelongedTo,
+                    TriggerTracker = CampaignTriggerTrackerBehavior.Instance,
+                    CampLife = CampLifeBehavior.Instance,
+                    Schedule = ScheduleBehavior.Instance,
+                    NewsState = _campNewsState,
+                    NewsBehavior = this,
+                    Generation = context
+                };
+
+                for (var i = 0; i < DailyReportFactProducers.Length; i++)
+                {
+                    try
+                    {
+                        DailyReportFactProducers[i]?.Contribute(snapshot, ctx);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error(LogCategory, $"Daily report producer failed: {DailyReportFactProducers[i]?.GetType().Name}", ex);
+                    }
+                }
+
+                // Ledger aggregate for the day (best-effort).
+                aggregate = DailyAggregate.CreateEmpty(dayNumber);
+                aggregate.LostToday = snapshot.DeadDelta;
+                aggregate.WoundedToday = Math.Max(0, snapshot.WoundedDelta);
+                aggregate.SickToday = Math.Max(0, snapshot.SickDelta);
+                // TrainingIncidents/DecisionsResolved/Dispatches tracked in later phases.
+
+                snapshot.Normalize();
+                return snapshot;
+            }
+            catch
+            {
+                snapshot.Normalize();
+                return snapshot;
+            }
+        }
+
+        /// <summary>
+        /// Phase 2 helper: get the latest Daily Report lines (already templated) if available.
+        /// </summary>
+        public IReadOnlyList<string> GetLatestDailyReportLines()
+        {
+            try
+            {
+                // If UI asks before the daily tick fires (e.g., right after load), generate lazily but safely.
+                EnsureDailyReportGenerated();
+
+                _campNewsState ??= new CampNewsState();
+
+                var today = (int)CampaignTime.Now.ToDays;
+                var record = _campNewsState.TryGetReportForDay(today) ?? _campNewsState.TryGetLatestReport();
+                return record?.Lines ?? Array.Empty<string>();
+            }
+            catch
+            {
+                return Array.Empty<string>();
+            }
+        }
+
+        /// <summary>
+        /// Phase 2 helper: returns a compact excerpt suitable for a main-menu paragraph.
+        /// Phase 3 will switch the enlisted_status display over to this.
+        /// </summary>
+        public string GetLatestDailyReportExcerpt(int maxLines = 3, int maxChars = 260)
+        {
+            try
+            {
+                // Ensure we have a record for the current day before formatting an excerpt.
+                EnsureDailyReportGenerated();
+
+                maxLines = Math.Max(1, Math.Min(maxLines, 6));
+                maxChars = Math.Max(80, Math.Min(maxChars, 600));
+
+                var lines = GetLatestDailyReportLines();
+                if (lines == null || lines.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                var parts = lines
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Select(x => x.Trim())
+                    .Take(maxLines)
+                    .ToList();
+
+                if (parts.Count == 0)
+                {
+                    return string.Empty;
+                }
+
+                var excerpt = string.Join(" ", parts).Trim();
+
+                // Phase 5.5: append one short "Opportunities" sentence when player decisions are available.
+                // This is deliberately dynamic (not persisted) so it reflects resolved decisions without regenerating the Daily Report.
+                try
+                {
+                    var decisionBehavior = DecisionEventBehavior.Instance;
+                    var available = decisionBehavior?.GetAvailablePlayerDecisions();
+                    var count = available?.Count ?? 0;
+
+                    if (count > 0 && available != null)
+                    {
+                        var enlistment = EnlistmentBehavior.Instance;
+                        var top = available[0];
+                        var topTitle = LanceLifeEventText.Resolve(top?.TitleId, top?.TitleFallback, top?.Id, enlistment).Trim();
+
+                        // Keep this ONE sentence in the paragraph (use an em dash rather than a second sentence).
+                        var oppLong = !string.IsNullOrWhiteSpace(topTitle)
+                            ? $"Opportunities: {count} matters await your decision — most pressing: {topTitle}."
+                            : $"Opportunities: {count} matters await your decision.";
+
+                        var oppShort = $"Opportunities: {count} awaiting.";
+
+                        // Prefer the richer sentence when it fits; otherwise use the short one.
+                        var opp = $"{excerpt} {oppLong}".Trim().Length <= maxChars ? oppLong : oppShort;
+
+                        // Ensure the Opportunities sentence is included by trimming the base excerpt if needed.
+                        // (Main menu excerpt maxChars is typically generous, but we keep this robust.)
+                        var reserved = opp.Length + 1; // space + sentence
+                        if (reserved < maxChars)
+                        {
+                            var allowedBase = Math.Max(0, maxChars - reserved);
+                            var baseText = excerpt;
+
+                            if (baseText.Length > allowedBase)
+                            {
+                                // Trim base text to make room and add ellipsis to avoid an abrupt cut.
+                                var trimmed = baseText.Substring(0, allowedBase).TrimEnd();
+                                if (!string.IsNullOrWhiteSpace(trimmed))
+                                {
+                                    // Reserve room for ellipsis if possible.
+                                    if (trimmed.Length > 3)
+                                    {
+                                        trimmed = trimmed.Substring(0, trimmed.Length - 3).TrimEnd() + "...";
+                                    }
+                                    else
+                                    {
+                                        trimmed = "...";
+                                    }
+                                }
+
+                                baseText = trimmed;
+                            }
+
+                            excerpt = $"{baseText} {opp}".Trim();
+                        }
+                        else
+                        {
+                            // Degenerate case: maxChars too small - fall back to the opportunities sentence only.
+                            excerpt = opp.Length <= maxChars
+                                ? opp
+                                : opp.Substring(0, maxChars).TrimEnd() + "...";
+                        }
+                    }
+                }
+                catch
+                {
+                    // Best-effort only; never break menu rendering due to decision availability checks.
+                }
+
+                if (excerpt.Length <= maxChars)
+                {
+                    return excerpt;
+                }
+
+                // Trim with a hard cap, preserving a clean ending.
+                var cut = excerpt.Substring(0, maxChars).TrimEnd();
+                return cut.EndsWith(".", StringComparison.Ordinal) ? cut : cut + "...";
+            }
+            catch
+            {
+                return string.Empty;
             }
         }
 
@@ -1423,15 +1756,21 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 if (winnerSide.HasValue)
                 {
-                    var winnerHero = winnerSide.Value == BattleSideEnum.Attacker
-                        ? mapEvent.AttackerSide?.LeaderParty?.LeaderHero
-                        : mapEvent.DefenderSide?.LeaderParty?.LeaderHero;
-                    var loserHero = winnerSide.Value == BattleSideEnum.Attacker
-                        ? mapEvent.DefenderSide?.LeaderParty?.LeaderHero
-                        : mapEvent.AttackerSide?.LeaderParty?.LeaderHero;
+                    // Get the winning and losing sides based on battle outcome
+                    var winnerSideData = winnerSide.Value == BattleSideEnum.Attacker
+                        ? mapEvent.AttackerSide
+                        : mapEvent.DefenderSide;
+                    var loserSideData = winnerSide.Value == BattleSideEnum.Attacker
+                        ? mapEvent.DefenderSide
+                        : mapEvent.AttackerSide;
 
-                    placeholders["WINNER"] = winnerHero?.Name?.ToString() ?? "Unknown";
-                    placeholders["LOSER"] = loserHero?.Name?.ToString() ?? "Unknown";
+                    // Use hero name if available, otherwise fall back to party name (handles bandits, looters, etc.)
+                    placeholders["WINNER"] = winnerSideData?.LeaderParty?.LeaderHero?.Name?.ToString()
+                                             ?? winnerSideData?.LeaderParty?.Name?.ToString()
+                                             ?? "unknown forces";
+                    placeholders["LOSER"] = loserSideData?.LeaderParty?.LeaderHero?.Name?.ToString()
+                                            ?? loserSideData?.LeaderParty?.Name?.ToString()
+                                            ?? "unknown forces";
                 }
 
                 // Get place name (settlement or region)

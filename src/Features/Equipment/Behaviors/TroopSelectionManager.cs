@@ -584,6 +584,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Apply equipment from selected troop to hero.
         /// Implements equipment REPLACEMENT system (not accumulation).
         /// Includes accountability check - soldier is charged for missing equipment when auto-issuing.
+        /// PROTECTS QUEST ITEMS: Quest items are preserved during equipment replacement.
         /// </summary>
         public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop, bool autoIssueEquipment)
         {
@@ -606,8 +607,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                         return;
                     }
 
+                    // CRITICAL: Preserve quest items before replacing equipment
+                    var equipmentManager = EquipmentManager.Instance;
+                    var questItems = equipmentManager?.PreserveEquippedQuestItems() ?? new Dictionary<EquipmentIndex, EquipmentElement>();
+
                     // Replace all equipment with new troop's gear
                     EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
+
+                    // CRITICAL: Restore quest items after equipment replacement
+                    equipmentManager?.RestoreEquippedQuestItems(questItems);
 
                     // Show promotion notification
                     var message = new TextObject("{=eq_promoted_new_equipment}Promoted to {TROOP_NAME}! New equipment issued.");
@@ -627,7 +635,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _availableTroops.Clear();
                 
                 ModLogger.Info("TroopSelection", autoIssueEquipment
-                    ? $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation})"
+                    ? $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation}, quest items protected)"
                     : $"Troop selection recorded without auto-issue (Formation: {formation}); gear available at Quartermaster");
             }
             catch (Exception ex)

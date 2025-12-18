@@ -12,11 +12,33 @@ This spec defines a three-surface model:
 - **Decisions Menu (`enlisted_decisions`)**: “React now” (quick choices).
 - **Camp Management (Gauntlet: `CampManagementScreen`)**: “Configure / manage” (in-depth, occasional).
 
+Terminology (important):
+- **Main Menu (text)**: `enlisted_status` (a Bannerlord `GameMenu`/`WaitGameMenu`)
+- **Camp Menu (text)**: `enlisted_camp_hub` (opened from Main Menu → “Camp”)
+- **Camp Bulletin (Gauntlet overlay)**: opened from the Camp Menu “Reports” option
+- **Camp Management Screen (Gauntlet)**: `CampManagementScreen` (tabbed deep management UI)
+
+Implementation mapping (where this lives in code)
+- **Main Menu (text) wiring**: `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
+- **Camp Menu (text) wiring**: `src/Features/Camp/CampMenuHandler.cs`
+- **Camp News (daily brief + dispatches)**: `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`
+- **Decision pipeline**:
+  - Behavior + queueing: `src/Features/Lances/Events/Decisions/DecisionEventBehavior.cs`
+  - Evaluator + pacing: `src/Features/Lances/Events/Decisions/DecisionEventEvaluator.cs`
+  - Content: `ModuleData/Enlisted/Events/events_decisions.json` and `events_player_decisions.json`
+- **Reports surfaces**:
+  - Camp Bulletin overlay: `src/Features/Camp/UI/Bulletin/CampBulletinScreen.cs` + `CampBulletinVM.cs`
+  - Camp Management reports tab (Gauntlet): `src/Features/Camp/UI/Management/Tabs/CampReportsVM.cs`
+
+Navigation intent (key change):
+- **Camp Activities are a high-frequency action surface** and should be **one-click accessible** from **Camp Menu (text)** (`enlisted_camp_hub`), not hidden inside deep management UI.
+- **Duties are a low-frequency configuration** and should be managed from **Camp Management** (not the main loop).
+
 ## Purpose
 - Make the camp feel alive via a **daily digest + short updates** on the main menu.
 - Ensure “something happened” moments are handled via **Decisions**, not by forcing the player into deep screens.
 - Keep complex configuration (schedules, lance management, reports) in **Camp Management**, visited periodically.
-- Maintain a consistent navigation model (avoid duplicated hubs / conflicting menu ownership).
+- Maintain a consistent navigation model (avoid duplicated menus / conflicting menu ownership).
 
 ## Inputs / Outputs
 
@@ -54,13 +76,53 @@ This spec defines a three-surface model:
   - The player should not need to open Camp Management for routine awareness.
   - The player should not need to manage multiple lances here.
 - **Navigation**:
-  - Keep an entry to “Camp” (hub) and/or “Visit Camp” (deep).
-  - Keep an entry to “Decisions” (react).
-  - Keep quick “My Lance” interactions (roster glance, talk, welfare) if we decide they belong in the main loop.
+  - Keep an entry to **Camp** (Camp Menu (text): fast access to Camp Activities + Medical Tent).
+  - Keep an entry to **Decisions** (react).
+  - Keep an entry to **Camp Management** (deep, configure/manage).
+  - Keep an entry to **My Lance** (fast glance/interactions).
+  - Keep an entry to **Duties** but route it to **Camp Management** (because duties are configuration, not a frequent action).
+
+#### Main menu navigation list (always shown, grey-out with tooltip)
+We want the main menu to feel “complete” and predictable. The menu should always list the same navigation entries in the same order.
+
+Rule:
+- **All main navigation entries are always listed** in `enlisted_status`.
+- If the player cannot access an entry right now, it is **greyed out** and shows a **specific tooltip** explaining why and how to unlock it.
+
+Recommended main menu navigation entries (order):
+- **Camp** (opens the Camp Menu (text); contains Camp Activities + Medical Tent).
+- **Decisions** (react now; shows pending count).
+- **My Lance** (roster + interactions).
+- **Camp Management** (Gauntlet deep screen: orders/reports/army/duties).
+- **Duties** (shortcut into Camp Management duty assignment view).
+- **Medical Attention** (greyed if not injured/ill).
+- **Quartermaster** (greyed if not in a context where it makes sense / not enlisted).
+- **Service Records** (greyed if not enlisted).
+- **Leave / Discharge / Desert** (always shown; eligibility varies).
+
+Tooltip examples (keep short and explicit):
+- Camp locked: “You must be enlisted to access Camp.”
+- Duties locked: “Duties are assigned in Camp Management. Enlist to access duties.”
+- Medical locked: “You are in good health. No treatment needed.”
+- Quartermaster locked: “You can only visit the quartermaster when the camp is established / when permitted by rank.”
+
+#### Camp Menu (text) navigation list (always shown, grey-out with tooltip)
+Inside the **Camp Menu (text)** (`enlisted_camp_hub`), we want “do something now” actions to be immediately visible.
+
+Rule:
+- **All Camp Menu (text) entries are always listed**.
+- If an entry is not usable right now, it is **greyed out** with a tooltip explaining why.
+
+Recommended Camp Menu (text) entries (order):
+- **Camp Activities** (primary “do something now”).
+- **Medical Tent** (greyed if not injured/ill).
+- **Reports** (opens Camp Bulletin overlay: daily report / archive / categories).
+- **Camp Management** (deep config: orders/reports/army/duties).
+- **Service Records** (posting/faction/lifetime summary).
 
 Implementation notes:
 - `EnlistedNewsBehavior` already supports:
-  - A **Daily Brief** (stable per day).
+  - A **Daily Brief** (stable per day) and persistence helpers for “once-per-day” generation.
   - Kingdom + personal feeds (capped).
 - We should extend/consume simulation outputs to generate:
   - Lance headlines (“Two men wounded in the 3rd Lance.”).
@@ -141,6 +203,16 @@ Example (main menu paragraph excerpt):
   - Apply changes to internal state (escalation, fatigue, roster state, etc.).
   - Post a short “result” line back into the main menu digest.
 
+#### Compatibility / safety constraints (do not break other systems)
+We want this feature to be “high-impact gameplay, low-risk integration”.
+
+Rules:
+- **No hard overrides of native AI**: the Company “intelligence” layer should primarily **observe, summarize, and recommend**.
+- **Bounded world effects only**: when we do alter world state (combat/intel ops), effects must be **local, small, and temporary** (TTL measured in hours/days).
+- **Save-safe state**: persist only primitives (strings/ints) and bounded lists; avoid storing complex engine objects.
+- **UI does not author decisions**: UI reads state and routes actions; it never creates/queues decisions directly.
+- **Safe-to-show gating**: pushed decisions obey the existing “safe moment” checks (not in encounter/conversation, etc.).
+
 #### Decisions menu layout (Camp Life first)
 At the top of `enlisted_decisions`, show a compact **Camp Life dashboard** before listing choices.
 
@@ -154,6 +226,19 @@ Camp Life dashboard content (always at top):
 
 Implementation note:
 - The “last 30 days” stats require a small persistent **CampLifeLedger** (ring buffer of daily aggregates) so we can compute rolling totals cheaply and deterministically.
+
+CampLifeLedger (recommended minimal shape):
+- **Cadence**: one entry per in-game day (append/rollover once per day).
+- **Size**: fixed 30 (or 31) entries; overwrite oldest (ring buffer).
+- **Fields** (ints):
+  - `lostToday` (deaths)
+  - `woundedToday`
+  - `sickToday`
+  - `trainingIncidentsToday`
+  - (optional) `decisionsResolvedToday` / `highSignalDispatchesToday`
+- **Derived views**:
+  - rolling sum `lost30`, `wounded30`, `sick30`, `trainingIncidents30`
+  - current `woundedNow`, `sickNow` (from live state, not ledger)
 
 #### Categorized Decisions (organized by type)
 Below Camp Life, show decisions grouped into categories so the player can browse like a “tab” even in a menu list.
@@ -188,6 +273,27 @@ Pattern: operations decisions (combat/intel)
   - **Skirmish casualties**: remove a small number of low-tier troops from a target party (with risk of injuries on our side).
   - **Intel reveal**: add a report entry that names the party and estimates strength/route (even if we avoid direct world edits at first).
 - These should be implemented via a small “WorldEffects” layer with TTLs to avoid long-lived state and mod conflicts.
+
+WorldEffects layer (recommended safety design):
+- Stores temporary effects as primitives only:
+  - `effectId`, `targetPartyId` (string), `expiresAtDay/hour` (int), `magnitude` (int/float), `sourceEventId` (string)
+- Enforces strict caps:
+  - max active effects (e.g., 10–20)
+  - max TTL per effect (e.g., 6–48 hours)
+  - max magnitude (small numbers only)
+- Prefers **modelled** effects (movement penalty, morale pressure, intel visibility) over direct “force AI behavior” where possible.
+
+#### Decision option “impact preview” (make consequences legible)
+To make the system engaging, every decision option should communicate the stakes consistently.
+
+Convention:
+- Use existing authored fields where possible (`costs`, `rewards`, `risk`, `success_chance`, injury/illness risk).
+- Add an authoring-only “impact tag” in `metadata` (schema already includes a metadata block) when needed:
+  - Examples: `impact:slow_enemy`, `impact:intel_reveal`, `impact:discipline_risk`, `impact:lance_rep_gain`
+
+UI rule:
+- The Decisions tooltip (and Reports “Opportunities” list) should render a compact line:
+  - “Cost: … | Risk: … | Impact: …”
 
 #### Linking Company high-signal beats to Decisions and Events
 The high-signal Company states above are the primary “situation” inputs that can drive:
@@ -232,19 +338,20 @@ Examples (conceptual):
 - **Purpose**: the place for periodic “admin” actions:
   - Lance schedule policy toggles and knobs.
   - Multi-lance roster view (all lances in lord’s party).
-  - In-depth Reports (lance/company/kingdom categories).
+  - In-depth Reports (lance/company/kingdom categories) (may mirror Camp Bulletin categories later).
+- Duties configuration / assignment (moved here).
 - **Frequency**: the player should visit “every so often,” not as the default loop.
 
 ### D) Menu ownership and navigation consistency
-We must avoid conflicting routing for the camp hub.
+We must avoid conflicting routing for the Camp Menu (text) (`enlisted_camp_hub`).
 
 Current status:
-- The Camp hub menu id (`enlisted_camp_hub`) must have a single canonical owner.
-- In the current codebase, the hub is owned by the interface/menu behavior and other systems should only register submenus routed from it.
+- The **Camp Menu (text)** id (`enlisted_camp_hub`) must have a single canonical owner.
+- In the current codebase, this menu is owned by the interface/menu behavior and other systems should only register submenus routed from it.
 
 Rule:
-- There must be **one canonical owner** of the camp hub menu id (`enlisted_camp_hub`).
-- All other systems should register *submenus* and be routed to, but not re-register the hub.
+- There must be **one canonical owner** of the Camp Menu (text) id (`enlisted_camp_hub`).
+- All other systems should register *submenus* and be routed to, but not re-register the menu.
 
 ## Edge Cases
 - **Decision spam**: too many prompts in a short time window.
@@ -263,39 +370,139 @@ Rule:
 - **Main menu feels alive**:
   - `enlisted_status` shows a short digest that updates at least daily and includes lance/camp happenings.
   - Digest lines are readable, not walls of text, and remain stable for the day where appropriate.
+- **Main menu navigation is predictable**:
+  - `enlisted_status` always shows the full navigation list (no “missing menu options”).
+  - Inaccessible items are greyed out and provide tooltips explaining why.
 - **Decisions are the “react now” layer**:
   - When time-sensitive events occur, the player can resolve them via `enlisted_decisions` without opening Camp Management.
   - Resolution posts a short follow-up line to the digest.
-- **Camp is the “configure/manage” layer**:
+- **Camp Management is the “configure/manage” layer**:
   - Lance schedule toggles and multi-lance management live in Camp Management.
   - Camp Reports provide an in-depth view beyond the digest.
-- **No duplicate camp hub**:
+- **No duplicate Camp Menu (text)**:
   - Only one system registers `enlisted_camp_hub`; navigation is consistent.
 
-## Open Questions (answer before implementation)
-1) **Main menu news tone**: should the digest be mostly:
-   - **Diegetic** (“The lads grumble by the fires…”) OR
-   - **Operational with light RP** (“Morale low — men grumble by the fires.”)?
+## Decisions Locked In (implementation defaults)
 
-2) **Decision cadence / queueing**: should we:
-   - **Allow a small queue** (cap N pending, e.g. 3–5), OR
-   - **Enforce only one pending decision at a time** (next decision waits)?
+These were open questions; we’ve now locked defaults so implementation can proceed without ambiguity.
 
-3) **Daily Summary detail**: should the once-per-day summary be:
-   - **1 line total** (very compact), OR
-   - **Daily Report excerpt (3–6 lines)** in `enlisted_status` + full report in Reports (recommended)?
+1) **News tone (Daily Report + excerpt)**:
+   - **Operational + light RP** (clear info with a little flavor).
+
+2) **Decision cadence / queueing**:
+   - **Queue a few pending decisions** so the player can handle them when ready.
+   - **Cap:** 5 pending decisions (FIFO by “time added”; discard/merge duplicates via dedupe keys where possible).
 
 ## Implementation Plan (Company Daily Report + Rumors + Decision hooks)
 This plan is scoped to the player’s **Company** (enlisted lord’s party) and the player’s **Lance**, with kingdom dispatch as context.
+
+### Phase 0 — Alignment + guardrails (before building features)
+- Confirm the Decisions schema fields we will rely on are already present (they are today):
+  - `delivery.menu_section` for categories
+  - `narrative_source` + tier gates for rank-gated delegation
+  - `metadata` for authoring hints (impact tags)
+- Confirm we can keep the system safe:
+  - Pushed decisions already have safe-to-show gating and pacing protections.
+  - We will not introduce AI overrides; any world effects will be TTL and bounded.
+
+### Phase 0.5 — Menu reshape (prep for “fleshed out, organized” UI)
+Goal: restructure the navigation so the main loop is fast and the deep configuration lives in Camp Management.
+
+Deliverables:
+- Update `enlisted_status` to show the full navigation list (always shown, grey-out with tooltip).
+- Keep **Camp** as the main-menu entry point for camp-facing actions.
+- Inside the **Camp Menu (text)** (`enlisted_camp_hub`), list **Camp Activities** and **Medical Tent** as primary options (always shown, tooltip-gated).
+- Move **Duties** management into **Camp Management** (and make the main menu Duty entry route there).
+- Keep menu ownership consistent: the Camp Menu (text) (`enlisted_camp_hub`) remains single-owner; other systems route through it.
+
+Implementation checklist (Phase 0.5)
+- **Main Menu (text)** (`enlisted_status`):
+  - Add/show the navigation entries listed above (even when disabled).
+  - Use grey-out + tooltips to explain availability (do not hide).
+- **Camp Menu (text)** (`enlisted_camp_hub`):
+  - Ensure “Camp Activities” and “Medical Tent” are explicit menu options (always shown; tooltip-gated).
+  - Ensure “Reports” clearly opens the Camp Bulletin overlay (not a different menu).
+  - Keep this menu single-owner (`EnlistedMenuBehavior` owns the menu id; other systems only add submenus).
 
 ### Phase 1 — Data model + template library
 - **Daily snapshot struct**:
   - Create `DailyReportSnapshot` and small enums/bands (`ThreatBand`, `FoodBand`, `MoraleBand`, `HealthDeltaBand`, `TrainingTag`, etc.).
   - Store only what we need to summarize; keep it serializable / save-safe.
+- **CampLifeLedger**:
+  - Implement the 30-day rolling ledger for deaths/sick/wounded/training incidents (primitives only).
 - **Template library**:
   - Create a small template set per section/category: Lance health, Lance training, Company movement/needs, Company threat/battle prep, Kingdom headline, Rumor.
   - Templates accept placeholders (lord name, settlement, counts, etc.).
   - Add `Confidence → hedge phrase` mapping table.
+
+Implementation checklist (Phase 1)
+- **Add minimal types (save-safe, primitives-first)**:
+  - Put them under a Camp News namespace (example): `src/Features/Interface/News/Models/`
+  - Keep them independent of engine objects (no `Hero`, `MobileParty`, `Settlement`, etc. stored inside state).
+
+Suggested minimal data shapes:
+
+```csharp
+// Bands keep the prose stable; we avoid dumping raw numbers into the main menu.
+public enum ThreatBand { Unknown = 0, Low, Medium, High }
+public enum FoodBand { Unknown = 0, Plenty, Thin, Low, Critical }
+public enum MoraleBand { Unknown = 0, High, Steady, Low, Breaking }
+
+// The factual “input” for one in-game day. This is NOT player-facing text yet.
+public sealed class DailyReportSnapshot
+{
+    public int DayNumber { get; set; }                 // (int)CampaignTime.Now.ToDays
+    public string LordPartyId { get; set; }            // string id only (if needed for dedupe)
+
+    // Lance deltas (day-over-day)
+    public int WoundedDelta { get; set; }
+    public int SickDelta { get; set; }
+    public int DeadDelta { get; set; }
+    public int ReplacementsDelta { get; set; }
+
+    // Company bands (best-effort)
+    public ThreatBand Threat { get; set; }
+    public FoodBand Food { get; set; }
+    public MoraleBand Morale { get; set; }
+
+    // Optional tags (string enums are OK too)
+    public string ObjectiveTag { get; set; }           // e.g. "Traveling", "Besieging"
+    public string LastStopTag { get; set; }            // e.g. "resupply", "recruit"
+}
+
+// 30-day rolling ledger (ring buffer). All ints.
+public sealed class CampLifeLedger
+{
+    public int Capacity { get; set; } = 30;
+    public int HeadIndex { get; set; }                 // current write position
+    public DailyAggregate[] Days { get; set; }         // fixed array length = Capacity
+}
+
+public struct DailyAggregate
+{
+    public int DayNumber;
+    public int LostToday;
+    public int WoundedToday;
+    public int SickToday;
+    public int TrainingIncidentsToday;
+    public int DecisionsResolvedToday;
+}
+```
+
+- **Template library structure**:
+  - Create a small “template id → string format” table per category (operational + light RP).
+  - Do not generate free-form text; select templates + fill placeholders.
+
+```csharp
+public enum ConfidenceBand { Low, Medium, High }
+
+public sealed class NewsTemplate
+{
+    public string Id { get; set; }           // stable id for debugging/telemetry
+    public string Format { get; set; }       // e.g. "Rations look {FOOD_DESC}. {HEDGE} we march toward {SETTLEMENT}."
+    public string Category { get; set; }     // "lance" | "company" | "kingdom" | "rumor"
+}
+```
 
 ### Phase 2 — Daily generation + persistence (no spam)
 - Add a “generate-once-per-day” entry point (reusing `EnlistedNewsBehavior` daily infrastructure):
@@ -306,12 +513,67 @@ This plan is scoped to the player’s **Company** (enlisted lord’s party) and 
   - Pick best N candidates using priority + severity + freshness until we fill the excerpt/report limits.
   - Convert candidate → template → localized string using confidence hedging.
 
+Implementation checklist (Phase 2)
+- **Persisted state (save-safe, bounded)**:
+  - Put under `src/Features/Interface/News/State/` (or keep nested inside `EnlistedNewsBehavior` if you prefer one behavior).
+  - Persist only primitives and short arrays/lists.
+
+Suggested persisted state shape:
+
+```csharp
+public sealed class CampNewsState
+{
+    // “Generate once per in-game day” gate.
+    public int LastGeneratedDayNumber { get; set; } = -1;
+
+    // A small archive (bounded). Keep last N day reports.
+    public int ArchiveCapacity { get; set; } = 7;
+    public DailyReportRecord[] Archive { get; set; }   // fixed length; overwrite oldest
+    public int ArchiveHeadIndex { get; set; }
+
+    public CampLifeLedger Ledger { get; set; }         // from Phase 1
+}
+
+public sealed class DailyReportRecord
+{
+    public int DayNumber { get; set; }
+    public string[] Lines { get; set; }                // already templated/localized strings
+}
+```
+
+- **Generation entry point**:
+  - Trigger on a deterministic cadence (recommended: daily tick).
+  - If you must generate lazily (on menu open), still gate by `LastGeneratedDayNumber`.
+
+- **Candidate selection**:
+  - Use a small candidate struct with `severity`, `freshness`, `confidence`, `dedupeKey`.
+  - After selecting candidates, template them into final `Lines[]`.
+
 ### Phase 3 — Main menu surface (Today’s Report paragraph excerpt)
 - Ensure `enlisted_status` displays Today’s Report excerpt as a **single paragraph** via `EnlistedNewsBehavior` formatting.
 - If needed, add a short “Recent updates” header under the Daily Summary later; do not expand beyond readability limits.
 
+Implementation checklist (Phase 3)
+- **Rendering rule**:
+  - Main menu excerpt should be generated from the `DailyReportRecord.Lines` archive entry for “today”.
+  - Render as **one paragraph** (join 2–5 short sentences) and cap length.
+
+Suggested formatting rules:
+- Join lines with spaces and convert any “category headers” into gentle separators (no bullet lists).
+- Cap at a hard limit (example: 350–500 chars) and truncate with `…` if needed.
+- If no report exists yet (early init), show a stable fallback line (“Quiet day. Drills and routine.”).
+
 ### Phase 3.5 — Reports surface (full Daily Report)
 - Add/extend the Reports UI to show the **full Daily Report** (multi-line / categorized), and optionally a small archive.
+
+Implementation checklist (Phase 3.5)
+- **Which “Reports” this refers to**:
+  - For this spec, “Reports” means the **Camp Bulletin overlay** opened from Camp Menu → “Reports”.
+  - Camp Management Reports tab can mirror later, but the Bulletin is the primary “read the report” surface.
+
+- **Minimum UI requirement**:
+  - Show today’s full `DailyReportRecord.Lines` as a multi-line view.
+  - Optional: show last N days (archive) with a simple day selector.
 
 ### Phase 4 — News events feeding the report (facts)
 - Add fact producers that populate the snapshot inputs:
@@ -319,6 +581,28 @@ This plan is scoped to the player’s **Company** (enlisted lord’s party) and 
   - **Lance**: wounded/sick/dead deltas, training tag (drill/inspection), discipline tag.
   - **Kingdom**: reuse kingdom feed headlines already tracked.
 - Keep producers read-only where possible; they should *observe* and *summarize*, not override AI.
+
+Implementation checklist (Phase 4)
+- **Use a producer pattern** so adding new facts doesn’t sprawl:
+
+```csharp
+public interface IDailyReportFactProducer
+{
+    void Contribute(DailyReportSnapshot snapshot, CampNewsContext context);
+}
+
+public sealed class CampNewsContext
+{
+    public int DayNumber { get; set; }
+    // Live engine objects can exist here (not persisted).
+    // e.g. MobileParty current lord party, player status, etc.
+}
+```
+
+- **Start with 3 producers** (enough to ship):
+  - Company movement/objective producer (best-effort).
+  - Lance health delta producer (wounded/sick/dead/replacements).
+  - Kingdom headline producer (reusing existing feed logic).
 
 ### Phase 5 — Decision hooks (RPG/Text events)
 - Define a small set of “situation flags” derived from the same snapshot (examples):
@@ -328,7 +612,44 @@ This plan is scoped to the player’s **Company** (enlisted lord’s party) and 
   - Push **automatic** inquiry decisions for urgent situations (per `docs/StoryBlocks/decision-events-spec.md`).
 - When a decision resolves, it should:
   - Update underlying state (fatigue/morale/health/etc.).
-  - Post a short dispatch follow-up (high-signal), and influence next day’s Daily Summary.
+  - Post a short dispatch follow-up (high-signal), and influence next day’s Daily Report.
+
+Implementation checklist (Phase 5)
+- **Don’t create decisions in UI code**. Use a small “situation flag” provider that updates evaluator context.
+
+```csharp
+public sealed class SituationFlags
+{
+    public bool CompanyFoodCritical { get; set; }
+    public bool CompanyThreatHigh { get; set; }
+    public bool LanceShortHanded { get; set; }
+    // ... keep it small and stable
+}
+```
+
+- **Where to set flags**:
+  - Prefer: compute from `DailyReportSnapshot` (Phase 4 output) + current live state (for “right now” conditions).
+  - Expose into the decision evaluator context in one place (Behavior-level).
+
+- **Outcome logging (required for “Recent Outcomes”)**:
+  - Add a small ring buffer of resolved decision outcomes (save-safe strings only).
+
+```csharp
+public sealed class DecisionOutcomeLog
+{
+    public int Capacity { get; set; } = 20;
+    public int HeadIndex { get; set; }
+    public DecisionOutcomeRecord[] Items { get; set; }
+}
+
+public sealed class DecisionOutcomeRecord
+{
+    public int DayNumber { get; set; }
+    public string EventId { get; set; }
+    public string OptionId { get; set; }           // or option index if that’s what we have
+    public string ResultText { get; set; }         // short, player-facing
+}
+```
 
 ### Phase 5.5 — Make Decisions feel “important” via Reports + Daily Report
 Objective: the main menu Daily Report and Reports tab should *point at choices* and *show consequences*, so the player feels agency day-to-day.
@@ -349,9 +670,22 @@ Design additions:
 Implementation notes:
 - Today, decision resolution applies effects but does not persist a readable “outcome log”. We will need to add a small persistent “decision outcome feed” (strings/ids only) to support “Recent Outcomes” and the Daily Report’s sense of continuity.
 
+### Phase 5.6 — Centralize “dynamic availability” via trigger tokens (avoid scattered logic)
+Many of the most fun, dynamic decisions (e.g., “screen a nearby enemy party”) should appear based on real context.
+
+Rule:
+- Add new availability conditions as **trigger tokens** (evaluated by the existing token evaluator) rather than one-off UI checks.
+
+Examples (conceptual tokens to add):
+- `nearby_enemy_party` / `nearby_enemy_party:range<XX`
+- `nearby_enemy_party:can_intercept`
+- `company_threat:high` (derived band)
+
+This keeps authoring consistent and avoids fragile duplication across UI/behaviors.
+
 ### Phase 6 — Acceptance checks (behavioral)
-- Daily Summary appears once/day and stays stable through the day.
-- Summary includes grounded Lance/Company/Kingdom+Rumor content.
+- Daily Report is generated once/day and stays stable through the day.
+- Daily Report includes grounded Lance/Company/Kingdom+Rumor content.
 - No dispatch spam: repeated checks update one story via dedupe keys; only threshold crossings emit new high-signal items.
 - Decisions are driven by situation flags; UI code does not create decisions.
 

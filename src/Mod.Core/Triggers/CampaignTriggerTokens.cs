@@ -75,6 +75,7 @@ namespace Enlisted.Mod.Core.Triggers
 
         // Numeric comparison prefixes used by metadata-driven content (Phase 5)
         public const string DaysFromTown = "days_from_town";
+        public const string Gold = "gold";
         public const string LogisticsStrain = "logistics_strain";
         public const string MoraleShock = "morale_shock";
         public const string PayTension = "pay_tension";
@@ -85,6 +86,11 @@ namespace Enlisted.Mod.Core.Triggers
 
         // Prefix tokens (pattern-based)
         public const string HasDutyPrefix = "has_duty:";
+
+        // Story flags (Decision Events): allow authored content to require/negate a named story flag.
+        // Flags are free-form (set/cleared by events), so we use explicit prefixes rather than enumerating them.
+        public const string FlagPrefix = "flag:";
+        public const string NotFlagPrefix = "not:flag:";
 
         // Decision Events (Track D2): Activity-aware event tokens
         // Used by decision events to match the player's current schedule activity
@@ -187,6 +193,16 @@ namespace Enlisted.Mod.Core.Triggers
                 return trimmed.Length > HasDutyPrefix.Length;
             }
 
+            if (trimmed.StartsWith(FlagPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed.Length > FlagPrefix.Length;
+            }
+
+            if (trimmed.StartsWith(NotFlagPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return trimmed.Length > NotFlagPrefix.Length;
+            }
+
             // Activity-aware tokens (Track D2: Decision Events)
             if (trimmed.StartsWith(CurrentActivityPrefix, StringComparison.OrdinalIgnoreCase))
             {
@@ -204,6 +220,7 @@ namespace Enlisted.Mod.Core.Triggers
                 trimmed.StartsWith(DaysSincePromotion, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(DaysEnlisted, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(DaysFromTown, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(Gold, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(LogisticsStrain, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(MoraleShock, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(PayTension, StringComparison.OrdinalIgnoreCase) ||
@@ -233,6 +250,16 @@ namespace Enlisted.Mod.Core.Triggers
                 return true;
             }
 
+            if (trimmed.StartsWith(FlagPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (trimmed.StartsWith(NotFlagPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             // Activity-aware tokens (Track D2: Decision Events)
             if (trimmed.StartsWith(CurrentActivityPrefix, StringComparison.OrdinalIgnoreCase))
             {
@@ -249,6 +276,7 @@ namespace Enlisted.Mod.Core.Triggers
                 trimmed.StartsWith(DaysSincePromotion, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(DaysEnlisted, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(DaysFromTown, StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith(Gold, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(LogisticsStrain, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(MoraleShock, StringComparison.OrdinalIgnoreCase) ||
                 trimmed.StartsWith(PayTension, StringComparison.OrdinalIgnoreCase) ||

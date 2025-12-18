@@ -309,8 +309,8 @@
     <string id="Enlisted_Menu_VisitSettlementNamed" text="Visit {SETTLEMENT}" />
 
     <!-- Menu Symbols & Duties -->
-    <string id="Enlisted_Symbol_Selected" text="âœ“ {NAME}" />
-    <string id="Enlisted_Symbol_Unselected" text="â—‹ {NAME}" />
+    <string id="Enlisted_Symbol_Selected" text="✓ {NAME}" />
+    <string id="Enlisted_Symbol_Unselected" text="○ {NAME}" />
     <string id="Enlisted_Duty_Name_Enlisted" text="Enlisted" />
     <string id="Enlisted_Duty_Name_Forager" text="Forager" />
     <string id="Enlisted_Duty_Name_Sentry" text="Sentry" />
@@ -510,12 +510,12 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- QUARTERMASTER - Purchase & Buyback -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <string id="qm_intro_dialogue" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, Iâ€™ll buy it back.&quot;" />
-    <string id="qm_intro_dialogue_fine" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, Iâ€™ll buy it back.&quot;" />
-    <string id="qm_intro_dialogue_tense" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. Donâ€™t waste my time.&quot;" />
-    <string id="qm_intro_dialogue_sour" text="&quot;Need kit? Buy it here. Supplyâ€™s tight and my patience is thinner. Pay what the ledger says.&quot;" />
-    <string id="qm_intro_dialogue_predatory" text="&quot;Need kit? Buy it here. Wagons are dry and prices rise. If you donâ€™t like it, march naked.&quot;" />
-    <string id="qm_cannot_afford" text="You canâ€™t afford this. Cost: {COST} denars." />
+    <string id="qm_intro_dialogue" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, I'll buy it back.&quot;" />
+    <string id="qm_intro_dialogue_fine" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. If you want to sell, I'll buy it back.&quot;" />
+    <string id="qm_intro_dialogue_tense" text="&quot;Need kit? Buy it here. Prices are set by the quartermaster. Don't waste my time.&quot;" />
+    <string id="qm_intro_dialogue_sour" text="&quot;Need kit? Buy it here. Supply's tight and my patience is thinner. Pay what the ledger says.&quot;" />
+    <string id="qm_intro_dialogue_predatory" text="&quot;Need kit? Buy it here. Wagons are dry and prices rise. If you don't like it, march naked.&quot;" />
+    <string id="qm_cannot_afford" text="You can't afford this. Cost: {COST} denars." />
     <string id="qm_equipment_issued_buy" text="Purchased {ITEM_NAME} for {COST} denars." />
     <string id="qm_item_limit_reached" text="You already have {COUNT} of {ITEM_NAME}." />
     <string id="qm_equipment_issued" text="Purchased: {ITEM_NAME}." />
@@ -570,7 +570,7 @@
 
     <!-- Story: After Hours — Lance Drill -->
     <string id="ll_story_lance_drill_night_sparring_title" text="After Hours — Lance Drill" />
-    <string id="ll_story_lance_drill_night_sparring_body" text="The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someoneâ€™s bleeding. Stillâ€¦ good practice is hard to come by on campaign." />
+    <string id="ll_story_lance_drill_night_sparring_body" text="The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someone's bleeding. Still... good practice is hard to come by on campaign." />
     <string id="ll_story_lance_drill_night_sparring_opt_lead_text" text="Lead the drill (Athletics + Polearm)" />
     <string id="ll_story_lance_drill_night_sparring_opt_lead_hint" text="Spend a little energy to build real soldiering skills." />
     <string id="ll_story_lance_drill_night_sparring_opt_delegate_text" text="Let them run it without you (Leadership)" />
@@ -590,15 +590,15 @@
 
     <!-- Story: The Ledger and the Smile -->
     <string id="ll_story_lance_quartermaster_ledger_skim_title" text="The Ledger and the Smile" />
-    <string id="ll_story_lance_quartermaster_ledger_skim_body" text="The quartermasterâ€™s clerk doesnâ€™t look up as you approach. He just taps the ledger with a dirty nail.\n\n&quot;Thereâ€™s the price,&quot; he says. Then, quieter: &quot;Unless weâ€™re friends.&quot;" />
+    <string id="ll_story_lance_quartermaster_ledger_skim_body" text="The quartermaster's clerk doesn't look up as you approach. He just taps the ledger with a dirty nail.\n\n&quot;There's the price,&quot; he says. Then, quieter: &quot;Unless we're friends.&quot;" />
     <string id="ll_story_lance_quartermaster_ledger_skim_opt_refuse_text" text="Refuse. Pay the posted price." />
     <string id="ll_story_lance_quartermaster_ledger_skim_opt_refuse_hint" text="No heat. No favors owed." />
     <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_text" text="Slip him a little (Roguery)" />
-    <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_hint" text="A small bribe. Lower prices todayâ€¦ and eyes on you tomorrow." />
+    <string id="ll_story_lance_quartermaster_ledger_skim_opt_tip_hint" text="A small bribe. Lower prices today... and eyes on you tomorrow." />
 
     <!-- Story: A Song for the Cold -->
     <string id="ll_story_morale_campfire_song_title" text="A Song for the Cold" />
-    <string id="ll_story_morale_campfire_song_body" text="The night wind cuts through the tents. Someone in your lance starts a low song to keep spirits up.\n\nA few voices join in—awkward at first—then steadier. You can let it happenâ€¦ or you can take the lead." />
+    <string id="ll_story_morale_campfire_song_body" text="The night wind cuts through the tents. Someone in your lance starts a low song to keep spirits up.\n\nA few voices join in—awkward at first—then steadier. You can let it happen... or you can take the lead." />
     <string id="ll_story_morale_campfire_song_opt_lead_text" text="Lead the song (Charm + Leadership)" />
     <string id="ll_story_morale_campfire_song_opt_lead_hint" text="Spend a little energy to lift the lance." />
     <string id="ll_story_morale_campfire_song_opt_listen_text" text="Let the lads carry it" />
@@ -616,7 +616,7 @@
 
     <!-- Story: The Mess Line -->
     <string id="ll_story_discipline_mess_line_fight_title" text="The Mess Line" />
-    <string id="ll_story_discipline_mess_line_fight_body" text="The cookâ€™s pot is thin and tempers are thinner. Two men from your lance start shoving in the line.\n\nIf this turns into a brawl, the serjeant will make an example of someone—maybe the whole lance." />
+    <string id="ll_story_discipline_mess_line_fight_body" text="The cook's pot is thin and tempers are thinner. Two men from your lance start shoving in the line.\n\nIf this turns into a brawl, the serjeant will make an example of someone—maybe the whole lance." />
     <string id="ll_story_discipline_mess_line_fight_opt_stepin_text" text="Step in and put a stop to it (Leadership)" />
     <string id="ll_story_discipline_mess_line_fight_opt_stepin_hint" text="Set the tone before the camp does it for you." />
     <string id="ll_story_discipline_mess_line_fight_opt_breakit_text" text="Pull them apart and move on" />
@@ -626,7 +626,7 @@
 
     <!-- Story: Dawn Inspection -->
     <string id="ll_story_discipline_dawn_inspection_title" text="Dawn Inspection" />
-    <string id="ll_story_discipline_dawn_inspection_body" text="The serjeantâ€™s boots crunch frost as he walks the line. Heâ€™s looking for any excuse to punish slackness.\n\nYour kit is serviceableâ€¦ but you could make it sharp enough that he doesnâ€™t linger on your lance." />
+    <string id="ll_story_discipline_dawn_inspection_body" text="The serjeant's boots crunch frost as he walks the line. He's looking for any excuse to punish slackness.\n\nYour kit is serviceable... but you could make it sharp enough that he doesn't linger on your lance." />
     <string id="ll_story_discipline_dawn_inspection_opt_polish_text" text="Put in the extra work (Steward)" />
     <string id="ll_story_discipline_dawn_inspection_opt_polish_hint" text="Costs energy, but keeps attention off your men." />
     <string id="ll_story_discipline_dawn_inspection_opt_standard_text" text="Do the standard checks" />
@@ -634,7 +634,7 @@
 
     <!-- Story: The Aid Tent -->
     <string id="ll_story_medical_aid_tent_shift_title" text="The Aid Tent" />
-    <string id="ll_story_medical_aid_tent_shift_body" text="The aid tent stinks of boiled linen and old blood. The medic is short-handed, and your lance is close enough to be asked.\n\nYou can spare the timeâ€¦ or you can pretend you didnâ€™t hear." />
+    <string id="ll_story_medical_aid_tent_shift_body" text="The aid tent stinks of boiled linen and old blood. The medic is short-handed, and your lance is close enough to be asked.\n\nYou can spare the time... or you can pretend you didn't hear." />
     <string id="ll_story_medical_aid_tent_shift_opt_help_text" text="Help for a while (Medicine)" />
     <string id="ll_story_medical_aid_tent_shift_opt_help_hint" text="Costs energy. You learn useful work." />
     <string id="ll_story_medical_aid_tent_shift_opt_watch_text" text="Watch and take notes" />
@@ -644,7 +644,7 @@
 
     <!-- Story: Bandage Drill -->
     <string id="ll_story_medical_bandage_drill_title" text="Bandage Drill" />
-    <string id="ll_story_medical_bandage_drill_body" text="As dusk settles, the medic shows your lance how to bind a wound properly.\n\nItâ€™s not glory, but itâ€™s the difference between a man walking tomorrow and a man rotting in a ditch." />
+    <string id="ll_story_medical_bandage_drill_body" text="As dusk settles, the medic shows your lance how to bind a wound properly.\n\nIt's not glory, but it's the difference between a man walking tomorrow and a man rotting in a ditch." />
     <string id="ll_story_medical_bandage_drill_opt_serious_text" text="Take it seriously (Medicine)" />
     <string id="ll_story_medical_bandage_drill_opt_serious_hint" text="A little effort now saves pain later." />
     <string id="ll_story_medical_bandage_drill_opt_half_text" text="Half-listen and nod" />
@@ -883,7 +883,7 @@
     <string id="cond_treat_herbal_hint" text="Costs coin. Solid recovery boost." />
 
     <string id="cond_treatment_applied" text="Treatment applied." />
-    <string id="cond_recovered" text="Youâ€™ve recovered." />
+    <string id="cond_recovered" text="You've recovered." />
 
     <string id="cond_injury_generic" text="Injury" />
     <string id="cond_illness_generic" text="Illness" />
@@ -1101,16 +1101,16 @@
 
     <!-- Heat thresholds -->
     <string id="ll_thr_heat_warning_title" text="Watched Eyes" />
-    <string id="ll_thr_heat_warning_body" text="A clerkâ€™s gaze lingers a little too long. Your name is on the slate now—and the slate gets read." />
+    <string id="ll_thr_heat_warning_body" text="A clerk's gaze lingers a little too long. Your name is on the slate now—and the slate gets read." />
     <string id="ll_thr_heat_warning_opt_clean_text" text="Keep your nose clean." />
     <string id="ll_thr_heat_warning_opt_clean_hint" text="Back away from the easy angles." />
     <string id="ll_thr_heat_warning_opt_clean_result" text="You make a point of being seen doing things right." />
     <string id="ll_thr_heat_warning_opt_shrug_text" text="Smile and move on." />
-    <string id="ll_thr_heat_warning_opt_shrug_hint" text="If theyâ€™re watching, let them watch." />
-    <string id="ll_thr_heat_warning_opt_shrug_result" text="You carry on, but the eyes donâ€™t leave." />
+    <string id="ll_thr_heat_warning_opt_shrug_hint" text="If they're watching, let them watch." />
+    <string id="ll_thr_heat_warning_opt_shrug_result" text="You carry on, but the eyes don't leave." />
 
     <string id="ll_thr_heat_shakedown_title" text="Shakedown" />
-    <string id="ll_thr_heat_shakedown_body" text="A hard hand stops you by the wagons. â€œInspection. Now.â€ This isnâ€™t random. Someone remembered your name." />
+    <string id="ll_thr_heat_shakedown_body" text="A hard hand stops you by the wagons. &quot;Inspection. Now.&quot; This isn't random. Someone remembered your name." />
     <string id="ll_thr_heat_shakedown_opt_comply_text" text="Comply." />
     <string id="ll_thr_heat_shakedown_opt_comply_hint" text="Take the heat and keep it survivable." />
     <string id="ll_thr_heat_shakedown_opt_comply_result" text="They find nothing worth hanging you for. This time." />
@@ -1119,29 +1119,29 @@
     <string id="ll_thr_heat_shakedown_opt_pay_result" text="The hand relaxes. The inspection ends early." />
 
     <string id="ll_thr_heat_audit_title" text="Audit" />
-    <string id="ll_thr_heat_audit_body" text="A thin man with ink-stained fingers presents a list of numbers that donâ€™t add up. â€œExplain this.â€" />
+    <string id="ll_thr_heat_audit_body" text="A thin man with ink-stained fingers presents a list of numbers that don't add up. &quot;Explain this.&quot;" />
     <string id="ll_thr_heat_audit_opt_cooperate_text" text="Cooperate and explain." />
     <string id="ll_thr_heat_audit_opt_cooperate_hint" text="Make it boring. Make it plausible." />
-    <string id="ll_thr_heat_audit_opt_cooperate_result" text="The questions end. The suspicion doesnâ€™t." />
+    <string id="ll_thr_heat_audit_opt_cooperate_result" text="The questions end. The suspicion doesn't." />
     <string id="ll_thr_heat_audit_opt_confess_text" text="Confess the smallest version of it." />
     <string id="ll_thr_heat_audit_opt_confess_hint" text="Offer a clean ending to a dirty thread." />
     <string id="ll_thr_heat_audit_opt_confess_result" text="You take the hit, and the ledger closes—mostly." />
 
     <string id="ll_thr_heat_exposed_title" text="Exposed" />
-    <string id="ll_thr_heat_exposed_body" text="They have the proof. The room is quiet enough to hear the quill scratch. â€œSign here.â€" />
+    <string id="ll_thr_heat_exposed_body" text="They have the proof. The room is quiet enough to hear the quill scratch. &quot;Sign here.&quot;" />
     <string id="ll_thr_heat_exposed_opt_fine_text" text="Pay the fine and accept the punishment." />
     <string id="ll_thr_heat_exposed_opt_fine_hint" text="Lose coin now to keep your legs." />
     <string id="ll_thr_heat_exposed_opt_fine_result" text="It hurts, but it ends. For now." />
     <string id="ll_thr_heat_exposed_opt_deny_text" text="Deny it." />
     <string id="ll_thr_heat_exposed_opt_deny_hint" text="Make them work for it." />
-    <string id="ll_thr_heat_exposed_opt_deny_result" text="You walk out, but you donâ€™t walk away clean." />
+    <string id="ll_thr_heat_exposed_opt_deny_result" text="You walk out, but you don't walk away clean." />
 
     <!-- Discipline thresholds -->
     <string id="ll_thr_disc_extra_title" text="Extra Duty" />
-    <string id="ll_thr_disc_extra_body" text="Someone hands you a task nobody volunteers for. â€œYouâ€™ll learn punctuality the hard way.â€" />
+    <string id="ll_thr_disc_extra_body" text="Someone hands you a task nobody volunteers for. &quot;You'll learn punctuality the hard way.&quot;" />
     <string id="ll_thr_disc_extra_opt_do_text" text="Do the duty." />
     <string id="ll_thr_disc_extra_opt_do_hint" text="Take your lumps and move on." />
-    <string id="ll_thr_disc_extra_opt_do_result" text="You finish it. Youâ€™re tired, but the mark eases." />
+    <string id="ll_thr_disc_extra_opt_do_result" text="You finish it. You're tired, but the mark eases." />
     <string id="ll_thr_disc_extra_opt_mouth_text" text="Mouth off." />
     <string id="ll_thr_disc_extra_opt_mouth_hint" text="Turn a punishment into a statement." />
     <string id="ll_thr_disc_extra_opt_mouth_result" text="The statement is noted. So is your name." />
@@ -1150,7 +1150,7 @@
     <string id="ll_thr_disc_hearing_body" text="You stand before a small circle of authority. No shouting. Just questions." />
     <string id="ll_thr_disc_hearing_opt_own_text" text="Own it." />
     <string id="ll_thr_disc_hearing_opt_own_hint" text="Straight answers, fewer surprises." />
-    <string id="ll_thr_disc_hearing_opt_own_result" text="They donâ€™t forgive, but they move on." />
+    <string id="ll_thr_disc_hearing_opt_own_result" text="They don't forgive, but they move on." />
     <string id="ll_thr_disc_hearing_opt_blame_text" text="Blame someone else." />
     <string id="ll_thr_disc_hearing_opt_blame_hint" text="Save yourself. Pay later." />
     <string id="ll_thr_disc_hearing_opt_blame_result" text="You keep your skin. You lose some of your people." />
@@ -1159,7 +1159,7 @@
     <string id="ll_thr_disc_blocked_body" text="Word comes down: no advancement while your discipline is in question. The road forward is closed—for now." />
     <string id="ll_thr_disc_blocked_opt_accept_text" text="Accept it." />
     <string id="ll_thr_disc_blocked_opt_accept_hint" text="Keep your head down. Serve clean." />
-    <string id="ll_thr_disc_blocked_opt_accept_result" text="It stings, but itâ€™s clear what you must do." />
+    <string id="ll_thr_disc_blocked_opt_accept_result" text="It stings, but it's clear what you must do." />
     <string id="ll_thr_disc_blocked_opt_volunteer_text" text="Volunteer for an unpleasant duty." />
     <string id="ll_thr_disc_blocked_opt_volunteer_hint" text="Earn your way back fast." />
     <string id="ll_thr_disc_blocked_opt_volunteer_result" text="You pay in sweat, and the pressure eases." />
@@ -1168,14 +1168,14 @@
     <string id="ll_thr_disc_discharge_body" text="You get one chance to speak before the paper is signed. The room waits." />
     <string id="ll_thr_disc_discharge_opt_plead_text" text="Plead your case." />
     <string id="ll_thr_disc_discharge_opt_plead_hint" text="Promise clean service and mean it." />
-    <string id="ll_thr_disc_discharge_opt_plead_result" text="They choose punishment over discharge. Youâ€™re still in it." />
+    <string id="ll_thr_disc_discharge_opt_plead_result" text="They choose punishment over discharge. You're still in it." />
     <string id="ll_thr_disc_discharge_opt_defy_text" text="Defy them." />
     <string id="ll_thr_disc_discharge_opt_defy_hint" text="If they want your respect, they can earn it." />
     <string id="ll_thr_disc_discharge_opt_defy_result" text="The decision hardens. So do the consequences." />
 
     <!-- Reputation thresholds -->
     <string id="ll_thr_rep_trusted_title" text="Trusted" />
-    <string id="ll_thr_rep_trusted_body" text="A lance mate pulls you aside. â€œI trust you. Donâ€™t make me regret it.â€" />
+    <string id="ll_thr_rep_trusted_body" text="A lance mate pulls you aside. &quot;I trust you. Don't make me regret it.&quot;" />
     <string id="ll_thr_rep_trusted_opt_help_text" text="Help." />
     <string id="ll_thr_rep_trusted_opt_help_hint" text="Pay trust forward." />
     <string id="ll_thr_rep_trusted_opt_help_result" text="The bond tightens." />
@@ -1184,13 +1184,13 @@
     <string id="ll_thr_rep_trusted_opt_decline_result" text="Trust is still there—thinner." />
 
     <string id="ll_thr_rep_bonded_title" text="Bonded" />
-    <string id="ll_thr_rep_bonded_body" text="Someone warns you before trouble finds you. â€œHeads up,â€ they whisper. â€œTheyâ€™re looking for you.â€" />
+    <string id="ll_thr_rep_bonded_body" text="Someone warns you before trouble finds you. &quot;Heads up,&quot; they whisper. &quot;They're looking for you.&quot;" />
     <string id="ll_thr_rep_bonded_opt_accept_text" text="Accept the warning and listen." />
-    <string id="ll_thr_rep_bonded_opt_accept_hint" text="Use it. Donâ€™t waste it." />
-    <string id="ll_thr_rep_bonded_opt_accept_result" text="Youâ€™re not alone in this lance." />
+    <string id="ll_thr_rep_bonded_opt_accept_hint" text="Use it. Don't waste it." />
+    <string id="ll_thr_rep_bonded_opt_accept_result" text="You're not alone in this lance." />
     <string id="ll_thr_rep_bonded_opt_wave_text" text="Wave it off." />
     <string id="ll_thr_rep_bonded_opt_wave_hint" text="Pride over prudence." />
-    <string id="ll_thr_rep_bonded_opt_wave_result" text="You still have friends. You act like you donâ€™t." />
+    <string id="ll_thr_rep_bonded_opt_wave_result" text="You still have friends. You act like you don't." />
 
     <string id="ll_thr_rep_isolated_title" text="Isolated" />
     <string id="ll_thr_rep_isolated_body" text="The fire circle closes without you. Conversations die when you approach." />
@@ -1199,20 +1199,20 @@
     <string id="ll_thr_rep_isolated_opt_head_result" text="You swallow your pride and keep working." />
     <string id="ll_thr_rep_isolated_opt_snap_text" text="Snap back." />
     <string id="ll_thr_rep_isolated_opt_snap_hint" text="Make it worse, faster." />
-    <string id="ll_thr_rep_isolated_opt_snap_result" text="Now itâ€™s not just cold. Itâ€™s hostile." />
+    <string id="ll_thr_rep_isolated_opt_snap_result" text="Now it's not just cold. It's hostile." />
 
     <string id="ll_thr_rep_sabotage_title" text="Sabotage" />
     <string id="ll_thr_rep_sabotage_body" text="Something you need is missing. Not lost—taken. The message is plain." />
     <string id="ll_thr_rep_sabotage_opt_loss_text" text="Eat the loss." />
     <string id="ll_thr_rep_sabotage_opt_loss_hint" text="Pay coin to move on." />
-    <string id="ll_thr_rep_sabotage_opt_loss_result" text="You replace what was stolen. You donâ€™t forget." />
+    <string id="ll_thr_rep_sabotage_opt_loss_result" text="You replace what was stolen. You don't forget." />
     <string id="ll_thr_rep_sabotage_opt_confront_text" text="Confront them." />
     <string id="ll_thr_rep_sabotage_opt_confront_hint" text="Make it public. Make it messy." />
     <string id="ll_thr_rep_sabotage_opt_confront_result" text="You get answers—or you get trouble." />
 
     <!-- Medical thresholds -->
     <string id="ll_thr_med_worsening_title" text="Worsening" />
-    <string id="ll_thr_med_worsening_body" text="Something aches in a way that isnâ€™t normal. You can feel it getting worse." />
+    <string id="ll_thr_med_worsening_body" text="Something aches in a way that isn't normal. You can feel it getting worse." />
     <string id="ll_thr_med_worsening_opt_rest_text" text="Rest and recover." />
     <string id="ll_thr_med_worsening_opt_rest_hint" text="Slow down before it forces you." />
     <string id="ll_thr_med_worsening_opt_rest_result" text="You breathe, you rest, and the edge fades." />
@@ -1226,7 +1226,7 @@
     <string id="ll_thr_med_complication_opt_seek_hint" text="Time, fatigue, and a little coin—worth it." />
     <string id="ll_thr_med_complication_opt_seek_result" text="Clean bandages and bitter herbs. It starts to turn." />
     <string id="ll_thr_med_complication_opt_push_text" text="Push on." />
-    <string id="ll_thr_med_complication_opt_push_hint" text="You canâ€™t afford to look weak." />
+    <string id="ll_thr_med_complication_opt_push_hint" text="You can't afford to look weak." />
     <string id="ll_thr_med_complication_opt_push_result" text="You stay upright. Barely." />
 
     <string id="ll_thr_med_emergency_title" text="Emergency" />
@@ -1236,7 +1236,7 @@
     <string id="ll_thr_med_emergency_opt_rest_result" text="You lose time. You keep your life." />
     <string id="ll_thr_med_emergency_opt_stumble_text" text="Stumble onward." />
     <string id="ll_thr_med_emergency_opt_stumble_hint" text="Refuse to stop." />
-    <string id="ll_thr_med_emergency_opt_stumble_result" text="You donâ€™t collapse—but everyone sees you close to it." />
+    <string id="ll_thr_med_emergency_opt_stumble_result" text="You don't collapse—but everyone sees you close to it." />
   
 
     <!-- ═══════════════════════════════════════════════════════════════ -->

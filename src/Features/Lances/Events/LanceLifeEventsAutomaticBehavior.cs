@@ -161,6 +161,18 @@ namespace Enlisted.Features.Lances.Events
             }
             _lastEvaluationHour = nowHour;
 
+            // Enlistment grace period: don't fire events for the first N days after enlisting
+            // This gives players time to learn systems and get oriented before events start
+            var graceDays = Math.Max(0, auto.EnlistmentGraceDays);
+            if (graceDays > 0)
+            {
+                var daysSinceEnlistment = LanceLifeOnboardingBehavior.Instance?.DaysSinceEnlistment ?? int.MaxValue;
+                if (daysSinceEnlistment < graceDays)
+                {
+                    return; // Too soon - player is still in grace period
+                }
+            }
+
             // Global rate limits
             var maxPerDay = Math.Max(0, auto.MaxEventsPerDay);
             if (maxPerDay > 0 && _autoFiresToday >= maxPerDay)

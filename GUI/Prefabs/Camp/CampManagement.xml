@@ -73,10 +73,10 @@
                   </Children>
                 </ButtonWidget>
                 
-                <!-- Activities Tab -->
-                <ButtonWidget Id="ActivitiesTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Width.Scaled" SuggestedHeight="!Tab.Height.Scaled" VerticalAlignment="Center" PositionYOffset="2" Brush="Header.Tab.Center" Command.Click="ExecuteShowActivities" UpdateChildrenStates="true">
+                <!-- Duties Tab -->
+                <ButtonWidget Id="DutiesTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Width.Scaled" SuggestedHeight="!Tab.Height.Scaled" VerticalAlignment="Center" PositionYOffset="2" Brush="Header.Tab.Center" Command.Click="ExecuteShowDuties" UpdateChildrenStates="true">
                   <Children>
-                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Clan.TabControl.Text" Text="@ActivitiesText" />
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Clan.TabControl.Text" Text="@DutiesText" />
                   </Children>
                 </ButtonWidget>
                 
@@ -115,8 +115,8 @@
         <!-- Schedule Panel (Policy-style - KEY FEATURE) -->
         <CampSchedulePanel Id="SchedulePanel" DataSource="{Schedule}" MarginTop="188" MarginBottom="75" />
         
-        <!-- Activities Panel -->
-        <CampActivitiesPanel Id="ActivitiesPanel" DataSource="{Activities}" MarginTop="188" MarginBottom="75" />
+        <!-- Duties Panel -->
+        <CampDutiesPanel Id="DutiesPanel" DataSource="{Duties}" MarginTop="188" MarginBottom="75" />
         
         <!-- Reports Panel -->
         <CampReportsPanel Id="ReportsPanel" DataSource="{Reports}" MarginTop="188" MarginBottom="75" />

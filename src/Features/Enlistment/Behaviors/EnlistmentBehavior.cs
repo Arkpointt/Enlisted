@@ -1807,6 +1807,23 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         public void HandleBagCheckChoice(string choice)
         {
+            // CRITICAL: Skip bag check if equipment was already backed up by EquipmentManager
+            // This happens when equipment backup runs BEFORE bag check fires (normal flow)
+            // In this case, the "personal equipment" has already been secured by EquipmentManager,
+            // and the player now has military-issued gear that should NOT be touched by bag check
+            var equipmentManager = EquipmentManager.Instance;
+            if (equipmentManager?.HasBackedUpEquipment == true)
+            {
+                ModLogger.Info("Enlistment", "Skipping bag check - equipment already secured by EquipmentManager before military gear was issued");
+                _bagCheckCompleted = true;
+                _bagCheckEverCompleted = true;
+                _pendingBagCheckLord = null;
+                _bagCheckScheduled = false;
+                _bagCheckDueTime = CampaignTime.Zero;
+                _bagCheckInProgress = false;
+                return;
+            }
+            
             EnsureBaggageStash();
             switch (choice)
             {
@@ -1854,6 +1871,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             if (CampaignTime.Now < _bagCheckDueTime)
             {
+                return;
+            }
+
+            // CRITICAL: Skip bag check if equipment was already backed up by EquipmentManager
+            // This prevents the bag check from clearing military-issued equipment
+            var equipmentManager = EquipmentManager.Instance;
+            if (equipmentManager?.HasBackedUpEquipment == true)
+            {
+                ModLogger.Info("Enlistment", "Skipping bag check - equipment already secured by EquipmentManager before military gear was issued");
+                _bagCheckCompleted = true;
+                _bagCheckEverCompleted = true;
+                _bagCheckScheduled = false;
+                _bagCheckDueTime = CampaignTime.Zero;
+                _pendingBagCheckLord = null;
                 return;
             }
 
@@ -1907,14 +1938,33 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var partyRoster = MobileParty.MainParty?.ItemRoster;
                 if (partyRoster != null)
                 {
+                    var questItemsKept = 0;
                     foreach (var element in partyRoster.ToList())
                     {
                         if (element.EquipmentElement.Item != null && element.Amount > 0)
                         {
+                            // CRITICAL: Skip quest items - they must stay with the player
+                            if (element.EquipmentElement.IsQuestItem)
+                            {
+                                questItemsKept++;
+                                continue;
+                            }
+                            
                             _baggageStash.AddToCounts(element.EquipmentElement.Item, element.Amount);
                         }
                     }
-                    partyRoster.Clear();
+                    
+                    // Clear non-quest items from roster
+                    var itemsToRemove = partyRoster.Where(e => !e.EquipmentElement.IsQuestItem).ToList();
+                    foreach (var item in itemsToRemove)
+                    {
+                        partyRoster.AddToCounts(item.EquipmentElement, -item.Amount);
+                    }
+                    
+                    if (questItemsKept > 0)
+                    {
+                        ModLogger.Info("Equipment", $"Protected {questItemsKept} quest item(s) from inventory stashing");
+                    }
                 }
 
                 MoveEquipmentToStash(hero.BattleEquipment);
@@ -1954,6 +2004,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var totalValue = 0f;
+                var questItemsKept = 0;
                 var partyRoster = MobileParty.MainParty?.ItemRoster;
                 if (partyRoster != null)
                 {
@@ -1961,10 +2012,28 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         if (element.EquipmentElement.Item != null && element.Amount > 0)
                         {
+                            // CRITICAL: Skip quest items - they cannot be sold
+                            if (element.EquipmentElement.IsQuestItem)
+                            {
+                                questItemsKept++;
+                                continue;
+                            }
+                            
                             totalValue += element.EquipmentElement.Item.Value * element.Amount * rate;
                         }
                     }
-                    partyRoster.Clear();
+                    
+                    // Clear only non-quest items from roster
+                    var itemsToRemove = partyRoster.Where(e => !e.EquipmentElement.IsQuestItem).ToList();
+                    foreach (var item in itemsToRemove)
+                    {
+                        partyRoster.AddToCounts(item.EquipmentElement, -item.Amount);
+                    }
+                    
+                    if (questItemsKept > 0)
+                    {
+                        ModLogger.Info("Equipment", $"Protected {questItemsKept} quest item(s) from liquidation");
+                    }
                 }
 
                 totalValue += ExtractEquipmentValue(hero.BattleEquipment, rate);
@@ -2005,12 +2074,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 allItems.AddRange(GetEquipmentElements(hero.BattleEquipment));
                 allItems.AddRange(GetEquipmentElements(hero.CivilianEquipment));
 
+                // CRITICAL: Filter out quest items - they cannot be smuggled
                 var best = allItems
-                    .Where(e => e.EquipmentElement.Item != null && e.Amount > 0)
+                    .Where(e => e.EquipmentElement.Item != null && e.Amount > 0 && !e.EquipmentElement.IsQuestItem)
                     .OrderByDescending(e => e.EquipmentElement.Item.Value)
                     .FirstOrDefault();
 
-                // If nothing to smuggle, just stash everything
+                // If nothing to smuggle, just stash everything (quest items will be protected)
                 if (best.EquipmentElement.Item == null)
                 {
                     StashAllBelongings(hero, 0);
@@ -2062,6 +2132,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
+                    // CRITICAL: Skip quest items - they must stay equipped with the player
+                    if (elem.IsQuestItem)
+                    {
+                        ModLogger.Info("Equipment", $"Protected quest item '{elem.Item.Name}' from equipment stashing (slot {slot})");
+                        continue;
+                    }
+                    
                     _baggageStash.AddToCounts(elem.Item, 1);
                     equipment[slot] = default;
                 }
@@ -2083,6 +2160,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
+                    // CRITICAL: Skip quest items - they cannot be sold and must stay equipped
+                    if (elem.IsQuestItem)
+                    {
+                        ModLogger.Info("Equipment", $"Protected quest item '{elem.Item.Name}' from liquidation (slot {slot})");
+                        continue;
+                    }
+                    
                     total += elem.Item.Value * rate;
                     equipment[slot] = default;
                 }
@@ -2255,6 +2339,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // now part of the lord's military force. Troops will be restored when service ends.
                 TransferPlayerTroopsToLord();
 
+                // CRITICAL: Issue military equipment BEFORE bag check scheduling
+                // This ensures bag check only processes pre-enlistment civilian gear,
+                // not the military-issued T1 equipment
                 var appliedGraceEquipment = TryApplyGraceEquipment(resumedFromGrace, graceTroopId);
                 if (!appliedGraceEquipment)
                 {
@@ -9797,6 +9884,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Assign initial recruit equipment based on lord's culture.
+        ///     PROTECTS QUEST ITEMS: Quest items are preserved during equipment assignment.
         /// </summary>
         private void AssignInitialEquipment()
         {
@@ -9807,11 +9895,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                // CRITICAL: Preserve quest items before replacing equipment
+                var equipmentManager = EquipmentManager.Instance;
+                var questItems = equipmentManager?.PreserveEquippedQuestItems() ?? new Dictionary<EquipmentIndex, EquipmentElement>();
+
                 // Use lord's culture basic troop equipment
                 var basicTroopEquipment = _enlistedLord.Culture.BasicTroop.Equipment;
                 Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
 
-                ModLogger.Info("Equipment", $"Assigned initial {_enlistedLord.Culture.Name} recruit equipment");
+                // CRITICAL: Restore quest items after equipment assignment
+                equipmentManager?.RestoreEquippedQuestItems(questItems);
+
+                ModLogger.Info("Equipment", $"Assigned initial {_enlistedLord.Culture.Name} recruit equipment (quest items protected)");
             }
             catch (Exception ex)
             {
@@ -10019,7 +10114,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Clear leave state and start cooldown before next leave
                 _isOnLeave = false;
                 _leaveStartDate = CampaignTime.Zero;
-                _leaveCooldownEnds = CampaignTime.Now + CampaignTime.Days(30);
+                // Leave cooldown should be short enough to feel usable, while still preventing spam.
+                // Requested behavior: 7-day cooldown (was 30).
+                _leaveCooldownEnds = CampaignTime.Now + CampaignTime.Days(7);
 
                 // NOTE: We intentionally do NOT transfer troops here. Unlike initial enlistment, 
                 // troops recruited during leave are the player's personal force and should stay

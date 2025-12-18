@@ -172,6 +172,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(IncidentsSuppressionPatch);
                     _ = typeof(InfluenceMessageSuppressionPatch);
                     _ = typeof(JoinEncounterAutoSelectPatch);
+                    _ = typeof(JoinSiegeEventAutoSelectPatch);
                     _ = typeof(LootBlockPatch);
                     _ = typeof(LootBlockPatch.ItemLootPatch);
                     _ = typeof(LootBlockPatch.MemberLootPatch);
@@ -200,6 +201,7 @@ namespace Enlisted.Mod.Entry
                         "ArmyCohesionExclusionPatch",           // Target: DefaultArmyManagementCalculationModel
                         "SettlementOutsideLeaveButtonPatch",    // Target: EncounterGameMenuBehavior
                         "JoinEncounterAutoSelectPatch",         // Target: EncounterGameMenuBehavior
+                        "JoinSiegeEventAutoSelectPatch",        // Target: EncounterGameMenuBehavior
                         "EncounterAbandonArmyBlockPatch",       // Target: EncounterGameMenuBehavior (deferred)
                         "EncounterAbandonArmyBlockPatch2"       // Target: EncounterGameMenuBehavior (deferred)
                     };
@@ -583,6 +585,7 @@ namespace Enlisted.Mod.Entry
                     ApplyDeferredPatch(harmony, typeof(ArmyCohesionExclusionPatch));
                     ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
                     ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
+                    ApplyDeferredPatch(harmony, typeof(JoinSiegeEventAutoSelectPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
 

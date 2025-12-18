@@ -58,6 +58,14 @@ namespace Enlisted.Features.Lances.UI
         /// </summary>
         public static bool TryShow(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment)
         {
+            return TryShow(evt, enlistment, additionalOnClosedCallback: null);
+        }
+
+        /// <summary>
+        /// Show an event using the modern custom UI screen with an additional callback when closed.
+        /// </summary>
+        public static bool TryShow(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment, System.Action additionalOnClosedCallback)
+        {
             try
             {
                 // Check if events are enabled
@@ -105,6 +113,9 @@ namespace Enlisted.Features.Lances.UI
                     _isEventShowing = false;
                     _eventShowingStartHour = -1.0;
                     ModLogger.Debug(LogCategory, $"Event screen closed: {evt.Id}");
+
+                    // Call additional callback if provided
+                    additionalOnClosedCallback?.Invoke();
                 });
 
                 ModLogger.Info(LogCategory, $"Modern event screen queued successfully: {evt.Id}");

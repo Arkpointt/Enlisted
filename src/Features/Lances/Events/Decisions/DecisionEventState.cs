@@ -43,10 +43,14 @@ namespace Enlisted.Features.Lances.Events.Decisions
         // Chain delay tracking (hour number when each queued chain event becomes eligible)
         private Dictionary<string, int> _chainDelayHour = new Dictionary<string, int>();
 
+        // Phase 5: short outcome log (for Reports “Recent Outcomes” and Daily Report grounding)
+        private DecisionOutcomeLog _outcomeLog = new DecisionOutcomeLog();
+
         // Property accessors for cleaner external use
 
         public int FiredToday => _firedToday;
         public int FiredThisWeek => _firedThisWeek;
+        public DecisionOutcomeLog OutcomeLog => _outcomeLog;
 
         /// <summary>
         /// Gets hours since last event fired.
@@ -328,6 +332,10 @@ namespace Enlisted.Features.Lances.Events.Decisions
             SyncList(dataStore, "de_chainQueue", ref _chainQueue);
             SyncDictionaryInt(dataStore, "de_chainDelay", ref _chainDelayHour);
 
+            // Phase 5: decision outcomes log
+            _outcomeLog ??= new DecisionOutcomeLog();
+            _outcomeLog.SyncData(dataStore, "de_outcome");
+
             // Ensure collections are not null after loading
             _eventLastFiredDay ??= new Dictionary<string, int>();
             _oneTimeFired ??= new HashSet<string>();
@@ -337,6 +345,21 @@ namespace Enlisted.Features.Lances.Events.Decisions
             _flagExpiryDay ??= new Dictionary<string, int>();
             _chainQueue ??= new List<string>();
             _chainDelayHour ??= new Dictionary<string, int>();
+            _outcomeLog ??= new DecisionOutcomeLog();
+        }
+
+        public void RecordOutcome(string eventId, string optionId, string resultText)
+        {
+            _outcomeLog ??= new DecisionOutcomeLog();
+            _outcomeLog.EnsureInitialized();
+
+            _outcomeLog.Append(new DecisionOutcomeRecord
+            {
+                DayNumber = GetDayNumber(),
+                EventId = eventId ?? string.Empty,
+                OptionId = optionId ?? string.Empty,
+                ResultText = resultText ?? string.Empty
+            });
         }
 
         private static void SyncDictionaryInt(IDataStore dataStore, string prefix, ref Dictionary<string, int> dict)

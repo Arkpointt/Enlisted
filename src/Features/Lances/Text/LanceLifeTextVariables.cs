@@ -15,6 +15,15 @@ namespace Enlisted.Features.Lances.Text
         /// <summary>
         /// Apply common Lance Life text variables used by both story packs and data-driven events.
         /// Keep this best-effort: placeholder resolution should never crash inquiry rendering.
+        /// 
+        /// Event-Specific Tokens (must be set by the event system triggering the event):
+        /// - {DECEASED_MEMBER}: Name of a deceased lance member (context: memorial/death events)
+        /// - {DUTY_NAME}: Name of the duty assignment being referenced (context: duty swap events)
+        /// - {TROOP_COUNT}: Number of troops in a command context (context: onboarding/command events)
+        /// - {OFFICER_NAME}: Name of the player's officer/sergeant in command context (context: command events)
+        /// 
+        /// These tokens are intentionally NOT set here because they require event-specific context
+        /// that isn't available in the general text variable system.
         /// </summary>
         public static void ApplyCommon(TextObject text, EnlistmentBehavior enlistment)
         {
@@ -24,7 +33,17 @@ namespace Enlisted.Features.Lances.Text
             }
 
             text.SetTextVariable("PLAYER_NAME", Hero.MainHero?.Name ?? new TextObject(string.Empty));
+            text.SetTextVariable("PLAYER_SHORT", Hero.MainHero?.Name ?? new TextObject(string.Empty));
             text.SetTextVariable("LORD_NAME", enlistment?.EnlistedLord?.Name ?? new TextObject("{=enlist_fallback_army}the army"));
+            
+            // LORD_TITLE: "Lord" or "Lady" based on gender
+            var lordTitle = "Lord";
+            if (enlistment?.EnlistedLord != null)
+            {
+                lordTitle = enlistment.EnlistedLord.IsFemale ? "Lady" : "Lord";
+            }
+            text.SetTextVariable("LORD_TITLE", new TextObject(lordTitle));
+            
             text.SetTextVariable("LANCE_NAME",
                 !string.IsNullOrWhiteSpace(enlistment?.CurrentLanceName) ? new TextObject(enlistment.CurrentLanceName) : new TextObject(string.Empty));
 

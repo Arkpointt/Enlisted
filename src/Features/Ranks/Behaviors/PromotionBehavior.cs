@@ -39,6 +39,9 @@ namespace Enlisted.Features.Ranks.Behaviors
             // | T3→T4 | 4,400 | 56 | 25 | 12 | ≥20 | ≥20 | <6 |
             // | T4→T5 | 6,600 | 56 | 40 | 20 | ≥30 | ≥30 | <5 |
             // | T5→T6 | 8,800 | 56 | 55 | 30 | ≥40 | ≥15 | <4 |
+            // | T6→T7 | 11,000 | 70 | 70 | 40 | ≥50 | ≥20 | <3 |
+            // | T7→T8 | 14,000 | 84 | 85 | 50 | ≥60 | ≥25 | <2 |
+            // | T8→T9 | 18,000 | 112 | 100 | 60 | ≥70 | ≥30 | <1 |
 
             return targetTier switch
             {
@@ -47,6 +50,9 @@ namespace Enlisted.Features.Ranks.Behaviors
                 4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, EventsRequired = 25, BattlesRequired = 12, MinLanceReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
                 5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, EventsRequired = 40, BattlesRequired = 20, MinLanceReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
                 6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, EventsRequired = 55, BattlesRequired = 30, MinLanceReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
+                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, EventsRequired = 70, BattlesRequired = 40, MinLanceReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
+                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, EventsRequired = 85, BattlesRequired = 50, MinLanceReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
+                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, EventsRequired = 100, BattlesRequired = 60, MinLanceReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
                 _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, EventsRequired = 999, BattlesRequired = 999, MinLanceReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
             };
         }
@@ -107,6 +113,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 3 => "promotion_t3_t4_crisis_of_command",
                 4 => "promotion_t4_t5_lance_vote",
                 5 => "promotion_t5_t6_lord_audience",
+                6 => "promotion_t6_t7_commanders_commission",
                 _ => $"promotion_t{fromTier}_t{toTier}" // Fallback pattern
             };
         }
@@ -140,7 +147,9 @@ namespace Enlisted.Features.Ranks.Behaviors
             }
 
             var currentTier = enlistment.EnlistmentTier;
-            if (currentTier >= 6)
+            var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+            
+            if (currentTier >= maxTier)
             {
                 reasons.Add("Already at maximum tier");
                 return (false, reasons);
@@ -221,7 +230,9 @@ namespace Enlisted.Features.Ranks.Behaviors
         public int GetPromotionProgress()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier >= 6)
+            var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+            
+            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier >= maxTier)
             {
                 return 100;
             }

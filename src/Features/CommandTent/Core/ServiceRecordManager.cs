@@ -493,14 +493,14 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Called when player receives a promotion. Shows leadership notification at Tier 4.
+        /// Called when player receives a promotion. Shows leadership notification at Commander tier (T7).
         /// </summary>
         private void HandlePromotion(int newTier)
         {
             try
             {
-                // Show Tier 4 leadership notification only once per session
-                if (newTier >= RetinueManager.LanceTier && !_shownLeadershipNotification)
+                // Show Commander leadership notification only once per session
+                if (newTier >= RetinueManager.CommanderTier1 && !_shownLeadershipNotification)
                 {
                     _shownLeadershipNotification = true;
                     RetinueManager.ShowLeadershipNotification();

@@ -1476,11 +1476,14 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("max_events_per_day")] public int MaxEventsPerDay { get; set; } = 1;
         
         // Minimum days between ANY automatic events (hard floor - prevents spam)
-        [JsonProperty("min_days_between_events")] public int MinDaysBetweenEvents { get; set; } = 3;
+        [JsonProperty("min_days_between_events")] public int MinDaysBetweenEvents { get; set; } = 5;
         
         // Target days between events (soft target - events aim to fire around this interval)
         // Events will fire after MinDaysBetweenEvents but prefer to wait until TargetDaysBetweenEvents
-        [JsonProperty("target_days_between_events")] public int TargetDaysBetweenEvents { get; set; } = 7;
+        [JsonProperty("target_days_between_events")] public int TargetDaysBetweenEvents { get; set; } = 10;
+        
+        // Grace period after enlistment before any automatic events can fire (prevents overwhelming new players)
+        [JsonProperty("enlistment_grace_days")] public int EnlistmentGraceDays { get; set; } = 7;
 
         // Safety: if a queued event can't fire for a long time, drop it.
         [JsonProperty("queue_timeout_hours")] public int QueueTimeoutHours { get; set; } = 24;

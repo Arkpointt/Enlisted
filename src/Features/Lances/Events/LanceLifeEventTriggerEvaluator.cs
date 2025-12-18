@@ -229,6 +229,13 @@ namespace Enlisted.Features.Lances.Events
                 return numericResult;
             }
 
+            // Decision Events: explicit story flag checks.
+            // These allow content to require a flag set by earlier decisions (without hardcoding tokens in the vocabulary).
+            if (TryEvaluateStoryFlagToken(t, out var flagResult))
+            {
+                return flagResult;
+            }
+
             // Prefix tokens
             if (t.StartsWith(CampaignTriggerTokens.HasDutyPrefix, StringComparison.OrdinalIgnoreCase))
             {
@@ -457,6 +464,47 @@ namespace Enlisted.Features.Lances.Events
                     // Recognized-but-unimplemented tokens are treated as false (loader warns once).
                     return false;
             }
+        }
+
+        private static bool TryEvaluateStoryFlagToken(string token, out bool result)
+        {
+            result = false;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return false;
+            }
+
+            var t = token.Trim();
+
+            if (t.StartsWith(CampaignTriggerTokens.FlagPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var flag = t.Substring(CampaignTriggerTokens.FlagPrefix.Length).Trim();
+                if (string.IsNullOrWhiteSpace(flag))
+                {
+                    result = false;
+                    return true;
+                }
+
+                var state = Decisions.DecisionEventBehavior.Instance?.State;
+                result = state?.HasActiveFlag(flag) == true;
+                return true;
+            }
+
+            if (t.StartsWith(CampaignTriggerTokens.NotFlagPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                var flag = t.Substring(CampaignTriggerTokens.NotFlagPrefix.Length).Trim();
+                if (string.IsNullOrWhiteSpace(flag))
+                {
+                    result = true;
+                    return true;
+                }
+
+                var state = Decisions.DecisionEventBehavior.Instance?.State;
+                result = state?.HasActiveFlag(flag) != true;
+                return true;
+            }
+
+            return false;
         }
 
         private static bool IsEnemyNearbyFast()
@@ -701,6 +749,12 @@ namespace Enlisted.Features.Lances.Events
                     value = 999f;
                 }
                 return CampaignTriggerTokens.DaysFromTown;
+            }
+
+            if (token.StartsWith(CampaignTriggerTokens.Gold, StringComparison.OrdinalIgnoreCase))
+            {
+                value = Hero.MainHero?.Gold ?? 0;
+                return CampaignTriggerTokens.Gold;
             }
 
             var camp = CampLifeBehavior.Instance;

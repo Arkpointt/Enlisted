@@ -11,9 +11,9 @@ The retinue system provides enlisted players with a personal military force that
 ## System (v3.0)
 
 - **T1 (All tiers)**: Companion management
-- **T7 (Commander I)**: 15 raw recruits + companions
-- **T8 (Commander II)**: 25 soldiers + companions
-- **T9 (Commander III)**: 35 soldiers + companions
+- **T7 (Commander I)**: 20 raw recruits + companions
+- **T8 (Commander II)**: 30 soldiers + companions
+- **T9 (Commander III)**: 40 soldiers + companions
 - Initial recruits granted automatically on promotion
 - Reinforcements via trickle system (1 recruit every 2-3 days)
 - Provisions system for feeding retinue (v3.0)
@@ -41,9 +41,9 @@ The retinue system provides enlisted players with a personal military force that
 | Tier | Rank Track | Companions | Soldiers | Total Force | Grant Method |
 |------|------------|------------|----------|-------------|--------------|
 | T1-T6 | Enlisted/Officer | Managed | 0 | Companions only | N/A |
-| T7 | Commander I | Managed | 15 | 15 + companions | Auto-grant raw recruits |
-| T8 | Commander II | Managed | 25 | 25 + companions | +10 recruits on promotion |
-| T9 | Commander III | Managed | 35 | 35 + companions | +10 recruits on promotion |
+| T7 | Commander I | Managed | 20 | 20 + companions | Auto-grant raw recruits |
+| T8 | Commander II | Managed | 30 | 30 + companions | +10 recruits on promotion |
+| T9 | Commander III | Managed | 40 | 40 + companions | +10 recruits on promotion |
 
 **Key Features:**
 - Companions managed from day one (T1)
@@ -125,7 +125,7 @@ At T7+, companions fight alongside the player's retinue in unified squad:
 **T6->T7 Promotion Event: "Commander's Commission"**
 
 When promoted to T7, player receives initial command:
-- **15 raw recruits** automatically added to roster
+- **20 raw recruits** automatically added to roster
 - Recruit type matches player's formation specialization
 - Event narrative: Lord recognizes leadership, assigns first command
 - No cost, no shopping — command is granted as reward
@@ -133,19 +133,19 @@ When promoted to T7, player receives initial command:
 **Example Flow:**
 1. Player reaches T7 XP threshold
 2. Proving event: "You're ready to lead. Here are your soldiers."
-3. 15 recruits (Recruit I) appear in party roster
+3. 20 recruits (Recruit I) appear in party roster
 4. Formation type: Infantry recruits if player is infantry specialist, etc.
 
 ### Capacity Progression
 
 | Tier | Capacity | Grant on Promotion | Existing Soldiers |
 |------|----------|-------------------|-------------------|
-| T7 | 15 | +15 raw recruits | 0 -> 15 |
-| T8 | 25 | +10 recruits | 15 -> 25 |
-| T9 | 35 | +10 recruits | 25 -> 35 |
+| T7 | 20 | +20 raw recruits | 0 -> 20 |
+| T8 | 30 | +10 recruits | 20 -> 30 |
+| T9 | 40 | +10 recruits | 30 -> 40 |
 
 **Promotion Grants:**
-- T7: Initial grant of 15
+- T7: Initial grant of 20
 - T8: +10 more (if under capacity)
 - T9: +10 more (if under capacity)
 - Always raw recruits (Recruit I tier)
@@ -554,7 +554,7 @@ Player Formation = Infantry
 
 ---
 
-### Phase 5: Training Events & Flavor (Optional) ðŸŽ¨ Enhancement
+### Phase 5: Training Events & Flavor (Optional) - Enhancement
 
 **Goal**: Add narrative flavor to recruit development, integrate with lance life system
 

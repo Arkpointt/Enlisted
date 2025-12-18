@@ -1,15 +1,29 @@
 # Menu Interface System
 
+## Terminology (to avoid confusion)
+
+This project uses **two UI technologies**, and they are easy to mix up:
+
+- **Text menus (GameMenu / WaitGameMenu)**: classic Bannerlord menu screens with menu IDs like `enlisted_status`.
+- **Gauntlet screens (full-screen UI overlays)**: custom UI layers like `CampManagementScreen`.
+
+We use these names consistently in docs:
+
+- **Main Menu (text)**: `enlisted_status`
+- **Camp Menu (text)**: `enlisted_camp_hub` (opened from Main Menu → “Camp”)
+- **Camp Bulletin (Gauntlet overlay)**: opened via a “Reports” option inside the Camp Menu
+- **Camp Management Screen (Gauntlet)**: `CampManagementScreen` (deep configuration screen)
+
 ## Quick Reference
 
 | Menu ID | Purpose | Access |
 |---------|---------|--------|
-| `enlisted_status` | Main service hub - status with escalation tracks (Heat/Discipline/Lance Rep), navigation | After enlistment |
+| `enlisted_status` | Main service menu - status with escalation tracks (Heat/Discipline/Lance Rep), navigation | After enlistment |
 | `enlisted_lance` | My Lance - roster with relationship indicators, interactions, welfare tracking | Enlisted Status -> "My Lance" |
-| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Camp -> "Camp Activities" |
-| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Enlisted Status -> "Report for Duty" |
+| `enlisted_activities` | Camp Activities - organized by category (Training/Tasks/Social/Lance) | Enlisted Status -> "Camp" -> "Camp Activities" |
+| `enlisted_duty_selection` | Duty Selection - request-based assignment (T2+) | Camp Management -> "Duties" (primary entry) |
 | `enlisted_medical` | Medical Attention - treatment options | Enlisted Status -> "Seek Medical Attention" (when injured/ill) |
-| `command_tent` | Camp - service records, retinue, camp activities, activity log | Enlisted Status -> "Camp" |
+| `enlisted_camp_hub` | Camp Menu (text) - camp-facing navigation (medical, reports, records, camp activities entry points) | Enlisted Status -> "Camp" |
 | Quartermaster | Equipment selection (formation+tier+culture based) | Enlisted Status -> "Visit Quartermaster" |
 
 ## Index
@@ -67,6 +81,7 @@ Professional military menu interface providing comprehensive service management 
 - Camp status + time-of-day context in the enlisted header (days from town, camp snapshot)
 - Camp Activities menu driven by JSON (XP + fatigue, with condition gating)
 - **Lance Menu** with relationship indicators, leader/second interactions, wounded/fallen welfare tracking
+- Main menu navigation entries are **always shown**; inaccessible entries are **greyed out with tooltips** explaining why.
 
 **File:** `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
 
@@ -85,7 +100,7 @@ Each menu option has a `LeaveType` that displays an appropriate icon:
 | Visit Quartermaster | `Trade` | Equipment/trading |
 | My Lord... | `Conversation` | Dialog |
 | Visit Settlement | `Submenu` | Navigation |
-| Report for Duty | `Manage` | Management (includes duty request system) |
+| Duties | `Manage` | Management (duty request/assignment; primary entry lives in Camp Management) |
 | Ask for Leave | `Leave` | Exit action |
 | Desert the Army | `Escape` | Warning/danger (immediate abandonment) |
 | (Discharge via Camp) | `Manage` | Managed separation (Pending Discharge -> Final Muster) |
@@ -126,17 +141,16 @@ Menus use `[GameMenuInitializationHandler]` attributes to set:
 |--------|------|---------|-----------|
 | Visit Quartermaster | Trade | Purchase equipment for your formation and rank | Always |
 | My Lance | Manage | View your lance roster and relationships | Always |
-| Camp | Manage | Service records, pay status, camp activities, retinue | Always |
+| Camp | Manage | Open the Camp Menu (text): medical, reports, records, and entry points to camp activities/screens | While enlisted (greyed if not enlisted) |
 | My Lord... | Conversation | Speak with nearby lords for quests and news | Lord nearby |
 | Visit Settlement | Submenu | Enter the settlement while your lord is present | In settlement |
-| Report for Duty | Manage | View/request duty assignments | Always |
 | Seek Medical Attention | Manage | Visit the surgeon's tent | When injured/ill |
 | — LEAVE OPTIONS — | | | |
 | Ask for Leave | Leave | Request temporary leave from service | Always |
 | Leave Without Penalty | Leave | Pay is too late — leave with minimal consequences | PayTension ≥ 60 |
 | Desert the Army | Escape | Abandon your post (severe penalties) | Always |
 
-**Note:** "Camp" is accessed from the main menu but has its own menu ID (`command_tent`).
+**Note:** “Camp Management” is the deep configuration surface (Gauntlet). “Camp” here means the **Camp Menu (text)** (`enlisted_camp_hub`).
 
 **Features:**
 - Modern icons on every option for visual clarity
@@ -257,20 +271,15 @@ Duties are defined in `ModuleData/Enlisted/duties_system.json`. The menu uses `E
 - Enlisted Status (`enlisted_status`)
   - Visit Quartermaster -> equipment selection (formation + tier + culture)
   - My Lance (`enlisted_lance`) -> roster / relationships
-  - Report for Duty (`enlisted_duty_selection`) -> duty selection (request system)
+  - Camp (`enlisted_camp_hub`) -> Camp Menu (text)
+    - Camp Activities (`enlisted_activities`) -> activity selection (data-driven)
+    - Medical Tent (`enlisted_medical`) -> treatment options (when injured/ill)
+    - Reports -> Camp Bulletin (Gauntlet overlay)
+    - Camp Management (Gauntlet) -> deep configure/manage surface
+      - Duties -> duty selection (request system; `enlisted_duty_selection` or camp management panel routing)
   - Seek Medical Attention (`enlisted_medical`) -> treatment options (when injured/ill)
   - My Lord... -> dialog system
   - Visit Settlement -> town/castle menu
-  - Camp (`command_tent`)
-    - Service Records
-    - Activity Log / XP Breakdown
-    - Camp Activities (`enlisted_activities`)
-      - — TRAINING — (Formation Drill, Sparring, etc.)
-      - — CAMP TASKS — (Help Surgeon, Forge, etc.)
-      - — SOCIAL — (Fire Circle, Dice, etc.)
-      - — LANCE — (Talk to Leader, Check Mates, etc.)
-    - Retinue / Companions
-    - Request Discharge
   - Ask for Leave -> leave request dialog
 
 ### My Lance Menu

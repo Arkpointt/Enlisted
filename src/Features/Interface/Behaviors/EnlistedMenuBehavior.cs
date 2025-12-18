@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Assignments.Core;
+using Enlisted.Features.Camp.UI.Bulletin;
 using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -969,7 +970,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 OnDebugToolsSelected,
-                false, 0);
+                false, 2000);
 
             // Master at Arms - DEPRECATED in Phase 7
             // Formation is now chosen during T1→T2 proving event
@@ -989,18 +990,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 false, 1);
 #pragma warning restore CS0618
 
-            // Visit Quartermaster - equipment variant selection and management (Trade icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
-                "{=Enlisted_Menu_VisitQuartermaster}Visit Quartermaster",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    // Phase 7: Equipment based on formation + tier + culture
-                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Purchase equipment for your formation and rank. Newly unlocked items marked [NEW].");
-                    return true;
-                },
-                OnQuartermasterSelected,
-                false, 2);
+            // NOTE: Visit Quartermaster moved to Camp Hub - not needed on main status menu.
 
             // Camp hub: decisions, camp screen, companions, service records, and leaving-service actions.
             starter.AddGameMenuOption("enlisted_status", "enlisted_camp_hub",
@@ -1008,21 +998,37 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=enlisted_camp_tooltip}Open the Camp hub (decisions, records, companions, and more).");
-                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                    args.Tooltip = new TextObject("{=enlisted_camp_tooltip}Open the Camp hub (activities, medical tent, reports, and management).");
+                    return true;
                 },
                 _ =>
                 {
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     GameMenu.SwitchToMenu(CampHubMenuId);
                 },
-                false, 4);
+                false, 10);
 
-            // NOTE: "My Lance" has been moved to the Visit Camp visual screen
-            // Lance management is now accessed via Visit Camp > Lance location
+            // Decisions (react-now layer)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_decisions_entry",
+                "{=enlisted_decisions_entry}Decisions",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var availableCount = DecisionEventBehavior.Instance?.GetAvailablePlayerDecisions()?.Count ?? 0;
+                    args.Tooltip = availableCount > 0
+                        ? new TextObject("{=enlisted_decisions_tooltip}Review and act on pending decisions.")
+                        : new TextObject("{=enlisted_decisions_tooltip_none}No decisions currently available.");
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_decisions");
+                },
+                false, 11);
 
-            // NOTE: Camp hub is owned by this behavior (`enlisted_camp_hub`).
-            // Camp activities are accessed via Camp screens, not as a separate main menu option.
+            // NOTE: My Lance and Camp Management have been moved to Camp Hub.
+            // These are accessible via Camp → Camp Activities / Camp Management.
 
             // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
@@ -1041,10 +1047,10 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 OnTalkToSelected,
-                false, 6);
+                false, 19);
 
             // Visit Settlement - towns and castles only (Submenu icon)
-            // HIDDEN when not at a settlement (user preference - don't show greyed out)
+            // Hidden when not at a settlement to reduce clutter.
             starter.AddGameMenuOption("enlisted_status", "enlisted_visit_settlement",
                 "{VISIT_SETTLEMENT_TEXT}",
                 args =>
@@ -1053,11 +1059,13 @@ namespace Enlisted.Features.Interface.Behaviors
                     var enlistment = EnlistmentBehavior.Instance;
                     var lord = enlistment?.CurrentLord;
                     var settlement = lord?.CurrentSettlement;
-                    // Hide completely when not at a settlement
+
+                    // Hide entirely when not at a town or castle
                     if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
                     {
                         return false;
                     }
+
                     args.Tooltip = new TextObject("{=menu_tooltip_visit}Enter the settlement while your lord is present.");
                     var visitText = new TextObject("{=Enlisted_Menu_VisitSettlementNamed}Visit {SETTLEMENT}");
                     visitText.SetTextVariable("SETTLEMENT", settlement.Name);
@@ -1065,44 +1073,28 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 OnVisitTownSelected,
-                false, 7);
+                false, 18);
 
-            // Report for Duty - duty selection (Manage icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
-                "{=Enlisted_Menu_ReportDuty}Report for Duty",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    // Phase 7: T1 can view duties, T2+ can request duty changes
-                    args.Tooltip = (enlistment?.EnlistmentTier ?? 1) >= 2
-                        ? new TextObject("{=menu_tooltip_duty_request}Request duty transfer or view current assignment. Changes require lance leader approval.")
-                        : new TextObject("{=menu_tooltip_duty_t1}View your current duty assignment. Duty changes unlock at next rank.");
-                    return true;
-                },
-                OnReportDutySelected,
-                false, 8);
+            // NOTE: Duties, Medical Attention, and Service Records are all accessed via Camp Hub.
+            // Keeping the main menu lean - only essential/frequent actions here.
 
-            // === LEAVE OPTIONS (grouped at bottom) ===
-
-            // Ask commander for leave (Leave icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
-                "{=Enlisted_Menu_AskLeave}Ask for Leave",
+            // Leave / Discharge / Desert (always shown; eligibility varies)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_leave_service_entry",
+                "{=enlisted_leave_service_entry}Leave / Discharge / Desert",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    var enlistment = EnlistmentBehavior.Instance;
-                    if (enlistment?.IsOnLeave == true)
-                    {
-                        args.IsEnabled = false;
-                        args.Tooltip = new TextObject("{=menu_disabled_on_leave}You are already on leave.");
-                        return true;
-                    }
-                    args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service.");
+                    args.Tooltip = new TextObject("{=enlisted_leave_service_tooltip}Leaving actions: request leave, discharge, or desert.");
                     return true;
                 },
-                OnAskLeaveSelected,
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu(LeaveServiceMenuId);
+                },
                 false, 20);
+
+            // === LEAVE OPTIONS (grouped at bottom) ===
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
 
@@ -1345,7 +1337,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Back option (first, like other submenus)
             starter.AddGameMenuOption("enlisted_decisions", "decisions_back",
-                "{=Enlisted_Menu_BackToCamp}Back to Camp",
+                "{=Enlisted_Menu_BackToStatus}Back",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
@@ -1380,39 +1372,87 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnCampHubTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // Decisions
-            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_decisions",
-                "{=enlisted_camp_decisions}Decisions",
+            // Camp Activities (primary “do something now” surface)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_activities",
+                "{=enlisted_camp_activities}Camp Activities",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    var availableCount = DecisionEventBehavior.Instance?.GetAvailablePlayerDecisions()?.Count ?? 0;
-                    args.Tooltip = availableCount > 0
-                        ? new TextObject("{=enlisted_camp_decisions_tooltip}Review and act on pending decisions.")
-                        : new TextObject("{=enlisted_camp_decisions_tooltip_none}No decisions currently available.");
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=enlisted_camp_activities_tooltip}Do something now: activities and quick interactions around camp.");
+                    return true;
+                },
+                _ =>
+                {
+                    CampBulletinScreen.Open(initialLocationId: "training_grounds");
+                },
+                false, 1);
+
+            // Visit Quartermaster - equipment variant selection and management
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_quartermaster",
+                "{=Enlisted_Menu_VisitQuartermaster}Visit Quartermaster",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Purchase equipment for your formation and rank. Newly unlocked items marked [NEW].");
+                    return true;
+                },
+                OnQuartermasterSelected,
+                false, 2);
+
+            // Medical Tent (treatment) - always listed; grey-out when healthy
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_medical_tent",
+                "{=enlisted_camp_medical_tent}Medical Tent",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+
+                    var conditions = PlayerConditionBehavior.Instance;
+                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
+                        return true;
+                    }
+
+                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
                     return true;
                 },
                 _ =>
                 {
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.SwitchToMenu("enlisted_decisions");
+                    GameMenu.SwitchToMenu("enlisted_medical");
                 },
-                false, 1);
+                false, 3);
 
-            // Visit Camp (Gauntlet screen) - do not modify the CampManagement screen itself here.
-            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_visit_camp",
-                "{=enlisted_camp_visit_camp}Visit Camp",
+            // Reports (Camp Bulletin overlay)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_reports",
+                "{=enlisted_camp_reports}Reports",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=enlisted_camp_reports_tooltip}Open the Camp Bulletin (daily report, archive, and locations).");
+                    return true;
+                },
+                _ =>
+                {
+                    CampBulletinScreen.Open(initialLocationId: "reports");
+                },
+                false, 4);
+
+            // Camp Management (deep config)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_camp_management",
+                "{=enlisted_camp_management}Camp Management",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=enlisted_camp_visit_camp_tooltip}Open the Camp screen.");
+                    args.Tooltip = new TextObject("{=enlisted_camp_management_tooltip}Orders, reports, army view, and other management.");
                     return true;
                 },
                 _ =>
                 {
                     Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(1);
                 },
-                false, 2);
+                false, 5);
 
             // Manage Companions
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_companions",
@@ -1428,7 +1468,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     GameMenu.SwitchToMenu("enlisted_companions");
                 },
-                false, 3);
+                false, 7);
 
             // Service Records
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_service_records",
@@ -1444,23 +1484,33 @@ namespace Enlisted.Features.Interface.Behaviors
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
                     GameMenu.SwitchToMenu("enlisted_service_records");
                 },
-                false, 4);
+                false, 6);
 
-            // Leave Service...
-            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_leave_service",
-                "{=enlisted_camp_leave_service}Leave Service...",
+            // Personal Retinue (T7+: Commander track with recruit training system)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_retinue",
+                "{=ct_option_retinue}Muster Personal Retinue",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    args.Tooltip = new TextObject("{=enlisted_camp_leave_service_tooltip}Desert, discharge, and other leaving options.");
+                    args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    
+                    // T7+ for new Commander track retinue system (15/25/35 soldiers)
+                    if ((enlistment?.EnlistmentTier ?? 1) < 7)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=ct_warn_retinue_tier_locked}You must reach Commander rank (Tier 7) to command your own retinue.");
+                        return true;
+                    }
+                    
+                    args.Tooltip = new TextObject("{=ct_retinue_tooltip}Manage your personal retinue of soldiers. Recruits trickle in and must be trained through battle.");
                     return true;
                 },
                 _ =>
                 {
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.SwitchToMenu(LeaveServiceMenuId);
+                    GameMenu.SwitchToMenu("enlisted_retinue");
                 },
-                false, 5);
+                false, 8);
 
             // Back
             starter.AddGameMenuOption(CampHubMenuId, "camp_hub_back",
@@ -1704,10 +1754,12 @@ namespace Enlisted.Features.Interface.Behaviors
                 sb.AppendLine($"Service: {rank} (T{enlistment.EnlistmentTier})");
                 sb.AppendLine();
 
-                var dailyBrief = EnlistedNewsBehavior.Instance?.BuildDailyBriefSection();
-                if (!string.IsNullOrWhiteSpace(dailyBrief))
+                // Phase 3 (Camp News): main menu uses Today’s Report excerpt (single paragraph) instead of the old Daily Brief block.
+                // This keeps vertical space low and avoids “menu jitter” by pulling from the persisted daily report record.
+                var reportExcerpt = EnlistedNewsBehavior.Instance?.GetLatestDailyReportExcerpt(maxLines: 5, maxChars: 450);
+                if (!string.IsNullOrWhiteSpace(reportExcerpt))
                 {
-                    sb.AppendLine(dailyBrief.TrimEnd());
+                    sb.AppendLine($"Today’s Report: {reportExcerpt.Trim()}");
                     sb.AppendLine();
                 }
 
@@ -2626,7 +2678,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Show leave request confirmation
                 var titleText = "Request Leave from Commander";
                 var descriptionText =
-                    "Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 30-day cooldown after you come back.";
+                    "Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 7-day cooldown after you come back.";
 
                 var confirmData = new InquiryData(
                     titleText,
@@ -3523,7 +3575,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private void OnDecisionsBackSelected(MenuCallbackArgs args)
         {
             QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-            GameMenu.SwitchToMenu(CampHubMenuId);
+            GameMenu.SwitchToMenu("enlisted_status");
         }
 
         /// <summary>
@@ -3550,9 +3602,29 @@ namespace Enlisted.Features.Interface.Behaviors
                 _ =>
                 {
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.SwitchToMenu(CampHubMenuId);
+                    GameMenu.SwitchToMenu("enlisted_status");
                 },
                 false, 0);
+
+            // Ask for temporary leave (does not discharge/desert)
+            starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_ask_leave",
+                "{=Enlisted_Menu_AskLeave}Ask for Leave",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsOnLeave == true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_on_leave}You are already on leave.");
+                        return true;
+                    }
+
+                    // Reuse the existing cooldown messaging.
+                    return IsAskLeaveAvailable(args);
+                },
+                OnAskLeaveSelected,
+                false, 1);
 
             // Leave without penalty (free desertion) - PayTension gated
             starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_free_desertion",
@@ -3571,7 +3643,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 OnFreeDesertionSelected,
-                false, 1);
+                false, 2);
 
             // Desert Army (penalty) -> confirm
             starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_desert_army",
@@ -3583,7 +3655,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return IsDesertArmyAvailable(args);
                 },
                 OnDesertArmySelected,
-                false, 2);
+                false, 3);
 
             // Request Discharge (final muster) / Cancel (toggle)
             starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_request_discharge",
@@ -3611,7 +3683,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 _ => OnLeaveServiceDischargeSelected(),
-                false, 3);
+                false, 4);
         }
 
         private void OnLeaveServiceInit(MenuCallbackArgs args)
@@ -3734,11 +3806,30 @@ namespace Enlisted.Features.Interface.Behaviors
                 var decisionBehavior = DecisionEventBehavior.Instance;
                 if (decisionBehavior != null)
                 {
-                    // Close the menu first, then show the event
-                    GameMenu.ExitToLast();
+                    // First, exit the decisions submenu back to enlisted_status
+                    // This ensures clean menu state before opening the event screen
+                    GameMenu.SwitchToMenu("enlisted_status");
 
-                    // Fire the decision (opens event screen)
-                    decisionBehavior.FirePlayerDecision(decision.Id);
+                    // Fire the decision (opens event screen as overlay on top of enlisted_status)
+                    // When the event closes, restore the enlisted_status menu to ensure it's active
+                    decisionBehavior.FirePlayerDecision(decision.Id, onEventClosed: () =>
+                    {
+                        // Restore the main Enlisted menu after the event screen closes
+                        // This handles cases where the screen close might have deactivated the menu
+                        try
+                        {
+                            if (TaleWorlds.CampaignSystem.Campaign.Current != null &&
+                                EnlistmentBehavior.Instance?.IsEnlisted == true)
+                            {
+                                GameMenu.ActivateGameMenu("enlisted_status");
+                                ModLogger.Debug("Interface", "Restored enlisted_status menu after decision event");
+                            }
+                        }
+                        catch (Exception restoreEx)
+                        {
+                            ModLogger.Warn("Interface", $"Failed to restore menu after decision: {restoreEx.Message}");
+                        }
+                    });
                 }
             }
             catch (Exception ex)

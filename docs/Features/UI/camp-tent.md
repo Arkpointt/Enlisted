@@ -308,7 +308,9 @@ character.GetFormationClass();  // Returns FormationClass enum
 
 ## Configuration
 
-**JSON Config:** `ModuleData/Enlisted/command_tent_config.json`
+**JSON Config (legacy name):** `ModuleData/Enlisted/command_tent_config.json`
+
+Note: the **Camp Menu (text)** menu id in code is `enlisted_camp_hub`. Some older docs used “command_tent” as a label, but the current menu id is `enlisted_camp_hub`.
 
 **Key Settings:**
 - `capacity_by_tier`: Max soldiers per tier (4: 5, 5: 10, 6: 20)

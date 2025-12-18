@@ -1,8 +1,15 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Enlisted.Features.Camp.UI.Bulletin;
+using Enlisted.Features.Camp.UI.Management;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Lances.Events.Decisions;
 using Enlisted.Features.Schedule.Behaviors;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.LogEntries;
 using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
@@ -30,12 +37,20 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         private string _numLanceNewsText;
         private string _numCompanyNewsText;
         private string _numKingdomNewsText;
+
+        // Phase 5.5: decision-driven report categories
+        private string _opportunitiesText;
+        private string _recentOutcomesText;
+        private string _numOpportunitiesText;
+        private string _numRecentOutcomesText;
         
         // News item lists
         private MBBindingList<ReportItemVM> _lanceNews;
         private MBBindingList<ReportItemVM> _companyNews;
         private MBBindingList<ReportItemVM> _kingdomNews;
         private MBBindingList<ReportItemVM> _generalOrders;
+        private MBBindingList<ReportItemVM> _opportunities;
+        private MBBindingList<ReportItemVM> _recentOutcomes;
         
         // General Orders header
         private string _generalOrdersText;
@@ -65,6 +80,8 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             CompanyNews = new MBBindingList<ReportItemVM>();
             KingdomNews = new MBBindingList<ReportItemVM>();
             GeneralOrders = new MBBindingList<ReportItemVM>();
+            Opportunities = new MBBindingList<ReportItemVM>();
+            RecentOutcomes = new MBBindingList<ReportItemVM>();
             ReportCategories = new MBBindingList<ReportCategoryItemVM>();
             SelectedCategoryNews = new MBBindingList<ReportItemVM>();
             _selectedCategoryType = ReportCategoryType.GeneralOrders;
@@ -77,6 +94,8 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
 
             ReportsText = "Reports";
             GeneralOrdersText = "General Orders";
+            OpportunitiesText = "Opportunities";
+            RecentOutcomesText = "Recent Outcomes";
             LanceNewsText = "Lance Reports";
             CompanyNewsText = "Company Reports";
             KingdomNewsText = "Kingdom Reports";
@@ -94,6 +113,8 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             CompanyNews.Clear();
             KingdomNews.Clear();
             GeneralOrders.Clear();
+            Opportunities.Clear();
+            RecentOutcomes.Clear();
             
             var enlistment = EnlistmentBehavior.Instance;
             var schedule = ScheduleBehavior.Instance;
@@ -269,9 +290,15 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             // ----- GENERAL ORDERS -----
             // Generate RP-style narrative summaries of recent events
             GenerateGeneralOrders(enlistment, factionBanner);
+
+            // ----- DECISIONS (Phase 5.5) -----
+            var opportunitiesCount = PopulateDecisionOpportunities(enlistment, factionBanner);
+            var recentOutcomesCount = PopulateRecentDecisionOutcomes(enlistment, factionBanner);
             
             // Update counts
             NumGeneralOrdersText = $"({GeneralOrders.Count})";
+            NumOpportunitiesText = $"({opportunitiesCount})";
+            NumRecentOutcomesText = $"({recentOutcomesCount})";
             NumLanceNewsText = $"({LanceNews.Count})";
             NumCompanyNewsText = $"({CompanyNews.Count})";
             NumKingdomNewsText = $"({KingdomNews.Count})";
@@ -295,6 +322,20 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                 ReportCategoryType.GeneralOrders,
                 $"{GeneralOrdersText} {NumGeneralOrdersText}",
                 GeneralOrders.Count,
+                SelectCategory,
+                lordBanner
+            ));
+            ReportCategories.Add(new ReportCategoryItemVM(
+                ReportCategoryType.Opportunities,
+                $"{OpportunitiesText} {NumOpportunitiesText}",
+                Opportunities?.Count ?? 0,
+                SelectCategory,
+                lordBanner
+            ));
+            ReportCategories.Add(new ReportCategoryItemVM(
+                ReportCategoryType.RecentOutcomes,
+                $"{RecentOutcomesText} {NumRecentOutcomesText}",
+                RecentOutcomes?.Count ?? 0,
                 SelectCategory,
                 lordBanner
             ));
@@ -352,6 +393,14 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                     SelectedCategoryTitle = GeneralOrdersText;
                     SelectedCategoryNews = GeneralOrders;
                     break;
+                case ReportCategoryType.Opportunities:
+                    SelectedCategoryTitle = OpportunitiesText;
+                    SelectedCategoryNews = Opportunities;
+                    break;
+                case ReportCategoryType.RecentOutcomes:
+                    SelectedCategoryTitle = RecentOutcomesText;
+                    SelectedCategoryNews = RecentOutcomes;
+                    break;
                 case ReportCategoryType.LanceReports:
                     SelectedCategoryTitle = LanceNewsText;
                     SelectedCategoryNews = LanceNews;
@@ -372,6 +421,13 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
 
             // In native screens, selecting an item always populates the right panel.
             // We'll auto-select the newest/top item in the feed for a responsive UX.
+            // For Opportunities (Phase 5.5) we DO NOT auto-select, because selecting an opportunity routes out to the Decisions menu.
+            if (categoryType == ReportCategoryType.Opportunities)
+            {
+                OnReportSelect(null);
+                return;
+            }
+
             if (SelectedCategoryNews != null && SelectedCategoryNews.Count > 0)
             {
                 OnReportSelect(SelectedCategoryNews[0]);
@@ -379,6 +435,306 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             else
             {
                 OnReportSelect(null);
+            }
+        }
+
+        private int PopulateDecisionOpportunities(EnlistmentBehavior enlistment, Banner factionBanner)
+        {
+            Opportunities.Clear();
+
+            if (enlistment?.IsEnlisted != true)
+            {
+                Opportunities.Add(new ReportItemVM(
+                    "No opportunities while not enlisted.",
+                    "",
+                    "Opportunity",
+                    OnReportSelect,
+                    factionBanner,
+                    detailText: "Opportunities appear when you are enlisted and there are player-initiated decisions available."
+                ));
+
+                return 0;
+            }
+
+            var decisionBehavior = DecisionEventBehavior.Instance;
+            var available = decisionBehavior?.GetAvailablePlayerDecisions() ?? new List<LanceLifeEventDefinition>();
+            var availableCount = available.Count;
+
+            if (availableCount == 0)
+            {
+                Opportunities.Add(new ReportItemVM(
+                    "No matters await your decision today.",
+                    "",
+                    "Opportunity",
+                    OnReportSelect,
+                    factionBanner,
+                    detailText: "No player-initiated decisions are currently available."
+                ));
+
+                return 0;
+            }
+
+            // Keep it short and high-signal.
+            var maxToShow = Math.Min(availableCount, 8);
+            for (var i = 0; i < maxToShow; i++)
+            {
+                var evt = available[i];
+                if (evt == null)
+                {
+                    continue;
+                }
+
+                var title = LanceLifeEventText.Resolve(evt.TitleId, evt.TitleFallback, evt.Id, enlistment);
+                var setup = LanceLifeEventText.Resolve(evt.SetupId, evt.SetupFallback, string.Empty, enlistment);
+                var stakes = BuildDecisionStakesHint(evt);
+
+                var detail = string.IsNullOrWhiteSpace(setup) ? title : setup;
+                if (!string.IsNullOrWhiteSpace(stakes))
+                {
+                    detail = $"{detail}\n\n{stakes}";
+                }
+
+                Opportunities.Add(new ReportItemVM(
+                    logText: ShortenSingleLine(title, 110),
+                    logTimeText: "Available",
+                    category: "Opportunity",
+                    onSelect: OnReportSelect,
+                    banner: factionBanner,
+                    detailText: detail,
+                    decisionEventId: evt.Id
+                ));
+            }
+
+            return availableCount;
+        }
+
+        private int PopulateRecentDecisionOutcomes(EnlistmentBehavior enlistment, Banner factionBanner)
+        {
+            RecentOutcomes.Clear();
+
+            var decisionBehavior = DecisionEventBehavior.Instance;
+            var log = decisionBehavior?.State?.OutcomeLog;
+            log?.EnsureInitialized();
+
+            var items = log?.Items;
+            if (items == null || items.Length == 0)
+            {
+                RecentOutcomes.Add(new ReportItemVM(
+                    "No recent outcomes.",
+                    "",
+                    "Outcome",
+                    OnReportSelect,
+                    factionBanner,
+                    detailText: "Resolved decision outcomes will appear here."
+                ));
+
+                return 0;
+            }
+
+            var records = items
+                .Where(r => r != null &&
+                            r.DayNumber >= 0 &&
+                            !string.IsNullOrWhiteSpace(r.EventId) &&
+                            !string.IsNullOrWhiteSpace(r.ResultText))
+                .ToList();
+
+            records.Sort((a, b) => b.DayNumber.CompareTo(a.DayNumber));
+
+            if (records.Count == 0)
+            {
+                RecentOutcomes.Add(new ReportItemVM(
+                    "No recent outcomes.",
+                    "",
+                    "Outcome",
+                    OnReportSelect,
+                    factionBanner,
+                    detailText: "Resolved decision outcomes will appear here."
+                ));
+
+                return 0;
+            }
+
+            var catalog = LanceLifeEventRuntime.GetCatalog();
+
+            var maxToShow = Math.Min(records.Count, 10);
+            for (var i = 0; i < maxToShow; i++)
+            {
+                var rec = records[i];
+                if (rec == null)
+                {
+                    continue;
+                }
+
+                var evt = catalog?.Events?.FirstOrDefault(e => string.Equals(e?.Id, rec.EventId, StringComparison.OrdinalIgnoreCase));
+
+                var title = evt != null
+                    ? LanceLifeEventText.Resolve(evt.TitleId, evt.TitleFallback, evt.Id, enlistment)
+                    : rec.EventId;
+
+                var optText = rec.OptionId ?? string.Empty;
+                if (evt?.Options != null && !string.IsNullOrWhiteSpace(rec.OptionId))
+                {
+                    var opt = evt.Options.FirstOrDefault(o => string.Equals(o?.Id, rec.OptionId, StringComparison.OrdinalIgnoreCase));
+                    if (opt != null)
+                    {
+                        optText = LanceLifeEventText.Resolve(opt.TextId, opt.TextFallback, opt.Id, enlistment);
+                    }
+                }
+
+                optText = ShortenSingleLine(optText, 70);
+
+                var heading = string.IsNullOrWhiteSpace(optText)
+                    ? title
+                    : $"{title} — {optText}";
+
+                heading = ShortenSingleLine(heading, 120);
+
+                var timeText = rec.DayNumber >= 0 ? CampaignTime.Days(rec.DayNumber).ToString() : string.Empty;
+
+                var detail = ShortenWithNewlines(rec.ResultText ?? string.Empty, 500);
+                if (!string.IsNullOrWhiteSpace(optText))
+                {
+                    detail = $"Chosen: {optText}\n\n{detail}";
+                }
+
+                RecentOutcomes.Add(new ReportItemVM(
+                    logText: heading,
+                    logTimeText: timeText,
+                    category: "Outcome",
+                    onSelect: OnReportSelect,
+                    banner: factionBanner,
+                    detailText: detail
+                ));
+            }
+
+            return records.Count;
+        }
+
+        private static string BuildDecisionStakesHint(LanceLifeEventDefinition evt)
+        {
+            if (evt?.Options == null || evt.Options.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var tags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var opt in evt.Options)
+            {
+                if (opt == null)
+                {
+                    continue;
+                }
+
+                if (opt.Costs?.Fatigue > 0)
+                {
+                    tags.Add("fatigue");
+                }
+                if (opt.Costs?.Gold > 0 || (opt.Rewards?.Gold ?? 0) > 0)
+                {
+                    tags.Add("coin");
+                }
+
+                var heat = (opt.Costs?.Heat ?? 0) + (opt.Effects?.Heat ?? 0);
+                if (heat != 0)
+                {
+                    tags.Add("heat");
+                }
+
+                var disc = (opt.Costs?.Discipline ?? 0) + (opt.Effects?.Discipline ?? 0);
+                if (disc != 0)
+                {
+                    tags.Add("discipline");
+                }
+
+                if ((opt.Effects?.LanceReputation ?? 0) != 0)
+                {
+                    tags.Add("reputation");
+                }
+
+                if ((opt.Rewards?.FatigueRelief ?? 0) > 0)
+                {
+                    tags.Add("rest");
+                }
+            }
+
+            if (tags.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            return $"Stakes: {string.Join(", ", tags)}.";
+        }
+
+        private static string ShortenSingleLine(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var t = text.Replace("\r", " ").Replace("\n", " ").Trim();
+            if (t.Length <= maxChars)
+            {
+                return t;
+            }
+
+            return t.Substring(0, maxChars).TrimEnd() + "...";
+        }
+
+        private static string ShortenWithNewlines(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var t = text.Trim();
+            if (t.Length <= maxChars)
+            {
+                return t;
+            }
+
+            return t.Substring(0, maxChars).TrimEnd() + "...";
+        }
+
+        private void OpenDecisionsMenuFromReports(string decisionEventId)
+        {
+            if (string.IsNullOrWhiteSpace(decisionEventId))
+            {
+                return;
+            }
+
+            try
+            {
+                // Close the Camp Management overlay first to avoid input restrictions, then switch to the Decisions menu.
+                Enlisted.Mod.Entry.NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        CampManagementScreen.Close();
+                    }
+                    catch
+                    {
+                        // Ignore
+                    }
+
+                    Enlisted.Mod.Entry.NextFrameDispatcher.RunNextFrame(() =>
+                    {
+                        try
+                        {
+                            GameMenu.SwitchToMenu("enlisted_decisions");
+                        }
+                        catch
+                        {
+                            // Ignore
+                        }
+                    });
+                });
+            }
+            catch
+            {
+                // Ignore
             }
         }
         
@@ -931,6 +1287,8 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         {
             // Deselect all
             foreach (var item in GeneralOrders) item.IsSelected = false;
+            foreach (var item in Opportunities) item.IsSelected = false;
+            foreach (var item in RecentOutcomes) item.IsSelected = false;
             foreach (var item in LanceNews) item.IsSelected = false;
             foreach (var item in CompanyNews) item.IsSelected = false;
             foreach (var item in KingdomNews) item.IsSelected = false;
@@ -946,6 +1304,13 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                 SelectedReportTitle = report.Title;
                 SelectedReportCategory = report.Category;
                 SelectedReportDescription = report.Description;
+
+                // Phase 5.5: selecting an opportunity routes the player to the Decisions surface.
+                if (_selectedCategoryType == ReportCategoryType.Opportunities &&
+                    !string.IsNullOrWhiteSpace(report.DecisionEventId))
+                {
+                    OpenDecisionsMenuFromReports(report.DecisionEventId);
+                }
             }
             else
             {
@@ -1143,6 +1508,78 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
                 OnPropertyChangedWithValue(value, nameof(NumGeneralOrdersText));
             }
         }
+
+        [DataSourceProperty]
+        public MBBindingList<ReportItemVM> Opportunities
+        {
+            get => _opportunities;
+            set
+            {
+                if (value == _opportunities) return;
+                _opportunities = value;
+                OnPropertyChangedWithValue(value, nameof(Opportunities));
+            }
+        }
+
+        [DataSourceProperty]
+        public MBBindingList<ReportItemVM> RecentOutcomes
+        {
+            get => _recentOutcomes;
+            set
+            {
+                if (value == _recentOutcomes) return;
+                _recentOutcomes = value;
+                OnPropertyChangedWithValue(value, nameof(RecentOutcomes));
+            }
+        }
+
+        [DataSourceProperty]
+        public string OpportunitiesText
+        {
+            get => _opportunitiesText;
+            set
+            {
+                if (value == _opportunitiesText) return;
+                _opportunitiesText = value;
+                OnPropertyChangedWithValue(value, nameof(OpportunitiesText));
+            }
+        }
+
+        [DataSourceProperty]
+        public string NumOpportunitiesText
+        {
+            get => _numOpportunitiesText;
+            set
+            {
+                if (value == _numOpportunitiesText) return;
+                _numOpportunitiesText = value;
+                OnPropertyChangedWithValue(value, nameof(NumOpportunitiesText));
+            }
+        }
+
+        [DataSourceProperty]
+        public string RecentOutcomesText
+        {
+            get => _recentOutcomesText;
+            set
+            {
+                if (value == _recentOutcomesText) return;
+                _recentOutcomesText = value;
+                OnPropertyChangedWithValue(value, nameof(RecentOutcomesText));
+            }
+        }
+
+        [DataSourceProperty]
+        public string NumRecentOutcomesText
+        {
+            get => _numRecentOutcomesText;
+            set
+            {
+                if (value == _numRecentOutcomesText) return;
+                _numRecentOutcomesText = value;
+                OnPropertyChangedWithValue(value, nameof(NumRecentOutcomesText));
+            }
+        }
         
         [DataSourceProperty]
         public ReportItemVM CurrentSelectedReport
@@ -1258,7 +1695,11 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         GeneralOrders = 0,
         LanceReports = 1,
         CompanyReports = 2,
-        KingdomReports = 3
+        KingdomReports = 3,
+
+        // Phase 5.5: decision-driven report categories
+        Opportunities = 4,
+        RecentOutcomes = 5
     }
 
     /// <summary>
@@ -1335,6 +1776,7 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
     public class ReportItemVM : ViewModel
     {
         private readonly System.Action<ReportItemVM> _onSelect;
+        private readonly string _decisionEventId;
         
         // Use EXACT same property names as native KingdomWarLogItemVM
         private string _warLogText;      // Main text (like "Grykka created an army.")
@@ -1350,13 +1792,15 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
             string category,
             System.Action<ReportItemVM> onSelect,
             Banner banner = null,
-            string detailText = null)
+            string detailText = null,
+            string decisionEventId = null)
         {
             _warLogText = logText;
             _warLogTimeText = logTimeText;
             _detailText = string.IsNullOrWhiteSpace(detailText) ? logText : detailText;
             _category = category;
             _onSelect = onSelect;
+            _decisionEventId = decisionEventId ?? string.Empty;
             
             // Use banner if provided - native pattern: new BannerImageIdentifierVM(banner, true)
             if (banner != null)
@@ -1419,6 +1863,8 @@ namespace Enlisted.Features.Camp.UI.Management.Tabs
         
         [DataSourceProperty]
         public string Description => _detailText;
+
+        public string DecisionEventId => _decisionEventId;
         
         [DataSourceProperty]
         public string Category

@@ -1,0 +1,145 @@
+<Prefab>
+  <!-- Duties Panel - Configure duty assignments (low-frequency) -->
+  <!-- Camp Activities (high-frequency) are accessible via Game Menu, not here -->
+  <Window>
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" IsVisible="@Show">
+      <Children>
+        
+        <!-- Main Content Container -->
+        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="40" MarginRight="40" MarginTop="20" MarginBottom="20">
+          <Children>
+            
+            <!-- Current Duty Header Bar -->
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="60">
+              <Children>
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#1A1A1ACC" />
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="2" VerticalAlignment="Bottom" Sprite="BlankWhiteSquare_9" Color="#8B735580" />
+                
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="20" MarginRight="20">
+                  <Children>
+                    <RichTextWidget Text="Current Duty:" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="#AAAAAA" />
+                    <RichTextWidget Text="@CurrentDutyText" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" PositionXOffset="120" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="18" Brush.TextColor="#FFE4B5FF" />
+                    <RichTextWidget Text="@CurrentFormationText" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Right" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="14" Brush.TextColor="#888888" />
+                  </Children>
+                </Widget>
+              </Children>
+            </Widget>
+            
+            <!-- Two-Column Layout -->
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" PositionYOffset="70">
+              <Children>
+                
+                <!-- Left Panel: Duty List (40% width) -->
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="450">
+                  <Children>
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#1A1A1ACC" />
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="3" HorizontalAlignment="Right" Sprite="BlankWhiteSquare_9" Color="#8B735580" />
+                    
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="15" MarginRight="15" MarginTop="15" MarginBottom="15">
+                      <Children>
+                        
+                        <!-- Header -->
+                        <RichTextWidget Text="@DutiesHeaderText" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="30" Brush="SPGeneral.MediumText" Brush.FontSize="18" Brush.TextColor="#FFE4B5FF" />
+                        
+                        <!-- Duty List -->
+                        <ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" PositionYOffset="40">
+                          <Children>
+                            <ListPanel DataSource="{Duties}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop">
+                              <ItemTemplate>
+                                <ButtonWidget Command.Click="ExecuteSelect" IsSelected="@IsSelected" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="55" MarginBottom="4" Brush="Clan.Member.Item.Button" UpdateChildrenStates="true">
+                                  <Children>
+                                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="15" MarginRight="15">
+                                      <Children>
+                                        <RichTextWidget Text="@DisplayText" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" VerticalAlignment="Center" Brush="Clan.Member.Name.Text" />
+                                        <RichTextWidget Text="@StatusText" IsVisible="@ShowStatus" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Right" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="13" Brush.TextColor="#888888" />
+                                      </Children>
+                                    </Widget>
+                                  </Children>
+                                </ButtonWidget>
+                              </ItemTemplate>
+                            </ListPanel>
+                          </Children>
+                        </ScrollablePanel>
+                        
+                        <!-- No Duties Message -->
+                        <RichTextWidget Text="@NoDutiesText" IsVisible="@Duties.Count == 0" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" PositionYOffset="60" HorizontalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="14" Brush.TextColor="#888888" />
+                        
+                      </Children>
+                    </Widget>
+                  </Children>
+                </Widget>
+                
+                <!-- Right Panel: Duty Details (60% width) -->
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="465">
+                  <Children>
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#1A1A1ACC" />
+                    
+                    <!-- No Selection State -->
+                    <Widget IsVisible="@HasSelectedDuty == false" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+                      <Children>
+                        <RichTextWidget Text="@SelectDutyText" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="#888888" />
+                      </Children>
+                    </Widget>
+                    
+                    <!-- Duty Details Content -->
+                    <Widget IsVisible="@HasSelectedDuty" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="25" MarginRight="25" MarginTop="20" MarginBottom="20">
+                      <Children>
+                        
+                        <!-- Duty Title -->
+                        <RichTextWidget Text="@DutyTitle" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="35" Brush="SPGeneral.MediumText" Brush.FontSize="24" Brush.TextColor="#FFE4B5FF" />
+                        
+                        <!-- Duty Description -->
+                        <RichTextWidget Text="@DutyDescription" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" PositionYOffset="45" Brush="SPGeneral.MediumText" Brush.FontSize="15" Brush.TextColor="#CCCCCC" />
+                        
+                        <!-- Effects Section -->
+                        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" PositionYOffset="100">
+                          <Children>
+                            <RichTextWidget Text="Effects:" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="25" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="#AAAAAA" />
+                            
+                            <ListPanel DataSource="{DutyEffects}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" PositionYOffset="30" StackLayout.LayoutMethod="VerticalBottomToTop">
+                              <ItemTemplate>
+                                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="22">
+                                  <Children>
+                                    <RichTextWidget Text="@EffectText" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="SPGeneral.SmallText" Brush.FontSize="14" Brush.TextColor="#88FF88" />
+                                  </Children>
+                                </Widget>
+                              </ItemTemplate>
+                            </ListPanel>
+                          </Children>
+                        </Widget>
+                        
+                        <!-- Requirements Section -->
+                        <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" PositionYOffset="220">
+                          <Children>
+                            <RichTextWidget Text="Requirements:" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="25" Brush="SPGeneral.MediumText" Brush.FontSize="16" Brush.TextColor="#AAAAAA" />
+                            <RichTextWidget Text="@DutyRequirements" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" PositionYOffset="28" Brush="SPGeneral.SmallText" Brush.FontSize="14" Brush.TextColor="#CCCCCC" />
+                          </Children>
+                        </Widget>
+                        
+                        <!-- Request Button -->
+                        <ButtonWidget Command.Click="ExecuteRequestDuty" IsDisabled="@CanRequestDuty == false" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="200" SuggestedHeight="45" VerticalAlignment="Bottom" HorizontalAlignment="Center" Brush="Popup.Button.ItemCard.Primary" UpdateChildrenStates="true">
+                          <Children>
+                            <RichTextWidget Text="@RequestButtonText" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Popup.Button.ItemCard.Text" />
+                          </Children>
+                        </ButtonWidget>
+                        
+                        <!-- Button Hint -->
+                        <RichTextWidget Text="@RequestButtonHint" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="20" VerticalAlignment="Bottom" PositionYOffset="-55" HorizontalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextColor="#888888" />
+                        
+                      </Children>
+                    </Widget>
+                    
+                  </Children>
+                </Widget>
+                
+              </Children>
+            </Widget>
+            
+          </Children>
+        </Widget>
+        
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>
+

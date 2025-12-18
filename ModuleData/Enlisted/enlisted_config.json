@@ -117,9 +117,11 @@
         "events_folder": "Events",
         "automatic": {
             "enabled": true,
-            "evaluation_cadence_hours": 1,
+            "evaluation_cadence_hours": 6,
             "max_events_per_day": 1,
-            "min_hours_between_events": 12,
+            "min_days_between_events": 5,
+            "target_days_between_events": 10,
+            "enlistment_grace_days": 7,
             "queue_timeout_hours": 24
         },
         "player_initiated": {
@@ -166,7 +168,7 @@
             "lance_leader_orders": 1,
             "noble_events": 5,
             "command_decisions": 7,
-            "lance_mate": 1,
+            "lance_mate": 2,
             "situation": 1
         }
     }

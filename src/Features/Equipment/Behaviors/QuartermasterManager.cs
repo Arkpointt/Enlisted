@@ -993,7 +993,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var cost = variant.Cost > 0 ? variant.Cost : CalculateQuartermasterPrice(requestedItem);
                 if (hero.Gold < cost)
                 {
-                    var msg = new TextObject("{=qm_cannot_afford}You canâ€™t afford this. Cost: {COST} denars.");
+                    var msg = new TextObject("{=qm_cannot_afford}You can't afford this. Cost: {COST} denars.");
                     msg.SetTextVariable("COST", cost);
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return;
@@ -3830,7 +3830,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var party = MobileParty.MainParty;
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                sb.AppendLine("â€” Supply Status â€”");
+                sb.AppendLine("— Supply Status —");
                 sb.AppendLine();
                 
                 // Current supply status with cleaner formatting
@@ -3842,10 +3842,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Officer benefits display with modern formatting
                 if (duties?.GetCurrentOfficerRole() == "Quartermaster")
                 {
-                    sb.AppendLine("â€” Officer Benefits â€”");
-                    sb.AppendLine("â€¢ +50 party carry capacity");
-                    sb.AppendLine("â€¢ +15% food efficiency");
-                    sb.AppendLine("â€¢ Enhanced supply management options");
+                    sb.AppendLine("— Officer Benefits —");
+                    sb.AppendLine("• +50 party carry capacity");
+                    sb.AppendLine("• +15% food efficiency");
+                    sb.AppendLine("• Enhanced supply management options");
                     sb.AppendLine();
                 }
                 

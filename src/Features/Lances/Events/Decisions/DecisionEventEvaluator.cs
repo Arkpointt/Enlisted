@@ -120,7 +120,10 @@ namespace Enlisted.Features.Lances.Events.Decisions
 
             // Filter to player-initiated events only
             var playerInitiated = allEvents
-                .Where(e => e.Delivery?.Method == "player_initiated")
+                .Where(e =>
+                    e != null &&
+                    string.Equals(e.Category, "decision", StringComparison.OrdinalIgnoreCase) &&
+                    e.Delivery?.Method == "player_initiated")
                 .ToList();
 
             // Check each event's requirements (but not global limits - those only apply to auto-fire)
@@ -219,6 +222,18 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 return false;
             }
 
+            // Protection Layer 8b: Explicit tier requirements (data-driven bounds).
+            if (!PassesTierRequirementCheck(evt, enlistment))
+            {
+                return false;
+            }
+
+            // Protection Layer 8c: Explicit duty requirements (data-driven).
+            if (!PassesDutyRequirementCheck(evt, enlistment))
+            {
+                return false;
+            }
+
             // Protection Layer 9 (Phase 6): Tier-based narrative access
             // A T1 peasant won't be invited hunting by the Lord
             if (!PassesNarrativeSourceCheck(evt, config, enlistment))
@@ -240,6 +255,46 @@ namespace Enlisted.Features.Lances.Events.Decisions
             }
 
             return true;
+        }
+
+        private bool PassesTierRequirementCheck(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment)
+        {
+            var tierRange = evt?.Requirements?.Tier;
+            if (tierRange == null)
+            {
+                return true;
+            }
+
+            var minTier = Math.Max(1, tierRange.Min);
+            var maxTier = Math.Max(minTier, tierRange.Max);
+
+            var playerTier = enlistment?.EnlistmentTier ?? 1;
+            if (playerTier < minTier || playerTier > maxTier)
+            {
+                ModLogger.Debug(LogCategory, $"Event {evt?.Id} blocked by requirements.tier: player T{playerTier} not in [{minTier}..{maxTier}]");
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool PassesDutyRequirementCheck(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment)
+        {
+            var reqDuty = (evt?.Requirements?.Duty ?? "any").Trim();
+            if (string.IsNullOrWhiteSpace(reqDuty) ||
+                string.Equals(reqDuty, "any", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var selectedDuty = (enlistment?.SelectedDuty ?? string.Empty).Trim();
+            var ok = string.Equals(selectedDuty, reqDuty, StringComparison.OrdinalIgnoreCase);
+            if (!ok)
+            {
+                ModLogger.Debug(LogCategory, $"Event {evt?.Id} blocked by requirements.duty: requires '{reqDuty}', player is '{selectedDuty}'");
+            }
+
+            return ok;
         }
 
         /// <summary>

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Lances.Events;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 
@@ -44,6 +46,9 @@ namespace Enlisted.Features.Lances.Events.Decisions
         // Tracking
         private int _lastEvaluationHour = -1;
         private bool _initialized;
+
+        // Phase 5: situation flag refresh gate
+        private int _lastSituationUpdateHourNumber = -1;
 
         public override void RegisterEvents()
         {
@@ -95,6 +100,9 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 return new List<LanceLifeEventDefinition>();
             }
 
+            // Phase 5: keep situation flags fresh before evaluating availability.
+            UpdateSituationFlagsIfNeeded(enlistment);
+
             var catalog = LanceLifeEventRuntime.GetCatalog();
             var allEvents = catalog?.Events ?? new List<LanceLifeEventDefinition>();
 
@@ -105,6 +113,14 @@ namespace Enlisted.Features.Lances.Events.Decisions
         /// Fires a player-initiated decision. Called from Main Menu.
         /// </summary>
         public bool FirePlayerDecision(string eventId)
+        {
+            return FirePlayerDecision(eventId, onEventClosed: null);
+        }
+
+        /// <summary>
+        /// Fires a player-initiated decision with an optional callback when the event screen closes.
+        /// </summary>
+        public bool FirePlayerDecision(string eventId, System.Action onEventClosed)
         {
             var config = GetConfig();
             if (config == null || !config.Enabled)
@@ -128,7 +144,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
             }
 
             // Fire through existing infrastructure
-            return FireEvent(evt, enlistment);
+            return FireEvent(evt, enlistment, onEventClosed);
         }
 
         /// <summary>
@@ -181,6 +197,9 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 {
                     return;
                 }
+
+                // Phase 5: update situation flags for decision availability (derived from Daily Report snapshot + live state).
+                UpdateSituationFlagsIfNeeded(enlistment);
 
                 // Try to fire queued event first
                 if (!string.IsNullOrEmpty(_queuedEventId))
@@ -235,11 +254,110 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 // Expire old flags
                 _state.ExpireFlags();
 
+                // Phase 5: refresh situation flags at least once per day (safe fallback)
+                UpdateSituationFlagsIfNeeded(EnlistmentBehavior.Instance, force: true);
+
                 ModLogger.Debug(LogCategory, $"Daily reset complete. Fired today: {_state.FiredToday}, this week: {_state.FiredThisWeek}");
             }
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Decision Events daily tick failed", ex);
+            }
+        }
+
+        private void UpdateSituationFlagsIfNeeded(EnlistmentBehavior enlistment, bool force = false)
+        {
+            try
+            {
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return;
+                }
+
+                var hourNumber = GetHourNumber();
+                if (!force && _lastSituationUpdateHourNumber == hourNumber)
+                {
+                    return;
+                }
+
+                _lastSituationUpdateHourNumber = hourNumber;
+
+                var flags = SituationFlagsProvider.Compute(enlistment);
+
+                ApplySituationFlag("company_food_critical", flags.CompanyFoodCritical);
+                ApplySituationFlag("company_threat_high", flags.CompanyThreatHigh);
+                ApplySituationFlag("lance_fever_spike", flags.LanceFeverSpike);
+                ApplySituationFlag("lance_short_handed", flags.LanceShortHanded);
+                ApplySituationFlag("battle_imminent", flags.BattleImminent);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(LogCategory, "E-DECISIONS-FLAGS-001", "Failed to update situation flags", ex);
+            }
+        }
+
+        private void ApplySituationFlag(string name, bool active)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return;
+            }
+
+            _state ??= new DecisionEventState();
+
+            var currently = _state.HasActiveFlag(name);
+            if (active && !currently)
+            {
+                // Use the state directly to avoid log spam (these update frequently).
+                _state.SetFlag(name, expiryDays: 0f);
+            }
+            else if (!active && currently)
+            {
+                _state.ClearFlag(name);
+            }
+        }
+
+        /// <summary>
+        /// Phase 5: record a resolved decision outcome (for Reports + Daily Report grounding) and post a short dispatch follow-up.
+        /// Called from the centralized effects applier to ensure all delivery paths are covered.
+        /// </summary>
+        public void RecordDecisionOutcome(LanceLifeEventDefinition evt, LanceLifeEventOptionDefinition option, string resultText)
+        {
+            try
+            {
+                if (evt == null || option == null)
+                {
+                    return;
+                }
+
+                if (!string.Equals(evt.Category, "decision", StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+
+                _state ??= new DecisionEventState();
+
+                var txt = (resultText ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+                if (txt.Length > 240)
+                {
+                    txt = txt.Substring(0, 240).TrimEnd() + "...";
+                }
+
+                _state.RecordOutcome(evt.Id, option.Id, txt);
+
+                // High-signal dispatch follow-up (personal feed).
+                var enlistment = EnlistmentBehavior.Instance;
+                var title = LanceLifeEventText.Resolve(evt.TitleId, evt.TitleFallback, evt.Id, enlistment);
+                var headline = string.IsNullOrWhiteSpace(txt) ? title : $"{title}: {txt}";
+
+                var dayNumber = (int)CampaignTime.Now.ToDays;
+                var storyKey = $"decision_outcome:{evt.Id}:{dayNumber}";
+
+                EnlistedNewsBehavior.Instance?.PostPersonalDispatchText("decision", headline, storyKey, minDisplayDays: 2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode(LogCategory, "E-DECISIONS-OUTCOME-001", $"Failed to record decision outcome for {evt?.Id}", ex);
             }
         }
 
@@ -334,12 +452,12 @@ namespace Enlisted.Features.Lances.Events.Decisions
             ClearQueue();
         }
 
-        private bool FireEvent(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment)
+        private bool FireEvent(LanceLifeEventDefinition evt, EnlistmentBehavior enlistment, System.Action onEventClosed = null)
         {
             try
             {
                 // Use the modern event presenter (matches existing infrastructure)
-                var shown = Enlisted.Features.Lances.UI.ModernEventPresenter.TryShow(evt, enlistment);
+                var shown = Enlisted.Features.Lances.UI.ModernEventPresenter.TryShow(evt, enlistment, onEventClosed);
 
                 if (shown)
                 {
@@ -369,19 +487,24 @@ namespace Enlisted.Features.Lances.Events.Decisions
 
         private bool IsSafeToShowEvent()
         {
-            // Check various unsafe conditions
             if (Campaign.Current == null)
             {
                 return false;
             }
 
-            // Not safe during combat
-            if (TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.Current != null)
+            // Don't stack decision popups on top of each other (modern UI sets its own global guard).
+            if (Enlisted.Features.Lances.UI.ModernEventPresenter.IsEventShowing)
             {
                 return false;
             }
 
-            // Not safe during menus (conversation, trade, etc.)
+            // Use the shared "ai_safe" guardrails to avoid firing during encounters/conversations/map events/prisoner state.
+            if (!LanceLifeEventTriggerEvaluator.IsAiSafe())
+            {
+                return false;
+            }
+
+            // Not safe during menus (conversation, trade, etc.) - keep this as a belt-and-suspenders check.
             if (Campaign.Current.ConversationManager?.IsConversationInProgress == true)
             {
                 return false;

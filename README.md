@@ -89,7 +89,11 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
   - when pay is late, “pay tension” rises and unlocks pressure-valve options (including leaving without penalty at high tension).
 - **leave vs discharge**
   - leave is temporary and time-limited.
-  - discharge (final muster) is the “leave properly” path and resolves at the next pay muster.
+  - discharge (final muster) is the "leave properly" path and resolves at the next pay muster.
+- **lance reputation**
+  - your standing with your lance mates affects available options and promotions.
+  - help your lance → better event options, they cover for you, promotion eligibility.
+  - betray or ignore them → worse options, isolation, blocked promotions, possible sabotage.
 
 ### settings / config
 

@@ -319,6 +319,21 @@ namespace Enlisted.Features.Lances.Events
 
             // Result/outcome text (best-effort).
             var resultText = ResolveOptionResultText(option, enlistment, success);
+
+            // Phase 5 (Decision hooks): record outcomes + post a short follow-up dispatch.
+            // This lives here so ALL decision delivery paths (modern UI, inquiry, incident) behave consistently.
+            try
+            {
+                if (string.Equals(evt.Category, "decision", StringComparison.OrdinalIgnoreCase))
+                {
+                    Decisions.DecisionEventBehavior.Instance?.RecordDecisionOutcome(evt, option, resultText);
+                }
+            }
+            catch
+            {
+                // Best-effort; never break effect application due to reporting.
+            }
+
             return resultText ?? string.Empty;
         }
 

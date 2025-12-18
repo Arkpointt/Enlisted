@@ -54,7 +54,7 @@
         "titleId": "ll_evt_commander_onboard_01_commission_title",
         "setupId": "ll_evt_commander_onboard_01_commission_setup",
         "title": "Your Commission",
-        "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many â€” {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+        "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
         "options": [
           {
             "id": "ready",
@@ -120,7 +120,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_questions_outcome",
-            "outcome": "Practical questions. {LORD_NAME} approves â€” or at least doesn't disapprove.\n\nThey spend an hour explaining the structure. Who you report to. What authority you actually have. What lines not to cross.\n\nYou leave with knowledge, not just soldiers.",
+            "outcome": "Practical questions. {LORD_NAME} approves — or at least doesn't disapprove.\n\nThey spend an hour explaining the structure. Who you report to. What authority you actually have. What lines not to cross.\n\nYou leave with knowledge, not just soldiers.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -190,7 +190,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome",
-            "outcome": "A hint of something â€” respect? â€” flickers across {LORD_NAME}'s face.\n\n\"Honest. I like that. Most commanders promise victory. Few deliver.\"\n\nThey tap the map. \"Your best will have to be enough. Now let me show you what I need.\"",
+            "outcome": "A hint of something — respect? — flickers across {LORD_NAME}'s face.\n\n\"Honest. I like that. Most commanders promise victory. Few deliver.\"\n\nThey tap the map. \"Your best will have to be enough. Now let me show you what I need.\"",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -201,7 +201,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_commander_onboard_01_commission_setup_first_time",
-          "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many â€” {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+          "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
           "options": [
             {
               "id": "ready",
@@ -267,7 +267,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_questions_outcome",
-              "outcome": "Practical questions. {LORD_NAME} approves â€” or at least doesn't disapprove.\n\nThey spend an hour explaining the structure. Who you report to. What authority you actually have. What lines not to cross.\n\nYou leave with knowledge, not just soldiers.",
+              "outcome": "Practical questions. {LORD_NAME} approves — or at least doesn't disapprove.\n\nThey spend an hour explaining the structure. Who you report to. What authority you actually have. What lines not to cross.\n\nYou leave with knowledge, not just soldiers.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -337,7 +337,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome",
-              "outcome": "A hint of something â€” respect? â€” flickers across {LORD_NAME}'s face.\n\n\"Honest. I like that. Most commanders promise victory. Few deliver.\"\n\nThey tap the map. \"Your best will have to be enough. Now let me show you what I need.\"",
+              "outcome": "A hint of something — respect? — flickers across {LORD_NAME}'s face.\n\n\"Honest. I like that. Most commanders promise victory. Few deliver.\"\n\nThey tap the map. \"Your best will have to be enough. Now let me show you what I need.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -493,7 +493,7 @@
         },
         "return": {
           "setupId": "ll_evt_commander_onboard_01_commission_setup_return",
-          "setup": "You've done this before. Stood in a lord's tent. Been given soldiers. Carried that weight.\n\nYou'd put it down. Walked away. Tried to be something else.\n\nNow here you are again.\n\n{LORD_TITLE} {LORD_NAME} watches you. They know your history â€” someone with your experience doesn't appear from nowhere.\n\n\"Back in harness, Commander?\"\n\n{TROOP_COUNT} soldiers. Yours again.",
+          "setup": "You've done this before. Stood in a lord's tent. Been given soldiers. Carried that weight.\n\nYou'd put it down. Walked away. Tried to be something else.\n\nNow here you are again.\n\n{LORD_TITLE} {LORD_NAME} watches you. They know your history — someone with your experience doesn't appear from nowhere.\n\n\"Back in harness, Commander?\"\n\n{TROOP_COUNT} soldiers. Yours again.",
           "options": [
             {
               "id": "needed",
@@ -594,7 +594,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_commander_onboard_01_commission_opt_return_sharp_outcome",
-              "outcome": "\"Purpose.\" {LORD_NAME} considers the word. \"I can provide that. Victory, defeat, meaning â€” that's for you to find.\"\n\nPhilosophical for a commander giving orders. But not wrong.\n\n\"Your soldiers await, Commander. Give them something to believe in.\"",
+              "outcome": "\"Purpose.\" {LORD_NAME} considers the word. \"I can provide that. Victory, defeat, meaning — that's for you to find.\"\n\nPhilosophical for a commander giving orders. But not wrong.\n\n\"Your soldiers await, Commander. Give them something to believe in.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -692,7 +692,7 @@
         "titleId": "ll_evt_commander_onboard_02_meet_troops_title",
         "setupId": "ll_evt_commander_onboard_02_meet_troops_setup",
         "title": "Meeting Your Troops",
-        "setup": "Your soldiers. Formed up. Waiting.\n\n{TROOP_COUNT} faces looking at you. Some veterans, some green, all uncertain. They've had commanders before. Some good. Some got men killed.\n\nThey're wondering which kind you'll be.\n\nYour sergeant â€” {OFFICER_NAME} â€” stands beside you. \"They're ready for inspection, Commander.\"\n\nThis is the moment. First impressions last.",
+        "setup": "Your soldiers. Formed up. Waiting.\n\n{TROOP_COUNT} faces looking at you. Some veterans, some green, all uncertain. They've had commanders before. Some good. Some got men killed.\n\nThey're wondering which kind you'll be.\n\nYour sergeant — {OFFICER_NAME} — stands beside you. \"They're ready for inspection, Commander.\"\n\nThis is the moment. First impressions last.",
         "options": [
           {
             "id": "walk_line",
@@ -793,7 +793,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_defer_outcome",
-            "outcome": "{OFFICER_NAME} walks you through the formation. Names, histories, strengths, problems.\n\nThat one's reliable. That one drinks. Those two hate each other. The veteran in the back has forgotten more than most soldiers learn.\n\nBy the end, you know your force. Not faces â€” people.",
+            "outcome": "{OFFICER_NAME} walks you through the formation. Names, histories, strengths, problems.\n\nThat one's reliable. That one drinks. Those two hate each other. The veteran in the back has forgotten more than most soldiers learn.\n\nBy the end, you know your force. Not faces — people.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -828,7 +828,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_train_outcome",
-            "outcome": "Words are cheap. Action tells.\n\nYou put them through their paces. Basic formations. Reactions to commands. Nothing fancy â€” just competence.\n\nBy the end, you know who's sharp and who needs work. They know you care about the basics.\n\n\"Again tomorrow,\" you tell {OFFICER_NAME}. \"Until it's reflex.\"",
+            "outcome": "Words are cheap. Action tells.\n\nYou put them through their paces. Basic formations. Reactions to commands. Nothing fancy — just competence.\n\nBy the end, you know who's sharp and who needs work. They know you care about the basics.\n\n\"Again tomorrow,\" you tell {OFFICER_NAME}. \"Until it's reflex.\"",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -839,7 +839,7 @@
       "variants": {
         "all": {
           "setupId": "ll_evt_commander_onboard_02_meet_troops_setup_all",
-          "setup": "Your soldiers. Formed up. Waiting.\n\n{TROOP_COUNT} faces looking at you. Some veterans, some green, all uncertain. They've had commanders before. Some good. Some got men killed.\n\nThey're wondering which kind you'll be.\n\nYour sergeant â€” {OFFICER_NAME} â€” stands beside you. \"They're ready for inspection, Commander.\"\n\nThis is the moment. First impressions last.",
+          "setup": "Your soldiers. Formed up. Waiting.\n\n{TROOP_COUNT} faces looking at you. Some veterans, some green, all uncertain. They've had commanders before. Some good. Some got men killed.\n\nThey're wondering which kind you'll be.\n\nYour sergeant — {OFFICER_NAME} — stands beside you. \"They're ready for inspection, Commander.\"\n\nThis is the moment. First impressions last.",
           "options": [
             {
               "id": "walk_line",
@@ -940,7 +940,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_defer_outcome",
-              "outcome": "{OFFICER_NAME} walks you through the formation. Names, histories, strengths, problems.\n\nThat one's reliable. That one drinks. Those two hate each other. The veteran in the back has forgotten more than most soldiers learn.\n\nBy the end, you know your force. Not faces â€” people.",
+              "outcome": "{OFFICER_NAME} walks you through the formation. Names, histories, strengths, problems.\n\nThat one's reliable. That one drinks. Those two hate each other. The veteran in the back has forgotten more than most soldiers learn.\n\nBy the end, you know your force. Not faces — people.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -975,7 +975,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_train_outcome",
-              "outcome": "Words are cheap. Action tells.\n\nYou put them through their paces. Basic formations. Reactions to commands. Nothing fancy â€” just competence.\n\nBy the end, you know who's sharp and who needs work. They know you care about the basics.\n\n\"Again tomorrow,\" you tell {OFFICER_NAME}. \"Until it's reflex.\"",
+              "outcome": "Words are cheap. Action tells.\n\nYou put them through their paces. Basic formations. Reactions to commands. Nothing fancy — just competence.\n\nBy the end, you know who's sharp and who needs work. They know you care about the basics.\n\n\"Again tomorrow,\" you tell {OFFICER_NAME}. \"Until it's reflex.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1444,7 +1444,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome",
-            "outcome": "A flicker of something â€” amusement? approval? â€” crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
+            "outcome": "A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -1591,7 +1591,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome",
-              "outcome": "A flicker of something â€” amusement? approval? â€” crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
+              "outcome": "A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1807,7 +1807,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} accepts your silence for what it is â€” a professional who doesn't need the speech. \"Tent line. Dawn. Don't make me come find you.\"",
+              "outcome": "{LANCE_LEADER_SHORT} accepts your silence for what it is — a professional who doesn't need the speech. \"Tent line. Dawn. Don't make me come find you.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -1817,7 +1817,7 @@
         },
         "return": {
           "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_return",
-          "setup": "Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier's life settling back onto your shoulders.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over â€” and pauses. They see it. The way you stand. The way you're already scanning the camp, reading the layout.\n\n\"Served before, have you?\"\n\nThe lance watches with new interest. A veteran returning to the ranks. That's either wisdom or desperation.",
+          "setup": "Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier's life settling back onto your shoulders.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over — and pauses. They see it. The way you stand. The way you're already scanning the camp, reading the layout.\n\n\"Served before, have you?\"\n\nThe lance watches with new interest. A veteran returning to the ranks. That's either wisdom or desperation.",
           "options": [
             {
               "id": "honest",
@@ -2015,7 +2015,7 @@
         "titleId": "ll_evt_enlisted_onboard_02_fire_circle_title",
         "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup",
         "title": "The Fire Circle",
-        "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot â€” a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
+        "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
         "options": [
           {
             "id": "recruits",
@@ -2116,7 +2116,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_outcome",
-            "outcome": "The soldier on cook duty looks surprised, then relieved. \"Grab that pot. Don't spill it.\"\n\nYou serve. Everyone gets a good look at you. Some nod. Some ignore you. But they all know your face now.\n\nYou eat last, but you eat well â€” cook's privilege. And you've met everyone without having to pick sides.",
+            "outcome": "The soldier on cook duty looks surprised, then relieved. \"Grab that pot. Don't spill it.\"\n\nYou serve. Everyone gets a good look at you. Some nod. Some ignore you. But they all know your face now.\n\nYou eat last, but you eat well — cook's privilege. And you've met everyone without having to pick sides.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2162,7 +2162,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_first_time",
-          "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot â€” a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
+          "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
           "options": [
             {
               "id": "recruits",
@@ -2263,7 +2263,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_outcome",
-              "outcome": "The soldier on cook duty looks surprised, then relieved. \"Grab that pot. Don't spill it.\"\n\nYou serve. Everyone gets a good look at you. Some nod. Some ignore you. But they all know your face now.\n\nYou eat last, but you eat well â€” cook's privilege. And you've met everyone without having to pick sides.",
+              "outcome": "The soldier on cook duty looks surprised, then relieved. \"Grab that pot. Don't spill it.\"\n\nYou serve. Everyone gets a good look at you. Some nod. Some ignore you. But they all know your face now.\n\nYou eat last, but you eat well — cook's privilege. And you've met everyone without having to pick sides.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2308,7 +2308,7 @@
         },
         "transfer": {
           "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_transfer",
-          "setup": "Evening. The fire circle.\n\nYou know this ritual. Every lance has one â€” the spot where stories are told and bonds form. {LANCE_NAME}'s fire is no different. Just unfamiliar faces around familiar flames.\n\n{VETERAN_1_NAME} catches your eye. The look says: we know you're a transfer. Question is, what kind?\n\nThere's space available. Where you sit matters.",
+          "setup": "Evening. The fire circle.\n\nYou know this ritual. Every lance has one — the spot where stories are told and bonds form. {LANCE_NAME}'s fire is no different. Just unfamiliar faces around familiar flames.\n\n{VETERAN_1_NAME} catches your eye. The look says: we know you're a transfer. Question is, what kind?\n\nThere's space available. Where you sit matters.",
           "options": [
             {
               "id": "earn_spot",
@@ -2339,7 +2339,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_outcome",
-              "outcome": "You take a modest spot. Not with the raw recruits â€” you're past that. But not pushing into the veteran circle either.\n\n{VETERAN_1_NAME} watches. Nods slightly. You know the game. Respect is earned, not transferred.",
+              "outcome": "You take a modest spot. Not with the raw recruits — you're past that. But not pushing into the veteran circle either.\n\n{VETERAN_1_NAME} watches. Nods slightly. You know the game. Respect is earned, not transferred.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2454,7 +2454,7 @@
         },
         "return": {
           "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_return",
-          "setup": "The fire circle. You've sat at a hundred of these. The warmth, the smoke, the lies soldiers tell each other.\n\nYou'd almost missed it. Almost.\n\n{LANCE_NAME} has gathered. They know you're a veteran â€” it shows in how you move, how you don't ask obvious questions. {VETERAN_1_NAME} gestures to a spot. \"Sit. Eat.\"\n\nNot a command. An offer. They're curious about you.",
+          "setup": "The fire circle. You've sat at a hundred of these. The warmth, the smoke, the lies soldiers tell each other.\n\nYou'd almost missed it. Almost.\n\n{LANCE_NAME} has gathered. They know you're a veteran — it shows in how you move, how you don't ask obvious questions. {VETERAN_1_NAME} gestures to a spot. \"Sit. Eat.\"\n\nNot a command. An offer. They're curious about you.",
           "options": [
             {
               "id": "modest",
@@ -2485,7 +2485,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_outcome",
-              "outcome": "You sit where indicated. The conversation flows around you â€” recent battles, complaints about pay, gossip about officers.\n\nSome things never change. You find yourself smiling.\n\n{VETERAN_1_NAME} catches it. \"Good to be back?\"\n\n\"Yeah,\" you admit. \"It is.\"",
+              "outcome": "You sit where indicated. The conversation flows around you — recent battles, complaints about pay, gossip about officers.\n\nSome things never change. You find yourself smiling.\n\n{VETERAN_1_NAME} catches it. \"Good to be back?\"\n\n\"Yeah,\" you admit. \"It is.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2520,7 +2520,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_outcome",
-              "outcome": "They ask. Veterans always do â€” sizing up the new old-timer.\n\nYou tell one. Not the best one. Not showing off. Just... a story. Real enough to ring true.\n\nWhen you finish, {VETERAN_1_NAME} nods slowly. \"You've seen some things.\"\n\n\"Haven't we all.\"\n\nYou're not one of them yet. But you speak the same language.",
+              "outcome": "They ask. Veterans always do — sizing up the new old-timer.\n\nYou tell one. Not the best one. Not showing off. Just... a story. Real enough to ring true.\n\nWhen you finish, {VETERAN_1_NAME} nods slowly. \"You've seen some things.\"\n\n\"Haven't we all.\"\n\nYou're not one of them yet. But you speak the same language.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2683,7 +2683,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome",
-            "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it â€” knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
+            "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2788,7 +2788,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome",
-            "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear â€” it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
+            "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -2830,7 +2830,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome",
-              "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it â€” knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
+              "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2935,7 +2935,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear â€” it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
+              "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -2976,7 +2976,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome",
-              "outcome": "You work efficiently. You've done this a hundred times. The difference shows â€” you're faster, more thorough, spot problems others would miss.\n\n{LANCE_LEADER_SHORT} inspects your work. Finds nothing to criticize. \"Your old unit taught you right, at least.\" Grudging respect.",
+              "outcome": "You work efficiently. You've done this a hundred times. The difference shows — you're faster, more thorough, spot problems others would miss.\n\n{LANCE_LEADER_SHORT} inspects your work. Finds nothing to criticize. \"Your old unit taught you right, at least.\" Grudging respect.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3011,7 +3011,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome",
-              "outcome": "\"Latrine it is.\" {LANCE_LEADER_SHORT} almost smiles.\n\nYou dig. You've dug before. The smell doesn't bother you anymore â€” or rather, you've learned to ignore it.\n\nWhen you're done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn't complain.\n\nRespect is earned, not transferred. You know that.",
+              "outcome": "\"Latrine it is.\" {LANCE_LEADER_SHORT} almost smiles.\n\nYou dig. You've dug before. The smell doesn't bother you anymore — or rather, you've learned to ignore it.\n\nWhen you're done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn't complain.\n\nRespect is earned, not transferred. You know that.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3122,7 +3122,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome",
-              "outcome": "You take the latrine duty. The worst one. Deliberately.\n\n{LANCE_LEADER_SHORT} watches you work â€” not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n\"Alright,\" they say, when you're done. \"You're still one of us.\"",
+              "outcome": "You take the latrine duty. The worst one. Deliberately.\n\n{LANCE_LEADER_SHORT} watches you work — not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n\"Alright,\" they say, when you're done. \"You're still one of us.\"",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3157,7 +3157,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome",
-              "outcome": "You work the gear pile. But you do more than maintain â€” you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n\"That would have broken in battle,\" you explain. \"Learn to see it.\"\n\n{LANCE_LEADER_SHORT} observes. \"Maybe we got lucky with this one,\" they mutter to {SECOND_SHORT}.",
+              "outcome": "You work the gear pile. But you do more than maintain — you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n\"That would have broken in battle,\" you explain. \"Learn to see it.\"\n\n{LANCE_LEADER_SHORT} observes. \"Maybe we got lucky with this one,\" they mutter to {SECOND_SHORT}.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3166,7 +3166,7 @@
             {
               "id": "problem",
               "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_text",
-              "text": "\"What's the real problem right now? Not the busy work â€” the actual issue.\"",
+              "text": "\"What's the real problem right now? Not the busy work — the actual issue.\"",
               "tooltip": null,
               "condition": null,
               "risk": "safe",
@@ -3192,7 +3192,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome",
-              "outcome": "{LANCE_LEADER_SHORT} pauses. Studies you.\n\n\"Supply count's off. Someone's skimming or the quartermasters can't count. Either way, I need it fixed before the captain notices.\"\n\nA real problem. Not grunt work. They're trusting you.\n\nYou spend the morning in the supply tents. By noon, you've found the discrepancy â€” honest mistake, not theft. The quartermaster owes you a favor. {LANCE_LEADER_SHORT} owes you more.\n\n\"Good to have you back,\" they admit.",
+              "outcome": "{LANCE_LEADER_SHORT} pauses. Studies you.\n\n\"Supply count's off. Someone's skimming or the quartermasters can't count. Either way, I need it fixed before the captain notices.\"\n\nA real problem. Not grunt work. They're trusting you.\n\nYou spend the morning in the supply tents. By noon, you've found the discrepancy — honest mistake, not theft. The quartermaster owes you a favor. {LANCE_LEADER_SHORT} owes you more.\n\n\"Good to have you back,\" they admit.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -3289,7 +3289,7 @@
         "titleId": "ll_evt_officer_onboard_01_shoulder_tabs_title",
         "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup",
         "title": "Shoulder Tabs",
-        "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} â€” no, they're {SECOND_SHORT} now, your sergeant â€” stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
+        "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
         "options": [
           {
             "id": "steady",
@@ -3436,7 +3436,7 @@
       "variants": {
         "first_time": {
           "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time",
-          "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} â€” no, they're {SECOND_SHORT} now, your sergeant â€” stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
+          "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
           "options": [
             {
               "id": "steady",
@@ -3928,7 +3928,7 @@
         "titleId": "ll_evt_officer_onboard_02_first_command_title",
         "setupId": "ll_evt_officer_onboard_02_first_command_setup",
         "title": "Your First Command",
-        "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream â€” good water, but exposed. Or there's the tree line â€” sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
+        "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
         "options": [
           {
             "id": "stream",
@@ -3959,7 +3959,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome",
-            "outcome": "You give the order. {SECOND_SHORT} nods â€” they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
+            "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -3994,7 +3994,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome",
-            "outcome": "{SECOND_SHORT}'s expression flickers â€” they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
+            "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -4075,7 +4075,7 @@
       "variants": {
         "all": {
           "setupId": "ll_evt_officer_onboard_02_first_command_setup_all",
-          "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream â€” good water, but exposed. Or there's the tree line â€” sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
+          "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
           "options": [
             {
               "id": "stream",
@@ -4106,7 +4106,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome",
-              "outcome": "You give the order. {SECOND_SHORT} nods â€” they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
+              "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4141,7 +4141,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome",
-              "outcome": "{SECOND_SHORT}'s expression flickers â€” they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
+              "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,
@@ -4276,7 +4276,7 @@
         "titleId": "ll_evt_officer_onboard_03_tested_title",
         "setupId": "ll_evt_officer_onboard_03_tested_setup",
         "title": "Tested",
-        "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep â€” or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
+        "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
         "options": [
           {
             "id": "by_the_book",
@@ -4307,7 +4307,7 @@
             "flags_set": [],
             "flags_clear": [],
             "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome",
-            "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute â€” properly this time â€” and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
+            "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -4423,7 +4423,7 @@
       "variants": {
         "all": {
           "setupId": "ll_evt_officer_onboard_03_tested_setup_all",
-          "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep â€” or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
+          "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
           "options": [
             {
               "id": "by_the_book",
@@ -4454,7 +4454,7 @@
               "flags_set": [],
               "flags_clear": [],
               "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome",
-              "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute â€” properly this time â€” and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
+              "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
               "outcome_failure": null,
               "injury_risk": null,
               "triggers_event": null,

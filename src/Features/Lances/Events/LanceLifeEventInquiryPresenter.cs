@@ -8,7 +8,7 @@ using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
-using TaleWorlds.Core.ImageIdentifiers;
+using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Lances.Events
@@ -143,15 +143,41 @@ namespace Enlisted.Features.Lances.Events
                             var chosen = selected?.FirstOrDefault()?.Identifier as LanceLifeEventOptionDefinition;
                             if (chosen != null)
                             {
-                                LanceLifeEventEffectsApplier.Apply(evt, chosen, enlistment);
+                                // Check if this option has reward choices
+                                if (chosen.RewardChoices != null && chosen.RewardChoices.Options.Count > 0)
+                                {
+                                    // Show outcome narrative first
+                                    var outcome = GetOutcomeText(chosen, enlistment);
+                                    if (!string.IsNullOrWhiteSpace(outcome))
+                                    {
+                                        InformationManager.DisplayMessage(new InformationMessage(outcome, Colors.White));
+                                    }
+
+                                    // Then show reward choice dialog
+                                    LanceLifeRewardChoiceInquiryScreen.Show(evt, chosen, enlistment, resultText =>
+                                    {
+                                        // Reward choice complete
+                                        _isEventShowing = false;
+                                        RestoreTimeControlMode();
+                                    });
+                                }
+                                else
+                                {
+                                    // No reward choices - apply directly
+                                    LanceLifeEventEffectsApplier.Apply(evt, chosen, enlistment);
+                                    _isEventShowing = false;
+                                    RestoreTimeControlMode();
+                                }
+                            }
+                            else
+                            {
+                                _isEventShowing = false;
+                                RestoreTimeControlMode();
                             }
                         }
                         catch (Exception ex)
                         {
                             ModLogger.Error(LogCategory, "Error applying Lance Life Event option", ex);
-                        }
-                        finally
-                        {
                             _isEventShowing = false;
                             RestoreTimeControlMode();
                         }
@@ -163,8 +189,16 @@ namespace Enlisted.Features.Lances.Events
                     },
                     soundEventPath: string.Empty);
 
-                // Pause the game while the event popup is showing
-                MBInformationManager.ShowMultiSelectionInquiry(inquiry, pauseGameActiveState: true);
+                // Show inquiry with transparent background (pauseGameActiveState: false allows map to be visible)
+                // We manually control time via _capturedTimeMode capture/restore
+                MBInformationManager.ShowMultiSelectionInquiry(inquiry, pauseGameActiveState: false);
+                
+                // Manually pause time if it's not already paused
+                if (Campaign.Current.TimeControlMode != CampaignTimeControlMode.Stop)
+                {
+                    Campaign.Current.TimeControlMode = CampaignTimeControlMode.Stop;
+                }
+                
                 return true;
             }
             catch (Exception ex)
@@ -416,6 +450,31 @@ namespace Enlisted.Features.Lances.Events
             }
 
             return lines.Count > 0 ? string.Join("\n", lines) : string.Empty;
+        }
+
+        /// <summary>
+        /// Get the outcome text for an event option (for displaying before reward choices)
+        /// </summary>
+        private static string GetOutcomeText(LanceLifeEventOptionDefinition option, EnlistmentBehavior enlistment)
+        {
+            if (option == null)
+            {
+                return string.Empty;
+            }
+
+            // Try schema outcome first
+            if (!string.IsNullOrWhiteSpace(option.SchemaOutcome))
+            {
+                return LanceLifeEventText.Resolve(string.Empty, option.SchemaOutcome, string.Empty, enlistment);
+            }
+
+            // Fall back to result text
+            if (!string.IsNullOrWhiteSpace(option.OutcomeTextId) || !string.IsNullOrWhiteSpace(option.OutcomeTextFallback))
+            {
+                return LanceLifeEventText.Resolve(option.OutcomeTextId, option.OutcomeTextFallback, string.Empty, enlistment);
+            }
+
+            return string.Empty;
         }
     }
 }

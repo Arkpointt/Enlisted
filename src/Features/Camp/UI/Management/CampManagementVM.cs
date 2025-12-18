@@ -9,6 +9,9 @@ namespace Enlisted.Features.Camp.UI.Management
     /// <summary>
     /// Main ViewModel for the Camp Management screen.
     /// Uses tab controller pattern from native KingdomManagementVM.
+    /// Tabs: Lance, Orders, Duties, Reports, Army
+    /// Note: Camp Activities are in the Game Menu (one-click access), not here.
+    ///       Duties are low-frequency configuration and belong in this management screen.
     /// </summary>
     public class CampManagementVM : ViewModel
     {
@@ -19,7 +22,7 @@ namespace Enlisted.Features.Camp.UI.Management
         // Tab VMs
         private CampLanceVM _lance;
         private CampScheduleVM _schedule;
-        private CampActivitiesVM _activities;
+        private CampDutiesVM _duties;
         private CampReportsVM _reports;
         private CampArmyVM _army;
         
@@ -31,7 +34,7 @@ namespace Enlisted.Features.Camp.UI.Management
         // Tab labels
         private string _lanceText;
         private string _scheduleText;
-        private string _activitiesText;
+        private string _dutiesText;
         private string _reportsText;
         private string _armyText;
         
@@ -47,7 +50,7 @@ namespace Enlisted.Features.Camp.UI.Management
             // Initialize tab VMs
             Lance = new CampLanceVM();
             Schedule = new CampScheduleVM();
-            Activities = new CampActivitiesVM();
+            Duties = new CampDutiesVM();
             Reports = new CampReportsVM();
             Army = new CampArmyVM();
             
@@ -64,14 +67,14 @@ namespace Enlisted.Features.Camp.UI.Management
             DoneText = "Done";
             LanceText = "Lance";
             ScheduleText = "Orders";
-            ActivitiesText = "Activities";
+            DutiesText = "Duties";
             ReportsText = "Reports";
             ArmyText = "Army";
             
             // Refresh sub-VMs
             Lance?.RefreshValues();
             Schedule?.RefreshValues();
-            Activities?.RefreshValues();
+            Duties?.RefreshValues();
             Reports?.RefreshValues();
             Army?.RefreshValues();
         }
@@ -92,7 +95,7 @@ namespace Enlisted.Features.Camp.UI.Management
             // Hide all panels
             Lance.Show = false;
             Schedule.Show = false;
-            Activities.Show = false;
+            Duties.Show = false;
             Reports.Show = false;
             Army.Show = false;
             
@@ -108,7 +111,7 @@ namespace Enlisted.Features.Camp.UI.Management
                     Schedule.Show = true;
                     break;
                 case 2:
-                    Activities.Show = true;
+                    Duties.Show = true;
                     break;
                 case 3:
                     Reports.Show = true;
@@ -133,7 +136,7 @@ namespace Enlisted.Features.Camp.UI.Management
         // Tab commands (called from XML buttons)
         public void ExecuteShowLance() => SetSelectedCategory(0);
         public void ExecuteShowSchedule() => SetSelectedCategory(1);
-        public void ExecuteShowActivities() => SetSelectedCategory(2);
+        public void ExecuteShowDuties() => SetSelectedCategory(2);
         public void ExecuteShowReports() => SetSelectedCategory(3);
         public void ExecuteShowArmy() => SetSelectedCategory(4);
         
@@ -163,7 +166,7 @@ namespace Enlisted.Features.Camp.UI.Management
             NextTabInputKey?.OnFinalize();
             Lance?.OnFinalize();
             Schedule?.OnFinalize();
-            Activities?.OnFinalize();
+            Duties?.OnFinalize();
             Reports?.OnFinalize();
             Army?.OnFinalize();
         }
@@ -231,14 +234,14 @@ namespace Enlisted.Features.Camp.UI.Management
         }
         
         [DataSourceProperty]
-        public string ActivitiesText
+        public string DutiesText
         {
-            get => _activitiesText;
+            get => _dutiesText;
             set
             {
-                if (value == _activitiesText) return;
-                _activitiesText = value;
-                OnPropertyChangedWithValue(value, nameof(ActivitiesText));
+                if (value == _dutiesText) return;
+                _dutiesText = value;
+                OnPropertyChangedWithValue(value, nameof(DutiesText));
             }
         }
         
@@ -291,14 +294,14 @@ namespace Enlisted.Features.Camp.UI.Management
         }
         
         [DataSourceProperty]
-        public CampActivitiesVM Activities
+        public CampDutiesVM Duties
         {
-            get => _activities;
+            get => _duties;
             set
             {
-                if (value == _activities) return;
-                _activities = value;
-                OnPropertyChangedWithValue(value, nameof(Activities));
+                if (value == _duties) return;
+                _duties = value;
+                OnPropertyChangedWithValue(value, nameof(Duties));
             }
         }
         

@@ -28,7 +28,15 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         private static SpriteCategory _townManagementSpriteCategory;
         private static SpriteCategory _encyclopediaSpriteCategory;
 
-        public static void Open(Action onClosed = null)
+        /// <summary>
+        /// Open the Camp Bulletin overlay.
+        /// </summary>
+        /// <param name="onClosed">Optional callback invoked after the overlay fully closes.</param>
+        /// <param name="initialLocationId">
+        /// Optional initial location to show (e.g., "reports", "lance", "training_grounds").
+        /// When null/empty, the ViewModel default is used.
+        /// </param>
+        public static void Open(Action onClosed = null, string initialLocationId = null)
         {
             // Guard against multiple simultaneous opens
             if (_isOpen)
@@ -37,6 +45,8 @@ namespace Enlisted.Features.Camp.UI.Bulletin
             }
 
             ModLogger.Info(LogCategory, "Open called");
+
+            var startLocationId = string.IsNullOrWhiteSpace(initialLocationId) ? null : initialLocationId.Trim();
             
             _isOpen = true;
             _onClosed = onClosed;
@@ -84,6 +94,12 @@ namespace Enlisted.Features.Camp.UI.Bulletin
 
                     // Track A Phase 3: Register bulletin for news integration
                     CampBulletinIntegration.RegisterActiveBulletin(_dataSource);
+
+                    // Allow callers to open straight into a specific camp location (e.g. My Lance / Reports / Activities).
+                    if (!string.IsNullOrWhiteSpace(startLocationId))
+                    {
+                        _dataSource.ExecuteShowLocation(startLocationId);
+                    }
 
                     // Load the Camp Bulletin UI
                     _movie = _gauntletLayer.LoadMovie("CampBulletin", _dataSource);

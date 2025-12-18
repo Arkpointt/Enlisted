@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Enlisted.Features.Lances.Events
 {
@@ -127,6 +128,10 @@ namespace Enlisted.Features.Lances.Events
         // Phase 4/5: onboarding stage advancement control.
         // If true and the event is an onboarding event, selecting this option advances the onboarding stage.
         [JsonProperty("advances_onboarding")] public bool AdvancesOnboarding { get; set; }
+
+        // Reward Choices: Optional reward selection dialog shown after event outcome
+        // Allows players to customize which skills level up, whether to take gold vs reputation, etc.
+        [JsonProperty("reward_choices")] public LanceLifeRewardChoices RewardChoices { get; set; }
     }
 
     public sealed class LanceLifeEventDelivery
@@ -238,6 +243,10 @@ namespace Enlisted.Features.Lances.Events
     {
         [JsonProperty("content_doc")] public string ContentDoc { get; set; } = string.Empty;
         [JsonProperty("tier_range")] public LanceLifeTierRange TierRange { get; set; } = new LanceLifeTierRange();
+
+        // Phase 0 guardrail: keep metadata forward-compatible.
+        // Authoring can add lightweight hints (e.g., impact tags) without requiring a code change for every new field.
+        [JsonExtensionData] public IDictionary<string, JToken> ExtensionData { get; set; } = new Dictionary<string, JToken>();
     }
 
     public sealed class LanceLifeEventContentDefinition
@@ -282,6 +291,147 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("chance")] public int Chance { get; set; }
         [JsonProperty("severity")] public string Severity { get; set; } = string.Empty;
         [JsonProperty("type")] public string Type { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Reward choice system - allows players to customize event rewards.
+    /// After an event outcome, players can choose between different reward types:
+    /// - Skill focus (which skill to level up)
+    /// - Compensation (gold vs reputation)
+    /// - Weapon specialization (which weapon to train)
+    /// - Risk level (safe vs aggressive approaches)
+    /// - Rest focus (sleep vs socialize vs study)
+    /// </summary>
+    public sealed class LanceLifeRewardChoices
+    {
+        /// <summary>
+        /// Type of reward choice:
+        /// - skill_focus: Choose which skills to level up (polearm vs one-handed vs balanced)
+        /// - compensation: Choose gold vs reputation tradeoffs
+        /// - weapon_focus: Choose which weapon to train
+        /// - risk_level: Choose risk/reward balance
+        /// - rest_focus: Choose how to spend downtime
+        /// </summary>
+        [JsonProperty("type")] 
+        public string Type { get; set; } = "skill_focus";
+        
+        /// <summary>
+        /// Custom prompt text shown in the reward choice dialog.
+        /// If empty, a default prompt is generated based on the type.
+        /// </summary>
+        [JsonProperty("prompt")] 
+        public string Prompt { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Optional: localization key for the prompt
+        /// </summary>
+        [JsonProperty("promptId")] 
+        public string PromptId { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Auto-selection preference (future enhancement):
+        /// - formation: Choose based on player's formation (cavalry → riding, infantry → melee)
+        /// - last_choice: Remember player's previous choice
+        /// - gold_focus: Always prefer gold rewards
+        /// - xp_focus: Always prefer XP rewards
+        /// </summary>
+        [JsonProperty("auto_select_preference")] 
+        public string AutoSelectPreference { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// List of reward options to choose from (2-5 recommended).
+        /// </summary>
+        [JsonProperty("options")] 
+        public List<LanceLifeRewardOption> Options { get; set; } = new List<LanceLifeRewardOption>();
+    }
+
+    /// <summary>
+    /// Individual reward option within a reward choice dialog.
+    /// </summary>
+    public sealed class LanceLifeRewardOption
+    {
+        /// <summary>
+        /// Unique ID for this reward option (used for tracking/analytics)
+        /// </summary>
+        [JsonProperty("id")] 
+        public string Id { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Text shown for this option in the dialog
+        /// </summary>
+        [JsonProperty("text")] 
+        public string Text { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Optional localization key for the text
+        /// </summary>
+        [JsonProperty("textId")] 
+        public string TextId { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Optional tooltip explaining the option in more detail
+        /// </summary>
+        [JsonProperty("tooltip")] 
+        public string Tooltip { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Optional condition that must be met for this option to appear:
+        /// - "formation:infantry" - only for infantry players
+        /// - "tier >= 3" - requires tier 3+
+        /// - "gold >= 50" - requires 50+ gold
+        /// </summary>
+        [JsonProperty("condition")] 
+        public string Condition { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Optional success chance (for risky reward options).
+        /// 0.0-1.0, where 1.0 = guaranteed success, 0.5 = 50% chance, etc.
+        /// If present, the option can fail and show failure_outcome instead.
+        /// </summary>
+        [JsonProperty("success_chance")] 
+        public float? SuccessChance { get; set; }
+        
+        /// <summary>
+        /// Rewards granted if this option is selected (and succeeds if risky)
+        /// </summary>
+        [JsonProperty("rewards")] 
+        public LanceLifeEventRewards Rewards { get; set; } = new LanceLifeEventRewards();
+        
+        /// <summary>
+        /// Effects applied if this option is selected (and succeeds if risky)
+        /// </summary>
+        [JsonProperty("effects")] 
+        public LanceLifeEventEscalationEffects Effects { get; set; } = new LanceLifeEventEscalationEffects();
+        
+        /// <summary>
+        /// Optional failure outcome (for risky options with success_chance)
+        /// </summary>
+        [JsonProperty("failure_outcome")] 
+        public LanceLifeRewardFailure Failure { get; set; }
+    }
+
+    /// <summary>
+    /// Failure outcome for a risky reward option.
+    /// </summary>
+    public sealed class LanceLifeRewardFailure
+    {
+        /// <summary>
+        /// Text shown if the option fails
+        /// </summary>
+        [JsonProperty("text")] 
+        public string Text { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Optional localization key for failure text
+        /// </summary>
+        [JsonProperty("textId")] 
+        public string TextId { get; set; } = string.Empty;
+        
+        /// <summary>
+        /// Effects applied on failure (typically negative)
+        /// </summary>
+        [JsonProperty("effects")] 
+        public LanceLifeEventEscalationEffects Effects { get; set; } = new LanceLifeEventEscalationEffects();
     }
 }
 

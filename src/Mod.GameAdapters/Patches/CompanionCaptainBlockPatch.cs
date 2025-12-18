@@ -47,9 +47,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
 
-                // Only check when enlisted at Tier 4+ (when companions participate in battles)
+                // Only check when enlisted at Commander tier (T7+) (when companions/retinue participate in battles)
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.LanceTier)
+                if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
                 {
                     return true; // Not enlisted or below tier - run vanilla
                 }
@@ -118,9 +118,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return true;
                 }
 
-                // Only check when enlisted at Tier 4+ (when companions participate in battles)
+                // Only check when enlisted at Commander tier (T7+) (when companions/retinue participate in battles)
                 var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.LanceTier)
+                if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.CommanderTier1)
                 {
                     return true; // Not enlisted or below tier - run vanilla
                 }

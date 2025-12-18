@@ -138,7 +138,7 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
     <Content Include="GUI\Prefabs\Events\LanceLifeEventScreen.xml"/>
-    <Content Include="GUI\Prefabs\Camp\CampScreen.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampDutiesPanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampActivityCard.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampManagement.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampSchedulePanel.xml"/>
@@ -146,6 +146,7 @@
     <Content Include="GUI\Prefabs\Camp\ScheduleOtherTuple.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampLancePanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\LanceTuple.xml"/>
+    <!-- CampActivitiesPanel.xml kept for reference but deprecated - Duties panel is used now -->
     <Content Include="GUI\Prefabs\Camp\CampActivitiesPanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampReportsPanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampArmyPanel.xml"/>
@@ -179,6 +180,7 @@
     <Compile Include="src\Features\Lances\Events\LanceLifeEventCatalogLoader.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventEffectsApplier.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventInquiryPresenter.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeRewardChoiceInquiryScreen.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventRuntime.cs"/>
     <Compile Include="src\Features\Lances\Events\LanceLifeEventText.cs"/>
     <!-- Modern Event UI - API fixes applied! Now using FatigueCurrent/FatigueMax and OutcomeTextId/OutcomeTextFallback -->
@@ -196,6 +198,9 @@
     <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventConfig.cs"/>
     <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventEvaluator.cs"/>
     <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\DecisionOutcomeLog.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\SituationFlags.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\SituationFlagsProvider.cs"/>
     <Compile Include="src\Features\Lances\Text\LanceLifeTextVariables.cs"/>
     <Compile Include="src\Features\Lances\Stories\LanceLifeStoryCatalog.cs"/>
     <Compile Include="src\Features\Lances\Stories\LanceLifeStoryPackLoader.cs"/>
@@ -210,6 +215,17 @@
     <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs"/>
+    <!-- Camp News / Daily Report (Phase 1-2 foundations) -->
+    <Compile Include="src\Features\Interface\News\Models\DailyReportModels.cs"/>
+    <Compile Include="src\Features\Interface\News\Models\CampLifeLedger.cs"/>
+    <Compile Include="src\Features\Interface\News\State\CampNewsState.cs"/>
+    <Compile Include="src\Features\Interface\News\Templates\NewsTemplates.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\DailyReportGenerator.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\IDailyReportFactProducer.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\CampNewsContext.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\CompanyMovementObjectiveProducer.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\LanceStatusFactProducer.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\KingdomHeadlineFactProducer.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs"/>
@@ -227,6 +243,7 @@
     <Compile Include="src\Features\Schedule\Models\LanceNeed.cs"/>
     <Compile Include="src\Features\Schedule\Models\LanceNeedsState.cs"/>
     <Compile Include="src\Features\Schedule\Models\SchedulePerformanceTracker.cs"/>
+    <Compile Include="src\Features\Schedule\Models\ScheduleModelsSaveDefiner.cs"/>
     <Compile Include="src\Features\Schedule\Config\ScheduleActivityDefinition.cs"/>
     <Compile Include="src\Features\Schedule\Config\LanceNeedsConfig.cs"/>
     <Compile Include="src\Features\Schedule\Config\ScheduleConfig.cs"/>
@@ -276,7 +293,7 @@
     <Compile Include="src\Features\Camp\UI\Management\CampManagementVM.cs"/>
     <Compile Include="src\Features\Camp\UI\Management\Tabs\CampLanceVM.cs"/>
     <Compile Include="src\Features\Camp\UI\Management\Tabs\CampScheduleVM.cs"/>
-    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampActivitiesVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampDutiesVM.cs"/>
     <Compile Include="src\Features\Camp\UI\Management\Tabs\CampReportsVM.cs"/>
     <Compile Include="src\Features\Camp\UI\Management\Tabs\CampArmyVM.cs"/>
     <Compile Include="src\Features\Camp\UI\Management\Tabs\ScheduleBlockItemVM.cs"/>
@@ -316,6 +333,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\JoinSiegeEventAutoSelectPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\GenericStateMenuPatch.cs"/>
@@ -421,7 +439,7 @@
     <Copy SourceFiles="GUI\Prefabs\Camp\ScheduleOtherTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampLancePanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\LanceTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
-    <Copy SourceFiles="GUI\Prefabs\Camp\CampActivitiesPanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampDutiesPanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\CampReportsPanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\ReportCategoryTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="GUI\Prefabs\Camp\ReportTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>

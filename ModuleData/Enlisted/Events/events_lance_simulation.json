@@ -16,7 +16,7 @@
       "titleId": "lance_cover_request_title",
       "title": "A Favor to Ask",
       "bodyId": "lance_cover_request_body",
-      "body": "{LANCE_MEMBER} approaches during evening mess.\n\n\"{PLAYER_SHORT}, I need a favor. I'm supposed to handle {DUTY_NAME} tomorrow morning, but I've got a conflict. Could you cover for me? It's nothing too demanding.\"",
+      "body": "{LANCE_MATE_NAME} approaches during evening mess.\n\n\"{PLAYER_SHORT}, I need a favor. I'm supposed to handle {DUTY_NAME} tomorrow morning, but I've got a conflict. Could you cover for me? It's nothing too demanding.\"",
       "options": [
         {
           "id": "accept",
@@ -27,7 +27,7 @@
             "fatigue": 2
           },
           "flags": ["cover_accepted"],
-          "resultText": "{LANCE_MEMBER} grins with relief. \"Thanks. I owe you one.\""
+          "resultText": "{LANCE_MATE_NAME} grins with relief. \"Thanks. I owe you one.\""
         },
         {
           "id": "negotiate",
@@ -38,7 +38,7 @@
             "fatigue": 2
           },
           "flags": ["favor_owed", "cover_accepted"],
-          "resultText": "{LANCE_MEMBER} nods. \"Fair enough. Deal.\""
+          "resultText": "{LANCE_MATE_NAME} nods. \"Fair enough. Deal.\""
         },
         {
           "id": "refuse",
@@ -48,7 +48,7 @@
             "lance_reputation": -1
           },
           "flags": ["cover_refused"],
-          "resultText": "{LANCE_MEMBER} looks disappointed but nods. \"Understood.\""
+          "resultText": "{LANCE_MATE_NAME} looks disappointed but nods. \"Understood.\""
         },
         {
           "id": "report",
@@ -59,7 +59,7 @@
             "discipline": 0
           },
           "flags": ["cover_refused", "reported"],
-          "resultText": "{LANCE_MEMBER}'s face hardens. \"Right. Official channels.\""
+          "resultText": "{LANCE_MATE_NAME}'s face hardens. \"Right. Official channels.\""
         }
       ]
     },
@@ -76,7 +76,7 @@
       "titleId": "lance_cover_illness_title",
       "title": "Feeling Poorly",
       "bodyId": "lance_cover_illness_body",
-      "body": "{LANCE_MEMBER} catches you before morning formation, looking pale and unsteady.\n\n\"I'm not feeling well - stomach's been turning all night. I'm supposed to be on {DUTY_NAME} today. Could you stand in for me? I just need a day to recover.\"",
+      "body": "{LANCE_MATE_NAME} catches you before morning formation, looking pale and unsteady.\n\n\"I'm not feeling well - stomach's been turning all night. I'm supposed to be on {DUTY_NAME} today. Could you stand in for me? I just need a day to recover.\"",
       "options": [
         {
           "id": "accept",
@@ -87,7 +87,7 @@
             "fatigue": 3
           },
           "flags": ["cover_accepted", "compassionate"],
-          "resultText": "{LANCE_MEMBER} manages a weak smile. \"You're a good sort. Thanks.\""
+          "resultText": "{LANCE_MATE_NAME} manages a weak smile. \"You're a good sort. Thanks.\""
         },
         {
           "id": "suggest_surgeon",
@@ -98,7 +98,7 @@
             "fatigue": 2
           },
           "flags": ["cover_accepted", "medical_referral"],
-          "resultText": "{LANCE_MEMBER} nods weakly. \"You're right. I'll go to the medical tent.\""
+          "resultText": "{LANCE_MATE_NAME} nods weakly. \"You're right. I'll go to the medical tent.\""
         },
         {
           "id": "refuse",
@@ -108,7 +108,7 @@
             "lance_reputation": -2
           },
           "flags": ["cover_refused"],
-          "resultText": "{LANCE_MEMBER} just nods, too weak to argue, and shuffles off."
+          "resultText": "{LANCE_MATE_NAME} just nods, too weak to argue, and shuffles off."
         }
       ]
     },
@@ -124,7 +124,7 @@
       "titleId": "lance_injury_title",
       "title": "Training Accident",
       "bodyId": "lance_injury_body",
-      "body": "During formation drill, {LANCE_MEMBER} takes a hard fall. The sergeant calls for the surgeon.\n\nThe drill instructor looks to you: \"Get {LANCE_MEMBER} to the medical tent. Someone needs to cover their watch duty tonight.\"",
+      "body": "During formation drill, {LANCE_MATE_NAME} takes a hard fall. The sergeant calls for the surgeon.\n\nThe drill instructor looks to you: \"Get {LANCE_MATE_NAME} to the medical tent. Someone needs to cover their watch duty tonight.\"",
       "notification_type": "warning",
       "effects": {
         "member_state": "minor_injury",
@@ -142,7 +142,7 @@
             "lance_reputation": 2,
             "fatigue": 1
           },
-          "resultText": "You help {LANCE_MEMBER} to the surgeon. They'll recover, given time."
+          "resultText": "You help {LANCE_MATE_NAME} to the surgeon. They'll recover, given time."
         },
         {
           "id": "cover",
@@ -169,7 +169,7 @@
       "titleId": "lance_illness_title",
       "title": "Fallen Ill",
       "bodyId": "lance_illness_body",
-      "body": "{LANCE_MEMBER} hasn't reported for morning formation. You find them in their tent, burning with fever and barely conscious.\n\nThis looks serious.",
+      "body": "{LANCE_MATE_NAME} hasn't reported for morning formation. You find them in their tent, burning with fever and barely conscious.\n\nThis looks serious.",
       "notification_type": "warning",
       "effects": {
         "member_state": "major_injury",
@@ -195,7 +195,7 @@
             "fatigue": 2
           },
           "flags": ["delayed_response"],
-          "resultText": "You do what you can, but {LANCE_MEMBER} needs professional care."
+          "resultText": "You do what you can, but {LANCE_MATE_NAME} needs professional care."
         },
         {
           "id": "report_only",
@@ -221,7 +221,7 @@
       "titleId": "lance_death_title",
       "title": "A Soldier Falls",
       "bodyId": "lance_death_illness_body",
-      "body": "Despite the surgeon's efforts, {LANCE_MEMBER} succumbs to the fever. Another empty bunk in the tent.\n\nThe lance gathers in somber silence. Someone will have to collect their belongings.",
+      "body": "Despite the surgeon's efforts, {LANCE_MATE_NAME} succumbs to the fever. Another empty bunk in the tent.\n\nThe lance gathers in somber silence. Someone will have to collect their belongings.",
       "notification_type": "critical",
       "effects": {
         "member_state": "dead",
@@ -240,7 +240,7 @@
           "effects": {
             "lance_reputation": 5
           },
-          "resultText": "You carefully pack {LANCE_MEMBER}'s possessions. Someone should write to their family."
+          "resultText": "You carefully pack {LANCE_MATE_NAME}'s possessions. Someone should write to their family."
         },
         {
           "id": "mourn_silently",
@@ -266,7 +266,7 @@
       "titleId": "lance_memorial_title",
       "title": "Memorial Service",
       "bodyId": "lance_memorial_body",
-      "body": "The lance gathers for {DECEASED_MEMBER}'s memorial. A simple marker has been placed, and the chaplain speaks words of remembrance.\n\n{LANCE_LEADER} addresses the lance: \"They served with honor. We carry on in their memory.\"",
+      "body": "The lance gathers for {DECEASED_MEMBER}'s memorial. A simple marker has been placed, and the chaplain speaks words of remembrance.\n\n{LANCE_LEADER_SHORT} addresses the lance: \"They served with honor. We carry on in their memory.\"",
       "notification_type": "info",
       "effects": {
         "morale": 5,
@@ -314,7 +314,7 @@
       "titleId": "lance_foreshadow_title",
       "title": "Rumors of Change",
       "bodyId": "lance_foreshadow_body",
-      "body": "{LANCE_MEMBER} sidles up to you during evening mess.\n\n\"Word is, {LANCE_LEADER} might be getting new orders soon. Could mean a shakeup in the chain of command.\" They give you a meaningful look. \"You've been doing well. People notice.\"",
+      "body": "{LANCE_MATE_NAME} sidles up to you during evening mess.\n\n\"Word is, {LANCE_LEADER_SHORT} might be getting new orders soon. Could mean a shakeup in the chain of command.\" They give you a meaningful look. \"You've been doing well. People notice.\"",
       "options": [
         {
           "id": "interested",
@@ -323,7 +323,7 @@
           "effects": {
             "lance_reputation": 1
           },
-          "resultText": "{LANCE_MEMBER} shrugs. \"Just rumors. But keep your eyes open.\""
+          "resultText": "{LANCE_MATE_NAME} shrugs. \"Just rumors. But keep your eyes open.\""
         },
         {
           "id": "humble",
@@ -332,7 +332,7 @@
           "effects": {
             "lance_reputation": 2
           },
-          "resultText": "{LANCE_MEMBER} nods approvingly. \"That's why people notice.\""
+          "resultText": "{LANCE_MATE_NAME} nods approvingly. \"That's why people notice.\""
         },
         {
           "id": "dismiss",
@@ -341,7 +341,7 @@
           "effects": {
             "lance_reputation": 0
           },
-          "resultText": "{LANCE_MEMBER} shrugs. \"Fair enough.\""
+          "resultText": "{LANCE_MATE_NAME} shrugs. \"Fair enough.\""
         }
       ]
     },
@@ -407,7 +407,7 @@
       "titleId": "lance_favor_title",
       "title": "Returning the Favor",
       "bodyId": "lance_favor_body",
-      "body": "{LANCE_MEMBER} approaches you before duty assignment.\n\n\"Remember when you covered for me? I owe you one. Word is you've got {DUTY_NAME} coming up - I could take it off your hands if you want.\"",
+      "body": "{LANCE_MATE_NAME} approaches you before duty assignment.\n\n\"Remember when you covered for me? I owe you one. Word is you've got {DUTY_NAME} coming up - I could take it off your hands if you want.\"",
       "options": [
         {
           "id": "accept",
@@ -417,7 +417,7 @@
             "fatigue": -2
           },
           "flags": ["favor_cleared"],
-          "resultText": "{LANCE_MEMBER} nods. \"Consider us even.\""
+          "resultText": "{LANCE_MATE_NAME} nods. \"Consider us even.\""
         },
         {
           "id": "save",
@@ -426,7 +426,7 @@
           "effects": {
             "lance_reputation": 1
           },
-          "resultText": "{LANCE_MEMBER} looks surprised but nods. \"Alright. I still owe you one.\""
+          "resultText": "{LANCE_MATE_NAME} looks surprised but nods. \"Alright. I still owe you one.\""
         },
         {
           "id": "trade",
@@ -436,7 +436,7 @@
             "lance_reputation": 0
           },
           "flags": ["favor_pending"],
-          "resultText": "{LANCE_MEMBER} considers. \"What did you have in mind?\""
+          "resultText": "{LANCE_MATE_NAME} considers. \"What did you have in mind?\""
         }
       ]
     }

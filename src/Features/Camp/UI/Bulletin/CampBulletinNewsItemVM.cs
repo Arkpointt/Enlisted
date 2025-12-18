@@ -91,6 +91,7 @@ namespace Enlisted.Features.Camp.UI.Bulletin
         {
             return category switch
             {
+                "Report" => "#607D8BFF",        // Blue-gray - daily report / briefing
                 "Activity" => "#4CAF50FF",      // Green - completed activities
                 "Command" => "#FFB74DFF",       // Orange - orders/duties
                 "Alert" => "#F44336FF",         // Red - important alerts

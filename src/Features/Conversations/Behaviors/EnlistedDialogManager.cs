@@ -282,6 +282,31 @@ namespace Enlisted.Features.Conversations.Behaviors
                 OnAcceptServiceTransfer,
                 112);
 
+            // ===== Promotion Request Dialog (T6→T7) =====
+            // Player can request T7 promotion if they meet all requirements
+            starter.AddPlayerLine(
+                "enlisted_request_promotion_t7",
+                "enlisted_service_options",
+                "enlisted_promotion_t7_response",
+                GetLocalizedText(
+                        "{=enlisted_request_promotion_t7}My lord, I have proven myself in your service. I believe I am ready to accept the responsibilities of command.")
+                    .ToString(),
+                CanRequestCommanderPromotion,
+                null,
+                108); // High priority - shows when eligible
+
+            // Lord evaluates player and offers promotion
+            starter.AddDialogLine(
+                "enlisted_promotion_t7_offer",
+                "enlisted_promotion_t7_response",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_promotion_t7_offer}You have proven yourself worthy. The rank of commander is yours, along with twenty soldiers to train and lead. Make them into warriors worthy of our banner.")
+                    .ToString(),
+                null,
+                OnAcceptCommanderPromotion,
+                110);
+
             // Lord's response to enlistment request
             starter.AddDialogLine(
                 "enlisted_lord_accepts",
@@ -2503,6 +2528,43 @@ namespace Enlisted.Features.Conversations.Behaviors
             return enlistment.CanEnlistWithParty(lord, out _);
         }
 
+        /// <summary>
+        ///     Check if player can request T7 (Commander) promotion.
+        ///     Player must be T6, enlisted with the lord they're talking to, and meet all T7 requirements.
+        /// </summary>
+        private bool CanRequestCommanderPromotion()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            if (lord == null || !lord.IsLord || !lord.IsAlive)
+            {
+                return false;
+            }
+
+            // Must be enlisted with this specific lord
+            if (enlistment?.IsEnlisted != true || enlistment.CurrentLord != lord)
+            {
+                return false;
+            }
+
+            // Must be exactly Tier 6 (not already T7+)
+            if (enlistment.EnlistmentTier != 6)
+            {
+                return false;
+            }
+
+            // Must meet all T7 promotion requirements
+            var promotionBehavior = Ranks.Behaviors.PromotionBehavior.Instance;
+            if (promotionBehavior == null)
+            {
+                return false;
+            }
+
+            var (canPromote, _) = promotionBehavior.CanPromote();
+            return canPromote;
+        }
+
         #endregion
 
         #region Shared Dialog Consequences
@@ -2911,6 +2973,69 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("DialogManager", "Error during service transfer", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Handles the consequence of accepting T7 Commander promotion via dialog.
+        ///     Triggers the T6→T7 promotion event which grants retinue and promotes player.
+        /// </summary>
+        private void OnAcceptCommanderPromotion()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+
+                if (enlistment == null)
+                {
+                    ModLogger.Error("DialogManager", "EnlistmentBehavior.Instance is null during commander promotion acceptance");
+                    return;
+                }
+
+                if (enlistment.EnlistmentTier != 6)
+                {
+                    ModLogger.Warn("DialogManager", $"Player not T6 when accepting commander promotion (tier={enlistment.EnlistmentTier})");
+                    return;
+                }
+
+                ModLogger.Info("DialogManager", "Player accepting T7 Commander promotion via dialog");
+
+                // Defer to next frame to let conversation close first
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        // Try to fire the T6→T7 promotion event
+                        var eventId = "promotion_t6_t7_commanders_commission";
+                        if (Lances.Events.LanceLifeEventRuntime.TryShowEventById(eventId))
+                        {
+                            ModLogger.Info("DialogManager", $"Triggered promotion event: {eventId}");
+                        }
+                        else
+                        {
+                            // Fallback: Direct promotion if event not found
+                            ModLogger.Warn("DialogManager", $"Promotion event {eventId} not found, using direct promotion");
+                            
+                            var enlistmentCheck = EnlistmentBehavior.Instance;
+                            if (enlistmentCheck != null && enlistmentCheck.EnlistmentTier == 6)
+                            {
+                                enlistmentCheck.SetTier(7);
+                                Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+                                
+                                var message = new TextObject("{=promotion_t7_notification}You have been promoted to Commander. Twenty recruits await your command.");
+                                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("DialogManager", "Error during deferred commander promotion", ex);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error accepting commander promotion", ex);
             }
         }
 

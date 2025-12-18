@@ -25,7 +25,7 @@ namespace Enlisted.Features.CommandTent.Core
         // ========================================================================
         // RETINUE SYSTEM V2.0 - Commander's Retinue at T7-T9
         // Companions managed from T1 (via CompanionAssignmentManager)
-        // Commander retinue: 15/25/35 soldiers at T7/T8/T9
+        // Commander retinue: 20/30/40 soldiers at T7/T8/T9
         // ========================================================================
 
         // New tier unlock thresholds (Commander's Retinue)
@@ -34,9 +34,9 @@ namespace Enlisted.Features.CommandTent.Core
         public const int CommanderTier3 = 9;  // Elite retinue
 
         // New capacity by tier
-        public const int CommanderCapacity1 = 15;  // T7: 15 soldiers
-        public const int CommanderCapacity2 = 25;  // T8: 25 soldiers
-        public const int CommanderCapacity3 = 35;  // T9: 35 soldiers
+        public const int CommanderCapacity1 = 20;  // T7: 20 soldiers
+        public const int CommanderCapacity2 = 30;  // T8: 30 soldiers
+        public const int CommanderCapacity3 = 40;  // T9: 40 soldiers
 
         // Legacy constants (for backward compatibility and gradual migration)
         [Obsolete("Use CommanderTier1 instead. Retinue now starts at T7.")]
@@ -46,11 +46,11 @@ namespace Enlisted.Features.CommandTent.Core
         [Obsolete("Use CommanderTier3 instead.")]
         public const int RetinueTier = 9;
         [Obsolete("Use CommanderCapacity1 instead.")]
-        public const int LanceCapacity = 15;
+        public const int LanceCapacity = 20;
         [Obsolete("Use CommanderCapacity2 instead.")]
-        public const int SquadCapacity = 25;
+        public const int SquadCapacity = 30;
         [Obsolete("Use CommanderCapacity3 instead.")]
-        public const int RetinueCapacity = 35;
+        public const int RetinueCapacity = 40;
 
         // Factions that don't have horse archers
         private static readonly HashSet<string> NoHorseArcherFactions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -89,19 +89,19 @@ namespace Enlisted.Features.CommandTent.Core
         /// <summary>
         /// Gets the maximum soldier capacity for a given tier.
         /// T1-T6: 0 (companions only)
-        /// T7: 15 soldiers
-        /// T8: 25 soldiers  
-        /// T9: 35 soldiers
+        /// T7: 20 soldiers
+        /// T8: 30 soldiers  
+        /// T9: 40 soldiers
         /// </summary>
         /// <param name="tier">Player's enlistment tier (1-9)</param>
-        /// <returns>Max soldiers allowed: 0 for T1-T6, 15/25/35 for T7/T8/T9</returns>
+        /// <returns>Max soldiers allowed: 0 for T1-T6, 20/30/40 for T7/T8/T9</returns>
         public static int GetTierCapacity(int tier)
         {
             return tier switch
             {
-                >= CommanderTier3 => CommanderCapacity3,  // T9+: 35 soldiers
-                CommanderTier2 => CommanderCapacity2,      // T8: 25 soldiers
-                CommanderTier1 => CommanderCapacity1,      // T7: 15 soldiers
+                >= CommanderTier3 => CommanderCapacity3,  // T9+: 40 soldiers
+                CommanderTier2 => CommanderCapacity2,      // T8: 30 soldiers
+                CommanderTier1 => CommanderCapacity1,      // T7: 20 soldiers
                 _ => 0  // T1-T6: companions only, no soldiers
             };
         }
