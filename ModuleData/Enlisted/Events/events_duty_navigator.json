@@ -1,0 +1,1237 @@
+﻿{
+    "schemaVersion":  1,
+    "packId":  "duty_navigator",
+    "category":  "duty",
+    "events":  [
+                   {
+                       "id":  "nav_course_setting",
+                       "category":  "duty",
+                       "metadata":  {
+                                        "tier_range":  {
+                                                           "min":  1,
+                                                           "max":  6
+                                                       },
+                                        "content_doc":  "docs/StoryBlocks/StoryBlock.md"
+                                    },
+                       "delivery":  {
+                                        "method":  "automatic",
+                                        "channel":  "inquiry",
+                                        "incident_trigger":  null,
+                                        "menu":  null,
+                                        "menu_section":  null
+                                    },
+                       "triggers":  {
+                                        "all":  [
+                                                    "is_enlisted",
+                                                    "ai_safe",
+                                                    "has_duty:navigator",
+                                                    "at_sea, voyage_start"
+                                                ],
+                                        "any":  [
+
+                                                ],
+                                        "time_of_day":  [
+                                                            "dawn",
+                                                            "morning"
+                                                        ],
+                                        "escalation_requirements":  {
+
+                                                                    }
+                                    },
+                       "requirements":  {
+                                            "duty":  "navigator",
+                                            "formation":  "any",
+                                            "tier":  {
+                                                         "min":  1,
+                                                         "max":  6
+                                                     }
+                                        },
+                       "timing":  {
+                                      "cooldown_days":  5,
+                                      "priority":  "normal",
+                                      "one_time":  false,
+                                      "rate_limit":  {
+                                                         "max_per_week":  0,
+                                                         "category_cooldown_days":  0
+                                                     }
+                                  },
+                       "content":  {
+                                       "titleId":  "ll_evt_nav_course_setting_title",
+                                       "setupId":  "ll_evt_nav_course_setting_setup",
+                                       "title":  "Course Setting",
+                                       "setup":  "{CAPTAIN_NAME} spreads the charts. {DESTINATION_PORT} is the goal.\n\n\"Plot our course, Navigator. Weather\u0027s your concern, shoals are your concern, time is mine.\"",
+                                       "options":  [
+                                                       {
+                                                           "id":  "safe_route_longer_but_reliable",
+                                                           "textId":  "ll_evt_nav_course_setting_opt_safe_route_longer_but_reliable_text",
+                                                           "text":  "Safe route — longer but reliable",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30,
+                                                                                      "scouting":  20
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_course_setting_opt_safe_route_longer_but_reliable_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "direct_route_fastest_but_riskier",
+                                                           "textId":  "ll_evt_nav_course_setting_opt_direct_route_fastest_but_riskier_text",
+                                                           "text":  "Direct route — fastest but riskier",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "risky",
+                                                           "risk_chance":  50,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  35,
+                                                                                      "tactics":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_course_setting_opt_direct_route_fastest_but_riskier_outcome",
+                                                           "outcome":  "You take the risk and see it through.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  {
+                                                                               "chance":  10,
+                                                                               "severity":  "minor",
+                                                                               "type":  "wound"
+                                                                           },
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "coastal_route_landmarks_safe_har",
+                                                           "textId":  "ll_evt_nav_course_setting_opt_coastal_route_landmarks_safe_har_text",
+                                                           "text":  "Coastal route — landmarks, safe harbors",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30,
+                                                                                      "scouting":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_course_setting_opt_coastal_route_landmarks_safe_har_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "suggest_waiting_for_better_weath",
+                                                           "textId":  "ll_evt_nav_course_setting_opt_suggest_waiting_for_better_weath_text",
+                                                           "text":  "Suggest waiting for better weather",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_course_setting_opt_suggest_waiting_for_better_weath_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       }
+                                                   ]
+                                   },
+                       "variants":  {
+
+                                    }
+                   },
+                   {
+                       "id":  "nav_dead_reckoning",
+                       "category":  "duty",
+                       "metadata":  {
+                                        "tier_range":  {
+                                                           "min":  1,
+                                                           "max":  6
+                                                       },
+                                        "content_doc":  "docs/StoryBlocks/StoryBlock.md"
+                                    },
+                       "delivery":  {
+                                        "method":  "automatic",
+                                        "channel":  "inquiry",
+                                        "incident_trigger":  null,
+                                        "menu":  null,
+                                        "menu_section":  null
+                                    },
+                       "triggers":  {
+                                        "all":  [
+                                                    "is_enlisted",
+                                                    "ai_safe",
+                                                    "has_duty:navigator"
+                                                ],
+                                        "any":  [
+                                                    "at_sea, overcast",
+                                                    "fog"
+                                                ],
+                                        "time_of_day":  [
+                                                            "any"
+                                                        ],
+                                        "escalation_requirements":  {
+
+                                                                    }
+                                    },
+                       "requirements":  {
+                                            "duty":  "navigator",
+                                            "formation":  "any",
+                                            "tier":  {
+                                                         "min":  1,
+                                                         "max":  6
+                                                     }
+                                        },
+                       "timing":  {
+                                      "cooldown_days":  5,
+                                      "priority":  "normal",
+                                      "one_time":  false,
+                                      "rate_limit":  {
+                                                         "max_per_week":  0,
+                                                         "category_cooldown_days":  0
+                                                     }
+                                  },
+                       "content":  {
+                                       "titleId":  "ll_evt_nav_dead_reckoning_title",
+                                       "setupId":  "ll_evt_nav_dead_reckoning_setup",
+                                       "title":  "Storm Navigation",
+                                       "setup":  "The storm hit hard. Stars are gone. Landmarks — what landmarks? {SHIP_NAME} is somewhere in a lot of angry water.\n\n{CAPTAIN_NAME} needs a heading. Now.",
+                                       "options":  [
+                                                       {
+                                                           "id":  "dead_reckoning_trust_your_calcul",
+                                                           "textId":  "ll_evt_nav_dead_reckoning_opt_dead_reckoning_trust_your_calcul_text",
+                                                           "text":  "Dead reckoning — trust your calculations",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "risky",
+                                                           "risk_chance":  50,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  45
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_dead_reckoning_opt_dead_reckoning_trust_your_calcul_outcome",
+                                                           "outcome":  "You take the risk and see it through.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "heave_to_ride_out_the_storm_reca",
+                                                           "textId":  "ll_evt_nav_dead_reckoning_opt_heave_to_ride_out_the_storm_reca_text",
+                                                           "text":  "Heave to — ride out the storm, recalculate after",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_dead_reckoning_opt_heave_to_ride_out_the_storm_reca_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "run_before_the_wind_go_where_it_",
+                                                           "textId":  "ll_evt_nav_dead_reckoning_opt_run_before_the_wind_go_where_it__text",
+                                                           "text":  "Run before the wind — go where it takes us",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_dead_reckoning_opt_run_before_the_wind_go_where_it__outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "admit_uncertainty_advise_caution",
+                                                           "textId":  "ll_evt_nav_dead_reckoning_opt_admit_uncertainty_advise_caution_text",
+                                                           "text":  "Admit uncertainty, advise caution",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_dead_reckoning_opt_admit_uncertainty_advise_caution_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       }
+                                                   ]
+                                   },
+                       "variants":  {
+
+                                    }
+                   },
+                   {
+                       "id":  "nav_reef_warning",
+                       "category":  "duty",
+                       "metadata":  {
+                                        "tier_range":  {
+                                                           "min":  1,
+                                                           "max":  6
+                                                       },
+                                        "content_doc":  "docs/StoryBlocks/StoryBlock.md"
+                                    },
+                       "delivery":  {
+                                        "method":  "automatic",
+                                        "channel":  "inquiry",
+                                        "incident_trigger":  null,
+                                        "menu":  null,
+                                        "menu_section":  null
+                                    },
+                       "triggers":  {
+                                        "all":  [
+                                                    "is_enlisted",
+                                                    "ai_safe",
+                                                    "has_duty:navigator",
+                                                    "at_sea, near_coast"
+                                                ],
+                                        "any":  [
+
+                                                ],
+                                        "time_of_day":  [
+                                                            "any"
+                                                        ],
+                                        "escalation_requirements":  {
+
+                                                                    }
+                                    },
+                       "requirements":  {
+                                            "duty":  "navigator",
+                                            "formation":  "any",
+                                            "tier":  {
+                                                         "min":  1,
+                                                         "max":  6
+                                                     }
+                                        },
+                       "timing":  {
+                                      "cooldown_days":  5,
+                                      "priority":  "normal",
+                                      "one_time":  false,
+                                      "rate_limit":  {
+                                                         "max_per_week":  0,
+                                                         "category_cooldown_days":  0
+                                                     }
+                                  },
+                       "content":  {
+                                       "titleId":  "ll_evt_nav_reef_warning_title",
+                                       "setupId":  "ll_evt_nav_reef_warning_setup",
+                                       "title":  "Unknown Waters",
+                                       "setup":  "The charts end here. {CAPTAIN_NAME} wants to push on — profit in unknown ports, they say.\n\nYour charts are blank. Your instruments are useless. Now it\u0027s just experience.",
+                                       "options":  [
+                                                       {
+                                                           "id":  "map_as_you_go_careful_progress",
+                                                           "textId":  "ll_evt_nav_reef_warning_opt_map_as_you_go_careful_progress_text",
+                                                           "text":  "Map as you go — careful progress",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  3,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  40,
+                                                                                      "scouting":  30
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_reef_warning_opt_map_as_you_go_careful_progress_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "use_stars_currents_bird_signs",
+                                                           "textId":  "ll_evt_nav_reef_warning_opt_use_stars_currents_bird_signs_text",
+                                                           "text":  "Use stars, currents, bird signs",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "risky",
+                                                           "risk_chance":  50,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  45
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_reef_warning_opt_use_stars_currents_bird_signs_outcome",
+                                                           "outcome":  "You take the risk and see it through.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "keep_the_coastline_in_sight",
+                                                           "textId":  "ll_evt_nav_reef_warning_opt_keep_the_coastline_in_sight_text",
+                                                           "text":  "Keep the coastline in sight",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30,
+                                                                                      "scouting":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_reef_warning_opt_keep_the_coastline_in_sight_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "advise_turning_back",
+                                                           "textId":  "ll_evt_nav_reef_warning_opt_advise_turning_back_text",
+                                                           "text":  "Advise turning back",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  20
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_reef_warning_opt_advise_turning_back_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       }
+                                                   ]
+                                   },
+                       "variants":  {
+
+                                    }
+                   },
+                   {
+                       "id":  "nav_star_navigation",
+                       "category":  "duty",
+                       "metadata":  {
+                                        "tier_range":  {
+                                                           "min":  1,
+                                                           "max":  6
+                                                       },
+                                        "content_doc":  "docs/StoryBlocks/StoryBlock.md"
+                                    },
+                       "delivery":  {
+                                        "method":  "automatic",
+                                        "channel":  "inquiry",
+                                        "incident_trigger":  null,
+                                        "menu":  null,
+                                        "menu_section":  null
+                                    },
+                       "triggers":  {
+                                        "all":  [
+                                                    "is_enlisted",
+                                                    "ai_safe",
+                                                    "has_duty:navigator",
+                                                    "at_sea, clear_sky"
+                                                ],
+                                        "any":  [
+
+                                                ],
+                                        "time_of_day":  [
+                                                            "night",
+                                                            "late_night"
+                                                        ],
+                                        "escalation_requirements":  {
+
+                                                                    }
+                                    },
+                       "requirements":  {
+                                            "duty":  "navigator",
+                                            "formation":  "any",
+                                            "tier":  {
+                                                         "min":  1,
+                                                         "max":  6
+                                                     }
+                                        },
+                       "timing":  {
+                                      "cooldown_days":  5,
+                                      "priority":  "normal",
+                                      "one_time":  false,
+                                      "rate_limit":  {
+                                                         "max_per_week":  0,
+                                                         "category_cooldown_days":  0
+                                                     }
+                                  },
+                       "content":  {
+                                       "titleId":  "ll_evt_nav_star_navigation_title",
+                                       "setupId":  "ll_evt_nav_star_navigation_setup",
+                                       "title":  "Shoal Warning",
+                                       "setup":  "The water\u0027s changing color. Charts say we\u0027re clear, but charts lie.\n\n\"Depth?\" {CAPTAIN_NAME} asks.",
+                                       "options":  [
+                                                       {
+                                                           "id":  "sound_the_depths_adjust_course",
+                                                           "textId":  "ll_evt_nav_star_navigation_opt_sound_the_depths_adjust_course_text",
+                                                           "text":  "Sound the depths, adjust course",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  35,
+                                                                                      "scouting":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_star_navigation_opt_sound_the_depths_adjust_course_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "trust_the_charts_maintain_speed",
+                                                           "textId":  "ll_evt_nav_star_navigation_opt_trust_the_charts_maintain_speed_text",
+                                                           "text":  "Trust the charts, maintain speed",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "risky",
+                                                           "risk_chance":  50,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_star_navigation_opt_trust_the_charts_maintain_speed_outcome",
+                                                           "outcome":  "You take the risk and see it through.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "post_lookouts_slow_to_half",
+                                                           "textId":  "ll_evt_nav_star_navigation_opt_post_lookouts_slow_to_half_text",
+                                                           "text":  "Post lookouts, slow to half",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_star_navigation_opt_post_lookouts_slow_to_half_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "drop_anchor_scout_in_small_boat",
+                                                           "textId":  "ll_evt_nav_star_navigation_opt_drop_anchor_scout_in_small_boat_text",
+                                                           "text":  "Drop anchor, scout in small boat",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30,
+                                                                                      "scouting":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_star_navigation_opt_drop_anchor_scout_in_small_boat_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       }
+                                                   ]
+                                   },
+                       "variants":  {
+
+                                    }
+                   },
+                   {
+                       "id":  "nav_landfall",
+                       "category":  "duty",
+                       "metadata":  {
+                                        "tier_range":  {
+                                                           "min":  1,
+                                                           "max":  6
+                                                       },
+                                        "content_doc":  "docs/StoryBlocks/StoryBlock.md"
+                                    },
+                       "delivery":  {
+                                        "method":  "automatic",
+                                        "channel":  "inquiry",
+                                        "incident_trigger":  null,
+                                        "menu":  null,
+                                        "menu_section":  null
+                                    },
+                       "triggers":  {
+                                        "all":  [
+                                                    "is_enlisted",
+                                                    "ai_safe",
+                                                    "has_duty:navigator",
+                                                    "at_sea, approaching_land"
+                                                ],
+                                        "any":  [
+
+                                                ],
+                                        "time_of_day":  [
+                                                            "any"
+                                                        ],
+                                        "escalation_requirements":  {
+
+                                                                    }
+                                    },
+                       "requirements":  {
+                                            "duty":  "navigator",
+                                            "formation":  "any",
+                                            "tier":  {
+                                                         "min":  1,
+                                                         "max":  6
+                                                     }
+                                        },
+                       "timing":  {
+                                      "cooldown_days":  7,
+                                      "priority":  "normal",
+                                      "one_time":  false,
+                                      "rate_limit":  {
+                                                         "max_per_week":  0,
+                                                         "category_cooldown_days":  0
+                                                     }
+                                  },
+                       "content":  {
+                                       "titleId":  "ll_evt_nav_landfall_title",
+                                       "setupId":  "ll_evt_nav_landfall_setup",
+                                       "title":  "Landfall",
+                                       "setup":  "\"Land!\" The cry every sailor loves.\n\nBut is it the right land? {DESTINATION_PORT} should be... there? Or there?\n\n{CAPTAIN_NAME} looks at you. \"Where are we, Navigator?\"",
+                                       "options":  [
+                                                       {
+                                                           "id":  "study_the_coastline_identify_lan",
+                                                           "textId":  "ll_evt_nav_landfall_opt_study_the_coastline_identify_lan_text",
+                                                           "text":  "Study the coastline, identify landmarks",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  35,
+                                                                                      "scouting":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_landfall_opt_study_the_coastline_identify_lan_outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "that_s_destination_port_i_m_cert",
+                                                           "textId":  "ll_evt_nav_landfall_opt_that_s_destination_port_i_m_cert_text",
+                                                           "text":  "That\u0027s {DESTINATION_PORT}, I\u0027m certain",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "risky",
+                                                           "risk_chance":  50,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  40
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_landfall_opt_that_s_destination_port_i_m_cert_outcome",
+                                                           "outcome":  "You take the risk and see it through.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "signal_for_pilot_boat_get_local_",
+                                                           "textId":  "ll_evt_nav_landfall_opt_signal_for_pilot_boat_get_local__text",
+                                                           "text":  "Signal for pilot boat, get local guidance",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  1,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  25
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_landfall_opt_signal_for_pilot_boat_get_local__outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       },
+                                                       {
+                                                           "id":  "approach_cautiously_sound_as_we_",
+                                                           "textId":  "ll_evt_nav_landfall_opt_approach_cautiously_sound_as_we__text",
+                                                           "text":  "Approach cautiously, sound as we go",
+                                                           "tooltip":  null,
+                                                           "condition":  null,
+                                                           "risk":  "safe",
+                                                           "risk_chance":  null,
+                                                           "costs":  {
+                                                                         "fatigue":  2,
+                                                                         "gold":  0,
+                                                                         "time_hours":  0
+                                                                     },
+                                                           "rewards":  {
+                                                                           "xp":  {
+                                                                                      "shipmaster":  30,
+                                                                                      "scouting":  20
+                                                                                  },
+                                                                           "gold":  0,
+                                                                           "relation":  {
+
+                                                                                        },
+                                                                           "items":  [
+
+                                                                                     ]
+                                                                       },
+                                                           "effects":  {
+                                                                           "heat":  0,
+                                                                           "discipline":  0,
+                                                                           "lance_reputation":  0,
+                                                                           "medical_risk":  0,
+                                                                           "fatigue_relief":  0
+                                                                       },
+                                                           "flags_set":  [
+
+                                                                         ],
+                                                           "flags_clear":  [
+
+                                                                           ],
+                                                           "resultTextId":  "ll_evt_nav_landfall_opt_approach_cautiously_sound_as_we__outcome",
+                                                           "outcome":  "You carry it out.",
+                                                           "outcome_failure":  null,
+                                                           "injury_risk":  null,
+                                                           "triggers_event":  null,
+                                                           "advances_onboarding":  false
+                                                       }
+                                                   ]
+                                   },
+                       "variants":  {
+
+                                    }
+                   }
+               ]
+}

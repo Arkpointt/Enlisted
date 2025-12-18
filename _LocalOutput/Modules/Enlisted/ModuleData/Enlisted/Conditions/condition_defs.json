@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "injuries": {
+    "twisted_knee": {
+      "displayNameId": "cond_injury_twisted_knee",
+      "displayNameFallback": "Twisted Knee",
+      "baseRecoveryDays": { "minor": 3, "moderate": 6, "severe": 12, "critical": 16 }
+    },
+    "blade_cut": {
+      "displayNameId": "cond_injury_blade_cut",
+      "displayNameFallback": "Blade Cut",
+      "baseRecoveryDays": { "minor": 3, "moderate": 7, "severe": 12, "critical": 18 }
+    },
+    "arrow_wound": {
+      "displayNameId": "cond_injury_arrow_wound",
+      "displayNameFallback": "Arrow Wound",
+      "baseRecoveryDays": { "minor": 4, "moderate": 8, "severe": 14, "critical": 20 }
+    }
+  },
+  "illnesses": {
+    "camp_fever": {
+      "displayNameId": "cond_illness_camp_fever",
+      "displayNameFallback": "Camp Fever",
+      "baseRecoveryDays": { "mild": 3, "moderate": 7, "severe": 14, "critical": 21 }
+    },
+    "flux": {
+      "displayNameId": "cond_illness_flux",
+      "displayNameFallback": "Flux",
+      "baseRecoveryDays": { "mild": 4, "moderate": 8, "severe": 14, "critical": 21 }
+    }
+  }
+}
+
+

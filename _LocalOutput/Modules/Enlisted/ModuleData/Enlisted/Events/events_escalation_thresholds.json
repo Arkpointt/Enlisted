@@ -1,0 +1,3520 @@
+{
+  "schemaVersion": 1,
+  "packId": "escalation_thresholds",
+  "category": "threshold",
+  "events": [
+    {
+      "id": "discipline_blocked",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "discipline_7"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_discipline_blocked_title",
+        "setupId": "ll_evt_discipline_blocked_setup",
+        "title": "Promotion Blocked",
+        "setup": "The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it's not there.\n\n{LANCE_LEADER_SHORT} finds you staring at the roster.\n\n\"Your record, {PLAYER_NAME}. Too many marks. The captain won't sign off on promoting someone with your... history.\" They actually look sympathetic. \"Clean it up. Prove them wrong. Maybe next time.\"\n\nNext time. If there is one.",
+        "options": [
+          {
+            "id": "accept",
+            "text": "\"I understand. I'll earn it properly.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} nods. \"That's the spirit. Keep your head down, do good work. They'll notice.\" A setback, not a defeat. The path forward is clear, if harder.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_blocked_opt_accept_text",
+            "resultTextId": "ll_evt_discipline_blocked_opt_accept_outcome"
+          },
+          {
+            "id": "bitter",
+            "text": "\"Politics. It's always politics.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"Maybe.\" {LANCE_LEADER_SHORT} doesn't argue. \"But politics or not, you gave them ammunition. Stop doing that.\" Cold comfort. True, though.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_blocked_opt_bitter_text",
+            "resultTextId": "ll_evt_discipline_blocked_opt_bitter_outcome"
+          },
+          {
+            "id": "appeal",
+            "text": "\"I want to speak to the captain. Make my case directly.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": -2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain hears you out. \"Convince me you've changed.\" You do. Or try to. \"Probationary advancement. One incident, and you're back where you started.\" A chance.",
+            "outcome_failure": "\"The decision stands. Prove yourself through action, not words.\" Appeal denied. You've wasted political capital.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_blocked_opt_appeal_text",
+            "resultTextId": "ll_evt_discipline_blocked_opt_appeal_outcome",
+            "resultFailureTextId": "ll_evt_discipline_blocked_opt_appeal_outcome_failure"
+          },
+          {
+            "id": "despair",
+            "text": "\"What's the point? They'll never promote someone like me.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} grabs your shoulder. \"None of that. You're a soldier, act like one.\" Harsh. But sometimes harsh is what you need.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_blocked_opt_despair_text",
+            "resultTextId": "ll_evt_discipline_blocked_opt_despair_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "discipline_discharge",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "discipline_10"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_discipline_discharge_title",
+        "setupId": "ll_evt_discipline_discharge_setup",
+        "title": "Facing Discharge",
+        "setup": "\"Dishonorable discharge.\"\n\nThe words hang in the air. The captain doesn't look pleased to say them — or maybe they do. Hard to tell.\n\n\"Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You've left us no choice.\"\n\n{LANCE_NAME} watches from the edge of the assembly. {LANCE_LEADER_SHORT}'s face is stone.\n\n\"You have one opportunity to speak before the sentence is carried out. Make it count.\"",
+        "options": [
+          {
+            "id": "accept",
+            "text": "\"I have nothing to say. I accept the judgment.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain nods. \"Then it's done. Turn in your equipment. You're no longer part of this army.\" It's over. Not with a bang, but with paperwork.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_discharge_opt_accept_text",
+            "resultTextId": "ll_evt_discipline_discharge_opt_accept_outcome"
+          },
+          {
+            "id": "beg",
+            "text": "\"Please — one more chance. I'll be different. I swear it.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 25,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -20,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "A long silence. \"Against my better judgment... penal detail. Six months. Any incident and this offer disappears.\" A thread of hope. Thin as spider silk.",
+            "outcome_failure": "\"We've given you chances. Too many.\" The captain shakes their head. \"Sentence stands.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_discharge_opt_beg_text",
+            "resultTextId": "ll_evt_discipline_discharge_opt_beg_outcome",
+            "resultFailureTextId": "ll_evt_discipline_discharge_opt_beg_outcome_failure"
+          },
+          {
+            "id": "defiant",
+            "text": "\"Discharge me then. This army never valued me anyway.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"Noted.\" The captain's voice is ice. \"Your attitude explains much.\" The discharge proceeds. No pension. No reference. Nothing.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_discharge_opt_defiant_text",
+            "resultTextId": "ll_evt_discipline_discharge_opt_defiant_outcome"
+          },
+          {
+            "id": "service",
+            "text": "\"My service record — the battles, the duties, the blood I've shed for {LORD_NAME}—\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain reviews documents. Consults with officers. \"Your combat record... is not nothing. Reduction in rank. Final warning. Don't make us regret this.\"",
+            "outcome_failure": "\"Service doesn't excuse conduct. Many have served without becoming a disciplinary nightmare.\" No mercy.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_discharge_opt_service_text",
+            "resultTextId": "ll_evt_discipline_discharge_opt_service_outcome",
+            "resultFailureTextId": "ll_evt_discipline_discharge_opt_service_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "discipline_extra_duty",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "discipline_3"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_discipline_extra_duty_title",
+        "setupId": "ll_evt_discipline_extra_duty_setup",
+        "title": "Extra Duty",
+        "setup": "The duty roster goes up. Your name's on it. Again. And again. And twice more after that.\n\nExtra duty — the army's favorite corrective measure. Latrine digging, night watch, hauling water, whatever's worst. Your infractions have been noticed, and this is the price.\n\n{LANCE_LEADER_SHORT} shrugs when you look at them. \"Out of my hands. Sergeant's orders.\"\n\nA week of this, minimum.",
+        "options": [
+          {
+            "id": "accept",
+            "text": "Accept the punishment. Do the work.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "It's brutal. Every muscle aches. But you don't complain, don't slack. By week's end, the sergeant gives you a curt nod. \"Maybe you're learning after all.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_extra_duty_opt_accept_text",
+            "resultTextId": "ll_evt_discipline_extra_duty_opt_accept_outcome"
+          },
+          {
+            "id": "complain",
+            "text": "Protest the unfairness of the punishment.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"Unfair?\" The sergeant's voice carries across the camp. \"You want to talk about UNFAIR?\" The lecture that follows is worse than the extra duty. And you've still got to do the duty.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_extra_duty_opt_complain_text",
+            "resultTextId": "ll_evt_discipline_extra_duty_opt_complain_outcome"
+          },
+          {
+            "id": "excel",
+            "text": "Not just do it — do it better than anyone. Make a point.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -3,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You throw yourself into every task. Best-dug latrines in the camp. Not a drop of water spilled. The sergeant notices. Grudging respect, maybe. At least you're not a whiner.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_extra_duty_opt_excel_text",
+            "resultTextId": "ll_evt_discipline_extra_duty_opt_excel_outcome"
+          },
+          {
+            "id": "shirk",
+            "text": "Do the minimum. What are they going to do, punish you more?",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Turns out, yes. They can. Extended duty. Double shifts. Someone's always watching now. You've made this worse.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_extra_duty_opt_shirk_text",
+            "resultTextId": "ll_evt_discipline_extra_duty_opt_shirk_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "discipline_hearing",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "discipline_5"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_discipline_hearing_title",
+        "setupId": "ll_evt_discipline_hearing_setup",
+        "title": "The Hearing",
+        "setup": "A formal hearing. The captain presides, {LORD_NAME}'s banner hanging behind them. You stand before a table of officers.\n\n\"Soldier {PLAYER_NAME}. The charges: repeated failure to maintain discipline standards, disregard for orders, and conduct prejudicial to good order.\"\n\nThey read from a list. Every infraction, every slip-up, documented and damning.\n\n\"What do you have to say for yourself?\"",
+        "options": [
+          {
+            "id": "accountable",
+            "text": "\"No excuses, sir. I failed to meet standards. I accept whatever punishment you decide.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -2,
+              "lance_reputation": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain studies you. \"Accountability. That's something, at least.\" The punishment is firm but fair. You've shown character, if not competence.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_hearing_opt_accountable_text",
+            "resultTextId": "ll_evt_discipline_hearing_opt_accountable_outcome"
+          },
+          {
+            "id": "explain",
+            "text": "Lay out the context. The pressures, the circumstances, the reasons behind each incident.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": -3,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain listens. Nods, occasionally. \"Context noted. Punishment will reflect... mitigating factors.\" You've bought some leniency.",
+            "outcome_failure": "\"Excuses. I hear excuses.\" The captain's voice is cold. \"Next.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_hearing_opt_explain_text",
+            "resultTextId": "ll_evt_discipline_hearing_opt_explain_outcome",
+            "resultFailureTextId": "ll_evt_discipline_hearing_opt_explain_outcome_failure"
+          },
+          {
+            "id": "blame",
+            "text": "Point fingers. Others share responsibility — maybe more than you.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -3,
+              "lance_reputation": -15,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"Interesting.\" The captain makes notes. \"We'll be speaking to these individuals.\" You've deflected heat. But someone's going to know you named names.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_hearing_opt_blame_text",
+            "resultTextId": "ll_evt_discipline_hearing_opt_blame_outcome"
+          },
+          {
+            "id": "challenge",
+            "text": "\"Some of these charges are exaggerated. I demand to face my accusers.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": -4,
+              "lance_reputation": 15,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain raises an eyebrow. \"Bold. Very well.\" The confrontation that follows is ugly, but you poke holes in the case. Charges reduced.",
+            "outcome_failure": "\"You're in no position to demand anything.\" The captain's patience is gone. \"Charges stand. Punishment enhanced for attitude.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_hearing_opt_challenge_text",
+            "resultTextId": "ll_evt_discipline_hearing_opt_challenge_outcome",
+            "resultFailureTextId": "ll_evt_discipline_hearing_opt_challenge_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "discipline_warning",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "discipline_2"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_discipline_warning_title",
+        "setupId": "ll_evt_discipline_warning_setup",
+        "title": "On Notice",
+        "setup": "{LANCE_LEADER_SHORT} doesn't look happy.\n\n\"You're on notice, {PLAYER_NAME}. The sergeant's been keeping track — late to muster, sloppy kit, that business with the—\" they wave a hand. \"Doesn't matter. Point is, you're building a reputation, and not the good kind.\"\n\nThey lower their voice.\n\n\"I can only cover for you so many times. Get it together.\"",
+        "options": [
+          {
+            "id": "apologize",
+            "text": "\"You're right. I've been slipping. It won't happen again.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} nods slowly. \"See that it doesn't.\" The warning's been delivered. Ball's in your court now.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_warning_opt_apologize_text",
+            "resultTextId": "ll_evt_discipline_warning_opt_apologize_outcome"
+          },
+          {
+            "id": "excuse",
+            "text": "\"It's not my fault — there were circumstances—\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT}'s expression hardens. \"There are always circumstances. The question is whether you rise above them.\" They walk away. Not convinced.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_warning_opt_excuse_text",
+            "resultTextId": "ll_evt_discipline_warning_opt_excuse_outcome"
+          },
+          {
+            "id": "resentful",
+            "text": "\"Maybe if the duties weren't so—\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"I don't want to hear it.\" {LANCE_LEADER_SHORT} cuts you off. \"Everyone's got complaints. Not everyone makes them the camp's problem.\" The message is clear: shut up and soldier.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_warning_opt_resentful_text",
+            "resultTextId": "ll_evt_discipline_warning_opt_resentful_outcome"
+          },
+          {
+            "id": "grateful",
+            "text": "\"Thanks for the heads up. I mean it.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": -1,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "A slight softening. \"Just... be better. That's all I'm asking.\" They've stuck their neck out for you. Don't make them regret it.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_discipline_warning_opt_grateful_text",
+            "resultTextId": "ll_evt_discipline_warning_opt_grateful_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "heat_audit",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "heat_7"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_heat_audit_title",
+        "setupId": "ll_evt_heat_audit_setup",
+        "title": "The Audit",
+        "setup": "The captain's clerk finds you after morning muster. His smile doesn't reach his eyes.\n\n\"The captain's ordered a review of supply records. Your name came up several times — requisitions, distributions, inventory counts.\" He produces a ledger. \"Some discrepancies need explaining.\"\n\nThis is it. The numbers don't add up because you made sure they wouldn't. The question is whether you can talk your way out, or if the noose is already tightening.\n\n\"The captain will see you at midday. I suggest you have answers ready.\"",
+        "options": [
+          {
+            "id": "honest",
+            "text": "Come clean. Admit what you did, throw yourself on mercy.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": -3,
+              "discipline": 3,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain listens in cold silence. When you finish: \"At least you're not a liar on top of everything else.\" Punishment is coming, but it won't be the worst. They respect honesty, barely.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_audit_opt_honest_text",
+            "resultTextId": "ll_evt_heat_audit_opt_honest_outcome"
+          },
+          {
+            "id": "excuse",
+            "text": "Blame clerical errors. The records were a mess before you touched them.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": -2,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 2,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain frowns, reviews the ledger. \"This is a shambles. Someone needs to sort this properly.\" You've dodged — for now.",
+            "outcome_failure": "\"Funny how the errors all favor you,\" the captain observes. \"I wasn't born yesterday, soldier.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_audit_opt_excuse_text",
+            "resultTextId": "ll_evt_heat_audit_opt_excuse_outcome",
+            "resultFailureTextId": "ll_evt_heat_audit_opt_excuse_outcome_failure"
+          },
+          {
+            "id": "implicate",
+            "text": "There's a larger scheme. You were just following orders from above.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": -5,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain's eyes narrow. \"Names.\" You give them — true or not, it doesn't matter. The investigation widens. You're a witness now, not a suspect. But you've made powerful enemies.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_audit_opt_implicate_text",
+            "resultTextId": "ll_evt_heat_audit_opt_implicate_outcome"
+          },
+          {
+            "id": "records",
+            "text": "You've been keeping your own records. Produce them — doctored to tell a better story.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": -4,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 3,
+              "discipline": 4,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The captain compares ledgers. Your version is cleaner, more plausible. \"This contradicts the official count.\" They choose to believe yours.",
+            "outcome_failure": "\"These don't match anything.\" The captain's voice is flat. \"You've made this worse, soldier. Much worse.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_audit_opt_records_text",
+            "resultTextId": "ll_evt_heat_audit_opt_records_outcome",
+            "resultFailureTextId": "ll_evt_heat_audit_opt_records_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "heat_exposed",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "heat_10"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_heat_exposed_title",
+        "setupId": "ll_evt_heat_exposed_setup",
+        "title": "Exposed",
+        "setup": "Guards. Four of them, armed, surrounding your tent at dawn.\n\n\"On your feet, soldier. Captain's orders. You're under arrest for theft of army supplies, falsification of records, and conduct unbecoming.\"\n\nNo warnings this time. No audits. They've built their case and now they're collecting.\n\n{LANCE_LEADER_SHORT} watches from a distance. Their expression is unreadable. They can't help you. Maybe they wouldn't if they could.\n\n\"Come quietly, or don't. Makes no difference to us.\"",
+        "options": [
+          {
+            "id": "surrender",
+            "text": "Go quietly. Face the charges.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 5,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You're escorted to the stockade. A hearing will follow. The evidence is damning, but you'll have a chance to speak. The army has procedures. Cold comfort, but it's something.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_exposed_opt_surrender_text",
+            "resultTextId": "ll_evt_heat_exposed_opt_surrender_outcome"
+          },
+          {
+            "id": "beg",
+            "text": "\"Please — I'll return everything, I'll work it off, anything—\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 3,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 5,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "One guard exchanges glances with another. \"Double shifts. Three months. Every coin returned, with interest. One more incident and we won't be talking.\" A lifeline, barely.",
+            "outcome_failure": "\"Should've thought of that before.\" They're not interested in deals. The stockade awaits.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_exposed_opt_beg_text",
+            "resultTextId": "ll_evt_heat_exposed_opt_beg_outcome",
+            "resultFailureTextId": "ll_evt_heat_exposed_opt_beg_outcome_failure"
+          },
+          {
+            "id": "fight",
+            "text": "Not like this. Make a break for it.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 20,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 7,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You burst through — luck, desperation, they weren't expecting it. You're running now. A deserter and a thief. But you're free.",
+            "outcome_failure": "They're ready for it. A club to the back of the head. You wake in chains, charges now including resisting arrest.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_exposed_opt_fight_text",
+            "resultTextId": "ll_evt_heat_exposed_opt_fight_outcome",
+            "resultFailureTextId": "ll_evt_heat_exposed_opt_fight_outcome_failure"
+          },
+          {
+            "id": "leverage",
+            "text": "\"I know things. About supply chains. About officers. Things the captain might want to know.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 2,
+              "lance_reputation": -30,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 5,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "A pause. Whispered consultation. \"The captain will hear you. But this better be good.\" You've bought an audience, maybe your freedom — at the cost of becoming an informant.",
+            "outcome_failure": "\"Save it for the hearing.\" They don't care what you know. Into the stockade you go.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_exposed_opt_leverage_text",
+            "resultTextId": "ll_evt_heat_exposed_opt_leverage_outcome",
+            "resultFailureTextId": "ll_evt_heat_exposed_opt_leverage_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "heat_shakedown",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "heat_5"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_heat_shakedown_title",
+        "setupId": "ll_evt_heat_shakedown_setup",
+        "title": "The Shakedown",
+        "setup": "\"Kit inspection! Everyone out, gear on the ground, NOW!\"\n\n{SERGEANT_NAME} — not your lance's sergeant, one of the captain's dogs — is tearing through the camp with two soldiers. Random inspection, they're calling it. But the way they looked at you when they announced it... this isn't random.\n\nYour kit is laid out. There's nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack...",
+        "options": [
+          {
+            "id": "comply",
+            "text": "Stand at attention, let them search. Nothing to hide.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": -1,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 2,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "They search. Find nothing incriminating — you got lucky, or they weren't looking hard enough. {SERGEANT_NAME} grunts, moves on.",
+            "outcome_failure": "{SERGEANT_NAME}'s hand closes on the coin pouch. \"What's this then?\" The extra weight gives you away. \"Skimming, are we?\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_shakedown_opt_comply_text",
+            "resultTextId": "ll_evt_heat_shakedown_opt_comply_outcome",
+            "resultFailureTextId": "ll_evt_heat_shakedown_opt_comply_outcome_failure"
+          },
+          {
+            "id": "bribe",
+            "text": "Quietly offer {SERGEANT_NAME} a cut to look the other way.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": -2,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 3,
+              "discipline": 3,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "A slight nod. The inspection of your kit is perfunctory at best. {SERGEANT_NAME} moves on. You've bought time — and a new problem.",
+            "outcome_failure": "\"Are you trying to BRIBE me, soldier?\" {SERGEANT_NAME}'s voice carries. Everyone's looking now. This just got much worse.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_shakedown_opt_bribe_text",
+            "resultTextId": "ll_evt_heat_shakedown_opt_bribe_outcome",
+            "resultFailureTextId": "ll_evt_heat_shakedown_opt_bribe_outcome_failure"
+          },
+          {
+            "id": "distraction",
+            "text": "\"Sergeant! {SOLDIER_NAME}'s kit — I saw them hiding something earlier!\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": -2,
+              "discipline": 0,
+              "lance_reputation": -10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{SERGEANT_NAME}'s attention shifts. They descend on {SOLDIER_NAME}'s kit like wolves. You've bought yourself time by throwing someone else to the dogs. {SOLDIER_NAME} will figure out who talked. Eventually.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_shakedown_opt_distraction_text",
+            "resultTextId": "ll_evt_heat_shakedown_opt_distraction_outcome"
+          },
+          {
+            "id": "dump",
+            "text": "While attention's elsewhere, quietly dump the evidence.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 60,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": -3,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": -1,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The incriminating items vanish into the latrine trench. When they search your kit, there's nothing to find. Clean — for now.",
+            "outcome_failure": "{VETERAN_1_NAME} sees you. Their eyes meet yours. They don't say anything. But they saw.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_shakedown_opt_dump_text",
+            "resultTextId": "ll_evt_heat_shakedown_opt_dump_outcome",
+            "resultFailureTextId": "ll_evt_heat_shakedown_opt_dump_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "heat_warning",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "heat_3"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_heat_warning_title",
+        "setupId": "ll_evt_heat_warning_setup",
+        "title": "The Warning",
+        "setup": "{LANCE_LEADER_SHORT} pulls you aside after evening meal. Their voice is low, eyes checking that no one's close enough to hear.\n\n\"I'm going to say this once, {PLAYER_NAME}. Whatever you're doing — the extra coins, the supply discrepancies, the 'gifts' from merchants — people are starting to notice.\"\n\nThey lean closer.\n\n\"I don't care what you do on your own time. But if it comes back on {LANCE_NAME}, we're going to have a problem. Understand?\"",
+        "options": [
+          {
+            "id": "deny",
+            "text": "\"I don't know what you're talking about, {LANCE_LEADER_RANK}.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} stares at you for a long moment. \"Right. You don't.\" They walk away. The warning's been given. What you do with it is your business.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_warning_opt_deny_text",
+            "resultTextId": "ll_evt_heat_warning_opt_deny_outcome"
+          },
+          {
+            "id": "acknowledge",
+            "text": "\"I hear you. I'll be more careful.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": -1,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "A curt nod. \"See that you are.\" {LANCE_LEADER_SHORT} leaves. You've been warned — by someone who could've reported you instead. That's worth something.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_warning_opt_acknowledge_text",
+            "resultTextId": "ll_evt_heat_warning_opt_acknowledge_outcome"
+          },
+          {
+            "id": "deflect",
+            "text": "\"Everyone's doing it. I'm just not as subtle.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 1,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"Everyone's NOT doing it,\" {LANCE_LEADER_SHORT} snaps. \"And the ones who are? They're better at it than you.\" The words sting because they're true.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_warning_opt_deflect_text",
+            "resultTextId": "ll_evt_heat_warning_opt_deflect_outcome"
+          },
+          {
+            "id": "ask_help",
+            "text": "\"I'm in deeper than I meant to be. Any advice?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": -2,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} sighs. \"Keep your head down for a while. Volunteer for the shit jobs. Be visible doing honest work.\" They pause. \"And stop. Whatever it is, just stop.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_heat_warning_opt_ask_help_text",
+            "resultTextId": "ll_evt_heat_warning_opt_ask_help_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "lance_bonded",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "lance_rep_40"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_lance_bonded_title",
+        "setupId": "ll_evt_lance_bonded_setup",
+        "title": "Bonded",
+        "setup": "{LANCE_LEADER_SHORT} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n\"The sergeant's planning a kit inspection tomorrow. The captain's hound — looking for contraband, extra rations, anything they can nail someone for.\"\n\nThey meet your eyes.\n\n\"Thought you should know. In case you've got anything that needs... relocating.\"\n\nThis is a warning. The kind you don't give to just anyone. The kind that could get {LANCE_LEADER_SHORT} in serious trouble if anyone found out.\n\nYou're family now. {LANCE_NAME} protects its own.",
+        "options": [
+          {
+            "id": "grateful",
+            "text": "\"I appreciate this. More than you know.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": -3,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} nods. \"Just don't make me regret it.\" You won't. This is what a lance is supposed to be — watching each other's backs. Even when the enemy wears the same uniform.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_bonded_opt_grateful_text",
+            "resultTextId": "ll_evt_lance_bonded_opt_grateful_outcome"
+          },
+          {
+            "id": "clean",
+            "text": "\"I'm clean. But thanks for the warning.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"Good.\" {LANCE_LEADER_SHORT} looks relieved. \"Keep it that way.\" They didn't have to warn you. They did anyway. That means something.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_bonded_opt_clean_text",
+            "resultTextId": "ll_evt_lance_bonded_opt_clean_outcome"
+          },
+          {
+            "id": "share",
+            "text": "\"Anyone else in the lance need to know?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} considers. \"I'll handle it. Quietly.\" They move off to warn the others. You're not the only one they're protecting. But you were first. That means something too.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_bonded_opt_share_text",
+            "resultTextId": "ll_evt_lance_bonded_opt_share_outcome"
+          },
+          {
+            "id": "warn_others",
+            "text": "\"Let me tell the others. Less risk for you.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 15,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "\"You sure?\" You nod. Over the next hour, quiet words are exchanged. By morning, the lance is clean. The inspection finds nothing. {LANCE_LEADER_SHORT} never gets connected to the warning.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_bonded_opt_warn_others_text",
+            "resultTextId": "ll_evt_lance_bonded_opt_warn_others_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "lance_isolated",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "lance_rep_0"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_lance_isolated_title",
+        "setupId": "ll_evt_lance_isolated_setup",
+        "title": "Isolated",
+        "setup": "The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.\n\n{SOLDIER_NAME} doesn't even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.\n\n{LANCE_LEADER_SHORT} watches from across the fire. Measuring. Not intervening.\n\nYou're still part of {LANCE_NAME}. Technically. But the warmth is gone. You're a stranger wearing a familiar uniform.\n\nThis is what isolation feels like.",
+        "options": [
+          {
+            "id": "approach",
+            "text": "Try to join a conversation. Break through the ice.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -2,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{SOLDIER_NAME} doesn't welcome you. But they don't reject you either. A few words. A shared complaint about the food. It's not much. It's something.",
+            "outcome_failure": "Silence. They wait for you to leave. When you do, the talking resumes. You weren't part of it. You aren't now.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_isolated_opt_approach_text",
+            "resultTextId": "ll_evt_lance_isolated_opt_approach_outcome",
+            "resultFailureTextId": "ll_evt_lance_isolated_opt_approach_outcome_failure"
+          },
+          {
+            "id": "alone",
+            "text": "Take your food and eat alone. They've made their choice.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The darkness beyond the firelight is cold. But at least it's honest. You know where you stand now. Sometimes that's worth more than false warmth.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_isolated_opt_alone_text",
+            "resultTextId": "ll_evt_lance_isolated_opt_alone_outcome"
+          },
+          {
+            "id": "confront",
+            "text": "\"Someone want to tell me what's going on?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{VETERAN_1_NAME} speaks up. \"You know what you did.\" An argument follows. Ugly. But at least it's honest. Grievances aired. Not forgiven, but acknowledged.",
+            "outcome_failure": "\"Nothing's going on.\" Flat. Final. They're not even willing to fight with you. That's worse.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_isolated_opt_confront_text",
+            "resultTextId": "ll_evt_lance_isolated_opt_confront_outcome",
+            "resultFailureTextId": "ll_evt_lance_isolated_opt_confront_outcome_failure"
+          },
+          {
+            "id": "leader",
+            "text": "Find {LANCE_LEADER_SHORT}. Ask what happened.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 2,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "They don't sugarcoat it. \"You've lost their trust. The way you handled—\" they list examples. Each one a small betrayal you barely remember. \"You want back in? Start making different choices.\" A path forward. Hard, but real.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_isolated_opt_leader_text",
+            "resultTextId": "ll_evt_lance_isolated_opt_leader_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "lance_sabotage",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "lance_rep_0"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_lance_sabotage_title",
+        "setupId": "ll_evt_lance_sabotage_setup",
+        "title": "Sabotage",
+        "setup": "Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn't notice until half your water was gone.\n\nSomeone did this. Someone in {LANCE_NAME}.\n\n{LANCE_LEADER_SHORT} isn't going to help. They're part of this, or they're looking the other way. Same result.\n\nYou're on your own. In a unit that wants you gone — or worse.",
+        "options": [
+          {
+            "id": "endure",
+            "text": "Fix it silently. Don't give them the satisfaction of reacting.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Hours of work restoring your kit. They wanted you angry. They wanted a confrontation they could win. You deny them both. Cold. Professional. They'll get bored eventually. Or they won't. Either way, you're still standing.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_sabotage_opt_endure_text",
+            "resultTextId": "ll_evt_lance_sabotage_opt_endure_outcome"
+          },
+          {
+            "id": "confront",
+            "text": "Find out who did it. Make them answer.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 1,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 2,
+              "lance_reputation": -5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You catch {SOLDIER_NAME} smirking. You get in their face. Words are exchanged. Maybe fists. But the message is clear: you're not a victim.",
+            "outcome_failure": "No one admits anything. No one saw anything. You're shouting at walls. You look paranoid. Dangerous. They wanted that.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_sabotage_opt_confront_text",
+            "resultTextId": "ll_evt_lance_sabotage_opt_confront_outcome",
+            "resultFailureTextId": "ll_evt_lance_sabotage_opt_confront_outcome_failure"
+          },
+          {
+            "id": "report",
+            "text": "Take it to the sergeant. This is beyond lance politics.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 2,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The sergeant listens. Investigates, maybe. \"I'll handle it.\" They probably won't. But it's on record now. If something happens to you, there's a trail.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_sabotage_opt_report_text",
+            "resultTextId": "ll_evt_lance_sabotage_opt_report_outcome"
+          },
+          {
+            "id": "transfer",
+            "text": "Request reassignment. This lance is done with you.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} doesn't argue. The paperwork goes through. New lance, new people, fresh start. You're leaving enemies behind. Whether you're also leaving the problem behind... time will tell.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_sabotage_opt_transfer_text",
+            "resultTextId": "ll_evt_lance_sabotage_opt_transfer_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "lance_trusted",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "lance_rep_20"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_lance_trusted_title",
+        "setupId": "ll_evt_lance_trusted_setup",
+        "title": "Trusted",
+        "setup": "{VETERAN_1_NAME} corners you after the evening meal. They look around, making sure no one's listening.\n\n\"Got a problem, {PLAYER_NAME}. Need help from someone I can trust.\" They pause. \"That's you.\"\n\nThey explain: a debt from before the army. Collector's coming. If {VETERAN_1_NAME} doesn't have the coin, things get ugly — for them, maybe for their family back home.\n\n\"I'm not asking for money. Just... watch my back when the collector shows. Make sure things stay... civil.\"",
+        "options": [
+          {
+            "id": "help",
+            "text": "\"I've got your back. When and where?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Relief floods {VETERAN_1_NAME}'s face. \"Tomorrow, by the supply wagons. Just... be there.\" You show up. The collector sees they're not alone. The conversation stays civil. A debt renegotiated, not collected by force.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_trusted_opt_help_text",
+            "resultTextId": "ll_evt_lance_trusted_opt_help_outcome"
+          },
+          {
+            "id": "money",
+            "text": "\"How much do you owe? Maybe I can help directly.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 15,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{VETERAN_1_NAME} hesitates. \"Twenty denars. I know it's a lot—\" You hand it over. They stare at the coins like they're made of gold. \"I'll pay you back. Every copper, I swear.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_trusted_opt_money_text",
+            "resultTextId": "ll_evt_lance_trusted_opt_money_outcome"
+          },
+          {
+            "id": "decline",
+            "text": "\"Sorry, can't get involved. Too risky.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{VETERAN_1_NAME}'s face falls, then hardens. \"Right. Forget I asked.\" They walk away. You had reasons. Good ones, probably. But something's broken now.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_trusted_opt_decline_text",
+            "resultTextId": "ll_evt_lance_trusted_opt_decline_outcome"
+          },
+          {
+            "id": "leverage",
+            "text": "\"I'll help. But you'll owe me a favor. A real one.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "A long pause. \"What kind of favor?\" You don't specify. They agree anyway. Desperate people do desperate things. You've got leverage now. Whether that's worth more than simple friendship... time will tell.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_lance_trusted_opt_leverage_text",
+            "resultTextId": "ll_evt_lance_trusted_opt_leverage_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medical_complication",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "medical_4"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medical_complication_title",
+        "setupId": "ll_evt_medical_complication_setup",
+        "title": "Complication",
+        "setup": "Fever hits in the night.\n\nThe {CONDITION_TYPE} has become something else — something worse. {COMPLICATION_NAME}, the surgeon would probably call it. Infection, inflammation, your body turning against itself.\n\nYou wake drenched in sweat, shaking. {LANCE_MATE_NAME} is there, looking worried.\n\n\"You're burning up. Can you walk?\"\n\nWalking sounds impossible. The surgeon's tent sounds very far away.",
+        "options": [
+          {
+            "id": "help",
+            "text": "\"Get me to the surgeon.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_MATE_NAME} half-carries you across camp. The surgeon takes one look and starts working. Treatment is aggressive — and necessary. You're going to be out for a while. But you're going to live.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_complication_opt_help_text",
+            "resultTextId": "ll_evt_medical_complication_opt_help_outcome"
+          },
+          {
+            "id": "refuse",
+            "text": "\"I'm fine. Just need water.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Somehow, impossibly, you ride it out. The fever breaks by morning. You're weak as a kitten, but alive. The surgeon will call it a miracle.",
+            "outcome_failure": "You're not fine. The fever spikes. You lose consciousness. When you wake, you're in the surgeon's tent anyway — in worse shape than before.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_complication_opt_refuse_text",
+            "resultTextId": "ll_evt_medical_complication_opt_refuse_outcome",
+            "resultFailureTextId": "ll_evt_medical_complication_opt_refuse_outcome_failure"
+          },
+          {
+            "id": "medicine",
+            "text": "\"There's medicine in my kit. Help me take it.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Whatever you had stashed works. The fever eases. Not cured, but stable. {LANCE_MATE_NAME} watches through the night. By dawn, you're coherent again.",
+            "outcome_failure": "Wrong medicine. Or not enough. The fever climbs. You don't remember {LANCE_MATE_NAME} carrying you to the surgeon. You're told about it later.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_complication_opt_medicine_text",
+            "resultTextId": "ll_evt_medical_complication_opt_medicine_outcome",
+            "resultFailureTextId": "ll_evt_medical_complication_opt_medicine_outcome_failure"
+          },
+          {
+            "id": "lance_leader",
+            "text": "\"Get {LANCE_LEADER_SHORT}. They'll know what to do.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{LANCE_LEADER_SHORT} arrives, assesses, takes charge. \"Surgeon. Now. No arguments.\" They organize a carry. The surgeon isn't gentle, but they're effective. {LANCE_LEADER_SHORT} checks on you twice. That means something.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_complication_opt_lance_leader_text",
+            "resultTextId": "ll_evt_medical_complication_opt_lance_leader_outcome"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medical_emergency",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "medical_5"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medical_emergency_title",
+        "setupId": "ll_evt_medical_emergency_setup",
+        "title": "Emergency",
+        "setup": "You collapse.\n\nOne moment you're standing, the next you're on the ground. Voices around you, distant and echoey. Someone's shouting for the surgeon. Someone else is pressing something against the {CONDITION_LOCATION}.\n\nThe sky is very bright. Or very dark. Hard to tell.\n\n{LANCE_LEADER_SHORT}'s face swims into view. Their mouth moves. The words don't reach you.\n\nEverything goes sideways.",
+        "options": [
+          {
+            "id": "fight",
+            "text": "Fight to stay conscious. You need to... something.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 40,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Sheer will keeps you present. You hear the surgeon's instructions. Feel them working. Pain means alive. You cling to the pain.",
+            "outcome_failure": "Darkness takes you anyway. When you wake, it's over. You don't know how long you were out.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_emergency_opt_fight_text",
+            "resultTextId": "ll_evt_medical_emergency_opt_fight_outcome",
+            "resultFailureTextId": "ll_evt_medical_emergency_opt_fight_outcome_failure"
+          },
+          {
+            "id": "surrender",
+            "text": "Let go. Trust them to fix this.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You stop fighting. The darkness is almost peaceful. When you wake, it's to the surgeon's tent, the smell of herbs, and {LANCE_MATE_NAME} dozing in a chair beside you. Still here.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_emergency_opt_surrender_text",
+            "resultTextId": "ll_evt_medical_emergency_opt_surrender_outcome"
+          },
+          {
+            "id": "speak",
+            "text": "Try to tell them something. Important.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 30,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Words come out. Maybe coherent. {LANCE_LEADER_SHORT} nods. \"We know. Rest now.\" You said what needed saying.",
+            "outcome_failure": "Just sounds. No words. Then nothing.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_emergency_opt_speak_text",
+            "resultTextId": "ll_evt_medical_emergency_opt_speak_outcome",
+            "resultFailureTextId": "ll_evt_medical_emergency_opt_speak_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "medical_worsening",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research/escalation_threshold_events.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "medical_3"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "high",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medical_worsening_title",
+        "setupId": "ll_evt_medical_worsening_setup",
+        "title": "Worsening",
+        "setup": "It's worse today.\n\nWhat started as a manageable {CONDITION_TYPE} has become something harder to ignore. The {SYMPTOM_1} is constant now. {SYMPTOM_2} makes sleep difficult.\n\nYou've been pushing through. The army doesn't stop for one soldier's discomfort. But your body is sending messages you can't keep ignoring.\n\n{LANCE_MATE_NAME} notices you wincing. \"You should see the surgeon.\"\n\nMaybe they're right.",
+        "options": [
+          {
+            "id": "surgeon",
+            "text": "Finally give in. See the surgeon.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The surgeon takes one look and scowls. \"Why didn't you come sooner?\" Treatment begins. It's not pleasant, but it's working. A few days rest and you'll be functional again. Should've done this earlier.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_worsening_opt_surgeon_text",
+            "resultTextId": "ll_evt_medical_worsening_opt_surgeon_outcome"
+          },
+          {
+            "id": "push",
+            "text": "Keep pushing. It's not that bad.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 60,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": -1,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 2,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You power through. The symptoms peak, then start to fade. Natural recovery, or maybe just stubbornness. Either way, you're still standing.",
+            "outcome_failure": "Your body disagrees. The {SYMPTOM_1} spikes. You stagger. {LANCE_MATE_NAME} catches you. \"Get the surgeon. Now.\"",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_worsening_opt_push_text",
+            "resultTextId": "ll_evt_medical_worsening_opt_push_outcome",
+            "resultFailureTextId": "ll_evt_medical_worsening_opt_push_outcome_failure"
+          },
+          {
+            "id": "rest",
+            "text": "Take it easy. Rest without formal treatment.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You scale back. Light duties only. Sleep when you can. It's not the surgeon's tent, but it's not reckless either. Slow recovery begins.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_worsening_opt_rest_text",
+            "resultTextId": "ll_evt_medical_worsening_opt_rest_outcome"
+          },
+          {
+            "id": "herbs",
+            "text": "Find some herbs, treat yourself.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "{REMEDY_NAME} does the trick. The symptoms ease. Not cured, but manageable. And you didn't have to explain anything to the surgeon.",
+            "outcome_failure": "The remedy does nothing. Or makes it worse. You've wasted time you didn't have.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_worsening_opt_herbs_text",
+            "resultTextId": "ll_evt_medical_worsening_opt_herbs_outcome",
+            "resultFailureTextId": "ll_evt_medical_worsening_opt_herbs_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    }
+  ]
+}

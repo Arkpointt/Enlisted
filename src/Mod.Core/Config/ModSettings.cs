@@ -28,6 +28,14 @@ namespace Enlisted.Mod.Core.Config
 		public bool LogCampaignEvents { get; set; } = true;
 
 		/// <summary>
+		/// Whether to run deep troop discovery validation at session launch.
+		/// This is a development-only diagnostic and can be expensive/noisy.
+		/// Leave disabled for normal play.
+		/// </summary>
+		[DataMember(Name = "RunTroopDiscoveryValidation")]
+		public bool RunTroopDiscoveryValidation { get; set; } = false;
+
+		/// <summary>
 		/// Whether to run mod conflict diagnostics at startup and write to conflicts.log.
 		/// Useful for diagnosing issues caused by other mods patching the same game methods.
 		/// When disabled, the conflicts.log file will not be generated.
@@ -112,6 +120,22 @@ namespace Enlisted.Mod.Core.Config
 			[DataMember(Name = "TroopSelection")]
 			public string TroopSelection { get; set; } = "Info";
 
+			/// <summary>Lance Life Events logging (catalog load, scheduling, delivery).</summary>
+			[DataMember(Name = "LanceLifeEvents")]
+			public string LanceLifeEvents { get; set; } = "Info";
+
+			/// <summary>Camp Activities logging (definitions load, execution).</summary>
+			[DataMember(Name = "CampActivities")]
+			public string CampActivities { get; set; } = "Info";
+
+			/// <summary>Player Conditions logging (injury/illness/exhaustion changes).</summary>
+			[DataMember(Name = "PlayerConditions")]
+			public string PlayerConditions { get; set; } = "Info";
+
+			/// <summary>Troop discovery validation logging (development-only).</summary>
+			[DataMember(Name = "TroopDiscovery")]
+			public string TroopDiscovery { get; set; } = "Off";
+
 			/// <summary>Kill tracker logging (per-mission tracking).</summary>
 			[DataMember(Name = "KillTracker")]
 			public string KillTracker { get; set; } = "Info";
@@ -162,6 +186,10 @@ namespace Enlisted.Mod.Core.Config
 				AddLevel(dict, "Promotion", Promotion);
 				AddLevel(dict, "Duties", Duties);
 				AddLevel(dict, "TroopSelection", TroopSelection);
+				AddLevel(dict, "LanceLifeEvents", LanceLifeEvents);
+				AddLevel(dict, "CampActivities", CampActivities);
+				AddLevel(dict, "PlayerConditions", PlayerConditions);
+				AddLevel(dict, "TroopDiscovery", TroopDiscovery);
 				AddLevel(dict, "KillTracker", KillTracker);
 				AddLevel(dict, "Enlistment", Enlistment);
 				AddLevel(dict, "Patch", Patch);

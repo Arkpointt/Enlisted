@@ -2,16 +2,16 @@
 <Module>
     <Name value="Enlisted"/>
     <Id value="Enlisted"/>
-  <Version value="v0.6.0"/>
+  <Version value="v0.9.0"/>
     <SingleplayerModule value="true"/>
     <Official value="false"/>
     <DependedModules>
-        <!-- Base game modules - compatible with v1.3.10+ -->
-        <DependedModule Id="Native" DependentVersion="v1.3.10"/>
-        <DependedModule Id="SandBoxCore" DependentVersion="v1.3.10"/>
-        <DependedModule Id="Sandbox" DependentVersion="v1.3.10"/>
-        <DependedModule Id="StoryMode" Optional="true" DependentVersion="v1.3.10"/>
-        <DependedModule Id="CustomBattle" Optional="true" DependentVersion="v1.3.10"/>
+        <!-- Base game modules - compatible with v1.3.11+ -->
+        <DependedModule Id="Native" DependentVersion="v1.3.11"/>
+        <DependedModule Id="SandBoxCore" DependentVersion="v1.3.11"/>
+        <DependedModule Id="Sandbox" DependentVersion="v1.3.11"/>
+        <DependedModule Id="StoryMode" Optional="true" DependentVersion="v1.3.11"/>
+        <DependedModule Id="CustomBattle" Optional="true" DependentVersion="v1.3.11"/>
         <!-- Ensure Harmony is loaded before this mod -->
         <DependedModule Id="Bannerlord.Harmony" DependentVersion="v2.3.6"/>
     </DependedModules>

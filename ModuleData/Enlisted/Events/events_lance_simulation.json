@@ -1,0 +1,445 @@
+{
+  "$schema": "../../../src/Features/Lances/Events/lance-events-schema.json",
+  "version": "1.0.0",
+  "description": "Lance Life Simulation events - cover requests, injuries, deaths, memorials",
+  "events": [
+    {
+      "id": "lance_cover_request_personal",
+      "category": "lance_simulation",
+      "channel": "inquiry",
+      "weight": 10,
+      "triggers": {
+        "all": ["is_enlisted", "ai_safe"],
+        "time_of_day": ["evening", "night"]
+      },
+      "cooldown_hours": 72,
+      "titleId": "lance_cover_request_title",
+      "title": "A Favor to Ask",
+      "bodyId": "lance_cover_request_body",
+      "body": "{LANCE_MATE_NAME} approaches during evening mess.\n\n\"{PLAYER_SHORT}, I need a favor. I'm supposed to handle {DUTY_NAME} tomorrow morning, but I've got a conflict. Could you cover for me? It's nothing too demanding.\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "lance_cover_accept",
+          "text": "[Accept] \"Sure, I'll take care of it.\"",
+          "effects": {
+            "lance_reputation": 2,
+            "fatigue": 2
+          },
+          "flags": ["cover_accepted"],
+          "resultText": "{LANCE_MATE_NAME} grins with relief. \"Thanks. I owe you one.\""
+        },
+        {
+          "id": "negotiate",
+          "textId": "lance_cover_negotiate",
+          "text": "[Negotiate] \"I'll do it if you cover my stable duty next week.\"",
+          "effects": {
+            "lance_reputation": 0,
+            "fatigue": 2
+          },
+          "flags": ["favor_owed", "cover_accepted"],
+          "resultText": "{LANCE_MATE_NAME} nods. \"Fair enough. Deal.\""
+        },
+        {
+          "id": "refuse",
+          "textId": "lance_cover_refuse",
+          "text": "[Refuse] \"Sorry, I've got my own duties to handle.\"",
+          "effects": {
+            "lance_reputation": -1
+          },
+          "flags": ["cover_refused"],
+          "resultText": "{LANCE_MATE_NAME} looks disappointed but nods. \"Understood.\""
+        },
+        {
+          "id": "report",
+          "textId": "lance_cover_report",
+          "text": "[Report] \"You should request official leave.\"",
+          "effects": {
+            "lance_reputation": -2,
+            "discipline": 0
+          },
+          "flags": ["cover_refused", "reported"],
+          "resultText": "{LANCE_MATE_NAME}'s face hardens. \"Right. Official channels.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_cover_request_illness",
+      "category": "lance_simulation",
+      "channel": "inquiry",
+      "weight": 8,
+      "triggers": {
+        "all": ["is_enlisted", "ai_safe"],
+        "time_of_day": ["morning"]
+      },
+      "cooldown_hours": 96,
+      "titleId": "lance_cover_illness_title",
+      "title": "Feeling Poorly",
+      "bodyId": "lance_cover_illness_body",
+      "body": "{LANCE_MATE_NAME} catches you before morning formation, looking pale and unsteady.\n\n\"I'm not feeling well - stomach's been turning all night. I'm supposed to be on {DUTY_NAME} today. Could you stand in for me? I just need a day to recover.\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "lance_cover_illness_accept",
+          "text": "[Help] \"Get some rest. I'll handle it.\"",
+          "effects": {
+            "lance_reputation": 3,
+            "fatigue": 3
+          },
+          "flags": ["cover_accepted", "compassionate"],
+          "resultText": "{LANCE_MATE_NAME} manages a weak smile. \"You're a good sort. Thanks.\""
+        },
+        {
+          "id": "suggest_surgeon",
+          "textId": "lance_cover_illness_surgeon",
+          "text": "[Advise] \"You should see the surgeon first.\"",
+          "effects": {
+            "lance_reputation": 1,
+            "fatigue": 2
+          },
+          "flags": ["cover_accepted", "medical_referral"],
+          "resultText": "{LANCE_MATE_NAME} nods weakly. \"You're right. I'll go to the medical tent.\""
+        },
+        {
+          "id": "refuse",
+          "textId": "lance_cover_illness_refuse",
+          "text": "[Refuse] \"I can't, I have my own assignments.\"",
+          "effects": {
+            "lance_reputation": -2
+          },
+          "flags": ["cover_refused"],
+          "resultText": "{LANCE_MATE_NAME} just nods, too weak to argue, and shuffles off."
+        }
+      ]
+    },
+    {
+      "id": "lance_member_training_injury",
+      "category": "lance_simulation",
+      "channel": "incident",
+      "weight": 5,
+      "triggers": {
+        "all": ["is_enlisted", "lance_training_active"]
+      },
+      "cooldown_hours": 168,
+      "titleId": "lance_injury_title",
+      "title": "Training Accident",
+      "bodyId": "lance_injury_body",
+      "body": "During formation drill, {LANCE_MATE_NAME} takes a hard fall. The sergeant calls for the surgeon.\n\nThe drill instructor looks to you: \"Get {LANCE_MATE_NAME} to the medical tent. Someone needs to cover their watch duty tonight.\"",
+      "notification_type": "warning",
+      "effects": {
+        "member_state": "minor_injury",
+        "medical_risk": 2,
+        "schedule_remove": true
+      },
+      "follow_up_event": "lance_injury_recovery",
+      "follow_up_delay_hours": 24,
+      "options": [
+        {
+          "id": "help",
+          "textId": "lance_injury_help",
+          "text": "[Help] Help carry them to the medical tent.",
+          "effects": {
+            "lance_reputation": 2,
+            "fatigue": 1
+          },
+          "resultText": "You help {LANCE_MATE_NAME} to the surgeon. They'll recover, given time."
+        },
+        {
+          "id": "cover",
+          "textId": "lance_injury_cover",
+          "text": "[Volunteer] \"I'll take their watch duty tonight.\"",
+          "effects": {
+            "lance_reputation": 3,
+            "fatigue": 3
+          },
+          "flags": ["cover_accepted"],
+          "resultText": "The sergeant nods approvingly. \"Good soldier.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_member_serious_illness",
+      "category": "lance_simulation",
+      "channel": "incident",
+      "weight": 3,
+      "triggers": {
+        "all": ["is_enlisted"]
+      },
+      "cooldown_hours": 336,
+      "titleId": "lance_illness_title",
+      "title": "Fallen Ill",
+      "bodyId": "lance_illness_body",
+      "body": "{LANCE_MATE_NAME} hasn't reported for morning formation. You find them in their tent, burning with fever and barely conscious.\n\nThis looks serious.",
+      "notification_type": "warning",
+      "effects": {
+        "member_state": "major_injury",
+        "medical_risk": 3
+      },
+      "options": [
+        {
+          "id": "get_surgeon",
+          "textId": "lance_illness_surgeon",
+          "text": "[Urgent] \"I'll get the surgeon immediately!\"",
+          "effects": {
+            "lance_reputation": 3
+          },
+          "flags": ["quick_response"],
+          "resultText": "You sprint to the medical tent. The surgeon comes running back with you."
+        },
+        {
+          "id": "help_self",
+          "textId": "lance_illness_help",
+          "text": "[Help] Get them water and find medicine.",
+          "effects": {
+            "lance_reputation": 1,
+            "fatigue": 2
+          },
+          "flags": ["delayed_response"],
+          "resultText": "You do what you can, but {LANCE_MATE_NAME} needs professional care."
+        },
+        {
+          "id": "report_only",
+          "textId": "lance_illness_report",
+          "text": "[Report] Tell the sergeant about the situation.",
+          "effects": {
+            "lance_reputation": 0
+          },
+          "resultText": "The sergeant sends someone to fetch the surgeon."
+        }
+      ]
+    },
+    {
+      "id": "lance_member_death_illness",
+      "category": "lance_simulation",
+      "channel": "incident",
+      "weight": 1,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["member_critically_ill"]
+      },
+      "cooldown_hours": 720,
+      "titleId": "lance_death_title",
+      "title": "A Soldier Falls",
+      "bodyId": "lance_death_illness_body",
+      "body": "Despite the surgeon's efforts, {LANCE_MATE_NAME} succumbs to the fever. Another empty bunk in the tent.\n\nThe lance gathers in somber silence. Someone will have to collect their belongings.",
+      "notification_type": "critical",
+      "effects": {
+        "member_state": "dead",
+        "lance_reputation": -5,
+        "morale": -10,
+        "roster_remove": true
+      },
+      "flags": ["memorial_pending"],
+      "follow_up_event": "lance_memorial_service",
+      "follow_up_delay_hours": 48,
+      "options": [
+        {
+          "id": "volunteer_belongings",
+          "textId": "lance_death_belongings",
+          "text": "[Volunteer] \"I'll handle their belongings.\"",
+          "effects": {
+            "lance_reputation": 5
+          },
+          "resultText": "You carefully pack {LANCE_MATE_NAME}'s possessions. Someone should write to their family."
+        },
+        {
+          "id": "mourn_silently",
+          "textId": "lance_death_mourn",
+          "text": "[Silent] Stand with the others in silence.",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "Words aren't needed. Your presence is enough."
+        }
+      ]
+    },
+    {
+      "id": "lance_memorial_service",
+      "category": "lance_simulation",
+      "channel": "incident",
+      "weight": 1,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["memorial_pending"]
+      },
+      "cooldown_hours": 0,
+      "titleId": "lance_memorial_title",
+      "title": "Memorial Service",
+      "bodyId": "lance_memorial_body",
+      "body": "The lance gathers for {DECEASED_MEMBER}'s memorial. A simple marker has been placed, and the chaplain speaks words of remembrance.\n\n{LANCE_LEADER_SHORT} addresses the lance: \"They served with honor. We carry on in their memory.\"",
+      "notification_type": "info",
+      "effects": {
+        "morale": 5,
+        "flags_clear": ["memorial_pending"]
+      },
+      "options": [
+        {
+          "id": "speak",
+          "textId": "lance_memorial_speak",
+          "text": "[Speak] Share a memory of your fallen comrade.",
+          "effects": {
+            "lance_reputation": 3
+          },
+          "resultText": "Your words bring comfort to the lance. {DECEASED_MEMBER} won't be forgotten."
+        },
+        {
+          "id": "attend",
+          "textId": "lance_memorial_attend",
+          "text": "[Attend] Stand in respectful silence.",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "Sometimes presence speaks louder than words."
+        },
+        {
+          "id": "skip",
+          "textId": "lance_memorial_skip",
+          "text": "[Skip] You have duties elsewhere.",
+          "effects": {
+            "lance_reputation": -3
+          },
+          "resultText": "Your absence is noted."
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_foreshadow_promotion",
+      "category": "lance_simulation",
+      "channel": "inquiry",
+      "weight": 5,
+      "triggers": {
+        "all": ["is_enlisted", "player_ready_for_promotion"]
+      },
+      "cooldown_hours": 168,
+      "titleId": "lance_foreshadow_title",
+      "title": "Rumors of Change",
+      "bodyId": "lance_foreshadow_body",
+      "body": "{LANCE_MATE_NAME} sidles up to you during evening mess.\n\n\"Word is, {LANCE_LEADER_SHORT} might be getting new orders soon. Could mean a shakeup in the chain of command.\" They give you a meaningful look. \"You've been doing well. People notice.\"",
+      "options": [
+        {
+          "id": "interested",
+          "textId": "lance_foreshadow_interested",
+          "text": "[Curious] \"What have you heard?\"",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "{LANCE_MATE_NAME} shrugs. \"Just rumors. But keep your eyes open.\""
+        },
+        {
+          "id": "humble",
+          "textId": "lance_foreshadow_humble",
+          "text": "[Humble] \"I just do my duty.\"",
+          "effects": {
+            "lance_reputation": 2
+          },
+          "resultText": "{LANCE_MATE_NAME} nods approvingly. \"That's why people notice.\""
+        },
+        {
+          "id": "dismiss",
+          "textId": "lance_foreshadow_dismiss",
+          "text": "[Dismiss] \"Rumors are just rumors.\"",
+          "effects": {
+            "lance_reputation": 0
+          },
+          "resultText": "{LANCE_MATE_NAME} shrugs. \"Fair enough.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_leader_vacancy_promotion_offer",
+      "category": "lance_simulation",
+      "channel": "inquiry",
+      "weight": 100,
+      "triggers": {
+        "all": ["is_enlisted", "player_ready_for_promotion", "lance_leader_vacancy"]
+      },
+      "cooldown_hours": 0,
+      "titleId": "lance_promotion_offer_title",
+      "title": "A New Responsibility",
+      "bodyId": "lance_promotion_offer_body",
+      "body": "A runner finds you: the commander wants to see you immediately.\n\nIn the command tent, {LORD_NAME} regards you with a measuring gaze.\n\n\"The lance needs a new leader. Your service record speaks well of you. Are you ready to take command?\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "lance_promotion_accept",
+          "text": "[Accept] \"I am ready, my lord.\"",
+          "effects": {
+            "tier_up": 1,
+            "lance_reputation": 10,
+            "lord_relation": 5
+          },
+          "flags": ["promotion_accepted"],
+          "resultText": "{LORD_NAME} nods. \"Then the lance is yours. Lead them well.\""
+        },
+        {
+          "id": "hesitate",
+          "textId": "lance_promotion_hesitate",
+          "text": "[Hesitate] \"I... need time to consider.\"",
+          "effects": {
+            "lord_relation": -2
+          },
+          "flags": ["promotion_deferred"],
+          "resultText": "{LORD_NAME}'s expression hardens slightly. \"Don't take too long. The lance needs leadership.\""
+        },
+        {
+          "id": "decline",
+          "textId": "lance_promotion_decline",
+          "text": "[Decline] \"I don't feel ready for command.\"",
+          "effects": {
+            "lord_relation": -5,
+            "lance_reputation": -3
+          },
+          "flags": ["promotion_declined"],
+          "resultText": "{LORD_NAME} sighs. \"Very well. Another will be found.\""
+        }
+      ]
+    },
+    {
+      "id": "lance_favor_returned",
+      "category": "lance_simulation",
+      "channel": "inquiry",
+      "weight": 8,
+      "triggers": {
+        "all": ["is_enlisted"],
+        "flags": ["favor_owed_to_player"]
+      },
+      "cooldown_hours": 120,
+      "titleId": "lance_favor_title",
+      "title": "Returning the Favor",
+      "bodyId": "lance_favor_body",
+      "body": "{LANCE_MATE_NAME} approaches you before duty assignment.\n\n\"Remember when you covered for me? I owe you one. Word is you've got {DUTY_NAME} coming up - I could take it off your hands if you want.\"",
+      "options": [
+        {
+          "id": "accept",
+          "textId": "lance_favor_accept",
+          "text": "[Accept] \"That would be helpful, thanks.\"",
+          "effects": {
+            "fatigue": -2
+          },
+          "flags": ["favor_cleared"],
+          "resultText": "{LANCE_MATE_NAME} nods. \"Consider us even.\""
+        },
+        {
+          "id": "save",
+          "textId": "lance_favor_save",
+          "text": "[Save] \"Keep that favor for now. I'll manage.\"",
+          "effects": {
+            "lance_reputation": 1
+          },
+          "resultText": "{LANCE_MATE_NAME} looks surprised but nods. \"Alright. I still owe you one.\""
+        },
+        {
+          "id": "trade",
+          "textId": "lance_favor_trade",
+          "text": "[Trade] \"Actually, could you help me with something else instead?\"",
+          "effects": {
+            "lance_reputation": 0
+          },
+          "flags": ["favor_pending"],
+          "resultText": "{LANCE_MATE_NAME} considers. \"What did you have in mind?\""
+        }
+      ]
+    }
+  ]
+}
+

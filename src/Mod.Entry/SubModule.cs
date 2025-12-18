@@ -6,17 +6,28 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
+using Enlisted.Features.Activities;
 using Enlisted.Features.Camp;
+// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Conversations.Behaviors;
+using Enlisted.Features.Escalation;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Lances.Behaviors;
+using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Lances.Events.Decisions;
+using Enlisted.Features.Lances.Personas;
+using Enlisted.Features.Lances.Leaders;
+using Enlisted.Features.Lances.Simulation;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Ranks.Behaviors;
+using Enlisted.Features.Schedule.Behaviors;
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core;
+using Enlisted.Mod.Core.Triggers;
 using Enlisted.Mod.GameAdapters.Patches;
 using HarmonyLib;
 using TaleWorlds.CampaignSystem;
@@ -91,7 +102,7 @@ namespace Enlisted.Mod.Entry
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("NextFrameDispatcher", $"Error processing next frame action: {ex.Message}");
+                    ModLogger.Error("NextFrameDispatcher", "Error processing next frame action", ex);
                 }
             }
         }
@@ -161,6 +172,7 @@ namespace Enlisted.Mod.Entry
                     _ = typeof(IncidentsSuppressionPatch);
                     _ = typeof(InfluenceMessageSuppressionPatch);
                     _ = typeof(JoinEncounterAutoSelectPatch);
+                    _ = typeof(JoinSiegeEventAutoSelectPatch);
                     _ = typeof(LootBlockPatch);
                     _ = typeof(LootBlockPatch.ItemLootPatch);
                     _ = typeof(LootBlockPatch.MemberLootPatch);
@@ -189,6 +201,7 @@ namespace Enlisted.Mod.Entry
                         "ArmyCohesionExclusionPatch",           // Target: DefaultArmyManagementCalculationModel
                         "SettlementOutsideLeaveButtonPatch",    // Target: EncounterGameMenuBehavior
                         "JoinEncounterAutoSelectPatch",         // Target: EncounterGameMenuBehavior
+                        "JoinSiegeEventAutoSelectPatch",        // Target: EncounterGameMenuBehavior
                         "EncounterAbandonArmyBlockPatch",       // Target: EncounterGameMenuBehavior (deferred)
                         "EncounterAbandonArmyBlockPatch2"       // Target: EncounterGameMenuBehavior (deferred)
                     };
@@ -219,12 +232,11 @@ namespace Enlisted.Mod.Entry
                         }
                         catch (Exception patchEx)
                         {
-                            ModLogger.Error("Bootstrap", $"Failed to patch {type.Name}: {patchEx.Message}");
+                            ModLogger.Error("Bootstrap", $"Failed to patch {type.Name}", patchEx);
                             if (patchEx.InnerException != null)
                             {
-                                ModLogger.Error("Bootstrap", $"  Inner exception: {patchEx.InnerException.Message}");
+                                ModLogger.Error("Bootstrap", "Inner exception during patch", patchEx.InnerException);
                             }
-                            ModLogger.Debug("Bootstrap", $"  Stack trace: {patchEx.StackTrace}");
                         }
                     }
 
@@ -236,14 +248,14 @@ namespace Enlisted.Mod.Entry
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("Bootstrap", $"Harmony PatchAll failed: {ex.Message}\n{ex.StackTrace}");
+                    ModLogger.Error("Bootstrap", "Harmony PatchAll failed", ex);
                 }
 
                 // Log all patched methods for debugging
                 var patchedMethods = _harmony.GetPatchedMethods();
                 foreach (var method in patchedMethods)
                 {
-                    ModLogger.Info("Bootstrap", $"Patched method: {method.DeclaringType?.Name}.{method.Name}");
+                    ModLogger.Debug("Bootstrap", $"Patched method: {method.DeclaringType?.Name}.{method.Name}");
                 }
 
                 // Run mod conflict diagnostics and write to Debugging/conflicts.log
@@ -335,8 +347,42 @@ namespace Enlisted.Mod.Entry
                     // can click on individual equipment pieces to see stats and select variants
                     campaignStarter.AddBehavior(new QuartermasterEquipmentSelectorBehavior());
 
+                    // Phase 1 foundation: shared trigger vocabulary + minimal recent-history persistence (no scanning loops).
+                    campaignStarter.AddBehavior(new CampaignTriggerTrackerBehavior());
+
+                    // Phase 5 (optional): named lance role personas (text-only roster). Feature-flagged.
+                    campaignStarter.AddBehavior(new LancePersonaBehavior());
+
+                    // Phase 5: player conditions (injury/illness/exhaustion). Feature-flagged.
+                    campaignStarter.AddBehavior(new PlayerConditionBehavior());
+
                     // Lance Life (text events): Viking Conquest-style camp activities and stories tied to lance identity
                     campaignStarter.AddBehavior(new LanceStoryBehavior());
+
+                    // Lance Life Events (shared state): persisted cooldowns + one-time fired ids.
+                    campaignStarter.AddBehavior(new LanceLifeEventsStateBehavior());
+
+                    // Lance Life Events (Phase 4): onboarding state machine (stage/track/variant), feature-flagged.
+                    campaignStarter.AddBehavior(new LanceLifeOnboardingBehavior());
+
+                    // Lance Life Events (Phase 2): automatic scheduler (tick evaluation + queueing), feature-flagged.
+                    campaignStarter.AddBehavior(new LanceLifeEventsAutomaticBehavior());
+
+                    // Lance Life Events (Phase 5b): incident channel delivery (MapState.NextIncident), feature-flagged.
+                    campaignStarter.AddBehavior(new LanceLifeEventsIncidentBehavior());
+
+                    // Decision Events (Track D2): CK3-style decision system with activity-aware events,
+                    // 8-layer pacing protections, and player-initiated decisions. Feature-flagged.
+                    campaignStarter.AddBehavior(new DecisionEventBehavior());
+
+                    // Lance banner persistence: manages unique banners for each lance under each lord
+                    campaignStarter.AddBehavior(new LanceBannerManager());
+
+                    // My Lance menu: roster view, relationships, wounded/fallen tracking
+                    campaignStarter.AddBehavior(new EnlistedLanceMenuBehavior());
+
+                    // Medical menu: treatment options when injured/ill/exhausted
+                    campaignStarter.AddBehavior(new EnlistedMedicalMenuBehavior());
 
                     // Battle encounter system: detects when the lord enters battle and handles player participation,
                     // manages menu transitions during battles, and provides battle wait menu options
@@ -348,6 +394,19 @@ namespace Enlisted.Mod.Entry
                     // Camp UI: provides menus for viewing service records (current posting,
                     // faction history, lifetime summary) and future retinue management
                     campaignStarter.AddBehavior(new CampMenuHandler());
+
+                    // Camp Activities: data-driven activity system for training, tasks, social, and lance activities
+                    campaignStarter.AddBehavior(new CampActivitiesBehavior());
+
+                    // Camp Life Simulation (Phase 3): daily snapshot + Quartermaster/Pay integrations (gated by config).
+                    campaignStarter.AddBehavior(new CampLifeBehavior());
+
+                    // Phase 4: escalation tracks (heat/discipline/lance rep/medical risk). Feature-flagged.
+                    campaignStarter.AddBehavior(new EscalationManager());
+
+                    // News/Dispatches: generates kingdom-wide and personal news headlines.
+                    // Read-only observer of campaign events; updates every 2 in-game days.
+                    campaignStarter.AddBehavior(new EnlistedNewsBehavior());
 
                     // Retinue trickle system: adds free soldiers over time (every 2-3 days)
                     campaignStarter.AddBehavior(new RetinueTrickleSystem());
@@ -361,6 +420,18 @@ namespace Enlisted.Mod.Entry
                     // Companion assignment manager: tracks which companions should fight vs stay back
                     // Companions marked "stay back" don't spawn in battle, keeping them safe
                     campaignStarter.AddBehavior(new CompanionAssignmentManager());
+
+                    // AI Camp Schedule (Track B Phase 0): foundation - data models, config loading, save/load
+                    // Manages daily duty schedules and lance needs for T1-T6 enlisted gameplay
+                    campaignStarter.AddBehavior(new ScheduleBehavior());
+
+                    // Lance Life Simulation (Track C1): member states, injuries, deaths, cover requests, promotions
+                    // Creates dynamic lance environment with member availability affecting AI Schedule
+                    campaignStarter.AddBehavior(new LanceLifeSimulationBehavior());
+
+                    // Persistent Lance Leaders (Track C2): unique leaders per lord with memory and personality
+                    // Leaders remember player actions, react based on traits, and persist across save/load
+                    campaignStarter.AddBehavior(new PersistentLanceLeadersBehavior());
 
                     // Save/load diagnostics end marker: registered last so it runs after all other behaviors
                     // during save/load serialization passes.
@@ -387,14 +458,27 @@ namespace Enlisted.Mod.Entry
                         nameof(PromotionBehavior),
                         nameof(QuartermasterManager),
                         nameof(QuartermasterEquipmentSelectorBehavior),
+                        nameof(CampaignTriggerTrackerBehavior),
+                        nameof(LancePersonaBehavior),
+                        nameof(PlayerConditionBehavior),
                         nameof(LanceStoryBehavior),
+                        nameof(LanceLifeEventsStateBehavior),
+                        nameof(LanceLifeOnboardingBehavior),
+                        nameof(LanceLifeEventsAutomaticBehavior),
+                        nameof(LanceLifeEventsIncidentBehavior),
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),
+                        nameof(CampActivitiesBehavior),
+                        nameof(CampLifeBehavior),
+                        nameof(EscalationManager),
+                        nameof(EnlistedNewsBehavior),
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),
-                        nameof(CompanionAssignmentManager)
+                        nameof(CompanionAssignmentManager),
+                        nameof(LanceLifeSimulationBehavior),
+                        nameof(PersistentLanceLeadersBehavior)
                     });
                 }
             }
@@ -453,7 +537,7 @@ namespace Enlisted.Mod.Entry
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Bootstrap", $"Error in OnMissionBehaviorInitialize: {ex.Message}");
+                ModLogger.Error("Bootstrap", "Error in OnMissionBehaviorInitialize", ex);
             }
         }
     }
@@ -473,6 +557,8 @@ namespace Enlisted.Mod.Entry
         ///     Processes any actions that were deferred to avoid timing conflicts during game state transitions.
         ///     Also applies deferred patches on first tick (after character creation is complete).
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local",
+            Justification = "Called by Harmony via [HarmonyPatch] postfix")]
         private static void Postfix()
         {
             // Apply deferred patches only after the campaign is *fully* ready.
@@ -496,6 +582,7 @@ namespace Enlisted.Mod.Entry
                     ApplyDeferredPatch(harmony, typeof(ArmyCohesionExclusionPatch));
                     ApplyDeferredPatch(harmony, typeof(SettlementOutsideLeaveButtonPatch));
                     ApplyDeferredPatch(harmony, typeof(JoinEncounterAutoSelectPatch));
+                    ApplyDeferredPatch(harmony, typeof(JoinSiegeEventAutoSelectPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch));
                     ApplyDeferredPatch(harmony, typeof(EncounterAbandonArmyBlockPatch2));
 
@@ -503,6 +590,7 @@ namespace Enlisted.Mod.Entry
                     // These must be deferred because Naval DLC types aren't available during OnSubModuleLoad.
                     RaftStateSuppressionPatch.TryApplyPatch(harmony);
                     RaftStateSuppressionPatch.TryApplyOnPartyLeftArmyPatch(harmony);
+                    NavalMobilePartyVisualUpdateEntityPositionCrashGuardPatch.TryApplyPatch(harmony);
 
                     ModLogger.Info("Bootstrap", "Deferred patches applied (campaign ready)");
 
@@ -514,7 +602,7 @@ namespace Enlisted.Mod.Entry
                 {
                     // Hard safety: never allow a failure during deferred patch application to crash the game.
                     // If something goes wrong here, we'll run without deferred patches.
-                    ModLogger.Error("Bootstrap", $"Unexpected error applying deferred patches: {ex.Message}");
+                    ModLogger.Error("Bootstrap", "Unexpected error applying deferred patches", ex);
                 }
             }
 
@@ -534,12 +622,11 @@ namespace Enlisted.Mod.Entry
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Bootstrap", $"Failed to apply deferred patch {patchType.Name}: {ex.Message}");
+                ModLogger.Error("Bootstrap", $"Failed to apply deferred patch {patchType.Name}", ex);
                 if (ex.InnerException != null)
                 {
-                    ModLogger.Error("Bootstrap", $"  Inner exception: {ex.InnerException.Message}");
+                    ModLogger.Error("Bootstrap", "Inner exception during deferred patch", ex.InnerException);
                 }
-                ModLogger.Debug("Bootstrap", $"  Stack trace: {ex.StackTrace}");
             }
         }
     }

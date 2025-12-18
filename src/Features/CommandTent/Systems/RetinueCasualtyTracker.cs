@@ -96,7 +96,7 @@ namespace Enlisted.Features.CommandTent.Systems
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in OnMapEventStarted: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CASUALTY-001", "Error in OnMapEventStarted", ex);
             }
         }
 
@@ -125,7 +125,7 @@ namespace Enlisted.Features.CommandTent.Systems
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in OnMapEventEnded: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CASUALTY-002", "Error in OnMapEventEnded", ex);
                 _isInBattle = false;
             }
         }
@@ -149,7 +149,7 @@ namespace Enlisted.Features.CommandTent.Systems
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in OnPlayerBattleEnd: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CASUALTY-003", "Error in OnPlayerBattleEnd", ex);
                 _isInBattle = false;
             }
         }
@@ -179,7 +179,7 @@ namespace Enlisted.Features.CommandTent.Systems
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in daily sync: {ex.Message}", ex);
+                ModLogger.ErrorCode(LogCategory, "E-CASUALTY-004", "Error in daily sync", ex);
             }
         }
 

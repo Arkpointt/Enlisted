@@ -35,7 +35,6 @@
   - [Acceptance Criteria](#acceptance-criteria-5)
 - [Configuration](#configuration)
 - [Debugging](#debugging)
-- [Implementation Priority](#implementation-priority)
 
 ---
 
@@ -247,8 +246,8 @@ Parties are despawned immediately (not delayed) if:
 
 **State Machine:**
 ```
-Inactive → OfferPending → Active → Warning ↔ Active → Completing → Completed
-                              ↘ Critical → Failed
+Inactive -> OfferPending -> Active -> Warning ↔ Active -> Completing -> Completed
+                              ↘ Critical -> Failed
                               ↘ Cancelled (any time due to external events)
                                   
 Cancelled triggers:
@@ -956,28 +955,7 @@ recon.enemies         - List all spawned enemy parties
 
 ---
 
-## Implementation Priority
-
-**Phase 1 (Core):** Required for basic functionality
-- State machine, trigger system, detach/attach, distance tracking, sight bonus patch
-- Scout troop assignment and removal (faction-appropriate cavalry)
-- Spawned enemy party tracking and cleanup system
-
-**Phase 2 (Risk/Reward):** High value, moderate complexity
-- Timer system, tier progression, dynamic sight bonus
-- Danger escalation spawn probabilities
-
-**Phase 3 (Discovery):** Medium value, uses native APIs
-- Discovery scanning, intel gathering, progressive intel
-
-**Phase 4 (Evasion):** High value for gameplay variety
-- Detection system, chase mechanics, near-miss bonuses
-- Enemy patrol spawning based on risk tier
-- Pursuit AI behavior (SetMoveEngageParty)
-
-**Phase 5 (Reporting):** Medium value, adds narrative depth
-- Report dialog, quality system, lord reactions
-
-**Phase 6 (Skills):** Low priority, can be added later
-- Skill integration, XP gains, advanced unlocks
+## Scope boundaries (documentation)
+This page documents **shipping behavior** and stable API surfaces for the Recon Mission feature.
+Planning/prioritization details belong in `docs/research/` (not here).
 

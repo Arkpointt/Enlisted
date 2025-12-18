@@ -1,0 +1,80 @@
+<Prefab>
+  <!-- Lance Tuple - Exact copy of native ClanTuple.xml structure -->
+  <Constants>
+
+    <Constant Name="Kingdom.Item.Tuple.Width" BrushLayer="Default" BrushName="Kingdom.Item.Tuple" BrushValueType="Width" />
+    <Constant Name="Kingdom.Item.Tuple.Height" BrushLayer="Default" BrushName="Kingdom.Item.Tuple" BrushValueType="Height" />
+
+    <Constant Name="Kingdom.Clans.Sort.1.Width" BrushLayer="Default" BrushName="Kingdom.Clans.Sort.1" BrushValueType="Width" />
+    <Constant Name="Kingdom.Clans.Sort.2.Width" BrushLayer="Default" BrushName="Kingdom.Clans.Sort.2" BrushValueType="Width" />
+    <Constant Name="Kingdom.Clans.Sort.3.Width" BrushLayer="Default" BrushName="Kingdom.Clans.Sort.3" BrushValueType="Width" />
+    <Constant Name="Kingdom.Clans.Sort.4.Width" BrushLayer="Default" BrushName="Kingdom.Clans.Sort.4" BrushValueType="Width" />
+    <Constant Name="Kingdom.Clans.Sort.5.Width" BrushLayer="Default" BrushName="Kingdom.Clans.Sort.5" BrushValueType="Width" />
+    
+    <Constant Name="Banner.Width" BrushLayer="Default" BrushName="Flat.Tuple.Banner.Small" BrushValueType="Width" />
+    <Constant Name="Banner.Height" BrushLayer="Default" BrushName="Flat.Tuple.Banner.Small" BrushValueType="Height" />
+
+    <Constant Name="Banner.Width.Scaled" MultiplyResult="0.43" Value="!Banner.Width" />
+    <Constant Name="Banner.Height.Scaled" MultiplyResult="0.43" Value="!Banner.Height"/>
+
+  </Constants>
+  <Window>
+    <ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Kingdom.Item.Tuple.Width" SuggestedHeight="!Kingdom.Item.Tuple.Height" Brush="Kingdom.Item.Tuple" Command.Click="ExecuteSelect" IsSelected="@IsSelected">
+      <Children>
+
+        <ListPanel DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+          <Children>
+
+            <!--Lance Banner (Lord's banner)-->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="!Kingdom.Clans.Sort.1.Width" VerticalAlignment="Center" IsEnabled="false">
+              <Children>
+                <MaskedTextureWidget DataSource="{Banner_9}" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Banner.Width.Scaled" SuggestedHeight="!Banner.Height.Scaled" HorizontalAlignment="Left" VerticalAlignment="Top" MarginLeft="9" Brush="Flat.Tuple.Banner.Small" AdditionalArgs="@AdditionalArgs" ImageId="@Id" TextureProviderName="@TextureProviderName" IsDisabled="true" />
+              </Children>
+            </Widget>
+
+            <!--Formation Type (Infantry/Cavalry/Archer sprite)-->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="!Kingdom.Clans.Sort.2.Width" VerticalAlignment="Center" IsEnabled="false">
+              <Children>
+                <!-- Formation icon sprite - 0=Infantry, 1=Cavalry, 2=Archer -->
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="40" SuggestedHeight="40" VerticalAlignment="Center" HorizontalAlignment="Center">
+                  <Children>
+                    <!-- Infantry icon -->
+                    <Widget IsVisible="false" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="SPGeneral\MapBar\icon_infantry" />
+                    <!-- Cavalry icon -->
+                    <Widget IsVisible="false" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="SPGeneral\MapBar\icon_cavalry" />
+                    <!-- Archer icon -->
+                    <Widget IsVisible="false" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="SPGeneral\MapBar\icon_ranged" />
+                  </Children>
+                </Widget>
+              </Children>
+            </Widget>
+
+            <!--Lance Name-->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="!Kingdom.Clans.Sort.3.Width" MarginTop="3" MarginBottom="3" VerticalAlignment="Center" IsEnabled="false">
+              <Children>
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="ArmyManagement.Army.Tuple.Name" Text="@Name" ClipContents="true" />
+              </Children>
+            </Widget>
+
+            <!--Members Count-->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="!Kingdom.Clans.Sort.4.Width" VerticalAlignment="Center" ClipContents="true" IsEnabled="false">
+              <Children>
+                <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="ArmyManagement.Army.Tuple.Name" IntText="@NumOfMembers" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Children>
+            </Widget>
+
+            <!--Fallen Count-->
+            <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="!Kingdom.Clans.Sort.5.Width" VerticalAlignment="Center" ClipContents="true" IsEnabled="false">
+              <Children>
+                <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="ArmyManagement.Army.Tuple.Name" IntText="@NumOfFallen" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+              </Children>
+            </Widget>
+
+          </Children>
+        </ListPanel>
+
+      </Children>
+    </ButtonWidget>
+  </Window>
+</Prefab>
+

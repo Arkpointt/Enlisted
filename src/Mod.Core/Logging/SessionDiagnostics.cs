@@ -3,6 +3,7 @@ using System.Text;
 using Enlisted.Features.Assignments.Core;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
+using TaleWorlds.SaveSystem;
 
 namespace Enlisted.Mod.Core.Logging
 {
@@ -85,13 +86,42 @@ namespace Enlisted.Mod.Core.Logging
                 sb.AppendLine(
                     $"[Lances] enabled: {lances.LancesEnabled}, selection_count: {lances.LanceSelectionCount}, culture_weighting: {lances.UseCultureWeighting}");
 
+                // Feature flags (end-user friendly; the "what's turned on" answer in one place)
+                var campLife = ConfigurationManager.LoadCampLifeConfig();
+                sb.AppendLine($"[CampLife] enabled: {campLife?.Enabled == true}");
+
+                var escalation = ConfigurationManager.LoadEscalationConfig();
+                sb.AppendLine($"[Escalation] enabled: {escalation?.Enabled == true}");
+
+                var personas = ConfigurationManager.LoadLancePersonasConfig();
+                sb.AppendLine($"[LancePersonas] enabled: {personas?.Enabled == true}");
+
+                var cond = ConfigurationManager.LoadPlayerConditionsConfig();
+                sb.AppendLine($"[PlayerConditions] enabled: {cond?.Enabled == true}, exhaustion_enabled: {cond?.ExhaustionEnabled == true}");
+
+                var campActivities = ConfigurationManager.LoadCampActivitiesConfig();
+                sb.AppendLine($"[CampActivities] enabled: {campActivities?.Enabled == true}, definitions_file: {campActivities?.DefinitionsFile}");
+
+                var ll = ConfigurationManager.LoadLanceLifeConfig();
+                sb.AppendLine($"[LanceLife] enabled: {ll?.Enabled == true}, min_tier: {ll?.MinTier}, max_stories_per_week: {ll?.MaxStoriesPerWeek}");
+
+                var llEvents = ConfigurationManager.LoadLanceLifeEventsConfig();
+                if (llEvents != null)
+                {
+                    sb.AppendLine($"[LanceLifeEvents] enabled: {llEvents.Enabled}, folder: {llEvents.EventsFolder}");
+                    sb.AppendLine($"[LanceLifeEvents] automatic: {llEvents.Automatic?.Enabled == true}, cadence_hours: {llEvents.Automatic?.EvaluationCadenceHours}, max_per_day: {llEvents.Automatic?.MaxEventsPerDay}");
+                    sb.AppendLine($"[LanceLifeEvents] player_initiated: {llEvents.PlayerInitiated?.Enabled == true}, block_training_on_severe_condition: {llEvents.PlayerInitiated?.BlockTrainingOnSevereCondition == true}");
+                    sb.AppendLine($"[LanceLifeEvents] onboarding: {llEvents.Onboarding?.Enabled == true}, skip_for_veterans: {llEvents.Onboarding?.SkipForVeterans == true}, stage_count: {llEvents.Onboarding?.StageCount}");
+                    sb.AppendLine($"[LanceLifeEvents] incident_channel: {llEvents.IncidentChannel?.Enabled == true}");
+                }
+
                 sb.AppendLine("----------------------------");
 
                 ModLogger.Info("Config", sb.ToString());
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to log configuration values: {ex.Message}");
+                ModLogger.Error("Config", "Failed to log configuration values", ex);
             }
         }
 
@@ -219,6 +249,45 @@ namespace Enlisted.Mod.Core.Logging
 
             var elapsedMs = (int)Math.Max(0, (DateTime.UtcNow - startUtc).TotalMilliseconds);
             ModLogger.Info("SaveLoad", $"Load finished. (#{seq}, {elapsedMs} ms)");
+        }
+
+        /// <summary>
+        /// Wrap a behavior SyncData() body so save/load failures always produce a clear log line
+        /// identifying the exact behavior that broke serialization.
+        ///
+        /// IMPORTANT:
+        /// - We rethrow after logging. Swallowing save/load exceptions can silently corrupt state.
+        /// - This method only logs when something actually fails (no spam).
+        /// </summary>
+        public static void SafeSyncData(CampaignBehaviorBase behavior, IDataStore dataStore, Action syncAction)
+        {
+            if (dataStore == null || syncAction == null)
+            {
+                return;
+            }
+
+            try
+            {
+                syncAction();
+            }
+            catch (Exception ex)
+            {
+                var phase = dataStore.IsSaving
+                    ? "Saving"
+                    : dataStore.IsLoading
+                        ? "Loading"
+                        : "SyncData";
+
+                var behaviorName = behavior?.GetType().FullName ?? "UnknownBehavior";
+
+                ModLogger.ErrorCode(
+                    "SaveLoad",
+                    "E-SAVELOAD-001",
+                    $"Save/load failed in {behaviorName} during {phase}. This can break saves. Try: load an older save, disable recently-added mods, then share your latest Session log + Conflicts log (and the save file if possible).",
+                    ex);
+
+                throw;
+            }
         }
     }
 

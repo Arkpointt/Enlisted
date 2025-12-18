@@ -1,0 +1,4575 @@
+{
+  "schemaVersion": 1,
+  "packId": "onboarding",
+  "category": "onboarding",
+  "events": [
+    {
+      "id": "commander_onboard_01_commission",
+      "category": "onboarding",
+      "track": "commander",
+      "metadata": {
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "tier >= 7",
+          "onboarding_stage_1",
+          "days_since_promotion < 1"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_commander_onboard_01_commission_title",
+        "setupId": "ll_evt_commander_onboard_01_commission_setup",
+        "title": "Your Commission",
+        "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+        "options": [
+          {
+            "id": "ready",
+            "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_ready_text",
+            "text": "\"I understand, {LORD_TITLE}. I won't waste them.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_ready_outcome",
+            "outcome": "{LORD_NAME} nods slowly. \"See that you don't.\"\n\nThey return to the map, pointing out your area of responsibility. You listen. You learn. When you leave, you're carrying the weight of {TROOP_COUNT} lives.\n\nIt feels heavier than you expected.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "questions",
+            "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_questions_text",
+            "text": "\"What resources do I have? What's the chain of command?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_questions_outcome",
+            "outcome": "Practical questions. {LORD_NAME} approves — or at least doesn't disapprove.\n\nThey spend an hour explaining the structure. Who you report to. What authority you actually have. What lines not to cross.\n\nYou leave with knowledge, not just soldiers.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "confident",
+            "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_confident_text",
+            "text": "\"I've been waiting for this, {LORD_TITLE}. I won't let you down.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_confident_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "honest",
+            "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_honest_text",
+            "text": "\"I'll do my best, {LORD_TITLE}. That's all I can promise.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome",
+            "outcome": "A hint of something — respect? — flickers across {LORD_NAME}'s face.\n\n\"Honest. I like that. Most commanders promise victory. Few deliver.\"\n\nThey tap the map. \"Your best will have to be enough. Now let me show you what I need.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "first_time": {
+          "setupId": "ll_evt_commander_onboard_01_commission_setup_first_time",
+          "setup": "{LORD_TITLE} {LORD_NAME}'s pavilion. You've been summoned.\n\nThey don't waste time with pleasantries. A map spread on the table. Markers showing positions.\n\n\"I'm giving you soldiers. Not many — {TROOP_COUNT} to start. Prove you can handle them, and there will be more.\"\n\nThey look up from the map. Eyes weighing you.\n\n\"These men will live or die by your decisions. Not mine. Yours. Do you understand what that means?\"\n\nThis isn't a lance anymore. This is real command. Real soldiers in your party. Real consequences.",
+          "options": [
+            {
+              "id": "ready",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_ready_text",
+              "text": "\"I understand, {LORD_TITLE}. I won't waste them.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_ready_outcome",
+              "outcome": "{LORD_NAME} nods slowly. \"See that you don't.\"\n\nThey return to the map, pointing out your area of responsibility. You listen. You learn. When you leave, you're carrying the weight of {TROOP_COUNT} lives.\n\nIt feels heavier than you expected.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "questions",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_questions_text",
+              "text": "\"What resources do I have? What's the chain of command?\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_questions_outcome",
+              "outcome": "Practical questions. {LORD_NAME} approves — or at least doesn't disapprove.\n\nThey spend an hour explaining the structure. Who you report to. What authority you actually have. What lines not to cross.\n\nYou leave with knowledge, not just soldiers.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "confident",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_confident_text",
+              "text": "\"I've been waiting for this, {LORD_TITLE}. I won't let you down.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_confident_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "honest",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_first_time_honest_text",
+              "text": "\"I'll do my best, {LORD_TITLE}. That's all I can promise.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_first_time_honest_outcome",
+              "outcome": "A hint of something — respect? — flickers across {LORD_NAME}'s face.\n\n\"Honest. I like that. Most commanders promise victory. Few deliver.\"\n\nThey tap the map. \"Your best will have to be enough. Now let me show you what I need.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "transfer": {
+          "setupId": "ll_evt_commander_onboard_01_commission_setup_transfer",
+          "setup": "New lord. New army. Same rank.\n\n{LORD_TITLE} {LORD_NAME} looks you over. They know you commanded for someone else. They're wondering why you're here now.\n\n\"I don't know what your previous lord tolerated. Here, I have expectations.\"\n\nThe map on the table. {TROOP_COUNT} soldiers to command. Familiar weight, unfamiliar circumstances.\n\n\"Prove yourself. I don't inherit trust.\"",
+          "options": [
+            {
+              "id": "professional",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_transfer_professional_text",
+              "text": "\"I understand, {LORD_TITLE}. I'll earn my place.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_transfer_professional_outcome",
+              "outcome": "The right answer. {LORD_NAME} nods.\n\n\"See that you do. Your soldiers are waiting. Don't keep them.\"\n\nYou're dismissed. The relationship starts at zero. But at least it's not negative.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "record",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_transfer_record_text",
+              "text": "\"My record speaks for itself, {LORD_TITLE}. Ask around.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_transfer_record_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "humble",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_transfer_humble_text",
+              "text": "\"Fresh start. Tell me how you want things done.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_transfer_humble_outcome",
+              "outcome": "{LORD_NAME} relaxes slightly. You're not going to be difficult.\n\n\"Discipline. Results. No surprises.\" Simple expectations. Clear.\n\n\"Meet your officers. Learn the structure. We march in two days.\"\n\nYou've got two days to become part of this army.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "why_here",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_transfer_why_here_text",
+              "text": "\"You're wondering why I left my last lord. Ask.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_transfer_why_here_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "return": {
+          "setupId": "ll_evt_commander_onboard_01_commission_setup_return",
+          "setup": "You've done this before. Stood in a lord's tent. Been given soldiers. Carried that weight.\n\nYou'd put it down. Walked away. Tried to be something else.\n\nNow here you are again.\n\n{LORD_TITLE} {LORD_NAME} watches you. They know your history — someone with your experience doesn't appear from nowhere.\n\n\"Back in harness, Commander?\"\n\n{TROOP_COUNT} soldiers. Yours again.",
+          "options": [
+            {
+              "id": "needed",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_return_needed_text",
+              "text": "\"Couldn't stay away. Some men aren't meant for peace.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_return_needed_outcome",
+              "outcome": "{LORD_NAME} nods slowly. \"I know the type.\"\n\nDo they? Maybe. Or maybe they just know soldiers.\n\n\"Your men are waiting. Try not to get them killed.\"\n\nThe old weight settles onto your shoulders. Familiar. Heavy. Home.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "rusty",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_return_rusty_text",
+              "text": "\"I might be rusty, {LORD_TITLE}. It's been a while.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_return_rusty_outcome",
+              "outcome": "\"Rust comes off.\" {LORD_NAME} gestures at the map. \"Battle has a way of polishing.\"\n\nThey spend time going over the situation. What they need. What you'll be doing. It's coming back. The language, the thinking, the weight.\n\nRust comes off. They're right.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "sharp",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_return_sharp_text",
+              "text": "\"Sharp as ever, {LORD_TITLE}. Just needed a purpose.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_return_sharp_outcome",
+              "outcome": "\"Purpose.\" {LORD_NAME} considers the word. \"I can provide that. Victory, defeat, meaning — that's for you to find.\"\n\nPhilosophical for a commander giving orders. But not wrong.\n\n\"Your soldiers await, Commander. Give them something to believe in.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "reasons",
+              "textId": "ll_evt_commander_onboard_01_commission_opt_return_reasons_text",
+              "text": "\"Let's just say I have unfinished business.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_01_commission_opt_return_reasons_outcome",
+              "outcome": "{LORD_NAME} doesn't ask what business. Lords don't, usually.\n\n\"Finish it, then. But not at my army's expense.\"\n\nFair enough. Your ghosts are your problem. The soldiers are the job.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "commander_onboard_02_meet_troops",
+      "category": "onboarding",
+      "track": "commander",
+      "metadata": {
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "tier >= 7",
+          "onboarding_stage_2"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning",
+          "afternoon"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_commander_onboard_02_meet_troops_title",
+        "setupId": "ll_evt_commander_onboard_02_meet_troops_setup",
+        "title": "Meeting Your Troops",
+        "setup": "Your soldiers. Formed up. Waiting.\n\n{TROOP_COUNT} faces looking at you. Some veterans, some green, all uncertain. They've had commanders before. Some good. Some got men killed.\n\nThey're wondering which kind you'll be.\n\nYour sergeant — {OFFICER_NAME} — stands beside you. \"They're ready for inspection, Commander.\"\n\nThis is the moment. First impressions last.",
+        "options": [
+          {
+            "id": "walk_line",
+            "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_text",
+            "text": "Walk the line. Look each soldier in the eye.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 7,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_outcome",
+            "outcome": "You walk slowly. Pause at each soldier. Check their gear. Ask their names. Some meet your eyes. Some look away.\n\nBy the end, they know your face. You know theirs.\n\n\"Good men,\" you tell {OFFICER_NAME} afterward. Loud enough for them to hear.\n\nIt's a start.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "speech",
+            "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_speech_text",
+            "text": "Address them as a group. Set expectations.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_speech_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "defer",
+            "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_defer_text",
+            "text": "\"Tell me about them, {OFFICER_NAME}. Who are these men?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_defer_outcome",
+            "outcome": "{OFFICER_NAME} walks you through the formation. Names, histories, strengths, problems.\n\nThat one's reliable. That one drinks. Those two hate each other. The veteran in the back has forgotten more than most soldiers learn.\n\nBy the end, you know your force. Not faces — people.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "train",
+            "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_train_text",
+            "text": "\"No speeches. Formation drill. Now.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_train_outcome",
+            "outcome": "Words are cheap. Action tells.\n\nYou put them through their paces. Basic formations. Reactions to commands. Nothing fancy — just competence.\n\nBy the end, you know who's sharp and who needs work. They know you care about the basics.\n\n\"Again tomorrow,\" you tell {OFFICER_NAME}. \"Until it's reflex.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "all": {
+          "setupId": "ll_evt_commander_onboard_02_meet_troops_setup_all",
+          "setup": "Your soldiers. Formed up. Waiting.\n\n{TROOP_COUNT} faces looking at you. Some veterans, some green, all uncertain. They've had commanders before. Some good. Some got men killed.\n\nThey're wondering which kind you'll be.\n\nYour sergeant — {OFFICER_NAME} — stands beside you. \"They're ready for inspection, Commander.\"\n\nThis is the moment. First impressions last.",
+          "options": [
+            {
+              "id": "walk_line",
+              "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_text",
+              "text": "Walk the line. Look each soldier in the eye.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_walk_line_outcome",
+              "outcome": "You walk slowly. Pause at each soldier. Check their gear. Ask their names. Some meet your eyes. Some look away.\n\nBy the end, they know your face. You know theirs.\n\n\"Good men,\" you tell {OFFICER_NAME} afterward. Loud enough for them to hear.\n\nIt's a start.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "speech",
+              "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_speech_text",
+              "text": "Address them as a group. Set expectations.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_speech_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "defer",
+              "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_defer_text",
+              "text": "\"Tell me about them, {OFFICER_NAME}. Who are these men?\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_defer_outcome",
+              "outcome": "{OFFICER_NAME} walks you through the formation. Names, histories, strengths, problems.\n\nThat one's reliable. That one drinks. Those two hate each other. The veteran in the back has forgotten more than most soldiers learn.\n\nBy the end, you know your force. Not faces — people.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "train",
+              "textId": "ll_evt_commander_onboard_02_meet_troops_opt_all_train_text",
+              "text": "\"No speeches. Formation drill. Now.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_02_meet_troops_opt_all_train_outcome",
+              "outcome": "Words are cheap. Action tells.\n\nYou put them through their paces. Basic formations. Reactions to commands. Nothing fancy — just competence.\n\nBy the end, you know who's sharp and who needs work. They know you care about the basics.\n\n\"Again tomorrow,\" you tell {OFFICER_NAME}. \"Until it's reflex.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "commander_onboard_03_first_blood",
+      "category": "onboarding",
+      "track": "commander",
+      "metadata": {
+        "tier_range": {
+          "min": 7,
+          "max": 9
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "incident",
+        "incident_trigger": "LeavingBattle",
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "tier >= 7",
+          "onboarding_stage_3"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 7,
+          "max": 9
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_commander_onboard_03_first_blood_title",
+        "setupId": "ll_evt_commander_onboard_03_first_blood_setup",
+        "title": "First Blood",
+        "setup": "",
+        "options": [
+          {
+            "id": "face_it",
+            "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_face_it_text",
+            "text": "Face it. Learn their names. Remember them.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_face_it_outcome",
+            "outcome": "You go through the list. Every name. Every face you can remember.\n\nSome commanders don't. It's easier not to. But easy isn't right.\n\nYou'll carry these names. All the names, for all the battles to come. That's part of the job nobody mentions.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "practical",
+            "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_practical_text",
+            "text": "Focus on what can be fixed. Wounded. Replacements. Next battle.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_practical_outcome",
+            "outcome": "Grief is a luxury. There's work to do.\n\nYou organize care for the wounded. Send requests for replacements. Review what went wrong, what went right.\n\nThe dead are dead. The living need you focused.\n\n{OFFICER_NAME} watches you work. \"Cold,\" they say quietly. \"But effective.\"\n\nMaybe that's all command is.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "drink",
+            "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_drink_text",
+            "text": "Find a bottle. Tonight, you're not a commander.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_drink_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "talk",
+            "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_talk_text",
+            "text": "Talk to {OFFICER_NAME}. They've been here before.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_talk_outcome",
+            "outcome": "You find them after dark. \"How do you do it? How do you keep giving orders knowing what they cost?\"\n\n{OFFICER_NAME} is quiet for a long moment. \"You don't get used to it. You shouldn't. The day you stop feeling it is the day you start getting men killed for nothing.\"\n\n\"So you just... carry it?\"\n\n\"You carry it. And you make sure it's worth what you're carrying.\"\n\nNot comforting. But true.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "all": {
+          "setupId": "ll_evt_commander_onboard_03_first_blood_setup_all",
+          "setup": "",
+          "options": [
+            {
+              "id": "face_it",
+              "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_face_it_text",
+              "text": "Face it. Learn their names. Remember them.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 10,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_face_it_outcome",
+              "outcome": "You go through the list. Every name. Every face you can remember.\n\nSome commanders don't. It's easier not to. But easy isn't right.\n\nYou'll carry these names. All the names, for all the battles to come. That's part of the job nobody mentions.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "practical",
+              "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_practical_text",
+              "text": "Focus on what can be fixed. Wounded. Replacements. Next battle.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_practical_outcome",
+              "outcome": "Grief is a luxury. There's work to do.\n\nYou organize care for the wounded. Send requests for replacements. Review what went wrong, what went right.\n\nThe dead are dead. The living need you focused.\n\n{OFFICER_NAME} watches you work. \"Cold,\" they say quietly. \"But effective.\"\n\nMaybe that's all command is.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "drink",
+              "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_drink_text",
+              "text": "Find a bottle. Tonight, you're not a commander.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_drink_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "talk",
+              "textId": "ll_evt_commander_onboard_03_first_blood_opt_all_talk_text",
+              "text": "Talk to {OFFICER_NAME}. They've been here before.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_commander_onboard_03_first_blood_opt_all_talk_outcome",
+              "outcome": "You find them after dark. \"How do you do it? How do you keep giving orders knowing what they cost?\"\n\n{OFFICER_NAME} is quiet for a long moment. \"You don't get used to it. You shouldn't. The day you stop feeling it is the day you start getting men killed for nothing.\"\n\n\"So you just... carry it?\"\n\n\"You carry it. And you make sure it's worth what you're carrying.\"\n\nNot comforting. But true.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "enlisted_onboard_01_meet_lance",
+      "category": "onboarding",
+      "track": "enlisted",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 4
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "onboarding_stage_1",
+          "days_since_enlistment < 1"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_enlisted_onboard_01_meet_lance_title",
+        "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup",
+        "title": "Meeting Your Lance",
+        "setup": "{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over like they're inspecting a horse they're not sure about buying.\n\n\"{PLAYER_NAME}, is it? You're with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.\"\n\nThe rest of the lance watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n\"Understood?\"",
+        "options": [
+          {
+            "id": "respectful",
+            "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_text",
+            "text": "\"Understood, {LANCE_LEADER_RANK}.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome",
+            "outcome": "{LANCE_LEADER_SHORT} gives a curt nod. \"Good. We'll see if you last the week.\" They walk off. Not warm, but not hostile. You've made no enemies today.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "eager",
+            "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_text",
+            "text": "\"Ready to prove myself, {LANCE_LEADER_RANK}.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome",
+            "outcome": "A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "quiet",
+            "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_text",
+            "text": "Just nod.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome",
+            "outcome": "{LANCE_LEADER_SHORT} stares at you a moment longer, then shrugs. \"Quiet type. Fine. Just don't be stupid.\" They leave. You've made no impression at all. That might be good. That might be bad.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "cocky",
+            "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_text",
+            "text": "\"I've handled worse than this.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome",
+            "outcome": "The lance goes quiet. {LANCE_LEADER_SHORT}'s eyes harden. \"Have you now.\" It's not a question. \"We'll see about that.\"\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "first_time": {
+          "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_first_time",
+          "setup": "{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over like they're inspecting a horse they're not sure about buying.\n\n\"{PLAYER_NAME}, is it? You're with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.\"\n\nThe rest of the lance watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n\"Understood?\"",
+          "options": [
+            {
+              "id": "respectful",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_text",
+              "text": "\"Understood, {LANCE_LEADER_RANK}.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} gives a curt nod. \"Good. We'll see if you last the week.\" They walk off. Not warm, but not hostile. You've made no enemies today.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "eager",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_text",
+              "text": "\"Ready to prove myself, {LANCE_LEADER_RANK}.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome",
+              "outcome": "A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}'s face. \"Keen one, are you? We'll see how long that lasts.\" Someone in the lance chuckles. But it's not unfriendly.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "quiet",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_text",
+              "text": "Just nod.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} stares at you a moment longer, then shrugs. \"Quiet type. Fine. Just don't be stupid.\" They leave. You've made no impression at all. That might be good. That might be bad.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "cocky",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_text",
+              "text": "\"I've handled worse than this.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": -3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome",
+              "outcome": "The lance goes quiet. {LANCE_LEADER_SHORT}'s eyes harden. \"Have you now.\" It's not a question. \"We'll see about that.\"\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "transfer": {
+          "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_transfer",
+          "setup": "Another lord, another lance. You know how this goes.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over. They've seen transfers before too. \"You're with {LANCE_NAME} now. I don't care who you served before or what you did there. Here, you prove yourself fresh.\"\n\nThe lance watches. Sizing you up. Wondering if you're an asset or a liability.",
+          "options": [
+            {
+              "id": "respectful",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_text",
+              "text": "\"Understood, {LANCE_LEADER_RANK}. Fresh start.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_outcome",
+              "outcome": "A hint of approval. They've dealt with transfers who brought baggage. You're not going to be one of those. \"Good. Find a spot in the tent line. We march at dawn.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "professional",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_text",
+              "text": "\"I know the work. Point me at it.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} nods slowly. \"Experienced, are you? Good. Less hand-holding.\" They point toward the supply wagons. \"Gear check in an hour. Don't be late.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "mention_experience",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_text",
+              "text": "\"Served three years under Lord {PREVIOUS_LORD}. I know how a lance works.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": -2,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_outcome",
+              "outcome": "\"Did you now.\" {LANCE_LEADER_SHORT}'s tone is flat. \"And yet here you are, starting over.\" The implication hangs in the air. Maybe that wasn't the right thing to say.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "quiet",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_text",
+              "text": "Just nod. You know the drill.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} accepts your silence for what it is — a professional who doesn't need the speech. \"Tent line. Dawn. Don't make me come find you.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "return": {
+          "setupId": "ll_evt_enlisted_onboard_01_meet_lance_setup_return",
+          "setup": "Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier's life settling back onto your shoulders.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over — and pauses. They see it. The way you stand. The way you're already scanning the camp, reading the layout.\n\n\"Served before, have you?\"\n\nThe lance watches with new interest. A veteran returning to the ranks. That's either wisdom or desperation.",
+          "options": [
+            {
+              "id": "honest",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_text",
+              "text": "\"Aye. Took some time away. Ready to be back.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} considers this. \"Time away.\" They don't ask why. Good sergeants don't. \"Well, you know what's expected then. Don't make me teach you twice.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "humble",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_text",
+              "text": "\"Some time ago. I'm rusty. Treat me like a recruit.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_outcome",
+              "outcome": "Respect flickers in {LANCE_LEADER_SHORT}'s eyes. A veteran who doesn't assume they know everything. Rare. \"Fair enough. But I'll lean on you when I need experience. That's the deal.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "confident",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_text",
+              "text": "\"Three campaigns. I could run a lance in my sleep.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": -2,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_outcome",
+              "outcome": "{LANCE_LEADER_SHORT}'s expression cools. \"Could you now. Then you won't mind showing the recruits how it's done.\" They've just assigned you extra work. Well done.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "private",
+              "textId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_text",
+              "text": "\"Rather not talk about before. I'm here now.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_outcome",
+              "outcome": "A long look. {LANCE_LEADER_SHORT} doesn't push. \"Fine. Your business. Just do your job.\" They walk off. You've got secrets. That's fine. Everyone does.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "enlisted_onboard_02_fire_circle",
+      "category": "onboarding",
+      "track": "enlisted",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 4
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "onboarding_stage_2"
+        ],
+        "any": [],
+        "time_of_day": [
+          "evening",
+          "dusk"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_enlisted_onboard_02_fire_circle_title",
+        "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup",
+        "title": "The Fire Circle",
+        "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
+        "options": [
+          {
+            "id": "recruits",
+            "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_text",
+            "text": "Sit with the other recruits",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_outcome",
+            "outcome": "You find a spot next to {RECRUIT_NAME}. They give you a nervous nod. The food is decent. The company is... green. But there's safety in shared inexperience.\n\n\"First day?\" {RECRUIT_NAME} asks. You nod. \"Same. Thought I was going to piss myself when the {LANCE_LEADER_RANK} yelled.\"\n\nYou eat. You listen. You're not alone in being new.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "veterans",
+            "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_text",
+            "text": "Take the spot near the veterans",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "help_serve",
+            "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_text",
+            "text": "\"Need a hand with the food?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_outcome",
+            "outcome": "The soldier on cook duty looks surprised, then relieved. \"Grab that pot. Don't spill it.\"\n\nYou serve. Everyone gets a good look at you. Some nod. Some ignore you. But they all know your face now.\n\nYou eat last, but you eat well — cook's privilege. And you've met everyone without having to pick sides.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "alone",
+            "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_text",
+            "text": "Take your food into the darkness",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_outcome",
+            "outcome": "You take your portion and find a quiet spot away from the fire. The laughter fades to murmurs. The stars are bright.\n\nYou eat alone. Watch the camp. Learn its rhythms from the outside.\n\nSome soldiers notice. They'll remember you as the one who doesn't join in. That's a reputation too.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "first_time": {
+          "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_first_time",
+          "setup": "Evening falls. Cook fires bloom across the camp like orange flowers.\n\n{LANCE_NAME} gathers at their spot — a fire ringed by logs worn smooth by use. Stories overlap. Someone laughs. The smell of food makes your stomach growl.\n\nYou're standing at the edge. {VETERAN_1_NAME} notices you hovering. \"Well? You eating or not?\"\n\nThere's space near the other recruits, {RECRUIT_NAME} among them. There's an open spot closer to the veterans. And there's always the darkness beyond the firelight.",
+          "options": [
+            {
+              "id": "recruits",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_text",
+              "text": "Sit with the other recruits",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_recruits_outcome",
+              "outcome": "You find a spot next to {RECRUIT_NAME}. They give you a nervous nod. The food is decent. The company is... green. But there's safety in shared inexperience.\n\n\"First day?\" {RECRUIT_NAME} asks. You nod. \"Same. Thought I was going to piss myself when the {LANCE_LEADER_RANK} yelled.\"\n\nYou eat. You listen. You're not alone in being new.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "veterans",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_text",
+              "text": "Take the spot near the veterans",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_veterans_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "help_serve",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_text",
+              "text": "\"Need a hand with the food?\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_help_serve_outcome",
+              "outcome": "The soldier on cook duty looks surprised, then relieved. \"Grab that pot. Don't spill it.\"\n\nYou serve. Everyone gets a good look at you. Some nod. Some ignore you. But they all know your face now.\n\nYou eat last, but you eat well — cook's privilege. And you've met everyone without having to pick sides.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "alone",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_text",
+              "text": "Take your food into the darkness",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": -3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_first_time_alone_outcome",
+              "outcome": "You take your portion and find a quiet spot away from the fire. The laughter fades to murmurs. The stars are bright.\n\nYou eat alone. Watch the camp. Learn its rhythms from the outside.\n\nSome soldiers notice. They'll remember you as the one who doesn't join in. That's a reputation too.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "transfer": {
+          "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_transfer",
+          "setup": "Evening. The fire circle.\n\nYou know this ritual. Every lance has one — the spot where stories are told and bonds form. {LANCE_NAME}'s fire is no different. Just unfamiliar faces around familiar flames.\n\n{VETERAN_1_NAME} catches your eye. The look says: we know you're a transfer. Question is, what kind?\n\nThere's space available. Where you sit matters.",
+          "options": [
+            {
+              "id": "earn_spot",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_text",
+              "text": "Sit at the edge, don't presume",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_earn_spot_outcome",
+              "outcome": "You take a modest spot. Not with the raw recruits — you're past that. But not pushing into the veteran circle either.\n\n{VETERAN_1_NAME} watches. Nods slightly. You know the game. Respect is earned, not transferred.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "tell_stories",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_tell_stories_text",
+              "text": "Offer a story from your old unit",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_tell_stories_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "listen",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_text",
+              "text": "Listen more than you talk",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_listen_outcome",
+              "outcome": "You sit. You eat. You laugh when others laugh. You keep your mouth shut about how your old lance did things.\n\nSmart. By the end of the night, you know who matters, who to avoid, and where the real power in {LANCE_NAME} lies.\n\nInformation is worth more than friendship. For now.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "bring_drink",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_bring_drink_text",
+              "text": "Produce a hidden flask. \"Brought something from my last posting.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_transfer_bring_drink_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "return": {
+          "setupId": "ll_evt_enlisted_onboard_02_fire_circle_setup_return",
+          "setup": "The fire circle. You've sat at a hundred of these. The warmth, the smoke, the lies soldiers tell each other.\n\nYou'd almost missed it. Almost.\n\n{LANCE_NAME} has gathered. They know you're a veteran — it shows in how you move, how you don't ask obvious questions. {VETERAN_1_NAME} gestures to a spot. \"Sit. Eat.\"\n\nNot a command. An offer. They're curious about you.",
+          "options": [
+            {
+              "id": "modest",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_text",
+              "text": "Take the offered spot. Listen.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_modest_outcome",
+              "outcome": "You sit where indicated. The conversation flows around you — recent battles, complaints about pay, gossip about officers.\n\nSome things never change. You find yourself smiling.\n\n{VETERAN_1_NAME} catches it. \"Good to be back?\"\n\n\"Yeah,\" you admit. \"It is.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "share_wisdom",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_text",
+              "text": "When asked, share a story from your old campaigns",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_outcome",
+              "outcome": "They ask. Veterans always do — sizing up the new old-timer.\n\nYou tell one. Not the best one. Not showing off. Just... a story. Real enough to ring true.\n\nWhen you finish, {VETERAN_1_NAME} nods slowly. \"You've seen some things.\"\n\n\"Haven't we all.\"\n\nYou're not one of them yet. But you speak the same language.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "mentor",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_text",
+              "text": "Notice {RECRUIT_NAME} struggling. Offer quiet advice.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_outcome",
+              "outcome": "The recruit is holding their spoon wrong. Small thing. But you remember being that green.\n\n\"Like this,\" you say quietly, demonstrating. \"Keeps the heat off your fingers.\"\n\n{RECRUIT_NAME} blinks. Adjusts. \"Thanks.\"\n\n{LANCE_LEADER_SHORT} notices the exchange. Doesn't say anything. But they notice.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "ghosts",
+              "textId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_text",
+              "text": "Stare into the fire. Some memories don't need sharing.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 2,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_outcome",
+              "outcome": "The fire crackles. Voices fade to background noise.\n\nYou've seen men die at fires like this. Celebrated victories that cost too much. Mourned friends whose names you're starting to forget.\n\nYou eat. You don't talk.\n\nThe lance gives you space. Veterans understand silence.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "enlisted_onboard_03_prove_yourself",
+      "category": "onboarding",
+      "track": "enlisted",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 4
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "onboarding_stage_3"
+        ],
+        "any": [],
+        "time_of_day": [
+          "dawn",
+          "morning"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 4
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_enlisted_onboard_03_prove_yourself_title",
+        "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup",
+        "title": "Prove Yourself",
+        "setup": "{LANCE_LEADER_SHORT} finds you before the morning meal. The look on their face says this isn't social.\n\n\"New blood gets the worst jobs. That's how it works. That's how it's always worked. That's how it'll work long after both of us are worm food.\"\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n\"Pick one. Do it right. Don't make me come check on you.\"",
+        "options": [
+          {
+            "id": "gear",
+            "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_text",
+            "text": "\"I'll handle the equipment.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome",
+            "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "wood",
+            "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_text",
+            "text": "\"I'll get the firewood.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome",
+            "outcome": "Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that's your work.\n\n{LANCE_LEADER_SHORT} glances at the wood pile. Nods once. Moves on.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "latrine",
+            "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_text",
+            "text": "\"I'll dig.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 7,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome",
+            "outcome": "Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you'd expect. Worse, maybe. But you dig. You don't complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{LANCE_LEADER_SHORT} finds you at midday, covered in dirt and worse. \"Didn't expect you to pick that one.\" Almost respect in their voice. Almost.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "ask",
+            "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text",
+            "text": "\"What does the lance need most?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome",
+            "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "first_time": {
+          "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup_first_time",
+          "setup": "{LANCE_LEADER_SHORT} finds you before the morning meal. The look on their face says this isn't social.\n\n\"New blood gets the worst jobs. That's how it works. That's how it's always worked. That's how it'll work long after both of us are worm food.\"\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n\"Pick one. Do it right. Don't make me come check on you.\"",
+          "options": [
+            {
+              "id": "gear",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_text",
+              "text": "\"I'll handle the equipment.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome",
+              "outcome": "You spend the morning with oil, leather, and rust. It's mindless work, but there's skill in it — knowing what needs replacing, what can be salvaged, what's good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}'s buckle won't fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That's approval.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "wood",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_text",
+              "text": "\"I'll get the firewood.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome",
+              "outcome": "Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that's your work.\n\n{LANCE_LEADER_SHORT} glances at the wood pile. Nods once. Moves on.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "latrine",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_text",
+              "text": "\"I'll dig.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome",
+              "outcome": "Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you'd expect. Worse, maybe. But you dig. You don't complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{LANCE_LEADER_SHORT} finds you at midday, covered in dirt and worse. \"Didn't expect you to pick that one.\" Almost respect in their voice. Almost.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "ask",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text",
+              "text": "\"What does the lance need most?\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} pauses. Considers you. \"Huh. One that thinks.\"\n\nThey assign you the gear — it's most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n\"Maybe you'll last after all,\" they mutter, walking away.\n\nHigh praise.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "transfer": {
+          "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup_transfer",
+          "setup": "{LANCE_LEADER_SHORT} catches you at dawn. \"Transfer, you know how this works. New to the lance means bottom of the pile. Doesn't matter what rank you held before.\"\n\nThey're testing you. Seeing if you'll pull the \"but in my old unit\" card.\n\nGear maintenance. Wood hauling. Latrine duty. The eternal trinity of grunt work.\n\n\"Pick one. Show me you're not too good for the basics.\"",
+          "options": [
+            {
+              "id": "gear",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_text",
+              "text": "\"Gear. I know equipment.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome",
+              "outcome": "You work efficiently. You've done this a hundred times. The difference shows — you're faster, more thorough, spot problems others would miss.\n\n{LANCE_LEADER_SHORT} inspects your work. Finds nothing to criticize. \"Your old unit taught you right, at least.\" Grudging respect.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "hardest",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_text",
+              "text": "\"Give me the worst one.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 10,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome",
+              "outcome": "\"Latrine it is.\" {LANCE_LEADER_SHORT} almost smiles.\n\nYou dig. You've dug before. The smell doesn't bother you anymore — or rather, you've learned to ignore it.\n\nWhen you're done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn't complain.\n\nRespect is earned, not transferred. You know that.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "efficient",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_text",
+              "text": "\"I'll do all three. By midday.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "delegate",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_text",
+              "text": "\"I'll take gear. {RECRUIT_NAME} can help with wood.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "return": {
+          "setupId": "ll_evt_enlisted_onboard_03_prove_yourself_setup_return",
+          "setup": "{LANCE_LEADER_SHORT} approaches you at dawn. But there's no lecture about new blood and grunt work.\n\n\"I know you've done this before. Question is, are you still sharp, or did peace make you soft?\"\n\nThey gesture at the camp. \"Something needs doing. You pick. Show me what kind of soldier came back.\"",
+          "options": [
+            {
+              "id": "grunt_work",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_text",
+              "text": "\"Grunt work. Same as any recruit. I'm not above it.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 10,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome",
+              "outcome": "You take the latrine duty. The worst one. Deliberately.\n\n{LANCE_LEADER_SHORT} watches you work — not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n\"Alright,\" they say, when you're done. \"You're still one of us.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "skills",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_text",
+              "text": "\"Put me where my experience helps. Gear inspection.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome",
+              "outcome": "You work the gear pile. But you do more than maintain — you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n\"That would have broken in battle,\" you explain. \"Learn to see it.\"\n\n{LANCE_LEADER_SHORT} observes. \"Maybe we got lucky with this one,\" they mutter to {SECOND_SHORT}.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "problem",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_text",
+              "text": "\"What's the real problem right now? Not the busy work — the actual issue.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 10,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome",
+              "outcome": "{LANCE_LEADER_SHORT} pauses. Studies you.\n\n\"Supply count's off. Someone's skimming or the quartermasters can't count. Either way, I need it fixed before the captain notices.\"\n\nA real problem. Not grunt work. They're trusting you.\n\nYou spend the morning in the supply tents. By noon, you've found the discrepancy — honest mistake, not theft. The quartermaster owes you a favor. {LANCE_LEADER_SHORT} owes you more.\n\n\"Good to have you back,\" they admit.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "all",
+              "textId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_text",
+              "text": "\"Dawn to dusk. Whatever needs doing. All of it.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "officer_onboard_01_shoulder_tabs",
+      "category": "onboarding",
+      "track": "officer",
+      "metadata": {
+        "tier_range": {
+          "min": 5,
+          "max": 6
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "tier >= 5",
+          "tier <= 6",
+          "onboarding_stage_1",
+          "days_since_promotion < 1"
+        ],
+        "any": [],
+        "time_of_day": [],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 5,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_officer_onboard_01_shoulder_tabs_title",
+        "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup",
+        "title": "Shoulder Tabs",
+        "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
+        "options": [
+          {
+            "id": "steady",
+            "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_text",
+            "text": "\"At ease, {SECOND_RANK}. We know each other. That doesn't change.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 7,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_outcome",
+            "outcome": "The tension eases slightly. {SECOND_SHORT} nods. \"Aye, {PLAYER_RANK}. But it does change. That's how it works.\"\n\nThey're right. It does. But you've signaled that you're not going to be an ass about it.\n\nSmall mercies.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "formal",
+            "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_text",
+            "text": "\"Carry on with morning duties, {SECOND_RANK}. Report to me after.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_outcome",
+            "outcome": "Crisp. Professional. By the book.\n\n{SECOND_SHORT}'s expression doesn't flicker. \"Aye, {PLAYER_RANK}.\"\n\nThe lance disperses. You've drawn a line. Clear boundaries. That's not a bad thing. But it's a thing.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "acknowledge",
+            "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_text",
+            "text": "\"This is strange for both of us. We'll figure it out.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 10,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome",
+            "outcome": "{SECOND_SHORT} almost smiles. \"Strange is one word for it.\"\n\nThe lance relaxes. You've acknowledged the elephant. Some things will be awkward. That's fine. You're human.\n\n\"I'll have the duty roster for you within the hour, {PLAYER_RANK},\" {SECOND_SHORT} says. Back to business. But the air is clearer.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "uncertain",
+            "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_text",
+            "text": "Freeze. You don't know what to say.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": -3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome",
+            "outcome": "The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. \"Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.\"\n\nThey're covering for you. The lance pretends not to notice your hesitation.\n\nYou'll have to do better. But not everyone does better on the first day.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "first_time": {
+          "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time",
+          "setup": "The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they're {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n\"Orders, {PLAYER_RANK}?\"\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do.",
+          "options": [
+            {
+              "id": "steady",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_text",
+              "text": "\"At ease, {SECOND_RANK}. We know each other. That doesn't change.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_outcome",
+              "outcome": "The tension eases slightly. {SECOND_SHORT} nods. \"Aye, {PLAYER_RANK}. But it does change. That's how it works.\"\n\nThey're right. It does. But you've signaled that you're not going to be an ass about it.\n\nSmall mercies.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "formal",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_text",
+              "text": "\"Carry on with morning duties, {SECOND_RANK}. Report to me after.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_outcome",
+              "outcome": "Crisp. Professional. By the book.\n\n{SECOND_SHORT}'s expression doesn't flicker. \"Aye, {PLAYER_RANK}.\"\n\nThe lance disperses. You've drawn a line. Clear boundaries. That's not a bad thing. But it's a thing.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "acknowledge",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_text",
+              "text": "\"This is strange for both of us. We'll figure it out.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 10,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome",
+              "outcome": "{SECOND_SHORT} almost smiles. \"Strange is one word for it.\"\n\nThe lance relaxes. You've acknowledged the elephant. Some things will be awkward. That's fine. You're human.\n\n\"I'll have the duty roster for you within the hour, {PLAYER_RANK},\" {SECOND_SHORT} says. Back to business. But the air is clearer.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "uncertain",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_text",
+              "text": "Freeze. You don't know what to say.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": -3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome",
+              "outcome": "The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. \"Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.\"\n\nThey're covering for you. The lance pretends not to notice your hesitation.\n\nYou'll have to do better. But not everyone does better on the first day.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "transfer": {
+          "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_transfer",
+          "setup": "New lord. New lance. But the same shoulder tabs.\n\n{SECOND_SHORT} salutes you. A stranger. Their eyes measure you the way all sergeants measure new officers: will this one get us killed?\n\n\"Welcome to {LANCE_NAME}, {PLAYER_RANK}. I'm {SECOND_RANK} {SECOND_SHORT}. I've been running this lance for two years.\"\n\nSubtext: I know these men. You don't. Tread carefully.\n\nThe lance watches. Your lance now. Men who don't know you. Don't trust you. Not yet.",
+          "options": [
+            {
+              "id": "respect_experience",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_respect_experience_text",
+              "text": "\"Two years. Good. I'll need your experience, {SECOND_RANK}.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_respect_experience_outcome",
+              "outcome": "The right answer. {SECOND_SHORT}'s shoulders relax slightly.\n\n\"I'll have reports for you within the hour, {PLAYER_RANK}. Roster, readiness, any problems you should know about.\"\n\nYou've signaled that you're not going to override two years of experience on day one. Smart.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "assert",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_text",
+              "text": "\"I've led lances before. Walk me through your current procedures.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_outcome",
+              "outcome": "Professional. Clear. You're not dismissing their experience, but you're not deferring either.\n\n{SECOND_SHORT} nods slowly. \"This way, {PLAYER_RANK}.\"\n\nThey spend the morning showing you how {LANCE_NAME} operates. By noon, you know who to trust and what needs fixing.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "prove_yourself",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_text",
+              "text": "\"I know I need to earn your trust. Just give me a chance.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "inspect",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_text",
+              "text": "\"Form the lance for inspection, {SECOND_RANK}. Now.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        },
+        "return": {
+          "setupId": "ll_evt_officer_onboard_01_shoulder_tabs_setup_return",
+          "setup": "The shoulder tabs again. You'd thought you'd left them behind.\n\n{SECOND_SHORT} salutes. They don't know you, but they've been told: this one's commanded before. Came back for some reason.\n\n\"Welcome to {LANCE_NAME}, {PLAYER_RANK}. I'm {SECOND_RANK} {SECOND_SHORT}.\"\n\nNo subtext about experience. They're giving you the benefit of the doubt. For now.\n\nThe lance watches. Wondering why someone would come back to this life.",
+          "options": [
+            {
+              "id": "honest",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_text",
+              "text": "\"I've done this before. Been away. Needed to come back.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_outcome",
+              "outcome": "{SECOND_SHORT} nods slowly. They don't ask why. Good sergeants never do.\n\n\"Then you know how it works, {PLAYER_RANK}. I'll bring you up to speed on {LANCE_NAME}'s particulars.\"\n\nProfessional. Clean. A good start.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "rusty",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_rusty_text",
+              "text": "\"It's been a while. I might be rusty. Lean on me when I need it.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_rusty_outcome",
+              "outcome": "Rare for an officer to admit weakness. {SECOND_SHORT}'s respect visibly increases.\n\n\"We'll get you back up to speed, {PLAYER_RANK}. That's what sergeants are for.\"\n\nA partnership, not a hierarchy. That can work.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "sharp",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_sharp_text",
+              "text": "\"I'm not rusty. I'm ready. Show me what you've got.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_sharp_outcome",
+              "outcome": "Confidence. Maybe even true.\n\n{SECOND_SHORT} accepts it at face value. \"Then let's get to work, {PLAYER_RANK}.\"\n\nYou spend the morning proving you remember how this works. You do. Muscle memory kicks in. The commands come naturally.\n\nYou're back.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "private",
+              "textId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_private_text",
+              "text": "\"Just... needed to be useful again. We'll leave it at that.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_01_shoulder_tabs_opt_return_private_outcome",
+              "outcome": "{SECOND_SHORT} holds your gaze for a moment. Then nods.\n\n\"Understood, {PLAYER_RANK}. Your reasons are your own.\"\n\nSome things don't need explaining. You're here. That's what matters.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "officer_onboard_02_first_command",
+      "category": "onboarding",
+      "track": "officer",
+      "metadata": {
+        "tier_range": {
+          "min": 5,
+          "max": 6
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "tier >= 5",
+          "tier <= 6",
+          "onboarding_stage_2"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning",
+          "afternoon"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 5,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_officer_onboard_02_first_command_title",
+        "setupId": "ll_evt_officer_onboard_02_first_command_setup",
+        "title": "Your First Command",
+        "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
+        "options": [
+          {
+            "id": "stream",
+            "textId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_text",
+            "text": "\"The stream. Water's more important.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome",
+            "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "trees",
+            "textId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_text",
+            "text": "\"The tree line. I don't like being exposed.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 3,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome",
+            "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "ask_sergeant",
+            "textId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_text",
+            "text": "\"What do you recommend, {SECOND_RANK}?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome",
+            "outcome": "\"Stream, {PLAYER_RANK}. Water's worth the exposure.\"\n\nYou nod. \"Stream it is.\"\n\nYou've shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n\"I'll get the lance moving,\" they say. Pleased.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "ask_then_opposite",
+            "textId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_text",
+            "text": "\"What would you do?\" Then pick the opposite.",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome",
+            "outcome": "\"Stream,\" {SECOND_SHORT} says.\n\n\"Tree line,\" you decide.\n\n{SECOND_SHORT}'s jaw tightens slightly. You've made a point: you're in command. Maybe too obviously.\n\nThe lance notices. They always notice.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "all": {
+          "setupId": "ll_evt_officer_onboard_02_first_command_setup_all",
+          "setup": "First decision that's actually yours to make.\n\nThe army's moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n\"There's a spot by the stream — good water, but exposed. Or there's the tree line — sheltered, but further from the main camp.\"\n\nThey have an opinion. You can see it in their eyes. But they're waiting for you to decide.\n\nThe lance watches. Your first real order.",
+          "options": [
+            {
+              "id": "stream",
+              "textId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_text",
+              "text": "\"The stream. Water's more important.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome",
+              "outcome": "You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n\"Good call, {PLAYER_RANK},\" {SECOND_SHORT} says. Quietly. Privately. But they said it.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "trees",
+              "textId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_text",
+              "text": "\"The tree line. I don't like being exposed.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 3,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome",
+              "outcome": "{SECOND_SHORT}'s expression flickers — they would've picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "ask_sergeant",
+              "textId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_text",
+              "text": "\"What do you recommend, {SECOND_RANK}?\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome",
+              "outcome": "\"Stream, {PLAYER_RANK}. Water's worth the exposure.\"\n\nYou nod. \"Stream it is.\"\n\nYou've shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n\"I'll get the lance moving,\" they say. Pleased.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "ask_then_opposite",
+              "textId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_text",
+              "text": "\"What would you do?\" Then pick the opposite.",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome",
+              "outcome": "\"Stream,\" {SECOND_SHORT} says.\n\n\"Tree line,\" you decide.\n\n{SECOND_SHORT}'s jaw tightens slightly. You've made a point: you're in command. Maybe too obviously.\n\nThe lance notices. They always notice.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "officer_onboard_03_tested",
+      "category": "onboarding",
+      "track": "officer",
+      "metadata": {
+        "tier_range": {
+          "min": 5,
+          "max": 6
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "tier >= 5",
+          "tier <= 6",
+          "onboarding_stage_3"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning",
+          "afternoon",
+          "evening"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 5,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 0,
+        "priority": "high",
+        "one_time": true,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_officer_onboard_03_tested_title",
+        "setupId": "ll_evt_officer_onboard_03_tested_setup",
+        "title": "Tested",
+        "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
+        "options": [
+          {
+            "id": "by_the_book",
+            "textId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_text",
+            "text": "\"Extra duty. Three days. Dismissed.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 5,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome",
+            "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "harsh",
+            "textId": "ll_evt_officer_onboard_03_tested_opt_all_harsh_text",
+            "text": "\"Extra duty. A week. And you're on latrine until I say otherwise.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_harsh_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "understand",
+            "textId": "ll_evt_officer_onboard_03_tested_opt_all_understand_text",
+            "text": "\"This the first time, {SECOND_RANK}?\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 7,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_understand_outcome",
+            "outcome": "{SECOND_SHORT} shakes their head. \"Second this month.\"\n\nYou turn back to {SOLDIER_NAME}. \"Sounds like a pattern. Extra duty. Three days. Third time, it won't be me you're answering to.\"\n\nFair. Warned. Clear consequences.\n\n{SOLDIER_NAME} swallows. \"Aye, {PLAYER_RANK}.\"",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          },
+          {
+            "id": "let_sergeant",
+            "textId": "ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_text",
+            "text": "\"Handle it, {SECOND_RANK}.\"",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": true
+          }
+        ]
+      },
+      "variants": {
+        "all": {
+          "setupId": "ll_evt_officer_onboard_03_tested_setup_all",
+          "setup": "It was bound to happen. Someone testing the new officer.\n\n{SOLDIER_NAME} didn't show for morning muster. When {SECOND_SHORT} found them, they were still asleep — or pretending to be.\n\nNow they're standing before you. Not quite at attention. Not quite disrespectful. Walking the line.\n\n\"Overslept, {PLAYER_RANK}.\" No apology. No excuse. Just the flat statement.\n\n{SECOND_SHORT} watches. The lance watches. Your move.",
+          "options": [
+            {
+              "id": "by_the_book",
+              "textId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_text",
+              "text": "\"Extra duty. Three days. Dismissed.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 5,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_by_the_book_outcome",
+              "outcome": "By the book. Fair. {SOLDIER_NAME} knows the rules; they broke them.\n\n\"Aye, {PLAYER_RANK}.\" They salute — properly this time — and go.\n\n{SECOND_SHORT} nods slightly. \"That's how it's done.\"\n\nThe lance knows where the line is now. Good.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "harsh",
+              "textId": "ll_evt_officer_onboard_03_tested_opt_all_harsh_text",
+              "text": "\"Extra duty. A week. And you're on latrine until I say otherwise.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_harsh_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "understand",
+              "textId": "ll_evt_officer_onboard_03_tested_opt_all_understand_text",
+              "text": "\"This the first time, {SECOND_RANK}?\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "safe",
+              "risk_chance": null,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 7,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_understand_outcome",
+              "outcome": "{SECOND_SHORT} shakes their head. \"Second this month.\"\n\nYou turn back to {SOLDIER_NAME}. \"Sounds like a pattern. Extra duty. Three days. Third time, it won't be me you're answering to.\"\n\nFair. Warned. Clear consequences.\n\n{SOLDIER_NAME} swallows. \"Aye, {PLAYER_RANK}.\"",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            },
+            {
+              "id": "let_sergeant",
+              "textId": "ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_text",
+              "text": "\"Handle it, {SECOND_RANK}.\"",
+              "tooltip": null,
+              "condition": null,
+              "risk": "risky",
+              "risk_chance": 50,
+              "costs": {
+                "fatigue": 0,
+                "gold": 0,
+                "time_hours": 0
+              },
+              "rewards": {
+                "xp": {},
+                "gold": 0,
+                "relation": {},
+                "items": []
+              },
+              "effects": {
+                "heat": 0,
+                "discipline": 0,
+                "lance_reputation": 0,
+                "medical_risk": 0,
+                "fatigue_relief": 0
+              },
+              "flags_set": [],
+              "flags_clear": [],
+              "resultTextId": "ll_evt_officer_onboard_03_tested_opt_all_let_sergeant_outcome",
+              "outcome": "You take the risk and see it through.",
+              "outcome_failure": null,
+              "injury_risk": null,
+              "triggers_event": null,
+              "advances_onboarding": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+
+

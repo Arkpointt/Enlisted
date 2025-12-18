@@ -6,8 +6,10 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.Escalation;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Features.Lances.Leaders;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -157,6 +159,29 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Used to determine tier promotions based on thresholds in progression_config.json.
         /// </summary>
         private int _enlistmentXP;
+
+        /// <summary>
+        ///     Phase 7: Date of last promotion (or enlistment if T1). Used to calculate days in rank.
+        /// </summary>
+        private CampaignTime _lastPromotionDate = CampaignTime.Zero;
+
+        /// <summary>
+        ///     Phase 7: Number of battles survived since enlistment. Used for promotion requirements.
+        /// </summary>
+        private int _battlesSurvived;
+
+        /// <summary>
+        ///     Phase 7: Number of Lance Life events completed. Used for promotion requirements.
+        /// </summary>
+        private int _eventsCompleted;
+
+        // Phase 4: promotion can be temporarily blocked at very high discipline risk.
+        // This is rate-limited to avoid message spam when earning XP while blocked.
+        private CampaignTime _lastPromotionBlockedMessageTime = CampaignTime.Zero;
+
+        // UI anti-spam: wage breakdown is used by tooltips and can be queried frequently.
+        // If it ever throws, log it once per session and fall back to a safe default breakdown.
+        private bool _loggedWageBreakdownFailure;
 
         private CampaignTime _graceProtectionEnds = CampaignTime.Zero;
 
@@ -312,6 +337,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private int _fatigueCurrent = 24;
         private int _fatigueMax = 24;
 
+        // Enhanced Fatigue System (Phase 1 - 24-point budget with health penalties)
+        // _fatigueCurrent represents REMAINING fatigue points (24 = fresh, 0 = exhausted)
+        // Health penalties trigger at LOW fatigue (8 or less remaining)
+        private CampaignTime _lastFatigueRecoveryTime = CampaignTime.Zero;
+        private float _healthBeforeExhaustion = -1f;
+        private float _accumulatedFatigueRecovery = 0f; // Fractional recovery accumulator
+
         private bool _playerCaptureCleanupScheduled;
         private CampaignTime _savedGraceEnlistmentDate = CampaignTime.Zero;
         private Hero _savedGraceLord;
@@ -340,19 +372,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _isOnProbation;
         private CampaignTime _probationEnds = CampaignTime.Zero;
 
+        // Pay tension and backpay tracking (Phase 1 Pay System)
+        // PayTension escalates when pay is delayed; triggers events at thresholds
+        private int _payTension;
+        private int _owedBackpay;
+        private CampaignTime _lastPayDate = CampaignTime.Zero;
+        private int _consecutiveDelays;
+        private int _lanceFundBalance;
+
         /// <summary>
-        ///     Currently selected duty assignment ID (e.g., "enlisted", "forager", "sentry").
+        ///     Currently selected duty assignment ID (e.g., "runner", "scout", "field_medic").
         ///     Duties provide daily skill XP bonuses and may include wage multipliers.
         ///     Changed via the duty selection menu.
         /// </summary>
-        private string _selectedDuty = "enlisted";
-
-        /// <summary>
-        ///     Currently selected profession ID (e.g., "field_medic", "quartermaster_aide").
-        ///     Professions unlock at tier 3 and provide specialized skill XP bonuses.
-        ///     Can be set to "none" if no profession is selected.
-        /// </summary>
-        private string _selectedProfession = "none";
+        private string _selectedDuty = "runner";
 
         /// <summary>
         ///     Whether the player's clan was independent (no kingdom) before enlistment.
@@ -368,6 +401,79 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     nameplates show correct ally/enemy colors. These are restored to neutral when service ends.
         /// </summary>
         private List<string> _minorFactionWarRelations = new List<string>();
+
+        // ========================================================================
+        // QUARTERMASTER HERO SYSTEM (Phase 3)
+        // Persistent NPC quartermaster with personality archetype
+        // ========================================================================
+
+        /// <summary>
+        ///     The quartermaster Hero assigned to the current enlisted lord.
+        ///     Created on first quartermaster access, persists for duration of service.
+        ///     Each lord has their own unique quartermaster.
+        /// </summary>
+        private Hero _quartermasterHero;
+
+        /// <summary>
+        ///     Personality archetype for the quartermaster.
+        ///     Determines dialogue style and special interactions.
+        ///     Values: "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric"
+        /// </summary>
+        private string _quartermasterArchetype;
+
+        /// <summary>
+        ///     Relationship level with quartermaster (0-100).
+        ///     Affects discounts, dialogue options, and special favors.
+        ///     Separate from lord relationship.
+        /// </summary>
+        private int _quartermasterRelationship;
+
+        /// <summary>
+        ///     Whether this is the first meeting with the current quartermaster.
+        ///     Used to trigger introduction dialogue on first visit.
+        /// </summary>
+        private bool _hasMetQuartermaster;
+
+        // ========================================================================
+        // FOOD/RATIONS SYSTEM (Phase 5)
+        // Allows player to purchase better rations for morale and fatigue bonuses
+        // ========================================================================
+
+        /// <summary>
+        ///     Current food quality tier affecting morale and fatigue recovery.
+        ///     Standard (0) = no bonus, Supplemental (1) = +2 morale, Officer (2) = +4 morale +2 fatigue,
+        ///     Commander (3) = +8 morale +5 fatigue.
+        /// </summary>
+        private int _currentFoodQuality;
+
+        /// <summary>
+        ///     When the current food quality bonus expires.
+        ///     Rations are typically purchased for 1-3 days at a time.
+        /// </summary>
+        private CampaignTime _foodQualityExpires = CampaignTime.Zero;
+
+        // ========================================================================
+        // RETINUE PROVISIONING SYSTEM (Phase 6)
+        // T7-T9 commanders must provision their retinue weekly
+        // ========================================================================
+
+        /// <summary>
+        ///     Current provisioning tier for the retinue.
+        ///     Affects retinue morale and combat effectiveness.
+        /// </summary>
+        private int _retinueProvisioningTier;
+
+        /// <summary>
+        ///     When the current retinue provisioning expires.
+        ///     Provisioning is purchased for 7 days (1 week) at a time.
+        /// </summary>
+        private CampaignTime _retinueProvisioningExpires = CampaignTime.Zero;
+
+        /// <summary>
+        ///     Whether the player has been warned about low provisions (2 days remaining).
+        ///     Resets when new provisions are purchased.
+        /// </summary>
+        private bool _retinueProvisioningWarningShown;
 
         /// <summary>
         ///     Tracks desertion cooldowns for minor factions. When a player deserts from a minor faction lord,
@@ -460,14 +566,37 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public int EnlistmentXP => _enlistmentXP;
 
         /// <summary>
-        ///     Currently assigned duty (e.g., "enlisted", "pathfinder", "field_medic").
+        ///     Phase 7: Days since last promotion (or enlistment for T1).
         /// </summary>
-        public string SelectedDuty => _selectedDuty;
+        public int DaysInRank
+        {
+            get
+            {
+                if (_lastPromotionDate == CampaignTime.Zero)
+                {
+                    // Fall back to enlistment date if no promotion recorded
+                    return _enlistmentDate != CampaignTime.Zero 
+                        ? (int)(CampaignTime.Now - _enlistmentDate).ToDays 
+                        : 0;
+                }
+                return (int)(CampaignTime.Now - _lastPromotionDate).ToDays;
+            }
+        }
 
         /// <summary>
-        ///     Currently selected profession track (e.g., "infantry", "cavalry"). "none" if not selected.
+        ///     Phase 7: Number of battles survived since enlistment.
         /// </summary>
-        public string SelectedProfession => _selectedProfession;
+        public int BattlesSurvived => _battlesSurvived;
+
+        /// <summary>
+        ///     Phase 7: Number of Lance Life events completed since enlistment.
+        /// </summary>
+        public int EventsCompleted => _eventsCompleted;
+
+        /// <summary>
+        ///     Currently assigned duty (e.g., "runner", "scout", "field_medic").
+        /// </summary>
+        public string SelectedDuty => _selectedDuty;
 
         /// <summary>
         ///     Current lance identifiers for UI/story systems.
@@ -488,6 +617,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public CampaignTime NextPaydaySafe => _nextPayday != CampaignTime.Zero ? _nextPayday : (_nextPayday = ComputeNextPayday());
         public string LastPayOutcome => _lastPayOutcome ?? "none";
         public bool IsPayMusterPending => _payMusterPending;
+        
+        // Pay tension properties (Phase 1 Pay System)
+        /// <summary>Pay tension level (0-100). Escalates when pay is delayed, triggers events at thresholds.</summary>
+        public int PayTension => _payTension;
+        /// <summary>Accumulated unpaid wages when lord can't afford to pay.</summary>
+        public int OwedBackpay => _owedBackpay;
+        /// <summary>Days since last successful pay. Used for pay delay detection.</summary>
+        public int DaysSincePay => _lastPayDate == CampaignTime.Zero ? 0 : (int)(CampaignTime.Now - _lastPayDate).ToDays;
+        /// <summary>True if pay is overdue (more than 7 days since last pay).</summary>
+        public bool IsPayOverdue => DaysSincePay > 7 && IsEnlisted;
+        /// <summary>Lance communal fund balance (5% deduction from pay).</summary>
+        public int LanceFundBalance => _lanceFundBalance;
+        
         public int PensionAmountPerDay => _pensionAmountPerDay;
         public bool IsPensionPaused => _isPensionPaused;
         public bool IsPendingDischarge => _isPendingDischarge;
@@ -495,14 +637,78 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public bool IsOnProbation => _isOnProbation;
 
         /// <summary>
-        ///     Current fatigue for camp actions (placeholder hook; no mechanics yet).
+        ///     Current remaining fatigue points for camp actions.
+        ///     24 = fully rested, 0 = completely exhausted.
+        ///     Health penalties apply at 8 or below (exhausted) and 0 (severe exhaustion).
         /// </summary>
         public int FatigueCurrent => _fatigueCurrent;
 
         /// <summary>
-        ///     Max fatigue for camp actions (placeholder hook; no mechanics yet).
+        ///     Maximum fatigue points available (may be reduced by probation).
         /// </summary>
         public int FatigueMax => _fatigueMax;
+
+        /// <summary>
+        ///     Returns true if the player is in an exhausted state (low fatigue, health penalties active).
+        /// </summary>
+        public bool IsExhausted => _fatigueCurrent <= 8;
+
+        /// <summary>
+        ///     Returns true if the player is severely exhausted (critical fatigue level).
+        /// </summary>
+        public bool IsSeverelyExhausted => _fatigueCurrent <= 0;
+
+        /// <summary>
+        ///     Gets the fatigue percentage remaining (100% = fresh, 0% = exhausted).
+        ///     Useful for UI progress bars.
+        /// </summary>
+        public float FatiguePercentage => _fatigueMax > 0 ? (float)_fatigueCurrent / _fatigueMax * 100f : 0f;
+
+        /// <summary>
+        ///     Gets a localized fatigue status string for UI display.
+        /// </summary>
+        public string FatigueStatusText
+        {
+            get
+            {
+                if (_fatigueCurrent <= 0) return "Severely Exhausted";
+                if (_fatigueCurrent <= 8) return "Exhausted";
+                if (_fatigueCurrent <= 16) return "Tired";
+                return "Rested";
+            }
+        }
+
+        // ========================================================================
+        // QUARTERMASTER HERO PROPERTIES (Phase 3)
+        // ========================================================================
+
+        /// <summary>
+        ///     The current quartermaster Hero for dialog interaction.
+        ///     Returns null if not enlisted or hero hasn't been created.
+        /// </summary>
+        public Hero QuartermasterHero => _quartermasterHero;
+
+        /// <summary>
+        ///     Personality archetype of the quartermaster.
+        ///     Values: "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric"
+        /// </summary>
+        public string QuartermasterArchetype => _quartermasterArchetype ?? "veteran";
+
+        /// <summary>
+        ///     Relationship level with quartermaster (0-100).
+        /// </summary>
+        public int QuartermasterRelationship => _quartermasterRelationship;
+
+        /// <summary>
+        ///     Whether this is the first meeting with the quartermaster.
+        /// </summary>
+        public bool HasMetQuartermaster => _hasMetQuartermaster;
+
+        /// <summary>
+        ///     Returns true if a bag check is scheduled or in progress.
+        ///     Used to defer other events until bag check completes.
+        /// </summary>
+        public bool IsBagCheckPending => (_bagCheckScheduled || _bagCheckInProgress) && !_bagCheckCompleted;
 
         private bool ShouldRunBagCheck()
         {
@@ -530,7 +736,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Enlistment", $"Error opening baggage train: {ex.Message}", ex);
+                // End-user support: stable code + full exception detail (stack trace written once per unique exception).
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-001", "Error opening baggage train stash", ex);
                 return false;
             }
         }
@@ -551,6 +758,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Reduce fatigue for camp actions. Clamped to 0..FatigueMax. Returns true if applied.
         ///     Safe to call by camp actions when they later consume fatigue.
+        ///     Now includes health penalty checks for exhaustion (Enhanced Fatigue System).
         /// </summary>
         public bool TryConsumeFatigue(int amount, string reason = null)
         {
@@ -568,6 +776,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _fatigueCurrent = newValue;
             SessionDiagnostics.LogEvent("Fatigue", "Consumed",
                 $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "camp_action"}");
+
+            // Check for health penalties when fatigue gets critically low
+            CheckFatigueHealthPenalty();
+
             return true;
         }
 
@@ -650,8 +862,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             var hero = Hero.MainHero;
                             if (hero != null)
                             {
-                                var paid = Math.Min(hero.Gold, fine);
-                                hero.ChangeHeroGold(-paid);
+                                var partyGold = hero.PartyBelongedTo?.PartyTradeGold ?? 0;
+                                var paid = Math.Min(partyGold, fine);
+                                if (paid > 0)
+                                {
+                                    GiveGoldAction.ApplyBetweenCharacters(hero, null, paid);
+                                }
                                 ModLogger.Info("Enlistment",
                                     $"Commander re-entry fine paid: {paid} (configured {fine})");
                             }
@@ -663,7 +879,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Enlistment", $"Reservist re-entry boost failed: {ex.Message}");
+                // This should never fail, but if it does we want the full stack trace for support.
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-002", "Reservist re-entry boost failed", ex);
             }
         }
 
@@ -681,6 +898,153 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _fatigueCurrent = target;
             SessionDiagnostics.LogEvent("Fatigue", "Restored",
                 $"amount={amount}, now={_fatigueCurrent}/{_fatigueMax}, reason={reason ?? "rest"}");
+
+            // Check if we've recovered enough to remove health penalties
+            CheckFatigueHealthRecovery();
+        }
+
+        /// <summary>
+        ///     Gets the hourly fatigue recovery rate based on military rank/tier.
+        ///     Higher ranks recover faster due to better accommodations and rest privileges.
+        ///     See: docs/research/IMPLEMENTATION_PLAN.md lines 138-145
+        /// </summary>
+        /// <returns>Fatigue points recovered per hour during rest periods.</returns>
+        public float GetFatigueRecoveryRate()
+        {
+            // Based on tier (see IMPLEMENTATION_PLAN.md)
+            // T1-T2: 0.5/hour (8 hours to full recovery from exhausted)
+            // T3-T4: 0.75/hour (~5.3 hours to full recovery)
+            // T5-T6: 1.0/hour (4 hours to full recovery)
+            // T7+: 1.25/hour (3.2 hours to full recovery)
+            if (_enlistmentTier <= 2) return 0.5f;
+            if (_enlistmentTier <= 4) return 0.75f;
+            if (_enlistmentTier <= 6) return 1.0f;
+            return 1.25f;
+        }
+
+        /// <summary>
+        ///     Checks and applies health penalties based on current fatigue level.
+        ///     Called when fatigue is consumed. Low fatigue (high exhaustion) triggers penalties.
+        ///     - At 8 or less remaining: 15% health reduction
+        ///     - At 0 remaining: 70% health reduction (drops to 30%)
+        /// </summary>
+        private void CheckFatigueHealthPenalty()
+        {
+            var hero = Hero.MainHero;
+            if (hero == null) return;
+
+            // Fatigue thresholds (remaining points):
+            // 0 = completely exhausted (severe penalty)
+            // 8 or less = exhausted (moderate penalty)
+            // 9+ = fine (no penalty)
+            const int SevereThreshold = 0;
+            const int ModerateThreshold = 8;
+
+            if (_fatigueCurrent <= SevereThreshold)
+            {
+                // Severe exhaustion: Drop to 30% health
+                if (_healthBeforeExhaustion < 0)
+                    _healthBeforeExhaustion = hero.HitPoints;
+
+                var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.30f));
+                if (hero.HitPoints > targetHealth)
+                {
+                    hero.HitPoints = targetHealth;
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You collapse from exhaustion! Health dropped to 30%.",
+                        Colors.Red));
+                    ModLogger.Warn("Fatigue", $"Severe exhaustion penalty applied: HP={hero.HitPoints}/{hero.MaxHitPoints}");
+                }
+            }
+            else if (_fatigueCurrent <= ModerateThreshold)
+            {
+                // Moderate exhaustion: Reduce to 85% max health
+                if (_healthBeforeExhaustion < 0)
+                    _healthBeforeExhaustion = hero.HitPoints;
+
+                var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.85f));
+                if (hero.HitPoints > targetHealth)
+                {
+                    hero.HitPoints = targetHealth;
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You're exhausted. Health reduced.",
+                        Colors.Yellow));
+                    ModLogger.Info("Fatigue", $"Moderate exhaustion penalty applied: HP={hero.HitPoints}/{hero.MaxHitPoints}");
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Checks if health should be restored after fatigue recovery.
+        ///     Called when fatigue is restored. Removes health penalties when fatigue rises above danger zones.
+        /// </summary>
+        private void CheckFatigueHealthRecovery()
+        {
+            var hero = Hero.MainHero;
+            if (hero == null || _healthBeforeExhaustion < 0) return;
+
+            const int ModerateThreshold = 8;
+
+            // Restore health if fatigue is now above the danger zone
+            if (_fatigueCurrent > ModerateThreshold)
+            {
+                var restoredHealth = (int)_healthBeforeExhaustion;
+                if (hero.HitPoints < restoredHealth)
+                {
+                    hero.HitPoints = Math.Min(restoredHealth, hero.MaxHitPoints);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You feel rested. Health restored.",
+                        Colors.Green));
+                    ModLogger.Info("Fatigue", $"Health restored after rest: HP={hero.HitPoints}/{hero.MaxHitPoints}");
+                }
+                _healthBeforeExhaustion = -1f;
+            }
+        }
+
+        /// <summary>
+        ///     Processes hourly fatigue recovery during rest periods.
+        ///     Called from OnHourlyTick. Recovery only occurs during night hours (dusk/night/dawn).
+        ///     Settlement bonus provides +2 fatigue recovery per hour.
+        /// </summary>
+        public void ProcessFatigueRecovery()
+        {
+            if (!IsEnlisted) return;
+            if (_fatigueCurrent >= _fatigueMax) return; // Already at max
+
+            // Only recover during rest hours (dusk, night, dawn)
+            // Use Campaign.Current.IsNight as a simple check, or check time of day
+            var currentHour = CampaignTime.Now.CurrentHourInDay;
+            bool isRestPeriod = currentHour >= 20 || currentHour <= 6; // 8 PM to 6 AM
+
+            if (!isRestPeriod)
+            {
+                return;
+            }
+
+            // Get rank-based recovery rate
+            float recoveryRate = GetFatigueRecoveryRate();
+
+            // Settlement bonus: +2/hour when in a town
+            if (Settlement.CurrentSettlement?.IsTown == true)
+            {
+                recoveryRate += 2.0f;
+            }
+
+            // Accumulate fractional recovery
+            _accumulatedFatigueRecovery += recoveryRate;
+
+            // Apply whole number recovery
+            if (_accumulatedFatigueRecovery >= 1.0f)
+            {
+                int wholeRecovery = (int)_accumulatedFatigueRecovery;
+                _accumulatedFatigueRecovery -= wholeRecovery;
+
+                RestoreFatigue(wholeRecovery, "night_rest");
+                ModLogger.Debug("Fatigue",
+                    $"Hourly recovery: +{wholeRecovery} (rate={recoveryRate}/hr, tier={_enlistmentTier}, now={_fatigueCurrent}/{_fatigueMax})");
+            }
+
+            _lastFatigueRecoveryTime = CampaignTime.Now;
         }
 
         public bool HasActiveGraceProtection => CampaignTime.Now < _graceProtectionEnds;
@@ -938,11 +1302,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <param name="dataStore">The save/load data store that handles serialization.</param>
         public override void SyncData(IDataStore dataStore)
         {
-            // Serialize all enlistment state variables
-            // These values are saved to the game's save file and restored when loading
-            SyncKey(dataStore, "_enlistedLord", ref _enlistedLord);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                // Serialize all enlistment state variables
+                // These values are saved to the game's save file and restored when loading
+                SyncKey(dataStore, "_enlistedLord", ref _enlistedLord);
             SyncKey(dataStore, "_enlistmentTier", ref _enlistmentTier);
             SyncKey(dataStore, "_enlistmentXP", ref _enlistmentXP);
+            SyncKey(dataStore, "_lastPromotionBlockedMessageTime", ref _lastPromotionBlockedMessageTime);
             SyncKey(dataStore, "_hasBackedUpEquipment", ref _hasBackedUpEquipment);
             SyncKey(dataStore, "_personalBattleEquipment", ref _personalBattleEquipment);
             SyncKey(dataStore, "_personalCivilianEquipment", ref _personalCivilianEquipment);
@@ -950,8 +1317,17 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_baggageStash", ref _baggageStash);
             SyncKey(dataStore, "_bagCheckCompleted", ref _bagCheckCompleted);
             SyncKey(dataStore, "_bagCheckEverCompleted", ref _bagCheckEverCompleted);
+            SyncKey(dataStore, "_bagCheckScheduled", ref _bagCheckScheduled);
+            SyncKey(dataStore, "_bagCheckDueTime", ref _bagCheckDueTime);
+            SyncKey(dataStore, "_pendingBagCheckLord", ref _pendingBagCheckLord);
             SyncKey(dataStore, "_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
             SyncKey(dataStore, "_enlistmentDate", ref _enlistmentDate);
+            
+            // Phase 7: Promotion requirements tracking
+            SyncKey(dataStore, "_lastPromotionDate", ref _lastPromotionDate);
+            SyncKey(dataStore, "_battlesSurvived", ref _battlesSurvived);
+            SyncKey(dataStore, "_eventsCompleted", ref _eventsCompleted);
+
             SyncKey(dataStore, "_isOnLeave", ref _isOnLeave);
             SyncKey(dataStore, "_leaveStartDate", ref _leaveStartDate);
             SyncKey(dataStore, "_leaveCooldownEnds", ref _leaveCooldownEnds);
@@ -965,6 +1341,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_nextPayday", ref _nextPayday);
             SyncKey(dataStore, "_payMusterPending", ref _payMusterPending);
             SyncKey(dataStore, "_lastPayOutcome", ref _lastPayOutcome);
+            
+            // Pay tension state (Phase 1 Pay System)
+            SyncKey(dataStore, "_payTension", ref _payTension);
+            SyncKey(dataStore, "_owedBackpay", ref _owedBackpay);
+            SyncKey(dataStore, "_lastPayDate", ref _lastPayDate);
+            SyncKey(dataStore, "_consecutiveDelays", ref _consecutiveDelays);
+            SyncKey(dataStore, "_lanceFundBalance", ref _lanceFundBalance);
+            
             SyncKey(dataStore, "_pensionAmountPerDay", ref _pensionAmountPerDay);
             SyncKey(dataStore, "_pensionFactionId", ref _pensionFactionId);
             SyncKey(dataStore, "_isPensionPaused", ref _isPensionPaused);
@@ -982,7 +1366,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_savedGraceLanceLegacy", ref _savedGraceLanceLegacy);
             SyncKey(dataStore, "_graceProtectionEnds", ref _graceProtectionEnds);
             SyncKey(dataStore, "_selectedDuty", ref _selectedDuty);
-            SyncKey(dataStore, "_selectedProfession", ref _selectedProfession);
             SyncKey(dataStore, "_currentLanceId", ref _currentLanceId);
             SyncKey(dataStore, "_currentLanceName", ref _currentLanceName);
             SyncKey(dataStore, "_currentLanceStyle", ref _currentLanceStyle);
@@ -992,6 +1375,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_isLanceLegacy", ref _isLanceLegacy);
             SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
             SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
+
+            // Enhanced Fatigue System (Phase 1)
+            SyncKey(dataStore, "_lastFatigueRecoveryTime", ref _lastFatigueRecoveryTime);
+            SyncKey(dataStore, "_healthBeforeExhaustion", ref _healthBeforeExhaustion);
+            SyncKey(dataStore, "_accumulatedFatigueRecovery", ref _accumulatedFatigueRecovery);
+
+            // Quartermaster Hero System (Phase 3)
+            SyncKey(dataStore, "_quartermasterHero", ref _quartermasterHero);
+            SyncKey(dataStore, "_quartermasterArchetype", ref _quartermasterArchetype);
+            SyncKey(dataStore, "_quartermasterRelationship", ref _quartermasterRelationship);
+            SyncKey(dataStore, "_hasMetQuartermaster", ref _hasMetQuartermaster);
+
+            // Food/Rations System (Phase 5)
+            SyncKey(dataStore, "_currentFoodQuality", ref _currentFoodQuality);
+            SyncKey(dataStore, "_foodQualityExpires", ref _foodQualityExpires);
+
+            // Retinue Provisioning System (Phase 6)
+            SyncKey(dataStore, "_retinueProvisioningTier", ref _retinueProvisioningTier);
+            SyncKey(dataStore, "_retinueProvisioningExpires", ref _retinueProvisioningExpires);
+            SyncKey(dataStore, "_retinueProvisioningWarningShown", ref _retinueProvisioningWarningShown);
 
             // Serialize kingdom state so we can restore the player's original kingdom/clan status
             SyncKey(dataStore, "_originalKingdom", ref _originalKingdom);
@@ -1049,6 +1452,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _initializationTicksRemaining = 10; // Reset countdown to ensure we wait for load completion
                 ModLogger.Debug("SaveLoad", "Deferred party state restoration to first campaign tick");
             }
+            });
         }
 
         /// <summary>
@@ -1134,7 +1538,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("SaveLoad", $"Error serializing veteran records: {ex.Message}");
+                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-001", "Error serializing veteran records", ex);
                 // Ensure dictionary exists even on error
                 if (_veteranRecords == null)
                 {
@@ -1192,7 +1596,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("SaveLoad", $"Error serializing minor faction desertion cooldowns: {ex.Message}");
+                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-002", "Error serializing minor faction desertion cooldowns", ex);
                 // Ensure dictionary exists even on error
                 if (_minorFactionDesertionCooldowns == null)
                 {
@@ -1325,12 +1729,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             // Run enlistment bag check (stash/sell/smuggle) before proceeding
             // If the incidents behavior is unavailable, fail open so enlistment can continue.
-            // For stability, schedule the bag check 12 in-game hours later so it never blocks enlistment.
+            // For stability, schedule the bag check 1 in-game hour later so it never blocks enlistment.
             if (ShouldRunBagCheck() && !_bagCheckScheduled)
             {
                 _pendingBagCheckLord = lord;
                 _bagCheckScheduled = true;
-                _bagCheckDueTime = CampaignTime.Now + CampaignTime.Hours(12f);
+                _bagCheckDueTime = CampaignTime.Now + CampaignTime.Hours(1f);
                 ModLogger.Info("Enlistment", $"Deferred bag check scheduled for {_bagCheckDueTime}");
             }
 
@@ -1394,7 +1798,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             catch (Exception ex)
             {
                 _bagCheckInProgress = false;
-                ModLogger.Error("Enlistment", $"Bag check prompt failed: {ex.Message}");
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-003", "Bag check prompt failed", ex);
             }
         }
 
@@ -1404,47 +1808,223 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ShowBagCheckInquiry(_pendingBagCheckLord);
         }
 
-        public void HandleBagCheckChoice(string choice)
+        /// <summary>
+        /// Bag-check processing when the player's personal belongings have already been backed up by <see cref="EquipmentManager"/>.
+        /// This is the normal flow: equipment backup happens during enlistment, then the bag-check prompt
+        /// decides what happens to the *stored* personal inventory (stash/sell/smuggle) without touching military-issued kit.
+        ///
+        /// IMPORTANT: This only processes the backed-up personal INVENTORY (party item roster).
+        /// Personal equipped sets (battle/civilian) are still restored on discharge via <see cref="EquipmentManager"/>.
+        /// </summary>
+        private bool TryHandleBagCheckUsingBackedUpPersonalInventory(Hero hero, string choice)
         {
+            var equipmentManager = EquipmentManager.Instance;
+            if (equipmentManager?.HasBackedUpEquipment != true)
+            {
+                return false;
+            }
+
+            // Snapshot what was removed from the player's inventory at enlistment time.
+            var backedUpInventory = equipmentManager.GetBackedUpPersonalInventorySnapshot();
+
+            // If there's nothing to process, treat it as handled (and clear the snapshot store to avoid restoring "ghost" items later).
+            if (backedUpInventory == null || backedUpInventory.Count == 0)
+            {
+                equipmentManager.ClearBackedUpPersonalInventory();
+                ModLogger.Info("Enlistment", "Bag check: no backed-up personal inventory found to process.");
+                return true;
+            }
+
             EnsureBaggageStash();
+
+            // Local helper: add an item roster into baggage stash.
+            void AddRosterToBaggage(ItemRoster roster)
+            {
+                foreach (var element in roster)
+                {
+                    if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    // Quest items are excluded from the backup inventory, but keep this guard anyway for safety.
+                    if (element.EquipmentElement.IsQuestItem)
+                    {
+                        continue;
+                    }
+
+                    _baggageStash.AddToCounts(element.EquipmentElement, element.Amount);
+                }
+            }
+
+            // Local helper: charge a wagon fee using party gold.
+            void TryChargeWagonFee(int feeAmount)
+            {
+                if (feeAmount <= 0)
+                {
+                    return;
+                }
+
+                var partyGold = Hero.MainHero?.PartyBelongedTo?.PartyTradeGold ?? 0;
+                var fee = Math.Min(feeAmount, partyGold);
+                if (fee <= 0)
+                {
+                    ModLogger.Info("Gold", "No gold available for wagon fee - proceeding without charge.");
+                    return;
+                }
+
+                GiveGoldAction.ApplyBetweenCharacters(hero, null, fee);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
+                        .SetTextVariable("FEE", fee).ToString()));
+            }
+
+            // Execute choice using backed-up inventory.
             switch (choice)
             {
                 case "stash":
-                    StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                {
+                    AddRosterToBaggage(backedUpInventory);
+                    TryChargeWagonFee(50);
                     break;
+                }
                 case "sell":
-                    LiquidateAllBelongings(Hero.MainHero, 0.60f);
+                {
+                    var totalValue = 0f;
+                    foreach (var element in backedUpInventory)
+                    {
+                        if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                        {
+                            continue;
+                        }
+
+                        if (element.EquipmentElement.IsQuestItem)
+                        {
+                            continue;
+                        }
+
+                        totalValue += element.EquipmentElement.Item.Value * element.Amount * 0.60f;
+                    }
+
+                    var gain = (int)Math.Floor(totalValue);
+                    if (gain > 0)
+                    {
+                        GiveGoldAction.ApplyBetweenCharacters(null, hero, gain);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
+                                .SetTextVariable("GOLD", gain).ToString()));
+                    }
+
                     break;
+                }
                 case "smuggle":
-                    SmuggleOneItem(Hero.MainHero);
+                {
+                    var best = backedUpInventory
+                        .Where(e => e.EquipmentElement.Item != null && e.Amount > 0 && !e.EquipmentElement.IsQuestItem)
+                        .OrderByDescending(e => e.EquipmentElement.Item.Value)
+                        .FirstOrDefault();
+
+                    // Default: if nothing meaningful, just stash.
+                    if (best.EquipmentElement.Item == null)
+                    {
+                        AddRosterToBaggage(backedUpInventory);
+                        break;
+                    }
+
+                    // Stash everything first, then decide what happens to the one item the player tried to keep.
+                    AddRosterToBaggage(backedUpInventory);
+
+                    var roguery = hero.GetSkillValue(DefaultSkills.Roguery);
+                    var success = roguery >= 30;
+
+                    if (success)
+                    {
+                        // Move 1 copy back into the player's inventory.
+                        _baggageStash.AddToCounts(best.EquipmentElement, -1);
+                        MobileParty.MainParty?.ItemRoster.AddToCounts(best.EquipmentElement, 1);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=qm_smuggle_success}You tuck away your {ITEM} without being caught.")
+                                .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString()));
+                    }
+                    else
+                    {
+                        // Confiscated: remove 1 copy from the wagon stash.
+                        _baggageStash.AddToCounts(best.EquipmentElement, -1);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=qm_smuggle_fail}Caught smuggling. Your {ITEM} is confiscated.")
+                                .SetTextVariable("ITEM", best.EquipmentElement.Item.Name).ToString(),
+                            Colors.Red));
+                    }
+
                     break;
+                }
                 default:
-                    // Default to stow to avoid enlistment without cleanup
-                    StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                    AddRosterToBaggage(backedUpInventory);
+                    TryChargeWagonFee(50);
                     break;
+            }
+
+            // The backed up inventory has now been handled (moved to baggage/sold/confiscated).
+            // Clear it so discharge restoration doesn't duplicate items.
+            equipmentManager.ClearBackedUpPersonalInventory();
+            return true;
+        }
+
+        public void HandleBagCheckChoice(string choice)
+        {
+            // Preferred flow: operate on the backed-up personal inventory so we never touch military-issued kit.
+            // Fallback: if no backup exists (unexpected), operate on the live roster/equipment.
+            var handledViaBackup = TryHandleBagCheckUsingBackedUpPersonalInventory(Hero.MainHero, choice);
+
+            if (!handledViaBackup)
+            {
+                EnsureBaggageStash();
+                switch (choice)
+                {
+                    case "stash":
+                        StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                        break;
+                    case "sell":
+                        LiquidateAllBelongings(Hero.MainHero, 0.60f);
+                        break;
+                    case "smuggle":
+                        SmuggleOneItem(Hero.MainHero);
+                        break;
+                    default:
+                        // Default to stow to avoid enlistment without cleanup
+                        StashAllBelongings(Hero.MainHero, chargeFee: 50);
+                        break;
+                }
             }
 
             _bagCheckCompleted = true;
             _bagCheckEverCompleted = true;
-            var pendingLord = _pendingBagCheckLord;
             _pendingBagCheckLord = null;
             _bagCheckScheduled = false;
             _bagCheckDueTime = CampaignTime.Zero;
             _bagCheckInProgress = false;
-            ContinueStartEnlistInternal(pendingLord);
+            
+            // NOTE: Do NOT call ContinueStartEnlistInternal here!
+            // The player is already enlisted from StartEnlist() → ContinueStartEnlistInternal() (first call).
+            // Calling it again here causes:
+            // 1. OnEnlisted event to fire twice
+            // 2. Onboarding state to be re-initialized
+            // 3. Queued onboarding events to be dropped as "no longer eligible"
+            // The bag check should ONLY process equipment, not re-run the enlistment flow.
+            ModLogger.Info("Enlistment", "Bag check completed successfully");
         }
 
         /// <summary>
         ///     Processes a deferred enlistment bag check after a cooldown so enlistment flow is never blocked.
         /// </summary>
-        private void ProcessDeferredBagCheck()
+        private void ProcessDeferredBagCheck(bool force = false)
         {
             if (!_bagCheckScheduled || _bagCheckCompleted || _bagCheckInProgress)
             {
                 return;
             }
 
-            if (CampaignTime.Now < _bagCheckDueTime)
+            if (!force && CampaignTime.Now < _bagCheckDueTime)
             {
                 return;
             }
@@ -1490,6 +2070,45 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _baggageStash ??= new ItemRoster();
         }
 
+        /// <summary>
+        /// Return any items left in the baggage train stash to the player's party inventory.
+        /// This prevents "stored belongings" from becoming inaccessible after discharge.
+        /// </summary>
+        private void ReturnBaggageStashToPlayerInventory()
+        {
+            try
+            {
+                if (_baggageStash == null || _baggageStash.Count == 0)
+                {
+                    return;
+                }
+
+                var partyRoster = MobileParty.MainParty?.ItemRoster;
+                if (partyRoster == null)
+                {
+                    return;
+                }
+
+                var elements = _baggageStash.ToList();
+                foreach (var element in elements)
+                {
+                    if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                    {
+                        continue;
+                    }
+
+                    partyRoster.AddToCounts(element.EquipmentElement, element.Amount);
+                    _baggageStash.AddToCounts(element.EquipmentElement, -element.Amount);
+                }
+
+                ModLogger.Info("Enlistment", $"Returned baggage train stash to player inventory ({elements.Count} stacks).");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-015", "Error returning baggage train stash to inventory", ex);
+            }
+        }
+
         private void StashAllBelongings(Hero hero, int chargeFee)
         {
             try
@@ -1499,38 +2118,64 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var partyRoster = MobileParty.MainParty?.ItemRoster;
                 if (partyRoster != null)
                 {
+                    var questItemsKept = 0;
                     foreach (var element in partyRoster.ToList())
                     {
                         if (element.EquipmentElement.Item != null && element.Amount > 0)
                         {
+                            // CRITICAL: Skip quest items - they must stay with the player
+                            if (element.EquipmentElement.IsQuestItem)
+                            {
+                                questItemsKept++;
+                                continue;
+                            }
+                            
                             _baggageStash.AddToCounts(element.EquipmentElement.Item, element.Amount);
                         }
                     }
-                    partyRoster.Clear();
+                    
+                    // Clear non-quest items from roster
+                    var itemsToRemove = partyRoster.Where(e => !e.EquipmentElement.IsQuestItem).ToList();
+                    foreach (var item in itemsToRemove)
+                    {
+                        partyRoster.AddToCounts(item.EquipmentElement, -item.Amount);
+                    }
+                    
+                    if (questItemsKept > 0)
+                    {
+                        ModLogger.Info("Equipment", $"Protected {questItemsKept} quest item(s) from inventory stashing");
+                    }
                 }
 
                 MoveEquipmentToStash(hero.BattleEquipment);
                 MoveEquipmentToStash(hero.CivilianEquipment);
 
-                if (chargeFee > 0)
+            if (chargeFee > 0)
+            {
+                // Use party gold (what the player sees in UI) not hero personal gold
+                var partyGold = Hero.MainHero?.PartyBelongedTo?.PartyTradeGold ?? 0;
+                var fee = Math.Min(chargeFee, partyGold);
+                if (fee > 0)
                 {
-                    var fee = Math.Min(chargeFee, hero.Gold);
-                    if (fee > 0)
-                    {
-                        // Use ChangeHeroGold to ensure the engine updates state/UI consistently.
-                        hero.ChangeHeroGold(-fee);
-                        InformationManager.DisplayMessage(new InformationMessage(
-                            new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
-                                .SetTextVariable("FEE", fee).ToString()));
-                        ModLogger.Info("Gold", $"Wagon fee paid: {fee} denars");
-                    }
+                    // GiveGoldAction properly deducts from party treasury and updates UI
+                    GiveGoldAction.ApplyBetweenCharacters(hero, null, fee);
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_fee_paid}You pay {FEE} denars for the wagon fee.")
+                            .SetTextVariable("FEE", fee).ToString()));
+                    ModLogger.Info("Gold", $"Wagon fee paid: {fee} denars");
                 }
+                else
+                {
+                    // Player has no gold - still proceed but log it
+                    ModLogger.Info("Gold", "No gold available for wagon fee - proceeding without charge.");
+                }
+            }
 
                 ModLogger.Info("Enlistment", $"Stashed belongings; stash now {_baggageStash.Count} entries.");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Enlistment", $"Error stashing belongings: {ex.Message}", ex);
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-004", "Error stashing belongings", ex);
             }
         }
 
@@ -1539,6 +2184,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 var totalValue = 0f;
+                var questItemsKept = 0;
                 var partyRoster = MobileParty.MainParty?.ItemRoster;
                 if (partyRoster != null)
                 {
@@ -1546,10 +2192,28 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         if (element.EquipmentElement.Item != null && element.Amount > 0)
                         {
+                            // CRITICAL: Skip quest items - they cannot be sold
+                            if (element.EquipmentElement.IsQuestItem)
+                            {
+                                questItemsKept++;
+                                continue;
+                            }
+                            
                             totalValue += element.EquipmentElement.Item.Value * element.Amount * rate;
                         }
                     }
-                    partyRoster.Clear();
+                    
+                    // Clear only non-quest items from roster
+                    var itemsToRemove = partyRoster.Where(e => !e.EquipmentElement.IsQuestItem).ToList();
+                    foreach (var item in itemsToRemove)
+                    {
+                        partyRoster.AddToCounts(item.EquipmentElement, -item.Amount);
+                    }
+                    
+                    if (questItemsKept > 0)
+                    {
+                        ModLogger.Info("Equipment", $"Protected {questItemsKept} quest item(s) from liquidation");
+                    }
                 }
 
                 totalValue += ExtractEquipmentValue(hero.BattleEquipment, rate);
@@ -1558,8 +2222,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var gain = (int)Math.Floor(totalValue);
                 if (gain > 0)
                 {
-                    // Use ChangeHeroGold to ensure the engine updates state/UI consistently.
-                    hero.ChangeHeroGold(gain);
+                    // GiveGoldAction properly adds to party treasury and updates UI
+                    GiveGoldAction.ApplyBetweenCharacters(null, hero, gain);
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=qm_liquidate_gain}You receive {GOLD} denars from liquidating your possessions.")
                             .SetTextVariable("GOLD", gain).ToString()));
@@ -1569,7 +2233,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Enlistment", $"Error liquidating belongings: {ex.Message}", ex);
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-005", "Error liquidating belongings", ex);
             }
         }
 
@@ -1590,12 +2254,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 allItems.AddRange(GetEquipmentElements(hero.BattleEquipment));
                 allItems.AddRange(GetEquipmentElements(hero.CivilianEquipment));
 
+                // CRITICAL: Filter out quest items - they cannot be smuggled
                 var best = allItems
-                    .Where(e => e.EquipmentElement.Item != null && e.Amount > 0)
+                    .Where(e => e.EquipmentElement.Item != null && e.Amount > 0 && !e.EquipmentElement.IsQuestItem)
                     .OrderByDescending(e => e.EquipmentElement.Item.Value)
                     .FirstOrDefault();
 
-                // If nothing to smuggle, just stash everything
+                // If nothing to smuggle, just stash everything (quest items will be protected)
                 if (best.EquipmentElement.Item == null)
                 {
                     StashAllBelongings(hero, 0);
@@ -1628,7 +2293,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Enlistment", $"Error smuggling item: {ex.Message}", ex);
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-006", "Error smuggling item", ex);
             }
         }
 
@@ -1639,16 +2304,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+            // Use numeric iteration to avoid invalid enum values like NumEquipmentSetSlots
+            // which would cause IndexOutOfRangeException when used as an array index.
+            for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
             {
-                if (slot == EquipmentIndex.None)
-                {
-                    continue;
-                }
-
+                var slot = (EquipmentIndex)i;
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
+                    // CRITICAL: Skip quest items - they must stay equipped with the player
+                    if (elem.IsQuestItem)
+                    {
+                        ModLogger.Info("Equipment", $"Protected quest item '{elem.Item.Name}' from equipment stashing (slot {slot})");
+                        continue;
+                    }
+                    
                     _baggageStash.AddToCounts(elem.Item, 1);
                     equipment[slot] = default;
                 }
@@ -1663,16 +2333,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return total;
             }
 
-            foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+            // Use numeric iteration to avoid invalid enum values like NumEquipmentSetSlots
+            for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
             {
-                if (slot == EquipmentIndex.None)
-                {
-                    continue;
-                }
-
+                var slot = (EquipmentIndex)i;
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
+                    // CRITICAL: Skip quest items - they cannot be sold and must stay equipped
+                    if (elem.IsQuestItem)
+                    {
+                        ModLogger.Info("Equipment", $"Protected quest item '{elem.Item.Name}' from liquidation (slot {slot})");
+                        continue;
+                    }
+                    
                     total += elem.Item.Value * rate;
                     equipment[slot] = default;
                 }
@@ -1689,13 +2363,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return list;
             }
 
-            foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+            // Use numeric iteration to avoid invalid enum values like NumEquipmentSetSlots
+            for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
             {
-                if (slot == EquipmentIndex.None)
-                {
-                    continue;
-                }
-
+                var slot = (EquipmentIndex)i;
                 var elem = equipment[slot];
                 if (elem.Item != null)
                 {
@@ -1765,8 +2436,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentDate = resumedFromGrace && _savedGraceEnlistmentDate != CampaignTime.Zero
                     ? _savedGraceEnlistmentDate
                     : CampaignTime.Now; // Record when service started (or resume previous enlistment date)
-                _selectedDuty = "enlisted"; // Default to basic enlisted duty for daily XP
-                _selectedProfession = "none"; // No profession initially (unlocks at tier 3)
+                _selectedDuty = "runner"; // Default to runner duty for new recruits
                 _fatigueMax = 24;
                 _fatigueCurrent = _fatigueMax;
                 _pendingMusterPay = 0;
@@ -1778,8 +2448,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _lastDischargeBand = null;
                 _isOnProbation = false;
                 _probationEnds = CampaignTime.Zero;
-
-                TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
+                
+                // Reset term-based notification state (used only for informational prompts)
+                _retirementNotificationShown = false;
+                _currentTermKills = 0;
 
                 TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
 
@@ -1788,12 +2460,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 TryPromptUnknownCultureStyle();
                 AssignProvisionalLance(resumedFromGrace);
 
-                // Register the default "enlisted" duty with the duties system
+                // Register the formation-appropriate starter duty with the duties system
                 // This ensures daily XP processing begins immediately for the basic duty
                 var dutiesBehavior = EnlistedDutiesBehavior.Instance;
                 if (dutiesBehavior != null)
                 {
-                    dutiesBehavior.AssignDuty("enlisted");
+                    var formation = dutiesBehavior.PlayerFormation ?? "infantry";
+                    var starterDuty = EnlistedDutiesBehavior.GetStarterDutyForFormation(formation);
+                    dutiesBehavior.AssignDuty(starterDuty);
+                    _selectedDuty = starterDuty;
                 }
 
                 // Log enlistment start for diagnostics
@@ -1823,7 +2498,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Enlistment", $"Error joining lord's kingdom: {ex.Message}");
+                            ModLogger.ErrorCode("Enlistment", "E-ENLIST-007", "Error joining lord's kingdom", ex);
                         }
                     }
                     else
@@ -1844,6 +2519,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // now part of the lord's military force. Troops will be restored when service ends.
                 TransferPlayerTroopsToLord();
 
+                // CRITICAL: Issue military equipment BEFORE bag check scheduling
+                // This ensures bag check only processes pre-enlistment civilian gear,
+                // not the military-issued T1 equipment
                 var appliedGraceEquipment = TryApplyGraceEquipment(resumedFromGrace, graceTroopId);
                 if (!appliedGraceEquipment)
                 {
@@ -1886,8 +2564,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("Enlistment",
-                            $"Error finishing PlayerEncounter before enlistment: {ex.Message}");
+                        ModLogger.ErrorCode("Enlistment", "E-ENLIST-008",
+                            "Error finishing PlayerEncounter before enlistment", ex);
                     }
                 }
 
@@ -1936,16 +2614,65 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Fire event for other mods
                 OnEnlisted?.Invoke(lord);
+
+                // Persistent Lance Leaders: connect/create the current leader now that we are enlisted.
+                // Without this, the leader system only reconnects on session launch and never records state for new enlistments.
+                try
+                {
+                    PersistentLanceLeadersBehavior.Instance?.OnPlayerEnlisted(lord);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.ErrorCode("LanceLeaders", "E-LANCELEAD-001",
+                        "Failed to notify persistent lance leader system on enlist", ex);
+                }
+
+                // Trigger the deferred bag-check as soon as enlistment finishes (best-effort).
+                // The bag-check uses backed-up personal inventory, so this is safe even after military gear issuance.
+                // If the player is in a vulnerable state (battle/encounter/prisoner), this will simply no-op
+                // and the hourly tick will retry later.
+                try
+                {
+                    ProcessDeferredBagCheck(force: true);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.ErrorCode("Enlistment", "E-ENLIST-014", "Error triggering post-enlist bag check", ex);
+                }
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Enlistment",
                     $"Failed to start enlistment with {lord?.Name?.ToString() ?? "null"} - {ex.Message}", ex);
+                
+                // CRITICAL: Reset enlistment state to prevent partial enlistment
+                // Without this, IsEnlisted would return true and hide the enlistment dialog
+                _enlistedLord = null;
+                _enlistmentTier = 1;
+                _enlistmentXP = 0;
+                _enlistmentDate = CampaignTime.Zero;
+                _selectedDuty = "runner";
+                _isOnLeave = false;
+                
                 // Restore equipment if backup was created
                 if (_hasBackedUpEquipment)
                 {
                     RestorePersonalEquipment();
+                    _hasBackedUpEquipment = false;
                 }
+                
+                // Deactivate enlisted mode
+                SyncActivationState("enlistment_failed");
+                
+                // Restore party visibility
+                var main = MobileParty.MainParty;
+                if (main != null)
+                {
+                    main.IsVisible = true;
+                    main.IsActive = true;
+                }
+                
+                ModLogger.Info("Enlistment", "Enlistment state reset after failure - dialog should be available again");
             }
         }
 
@@ -1994,7 +2721,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Lance", $"Error prompting lance selection: {ex.Message}");
+                ModLogger.ErrorCode("Lance", "E-LANCE-004", "Error prompting lance selection", ex);
             }
         }
 
@@ -2013,7 +2740,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Lance", $"Error finalizing lance selection: {ex.Message}");
+                ModLogger.ErrorCode("Lance", "E-LANCE-005", "Error finalizing lance selection", ex);
             }
         }
 
@@ -2189,7 +2916,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Lance", $"Error applying style selection: {ex.Message}");
+                ModLogger.ErrorCode("Lance", "E-LANCE-006", "Error applying unknown-culture style selection", ex);
             }
         }
 
@@ -2224,6 +2951,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
             try
             {
                 ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
+
+                // Persistent Lance Leaders: record discharge memory and clear cached leader reference.
+                // Best effort only: enlistment discharge must not fail due to auxiliary systems.
+                try
+                {
+                    PersistentLanceLeadersBehavior.Instance?.OnPlayerDischarged();
+                }
+                catch (Exception ex)
+                {
+                    // Best-effort only, but include the full exception detail for support.
+                    ModLogger.ErrorCode("LanceLeaders", "E-LANCELEAD-002",
+                        "Failed to notify persistent lance leader system on discharge", ex);
+                }
                 var retirementConfig = EnlistedConfig.LoadRetirementConfig();
                 var firstTermDays = retirementConfig?.FirstTermDays > 0 ? retirementConfig.FirstTermDays : 252;
                 
@@ -2268,7 +3008,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Enlistment", $"Error removing player from army: {ex.Message}");
+                            ModLogger.ErrorCode("Enlistment", "E-ENLIST-011", "Error removing player from army", ex);
                             // Force clear army reference even if removal fails
                             main.Army = null;
                         }
@@ -2362,6 +3102,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     ModLogger.Info("Equipment", "Keeping enlisted equipment during grace period");
                 }
+
+                // Return any stowed belongings from the baggage train stash so they are not stranded behind the camp UI.
+                ReturnBaggageStashToPlayerInventory();
 
                 // Restore player's ships to normal vulnerability after full discharge
                 // During grace period, ships remain protected in case player re-enlists
@@ -2484,7 +3227,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("Enlistment", $"Error restoring kingdom: {ex.Message}");
+                        ModLogger.ErrorCode("Enlistment", "E-ENLIST-012", "Error restoring kingdom during discharge", ex);
                     }
                 }
 
@@ -2499,7 +3242,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // If retaining kingdom for grace period, save progression state BEFORE clearing it
                 // This preserves tier/XP so player can resume at their previous rank when re-enlisting
                 // CRITICAL: Must happen before _enlistmentTier and _enlistmentXP are reset below
-                if (retainKingdomDuringGrace && _enlistedLord != null)
+                // BUG FIX: Removed _enlistedLord != null check - lord may be dead but we still need
+                // to save progression state so player can resume at their previous rank
+                if (retainKingdomDuringGrace)
                 {
                     _savedGraceTier = _enlistmentTier;
                     _savedGraceXP = _enlistmentXP;
@@ -2510,10 +3255,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _savedGraceLanceStyle = _currentLanceStyle;
                     _savedGraceLanceStoryId = _currentLanceStoryId;
                     _savedGraceLanceProvisional = _isLanceProvisional;
-                _savedGraceManualLanceStyleId = _manualLanceStyleId;
-            _savedGraceLanceLegacy = _isLanceLegacy;
+                    _savedGraceManualLanceStyleId = _manualLanceStyleId;
+                    _savedGraceLanceLegacy = _isLanceLegacy;
                     ModLogger.Info("Enlistment",
-                        $"Saved grace progression state: Tier={_savedGraceTier}, XP={_savedGraceXP}");
+                        $"Saved grace progression state: Tier={_savedGraceTier}, XP={_savedGraceXP}, Lord={((_enlistedLord?.Name?.ToString()) ?? "deceased")}");
                 }
                 else
                 {
@@ -2538,11 +3283,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
+                // Clean up Quartermaster Hero reference (Phase 3)
+                CleanupQuartermasterOnServiceEnd();
+
+                // Clear food quality bonus (Phase 5)
+                ClearFoodQuality();
+
+                // Clear retinue provisioning (Phase 6)
+                ClearRetinueProvisioning();
+
                 _enlistedLord = null;
                 _enlistmentTier = 1;
                 _enlistmentXP = 0;
                 _enlistmentDate = CampaignTime.Zero;
                 _disbandArmyAfterBattle = false; // Clear any pending army operations
+                ClearPayState("service_ended");
                 ClearLanceState();
                 if (!playerInBattleState)
                 {
@@ -2590,7 +3345,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 if (kingdom == null)
                 {
-                    ModLogger.Error("Desertion", "Cannot start grace period - kingdom is null");
+                    ModLogger.ErrorCode("Desertion", "E-DESERT-004", "Cannot start grace period - kingdom is null",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                     return;
                 }
 
@@ -2615,6 +3371,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Debug("Desertion",
                         $"Using pre-saved grace state: Tier={_savedGraceTier}, XP={_savedGraceXP}");
                 }
+                
+                // BUG FIX: Also record reservist data when starting grace period
+                // This ensures player can resume service later even if grace period expires
+                // Uses "grace" band to give better treatment than deserter on re-enlistment
+                var daysServed = _enlistmentDate != CampaignTime.Zero 
+                    ? (int)(CampaignTime.Now - _enlistmentDate).ToDays 
+                    : 0;
+                ServiceRecordManager.Instance?.RecordReservist(
+                    "grace", // New band type for grace period exits
+                    daysServed,
+                    _savedGraceTier > 0 ? _savedGraceTier : _enlistmentTier,
+                    _savedGraceXP > 0 ? _savedGraceXP : _enlistmentXP,
+                    _savedGraceLord ?? _enlistedLord);
 
                 ModLogger.Info("Desertion", $"Started {graceDays}-day grace period to rejoin {kingdom.Name}");
 
@@ -2657,7 +3426,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var playerClan = Clan.PlayerClan;
                 if (playerClan == null)
                 {
-                    ModLogger.Error("Desertion", "Cannot apply penalties - player clan is null");
+                    ModLogger.ErrorCode("Desertion", "E-DESERT-005", "Cannot apply penalties - player clan is null",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                     ClearDesertionGracePeriod();
                     return;
                 }
@@ -2816,7 +3586,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Desertion", $"Error applying minor faction desertion penalties: {ex.Message}");
+                ModLogger.ErrorCode("Desertion", "E-DESERT-001", "Error applying minor faction desertion penalties", ex);
             }
         }
 
@@ -2875,7 +3645,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var playerClan = Clan.PlayerClan;
                 if (playerClan == null)
                 {
-                    ModLogger.Error("Desertion", "Cannot desert - player clan is null");
+                    ModLogger.ErrorCode("Desertion", "E-DESERT-006", "Cannot desert - player clan is null",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                     return;
                 }
 
@@ -2896,7 +3667,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Desertion", $"Error removing from army: {ex.Message}");
+                            ModLogger.ErrorCode("Desertion", "E-DESERT-002", "Error removing from army", ex);
                             main.Army = null;
                         }
                     }
@@ -2926,6 +3697,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentXP = 0;
                 _enlistmentDate = CampaignTime.Zero;
                 _disbandArmyAfterBattle = false;
+                ClearPayState("desertion");
 
                 // Clear any active grace period state
                 ClearDesertionGracePeriod();
@@ -2967,7 +3739,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("Desertion", $"Error leaving kingdom: {ex.Message}");
+                        ModLogger.ErrorCode("Desertion", "E-DESERT-003", "Error leaving kingdom", ex);
                     }
                 }
 
@@ -3008,7 +3780,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var manager = TroopSelectionManager.Instance;
             if (manager == null)
             {
-                ModLogger.Error("Enlistment", "TroopSelectionManager unavailable - cannot restore saved equipment");
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-009",
+                    "TroopSelectionManager unavailable - cannot restore saved equipment", null);
                 return false;
             }
 
@@ -3048,18 +3821,29 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Hourly tick handler that runs once per in-game hour while the player is enlisted.
         ///     Maintains party following, visibility, and encounter prevention state.
+        ///     Also processes hourly fatigue recovery during rest periods.
         ///     Called automatically by the game every hour.
         /// </summary>
         private void OnHourlyTick()
         {
             // Check if grace period expired (even if not enlisted)
-            if (IsInDesertionGracePeriod && CampaignTime.Now >= _desertionGracePeriodEnd)
+            // BUG FIX: Previous check used IsInDesertionGracePeriod which requires CampaignTime.Now < _desertionGracePeriodEnd
+            // This was contradictory with the >= check, meaning expiration NEVER triggered.
+            // Fixed: Check if grace period WAS active (kingdom set, deadline set) but has now expired
+            if (_pendingDesertionKingdom != null && 
+                _desertionGracePeriodEnd != CampaignTime.Zero && 
+                CampaignTime.Now >= _desertionGracePeriodEnd)
             {
+                ModLogger.Info("Desertion", $"Grace period expired - {(CampaignTime.Now - _desertionGracePeriodEnd).ToDays:F1} days overdue");
                 ApplyDesertionPenalties();
                 return;
             }
 
             ProcessDeferredBagCheck();
+
+            // Process hourly fatigue recovery (Enhanced Fatigue System - Phase 1)
+            // This runs for enlisted players during rest periods (night hours)
+            ProcessFatigueRecovery();
 
             SyncActivationState("hourly_tick");
             if (!EnlistedActivation.IsActive)
@@ -3286,7 +4070,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Following", $"Error releasing escort: {ex.Message}");
+                ModLogger.ErrorCode("Following", "E-FOLLOW-001", "Error releasing escort (SetMoveModeHold)", ex);
             }
         }
 
@@ -3320,13 +4104,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     else
                     {
-                        ModLogger.Error("Battle", "ShouldJoinPlayerBattles property not found via reflection");
+                        ModLogger.ErrorCode("Battle", "E-BATTLE-001",
+                            "ShouldJoinPlayerBattles property not found via reflection", null);
                     }
                 }
                 catch (Exception ex2)
                 {
-                    ModLogger.Error("Battle",
-                        $"Failed to set ShouldJoinPlayerBattles: Direct={ex1.Message}, Reflection={ex2.Message}");
+                    // Capture both failure stacks: direct set + reflection fallback.
+                    var agg = new AggregateException(ex1, ex2);
+                    ModLogger.ErrorCode("Battle", "E-BATTLE-002",
+                        "Failed to set ShouldJoinPlayerBattles (direct + reflection)", agg);
                 }
             }
         }
@@ -3400,9 +4187,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Check for retirement eligibility notification (first term complete)
                 CheckRetirementEligibility();
+                
+                // Phase 5: Check for NPC soldier desertion when pay tension is high
+                CheckNpcDesertionFromPayTension();
 
-                // Check for renewal term completion
-                CheckRenewalTermCompletion();
+                // Phase 6: Check retinue provisioning status (T7+ only)
+                CheckRetinueProvisioningStatus();
             }
             catch (Exception ex)
             {
@@ -3443,19 +4233,147 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             var payout = _pendingMusterPay;
-            ModLogger.Info("Pay", $"Resolving pay muster: standard (PendingPay={payout})");
-            if (payout > 0)
+            var totalWithBackpay = payout + _owedBackpay;
+            var canPayFull = CanLordAffordPay(totalWithBackpay);
+            var canPayPartial = !canPayFull && CanLordAffordPartialPay(totalWithBackpay);
+            var wealthStatus = GetLordWealthStatus();
+            
+            ModLogger.Info("Pay", $"Resolving pay muster: PendingPay={payout}, Backpay={_owedBackpay}, " +
+                $"CanPayFull={canPayFull}, CanPayPartial={canPayPartial}, LordWealth={wealthStatus}");
+
+            if (canPayFull && totalWithBackpay > 0)
             {
-                Hero.MainHero.ChangeHeroGold(payout);
-                OnWagePaid?.Invoke(payout);
-                ModLogger.Info("Gold", $"Pay muster payout: {payout} (pending cleared)");
+                // Full payment including any backpay
+                ProcessFullPayment(totalWithBackpay);
             }
+            else if (canPayPartial && totalWithBackpay > 0)
+            {
+                // Partial payment - lord pays 50% of what's owed
+                ProcessPartialPayment(payout, totalWithBackpay);
+            }
+            else if (payout > 0)
+            {
+                // Lord can't afford to pay anything - accumulate backpay and tension
+                ProcessPayDelay(payout);
+            }
+            
             _pendingMusterPay = 0;
-            _lastPayOutcome = $"standard:{payout}";
             _nextPayday = ComputeNextPayday();
             _payMusterPending = false;
             ClearProbation("pay_muster_resolved");
-            ModLogger.Info("Pay", $"Pay muster resolved: standard (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+            ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
+            
+            // Phase 6: Notify Schedule system to reset 12-day cycle
+            Schedule.Behaviors.ScheduleBehavior.Instance?.OnPayMusterCompleted();
+        }
+
+        /// <summary>
+        /// Process full payment including any backpay. Reduces tension by 30.
+        /// </summary>
+        private void ProcessFullPayment(int grossAmount)
+        {
+            // Deduct lance fund (5%)
+            var lanceFundDeduction = (int)(grossAmount * 0.05f);
+            _lanceFundBalance += lanceFundDeduction;
+            var netPayout = grossAmount - lanceFundDeduction;
+            
+            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, netPayout);
+            OnWagePaid?.Invoke(netPayout);
+            
+            // Update pay tension state - successful full payment reduces tension by 30
+            _lastPayDate = CampaignTime.Now;
+            var hadBackpay = _owedBackpay > 0;
+            _payTension = Math.Max(0, _payTension - 30);
+            _owedBackpay = 0;
+            _consecutiveDelays = 0;
+            
+            _lastPayOutcome = hadBackpay ? $"backpay:{netPayout}" : $"standard:{netPayout}";
+            ModLogger.Info("Gold", $"Full payment: {netPayout} (gross={grossAmount}, lanceFund={lanceFundDeduction})");
+            
+            if (hadBackpay)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Back pay received! {netPayout} denars (including owed wages).",
+                    Colors.Green));
+            }
+        }
+
+        /// <summary>
+        /// Process partial payment - lord pays current week + 50% of backpay. Reduces tension by 10.
+        /// </summary>
+        private void ProcessPartialPayment(int currentPay, int totalOwed)
+        {
+            // Pay current week + half of backpay
+            var backpayPortion = _owedBackpay / 2;
+            var grossAmount = currentPay + backpayPortion;
+            
+            // Deduct lance fund (5%)
+            var lanceFundDeduction = (int)(grossAmount * 0.05f);
+            _lanceFundBalance += lanceFundDeduction;
+            var netPayout = grossAmount - lanceFundDeduction;
+            
+            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, netPayout);
+            OnWagePaid?.Invoke(netPayout);
+            
+            // Update state - partial payment reduces tension by 10, halves remaining backpay
+            _lastPayDate = CampaignTime.Now;
+            _owedBackpay = _owedBackpay - backpayPortion;
+            _payTension = Math.Max(0, _payTension - 10);
+            // Don't reset consecutive delays for partial payment
+            
+            _lastPayOutcome = $"partial_backpay:{netPayout}";
+            ModLogger.Info("Gold", $"Partial payment: {netPayout} (stillOwed={_owedBackpay})");
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Partial pay received: {netPayout} denars. Still owed: {_owedBackpay}.",
+                Colors.Yellow));
+        }
+
+        /// <summary>
+        /// Process pay delay - accumulate backpay and increase tension.
+        /// </summary>
+        private void ProcessPayDelay(int unpaidAmount)
+        {
+            _owedBackpay += unpaidAmount;
+            _consecutiveDelays++;
+            
+            // Tension escalates: 10 + 5 per week overdue
+            var tensionIncrease = GetPayTensionIncrease();
+            _payTension = Math.Min(100, _payTension + tensionIncrease);
+            
+            _lastPayOutcome = $"delayed:{unpaidAmount}";
+            ModLogger.Warn("Pay", $"Pay delayed: Owed={_owedBackpay}, Tension={_payTension}, Consecutive={_consecutiveDelays}");
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Pay delayed! Lord {_enlistedLord?.Name} cannot afford wages. Owed: {_owedBackpay} denars.",
+                Colors.Red));
+        }
+
+        /// <summary>
+        /// Write off backpay debt (used when transferring lords or lord goes completely broke).
+        /// Clears owed amount and tension, but damages lord relation.
+        /// </summary>
+        internal void WriteOffBackpay(string reason)
+        {
+            if (_owedBackpay <= 0) return;
+            
+            var writtenOff = _owedBackpay;
+            _owedBackpay = 0;
+            _payTension = 0;
+            _consecutiveDelays = 0;
+            
+            // Damage relation with lord for stiffing us
+            if (_enlistedLord != null)
+            {
+                ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -10, false, true);
+            }
+            
+            _lastPayOutcome = $"written_off:{writtenOff}";
+            ModLogger.Warn("Pay", $"Backpay written off: {writtenOff} denars ({reason})");
+            
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Your back pay of {writtenOff} denars has been written off. {reason}",
+                Colors.Red));
         }
 
         internal void ResolveCorruptionMuster()
@@ -3503,7 +4421,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         var payout = (int)(_pendingMusterPay * 1.2f);
                         if (payout > 0)
                         {
-                            Hero.MainHero.ChangeHeroGold(payout);
+                            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                             OnWagePaid?.Invoke(payout);
                         }
                         _lastPayOutcome = $"corruption_success:{payout}";
@@ -3539,7 +4457,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var payout = (int)(_pendingMusterPay * 0.95f);
             if (payout > 0)
             {
-                Hero.MainHero.ChangeHeroGold(payout);
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                 OnWagePaid?.Invoke(payout);
             }
 
@@ -3587,7 +4505,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                Hero.MainHero.ChangeHeroGold(payout);
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                 OnWagePaid?.Invoke(payout);
 
                 // Placeholder: if no gear picker available, just log outcome.
@@ -3614,6 +4532,35 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Instead, retry soon so the player can resolve pay without losing track of it.
             _nextPayday = CampaignTime.Now + CampaignTime.Days(1f);
             ModLogger.Info("Pay", $"Pay muster deferred; retry scheduled for {_nextPayday} (Pending={_pendingMusterPay}).");
+        }
+
+        internal void ResolvePromissoryMuster()
+        {
+            try
+            {
+                if (_isPendingDischarge)
+                {
+                    // Promissory notes aren't used for final muster; resolve normally.
+                    ResolvePayMusterStandard();
+                    return;
+                }
+
+                // Keep this internal and simple:
+                // - do not pay out today
+                // - keep pending pay in the ledger
+                // - retry soon so the player can resolve when conditions improve
+                _lastPayOutcome = $"promissory:{_pendingMusterPay}";
+                _payMusterPending = false;
+                _nextPayday = CampaignTime.Now + CampaignTime.Days(3f);
+                ModLogger.Info("Pay",
+                    $"Pay muster resolved: promissory note accepted (PendingStillOwed={_pendingMusterPay}, NextRetry={_nextPayday})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Pay", $"Promissory muster failed: {ex.Message}");
+                _payMusterPending = false;
+                _nextPayday = CampaignTime.Now + CampaignTime.Days(1f);
+            }
         }
 
         public bool RequestDischarge()
@@ -3648,7 +4595,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 var daysServed = (int)(CampaignTime.Now - _enlistmentDate).ToDays;
                 var config = EnlistedConfig.LoadRetirementConfig();
-                var band = daysServed >= 200 ? "veteran" : daysServed >= 100 ? "honorable" : "washout";
+                var band = daysServed >= 200
+                    ? (_enlistmentTier >= 4 ? "heroic" : "veteran")
+                    : daysServed >= 100
+                        ? "honorable"
+                        : "washout";
 
                 // Honorable/Veteran discharge requires at least neutral relation with the enlisted lord.
                 // If relations are negative at exit, treat as washout even if days-served threshold is met.
@@ -3666,12 +4617,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 switch (band)
                 {
+                    case "heroic":
                     case "veteran":
                         lordRelation = 30;
                         factionRelation = 15;
                         severance = Math.Max(0, config?.SeveranceVeteran ?? 3000);
                         isHonorable = true;
-                        _lastDischargeBand = "veteran";
+                        _lastDischargeBand = band;
                         break;
                     case "honorable":
                         lordRelation = 10;
@@ -3705,7 +4657,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var payout = Math.Max(0, _pendingMusterPay) + Math.Max(0, severance);
                 if (payout > 0)
                 {
-                    Hero.MainHero.ChangeHeroGold(payout);
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, payout);
                 }
 
                 ModLogger.Info("Pay",
@@ -3733,7 +4685,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Retirement", $"Error finalizing discharge: {ex.Message}");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-001", "Error finalizing discharge", ex);
                 _isPendingDischarge = false;
                 _payMusterPending = false;
                 _pendingMusterPay = 0;
@@ -3790,7 +4742,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Pay", $"Error resolving smuggle discharge: {ex.Message}");
+                ModLogger.ErrorCode("Pay", "E-PAY-001", "Error resolving smuggle discharge", ex);
                 _isPendingDischarge = false;
                 _payMusterPending = false;
                 _pendingMusterPay = 0;
@@ -3843,13 +4795,20 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                Hero.MainHero?.ChangeHeroGold(_pensionAmountPerDay);
+                if (_pensionAmountPerDay > 0)
+                {
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, _pensionAmountPerDay);
+                }
                 _lastPayOutcome = $"pension:{_pensionAmountPerDay}";
                 ModLogger.Info("Gold", $"Pension paid: {_pensionAmountPerDay} denars");
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Gold", $"Pension processing failed: {ex.Message}");
+                // Pension is processed daily while not enlisted. If this throws, pause pension to avoid log spam
+                // and prevent repeating a potentially bad/partial payout.
+                _isPensionPaused = true;
+                _lastPayOutcome = "pension_paused_error";
+                ModLogger.ErrorCode("Gold", "E-GOLD-001", "Pension processing failed; pension paused", ex);
             }
         }
 
@@ -3922,6 +4881,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         break;
                     case "honorable":
                     case "veteran":
+                    case "heroic":
                         // Keep armor (slots 6–9), clear weapons (0–3) and mounts (10–11) to inventory
                         MoveSlotsToInventory(hero, new[] { 0, 1, 2, 3, 10, 11 });
                         break;
@@ -3929,7 +4889,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Equipment", $"Gear handling on discharge failed: {ex.Message}");
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-004", "Gear handling on discharge failed", ex);
             }
         }
 
@@ -3985,7 +4945,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Equipment", $"Failed to clear equipment: {ex.Message}");
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-005", "Failed to clear equipment", ex);
             }
         }
 
@@ -4043,7 +5003,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Warn("Retirement", $"Error applying pension on discharge: {ex.Message}");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-002", "Error applying pension on discharge", ex);
             }
         }
 
@@ -4076,6 +5036,450 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var finalWage = Math.Min((int)(baseWage * armyMultiplier * dutiesMultiplier * probationMult), 150);
             return Math.Max(finalWage, 24); // Minimum 24 gold/day
         }
+
+        #region Pay System (Phase 1-2)
+
+        /// <summary>
+        /// Lord's financial status affects pay reliability and amount.
+        /// </summary>
+        internal enum LordWealthStatus { Wealthy, Comfortable, Struggling, Poor, Broke }
+
+        /// <summary>
+        /// Get base daily pay by tier per pay_system.md spec.
+        /// T1 (Levy): 3, T2 (Recruit): 6, T3 (Soldier): 10, T4 (Veteran): 16,
+        /// T5 (Elite): 25, T6 (Household): 40, T7 (Lieutenant): 60, T8 (Captain): 85, T9 (Commander): 120
+        /// </summary>
+        private int GetBasePayByTier(int tier)
+        {
+            return tier switch
+            {
+                1 => 3,
+                2 => 6,
+                3 => 10,
+                4 => 16,
+                5 => 25,
+                6 => 40,
+                7 => 60,
+                8 => 85,
+                9 => 120,
+                _ => 3
+            };
+        }
+
+        /// <summary>
+        /// Get culture modifier for pay. Some cultures pay better than others.
+        /// Empire/Aserai: 1.1, Vlandia: 1.0, Sturgia: 0.9, Battania: 0.85, Khuzait: 0.8
+        /// </summary>
+        private float GetCulturePayModifier()
+        {
+            var cultureId = _enlistedLord?.Culture?.StringId?.ToLowerInvariant() ?? string.Empty;
+            return cultureId switch
+            {
+                "empire" => 1.1f,
+                "aserai" => 1.1f,
+                "vlandia" => 1.0f,
+                "sturgia" => 0.9f,
+                "battania" => 0.85f,
+                "khuzait" => 0.8f,
+                _ => 1.0f
+            };
+        }
+
+        /// <summary>
+        /// Get wartime modifier for pay. Active conflict = hazard pay.
+        /// Peacetime: 1.0, Active War: 1.15, Siege (defending): 1.25, Siege (attacking): 1.2
+        /// </summary>
+        private float GetWartimePayModifier()
+        {
+            var lordFaction = _enlistedLord?.MapFaction;
+            if (lordFaction == null) return 1.0f;
+
+            // Check if we're in a siege
+            var settlement = Settlement.CurrentSettlement;
+            if (settlement?.IsUnderSiege == true)
+            {
+                // Check if we're defending or attacking
+                var siegeEvent = settlement.SiegeEvent;
+                if (siegeEvent != null)
+                {
+                    var isDefending = siegeEvent.BesiegerCamp?.LeaderParty?.MapFaction != lordFaction;
+                    return isDefending ? 1.25f : 1.2f;
+                }
+            }
+
+            // Check if faction is at war with anyone
+            foreach (var otherFaction in Campaign.Current.Factions)
+            {
+                if (otherFaction != lordFaction && FactionManager.IsAtWarAgainstFaction(lordFaction, otherFaction))
+                {
+                    return 1.15f; // Active war hazard pay
+                }
+            }
+
+            return 1.0f; // Peacetime
+        }
+
+        /// <summary>
+        /// Get lord wealth pay modifier. Wealthy lords pay more, poor lords pay less.
+        /// Wealthy (>50k): 1.1, Comfortable: 1.0, Struggling: 0.9, Poor: 0.75, Broke: 0.5
+        /// </summary>
+        private float GetLordWealthPayModifier()
+        {
+            var status = GetLordWealthStatus();
+            return status switch
+            {
+                LordWealthStatus.Wealthy => 1.1f,
+                LordWealthStatus.Comfortable => 1.0f,
+                LordWealthStatus.Struggling => 0.9f,
+                LordWealthStatus.Poor => 0.75f,
+                LordWealthStatus.Broke => 0.5f,
+                _ => 1.0f
+            };
+        }
+
+        /// <summary>
+        /// Check if the lord has enough gold to pay the player.
+        /// Lords keep a buffer so we don't drain them completely.
+        /// </summary>
+        private bool CanLordAffordPay(int amount)
+        {
+            var lord = _enlistedLord;
+            if (lord == null) return false;
+
+            // Lord needs to keep a buffer - don't drain them to zero
+            const int minimumBuffer = 500;
+            return lord.Gold >= amount + minimumBuffer;
+        }
+
+        /// <summary>
+        /// Check if lord can afford partial pay (at least 50%).
+        /// </summary>
+        private bool CanLordAffordPartialPay(int amount)
+        {
+            var lord = _enlistedLord;
+            if (lord == null) return false;
+
+            const int minimumBuffer = 200;
+            return lord.Gold >= (amount / 2) + minimumBuffer;
+        }
+
+        /// <summary>
+        /// Get lord's financial status based on gold thresholds.
+        /// Used for pay reliability and potential pay reduction.
+        /// </summary>
+        private LordWealthStatus GetLordWealthStatus()
+        {
+            var gold = _enlistedLord?.Gold ?? 0;
+            if (gold > 50000) return LordWealthStatus.Wealthy;
+            if (gold > 20000) return LordWealthStatus.Comfortable;
+            if (gold > 5000) return LordWealthStatus.Struggling;
+            if (gold > 1000) return LordWealthStatus.Poor;
+            return LordWealthStatus.Broke;
+        }
+
+        /// <summary>
+        /// Calculate fully-modified daily pay using tier base + all modifiers.
+        /// </summary>
+        internal int CalculateModifiedDailyPay()
+        {
+            var basePay = GetBasePayByTier(_enlistmentTier);
+            var dutyMod = GetDutiesWageMultiplier();
+            var cultureMod = GetCulturePayModifier();
+            var wealthMod = GetLordWealthPayModifier();
+            var wartimeMod = GetWartimePayModifier();
+
+            var totalPay = basePay * dutyMod * cultureMod * wealthMod * wartimeMod;
+            return Math.Max(1, (int)Math.Round(totalPay));
+        }
+
+        /// <summary>
+        /// Clear pay tension state when service ends or transfers.
+        /// </summary>
+        private void ClearPayState(string reason)
+        {
+            _payTension = 0;
+            _owedBackpay = 0;
+            _lastPayDate = CampaignTime.Zero;
+            _consecutiveDelays = 0;
+            // Note: Lance fund is NOT cleared - it belongs to the lance, not the player
+            ModLogger.Debug("Pay", $"Pay state cleared: {reason}");
+        }
+
+        /// <summary>
+        /// Calculate pay tension increase based on weeks overdue.
+        /// Base 10 + 5 per week overdue, per pay_tension_events.md spec.
+        /// </summary>
+        private int GetPayTensionIncrease()
+        {
+            if (_lastPayDate == CampaignTime.Zero) return 10;
+            var weeksOverdue = Math.Max(0, (DaysSincePay - 7) / 7);
+            return 10 + (weeksOverdue * 5);
+        }
+
+        #endregion
+
+        #region Battle Loot Share (Phase 4 Pay System)
+
+        /// <summary>
+        /// Get gold share percentage based on tier per pay_system.md spec.
+        /// T1-T6: Percentage of troop pool (after lord's 50% take)
+        /// T7-T9: Percentage of total loot (before lord's take)
+        /// </summary>
+        private float GetLootSharePercent(int tier)
+        {
+            return tier switch
+            {
+                1 => 0.05f,  // 5%
+                2 => 0.10f,  // 10%
+                3 => 0.10f,  // 10%
+                4 => 0.15f,  // 15%
+                5 => 0.15f,  // 15%
+                6 => 0.15f,  // 15%
+                7 => 0.10f,  // 10% of total (commander)
+                8 => 0.15f,  // 15% of total (commander)
+                9 => 0.20f,  // 20% of total (commander)
+                _ => 0.05f
+            };
+        }
+
+        /// <summary>
+        /// Calculate and award battle loot share based on battle outcome.
+        /// Called from OnMapEventEnded when player participated in a victory.
+        /// </summary>
+        internal void AwardBattleLootShare(MapEvent mapEvent, bool playerWon)
+        {
+            try
+            {
+                if (!IsEnlisted || _enlistedLord == null)
+                {
+                    return;
+                }
+
+                if (!playerWon)
+                {
+                    ModLogger.Debug("Pay", "No loot share - battle lost");
+                    return;
+                }
+
+                // Estimate battle loot value based on enemy casualties
+                // Native doesn't expose loot value directly, so we estimate based on killed troops
+                var enemySide = mapEvent.PlayerSide == BattleSideEnum.Defender 
+                    ? BattleSideEnum.Attacker 
+                    : BattleSideEnum.Defender;
+                    
+                var enemyCasualties = mapEvent.GetMapEventSide(enemySide)?.TroopCasualties ?? 0;
+                
+                // Estimate loot value: ~20 denars per enemy killed (rough average)
+                var estimatedTotalLoot = enemyCasualties * 20;
+                
+                if (estimatedTotalLoot <= 0)
+                {
+                    ModLogger.Debug("Pay", "No loot share - no enemy casualties");
+                    return;
+                }
+
+                var tier = _enlistmentTier;
+                var sharePercent = GetLootSharePercent(tier);
+                
+                // T1-T6 get share of troop pool (50% of total after lord's take)
+                // T7-T9 get share of total loot (commander privilege)
+                var lootPool = tier >= 7 ? estimatedTotalLoot : (int)(estimatedTotalLoot * 0.5f);
+                var goldEarned = (int)(lootPool * sharePercent);
+                
+                // Battle bonuses: Victory bonus (5-20 based on battle size)
+                var battleSizeBonus = Math.Min(20, 5 + (enemyCasualties / 10));
+                
+                var totalReward = goldEarned + battleSizeBonus;
+                
+                if (totalReward <= 0)
+                {
+                    return;
+                }
+
+                // Award gold
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, totalReward);
+                
+                ModLogger.Info("Pay", $"Battle loot share: {goldEarned} (share) + {battleSizeBonus} (victory) = {totalReward} gold (T{tier}, {enemyCasualties} casualties)");
+                
+                // Notify player
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Battle spoils: {totalReward} denars ({goldEarned} loot share + {battleSizeBonus} victory bonus)",
+                    Colors.Green));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Pay", "E-PAY-002", "Error awarding battle loot share", ex);
+            }
+        }
+
+        #endregion
+
+        #region PayTension Effects (Phase 5 Pay System)
+
+        /// <summary>
+        /// Get morale penalty based on PayTension level.
+        /// Higher tension = lower morale as soldiers get desperate.
+        /// </summary>
+        public int GetPayTensionMoralePenalty()
+        {
+            if (_payTension < 20) return 0;
+            if (_payTension < 40) return -3;
+            if (_payTension < 60) return -6;
+            if (_payTension < 80) return -10;
+            return -15;
+        }
+
+        /// <summary>
+        /// Get discipline incident chance modifier based on PayTension.
+        /// Higher tension = more likely discipline problems.
+        /// </summary>
+        public float GetPayTensionDisciplineModifier()
+        {
+            if (_payTension < 40) return 0f;
+            if (_payTension < 60) return 0.05f;  // +5% chance
+            if (_payTension < 80) return 0.10f;  // +10% chance
+            return 0.20f;  // +20% chance
+        }
+
+        /// <summary>
+        /// Check if free desertion is available (no penalty at 60+ tension).
+        /// When pay is severely delayed, the lord understands if soldiers leave.
+        /// </summary>
+        public bool IsFreeDesertionAvailable => _payTension >= 60 && IsEnlisted;
+
+        /// <summary>
+        /// Reduces PayTension by the specified amount.
+        /// Used when the player helps the lord (Phase 8).
+        /// </summary>
+        /// <param name="amount">Amount to reduce (positive value)</param>
+        public void ReducePayTension(int amount)
+        {
+            if (amount <= 0 || !IsEnlisted)
+            {
+                return;
+            }
+
+            var oldTension = _payTension;
+            _payTension = Math.Max(0, _payTension - amount);
+
+            ModLogger.Info("Pay", $"PayTension reduced: {oldTension} -> {_payTension} (by {amount})");
+
+            if (_payTension < 40 && oldTension >= 40)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=hlm_tension_stabilized}The lord's financial situation has stabilized.").ToString(),
+                    Colors.Green));
+            }
+        }
+
+        /// <summary>
+        /// Process free desertion when PayTension is 60+.
+        /// Minimal penalties compared to normal desertion.
+        /// </summary>
+        public void ProcessFreeDesertion()
+        {
+            if (!IsFreeDesertionAvailable)
+            {
+                ModLogger.Warn("Pay", "Free desertion not available - tension below 60");
+                return;
+            }
+
+            try
+            {
+                // Minimal relation penalty - lord understands
+                if (_enlistedLord != null)
+                {
+                    ChangeRelationAction.ApplyPlayerRelation(_enlistedLord, -5, false, true);
+                }
+
+                // No bounty, no faction penalty
+                ModLogger.Info("Pay", $"Processing free desertion (PayTension={_payTension})");
+
+                // End enlistment cleanly
+                StopEnlist("free_desertion_pay_crisis", isHonorableDischarge: false);
+
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "You leave quietly. No one blames you — you weren't paid.",
+                    Colors.Yellow));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Pay", "E-PAY-003", "Error processing free desertion", ex);
+            }
+        }
+
+        /// <summary>
+        /// Check for NPC soldier desertion due to high pay tension.
+        /// Only applies to commanders (T7+) with retinue.
+        /// Called daily when tension is 60+.
+        /// </summary>
+        internal void CheckNpcDesertionFromPayTension()
+        {
+            try
+            {
+                // Only commanders have troops to desert
+                if (_enlistmentTier < 7 || _payTension < 60)
+                {
+                    return;
+                }
+
+                var mainParty = MobileParty.MainParty;
+                if (mainParty?.MemberRoster == null || mainParty.MemberRoster.TotalManCount <= 1)
+                {
+                    return;
+                }
+
+                // Desertion chance scales with tension
+                float desertionChance = _payTension switch
+                {
+                    >= 90 => 0.05f,  // 5% per soldier
+                    >= 80 => 0.03f,  // 3% per soldier
+                    >= 60 => 0.01f,  // 1% per soldier
+                    _ => 0f
+                };
+
+                var roster = mainParty.MemberRoster;
+                var desertersTotal = 0;
+
+                // Check each troop type (not heroes)
+                for (int i = roster.Count - 1; i >= 0; i--)
+                {
+                    var element = roster.GetElementCopyAtIndex(i);
+                    if (element.Character?.IsHero == true) continue;
+
+                    var count = element.Number;
+                    var deserters = 0;
+
+                    for (int j = 0; j < count; j++)
+                    {
+                        if (MBRandom.RandomFloat < desertionChance)
+                        {
+                            deserters++;
+                        }
+                    }
+
+                    if (deserters > 0)
+                    {
+                        roster.AddToCounts(element.Character, -deserters);
+                        desertersTotal += deserters;
+                    }
+                }
+
+                if (desertersTotal > 0)
+                {
+                    ModLogger.Info("Pay", $"NPC desertion: {desertersTotal} soldiers left due to unpaid wages (tension={_payTension})");
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"{desertersTotal} soldier(s) deserted due to unpaid wages!",
+                        Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Pay", "E-PAY-004", "Error checking NPC desertion from pay tension", ex);
+            }
+        }
+
+        #endregion
 
         internal bool TryGetProjectedDailyWage(out int wage)
         {
@@ -4151,7 +5555,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Wage", $"Failed to calculate wage breakdown: {ex.Message}");
+                if (!_loggedWageBreakdownFailure)
+                {
+                    _loggedWageBreakdownFailure = true;
+                    ModLogger.ErrorCode("Wage", "E-WAGE-001", "Failed to calculate wage breakdown (using fallback values)", ex);
+                }
                 breakdown.BasePay = 24;
                 breakdown.Total = 24;
             }
@@ -4176,13 +5584,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var activeDuties = dutiesBehavior.ActiveDuties;
                 if (activeDuties != null && activeDuties.Count > 0)
                 {
-                    // Return the first duty that has a wage modifier
+                    // Return the first active duty for display
                     foreach (var duty in activeDuties)
                     {
-                        if (duty != "enlisted") // Skip default duty
-                        {
-                            return FormatDutyName(duty);
-                        }
+                        return FormatDutyName(duty);
                     }
                 }
 
@@ -4260,6 +5665,26 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Check if player has enough XP for next tier (up to max tier)
             while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
             {
+                // Phase 4: temporary promotion block at very high discipline risk.
+                // This is a relief-valve-friendly block: XP keeps accumulating and promotion will resume
+                // once discipline improves below the threshold.
+                var escalation = EscalationManager.Instance;
+                if (escalation?.IsEnabled() == true &&
+                    escalation.State != null &&
+                    escalation.State.Discipline >= EscalationThresholds.DisciplineBlocked)
+                {
+                    var show = _lastPromotionBlockedMessageTime == CampaignTime.Zero ||
+                               (CampaignTime.Now - _lastPromotionBlockedMessageTime).ToDays >= 1f;
+                    if (show)
+                    {
+                        _lastPromotionBlockedMessageTime = CampaignTime.Now;
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=enlist_promotion_blocked_discipline}Promotion blocked: your discipline is under review. Reduce discipline risk before advancing.").ToString(),
+                            Colors.Yellow));
+                    }
+                    break;
+                }
+
                 _enlistmentTier++;
                 promoted = true;
                 ModLogger.Info("Progression", $"Promoted to Tier {_enlistmentTier}");
@@ -4308,8 +5733,73 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
 
             ValidateLanceStateOnLoad();
+            
+            // Phase 7: Migrate tracking fields for existing saves
+            MigratePhase7TrackingFields();
 
             ModLogger.Info("SaveLoad", $"Validated enlistment state - Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
+        }
+        
+        /// <summary>
+        ///     Phase 7: Migrate promotion tracking fields for existing saves.
+        ///     Initializes days in rank, events completed, and battles survived with reasonable estimates.
+        /// </summary>
+        private void MigratePhase7TrackingFields()
+        {
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            
+            try
+            {
+                var migrated = false;
+
+                // If lastPromotionDate is not set but player is T2+, estimate from enlistment date
+                if (_lastPromotionDate == CampaignTime.Zero && _enlistmentTier > 1)
+                {
+                    // Assume player was promoted fairly recently (within tier * 7 days)
+                    var estimatedDaysSincePromotion = Math.Max(7, (_enlistmentTier - 1) * 7);
+                    _lastPromotionDate = CampaignTime.Now - CampaignTime.Days(estimatedDaysSincePromotion);
+                    ModLogger.Info("SaveLoad", $"Migration: Estimated lastPromotionDate to {estimatedDaysSincePromotion} days ago");
+                    migrated = true;
+                }
+                
+                // If T1 and lastPromotionDate not set, use enlistment date
+                if (_lastPromotionDate == CampaignTime.Zero && _enlistmentTier == 1)
+                {
+                    _lastPromotionDate = _enlistmentDate != CampaignTime.Zero ? _enlistmentDate : CampaignTime.Now;
+                    ModLogger.Info("SaveLoad", "Migration: Set lastPromotionDate to enlistment date for T1 player");
+                    migrated = true;
+                }
+                
+                // If events/battles are 0 but player is T2+, estimate based on tier
+                // Players typically complete 2-3 events and survive 1-2 battles per tier
+                if (_eventsCompleted == 0 && _enlistmentTier > 1)
+                {
+                    _eventsCompleted = (_enlistmentTier - 1) * 2; // 2 events per tier
+                    ModLogger.Info("SaveLoad", $"Migration: Estimated eventsCompleted to {_eventsCompleted}");
+                    migrated = true;
+                }
+                
+                if (_battlesSurvived == 0 && _enlistmentTier > 1)
+                {
+                    _battlesSurvived = (_enlistmentTier - 1); // 1 battle per tier
+                    ModLogger.Info("SaveLoad", $"Migration: Estimated battlesSurvived to {_battlesSurvived}");
+                    migrated = true;
+                }
+
+                if (migrated)
+                {
+                    // Non-spammy summary marker for support: confirms a migration occurred in this session.
+                    ModLogger.LogOnce("enlistment_migrate_phase7_tracking", "SaveLoad",
+                        "[E-SAVELOAD-002] Applied Phase 7 tracking migration for an existing save.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-003", "Phase 7 tracking migration failed", ex);
+            }
         }
 
         private void TryPauseForSettlementEntry()
@@ -4323,7 +5813,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Settlement", $"Failed to pause time on settlement entry: {ex.Message}");
+                ModLogger.ErrorCode("Settlement", "E-SETTLEMENT-001", "Failed to pause time on settlement entry", ex);
             }
         }
 
@@ -4461,7 +5951,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("SaveLoad", $"Error during roster deduplication: {ex.Message}");
+                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-003", "Error during roster deduplication", ex);
             }
         }
 
@@ -4565,7 +6055,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("SaveLoad", $"Error in RestorePartyStateAfterLoad: {ex.Message}");
+                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-004", "Error in RestorePartyStateAfterLoad", ex);
             }
         }
 
@@ -4621,12 +6111,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         else
                         {
                             // Fallback if method not found (unlikely)
-                            ModLogger.Error("EventSafety", "Could not find EndCaptivityAction.ApplyByEscape");
+                            ModLogger.ErrorCode("EventSafety", "E-EVENTSAFE-001",
+                                "Could not find EndCaptivityAction.ApplyByEscape", null);
                         }
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("EventSafety", $"Error forcing player escape: {ex.Message}");
+                        ModLogger.ErrorCode("EventSafety", "E-EVENTSAFE-002", "Error forcing player escape", ex);
                     }
                 }
             }
@@ -4981,7 +6472,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 }
                                 catch (Exception ex)
                                 {
-                                    ModLogger.Error("Battle", $"Error joining lord's army: {ex.Message}");
+                                    ModLogger.ErrorCode("Battle", "E-BATTLE-003", "Error joining lord's army", ex);
                                 }
                             }
                         }
@@ -5182,7 +6673,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             }
                             catch (Exception ex)
                             {
-                                ModLogger.Error("Battle", $"Error in battle participation setup: {ex.Message}");
+                                ModLogger.ErrorCode("Battle", "E-BATTLE-004", "Error in battle participation setup", ex);
                             }
                         }
                         else
@@ -5269,8 +6760,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 }
                                 catch (Exception ex)
                                 {
-                                    ModLogger.Error("Siege",
-                                        $"Error finishing PlayerEncounter when entering settlement: {ex.Message}");
+                                    ModLogger.ErrorCode("Siege", "E-SIEGE-001",
+                                        "Error finishing PlayerEncounter when entering settlement", ex);
                                 }
                             }
                         }
@@ -5467,7 +6958,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Failed to sync besieger camp: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-005", "Failed to sync besieger camp", ex);
             }
         }
 
@@ -5526,7 +7017,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("PositionSync", $"Error in aggressive position sync: {ex.Message}");
+                ModLogger.ErrorCode("PositionSync", "E-POSSYNC-001", "Error in aggressive position sync", ex);
             }
         }
 
@@ -5652,7 +7143,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Naval", $"Failed to sync naval position: {ex.Message}");
+                ModLogger.ErrorCode("Naval", "E-NAVAL-001", "Failed to sync naval position", ex);
                 return false;
             }
         }
@@ -5745,7 +7236,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Failed to teleport player to safety: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-006", "Failed to teleport player to safety", ex);
             }
         }
 
@@ -5827,7 +7318,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Naval", $"Failed to teleport stranded player: {ex.Message}");
+                ModLogger.ErrorCode("Naval", "E-NAVAL-002", "Failed to teleport stranded player to nearest port", ex);
 
                 // Emergency fallback - at least try to clear sea state
                 try
@@ -5952,10 +7443,19 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public static event Action<int> OnPromoted;
 
         /// <summary>
-        ///     Current rank title for story systems (uses progression_config tier names).
+        ///     Current rank title for story systems (culture-specific from progression_config).
+        ///     Returns the rank name appropriate for the current lord's culture.
         /// </summary>
-        public string CurrentRankTitle =>
-            Assignments.Core.ConfigurationManager.GetTierName(_enlistmentTier);
+        public string CurrentRankTitle
+        {
+            get
+            {
+                var cultureId = CurrentLord?.Culture?.StringId ?? 
+                               CurrentLord?.Clan?.Kingdom?.Culture?.StringId ?? 
+                               "mercenary";
+                return Assignments.Core.ConfigurationManager.GetCultureRankTitle(_enlistmentTier, cultureId);
+            }
+        }
 
         /// <summary>
         ///     Fired when player starts temporary leave.
@@ -6113,7 +7613,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void CheckRetirementEligibility()
         {
-            if (_retirementNotificationShown || !IsEnlisted || IsInRenewalTerm)
+            if (_retirementNotificationShown || !IsEnlisted || _isPendingDischarge)
             {
                 return;
             }
@@ -6125,8 +7625,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 var message =
                     new TextObject(
-                        "{=Enlisted_Message_TermCompleted}You have completed your term of service! Speak with {LORD} to discuss retirement or re-enlistment.");
-                message.SetTextVariable("LORD", _enlistedLord.Name);
+                        "{=Enlisted_Message_TermCompleted}You have completed your term of service! Use the Camp menu to request a managed discharge (Final Muster).");
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
 
                 ModLogger.Info("Retirement", $"Player eligible for retirement after {DaysServed:F1} days");
@@ -6167,7 +7666,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             if (!IsEnlisted || !IsEligibleForRetirement)
             {
-                ModLogger.Error("Retirement", "Cannot process first-term retirement - not eligible");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-005", "Cannot process first-term retirement - not eligible",
+                    new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                 return;
             }
 
@@ -6217,7 +7717,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             if (!IsEnlisted || !IsInRenewalTerm)
             {
-                ModLogger.Error("Retirement", "Cannot process renewal retirement - not in renewal term");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-006", "Cannot process renewal retirement - not in renewal term",
+                    new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                 return;
             }
 
@@ -6265,7 +7766,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             if (!IsEnlisted)
             {
-                ModLogger.Error("Retirement", "Cannot start renewal term - not enlisted");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-007", "Cannot start renewal term - not enlisted",
+                    new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                 return;
             }
 
@@ -6330,7 +7832,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var faction = lord.MapFaction;
             if (faction == null || !CanReEnlistAfterCooldown(faction))
             {
-                ModLogger.Error("Retirement", "Cannot re-enlist - not eligible or wrong faction");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-008", "Cannot re-enlist - not eligible or wrong faction",
+                    new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                 return;
             }
 
@@ -6394,7 +7897,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var faction = _enlistedLord?.MapFaction;
                 if (faction == null)
                 {
-                    ModLogger.Error("Retirement", "Cannot apply relation bonuses - no faction");
+                    ModLogger.ErrorCode("Retirement", "E-RETIRE-009", "Cannot apply relation bonuses - no faction",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                     return;
                 }
 
@@ -6467,7 +7971,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Retirement", $"Error applying relation bonuses: {ex.Message}");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-003", "Error applying relation bonuses", ex);
             }
         }
 
@@ -6484,7 +7988,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var faction = _enlistedLord?.MapFaction;
                 if (faction == null)
                 {
-                    ModLogger.Error("Retirement", "Cannot apply subsequent bonuses - no faction");
+                    ModLogger.ErrorCode("Retirement", "E-RETIRE-010", "Cannot apply subsequent bonuses - no faction",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                     return;
                 }
 
@@ -6540,7 +8045,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Retirement", $"Error applying subsequent bonuses: {ex.Message}");
+                ModLogger.ErrorCode("Retirement", "E-RETIRE-004", "Error applying subsequent re-enlistment bonuses", ex);
             }
         }
 
@@ -7079,6 +8584,32 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
+        ///     Phase 7: Increment the battles survived counter. Called after successfully completing a battle.
+        /// </summary>
+        public void IncrementBattlesSurvived()
+        {
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            _battlesSurvived++;
+            ModLogger.Debug("Enlistment", $"Battles survived: {_battlesSurvived}");
+        }
+
+        /// <summary>
+        ///     Phase 7: Increment the events completed counter. Called after completing a Lance Life event.
+        /// </summary>
+        public void IncrementEventsCompleted()
+        {
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            _eventsCompleted++;
+            ModLogger.Debug("Enlistment", $"Events completed: {_eventsCompleted}");
+        }
+
+        /// <summary>
         ///     Awards battle participation XP after a battle ends (called from OnMapEventEnded).
         ///     Reads values from progression_config.json for configurability.
         ///     Note: This is a fallback - OnPlayerBattleEnd awards XP first if it fires.
@@ -7121,6 +8652,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     AddEnlistmentXP(battleXP, "Battle Participation");
                     _battleXPAwardedThisBattle = true;
 
+                    // Phase 7: Track battles for promotion requirements
+                    IncrementBattlesSurvived();
+
                     // Show notification to player
                     var message = $"Battle completed! +{battleXP} XP";
                     InformationManager.DisplayMessage(new InformationMessage(message));
@@ -7130,17 +8664,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error awarding battle XP: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-007", "Error awarding battle XP", ex);
             }
         }
 
         /// <summary>
         ///     Set tier directly (called by PromotionBehavior for immediate promotion).
-        ///     When crossing into Tier 4, reclaims companions from lord's party for retinue system.
+        ///     V2.0: Companions now managed from T1. Commander retinue granted at T7/T8/T9.
         /// </summary>
         public void SetTier(int tier)
         {
-            if (!IsEnlisted || tier < 1 || tier > 6)
+            // V2.0: Support T1-T9 (was T1-T6)
+            if (!IsEnlisted || tier < 1 || tier > 9)
             {
                 ModLogger.Debug("Enlistment", $"SetTier rejected - Enlisted: {IsEnlisted}, Tier: {tier}");
                 return;
@@ -7148,14 +8683,861 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             var previousTier = _enlistmentTier;
             _enlistmentTier = tier;
+
+            // Phase 7: Track promotion date for days-in-rank requirement
+            if (tier > previousTier)
+            {
+                _lastPromotionDate = CampaignTime.Now;
+            }
+
             ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP})");
 
-            // When crossing into Tier 4, reclaim companions from lord's party
-            // This enables the Companion Assignments feature in the Command Tent
+            // V2.0: Companions are now managed from T1 (enlistment start), not T4
+            // Legacy reclaim kept for backward compatibility with older saves
             if (previousTier < 4 && tier >= 4)
             {
                 ReclaimCompanionsFromLord();
             }
+
+            // V2.0: Grant commander retinue when crossing into T7/T8/T9
+            // Recruits are auto-granted based on player's formation and lord's culture
+            if (tier >= 7 && previousTier < tier)
+            {
+                try
+                {
+                    Features.CommandTent.Core.RetinueRecruitmentGrant.GrantCommanderRetinue(tier, previousTier);
+                }
+                catch (Exception ex)
+                {
+                    ModLogger.ErrorCode("Enlistment", "E-ENLIST-014", "Failed to grant commander retinue on tier change", ex);
+                }
+            }
+        }
+
+        // ========================================================================
+        // QUARTERMASTER HERO METHODS (Phase 3)
+        // ========================================================================
+
+        /// <summary>
+        ///     Get the current quartermaster Hero, creating one if necessary.
+        ///     Returns null if not enlisted or if hero creation fails.
+        /// </summary>
+        public Hero GetOrCreateQuartermaster()
+        {
+            if (!IsEnlisted || _enlistedLord == null)
+            {
+                return null;
+            }
+
+            // Check if we need to create a new quartermaster
+            if (_quartermasterHero == null || _quartermasterHero.IsDead)
+            {
+                _quartermasterHero = CreateQuartermasterForLord();
+                
+                if (_quartermasterHero != null)
+                {
+                    _hasMetQuartermaster = false; // Reset for first meeting
+                }
+            }
+
+            return _quartermasterHero;
+        }
+
+        /// <summary>
+        ///     Creates a new quartermaster Hero for the current enlisted lord.
+        ///     The quartermaster has a culture-appropriate name, appearance, equipment,
+        ///     and a randomly assigned personality archetype.
+        /// </summary>
+        private Hero CreateQuartermasterForLord()
+        {
+            if (_enlistedLord == null)
+            {
+                ModLogger.ErrorCode("Quartermaster", "E-QM-008", "Cannot create quartermaster: no enlisted lord",
+                    new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
+                return null;
+            }
+
+            try
+            {
+                var culture = _enlistedLord.Culture;
+                if (culture == null)
+                {
+                    ModLogger.ErrorCode("Quartermaster", "E-QM-009", "Cannot create quartermaster: lord has no culture",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
+                    return null;
+                }
+
+                // 1. Get culture-appropriate troop template (sergeant/veteran tier)
+                var template = GetSergeantTierTroopTemplate(culture);
+                if (template == null)
+                {
+                    ModLogger.Error("Quartermaster", $"Cannot find troop template for culture {culture.StringId}");
+                    return null;
+                }
+
+                // 2. Get birth settlement (fallback chain for safety)
+                var birthSettlement = _enlistedLord.HomeSettlement 
+                    ?? _enlistedLord.BornSettlement 
+                    ?? Settlement.All.FirstOrDefault(s => s.Culture == culture && s.IsTown);
+
+                // 3. Create the Hero using native HeroCreator
+                var qm = HeroCreator.CreateSpecialHero(
+                    template,
+                    birthSettlement,
+                    _enlistedLord.Clan,
+                    null, // No spouse
+                    MBRandom.RandomInt(35, 55) // Experienced NCO age
+                );
+
+                if (qm == null)
+                {
+                    ModLogger.ErrorCode("Quartermaster", "E-QM-010", "HeroCreator.CreateSpecialHero returned null",
+                        new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
+                    return null;
+                }
+
+                // 4. Set Hero properties
+                // Use Wanderer occupation for generic camp NPCs (Quartermaster not in API)
+                qm.SetNewOccupation(Occupation.Wanderer);
+                qm.HiddenInEncyclopedia = true; // Don't clutter encyclopedia
+                qm.IsKnownToPlayer = true;
+                // Note: HasMet is read-only, but IsKnownToPlayer triggers the met status
+
+                // 4.5. Visuals: quartermasters should look like a wealthy camp official, not a line soldier.
+                // We keep battle equipment intact (safety: avoid spawning a helpless hero in rare edge cases),
+                // but overwrite CIVILIAN equipment with the richest culture-appropriate civilian outfit we can find.
+                TryApplyQuartermasterWealthyCulturalAttire(qm, culture);
+
+                // 5. Place in lord's party (stays in baggage train)
+                if (_enlistedLord.PartyBelongedTo != null)
+                {
+                    qm.ChangeHeroGold(-qm.Gold); // Remove default gold
+                    EnterSettlementAction.ApplyForCharacterOnly(qm, birthSettlement);
+                }
+
+                // 6. Assign personality archetype based on culture
+                _quartermasterArchetype = SelectArchetypeForCulture(culture.StringId);
+                _quartermasterRelationship = 0; // Start neutral
+                _hasMetQuartermaster = false;
+
+                ModLogger.Info("Quartermaster",
+                    $"Created quartermaster '{qm.Name}' ({_quartermasterArchetype}) for lord {_enlistedLord.Name}");
+
+                return qm;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to create quartermaster Hero", ex);
+                return null;
+            }
+        }
+
+        private static void TryApplyQuartermasterWealthyCulturalAttire(Hero qm, CultureObject culture)
+        {
+            try
+            {
+                if (qm?.CivilianEquipment == null || culture == null)
+                {
+                    return;
+                }
+
+                // Candidate civilian templates: “wealthy” town/camp types.
+                // Note: We do not rely on string ids (mod compatibility); we rely on Occupation + culture.
+                var candidates = CharacterObject.All
+                    .Where(t => t != null
+                                && !t.IsHero
+                                && t.Culture == culture
+                                && (t.Occupation == Occupation.Merchant ||
+                                    t.Occupation == Occupation.Artisan ||
+                                    t.Occupation == Occupation.Preacher ||
+                                    t.Occupation == Occupation.Gangster))
+                    .ToList();
+
+                if (candidates.Count == 0)
+                {
+                    // Fallback: any non-soldier civilian template of the culture.
+                    candidates = CharacterObject.All
+                        .Where(t => t != null
+                                    && !t.IsHero
+                                    && t.Culture == culture
+                                    && t.Occupation != Occupation.Soldier)
+                        .ToList();
+                }
+
+                if (candidates.Count == 0)
+                {
+                    return;
+                }
+
+                CharacterObject best = null;
+                var bestScore = -1;
+                foreach (var candidate in candidates)
+                {
+                    var score = ScoreCivilianOutfit(candidate?.FirstCivilianEquipment);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        best = candidate;
+                    }
+                }
+
+                if (best == null || bestScore <= 0)
+                {
+                    return;
+                }
+
+                // Apply the outfit.
+                qm.CivilianEquipment.FillFrom(best.FirstCivilianEquipment, false);
+
+                // Keep the look “official” (no visible civilian weapons unless the template insists).
+                qm.CivilianEquipment[EquipmentIndex.Weapon0] = default;
+                qm.CivilianEquipment[EquipmentIndex.Weapon1] = default;
+                qm.CivilianEquipment[EquipmentIndex.Weapon2] = default;
+                qm.CivilianEquipment[EquipmentIndex.Weapon3] = default;
+
+                ModLogger.Info("Quartermaster",
+                    $"Quartermaster attire: applied wealthy civilian outfit from '{best.StringId}' (score={bestScore}) for culture '{culture.StringId}'");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Quartermaster", "E-QM-011", "Failed to apply wealthy quartermaster attire", ex);
+            }
+        }
+
+        private static int ScoreCivilianOutfit(TaleWorlds.Core.Equipment equipment)
+        {
+            try
+            {
+                if (equipment == null)
+                {
+                    return 0;
+                }
+
+                // Focus on attire slots; treat item value as a decent “wealth” proxy.
+                var slots = new[]
+                {
+                    EquipmentIndex.Head,
+                    EquipmentIndex.Body,
+                    EquipmentIndex.Leg,
+                    EquipmentIndex.Gloves,
+                    EquipmentIndex.Cape
+                };
+
+                var score = 0;
+                foreach (var slot in slots)
+                {
+                    var item = equipment[slot].Item;
+                    if (item != null)
+                    {
+                        score += Math.Max(0, item.Value);
+                    }
+                }
+
+                return score;
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        ///     Gets a sergeant/veteran tier troop template from the culture.
+        ///     Used as the base for quartermaster appearance and skills.
+        /// </summary>
+        private CharacterObject GetSergeantTierTroopTemplate(CultureObject culture)
+        {
+            // Find tier 3-4 infantry troops from the lord's culture
+            var eligibleTroops = CharacterObject.All
+                .Where(t => t.Culture == culture
+                         && !t.IsHero
+                         && t.Tier >= 3 && t.Tier <= 4
+                         && t.Occupation == Occupation.Soldier
+                         && t.DefaultFormationClass == FormationClass.Infantry)
+                .ToList();
+
+            if (eligibleTroops.Count == 0)
+            {
+                // Fallback: any tier 3-4 troop
+                eligibleTroops = CharacterObject.All
+                    .Where(t => t.Culture == culture
+                             && !t.IsHero
+                             && t.Tier >= 3 && t.Tier <= 4)
+                    .ToList();
+            }
+
+            if (eligibleTroops.Count == 0)
+            {
+                // Last resort: basic troop
+                ModLogger.Warn("Quartermaster", $"No sergeant-tier troops found for {culture.StringId}, using basic troop");
+                return culture.BasicTroop;
+            }
+
+            return eligibleTroops.GetRandomElement();
+        }
+
+        /// <summary>
+        ///     Selects a personality archetype based on culture with weighted randomization.
+        ///     Different cultures favor different personality types.
+        /// </summary>
+        private string SelectArchetypeForCulture(string cultureId)
+        {
+            var archetypes = new[] { "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric" };
+
+            // Culture-specific weights (from quartermaster_hero_update.md)
+            // Format: veteran, merchant, bookkeeper, scoundrel, believer, eccentric
+            var weights = cultureId?.ToLowerInvariant() switch
+            {
+                "empire" => new[] { 30, 20, 35, 3, 10, 2 },    // Bureaucratic empire favors bookkeepers
+                "vlandia" => new[] { 25, 30, 20, 7, 15, 3 },   // Mercantile culture favors merchants
+                "sturgia" => new[] { 40, 10, 5, 5, 25, 15 },   // Warrior culture favors veterans
+                "battania" => new[] { 20, 7, 3, 30, 15, 25 },  // Tribal culture favors scoundrels/eccentrics
+                "khuzait" => new[] { 20, 30, 3, 30, 7, 10 },   // Trade/raid culture
+                "aserai" => new[] { 15, 35, 3, 15, 30, 2 },    // Merchant/faith culture
+                _ => new[] { 30, 20, 15, 10, 15, 10 }          // Mercenary/default
+            };
+
+            // Weighted random selection
+            var totalWeight = weights.Sum();
+            var roll = MBRandom.RandomInt(0, totalWeight);
+            var cumulative = 0;
+
+            for (var i = 0; i < archetypes.Length; i++)
+            {
+                cumulative += weights[i];
+                if (roll < cumulative)
+                {
+                    return archetypes[i];
+                }
+            }
+
+            return "veteran"; // Fallback
+        }
+
+        /// <summary>
+        ///     Modifies the relationship level with the quartermaster.
+        /// </summary>
+        /// <param name="change">Amount to change (positive or negative)</param>
+        public void ModifyQuartermasterRelationship(int change)
+        {
+            _quartermasterRelationship = Math.Max(0, Math.Min(100, _quartermasterRelationship + change));
+            ModLogger.Debug("Quartermaster", $"Relationship changed by {change}, now {_quartermasterRelationship}");
+        }
+
+        /// <summary>
+        ///     Marks the quartermaster as met (after first conversation).
+        /// </summary>
+        public void MarkQuartermasterMet()
+        {
+            _hasMetQuartermaster = true;
+            ModLogger.Debug("Quartermaster", "Player has met the quartermaster");
+        }
+
+        /// <summary>
+        ///     Gets the relationship level name for UI display.
+        /// </summary>
+        public string GetQuartermasterRelationshipLevel()
+        {
+            return _quartermasterRelationship switch
+            {
+                >= 80 => "Battle Brother",
+                >= 60 => "Respected",
+                >= 40 => "Trusted",
+                >= 20 => "Known",
+                _ => "Stranger"
+            };
+        }
+
+        /// <summary>
+        ///     Gets the quartermaster discount percentage based on relationship.
+        ///     Phase 8: High relationship provides discounts on equipment and rations.
+        /// </summary>
+        /// <returns>Discount percentage (0-15)</returns>
+        public int GetQuartermasterDiscount()
+        {
+            return _quartermasterRelationship switch
+            {
+                >= 80 => 15, // 15% discount for Battle Brothers
+                >= 60 => 10, // 10% discount for Respected
+                >= 40 => 5,  // 5% discount for Trusted
+                _ => 0       // No discount below Trusted
+            };
+        }
+
+        /// <summary>
+        ///     Applies the quartermaster discount to a price.
+        /// </summary>
+        /// <param name="basePrice">Original price</param>
+        /// <returns>Discounted price</returns>
+        public int ApplyQuartermasterDiscount(int basePrice)
+        {
+            var discount = GetQuartermasterDiscount();
+            if (discount <= 0)
+            {
+                return basePrice;
+            }
+
+            var reduction = (int)(basePrice * discount / 100f);
+            return Math.Max(1, basePrice - reduction);
+        }
+
+        /// <summary>
+        ///     Gets relationship milestone info for display.
+        ///     Returns (nextMilestone, pointsNeeded, reward) tuple.
+        /// </summary>
+        public (int NextMilestone, int PointsNeeded, string Reward) GetRelationshipMilestoneInfo()
+        {
+            var current = _quartermasterRelationship;
+
+            if (current < 20)
+            {
+                return (20, 20 - current, "Unlocks: Chat option");
+            }
+            else if (current < 40)
+            {
+                return (40, 40 - current, "Unlocks: 5% discount, Black market access");
+            }
+            else if (current < 60)
+            {
+                return (60, 60 - current, "Unlocks: 10% discount");
+            }
+            else if (current < 80)
+            {
+                return (80, 80 - current, "Unlocks: 15% discount, Special items");
+            }
+            else
+            {
+                return (100, 100 - current, "Maximum relationship");
+            }
+        }
+
+        /// <summary>
+        ///     Cleans up quartermaster state when service ends.
+        /// </summary>
+        private void CleanupQuartermasterOnServiceEnd()
+        {
+            // Quartermaster stays with the lord's army when player leaves
+            // Just null out our reference
+            _quartermasterHero = null;
+            _quartermasterArchetype = null;
+            _quartermasterRelationship = 0;
+            _hasMetQuartermaster = false;
+
+            ModLogger.Info("Quartermaster", "Quartermaster reference cleared on service end");
+        }
+
+        // ========================================================================
+        // FOOD/RATIONS SYSTEM METHODS (Phase 5)
+        // ========================================================================
+
+        /// <summary>
+        ///     Food quality tier enumeration for rations system.
+        ///     Values correspond to _currentFoodQuality field.
+        /// </summary>
+        public enum FoodQualityTier
+        {
+            /// <summary>Standard army rations - no bonus.</summary>
+            Standard = 0,
+            /// <summary>Supplemental rations - +2 morale for 1 day.</summary>
+            Supplemental = 1,
+            /// <summary>Officer's fare - +4 morale, +2 fatigue relief for 2 days.</summary>
+            Officer = 2,
+            /// <summary>Commander's feast - +8 morale, +5 fatigue relief for 3 days.</summary>
+            Commander = 3
+        }
+
+        /// <summary>
+        ///     Gets the current food quality tier.
+        ///     Automatically returns Standard if the current quality has expired.
+        /// </summary>
+        public FoodQualityTier CurrentFoodQuality
+        {
+            get
+            {
+                // Check if expired
+                if (_currentFoodQuality > 0 && CampaignTime.Now >= _foodQualityExpires)
+                {
+                    _currentFoodQuality = 0;
+                    _foodQualityExpires = CampaignTime.Zero;
+                    ModLogger.Debug("Food", "Food quality bonus expired");
+                }
+                return (FoodQualityTier)_currentFoodQuality;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the time remaining on the current food quality bonus.
+        ///     Returns zero if no bonus active or expired.
+        /// </summary>
+        public CampaignTime FoodQualityTimeRemaining
+        {
+            get
+            {
+                if (_currentFoodQuality <= 0 || CampaignTime.Now >= _foodQualityExpires)
+                {
+                    return CampaignTime.Zero;
+                }
+                return _foodQualityExpires - CampaignTime.Now;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the morale bonus from current food quality.
+        ///     Used by camp life behavior to adjust party morale.
+        /// </summary>
+        /// <returns>Morale bonus (0, 2, 4, or 8)</returns>
+        public int GetFoodMoraleBonus()
+        {
+            var quality = CurrentFoodQuality;
+            return quality switch
+            {
+                FoodQualityTier.Supplemental => 2,
+                FoodQualityTier.Officer => 4,
+                FoodQualityTier.Commander => 8,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets the fatigue relief bonus from current food quality.
+        ///     Applied when rations are purchased (immediate relief).
+        /// </summary>
+        /// <returns>Fatigue relief points (0, 0, 2, or 5)</returns>
+        public int GetFoodFatigueBonus()
+        {
+            var quality = CurrentFoodQuality;
+            return quality switch
+            {
+                FoodQualityTier.Officer => 2,
+                FoodQualityTier.Commander => 5,
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets food quality information for display.
+        /// </summary>
+        public (string Name, int MoraleBonus, int FatigueBonus, float DaysRemaining) GetFoodQualityInfo()
+        {
+            var quality = CurrentFoodQuality;
+            var remaining = FoodQualityTimeRemaining;
+            var daysRemaining = (float)remaining.ToDays;
+
+            var name = quality switch
+            {
+                FoodQualityTier.Supplemental => "Supplemental Rations",
+                FoodQualityTier.Officer => "Officer's Fare",
+                FoodQualityTier.Commander => "Commander's Feast",
+                _ => "Standard Rations"
+            };
+
+            return (name, GetFoodMoraleBonus(), GetFoodFatigueBonus(), daysRemaining);
+        }
+
+        /// <summary>
+        ///     Purchases rations of the specified quality tier.
+        ///     Deducts gold, applies fatigue relief, sets morale bonus duration.
+        /// </summary>
+        /// <param name="tier">The food quality tier to purchase</param>
+        /// <param name="cost">Gold cost (validated before calling)</param>
+        /// <param name="durationDays">How many days the bonus lasts</param>
+        /// <returns>True if purchase successful, false if insufficient funds</returns>
+        public bool PurchaseRations(FoodQualityTier tier, int cost, int durationDays)
+        {
+            if (!IsEnlisted)
+            {
+                ModLogger.Warn("Food", "Cannot purchase rations: not enlisted");
+                return false;
+            }
+
+            // Relationship discount is part of the Quartermaster Hero system.
+            // Apply it here so *all* rations purchases respect the relationship tier.
+            var effectiveCost = ApplyQuartermasterDiscount(cost);
+
+            if (Hero.MainHero.Gold < effectiveCost)
+            {
+                ModLogger.Debug("Food", $"Cannot purchase rations: insufficient gold ({Hero.MainHero.Gold} < {effectiveCost})");
+                return false;
+            }
+
+            // Deduct gold
+            Hero.MainHero.ChangeHeroGold(-effectiveCost);
+
+            // Set quality and duration
+            _currentFoodQuality = (int)tier;
+            _foodQualityExpires = CampaignTime.Now + CampaignTime.Days(durationDays);
+
+            // Apply immediate fatigue relief for higher tiers
+            var fatigueBonus = tier switch
+            {
+                FoodQualityTier.Officer => 2,
+                FoodQualityTier.Commander => 5,
+                _ => 0
+            };
+
+            if (fatigueBonus > 0)
+            {
+                RestoreFatigue(fatigueBonus, "rations_purchase");
+            }
+
+            // Increase quartermaster relationship
+            ModifyQuartermasterRelationship(2);
+
+            var tierName = tier switch
+            {
+                FoodQualityTier.Supplemental => "Supplemental Rations",
+                FoodQualityTier.Officer => "Officer's Fare",
+                FoodQualityTier.Commander => "Commander's Feast",
+                _ => "Rations"
+            };
+
+            ModLogger.Info("Food",
+                $"Purchased {tierName} for {effectiveCost}g (base {cost}g), duration {durationDays} days, fatigue relief +{fatigueBonus}");
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Clears food quality bonus (used when service ends).
+        /// </summary>
+        private void ClearFoodQuality()
+        {
+            _currentFoodQuality = 0;
+            _foodQualityExpires = CampaignTime.Zero;
+        }
+
+        // ========================================================================
+        // RETINUE PROVISIONING SYSTEM METHODS (Phase 6)
+        // ========================================================================
+
+        /// <summary>
+        ///     Retinue provisioning tier enumeration.
+        ///     Higher tiers provide better morale but cost more per soldier.
+        /// </summary>
+        public enum RetinueProvisioningTier
+        {
+            /// <summary>No provisions - starvation penalties apply.</summary>
+            None = 0,
+            /// <summary>Bare minimum rations - -5 morale penalty.</summary>
+            BareMinimum = 1,
+            /// <summary>Standard army rations - no modifier.</summary>
+            Standard = 2,
+            /// <summary>Good fare - +5 morale bonus.</summary>
+            GoodFare = 3,
+            /// <summary>Officer quality - +10 morale bonus.</summary>
+            OfficerQuality = 4
+        }
+
+        /// <summary>
+        ///     Gets the current retinue provisioning tier.
+        ///     Returns None if expired.
+        /// </summary>
+        public RetinueProvisioningTier CurrentRetinueProvisioning
+        {
+            get
+            {
+                // Check if expired
+                if (_retinueProvisioningTier > 0 && CampaignTime.Now >= _retinueProvisioningExpires)
+                {
+                    _retinueProvisioningTier = 0;
+                    _retinueProvisioningExpires = CampaignTime.Zero;
+                    ModLogger.Debug("RetinueFood", "Retinue provisioning expired");
+                }
+                return (RetinueProvisioningTier)_retinueProvisioningTier;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the time remaining on retinue provisions.
+        /// </summary>
+        public CampaignTime RetinueProvisioningTimeRemaining
+        {
+            get
+            {
+                if (_retinueProvisioningTier <= 0 || CampaignTime.Now >= _retinueProvisioningExpires)
+                {
+                    return CampaignTime.Zero;
+                }
+                return _retinueProvisioningExpires - CampaignTime.Now;
+            }
+        }
+
+        /// <summary>
+        ///     Gets the morale modifier from current retinue provisioning.
+        /// </summary>
+        /// <returns>Morale modifier (-10 to +10)</returns>
+        public int GetRetinueMoraleModifier()
+        {
+            var tier = CurrentRetinueProvisioning;
+            return tier switch
+            {
+                RetinueProvisioningTier.None => -10,       // Starvation
+                RetinueProvisioningTier.BareMinimum => -5, // Grumbling
+                RetinueProvisioningTier.Standard => 0,     // Neutral
+                RetinueProvisioningTier.GoodFare => 5,     // Satisfied
+                RetinueProvisioningTier.OfficerQuality => 10, // High morale
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets the cost per soldier for a provisioning tier.
+        /// </summary>
+        public static int GetProvisioningCostPerSoldier(RetinueProvisioningTier tier)
+        {
+            return tier switch
+            {
+                RetinueProvisioningTier.BareMinimum => 2,    // 2g per soldier per week
+                RetinueProvisioningTier.Standard => 5,       // 5g per soldier per week
+                RetinueProvisioningTier.GoodFare => 10,      // 10g per soldier per week
+                RetinueProvisioningTier.OfficerQuality => 20, // 20g per soldier per week
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        ///     Gets the total cost to provision the retinue for one week.
+        /// </summary>
+        /// <param name="tier">Provisioning tier</param>
+        /// <param name="soldierCount">Number of soldiers (from RetinueManager)</param>
+        public static int GetRetinueProvisioningCost(RetinueProvisioningTier tier, int soldierCount)
+        {
+            return GetProvisioningCostPerSoldier(tier) * soldierCount;
+        }
+
+        /// <summary>
+        ///     Gets retinue provisioning information for display.
+        /// </summary>
+        public (string Name, int MoraleModifier, float DaysRemaining) GetRetinueProvisioningInfo()
+        {
+            var tier = CurrentRetinueProvisioning;
+            var remaining = RetinueProvisioningTimeRemaining;
+            var daysRemaining = (float)remaining.ToDays;
+
+            var name = tier switch
+            {
+                RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                RetinueProvisioningTier.Standard => "Standard Rations",
+                RetinueProvisioningTier.GoodFare => "Good Fare",
+                RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                _ => "Not Provisioned"
+            };
+
+            return (name, GetRetinueMoraleModifier(), daysRemaining);
+        }
+
+        /// <summary>
+        ///     Purchases retinue provisions for one week.
+        /// </summary>
+        /// <param name="tier">The provisioning tier to purchase</param>
+        /// <param name="soldierCount">Number of soldiers to provision</param>
+        /// <returns>True if purchase successful</returns>
+        public bool PurchaseRetinueProvisioning(RetinueProvisioningTier tier, int soldierCount)
+        {
+            if (!IsEnlisted || _enlistmentTier < 7)
+            {
+                ModLogger.Warn("RetinueFood", "Cannot provision retinue: not a commander (T7+)");
+                return false;
+            }
+
+            var baseCost = GetRetinueProvisioningCost(tier, soldierCount);
+            var cost = ApplyQuartermasterDiscount(baseCost);
+
+            if (Hero.MainHero.Gold < cost)
+            {
+                ModLogger.Debug("RetinueFood", $"Cannot provision: insufficient gold ({Hero.MainHero.Gold} < {cost})");
+                return false;
+            }
+
+            // Deduct gold
+            Hero.MainHero.ChangeHeroGold(-cost);
+
+            // Set provisioning tier and duration (7 days)
+            _retinueProvisioningTier = (int)tier;
+            _retinueProvisioningExpires = CampaignTime.Now + CampaignTime.Days(7);
+            _retinueProvisioningWarningShown = false;
+
+            // Increase quartermaster relationship
+            ModifyQuartermasterRelationship(3);
+
+            var tierName = tier switch
+            {
+                RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                RetinueProvisioningTier.Standard => "Standard",
+                RetinueProvisioningTier.GoodFare => "Good Fare",
+                RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                _ => "provisions"
+            };
+
+            ModLogger.Info("RetinueFood",
+                $"Purchased {tierName} provisioning for {soldierCount} soldiers, cost {cost}g (base {baseCost}g), 7 days");
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Checks retinue provisioning status and displays warnings.
+        ///     Called from DailyTick.
+        /// </summary>
+        public void CheckRetinueProvisioningStatus()
+        {
+            // Only applies to T7+ commanders with retinue
+            if (!IsEnlisted || _enlistmentTier < 7)
+            {
+                return;
+            }
+
+            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            if (retinueManager?.State == null || retinueManager.State.TotalSoldiers <= 0)
+            {
+                return;
+            }
+
+            var remaining = RetinueProvisioningTimeRemaining;
+            var daysRemaining = remaining.ToDays;
+
+            // Check for starvation (no provisions)
+            if (_retinueProvisioningTier <= 0 || CampaignTime.Now >= _retinueProvisioningExpires)
+            {
+                // Starvation - apply penalties
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "Your retinue is starving! Visit the Quartermaster to provision them.",
+                    Colors.Red));
+                return;
+            }
+
+            // Check for low provisions warning (2 days or less)
+            if (daysRemaining <= 2 && !_retinueProvisioningWarningShown)
+            {
+                _retinueProvisioningWarningShown = true;
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"Warning: Retinue provisions will run out in {daysRemaining:F1} days!",
+                    Colors.Yellow));
+            }
+        }
+
+        /// <summary>
+        ///     Clears retinue provisioning (used when service ends or retinue disbanded).
+        /// </summary>
+        public void ClearRetinueProvisioning()
+        {
+            _retinueProvisioningTier = 0;
+            _retinueProvisioningExpires = CampaignTime.Zero;
+            _retinueProvisioningWarningShown = false;
+        }
+
+        /// <summary>
+        ///     Whether the player has an active retinue that needs provisioning.
+        /// </summary>
+        public bool HasRetinueToProvision()
+        {
+            if (!IsEnlisted || _enlistmentTier < 7)
+            {
+                return false;
+            }
+
+            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            return retinueManager?.State?.TotalSoldiers > 0;
         }
 
         /// <summary>
@@ -7191,43 +9573,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Change selected profession (called from duty selection menu).
-        /// </summary>
-        public void SetSelectedProfession(string professionId)
-        {
-            if (!IsEnlisted || string.IsNullOrEmpty(professionId))
-            {
-                return;
-            }
-
-            // Remove previous profession if different and not "none"
-            if (_selectedProfession != professionId && _selectedProfession != "none" &&
-                !string.IsNullOrEmpty(_selectedProfession))
-            {
-                var duties = EnlistedDutiesBehavior.Instance;
-                if (duties != null)
-                {
-                    duties.RemoveDuty(_selectedProfession);
-                }
-            }
-
-            _selectedProfession = professionId;
-
-            // Add the new profession to active duties for daily XP processing (skip "none")
-            // "none" remains as default internal value but isn't an active duty
-            if (professionId != "none")
-            {
-                var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-                if (dutiesBehavior != null)
-                {
-                    dutiesBehavior.AssignDuty(professionId);
-                }
-            }
-
-            ModLogger.Info("Duties", $"Changed profession to: {professionId}");
-        }
-
-        /// <summary>
         ///     Check if promotion notification should be triggered after XP gain.
         ///     Now integrates with Phase 2B troop selection system.
         /// </summary>
@@ -7257,17 +9602,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // If we crossed from below to above a threshold
                     if (previousXP < requiredXP && currentXP >= requiredXP)
                     {
-                        // Phase 2B: Trigger troop selection system
-                        var troopSelectionManager = TroopSelectionManager.Instance;
-                        if (troopSelectionManager != null)
-                        {
-                            troopSelectionManager.ShowTroopSelectionMenu(tier + 1);
-                        }
-                        else
-                        {
-                            // Fallback: Direct promotion notification
-                            ShowPromotionNotification(tier + 1);
-                        }
+                        // Phase 7: Troop selection menu removed - promotions handled via PromotionBehavior
+                        // which triggers proving events and culture-specific notifications.
+                        // Player visits Quartermaster manually for equipment after promotion.
+                        // The PromotionBehavior.CheckForPromotion() handles the actual tier advancement.
+                        ModLogger.Info("Progression", $"XP threshold crossed for tier {tier + 1} - PromotionBehavior will handle");
 
                         break; // Only notify for the first threshold crossed
                     }
@@ -7275,7 +9614,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Progression", $"Error checking promotion notification: {ex.Message}");
+                ModLogger.ErrorCode("Progression", "E-PROG-001", "Error checking promotion notification", ex);
             }
         }
 
@@ -7329,7 +9668,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Progression", $"Error showing promotion notification: {ex.Message}");
+                ModLogger.ErrorCode("Progression", "E-PROG-002", "Error showing promotion notification", ex);
             }
         }
 
@@ -7415,7 +9754,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FactionRelations", $"Error mirroring war relations: {ex.Message}");
+                ModLogger.ErrorCode("FactionRelations", "E-FACTIONREL-001", "Error mirroring war relations", ex);
             }
         }
 
@@ -7483,7 +9822,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FactionRelations", $"Error restoring war relations: {ex.Message}");
+                ModLogger.ErrorCode("FactionRelations", "E-FACTIONREL-002", "Error restoring war relations", ex);
                 // Clear tracking even on error to prevent stale state
                 _minorFactionWarRelations?.Clear();
             }
@@ -7549,7 +9888,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("FactionRelations", $"Error refreshing faction visuals: {ex.Message}");
+                ModLogger.ErrorCode("FactionRelations", "E-FACTIONREL-003", "Error refreshing faction visuals", ex);
             }
         }
 
@@ -7741,6 +10080,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Assign initial recruit equipment based on lord's culture.
+        ///     PROTECTS QUEST ITEMS: Quest items are preserved during equipment assignment.
         /// </summary>
         private void AssignInitialEquipment()
         {
@@ -7751,11 +10091,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
+                // CRITICAL: Preserve quest items before replacing equipment
+                var equipmentManager = EquipmentManager.Instance;
+                var questItems = equipmentManager?.PreserveEquippedQuestItems() ?? new Dictionary<EquipmentIndex, EquipmentElement>();
+
                 // Use lord's culture basic troop equipment
                 var basicTroopEquipment = _enlistedLord.Culture.BasicTroop.Equipment;
                 Helpers.EquipmentHelper.AssignHeroEquipmentFromEquipment(Hero.MainHero, basicTroopEquipment);
 
-                ModLogger.Info("Equipment", $"Assigned initial {_enlistedLord.Culture.Name} recruit equipment");
+                // CRITICAL: Restore quest items after equipment assignment
+                equipmentManager?.RestoreEquippedQuestItems(questItems);
+
+                ModLogger.Info("Equipment", $"Assigned initial {_enlistedLord.Culture.Name} recruit equipment (quest items protected)");
             }
             catch (Exception ex)
             {
@@ -7963,7 +10310,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Clear leave state and start cooldown before next leave
                 _isOnLeave = false;
                 _leaveStartDate = CampaignTime.Zero;
-                _leaveCooldownEnds = CampaignTime.Now + CampaignTime.Days(30);
+                // Leave cooldown should be short enough to feel usable, while still preventing spam.
+                // Requested behavior: 7-day cooldown (was 30).
+                _leaveCooldownEnds = CampaignTime.Now + CampaignTime.Days(7);
 
                 // NOTE: We intentionally do NOT transfer troops here. Unlike initial enlistment, 
                 // troops recruited during leave are the player's personal force and should stay
@@ -8031,7 +10380,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             if (newLord == null)
             {
-                ModLogger.Error("Enlistment", "TransferServiceToLord called with null lord");
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-016", "TransferServiceToLord called with null lord",
+                    new InvalidOperationException("Generated diagnostic exception to capture stack trace."));
                 return;
             }
 
@@ -8154,7 +10504,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Enlistment", $"Error transferring service to {newLord?.Name}: {ex.Message}", ex);
+                var newLordName = newLord?.Name?.ToString() ?? "unknown";
+                ModLogger.ErrorCode("Enlistment", "E-ENLIST-015", $"Error transferring service to {newLordName}", ex);
             }
         }
 
@@ -8458,7 +10809,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in army battle participation: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-008", "Error in army battle participation", ex);
             }
         }
 
@@ -8479,7 +10830,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error handling army battle: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-009", "Error handling army battle", ex);
             }
         }
 
@@ -8510,7 +10861,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error handling individual battle: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-010", "Error handling individual battle", ex);
             }
         }
 
@@ -8539,7 +10890,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in post-battle cleanup: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-011", "Error in post-battle cleanup", ex);
             }
         }
 
@@ -8593,8 +10944,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Settlement",
-                                $"Error finishing PlayerEncounter before settlement entry: {ex.Message}");
+                            ModLogger.ErrorCode("Settlement", "E-SETTLEMENT-002",
+                                "Error finishing PlayerEncounter before settlement entry (player)", ex);
                         }
                     }
 
@@ -8639,8 +10990,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Settlement",
-                                $"Error finishing PlayerEncounter before settlement entry: {ex.Message}");
+                            ModLogger.ErrorCode("Settlement", "E-SETTLEMENT-003",
+                                "Error finishing PlayerEncounter before settlement entry (lord)", ex);
                         }
                     }
 
@@ -8701,7 +11052,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Settlement", $"Error in settlement entry detection: {ex.Message}");
+                ModLogger.ErrorCode("Settlement", "E-SETTLEMENT-004", "Error in settlement entry detection", ex);
             }
         }
 
@@ -8801,7 +11152,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             {
                                 // Make sure to end force hidden even on error
                                 VisibilityEnforcementPatch.EndForceHidden();
-                                ModLogger.Error("Settlement", $"Error pulling player from settlement: {ex.Message}");
+                                ModLogger.ErrorCode("Settlement", "E-SETTLEMENT-005",
+                                    "Error pulling player from settlement to follow lord", ex);
                             }
                         });
                     }
@@ -8809,7 +11161,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Settlement", $"Error in settlement exit detection: {ex.Message}");
+                ModLogger.ErrorCode("Settlement", "E-SETTLEMENT-006", "Error in settlement exit detection", ex);
             }
         }
 
@@ -8920,8 +11272,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             }
                             catch (Exception ex)
                             {
-                                ModLogger.Error("Battle",
-                                    $"Failed to switch to native menu '{desiredMenu}': {ex.Message}");
+                                ModLogger.ErrorCode("Battle", "E-BATTLE-018",
+                                    $"Failed to switch to native menu '{desiredMenu}'", ex);
                             }
                         });
                     }
@@ -8967,7 +11319,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in BattleStarted handler: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-014", "Error in MapEventStarted battle handler", ex);
             }
         }
 
@@ -9071,8 +11423,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Battle",
-                                $"Error finishing PlayerEncounter after enlistment ended: {ex.Message}");
+                            ModLogger.ErrorCode("Battle", "E-BATTLE-019",
+                                "Error finishing PlayerEncounter after enlistment ended", ex);
                         }
                     }
 
@@ -9152,6 +11504,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (!EnlistedEncounterBehavior.IsWaitingInReserve)
                     {
                         AwardBattleXP(playerParticipated);
+                        
+                        // Phase 4: Award battle loot share if we won
+                        var playerWon = effectiveMapEvent?.WinningSide == effectiveMapEvent?.PlayerSide;
+                        if (playerParticipated && playerWon)
+                        {
+                            AwardBattleLootShare(effectiveMapEvent, true);
+                        }
                     }
                     else
                     {
@@ -9244,8 +11603,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                                 }
                                 catch (Exception ex)
                                 {
-                                    ModLogger.Error("Battle",
-                                        $"Error in deferred encounter cleanup: {ex.Message}");
+                                    ModLogger.ErrorCode("Battle", "E-BATTLE-020",
+                                        "Error in deferred encounter cleanup", ex);
                                 }
                             });
                         }
@@ -9274,7 +11633,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in MapEvent end handler: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-015", "Error in MapEvent end handler", ex);
             }
         }
 
@@ -9346,6 +11705,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 if (participated)
                 {
                     AwardBattleXP(killsThisBattle);
+                    
+                    // Record battle for lance persona progression (promotions require 3+ battles)
+                    var lancePersonas = Lances.Personas.LancePersonaBehavior.Instance;
+                    if (lancePersonas != null && !string.IsNullOrEmpty(CurrentLanceId))
+                    {
+                        var lanceKey = $"{CurrentLord?.StringId}_{CurrentLanceId}";
+                        lancePersonas.RecordBattleParticipation(lanceKey, 10);
+                        ModLogger.Debug("Battle", $"Lance battle recorded for {lanceKey}");
+                    }
                 }
 
                 // Add kills to current term total (persists to faction record on retirement)
@@ -9361,7 +11729,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in OnPlayerBattleEnd: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-016", "Error in OnPlayerBattleEnd", ex);
             }
         }
 
@@ -9412,7 +11780,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error awarding battle XP: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-017", "Error awarding battle XP", ex);
             }
         }
 
@@ -9487,7 +11855,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Siege", $"Error in siege watchdog: {ex.Message}");
+                ModLogger.ErrorCode("Siege", "E-SIEGE-002", "Error in siege watchdog", ex);
             }
         }
 
@@ -9773,7 +12141,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("GraceProtection", $"Failed to grant grace period interaction window: {ex.Message}");
+                ModLogger.ErrorCode("GraceProtection", "E-GRACE-001", "Failed to grant grace period interaction window", ex);
             }
         }
 
@@ -9829,7 +12197,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error restoring campaign flow after battle: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-012", "Error restoring campaign flow after battle", ex);
             }
         }
 
@@ -9860,8 +12228,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("EncounterCleanup",
-                    $"Failed to finish lingering PlayerEncounter after {context}: {ex.Message}");
+                ModLogger.ErrorCode("EncounterCleanup", "E-ENCOUNTER-002",
+                    $"Failed to finish lingering PlayerEncounter after {context}", ex);
             }
         }
 
@@ -9993,7 +12361,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Naval", $"Error validating army state: {ex.Message}");
+                ModLogger.ErrorCode("Naval", "E-NAVAL-003", "Error validating army state", ex);
                 
                 // On error, try to clean up anyway to prevent cascading crashes
                 try
@@ -10033,7 +12401,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Diagnostics", $"Error logging party state: {ex.Message}");
+                ModLogger.ErrorCode("Diagnostics", "E-DIAG-001", "Error logging party state", ex);
             }
         }
 
@@ -10061,7 +12429,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Battle", $"Error in OnAfterMissionStarted: {ex.Message}");
+                ModLogger.ErrorCode("Battle", "E-BATTLE-013", "Error in OnAfterMissionStarted", ex);
             }
         }
 

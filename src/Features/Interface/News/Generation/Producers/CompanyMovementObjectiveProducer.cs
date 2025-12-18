@@ -1,0 +1,170 @@
+using System;
+using Enlisted.Features.Interface.News.Models;
+using Enlisted.Features.Lances.Events;
+using Enlisted.Mod.Core.Triggers;
+using TaleWorlds.CampaignSystem.Settlements;
+
+namespace Enlisted.Features.Interface.News.Generation.Producers
+{
+    /// <summary>
+    /// Company facts: movement, objective tag, settlement stops, and army attachment context.
+    /// </summary>
+    public sealed class CompanyMovementObjectiveProducer : IDailyReportFactProducer
+    {
+        public void Contribute(DailyReportSnapshot snapshot, CampNewsContext context)
+        {
+            if (snapshot == null || context == null)
+            {
+                return;
+            }
+
+            var party = context.LordParty;
+            snapshot.LordPartyId = party?.StringId ?? string.Empty;
+
+            // Food / morale bands (best-effort) from the CampLife snapshot meters.
+            var camp = context.CampLife;
+            if (camp != null && camp.IsActiveWhileEnlisted())
+            {
+                // Food proxy: logistics strain correlates with time away from towns and disruption.
+                var logistics = camp.LogisticsStrain;
+                snapshot.Food = logistics switch
+                {
+                    < 25f => FoodBand.Plenty,
+                    < 55f => FoodBand.Thin,
+                    < 80f => FoodBand.Low,
+                    _ => FoodBand.Critical
+                };
+
+                // MoraleShock is inverse morale (higher shock == lower morale).
+                var moraleShock = camp.MoraleShock;
+                snapshot.Morale = moraleShock switch
+                {
+                    < 25f => MoraleBand.High,
+                    < 55f => MoraleBand.Steady,
+                    < 80f => MoraleBand.Low,
+                    _ => MoraleBand.Breaking
+                };
+            }
+
+            // Army attachment context (acknowledge as context only; we avoid army-wide simulation).
+            if (party?.Army != null)
+            {
+                var leader = party.Army.LeaderParty?.LeaderHero;
+                var leaderName = leader?.Name?.ToString() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(leaderName))
+                {
+                    context.Generation.AttachedArmyLeaderName = leaderName;
+                    snapshot.AttachedArmyTag = "attached_to_army";
+                }
+            }
+
+            // Current objective/movement.
+            if (party?.Party?.MapEvent != null)
+            {
+                snapshot.ObjectiveTag = "battle";
+                snapshot.BattleTag = "engaged";
+                snapshot.Threat = ThreatBand.High;
+                context.Generation.CompanySettlementName = string.Empty;
+                context.Generation.TargetSettlementName = string.Empty;
+                return;
+            }
+
+            if (party?.Party?.SiegeEvent != null)
+            {
+                snapshot.ObjectiveTag = "siege";
+                snapshot.BattleTag = "siege";
+                snapshot.Threat = ThreatBand.High;
+                context.Generation.CompanySettlementName = string.Empty;
+                context.Generation.TargetSettlementName = string.Empty;
+                return;
+            }
+
+            if (party?.CurrentSettlement != null)
+            {
+                snapshot.ObjectiveTag = "camped";
+                context.Generation.CompanySettlementName = party.CurrentSettlement.Name?.ToString() ?? string.Empty;
+                context.Generation.TargetSettlementName = string.Empty;
+            }
+            else if (party?.TargetSettlement != null)
+            {
+                snapshot.ObjectiveTag = "marching";
+                context.Generation.TargetSettlementName = party.TargetSettlement.Name?.ToString() ?? string.Empty;
+                context.Generation.CompanySettlementName = string.Empty;
+            }
+            else
+            {
+                snapshot.ObjectiveTag = party?.Army != null ? "army_march" : "marching";
+                context.Generation.CompanySettlementName = string.Empty;
+                context.Generation.TargetSettlementName = string.Empty;
+            }
+
+            // Threat band (best-effort): prefer cheap checks, then token checks.
+            if (snapshot.Threat == ThreatBand.Unknown)
+            {
+                try
+                {
+                    var trackerBehavior = context.TriggerTracker;
+                    if (trackerBehavior != null && trackerBehavior.IsWithinDays(trackerBehavior.LastMapEventEndedTime, 2f))
+                    {
+                        snapshot.Threat = ThreatBand.Medium;
+                    }
+                    else
+                    {
+                        snapshot.Threat = ThreatBand.Low;
+                    }
+
+                    // Token checks for “enemy nearby / before battle” (shared trigger vocabulary).
+                    // This is still best-effort: if a token implementation changes across versions, we fall back to the simple band above.
+                    var enlistment = context.Enlistment;
+                    if (enlistment != null)
+                    {
+                        var eval = new LanceLifeEventTriggerEvaluator();
+                        var danger =
+                            eval.IsConditionTrue(CampaignTriggerTokens.EnemyNearby, enlistment) ||
+                            eval.IsConditionTrue(CampaignTriggerTokens.BeforeBattle, enlistment);
+
+                        if (danger)
+                        {
+                            snapshot.Threat = ThreatBand.Medium;
+                        }
+                    }
+                }
+                catch
+                {
+                    snapshot.Threat = snapshot.Threat == ThreatBand.Unknown ? ThreatBand.Low : snapshot.Threat;
+                }
+            }
+
+            // Recent settlement stop (best-effort grounding for rumors + logistics talk).
+            // Use the shared tracker so we avoid scanning the world.
+            var tracker = context.TriggerTracker;
+            if (tracker == null)
+            {
+                return;
+            }
+
+            if (tracker.LastSettlementEnteredTime != TaleWorlds.CampaignSystem.CampaignTime.Zero &&
+                tracker.IsWithinDays(tracker.LastSettlementEnteredTime, 1f))
+            {
+                var lastId = tracker.LastSettlementEnteredId;
+                if (!string.IsNullOrWhiteSpace(lastId))
+                {
+                    var settlement = Settlement.Find(lastId);
+                    var name = settlement?.Name?.ToString() ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        snapshot.LastStopTag = settlement.IsTown
+                            ? "town_stop"
+                            : settlement.IsVillage
+                                ? "village_stop"
+                                : "settlement_stop";
+
+                        context.Generation.LastStopSettlementName = name;
+                    }
+                }
+            }
+        }
+    }
+}
+
+

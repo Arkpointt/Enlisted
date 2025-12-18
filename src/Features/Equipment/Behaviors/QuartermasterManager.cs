@@ -11,6 +11,7 @@ using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using TaleWorlds.ObjectSystem;
 using Helpers;
+using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
@@ -301,6 +302,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                 QuartermasterWaitConsequence,
                 QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Rations purchase menu (Phase 5 Food System)
+            starter.AddWaitGameMenu(
+                "quartermaster_rations",
+                "Provisions\n{RATIONS_TEXT}",
+                OnQuartermasterRationsInit,
+                QuartermasterWaitCondition,
+                QuartermasterWaitConsequence,
+                QuartermasterWaitTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Add rations menu options
+            AddRationsMenuOptions(starter);
                 
             // Main equipment category options with modern icons
 
@@ -362,6 +376,17 @@ namespace Enlisted.Features.Equipment.Behaviors
                 OnSupplyManagementSelected,
                 false, 6);
 
+            // Purchase rations (Phase 5 Food System - Trade icon for food purchase)
+            starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_rations_option",
+                new TextObject("{=qm_menu_rations}Purchase provisions").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_rations"),
+                false, 7);
+
             // Sell equipment back to the quartermaster (Trade icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_sell",
                 new TextObject("{=qm_menu_return_equipment}Sell equipment").ToString(),
@@ -388,7 +413,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return true;
                 },
                 _ => ActivateMenuPreserveTime("quartermaster_returns"),
-                false, 7);
+                false, 8);
                 
             // Return to enlisted status (Leave icon)
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_back",
@@ -400,6 +425,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 _ =>
                 {
+                    // Phase 7: Clear the "NEW" markers after player visits Quartermaster
+                    ClearNewlyUnlockedMarkers();
+
                     NextFrameDispatcher.RunNextFrame(() =>
                     {
                         try
@@ -409,7 +437,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Quartermaster", $"Failed to switch back to enlisted status: {ex.Message}");
+                            ModLogger.ErrorCode("Quartermaster", "E-QM-004",
+                                "Failed to switch back to enlisted status", ex);
                             EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
                     });
@@ -477,10 +506,197 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
+
+        // Phase 7: Track items that became available after last promotion for "new item" indicators
+        private readonly HashSet<string> _previouslyAvailableItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> _newlyUnlockedItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private int _lastPromotionTier;
+
+        /// <summary>
+        /// Phase 7: Get all equipment available for a formation+tier+culture combination.
+        /// This replaces the single-troop approach with a comprehensive scan of all matching troops.
+        /// </summary>
+        /// <param name="formation">Player's formation (infantry, archer, cavalry, horsearcher)</param>
+        /// <param name="tierCap">Maximum tier to include (player's current tier)</param>
+        /// <param name="culture">Player's enlisted lord's culture</param>
+        /// <returns>Dictionary of equipment slots to available items</returns>
+        public Dictionary<EquipmentIndex, List<ItemObject>> GetAvailableEquipmentByFormation(
+            string formation, 
+            int tierCap, 
+            BasicCultureObject culture)
+        {
+            try
+            {
+                if (culture == null || string.IsNullOrWhiteSpace(formation))
+                {
+                    return new Dictionary<EquipmentIndex, List<ItemObject>>();
+                }
+
+                var formationLower = formation.ToLowerInvariant();
+                var variants = new Dictionary<EquipmentIndex, List<ItemObject>>();
+                var allTroops = MBObjectManager.Instance.GetObjectTypeList<CharacterObject>();
+
+                // Scan all non-hero troops of the player's culture that match formation and are at or below tier
+                foreach (var troop in allTroops)
+                {
+                    if (troop.IsHero || troop.Culture != culture)
+                    {
+                        continue;
+                    }
+
+                    var troopTier = troop.GetBattleTier();
+                    if (troopTier < 1 || troopTier > tierCap)
+                    {
+                        continue;
+                    }
+
+                    // Check if troop matches the formation
+                    var troopFormation = DetectTroopFormation(troop).ToString().ToLowerInvariant();
+                    if (troopFormation != formationLower)
+                    {
+                        continue;
+                    }
+
+                    if (!troop.BattleEquipments.Any())
+                    {
+                        continue;
+                    }
+
+                    // Collect all equipment from this troop
+                    foreach (var equipment in troop.BattleEquipments)
+                    {
+                        for (var slot = EquipmentIndex.Weapon0; slot <= EquipmentIndex.HorseHarness; slot++)
+                        {
+                            var item = equipment[slot].Item;
+                            if (item == null)
+                            {
+                                continue;
+                            }
+
+                            // Culture filter: if item has a culture, it must match
+                            if (item.Culture != null && item.Culture != culture)
+                            {
+                                continue;
+                            }
+
+                            if (!variants.ContainsKey(slot))
+                            {
+                                variants[slot] = new List<ItemObject>();
+                            }
+
+                            if (!variants[slot].Contains(item))
+                            {
+                                variants[slot].Add(item);
+                            }
+                        }
+                    }
+                }
+
+                var total = variants.Sum(kvp => kvp.Value.Count);
+                ModLogger.Info("Quartermaster", 
+                    $"Formation-based equipment scan: {formation} T1-T{tierCap} {culture.Name} -> {total} items");
+
+                return variants;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error getting formation equipment", ex);
+                return new Dictionary<EquipmentIndex, List<ItemObject>>();
+            }
+        }
+
+        /// <summary>
+        /// Phase 7: Update the "newly unlocked items" set after a promotion.
+        /// Call this when the player's tier changes.
+        /// </summary>
+        public void UpdateNewlyUnlockedItems()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var duties = EnlistedDutiesBehavior.Instance;
+                if (enlistment?.IsEnlisted != true || duties == null)
+                {
+                    return;
+                }
+
+                var tier = enlistment.EnlistmentTier;
+                var culture = enlistment.EnlistedLord?.Culture;
+                var formation = duties.GetPlayerFormationType() ?? "infantry";
+
+                // Only update if tier actually changed
+                if (tier <= _lastPromotionTier)
+                {
+                    return;
+                }
+
+                // Get current available items
+                var currentEquipment = GetAvailableEquipmentByFormation(formation, tier, culture);
+                var currentItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var slot in currentEquipment.Values)
+                {
+                    foreach (var item in slot)
+                    {
+                        currentItemIds.Add(item.StringId);
+                    }
+                }
+
+                // Find newly unlocked items
+                _newlyUnlockedItems.Clear();
+                foreach (var itemId in currentItemIds)
+                {
+                    if (!_previouslyAvailableItems.Contains(itemId))
+                    {
+                        _newlyUnlockedItems.Add(itemId);
+                    }
+                }
+
+                // Update the previous set for next time
+                _previouslyAvailableItems.Clear();
+                foreach (var itemId in currentItemIds)
+                {
+                    _previouslyAvailableItems.Add(itemId);
+                }
+
+                _lastPromotionTier = tier;
+
+                if (_newlyUnlockedItems.Count > 0)
+                {
+                    ModLogger.Info("Quartermaster", $"Promotion to T{tier}: {_newlyUnlockedItems.Count} new items unlocked");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error updating newly unlocked items", ex);
+            }
+        }
+
+        /// <summary>
+        /// Phase 7: Check if an item is newly unlocked (for "NEW" indicators in UI).
+        /// </summary>
+        public bool IsNewlyUnlockedItem(ItemObject item)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+            return _newlyUnlockedItems.Contains(item.StringId);
+        }
+
+        /// <summary>
+        /// Phase 7: Clear the newly unlocked items set (call when player visits QM or equips items).
+        /// </summary>
+        public void ClearNewlyUnlockedMarkers()
+        {
+            _newlyUnlockedItems.Clear();
+        }
         
         /// <summary>
         /// Get equipment variants available to a specific troop type.
         /// Uses runtime discovery from actual game data.
+        /// 
+        /// Phase 7 Note: This method is retained for backward compatibility but 
+        /// GetAvailableEquipmentByFormation() is now the preferred approach.
         /// </summary>
         public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(CharacterObject selectedTroop)
         {
@@ -544,7 +760,11 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
         
         /// <summary>
-        /// Get the currently selected troop for the player (from TroopSelectionManager).
+        /// Get the currently selected troop for the player.
+        /// 
+        /// Phase 7 Note: This method now uses formation+tier+culture to find a representative troop.
+        /// The TroopSelectionManager.LastSelectedTroopId is no longer the primary lookup method.
+        /// GetAvailableEquipmentByFormation() should be preferred for equipment queries.
         /// </summary>
         public CharacterObject GetPlayerSelectedTroop()
         {
@@ -552,35 +772,15 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 var enlistment = EnlistmentBehavior.Instance;
                 var duties = EnlistedDutiesBehavior.Instance;
-                var troopSelector = TroopSelectionManager.Instance;
                 
                 if (enlistment?.IsEnlisted != true || duties == null)
                 {
                     return null;
                 }
-
-                // First, prefer the last explicitly selected troop (promotion or Master at Arms)
-                var lastTroopId = troopSelector?.LastSelectedTroopId;
-                if (!string.IsNullOrEmpty(lastTroopId))
-                {
-                    try
-                    {
-                        var remembered = MBObjectManager.Instance.GetObject<CharacterObject>(lastTroopId);
-                        if (remembered != null && remembered.BattleEquipments.Any())
-                        {
-                            ModLogger.Info("Quartermaster", $"Player troop identified from last selection: {remembered.Name}");
-                            return remembered;
-                        }
-                    }
-                    catch
-                    {
-                        // Fall through to dynamic detection
-                    }
-                }
                 
-                // Get player's current formation to help identify troop type
+                // Phase 7: Use formation+tier+culture directly
                 var formation = duties.GetPlayerFormationType() ?? "infantry";
-                var culture = enlistment.CurrentLord?.Culture;
+                var culture = enlistment.EnlistedLord?.Culture;
                 var tier = enlistment.EnlistmentTier;
                 
                 if (culture == null)
@@ -595,13 +795,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                     troop.GetBattleTier() == tier &&
                     !troop.IsHero &&
                     troop.BattleEquipments.Any() &&
-                    DetectTroopFormation(troop).ToString().ToLower() == formation).ToList();
+                    DetectTroopFormation(troop).ToString().ToLowerInvariant() == formation.ToLowerInvariant()).ToList();
                 
                 // Select first matching troop as representative
                 var selectedTroop = matchingTroops.FirstOrDefault();
                 if (selectedTroop != null)
                 {
-                    ModLogger.Info("Quartermaster", $"Player troop identified as: {selectedTroop.Name} ({formation} formation)");
+                    ModLogger.Debug("Quartermaster", $"Representative troop for {formation} T{tier}: {selectedTroop.Name}");
                 }
                 
                 return selectedTroop;
@@ -690,9 +890,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
                 var discountMultiplier = (isProvisioner || isQuartermaster) ? 0.85f : 1.0f;
 
-                var price = basePrice * soldierTax * discountMultiplier;
+                var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
+                var price = basePrice * soldierTax * discountMultiplier * campMultiplier;
                 var roundedPrice = Convert.ToInt32(MathF.Round(price));
-                return Math.Max(5, roundedPrice);
+                
+                // Relationship discount (0–15%) comes from the Quartermaster Hero relationship system.
+                // This is intentionally applied AFTER soldier-tax and role/mood multipliers so the discount is predictable.
+                var enlistment = EnlistmentBehavior.Instance;
+                var discounted = enlistment?.IsEnlisted == true
+                    ? enlistment.ApplyQuartermasterDiscount(roundedPrice)
+                    : roundedPrice;
+
+                return Math.Max(5, discounted);
             }
             catch
             {
@@ -712,7 +921,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
                 var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
                 var basePrice = item.Value;
-                var priceFloat = MathF.Max(0f, basePrice * buybackRate);
+                var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterBuybackMultiplier() ?? 1.0f;
+                var priceFloat = MathF.Max(0f, basePrice * buybackRate * campMultiplier);
                 var price = (int)priceFloat;
                 return Math.Max(price, 0);
             }
@@ -732,7 +942,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"Error charging gold: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-005", "Error charging gold", ex);
             }
         }
         
@@ -752,7 +962,10 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 if (variant?.Item == null)
                 {
-                    ModLogger.Error("Quartermaster", "Equipment request failed - variant or item is null");
+                    // This is a genuine bad state but can be hit repeatedly via UI retry flows.
+                    // Keep it high-signal: log once per session with a stable code.
+                    ModLogger.LogOnce("qm_variant_null", "Quartermaster",
+                        "[E-QM-012] Equipment request failed - variant or item is null", LogLevel.Error);
                     return;
                 }
 
@@ -780,7 +993,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var cost = variant.Cost > 0 ? variant.Cost : CalculateQuartermasterPrice(requestedItem);
                 if (hero.Gold < cost)
                 {
-                    var msg = new TextObject("{=qm_cannot_afford}You canâ€™t afford this. Cost: {COST} denars.");
+                    var msg = new TextObject("{=qm_cannot_afford}You can't afford this. Cost: {COST} denars.");
                     msg.SetTextVariable("COST", cost);
                     InformationManager.DisplayMessage(new InformationMessage(msg.ToString(), Colors.Red));
                     return;
@@ -864,7 +1077,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"Error processing equipment variant request for {variant?.Item?.Name?.ToString() ?? "null"} in slot {variant?.Slot}: {ex.Message}", ex);
+                ModLogger.ErrorCode("Quartermaster", "E-QM-006",
+                    $"Error processing equipment variant request for {variant?.Item?.Name?.ToString() ?? "null"} in slot {variant?.Slot}", ex);
             }
         }
         
@@ -1108,7 +1322,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var buyback = removed ? CalculateQuartermasterBuybackPrice(item) : 0;
                 if (removed && buyback > 0)
                 {
-                    Hero.MainHero.ChangeHeroGold(buyback);
+                    // GiveGoldAction properly adds to party treasury and updates UI
+                    GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, buyback);
                 }
 
                 var message = removed
@@ -1314,7 +1529,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                     sb.AppendLine("or try again after your next promotion.");
                     
                     MBTextManager.SetTextVariable("QUARTERMASTER_TEXT", sb.ToString());
-                    ModLogger.Error("Quartermaster", "Unable to identify player troop type");
+                    ModLogger.LogOnce("qm_player_troop_unknown", "Quartermaster",
+                        "[E-QM-013] Unable to identify player troop type", LogLevel.Error);
                     return;
                 }
                 
@@ -1490,7 +1706,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                             Slot = slot,
                             IsOfficerExclusive = !variants.ContainsKey(slot) || !variants[slot].Contains(item),
                             AllowsDuplicatePurchase = allowsDuplicate,
-                            IsAtLimit = isAtLimit
+                            IsAtLimit = isAtLimit,
+                            IsNewlyUnlocked = IsNewlyUnlockedItem(item)
                         });
                     }
                     
@@ -1617,7 +1834,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"GetCultureHorseGear failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-007", "GetCultureHorseGear failed", ex);
                 return result;
             }
         }
@@ -1635,23 +1852,63 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
                 var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
                 
-                // In-character quartermaster dialogue
-                var qmDialogue = new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"");
+                // In-character quartermaster dialogue (Camp Life can shift mood/pricing for the day).
+                TextObject qmDialogue;
+                if (CampLifeBehavior.Instance?.IsActiveWhileEnlisted() == true)
+                {
+                    var mood = CampLifeBehavior.Instance.QuartermasterMoodTier;
+                    qmDialogue = mood switch
+                    {
+                        QuartermasterMoodTier.Fine => new TextObject("{=qm_intro_dialogue_fine}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        QuartermasterMoodTier.Tense => new TextObject("{=qm_intro_dialogue_tense}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        QuartermasterMoodTier.Sour => new TextObject("{=qm_intro_dialogue_sour}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        QuartermasterMoodTier.Predatory => new TextObject("{=qm_intro_dialogue_predatory}\"Need kit? Buy it here. Prices are set by the quartermaster.\""),
+                        _ => new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"")
+                    };
+                }
+                else
+                {
+                    qmDialogue = new TextObject("{=qm_intro_dialogue}\"Need kit? Buy it here. Prices are set by the quartermaster.\"");
+                }
                 sb.AppendLine(qmDialogue.ToString());
                 sb.AppendLine();
                 
-                // Current status section
-                sb.AppendLine("â€” Current Status â€”");
-                sb.AppendLine();
-                sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
-                sb.AppendLine($"Your Gold: {Hero.MainHero.Gold} denars");
+                // Current status section - use simple ASCII dividers
+                sb.AppendLine("--- Your Status ---");
                 sb.AppendLine();
                 
-                // Pricing section
-                sb.AppendLine("â€” Pricing â€”");
+                // Rank and formation info
+                var enlistment = EnlistmentBehavior.Instance;
+                var rankName = Ranks.RankHelper.GetCurrentRank(enlistment);
+                var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType() ?? "Infantry";
+                sb.AppendLine($"Rank: {rankName}");
+                sb.AppendLine($"Formation: {formation.ToTitleCase()}");
+                sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
                 sb.AppendLine();
-                sb.AppendLine($"Soldier tax: x{soldierTax:0.00}");
-                sb.AppendLine($"Buyback: {(int)(buybackRate * 100f)}% of base value");
+                sb.AppendLine($"Your Gold: {Hero.MainHero.Gold:N0} denars");
+                sb.AppendLine();
+                
+                // Pricing section - explain what affects prices
+                sb.AppendLine("--- Pricing ---");
+                sb.AppendLine();
+                
+                // Calculate final multiplier for clarity
+                var finalBuyMult = soldierTax;
+                var finalSellMult = buybackRate;
+                
+                if (CampLifeBehavior.Instance?.IsActiveWhileEnlisted() == true)
+                {
+                    var campPurchase = CampLifeBehavior.Instance.GetQuartermasterPurchaseMultiplier();
+                    var campBuyback = CampLifeBehavior.Instance.GetQuartermasterBuybackMultiplier();
+                    finalBuyMult *= campPurchase;
+                    finalSellMult *= campBuyback;
+                    
+                    var mood = CampLifeBehavior.Instance.QuartermasterMoodTier;
+                    sb.AppendLine($"Camp Mood: {mood}");
+                }
+                
+                sb.AppendLine($"Buy Price: {(int)(finalBuyMult * 100)}% of value");
+                sb.AppendLine($"Sell Price: {(int)(finalSellMult * 100)}% of value");
                 sb.AppendLine();
                 
                 // Officer privileges if applicable
@@ -1660,7 +1917,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 if (isProvisioner || isQuartermaster)
                 {
-                    sb.AppendLine("â€” Officer Access â€”");
+                    sb.AppendLine("--- Officer Access ---");
                     sb.AppendLine();
                     sb.AppendLine("Extended equipment options available.");
                     sb.AppendLine();
@@ -1741,7 +1998,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var status = option.IsCurrent ? "(Current Equipment)" :
                                 option.CanAfford ? $"Cost: {option.Cost} denars" :
                                 $"Cost: {option.Cost} denars (Insufficient funds)";
-                    var marker = option.IsCurrent ? "â—" : "â—‹";
+                    var marker = option.IsCurrent ? "[*]" : "[ ]"; // Simple ASCII markers
                     
                     sb.AppendLine($"{marker} {option.Item.Name}");
                     sb.AppendLine($"  {status}");
@@ -1816,6 +2073,434 @@ namespace Enlisted.Features.Equipment.Behaviors
                 MBTextManager.SetTextVariable("RETURN_TEXT",
                     new TextObject("{=qm_return_error}Return processing unavailable.").ToString());
             }
+        }
+
+        // ========================================================================
+        // RATIONS/FOOD SYSTEM (Phase 5)
+        // ========================================================================
+
+        /// <summary>
+        /// Initialize rations purchase menu.
+        /// </summary>
+        private void OnQuartermasterRationsInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var backgroundMesh = "encounter_looter";
+
+                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+                }
+                else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+                {
+                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                }
+
+                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+
+                var sb = new StringBuilder();
+                sb.AppendLine(new TextObject("{=qm_rations_intro}Purchase better rations from the quartermaster.").ToString());
+                sb.AppendLine(new TextObject("{=qm_rations_desc}Higher quality food provides morale bonuses and fatigue relief.").ToString());
+                sb.AppendLine();
+
+                // Show current status
+                if (enlistment != null)
+                {
+                    var (qualityName, moraleBonus, fatigueBonus, daysRemaining) = enlistment.GetFoodQualityInfo();
+                    
+                    if (daysRemaining > 0)
+                    {
+                        var statusText = new TextObject("{=qm_rations_current}Current: {QUALITY} (+{MORALE} morale) - {DAYS} days remaining");
+                        statusText.SetTextVariable("QUALITY", qualityName);
+                        statusText.SetTextVariable("MORALE", moraleBonus);
+                        statusText.SetTextVariable("DAYS", daysRemaining.ToString("F1"));
+                        sb.AppendLine(statusText.ToString());
+                    }
+                    else
+                    {
+                        sb.AppendLine(new TextObject("{=qm_rations_standard}Current: Standard army rations (no bonus)").ToString());
+                    }
+
+                    sb.AppendLine();
+                    sb.AppendLine(new TextObject("{=qm_rations_gold}Your gold: {GOLD_ICON} {GOLD}").ToString());
+                    MBTextManager.SetTextVariable("GOLD", Hero.MainHero.Gold);
+
+                    // Show retinue provisioning status (Phase 6)
+                    if (enlistment.HasRetinueToProvision())
+                    {
+                        sb.AppendLine();
+                        sb.AppendLine("─── Retinue Provisioning ───");
+
+                        var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+                        var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
+
+                        var (retinueName, retinueMorale, retinueDays) = enlistment.GetRetinueProvisioningInfo();
+                        
+                        if (retinueDays > 0)
+                        {
+                            sb.AppendLine($"Retinue ({soldierCount} soldiers): {retinueName} ({(retinueMorale >= 0 ? "+" : "")}{retinueMorale} morale)");
+                            sb.AppendLine($"Days remaining: {retinueDays:F1}");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"Retinue ({soldierCount} soldiers): NOT PROVISIONED!");
+                            sb.AppendLine("Your soldiers are starving! (-10 morale)");
+                        }
+                    }
+                }
+
+                MBTextManager.SetTextVariable("RATIONS_TEXT", sb.ToString());
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error initializing rations menu", ex);
+                MBTextManager.SetTextVariable("RATIONS_TEXT",
+                    new TextObject("{=qm_rations_error}Provisions unavailable.").ToString());
+            }
+        }
+
+        /// <summary>
+        /// Add rations purchase menu options.
+        /// </summary>
+        private void AddRationsMenuOptions(CampaignGameStarter starter)
+        {
+            // Supplemental Rations - 10g, +2 morale, 1 day
+            starter.AddGameMenuOption("quartermaster_rations", "rations_supplemental",
+                new TextObject("{=qm_rations_supplemental}Supplemental Rations (10{GOLD_ICON}) - +2 morale for 1 day").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(10) : 10;
+                    args.Text = new TextObject($"Supplemental Rations ({cost}{{GOLD_ICON}}) - +2 morale for 1 day");
+
+                    var canAfford = Hero.MainHero.Gold >= cost;
+                    if (!canAfford)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_no_gold}Not enough gold.");
+                    }
+                    return true;
+                },
+                _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Supplemental, 10, 1),
+                false, 1);
+
+            // Officer's Fare - 30g, +4 morale, +2 fatigue relief, 2 days
+            starter.AddGameMenuOption("quartermaster_rations", "rations_officer",
+                new TextObject("{=qm_rations_officer}Officer's Fare (30{GOLD_ICON}) - +4 morale, +2 fatigue for 2 days").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(30) : 30;
+                    args.Text = new TextObject($"Officer's Fare ({cost}{{GOLD_ICON}}) - +4 morale, +2 fatigue for 2 days");
+
+                    var canAfford = Hero.MainHero.Gold >= cost;
+                    if (!canAfford)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_no_gold}Not enough gold.");
+                    }
+                    return true;
+                },
+                _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Officer, 30, 2),
+                false, 2);
+
+            // Commander's Feast - 75g, +8 morale, +5 fatigue relief, 3 days
+            starter.AddGameMenuOption("quartermaster_rations", "rations_commander",
+                new TextObject("{=qm_rations_commander}Commander's Feast (75{GOLD_ICON}) - +8 morale, +5 fatigue for 3 days").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var cost = enlistment?.IsEnlisted == true ? enlistment.ApplyQuartermasterDiscount(75) : 75;
+                    args.Text = new TextObject($"Commander's Feast ({cost}{{GOLD_ICON}}) - +8 morale, +5 fatigue for 3 days");
+
+                    var canAfford = Hero.MainHero.Gold >= cost;
+                    var highEnoughTier = enlistment?.EnlistmentTier >= 4;
+                    
+                    if (!canAfford)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_no_gold}Not enough gold.");
+                    }
+                    else if (!highEnoughTier)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=qm_rations_rank}Reserved for Tier 4+ soldiers.");
+                    }
+                    return true;
+                },
+                _ => OnPurchaseRations(EnlistmentBehavior.FoodQualityTier.Commander, 75, 3),
+                false, 3);
+
+            // ========================================
+            // RETINUE PROVISIONING OPTIONS (Phase 6)
+            // Only shown for T7+ commanders with retinue
+            // ========================================
+
+            // Section header for retinue provisioning
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_header",
+                new TextObject("{=qm_retinue_header}— RETINUE PROVISIONING —").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Wait;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    return enlistment?.HasRetinueToProvision() == true;
+                },
+                _ => { }, // No action for header
+                false, 10);
+
+            // Bare Minimum - lowest cost, morale penalty
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_bare",
+                "{=qm_retinue_bare}Retinue: Bare Minimum (-5 morale)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.BareMinimum);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.BareMinimum),
+                false, 11);
+
+            // Standard - default quality
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_standard",
+                "{=qm_retinue_standard}Retinue: Standard Rations",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.Standard);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.Standard),
+                false, 12);
+
+            // Good Fare - morale bonus
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_good",
+                "{=qm_retinue_good}Retinue: Good Fare (+5 morale)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.GoodFare);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.GoodFare),
+                false, 13);
+
+            // Officer Quality - best morale bonus
+            starter.AddGameMenuOption("quartermaster_rations", "retinue_officer",
+                "{=qm_retinue_officer}Retinue: Officer Quality (+10 morale)",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    return SetupRetinueProvisioningOption(args, EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality);
+                },
+                _ => OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality),
+                false, 14);
+
+            // Return to quartermaster
+            starter.AddGameMenuOption("quartermaster_rations", "rations_back",
+                new TextObject("{=qm_menu_supplies_back}Return to quartermaster").ToString(),
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ => ActivateMenuPreserveTime("quartermaster_equipment"),
+                false, 99);
+        }
+
+        /// <summary>
+        /// Handle rations purchase.
+        /// </summary>
+        private void OnPurchaseRations(EnlistmentBehavior.FoodQualityTier tier, int cost, int durationDays)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_rations_not_enlisted}You must be enlisted to purchase provisions.").ToString()));
+                    return;
+                }
+
+                // Cost shown to the player should reflect relationship discount (if any).
+                var effectiveCost = enlistment.ApplyQuartermasterDiscount(cost);
+
+                if (enlistment.PurchaseRations(tier, cost, durationDays))
+                {
+                    var tierName = tier switch
+                    {
+                        EnlistmentBehavior.FoodQualityTier.Supplemental => "Supplemental Rations",
+                        EnlistmentBehavior.FoodQualityTier.Officer => "Officer's Fare",
+                        EnlistmentBehavior.FoodQualityTier.Commander => "Commander's Feast",
+                        _ => "Rations"
+                    };
+
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Purchased {tierName} for {effectiveCost} gold ({durationDays} days).",
+                        Colors.Green));
+
+                    // Refresh menu to show updated status
+                    ActivateMenuPreserveTime("quartermaster_rations");
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_rations_no_gold}Not enough gold.").ToString(),
+                        Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error purchasing rations", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_rations_error}Failed to purchase provisions.").ToString(),
+                    Colors.Red));
+            }
+        }
+
+        // ========================================================================
+        // RETINUE PROVISIONING METHODS (Phase 6)
+        // ========================================================================
+
+        /// <summary>
+        /// Sets up a retinue provisioning menu option with dynamic cost text.
+        /// Returns true if the option should be visible.
+        /// </summary>
+        private bool SetupRetinueProvisioningOption(MenuCallbackArgs args, EnlistmentBehavior.RetinueProvisioningTier tier)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.HasRetinueToProvision())
+            {
+                return false;
+            }
+
+            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
+            var baseCost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+            var cost = enlistment.ApplyQuartermasterDiscount(baseCost);
+
+            // Set dynamic text with cost
+            var tierName = tier switch
+            {
+                EnlistmentBehavior.RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                EnlistmentBehavior.RetinueProvisioningTier.Standard => "Standard",
+                EnlistmentBehavior.RetinueProvisioningTier.GoodFare => "Good Fare",
+                EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                _ => "Provisions"
+            };
+
+            var moraleText = tier switch
+            {
+                EnlistmentBehavior.RetinueProvisioningTier.BareMinimum => "-5 morale",
+                EnlistmentBehavior.RetinueProvisioningTier.Standard => "neutral",
+                EnlistmentBehavior.RetinueProvisioningTier.GoodFare => "+5 morale",
+                EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality => "+10 morale",
+                _ => ""
+            };
+
+            args.Text = new TextObject($"Retinue: {tierName} ({cost}{{GOLD_ICON}}) [{soldierCount} soldiers, {moraleText}]");
+
+            var canAfford = Hero.MainHero.Gold >= cost;
+            if (!canAfford)
+            {
+                args.IsEnabled = false;
+                args.Tooltip = new TextObject("{=qm_retinue_no_gold}Not enough gold to provision your retinue.");
+            }
+            else
+            {
+                args.Tooltip = baseCost != cost
+                    ? new TextObject($"Provision your {soldierCount} soldiers for 7 days at {tierName} quality (base {baseCost}, discounted {cost}).")
+                    : new TextObject($"Provision your {soldierCount} soldiers for 7 days at {tierName} quality.");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Handle retinue provisioning purchase.
+        /// </summary>
+        private void OnPurchaseRetinueProvisioning(EnlistmentBehavior.RetinueProvisioningTier tier)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null || !enlistment.IsEnlisted)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_retinue_not_enlisted}You must be enlisted to provision your retinue.").ToString()));
+                    return;
+                }
+
+                var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+                var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
+
+                if (soldierCount <= 0)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_retinue_no_soldiers}You have no soldiers to provision.").ToString()));
+                    return;
+                }
+
+                var baseCost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
+                var cost = enlistment.ApplyQuartermasterDiscount(baseCost);
+
+                if (enlistment.PurchaseRetinueProvisioning(tier, soldierCount))
+                {
+                    var tierName = tier switch
+                    {
+                        EnlistmentBehavior.RetinueProvisioningTier.BareMinimum => "Bare Minimum",
+                        EnlistmentBehavior.RetinueProvisioningTier.Standard => "Standard",
+                        EnlistmentBehavior.RetinueProvisioningTier.GoodFare => "Good Fare",
+                        EnlistmentBehavior.RetinueProvisioningTier.OfficerQuality => "Officer Quality",
+                        _ => "provisions"
+                    };
+
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        $"Provisioned {soldierCount} soldiers with {tierName} rations for {cost} gold (7 days).",
+                        Colors.Green));
+
+                    // Refresh menu to show updated status
+                    ActivateMenuPreserveTime("quartermaster_rations");
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_retinue_no_gold}Not enough gold to provision your retinue.").ToString(),
+                        Colors.Red));
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error purchasing retinue provisioning", ex);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    new TextObject("{=qm_retinue_error}Failed to provision retinue.").ToString(),
+                    Colors.Red));
+            }
+        }
+
+        /// <summary>
+        /// Menu background initialization for quartermaster_rations menu.
+        /// </summary>
+        [GameMenuInitializationHandler("quartermaster_rations")]
+        private static void OnQuartermasterRationsBackgroundInit(MenuCallbackArgs args)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var backgroundMesh = "encounter_looter";
+
+            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
+            }
+            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
+            {
+                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+            }
+
+            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
+            args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
         
         /// <summary>
@@ -1980,7 +2665,10 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Gauntlet UI failed, using conversation-based selection", ex);
+                // The Gauntlet VM can fail due to mod UI conflicts; we still provide a safe fallback.
+                // Non-spammy: log once per session with full exception detail.
+                ModLogger.ErrorCodeOnce("qm_gauntlet_ui_failed", "Quartermaster", "E-QM-014",
+                    "Gauntlet UI failed; using conversation-based selection. This can indicate a UI mod conflict.", ex);
                 
                 // Fallback to conversation-based individual selection
                 ShowConversationBasedEquipmentSelection(variants, equipmentType);
@@ -2011,12 +2699,28 @@ namespace Enlisted.Features.Equipment.Behaviors
                     // Create inquiry for equipment selection
                     var inquiryElements = new List<InquiryElement>();
                     
+                    var unknown = new TextObject("{=enl_ui_unknown}Unknown").ToString();
+                    var newTag = new TextObject("{=enl_ui_tag_new}[NEW]").ToString();
+
                     foreach (var variant in availableVariants)
                     {
-                        var title = variant.Item.Name?.ToString() ?? "Unknown";
-                        var description = variant.CanAfford 
-                            ? $"Cost: {variant.Cost} denars" 
-                            : $"Cost: {variant.Cost} denars (Can't afford)";
+                        var title = variant.Item.Name?.ToString() ?? unknown;
+                        
+                        // Phase 7: Add "NEW" indicator for recently unlocked items
+                        if (variant.IsNewlyUnlocked)
+                        {
+                            title = $"{newTag} {title}";
+                        }
+
+                        var costOk = new TextObject("{=enl_qm_cost_line}Cost: {COST} denars");
+                        costOk.SetTextVariable("COST", variant.Cost);
+
+                        var costCant = new TextObject("{=enl_qm_cost_line_cant_afford}Cost: {COST} denars (Can't afford)");
+                        costCant.SetTextVariable("COST", variant.Cost);
+
+                        var description = variant.CanAfford
+                            ? costOk.ToString()
+                            : costCant.ToString();
                         
                         inquiryElements.Add(new InquiryElement(
                             variant, 
@@ -2027,12 +2731,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                     }
                     
                     // Show selection inquiry
+                    var titleText = new TextObject("{=enl_qm_select_equipment_title}Select {EQUIPMENT_TYPE}");
+                    titleText.SetTextVariable("EQUIPMENT_TYPE", equipmentType ?? string.Empty);
+
+                    var descText = new TextObject("{=enl_qm_select_equipment_desc}Choose equipment variant to request:");
+
                     MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                        $"Select {equipmentType}",
-                        "Choose equipment variant to request:",
+                        titleText.ToString(),
+                        descText.ToString(),
                         inquiryElements,
                         true, 1, 1, // Single selection
-                        "Request Equipment", "Cancel",
+                        new TextObject("{=enl_qm_request_equipment}Request Equipment").ToString(),
+                        new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                         OnEquipmentVariantSelected,
                         null)); // Default parameters are sufficient
                         
@@ -2269,7 +2979,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildArmorOptionsFromCurrentTroop failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-100", "BuildArmorOptionsFromCurrentTroop failed", ex);
             }
             return result;
         }
@@ -2352,7 +3062,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildWeaponOptionsFromCurrentTroop failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-101", "BuildWeaponOptionsFromCurrentTroop failed", ex);
             }
             return result;
         }
@@ -2399,8 +3109,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectWeaponVariantsFromNodes failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-102",
+                    $"CollectWeaponVariantsFromNodes failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -2457,8 +3167,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectWeaponVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-103",
+                    $"CollectWeaponVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -2514,7 +3224,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildVariantOptionsForWeapons failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-104", "BuildVariantOptionsForWeapons failed", ex);
             }
             return finalOptions;
         }
@@ -2577,8 +3287,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectArmorVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-105",
+                    $"CollectArmorVariantsFromAllTiers failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -2634,7 +3344,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildVariantOptionsForArmor failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-106", "BuildVariantOptionsForArmor failed", ex);
             }
             return finalOptions;
         }
@@ -2693,7 +3403,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildTroopBranchNodes failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-107", "BuildTroopBranchNodes failed", ex);
             }
             return branch;
         }
@@ -2744,8 +3454,8 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster",
-                    $"CollectArmorVariantsFromNodes failed (culture={culture?.StringId ?? "null"}): {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-108",
+                    $"CollectArmorVariantsFromNodes failed (culture={culture?.StringId ?? "null"})", ex);
             }
             return variants;
         }
@@ -2799,7 +3509,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildVariantOptionsExact failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-109", "BuildVariantOptionsExact failed", ex);
             }
             return finalOptions;
         }
@@ -2831,17 +3541,18 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
 
                 MBInformationManager.ShowMultiSelectionInquiry(new MultiSelectionInquiryData(
-                    "Select armor slot",
-                    "Choose which armor piece to request",
+                    new TextObject("{=enl_qm_select_armor_slot_title}Select armor slot").ToString(),
+                    new TextObject("{=enl_qm_select_armor_slot_desc}Choose which armor piece to request").ToString(),
                     elements,
                     false, 1, 1,
-                    "Continue", "Cancel",
+                    new TextObject("{=ll_default_continue}Continue").ToString(),
+                    new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     OnDone,
                     _ => { }));
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"ShowArmorSlotPicker failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-110", "ShowArmorSlotPicker failed", ex);
             }
         }
 
@@ -3031,7 +3742,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", $"BuildShieldOptionsFromWeapons failed: {ex.Message}");
+                ModLogger.ErrorCode("Quartermaster", "E-QM-111", "BuildShieldOptionsFromWeapons failed", ex);
             }
             return shields;
         }
@@ -3135,7 +3846,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var party = MobileParty.MainParty;
                 var duties = EnlistedDutiesBehavior.Instance;
                 
-                sb.AppendLine("â€” Supply Status â€”");
+                sb.AppendLine("— Supply Status —");
                 sb.AppendLine();
                 
                 // Current supply status with cleaner formatting
@@ -3147,10 +3858,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Officer benefits display with modern formatting
                 if (duties?.GetCurrentOfficerRole() == "Quartermaster")
                 {
-                    sb.AppendLine("â€” Officer Benefits â€”");
-                    sb.AppendLine("â€¢ +50 party carry capacity");
-                    sb.AppendLine("â€¢ +15% food efficiency");
-                    sb.AppendLine("â€¢ Enhanced supply management options");
+                    sb.AppendLine("— Officer Benefits —");
+                    sb.AppendLine("• +50 party carry capacity");
+                    sb.AppendLine("• +15% food efficiency");
+                    sb.AppendLine("• Enhanced supply management options");
                     sb.AppendLine();
                 }
                 
@@ -3320,7 +4031,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                            option.CanAfford ? $"({option.Cost} denars)" :
                            $"({option.Cost} denars - Can't afford)";
             
-            var marker = option.IsCurrent ? "*" : "-"; // Use simple ASCII characters
+            var marker = option.IsCurrent ? "[*]" : "[ ]"; // Simple ASCII markers
             return $"{marker} {option.Item.Name} {statusText}";
         }
         
@@ -3373,6 +4084,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Prevents abuse of the free equipment system.
         /// </summary>
         public bool IsAtLimit { get; set; }
+
+        /// <summary>
+        /// Phase 7: True if this item became available after the player's last promotion.
+        /// Used for "NEW" indicators in the UI.
+        /// </summary>
+        public bool IsNewlyUnlocked { get; set; }
     }
 }
 

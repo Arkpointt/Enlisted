@@ -1,6 +1,8 @@
 using System;
+using Enlisted.Features.Camp;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -45,6 +47,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             AddEnlistedDialogs(starter);
+            AddQuartermasterDialogs(starter);
             // The menu system is handled by EnlistedMenuBehavior.cs, which provides the main enlisted status menu
         }
 
@@ -279,6 +282,31 @@ namespace Enlisted.Features.Conversations.Behaviors
                 OnAcceptServiceTransfer,
                 112);
 
+            // ===== Promotion Request Dialog (T6→T7) =====
+            // Player can request T7 promotion if they meet all requirements
+            starter.AddPlayerLine(
+                "enlisted_request_promotion_t7",
+                "enlisted_service_options",
+                "enlisted_promotion_t7_response",
+                GetLocalizedText(
+                        "{=enlisted_request_promotion_t7}My lord, I have proven myself in your service. I believe I am ready to accept the responsibilities of command.")
+                    .ToString(),
+                CanRequestCommanderPromotion,
+                null,
+                108); // High priority - shows when eligible
+
+            // Lord evaluates player and offers promotion
+            starter.AddDialogLine(
+                "enlisted_promotion_t7_offer",
+                "enlisted_promotion_t7_response",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_promotion_t7_offer}You have proven yourself worthy. The rank of commander is yours, along with twenty soldiers to train and lead. Make them into warriors worthy of our banner.")
+                    .ToString(),
+                null,
+                OnAcceptCommanderPromotion,
+                110);
+
             // Lord's response to enlistment request
             starter.AddDialogLine(
                 "enlisted_lord_accepts",
@@ -344,6 +372,31 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private void AddRetirementDialogs(CampaignGameStarter starter)
         {
+            // Retirement/discharge is requested via Camp -> Leave Service -> Request Discharge (Pending Discharge -> Final Muster).
+            // Conversations only provide guidance so we don't maintain a second conflicting retirement system here.
+            starter.AddPlayerLine(
+                "enlisted_discuss_discharge_guidance",
+                "enlisted_service_options",
+                "enlisted_discharge_guidance",
+                GetLocalizedText(
+                        "{=enlisted_discuss_discharge_guidance}My lord, if I wished to leave your service, how would I do so properly?")
+                    .ToString(),
+                CanDiscussDischargeGuidance,
+                null,
+                109);
+
+            starter.AddDialogLine(
+                "enlisted_discharge_guidance_text",
+                "enlisted_discharge_guidance",
+                "close_window",
+                GetLocalizedText(
+                        "{=enlisted_discharge_guidance_text}If you wish to leave my service, do it properly. Make camp and request discharge. Your final pay and discharge papers will be handled at the next muster.")
+                    .ToString(),
+                null,
+                null,
+                110);
+
+#if false
             // First-term retirement discussion (available after 3 years) - kingdom lords
             starter.AddPlayerLine(
                 "enlisted_discuss_retirement",
@@ -989,6 +1042,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 OnGrantEarlyDischarge,
                 110);
+#endif
 
             // Exit option - always available as fallback from service options
             // Uses default priority (100) - shows last among service options (others use 110-115)
@@ -1002,6 +1056,975 @@ namespace Enlisted.Features.Conversations.Behaviors
                 null,
                 null);
         }
+
+        // ========================================================================
+        // QUARTERMASTER HERO DIALOG SYSTEM (Phase 3)
+        // Dialog tree for interaction with persistent quartermaster NPC
+        // ========================================================================
+
+        /// <summary>
+        ///     Add quartermaster NPC dialog tree.
+        ///     Player opens conversation via "Visit Quartermaster" menu option.
+        /// </summary>
+        private void AddQuartermasterDialogs(CampaignGameStarter starter)
+        {
+            try
+            {
+                // ========================================
+                // QUARTERMASTER GREETING (Entry Point)
+                // ========================================
+
+                // First meeting greeting - introduction (uses dynamic text)
+                starter.AddDialogLine(
+                    "qm_greeting_first",
+                    "start",
+                    "qm_hub",
+                    "{=qm_greeting_dynamic}{QM_GREETING}",
+                    () => IsQuartermasterConversation() && !HasMetQuartermaster() && SetQuartermasterGreetingText(),
+                    OnQuartermasterFirstMeeting,
+                    200); // High priority for first meeting
+
+                // Returning visit greeting - archetype + mood based (uses dynamic text)
+                starter.AddDialogLine(
+                    "qm_greeting_return",
+                    "start",
+                    "qm_hub",
+                    "{=qm_greeting_dynamic}{QM_GREETING}",
+                    () => IsQuartermasterConversation() && HasMetQuartermaster() && SetQuartermasterGreetingText(),
+                    null,
+                    199); // Slightly lower priority for returning visits
+
+                // ========================================
+                // QUARTERMASTER HUB (Main Options)
+                // ========================================
+
+                // Option 1: Browse Equipment → Opens existing menu system
+                starter.AddPlayerLine(
+                    "qm_request_equipment",
+                    "qm_hub",
+                    "qm_equipment_response",
+                    "{=qm_request_equipment}I need equipment.",
+                    null,
+                    null,
+                    100);
+
+                starter.AddDialogLine(
+                    "qm_equipment_response",
+                    "qm_equipment_response",
+                    "close_window",
+                    "{=qm_equipment_response}Let me see what I've got in stock for you.",
+                    null,
+                    OnQuartermasterEquipmentRequest,
+                    100);
+
+                // Option 2: Sell Equipment → Opens existing returns menu
+                starter.AddPlayerLine(
+                    "qm_sell_equipment",
+                    "qm_hub",
+                    "qm_sell_response",
+                    "{=qm_sell_equipment}I want to sell some equipment.",
+                    CanSellEquipment,
+                    null,
+                    99);
+
+                starter.AddDialogLine(
+                    "qm_sell_response",
+                    "qm_sell_response",
+                    "close_window",
+                    "{=qm_sell_response}[Quartermaster responds to sell request]",
+                    null,
+                    OnQuartermasterSellRequest,
+                    100);
+
+                // Option 3: Provisions → Opens rations menu (Phase 5)
+                starter.AddPlayerLine(
+                    "qm_request_provisions",
+                    "qm_hub",
+                    "qm_provisions_response",
+                    "{=qm_request_provisions}I need better provisions.",
+                    null,
+                    null,
+                    97);
+
+                starter.AddDialogLine(
+                    "qm_provisions_response",
+                    "qm_provisions_response",
+                    "close_window",
+                    "{=qm_provisions_response}Let me show you what provisions I have available.",
+                    null,
+                    OnQuartermasterProvisionsRequest,
+                    100);
+
+                // ========================================
+                // PAYTENSION DIALOG OPTIONS (Phase 7)
+                // ========================================
+
+                // Scoundrel Black Market (tension 40+)
+                starter.AddPlayerLine(
+                    "qm_black_market",
+                    "qm_hub",
+                    "qm_black_market_response",
+                    "{=qm_black_market}I need... alternative supplies.",
+                    IsScoundrelBlackMarketAvailable,
+                    null,
+                    96);
+
+                starter.AddDialogLine(
+                    "qm_black_market_response",
+                    "qm_black_market_response",
+                    "qm_hub",
+                    "{=qm_black_market_response}Looking for opportunities? I might know some people who can help... for a price.",
+                    null,
+                    OnQuartermasterBlackMarket,
+                    100);
+
+                // Believer Moral Guidance (tension 60+)
+                starter.AddPlayerLine(
+                    "qm_moral_guidance",
+                    "qm_hub",
+                    "qm_moral_guidance_response",
+                    "{=qm_moral_guidance}The men are losing hope. Any guidance?",
+                    IsBelieverGuidanceAvailable,
+                    null,
+                    95);
+
+                starter.AddDialogLine(
+                    "qm_moral_guidance_response",
+                    "qm_moral_guidance_response",
+                    "qm_hub",
+                    "{=qm_moral_guidance_response}These are trying times, but faith endures. Remember why you serve.",
+                    null,
+                    OnQuartermasterMoralGuidance,
+                    100);
+
+                // Veteran Survival Advice (tension 80+)
+                starter.AddPlayerLine(
+                    "qm_survival_advice",
+                    "qm_hub",
+                    "qm_survival_advice_response",
+                    "{=qm_survival_advice}Should I... consider my options?",
+                    IsVeteranAdviceAvailable,
+                    null,
+                    94);
+
+                starter.AddDialogLine(
+                    "qm_survival_advice_response",
+                    "qm_survival_advice_response",
+                    "qm_hub",
+                    "{=qm_survival_advice_response}I've seen armies fall apart before. Keep your head down and watch for opportunities.",
+                    null,
+                    OnQuartermasterSurvivalAdvice,
+                    100);
+
+                // Help the Lord suggestion (any archetype, tension 40+)
+                starter.AddPlayerLine(
+                    "qm_help_lord",
+                    "qm_hub",
+                    "qm_help_lord_response",
+                    "{=qm_help_lord}Is there anything I can do to help with... the situation?",
+                    IsHelpLordAvailable,
+                    null,
+                    93);
+
+                starter.AddDialogLine(
+                    "qm_help_lord_response",
+                    "qm_help_lord_response",
+                    "qm_hub",
+                    "{=qm_help_lord_response}There are ways a loyal soldier could help. Collect debts, escort merchants, that sort of thing.",
+                    null,
+                    OnQuartermasterHelpLordSuggestion,
+                    100);
+
+                // Option 4: Chat (Relationship building) - first time or high relationship
+                starter.AddPlayerLine(
+                    "qm_chat",
+                    "qm_hub",
+                    "qm_chat_response",
+                    "{=qm_chat}How did you end up as quartermaster?",
+                    CanChatWithQuartermaster,
+                    null,
+                    98);
+
+                starter.AddDialogLine(
+                    "qm_chat_response",
+                    "qm_chat_response",
+                    "qm_hub",
+                    "{=qm_chat_response}It's a long story. Let's just say I ended up here after some... interesting experiences.",
+                    null,
+                    OnQuartermasterChat,
+                    100);
+
+                // Option 4: Leave
+                starter.AddPlayerLine(
+                    "qm_leave",
+                    "qm_hub",
+                    "close_window",
+                    "{=qm_leave}I'll be going.",
+                    null,
+                    null,
+                    50);
+
+                ModLogger.Info("DialogManager", "Quartermaster dialog tree registered");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Failed to register quartermaster dialogs", ex);
+            }
+        }
+
+        #region Quartermaster Dialog Conditions
+
+        /// <summary>
+        ///     Sets the QM_GREETING text variable for dynamic greeting display.
+        ///     Returns true always (used in condition chain).
+        /// </summary>
+        private bool SetQuartermasterGreetingText()
+        {
+            MBTextManager.SetTextVariable("QM_GREETING", GetQuartermasterGreeting());
+            return true;
+        }
+
+        /// <summary>
+        ///     Checks if the current conversation is with the quartermaster hero.
+        /// </summary>
+        private bool IsQuartermasterConversation()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return false;
+            }
+
+            var qm = enlistment.QuartermasterHero;
+            return qm != null && qm.IsAlive && Hero.OneToOneConversationHero == qm;
+        }
+
+        /// <summary>
+        ///     Checks if the player has met the current quartermaster before.
+        /// </summary>
+        private bool HasMetQuartermaster()
+        {
+            return EnlistmentBehavior.Instance?.HasMetQuartermaster == true;
+        }
+
+        /// <summary>
+        ///     Checks if the player can sell equipment (has sellable items).
+        /// </summary>
+        private bool CanSellEquipment()
+        {
+            // Always available - the menu will show what can be sold
+            return true;
+        }
+
+        /// <summary>
+        ///     Checks if the player can chat with the quartermaster.
+        ///     Available on first meeting or at high relationship (40+).
+        /// </summary>
+        private bool CanChatWithQuartermaster()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return false;
+            }
+
+            // Chat available: first time (not met), or high relationship
+            return !enlistment.HasMetQuartermaster || enlistment.QuartermasterRelationship >= 40;
+        }
+
+        // ========================================
+        // PAYTENSION DIALOG CONDITIONS (Phase 7)
+        // ========================================
+
+        /// <summary>
+        ///     Checks if Scoundrel black market option is available.
+        ///     Requires: Scoundrel archetype + PayTension 40+ + relationship 20+
+        /// </summary>
+        private bool IsScoundrelBlackMarketAvailable()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return false;
+            }
+
+            return enlistment.QuartermasterArchetype == "scoundrel"
+                && enlistment.PayTension >= 40
+                && enlistment.QuartermasterRelationship >= 20;
+        }
+
+        /// <summary>
+        ///     Checks if Believer moral guidance option is available.
+        ///     Requires: Believer archetype + PayTension 60+
+        /// </summary>
+        private bool IsBelieverGuidanceAvailable()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return false;
+            }
+
+            return enlistment.QuartermasterArchetype == "believer"
+                && enlistment.PayTension >= 60;
+        }
+
+        /// <summary>
+        ///     Checks if Veteran survival advice option is available.
+        ///     Requires: Veteran archetype + PayTension 80+
+        /// </summary>
+        private bool IsVeteranAdviceAvailable()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return false;
+            }
+
+            return enlistment.QuartermasterArchetype == "veteran"
+                && enlistment.PayTension >= 80;
+        }
+
+        /// <summary>
+        ///     Checks if "Help the Lord" suggestion is available.
+        ///     Requires: PayTension 40+ (any archetype)
+        /// </summary>
+        private bool IsHelpLordAvailable()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return false;
+            }
+
+            return enlistment.PayTension >= 40;
+        }
+
+        #endregion
+
+        #region Quartermaster Dialog Text Generation
+
+        /// <summary>
+        ///     Gets the quartermaster's greeting text based on archetype, mood, and first meeting status.
+        ///     Called dynamically when the greeting dialog is displayed.
+        /// </summary>
+        public string GetQuartermasterGreeting()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return "What do you need, soldier?";
+            }
+
+            var archetype = enlistment.QuartermasterArchetype;
+            var isFirstMeeting = !enlistment.HasMetQuartermaster;
+            var mood = GetQuartermasterMood();
+            var qmName = enlistment.QuartermasterHero?.Name?.ToString() ?? "Quartermaster";
+
+            if (isFirstMeeting)
+            {
+                return GetFirstMeetingGreeting(archetype, qmName);
+            }
+
+            return GetReturningGreeting(archetype, mood);
+        }
+
+        /// <summary>
+        ///     Gets the first-meeting introduction based on archetype.
+        ///     Uses {QM_NAME} placeholder for quartermaster's actual name.
+        /// </summary>
+        private string GetFirstMeetingGreeting(string archetype, string qmName)
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var text = archetype switch
+            {
+                "veteran" => new TextObject("So you're the new {PLAYER_RANK}. Name's {QM_NAME}. I run the baggage train. You need gear, you come to me. Clear?"),
+                "merchant" => new TextObject("Ah, fresh meat! I'm {QM_NAME}, quartermaster. Everything here has a price, soldier. Even loyalty."),
+                "bookkeeper" => new TextObject("New arrival. {QM_NAME}, quartermaster. Please familiarize yourself with Form 14-C for equipment requisitions."),
+                "scoundrel" => new TextObject("Well, well. Another mouth to feed. I'm {QM_NAME}. Need anything... special?"),
+                "believer" => new TextObject("Welcome, soldier. I am {QM_NAME}. The Lord provides for those who serve with honor. What do you seek?"),
+                "eccentric" => new TextObject("Your name has a lucky number of letters. I'm {QM_NAME}. The stars say you'll need good armor."),
+                _ => new TextObject("I'm {QM_NAME}, quartermaster. What do you need?")
+            };
+            
+            text.SetTextVariable("QM_NAME", qmName);
+            if (enlistment != null)
+            {
+                Lances.Text.LanceLifeTextVariables.ApplyCommon(text, enlistment);
+            }
+            
+            return text.ToString();
+        }
+
+        /// <summary>
+        ///     Gets the returning visit greeting based on archetype, mood, and PayTension level.
+        ///     Phase 7: Now includes tension-aware greetings at 40+, 60+, and 80+ thresholds.
+        /// </summary>
+        private string GetReturningGreeting(string archetype, string mood)
+        {
+            // Phase 7: Check PayTension for tension-aware greetings
+            var tension = EnlistmentBehavior.Instance?.PayTension ?? 0;
+
+            // Critical tension (80+) - all archetypes show concern
+            if (tension >= 80)
+            {
+                return GetCriticalTensionGreeting(archetype);
+            }
+
+            // High tension (60+) - archetype-specific warnings
+            if (tension >= 60)
+            {
+                return GetHighTensionGreeting(archetype);
+            }
+
+            // Moderate tension (40+) - subtle hints
+            if (tension >= 40)
+            {
+                return GetModerateTensionGreeting(archetype);
+            }
+
+            // Normal greetings based on mood
+            return (archetype, mood) switch
+            {
+                ("veteran", "content") => "Back again? What do you need?",
+                ("veteran", "stressed") => "Busy day. Make it quick.",
+                ("veteran", "grim") => "Supply's tight. What?",
+                ("merchant", "content") => "Good to see you. What can I sell you today?",
+                ("merchant", "stressed") => "Prices are up. Supply issues. What do you need?",
+                ("merchant", "grim") => "Not a good time for shopping. Make it fast.",
+                ("bookkeeper", "content") => "Ah, soldier. Equipment requisition? Let me find the form.",
+                ("bookkeeper", "stressed") => "The inventory is a mess. What is it?",
+                ("bookkeeper", "grim") => "Everything is behind schedule. What?",
+                ("scoundrel", "content") => "My favorite customer. What are you looking for today?",
+                ("scoundrel", "stressed") => "Things are getting tight around here. Need something?",
+                ("scoundrel", "grim") => "Bad times, friend. Very bad times. What do you need?",
+                ("believer", "content") => "The Lord's blessings upon you. How may I serve?",
+                ("believer", "stressed") => "Trying times test our faith. What do you need?",
+                ("believer", "grim") => "Pray for us all, soldier. What can I do for you?",
+                ("eccentric", "content") => "The ravens spoke of your coming. What do you seek?",
+                ("eccentric", "stressed") => "The stars are misaligned today. Be careful what you ask for.",
+                ("eccentric", "grim") => "Dark omens everywhere. What?",
+                _ => "What do you need, soldier?"
+            };
+        }
+
+        /// <summary>
+        ///     Gets greeting when PayTension is 80+ (critical).
+        ///     All archetypes express serious concern about the situation.
+        /// </summary>
+        private string GetCriticalTensionGreeting(string archetype)
+        {
+            return archetype switch
+            {
+                "veteran" => "You're still here? Half the company's talking desertion. The lord better pay up soon or there won't be anyone left to pay.",
+                "merchant" => "Ah, friend. These are dark days. Even my best suppliers won't extend credit anymore. The whole operation is falling apart.",
+                "bookkeeper" => "The accounts... they're a disaster. Unpaid wages everywhere. I don't know how much longer we can hold things together.",
+                "scoundrel" => "Looking to disappear? I know some people... for a price. This whole army is one bad battle away from scattering like leaves.",
+                "believer" => "The men's faith is being tested beyond measure. Many are losing hope. Pray with me, soldier, for we are in dire straits.",
+                "eccentric" => "The stars scream of betrayal and abandonment. The wheel of fortune has turned against us. Do you hear the whispers of the damned?",
+                _ => "Things are very bad. What do you need?"
+            };
+        }
+
+        /// <summary>
+        ///     Gets greeting when PayTension is 60-79 (high).
+        ///     Archetypes provide specific warnings and hints.
+        /// </summary>
+        private string GetHighTensionGreeting(string archetype)
+        {
+            return archetype switch
+            {
+                "veteran" => "The men are angry. Real angry. I've seen mutinies start from less than this. Watch your back.",
+                "merchant" => "Payment's been... irregular. My credit with suppliers is stretched thin. We may need to discuss... alternatives.",
+                "bookkeeper" => "The ledgers don't balance. Too many 'delayed' entries. This is unsustainable.",
+                "scoundrel" => "Desperate times, friend. People are getting creative about finding coin. If you need anything... unofficial...",
+                "believer" => "The men's spirits are breaking. Some are losing their way. Perhaps if you could help the lord find coin, their faith would be restored.",
+                "eccentric" => "I dreamed of empty coffers and marching boots heading home. An ill omen. Very ill.",
+                _ => "Times are getting hard. What do you need?"
+            };
+        }
+
+        /// <summary>
+        ///     Gets greeting when PayTension is 40-59 (moderate).
+        ///     Subtle hints that something is wrong.
+        /// </summary>
+        private string GetModerateTensionGreeting(string archetype)
+        {
+            return archetype switch
+            {
+                "veteran" => "The lads are grumbling about pay. Nothing serious yet, but keep your ears open.",
+                "merchant" => "Cash flow is getting tight. Might be some opportunities for a resourceful soldier, if you take my meaning.",
+                "bookkeeper" => "There are some... irregularities in the pay records. I'm sure it will be sorted soon.",
+                "scoundrel" => "Heard some interesting rumors about the lord's finances. Nothing that concerns you, of course... unless you want it to.",
+                "believer" => "Some of the men are wavering. Material concerns are clouding their devotion. Perhaps you could set an example.",
+                "eccentric" => "The coins in my pouch keep spinning counterclockwise. That usually means someone isn't getting paid.",
+                _ => "What brings you here today?"
+            };
+        }
+
+        /// <summary>
+        ///     Gets the quartermaster's response to equipment request based on archetype.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetEquipmentResponseLine()
+        {
+            var archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran";
+
+            return archetype switch
+            {
+                "veteran" => "Equipment requisition. Let me see what I've got.",
+                "merchant" => "Looking to upgrade? Smart. Follow me to the armory.",
+                "bookkeeper" => "Equipment requisition approved. Please review the inventory.",
+                "scoundrel" => "Official channels or... off the books?",
+                "believer" => "The armory is open. May you choose wisely.",
+                "eccentric" => "The stars favor shields today. Or swords. Maybe both.",
+                _ => "This way."
+            };
+        }
+
+        /// <summary>
+        ///     Gets the quartermaster's response to sell request based on mood.
+        /// </summary>
+        public string GetSellResponseLine()
+        {
+            var mood = GetQuartermasterMood();
+
+            return mood switch
+            {
+                "content" => "Let's see what you've got. I'll give you fair value.",
+                "stressed" => "Selling? Fine. Prices are low right now.",
+                "grim" => "Not buying much today. Supply issues.",
+                _ => "What are you selling?"
+            };
+        }
+
+        /// <summary>
+        ///     Gets the quartermaster's response to provisions request based on archetype.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetProvisionsResponseLine()
+        {
+            var archetype = EnlistmentBehavior.Instance?.QuartermasterArchetype ?? "veteran";
+
+            return archetype switch
+            {
+                "veteran" => "Hungry? Smart soldier keeps his belly full. Let me show you what I've got.",
+                "merchant" => "Looking to upgrade from hardtack? I've got options. Quality costs, mind you.",
+                "bookkeeper" => "Provisions requisition. I'll need to check the allocation limits for your rank.",
+                "scoundrel" => "Want something better than the slop they serve the regulars? I might know a source.",
+                "believer" => "The body is a temple. You're wise to nourish it properly. What do you need?",
+                "eccentric" => "The ravens say the meat is fresh today. The bread too. Maybe. Let me show you.",
+                _ => "Looking for better rations? Follow me."
+            };
+        }
+
+        /// <summary>
+        ///     Gets the quartermaster's backstory based on archetype.
+        ///     Uses {LORD_NAME} placeholder for dynamic lord reference.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetQuartermasterBackstory()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var archetype = enlistment?.QuartermasterArchetype ?? "veteran";
+
+            var text = archetype switch
+            {
+                "veteran" => new TextObject("Lost my sword arm at Pendraic. {LORD_NAME} gave me this posting. Beats starving. Now I make sure other soldiers don't go hungry."),
+                "merchant" => new TextObject("I ran caravans for twenty years. Profitable, but dangerous. This is safer and steadier. Plus, I know every trader from here to Zeonica."),
+                "bookkeeper" => new TextObject("I clerked for the imperial bureaucracy for fifteen years. When the war came, they needed someone who could count. Here I am."),
+                "scoundrel" => new TextObject("Let's just say I had some... disagreements... with the city guard. {LORD_NAME} offered me a choice: noose or supply wagon. Easy choice."),
+                "believer" => new TextObject("I served as a priest before the war. But faith without works is dead. Now I serve by ensuring the faithful are fed and armed."),
+                "eccentric" => new TextObject("The stars told me I'd manage supplies for a great army. Twelve years ago. On a Tuesday. In the rain. And here I am, just as foretold."),
+                _ => new TextObject("I've been doing this for years. It's honest work.")
+            };
+            
+            if (enlistment != null)
+            {
+                Lances.Text.LanceLifeTextVariables.ApplyCommon(text, enlistment);
+            }
+            
+            return text.ToString();
+        }
+
+        // ========================================
+        // PAYTENSION DIALOG TEXT GENERATION (Phase 7)
+        // Reserved for future dynamic dialog enhancement.
+        // Currently using static localized strings in dialog registration.
+        // ========================================
+
+        /// <summary>
+        ///     Gets the Scoundrel's black market response.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetBlackMarketResponseLine()
+        {
+            var tension = EnlistmentBehavior.Instance?.PayTension ?? 0;
+
+            if (tension >= 80)
+            {
+                return "Alternative supplies? Ha! Half the camp is already selling what they can carry. " +
+                       "I know some merchants who don't ask questions... for a cut, of course. " +
+                       "Smuggled goods, looted gear, you name it. Times like these, everyone's a little flexible with the rules.";
+            }
+            else if (tension >= 60)
+            {
+                return "Looking to make some coin on the side? I might know some people. " +
+                       "There's always a market for... surplus equipment. Weapons that fell off wagons, rations that weren't counted right. " +
+                       "Just don't get caught. The lord's too broke to pay bribes right now.";
+            }
+            else
+            {
+                return "Interested in opportunities, eh? Smart. " +
+                       "I can point you toward some traders who pay premium for certain... acquisitions. " +
+                       "Nothing too serious yet, but if things get worse, we might need to be more creative.";
+            }
+        }
+
+        /// <summary>
+        ///     Gets the Believer's moral guidance response.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetMoralGuidanceResponseLine()
+        {
+            var tension = EnlistmentBehavior.Instance?.PayTension ?? 0;
+
+            if (tension >= 80)
+            {
+                return "These are the darkest of times, my child. The men's faith is being tested beyond measure. " +
+                       "Some have already abandoned their posts - and their honor. But you are still here. That means something. " +
+                       "The heavens see our suffering. They see the lord's broken promises. Justice will come - one way or another. " +
+                       "Until then, hold to your principles. That is all any of us can do.";
+            }
+            else
+            {
+                return "I see the doubt in your eyes. You are not alone. Many question why we suffer when we have served faithfully. " +
+                       "Remember: material wealth fades, but honor endures. If the lord cannot pay, perhaps there are other ways to serve - " +
+                       "helping him recover his fortune. The faithful are rewarded, in this life or the next.";
+            }
+        }
+
+        /// <summary>
+        ///     Gets the Veteran's survival advice response.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetSurvivalAdviceResponseLine()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var tension = enlistment?.PayTension ?? 0;
+            var freeDesertion = enlistment?.IsFreeDesertionAvailable == true;
+
+            if (freeDesertion)
+            {
+                return "Listen to me carefully. I've seen this before. The lord's broke, the men are starving, and the whole thing's falling apart. " +
+                       "At this point? No one would blame you for walking away. The lord broke his end of the deal first. " +
+                       "If you do decide to leave... do it at night. Head for the nearest village. Don't look back. " +
+                       "But if you stay... stay for the right reasons. Not because you can't leave.";
+            }
+            else
+            {
+                return "Things are bad, I won't lie to you. But we've been in tough spots before. " +
+                       "Keep your head down, don't volunteer for anything stupid, and watch your purse. " +
+                       "Some men are getting desperate - and desperate men do foolish things. " +
+                       "If it gets worse... well, we'll talk then.";
+            }
+        }
+
+        /// <summary>
+        ///     Gets the Help the Lord suggestion response based on archetype.
+        ///     Uses {LORD_NAME} placeholder for dynamic lord reference.
+        ///     Note: Reserved for future dynamic dialog enhancement.
+        /// </summary>
+        [Obsolete("Reserved for future dynamic dialog. Currently using static localized strings.")]
+        public string GetHelpLordResponseLine()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var archetype = enlistment?.QuartermasterArchetype ?? "veteran";
+
+            var text = archetype switch
+            {
+                "veteran" => new TextObject("You want to help? Good soldier. {LORD_NAME} needs gold, and fast. " +
+                             "There's always bounty work, escort jobs, that sort of thing. Traders sometimes pay for protection. " +
+                             "If we're at war, enemy supply wagons are fair game. Every denar helps."),
+
+                "merchant" => new TextObject("Ah, thinking like a businessman! There are merchants who owe {LORD_NAME} money. " +
+                              "Perhaps you could... encourage timely payment. Also, I hear there's profit in captured goods - " +
+                              "just bring them to me and I'll handle the sale. Discretely."),
+
+                "bookkeeper" => new TextObject("According to my records, there are several outstanding debts owed to {LORD_NAME}. " +
+                                "If someone were to... collect these debts... the accounts would balance better. " +
+                                "I can provide you with a list of debtors, if you're interested."),
+
+                "scoundrel" => new TextObject("Help {LORD_NAME}? Ha! Plenty of ways, if you're not too squeamish. " +
+                               "Enemy caravans, shakedowns, a little light robbery... all perfectly acceptable in wartime. " +
+                               "Bring me the goods and I'll fence them. We split the profit - and the lord gets his cut."),
+
+                "believer" => new TextObject("Your loyalty is commendable. Perhaps you could collect donations from the faithful? " +
+                              "Or help {LORD_NAME} recover what is rightfully owed. " +
+                              "There's also the matter of enemy supplies - liberating them serves a higher purpose."),
+
+                "eccentric" => new TextObject("The stars aligned last night to show me a vision. A merchant caravan, heavy with gold, " +
+                               "passing through dangerous territory. Perhaps they need protection? Perhaps they don't survive the journey? " +
+                               "Either way, there's opportunity for the bold."),
+
+                _ => new TextObject("The lord needs gold. Find work that pays and bring back what you can.")
+            };
+            
+            if (enlistment != null)
+            {
+                Lances.Text.LanceLifeTextVariables.ApplyCommon(text, enlistment);
+            }
+            
+            return text.ToString();
+        }
+
+        /// <summary>
+        ///     Gets the current quartermaster mood based on camp conditions.
+        /// </summary>
+        private string GetQuartermasterMood()
+        {
+            // Try to get mood from CampLifeBehavior if available
+            var campLife = CampLifeBehavior.Instance;
+            if (campLife != null && campLife.IsActiveWhileEnlisted())
+            {
+                // Map QuartermasterMoodTier enum to mood strings
+                return campLife.QuartermasterMoodTier switch
+                {
+                    QuartermasterMoodTier.Fine => "content",
+                    QuartermasterMoodTier.Tense => "stressed",
+                    QuartermasterMoodTier.Sour => "grim",
+                    QuartermasterMoodTier.Predatory => "grim",
+                    _ => "content"
+                };
+            }
+
+            // Fallback: Use pay tension as mood indicator
+            var payTension = EnlistmentBehavior.Instance?.PayTension ?? 0;
+            if (payTension < 20) return "content";
+            if (payTension < 50) return "stressed";
+            return "grim";
+        }
+
+        #endregion
+
+        #region Quartermaster Dialog Consequences
+
+        /// <summary>
+        ///     Called on first meeting with the quartermaster.
+        ///     Marks the quartermaster as met.
+        /// </summary>
+        private void OnQuartermasterFirstMeeting()
+        {
+            EnlistmentBehavior.Instance?.MarkQuartermasterMet();
+            ModLogger.Info("Quartermaster", "First meeting with quartermaster completed");
+        }
+
+        /// <summary>
+        ///     Called when player requests equipment.
+        ///     Opens the quartermaster equipment menu.
+        /// </summary>
+        private void OnQuartermasterEquipmentRequest()
+        {
+            try
+            {
+                // Increase relationship slightly for interaction
+                EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+
+                // Open equipment menu
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                GameMenu.ActivateGameMenu("quartermaster_equipment");
+
+                ModLogger.Info("Quartermaster", "Opened equipment menu from dialog");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to open equipment menu from dialog", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Called when player wants to sell equipment.
+        ///     Opens the quartermaster returns menu.
+        /// </summary>
+        private void OnQuartermasterSellRequest()
+        {
+            try
+            {
+                // Increase relationship for interaction
+                EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+
+                // Open sell menu
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                GameMenu.ActivateGameMenu("quartermaster_returns");
+
+                ModLogger.Info("Quartermaster", "Opened sell menu from dialog");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to open sell menu from dialog", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Called when player chats with the quartermaster.
+        ///     Increases relationship.
+        /// </summary>
+        private void OnQuartermasterChat()
+        {
+            // Increase relationship for chatting
+            EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(5);
+            ModLogger.Info("Quartermaster", "Chat completed, relationship increased");
+        }
+
+        /// <summary>
+        ///     Called when player requests provisions.
+        ///     Opens the rations purchase menu (Phase 5).
+        /// </summary>
+        private void OnQuartermasterProvisionsRequest()
+        {
+            try
+            {
+                // Open rations menu
+                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                GameMenu.ActivateGameMenu("quartermaster_rations");
+
+                ModLogger.Info("Quartermaster", "Opened rations menu from dialog");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Failed to open rations menu from dialog", ex);
+            }
+        }
+
+        // ========================================
+        // PAYTENSION DIALOG CONSEQUENCES (Phase 7)
+        // ========================================
+
+        /// <summary>
+        ///     Called when player asks Scoundrel for black market options.
+        ///     Provides hints about illicit ways to acquire coin/supplies.
+        /// </summary>
+        private void OnQuartermasterBlackMarket()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            // Increase relationship for showing trust
+            enlistment.ModifyQuartermasterRelationship(3);
+
+            // Display the black market response text
+            var tension = enlistment.PayTension;
+            InformationManager.DisplayMessage(new InformationMessage(
+                "The quartermaster shares some... alternative supply channels.",
+                Colors.Magenta));
+
+            ModLogger.Info("Quartermaster", $"Black market dialog triggered (tension={tension})");
+        }
+
+        /// <summary>
+        ///     Called when player asks Believer for moral guidance.
+        ///     Provides morale boost and spiritual encouragement.
+        /// </summary>
+        private void OnQuartermasterMoralGuidance()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            // Increase relationship for seeking guidance
+            enlistment.ModifyQuartermasterRelationship(5);
+
+            // Small fatigue relief from spiritual comfort
+            if (enlistment.FatigueCurrent < 24)
+            {
+                enlistment.RestoreFatigue(2, "moral_guidance");
+            }
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                "The quartermaster's words bring some comfort. (+2 fatigue recovery)",
+                Colors.Green));
+
+            ModLogger.Info("Quartermaster", "Moral guidance dialog triggered");
+        }
+
+        /// <summary>
+        ///     Called when player asks Veteran for survival advice.
+        ///     Provides practical advice about desertion and survival.
+        /// </summary>
+        private void OnQuartermasterSurvivalAdvice()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            // Increase relationship for confiding
+            enlistment.ModifyQuartermasterRelationship(2);
+
+            // Check if free desertion is available
+            if (enlistment.IsFreeDesertionAvailable)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "The veteran nods knowingly. 'If you need to leave... no one would blame you. The Lord's broken his contract with us.'",
+                    Colors.Yellow));
+            }
+            else
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    "The veteran shares tips for surviving hard times. 'Keep your head down. Watch for opportunities.'",
+                    Colors.Yellow));
+            }
+
+            ModLogger.Info("Quartermaster", $"Survival advice dialog triggered (freeDesertion={enlistment.IsFreeDesertionAvailable})");
+        }
+
+        /// <summary>
+        ///     Called when player asks how to help the lord.
+        ///     Provides archetype-specific suggestions for reducing PayTension.
+        /// </summary>
+        private void OnQuartermasterHelpLordSuggestion()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null)
+            {
+                return;
+            }
+
+            var archetype = enlistment.QuartermasterArchetype;
+            var suggestion = archetype switch
+            {
+                "veteran" => "The lord needs gold, and fast. Look for bounty work, escort missions, anything that pays quick.",
+                "merchant" => "I know some merchants who owe the lord money. Perhaps you could... encourage them to pay up.",
+                "bookkeeper" => "There are discrepancies in the accounts. If you find evidence of embezzlement, the lord could recover funds.",
+                "scoundrel" => "Plenty of ways to make coin if you're not too squeamish. Raid enemy supply lines, shake down travelers...",
+                "believer" => "The faithful should help their lord in times of need. Perhaps donations could be collected, or enemy coffers... liberated.",
+                "eccentric" => "The stars suggest a merchant caravan will pass by soon with more gold than guards. Just saying.",
+                _ => "The lord needs coin. Find work that pays."
+            };
+
+            // Increase relationship for showing loyalty
+            enlistment.ModifyQuartermasterRelationship(3);
+
+            InformationManager.DisplayMessage(new InformationMessage(
+                $"Quartermaster advice: \"{suggestion}\"",
+                Colors.Cyan));
+
+            ModLogger.Info("Quartermaster", "Help lord suggestion dialog triggered");
+        }
+
+        #endregion
 
         #region Utility Methods
 
@@ -1031,7 +2054,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("DialogManager", $"Error cleaning up menu after discharge: {ex.Message}");
+                ModLogger.ErrorCode("DialogManager", "E-DIALOG-003", "Error cleaning up menu after discharge", ex);
             }
         }
 
@@ -1298,6 +2321,16 @@ namespace Enlisted.Features.Conversations.Behaviors
                    !enlistment.IsInDesertionGracePeriod;
         }
 
+        private bool CanDiscussDischargeGuidance()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            return enlistment?.IsEnlisted == true &&
+                   enlistment.CurrentLord == lord &&
+                   !enlistment.IsInDesertionGracePeriod;
+        }
+
         /// <summary>
         ///     Checks if the player can discuss retirement with a minor faction lord.
         ///     Same eligibility as kingdom lords but uses mercenary-themed dialog.
@@ -1495,6 +2528,43 @@ namespace Enlisted.Features.Conversations.Behaviors
             return enlistment.CanEnlistWithParty(lord, out _);
         }
 
+        /// <summary>
+        ///     Check if player can request T7 (Commander) promotion.
+        ///     Player must be T6, enlisted with the lord they're talking to, and meet all T7 requirements.
+        /// </summary>
+        private bool CanRequestCommanderPromotion()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var lord = Hero.OneToOneConversationHero;
+
+            if (lord == null || !lord.IsLord || !lord.IsAlive)
+            {
+                return false;
+            }
+
+            // Must be enlisted with this specific lord
+            if (enlistment?.IsEnlisted != true || enlistment.CurrentLord != lord)
+            {
+                return false;
+            }
+
+            // Must be exactly Tier 6 (not already T7+)
+            if (enlistment.EnlistmentTier != 6)
+            {
+                return false;
+            }
+
+            // Must meet all T7 promotion requirements
+            var promotionBehavior = Ranks.Behaviors.PromotionBehavior.Instance;
+            if (promotionBehavior == null)
+            {
+                return false;
+            }
+
+            var (canPromote, _) = promotionBehavior.CanPromote();
+            return canPromote;
+        }
+
         #endregion
 
         #region Shared Dialog Consequences
@@ -1502,6 +2572,9 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// <summary>
         ///     Handles the consequence of accepting enlistment.
         ///     Centralized to ensure consistent behavior across all enlistment paths.
+        ///     CRITICAL: The entire enlistment process is deferred to the next frame because
+        ///     StartEnlist() calls PlayerEncounter.LeaveSettlement/Finish which crashes if
+        ///     the conversation mission is still active (MissionLocationLogic.OnRemoveBehavior fails).
         /// </summary>
         private void OnAcceptEnlistment()
         {
@@ -1510,32 +2583,55 @@ namespace Enlisted.Features.Conversations.Behaviors
                 var lord = Hero.OneToOneConversationHero;
                 if (lord == null)
                 {
-                    ModLogger.Error("DialogManager", "No conversation hero found during enlistment acceptance");
+                    ModLogger.LogOnce("dialog_accept_enlistment_no_conversation_hero", "DialogManager",
+                        "[E-DIALOG-001] No conversation hero found during enlistment acceptance", LogLevel.Error);
                     return;
                 }
 
                 if (EnlistmentBehavior.Instance == null)
                 {
-                    ModLogger.Error("DialogManager", "EnlistmentBehavior.Instance is null during enlistment");
+                    ModLogger.LogOnce("dialog_accept_enlistment_enlistment_instance_null", "DialogManager",
+                        "[E-DIALOG-002] EnlistmentBehavior.Instance is null during enlistment", LogLevel.Error);
                     return;
                 }
 
                 ModLogger.Info("DialogManager", $"Player accepting enlistment with lord: {lord.Name}");
 
-                EnlistmentBehavior.Instance.StartEnlist(lord);
+                // Capture lord reference before conversation ends (Hero.OneToOneConversationHero will be null next frame)
+                var capturedLord = lord;
 
-                // Activate the enlisted status menu, deferred to the next frame to prevent timing conflicts
-                // This ensures the menu activates cleanly after the conversation ends and prevents
-                // any gaps that could cause encounter menus to appear
-                NextFrameDispatcher.RunNextFrame(EnlistedMenuBehavior.SafeActivateEnlistedMenu);
-                ModLogger.Debug("DialogManager",
-                    "Scheduled enlisted_status menu activation - preventing encounter gap");
+                // CRITICAL: Defer the entire enlistment to next frame to let the conversation mission
+                // finalize first. Calling StartEnlist() during the dialog consequence crashes because
+                // it tries to end the PlayerEncounter while MissionLocationLogic is still active.
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        if (EnlistmentBehavior.Instance == null)
+                        {
+                            ModLogger.LogOnce("dialog_deferred_enlistment_instance_null", "DialogManager",
+                                "[E-DIALOG-004] EnlistmentBehavior.Instance became null before deferred enlistment", LogLevel.Error);
+                            return;
+                        }
 
-                // Professional notification
-                var message =
-                    GetLocalizedText("{=enlisted_success_notification}You have enlisted in {LORD_NAME}'s service.");
-                message.SetTextVariable("LORD_NAME", lord.Name);
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                        EnlistmentBehavior.Instance.StartEnlist(capturedLord);
+
+                        // Activate the enlisted status menu after enlistment completes
+                        NextFrameDispatcher.RunNextFrame(EnlistedMenuBehavior.SafeActivateEnlistedMenu);
+                        ModLogger.Debug("DialogManager",
+                            "Scheduled enlisted_status menu activation - preventing encounter gap");
+
+                        // Professional notification
+                        var message =
+                            GetLocalizedText("{=enlisted_success_notification}You have enlisted in {LORD_NAME}'s service.");
+                        message.SetTextVariable("LORD_NAME", capturedLord.Name);
+                        InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("DialogManager", "Error in deferred enlistment", ex);
+                    }
+                });
             }
             catch (Exception ex)
             {
@@ -1621,7 +2717,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("DialogManager", $"Failed to add retirement supplies: {ex.Message}");
+                ModLogger.ErrorCode("DialogManager", "E-DIALOG-004", "Failed to add retirement supplies", ex);
             }
         }
 
@@ -1853,7 +2949,8 @@ namespace Enlisted.Features.Conversations.Behaviors
 
                 if (newLord == null || enlistment == null)
                 {
-                    ModLogger.Error("DialogManager", "Cannot transfer service - missing lord or enlistment instance");
+                    ModLogger.LogOnce("dialog_transfer_service_missing_inputs", "DialogManager",
+                        "[E-DIALOG-003] Cannot transfer service - missing lord or enlistment instance", LogLevel.Error);
                     return;
                 }
 
@@ -1876,6 +2973,69 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("DialogManager", "Error during service transfer", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Handles the consequence of accepting T7 Commander promotion via dialog.
+        ///     Triggers the T6→T7 promotion event which grants retinue and promotes player.
+        /// </summary>
+        private void OnAcceptCommanderPromotion()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+
+                if (enlistment == null)
+                {
+                    ModLogger.Error("DialogManager", "EnlistmentBehavior.Instance is null during commander promotion acceptance");
+                    return;
+                }
+
+                if (enlistment.EnlistmentTier != 6)
+                {
+                    ModLogger.Warn("DialogManager", $"Player not T6 when accepting commander promotion (tier={enlistment.EnlistmentTier})");
+                    return;
+                }
+
+                ModLogger.Info("DialogManager", "Player accepting T7 Commander promotion via dialog");
+
+                // Defer to next frame to let conversation close first
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        // Try to fire the T6→T7 promotion event
+                        var eventId = "promotion_t6_t7_commanders_commission";
+                        if (Lances.Events.LanceLifeEventRuntime.TryShowEventById(eventId))
+                        {
+                            ModLogger.Info("DialogManager", $"Triggered promotion event: {eventId}");
+                        }
+                        else
+                        {
+                            // Fallback: Direct promotion if event not found
+                            ModLogger.Warn("DialogManager", $"Promotion event {eventId} not found, using direct promotion");
+                            
+                            var enlistmentCheck = EnlistmentBehavior.Instance;
+                            if (enlistmentCheck != null && enlistmentCheck.EnlistmentTier == 6)
+                            {
+                                enlistmentCheck.SetTier(7);
+                                Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+                                
+                                var message = new TextObject("{=promotion_t7_notification}You have been promoted to Commander. Twenty recruits await your command.");
+                                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("DialogManager", "Error during deferred commander promotion", ex);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("DialogManager", "Error accepting commander promotion", ex);
             }
         }
 

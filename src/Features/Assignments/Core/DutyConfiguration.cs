@@ -21,9 +21,6 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("duties")]
         public Dictionary<string, DutyDefinition> Duties { get; set; } = new Dictionary<string, DutyDefinition>();
         
-        [JsonProperty("professions")]
-        public Dictionary<string, DutyDefinition> Professions { get; set; } = new Dictionary<string, DutyDefinition>();
-        
         [JsonProperty("selection_system")]
         public SelectionSystemConfig SelectionSystem { get; set; } = new SelectionSystemConfig();
         
@@ -48,9 +45,6 @@ namespace Enlisted.Features.Assignments.Core
     {
         [JsonProperty("duty_selection")]
         public SelectionConfig DutySelection { get; set; } = new SelectionConfig();
-        
-        [JsonProperty("profession_selection")]
-        public SelectionConfig ProfessionSelection { get; set; } = new SelectionConfig();
     }
     
     [Serializable]
@@ -116,6 +110,14 @@ namespace Enlisted.Features.Assignments.Core
         
         [JsonProperty("multi_skill_xp")]
         public Dictionary<string, int> MultiSkillXp { get; set; } = new Dictionary<string, int>();
+
+        // Phase 4.5: Event prefix used by Phase 5 content conversion verification (e.g., "qm_" for quartermaster).
+        [JsonProperty("event_prefix")]
+        public string EventPrefix { get; set; }
+
+        // Phase 4.5: Optional DLC gate. Example: "war_sails" (NavalDLC).
+        [JsonProperty("requires_expansion")]
+        public string RequiresExpansion { get; set; }
     }
     
     [Serializable]
@@ -140,8 +142,8 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("party_effects")]
         public List<string> PartyEffects { get; set; } = new List<string>();
         
-        [JsonProperty("professions")]
-        public List<string> Professions { get; set; } = new List<string>();
+        [JsonProperty("duties")]
+        public List<string> Duties { get; set; } = new List<string>();
     }
     
     [Serializable]

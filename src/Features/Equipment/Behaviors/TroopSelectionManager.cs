@@ -12,6 +12,7 @@ using Helpers;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 
@@ -48,17 +49,24 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_promotionPending", ref _promotionPending);
-            dataStore.SyncData("_pendingTier", ref _pendingTier);
-            dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_promotionPending", ref _promotionPending);
+                dataStore.SyncData("_pendingTier", ref _pendingTier);
+                dataStore.SyncData("_lastSelectedTroopId", ref _lastSelectedTroopId);
+            });
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
         {
             AddTroopSelectionMenus(starter);
             
-            // DEVELOPMENT: Validate troop coverage across all factions
-            TroopDiscoveryValidator.ValidateAllCulturesAndTiers();
+            // Development-only: deep validation of troop coverage across cultures/tiers.
+            // Disabled by default to keep session logs lightweight for players.
+            if (ModConfig.Settings?.RunTroopDiscoveryValidation == true)
+            {
+                TroopDiscoveryValidator.ValidateAllCulturesAndTiers();
+            }
             
             ModLogger.Info("TroopSelection", "Troop selection system initialized with modern UI styling");
         }
@@ -70,19 +78,9 @@ namespace Enlisted.Features.Equipment.Behaviors
         [GameMenuInitializationHandler("enlisted_troop_selection")]
         private static void OnTroopSelectionBackgroundInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-            
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
-            }
-            
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            // Troop selection/promotion is a logistics/supply-facing flow (Quartermaster vibe).
+            // Use a known "trade/logistics" encounter mesh instead of a generic battle encounter.
+            args.MenuContext.SetBackgroundMeshName("encounter_caravan");
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             args.MenuContext.SetPanelSound("event:/ui/panels/settlement_camp");
         }
@@ -106,7 +104,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var cultureId = enlistment?.CurrentLord?.Culture?.StringId;
                 if (string.IsNullOrEmpty(cultureId))
                 {
-                    ModLogger.Error("Equipment", "Master at Arms: Missing culture on current lord");
+                    ModLogger.ErrorCode("Equipment", "E-TROOPSEL-001", "Master at Arms: Missing culture on current lord");
                     return;
                 }
 
@@ -124,21 +122,21 @@ namespace Enlisted.Features.Equipment.Behaviors
                 foreach (var troop in unlocked)
                 {
                     var hint = BuildTroopLoadoutHint(troop);
-                    var name = troop.Name?.ToString() ?? "Unknown";
+                    var name = troop.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     // 1.3.4 API: ImageIdentifier is now abstract, use CharacterImageIdentifier
                     var portrait = new CharacterImageIdentifier(CharacterCode.CreateFrom(troop));
                     options.Add(new InquiryElement(troop, name, portrait, true, hint));
                 }
 
                 var data = new MultiSelectionInquiryData(
-                    "Select equipment to use",
-                    "Gear will not be auto-issued after Tier 1. Your chosen kit becomes purchasable at the Quartermaster.",
+                    new TextObject("{=enl_ui_select_equipment_to_use_title}Select equipment to use").ToString(),
+                    new TextObject("{=enl_ui_select_equipment_to_use_desc}Gear will not be auto-issued after Tier 1. Your chosen kit becomes purchasable at the Quartermaster.").ToString(),
                     options,
                     true, // Enable close button (X) like lord selection dialog
                     1,
                     1,
-                    "Continue",
-                    "Cancel",
+                    new TextObject("{=ll_default_continue}Continue").ToString(),
+                    new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     selected =>
                     {
                         try
@@ -159,7 +157,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Equipment", $"Master at Arms apply failed: {ex.Message}", ex);
+                            ModLogger.ErrorCode("Equipment", "E-TROOPSEL-002", "Master at Arms apply failed", ex);
                         }
                     },
                     _ =>
@@ -173,7 +171,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Master at Arms popup failed: {ex.Message}");
+                ModLogger.ErrorCode("Equipment", "E-TROOPSEL-003", "Master at Arms popup failed", ex);
             }
         }
 
@@ -220,7 +218,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"GetUnlockedTroops failed: {ex.Message}");
+                ModLogger.ErrorCode("Equipment", "E-TROOPSEL-004", "GetUnlockedTroops failed", ex);
                 return new List<CharacterObject>();
             }
         }
@@ -237,7 +235,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             {
                 try
                 {
-                    var title = troop?.Name?.ToString() ?? "Unknown";
+                    var title = troop?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
                     var element = new InquiryElement(
                         troop,
                         title,
@@ -310,7 +308,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("TroopSelection", $"Failed to open Master at Arms popup: {ex.Message}");
+                            ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-005", "Failed to open Master at Arms popup", ex);
                         }
                     });
                 },
@@ -335,7 +333,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("TroopSelection", $"Failed to switch back to enlisted status: {ex.Message}");
+                            ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-006", "Failed to switch back to enlisted status", ex);
                             // Fallback to safe activation if direct switch failed
                             EnlistedMenuBehavior.SafeActivateEnlistedMenu();
                         }
@@ -354,14 +352,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {
-                    ModLogger.Error("TroopSelection", "Cannot show troop selection - player not enlisted");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-007", "Cannot show troop selection - player not enlisted");
                     return;
                 }
 
                 var cultureId = enlistment.CurrentLord?.Culture?.StringId;
                 if (string.IsNullOrEmpty(cultureId))
                 {
-                    ModLogger.Error("TroopSelection", "Cannot show troop selection - missing culture on current lord");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-008", "Cannot show troop selection - missing culture on current lord");
                     return;
                 }
                 _availableTroops = GetTroopsForCultureAndTier(cultureId, newTier);
@@ -370,7 +368,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 if (_availableTroops.Count == 0)
                 {
-                    ModLogger.Error("TroopSelection", $"No troops found for culture {cultureId} tier {newTier}");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-009", $"No troops found for culture {cultureId} tier {newTier}");
                     
                     // Fallback - apply basic tier progression without equipment change
                     enlistment.ApplyBasicPromotion(newTier);
@@ -421,10 +419,14 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var enlistmentRef = EnlistmentBehavior.Instance;
                 var rankName = enlistmentRef?.GetRankName(_pendingTier) ?? $"Tier {_pendingTier}";
                 
-                var statusText = "You've been summoned before the Master at Arms.\n\n";
-                statusText += $"\"Soldier, your service has not gone unnoticed. You've earned promotion to {rankName}.\"\n\n";
-                statusText += "After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster.\n\n";
-                statusText += $"({_availableTroops.Count} troop specializations available)";
+                var intro = new TextObject("{=enl_master_at_arms_summons_intro}You've been summoned before the Master at Arms.");
+                var promo = new TextObject("{=enl_master_at_arms_promotion_line}\"Soldier, your service has not gone unnoticed. You've earned promotion to {RANK_NAME}.\"");
+                promo.SetTextVariable("RANK_NAME", rankName ?? string.Empty);
+                var note = new TextObject("{=enl_master_at_arms_after_t1_note}After Tier 1, gear is not auto-issued. Your chosen kit becomes purchasable from the Quartermaster.");
+                var count = new TextObject("{=enl_master_at_arms_specializations_count}({COUNT} troop specializations available)");
+                count.SetTextVariable("COUNT", _availableTroops.Count);
+
+                var statusText = $"{intro}\n\n{promo}\n\n{note}\n\n{count}";
                 
                 MBTextManager.SetTextVariable("TROOP_SELECTION_TEXT", statusText);
                 
@@ -577,7 +579,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", $"BuildCultureTroopTree failed: {ex.Message}");
+                ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-010", "BuildCultureTroopTree failed", ex);
             }
             return results;
         }
@@ -586,6 +588,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Apply equipment from selected troop to hero.
         /// Implements equipment REPLACEMENT system (not accumulation).
         /// Includes accountability check - soldier is charged for missing equipment when auto-issuing.
+        /// PROTECTS QUEST ITEMS: Quest items are preserved during equipment replacement.
         /// </summary>
         public void ApplySelectedTroopEquipment(Hero hero, CharacterObject selectedTroop, bool autoIssueEquipment)
         {
@@ -604,12 +607,19 @@ namespace Enlisted.Features.Equipment.Behaviors
                     var troopEquipment = selectedTroop.BattleEquipments.FirstOrDefault();
                     if (troopEquipment == null)
                     {
-                        ModLogger.Error("TroopSelection", $"No equipment found for {selectedTroop.Name}");
+                        ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-011", $"No equipment found for {selectedTroop.Name}");
                         return;
                     }
 
+                    // CRITICAL: Preserve quest items before replacing equipment
+                    var equipmentManager = EquipmentManager.Instance;
+                    var questItems = equipmentManager?.PreserveEquippedQuestItems() ?? new Dictionary<EquipmentIndex, EquipmentElement>();
+
                     // Replace all equipment with new troop's gear
                     EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, troopEquipment);
+
+                    // CRITICAL: Restore quest items after equipment replacement
+                    equipmentManager?.RestoreEquippedQuestItems(questItems);
 
                     // Show promotion notification
                     var message = new TextObject("{=eq_promoted_new_equipment}Promoted to {TROOP_NAME}! New equipment issued.");
@@ -629,12 +639,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _availableTroops.Clear();
                 
                 ModLogger.Info("TroopSelection", autoIssueEquipment
-                    ? $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation})"
+                    ? $"Equipment replaced with {selectedTroop.Name} gear (Formation: {formation}, quest items protected)"
                     : $"Troop selection recorded without auto-issue (Formation: {formation}); gear available at Quartermaster");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}: {ex.Message}", ex);
+                ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-012",
+                    $"Failed to apply selected troop equipment for {selectedTroop?.Name?.ToString() ?? "null"}", ex);
             }
         }
         
@@ -688,12 +699,12 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 else
                 {
-                    ModLogger.Error("TroopSelection", $"No {formationType} troop available");
+                    ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-013", $"No {formationType} troop available");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("TroopSelection", "Error in troop selection", ex);
+                ModLogger.ErrorCode("TroopSelection", "E-TROOPSEL-014", "Error in troop selection", ex);
             }
         }
         

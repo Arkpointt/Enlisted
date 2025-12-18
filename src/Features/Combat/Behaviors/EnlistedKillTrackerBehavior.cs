@@ -52,7 +52,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("KillTracker", $"Error in AfterStart: {ex.Message}");
+                ModLogger.ErrorCode("KillTracker", "E-KILLTRACK-001", "Error in AfterStart", ex);
             }
         }
         
@@ -81,7 +81,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("KillTracker", $"Error in OnMissionTick: {ex.Message}");
+                ModLogger.ErrorCode("KillTracker", "E-KILLTRACK-002", "Error in OnMissionTick", ex);
             }
         }
         
@@ -136,7 +136,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("KillTracker", $"Error in OnAgentRemoved: {ex.Message}");
+                ModLogger.ErrorCode("KillTracker", "E-KILLTRACK-003", "Error in OnAgentRemoved", ex);
             }
         }
         
@@ -162,7 +162,7 @@ namespace Enlisted.Features.Combat.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("KillTracker", $"Error in OnEndMission: {ex.Message}");
+                ModLogger.ErrorCode("KillTracker", "E-KILLTRACK-004", "Error in OnEndMission", ex);
             }
         }
         

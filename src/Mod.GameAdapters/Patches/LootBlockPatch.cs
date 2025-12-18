@@ -14,10 +14,15 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Prevents enlisted soldiers from receiving any loot.
+    /// Tier-gated loot system for enlisted soldiers.
     /// 
-    /// As a soldier in someone else's army, the player does not receive personal loot.
-    /// All spoils of war go to the lord. The soldier is compensated through wages instead.
+    /// Low-tier soldiers (T1-T3) don't receive personal loot - all goes to the lord.
+    /// They are compensated through wages and gold share from battle spoils.
+    /// 
+    /// Veterans (T4+) have earned the privilege of keeping battle loot:
+    /// - T4-T5: Allowed loot (veteran's share)
+    /// - T6: Allowed loot (household guard picks first)
+    /// - T7-T9: Allowed loot (commander privilege)
     /// 
     /// Uses a two-layer approach:
     /// 1. Data level: Redirects loot to empty/dummy rosters during battle processing
@@ -32,6 +37,9 @@ namespace Enlisted.Mod.GameAdapters.Patches
     [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedType.Global", Justification = "Harmony patch classes discovered via reflection")]
     public static class LootBlockPatch
     {
+        // Minimum tier required to receive personal loot (T4 = Veteran)
+        private const int MinimumLootTier = 4;
+        
         // Dummy rosters that receive loot but are never used
         // These prevent crashes while still blocking loot from going to player
         private static readonly ItemRoster _dummyItemRoster = new ItemRoster();
@@ -52,7 +60,16 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 return false;
             }
             
-            return true; // Actively serving - block loot
+            // Phase 4: Tier-gated loot - veterans (T4+) get personal loot
+            // T1-T3: Blocked (compensated via gold share)
+            // T4+: Allowed (earned the privilege)
+            if (enlistment.EnlistmentTier >= MinimumLootTier)
+            {
+                ModLogger.Debug("LootBlock", $"Loot allowed - T{enlistment.EnlistmentTier} veteran privilege");
+                return false; // Allow loot for veterans
+            }
+            
+            return true; // Block loot for T1-T3 grunts
         }
         
         /// <summary>
@@ -211,7 +228,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("LootBlock", $"Error in loot screen patch: {ex.Message}", ex);
+                    ModLogger.ErrorCode("LootBlock", "E-PATCH-009", "Error in loot screen patch", ex);
                     return true; // Allow loot on error to prevent breaking gameplay
                 }
             }

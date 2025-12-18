@@ -1,0 +1,269 @@
+<Prefab>
+  <!-- Schedule Panel - EXACT COPY of native PoliciesPanel.xml structure -->
+  <Constants>
+    <Constant Name="Kingdom.Policies.Sort.1.Width" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.1" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policies.Sort.1.Height" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.1" BrushValueType="Height" />
+    <Constant Name="Kingdom.Policies.Sort.2.Width" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.2" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policies.Sort.2.Height" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.2" BrushValueType="Height" />
+    <Constant Name="Kingdom.Policies.Sort.3.Width" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.3" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policies.Sort.3.Height" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.3" BrushValueType="Height" />
+    <Constant Name="Kingdom.Policies.Sort.4.Width" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.4" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policies.Sort.4.Height" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.4" BrushValueType="Height" />
+    <Constant Name="Kingdom.Policies.Sort.5.Width" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.5" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policies.Sort.5.Height" BrushLayer="Default" BrushName="Kingdom.Policies.Sort.5" BrushValueType="Height" />
+    <Constant Name="Kingdom.Collapser.Tuple.Width" BrushLayer="Default" BrushName="Kingdom.Collapser.Tuple" BrushValueType="Width" />
+    <Constant Name="Kingdom.Collapser.Tuple.Height" BrushLayer="Default" BrushName="Kingdom.Collapser.Tuple" BrushValueType="Height" />
+    <Constant Name="Kingdom.Policy.ActionItem.Tuple.Width" BrushLayer="Default" BrushName="Kingdom.Policy.ActionItem.Tuple" BrushValueType="Width" />
+    <Constant Name="Kingdom.Policy.ActionItem.Tuple.Height" BrushLayer="Default" BrushName="Kingdom.Policy.ActionItem.Tuple" BrushValueType="Height" />
+    <Constant Name="Conversation.Relation.Background.Width" BrushLayer="Default" BrushName="Conversation.Relation.Background" BrushValueType="Width" />
+    <Constant Name="Conversation.Relation.Background.Width.Scaled" Value="!Conversation.Relation.Background.Width" MultiplyResult="2" />
+    <Constant Name="Conversation.Relation.Background.Height" BrushLayer="Default" BrushName="Conversation.Relation.Background" BrushValueType="Height" />
+    <Constant Name="Conversation.Relation.Background.Height.Scaled" Value="!Conversation.Relation.Background.Height" MultiplyResult="2" />
+    <Constant Name="Conversation.Relation.Handle.Width" BrushLayer="Default" BrushName="Kingdom.Support.Handle" BrushValueType="Width" />
+    <Constant Name="Conversation.Relation.Handle.Width.Scaled" Value="!Conversation.Relation.Handle.Width" MultiplyResult="2" />
+    <Constant Name="Conversation.Relation.Handle.Height" BrushLayer="Default" BrushName="Conversation.Relation.Handle" BrushValueType="Height" />
+    <Constant Name="Conversation.Relation.Handle.Height.Scaled" Value="!Conversation.Relation.Handle.Height" MultiplyResult="2" />
+    <Constant Name="PolicyToggle.Width" BrushLayer="Default" BrushName="Kingdom.Policy.Toggle.Tuple" BrushValueType="Width" />
+    <Constant Name="PolicyToggle.Height" BrushLayer="Default" BrushName="Kingdom.Policy.Toggle.Tuple" BrushValueType="Height" />
+    <Constant Name="Party.Toggle.ExpandIndicator.Width" BrushLayer="Default" BrushName="Party.Toggle.ExpandIndicator" BrushValueType="Width" />
+    <Constant Name="Party.Toggle.ExpandIndicator.Height" BrushLayer="Default" BrushName="Party.Toggle.ExpandIndicator" BrushValueType="Height" />
+    <Constant Name="Kingdom.Header.Policies.Width" BrushLayer="Default" BrushName="Kingdom.Header.Policies" BrushValueType="Width" />
+    <Constant Name="Kingdom.Header.Policies.Height" BrushLayer="Default" BrushName="Kingdom.Header.Policies" BrushValueType="Height" />
+    <Constant Name="Kingdom.Scroll.Header.Width" BrushLayer="Default" BrushName="Scroll.Header" BrushValueType="Width" />
+    <Constant Name="Kingdom.Scroll.Header.Height" BrushLayer="Default" BrushName="Scroll.Header" BrushValueType="Height" />
+  </Constants>
+  <Window>
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" IsVisible="@Show">
+      <Children>
+
+        <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+          <Children>
+
+            <!--Left Panel-->
+            <BrushListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" VerticalAlignment="Bottom" MarginTop="6" MarginBottom="9" MarginLeft="0" Brush="Frame1Brush" StackLayout.LayoutMethod="VerticalBottomToTop">
+              <Children>
+
+                <!--Horizontal Header Section-->
+                <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" RenderLate="true">
+                  <Children>
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Kingdom.Header.Policies.Width" SuggestedHeight="!Kingdom.Header.Policies.Height" Sprite="SPKingdom\header_policies" ExtendTop="21" ExtendRight="13" ExtendBottom="20" RenderLate="true">
+                      <Children>
+                        <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Kingdom.PoliciesCollapserTitle.Text" IsDisabled="true" Text="@OrdersText" />
+                      </Children>
+                    </Widget>
+
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Kingdom.Scroll.Header.Width" SuggestedHeight="!Kingdom.Scroll.Header.Height" Sprite="StdAssets\scroll_header" ExtendRight="3" ExtendTop="6" ExtendLeft="3" ExtendBottom="4" HorizontalAlignment="Right" />
+                  </Children>
+                </ListPanel>
+
+                <!--List and Scrollbar Horizontal Section-->
+                <NavigationScopeTargeter ScopeID="ScheduleLeftListScope" ScopeParent="..\ScheduleLeftList" ScopeMovements="Vertical" IsDefaultNavigationScope="true" DoNotAutoNavigateAfterSort="true" />
+                <ListPanel Id="ScheduleLeftList" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent">
+                  <Children>
+
+                    <!--Schedule List Scrollable Panel-->
+                    <ScrollablePanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" MarginLeft="3" MarginBottom="3" AutoHideScrollBars="true" ClipRect="ScheduleListClipRect" InnerPanel="ScheduleListClipRect\ScheduleList" VerticalScrollbar="..\ScheduleListScrollbar\Scrollbar">
+                      <Children>
+
+                        <Widget Id="ScheduleListClipRect" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" ClipContents="true">
+                          <Children>
+
+                            <NavigatableListPanel Id="ScheduleList" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop" MinIndex="0" StepSize="1000">
+                              <Children>
+
+								<!--Today's Schedule Header-->
+								<NavigationAutoScrollWidget TrackedWidget="..\TodaysScheduleHeader" />
+								<ScrollablePanelFixedHeaderWidget Id="TodaysScheduleHeader" FixedHeader="..\..\..\TodaysScheduleToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" HeaderHeight="!PolicyToggle.Height"/>
+
+                                <Widget Id="TodaysScheduleParentWidget" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren">
+                                  <Children>
+                                    <NavigationTargetSwitcher FromTarget="..\." ToTarget="..\TodaysScheduleList" />
+                                    <!--Today's Schedule List-->
+                                    <NavigatableListPanel Id="TodaysScheduleList" DataSource="{TodaysSchedule}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop" UseSelfIndexForMinimum="true">
+                                      <ItemTemplate>
+                                        <ScheduleActiveTuple IsSelected="@IsSelected" HorizontalAlignment="Left" />
+                                      </ItemTemplate>
+                                    </NavigatableListPanel>
+                                  </Children>
+                                </Widget>
+
+								<!--Available Activities Header-->
+								<NavigationAutoScrollWidget TrackedWidget="..\AvailableActivitiesHeader" />
+								<ScrollablePanelFixedHeaderWidget Id="AvailableActivitiesHeader" FixedHeader="..\..\..\AvailableActivitiesToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" HeaderHeight="!PolicyToggle.Height" AdditionalBottomOffset="!PolicyToggle.Height"/>
+
+                                <Widget Id="AvailableActivitiesParentWidget" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren">
+                                  <Children>
+                                    <!--Available Activities List-->
+                                    <NavigationTargetSwitcher FromTarget="..\." ToTarget="..\AvailableActivitiesList" />
+                                    <NavigatableListPanel Id="AvailableActivitiesList" DataSource="{AvailableActivities}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" StackLayout.LayoutMethod="VerticalBottomToTop" UseSelfIndexForMinimum="true">
+                                      <ItemTemplate>
+                                        <ScheduleOtherTuple IsSelected="@IsSelected" HorizontalAlignment="Left"/>
+                                      </ItemTemplate>
+                                    </NavigatableListPanel>
+                                  </Children>
+                                </Widget>
+
+                              </Children>
+                            </NavigatableListPanel>
+
+                          </Children>
+                        </Widget>
+
+						<!--Today's Schedule Toggle Button-->
+						<PartyHeaderToggleWidget Id="TodaysScheduleToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" SuggestedHeight="!PolicyToggle.Height" HorizontalAlignment="Left" VerticalAlignment="Top" Brush="Kingdom.Policy.Toggle.Tuple" CollapseIndicator="Description\CollapseIndicator" ListPanel="..\ScheduleListClipRect\ScheduleList\TodaysScheduleParentWidget\TodaysScheduleList" RenderLate="true" WidgetToClose="..\ScheduleListClipRect\ScheduleList\TodaysScheduleParentWidget" DoNotPassEventsToChildren="true">
+							<Children>
+								<ListPanel Id="Description" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="10" IsDisabled="true" StackLayout.LayoutMethod="HorizontalLeftToRight">
+									<Children>
+										<BrushWidget Id="CollapseIndicator" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Party.Toggle.ExpandIndicator.Width" SuggestedHeight="!Party.Toggle.ExpandIndicator.Height" VerticalAlignment="Center" MarginRight="5" Brush="Party.Toggle.ExpandIndicator" />
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginRight="5" Brush="Party.Text.Toggle" Text="@TodaysScheduleText" ClipContents="false" />
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginLeft="5" Brush="Party.Text.Toggle" Text="@NumScheduledBlocksText" ClipContents="false" />
+									</Children>
+								</ListPanel>
+							</Children>
+						</PartyHeaderToggleWidget>
+
+						<!--Available Activities Toggle Button-->
+						<PartyHeaderToggleWidget Id="AvailableActivitiesToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" SuggestedHeight="!PolicyToggle.Height" HorizontalAlignment="Left" VerticalAlignment="Top" Brush="Kingdom.Policy.Toggle.Tuple" CollapseIndicator="Description\CollapseIndicator" ListPanel="..\ScheduleListClipRect\ScheduleList\AvailableActivitiesParentWidget\AvailableActivitiesList" RenderLate="true" WidgetToClose="..\ScheduleListClipRect\ScheduleList\AvailableActivitiesParentWidget" DoNotPassEventsToChildren="true">
+							<Children>
+								<ListPanel Id="Description" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="10" IsDisabled="true" StackLayout.LayoutMethod="HorizontalLeftToRight">
+									<Children>
+										<BrushWidget Id="CollapseIndicator" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Party.Toggle.ExpandIndicator.Width" SuggestedHeight="!Party.Toggle.ExpandIndicator.Height" VerticalAlignment="Center" MarginRight="5" Brush="Party.Toggle.ExpandIndicator" />
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginRight="5" Brush="Party.Text.Toggle" Text="@AvailableActivitiesText" ClipContents="false" />
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginLeft="5" Brush="Party.Text.Toggle" Text="@NumAvailableActivitiesText" ClipContents="false" />
+									</Children>
+								</ListPanel>
+							</Children>
+						</PartyHeaderToggleWidget>
+
+                      </Children>
+                    </ScrollablePanel>
+
+                    <Standard.VerticalScrollbar Id="ScheduleListScrollbar" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Right" MarginRight="2" MarginLeft="2" MarginBottom="3" />
+                  </Children>
+                </ListPanel>
+
+              </Children>
+            </BrushListPanel>
+
+            <!--Right Side-->
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+              <Children>
+
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="540" SuggestedHeight="923" HorizontalAlignment="Right" VerticalAlignment="Bottom" PositionYOffset="80" Sprite="SPGeneral\background_illustration_policies" AlphaFactor="0.7" />
+
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="475" HorizontalAlignment="Center" MarginTop="25" MarginLeft="35" MarginRight="35" StackLayout.LayoutMethod="VerticalBottomToTop" IsVisible="@IsAcceptableItemSelected">
+                  <Children>
+
+                    <!-- Use generic Selected* properties that update for both blocks and activities -->
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Kingdom.TitleMedium.Text" Text="@SelectedTitle" ClipContents="false" />
+                    <TextWidget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="800" MarginTop="50" HorizontalAlignment="Center" Brush="Kingdom.CurrentArmyValues.Text" Text="@SelectedDescription" ClipContents="false" />
+
+
+                    <ScrollbarWidget Id="QuestLogScrollbar" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="16" HorizontalAlignment="Right" MarginLeft="10" MarginTop="135" MarginBottom="20" Sprite="SPParty\ScrollBar01TrackBG@2x" AlignmentAxis="Vertical" Handle="QuestLogScrollbarHandle" IsVisible="false" MaxValue="100" MinValue="0">
+                      <Children>
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="4" HorizontalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#5A4033FF" AlphaFactor="0.2" />
+                        <ImageWidget Id="QuestLogScrollbarHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="10" SuggestedWidth="8" HorizontalAlignment="Center" Brush="FaceGen.Scrollbar.Handle" IsVisible="false" />
+                      </Children>
+                    </ScrollbarWidget>
+
+
+                    <ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" MarginTop="135" MarginLeft="50" MarginRight="30" MarginBottom="15" AutoHideScrollBars="true" ClipRect="MyClipRect" InnerPanel="MyClipRect\ScheduleContent" VerticalScrollbar="..\QuestLogScrollbar">
+                      <Children>
+
+                        <Widget Id="MyClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginTop="20" MarginBottom="10" ClipContents="true">
+                          <Children>
+
+
+                            <!-- Use SelectedEffects instead of CurrentSelectedBlock\Effects -->
+                            <ListPanel Id="ScheduleContent" DataSource="{SelectedEffects}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginTop="15" StackLayout.LayoutMethod="VerticalBottomToTop">
+                              <ItemTemplate>
+                                <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="600" HeightSizePolicy="CoverChildren" MarginLeft="75" HorizontalAlignment="Center">
+                                  <Children>
+                                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="7" SuggestedWidth="7" Sprite="MapMenuUnread@2x" HorizontalAlignment="Right" PositionYOffset="14" Color="#FFFFFFFF"/>
+                                    <RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" Brush="Kingdom.CurrentArmyValues.Text" Brush.TextHorizontalAlignment="Left" MarginLeft="15" Text="@Text"/>
+                                  </Children>
+                                </ListPanel>
+                              </ItemTemplate>
+                            </ListPanel>
+
+                          </Children>
+                        </Widget>
+                      </Children>
+                    </ScrollablePanel>
+
+
+                  </Children>
+                </Widget>
+
+                <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginLeft="35" MarginRight="35" PositionYOffset="380" StackLayout.LayoutMethod="VerticalBottomToTop" IsVisible="@IsAcceptableItemSelected">
+                  <Children>
+
+                    <Widget WidthSizePolicy = "StretchToParent" HeightSizePolicy = "Fixed" SuggestedHeight="2" MarginTop="100" MarginLeft="200" MarginRight="200" Sprite="GradientDivider_9" AlphaFactor="0.4" />
+
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Kingdom.TitleSmall.Text" Text="@ApprovalText" MarginTop="50" ClipContents="false"/>
+                    <SliderWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="350" SuggestedHeight="65" HorizontalAlignment="Center" Brush="Kingdom.Support.Fill" DoNotUpdateHandleSize="true" Handle="SliderHandle" IsDiscrete="true" Locked="false" MaxValueInt="100" MinValueInt="0" ValueInt="@ApprovalLikelihood" MarginTop="10" IsEnabled="false">
+                      <Children>
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="400" SuggestedHeight="65" HorizontalAlignment="Center" Sprite="SPKingdom\progress_bar_frame" PositionYOffset="0" PositionXOffset="2" />
+                        <!-- Center line marker for 50% (Neutral) -->
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="2" SuggestedHeight="45" HorizontalAlignment="Center" VerticalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#FFFFFFAA" />
+                        <ImageWidget Id="SliderHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="16" SuggestedHeight="75" HorizontalAlignment="Left" VerticalAlignment="Center" Brush="Kingdom.Support.Handle" IsEnabled="false">
+                          <Children>
+                            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" PositionYOffset="65" MarginTop="10" Text="@ApprovalLikelihoodText" Brush="Kingdom.ParagraphSmall.Text"/>
+                          </Children>
+                        </ImageWidget>
+                        <!-- Tooltip handled via direct text on interactive elements; no HintWidget dependency. -->
+                      </Children>
+                    </SliderWidget>
+
+                  </Children>
+                </ListPanel>
+
+                <!--Action Buttons-->
+                <NavigationScopeTargeter ScopeID="ScheduleActionButtonsScope" ScopeParent="..\ActionButtons" ScopeMovements="Horizontal" ExtendDiscoveryAreaTop="-20" ExtendDiscoveryAreaLeft="250" ExtendDiscoveryAreaRight="520" DiscoveryAreaOffsetY="-25" />
+                <ListPanel Id="ActionButtons" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop" HorizontalAlignment="Center" VerticalAlignment="Bottom" PositionYOffset="0" IsVisible="@IsAcceptableItemSelected">
+                  <Children>
+
+                    <TextWidget WidthSizePolicy="Fixed" SuggestedWidth="260" HeightSizePolicy="CoverChildren" Brush="Kingdom.ParagraphSmall.Text" MarginBottom="10" Text="@ActionExplanationText" DoNotAcceptEvents="true" ClipContents="false"/>
+
+                    <!--Set Schedule Button-->
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="227" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginTop="3">
+                      <Children>
+                        <ButtonWidget Id="SetScheduleButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="227" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush2" Command.Click="ExecuteSetSchedule" IsEnabled="@CanSetScheduleAction" HoverText="@SetScheduleHoverText" UpdateChildrenStates="true" GamepadNavigationIndex="0">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Kingdom.GeneralButtons.Text" IsEnabled="@CanSetScheduleAction" Text="@SetScheduleText" />
+                          </Children>
+                        </ButtonWidget>
+
+                        <!-- HoverText on the button provides the tooltip; no HintWidget needed here. -->
+                      </Children>
+                    </Widget>
+                    
+                    <!--Request Change Button-->
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="227" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginTop="3">
+                      <Children>
+                        <ButtonWidget Id="RequestChangeButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="227" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush2" Command.Click="ExecuteRequestChange" IsEnabled="@CanRequestChangeAction" HoverText="@RequestChangeHoverText" UpdateChildrenStates="true" GamepadNavigationIndex="0">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Kingdom.GeneralButtons.Text" IsEnabled="@CanRequestChangeAction" Text="@RequestChangeText" />
+                          </Children>
+                        </ButtonWidget>
+
+                        <!-- HoverText on the button provides the tooltip; no HintWidget needed here. -->
+                      </Children>
+                    </Widget>
+
+                  </Children>
+                </ListPanel>
+
+
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="25" MarginRight="25" Brush.FontSize="40" Text="@NoItemSelectedText" IsHidden="@IsAcceptableItemSelected"/>
+
+              </Children>
+            </Widget>
+
+          </Children>
+        </ListPanel>
+
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>

@@ -34,7 +34,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                ModLogger.Debug("TroopDiscovery", "Validating faction troop coverage (all 8 cultures)");
+                ModLogger.Debug("TroopDiscovery", "Validating troop coverage (all cultures)");
 
                 // All 8 cultures: 6 main + nord and darshi (added in 1.3.4)
                 var cultures = new[] { "empire", "aserai", "khuzait", "vlandia", "sturgia", "battania", "nord", "darshi" };
@@ -67,7 +67,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 if (culture == null)
                 {
                     // Nord and Darshi are secondary cultures - they may share troops with parent cultures
-                    ModLogger.Warn("TroopDiscovery", $"⚠️ CULTURE MISSING: {cultureId} not found (may use parent culture troops)");
+                    ModLogger.Warn("TroopDiscovery", $"Culture not found: {cultureId} (may use parent culture troops)");
                     return;
                 }
 
@@ -89,18 +89,18 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                     if (troopsAtTier.Count > 0)
                     {
-                        ModLogger.Info("TroopDiscovery", $"✅ T{tier}: {troopsAtTier.Count} troops found");
+                        ModLogger.Debug("TroopDiscovery", $"T{tier}: {troopsAtTier.Count} troops found");
 
                         // Show sample troop names
                         var sampleTroops = troopsAtTier.Take(3).Select(t => t.Name?.ToString() ?? "Unnamed").ToArray();
-                        ModLogger.Info("TroopDiscovery", $"   Samples: {string.Join(", ", sampleTroops)}");
+                        ModLogger.Debug("TroopDiscovery", $"Samples: {string.Join(", ", sampleTroops)}");
 
                         // Check formation coverage
                         ValidateFormationCoverage(troopsAtTier, tier);
                     }
                     else
                     {
-                        ModLogger.Error("TroopDiscovery", $"❌ T{tier}: NO TROOPS FOUND - troop selection will fail!");
+                        ModLogger.Error("TroopDiscovery", $"T{tier}: no troops found - troop selection may fail!");
                     }
                 }
             }
@@ -136,16 +136,16 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 if (formationsWithTroops == totalFormations)
                 {
-                    ModLogger.Info("TroopDiscovery", $"   ✅ All 4 formations covered");
+                    ModLogger.Debug("TroopDiscovery", "All 4 formations covered");
                 }
                 else
                 {
-                    ModLogger.Warn("TroopDiscovery", $"   ⚠️ Only {formationsWithTroops}/{totalFormations} formations available");
+                    ModLogger.Warn("TroopDiscovery", $"Only {formationsWithTroops}/{totalFormations} formations available");
 
                     // Report missing formations
                     foreach (var kvp in formationCounts.Where(x => x.Value == 0))
                     {
-                        ModLogger.Warn("TroopDiscovery", $"   ❌ NO {kvp.Key} troops at T{tier}");
+                        ModLogger.Warn("TroopDiscovery", $"No {kvp.Key} troops at T{tier}");
                     }
                 }
             }
@@ -206,18 +206,18 @@ namespace Enlisted.Features.Equipment.Behaviors
 
                 if (availableTroops.Count > 0)
                 {
-                    ModLogger.Info("TroopDiscovery", $"✅ SUCCESS: {availableTroops.Count} troops found");
+                    ModLogger.Debug("TroopDiscovery", $"Success: {availableTroops.Count} troops found");
 
                     foreach (var troop in availableTroops.Take(5))
                     {
                         var formation = DetectTroopFormation(troop);
                         var equipmentCount = troop.BattleEquipments.Count();
-                        ModLogger.Info("TroopDiscovery", $"   • {troop.Name} ({formation}) - {equipmentCount} equipment sets");
+                        ModLogger.Debug("TroopDiscovery", $"{troop.Name} ({formation}) - {equipmentCount} equipment sets");
                     }
                 }
                 else
                 {
-                    ModLogger.Error("TroopDiscovery", $"❌ FAILURE: NO TROOPS FOUND for {cultureId} T{tier}");
+                    ModLogger.Error("TroopDiscovery", $"Failure: no troops found for {cultureId} T{tier}");
 
                     // Debug info - also show raw Tier vs calculated GetBattleTier difference
                     var totalCultureTroops = allTroops.Count(t => t.Culture == culture);
@@ -228,10 +228,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                     // Log if there's a mismatch between raw Tier and GetBattleTier
                     if (totalRawTierTroops != totalTierTroops)
                     {
-                        ModLogger.Info("TroopDiscovery", $"   Note: Raw Tier={totalRawTierTroops} vs GetBattleTier={totalTierTroops} troops at T{tier}");
+                        ModLogger.Debug("TroopDiscovery", $"Note: Raw Tier={totalRawTierTroops} vs GetBattleTier={totalTierTroops} troops at T{tier}");
                     }
 
-                    ModLogger.Info("TroopDiscovery", $"   Debug: {totalCultureTroops} culture troops, {totalTierTroops} tier troops, {totalSoldiers} soldiers total");
+                    ModLogger.Debug("TroopDiscovery", $"Debug: {totalCultureTroops} culture troops, {totalTierTroops} tier troops, {totalSoldiers} soldiers total");
                 }
             }
             catch (Exception ex)

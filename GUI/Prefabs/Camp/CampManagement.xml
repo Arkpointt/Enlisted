@@ -1,0 +1,134 @@
+<Prefab>
+  <!-- Kingdom-style Camp Management Screen -->
+  <!-- Modeled after Modules/SandBox/GUI/Prefabs/KingdomManagement/KingdomManagement.xml -->
+  <Constants>
+    <Constant Name="Header.Tab.Center.Width" BrushLayer="Default" BrushName="Header.Tab.Center" BrushValueType="Width" />
+    <Constant Name="Header.Tab.Center.Height" BrushLayer="Default" BrushName="Header.Tab.Center" BrushValueType="Height" />
+    <Constant Name="Header.Tab.Left.Width" BrushLayer="Default" BrushName="Header.Tab.Left" BrushValueType="Width" />
+    <Constant Name="Header.Tab.Left.Height" BrushLayer="Default" BrushName="Header.Tab.Left" BrushValueType="Height" />
+    <Constant Name="Header.Tab.Right.Width" BrushLayer="Default" BrushName="Header.Tab.Right" BrushValueType="Width" />
+    <Constant Name="Header.Tab.Right.Height" BrushLayer="Default" BrushName="Header.Tab.Right" BrushValueType="Height" />
+    
+    <Constant Name="Tab.Width.Scaled" MultiplyResult="0.90" Value="!Header.Tab.Center.Width" />
+    <Constant Name="Tab.Height.Scaled" MultiplyResult="0.90" Value="!Header.Tab.Center.Height" />
+    <Constant Name="Tab.Left.Width.Scaled" MultiplyResult="0.90" Value="!Header.Tab.Left.Width" />
+    <Constant Name="Tab.Left.Height.Scaled" MultiplyResult="0.90" Value="!Header.Tab.Left.Height" />
+    <Constant Name="Tab.Right.Width.Scaled" MultiplyResult="0.90" Value="!Header.Tab.Right.Width" />
+    <Constant Name="Tab.Right.Height.Scaled" MultiplyResult="0.90" Value="!Header.Tab.Right.Height" />
+  </Constants>
+  
+  <VisualDefinitions>
+    <VisualDefinition Name="BottomMenu" EaseType="EaseOut" EaseFunction="Quint" TransitionDuration="0.45">
+      <VisualState PositionYOffset="0" State="Default" />
+    </VisualDefinition>
+    <VisualDefinition Name="TopPanel" EaseType="EaseOut" EaseFunction="Quint" TransitionDuration="0.45">
+      <VisualState PositionYOffset="0" State="Default" />
+    </VisualDefinition>
+  </VisualDefinitions>
+  
+  <Window>
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+      <Children>
+        
+        <!-- Background -->
+        <Standard.Background />
+        
+        <!-- Top Header Panel (Kingdom-style) -->
+        <Widget VisualDefinition="TopPanel" WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="196" VerticalAlignment="Top" PositionYOffset="-196" Sprite="SPKingdom\kingdom_top_header">
+          <Children>
+            
+            <!-- Title Bar with Camp Name -->
+            <Widget Id="CampNamePanel" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="887" SuggestedHeight="150" HorizontalAlignment="Center" VerticalAlignment="Top" Sprite="StdAssets\tabbar_long">
+              <Children>
+                <Widget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" MarginTop="10">
+                  <Children>
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Kingdom.NameTitle.Text" Text="@TitleText" />
+                  </Children>
+                </Widget>
+              </Children>
+            </Widget>
+            
+            <!-- Tab Previous Hotkey -->
+            <Widget DoNotAcceptEvents="true" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="60" SuggestedHeight="60" HorizontalAlignment="Center" VerticalAlignment="Center" PositionXOffset="-695" PositionYOffset="32" IsVisible="@CanSwitchTabs">
+              <Children>
+                <InputKeyVisualWidget DataSource="{PreviousTabInputKey}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" KeyID="@KeyID" IsVisible="@IsVisible"/>
+              </Children>
+            </Widget>
+            
+            <!-- Tab Controls -->
+            <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="38">
+              <Children>
+                
+                <!-- Lance Tab -->
+                <ButtonWidget Id="LanceTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Left.Width.Scaled" SuggestedHeight="!Tab.Left.Height.Scaled" Brush="Header.Tab.Left" Command.Click="ExecuteShowLance" UpdateChildrenStates="true">
+                  <Children>
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" PositionXOffset="10" MarginTop="3" Brush="Clan.TabControl.Text" Text="@LanceText" />
+                  </Children>
+                </ButtonWidget>
+                
+                <!-- Schedule/Orders Tab (KEY - Policy-style) -->
+                <ButtonWidget Id="ScheduleTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Width.Scaled" SuggestedHeight="!Tab.Height.Scaled" VerticalAlignment="Center" PositionYOffset="2" Brush="Header.Tab.Center" Command.Click="ExecuteShowSchedule" UpdateChildrenStates="true">
+                  <Children>
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Clan.TabControl.Text" Text="@ScheduleText" />
+                  </Children>
+                </ButtonWidget>
+                
+                <!-- Duties Tab -->
+                <ButtonWidget Id="DutiesTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Width.Scaled" SuggestedHeight="!Tab.Height.Scaled" VerticalAlignment="Center" PositionYOffset="2" Brush="Header.Tab.Center" Command.Click="ExecuteShowDuties" UpdateChildrenStates="true">
+                  <Children>
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Clan.TabControl.Text" Text="@DutiesText" />
+                  </Children>
+                </ButtonWidget>
+                
+                <!-- Reports Tab -->
+                <ButtonWidget Id="ReportsTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Width.Scaled" SuggestedHeight="!Tab.Height.Scaled" HorizontalAlignment="Right" VerticalAlignment="Center" PositionYOffset="2" Brush="Header.Tab.Center" Command.Click="ExecuteShowReports" UpdateChildrenStates="true">
+                  <Children>
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Clan.TabControl.Text" Text="@ReportsText" />
+                  </Children>
+                </ButtonWidget>
+                
+                <!-- Army Tab -->
+                <ButtonWidget Id="ArmyTabButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Tab.Right.Width.Scaled" SuggestedHeight="!Tab.Right.Height.Scaled" HorizontalAlignment="Right" VerticalAlignment="Center" Brush="Header.Tab.Right" Command.Click="ExecuteShowArmy" UpdateChildrenStates="true">
+                  <Children>
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" PositionXOffset="-10" MarginTop="3" Brush="Clan.TabControl.Text" Text="@ArmyText" />
+                  </Children>
+                </ButtonWidget>
+                
+              </Children>
+            </ListPanel>
+            
+            <!-- Tab Next Hotkey -->
+            <Widget DoNotAcceptEvents="true" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="60" SuggestedHeight="60" HorizontalAlignment="Center" VerticalAlignment="Center" PositionXOffset="695" PositionYOffset="32" IsVisible="@CanSwitchTabs">
+              <Children>
+                <InputKeyVisualWidget DataSource="{NextTabInputKey}" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" KeyID="@KeyID" IsVisible="@IsVisible"/>
+              </Children>
+            </Widget>
+            
+          </Children>
+        </Widget>
+        
+        <!-- ===== TAB CONTENT PANELS ===== -->
+        
+        <!-- Lance Panel -->
+        <CampLancePanel Id="LancePanel" DataSource="{Lance}" MarginTop="188" MarginBottom="75" />
+        
+        <!-- Schedule Panel (Policy-style - KEY FEATURE) -->
+        <CampSchedulePanel Id="SchedulePanel" DataSource="{Schedule}" MarginTop="188" MarginBottom="75" />
+        
+        <!-- Duties Panel -->
+        <CampDutiesPanel Id="DutiesPanel" DataSource="{Duties}" MarginTop="188" MarginBottom="75" />
+        
+        <!-- Reports Panel -->
+        <CampReportsPanel Id="ReportsPanel" DataSource="{Reports}" MarginTop="188" MarginBottom="75" />
+        
+        <!-- Army Panel -->
+        <CampArmyPanel Id="ArmyPanel" DataSource="{Army}" MarginTop="188" MarginBottom="75" />
+        
+        <!-- Close Button (Kingdom-style) -->
+        <Standard.DialogCloseButtons VisualDefinition="BottomMenu" PositionYOffset="100" Parameter.DoneButtonAction="ExecuteClose" Parameter.DoneButtonText="@DoneText" Parameter.DoneInputKeyDataSource="{DoneInputKey}" Parameter.ShowCancel="false" />
+        
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>
+

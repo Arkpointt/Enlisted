@@ -75,7 +75,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to apply raft state suppression patch: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-011", "Failed to apply raft state suppression patch", ex);
             }
         }
 
@@ -135,7 +135,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         }
                         catch (Exception deactivateEx)
                         {
-                            ModLogger.Warn(LogCategory, $"Failed to deactivate raft state: {deactivateEx.Message}");
+                            ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-015", "Failed to deactivate raft state", deactivateEx);
                         }
                     }
 
@@ -171,7 +171,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                         }
                         catch (Exception deactivateEx)
                         {
-                            ModLogger.Warn(LogCategory, $"Failed to deactivate raft state: {deactivateEx.Message}");
+                            ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-015", "Failed to deactivate raft state", deactivateEx);
                         }
                     }
 
@@ -186,7 +186,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in raft state suppression prefix: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-012", "Error in raft state suppression prefix", ex);
                 // Fail open - allow original method to run
                 return true;
             }
@@ -220,7 +220,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Failed to apply OnPartyLeftArmy patch: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-013", "Failed to apply OnPartyLeftArmy patch", ex);
             }
         }
 
@@ -273,7 +273,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, $"Error in OnPartyLeftArmy prefix: {ex.Message}");
+                ModLogger.ErrorCode(LogCategory, "E-NAVALPATCH-014", "Error in OnPartyLeftArmy prefix", ex);
                 return true;
             }
         }

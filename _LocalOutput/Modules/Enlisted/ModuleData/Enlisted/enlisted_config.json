@@ -1,0 +1,138 @@
+{
+    "schemaVersion": 1,
+    "enabled": true,
+    "system_info": {
+        "config_version": "1.0",
+        "compatible_game_versions": [
+            "1.3.10"
+        ],
+        "mod_version": "0.6.0"
+    },
+    "gameplay": {
+        "reserve_troop_threshold": 100,
+        "desertion_grace_period_days": 14,
+        "leave_max_days": 14
+    },
+    "quartermaster": {
+        "soldier_tax": 1.2,
+        "buyback_rate": 0.5,
+        "officer_stock_tax": 1.35
+    },
+    "retirement": {
+        "first_term_days": 252,
+        "renewal_term_days": 84,
+        "cooldown_days": 42,
+        "first_term_gold": 10000,
+        "first_term_reenlist_bonus": 20000,
+        "renewal_discharge_gold": 5000,
+        "renewal_continue_bonus": 5000,
+        "lord_relation_bonus": 30,
+        "faction_reputation_bonus": 30,
+        "other_lords_relation_bonus": 15,
+        "other_lords_min_relation": 50,
+        "pension_honorable_daily": 50,
+        "pension_veteran_daily": 100,
+        "pension_relation_stop_threshold": 0,
+        "severance_honorable": 3000,
+        "severance_veteran": 10000,
+        "debug_skip_gear_stripping": false,
+        "probation_days": 12,
+        "probation_wage_multiplier": 0.5,
+        "probation_fatigue_cap": 18,
+        "commander_reentry_fine_gold": 3000
+    },
+    "finance": {
+        "show_in_clan_tooltip": true,
+        "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
+        "payday_interval_days": 12,
+        "payday_jitter_days": 1,
+        "wage_formula": {
+            "base_wage": 10,
+            "level_multiplier": 1,
+            "tier_multiplier": 5,
+            "xp_divisor": 200,
+            "army_bonus_multiplier": 1.2
+        }
+    },
+    "lances": {
+        "lances_enabled": true,
+        "lance_selection_count": 3,
+        "use_culture_weighting": true
+    },
+    "camp_life": {
+        "enabled": true,
+        "logistics_high_threshold": 70,
+        "morale_low_threshold": 70,
+        "pay_tension_high_threshold": 70,
+        "heat_high_threshold": 70,
+
+        "qm_purchase_fine": 0.98,
+        "qm_purchase_tense": 1.0,
+        "qm_purchase_sour": 1.07,
+        "qm_purchase_predatory": 1.15,
+
+        "qm_buyback_fine": 1.0,
+        "qm_buyback_tense": 0.95,
+        "qm_buyback_sour": 0.85,
+        "qm_buyback_predatory": 0.75
+    },
+    "escalation": {
+        "enabled": true,
+        "heat_decay_interval_days": 7,
+        "discipline_decay_interval_days": 14,
+        "lance_rep_decay_interval_days": 14,
+        "medical_risk_decay_interval_days": 1,
+        "threshold_event_cooldown_days": 7
+    },
+    "lance_personas": {
+        "enabled": true,
+        "seed_salt": "enlisted",
+        "female_leader_chance": 0.2,
+        "female_second_chance": 0.3,
+        "female_veteran_chance": 0.25,
+        "female_soldier_chance": 0.2,
+        "female_recruit_chance": 0.2
+    },
+    "player_conditions": {
+        "enabled": true,
+        "definitions_file": "Conditions\\condition_defs.json",
+        "basic_treatment_multiplier": 1.5,
+        "thorough_treatment_multiplier": 2.0,
+        "herbal_treatment_multiplier": 1.75,
+        "exhaustion_enabled": true
+    },
+    "camp_activities": {
+        "enabled": true,
+        "definitions_file": "Activities\\activities.json"
+    },
+    "lance_life": {
+        "enabled": true,
+        "require_final_lance": true,
+        "min_tier": 2,
+        "max_stories_per_week": 2,
+        "min_days_between_stories": 2
+    },
+    "lance_life_events": {
+        "enabled": true,
+        "events_folder": "Events",
+        "automatic": {
+            "enabled": true,
+            "evaluation_cadence_hours": 6,
+            "max_events_per_day": 1,
+            "min_hours_between_events": 12,
+            "queue_timeout_hours": 24
+        },
+        "player_initiated": {
+            "enabled": true,
+            "block_training_on_severe_condition": true
+        },
+        "onboarding": {
+            "enabled": true,
+            "skip_for_veterans": true,
+            "stage_count": 3
+        },
+        "incident_channel": {
+            "enabled": true
+        }
+    }
+}

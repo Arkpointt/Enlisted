@@ -158,6 +158,205 @@ namespace Enlisted.Features.Assignments.Core
                 .ToList();
         }
 
+        /// <summary>
+        ///     Returns a deterministic set of lances representing the lord's party composition for UI/simulation purposes.
+        ///     This is intentionally lightweight and does not attempt to infer "real" troop composition from the party roster.
+        ///
+        ///     Rules:
+        ///     - Calculates up to <paramref name="maxLances"/> lances from the lord's culture-mapped style.
+        ///     - First pass: Picks one lance per role (infantry → ranged → cavalry → horsearcher).
+        ///     - Subsequent passes: Cycles through roles again to fill remaining slots (e.g., "2nd Infantry", "2nd Ranged").
+        ///     - Ensures the player's current lance is included when provided (without duplication).
+        ///
+        ///     This replaces the previous "demo lances" placeholder in Camp UI and gives us stable per-lord lances
+        ///     that can be simulated independently (personas, banners, etc.).
+        /// </summary>
+        public static List<LanceAssignment> GetLordPartyLances(Hero lord, string playerCurrentLanceId, int maxLances = 3)
+        {
+            var featureConfig = ConfigurationManager.LoadLancesConfig();
+            if (featureConfig?.LancesEnabled != true || lord == null)
+            {
+                return new List<LanceAssignment>();
+            }
+
+            var catalog = ConfigurationManager.LoadLanceCatalog();
+            if (catalog?.StyleDefinitions == null || catalog.StyleDefinitions.Count == 0)
+            {
+                return new List<LanceAssignment>();
+            }
+
+            var cultureId = GetCultureId(lord);
+            var styleId = ResolveStyleId(catalog, cultureId);
+            var style = catalog.StyleDefinitions.FirstOrDefault(s =>
+                string.Equals(s.Id, styleId, StringComparison.OrdinalIgnoreCase));
+
+            var lances = style?.Lances?.Where(l => l != null).ToList() ?? new List<LanceDefinition>();
+            if (lances.Count == 0)
+            {
+                return new List<LanceAssignment>();
+            }
+
+            var result = new List<LanceAssignment>();
+            var usedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var cap = Math.Max(1, maxLances);
+
+            // Build role buckets from the style (each role may have multiple lance definitions).
+            var byRole = new Dictionary<string, List<LanceDefinition>>(StringComparer.OrdinalIgnoreCase);
+            foreach (var lance in lances)
+            {
+                var role = NormalizeRole(lance.RoleHint);
+                if (!byRole.TryGetValue(role, out var list))
+                {
+                    list = new List<LanceDefinition>();
+                    byRole[role] = list;
+                }
+                list.Add(lance);
+            }
+
+            // Ensure player's current lance is included first (if it resolves).
+            if (!string.IsNullOrWhiteSpace(playerCurrentLanceId))
+            {
+                var playerAssignment = ResolveLanceById(playerCurrentLanceId);
+                if (playerAssignment != null && usedIds.Add(playerAssignment.Id))
+                {
+                    result.Add(playerAssignment);
+                }
+            }
+
+            // Role cycling order - we'll loop through these repeatedly to fill lances.
+            var preferredRoles = new[] { "infantry", "ranged", "cavalry", "horsearcher" };
+            
+            // Track how many lances we've picked from each role bucket for deterministic selection.
+            var rolePickIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var role in preferredRoles)
+            {
+                rolePickIndex[role] = 0;
+            }
+
+            // Keep cycling through roles until we have enough lances.
+            // This gives us balanced distribution: Infantry1, Ranged1, Cavalry1, Horse1, Infantry2, Ranged2, etc.
+            var cycleCount = 0;
+            var maxCycles = cap; // Safety limit to prevent infinite loops
+            
+            while (result.Count < cap && cycleCount < maxCycles)
+            {
+                var addedThisCycle = false;
+                
+                foreach (var role in preferredRoles)
+                {
+                    if (result.Count >= cap)
+                    {
+                        break;
+                    }
+
+                    if (!byRole.TryGetValue(role, out var bucket) || bucket == null || bucket.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // Sort bucket deterministically for stable picking
+                    var sortedBucket = bucket
+                        .OrderBy(l => l.Id ?? l.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    var pickIdx = rolePickIndex[role];
+                    
+                    // Try to pick the next lance from this role that we haven't used yet
+                    for (var attempt = 0; attempt < sortedBucket.Count; attempt++)
+                    {
+                        var candidateIdx = (pickIdx + attempt) % sortedBucket.Count;
+                        var candidate = sortedBucket[candidateIdx];
+                        var assignment = BuildAssignment(candidate, styleId, cultureId, usedFallback: false);
+                        
+                        if (usedIds.Add(assignment.Id))
+                        {
+                            result.Add(assignment);
+                            rolePickIndex[role] = candidateIdx + 1;
+                            addedThisCycle = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // If we couldn't add any lances this cycle, all unique lances are exhausted.
+                // Generate synthetic lances with ordinal suffixes for larger parties.
+                if (!addedThisCycle)
+                {
+                    // Create synthetic lances by re-using definitions with ordinal suffixes
+                    var ordinal = cycleCount + 2; // "2nd", "3rd", etc.
+                    foreach (var role in preferredRoles)
+                    {
+                        if (result.Count >= cap)
+                        {
+                            break;
+                        }
+
+                        if (!byRole.TryGetValue(role, out var bucket) || bucket == null || bucket.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        // Pick deterministically based on lord + role + ordinal
+                        var sortedBucket = bucket
+                            .OrderBy(l => l.Id ?? l.Name ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                            .ToList();
+                        var idx = Math.Abs(StableHash32($"{lord.StringId}|{styleId}|{role}|{ordinal}")) % sortedBucket.Count;
+                        var baseLance = sortedBucket[idx];
+                        
+                        // Create a synthetic lance with ordinal suffix
+                        var syntheticId = $"{baseLance.Id}_{ordinal}";
+                        if (usedIds.Add(syntheticId))
+                        {
+                            var syntheticName = $"{baseLance.Name} ({GetOrdinalSuffix(ordinal)})";
+                            result.Add(new LanceAssignment
+                            {
+                                Id = syntheticId,
+                                Name = syntheticName,
+                                StyleId = styleId,
+                                StoryId = baseLance.StoryId ?? string.Empty,
+                                RoleHint = NormalizeRole(baseLance.RoleHint),
+                                SourceCultureId = string.IsNullOrWhiteSpace(cultureId) ? "unknown" : cultureId,
+                                UsedFallback = false
+                            });
+                        }
+                    }
+                }
+                
+                cycleCount++;
+            }
+
+            // Hard cap to maxLances.
+            if (result.Count > cap)
+            {
+                result = result.Take(cap).ToList();
+            }
+
+            return result;
+        }
+        
+        /// <summary>
+        /// Get ordinal suffix for lance numbering (2nd, 3rd, 4th, etc.).
+        /// </summary>
+        private static string GetOrdinalSuffix(int number)
+        {
+            if (number <= 0) return number.ToString();
+            
+            // Special cases for 11th, 12th, 13th
+            var lastTwoDigits = number % 100;
+            if (lastTwoDigits >= 11 && lastTwoDigits <= 13)
+            {
+                return $"{number}th";
+            }
+            
+            return (number % 10) switch
+            {
+                1 => $"{number}st",
+                2 => $"{number}nd",
+                3 => $"{number}rd",
+                _ => $"{number}th"
+            };
+        }
+
         private static string GetCultureId(Hero lord)
         {
             var cultureId = lord?.MapFaction?.Culture?.StringId;
@@ -286,6 +485,44 @@ namespace Enlisted.Features.Assignments.Core
                 "horsearcher" => "horsearcher",
                 _ => "infantry"
             };
+        }
+
+        private static LanceDefinition PickDeterministic(List<LanceDefinition> candidates, string seedKey)
+        {
+            if (candidates == null || candidates.Count == 0)
+            {
+                return null;
+            }
+
+            candidates.Sort((a, b) =>
+                string.Compare(a?.Id ?? a?.Name ?? string.Empty, b?.Id ?? b?.Name ?? string.Empty, StringComparison.OrdinalIgnoreCase));
+
+            var seed = StableHash32(seedKey ?? string.Empty);
+            var idx = Math.Abs(seed) % candidates.Count;
+            return candidates[idx];
+        }
+
+        /// <summary>
+        /// Stable, cross-process 32-bit hash (FNV-1a) for deterministic selections.
+        /// Do NOT use string.GetHashCode() here (it is randomized across processes in modern .NET).
+        /// </summary>
+        private static int StableHash32(string input)
+        {
+            unchecked
+            {
+                const int fnvPrime = 16777619;
+                var hash = (int)2166136261;
+                if (!string.IsNullOrEmpty(input))
+                {
+                    for (var i = 0; i < input.Length; i++)
+                    {
+                        hash ^= input[i];
+                        hash *= fnvPrime;
+                    }
+                }
+
+                return hash;
+            }
         }
     }
 

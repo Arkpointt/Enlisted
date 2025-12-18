@@ -51,7 +51,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("OrderOfBattle", $"Error in Order of Battle suppression patch: {ex.Message}");
+                ModLogger.ErrorCode("OrderOfBattle", "E-PATCH-018", "Error in Order of Battle suppression patch", ex);
                 return true; // Fail open - allow normal behavior on error
             }
         }

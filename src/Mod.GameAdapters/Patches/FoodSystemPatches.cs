@@ -72,7 +72,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("Food", $"Error in VirtualFoodLink: {ex.Message}");
+                    ModLogger.ErrorCode("Food", "E-PATCH-022", "Error in VirtualFoodLink", ex);
                 }
             }
         }
@@ -150,7 +150,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("Food", $"Error in SharedFoodConsumptionPatch: {ex.Message}");
+                    ModLogger.ErrorCode("Food", "E-PATCH-023", "Error in SharedFoodConsumptionPatch", ex);
                     return true; // Fail safe: run original
                 }
             }

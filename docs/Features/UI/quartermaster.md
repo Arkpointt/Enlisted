@@ -1,38 +1,74 @@
 # Quartermaster (and the Baggage Train)
 
-This page documents the full equipment loop: **Quartermaster buy/sell**, plus the **Enlistment Bag Check** and **Baggage Train** stash that keep early service grounded.
+This page documents the full equipment loop: **Quartermaster buy/sell**, the **Quartermaster Hero NPC**, plus the **Enlistment Bag Check** and **Baggage Train** stash that keep early service grounded.
 
 ## Index
 - [Overview](#overview)
+- [Quartermaster Hero](#quartermaster-hero)
 - [Access](#access)
 - [Enlistment Bag Check (first enlistment)](#enlistment-bag-check-first-enlistment)
 - [Baggage Train (stash access)](#baggage-train-stash-access)
 - [Quartermaster: How it works](#quartermaster-how-it-works)
+- [Provisions System](#provisions-system)
+- [Relationship System](#relationship-system)
 - [Discharge & gear handling](#discharge--gear-handling)
 - [Technical notes (high-level)](#technical-notes-high-level)
-- [Appendix: Future ideas (not implemented)](#appendix-future-ideas-not-implemented)
 
 ## Overview
-The **Quartermaster** is the enlisted equipment vendor. It lets you **purchase** troop-appropriate weapons, armor, and mounts based on your current **troop identity** (Master at Arms) and **tier**.
+The **Quartermaster** is the enlisted equipment vendor. It lets you **purchase** formation-appropriate weapons, armor, and mounts based on your **formation**, **tier**, and **culture**.
 
 Key traits:
-- **Purchase-based**: equipment costs denars.
-- **No accountability system**: the mod does not track “issued” gear or dock pay for missing items.
-- **Buyback**: you can sell gear back to the Quartermaster for a reduced price.
+- **Persistent NPC**: Each lord has a unique Quartermaster Hero with personality
+- **Multiple Archetypes**: Veteran, Merchant, Bookkeeper, Scoundrel, Believer, or Eccentric - each with unique dialogue
+- **Purchase-based**: equipment costs denars
+- **Formation-driven**: availability based on your chosen formation (Infantry/Archer/Cavalry/Horse Archer)
+- **Culture-appropriate**: gear matches your enlisted lord's culture
+- **Tier-unlocked**: higher tiers unlock better equipment
+- **Relationship discounts**: Build trust for 5-15% discounts (applies to equipment + provisions)
+- **NEW indicators**: newly unlocked items are marked with `[NEW]` after promotion
+- **No accountability system**: the mod does not track "issued" gear or dock pay for missing items
+- **Buyback**: you can sell gear back to the Quartermaster for a reduced price
+
+## Quartermaster Hero
+
+Each lord has a unique, persistent Quartermaster NPC:
+
+### Archetypes
+- **Veteran**: Pragmatic old soldier, practical advice, no-nonsense attitude
+- **Merchant**: Trade-minded and opportunistic, treats the armory like a market
+- **Bookkeeper**: Bureaucratic clerk type, obsessed with forms and ledgers
+- **Scoundrel**: Opportunistic, knows black market contacts, offers "creative" solutions
+- **Believer**: Pious and moral, offers spiritual guidance, encourages loyalty
+- **Eccentric**: Superstitious and odd, speaks in omens and strange observations
+
+### PayTension-Aware Dialogue
+When pay is late (PayTension 40+), the Quartermaster offers archetype-specific advice:
+- **Scoundrel**: Black market contacts, opportunities to make coin
+- **Believer**: Moral guidance, encouragement to stay faithful
+- **Veteran**: Practical survival advice, desertion warnings at 60+ tension
+
+### Relationship Milestones
+| Level | Relationship | Discount | Unlocks |
+|-------|-------------|----------|---------|
+| Stranger | 0-19 | 0% | Basic access |
+| Known | 20-39 | 0% | Chat option |
+| Trusted | 40-59 | 5% | Black market hints |
+| Respected | 60-79 | 10% | Better dialogue |
+| Battle Brother | 80-100 | 15% | Special items |
 
 ## Access
-- **Quartermaster**: Enlisted Status → **Visit Quartermaster**
-- **Baggage Train**: Enlisted Status → **Baggage Train**
+- **Quartermaster**: Enlisted Status -> **Visit Quartermaster**
+- **Baggage Train**: Enlisted Status -> **Baggage Train**
 
 ## Enlistment Bag Check (first enlistment)
-About **12 in-game hours** after enlisting (when safe: not in battle/encounter/captivity), the quartermaster runs a bag check.
+About **1 in-game hour** after enlisting (when safe: not in battle/encounter/captivity), the quartermaster runs a bag check.
 
 **Options:**
 - **"Stow it all" (50g)**: moves inventory + equipped items into the baggage train stash and charges a **50 denar wagon fee** (clamped to what you can afford).
 - **"Sell it all" (60%)**: liquidates inventory + equipped items at **60% value** and gives you denars.
 - **"I'm keeping one thing" (Roguery 30+)**: attempts to keep one item (currently picks the highest-value item). If Roguery < 30, it is confiscated.
 
-This is separate from Quartermaster trade: it’s part of the **Enlistment** flow.
+This is separate from Quartermaster trade: it's part of the **Enlistment** flow.
 
 ## Baggage Train (stash access)
 The Baggage Train is the stash created by the bag check.
@@ -44,49 +80,133 @@ The Baggage Train is the stash created by the bag check.
 
 ## Quartermaster: How it works
 
-### 1) Troop identity drives availability
-Your current troop identity comes from **Master at Arms** (Troop Selection). Quartermaster variants are discovered from the troop’s upgrade branch (culture-appropriate loadouts).
+### 1) Formation + Tier + Culture drives availability
+Your equipment availability is determined by:
+- **Formation**: Chosen during T1->T2 proving event (Infantry/Archer/Cavalry/Horse Archer)
+- **Tier**: Equipment up to your current tier is available
+- **Culture**: Your enlisted lord's culture determines the gear aesthetics
 
-### 2) Variant discovery
-Quartermaster collects possible variants from troop branch loadouts and builds options per equipment slot:
-- Weapons (Weapon0–Weapon3)
-- Armor (Head, Body, Gloves, Leg, Cape)
-- Mount/Harness (when available)
+### 2) Equipment discovery
+Quartermaster dynamically discovers available equipment by:
+- Scanning troops matching your formation and culture
+- Filtering to troops at or below your tier
+- Collecting all equipment from those troops
 
-### 3) Purchasing & equipping
+### 3) NEW item tracking
+After a promotion:
+- System detects newly available items for your tier
+- These items are marked with `[NEW]` in the selection menu
+- Markers clear after viewing the item selection
+
+### 4) Purchasing & equipping
 - **Weapons**: placed into the first empty weapon slot (Weapon0–Weapon3). If all weapon slots are full, the item is placed into party inventory.
 - **Armor / mount slots**: equipped into the relevant slot; any replaced item is moved into party inventory.
 
-### 4) Selling (buyback)
+### 5) Selling (buyback)
 Quartermaster offers a **Sell Equipment** menu that lists eligible items from your equipment and party inventory (excluding quest-critical items).
 
 Selling removes **one** item and pays the buyback amount.
 
-### 5) Pricing
+### 6) Pricing
 - **Purchase price**: `item.Value × quartermaster.soldier_tax`
 - **Provisioner / Quartermaster role discount**: 15% off quartermaster prices.
+- **Relationship discount**: 0–15% off based on Quartermaster relationship milestones.
 - **Buyback price**: `item.Value × quartermaster.buyback_rate`
 
-### 6) Provisioner / Quartermaster role perks
-- Expanded equipment availability (culture-wide additions beyond your exact troop kit).
+### 7) Provisioner / Quartermaster duty perks
+- Expanded equipment availability (culture-wide additions beyond your exact formation kit).
 - Supply Management menu access (party supplies / inventory utilities).
+
+## Promotion & Quartermaster
+
+When promoted, you are prompted to visit the Quartermaster:
+- No auto-equip on promotion (unlike the old troop selection system)
+- Message displays: "Report to the Quartermaster for your new kit"
+- Newly unlocked items are marked with `[NEW]`
+
+## Quartermaster Loop (CK3 / Viking Conquest style)
+
+Beyond the equipment shop, Quartermaster duty feeds a repeating “company logistics” loop:
+
+- **Weekly Supply Run (Quartermaster duty)**: A decision event can fire while you are `on_duty:quartermaster` (weekly cadence).
+  - You can do it **cleanly** (costs gold + fatigue, lowers PayTension modestly) or **quietly** (profit + bigger PayTension relief, but adds Heat/Discipline risk).
+- **Audit Pressure**: If Heat rises high enough, an audit-style decision can trigger. You can cooperate (cool Heat) or bury the trail (reduce PayTension but deepen corruption flags).
+- **Quartermaster Favor**: Clean, competent handling can set a temporary favor flag you can later cash in via a player-initiated decision for a one-time relief.
+
+This loop is implemented in data (Decision Events + flags), so expanding it is mostly content authoring: add more `decision_qm_*` events with chains, flags, and escalation gates.
+
+## Provisions System
+
+Purchase rations for morale and fatigue benefits:
+
+| Tier | Base Cost | Duration | Morale | Fatigue |
+|------|-----------|----------|--------|---------|
+| Supplemental Rations | 10g | 1 day | +2 | - |
+| Officer's Fare | 30g | 2 days | +4 | +2 (immediate) |
+| Commander's Feast | 75g | 3 days | +8 | +5 (immediate) |
+
+### Retinue Provisioning (T7+)
+Commanders with retinues can purchase provisions for their soldiers:
+
+| Tier | Base Cost/Soldier | Duration | Effect |
+|------|-------------------|----------|--------|
+| Bare Minimum | 2g | 7 days | -5 morale |
+| Standard | 5g | 7 days | No modifier |
+| Good Fare | 10g | 7 days | +5 morale |
+| Officer Quality | 20g | 7 days | +10 morale |
+
+Warning at 2 days remaining; starvation penalties at expiration.
+
+## Relationship System
+
+Build trust with the Quartermaster over time:
+
+**Gaining Relationship:**
+- First meeting: +5
+- Chatting: +3
+- Buying equipment: +1 per purchase
+- Helping with PayTension options: +2 to +5
+
+**Discounts by Level:**
+- Trusted (40+): 5% off all purchases
+- Respected (60+): 10% off all purchases
+- Battle Brother (80+): 15% off all purchases
 
 ## Discharge & gear handling
 Discharge is not handled inside Quartermaster. It resolves via **Final Muster** at pay muster (see Pay System). Final Muster determines whether gear is stripped or retained.
 
 ## Technical notes (high-level)
-- Core logic: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
-- Troop identity source: `src/Features/Equipment/Behaviors/TroopSelectionManager.cs`
+
+### Core Files
+- **Equipment Logic**: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
+- **Quartermaster Hero**: `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` (Quartermaster section)
+- **Dialog System**: `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs`
+- **Menu Integration**: `src/Features/Camp/CampMenuHandler.cs` (Desperate Measures, Help the Lord)
+
+### Key Methods
+**QuartermasterManager.cs:**
+- `GetAvailableEquipmentByFormation(formation, tierCap, culture)` - discovers equipment
+- `UpdateNewlyUnlockedItems()` - tracks NEW items after promotion
+- `IsNewlyUnlockedItem(item)` - checks if item should show [NEW]
+- `AddRationsMenuOptions()` - provisions menu
+
+**EnlistmentBehavior.cs (Quartermaster section):**
+- `GetOrCreateQuartermaster()` - gets or creates the QM Hero
+- `ModifyQuartermasterRelationship(change)` - adjusts trust level
+- `GetQuartermasterDiscount()` - returns discount percentage (0-15)
+- `ApplyQuartermasterDiscount(price)` - applies relationship discount
+- `PurchaseRations(tier)` - handles rations purchase
+- `PurchaseRetinueProvisioning(tier)` - handles retinue provisioning
+
+**EnlistedDialogManager.cs:**
+- `AddQuartermasterDialogs(starter)` - registers all QM dialog
+- `GetQuartermasterGreeting()` - dynamic greeting based on archetype/tension
+- PayTension-aware dialog conditions and consequences
 
 ## Related docs
-- [Troop Selection (Master at Arms)](../Gameplay/troop-selection.md)
+- [Troop Selection (Legacy)](../Gameplay/troop-selection.md)
 - [Enlistment](../Core/enlistment.md)
-- [Pay System](../Core/pay-system-rework.md)
-- [Camp (My Camp)](command-tent.md)
+- [Pay System](../Core/pay-system.md)
+- [Camp](camp-tent.md)
+- [Duties System](../Core/duties-system.md)
 - [Camp Life Simulation](../Gameplay/camp-life-simulation.md)
-
-## Appendix: Future ideas (not implemented)
-These are design ideas retained for later work; they are **not implemented** unless you can find code for them:
-- “Standard Issue” strict re-issue flow with penalties for missing items
-- Under-the-table store / officer stock and fatigue-driven favors (work/drink/roguery actions)
-- Stash loss / theft incidents (wagons burning, camp theft, etc.)

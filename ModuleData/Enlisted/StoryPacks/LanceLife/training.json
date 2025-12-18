@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "packId": "training",
+  "stories": [
+    {
+      "id": "training.lance_drill_night_sparring_v1",
+      "category": "training",
+      "tags": ["drill", "night"],
+
+      "titleId": "ll_story_lance_drill_night_sparring_title",
+      "bodyId": "ll_story_lance_drill_night_sparring_body",
+
+      "title": "After Hours — Lance Drill",
+      "body": "The camp quiets, but your lance keeps moving. A few of the lads want to spar in the dark to keep their edge.\n\nOne bad step and someone’s bleeding. Still… good practice is hard to come by on campaign.",
+
+      "tierMin": 2,
+      "tierMax": 6,
+      "requireFinalLance": true,
+
+      "cooldownDays": 5,
+      "maxPerTerm": 0,
+
+      "triggers": {
+        "all": ["night"],
+        "any": []
+      },
+
+      "options": [
+        {
+          "id": "lead_the_drill",
+          "textId": "ll_story_lance_drill_night_sparring_opt_lead_text",
+          "hintId": "ll_story_lance_drill_night_sparring_opt_lead_hint",
+          "text": "Lead the drill (Athletics + Polearm)",
+          "hint": "Spend a little energy to build real soldiering skills.",
+          "risk": "risky",
+          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "rewards": { "skillXp": { "Athletics": 35, "Polearm": 35 }, "gold": 0, "fatigueRelief": 0 },
+          "injury": {
+            "chance": 0.05,
+            "types": ["twisted_knee", "blade_cut"],
+            "severity_weights": { "minor": 0.9, "moderate": 0.1 }
+          },
+          "resultTextId": "",
+          "resultText": ""
+        },
+        {
+          "id": "let_them_run_it",
+          "textId": "ll_story_lance_drill_night_sparring_opt_delegate_text",
+          "hintId": "ll_story_lance_drill_night_sparring_opt_delegate_hint",
+          "text": "Let them run it without you (Leadership)",
+          "hint": "You keep your strength. They still learn from your example.",
+          "risk": "safe",
+          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "rewards": { "skillXp": { "Leadership": 20 }, "gold": 0, "fatigueRelief": 0 },
+          "resultTextId": "",
+          "resultText": ""
+        },
+        {
+          "id": "turn_in",
+          "textId": "ll_story_lance_drill_night_sparring_opt_turnin_text",
+          "hintId": "ll_story_lance_drill_night_sparring_opt_turnin_hint",
+          "text": "Turn in early",
+          "hint": "No gains. No risks.",
+          "risk": "safe",
+          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 1 },
+          "resultTextId": "",
+          "resultText": ""
+        }
+      ]
+    }
+  ]
+}
+
+

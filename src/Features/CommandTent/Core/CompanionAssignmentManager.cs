@@ -18,7 +18,7 @@ namespace Enlisted.Features.CommandTent.Core
 
         // Track battle participation per companion
         // Key: Hero.StringId, Value: true = fight (default), false = stay back
-        [SaveableField(1)]
+        // Synced via SyncData, not SaveableField
         private Dictionary<string, bool> _companionBattleParticipation;
 
         public static CompanionAssignmentManager Instance { get; private set; }
@@ -36,10 +36,13 @@ namespace Enlisted.Features.CommandTent.Core
 
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_companionBattleParticipation", ref _companionBattleParticipation);
-            _companionBattleParticipation ??= new Dictionary<string, bool>();
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_companionBattleParticipation", ref _companionBattleParticipation);
+                _companionBattleParticipation ??= new Dictionary<string, bool>();
 
-            ModLogger.Debug(LogCategory, $"SyncData: {_companionBattleParticipation.Count} companion assignments loaded");
+                ModLogger.Debug(LogCategory, $"SyncData: {_companionBattleParticipation.Count} companion assignments loaded");
+            });
         }
 
         /// <summary>
@@ -93,15 +96,17 @@ namespace Enlisted.Features.CommandTent.Core
         }
 
         /// <summary>
-        /// Gets all player companions currently in the player's party (Tier 4+).
-        /// Returns empty list if player is below Tier 4 or not enlisted.
+        /// Gets all player companions currently in the player's party.
+        /// Available from T1 (enlistment start) - no tier restriction.
+        /// Returns empty list if player is not enlisted.
         /// </summary>
         public List<Hero> GetAssignableCompanions()
         {
             var result = new List<Hero>();
 
             var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier < RetinueManager.LanceTier)
+            // V2.0: Companions manageable from T1 (no tier gate)
+            if (enlistment?.IsEnlisted != true)
             {
                 return result;
             }

@@ -1,190 +1,44 @@
-# Configuration Files
+# ModuleData/Enlisted (Blueprint)
 
-JSON files controlling the Enlisted mod. Edit and restart campaign to apply changes.
+This folder holds the **shipping, editable data** for Enlisted.
 
-**Current Mod Version**: 0.6.0  
-**Compatible Game Version**: 1.3.10
+Principles:
+- **Content is data**: where possible, gameplay knobs and story/action content live in JSON, not hardcoded.
+- **Localization lives in XML**: player-facing text is in `ModuleData/Languages/enlisted_strings.xml` and referenced by `{=id}`.
 
-## Files
+## What’s here (shipping)
 
+### Core configs (JSON)
 | File | Purpose |
 |------|---------|
-| settings.json | Logging levels, encounter settings, mod behavior flags |
-| enlisted_config.json | Retirement, grace periods, finance/wage display |
-| duties_system.json | Duty definitions and officer roles |
-| progression_config.json | **XP/tier progression**, XP sources, wage formulas, promotion benefits |
-| equipment_pricing.json | Formation/culture cost multipliers |
-| equipment_kits.json | Culture-specific loadouts |
-| menu_config.json | Menu text and options |
+| `settings.json` | Logging levels + runtime behavior flags |
+| `enlisted_config.json` | Feature flags + tuning (camp life, escalation, personas, conditions, activities) plus finance/retirement/gameplay |
+| `progression_config.json` | Tier thresholds + rank names |
+| `duties_system.json` | Duties/professions + formation training tuning |
+| `equipment_kits.json` | Troop equipment pools for Quartermaster |
+| `equipment_pricing.json` | Pricing multipliers and tuning |
+| `lances_config.json` | Lance styles, lance names, and culture mapping |
 
-## Key Settings
+### Content folders (JSON)
+| Path | Purpose |
+|------|---------|
+| `StoryPacks/LanceLife/*.json` | Lance Life stories (data-driven incidents) |
+| `LancePersonas/name_pools.json` | Name pools for text-only lance personas |
+| `Conditions/condition_defs.json` | Player condition definitions (injury/illness) |
+| `Activities/activities.json` | Camp Activities menu actions (data-driven XP/fatigue) |
+| `Events/*.json` | Lance Life Events catalog packs (delivery via menu/inquiry/incident) |
+| `Events/schema_version.json` | Schema marker for Events packs |
 
-### Retirement (enlisted_config.json)
-```json
-"retirement": {
-  "first_term_days": 252,
-  "renewal_term_days": 84,
-  "cooldown_days": 42,
-  "first_term_gold": 10000,
-  "first_term_reenlist_bonus": 20000,
-  "renewal_discharge_gold": 5000,
-  "renewal_continue_bonus": 5000,
-  "lord_relation_bonus": 30,
-  "faction_reputation_bonus": 30,
-  "other_lords_relation_bonus": 15,
-  "other_lords_min_relation": 50
-}
-```
+### Event Packs
+| File | Purpose |
+|------|---------|
+| `events_general.json` | General camp and training events |
+| `events_onboarding.json` | New recruit onboarding chain |
+| `events_training.json` | Formation training events |
+| `events_pay_tension.json` | Pay grumbling, theft, confrontation, mutiny brewing |
+| `events_pay_loyal.json` | Loyal path missions (collect debts, escort, raid) |
+| `events_pay_mutiny.json` | Desertion planning, mutiny resolution chains |
 
-### Tier/XP Progression (progression_config.json)
-To change how fast you rank up, edit `progression_config.json` (not enlisted_config.json):
-```json
-"tier_progression": {
-  "requirements": [
-    { "tier": 1, "xp_required": 0, "name": "Levy" },
-    { "tier": 2, "xp_required": 800, "name": "Footman" },
-    { "tier": 3, "xp_required": 3000, "name": "Serjeant" },
-    { "tier": 4, "xp_required": 6000, "name": "Man-at-Arms" },
-    { "tier": 5, "xp_required": 11000, "name": "Banner Serjeant" },
-    { "tier": 6, "xp_required": 19000, "name": "Household Guard" }
-  ]
-}
-```
-Lower `xp_required` values = faster progression. Tier 1 should always be 0.
-
-### Finance Settings (enlisted_config.json)
-```json
-"finance": {
-  "show_in_clan_tooltip": true,
-  "tooltip_label": "{=enlisted_wage_income}Enlistment Wages",
-  "wage_formula": {
-    "base_wage": 10,
-    "level_multiplier": 1,
-    "tier_multiplier": 5,
-    "xp_divisor": 200,
-    "army_bonus_multiplier": 1.2
-  }
-}
-```
-
-### XP Sources (progression_config.json)
-```json
-"xp_sources": {
-  "daily_base": 25,
-  "battle_participation": 25,
-  "xp_per_kill": 2
-}
-```
-
-### Wage Formula (progression_config.json)
-```json
-"wage_system": {
-  "base_formula": {
-    "daily_base": 10,
-    "tier_bonus_per_level": 5,
-    "hero_level_multiplier": 1,
-    "xp_bonus_divisor": 200,
-    "maximum_base_wage": 150
-  },
-  "assignment_multipliers": {
-    "sergeant": 1.5,
-    "strategist": 1.6
-  },
-  "army_bonuses": {
-    "in_army": 1.2
-  }
-}
-```
-
-### Formation Selection (progression_config.json)
-```json
-"formation_selection": {
-  "trigger_tier": 2,
-  "allow_multiple_changes": true,
-  "change_cooldown_days": 7,
-  "free_changes": 1
-}
-```
-
-### Grace Period (enlisted_config.json)
-```json
-"gameplay": {
-  "desertion_grace_period_days": 14,
-  "leave_max_days": 14
-}
-```
-
-### Log Levels (settings.json)
-```json
-"LogLevels": {
-  "Default": "Info",
-  "Battle": "Info",
-  "Siege": "Info",
-  "Combat": "Info",
-  "Equipment": "Info",
-  "Gold": "Info",
-  "XP": "Info",
-  "Menu": "Warn",
-  "Encounter": "Warn",
-  "Promotion": "Info",
-  "Duties": "Info",
-  "TroopSelection": "Info",
-  "KillTracker": "Info",
-  "Enlistment": "Info",
-  "Patch": "Warn",
-  "Interface": "Warn",
-  "Bootstrap": "Info",
-  "Session": "Info",
-  "Config": "Info"
-}
-```
-Valid levels: Off, Error, Warn, Info, Debug, Trace
-
-### Encounter Settings (settings.json)
-```json
-"Encounter": {
-  "AttachWhenClose": true,
-  "AttachRange": 0.6,
-  "TrailDistance": 1.2,
-  "SuppressPlayerEncounter": true
-}
-```
-
-### Formation Pricing (equipment_pricing.json)
-```json
-"equipment_pricing": {
-  "base_cost_per_tier": 75,
-  "formation_multipliers": {
-    "infantry": 1.0,
-    "archer": 1.3,
-    "cavalry": 2.0,
-    "horsearcher": 2.5
-  },
-  "culture_modifiers": {
-    "empire": 1.0,
-    "aserai": 0.9,
-    "khuzait": 0.8,
-    "vlandia": 1.2,
-    "sturgia": 0.9,
-    "battania": 0.8,
-    "nord": 0.9,
-    "darshi": 0.9
-  },
-  "elite_multiplier": 1.5,
-  "personal_equipment_restore_cost": 0
-}
-```
-
-## Supported Cultures
-empire, aserai, sturgia, vlandia, khuzait, battania, nord, darshi
-
-## Enlisted settlement behavior
-- When enlisted and your lord/army reaches a town or castle, the enlisted menu remains active and now shows a Visit option. It only hides if you are already inside a native town/castle menu or an actual battle/siege is active.
-- Settlement encounters (peaceful entry) are allowed; only live battles or sieges block the enlisted menu.
-
-## Notes
-
-- Changes to config files require restarting your campaign to take effect
-- Always back up your saves before modifying configuration files
-- The `schemaVersion` field should not be modified manually
-- Invalid JSON syntax will cause the mod to fail loading - validate your JSON before saving
+## Where behavior is documented
+Docs are the source-of-truth for feature behavior (not this file):
+- `docs/Features/index.md`

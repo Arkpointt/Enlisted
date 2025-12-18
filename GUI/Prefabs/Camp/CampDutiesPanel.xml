@@ -1,0 +1,267 @@
+<Prefab>
+  <!-- Duties Panel - Orders-screen (Kingdom/Policies) layout to match Camp Management -> Orders -->
+  <!-- Camp Activities (high-frequency) are accessible via Game Menu, not here -->
+  <Constants>
+    <Constant Name="Kingdom.Header.Policies.Width" BrushLayer="Default" BrushName="Kingdom.Header.Policies" BrushValueType="Width" />
+    <Constant Name="Kingdom.Header.Policies.Height" BrushLayer="Default" BrushName="Kingdom.Header.Policies" BrushValueType="Height" />
+    <Constant Name="Kingdom.Scroll.Header.Width" BrushLayer="Default" BrushName="Scroll.Header" BrushValueType="Width" />
+    <Constant Name="Kingdom.Scroll.Header.Height" BrushLayer="Default" BrushName="Scroll.Header" BrushValueType="Height" />
+
+    <!-- Collapsible section headers (same as Orders panel) -->
+    <Constant Name="PolicyToggle.Width" BrushLayer="Default" BrushName="Kingdom.Policy.Toggle.Tuple" BrushValueType="Width" />
+    <Constant Name="PolicyToggle.Height" BrushLayer="Default" BrushName="Kingdom.Policy.Toggle.Tuple" BrushValueType="Height" />
+    <Constant Name="Party.Toggle.ExpandIndicator.Width" BrushLayer="Default" BrushName="Party.Toggle.ExpandIndicator" BrushValueType="Width" />
+    <Constant Name="Party.Toggle.ExpandIndicator.Height" BrushLayer="Default" BrushName="Party.Toggle.ExpandIndicator" BrushValueType="Height" />
+  </Constants>
+  <Window>
+    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" IsVisible="@Show">
+      <Children>
+
+        <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+          <Children>
+
+            <!-- Left Panel (Policies-style list) -->
+            <BrushListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" VerticalAlignment="Bottom" MarginTop="6" MarginBottom="9" MarginLeft="0" Brush="Frame1Brush" StackLayout.LayoutMethod="VerticalBottomToTop">
+              <Children>
+
+                <!-- Header Horizontal Section -->
+                <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" RenderLate="true">
+                  <Children>
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Kingdom.Header.Policies.Width" SuggestedHeight="!Kingdom.Header.Policies.Height" Sprite="SPKingdom\header_policies" ExtendTop="21" ExtendRight="13" ExtendBottom="20" RenderLate="true">
+                      <Children>
+                        <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Kingdom.PoliciesCollapserTitle.Text" IsDisabled="true" Text="@DutiesHeaderText" />
+                      </Children>
+                    </Widget>
+
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Kingdom.Scroll.Header.Width" SuggestedHeight="!Kingdom.Scroll.Header.Height" Sprite="StdAssets\scroll_header" ExtendRight="3" ExtendTop="6" ExtendLeft="3" ExtendBottom="4" HorizontalAlignment="Right" />
+                  </Children>
+                </ListPanel>
+
+                <!-- List and Scrollbar Horizontal Section -->
+                <NavigationScopeTargeter ScopeID="CampDutiesListScope" ScopeParent="..\DutiesLeftList" ScopeMovements="Vertical" IsDefaultNavigationScope="true" DoNotAutoNavigateAfterSort="true" />
+                <ListPanel Id="DutiesLeftList" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent">
+                  <Children>
+
+                    <ScrollablePanel WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" MarginLeft="3" MarginBottom="3" AutoHideScrollBars="true" ClipRect="DutiesListClipRect" InnerPanel="DutiesListClipRect\DutiesList" VerticalScrollbar="..\DutiesListScrollbar\Scrollbar">
+                      <Children>
+                        <Widget Id="DutiesListClipRect" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" ClipContents="true">
+                          <Children>
+                            <NavigatableListPanel Id="DutiesList" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop" MinIndex="0" StepSize="1000">
+                              <Children>
+
+                                <!-- Available Duties Header -->
+                                <NavigationAutoScrollWidget TrackedWidget="..\AvailableDutiesHeader" />
+                                <ScrollablePanelFixedHeaderWidget Id="AvailableDutiesHeader" FixedHeader="..\..\..\AvailableDutiesToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" HeaderHeight="!PolicyToggle.Height" />
+
+                                <Widget Id="AvailableDutiesParentWidget" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren">
+                                  <Children>
+                                    <NavigationTargetSwitcher FromTarget="..\." ToTarget="..\AvailableDutiesList" />
+                                    <NavigatableListPanel Id="AvailableDutiesList" DataSource="{AvailableDuties}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop" UseSelfIndexForMinimum="true">
+                                      <ItemTemplate>
+                                        <ScheduleOtherTuple IsSelected="@IsSelected" HorizontalAlignment="Left" />
+                                      </ItemTemplate>
+                                    </NavigatableListPanel>
+                                  </Children>
+                                </Widget>
+
+                                <!-- Inactive Duties Header -->
+                                <NavigationAutoScrollWidget TrackedWidget="..\InactiveDutiesHeader" />
+                                <ScrollablePanelFixedHeaderWidget Id="InactiveDutiesHeader" FixedHeader="..\..\..\InactiveDutiesToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" HeaderHeight="!PolicyToggle.Height" AdditionalBottomOffset="!PolicyToggle.Height" />
+
+                                <Widget Id="InactiveDutiesParentWidget" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren">
+                                  <Children>
+                                    <NavigationTargetSwitcher FromTarget="..\." ToTarget="..\InactiveDutiesList" />
+                                    <NavigatableListPanel Id="InactiveDutiesList" DataSource="{InactiveDuties}" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalBottomToTop" UseSelfIndexForMinimum="true">
+                                      <ItemTemplate>
+                                        <ScheduleOtherTuple IsSelected="@IsSelected" HorizontalAlignment="Left" />
+                                      </ItemTemplate>
+                                    </NavigatableListPanel>
+                                  </Children>
+                                </Widget>
+
+                              </Children>
+                            </NavigatableListPanel>
+
+                            <!-- No Duties Message -->
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" MarginLeft="30" MarginRight="30" Brush="Kingdom.ParagraphSmall.Text" Brush.FontSize="18" IsHidden="@HasDuties" Text="@NoDutiesText" />
+                          </Children>
+                        </Widget>
+
+                        <!-- Toggle Buttons (fixed headers) -->
+                        <PartyHeaderToggleWidget Id="AvailableDutiesToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" SuggestedHeight="!PolicyToggle.Height" HorizontalAlignment="Left" VerticalAlignment="Top" Brush="Kingdom.Policy.Toggle.Tuple" CollapseIndicator="Description\CollapseIndicator" ListPanel="..\DutiesListClipRect\DutiesList\AvailableDutiesParentWidget\AvailableDutiesList" RenderLate="true" WidgetToClose="..\DutiesListClipRect\DutiesList\AvailableDutiesParentWidget" DoNotPassEventsToChildren="true">
+                          <Children>
+                            <ListPanel Id="Description" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="10" IsDisabled="true" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                              <Children>
+                                <BrushWidget Id="CollapseIndicator" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Party.Toggle.ExpandIndicator.Width" SuggestedHeight="!Party.Toggle.ExpandIndicator.Height" VerticalAlignment="Center" MarginRight="5" Brush="Party.Toggle.ExpandIndicator" />
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginRight="5" Brush="Party.Text.Toggle" Text="@AvailableDutiesText" ClipContents="false" />
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginLeft="5" Brush="Party.Text.Toggle" Text="@NumAvailableDutiesText" ClipContents="false" />
+                              </Children>
+                            </ListPanel>
+                          </Children>
+                        </PartyHeaderToggleWidget>
+
+                        <PartyHeaderToggleWidget Id="InactiveDutiesToggleButton" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!PolicyToggle.Width" SuggestedHeight="!PolicyToggle.Height" HorizontalAlignment="Left" VerticalAlignment="Top" Brush="Kingdom.Policy.Toggle.Tuple" CollapseIndicator="Description\CollapseIndicator" ListPanel="..\DutiesListClipRect\DutiesList\InactiveDutiesParentWidget\InactiveDutiesList" RenderLate="true" WidgetToClose="..\DutiesListClipRect\DutiesList\InactiveDutiesParentWidget" DoNotPassEventsToChildren="true">
+                          <Children>
+                            <ListPanel Id="Description" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginBottom="10" IsDisabled="true" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                              <Children>
+                                <BrushWidget Id="CollapseIndicator" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="!Party.Toggle.ExpandIndicator.Width" SuggestedHeight="!Party.Toggle.ExpandIndicator.Height" VerticalAlignment="Center" MarginRight="5" Brush="Party.Toggle.ExpandIndicator" />
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginRight="5" Brush="Party.Text.Toggle" Text="@InactiveDutiesText" ClipContents="false" />
+                                <RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" VerticalAlignment="Center" MarginLeft="5" Brush="Party.Text.Toggle" Text="@NumInactiveDutiesText" ClipContents="false" />
+                              </Children>
+                            </ListPanel>
+                          </Children>
+                        </PartyHeaderToggleWidget>
+                      </Children>
+                    </ScrollablePanel>
+
+                    <Standard.VerticalScrollbar Id="DutiesListScrollbar" WidthSizePolicy="CoverChildren" HeightSizePolicy="StretchToParent" HorizontalAlignment="Right" MarginRight="2" MarginLeft="2" MarginBottom="3" />
+                  </Children>
+                </ListPanel>
+
+              </Children>
+            </BrushListPanel>
+
+            <!-- Right Side (details + request action) -->
+            <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent">
+              <Children>
+
+                <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="540" SuggestedHeight="923" HorizontalAlignment="Right" VerticalAlignment="Bottom" PositionYOffset="80" Sprite="SPGeneral\background_illustration_policies" AlphaFactor="0.7" />
+
+                <!-- Current duty + formation info -->
+                <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="25" MarginLeft="35" MarginRight="35" StackLayout.LayoutMethod="VerticalBottomToTop">
+                  <Children>
+                    <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="HorizontalLeftToRight">
+                      <Children>
+                        <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="Kingdom.ParagraphSmall.Text" Brush.FontSize="18" Text="@CurrentDutyText" ClipContents="false" />
+                        <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Right" Brush="Kingdom.ParagraphSmall.Text" Brush.FontSize="18" Text="@CurrentFormationText" ClipContents="false" />
+                      </Children>
+                    </ListPanel>
+
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="2" MarginTop="10" MarginLeft="200" MarginRight="200" Sprite="GradientDivider_9" AlphaFactor="0.4" />
+                  </Children>
+                </ListPanel>
+
+                <!-- Selected duty details (policy-style, enhanced layout) -->
+                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="420" HorizontalAlignment="Center" MarginTop="85" MarginLeft="35" MarginRight="35" StackLayout.LayoutMethod="VerticalBottomToTop" IsVisible="@HasSelectedDuty">
+                  <Children>
+
+                    <!-- Duty Title (prominent) -->
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Kingdom.TitleMedium.Text" Text="@DutyTitle" ClipContents="false" />
+
+                    <!-- Divider under title -->
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="400" SuggestedHeight="2" HorizontalAlignment="Center" MarginTop="8" Sprite="GradientDivider_9" AlphaFactor="0.3" />
+
+                    <!-- Duty Description (full width, detailed) -->
+                    <TextWidget WidthSizePolicy="Fixed" HeightSizePolicy="CoverChildren" SuggestedWidth="750" MarginTop="40" HorizontalAlignment="Center" Brush="Kingdom.CurrentArmyValues.Text" Brush.FontSize="20" Text="@DutyDescription" ClipContents="false" />
+
+                    <!-- Scrollable effects and requirements section -->
+                    <ScrollbarWidget Id="DutyDetailsScrollbar" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="16" HorizontalAlignment="Right" MarginLeft="10" MarginTop="100" MarginBottom="10" Sprite="SPParty\ScrollBar01TrackBG@2x" AlignmentAxis="Vertical" Handle="DutyDetailsScrollbarHandle" IsVisible="false" MaxValue="100" MinValue="0">
+                      <Children>
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="4" HorizontalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#5A4033FF" AlphaFactor="0.2" />
+                        <ImageWidget Id="DutyDetailsScrollbarHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="10" SuggestedWidth="8" HorizontalAlignment="Center" Brush="FaceGen.Scrollbar.Handle" IsVisible="false" />
+                      </Children>
+                    </ScrollbarWidget>
+
+                    <ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" HorizontalAlignment="Center" MarginTop="100" MarginLeft="30" MarginRight="30" MarginBottom="10" AutoHideScrollBars="true" ClipRect="DutyDetailsClipRect" InnerPanel="DutyDetailsClipRect\DutyDetailsContent" VerticalScrollbar="..\DutyDetailsScrollbar">
+                      <Children>
+                        <Widget Id="DutyDetailsClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginTop="10" MarginBottom="10" ClipContents="true">
+                          <Children>
+
+                            <ListPanel Id="DutyDetailsContent" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginTop="5" StackLayout.LayoutMethod="VerticalBottomToTop">
+                              <Children>
+
+                                <!-- Effects Section Header -->
+                                <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Left" MarginLeft="50" Brush="Kingdom.TitleSmall.Text" Brush.FontSize="18" Text="Effects:" ClipContents="false" />
+
+                                <!-- Effects List -->
+                                <ListPanel DataSource="{DutyEffects}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginTop="20" StackLayout.LayoutMethod="VerticalBottomToTop">
+                                  <ItemTemplate>
+                                    <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="650" HeightSizePolicy="CoverChildren" MarginLeft="65" HorizontalAlignment="Left">
+                                      <Children>
+                                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="6" SuggestedWidth="6" Sprite="MapMenuUnread@2x" HorizontalAlignment="Left" VerticalAlignment="Top" MarginTop="8" Color="#88CC88FF"/>
+                                        <RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" Brush="Kingdom.CurrentArmyValues.Text" Brush.TextHorizontalAlignment="Left" Brush.FontSize="18" MarginLeft="12" Text="@Text"/>
+                                      </Children>
+                                    </ListPanel>
+                                  </ItemTemplate>
+                                </ListPanel>
+
+                                <!-- Spacer -->
+                                <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="15" />
+
+                                <!-- Requirements Section -->
+                                <ListPanel WidthSizePolicy="Fixed" SuggestedWidth="650" HeightSizePolicy="CoverChildren" MarginLeft="65" HorizontalAlignment="Left">
+                                  <Children>
+                                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="6" SuggestedWidth="6" Sprite="MapMenuUnread@2x" HorizontalAlignment="Left" VerticalAlignment="Top" MarginTop="8" Color="#CCCC88FF"/>
+                                    <RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" Brush="Kingdom.CurrentArmyValues.Text" Brush.TextHorizontalAlignment="Left" Brush.FontSize="18" MarginLeft="12" Text="@DutyRequirements"/>
+                                  </Children>
+                                </ListPanel>
+
+                              </Children>
+                            </ListPanel>
+
+                          </Children>
+                        </Widget>
+                      </Children>
+                    </ScrollablePanel>
+
+                  </Children>
+                </Widget>
+
+                <!-- Lance Rep Bar (bottom section, like Lord Approval in Schedule) -->
+                <ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginLeft="35" MarginRight="35" PositionYOffset="280" StackLayout.LayoutMethod="VerticalBottomToTop" IsVisible="@ShowLanceRepBar">
+                  <Children>
+
+                    <Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="2" MarginTop="15" MarginLeft="200" MarginRight="200" Sprite="GradientDivider_9" AlphaFactor="0.4" />
+
+                    <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" Brush="Kingdom.TitleSmall.Text" Text="@LanceRepLabel" MarginTop="10" ClipContents="false"/>
+                    
+                    <!-- Lance Rep slider bar (centered at 0, uses normalized 0-100 scale where 50 = neutral) -->
+                    <SliderWidget DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="350" SuggestedHeight="65" HorizontalAlignment="Center" Brush="Kingdom.Support.Fill" DoNotUpdateHandleSize="true" Handle="LanceRepHandle" IsDiscrete="true" Locked="false" MaxValueInt="100" MinValueInt="0" ValueInt="@LanceRepNormalized" MarginTop="10" IsEnabled="false">
+                      <Children>
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="400" SuggestedHeight="65" HorizontalAlignment="Center" Sprite="SPKingdom\progress_bar_frame" PositionYOffset="0" PositionXOffset="2" />
+                        <!-- Center line marker for 0 -->
+                        <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="2" SuggestedHeight="45" HorizontalAlignment="Center" VerticalAlignment="Center" Sprite="BlankWhiteSquare_9" Color="#FFFFFFAA" />
+                        <ImageWidget Id="LanceRepHandle" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="16" SuggestedHeight="75" HorizontalAlignment="Left" VerticalAlignment="Center" Brush="Kingdom.Support.Handle" IsEnabled="false">
+                          <Children>
+                            <TextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Top" PositionYOffset="65" MarginTop="10" Text="@LanceRepText" Brush="Kingdom.ParagraphSmall.Text"/>
+                          </Children>
+                        </ImageWidget>
+                      </Children>
+                    </SliderWidget>
+
+                  </Children>
+                </ListPanel>
+
+                <!-- Action button (request/assign) -->
+                <ListPanel WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginLeft="35" MarginRight="35" VerticalAlignment="Bottom" PositionYOffset="0" IsVisible="@HasSelectedDuty">
+                  <Children>
+
+                    <TextWidget WidthSizePolicy="Fixed" SuggestedWidth="400" HeightSizePolicy="CoverChildren" Brush="Kingdom.ParagraphSmall.Text" MarginBottom="10" Text="@RequestButtonHint" DoNotAcceptEvents="true" ClipContents="false"/>
+
+                    <Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="227" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginTop="3">
+                      <Children>
+                        <ButtonWidget Id="RequestDutyButton" DoNotPassEventsToChildren="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="227" SuggestedHeight="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Brush="ButtonBrush2" Command.Click="ExecuteRequestDuty" IsEnabled="@CanRequestDuty" HoverText="@RequestButtonHint" UpdateChildrenStates="true" GamepadNavigationIndex="0">
+                          <Children>
+                            <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Kingdom.GeneralButtons.Text" IsEnabled="@CanRequestDuty" Text="@RequestButtonText" />
+                          </Children>
+                        </ButtonWidget>
+                      </Children>
+                    </Widget>
+
+                  </Children>
+                </ListPanel>
+
+                <!-- No selection state -->
+                <TextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="25" MarginRight="25" Brush="Kingdom.TitleMedium.Text" Brush.FontSize="32" IsHidden="@HasSelectedDuty" Text="@SelectDutyText"/>
+
+              </Children>
+            </Widget>
+
+          </Children>
+        </ListPanel>
+
+      </Children>
+    </Widget>
+  </Window>
+</Prefab>
+

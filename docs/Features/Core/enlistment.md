@@ -1,5 +1,8 @@
 # Feature Spec: Enlistment System
 
+> Note: This page is still valid, but the **high-level “how the core loop fits together”** now lives in  
+> `docs/Features/core-gameplay.md`. Use this file for the deep-dive details.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -44,16 +47,20 @@ Provide the foundation for military service: enlist with a lord, follow their mo
 - Minor faction enlistment mirrors the lord faction’s active wars to the player clan and restores them to neutral on discharge
 - Minor faction desertion applies -50 relation to the lord and their clan members and blocks re-enlistment with that faction for 90 days (no crime rating)
 
+Related systems (shipping):
+- Discipline can temporarily block promotion until the player recovers (clean service / decay). (Config: `escalation.enabled`, enabled by default.)
+- The enlisted status UI can show “YOUR STANDING” and “YOUR CONDITION” sections. (Configs: `escalation.enabled`, `player_conditions.enabled`, enabled by default.)
+
 ## Behavior
 
 **Enlistment Process:**
-1. Talk to lord → Express interest in military service (kingdom flow or minor-faction mercenary flow)
+1. Talk to lord -> Express interest in military service (kingdom flow or minor-faction mercenary flow)
 2. Lord evaluates player (relationship, faction status)
 3. **Army Leader Restriction**: If player is leading their own army, lord will refuse with roleplay dialog explaining they must disband their army first
-4. Player confirms → Immediate enlistment with safety measures
+4. Player confirms -> Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
-7. Bag check is deferred ~12 in-game hours after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
+7. Bag check is deferred **1 in-game hour** after enlistment and fires as a native map incident (uses `MapState.NextIncident`, not a regular menu). It only triggers when safe (no battle/encounter/captivity) and falls back to the inquiry prompt if the incident system is unavailable; enlistment never blocks waiting for it.
    - **Stow it all (50g)**: stashes all inventory + equipped items into the baggage train and charges a **50 denar wagon fee** (clamped to what you can afford).
    - **Sell it all (60%)**: liquidates inventory + equipped items at **60%** and gives you the resulting denars.
    - **I'm keeping one thing (Roguery 30+)**: attempts to keep a single item (currently selects the highest-value item). If Roguery < 30, it is confiscated.
@@ -72,44 +79,56 @@ Provide the foundation for military service: enlist with a lord, follow their mo
 - Combat Exp: +1 per player level
 - Rank Pay: +5 per tier
 - Service Seniority: +1 per 200 XP accumulated
-- Army Campaign Bonus: +20% when lord is in army
+- ArCampaign Bonus: +20% when lord is in army
 - Duty Assignment: Varies by active duty (0.8x to 1.6x)
 - Probation Multiplier: Applied if on probation (reduces wage)
 - Wages accrue daily into `_pendingMusterPay`; paid out at pay muster (configurable interval ~12 days with jitter)
 - Daily wage is clamped after multipliers (minimum **24/day**, maximum **150/day**)
 
-**Tier Progression (XP thresholds from progression_config.json):**
-| Tier | Rank Name | XP Required | Key Features |
-|------|-----------|-------------|-------------|
-| 1 | Levy | 0 | Auto-issue equipment, basic duties |
-| 2 | Footman | 800 | Formation selection unlocked, better equipment access |
-| 3 | Serjeant | 3,000 | Military professions unlock, re-entry starting tier (Honorable) |
-| 4 | Man-at-Arms | 6,000 | Command 5 soldiers (retinue), re-entry starting tier (Veteran/Heroic) |
-| 5 | Banner Serjeant | 11,000 | Command 10 soldiers |
-| 6 | Household Guard | 19,000 | Command 20 soldiers (max) |
+**Tier Progression:**
+| Tier | XP Required | Key Features |
+|------|-------------|-------------|
+| 1 | 0 | Basic levy gear, Runner duty (default) |
+| 2 | 800 | Formation choice (proving event), starter duty assigned |
+| 3 | 3,000 | Advanced duties unlock, re-entry starting tier (Honorable) |
+| 4 | 6,000 | Command 5 soldiers (retinue), re-entry starting tier (Veteran/Heroic) |
+| 5 | 11,000 | Command 10 soldiers |
+| 6 | 19,000 | Command 20 soldiers (max) |
 
-Rank names are configurable in `progression_config.json`.
+**Culture-Specific Ranks:**
+Rank names are determined by the enlisted lord's culture:
+- Empire: Tiro -> Miles -> Immunes -> Principalis -> Evocatus -> Centurion
+- Vlandia: Peasant -> Levy -> Footman -> Man-at-Arms -> Sergeant -> Knight Bachelor
+- Sturgia: Thrall -> Ceorl -> Fyrdman -> Drengr -> Huskarl -> Varangian
+- (See `RankHelper.cs` for all cultures)
 
-**Immersive Promotion Notifications:**
+**Proving Events & Promotion:**
 
-Each tier has unique roleplay-focused promotion text with narrative describing the ceremony and new privileges:
+Promotions are no longer automatic upon reaching XP thresholds. Players must meet multiple requirements and complete a **proving event**.
 
-| Tier | Title | Key Unlocks |
-|------|-------|-------------|
-| 2 | "Recognized as a Soldier" | Formation selection, better equipment |
-| 3 | "Rise to Serjeant" | Military professions unlock |
-| 4 | "Sworn as Man-at-Arms" | Command 5 soldiers (retinue) |
-| 5 | "Entrusted with the Banner" | Command 10 soldiers |
-| 6 | "Welcomed to the Household" | Command 20 soldiers (max) |
+**Promotion Requirements (T2+):**
+- XP threshold (varies by tier)
+- Days in rank (minimum service time)
+- Events completed (Lance Life events)
+- Battles survived
+- Lance reputation (minimum threshold)
+- Discipline (not too high)
+- Leader relation (for higher tiers)
 
-Promotion popup features:
-- Tier-specific title showing the ceremony name
-- Narrative text describing the promotion from the lord's or serjeant's perspective
-- Player name included in the narrative for immersion
-- Context-aware button text ("Understood" for Tier 2-3, "To My Camp" for Tier 4+)
-- Short chat notification for quick feedback
+**Proving Events by Tier:**
+| Tier | Event | Theme |
+|------|-------|-------|
+| T1->T2 | "Finding Your Place" | Formation choice (Infantry/Archer/Cavalry/Horse Archer) |
+| T2->T3 | "The Sergeant's Test" | Judgment and discipline |
+| T3->T4 | "Crisis of Command" | Leadership under fire |
+| T4->T5 | "The Lance Vote" | Earning the trust of your peers |
+| T5->T6 | "Audience with the Lord" | Loyalty declaration |
 
-All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xml` with IDs like `promo_title_X`, `promo_msg_X`, and `promo_chat_X`.
+**After Promotion:**
+- Formation assigned (T1->T2)
+- Starter duty auto-assigned based on formation
+- Message prompts player to visit Quartermaster for new kit
+- New equipment unlocked (shown with [NEW] indicator)
 
 **Service Monitoring:**
 - Continuous checking of lord status (alive, army membership, etc.)
@@ -139,7 +158,7 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
 
 ## Discharge & Final Muster (Pending Discharge Flow)
 
-- Managed discharge is requested from **Camp ("My Camp")**. The main enlisted menu still has a **Desert the Army** option (immediate abandonment with penalties).
+- Managed discharge is requested from **Camp ("Camp")**. The main enlisted menu still has a **Desert the Army** option (immediate abandonment with penalties).
 - Selecting "Request Discharge" sets `IsPendingDischarge = true`; discharge resolves at the next pay muster incident (Final Muster branch).
 - Discharge can be cancelled via "Cancel Pending Discharge" in Camp menu before pay muster fires.
 - Eligibility & scaling:
@@ -158,7 +177,7 @@ All promotion strings are localized in `ModuleData/Languages/enlisted_strings.xm
   - On discharge, stores service metrics (days served, tier, XP, relations, faction/lord, discharge band) to `ReservistRecord` for re-entry boosts/probation.
   - Snapshot is consumed on first re-entry with matching faction; provides tier/XP/relation bonuses or probation based on discharge band.
 - UX/location:
-  - Discharge request/cancel appears in Camp ("My Camp") actions; removed from main town/army menus.
+  - Discharge request/cancel appears in Camp ("Camp") actions; removed from main town/army menus.
   - Final Muster resolves at pay muster incident (inquiry fallback) when `IsPendingDischarge` is true.
 
 ## Re-entry & Reservist System
@@ -197,7 +216,7 @@ When re-enlisting with a faction you've previously served, your reservist record
 - `EnlistmentBehavior.cs` - Core enlistment logic, state management, battle handling, retire incident entry point, service transfer, naval position sync, minor faction war mirroring, minor faction desertion cooldowns
 - `EncounterGuard.cs` - Utility for safe encounter state transitions
 - `HidePartyNamePlatePatch.cs` - Harmony patch for UI visibility control
-- `EnlistedDialogManager.cs` - Retire dialog routing, service transfer dialogs, minor faction dialog variants
+- `EnlistedDialogManager.cs` - Service transfer dialogs, leave/return, and discharge guidance (retirement is requested via Camp and resolves at Final Muster)
 - `EnlistedIncidentsBehavior.cs` - Registers the enlistment bag-check incident and pay muster incident; schedules deferred native map incidents via `MapState.NextIncident` with inquiry fallback if the incident system is unavailable; pay muster presents options (Standard, Corruption, Side Deal, Final Muster/Smuggle)
 - `EnlistedKillTrackerBehavior.cs` - Mission behavior for tracking player kills
 - `EnlistedFormationAssignmentBehavior.cs` - Mission behavior that assigns player and squad to formation, teleports to correct position (detects reinforcement vs initial spawn, skipped in naval battles)
@@ -228,9 +247,6 @@ public CampaignTime LeaveStartDate { get; }  // When current leave started
 // Minor faction war mirroring and desertion cooldown
 private List<string> _minorFactionWarRelations;                 // wars mirrored from minor faction lord
 private Dictionary<string, CampaignTime> _minorFactionDesertionCooldowns; // re-enlist block per minor faction
-
-// Veteran retirement system (per-faction)
-private Dictionary<string, FactionVeteranRecord> _veteranRecords;
 private Hero _savedGraceLord;  // Tracks lord during grace period for map marker cleanup
 
 // Real-time monitoring (runs every frame)
@@ -253,7 +269,7 @@ _currentTermKills += kills;  // Track for faction record
 
 **Safety Systems:**
 - Lord status validation before any operations
-- Graceful service termination on lord death/capture → 14-day grace period
+- Graceful service termination on lord death/capture -> 14-day grace period
 - Army disbandment detection and handling
 - Settlement/battle state awareness
 - **Grace Period Shield**: After defeat, one-day ignore window prevents re-engagement
@@ -365,7 +381,7 @@ mainParty.IsVisible = true;
 - Service terminated
 
 **Voluntary Discharge:**
-- Player can request discharge via "Request Discharge" in Camp ("My Camp") menu
+- Player can request discharge via "Request Discharge" in Camp ("Camp") menu
 - Sets `IsPendingDischarge = true`; discharge resolves at next pay muster (Final Muster branch)
 - Can be cancelled via "Cancel Pending Discharge" before pay muster fires
 - Discharge bands determined by service length (see Discharge & Final Muster section)
@@ -429,26 +445,26 @@ When the battle ends, the Naval DLC's `OnShipRemoved` iterates through agents an
 
 ## Acceptance Criteria
 
-- ✅ Can enlist with any lord that accepts player
-- ✅ Army leader restriction prevents crash and shows roleplay dialog
-- ✅ Player party safely hidden from map during service (UI Nameplate hidden)
-- ✅ Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
-- ✅ Daily XP progression (+25 per day)
-- ✅ Battle XP (+25 per battle, +1 per kill)
-- ✅ Kill tracking per faction (persists across terms)
-- ✅ Vanilla clan finances untouched; muster ledger separate from clan finance UI
-- ✅ Lord death/capture triggers 14-day grace period (not immediate discharge)
-- ✅ Army disbandment detected and grace period started
-- ✅ Service state persists through save/load cycles
-- ✅ Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
-- ✅ Re-enlistment with preserved tier and kill count; reservist re-entry system:
+- [x] Can enlist with any lord that accepts player
+- [x] Army leader restriction prevents crash and shows roleplay dialog
+- [x] Player party safely hidden from map during service (UI Nameplate hidden)
+- [x] Daily wage accrual into muster ledger; periodic pay muster incident with multiple payout options
+- [x] Daily XP progression (+25 per day)
+- [x] Battle XP (+25 per battle, +1 per kill)
+- [x] Kill tracking per faction (persists across terms)
+- [x] Vanilla clan finances untouched; muster ledger separate from clan finance UI
+- [x] Lord death/capture triggers 14-day grace period (not immediate discharge)
+- [x] Army disbandment detected and grace period started
+- [x] Service state persists through save/load cycles
+- [x] Pending discharge + Final Muster at pay muster; service-length-based rewards (Washout/Honorable/Veteran/Heroic), pensions, gear handling, reservist snapshot
+- [x] Re-enlistment with preserved tier and kill count; reservist re-entry system:
   - Washout/Deserter: Tier 1 start, probation status
   - Honorable: Tier 3 start, +500 XP, +5 relation
   - Veteran/Heroic: Tier 4 start, +1,000 XP, +10 relation
-- ✅ Per-faction veteran tracking
-- ✅ Service transfer to different lord while on leave/grace (preserves all progression)
-- ✅ Voluntary desertion with confirmation menu and penalties
-- ✅ No pathfinding crashes or encounter system conflicts
+- [x] Per-faction veteran tracking
+- [x] Service transfer to different lord while on leave/grace (preserves all progression)
+- [x] Voluntary desertion with confirmation menu and penalties
+- [x] No pathfinding crashes or encounter system conflicts
 
 ## Debugging
 

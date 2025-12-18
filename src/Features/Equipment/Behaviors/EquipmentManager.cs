@@ -49,10 +49,13 @@ namespace Enlisted.Features.Equipment.Behaviors
         
         public override void SyncData(IDataStore dataStore)
         {
-            dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);
-            dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment);
-            dataStore.SyncData("_personalInventory", ref _personalInventory);
-            dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
+            SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
+            {
+                dataStore.SyncData("_personalBattleEquipment", ref _personalBattleEquipment);
+                dataStore.SyncData("_personalCivilianEquipment", ref _personalCivilianEquipment);
+                dataStore.SyncData("_personalInventory", ref _personalInventory);
+                dataStore.SyncData("_hasBackedUpEquipment", ref _hasBackedUpEquipment);
+            });
         }
         
         private void OnSessionLaunched(CampaignGameStarter starter)
@@ -110,6 +113,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Backup player's personal equipment before military service.
         /// Called when enlisting to preserve personal gear.
+        /// PROTECTS QUEST ITEMS: Quest items in equipment slots are preserved and not stowed.
         /// </summary>
         public void BackupPersonalEquipment()
         {
@@ -156,12 +160,103 @@ namespace Enlisted.Features.Equipment.Behaviors
                 }
                 
                 _hasBackedUpEquipment = true;
-                ModLogger.Info("Equipment", "Personal equipment backed up for military service");
+                ModLogger.Info("Equipment", "Personal equipment backed up for military service (quest items protected)");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Error backing up personal equipment: {ex.Message}", ex);
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-001", "Error backing up personal equipment", ex);
                 throw;
+            }
+        }
+        
+        /// <summary>
+        /// Preserve quest items from equipped slots before equipment replacement.
+        /// Returns a dictionary mapping equipment slots to quest items that must be restored.
+        /// </summary>
+        public Dictionary<EquipmentIndex, EquipmentElement> PreserveEquippedQuestItems()
+        {
+            var questItems = new Dictionary<EquipmentIndex, EquipmentElement>();
+            
+            try
+            {
+                var hero = Hero.MainHero;
+                
+                // Check battle equipment for quest items
+                for (var slot = EquipmentIndex.WeaponItemBeginSlot; slot < EquipmentIndex.NumEquipmentSetSlots; slot++)
+                {
+                    var element = hero.BattleEquipment[slot];
+                    if (element.Item != null && element.IsQuestItem)
+                    {
+                        questItems[slot] = element;
+                        ModLogger.Info("Equipment", $"Preserving quest item '{element.Item.Name}' from slot {slot}");
+                    }
+                }
+                
+                // Check civilian equipment for quest items
+                for (var slot = EquipmentIndex.WeaponItemBeginSlot; slot < EquipmentIndex.NumEquipmentSetSlots; slot++)
+                {
+                    var element = hero.CivilianEquipment[slot];
+                    if (element.Item != null && element.IsQuestItem)
+                    {
+                        // Use a civilian slot offset to distinguish from battle equipment
+                        var civilianSlot = (EquipmentIndex)((int)slot + 100); // Offset by 100 to distinguish civilian slots
+                        questItems[civilianSlot] = element;
+                        ModLogger.Info("Equipment", $"Preserving quest item '{element.Item.Name}' from civilian slot {slot}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", "Error preserving equipped quest items", ex);
+            }
+            
+            return questItems;
+        }
+        
+        /// <summary>
+        /// Restore quest items back to their original equipment slots after equipment assignment.
+        /// </summary>
+        public void RestoreEquippedQuestItems(Dictionary<EquipmentIndex, EquipmentElement> questItems)
+        {
+            if (questItems == null || questItems.Count == 0)
+            {
+                return;
+            }
+            
+            try
+            {
+                var hero = Hero.MainHero;
+                var battleEquipment = hero.BattleEquipment.Clone();
+                var civilianEquipment = hero.CivilianEquipment.Clone();
+                
+                foreach (var kvp in questItems)
+                {
+                    var slot = kvp.Key;
+                    var element = kvp.Value;
+                    
+                    // Check if this is a civilian slot (offset by 100)
+                    if ((int)slot >= 100)
+                    {
+                        var actualSlot = (EquipmentIndex)((int)slot - 100);
+                        civilianEquipment[actualSlot] = element;
+                        ModLogger.Info("Equipment", $"Restored quest item '{element.Item.Name}' to civilian slot {actualSlot}");
+                    }
+                    else
+                    {
+                        battleEquipment[slot] = element;
+                        ModLogger.Info("Equipment", $"Restored quest item '{element.Item.Name}' to battle slot {slot}");
+                    }
+                }
+                
+                // Apply the updated equipment back to hero
+                EquipmentHelper.AssignHeroEquipmentFromEquipment(hero, battleEquipment);
+                hero.CivilianEquipment.FillFrom(civilianEquipment, false);
+                
+                ModLogger.Info("Equipment", $"Restored {questItems.Count} quest item(s) after equipment assignment");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Equipment", "Error restoring equipped quest items", ex);
             }
         }
         
@@ -206,7 +301,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Error restoring personal equipment: {ex.Message}", ex);
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-002", "Error restoring personal equipment", ex);
             }
         }
         
@@ -277,7 +372,7 @@ namespace Enlisted.Features.Equipment.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Equipment", $"Error restoring equipment to inventory for retirement: {ex.Message}", ex);
+                ModLogger.ErrorCode("Equipment", "E-EQUIP-003", "Error restoring equipment to inventory for retirement", ex);
             }
         }
         
@@ -285,6 +380,41 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Check if personal equipment has been backed up.
         /// </summary>
         public bool HasBackedUpEquipment => _hasBackedUpEquipment;
+
+        /// <summary>
+        /// Snapshot of the backed up personal inventory (items removed from the party roster during enlistment).
+        /// Used by the enlistment bag-check ("stowage") onboarding prompt so it can operate on
+        /// the *pre-service* belongings even after military equipment has been issued.
+        /// </summary>
+        public ItemRoster GetBackedUpPersonalInventorySnapshot()
+        {
+            var snapshot = new ItemRoster();
+            if (_personalInventory == null)
+            {
+                return snapshot;
+            }
+
+            foreach (var element in _personalInventory)
+            {
+                if (element.EquipmentElement.Item == null || element.Amount <= 0)
+                {
+                    continue;
+                }
+
+                snapshot.AddToCounts(element.EquipmentElement, element.Amount);
+            }
+
+            return snapshot;
+        }
+
+        /// <summary>
+        /// Clear the backed up personal inventory only.
+        /// This does NOT clear the backed up equipment sets (battle/civilian) which are still needed for discharge restoration.
+        /// </summary>
+        public void ClearBackedUpPersonalInventory()
+        {
+            _personalInventory?.Clear();
+        }
         
         /// <summary>
         /// Get culture-appropriate equipment for a specific tier and formation.

@@ -1,0 +1,1063 @@
+{
+  "schemaVersion": 1,
+  "packId": "duty_lookout",
+  "category": "duty",
+  "events": [
+    {
+      "id": "look_night_watch",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:lookout",
+          "not_in_settlement, camp_established"
+        ],
+        "any": [],
+        "time_of_day": [
+          "night",
+          "late_night"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "lookout",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_look_night_watch_title",
+        "setupId": "ll_evt_look_night_watch_setup",
+        "title": "Night Watch",
+        "setup": "Your watch. Four hours staring into darkness, listening for what doesn't belong.\n\nThe camp sleeps behind you. Everything beyond the firelight is enemy territory.",
+        "options": [
+          {
+            "id": "stay_sharp_walk_the_perimeter",
+            "textId": "ll_evt_look_night_watch_opt_stay_sharp_walk_the_perimeter_text",
+            "text": "Stay sharp, walk the perimeter",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 30,
+                "athletics": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_night_watch_opt_stay_sharp_walk_the_perimeter_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "find_a_good_vantage_point_stay_s",
+            "textId": "ll_evt_look_night_watch_opt_find_a_good_vantage_point_stay_s_text",
+            "text": "Find a good vantage point, stay still",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 25,
+                "tactics": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_night_watch_opt_find_a_good_vantage_point_stay_s_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "practice_with_your_weapon_quietl",
+            "textId": "ll_evt_look_night_watch_opt_practice_with_your_weapon_quietl_text",
+            "text": "Practice with your weapon (quietly)",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_night_watch_opt_practice_with_your_weapon_quietl_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "rest_your_eyes_trust_your_ears",
+            "textId": "ll_evt_look_night_watch_opt_rest_your_eyes_trust_your_ears_text",
+            "text": "Rest your eyes, trust your ears",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_night_watch_opt_rest_your_eyes_trust_your_ears_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 15,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "look_movement_spotted",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:lookout",
+          "on_watch, enemy_nearby"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "lookout",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_look_movement_spotted_title",
+        "setupId": "ll_evt_look_movement_spotted_setup",
+        "title": "Movement Spotted",
+        "setup": "Something moved out there. Too big for an animal. Too quiet for a friend.\n\nWake the camp? Investigate? Could be nothing. Could be a raid.",
+        "options": [
+          {
+            "id": "sound_the_alarm_immediately",
+            "textId": "ll_evt_look_movement_spotted_opt_sound_the_alarm_immediately_text",
+            "text": "Sound the alarm immediately",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_movement_spotted_opt_sound_the_alarm_immediately_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "investigate_first_confirm_the_th",
+            "textId": "ll_evt_look_movement_spotted_opt_investigate_first_confirm_the_th_text",
+            "text": "Investigate first, confirm the threat",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 35,
+                "athletics": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_movement_spotted_opt_investigate_first_confirm_the_th_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 15,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "alert_lance_leader_short_quietly",
+            "textId": "ll_evt_look_movement_spotted_opt_alert_lance_leader_short_quietly_text",
+            "text": "Alert {LANCE_LEADER_SHORT} quietly",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 30,
+                "leadership": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_movement_spotted_opt_alert_lance_leader_short_quietly_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "wait_and_watch_confirm_before_ac",
+            "textId": "ll_evt_look_movement_spotted_opt_wait_and_watch_confirm_before_ac_text",
+            "text": "Wait and watch, confirm before acting",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_movement_spotted_opt_wait_and_watch_confirm_before_ac_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 10,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "look_signal_fire",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:lookout",
+          "army_split"
+        ],
+        "any": [],
+        "time_of_day": [
+          "night"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "lookout",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_look_signal_fire_title",
+        "setupId": "ll_evt_look_signal_fire_setup",
+        "title": "Signal Fire",
+        "setup": "{LORD_NAME}'s orders: watch for the signal fire. When you see it, we move.\n\nHours pass. No fire. Then — is that it? Or just a farmhouse burning?",
+        "options": [
+          {
+            "id": "report_it_as_the_signal",
+            "textId": "ll_evt_look_signal_fire_opt_report_it_as_the_signal_text",
+            "text": "Report it as the signal",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 25,
+                "tactics": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_signal_fire_opt_report_it_as_the_signal_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "watch_longer_confirm_the_pattern",
+            "textId": "ll_evt_look_signal_fire_opt_watch_longer_confirm_the_pattern_text",
+            "text": "Watch longer, confirm the pattern",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 30,
+                "tactics": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_signal_fire_opt_watch_longer_confirm_the_pattern_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "send_a_runner_to_verify",
+            "textId": "ll_evt_look_signal_fire_opt_send_a_runner_to_verify_text",
+            "text": "Send a runner to verify",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 25,
+                "leadership": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_signal_fire_opt_send_a_runner_to_verify_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "guess_it_s_the_signal_wake_the_c",
+            "textId": "ll_evt_look_signal_fire_opt_guess_it_s_the_signal_wake_the_c_text",
+            "text": "Guess it's the signal, wake the camp",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_signal_fire_opt_guess_it_s_the_signal_wake_the_c_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "look_weather_watch",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:lookout",
+          "army_planning_movement"
+        ],
+        "any": [],
+        "time_of_day": [
+          "dawn",
+          "morning"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "lookout",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_look_weather_watch_title",
+        "setupId": "ll_evt_look_weather_watch_setup",
+        "title": "Weather Watch",
+        "setup": "{LORD_NAME} wants to know if we can move today. Storm clouds on the horizon, but they might pass.\n\nYour eyes have been watching the sky. What do you tell him?",
+        "options": [
+          {
+            "id": "report_honestly_uncertain",
+            "textId": "ll_evt_look_weather_watch_opt_report_honestly_uncertain_text",
+            "text": "Report honestly — uncertain",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_weather_watch_opt_report_honestly_uncertain_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "predict_clear_advise_movement",
+            "textId": "ll_evt_look_weather_watch_opt_predict_clear_advise_movement_text",
+            "text": "Predict clear — advise movement",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 30,
+                "tactics": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_weather_watch_opt_predict_clear_advise_movement_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "predict_storm_advise_waiting",
+            "textId": "ll_evt_look_weather_watch_opt_predict_storm_advise_waiting_text",
+            "text": "Predict storm — advise waiting",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 30,
+                "tactics": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_weather_watch_opt_predict_storm_advise_waiting_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "suggest_sending_a_scout_ahead",
+            "textId": "ll_evt_look_weather_watch_opt_suggest_sending_a_scout_ahead_text",
+            "text": "Suggest sending a scout ahead",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 25,
+                "leadership": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_weather_watch_opt_suggest_sending_a_scout_ahead_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "look_relief_late",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:lookout",
+          "on_watch"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "lookout",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_look_relief_late_title",
+        "setupId": "ll_evt_look_relief_late_setup",
+        "title": "Counting the Enemy",
+        "setup": "{ENEMY_FACTION_ADJECTIVE} forces on the ridge. {LORD_NAME} needs numbers before he commits.\n\n\"How many? Infantry? Cavalry? Be exact, {PLAYER_NAME}.\"",
+        "options": [
+          {
+            "id": "count_carefully_report_accuratel",
+            "textId": "ll_evt_look_relief_late_opt_count_carefully_report_accuratel_text",
+            "text": "Count carefully, report accurately",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 35,
+                "tactics": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_relief_late_opt_count_carefully_report_accuratel_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "estimate_by_formations_and_stand",
+            "textId": "ll_evt_look_relief_late_opt_estimate_by_formations_and_stand_text",
+            "text": "Estimate by formations and standards",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 25,
+                "tactics": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_relief_late_opt_estimate_by_formations_and_stand_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "move_closer_for_a_better_look",
+            "textId": "ll_evt_look_relief_late_opt_move_closer_for_a_better_look_text",
+            "text": "Move closer for a better look",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 40,
+                "tactics": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_relief_late_opt_move_closer_for_a_better_look_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 10,
+              "severity": "minor",
+              "type": "wound"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "round_up_better_safe_than_sorry",
+            "textId": "ll_evt_look_relief_late_opt_round_up_better_safe_than_sorry_text",
+            "text": "Round up — better safe than sorry",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "scouting": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_look_relief_late_opt_round_up_better_safe_than_sorry_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    }
+  ]
+}

@@ -2,12 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Enlisted.Features.Activities;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Assignments.Core;
+// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Escalation;
+using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Lances.Events.Decisions;
+using Enlisted.Features.Lances.UI;
+using Enlisted.Features.Schedule.Models;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Triggers;
 using Enlisted.Mod.Entry;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Conversation;
@@ -32,6 +41,9 @@ namespace Enlisted.Features.Interface.Behaviors
     /// </summary>
     public sealed class EnlistedMenuBehavior : CampaignBehaviorBase
     {
+        private const string CampHubMenuId = "enlisted_camp_hub";
+        private const string LeaveServiceMenuId = "enlisted_leave_service";
+
         /// <summary>
         ///     Minimum time interval between menu updates, in seconds.
         ///     Updates are limited to once per second to provide real-time feel
@@ -166,7 +178,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Interface", $"Error handling battle menu transition: {ex.Message}");
+                            ModLogger.ErrorCode("Interface", "E-UI-001", "Error handling battle menu transition", ex);
                         }
                     }
                 }
@@ -254,7 +266,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in siege battle detection: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-002", "Error in siege battle detection", ex);
                 return false;
             }
         }
@@ -263,21 +275,57 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                var data = new InquiryData(
-                    new TextObject("{=Enlisted_Debug_Title}Debug Tools").ToString(),
-                    new TextObject("{=Enlisted_Debug_Body}Grant testing resources.").ToString(),
-                    true,
-                    true,
-                    new TextObject("{=Enlisted_Debug_Gold}Give 1000 Gold").ToString(),
-                    new TextObject("{=Enlisted_Debug_XP}Give XP to Rank Up").ToString(),
-                    () => Debugging.Behaviors.DebugToolsBehavior.GiveGold(),
-                    () => Debugging.Behaviors.DebugToolsBehavior.GiveEnlistmentXp());
+                var options = new List<InquiryElement>
+                {
+                    new InquiryElement(
+                        "gold",
+                        new TextObject("{=Enlisted_Debug_Gold}Give 1000 Gold").ToString(),
+                        null),
+                    new InquiryElement(
+                        "xp",
+                        new TextObject("{=Enlisted_Debug_XP}Give XP to Rank Up").ToString(),
+                        null),
+                    new InquiryElement(
+                        "test_event",
+                        new TextObject("{=Enlisted_Debug_TestEvent}Test Onboarding Screen").ToString(),
+                        null)
+                };
 
-                InformationManager.ShowInquiry(data);
+                var inquiry = new MultiSelectionInquiryData(
+                    new TextObject("{=Enlisted_Debug_Title}Debug Tools").ToString(),
+                    new TextObject("{=Enlisted_Debug_Body}Select a debug action:").ToString(),
+                    options,
+                    true,
+                    1,
+                    1,
+                    new TextObject("{=str_ok}OK").ToString(),
+                    new TextObject("{=str_cancel}Cancel").ToString(),
+                    selectedElements =>
+                    {
+                        if (selectedElements != null && selectedElements.Count > 0)
+                        {
+                            var selected = selectedElements[0].Identifier as string;
+                            switch (selected)
+                            {
+                                case "gold":
+                                    Debugging.Behaviors.DebugToolsBehavior.GiveGold();
+                                    break;
+                                case "xp":
+                                    Debugging.Behaviors.DebugToolsBehavior.GiveEnlistmentXp();
+                                    break;
+                                case "test_event":
+                                    Debugging.Behaviors.DebugToolsBehavior.TestOnboardingScreen();
+                                    break;
+                            }
+                        }
+                    },
+                    null);
+
+                MBInformationManager.ShowMultiSelectionInquiry(inquiry);
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening debug tools: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-003", "Error opening debug tools", ex);
             }
         }
 
@@ -422,12 +470,11 @@ namespace Enlisted.Features.Interface.Behaviors
         }
         
         /// <summary>
-        /// Menu background initialization for enlisted_duty_selection menu.
-        /// Sets culture-appropriate background and ambient audio.
-        /// Leaves time control untouched so player retains current pause/speed.
+        /// Phase 4: Menu background initialization for enlisted_decisions menu.
+        /// Uses same culture-appropriate background as other enlisted menus.
         /// </summary>
-        [GameMenuInitializationHandler("enlisted_duty_selection")]
-        private static void OnDutySelectionBackgroundInit(MenuCallbackArgs args)
+        [GameMenuInitializationHandler("enlisted_decisions")]
+        private static void OnDecisionsBackgroundInit(MenuCallbackArgs args)
         {
             var enlistment = EnlistmentBehavior.Instance;
             var backgroundMesh = "encounter_looter";
@@ -454,19 +501,9 @@ namespace Enlisted.Features.Interface.Behaviors
         [GameMenuInitializationHandler("enlisted_desert_confirm")]
         private static void OnDesertConfirmBackgroundInit(MenuCallbackArgs args)
         {
-            var enlistment = EnlistmentBehavior.Instance;
-            var backgroundMesh = "encounter_looter";
-            
-            if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-            }
-            else if (enlistment?.CurrentLord?.Culture?.EncounterBackgroundMesh != null)
-            {
-                backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
-            }
-            
-            args.MenuContext.SetBackgroundMeshName(backgroundMesh);
+            // Desertion confirmation should feel ominous/decisive, not "normal encounter".
+            // Use a known base-game mesh intended for negative outcomes.
+            args.MenuContext.SetBackgroundMeshName("encounter_lose");
             args.MenuContext.SetAmbientSound("event:/map/ambient/node/settlements/2d/camp_army");
             // Time control left untouched - respects player's current pause/speed setting
         }
@@ -554,7 +591,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error("Interface", $"Deferred enlisted menu activation error: {ex.Message}");
+                    ModLogger.ErrorCode("Interface", "E-UI-004", "Deferred enlisted menu activation error", ex);
                     _pendingReturnToEnlistedMenu = false; // Clear flag to prevent endless retries
                 }
             }
@@ -653,6 +690,8 @@ namespace Enlisted.Features.Interface.Behaviors
         private void AddEnlistedMenus(CampaignGameStarter starter)
         {
             AddMainEnlistedStatusMenu(starter);
+            RegisterCampHubMenu(starter);
+            RegisterCampActivitiesMenu(starter);
 
             // Add direct siege battle option to enlisted menu as fallback
             // This allows players to join siege battles if other methods fail
@@ -667,7 +706,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Failed to add emergency siege battle option: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-005", "Failed to add emergency siege battle option", ex);
             }
 
             // Add "Return to camp" options to native town/castle menus for enlisted players
@@ -747,7 +786,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Failed to add Return to camp options: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-006", "Failed to add Return to camp options", ex);
             }
         }
 
@@ -794,7 +833,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error returning to camp: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-007", "Error returning to camp", ex);
             }
         }
 
@@ -869,7 +908,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in emergency siege battle: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-008", "Error in emergency siege battle", ex);
             }
         }
 
@@ -886,7 +925,7 @@ namespace Enlisted.Features.Interface.Behaviors
             // Create a wait menu with time controls but hides progress boxes
             // Using method group conversion instead of explicit delegate creation
             starter.AddWaitGameMenu("enlisted_status",
-                "{=Enlisted_Menu_Status_Title}Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}",
+                "{=Enlisted_Menu_Status_Title}Lord: {PARTY_LEADER}\n{PARTY_TEXT}",
                 OnEnlistedStatusInit,
                 OnEnlistedStatusCondition,
                 null, // No consequence for wait menu
@@ -905,31 +944,65 @@ namespace Enlisted.Features.Interface.Behaviors
                     return true;
                 },
                 OnDebugToolsSelected,
-                false, 0);
+                false, 2000);
 
-            // Master at Arms - allows players to select troop equipment (TroopSelection icon)
+            // Master at Arms - DEPRECATED in Phase 7
+            // Formation is now chosen during T1→T2 proving event
+            // Equipment is purchased from Quartermaster based on formation+tier+culture
+            // Keeping the menu option hidden but code intact for save compatibility
+#pragma warning disable CS0618 // Intentionally using obsolete method for save compatibility
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
                 "{=Enlisted_Menu_MasterAtArms}Master at Arms",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
                     args.Tooltip = new TextObject("{=menu_tooltip_master}Select your troop type and equipment loadout based on your current tier.");
-                    return IsMasterAtArmsAvailable(args);
+                    // Phase 7: Hide this option - formation is now chosen via proving event
+                    return false;
                 },
                 OnMasterAtArmsSelected,
                 false, 1);
+#pragma warning restore CS0618
 
-            // Visit Quartermaster - equipment variant selection and management (Trade icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_quartermaster",
-                "{=Enlisted_Menu_VisitQuartermaster}Visit Quartermaster",
+            // NOTE: Visit Quartermaster moved to Camp Hub - not needed on main status menu.
+
+            // Camp hub: decisions, camp screen, companions, service records, and leaving-service actions.
+            starter.AddGameMenuOption("enlisted_status", "enlisted_camp_hub",
+                "{=enlisted_camp}Camp",
                 args =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Request equipment variants and manage party supplies.");
-                    return IsQuartermasterAvailable(args);
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=enlisted_camp_tooltip}Open the Camp hub (activities, medical tent, reports, and management).");
+                    return true;
                 },
-                OnQuartermasterSelected,
-                false, 2);
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu(CampHubMenuId);
+                },
+                false, 10);
+
+            // Decisions (react-now layer)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_decisions_entry",
+                "{=enlisted_decisions_entry}Decisions",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var availableCount = DecisionEventBehavior.Instance?.GetAvailablePlayerDecisions()?.Count ?? 0;
+                    args.Tooltip = availableCount > 0
+                        ? new TextObject("{=enlisted_decisions_tooltip}Review and act on pending decisions.")
+                        : new TextObject("{=enlisted_decisions_tooltip_none}No decisions currently available.");
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_decisions");
+                },
+                false, 11);
+
+            // NOTE: My Lance and Camp Management have been moved to Camp Hub.
+            // These are accessible via Camp → Camp Activities / Camp Management.
 
             // My Lord... - conversation with the current lord (Conversation icon)
             starter.AddGameMenuOption("enlisted_status", "enlisted_talk_to",
@@ -937,67 +1010,79 @@ namespace Enlisted.Features.Interface.Behaviors
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+                    var nearbyLords = GetNearbyLordsForConversation();
+                    if (nearbyLords.Count == 0)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_no_lords}No lords nearby for conversation.");
+                        return true;
+                    }
                     args.Tooltip = new TextObject("{=menu_tooltip_talk}Speak with nearby lords for quests, news, and relation building.");
-                    return IsTalkToAvailable(args);
+                    return true;
                 },
                 OnTalkToSelected,
-                false, 3);
+                false, 19);
 
             // Visit Settlement - towns and castles only (Submenu icon)
+            // Hidden when not at a settlement to reduce clutter.
             starter.AddGameMenuOption("enlisted_status", "enlisted_visit_settlement",
                 "{VISIT_SETTLEMENT_TEXT}",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    var lord = enlistment?.CurrentLord;
+                    var settlement = lord?.CurrentSettlement;
+
+                    // Hide entirely when not at a town or castle
+                    if (settlement == null || (!settlement.IsTown && !settlement.IsCastle))
+                    {
+                        return false;
+                    }
+
                     args.Tooltip = new TextObject("{=menu_tooltip_visit}Enter the settlement while your lord is present.");
-                    return IsVisitSettlementAvailable(args);
+                    var visitText = new TextObject("{=Enlisted_Menu_VisitSettlementNamed}Visit {SETTLEMENT}");
+                    visitText.SetTextVariable("SETTLEMENT", settlement.Name);
+                    MBTextManager.SetTextVariable("VISIT_SETTLEMENT_TEXT", visitText);
+                    return true;
                 },
                 OnVisitTownSelected,
-                false, 4);
+                false, 18);
 
-            // Report for Duty - duty and profession selection (Manage icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_report_duty",
-                "{=Enlisted_Menu_ReportDuty}Report for Duty",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-                    args.Tooltip = new TextObject("{=menu_tooltip_duty}Select your daily duty and profession for bonuses and special abilities.");
-                    return IsReportDutyAvailable(args);
-                },
-                OnReportDutySelected,
-                false, 5);
+            // NOTE: Duties, Medical Attention, and Service Records are all accessed via Camp Hub.
+            // Keeping the main menu lean - only essential/frequent actions here.
 
-            // Ask commander for leave - moved to bottom (Leave icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_ask_leave",
-                "{=Enlisted_Menu_AskLeave}Ask commander for leave",
+            // Leave / Discharge / Desert (always shown; eligibility varies)
+            starter.AddGameMenuOption("enlisted_status", "enlisted_leave_service_entry",
+                "{=enlisted_leave_service_entry}Leave / Discharge / Desert",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    args.Tooltip = new TextObject("{=menu_tooltip_leave}Request temporary leave from service. You can return when ready.");
-                    return IsAskLeaveAvailable(args);
+                    args.Tooltip = new TextObject("{=enlisted_leave_service_tooltip}Leaving actions: request leave, discharge, or desert.");
+                    return true;
                 },
-                OnAskLeaveSelected,
-                false, 6);
-
-            // Desert Army option - allows player to voluntarily leave with penalties (Escape icon)
-            starter.AddGameMenuOption("enlisted_status", "enlisted_desert_army",
-                "{=Enlisted_Menu_DesertArmy}Desert the Army",
-                args =>
+                _ =>
                 {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Escape;
-                    args.Tooltip = new TextObject("{=menu_tooltip_desert}Abandon your post. WARNING: Severe relation and crime penalties!");
-                    return IsDesertArmyAvailable(args);
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu(LeaveServiceMenuId);
                 },
-                OnDesertArmySelected,
-                false, 7);
+                false, 20);
+
+            // === LEAVE OPTIONS (grouped at bottom) ===
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
 
-            // Add duty selection menu
-            AddDutySelectionMenu(starter);
+            // =================================================================
+            // PHASE 4: DECISIONS SUBMENU
+            // Player-initiated decisions (CK3-style)
+            // =================================================================
+            RegisterDecisionsMenu(starter);
 
             // Add desertion confirmation menu
             AddDesertionConfirmMenu(starter);
+
+            // Leave Service submenu (Camp Hub entry point)
+            RegisterLeaveServiceMenu(starter);
         }
 
         /// <summary>
@@ -1097,136 +1182,840 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"OnSettlementLeftReturnToCamp error: {ex}");
+                ModLogger.ErrorCode("Interface", "E-UI-009", "OnSettlementLeftReturnToCamp error", ex);
                 // Ensure we don't get stuck in pending state
                 _pendingReturnToEnlistedMenu = false;
             }
         }
 
-        /// <summary>
-        ///     Add duty selection menu for choosing duties and professions.
-        /// </summary>
-        private void AddDutySelectionMenu(CampaignGameStarter starter)
-        {
-            // Use same wait menu format as main enlisted menu for consistency
-            // Using method group conversion instead of explicit delegate creation
-            starter.AddWaitGameMenu("enlisted_duty_selection",
-                "{=Enlisted_Menu_Duty_Title}Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}",
-                OnDutySelectionInit,
-                OnDutySelectionCondition,
-                null, // No consequence for wait menu
-                OnDutySelectionTick,
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption); // Same as main menu
 
-            // BACK OPTION (first, like main menu style) - Leave icon
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_back",
-                "{=Enlisted_Menu_BackToStatus}Back to enlisted status",
+        /// <summary>
+        /// Phase 4: Register the decisions submenu for player-initiated decisions.
+        /// Follows same pattern as duty selection menu.
+        /// </summary>
+        private void RegisterDecisionsMenu(CampaignGameStarter starter)
+        {
+            // Create the decisions submenu (wait menu like duty selection)
+            starter.AddWaitGameMenu("enlisted_decisions",
+                "{=Enlisted_Menu_Decisions_Title}— AVAILABLE DECISIONS —\n{DECISIONS_STATUS_TEXT}",
+                OnDecisionsMenuInit,
+                OnDecisionsMenuCondition,
+                null,
+                OnDecisionsMenuTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Back option (first, like other submenus)
+            starter.AddGameMenuOption("enlisted_decisions", "decisions_back",
+                "{=Enlisted_Menu_BackToStatus}Back",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
                     return true;
                 },
-                OnDutyBackSelected,
+                OnDecisionsBackSelected,
                 false, 1);
 
-            // DUTIES HEADER - cleaner styling with em-dashes
-            starter.AddGameMenuOption("enlisted_duty_selection", "duties_header",
-                "{=Enlisted_Menu_Header_Duties}— DUTIES —",
-                _ => true, // Show but make it a display-only option
+            // Dynamic decision slots (up to 10 decisions shown)
+            for (var i = 0; i < 10; i++)
+            {
+                var slotIndex = i;
+                starter.AddGameMenuOption("enlisted_decisions", $"decision_slot_{i}",
+                    $"{{DECISION_SLOT_{i}_TEXT}}",
+                    args => IsDecisionSlotAvailable(args, slotIndex),
+                    args => OnDecisionSlotSelected(args, slotIndex),
+                    false, i + 2);
+            }
+        }
+
+        private void RegisterCampHubMenu(CampaignGameStarter starter)
+        {
+            starter.AddWaitGameMenu(CampHubMenuId,
+                "{=enlisted_camp_hub_title}— CAMP —\n{CAMP_HUB_TEXT}",
+                OnCampHubInit,
+                args =>
+                {
+                    _ = args;
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                null,
+                OnCampHubTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Camp Activities (primary "do something now" surface)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_activities",
+                "{=enlisted_camp_activities}Camp Activities",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=enlisted_camp_activities_tooltip}Do something now: activities and quick interactions around camp.");
+                    return true;
+                },
                 _ =>
                 {
-                    // Show message when clicked to indicate it's just a header
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject(
-                                "{=Enlisted_Message_HeaderInfo_Duties}This is a section header. Select duties below.")
-                            .ToString()));
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_camp_activities");
                 },
+                false, 1);
+
+            // Visit Quartermaster - equipment variant selection and management
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_quartermaster",
+                "{=Enlisted_Menu_VisitQuartermaster}Visit Quartermaster",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Trade;
+                    args.Tooltip = new TextObject("{=menu_tooltip_quartermaster}Purchase equipment for your formation and rank. Newly unlocked items marked [NEW].");
+                    return true;
+                },
+                OnQuartermasterSelected,
                 false, 2);
 
-            // DUTY OPTIONS - Dynamic text based on current selection
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_enlisted",
-                "{DUTY_ENLISTED_TEXT}",
-                IsDutyEnlistedAvailable,
-                OnDutyEnlistedSelected,
-                false, 3);
+            // Medical Tent (treatment) - always listed; grey-out when healthy
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_medical_tent",
+                "{=enlisted_camp_medical_tent}Medical Tent",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_forager",
-                "{DUTY_FORAGER_TEXT}",
-                IsDutyForagerAvailable,
-                OnDutyForagerSelected,
-                false, 4);
+                    var conditions = PlayerConditionBehavior.Instance;
+                    if (conditions?.IsEnabled() != true || conditions.State?.HasAnyCondition != true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_healthy}You are in good health. No treatment needed.");
+                        return true;
+                    }
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_sentry",
-                "{DUTY_SENTRY_TEXT}",
-                IsDutySentryAvailable,
-                OnDutySentrySelected,
-                false, 5);
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_messenger",
-                "{DUTY_MESSENGER_TEXT}",
-                IsDutyMessengerAvailable,
-                OnDutyMessengerSelected,
-                false, 6);
-
-            starter.AddGameMenuOption("enlisted_duty_selection", "duty_pioneer",
-                "{DUTY_PIONEER_TEXT}",
-                IsDutyPioneerAvailable,
-                OnDutyPioneerSelected,
-                false, 7);
-
-            // SPACER between duties and professions
-            starter.AddGameMenuOption("enlisted_duty_selection", "section_spacer",
-                " ",
-                _ => true, // Show as visible separator
-                _ => { }, // No action when clicked
-                true, 8); // Disabled = true makes it gray and non-clickable
-
-            // PROFESSIONS HEADER - cleaner styling with em-dashes
-            starter.AddGameMenuOption("enlisted_duty_selection", "professions_header",
-                "{=Enlisted_Menu_Header_Professions}— PROFESSIONS —",
-                _ => true, // Show but make it a display-only option
+                    args.Tooltip = new TextObject("{=menu_tooltip_seek_medical}Visit the surgeon's tent.");
+                    return true;
+                },
                 _ =>
                 {
-                    // Show message when clicked to indicate it's just a header
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject(
-                                "{=Enlisted_Message_HeaderInfo_Professions}This is a section header. Select professions below.")
-                            .ToString()));
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_medical");
                 },
-                false, 9);
+                false, 3);
 
-            // PROFESSION OPTIONS (T3+) - Dynamic text based on current selection
-            // Remove "None" profession as requested by user
+            // Reports (Camp Bulletin overlay)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_reports",
+                "{=enlisted_camp_reports}Reports",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    args.Tooltip = new TextObject("{=enlisted_camp_reports_tooltip}Open the Camp Bulletin (daily report, archive, and locations).");
+                    return true;
+                },
+                _ =>
+                {
+                    // Reports moved to Camp Management - open Reports tab (tab 3)
+                    Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(3);
+                },
+                false, 4);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_quarterhand",
-                "{PROF_QUARTERHAND_TEXT}",
-                IsProfQuarterhandAvailable,
-                OnProfQuarterhandSelected,
-                false, 10);
+            // Camp Management (deep config)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_camp_management",
+                "{=enlisted_camp_management}Camp Management",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=enlisted_camp_management_tooltip}Orders, reports, army view, and other management.");
+                    return true;
+                },
+                _ =>
+                {
+                    Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(1);
+                },
+                false, 5);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_field_medic",
-                "{PROF_FIELD_MEDIC_TEXT}",
-                IsProfFieldMedicAvailable,
-                OnProfFieldMedicSelected,
-                false, 11);
+            // Manage Companions
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_companions",
+                "{=enlisted_camp_companions}Manage Companions",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=enlisted_camp_companions_tooltip}Assign and manage your companions.");
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_companions");
+                },
+                false, 7);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_siegewright",
-                "{PROF_SIEGEWRIGHT_TEXT}",
-                IsProfSiegewrightAvailable,
-                OnProfSiegewrightSelected,
-                false, 12);
+            // Service Records
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_service_records",
+                "{=enlisted_camp_records}Service Records",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Manage;
+                    args.Tooltip = new TextObject("{=enlisted_camp_records_tooltip}Review your service records and history.");
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_service_records");
+                },
+                false, 6);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_drillmaster",
-                "{PROF_DRILLMASTER_TEXT}",
-                IsProfDrillmasterAvailable,
-                OnProfDrillmasterSelected,
-                false, 13);
+            // Personal Retinue (T7+: Commander track with recruit training system)
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_retinue",
+                "{=ct_option_retinue}Muster Personal Retinue",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    
+                    // T7+ for new Commander track retinue system (15/25/35 soldiers)
+                    if ((enlistment?.EnlistmentTier ?? 1) < 7)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=ct_warn_retinue_tier_locked}You must reach Commander rank (Tier 7) to command your own retinue.");
+                        return true;
+                    }
+                    
+                    args.Tooltip = new TextObject("{=ct_retinue_tooltip}Manage your personal retinue of soldiers. Recruits trickle in and must be trained through battle.");
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_retinue");
+                },
+                false, 8);
 
-            starter.AddGameMenuOption("enlisted_duty_selection", "prof_saboteur",
-                "{PROF_SABOTEUR_TEXT}",
-                IsProfSaboteurAvailable,
-                OnProfSaboteurSelected,
-                false, 14);
+            // Back
+            starter.AddGameMenuOption(CampHubMenuId, "camp_hub_back",
+                "{=enlisted_camp_back}Back",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_status");
+                },
+                false, 100);
+        }
+
+        private void OnCampHubInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
+                MBTextManager.SetTextVariable("CAMP_HUB_TEXT", BuildCampHubText());
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-010", "Error initializing Camp hub", ex);
+                MBTextManager.SetTextVariable("CAMP_HUB_TEXT", "Camp hub unavailable.");
+            }
+        }
+
+        private static void OnCampHubTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            _ = args;
+            _ = dt;
+            // Intentionally empty - hub is refreshed on init and re-entry.
+        }
+
+        /// <summary>
+        /// Camp Activities Menu - organized list of activities with stats at the top.
+        /// Light RP, quick access design for frequent use.
+        /// </summary>
+        private void RegisterCampActivitiesMenu(CampaignGameStarter starter)
+        {
+            starter.AddWaitGameMenu("enlisted_camp_activities",
+                "{=enlisted_activities_title}— CAMP ACTIVITIES —\n{ACTIVITIES_TEXT}",
+                OnCampActivitiesInit,
+                args =>
+                {
+                    _ = args;
+                    return EnlistmentBehavior.Instance?.IsEnlisted == true;
+                },
+                null,
+                OnCampActivitiesTick,
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            // Dynamic activity slots (50 total to support all categories + headers + spacers)
+            for (var i = 0; i < 50; i++)
+            {
+                var slotIndex = i;
+                starter.AddGameMenuOption("enlisted_camp_activities", $"activity_slot_{i}",
+                    $"{{ACTIVITY_SLOT_{i}_TEXT}}",
+                    args => IsActivitySlotAvailable(args, slotIndex),
+                    args => OnActivitySlotSelected(args, slotIndex),
+                    false, i + 1);
+            }
+
+            // Back option
+            starter.AddGameMenuOption("enlisted_camp_activities", "activities_back",
+                "{=activities_back}Back to Camp",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ =>
+                {
+                    GameMenu.SwitchToMenu("enlisted_camp_hub");
+                },
+                false, 100);
+        }
+
+        private class CampMenuSlot
+        {
+            public CampActivityDefinition Activity { get; set; }
+            public Enlisted.Features.Lances.Events.LanceLifeEventDefinition DecisionEvent { get; set; }
+            public string Text { get; set; }
+            public bool IsHeader { get; set; }
+            public bool IsSpacer { get; set; }
+            public bool IsEnabled { get; set; } = true;
+        }
+
+        private static List<CampMenuSlot> _cachedMenuSlots = new List<CampMenuSlot>();
+
+        private void OnCampActivitiesInit(MenuCallbackArgs args)
+        {
+            try
+            {
+                args.MenuContext.GameMenu.StartWait();
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
+                // Build stats + activities text
+                var text = BuildCampActivitiesText();
+                MBTextManager.SetTextVariable("ACTIVITIES_TEXT", text);
+
+                // Get all activities organized by category
+                var behavior = CampActivitiesBehavior.Instance;
+                if (behavior == null || !behavior.IsEnabled())
+                {
+                    return;
+                }
+
+                var allActivities = behavior.GetAllActivities();
+                var enlistment = EnlistmentBehavior.Instance;
+                var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
+                var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+                var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
+
+                // Group activities by category
+                // Robust grouping: Trust ID prefix if it matches a known category, 
+                // to handle cases where JSON 'category' might be malformed or defaulted.
+                var byCategory = allActivities
+                    .GroupBy(a => 
+                    {
+                        var cat = a.Category?.ToLowerInvariant() ?? "misc";
+                        // Fallback: use ID prefix (e.g. "social.drink" -> "social") if it's a known category
+                        if (!string.IsNullOrEmpty(a.Id) && a.Id.Contains("."))
+                        {
+                            var prefix = a.Id.Split('.')[0].ToLowerInvariant();
+                            if (prefix == "training" || prefix == "tasks" || prefix == "social" || prefix == "lance")
+                            {
+                                cat = prefix;
+                            }
+                        }
+                        return cat;
+                    })
+                    .OrderBy(g => GetCategoryOrder(g.Key))
+                    .ToList();
+
+                ModLogger.Info("Interface", $"CampActivities: Found {byCategory.Count} categories: {string.Join(", ", byCategory.Select(g => g.Key))}");
+
+                // Clear all slots
+                _cachedMenuSlots.Clear();
+                for (var i = 0; i < 50; i++)
+                {
+                    MBTextManager.SetTextVariable($"ACTIVITY_SLOT_{i}_TEXT", "");
+                }
+
+                // Build virtual slots (Headers -> Activities -> Spacers)
+                for (var catIndex = 0; catIndex < byCategory.Count; catIndex++)
+                {
+                    // Check limit
+                    if (_cachedMenuSlots.Count >= 50) break;
+
+                    var categoryGroup = byCategory[catIndex];
+                    var categoryKey = categoryGroup.Key;
+                    var categoryName = GetCategoryDisplayName(categoryKey);
+
+                    // Add Header
+                    var headerText = $"— {categoryName.ToUpperInvariant()} —";
+                    ModLogger.Info("Interface", $"CampActivities: Adding header '{headerText}' at slot {_cachedMenuSlots.Count}");
+                    
+                    _cachedMenuSlots.Add(new CampMenuSlot
+                    {
+                        Text = headerText,
+                        IsHeader = true,
+                        IsEnabled = false
+                    });
+
+                    // Sort activities
+                    var ordered = categoryGroup
+                        .Select(a =>
+                        {
+                            var reason = GetUnavailableReason(a, enlistment, formation, timeBlockToken);
+                            return new
+                            {
+                                Activity = a,
+                                IsAvailable = string.IsNullOrEmpty(reason),
+                                DisplayText = GetActivityDisplayTextWithAvailability(a, enlistment, formation, timeBlockToken)
+                            };
+                        })
+                        .OrderBy(x => x.IsAvailable ? 0 : 1)
+                        .ThenBy(x => x.DisplayText, StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    // Add Activities
+                    foreach (var item in ordered)
+                    {
+                        if (_cachedMenuSlots.Count >= 50) break;
+                        
+                        _cachedMenuSlots.Add(new CampMenuSlot
+                        {
+                            Activity = item.Activity,
+                            Text = item.DisplayText,
+                            IsEnabled = item.IsAvailable
+                        });
+                    }
+
+                    // Add Spacer (if not last and space available)
+                    if (catIndex < byCategory.Count - 1 && _cachedMenuSlots.Count < 50)
+                    {
+                        _cachedMenuSlots.Add(new CampMenuSlot
+                        {
+                            Text = " ", // Space to ensure it renders a gap
+                            IsSpacer = true,
+                            IsEnabled = false
+                        });
+                    }
+                }
+
+                // Map to text variables
+                for (var i = 0; i < _cachedMenuSlots.Count; i++)
+                {
+                    MBTextManager.SetTextVariable($"ACTIVITY_SLOT_{i}_TEXT", _cachedMenuSlots[i].Text);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error initializing Camp Activities menu", ex);
+                MBTextManager.SetTextVariable("ACTIVITIES_TEXT", "Activities unavailable.");
+            }
+        }
+
+        private static int GetCategoryOrder(string category)
+        {
+            return category switch
+            {
+                "training" => 0,
+                "tasks" => 1,
+                "social" => 2,
+                "lance" => 3,
+                _ => 4
+            };
+        }
+
+        private static string GetCategoryDisplayName(string category)
+        {
+            return category switch
+            {
+                "training" => "Training",
+                "tasks" => "Camp Tasks",
+                "social" => "Social",
+                "lance" => "Lance",
+                _ => "Activities"
+            };
+        }
+
+        private static void OnCampActivitiesTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            _ = args;
+            _ = dt;
+            // Menu refreshes on init
+        }
+
+        private static string BuildCampActivitiesText()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return "You are not currently enlisted.";
+                }
+
+                var escalation = EscalationManager.Instance;
+                var conditions = PlayerConditionBehavior.Instance;
+                var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+                var timeBlockStr = timeBlock.ToString();
+                var time = CampaignTime.Now.GetHourOfDay;
+
+                var sb = new System.Text.StringBuilder();
+                
+                // Light RP status header
+                sb.AppendLine($"Time: {timeBlockStr}, {time:00}:00");
+                
+                if (conditions?.State?.HasAnyCondition == true)
+                {
+                    var conditionList = new List<string>();
+                    if (conditions.State.HasInjury) conditionList.Add("Injured");
+                    if (conditions.State.HasIllness) conditionList.Add("Ill");
+                    if (conditionList.Count > 0)
+                        sb.AppendLine($"Condition: {string.Join(", ", conditionList)}");
+                }
+
+                var heat = escalation?.State?.Heat ?? 0;
+                if (heat > 3)
+                    sb.AppendLine($"Heat: {heat}/10 (keep a low profile)");
+
+                var lanceRep = escalation?.State?.LanceReputation ?? 0;
+                if (lanceRep > 10)
+                    sb.AppendLine($"Lance Reputation: +{lanceRep}");
+
+                sb.AppendLine();
+                sb.AppendLine("What will you do?");
+
+                return sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error building Camp Activities text", ex);
+                return "Camp activities...";
+            }
+        }
+
+        private static string GetActivityDisplayTextWithAvailability(
+            CampActivityDefinition activity, 
+            EnlistmentBehavior enlistment, 
+            string formation, 
+            string timeBlockToken)
+        {
+            try
+            {
+                // Clean up the text - remove stat brackets
+                var text = activity.TextFallback ?? "Unknown Activity";
+                var bracketIndex = text.IndexOf('[');
+                if (bracketIndex > 0)
+                {
+                    text = text.Substring(0, bracketIndex).Trim();
+                }
+
+                // Intentionally do NOT append availability/requirements suffixes here.
+                // The menu list should stay minimal; requirements belong in the tooltip.
+                return text;
+            }
+            catch
+            {
+                return "Activity";
+            }
+        }
+
+        private static string GetUnavailableReason(
+            CampActivityDefinition activity,
+            EnlistmentBehavior enlistment,
+            string formation,
+            string timeBlockToken)
+        {
+            if (activity == null || enlistment == null)
+            {
+                return "Unavailable";
+            }
+
+            // Check tier requirement
+            if (enlistment.EnlistmentTier < activity.MinTier)
+            {
+                // Prefer culture-specific rank names (looks better than raw tier numbers).
+                var requiredRank = Ranks.RankHelper.GetRankTitle(activity.MinTier, Ranks.RankHelper.GetCultureId(enlistment));
+                return $"Requires {requiredRank}";
+            }
+
+            // Check formation requirement
+            if (activity.Formations != null && activity.Formations.Count > 0)
+            {
+                if (string.IsNullOrWhiteSpace(formation) ||
+                    !activity.Formations.Any(f => string.Equals(f, formation, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var formationList = string.Join("/", activity.Formations.Select(f => 
+                        char.ToUpperInvariant(f[0]) + f.Substring(1).ToLowerInvariant()));
+                    return $"{formationList} only";
+                }
+            }
+
+            // Check time block requirement (uses DayParts property name for backward compatibility)
+            if (activity.DayParts != null && activity.DayParts.Count > 0)
+            {
+                if (string.IsNullOrWhiteSpace(timeBlockToken) ||
+                    !activity.DayParts.Any(d => string.Equals(d, timeBlockToken, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var timeList = string.Join("/", activity.DayParts.Select(d => 
+                        char.ToUpperInvariant(d[0]) + d.Substring(1).ToLowerInvariant()));
+                    return $"{timeList} only";
+                }
+            }
+
+            // Check cooldown
+            var currentDay = (int)CampaignTime.Now.ToDays;
+            var behavior = CampActivitiesBehavior.Instance;
+            if (behavior != null && behavior.TryGetCooldownDaysRemaining(activity, currentDay, out var daysRemaining))
+            {
+                return $"Cooldown: {daysRemaining} day{(daysRemaining > 1 ? "s" : "")}";
+            }
+
+            // Check fatigue cost
+            if (activity.FatigueCost > 0 && enlistment.FatigueCurrent < activity.FatigueCost)
+            {
+                return "Too fatigued";
+            }
+
+            // Check condition blocking
+            var cond = PlayerConditionBehavior.Instance;
+            if (activity.BlockOnSevereCondition && cond != null && cond.IsEnabled())
+            {
+                if (!cond.CanTrain())
+                {
+                    return "Too injured/ill";
+                }
+            }
+
+            return null; // Available
+        }
+
+        private static bool IsActivitySlotAvailable(MenuCallbackArgs args, int slotIndex)
+        {
+            if (slotIndex >= _cachedMenuSlots.Count)
+            {
+                return false;
+            }
+
+            var slot = _cachedMenuSlots[slotIndex];
+
+            // Set enabled state (Headers/Spacers are disabled)
+            args.IsEnabled = slot.IsEnabled;
+
+            if (slot.IsHeader || slot.IsSpacer)
+            {
+                args.Tooltip = new TextObject("");
+                args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+                return true;
+            }
+
+            var activity = slot.Activity;
+            if (activity == null) return false;
+
+            var enlistment = EnlistmentBehavior.Instance;
+            var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
+            var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+            var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
+            
+            var unavailableReason = GetUnavailableReason(activity, enlistment, formation, timeBlockToken);
+
+            // Set icon based on category
+            args.optionLeaveType = GetCategoryIcon(activity.Category);
+
+            // Build detailed tooltip
+            var tooltip = BuildActivityTooltip(activity, enlistment, unavailableReason);
+            args.Tooltip = new TextObject(tooltip);
+            
+            return true;
+        }
+
+        private static GameMenuOption.LeaveType GetCategoryIcon(string category)
+        {
+            return category?.ToLowerInvariant() switch
+            {
+                "training" => GameMenuOption.LeaveType.HostileAction, // Sword icon
+                "tasks" => GameMenuOption.LeaveType.Trade, // Trade/Work icon
+                "social" => GameMenuOption.LeaveType.Conversation, // Speech bubble
+                "lance" => GameMenuOption.LeaveType.Submenu, // Menu/List icon
+                _ => GameMenuOption.LeaveType.Default
+            };
+        }
+
+        private static string BuildActivityTooltip(CampActivityDefinition activity, EnlistmentBehavior enlistment, string unavailableReason)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append(activity.TextFallback ?? "Activity");
+
+            if (activity.FatigueCost > 0)
+            {
+                sb.AppendLine();
+                sb.Append($"Fatigue Cost: {activity.FatigueCost}");
+            }
+
+            if (!string.IsNullOrEmpty(unavailableReason))
+            {
+                sb.AppendLine();
+                sb.Append($"Unavailable: {unavailableReason}");
+            }
+
+            return sb.ToString();
+        }
+
+        private static void OnActivitySlotSelected(MenuCallbackArgs args, int slotIndex)
+        {
+            try
+            {
+                if (slotIndex >= _cachedMenuSlots.Count)
+                {
+                    return;
+                }
+
+                var slot = _cachedMenuSlots[slotIndex];
+                if (slot.IsHeader || slot.IsSpacer || slot.Activity == null)
+                {
+                    return;
+                }
+
+                var activity = slot.Activity;
+                var behavior = CampActivitiesBehavior.Instance;
+                
+                if (behavior != null)
+                {
+                    if (behavior.TryExecuteActivity(activity, out var failureReasonTextId))
+                    {
+                        // Success - show category-specific result message
+                        var categoryMsg = GetActivitySuccessMessage(activity);
+                        InformationManager.DisplayMessage(new InformationMessage(categoryMsg, Colors.Green));
+                    }
+                    else
+                    {
+                        // Failed - show localized reason
+                        var reason = GetLocalizedFailureReason(failureReasonTextId);
+                        InformationManager.DisplayMessage(new InformationMessage(reason, Colors.Red));
+                    }
+                    
+                    // Refresh menu to update cooldowns and fatigue
+                    GameMenu.SwitchToMenu("enlisted_camp_activities");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Interface", "Error executing activity", ex);
+            }
+        }
+
+        private static string GetActivitySuccessMessage(CampActivityDefinition activity)
+        {
+            var category = activity.Category?.ToLowerInvariant() ?? "";
+            var activityName = activity.TextFallback ?? "activity";
+            
+            // Remove stat brackets from name
+            var bracketIndex = activityName.IndexOf('[');
+            if (bracketIndex > 0)
+            {
+                activityName = activityName.Substring(0, bracketIndex).Trim();
+            }
+
+            return category switch
+            {
+                "training" => $"Training completed: {activityName}. Your skills improve.",
+                "tasks" => $"Task completed: {activityName}. The camp benefits from your work.",
+                "social" => $"{activityName}. Your bonds with your comrades strengthen.",
+                "lance" => $"{activityName}. Your lance mates appreciate your attention.",
+                _ => $"Activity completed: {activityName}"
+            };
+        }
+
+        private static string GetLocalizedFailureReason(string textId)
+        {
+            if (string.IsNullOrEmpty(textId))
+            {
+                return new TextObject("{=enl_act_fail_default}Activity not available").ToString();
+            }
+
+            return textId switch
+            {
+                "act_fail_invalid" => new TextObject("{=enl_act_fail_default}Activity not available").ToString(),
+                "act_fail_disabled" => new TextObject("{=enl_act_fail_disabled}Activities system disabled").ToString(),
+                "act_fail_not_enlisted" => new TextObject("{=enl_act_fail_not_enlisted}Not enlisted").ToString(),
+                "act_fail_cooldown" => new TextObject("{=enl_act_fail_cooldown}On cooldown").ToString(),
+                "act_fail_too_fatigued" => new TextObject("{=enl_act_fail_too_fatigued}Too fatigued").ToString(),
+                "act_fail_condition" => new TextObject("{=enl_act_fail_condition}Too injured or ill").ToString(),
+                _ => textId
+            };
+        }
+
+        private static string BuildCampHubText()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    return new TextObject("{=enl_camp_hub_not_enlisted}You are not currently enlisted.").ToString();
+                }
+
+                var lord = enlistment.CurrentLord;
+                var lordName = lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
+
+                var objective = new TextObject("{=enl_ui_unknown}Unknown").ToString();
+                try
+                {
+                    objective = Instance?.GetCurrentObjectiveDisplay(lord) ?? new TextObject("{=enl_ui_unknown}Unknown").ToString();
+                }
+                catch
+                {
+                    /* best-effort */
+                }
+
+                var rank = new TextObject("{=enl_ui_unknown}Unknown").ToString();
+                try
+                {
+                    rank = Ranks.RankHelper.GetCurrentRank(enlistment);
+                }
+                catch
+                {
+                    /* best-effort */
+                }
+
+                var decisions = DecisionEventBehavior.Instance?.GetAvailablePlayerDecisions()?.Count ?? 0;
+
+                var sb = new StringBuilder();
+
+                sb.AppendLine(new TextObject("{=enl_camp_hub_title}Service Status").ToString());
+
+                var lordLine = new TextObject("{=enl_camp_hub_lord_line}Lord: {LORD_NAME}");
+                lordLine.SetTextVariable("LORD_NAME", lordName);
+                sb.AppendLine(lordLine.ToString());
+
+                var fatigueLine = new TextObject("{=enl_camp_hub_fatigue_line}Fatigue: {FAT_CUR}/{FAT_MAX} | {RANK} (T{TIER})");
+                fatigueLine.SetTextVariable("FAT_CUR", enlistment.FatigueCurrent);
+                fatigueLine.SetTextVariable("FAT_MAX", enlistment.FatigueMax);
+                fatigueLine.SetTextVariable("RANK", rank);
+                fatigueLine.SetTextVariable("TIER", enlistment.EnlistmentTier);
+                sb.AppendLine(fatigueLine.ToString());
+
+                var workLine = new TextObject("{=enl_camp_hub_objective_line}Lord's Work: {OBJECTIVE}");
+                workLine.SetTextVariable("OBJECTIVE", objective);
+                sb.AppendLine(workLine.ToString());
+
+                var nowLine = new TextObject("{=enl_camp_hub_now_line}Now: {SITUATION} | Decisions: {COUNT}");
+                nowLine.SetTextVariable("SITUATION", BuildCurrentSituationLine(enlistment) ?? string.Empty);
+                nowLine.SetTextVariable("COUNT", decisions);
+                sb.AppendLine(nowLine.ToString());
+
+                return sb.ToString().TrimEnd();
+            }
+            catch
+            {
+                return new TextObject("{=enl_camp_hub_unavailable}Service Status unavailable.").ToString();
+            }
         }
 
         /// <summary>
@@ -1271,7 +2060,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error initializing enlisted status menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-011", "Error initializing enlisted status menu", ex);
             }
         }
 
@@ -1303,139 +2092,30 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Build the status content string that will be displayed in the menu
-                // Each line follows the format "Label : Value" for consistent presentation
-                var statusContent = "";
-
-                try
-                {
-                    // Construct status display line by line with label:value pairs
-                    // Each line contains a descriptive label followed by a colon and the current value
-
-                    // Party objective and enlistment details
-                    var objective = GetCurrentObjectiveDisplay(lord);
-                    var objectiveLine = new TextObject("{=Enlisted_Objective_Label}Party Objective : {OBJECTIVE}");
-                    objectiveLine.SetTextVariable("OBJECTIVE", objective);
-                    statusContent += objectiveLine + "\n";
-
-                    // Enlistment time and tier information
-                    var enlistmentTime = GetEnlistmentTimeDisplay(enlistment);
-                    var timeLine = new TextObject("{=Enlisted_Status_TermRemaining}Term Remaining : {TIME}");
-                    timeLine.SetTextVariable("TIME", enlistmentTime);
-                    statusContent += timeLine + "\n";
-
-                    // Enlistment tier and formation
-                    var tierLine = new TextObject("{=Enlisted_Status_Tier}Enlistment Tier : {TIER}");
-                    tierLine.SetTextVariable("TIER", enlistment.EnlistmentTier);
-                    statusContent += tierLine + "\n";
-
-                    // Formation display
-                    var formationName = "Infantry"; // Default
-                    try
-                    {
-                        if (duties?.IsInitialized == true)
-                        {
-                            var playerFormation = duties.GetPlayerFormationType();
-                            formationName = playerFormation?.ToTitleCase() ?? "Infantry";
-                        }
-                    }
-                    catch
-                    {
-                        /* Use default */
-                    }
-
-                    var formationLine = new TextObject("{=Enlisted_Status_Formation}Formation : {FORMATION}");
-                    formationLine.SetTextVariable("FORMATION", formationName);
-                    statusContent += formationLine + "\n";
-
-                    // Fatigue placeholder (camp actions will consume later)
-                    var fatigueLine = new TextObject("{=Enlisted_Status_Fatigue}Fatigue : {CUR}/{MAX}");
-                    fatigueLine.SetTextVariable("CUR", enlistment.FatigueCurrent);
-                    fatigueLine.SetTextVariable("MAX", enlistment.FatigueMax);
-                    statusContent += fatigueLine + "\n";
-
-                    // Lance display (provisional vs finalized)
-                    if (LanceRegistry.IsFeatureEnabled() && !string.IsNullOrWhiteSpace(enlistment.CurrentLanceName))
-                    {
-                        TextObject lanceLine;
-                        if (enlistment.IsLanceLegacy)
-                        {
-                            lanceLine = new TextObject("{=Enlisted_Status_LanceLegacy}Lance (Legacy) : {LANCE}");
-                        }
-                        else if (enlistment.IsLanceProvisional)
-                        {
-                            lanceLine = new TextObject("{=Enlisted_Status_LanceProvisional}Lance (Provisional) : {LANCE}");
-                        }
-                        else
-                        {
-                            lanceLine = new TextObject("{=Enlisted_Status_Lance}Lance : {LANCE}");
-                        }
-                        lanceLine.SetTextVariable("LANCE", enlistment.CurrentLanceName);
-                        statusContent += lanceLine + "\n";
-
-                        // Light, non-intrusive hint to finalize at Tier 2 when provisional
-                        if (enlistment.IsLanceProvisional)
-                        {
-                            var hint = new TextObject("{=Enlisted_Status_LanceHint}Hint: Finalize your lance at Tier 2.");
-                            statusContent += hint + "\n";
-                        }
-                    }
-
-                    // Wage and experience information
-                    var dailyWage = CalculateCurrentDailyWage();
-                    var wageLine = new TextObject("{=Enlisted_Status_Wage}Wage : {WAGE}");
-                    wageLine.SetTextVariable("WAGE", dailyWage);
-                    statusContent += wageLine + "<img src=\"General\\Icons\\Coin@2x\" extend=\"8\">\n";
-
-                    // Experience tracking
-                    var xpLine = new TextObject("{=Enlisted_Status_XP}Current Experience : {XP}");
-                    xpLine.SetTextVariable("XP", enlistment.EnlistmentXP);
-                    statusContent += xpLine + "\n";
-
-                    // Next tier experience requirement
-                    if (enlistment.EnlistmentTier < 6)
-                    {
-                        // GetNextTierXpRequirement returns XP needed to promote FROM current tier
-                        // So pass current tier, not tier + 1
-                        var nextTierXp = GetNextTierXpRequirement(enlistment.EnlistmentTier);
-                        var nextXpLine = new TextObject("{=Enlisted_Status_NextXP}Next Level Experience : {XP}");
-                        nextXpLine.SetTextVariable("XP", nextTierXp);
-                        statusContent += nextXpLine + "\n";
-                    }
-
-                    // Formation training description (explains daily skill development)
-                    var formationDesc = GetFormationTrainingDescription();
-                    statusContent += formationDesc;
-                }
-                catch
-                {
-                    // Fallback to simple display on any error (lord guaranteed non-null from earlier check)
-                    statusContent = $"Lord : {lord.Name?.ToString() ?? "Unknown"}\n";
-                    statusContent += $"Enlistment Tier : {enlistment.EnlistmentTier}\n";
-                    statusContent += $"Current Experience : {enlistment.EnlistmentXP}";
-                }
+                var statusContent = BuildCompactEnlistedStatusText(enlistment, lord, duties);
 
                 // Set text variables for menu display (lord guaranteed non-null from earlier check)
                 var lordName = lord.EncyclopediaLinkWithName?.ToString() ?? lord.Name?.ToString() ?? "Unknown";
+                var leaderSummary = $"{lordName} | Fatigue {enlistment.FatigueCurrent}/{enlistment.FatigueMax}";
 
                 // Get menu context and set text variables
                 var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
                 if (menuContext != null)
                 {
                     var text = menuContext.GameMenu.GetText();
-                    text.SetTextVariable("PARTY_LEADER", lordName);
+                    text.SetTextVariable("PARTY_LEADER", leaderSummary);
                     text.SetTextVariable("PARTY_TEXT", statusContent);
                 }
                 else
                 {
                     // Fallback for compatibility
-                    MBTextManager.SetTextVariable("PARTY_LEADER", lordName);
+                    MBTextManager.SetTextVariable("PARTY_LEADER", leaderSummary);
                     MBTextManager.SetTextVariable("PARTY_TEXT", statusContent);
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error refreshing enlisted status", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-036", "Error refreshing enlisted status", ex);
 
                 // Error fallback
                 var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
@@ -1445,6 +2125,104 @@ namespace Enlisted.Features.Interface.Behaviors
                     text.SetTextVariable("PARTY_LEADER", "Error");
                     text.SetTextVariable("PARTY_TEXT", "Status information unavailable.");
                 }
+            }
+        }
+
+        private static string BuildCompactEnlistedStatusText(
+            EnlistmentBehavior enlistment,
+            Hero lord,
+            EnlistedDutiesBehavior duties)
+        {
+            try
+            {
+                var sb = new StringBuilder();
+
+                var objective = "Unknown";
+                try
+                {
+                    // Reuse existing objective helper (keeps wording consistent with the rest of the system).
+                    objective = Instance?.GetCurrentObjectiveDisplay(lord) ?? "Unknown";
+                }
+                catch
+                {
+                    /* best-effort */
+                }
+
+                sb.AppendLine($"Lord's Work: {objective}");
+
+                // Compact service status line (kept short to preserve option list space).
+                var rank = "Unknown";
+                try
+                {
+                    rank = Ranks.RankHelper.GetCurrentRank(enlistment);
+                }
+                catch
+                {
+                    /* best-effort */
+                }
+
+                sb.AppendLine($"Service: {rank} (T{enlistment.EnlistmentTier})");
+                sb.AppendLine();
+
+                // Phase 3 (Camp News): main menu uses Today’s Report excerpt (single paragraph) instead of the old Daily Brief block.
+                // This keeps vertical space low and avoids “menu jitter” by pulling from the persisted daily report record.
+                var reportExcerpt = EnlistedNewsBehavior.Instance?.GetLatestDailyReportExcerpt(maxLines: 5, maxChars: 450);
+                if (!string.IsNullOrWhiteSpace(reportExcerpt))
+                {
+                    sb.AppendLine($"Today’s Report: {reportExcerpt.Trim()}");
+                    sb.AppendLine();
+                }
+
+                sb.AppendLine($"Now: {BuildCurrentSituationLine(enlistment)}");
+
+                return sb.ToString().TrimEnd();
+            }
+            catch
+            {
+                return "Status unavailable.";
+            }
+        }
+
+        private static string BuildCurrentSituationLine(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var main = MobileParty.MainParty;
+                if (main?.Party?.MapEvent != null)
+                {
+                    return Enlisted.Features.Combat.Behaviors.EnlistedEncounterBehavior.IsWaitingInReserve
+                        ? "Waiting in reserve during battle."
+                        : "Fighting in battle.";
+                }
+
+                if (main?.CurrentSettlement != null)
+                {
+                    return $"In {main.CurrentSettlement.Name}.";
+                }
+
+                var encounterSettlement = PlayerEncounter.EncounterSettlement;
+                if (encounterSettlement != null && PlayerEncounter.InsideSettlement)
+                {
+                    return $"Inside {encounterSettlement.Name}.";
+                }
+
+                if (main?.IsMoving == true)
+                {
+                    var target = enlistment?.CurrentLord?.PartyBelongedTo?.TargetSettlement;
+                    if (target != null)
+                    {
+                        return $"Marching toward {target.Name}.";
+                    }
+
+                    return "On the march.";
+                }
+
+                // Default: in camp / idle on the campaign map.
+                return "In camp with the company.";
+            }
+            catch
+            {
+                return "In camp.";
             }
         }
 
@@ -1461,45 +2239,110 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Gets the enlistment time display showing remaining days in the current term.
-        ///     Displays countdown for first term or renewal terms.
+        ///     Gets display text for total days the player has been enlisted.
+        ///     There are no terms anymore - service is indefinite until player leaves.
         /// </summary>
-        private string GetEnlistmentTimeDisplay(EnlistmentBehavior enlistment)
+        private string GetDaysEnlistedDisplay(EnlistmentBehavior enlistment)
         {
             try
             {
-                var remainingDays = 0;
-                var faction = enlistment.CurrentLord?.MapFaction;
-                var isRenewal = false;
-
-                if (faction != null)
+                if (enlistment?.EnlistmentDate == null || enlistment.EnlistmentDate == CampaignTime.Zero)
                 {
-                    var record = enlistment.GetFactionVeteranRecord(faction);
-                    if (record is { IsInRenewalTerm: true } && record.CurrentTermEnd != CampaignTime.Zero)
-                    {
-                        isRenewal = true;
-                        remainingDays = (int)(record.CurrentTermEnd - CampaignTime.Now).ToDays;
-                    }
+                    return "0";
                 }
 
-                if (!isRenewal)
+                var daysServed = (int)(CampaignTime.Now - enlistment.EnlistmentDate).ToDays;
+                if (daysServed < 0)
                 {
-                    // First term calculation
-                    var retirementConfig = Assignments.Core.ConfigurationManager.LoadRetirementConfig();
-                    var termEnd = enlistment.EnlistmentDate + CampaignTime.Days(retirementConfig.FirstTermDays);
-                    remainingDays = (int)(termEnd - CampaignTime.Now).ToDays;
+                    daysServed = 0;
                 }
 
-                if (remainingDays <= 0)
-                {
-                    return "Term Expired";
-                }
-
-                return $"{remainingDays} Days";
+                return daysServed.ToString();
             }
             catch
             {
-                return "Unknown";
+                return "0";
+            }
+        }
+
+        /// <summary>
+        ///     Builds a visual progress bar for escalation tracks.
+        ///     Uses filled (▓) and empty (░) blocks for ASCII-compatible display.
+        /// </summary>
+        private static string BuildTrackBar(int current, int max)
+        {
+            const int barLength = 10;
+            var filled = Math.Min(barLength, Math.Max(0, current));
+            var empty = barLength - filled;
+            return new string('▓', filled) + new string('░', empty);
+        }
+
+        /// <summary>
+        ///     Gets a warning label for the current Heat level based on threshold events.
+        /// </summary>
+        private static string GetHeatWarning(int heat)
+        {
+            return heat switch
+            {
+                >= 10 => "EXPOSED",
+                >= 7 => "Audit",
+                >= 5 => "Shakedown",
+                >= 3 => "Watched",
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        ///     Gets a warning label for the current Discipline level based on threshold events.
+        /// </summary>
+        private static string GetDisciplineWarning(int discipline)
+        {
+            return discipline switch
+            {
+                >= 10 => "DISCHARGE",
+                >= 7 => "Blocked",
+                >= 5 => "Hearing",
+                >= 3 => "Extra Duty",
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        ///     Calculates the number of days since the party was last in a settlement.
+        ///     Returns 0 if currently in a settlement.
+        /// </summary>
+        private static int CalculateDaysFromTown(Hero lord)
+        {
+            try
+            {
+                if (lord?.PartyBelongedTo?.CurrentSettlement != null)
+                {
+                    return 0; // Currently in settlement
+                }
+
+                var party = lord?.PartyBelongedTo;
+                if (party == null)
+                {
+                    return 0;
+                }
+
+                // Check if there's a nearby settlement using correct API (GetPosition2D)
+                var partyPos = party.GetPosition2D;
+                var nearestSettlement = Settlement.FindFirst(s => 
+                    (s.IsTown || s.IsCastle) && 
+                    partyPos.DistanceSquared(s.GetPosition2D) < 10f);
+                
+                if (nearestSettlement != null)
+                {
+                    return 1; // Near a settlement
+                }
+
+                // Estimate based on distance to nearest settlement
+                return 3; // Default to 3 days if far from settlements
+            }
+            catch
+            {
+                return 0;
             }
         }
 
@@ -1526,7 +2369,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error getting formation training description", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-037", "Error getting formation training description", ex);
                 return "You perform basic military duties and training.";
             }
         }
@@ -1646,7 +2489,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error refreshing menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-012", "Error refreshing menu", ex);
             }
         }
 
@@ -1664,12 +2507,22 @@ namespace Enlisted.Features.Interface.Behaviors
 
         // Menu Option Conditions and Actions
 
+        /// <summary>
+        ///     DEPRECATED: Phase 7 - Master at Arms replaced by proving events.
+        ///     Formation is now chosen during T1→T2 proving event.
+        ///     Kept for save compatibility but menu option is hidden.
+        /// </summary>
+        [System.Obsolete("Phase 7: Formation is now chosen via proving events, not Master at Arms menu.")]
         private bool IsMasterAtArmsAvailable(MenuCallbackArgs args)
         {
-            _ = args; // Required by API contract
-            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            _ = args;
+            return false; // Phase 7: Always hide this option
         }
 
+        /// <summary>
+        ///     DEPRECATED: Phase 7 - Master at Arms replaced by proving events.
+        /// </summary>
+        [System.Obsolete("Phase 7: Formation is now chosen via proving events, not Master at Arms menu.")]
         private void OnMasterAtArmsSelected(MenuCallbackArgs args)
         {
             try
@@ -1689,7 +2542,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening Master at Arms: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-013", "Error opening Master at Arms", ex);
             }
         }
 
@@ -1697,6 +2550,36 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             _ = args; // Required by API contract
             return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        // IsMyLanceAvailable removed - lance access now via Visit Camp > Lance location
+
+        /// <summary>
+        /// Checks if Seek Medical Attention option is available.
+        /// Only shows when player has an injury, illness, or exhaustion condition.
+        /// </summary>
+        private static bool IsSeekMedicalAvailable(MenuCallbackArgs args)
+        {
+            _ = args;
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            var cond = PlayerConditionBehavior.Instance;
+            if (cond?.IsEnabled() != true)
+            {
+                return false;
+            }
+
+            // Only show if player has an active condition
+            if (cond.State?.HasAnyCondition != true)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         private void OnQuartermasterSelected(MenuCallbackArgs args)
@@ -1712,31 +2595,60 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                var troopId = TroopSelectionManager.Instance?.LastSelectedTroopId ?? "unknown";
-                ModLogger.Info("Quartermaster",
-                    $"Opening quartermaster menu (Tier={enlistment.EnlistmentTier}, Troop={troopId})");
+                // Phase 3: Try to open conversation with Quartermaster Hero
+                var qm = enlistment.GetOrCreateQuartermaster();
+                
+                if (qm != null && qm.IsAlive)
+                {
+                    ModLogger.Info("Quartermaster",
+                        $"Opening conversation with quartermaster '{qm.Name}' ({enlistment.QuartermasterArchetype})");
 
-                // Connect to new Quartermaster system
+                    // Open conversation with quartermaster Hero
+                    // The dialog tree is registered in EnlistedDialogManager
+                    CampaignMapConversation.OpenConversation(
+                        new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
+                        new ConversationCharacterData(qm.CharacterObject, qm.PartyBelongedTo?.Party)
+                    );
+                }
+                else
+                {
+                    // Fallback: Direct to menu if hero creation/conversation fails
+                    ModLogger.Warn("Quartermaster", "Quartermaster Hero unavailable, falling back to direct menu");
+                    OpenQuartermasterMenuDirectly();
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-038", "Error opening quartermaster conversation", ex);
+                // Fallback to direct menu access
+                OpenQuartermasterMenuDirectly();
+            }
+        }
+
+        /// <summary>
+        ///     Opens the quartermaster menu directly (fallback for when Hero conversation fails).
+        /// </summary>
+        private void OpenQuartermasterMenuDirectly()
+        {
+            try
+            {
                 var quartermasterManager = QuartermasterManager.Instance;
                 if (quartermasterManager != null)
                 {
-                    // Capture time state BEFORE menu activation - the wait menu tick will restore it
                     QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    
-                    // Show equipment variants for current troop selection
-                    // (wait menu tick handler will restore captured time state)
                     GameMenu.ActivateGameMenu("quartermaster_equipment");
                 }
                 else
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
-                    ModLogger.Error("Quartermaster", "Quartermaster open failed: QuartermasterManager.Instance was null");
+                    ModLogger.ErrorCode("Quartermaster", "E-QM-001",
+                        "Quartermaster menu failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error accessing quartermaster services", ex);
+                ModLogger.ErrorCode("Quartermaster", "E-QM-002", "Error opening quartermaster menu directly", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }
@@ -1768,13 +2680,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
-                    ModLogger.Error("Quartermaster",
+                    ModLogger.ErrorCode("Quartermaster", "E-QM-003",
                         "Quartermaster (horse/tack) open failed: QuartermasterManager.Instance was null");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error accessing quartermaster horse/tack services", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-039", "Error accessing quartermaster horse/tack services", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
             }
@@ -1816,7 +2728,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in Talk to My Lord: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-014", "Error in Talk to My Lord", ex);
             }
         }
 
@@ -1866,7 +2778,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error finding nearby lords: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-015", "Error finding nearby lords", ex);
             }
 
             return nearbyLords;
@@ -1880,26 +2792,27 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 var options = new List<InquiryElement>();
+                var unknown = new TextObject("{=enl_ui_unknown}Unknown").ToString();
                 foreach (var lord in lords)
                 {
-                    var name = lord.Name?.ToString() ?? "Unknown Lord";
+                    var name = lord.Name?.ToString() ?? unknown;
                     // 1.3.4 API: ImageIdentifier is now abstract, use CharacterImageIdentifier
                     var portrait = new CharacterImageIdentifier(CharacterCode.CreateFrom(lord.CharacterObject));
                     var description =
-                        $"{lord.Clan?.Name?.ToString() ?? "Unknown Clan"}\n{lord.MapFaction?.Name?.ToString() ?? "Unknown Faction"}";
+                        $"{lord.Clan?.Name?.ToString() ?? unknown}\n{lord.MapFaction?.Name?.ToString() ?? unknown}";
 
                     options.Add(new InquiryElement(lord, name, portrait, true, description));
                 }
 
                 var data = new MultiSelectionInquiryData(
-                    titleText: "Select lord to speak with",
+                    titleText: new TextObject("{=enl_ui_select_lord_title}Select lord to speak with").ToString(),
                     descriptionText: string.Empty,
                     inquiryElements: options,
                     isExitShown: true,
                     minSelectableOptionCount: 1,
                     maxSelectableOptionCount: 1,
-                    affirmativeText: "Talk",
-                    negativeText: "Cancel",
+                    affirmativeText: new TextObject("{=enl_ui_talk}Talk").ToString(),
+                    negativeText: new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     affirmativeAction: selected =>
                     {
                         try
@@ -1912,7 +2825,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Interface", $"Error starting lord conversation: {ex.Message}");
+                            ModLogger.ErrorCode("Interface", "E-UI-016", "Error starting lord conversation", ex);
                         }
                     },
                     negativeAction: _ =>
@@ -1926,7 +2839,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error showing lord selection: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-017", "Error showing lord selection", ex);
             }
         }
 
@@ -1966,7 +2879,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening conversation with {lord?.Name}: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-018", $"Error opening conversation with {lord?.Name}", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_conversation_error}Unable to start conversation. Please try again.").ToString()));
             }
@@ -2029,7 +2942,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in settlement entered tracking: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-019", "Error in settlement entered tracking", ex);
             }
         }
 
@@ -2134,7 +3047,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"VisitTown failed: {ex}");
+                ModLogger.ErrorCode("Interface", "E-UI-020", "VisitTown failed", ex);
                 InformationManager.DisplayMessage(new InformationMessage(
                     new TextObject("{=menu_town_interface_error}Couldn't open the town interface.").ToString()));
             }
@@ -2174,17 +3087,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Show leave request confirmation
-                var titleText = "Request Leave from Commander";
-                var descriptionText =
-                    "Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 30-day cooldown after you come back.";
+                var titleText = new TextObject("{=enl_ui_request_leave_title}Request Leave from Commander").ToString();
+                var descriptionText = new TextObject("{=enl_ui_request_leave_desc}Request temporary leave for 14 days. You regain independent movement but forfeit daily wages and duties until you return. Taking leave starts a 7-day cooldown after you come back.").ToString();
 
                 var confirmData = new InquiryData(
                     titleText,
                     descriptionText,
                     isAffirmativeOptionShown: true,
                     isNegativeOptionShown: true,
-                    affirmativeText: "Request Leave",
-                    negativeText: "Cancel",
+                    affirmativeText: new TextObject("{=enl_ui_request_leave}Request Leave").ToString(),
+                    negativeText: new TextObject("{=enl_ui_cancel}Cancel").ToString(),
                     affirmativeAction: () =>
                     {
                         try
@@ -2193,7 +3105,7 @@ namespace Enlisted.Features.Interface.Behaviors
                         }
                         catch (Exception ex)
                         {
-                            ModLogger.Error("Interface", $"Error requesting leave: {ex.Message}");
+                            ModLogger.ErrorCode("Interface", "E-UI-021", "Error requesting leave", ex);
                         }
                     },
                     negativeAction: () =>
@@ -2206,7 +3118,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error in Ask for Leave: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-022", "Error in Ask for Leave", ex);
             }
         }
 
@@ -2226,9 +3138,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Use temporary leave instead of permanent discharge
                 enlistment?.StartTemporaryLeave();
 
-                var message =
-                    new TextObject(
-                        "Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty.");
+                var message = new TextObject("{=enl_ui_leave_granted}Leave granted. You are temporarily released from service. Speak with your lord when ready to return to duty.");
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
 
                 // Exit menu to campaign map (deferred to next frame)
@@ -2244,7 +3154,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error granting temporary leave: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-023", "Error granting temporary leave", ex);
             }
         }
 
@@ -2274,10 +3184,59 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening desertion menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-024", "Error opening desertion menu", ex);
             }
         }
 
+        /// <summary>
+        ///     Handles free desertion when PayTension >= 60.
+        ///     Shows a confirmation dialog then processes the clean desertion.
+        /// </summary>
+        private void OnFreeDesertionSelected(MenuCallbackArgs args)
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true || enlistment.PayTension < 60)
+                {
+                    ModLogger.Warn("Interface", "Free desertion attempted but conditions not met");
+                    return;
+                }
+
+                var lordName = enlistment.CurrentLord?.Name?.ToString() ?? "your lord";
+                var confirmText = new TextObject(
+                    "Pay has been late for too long. You approach your lance-mates and explain that you can't continue like this.\n\n" +
+                    "They nod slowly. \"Can't blame you. No one would. Go — find something better.\"\n\n" +
+                    "You can leave now with minimal consequences:\n" +
+                    "• -5 relation with {LORD_NAME} (they understand)\n" +
+                    "• No crime penalty\n" +
+                    "• Keep your equipment\n\n" +
+                    "Are you sure you want to leave?");
+                confirmText.SetTextVariable("LORD_NAME", lordName);
+
+                InformationManager.ShowInquiry(new InquiryData(
+                    new TextObject("{=Enlisted_FreeDesert_Title}Leave Without Penalty").ToString(),
+                    confirmText.ToString(),
+                    true, true,
+                    new TextObject("{=Enlisted_FreeDesert_Confirm}Leave").ToString(),
+                    new TextObject("{=Enlisted_FreeDesert_Cancel}Stay").ToString(),
+                    () =>
+                    {
+                        // Process free desertion - no major penalties
+                        enlistment.ProcessFreeDesertion();
+                        ModLogger.Info("Interface", "Player executed free desertion due to high PayTension");
+                    },
+                    () =>
+                    {
+                        // Player chose to stay
+                        ModLogger.Debug("Interface", "Player cancelled free desertion");
+                    }));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-025", "Error in free desertion", ex);
+            }
+        }
 
         /// <summary>
         ///     Creates the desertion confirmation menu with roleplay-appropriate warning text
@@ -2291,9 +3250,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 "{DESERT_WARNING_TEXT}",
                 OnDesertionConfirmInit);
 
-            // Back to Camp button - returns to enlisted status menu (Leave icon)
+            // Back button - returns to Leave Service submenu (Leave icon)
             starter.AddGameMenuOption("enlisted_desert_confirm", "desert_back",
-                "Return to Camp",
+                "{=enl_ui_back}Back",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Leave;
@@ -2304,7 +3263,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // Continue with Desertion button - executes the desertion (Escape icon - already set)
             starter.AddGameMenuOption("enlisted_desert_confirm", "desert_confirm",
-                "Desert the Army (Accept Penalties)",
+                "{=enl_ui_desert_confirm}Desert the Army (Accept Penalties)",
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Escape;
@@ -2347,7 +3306,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error initializing desertion menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-026", "Error initializing desertion menu", ex);
                 MBTextManager.SetTextVariable("DESERT_WARNING_TEXT",
                     "Are you sure you want to desert? This will have serious consequences.");
             }
@@ -2362,11 +3321,11 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 // Capture time state BEFORE menu switch to preserve player's time control
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                GameMenu.SwitchToMenu("enlisted_status");
+                GameMenu.SwitchToMenu(LeaveServiceMenuId);
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error returning from desertion menu: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-027", "Error returning from desertion menu", ex);
             }
         }
 
@@ -2381,7 +3340,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment == null)
                 {
-                    ModLogger.Error("Interface", "Cannot desert - EnlistmentBehavior not available");
+                    ModLogger.ErrorCode("Interface", "E-UI-040", "Cannot desert - EnlistmentBehavior not available", null);
                     return;
                 }
 
@@ -2400,7 +3359,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                     catch (Exception ex)
                     {
-                        ModLogger.Error("Interface", $"Error exiting menu after desertion: {ex.Message}");
+                        ModLogger.ErrorCode("Interface", "E-UI-028", "Error exiting menu after desertion", ex);
                     }
                 });
 
@@ -2408,7 +3367,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error confirming desertion: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-029", "Error confirming desertion", ex);
             }
         }
 
@@ -2480,7 +3439,7 @@ namespace Enlisted.Features.Interface.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error during enlisted status tick: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-030", "Error during enlisted status tick", ex);
             }
         }
 
@@ -2496,136 +3455,252 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Handle Report for Duty selection - open duty selection menu.
+        ///     Handle Report for Duty selection - open Camp Management Duties tab.
         /// </summary>
         private void OnReportDutySelected(MenuCallbackArgs args)
         {
             try
             {
-                // Capture time state BEFORE menu switch to preserve player's time control
+                // Open Camp Management screen with Duties tab (index 2)
+                Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(2);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-031", "Error opening Report for Duty", ex);
+            }
+        }
+
+
+        #region Decision Events Menu Handlers (Phase 4)
+
+        // Cache of available decisions for current menu session
+        private List<LanceLifeEventDefinition> _cachedDecisions = new List<LanceLifeEventDefinition>();
+
+        /// <summary>
+        /// Handler for "Pending Decisions" option in enlisted_status menu.
+        /// Opens the decisions submenu.
+        /// </summary>
+        private void OnPendingDecisionsSelected(MenuCallbackArgs args)
+        {
+            try
+            {
                 QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                GameMenu.SwitchToMenu("enlisted_duty_selection");
+                GameMenu.SwitchToMenu("enlisted_decisions");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", $"Error opening Report for Duty: {ex.Message}");
+                ModLogger.ErrorCode("Interface", "E-UI-042", "Failed to open decisions menu", ex);
             }
         }
 
         /// <summary>
-        ///     Initializes the duty selection menu when it's opened.
-        ///     Starts the wait menu to enable time controls, same as the main enlisted status menu.
+        /// Initialize decisions menu - loads available decisions and sets up text.
         /// </summary>
-        private void OnDutySelectionInit(MenuCallbackArgs args)
+        private void OnDecisionsMenuInit(MenuCallbackArgs args)
         {
             try
             {
-                // Time state is captured by calling code BEFORE menu activation
-                // (not here - vanilla has already set Stop by the time init runs)
-                
-                // 1.3.4+: Set proper menu background to avoid assertion failure
+                // Restore time mode preserved from parent menu
+                var capturedMode = QuartermasterManager.CapturedTimeMode
+                    ?? Campaign.Current?.TimeControlMode
+                    ?? CampaignTimeControlMode.Stop;
+
+                if (!QuartermasterManager.CapturedTimeMode.HasValue)
+                {
+                    QuartermasterManager.CapturedTimeMode = capturedMode;
+                }
+
+                if (Campaign.Current != null)
+                {
+                    Campaign.Current.TimeControlMode = capturedMode;
+                }
+
+                // Load available decisions
+                var decisionBehavior = DecisionEventBehavior.Instance;
+                _cachedDecisions = decisionBehavior?.GetAvailablePlayerDecisions() ?? new List<LanceLifeEventDefinition>();
+
+                // Set status text
+                var statusText = _cachedDecisions.Count > 0
+                    ? new TextObject("{=decisions_status_available}{COUNT} decision(s) available. Select one to review.")
+                    : new TextObject("{=decisions_status_none}No decisions are currently available. Check back later as opportunities arise.");
+                statusText.SetTextVariable("COUNT", _cachedDecisions.Count);
+                MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", statusText);
+
+                // Set text for each decision slot
+                for (var i = 0; i < 10; i++)
+                {
+                    var slotText = i < _cachedDecisions.Count
+                        ? GetDecisionSlotText(_cachedDecisions[i])
+                        : string.Empty;
+                    MBTextManager.SetTextVariable($"DECISION_SLOT_{i}_TEXT", slotText);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-043", "Failed to initialize decisions menu", ex);
+                MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", "Error loading decisions.");
+            }
+        }
+
+        /// <summary>
+        /// Condition check for decisions menu (always true when enlisted).
+        /// </summary>
+        private bool OnDecisionsMenuCondition(MenuCallbackArgs args)
+        {
+            return EnlistmentBehavior.Instance?.IsEnlisted == true;
+        }
+
+        /// <summary>
+        /// Tick handler for decisions menu (intentionally minimal).
+        /// </summary>
+        private void OnDecisionsMenuTick(MenuCallbackArgs args, CampaignTime dt)
+        {
+            // Intentionally empty - time mode is handled in menu init
+        }
+
+        /// <summary>
+        /// Handler for "Back" option in decisions menu.
+        /// </summary>
+        private void OnDecisionsBackSelected(MenuCallbackArgs args)
+        {
+            QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+            GameMenu.SwitchToMenu("enlisted_status");
+        }
+
+        /// <summary>
+        /// Camp Hub submenu: Leave Service.
+        /// Contains leaving actions that would otherwise clutter the main enlisted_status menu.
+        /// </summary>
+        private void RegisterLeaveServiceMenu(CampaignGameStarter starter)
+        {
+            starter.AddWaitGameMenu(LeaveServiceMenuId,
+                "{=Enlisted_LeaveService_Title}— LEAVE SERVICE —\n{LEAVE_SERVICE_TEXT}",
+                OnLeaveServiceInit,
+                _ => EnlistmentBehavior.Instance?.IsEnlisted == true,
+                null,
+                (_, __) => { },
+                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
+
+            starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_back",
+                "{=Enlisted_LeaveService_Back}Back",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    return true;
+                },
+                _ =>
+                {
+                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                    GameMenu.SwitchToMenu("enlisted_status");
+                },
+                false, 0);
+
+            // Ask for temporary leave (does not discharge/desert)
+            starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_ask_leave",
+                "{=Enlisted_Menu_AskLeave}Ask for Leave",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsOnLeave == true)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_on_leave}You are already on leave.");
+                        return true;
+                    }
+
+                    // Reuse the existing cooldown messaging.
+                    return IsAskLeaveAvailable(args);
+                },
+                OnAskLeaveSelected,
+                false, 1);
+
+            // Leave without penalty (free desertion) - PayTension gated
+            starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_free_desertion",
+                "{=Enlisted_Menu_FreeDesert}Leave Without Penalty",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if ((enlistment?.PayTension ?? 0) < 60)
+                    {
+                        args.IsEnabled = false;
+                        args.Tooltip = new TextObject("{=menu_disabled_pay_ok}Pay must be severely delayed (60+ tension) to leave without penalty.");
+                        return true;
+                    }
+                    args.Tooltip = new TextObject("{=menu_tooltip_free_desert}Pay is too late. You can leave with no penalties — no one would blame you.");
+                    return true;
+                },
+                OnFreeDesertionSelected,
+                false, 2);
+
+            // Desert Army (penalty) -> confirm
+            starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_desert_army",
+                "{=Enlisted_Menu_DesertArmy}Desert the Army",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Escape;
+                    args.Tooltip = new TextObject("{=menu_tooltip_desert}Abandon your post. WARNING: Severe relation and crime penalties!");
+                    return IsDesertArmyAvailable(args);
+                },
+                OnDesertArmySelected,
+                false, 3);
+
+            // Request Discharge (final muster) / Cancel (toggle)
+            starter.AddGameMenuOption(LeaveServiceMenuId, "leave_service_request_discharge",
+                "{LEAVE_SERVICE_DISCHARGE_TEXT}",
+                args =>
+                {
+                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
+                    var enlistment = EnlistmentBehavior.Instance;
+                    if (enlistment?.IsEnlisted != true)
+                    {
+                        return false;
+                    }
+
+                    if (enlistment.IsPendingDischarge)
+                    {
+                        MBTextManager.SetTextVariable("LEAVE_SERVICE_DISCHARGE_TEXT",
+                            new TextObject("{=ct_cancel_discharge_short}Cancel Discharge Request"));
+                        args.Tooltip = new TextObject("{=ct_cancel_discharge_tooltip}Withdraw your discharge request and remain in service.");
+                        return true;
+                    }
+
+                    MBTextManager.SetTextVariable("LEAVE_SERVICE_DISCHARGE_TEXT",
+                        new TextObject("{=ct_request_discharge_short}Request Discharge"));
+                    args.Tooltip = new TextObject("{=ct_discharge_tooltip}Request formal discharge with final pay settlement (resolves at next muster).");
+                    return true;
+                },
+                _ => OnLeaveServiceDischargeSelected(),
+                false, 4);
+        }
+
+        private void OnLeaveServiceInit(MenuCallbackArgs args)
+        {
+            try
+            {
                 var enlistment = EnlistmentBehavior.Instance;
-                var backgroundMesh = "encounter_looter"; // Safe fallback
-
-                if (enlistment?.CurrentLord?.Clan?.Kingdom?.Culture != null)
+                if (enlistment?.IsEnlisted != true)
                 {
-                    backgroundMesh = enlistment.CurrentLord.Clan.Kingdom.Culture.EncounterBackgroundMesh;
-                }
-                else if (enlistment?.CurrentLord?.Culture != null)
-                {
-                    backgroundMesh = enlistment.CurrentLord.Culture.EncounterBackgroundMesh;
+                    MBTextManager.SetTextVariable("LEAVE_SERVICE_TEXT",
+                        new TextObject("{=Enlisted_Status_NotEnlisted}You are not currently enlisted."));
+                    return;
                 }
 
-                args.MenuContext.SetBackgroundMeshName(backgroundMesh);
-
-                // Start wait to enable time controls for the wait menu
-                args.MenuContext.GameMenu.StartWait();
-
-                // Unlock time control so the player can change speed, but restore their prior state
-                Campaign.Current.SetTimeControlModeLock(false);
-
-                // Restore the captured time mode using stoppable equivalents, preserving Stop when paused
-                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
-                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
-                Campaign.Current.TimeControlMode = normalized;
-
-                // Initialize dynamic menu text on load
-                if (enlistment?.IsEnlisted == true)
-                {
-                    SetDynamicMenuText(enlistment);
-                }
-
-                RefreshDutySelectionDisplay(args);
-                _menuNeedsRefresh = true;
+                var sb = new StringBuilder();
+                sb.AppendLine("These actions remove you from service.");
+                sb.AppendLine();
+                sb.AppendLine($"Pay Tension: {enlistment.PayTension}/100");
+                sb.AppendLine($"Pending Discharge: {(enlistment.IsPendingDischarge ? "Yes" : "No")}");
+                MBTextManager.SetTextVariable("LEAVE_SERVICE_TEXT", sb.ToString().TrimEnd());
             }
-            catch (Exception ex)
+            catch
             {
-                ModLogger.Error("Interface", $"Error initializing duty selection menu: {ex.Message}");
+                MBTextManager.SetTextVariable("LEAVE_SERVICE_TEXT", "These actions remove you from service.");
             }
         }
 
-        /// <summary>
-        ///     Condition check for duty selection menu (same pattern as main menu).
-        /// </summary>
-        private bool OnDutySelectionCondition(MenuCallbackArgs args)
-        {
-            var isEnlisted = EnlistmentBehavior.Instance?.IsEnlisted == true;
-
-            // Don't refresh in condition methods - they're called too frequently during menu rendering
-            // Refresh is handled by the tick method with proper timing validation
-
-            return isEnlisted;
-        }
-
-        /// <summary>
-        ///     Tick handler for duty selection menu with proper timing validation.
-        /// </summary>
-        private void OnDutySelectionTick(MenuCallbackArgs args, CampaignTime dt)
-        {
-            try
-            {
-                // If no time state was captured yet (menu opened via native encounter system),
-                // capture current time now so we have a baseline for restoration
-                if (!QuartermasterManager.CapturedTimeMode.HasValue && Campaign.Current != null)
-                {
-                    QuartermasterManager.CapturedTimeMode = Campaign.Current.TimeControlMode;
-                }
-                
-                // NOTE: Time mode restoration is handled ONCE in menu init, not here.
-                // Previously this tick handler would restore CapturedTimeMode whenever it saw
-                // UnstoppableFastForward, but this fought with user input - when the user clicked
-                // fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
-                
-                // Validate time delta to prevent assertion failures
-                // Zero-delta-time updates can cause assertion failures in the rendering system
-                if (dt.ToSeconds <= 0)
-                {
-                    return; // Skip update if invalid time delta
-                }
-
-                // Refresh with timing validation (not every tick)
-                if (CampaignTime.Now - _lastMenuUpdate > CampaignTime.Seconds((long)_updateIntervalSeconds))
-                {
-                    RefreshDutySelectionDisplay(args);
-                    _lastMenuUpdate = CampaignTime.Now;
-                }
-
-                // Auto-exit if not enlisted
-                if (!EnlistmentBehavior.Instance?.IsEnlisted == true)
-                {
-                    GameMenu.ExitToLast();
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error("Interface", $"Error during duty selection tick: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        ///     Refresh duty selection display with dynamic checkmarks for current selections.
-        /// </summary>
-        private void RefreshDutySelectionDisplay(MenuCallbackArgs args = null)
+        private void OnLeaveServiceDischargeSelected()
         {
             try
             {
@@ -2635,464 +3710,215 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Build the duty selection status content string
-                // Formats information as "Label : Value" pairs displayed line by line
-                var statusContent = "";
-
-                // Current assignments with descriptions (enlistment guaranteed non-null after check above)
-                var currentDuty = GetDutyDisplayName(enlistment.SelectedDuty);
-                var currentProfession = enlistment.SelectedProfession == "none"
-                    ? "None"
-                    : GetProfessionDisplayName(enlistment.SelectedProfession);
-
-                statusContent += $"Current Duty : {currentDuty}\n";
-                statusContent += $"Current Profession : {currentProfession}\n\n";
-
-                // Add detailed descriptions for current assignments
-                var dutyDescription = GetDutyDescription(enlistment.SelectedDuty);
-                var professionDescription = GetProfessionDescription(enlistment.SelectedProfession);
-
-                statusContent += $"DUTY ASSIGNMENT: {dutyDescription}\n\n";
-                if (enlistment.SelectedProfession != "none")
+                if (enlistment.IsPendingDischarge)
                 {
-                    statusContent += $"PROFESSION: {professionDescription}\n\n";
+                    if (enlistment.CancelDischarge())
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=ct_discharge_cancelled}Pending discharge cancelled.").ToString()));
+                        QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                        GameMenu.SwitchToMenu(LeaveServiceMenuId);
+                    }
+                    return;
                 }
 
-                // Show the selected profession description instead of instructions
-                if (enlistment.SelectedProfession == "none")
+                InformationManager.ShowInquiry(new InquiryData(
+                    new TextObject("{=ct_request_discharge_confirm_title}Request Discharge").ToString(),
+                    new TextObject("{=ct_request_discharge_confirm_body}Request discharge now? It will resolve at the next pay muster.").ToString(),
+                    true,
+                    true,
+                    new TextObject("{=ct_yes}Yes").ToString(),
+                    new TextObject("{=ct_no}No").ToString(),
+                    () =>
+                    {
+                        if (enlistment.RequestDischarge())
+                        {
+                            InformationManager.DisplayMessage(new InformationMessage(
+                                new TextObject("{=ct_discharge_requested}Discharge requested. It will resolve at the next pay muster.").ToString()));
+                            QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
+                            GameMenu.SwitchToMenu(LeaveServiceMenuId);
+                        }
+                    },
+                    () => { }));
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-034", "Error in Leave Service discharge option", ex);
+            }
+        }
+
+        /// <summary>
+        /// Check if a decision slot is available and should be shown.
+        /// </summary>
+        private bool IsDecisionSlotAvailable(MenuCallbackArgs args, int slotIndex)
+        {
+            if (slotIndex >= _cachedDecisions.Count)
+            {
+                return false; // No decision in this slot
+            }
+
+            var decision = _cachedDecisions[slotIndex];
+            args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+
+            // Build tooltip with decision details
+            var tooltip = BuildDecisionTooltip(decision);
+            args.Tooltip = new TextObject(tooltip);
+
+            return true;
+        }
+
+        /// <summary>
+        /// Handler when a decision slot is selected.
+        /// Opens the full event screen for that decision.
+        /// </summary>
+        private void OnDecisionSlotSelected(MenuCallbackArgs args, int slotIndex)
+        {
+            try
+            {
+                if (slotIndex >= _cachedDecisions.Count)
                 {
-                    statusContent += "None";
-                }
-                else
-                {
-                    statusContent += GetProfessionDescription(enlistment.SelectedProfession);
+                    return;
                 }
 
-                // Set dynamic text variables for menu options with correct checkmarks
-                SetDynamicMenuText(enlistment);
+                var decision = _cachedDecisions[slotIndex];
+                var enlistment = EnlistmentBehavior.Instance;
 
-                // Use same text variable format as main menu
-                var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
-                if (menuContext != null)
+                if (decision == null || enlistment == null)
                 {
-                    var text = menuContext.GameMenu.GetText();
-                    text.SetTextVariable("DUTY_STATUS", "Report for Duty");
-                    text.SetTextVariable("DUTY_TEXT", statusContent);
+                    return;
                 }
-                else
+
+                ModLogger.Info("Interface", $"Player selected decision: {decision.Id}");
+
+                // Fire the decision through the modern event presenter
+                // This opens the LanceLifeEventScreen with full event experience
+                var decisionBehavior = DecisionEventBehavior.Instance;
+                if (decisionBehavior != null)
                 {
-                    // Fallback for compatibility
-                    MBTextManager.SetTextVariable("DUTY_STATUS", "Report for Duty");
-                    MBTextManager.SetTextVariable("DUTY_TEXT", statusContent);
+                    // First, exit the decisions submenu back to enlisted_status
+                    // This ensures clean menu state before opening the event screen
+                    GameMenu.SwitchToMenu("enlisted_status");
+
+                    // Fire the decision (opens event screen as overlay on top of enlisted_status)
+                    // When the event closes, restore the enlisted_status menu to ensure it's active
+                    decisionBehavior.FirePlayerDecision(decision.Id, onEventClosed: () =>
+                    {
+                        // Restore the main Enlisted menu after the event screen closes
+                        // This handles cases where the screen close might have deactivated the menu
+                        try
+                        {
+                            if (TaleWorlds.CampaignSystem.Campaign.Current != null &&
+                                EnlistmentBehavior.Instance?.IsEnlisted == true)
+                            {
+                                GameMenu.ActivateGameMenu("enlisted_status");
+                                ModLogger.Debug("Interface", "Restored enlisted_status menu after decision event");
+                            }
+                        }
+                        catch (Exception restoreEx)
+                        {
+                            ModLogger.Warn("Interface", $"Failed to restore menu after decision: {restoreEx.Message}");
+                        }
+                    });
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Interface", "Error refreshing duty selection display", ex);
+                ModLogger.ErrorCode("Interface", "E-UI-035", $"Failed to select decision slot {slotIndex}", ex);
+            }
+        }
 
-                // Error fallback
-                var menuContext = args?.MenuContext ?? Campaign.Current.CurrentMenuContext;
-                if (menuContext != null)
+        /// <summary>
+        /// Format the display text for a decision slot.
+        /// </summary>
+        private string GetDecisionSlotText(LanceLifeEventDefinition decision)
+        {
+            if (decision == null)
+            {
+                return string.Empty;
+            }
+
+            // Get title from event definition
+            var title = !string.IsNullOrWhiteSpace(decision.TitleFallback)
+                ? decision.TitleFallback
+                : decision.Id;
+
+            return title;
+        }
+
+        /// <summary>
+        /// Build tooltip text showing decision details.
+        /// </summary>
+        private string BuildDecisionTooltip(LanceLifeEventDefinition decision)
+        {
+            if (decision == null)
+            {
+                return string.Empty;
+            }
+
+            var lines = new List<string>();
+
+            // Setup/description text (truncated if too long)
+            var setup = !string.IsNullOrWhiteSpace(decision.SetupFallback)
+                ? decision.SetupFallback
+                : "Make a decision...";
+
+            if (setup.Length > 150)
+            {
+                setup = setup.Substring(0, 147) + "...";
+            }
+            lines.Add(setup);
+
+            // Add empty line
+            lines.Add("");
+
+            // Cooldown info
+            var state = DecisionEventBehavior.Instance?.State;
+            if (state != null && decision.Timing?.CooldownDays > 0)
+            {
+                var daysSince = state.GetDaysSinceEventFired(decision.Id);
+                if (daysSince < int.MaxValue)
                 {
-                    var text = menuContext.GameMenu.GetText();
-                    text.SetTextVariable("DUTY_STATUS", "Error");
-                    text.SetTextVariable("DUTY_TEXT", "Assignment information unavailable.");
+                    var daysRemaining = Math.Max(0, decision.Timing.CooldownDays - daysSince);
+                    if (daysRemaining > 0)
+                    {
+                        lines.Add($"Cooldown: {daysRemaining} days remaining");
+                    }
+                    else
+                    {
+                        lines.Add("Status: Ready");
+                    }
+                }
+                else
+                {
+                    lines.Add("Status: Ready");
                 }
             }
-        }
-
-        /// <summary>
-        ///     Set dynamic text variables for menu options based on current selections.
-        /// </summary>
-        private void SetDynamicMenuText(EnlistmentBehavior enlistment)
-        {
-            var selectedDuty = enlistment.SelectedDuty;
-            var selectedProfession = enlistment.SelectedProfession;
-
-            // Helper to format option text
-            TextObject FormatOption(string id, string nameText, string currentId)
-            {
-                var name = new TextObject(nameText);
-                var symbol = new TextObject(id == currentId
-                    ? "{=Enlisted_Symbol_Selected}✓ {NAME}"
-                    : "{=Enlisted_Symbol_Unselected}○ {NAME}");
-                symbol.SetTextVariable("NAME", name);
-                return symbol;
-            }
-
-            // DUTY TEXT VARIABLES
-            MBTextManager.SetTextVariable("DUTY_ENLISTED_TEXT",
-                FormatOption("enlisted", "{=Enlisted_Duty_Name_Enlisted}Enlisted", selectedDuty));
-
-            MBTextManager.SetTextVariable("DUTY_FORAGER_TEXT",
-                FormatOption("forager", "{=Enlisted_Duty_Name_Forager}Forager", selectedDuty));
-
-            MBTextManager.SetTextVariable("DUTY_SENTRY_TEXT",
-                FormatOption("sentry", "{=Enlisted_Duty_Name_Sentry}Sentry", selectedDuty));
-
-            MBTextManager.SetTextVariable("DUTY_MESSENGER_TEXT",
-                FormatOption("messenger", "{=Enlisted_Duty_Name_Messenger}Messenger", selectedDuty));
-
-            MBTextManager.SetTextVariable("DUTY_PIONEER_TEXT",
-                FormatOption("pioneer", "{=Enlisted_Duty_Name_Pioneer}Pioneer", selectedDuty));
-
-            // PROFESSION TEXT VARIABLES
-            MBTextManager.SetTextVariable("PROF_QUARTERHAND_TEXT",
-                FormatOption("quarterhand", "{=Enlisted_Prof_Name_Quarterhand}Quarterhand", selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_FIELD_MEDIC_TEXT",
-                FormatOption("field_medic", "{=Enlisted_Prof_Name_FieldMedic}Field Medic", selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_SIEGEWRIGHT_TEXT",
-                FormatOption("siegewright_aide", "{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide",
-                    selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_DRILLMASTER_TEXT",
-                FormatOption("drillmaster", "{=Enlisted_Prof_Name_Drillmaster}Drillmaster", selectedProfession));
-
-            MBTextManager.SetTextVariable("PROF_SABOTEUR_TEXT",
-                FormatOption("saboteur", "{=Enlisted_Prof_Name_Saboteur}Saboteur", selectedProfession));
-        }
-
-        #region Duty Selection Conditions and Actions
-
-        // Duty availability conditions with localized tooltips explaining bonuses
-        private bool IsDutyEnlistedAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-            args.Tooltip = new TextObject("{=duty_tooltip_enlisted}Standard military service. Train with your formation and earn base wages.");
-            return true;
-        }
-
-        private bool IsDutyForagerAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-            args.Tooltip = new TextObject("{=duty_tooltip_forager}Gather food and supplies for the army. Earn bonus XP and improved wages.");
-            return true;
-        }
-
-        private bool IsDutySentryAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.DefendAction;
-            args.Tooltip = new TextObject("{=duty_tooltip_sentry}Guard the camp perimeter. Improved detection of enemies and bonus relation with your lord.");
-            return true;
-        }
-
-        private bool IsDutyMessengerAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Mission;
-            args.Tooltip = new TextObject("{=duty_tooltip_messenger}Deliver messages and scout ahead. Bonus riding/athletics XP and faster travel.");
-            return true;
-        }
-
-        private bool IsDutyPioneerAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
-            args.Tooltip = new TextObject("{=duty_tooltip_pioneer}Build fortifications and siege works. Bonus engineering XP and siege effectiveness.");
-            return true;
-        }
-
-        // PROFESSION CONDITIONS with tier requirements shown in localized tooltips
-        private const int ProfessionTierRequirement = 3;
-
-        private bool IsProfQuarterhandAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Trade;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
-            }
             else
             {
-                args.Tooltip = new TextObject("{=prof_tooltip_quarterhand}Manage supplies and inventory. 15% better trade prices and +50 carry capacity.");
+                lines.Add("Status: Ready");
             }
-            return true;
-        }
 
-        private bool IsProfFieldMedicAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Manage;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
+            // First option costs (as preview)
+            var firstOption = decision.Options?.FirstOrDefault();
+            if (firstOption?.Costs != null)
             {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
+                var costs = new List<string>();
+                if (firstOption.Costs.Gold > 0)
+                    costs.Add($"{firstOption.Costs.Gold} gold");
+                if (firstOption.Costs.Fatigue > 0)
+                    costs.Add($"{firstOption.Costs.Fatigue} fatigue");
+
+                if (costs.Count > 0)
+                {
+                    lines.Add($"Cost: {string.Join(", ", costs)}");
+                }
             }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_medic}Tend to wounded soldiers. Faster healing, bonus medicine XP, and morale boost.");
-            }
-            return true;
-        }
 
-        private bool IsProfSiegewrightAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.SiegeAmbush;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_siege}Assist siege engineers. Faster siege construction and bonus engineering XP.");
-            }
-            return true;
-        }
-
-        private bool IsProfDrillmasterAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_drill}Train soldiers in formation fighting. Bonus leadership XP and troop morale.");
-            }
-            return true;
-        }
-
-        private bool IsProfSaboteurAvailable(MenuCallbackArgs args)
-        {
-            args.optionLeaveType = GameMenuOption.LeaveType.Raid;
-            var tier = EnlistmentBehavior.Instance?.EnlistmentTier ?? 1;
-            if (tier < ProfessionTierRequirement)
-            {
-                args.IsEnabled = false;
-                args.Tooltip = new TextObject("{=prof_tooltip_tier_locked}Requires Tier 3 to unlock this profession.");
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=prof_tooltip_saboteur}Conduct covert operations. Bonus roguery XP and special mission access.");
-            }
-            return true;
-        }
-
-        // DUTY ACTIONS
-        private void OnDutyEnlistedSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("enlisted", "{=Enlisted_Duty_Name_Enlisted}Enlisted");
-        }
-
-        private void OnDutyForagerSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("forager", "{=Enlisted_Duty_Name_Forager}Forager");
-        }
-
-        private void OnDutySentrySelected(MenuCallbackArgs args)
-        {
-            SelectDuty("sentry", "{=Enlisted_Duty_Name_Sentry}Sentry");
-        }
-
-        private void OnDutyMessengerSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("messenger", "{=Enlisted_Duty_Name_Messenger}Messenger");
-        }
-
-        private void OnDutyPioneerSelected(MenuCallbackArgs args)
-        {
-            SelectDuty("pioneer", "{=Enlisted_Duty_Name_Pioneer}Pioneer");
-        }
-
-        // PROFESSION ACTIONS (with tier checking)
-
-        private void OnProfQuarterhandSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("quarterhand", "{=Enlisted_Prof_Name_Quarterhand}Quarterhand");
-        }
-
-        private void OnProfFieldMedicSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("field_medic", "{=Enlisted_Prof_Name_FieldMedic}Field Medic");
-        }
-
-        private void OnProfSiegewrightSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("siegewright_aide",
-                "{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide");
-        }
-
-        private void OnProfDrillmasterSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("drillmaster", "{=Enlisted_Prof_Name_Drillmaster}Drillmaster");
-        }
-
-        private void OnProfSaboteurSelected(MenuCallbackArgs args)
-        {
-            SelectProfessionWithTierCheck("saboteur", "{=Enlisted_Prof_Name_Saboteur}Saboteur");
-        }
-
-        private void OnDutyBackSelected(MenuCallbackArgs args)
-        {
-            // Capture time state BEFORE menu switch to preserve player's time control
-            QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-            GameMenu.SwitchToMenu("enlisted_status");
+            return string.Join("\n", lines);
         }
 
         #endregion
 
-        #region Duty Selection Helper Methods
-
-        /// <summary>
-        ///     Select a new duty and show confirmation.
-        /// </summary>
-        private void SelectDuty(string dutyId, string dutyName)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted == true)
-            {
-                enlistment.SetSelectedDuty(dutyId);
-
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_DutyChanged}Duty changed to {DUTY}. Your new daily skill training has begun.");
-                message.SetTextVariable("DUTY", new TextObject(dutyName));
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-
-                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
-            }
-        }
-
-        /// <summary>
-        ///     Select a new profession and show confirmation.
-        /// </summary>
-        private void SelectProfession(string professionId, string professionName)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted == true)
-            {
-                enlistment.SetSelectedProfession(professionId);
-
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_ProfessionChanged}Profession changed to {PROFESSION}. Your specialized training has begun.");
-                message.SetTextVariable("PROFESSION", new TextObject(professionName));
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-
-                GameMenu.SwitchToMenu("enlisted_duty_selection"); // Refresh menu
-            }
-        }
-
-        /// <summary>
-        ///     Select profession with tier requirement check.
-        /// </summary>
-        private void SelectProfessionWithTierCheck(string professionId, string professionName)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment?.IsEnlisted != true)
-            {
-                return;
-            }
-
-            // Check tier requirement
-            if (enlistment.EnlistmentTier < 3)
-            {
-                var message =
-                    new TextObject(
-                        "{=Enlisted_Message_Tier3Required}You must reach Tier 3 before selecting professions. Continue your service to unlock specialized roles.");
-                InformationManager.DisplayMessage(new InformationMessage(message.ToString()));
-                return;
-            }
-
-            // Tier 3+, allow selection
-            SelectProfession(professionId, professionName);
-        }
-
-        /// <summary>
-        ///     Get display name for duty ID.
-        /// </summary>
-        private string GetDutyDisplayName(string dutyId)
-        {
-            return dutyId switch
-            {
-                "enlisted" => new TextObject("{=Enlisted_Duty_Name_Enlisted}Enlisted").ToString(),
-                "forager" => new TextObject("{=Enlisted_Duty_Name_Forager}Forager").ToString(),
-                "sentry" => new TextObject("{=Enlisted_Duty_Name_Sentry}Sentry").ToString(),
-                "messenger" => new TextObject("{=Enlisted_Duty_Name_Messenger}Messenger").ToString(),
-                "pioneer" => new TextObject("{=Enlisted_Duty_Name_Pioneer}Pioneer").ToString(),
-                _ => "Unknown"
-            };
-        }
-
-        /// <summary>
-        ///     Get detailed description for duty ID.
-        /// </summary>
-        private string GetDutyDescription(string dutyId)
-        {
-            return dutyId switch
-            {
-                "enlisted" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Enlisted}You handle the everyday soldier work: picket shifts, camp chores, hauling, drill, short patrols. (+4 XP for non-formation skills)")
-                    .ToString(),
-                "forager" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Forager}Work nearby farms/hamlets to keep rations coming—barter, levy, or quietly procure supplies. (Skills: Charm, Roguery, Trade)")
-                    .ToString(),
-                "sentry" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Sentry}Man the picket posts, patrol around the entrenchments and palisade, and call the alarm early. (Skills: Scouting, Tactics)")
-                    .ToString(),
-                "messenger" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Messenger}Run dispatches between the command tent, outposts, and allied banners; get through checkpoints and return with written replies. (Skills: Scouting, Charm, Trade)")
-                    .ToString(),
-                "pioneer" => new TextObject(
-                        "{=Enlisted_Duty_Desc_Pioneer}Cut timber and dig; drain around tents, shore up breastworks, lay corduroy over mud, and keep tools and wagons serviceable. (Skills: Engineering, Steward, Smithing)")
-                    .ToString(),
-                _ => "Military service duties."
-            };
-        }
-
-        /// <summary>
-        ///     Get display name for profession ID.
-        /// </summary>
-        private string GetProfessionDisplayName(string professionId)
-        {
-            return professionId switch
-            {
-                "none" => "None", // Default but invisible in menu
-                "quarterhand" => new TextObject("{=Enlisted_Prof_Name_Quarterhand}Quarterhand").ToString(),
-                "field_medic" => new TextObject("{=Enlisted_Prof_Name_FieldMedic}Field Medic").ToString(),
-                "siegewright_aide" => new TextObject("{=Enlisted_Prof_Name_SiegewrightAide}Siegewright's Aide")
-                    .ToString(),
-                "drillmaster" => new TextObject("{=Enlisted_Prof_Name_Drillmaster}Drillmaster").ToString(),
-                "saboteur" => new TextObject("{=Enlisted_Prof_Name_Saboteur}Saboteur").ToString(),
-                _ => "Unknown"
-            };
-        }
-
-        /// <summary>
-        ///     Get detailed description for profession ID.
-        /// </summary>
-        private string GetProfessionDescription(string professionId)
-        {
-            return professionId switch
-            {
-                "none" => new TextObject("{=Enlisted_Prof_Desc_None}No specialized profession assigned.").ToString(),
-                "quarterhand" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Quarterhand}Post billet lists, route carts around trenches, book barns/inns, and settle accounts. (Skills: Steward, Trade)")
-                    .ToString(),
-                "field_medic" => new TextObject(
-                        "{=Enlisted_Prof_Desc_FieldMedic}Run the aid tent by the stockade; clean and dress wounds, set bones, and keep salves stocked. (Skill: Medicine)")
-                    .ToString(),
-                "siegewright_aide" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Siegewright}Work the siege park; shape beams, lash ladders and gabions, and patch engines between bombardments. (Skills: Engineering, Smithing)")
-                    .ToString(),
-                "drillmaster" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Drillmaster}Run morning drill on the parade ground; dress ranks, time volleys, rehearse signals, and sharpen maneuvers. (Skills: Leadership, Tactics)")
-                    .ToString(),
-                "saboteur" => new TextObject(
-                        "{=Enlisted_Prof_Desc_Saboteur}Specialized reconnaissance and sabotage operations behind enemy lines. (Skills: Roguery, Engineering, Smithing)")
-                    .ToString(),
-                _ => new TextObject("{=Enlisted_Prof_Desc_Unknown}Specialized military profession.").ToString()
-            };
-        }
-
-        #endregion
 
         // Note: Removed unused Military Styling Helper Methods region (GetFormationSymbol, GetProgressBar)
     }

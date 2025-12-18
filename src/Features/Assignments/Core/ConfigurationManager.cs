@@ -23,7 +23,14 @@ namespace Enlisted.Features.Assignments.Core
         private static LancesFeatureConfig _cachedLancesConfig;
         private static LanceLifeConfig _cachedLanceLifeConfig;
         private static QuartermasterConfig _cachedQuartermasterConfig;
+        private static CampLifeConfig _cachedCampLifeConfig;
+        private static EscalationConfig _cachedEscalationConfig;
+        private static LancePersonasConfig _cachedLancePersonasConfig;
+        private static PlayerConditionsConfig _cachedPlayerConditionsConfig;
+        private static CampActivitiesConfig _cachedCampActivitiesConfig;
         private static LanceCatalogConfig _cachedLanceCatalogConfig;
+        private static LanceLifeEventsConfig _cachedLanceLifeEventsConfig;
+        private static Lances.Events.Decisions.DecisionEventConfig _cachedDecisionEventsConfig;
 
         /// <summary>
         ///     Load duties system configuration with comprehensive error handling and schema validation.
@@ -42,7 +49,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Duties config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-001", $"Duties config not found at: {configPath}");
                     return CreateDefaultDutiesConfig();
                 }
 
@@ -52,7 +59,8 @@ namespace Enlisted.Features.Assignments.Core
                 // Schema validation
                 if (config?.SchemaVersion != 1)
                 {
-                    ModLogger.Error("Config",
+                    ModLogger.ErrorCode("Config",
+                        "E-CONFIG-002",
                         $"Unsupported duties config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultDutiesConfig();
                 }
@@ -60,9 +68,12 @@ namespace Enlisted.Features.Assignments.Core
                 // Validate configuration structure and required fields
                 if (config.Duties == null || config.Duties.Count == 0)
                 {
-                    ModLogger.Error("Config", "Duties config contains no duty definitions");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-003", "Duties config contains no duty definitions");
                     return CreateDefaultDutiesConfig();
                 }
+
+                // Phase 4.5: Expansion gating (War Sails / NavalDLC).
+                ApplyExpansionGates(config);
 
                 _cachedDutiesConfig = config;
                 ModLogger.Info("Config", $"Duties config loaded successfully: {config.Duties.Count} duties");
@@ -70,12 +81,12 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (JsonException ex)
             {
-                ModLogger.Error("Config", "JSON parsing error in duties config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-004", "JSON parsing error in duties config", ex);
                 return CreateDefaultDutiesConfig();
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Unexpected error loading duties config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-005", "Unexpected error loading duties config", ex);
                 return CreateDefaultDutiesConfig();
             }
         }
@@ -123,6 +134,91 @@ namespace Enlisted.Features.Assignments.Core
             return defaultConfig;
         }
 
+        private static void ApplyExpansionGates(DutiesSystemConfig config)
+        {
+            try
+            {
+                if (config == null)
+                {
+                    return;
+                }
+
+                var hasWarSails = IsWarSailsLoaded();
+
+                // Filter duties
+                if (config.Duties != null && config.Duties.Count > 0)
+                {
+                    var toRemove = config.Duties
+                        .Where(kvp => ShouldSkipForExpansion(kvp.Value, hasWarSails))
+                        .Select(kvp => kvp.Key)
+                        .ToList();
+
+                    if (!hasWarSails && toRemove.Count > 0)
+                    {
+                        // Non-spammy: log once per session, but only when we actually disable content.
+                        ModLogger.WarnCodeOnce("warsails_missing_gated_duties", "Config", "W-DLC-001",
+                            $"War Sails (NavalDLC) not detected; disabled {toRemove.Count} naval duty definition(s).");
+                    }
+
+                    foreach (var key in toRemove)
+                    {
+                        config.Duties.Remove(key);
+                    }
+                }
+
+                // NOTE: Professions were removed from the duties system in favor of unified duty definitions.
+                // All duties (including former "professions") are now in the Duties dictionary.
+            }
+            catch (Exception ex)
+            {
+                ModLogger.WarnCode("Config", "W-CONFIG-001",
+                    $"Expansion gating failed; proceeding without gating: {ex.Message}");
+            }
+        }
+
+        private static bool ShouldSkipForExpansion(DutyDefinition def, bool hasWarSails)
+        {
+            if (def == null)
+            {
+                return false;
+            }
+
+            // Phase 4.5: Gate Naval duties on War Sails (NavalDLC).
+            // This is intentionally tolerant: duties declare "naval" formation, and we drop them if the DLC isn't present.
+            if (def.RequiredFormations != null &&
+                def.RequiredFormations.Any(f => string.Equals(f, "naval", StringComparison.OrdinalIgnoreCase)))
+            {
+                return !hasWarSails;
+            }
+
+            return false;
+        }
+
+        private static bool IsWarSailsLoaded()
+        {
+            try
+            {
+                // Naval DLC assembly name is typically "NavalDLC". Avoid direct references.
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+                foreach (var a in assemblies)
+                {
+                    var name = a.GetName().Name ?? string.Empty;
+                    if (string.Equals(name, "NavalDLC", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                // Fallback: type check (works if the assembly is loaded but name lookup is unreliable).
+                var t = Type.GetType("NavalDLC.CampaignBehaviors.RaftStateCampaignBehavior, NavalDLC");
+                return t != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         /// <summary>
         ///     Get the full path to a ModuleData configuration file.
         ///     Works with any Bannerlord installation location.
@@ -143,7 +239,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Error determining config path for {fileName}", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-006", $"Error determining config path for {fileName}", ex);
                 // Fallback to a safe non-null default under application base directory
                 return Path.Combine(AppContext.BaseDirectory, "ModuleData", "Enlisted", fileName);
             }
@@ -175,25 +271,25 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Progression config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-007", $"Progression config not found at: {configPath}");
                     return CreateDefaultProgressionConfig();
                 }
 
                 var jsonContent = File.ReadAllText(configPath);
                 var config = JsonConvert.DeserializeObject<ProgressionConfig>(jsonContent);
 
-                // Schema validation
-                if (config?.SchemaVersion != 1)
+                // Schema validation (support versions 1 and 2 - v2 adds culture_ranks)
+                if (config?.SchemaVersion != 1 && config?.SchemaVersion != 2)
                 {
-                    ModLogger.Error("Config",
-                        $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-008",
+                        $"Unsupported progression config schema version: {config?.SchemaVersion}. Expected: 1 or 2");
                     return CreateDefaultProgressionConfig();
                 }
 
                 // Basic validation
                 if (config.TierProgression?.Requirements == null || config.TierProgression.Requirements.Count == 0)
                 {
-                    ModLogger.Error("Config", "Progression config contains no tier requirements");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-009", "Progression config contains no tier requirements");
                     return CreateDefaultProgressionConfig();
                 }
 
@@ -204,12 +300,12 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (JsonException ex)
             {
-                ModLogger.Error("Config", "JSON parsing error in progression config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-010", "JSON parsing error in progression config", ex);
                 return CreateDefaultProgressionConfig();
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Unexpected error loading progression config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-011", "Unexpected error loading progression config", ex);
                 return CreateDefaultProgressionConfig();
             }
         }
@@ -332,12 +428,106 @@ namespace Enlisted.Features.Assignments.Core
 
         /// <summary>
         ///     Get the display name for a specific tier from progression config.
+        ///     Returns the generic/mercenary rank name.
         /// </summary>
         public static string GetTierName(int tier)
         {
             var config = LoadProgressionConfig();
             var requirement = config?.TierProgression?.Requirements?.Find(r => r.Tier == tier);
             return requirement?.Name ?? $"Tier {tier}";
+        }
+
+        /// <summary>
+        ///     Get the culture-specific rank title for a tier.
+        ///     Falls back to the generic tier name if culture not found.
+        /// </summary>
+        /// <param name="tier">The tier (1-9)</param>
+        /// <param name="cultureId">The culture StringId (e.g., "empire", "vlandia", "sturgia")</param>
+        public static string GetCultureRankTitle(int tier, string cultureId)
+        {
+            if (tier < 1 || tier > 9)
+            {
+                return GetTierName(tier);
+            }
+
+            var config = LoadProgressionConfig();
+            if (config?.CultureRanks == null || string.IsNullOrWhiteSpace(cultureId))
+            {
+                return GetTierName(tier);
+            }
+
+            // Normalize culture ID to match config keys
+            var normalizedCulture = NormalizeCultureId(cultureId);
+
+            if (config.CultureRanks.TryGetValue(normalizedCulture, out var cultureConfig) &&
+                cultureConfig?.Ranks != null &&
+                cultureConfig.Ranks.Count >= tier)
+            {
+                // Ranks array is 0-indexed, tier is 1-indexed
+                return cultureConfig.Ranks[tier - 1];
+            }
+
+            // Fallback to mercenary/generic if culture not found
+            if (config.CultureRanks.TryGetValue("mercenary", out var mercConfig) &&
+                mercConfig?.Ranks != null &&
+                mercConfig.Ranks.Count >= tier)
+            {
+                return mercConfig.Ranks[tier - 1];
+            }
+
+            return GetTierName(tier);
+        }
+
+        /// <summary>
+        ///     Normalizes a culture StringId to match progression config keys.
+        ///     Handles empire variants, minor factions, and mods.
+        /// </summary>
+        private static string NormalizeCultureId(string cultureId)
+        {
+            if (string.IsNullOrWhiteSpace(cultureId))
+            {
+                return "mercenary";
+            }
+
+            var lower = cultureId.ToLowerInvariant();
+
+            // Empire variants
+            if (lower.Contains("empire") || lower == "calradia_empire" || lower == "rome_reborn")
+            {
+                return "empire";
+            }
+
+            // Direct matches
+            if (lower == "vlandia" || lower == "sturgia" || lower == "khuzait" || 
+                lower == "battania" || lower == "aserai")
+            {
+                return lower;
+            }
+
+            // Mod culture mappings (add as needed)
+            if (lower.Contains("viking") || lower.Contains("nord"))
+            {
+                return "sturgia";
+            }
+            if (lower.Contains("mongol") || lower.Contains("steppe"))
+            {
+                return "khuzait";
+            }
+            if (lower.Contains("celtic") || lower.Contains("highland"))
+            {
+                return "battania";
+            }
+            if (lower.Contains("desert") || lower.Contains("arab"))
+            {
+                return "aserai";
+            }
+            if (lower.Contains("feudal") || lower.Contains("knight"))
+            {
+                return "vlandia";
+            }
+
+            // Default to mercenary for unknown cultures
+            return "mercenary";
         }
 
         /// <summary>
@@ -398,7 +588,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-012", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultFinanceConfig();
                 }
 
@@ -417,7 +607,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading finance config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-013", "Error loading finance config", ex);
                 return CreateDefaultFinanceConfig();
             }
         }
@@ -459,7 +649,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-014", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultGameplayConfig();
                 }
 
@@ -510,7 +700,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading gameplay config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-015", "Error loading gameplay config", ex);
                 return CreateDefaultGameplayConfig();
             }
         }
@@ -540,7 +730,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-016", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultRetirementConfig();
                 }
 
@@ -592,7 +782,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading retirement config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-017", "Error loading retirement config", ex);
                 return CreateDefaultRetirementConfig();
             }
         }
@@ -622,7 +812,7 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (!File.Exists(configPath))
                 {
-                    ModLogger.Error("Config", $"Enlisted config not found at: {configPath}");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-018", $"Enlisted config not found at: {configPath}");
                     return CreateDefaultLancesFeatureConfig();
                 }
 
@@ -642,7 +832,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Error loading lances feature config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-019", "Error loading lances feature config", ex);
                 return CreateDefaultLancesFeatureConfig();
             }
         }
@@ -672,7 +862,7 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load quartermaster config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-020", "Failed to load quartermaster config; using defaults", ex);
                 _cachedQuartermasterConfig = new QuartermasterConfig();
                 return _cachedQuartermasterConfig;
             }
@@ -703,9 +893,199 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", $"Failed to load lance life config, using defaults. Error: {ex.Message}");
+                ModLogger.ErrorCode("Config", "E-CONFIG-021", "Failed to load lance life config; using defaults", ex);
                 _cachedLanceLifeConfig = new LanceLifeConfig();
                 return _cachedLanceLifeConfig;
+            }
+        }
+
+        public static CampLifeConfig LoadCampLifeConfig()
+        {
+            if (_cachedCampLifeConfig != null)
+            {
+                return _cachedCampLifeConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for camp life");
+                    _cachedCampLifeConfig = new CampLifeConfig();
+                    return _cachedCampLifeConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedCampLifeConfig = fullConfig?.CampLife ?? new CampLifeConfig();
+                return _cachedCampLifeConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-022", "Failed to load camp life config; using defaults", ex);
+                _cachedCampLifeConfig = new CampLifeConfig();
+                return _cachedCampLifeConfig;
+            }
+        }
+
+        public static EscalationConfig LoadEscalationConfig()
+        {
+            if (_cachedEscalationConfig != null)
+            {
+                return _cachedEscalationConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for escalation");
+                    _cachedEscalationConfig = new EscalationConfig();
+                    return _cachedEscalationConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedEscalationConfig = fullConfig?.Escalation ?? new EscalationConfig();
+                return _cachedEscalationConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-023", "Failed to load escalation config; using defaults", ex);
+                _cachedEscalationConfig = new EscalationConfig();
+                return _cachedEscalationConfig;
+            }
+        }
+
+        public static LancePersonasConfig LoadLancePersonasConfig()
+        {
+            if (_cachedLancePersonasConfig != null)
+            {
+                return _cachedLancePersonasConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for lance personas");
+                    _cachedLancePersonasConfig = new LancePersonasConfig();
+                    return _cachedLancePersonasConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedLancePersonasConfig = fullConfig?.LancePersonas ?? new LancePersonasConfig();
+                return _cachedLancePersonasConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-024", "Failed to load lance personas config; using defaults", ex);
+                _cachedLancePersonasConfig = new LancePersonasConfig();
+                return _cachedLancePersonasConfig;
+            }
+        }
+
+        public static PlayerConditionsConfig LoadPlayerConditionsConfig()
+        {
+            if (_cachedPlayerConditionsConfig != null)
+            {
+                return _cachedPlayerConditionsConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for player conditions");
+                    _cachedPlayerConditionsConfig = new PlayerConditionsConfig();
+                    return _cachedPlayerConditionsConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedPlayerConditionsConfig = fullConfig?.PlayerConditions ?? new PlayerConditionsConfig();
+                return _cachedPlayerConditionsConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-025", "Failed to load player conditions config; using defaults", ex);
+                _cachedPlayerConditionsConfig = new PlayerConditionsConfig();
+                return _cachedPlayerConditionsConfig;
+            }
+        }
+
+        public static CampActivitiesConfig LoadCampActivitiesConfig()
+        {
+            if (_cachedCampActivitiesConfig != null)
+            {
+                return _cachedCampActivitiesConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for camp activities");
+                    _cachedCampActivitiesConfig = new CampActivitiesConfig();
+                    return _cachedCampActivitiesConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedCampActivitiesConfig = fullConfig?.CampActivities ?? new CampActivitiesConfig();
+                return _cachedCampActivitiesConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-026", "Failed to load camp activities config; using defaults", ex);
+                _cachedCampActivitiesConfig = new CampActivitiesConfig();
+                return _cachedCampActivitiesConfig;
+            }
+        }
+
+        /// <summary>
+        /// Phase 0 (Lance Life Events): feature gate and data folder selection.
+        /// Loaded from the lance_life_events section of enlisted_config.json.
+        /// </summary>
+        public static LanceLifeEventsConfig LoadLanceLifeEventsConfig()
+        {
+            if (_cachedLanceLifeEventsConfig != null)
+            {
+                return _cachedLanceLifeEventsConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for lance life events");
+                    _cachedLanceLifeEventsConfig = new LanceLifeEventsConfig();
+                    return _cachedLanceLifeEventsConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedLanceLifeEventsConfig = fullConfig?.LanceLifeEvents ?? new LanceLifeEventsConfig();
+                return _cachedLanceLifeEventsConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-027", "Failed to load lance life events config; using defaults", ex);
+                _cachedLanceLifeEventsConfig = new LanceLifeEventsConfig();
+                return _cachedLanceLifeEventsConfig;
             }
         }
 
@@ -717,6 +1097,41 @@ namespace Enlisted.Features.Assignments.Core
                 LanceSelectionCount = 3,
                 UseCultureWeighting = true
             };
+        }
+
+        /// <summary>
+        /// Decision Events (Track D2): CK3-style decision system configuration.
+        /// Loaded from the decision_events section of enlisted_config.json.
+        /// </summary>
+        public static Lances.Events.Decisions.DecisionEventConfig LoadDecisionEventsConfig()
+        {
+            if (_cachedDecisionEventsConfig != null)
+            {
+                return _cachedDecisionEventsConfig;
+            }
+
+            try
+            {
+                var configPath = GetModuleDataPath("enlisted_config.json");
+                if (!File.Exists(configPath))
+                {
+                    ModLogger.Warn("Config", "enlisted_config.json not found - using defaults for decision events");
+                    _cachedDecisionEventsConfig = new Lances.Events.Decisions.DecisionEventConfig();
+                    return _cachedDecisionEventsConfig;
+                }
+
+                var jsonContent = File.ReadAllText(configPath);
+                var fullConfig = JsonConvert.DeserializeObject<EnlistedFullConfig>(jsonContent);
+
+                _cachedDecisionEventsConfig = fullConfig?.DecisionEvents ?? new Lances.Events.Decisions.DecisionEventConfig();
+                return _cachedDecisionEventsConfig;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Config", "E-CONFIG-028", "Failed to load decision events config; using defaults", ex);
+                _cachedDecisionEventsConfig = new Lances.Events.Decisions.DecisionEventConfig();
+                return _cachedDecisionEventsConfig;
+            }
         }
 
         /// <summary>
@@ -745,14 +1160,14 @@ namespace Enlisted.Features.Assignments.Core
 
                 if (config?.SchemaVersion != 1)
                 {
-                    ModLogger.Error("Config",
+                    ModLogger.ErrorCode("Config", "E-CONFIG-029",
                         $"Unsupported lances config schema version: {config?.SchemaVersion}. Expected: 1");
                     return CreateDefaultLanceCatalog();
                 }
 
                 if (config.StyleDefinitions == null || config.StyleDefinitions.Count == 0)
                 {
-                    ModLogger.Error("Config", "Lances config contains no style definitions");
+                    ModLogger.ErrorCode("Config", "E-CONFIG-030", "Lances config contains no style definitions");
                     return CreateDefaultLanceCatalog();
                 }
 
@@ -763,12 +1178,12 @@ namespace Enlisted.Features.Assignments.Core
             }
             catch (JsonException ex)
             {
-                ModLogger.Error("Config", "JSON parsing error in lances config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-031", "JSON parsing error in lances config", ex);
                 return CreateDefaultLanceCatalog();
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Config", "Unexpected error loading lances config", ex);
+                ModLogger.ErrorCode("Config", "E-CONFIG-032", "Unexpected error loading lances config", ex);
                 return CreateDefaultLanceCatalog();
             }
         }
@@ -1006,9 +1421,164 @@ namespace Enlisted.Features.Assignments.Core
 
         [JsonProperty("quartermaster")] public QuartermasterConfig Quartermaster { get; set; }
 
+        [JsonProperty("camp_life")] public CampLifeConfig CampLife { get; set; }
+
+        [JsonProperty("escalation")] public EscalationConfig Escalation { get; set; }
+
+        [JsonProperty("lance_personas")] public LancePersonasConfig LancePersonas { get; set; }
+
+        [JsonProperty("player_conditions")] public PlayerConditionsConfig PlayerConditions { get; set; }
+
+        [JsonProperty("camp_activities")] public CampActivitiesConfig CampActivities { get; set; }
+
         [JsonProperty("lances")] public LancesFeatureConfig Lances { get; set; }
 
         [JsonProperty("lance_life")] public LanceLifeConfig LanceLife { get; set; }
+
+        [JsonProperty("lance_life_events")] public LanceLifeEventsConfig LanceLifeEvents { get; set; }
+
+        [JsonProperty("decision_events")] public Lances.Events.Decisions.DecisionEventConfig DecisionEvents { get; set; }
+    }
+
+    /// <summary>
+    /// Phase 0: Lance Life Events (duty/training/general/onboarding/threshold) delivery pipeline.
+    /// This config exists to provide a safe feature flag + rollback toggle before the system is wired into gameplay.
+    /// </summary>
+    public class LanceLifeEventsConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; } = true;
+
+        // Folder under ModuleData/Enlisted/ that contains event JSON files (Phase 5 content conversion).
+        [JsonProperty("events_folder")] public string EventsFolder { get; set; } = "Events";
+
+        // Phase 2: automatic scheduling (tick evaluation + queueing).
+        [JsonProperty("automatic")] public LanceLifeEventsAutomaticConfig Automatic { get; set; } = new LanceLifeEventsAutomaticConfig();
+
+        // Phase 3: player-initiated events surfaced in Camp Activities menu.
+        [JsonProperty("player_initiated")] public LanceLifeEventsPlayerInitiatedConfig PlayerInitiated { get; set; } = new LanceLifeEventsPlayerInitiatedConfig();
+
+        // Phase 4: onboarding state machine (stage/track/variant).
+        [JsonProperty("onboarding")] public LanceLifeEventsOnboardingConfig Onboarding { get; set; } = new LanceLifeEventsOnboardingConfig();
+
+        // Phase 5b: native incident channel delivery (MapState.NextIncident). Disabled by default for safe rollout.
+        [JsonProperty("incident_channel")] public LanceLifeEventsIncidentChannelConfig IncidentChannel { get; set; } =
+            new LanceLifeEventsIncidentChannelConfig();
+    }
+
+    public class LanceLifeEventsAutomaticConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; } = true;
+
+        // Evaluation cadence (hours). Lower values feel more reactive but cost more CPU; keep modest.
+        [JsonProperty("evaluation_cadence_hours")] public int EvaluationCadenceHours { get; set; } = 6;
+
+        // Rate limits for automatic events.
+        [JsonProperty("max_events_per_day")] public int MaxEventsPerDay { get; set; } = 1;
+        
+        // Minimum days between ANY automatic events (hard floor - prevents spam)
+        [JsonProperty("min_days_between_events")] public int MinDaysBetweenEvents { get; set; } = 5;
+        
+        // Target days between events (soft target - events aim to fire around this interval)
+        // Events will fire after MinDaysBetweenEvents but prefer to wait until TargetDaysBetweenEvents
+        [JsonProperty("target_days_between_events")] public int TargetDaysBetweenEvents { get; set; } = 10;
+        
+        // Grace period after enlistment before any automatic events can fire (prevents overwhelming new players)
+        [JsonProperty("enlistment_grace_days")] public int EnlistmentGraceDays { get; set; } = 7;
+
+        // Safety: if a queued event can't fire for a long time, drop it.
+        [JsonProperty("queue_timeout_hours")] public int QueueTimeoutHours { get; set; } = 24;
+    }
+
+    public class LanceLifeEventsPlayerInitiatedConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; } = true;
+
+        // If true, training-section events are blocked when PlayerConditionBehavior.CanTrain() is false.
+        [JsonProperty("block_training_on_severe_condition")] public bool BlockTrainingOnSevereCondition { get; set; } = true;
+    }
+
+    public class LanceLifeEventsOnboardingConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; } = true;
+
+        // If true, onboarding is skipped for players who have served before (TotalEnlistments > 1).
+        // (First-time enlistment still gets onboarding.)
+        [JsonProperty("skip_for_veterans")] public bool SkipForVeterans { get; set; } = true;
+
+        // How many onboarding stages exist (default 3, then complete).
+        [JsonProperty("stage_count")] public int StageCount { get; set; } = 3;
+    }
+
+    public class LanceLifeEventsIncidentChannelConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; } = false;
+    }
+
+    /// <summary>
+    ///     Phase 5: named lance role personas (text-only roster).
+    ///     Loaded from the lance_personas section of enlisted_config.json.
+    /// </summary>
+    public class LancePersonasConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; }
+
+        [JsonProperty("seed_salt")] public string SeedSalt { get; set; } = "enlisted";
+
+        [JsonProperty("female_leader_chance")] public float FemaleLeaderChance { get; set; } = 0.2f;
+        [JsonProperty("female_second_chance")] public float FemaleSecondChance { get; set; } = 0.3f;
+        [JsonProperty("female_veteran_chance")] public float FemaleVeteranChance { get; set; } = 0.25f;
+        [JsonProperty("female_soldier_chance")] public float FemaleSoldierChance { get; set; } = 0.2f;
+        [JsonProperty("female_recruit_chance")] public float FemaleRecruitChance { get; set; } = 0.2f;
+    }
+
+    /// <summary>
+    ///     Phase 5: player condition system (injury/illness/exhaustion).
+    ///     Loaded from the player_conditions section of enlisted_config.json.
+    /// </summary>
+    public class PlayerConditionsConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; }
+
+        // Data file path under ModuleData/Enlisted (relative).
+        [JsonProperty("definitions_file")] public string DefinitionsFile { get; set; } = "Conditions\\condition_defs.json";
+
+        // Treatment tuning (multipliers applied to daily recovery).
+        [JsonProperty("basic_treatment_multiplier")] public float BasicTreatmentMultiplier { get; set; } = 1.5f;
+        [JsonProperty("thorough_treatment_multiplier")] public float ThoroughTreatmentMultiplier { get; set; } = 2.0f;
+        [JsonProperty("herbal_treatment_multiplier")] public float HerbalTreatmentMultiplier { get; set; } = 1.75f;
+
+        // Rest-only decay for exhaustion is a later step; keep placeholder values now.
+        [JsonProperty("exhaustion_enabled")] public bool ExhaustionEnabled { get; set; }
+    }
+
+    /// <summary>
+    /// Phase 2 (menu_system_update): Camp Activities menu (data-driven actions).
+    /// Loaded from the camp_activities section of enlisted_config.json.
+    /// </summary>
+    public class CampActivitiesConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; } = true;
+
+        // Data file path under ModuleData/Enlisted (relative).
+        [JsonProperty("definitions_file")] public string DefinitionsFile { get; set; } = "Activities\\activities.json";
+    }
+
+    /// <summary>
+    ///     Feature gating and tuning for Phase 4 Escalation System.
+    ///     Loaded from the escalation section of enlisted_config.json.
+    /// </summary>
+    public class EscalationConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; }
+
+        // Passive decay intervals (in days), per docs/research/escalation_system.md.
+        [JsonProperty("heat_decay_interval_days")] public int HeatDecayIntervalDays { get; set; } = 7;
+        [JsonProperty("discipline_decay_interval_days")] public int DisciplineDecayIntervalDays { get; set; } = 14;
+        [JsonProperty("lance_rep_decay_interval_days")] public int LanceReputationDecayIntervalDays { get; set; } = 14;
+        [JsonProperty("medical_risk_decay_interval_days")] public int MedicalRiskDecayIntervalDays { get; set; } = 1;
+
+        // Threshold event cooldown (used in Phase 4 threshold-event manager).
+        [JsonProperty("threshold_event_cooldown_days")] public int ThresholdEventCooldownDays { get; set; } = 7;
     }
 
     /// <summary>
@@ -1157,6 +1727,38 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("max_stories_per_week")] public int MaxStoriesPerWeek { get; set; } = 2;
 
         [JsonProperty("min_days_between_stories")] public int MinDaysBetweenStories { get; set; } = 2;
+
+        // Content enable/disable controls (Phase 1 requirement).
+        // These allow safe rollout and troubleshooting without editing pack JSON.
+        [JsonProperty("disabled_story_ids")] public List<string> DisabledStoryIds { get; set; } = new List<string>();
+        [JsonProperty("disabled_categories")] public List<string> DisabledCategories { get; set; } = new List<string>();
+        [JsonProperty("disabled_pack_ids")] public List<string> DisabledPackIds { get; set; } = new List<string>();
+    }
+
+    /// <summary>
+    ///     Feature gating and tuning for Camp Life Simulation (Phase 3).
+    ///     Loaded from the camp_life section of enlisted_config.json.
+    /// </summary>
+    public class CampLifeConfig
+    {
+        [JsonProperty("enabled")] public bool Enabled { get; set; }
+
+        // Trigger thresholds used by story packs and integrations.
+        [JsonProperty("logistics_high_threshold")] public float LogisticsHighThreshold { get; set; } = 70f;
+        [JsonProperty("morale_low_threshold")] public float MoraleLowThreshold { get; set; } = 70f;
+        [JsonProperty("pay_tension_high_threshold")] public float PayTensionHighThreshold { get; set; } = 70f;
+        [JsonProperty("heat_high_threshold")] public float HeatHighThreshold { get; set; } = 70f;
+
+        // Quartermaster mood multipliers (small, contained).
+        [JsonProperty("qm_purchase_fine")] public float QuartermasterPurchaseFine { get; set; } = 0.98f;
+        [JsonProperty("qm_purchase_tense")] public float QuartermasterPurchaseTense { get; set; } = 1.00f;
+        [JsonProperty("qm_purchase_sour")] public float QuartermasterPurchaseSour { get; set; } = 1.07f;
+        [JsonProperty("qm_purchase_predatory")] public float QuartermasterPurchasePredatory { get; set; } = 1.15f;
+
+        [JsonProperty("qm_buyback_fine")] public float QuartermasterBuybackFine { get; set; } = 1.00f;
+        [JsonProperty("qm_buyback_tense")] public float QuartermasterBuybackTense { get; set; } = 0.95f;
+        [JsonProperty("qm_buyback_sour")] public float QuartermasterBuybackSour { get; set; } = 0.85f;
+        [JsonProperty("qm_buyback_predatory")] public float QuartermasterBuybackPredatory { get; set; } = 0.75f;
     }
 
     /// <summary>

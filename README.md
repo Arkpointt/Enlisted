@@ -1,97 +1,164 @@
-# Enlisted – Military Service Mod
+# enlisted (military service mod)
 
-Serve as a soldier in any lord's warband. Follow orders, earn wages, climb ranks, and retire with honor.
+serve as a soldier in any lord’s warband. follow orders, earn wages, climb ranks, and leave service when you’re done.
 
-## Features
+### index
 
-### 🛡️ Enlistment
-- Talk to any lord: "I wish to serve in your warband."
-- You join their party as a regular soldier.
-- **Army Leader Restriction**: Cannot enlist while leading your own army (must disband first).
-- **No Personal Loot/Prisoners**: Spoils go to your lord.
-- **No Starvation**: Your lord provides food (embedded food sharing; starvation cohesion penalties are compensated).
-- **Wages**: Daily wages accrue into a muster ledger; paid periodically at pay muster incidents (~12 days) with multiple payout options (Standard Pay, Corruption Challenge, Side Deal, Final Muster).
+- [requirements](#requirements)
+- [install](#install)
+- [update](#update)
+- [quick start (first time)](#quick-start-first-time)
+- [features (high level)](#features-high-level)
+- [what to expect (important rules)](#what-to-expect-important-rules)
+- [settings / config](#settings--config)
+- [logs + troubleshooting](#logs--troubleshooting)
+- [more docs](#more-docs)
 
-### ⚔️ Battle System
-- **Automatic Deployment**: You spawn in your assigned formation (Infantry, Archer, Cavalry, etc.).
-- **Auto-Join Battles**: Automatically join your lord's side when they enter combat - no menu interruptions.
-- **Strict Command Structure**:
-  - You are a soldier, not a general.
-  - You cannot issue orders (F1-F9 disabled).
-  - You must follow your Sergeant's commands.
-- **No Order of Battle**: The deployment screen is suppressed for immersion.
+### requirements
 
-### 🎖️ Rank & Progression
-- **6 Tiers**: Levy (Tier 1) → Footman (Tier 2) → Serjeant (Tier 3) → Man-at-Arms (Tier 4) → Banner Serjeant (Tier 5) → Household Guard (Tier 6).
-- **Promotions**: Earn XP from battles and kills (+25 daily, +25 per battle, +1-2 per kill) to reach the next tier.
-- **XP Thresholds**: Tier 2 (800 XP), Tier 3 (3,000 XP), Tier 4 (6,000 XP), Tier 5 (11,000 XP), Tier 6 (19,000 XP).
-- **Rewards**: Higher daily wages (accrued to muster ledger), access to better equipment, and command privileges (Tier 4+: personal retinue).
+- mount & blade ii: bannerlord (supported versions depend on the release you installed)
+- `bannerlord.harmony` (required)
 
-### 📋 Duties System
-- **Daily Assignments**: Choose a duty in the Camp Menu to earn bonus XP and Gold.
-  - **Combat Duties**: Guard, Sentry, Patrol.
-  - **Support Duties**: Forager, Cook, Messenger.
-  - **Specialist Duties**: Quartermaster Hand, Field Medic (requires skills).
-- **Passive Training**: Gain skill XP daily based on your formation (e.g., Athletics for Infantry, Riding for Cavalry).
+### install
 
-### 📦 Equipment
-- **Quartermaster**: Visit the Quartermaster from the **Enlisted Status** menu to **purchase** gear (prices use `soldier_tax`), and sell gear back via **buyback**.
-- **Tiered Kits**: Unlocks culture-specific equipment matching your rank (e.g., Legionary gear for Empire).
-- **Discounts**: Provisioner duty / Quartermaster role gets 15% better Quartermaster prices.
+1. download the mod release (zip).
+2. extract the `Enlisted` folder into:
+   - `<bannerlord>\Modules\`
+3. in the launcher, enable:
+   - `bannerlord.harmony`
+   - `enlisted`
+4. recommended load order:
+   - harmony -> native -> sandboxcore -> sandbox -> storymode -> custombattle -> enlisted
 
-### ⚓ Naval Support
-- Fully compatible with naval mods.
-- Your party follows the lord onto ships seamlessly.
-- **Ship Protection**: Your ships are protected from damage while enlisted.
-- **Naval Exclusion**: Lords cannot use your ships for navigation.
-- **Stranding Protection**: Prevents the Naval DLC stranded-at-sea UI while enlisted when your lord/army has ships; only triggers raft state when no naval capability remains.
+### update
 
-### 🚪 Discharge & Retirement
-- **Pending Discharge**: Request discharge in the Camp ("My Camp") menu; resolves at the next pay muster (Final Muster branch).
-- **Discharge Bands**: Service length determines rewards:
-  - **Washout** (<100 days): Relation penalties, no pension, gear stripped.
-  - **Honorable** (100-199 days): Relation bonuses, severance gold, pension 50/day, keep armor/lose weapons.
-  - **Veteran/Heroic** (200+ days): Larger relation bonuses, severance gold, pension 100/day, same gear handling.
-  - **Smuggle** (deserter): Keep all gear, crime +30, relation penalties, no pension.
-- **Pensions**: Daily payments pause on re-enlistment, stop if relation drops or at war, update on next retirement to new band.
-- **Re-entry System**: When re-enlisting with the same faction, your reservist record provides benefits:
-  - **Washout/Deserter**: Start at Tier 1 (raw recruit), probation status (reduced wages, fatigue cap).
-  - **Honorable Discharge**: Start at Tier 3 (NCO path), +500 XP bonus, +5 relation bonus.
-  - **Veteran/Heroic Discharge**: Start at Tier 4 (officer path), +1,000 XP bonus, +10 relation bonus.
-- **Probation**: Applied on washout/deserter re-entry; reduces wage multiplier and caps fatigue; clears on pay muster resolution or after configurable duration.
+- overwrite your existing `Modules\Enlisted\` folder with the new one.
+- if you use other mods that patch menus/encounters/party state, re-check load order after updating.
 
-## Installation
+### quick start (first time)
 
-1. **Requirements**:
-   - Mount & Blade II: Bannerlord v1.3.10
-   - Bannerlord.Harmony v2.3.6+
+1. talk to a lord -> choose the enlistment dialog option.
+2. after you enlist, use the **enlisted status** menu as your hub:
+   - quartermaster, camp, duty selection, leave, etc.
+   - to leave service properly: **camp -> request discharge** (resolves at next pay muster: **final muster**)
+3. at the t1->t2 proving event, choose your formation (infantry/archer/cavalry/horse archer when available).
 
-2. **Setup**:
-   - Extract the `Enlisted` folder to `<Bannerlord>\Modules\`.
-   - Enable `Bannerlord.Harmony` and `Enlisted` in the launcher.
-   - **Load Order**: Harmony -> Native -> ... -> Enlisted.
+### features (high level)
 
-## Configuration
+- **enlistment**
+  - enlist with a lord and live inside their campaign loop (movement, battles, camp).
+  - includes safety handling for battles/encounters/captivity so you don’t get stuck in weird states.
+- **bag check / baggage train**
+  - early enlistment inventory handling to prevent “walk in with endgame kit” without deleting your stuff.
+- **rank + proving events**
+  - promotion is not just xp; key ranks use narrative “proving” events (including formation choice at t1->t2).
+- **formation training**
+  - small daily skill xp baseline while actively enlisted, based on your chosen formation (infantry/archer/cavalry/horse archer).
+- **duties system**
+  - pick/request military duties for bonuses and pay modifiers (tier/formations gate options).
+- **pay system (muster ledger)**
+  - wages accrue daily into a ledger and pay out at pay muster events (with iou/promissory options when disrupted).
+- **pay tension**
+  - when pay is late, tension rises and unlocks special choices (corruption/loyalty pressure valves, including leaving without penalty at high tension).
+- **lance identity**
+  - you’re assigned a culture-flavored lance identity and see it reflected in menus, ranks, and story hooks.
+- **camp activities**
+  - a menu of action-based activities (training/tasks/social/lance) that spend/restore fatigue and grant xp.
+- **quartermaster + equipment**
+  - buy formation/tier/culture-appropriate gear; includes provisions (rations) and relationship flavor when enabled.
+- **companions**
+  - your companions stay with you; you can toggle who fights vs who stays back (safer).
+- **commander retinue (high tiers)**
+  - at commander tiers, you gain a personal force and manage it alongside your service.
+- **town/castle access while enlisted**
+  - safe settlement access patterns so you can still use towns/castles while your party is otherwise “embedded”.
+- **story content (events + decisions)**
+  - data-driven content packs: automatic events + player-initiated decisions, all driven from json.
+- **optional systems**
+  - camp life snapshot, escalation tracks, and player conditions can be toggled in config.
 
-Customize the mod via JSON files in `Modules\Enlisted\ModuleData\Enlisted\`:
-- `enlisted_config.json`: Wages, XP thresholds, pay muster intervals, discharge/retirement rules, probation settings.
-- `duties_system.json`: Duty definitions and rewards.
-- `settings.json`: Logging levels.
+### what to expect (important rules)
 
-## Troubleshooting
+- **you serve; you don’t command**
+  - you manage your own small scope (your duty, your lance menus, camp actions), not the lord’s strategy.
+- **loot**
+  - low tiers do not get normal loot screens; you’ll get compensation instead.
+  - higher tiers regain native loot access.
+- **pay**
+  - wages accrue into a muster ledger and pay out at pay muster events.
+  - when pay is late, “pay tension” rises and unlocks pressure-valve options (including leaving without penalty at high tension).
+- **leave vs discharge**
+  - leave is temporary and time-limited.
+  - discharge (final muster) is the "leave properly" path and resolves at the next pay muster.
+- **lance reputation**
+  - your standing with your lance mates affects available options and promotions.
+  - help your lance → better event options, they cover for you, promotion eligibility.
+  - betray or ignore them → worse options, isolation, blocked promotions, possible sabotage.
 
-Logs are located in `<Bannerlord>\Modules\Enlisted\Debugging\`:
-- `Session-A/B/C_{timestamp}.log`: Rotating session logs (A = newest). Share Session-A.
-- `Conflicts-A/B/C_{timestamp}.log`: Rotating conflict diagnostics (A = newest). Share Conflicts-A.
-- `Current_Session_README.txt`: Quick pointers to the newest logs.
-- Legacy aliases remain (`enlisted.log`, `conflicts.log`) but the rotating files are canonical.
-- `dialogue.log`: Conversation system events.
+### settings / config
 
-**Note**: Conflict diagnostics are written at startup and refreshed when a campaign begins. Always include the newest Session-A and Conflicts-A when reporting issues.
+configs live in:
 
-## Reporting issues
-- Steam comments cannot take file uploads; share links instead (Drive/Dropbox/GitHub Gist/Pastebin).
-- Include logs: `Modules\Enlisted\Debugging\enlisted.log` and `conflicts.log` (zip if large).
-- If crashing, include crash folder from `C:\ProgramData\Mount and Blade II Bannerlord\crashes\` (zip).
-- List Bannerlord version, Harmony version, and full mod list with load order.
-- Note how you installed and steps to reproduce the issue.
+- `Modules\Enlisted\ModuleData\Enlisted\`
+
+common files:
+- `enlisted_config.json` (main toggles and pacing)
+- `progression_config.json` (tiers/ranks)
+- `duties_system.json` (duties + formation training config)
+- `Events\*.json` (event content packs)
+
+### logs + troubleshooting
+
+#### where logs are
+
+primary location (next to the mod):
+- `<bannerlord>\Modules\Enlisted\Debugging\`
+
+you should usually share:
+- `Session-A_*.log` (latest session)
+- `Conflicts-A_*.log` (latest conflicts report)
+- `Current_Session_README.txt` (points to the current files)
+
+fallback location (if the game can’t write into the module folder):
+- `%userprofile%\Documents\Mount and Blade II Bannerlord\Logs\Enlisted\`
+
+bannerlord crash dumps (when the game hard-crashes):
+- `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
+
+#### error codes (important)
+
+when something breaks, enlisted will often log a **stable error code** like:
+- `[E-CAMPUI-031] Failed to display Camp Area screen`
+
+these codes are meant to be searchable and consistent across versions.
+when reporting an issue, please include:
+- the **error code(s)** you see (copy/paste the lines)
+- `Session-A_*.log`
+
+note: exceptions include **full stack traces**, but they’re **de-duplicated** (the first occurrence per unique exception in a session) to avoid log spam.
+
+also note: some issues are intentionally logged **once per session** (look for codes beginning with `E-` or `W-` in a single line), especially for:
+- **dlc missing / feature gating** (example: `W-DLC-001`, `W-DLC-002`)
+- **reflection / api drift** where a patch can’t apply (example: `W-REFLECT-001`)
+- **ui fallback paths** (example: `E-QM-014`)
+- **save/load wrappers + migrations** (example: `E-SAVELOAD-001`, `E-SAVELOAD-002`)
+
+#### common issues
+
+- **mod menu options don’t show**
+  - confirm `bannerlord.harmony` is enabled and loaded before enlisted.
+- **war sails / naval features don’t work**
+  - if you don’t have the War Sails (NavalDLC) expansion enabled, naval-only features will be gated.
+  - check the session log for a `W-DLC-*` warning.
+- **events don’t fire**
+  - confirm the event systems are enabled in `enlisted_config.json`.
+- **something feels “stuck” after leaving a menu/encounter**
+  - send `Session-A_*.log` + your mod list/load order.
+- **save won’t load / loads into broken state**
+  - check for `E-SAVELOAD-*` in `Session-A_*.log`, then share the session log + conflicts log (and the save file if possible).
+
+### more docs
+
+full documentation entry point:
+- `docs/index.md`
+

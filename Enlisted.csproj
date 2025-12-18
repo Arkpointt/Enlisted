@@ -104,6 +104,10 @@
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.Engine.GauntletUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TaleWorlds.TwoDimension">
+      <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.TwoDimension.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TaleWorlds.GauntletUI.Data">
       <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\bin\Win64_Shipping_Client\TaleWorlds.GauntletUI.Data.dll</HintPath>
       <Private>False</Private>
@@ -133,6 +137,16 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
+    <Content Include="GUI\Prefabs\Events\LanceLifeEventScreen.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampDutiesPanel.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampManagement.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampSchedulePanel.xml"/>
+    <Content Include="GUI\Prefabs\Camp\ScheduleActiveTuple.xml"/>
+    <Content Include="GUI\Prefabs\Camp\ScheduleOtherTuple.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampLancePanel.xml"/>
+    <Content Include="GUI\Prefabs\Camp\LanceTuple.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampReportsPanel.xml"/>
+    <Content Include="GUI\Prefabs\Camp\CampArmyPanel.xml"/>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -144,7 +158,10 @@
     <Compile Include="src\Mod.Core\Logging\SessionDiagnostics.cs"/>
     <Compile Include="src\Mod.Core\EnlistedActivation.cs"/>
     <Compile Include="src\Mod.Core\CampaignSafetyGuard.cs"/>
+    <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTokens.cs"/>
+    <Compile Include="src\Mod.Core\Triggers\CampaignTriggerTrackerBehavior.cs"/>
     <Compile Include="src\Mod.Core\Util\PlayerContext.cs"/>
+    <Compile Include="src\Mod.Core\Util\UiTextSanitizer.cs"/>
     <Compile Include="src\Mod.Core\Util\UsedImplicitlyAttribute.cs"/>
     <Compile Include="src\Features\Conversations\Behaviors\EnlistedDialogManager.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs"/>
@@ -153,11 +170,59 @@
     <Compile Include="src\Features\Assignments\Core\DutyConfiguration.cs"/>
     <Compile Include="src\Features\Assignments\Core\ConfigurationManager.cs"/>
     <Compile Include="src\Features\Assignments\Core\LanceRegistry.cs"/>
+    <Compile Include="src\Features\Lances\Behaviors\LanceBannerManager.cs"/>
     <Compile Include="src\Features\Lances\Behaviors\LanceStoryBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Behaviors\EnlistedLanceMenuBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventCatalog.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventCatalogLoader.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventEffectsApplier.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventInquiryPresenter.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeRewardChoiceInquiryScreen.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventRuntime.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventText.cs"/>
+    <!-- Modern Event UI - API fixes applied! Now using FatigueCurrent/FatigueMax and OutcomeTextId/OutcomeTextFallback -->
+    <Compile Include="src\Features\Lances\UI\LanceLifeEventVM.cs"/>
+    <Compile Include="src\Features\Lances\UI\EventChoiceVM.cs"/>
+    <Compile Include="src\Features\Lances\UI\LanceLifeEventScreen.cs"/>
+    <Compile Include="src\Features\Lances\UI\ModernEventPresenter.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventTriggerEvaluator.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventsAutomaticBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventsIncidentBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeEventsStateBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\LanceLifeOnboardingBehavior.cs"/>
+    <!-- Decision Events (Track D2): CK3-style decisions with activity-aware events -->
+    <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventState.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventConfig.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventEvaluator.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\DecisionOutcomeLog.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\SituationFlags.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\SituationFlagsProvider.cs"/>
+    <Compile Include="src\Features\Lances\Text\LanceLifeTextVariables.cs"/>
+    <Compile Include="src\Features\Lances\Stories\LanceLifeStoryCatalog.cs"/>
+    <Compile Include="src\Features\Lances\Stories\LanceLifeStoryPackLoader.cs"/>
+    <Compile Include="src\Features\Lances\Stories\LanceLifeStoryPackModels.cs"/>
+    <Compile Include="src\Features\Lances\Simulation\LanceMemberState.cs"/>
+    <Compile Include="src\Features\Lances\Simulation\LanceLifeSimulationBehavior.cs"/>
+    <Compile Include="src\Features\Lances\Simulation\ILanceScheduleModifier.cs"/>
+    <Compile Include="src\Features\Lances\Leaders\PersistentLanceLeaderModels.cs"/>
+    <Compile Include="src\Features\Lances\Leaders\PersistentLanceLeadersBehavior.cs"/>
     <Compile Include="src\Features\Assignments\Behaviors\EnlistedDutiesBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs"/>
     <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
+    <Compile Include="src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs"/>
+    <!-- Camp News / Daily Report (Phase 1-2 foundations) -->
+    <Compile Include="src\Features\Interface\News\Models\DailyReportModels.cs"/>
+    <Compile Include="src\Features\Interface\News\Models\CampLifeLedger.cs"/>
+    <Compile Include="src\Features\Interface\News\State\CampNewsState.cs"/>
+    <Compile Include="src\Features\Interface\News\Templates\NewsTemplates.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\DailyReportGenerator.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\IDailyReportFactProducer.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\CampNewsContext.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\CompanyMovementObjectiveProducer.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\LanceStatusFactProducer.cs"/>
+    <Compile Include="src\Features\Interface\News\Generation\Producers\KingdomHeadlineFactProducer.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\TroopSelectionManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\EquipmentManager.cs"/>
     <Compile Include="src\Features\Equipment\Behaviors\TroopDiscoveryValidator.cs"/>
@@ -166,7 +231,28 @@
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVm.cs"/>
+    <Compile Include="src\Features\Ranks\RankHelper.cs"/>
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
+    <Compile Include="src\Features\Schedule\Models\TimeBlock.cs"/>
+    <Compile Include="src\Features\Schedule\Models\ScheduleBlockType.cs"/>
+    <Compile Include="src\Features\Schedule\Models\ScheduledBlock.cs"/>
+    <Compile Include="src\Features\Schedule\Models\DailySchedule.cs"/>
+    <Compile Include="src\Features\Schedule\Models\LanceNeed.cs"/>
+    <Compile Include="src\Features\Schedule\Models\LanceNeedsState.cs"/>
+    <Compile Include="src\Features\Schedule\Models\SchedulePerformanceTracker.cs"/>
+    <Compile Include="src\Features\Schedule\Models\ScheduleModelsSaveDefiner.cs"/>
+    <Compile Include="src\Features\Schedule\Config\ScheduleActivityDefinition.cs"/>
+    <Compile Include="src\Features\Schedule\Config\LanceNeedsConfig.cs"/>
+    <Compile Include="src\Features\Schedule\Config\ScheduleConfig.cs"/>
+    <Compile Include="src\Features\Schedule\Config\ScheduleConfigLoader.cs"/>
+    <Compile Include="src\Features\Schedule\Events\SchedulePopupEventCatalog.cs"/>
+    <Compile Include="src\Features\Schedule\Events\SchedulePopupEventCatalogLoader.cs"/>
+    <Compile Include="src\Features\Schedule\Behaviors\ScheduleBehavior.cs"/>
+    <Compile Include="src\Features\Schedule\Models\LordObjective.cs"/>
+    <Compile Include="src\Features\Schedule\Core\ArmyStateAnalyzer.cs"/>
+    <Compile Include="src\Features\Schedule\Core\ScheduleGenerator.cs"/>
+    <Compile Include="src\Features\Schedule\Core\LanceNeedsManager.cs"/>
+    <Compile Include="src\Features\Schedule\Core\ScheduleExecutor.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
@@ -178,9 +264,31 @@
     <Compile Include="src\Features\CommandTent\Core\RetinueManager.cs"/>
     <Compile Include="src\Features\CommandTent\Core\RetinueLifecycleHandler.cs"/>
     <Compile Include="src\Features\CommandTent\Core\CompanionAssignmentManager.cs"/>
+    <Compile Include="src\Features\CommandTent\Core\RetinueRecruitmentGrant.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
     <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
+    <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
+    <!-- Old Bulletin Board UI deleted: replaced by Game Menu + Camp Management -->
+    <!-- Camp Management Screen (Kingdom-style full-screen UI) -->
+    <Compile Include="src\Features\Camp\UI\Management\CampManagementScreen.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\CampManagementVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampLanceVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampScheduleVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampDutiesVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampReportsVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\CampArmyVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\ScheduleBlockItemVM.cs"/>
+    <Compile Include="src\Features\Camp\UI\Management\Tabs\ActivityItemVM.cs"/>
+    <Compile Include="src\Features\Activities\*.cs"/>
+    <Compile Include="src\Features\Lances\Personas\LancePersonaModels.cs"/>
+    <Compile Include="src\Features\Lances\Personas\LancePersonaBehavior.cs"/>
+    <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
+    <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
+    <Compile Include="src\Features\Conditions\EnlistedMedicalMenuBehavior.cs"/>
+    <Compile Include="src\Features\Escalation\EscalationState.cs"/>
+    <Compile Include="src\Features\Escalation\EscalationThresholds.cs"/>
+    <Compile Include="src\Features\Escalation\EscalationManager.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CheckFortificationAttackablePatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyCohesionExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
@@ -194,6 +302,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\NavalShipExclusionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleShipAssignmentPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\NavalBattleArmyWaitCrashFix.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\NavalMobilePartyVisualUpdateEntityPositionCrashGuardPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PostDischargeProtectionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\RaftStateSuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\ReturnToArmySuppressionPatch.cs"/>
@@ -206,6 +315,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\TownLeaveButtonPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EnlistedWaitingPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\JoinEncounterAutoSelectPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\JoinSiegeEventAutoSelectPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\PlayerIsAtSeaTagCrashFix.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\CompanionCaptainBlockPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\GenericStateMenuPatch.cs"/>
@@ -224,7 +334,38 @@
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
     <Content Include="ModuleData\Enlisted\command_tent_config.json"/>
+    <Content Include="ModuleData\Enlisted\schedule_config.json"/>
+    <!-- Lance Life story packs (Phase 2+): wildcard so new packs can be dropped in without csproj edits -->
+    <Content Include="ModuleData\Enlisted\StoryPacks\LanceLife\*.json"/>
+    <!-- Phase 5: lance persona data (content-editable) -->
+    <Content Include="ModuleData\Enlisted\LancePersonas\*.json"/>
+    <!-- Phase 5: player condition definitions (content-editable) -->
+    <Content Include="ModuleData\Enlisted\Conditions\*.json"/>
+    <!-- Phase 2: camp activities (content-editable) -->
+    <Content Include="ModuleData\Enlisted\Activities\*.json"/>
+    <!-- Phase 0+: Lance Life Events (data-driven) -->
+    <Content Include="ModuleData\Enlisted\Events\*.json"/>
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy story packs into the Bannerlord module folder -->
+    <LanceLifeStoryPacks Include="ModuleData\Enlisted\StoryPacks\LanceLife\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy lance persona data into the Bannerlord module folder -->
+    <LancePersonaData Include="ModuleData\Enlisted\LancePersonas\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy player condition definition data into the Bannerlord module folder -->
+    <PlayerConditionData Include="ModuleData\Enlisted\Conditions\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy camp activities data into the Bannerlord module folder -->
+    <CampActivitiesData Include="ModuleData\Enlisted\Activities\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy Lance Life Events data into the Bannerlord module folder -->
+    <LanceLifeEventsData Include="ModuleData\Enlisted\Events\*.json"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Documentation - All markdown files in docs folder and subfolders -->
@@ -243,7 +384,13 @@
   <Target Name="AfterBuild">
     <MakeDir Directories="$(OutputPath)..\..\Debugging"/>
     <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Equipment"/>
+    <MakeDir Directories="$(OutputPath)..\..\GUI\Prefabs\Camp"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\StoryPacks\LanceLife"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\LancePersonas"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Conditions"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Activities"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
@@ -254,10 +401,28 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\command_tent_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\schedule_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="@(LanceLifeStoryPacks)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\StoryPacks\LanceLife\"/>
+    <Copy SourceFiles="@(LancePersonaData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\LancePersonas\"/>
+    <Copy SourceFiles="@(PlayerConditionData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Conditions\"/>
+    <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
+    <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
+    <Copy SourceFiles="GUI\Prefabs\Events\LanceLifeEventScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Events\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampManagement.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampSchedulePanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\ScheduleActiveTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\ScheduleOtherTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampLancePanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\LanceTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampDutiesPanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampReportsPanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\ReportCategoryTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\ReportTuple.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
+    <Copy SourceFiles="GUI\Prefabs\Camp\CampArmyPanel.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Camp\"/>
     <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>

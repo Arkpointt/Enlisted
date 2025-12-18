@@ -54,7 +54,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Influence", $"Error in influence suppression patch: {ex.Message}");
+                ModLogger.ErrorCode("Influence", "E-PATCH-021", "Error in influence suppression patch", ex);
                 return true; // Fail open - allow normal behavior
             }
         }

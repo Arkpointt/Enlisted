@@ -2,6 +2,12 @@
 
 Quick reference for extending or modifying Enlisted.
 
+## Game / API Version
+
+This project targets **Bannerlord v1.3.4**.
+
+When you need to confirm Bannerlord APIs, prefer the **local native decompile** included with this repository (it matches the target version). Use the official API docs only as a secondary convenience reference.
+
 ## Build
 ```bash
 dotnet build -c "Enlisted RETAIL" /p:Platform=x64
@@ -23,6 +29,10 @@ src/
    ├─ Interface/         # Menus
    └─ Conversations/     # Dialog
 ```
+
+Data and localization live outside `src/`:
+- `ModuleData/Enlisted/` (JSON: config + content)
+- `ModuleData/Languages/` (XML: translations)
 
 ## Key Systems
 
@@ -116,6 +126,28 @@ party.SetMoveEscortParty(lord, NavigationType.Default, false);
 party.IsVisible = false;
 ```
 
+**Gold transactions** - Use `GiveGoldAction` (not `ChangeHeroGold`):
+```csharp
+// X WRONG: ChangeHeroGold modifies internal gold not visible in UI
+Hero.MainHero.ChangeHeroGold(-amount);
+
+// [x] CORRECT: GiveGoldAction updates party treasury visible in UI
+GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct
+GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant
+```
+
+**Equipment slot iteration** - Use numeric loop (not `Enum.GetValues`):
+```csharp
+// X WRONG: Includes invalid count values, causes IndexOutOfRangeException
+foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex))) { ... }
+
+// [x] CORRECT: Iterate valid indices only (0-11)
+for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+{
+    var slot = (EquipmentIndex)i;
+}
+```
+
 ## Mod Integration
 
 Other mods can hook into Enlisted's systems via public events and properties.
@@ -171,7 +203,6 @@ if (eb?.IsEnlisted == true)
     int tier = eb.EnlistmentTier;         // 1-6
     int xp = eb.EnlistmentXP;             // Total XP
     string duty = eb.SelectedDuty;        // Current duty
-    string prof = eb.SelectedProfession;  // Profession track
     bool onLeave = eb.IsOnLeave;          // On leave?
     bool inGrace = eb.IsInDesertionGracePeriod;
 }
@@ -189,16 +220,11 @@ All Enlisted patches use default priority (400). If your mod patches the same me
 |-----|---------|
 | docs/BLUEPRINT.md | Architecture, patterns |
 | docs/Features/*.md | Feature specs |
-| docs/discovered/*.md | Bannerlord API reference (v1.3.4 verified) |
+| docs/research/campaignsystem-apis.md | API notes and pointers (research) |
 | ModuleData/Enlisted/README.md | Config schema |
 
 ### API Reference
 
-When extending Enlisted, refer to the discovered API documentation:
-- `docs/discovered/engine.md` - Core API signatures
-- `docs/discovered/menus.md` - Menu system
-- `docs/discovered/gauntlet.md` - UI system
-- `docs/discovered/equipment.md` - Equipment APIs
-- `docs/discovered/helpers.md` - Helper methods
-
-All discovered docs are updated for Bannerlord v1.3.4 compatibility and include indexes for easy navigation.
+When extending Enlisted, verify Bannerlord API usage against:
+- The local native decompile included with this repository (authoritative; matches v1.3.4)
+- The official API docs for v1.3.4 as a secondary convenience reference

@@ -1,4 +1,4 @@
-# Camp ("My Camp")
+# Camp ("Camp")
 
 ## Quick Reference
 
@@ -29,7 +29,7 @@
 
 ## Overview
 
-The **Camp ("My Camp")** is the player's personal hub within the enlisted army. It provides access to service records, pay/pension status, discharge actions, retinue management (Tier 4+), and companion assignments.
+The **Camp ("Camp")** is the player's personal hub within the enlisted army. It provides access to service records, pay/pension status, discharge actions, retinue management (Tier 4+), and companion assignments.
 
 **Menu Structure:**
 ```
@@ -91,7 +91,7 @@ Camp surfaces the pay-system state so players always know where they stand:
 
 ### Discharge Actions (Final Muster)
 
-Discharge is handled as **Pending Discharge → Final Muster**:
+Discharge is handled as **Pending Discharge -> Final Muster**:
 - **Request Discharge (Final Muster)** sets pending discharge.
 - **Cancel Pending Discharge** clears it.
 - Final Muster resolves at the **next pay muster** and is where severance, pension, and gear handling occur.
@@ -181,8 +181,8 @@ Manage which companions fight in battles (Tier 4+).
 - Applies to all companions regardless of "Fight" or "Stay Back" setting
 
 **UI:**
-- Camp → Companion Assignments
-- Shows list of companions with toggle (⚔️ Fight / 🏕️ Stay Back)
+- Camp -> Companion Assignments
+- Shows list of companions with toggle ( Fight /  Stay Back)
 - Changes saved immediately
 
 See [Companion Management](../Core/companion-management.md) for full details.
@@ -233,12 +233,12 @@ private List<string> _factionsServed;
 
 // Retinue State
 private string _retinueSelectedTypeId;  // "infantry", "archers", etc.
-private Dictionary<string, int> _retinueTroopCounts;  // CharacterObject.StringId → count
+private Dictionary<string, int> _retinueTroopCounts;  // CharacterObject.StringId -> count
 private int _daysSinceLastTrickle;
 private CampaignTime _requisitionCooldownEnd;
 
 // Companion Assignments
-private Dictionary<string, bool> _companionBattleParticipation;  // Hero.StringId → fight/stay back
+private Dictionary<string, bool> _companionBattleParticipation;  // Hero.StringId -> fight/stay back
 ```
 
 **RetinueState Class:**
@@ -275,8 +275,8 @@ int availableSpace = PartyBase.MainParty.PartySizeLimit - PartyBase.MainParty.Nu
 // Get recruitment cost
 Campaign.Current.Models.PartyWageModel.GetTroopRecruitmentCost(troop, Hero.MainHero);
 
-// Deduct gold
-Hero.MainHero.ChangeHeroGold(-amount);
+// Deduct gold (use GiveGoldAction to update party treasury visible in UI)
+GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);
 ```
 
 **Formation Control (Battle):**
@@ -308,7 +308,9 @@ character.GetFormationClass();  // Returns FormationClass enum
 
 ## Configuration
 
-**JSON Config:** `ModuleData/Enlisted/command_tent_config.json`
+**JSON Config (legacy name):** `ModuleData/Enlisted/command_tent_config.json`
+
+Note: the **Camp Menu (text)** menu id in code is `enlisted_camp_hub`. Some older docs used “command_tent” as a label, but the current menu id is `enlisted_camp_hub`.
 
 **Key Settings:**
 - `capacity_by_tier`: Max soldiers per tier (4: 5, 5: 10, 6: 20)
@@ -456,4 +458,4 @@ ModLogger.Info("CasualtyTracker", $"Wounded casualties: {lost} soldiers succumbe
 - [Companion Management](../Core/companion-management.md) - Companion battle participation details
 - [Enlistment System](../Core/enlistment.md) - Tier progression and service state
 - [Menu Interface](menu-interface.md) - Parent menu system
-- [Pay System](../Core/pay-system-rework.md) - Muster ledger, pay muster, discharge, pensions
+- [Pay System](../Core/pay-system.md) - Muster ledger, pay muster, discharge, pensions

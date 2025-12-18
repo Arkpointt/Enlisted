@@ -68,7 +68,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Patches", $"EffectiveEngineer patch error: {ex.Message}");
+                ModLogger.ErrorCode("Patches", "E-PATCH-024", "EffectiveEngineer patch error", ex);
                 return true; // Fail safe - use original behavior
             }
         }
@@ -121,7 +121,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Patches", $"EffectiveScout patch error: {ex.Message}");
+                ModLogger.ErrorCode("Patches", "E-PATCH-025", "EffectiveScout patch error", ex);
                 return true; // Fail safe
             }
         }
@@ -174,7 +174,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Patches", $"EffectiveQuartermaster patch error: {ex.Message}");
+                ModLogger.ErrorCode("Patches", "E-PATCH-026", "EffectiveQuartermaster patch error", ex);
                 return true; // Fail safe
             }
         }
@@ -222,7 +222,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Patches", $"EffectiveSurgeon patch error: {ex.Message}");
+                ModLogger.ErrorCode("Patches", "E-PATCH-027", "EffectiveSurgeon patch error", ex);
                 return true; // Fail safe
             }
         }

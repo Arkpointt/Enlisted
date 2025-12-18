@@ -248,13 +248,13 @@ public PartyBase Party { get; }
 ## Key Insights for RGL Crash Fix
 
 ### 1. MapEvent State Transitions
-- **Begin** → Battle starts
-- **Wait** → Battle in waiting state (this is when crash occurs!)
-- **WaitingRemoval** → Battle finalized
+- **Begin** -> Battle starts
+- **Wait** -> Battle in waiting state (this is when crash occurs!)
+- **WaitingRemoval** -> Battle finalized
 
 ### 2. PlayerEncounter.Finish() Behavior
 - **Calls `GameMenu.ExitToLast()`** if menu context exists
-- This can trigger menu transitions during siege → encounter transition
+- This can trigger menu transitions during siege -> encounter transition
 - **Solution**: Don't call `Finish()` during siege transitions
 
 ### 3. Siege Detection
@@ -321,6 +321,52 @@ bool anySiege = anySiegeEvent || anyBesiegerCamp || anyBesiegedSettlement || any
 4. **Party.MapEvent** - Correct way to access MapEvent (not directly on MobileParty)
 5. **SiegeEvent is on PartyBase** - Access via `Party.SiegeEvent`
 
+## Gold Transaction APIs
+
+### X WRONG: Hero.ChangeHeroGold()
+```csharp
+// DON'T USE - modifies internal "personal gold" not visible in UI
+Hero.MainHero.ChangeHeroGold(-amount);  // Player won't see gold decrease!
+Hero.MainHero.ChangeHeroGold(amount);   // Player won't see gold increase!
+```
+- **Problem**: `ChangeHeroGold` modifies an internal gold field that is NOT reflected in the party treasury UI
+- **Result**: Gold appears unchanged to the player even though the transaction occurred
+
+### [x] CORRECT: GiveGoldAction.ApplyBetweenCharacters()
+```csharp
+// USE THIS - properly updates party treasury visible in UI
+GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, amount);  // Deduct gold (hero pays "null"/world)
+GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, amount);  // Grant gold ("null"/world pays hero)
+```
+- **First param**: Source hero (who pays)
+- **Second param**: Target hero (who receives) 
+- **Third param**: Amount
+- **Note**: Use `null` for one side when paying to/from "the world" (fees, rewards, etc.)
+
+## Equipment Slot Iteration
+
+### X WRONG: Enum.GetValues(typeof(EquipmentIndex))
+```csharp
+// DON'T USE - includes invalid count values like NumEquipmentSetSlots (12)
+foreach (EquipmentIndex slot in Enum.GetValues(typeof(EquipmentIndex)))
+{
+    var elem = equipment[slot];  // CRASH: IndexOutOfRangeException when slot=12
+}
+```
+- **Problem**: `EquipmentIndex` enum includes count values (`NumEquipmentSetSlots=12`, `NumAllWeaponSlots=5`) that are not valid array indices
+- **Result**: `IndexOutOfRangeException` when used as array index
+
+### [x] CORRECT: Numeric iteration with NumEquipmentSetSlots
+```csharp
+// USE THIS - iterates only valid slot indices (0-11)
+for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
+{
+    var slot = (EquipmentIndex)i;
+    var elem = equipment[slot];  // Safe: indices 0-11 only
+}
+```
+- **Note**: `NumEquipmentSetSlots` (12) is the count of valid slots, not a valid slot index itself
+
 ## References
 
 - `TaleWorlds.CampaignSystem.MapEvents.MapEvent.cs`
@@ -328,5 +374,7 @@ bool anySiege = anySiegeEvent || anyBesiegerCamp || anyBesiegedSettlement || any
 - `TaleWorlds.CampaignSystem.Encounters.PlayerEncounter.cs`
 - `TaleWorlds.CampaignSystem.Party.MobileParty.cs`
 - `TaleWorlds.CampaignSystem.Party.PartyBase.cs`
+- `TaleWorlds.CampaignSystem.Actions.GiveGoldAction.cs`
+- `TaleWorlds.Core.EquipmentIndex.cs`
 
 

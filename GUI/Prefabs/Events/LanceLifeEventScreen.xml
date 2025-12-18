@@ -1,0 +1,205 @@
+<Prefab>
+	<Constants>
+		<Constant Name="Encyclopedia.Frame.Width" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Width" />
+		<Constant Name="Encyclopedia.Frame.Height" BrushLayer="Default" BrushName="Encyclopedia.Frame" BrushValueType="Height" />
+	</Constants>
+	<Window>
+		<!-- Full screen transparent tint so the campaign map remains visible behind the event window -->
+		<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#00000033">
+			<Children>
+
+				<!-- Main event window (single prefab, structured layout; no overlap) -->
+				<BrushWidget Id="EventCard" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="1120" SuggestedHeight="760" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="Encyclopedia.Frame">
+					<Children>
+						<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="26" MarginRight="26" MarginTop="24" MarginBottom="18" StackLayout.LayoutMethod="VerticalTopToBottom">
+							<Children>
+								<!-- Header row -->
+								<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="78" Sprite="StdAssets\tabbar_popup">
+									<Children>
+										<!-- Category badge -->
+										<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="132" SuggestedHeight="46" MarginLeft="18" MarginTop="16" HorizontalAlignment="Left" Sprite="StdAssets\round_frame" Color="@CategoryColor">
+											<Children>
+												<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="12" Brush.TextColor="#1A120CFF" Text="@CategoryText" />
+											</Children>
+										</Widget>
+
+										<!-- Title -->
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" MarginTop="4" Brush="SPGeneral.MediumText" Brush.FontSize="34" Brush.TextColor="#EAD7B0FF" Text="@EventTitle" />
+
+										<!-- Time/Location -->
+										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginRight="74" MarginTop="28" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#CBB894FF" Text="@TimeLocationText" />
+
+										<!-- Close button (in-header; no offsets) -->
+										<ButtonWidget Command.Click="ExecuteClose" HeightSizePolicy="Fixed" WidthSizePolicy="Fixed" SuggestedHeight="46" SuggestedWidth="46" MarginRight="16" MarginTop="16" HorizontalAlignment="Right" VerticalAlignment="Top" Brush="Popup.CloseButton" IsVisible="@CanClose" />
+									</Children>
+								</Widget>
+
+								<!-- Header divider -->
+								<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="14" MarginTop="8" Sprite="SPGeneral\TownManagement\horizontal_divider" AlphaFactor="0.7" />
+
+								<!-- Body row -->
+								<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginTop="10" MarginBottom="10" StackLayout.LayoutMethod="HorizontalLeftToRight">
+									<Children>
+										<!-- Left: image panel -->
+										<BrushWidget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="430" MarginRight="20" Brush="Frame1Brush">
+											<Children>
+												<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
+													<Children>
+														<ImageWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="8" MarginRight="8" MarginTop="8" MarginBottom="8" Sprite="@SceneImagePath" AlphaFactor="0.85" />
+													</Children>
+												</Widget>
+											</Children>
+										</BrushWidget>
+
+										<!-- Right: story + options -->
+										<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" StackLayout.LayoutMethod="VerticalTopToBottom">
+											<Children>
+												<!-- Story panel -->
+												<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="300" Brush="Encyclopedia.SubPage.Element">
+													<Children>
+														<ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="10" MarginRight="10" MarginTop="10" MarginBottom="10" MouseScrollAxis="Vertical" ClipRect="StoryClipRect" InnerPanel="StoryClipRect\StoryText" AutoHideScrollBars="true">
+															<Children>
+																<Widget Id="StoryClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
+																	<Children>
+																		<RichTextWidget Id="StoryText" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="10" MarginRight="20" MarginTop="6" Brush="SPGeneral.MediumText" Brush.FontSize="17" Brush.TextColor="#E7D6B5FF" Brush.LineSpacing="26" Text="@StoryText" />
+																	</Children>
+																</Widget>
+															</Children>
+														</ScrollablePanel>
+													</Children>
+												</BrushWidget>
+
+												<!-- Options header with dividers -->
+												<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="34" MarginTop="14" StackLayout.LayoutMethod="HorizontalLeftToRight">
+													<Children>
+														<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="14" VerticalAlignment="Center" Sprite="SPGeneral\TownManagement\horizontal_divider" AlphaFactor="0.55" />
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" VerticalAlignment="Center" MarginLeft="10" MarginRight="10" Brush="SPGeneral.MediumText" Brush.FontSize="13" Brush.TextColor="#BFA77DFF" Text="Choose Your Action" />
+														<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="14" VerticalAlignment="Center" Sprite="SPGeneral\TownManagement\horizontal_divider" AlphaFactor="0.55" />
+													</Children>
+												</ListPanel>
+
+												<!-- Options list (scrollable so it never spills into the footer) -->
+												<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginTop="10" Brush="Encyclopedia.SubPage.Element">
+													<Children>
+														<ScrollablePanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="10" MarginRight="10" MarginTop="10" MarginBottom="10" MouseScrollAxis="Vertical" ClipRect="ChoicesClipRect" InnerPanel="ChoicesClipRect\ChoiceList" AutoHideScrollBars="true">
+															<Children>
+																<Widget Id="ChoicesClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
+																	<Children>
+																		<ListPanel Id="ChoiceList" DataSource="{ChoiceOptions}" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" StackLayout.LayoutMethod="VerticalTopToBottom">
+																			<ItemTemplate>
+																				<!-- Inline choice button (single prefab; no external template) -->
+																				<ButtonWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="58" MarginBottom="10" Brush="ButtonBrush1" Command.Click="ExecuteSelectChoice" IsEnabled="@IsEnabled" UpdateChildrenStates="true">
+																					<Children>
+																						<BrushWidget DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
+																							<Children>
+																								<!-- Left accent -->
+																								<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="5" HorizontalAlignment="Left" Sprite="BlankWhiteSquare_9" Color="@RiskColor" />
+
+																								<!-- Choice text -->
+																								<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="18" MarginRight="190" MarginTop="10" HorizontalAlignment="Left" VerticalAlignment="Top" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="14" Brush.TextColor="@TextColor" Text="@ChoiceText" />
+
+																								<!-- Effects preview (right) -->
+																								<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="180" MarginRight="10" HorizontalAlignment="Right">
+																									<Children>
+																										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="7" MarginRight="6" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#7EBB6CFF" Text="@RewardsText" />
+																										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="26" MarginRight="6" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#C97A6AFF" Text="@CostsText" />
+																									</Children>
+																								</Widget>
+
+																								<!-- Risk badge -->
+																								<Widget DoNotAcceptEvents="true" WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="44" SuggestedHeight="20" MarginTop="6" MarginRight="6" HorizontalAlignment="Right" VerticalAlignment="Top" Sprite="StdAssets\round_frame" Color="@RiskColor" IsVisible="@IsRisky">
+																									<Children>
+																										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.SmallText" Brush.FontSize="9" Brush.TextColor="#FFFFFFFF" Text="RISK" />
+																									</Children>
+																								</Widget>
+
+																								<!-- Disabled overlay -->
+																								<Widget DoNotAcceptEvents="true" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Sprite="BlankWhiteSquare_9" Color="#00000066" IsVisible="@IsDisabled">
+																									<Children>
+																										<RichTextWidget DoNotAcceptEvents="true" WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" Brush="SPGeneral.MediumText" Brush.FontSize="12" Brush.TextColor="#FFAAAAFF" Text="@DisabledReasonText" />
+																									</Children>
+																								</Widget>
+																							</Children>
+																						</BrushWidget>
+																					</Children>
+																				</ButtonWidget>
+																			</ItemTemplate>
+																		</ListPanel>
+																	</Children>
+																</Widget>
+															</Children>
+														</ScrollablePanel>
+													</Children>
+												</BrushWidget>
+											</Children>
+										</ListPanel>
+									</Children>
+								</ListPanel>
+
+								<!-- Footer divider -->
+								<Widget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="14" MarginTop="8" Sprite="SPGeneral\TownManagement\horizontal_divider" AlphaFactor="0.7" />
+
+								<!-- Footer bar (fixed height; always below options) -->
+								<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="Fixed" SuggestedHeight="84" Brush="Encyclopedia.SubPage.Element">
+									<Children>
+										<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" MarginLeft="14" MarginRight="14" MarginTop="10" MarginBottom="10" StackLayout.LayoutMethod="HorizontalLeftToRight">
+											<Children>
+												<!-- Heat -->
+												<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" StackLayout.LayoutMethod="VerticalTopToBottom">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#BFA77DFF" Text="Heat" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="220" SuggestedHeight="12" MarginTop="6" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@HeatBarWidth" Sprite="StdAssets\progressbar_fill" Color="#FF6644FF" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="4" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextColor="#E7D6B5FF" Text="@HeatText" />
+													</Children>
+												</ListPanel>
+
+												<!-- Discipline -->
+												<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" StackLayout.LayoutMethod="VerticalTopToBottom">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#BFA77DFF" Text="Discipline" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="220" SuggestedHeight="12" MarginTop="6" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@DisciplineBarWidth" Sprite="StdAssets\progressbar_fill" Color="#4488FFFF" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="4" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextColor="#E7D6B5FF" Text="@DisciplineText" />
+													</Children>
+												</ListPanel>
+
+												<!-- Reputation -->
+												<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" StackLayout.LayoutMethod="VerticalTopToBottom">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#BFA77DFF" Text="Reputation" />
+														<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="220" SuggestedHeight="12" MarginTop="6" Sprite="StdAssets\progressbar_frame">
+															<Children>
+																<Widget WidthSizePolicy="Fixed" HeightSizePolicy="StretchToParent" SuggestedWidth="@LanceRepBarWidth" Sprite="StdAssets\progressbar_fill" Color="#44FF88FF" />
+															</Children>
+														</Widget>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="4" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextColor="#E7D6B5FF" Text="@LanceRepText" />
+													</Children>
+												</ListPanel>
+
+												<!-- Fatigue -->
+												<ListPanel WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" StackLayout.LayoutMethod="VerticalTopToBottom">
+													<Children>
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#BFA77DFF" Text="Fatigue" />
+														<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginTop="18" Brush="SPGeneral.MediumText" Brush.FontSize="18" Brush.TextColor="#E7D6B5FF" Text="@FatigueText" />
+													</Children>
+												</ListPanel>
+											</Children>
+										</ListPanel>
+									</Children>
+								</BrushWidget>
+							</Children>
+						</ListPanel>
+					</Children>
+				</BrushWidget>
+
+			</Children>
+		</Widget>
+	</Window>
+</Prefab>

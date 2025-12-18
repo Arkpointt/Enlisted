@@ -6,6 +6,7 @@ using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Helpers;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Actions;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
@@ -21,15 +22,35 @@ namespace Enlisted.Features.CommandTent.Core
     {
         private const string LogCategory = "Retinue";
 
-        // Tier unlock thresholds
-        public const int LanceTier = 4;
-        public const int SquadTier = 5;
-        public const int RetinueTier = 6;
+        // ========================================================================
+        // RETINUE SYSTEM V2.0 - Commander's Retinue at T7-T9
+        // Companions managed from T1 (via CompanionAssignmentManager)
+        // Commander retinue: 20/30/40 soldiers at T7/T8/T9
+        // ========================================================================
 
-        // Capacity by tier
-        public const int LanceCapacity = 5;
-        public const int SquadCapacity = 10;
-        public const int RetinueCapacity = 20;
+        // New tier unlock thresholds (Commander's Retinue)
+        public const int CommanderTier1 = 7;  // First retinue tier
+        public const int CommanderTier2 = 8;  // Expanded retinue
+        public const int CommanderTier3 = 9;  // Elite retinue
+
+        // New capacity by tier
+        public const int CommanderCapacity1 = 20;  // T7: 20 soldiers
+        public const int CommanderCapacity2 = 30;  // T8: 30 soldiers
+        public const int CommanderCapacity3 = 40;  // T9: 40 soldiers
+
+        // Legacy constants (for backward compatibility and gradual migration)
+        [Obsolete("Use CommanderTier1 instead. Retinue now starts at T7.")]
+        public const int LanceTier = 7;
+        [Obsolete("Use CommanderTier2 instead.")]
+        public const int SquadTier = 8;
+        [Obsolete("Use CommanderTier3 instead.")]
+        public const int RetinueTier = 9;
+        [Obsolete("Use CommanderCapacity1 instead.")]
+        public const int LanceCapacity = 20;
+        [Obsolete("Use CommanderCapacity2 instead.")]
+        public const int SquadCapacity = 30;
+        [Obsolete("Use CommanderCapacity3 instead.")]
+        public const int RetinueCapacity = 40;
 
         // Factions that don't have horse archers
         private static readonly HashSet<string> NoHorseArcherFactions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -67,64 +88,84 @@ namespace Enlisted.Features.CommandTent.Core
 
         /// <summary>
         /// Gets the maximum soldier capacity for a given tier.
+        /// T1-T6: 0 (companions only)
+        /// T7: 20 soldiers
+        /// T8: 30 soldiers  
+        /// T9: 40 soldiers
         /// </summary>
-        /// <param name="tier">Player's enlistment tier (1-6)</param>
-        /// <returns>Max soldiers allowed: 0 for tier less than 4, 5/10/20 for tier 4/5/6</returns>
+        /// <param name="tier">Player's enlistment tier (1-9)</param>
+        /// <returns>Max soldiers allowed: 0 for T1-T6, 20/30/40 for T7/T8/T9</returns>
         public static int GetTierCapacity(int tier)
         {
             return tier switch
             {
-                >= RetinueTier => RetinueCapacity,
-                SquadTier => SquadCapacity,
-                LanceTier => LanceCapacity,
-                _ => 0
+                >= CommanderTier3 => CommanderCapacity3,  // T9+: 40 soldiers
+                CommanderTier2 => CommanderCapacity2,      // T8: 30 soldiers
+                CommanderTier1 => CommanderCapacity1,      // T7: 20 soldiers
+                _ => 0  // T1-T6: companions only, no soldiers
             };
         }
 
         /// <summary>
-        /// Gets the unit name for a tier (Lance, Squad, Retinue).
+        /// Gets the unit name for a tier.
+        /// T1-T6: "Companions Only"
+        /// T7: "Command (Regular)"
+        /// T8: "Command (Veteran)"
+        /// T9: "Command (Elite)"
         /// </summary>
         public static string GetUnitName(int tier)
         {
             return tier switch
             {
-                >= RetinueTier => "Retinue",
-                SquadTier => "Squad",
-                LanceTier => "Lance",
-                _ => "None"
+                >= CommanderTier3 => "Command (Elite)",
+                CommanderTier2 => "Command (Veteran)",
+                CommanderTier1 => "Command (Regular)",
+                _ => "Companions Only"
             };
         }
 
         /// <summary>
+        /// Checks if player can have a retinue at the given tier.
+        /// </summary>
+        public static bool CanHaveRetinueAtTier(int tier)
+        {
+            return tier >= CommanderTier1;
+        }
+
+        /// <summary>
         /// Checks if the player can have a retinue at their current tier.
+        /// Retinue requires T7+ (Commander rank).
         /// </summary>
         public bool CanHaveRetinue(out string reason)
         {
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                reason = "You must be enlisted to command soldiers.";
+                reason = new TextObject("{=enl_retinue_reason_must_be_enlisted}You must be enlisted to command soldiers.").ToString();
                 return false;
             }
 
             var currentTier = enlistment.EnlistmentTier;
-            if (currentTier < LanceTier)
+            if (currentTier < CommanderTier1)
             {
-                reason = $"Requires Tier {LanceTier} or higher. You are Tier {currentTier}.";
+                var t = new TextObject("{=enl_retinue_reason_requires_commander}Requires Commander rank (Tier {REQ}). You are Tier {CUR}.");
+                t.SetTextVariable("REQ", CommanderTier1);
+                t.SetTextVariable("CUR", currentTier);
+                reason = t.ToString();
                 return false;
             }
 
             var party = PartyBase.MainParty;
             if (party == null)
             {
-                reason = "No party found.";
+                reason = new TextObject("{=enl_retinue_reason_no_party}No party found.").ToString();
                 return false;
             }
 
             var availableSpace = party.PartySizeLimit - party.NumberOfAllMembers;
             if (availableSpace <= 0)
             {
-                reason = "No party space available. Your companions fill your party.";
+                reason = new TextObject("{=enl_retinue_reason_no_space_companions}No party space available. Your companions fill your party.").ToString();
                 return false;
             }
 
@@ -199,16 +240,25 @@ namespace Enlisted.Features.CommandTent.Core
             var targetFormation = GetFormationClass(typeId);
 
             // Determine tier range based on player tier
+            // T7: Raw recruits (tier 1-2)
+            // T8: Better quality (tier 2-3)
+            // T9: Veteran troops (tier 3-4)
             int minTier, maxTier;
-            if (playerTier >= RetinueTier)
+            if (playerTier >= CommanderTier3)
             {
                 minTier = 3;
                 maxTier = 4;
             }
-            else
+            else if (playerTier >= CommanderTier2)
             {
                 minTier = 2;
                 maxTier = 3;
+            }
+            else
+            {
+                // T7 and below: raw recruits
+                minTier = 1;
+                maxTier = 2;
             }
 
             // Get all troops from the culture's troop tree within tier range
@@ -272,7 +322,7 @@ namespace Enlisted.Features.CommandTent.Core
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                message = "You must be enlisted to command soldiers.";
+                message = new TextObject("{=enl_retinue_msg_must_be_enlisted}You must be enlisted to command soldiers.").ToString();
                 ModLogger.Warn(LogCategory, "AddSoldiers blocked: not enlisted");
                 return false;
             }
@@ -280,7 +330,7 @@ namespace Enlisted.Features.CommandTent.Core
             var party = MobileParty.MainParty;
             if (party == null)
             {
-                message = "No party available.";
+                message = new TextObject("{=enl_retinue_msg_no_party}No party available.").ToString();
                 ModLogger.Warn(LogCategory, "AddSoldiers blocked: no party");
                 return false;
             }
@@ -290,7 +340,7 @@ namespace Enlisted.Features.CommandTent.Core
 
             if (culture == null)
             {
-                message = "Cannot determine faction culture.";
+                message = new TextObject("{=enl_retinue_msg_no_culture}Cannot determine faction culture.").ToString();
                 ModLogger.Warn(LogCategory, "AddSoldiers blocked: no culture");
                 return false;
             }
@@ -312,15 +362,15 @@ namespace Enlisted.Features.CommandTent.Core
             {
                 if (partyAvailable <= 0)
                 {
-                    message = "Party is full. Dismiss troops or increase party size.";
+                    message = new TextObject("{=enl_retinue_msg_party_full}Party is full. Dismiss troops or increase party size.").ToString();
                 }
                 else if (tierAvailable <= 0)
                 {
-                    message = "Retinue is at full capacity for your rank.";
+                    message = new TextObject("{=enl_retinue_msg_full_capacity}Retinue is at full capacity for your rank.").ToString();
                 }
                 else
                 {
-                    message = "Cannot add soldiers.";
+                    message = new TextObject("{=enl_retinue_msg_cannot_add}Cannot add soldiers.").ToString();
                 }
 
                 ModLogger.Warn(LogCategory, $"AddSoldiers blocked: {message}");
@@ -355,7 +405,9 @@ namespace Enlisted.Features.CommandTent.Core
 
             if (actuallyAdded < count)
             {
-                message = $"Party limit reached. Only {actuallyAdded} soldiers assigned.";
+                var t = new TextObject("{=enl_retinue_msg_party_limit_reached}Party limit reached. Only {COUNT} soldiers assigned.");
+                t.SetTextVariable("COUNT", actuallyAdded);
+                message = t.ToString();
                 ModLogger.Info(LogCategory, message);
             }
             else
@@ -498,24 +550,26 @@ namespace Enlisted.Features.CommandTent.Core
         {
             reason = null;
 
-            // Must be enlisted at Tier 4+
+            // Must be enlisted at Commander tier (T7+)
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
             {
-                reason = "You must be enlisted to requisition soldiers.";
+                reason = new TextObject("{=enl_retinue_reason_must_be_enlisted_requisition}You must be enlisted to requisition soldiers.").ToString();
                 return false;
             }
 
-            if (enlistment.EnlistmentTier < LanceTier)
+            if (enlistment.EnlistmentTier < CommanderTier1)
             {
-                reason = $"Requires Tier {LanceTier} or higher.";
+                var t = new TextObject("{=enl_retinue_reason_requires_commander_min}Requires Commander rank (Tier {REQ}) or higher.");
+                t.SetTextVariable("REQ", CommanderTier1);
+                reason = t.ToString();
                 return false;
             }
 
             // Must have a retinue type selected
             if (!_state.HasTypeSelected)
             {
-                reason = "You must select a soldier type first.";
+                reason = new TextObject("{=enl_retinue_reason_select_type}You must select a soldier type first.").ToString();
                 return false;
             }
 
@@ -523,7 +577,9 @@ namespace Enlisted.Features.CommandTent.Core
             if (!_state.IsRequisitionAvailable())
             {
                 var daysRemaining = _state.GetRequisitionCooldownDays();
-                reason = $"Requisition on cooldown: {daysRemaining} days remaining.";
+                var t = new TextObject("{=enl_retinue_reason_requisition_cooldown}Requisition on cooldown: {DAYS} days remaining.");
+                t.SetTextVariable("DAYS", daysRemaining);
+                reason = t.ToString();
                 return false;
             }
 
@@ -531,7 +587,7 @@ namespace Enlisted.Features.CommandTent.Core
             var missing = GetMissingSoldierCount();
             if (missing <= 0)
             {
-                reason = "Your retinue is at full strength.";
+                reason = new TextObject("{=enl_retinue_reason_full_strength}Your retinue is at full strength.").ToString();
                 return false;
             }
 
@@ -540,7 +596,10 @@ namespace Enlisted.Features.CommandTent.Core
             var playerGold = Hero.MainHero?.Gold ?? 0;
             if (playerGold < cost)
             {
-                reason = $"Not enough gold. Need {cost} denars, have {playerGold}.";
+                var t = new TextObject("{=enl_retinue_reason_not_enough_gold}Not enough gold. Need {NEED} denars, have {HAVE}.");
+                t.SetTextVariable("NEED", cost);
+                t.SetTextVariable("HAVE", playerGold);
+                reason = t.ToString();
                 return false;
             }
 
@@ -662,8 +721,11 @@ namespace Enlisted.Features.CommandTent.Core
                 return false;
             }
 
-            // Deduct gold
-            Hero.MainHero?.ChangeHeroGold(-cost);
+            // Deduct gold using GiveGoldAction (properly affects party treasury and updates UI)
+            if (cost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, null, cost);
+            }
 
             // Add soldiers
             if (TryAddSoldiers(toAdd, _state.SelectedTypeId, out var actuallyAdded, out var addMessage))
@@ -679,7 +741,10 @@ namespace Enlisted.Features.CommandTent.Core
             }
 
             // Refund gold on failure
-            Hero.MainHero?.ChangeHeroGold(cost);
+            if (cost > 0 && Hero.MainHero != null)
+            {
+                GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, cost);
+            }
             message = addMessage;
             ModLogger.ActionResult(reqCategory, "Requisition", false, addMessage);
             return false;
@@ -706,16 +771,16 @@ namespace Enlisted.Features.CommandTent.Core
         #region Leadership Notification
 
         /// <summary>
-        /// Shows the Tier 4 leadership unlock notification dialog.
-        /// Called when player reaches Tier 4 for the first time in a session.
+        /// Shows the Commander's Retinue unlock notification dialog.
+        /// Called when player reaches Tier 7 (Commander rank) for the first time.
         /// </summary>
         public static void ShowLeadershipNotification()
         {
-            var title = new TextObject("{=ct_leadership_title}Promotion to Leadership");
-            var message = new TextObject("{=ct_leadership_message}Your service has not gone unnoticed. " +
-                "You've been granted the authority to command a small lance of soldiers in battle.\n\n" +
-                "Visit the Command Tent to request men be assigned to your command. " +
-                "Know that you'll be responsible for their welfare—each soldier in your care will cost 2 denars per day in upkeep.");
+            var title = new TextObject("{=ct_leadership_title}Commander's Commission");
+            var message = new TextObject("{=ct_leadership_message}Your long service has been recognized. " +
+                "As a Commander, you've been granted authority over your own retinue of soldiers.\n\n" +
+                "Fifteen raw recruits have been assigned to your command. Train them well—their lives are in your hands.\n\n" +
+                "Visit Camp to manage your forces.");
 
             // pauseGameActiveState = false so notifications don't freeze game time
             InformationManager.ShowInquiry(
@@ -724,12 +789,12 @@ namespace Enlisted.Features.CommandTent.Core
                     message.ToString(),
                     true,
                     false,
-                    new TextObject("{=ct_leadership_acknowledge}Understood").ToString(),
+                    new TextObject("{=ct_leadership_acknowledge}I will lead them well").ToString(),
                     string.Empty,
                     null,
                     null));
 
-            ModLogger.Info(LogCategory, "Showed Tier 4 leadership notification");
+            ModLogger.Info(LogCategory, "Showed Commander (Tier 7) leadership notification");
         }
 
         #endregion

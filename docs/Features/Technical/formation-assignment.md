@@ -5,8 +5,8 @@
 | Component | Behavior |
 |-----------|----------|
 | Formation Assignment | Player automatically assigned to duty-based formation (Infantry/Ranged/Cavalry/Horse Archer) at battle start |
-| Position Teleportation | Player and squad teleported to their assigned formation's position (5m behind center) |
-| Teleport Priority | Formation position → Lord position → Any allied agent |
+| Position Teleportation | Player and squad teleported to their assigned formation's position (5m behind for field battles, center for sieges) |
+| Teleport Priority | Formation position -> Lord position -> Any allied agent |
 | Retry Window | 120 attempts (~2 seconds at 60fps) to allow formations to populate |
 
 ## Table of Contents
@@ -33,7 +33,7 @@ Automatically assigns the enlisted player to their designated formation based on
 **Key Features:**
 - Automatic formation assignment matching player's duty type
 - Teleportation to formation position (e.g., archers teleport to archer formation)
-- Player spawns 5m behind formation center to avoid being stuck in the middle
+- **Siege-aware positioning**: Formation center for siege assaults, 5m behind for field battles
 - Squad command authority at Tier 4+ (player controls their own formation)
 - Companion command blocking (companions cannot become captains or generals)
 - Handles late spawns, reinforcements, and single-team scenarios
@@ -85,7 +85,9 @@ Fix the issue where the player's map party spawns slightly behind the lord's arm
 1. System detects position fix is needed (player spawned in wrong location)
 2. Gets player's formation class from duties system (Infantry/Ranged/Cavalry/HorseArcher)
 3. Gets that formation from the player's team (all allied troops are on the same team)
-4. Calculates target position: formation's CachedMedianPosition minus 5m (behind formation)
+4. Calculates target position based on battle type:
+   - **Field battles**: Formation's CachedMedianPosition minus 5m (behind formation)
+   - **Siege assaults**: Formation's CachedMedianPosition (center, with the troops)
 5. If distance > 10m threshold, teleports player to formation position
 6. Sets movement direction and look direction to match formation
 7. Forces cache update to ensure position sticks
@@ -98,7 +100,10 @@ Fix the issue where the player's map party spawns slightly behind the lord's arm
 
 **Teleport Threshold:**
 - **10 meters**: If player is more than 10m from target, teleport is triggered
-- **5 meters behind**: Player spawns 5m behind formation center to avoid being stuck in the middle
+
+**Position Offset (Battle Type Dependent):**
+- **Field Battles**: 5m behind formation center (avoids spawning in the middle of troops)
+- **Siege Assaults**: Formation center (spawns with attacking troops near walls)
 
 ### Formation Position Lookup
 
@@ -112,14 +117,20 @@ var targetFormation = team.GetFormation(formationClass);
 if (targetFormation != null && targetFormation.CountOfUnits > 0)
 {
     targetPosition = targetFormation.CachedMedianPosition.GetGroundVec3();
-    // Offset 5m behind formation center
-    targetPosition += -formationDirection.ToVec3() * 5f;
+    
+    // Siege assaults: spawn at formation center (with the troops)
+    // Field battles: offset 5m behind formation center
+    if (!Mission.Current.IsSiegeBattle)
+    {
+        targetPosition += -formationDirection.ToVec3() * 5f;
+    }
 }
 ```
 - Gets the formation matching player's duty type from the player's team
 - Uses `CachedMedianPosition` which represents the center of all units in that formation
 - Includes both player party members and lord's army troops
-- Position offset 5m behind to avoid spawning in middle of troops
+- **Siege assaults**: No offset - spawn at formation center to be with attacking troops
+- **Field battles**: 5m behind to avoid spawning in middle of troops
 
 **Priority 2 - Lord Position (Fallback):**
 ```csharp
@@ -327,18 +338,22 @@ _spawnLogic.IsInitialSpawnOver      // True after initial deployment
 - Check if already assigned (prevents re-assignment)
 
 **Log Messages (INFO level):**
-- `"Teleported player to Infantry formation (90 units)"` - Success, shows formation type and unit count
-- `"Teleported player to Lord Debana"` - Fallback to lord position (formation not found)
-- `"Teleported player to allied agent"` - Last resort fallback
+- `"Teleported player to Infantry formation (90 units)"` - Success for field battle
+- `"Teleported player to Infantry formation (90 units, siege assault)"` - Success for siege
+- `"Teleported player to Lord Debana (fallback)"` - Fallback to lord position
+- `"Teleported player to allied agent (fallback)"` - Last resort fallback
+- `"Player already near {source} ({distance}m <= 10m) - no teleport needed"` - Player spawned close enough
+- `"Position fix FAILED after 120 attempts"` - Warning when teleport couldn't complete
 
-**Debug Logs (DEBUG level - enable for troubleshooting):**
-- `"Teleport search: Looking for X formation"` - Shows search parameters
-- `"Found X formation on player's team (N units)"` - Formation found
-- `"No X formation found, falling back to lord position"` - Fallback triggered
+**Log Details:**
+- Teleport logs show: distance moved, from/to coordinates, formation unit count
+- Siege assaults are explicitly labeled in the log message
 
 **Verification Steps:**
 1. Player should be in correct formation based on duty type
-2. Player should spawn near their formation (within 10m, 5m behind center)
+2. Player should spawn near their formation:
+   - **Field battles**: Within 10m, 5m behind center
+   - **Siege assaults**: At formation center (with attacking troops)
 3. At Tier 4+, companions and retinue should join same formation
 4. Teleportation should complete within 2 seconds of battle start
 5. Position should remain stable (not revert after teleport)
@@ -354,10 +369,19 @@ The original implementation searched for the lord agent as a teleport reference.
 - Archers would spawn near infantry if lord was with infantry
 - Didn't reflect the "serve in a formation" fantasy
 
-The new implementation uses the formation's `CachedMedianPosition`:
+The current implementation uses the formation's `CachedMedianPosition`:
 - Player spawns with their assigned troop type (archers with archers, infantry with infantry)
 - Formation position includes all units of that type (lord's army + player's party)
-- 5m offset behind formation center prevents spawning stuck in the middle
+- **Field battles**: 5m offset behind formation center prevents spawning stuck in the middle
+- **Siege assaults**: No offset - spawn at formation center to be with attacking troops near walls
+
+**Why Siege Assaults Are Different:**
+
+During siege assaults, formations are typically spread out along the approach to walls/gates. The "5m behind" offset that works well for field battles would place the player far from the action:
+- Field battle: Formation is a tight cluster; "behind" means back row
+- Siege assault: Formation is a column/line toward walls; "behind" could mean 80+ meters from the fight
+
+The siege-specific handling ensures players spawn with their formation regardless of how the formation is positioned relative to siege objectives.
 
 **Why Same Team, Not Separate Teams:**
 

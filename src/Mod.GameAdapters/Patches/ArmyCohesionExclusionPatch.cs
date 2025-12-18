@@ -128,7 +128,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Cohesion", $"Error in cohesion exclusion patch: {ex.Message}");
+                ModLogger.ErrorCode("Cohesion", "E-PATCH-010", "Error in cohesion exclusion patch", ex);
                 // Fail open - don't modify result on error
             }
         }

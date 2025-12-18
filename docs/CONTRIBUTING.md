@@ -101,15 +101,35 @@ Each crash creates a timestamped folder (e.g., `2025-12-08_03.41.58\`) containin
 
 ## API Reference
 
-When working with Bannerlord APIs, refer to the discovered documentation:
-- `docs/discovered/engine.md` - Core API signatures (v1.3.4 verified)
-- `docs/discovered/menus.md` - Menu system APIs
-- `docs/discovered/gauntlet.md` - UI system reference
-- `docs/discovered/images.md` - Image system (v1.3.4)
-- `docs/discovered/equipment.md` - Equipment APIs
-- `docs/discovered/helpers.md` - Helper methods
+When working with Bannerlord APIs, verify usage against:
+- The local native decompile included with this repository (authoritative)
+- The official API docs for the project's target version (currently **v1.3.4**) when needed for quick lookups
 
-All discovered docs are updated for Bannerlord v1.3.4 compatibility.
+### Native Decompile Location
+
+The decompiled Bannerlord source is located at:
+```
+C:\Dev\Enlisted\Decompile 1.3.4\
+```
+
+Key decompiled assemblies:
+| Assembly | Location | Contents |
+|----------|----------|----------|
+| TaleWorlds.CampaignSystem | `TaleWorlds.CampaignSystem\TaleWorlds\` | Party, Settlement, Campaign behaviors |
+| TaleWorlds.Core | `TaleWorlds.Core\` | Basic types, CharacterObject, ItemObject |
+| TaleWorlds.Library | `TaleWorlds.Library\` | Vec2, MBList, utility classes |
+| TaleWorlds.MountAndBlade | `TaleWorlds.MountAndBlade\TaleWorlds\` | Mission, Agent, combat |
+| SandBox.View | `SandBox.View\` | Menu views, map handlers |
+| NavalDLC | `NavalDLC\` | War Sails expansion APIs |
+
+**Example**: To find the correct property for party position:
+```
+C:\Dev\Enlisted\Decompile 1.3.4\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\Party\MobileParty.cs
+```
+Key APIs:
+- `MobileParty.GetPosition2D` -> `Vec2` (not `Position2D`)
+- `Settlement.GetPosition2D` -> `Vec2`
+- `MobileParty.Position` -> `CampaignVec2`
 
 ## Guidelines
 
@@ -117,4 +137,4 @@ All discovered docs are updated for Bannerlord v1.3.4 compatibility.
 - Comments explain *why*, not *what*
 - Use Harmony only when needed
 - Keep changes small and focused
-- Verify APIs against v1.3.4 decompile in `C:\Dev\Enlisted\DECOMPILE\`
+- Verify APIs against the official docs and your local decompile/reference project (path is developer-specific)

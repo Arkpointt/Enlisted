@@ -1,10 +1,37 @@
-# Documentation Index
+# enlisted documentation index
 
-This is the main documentation entry point for the Enlisted mod.
+**last updated:** december 17, 2025
 
-Use it two ways:
-- **If you're playing**: start with **How it all works** (the end-to-end loop).
-- **If you're modding/debugging**: use the feature pages under each category for deeper details and file references.
+This is the **single entry point** for all Enlisted mod documentation.
+
+---
+
+## index
+
+- [quick links](#quick-links)
+- [how it all works (end-to-end)](#how-it-all-works-end-to-end)
+- [core systems](#core-systems)
+- [user interface](#user-interface)
+- [gameplay features](#gameplay-features)
+- [missions](#missions)
+- [technical systems](#technical-systems)
+- [story content & events](#story-content--events)
+- [implementation status](#implementation-status)
+- [spec structure](#spec-structure)
+- [quick reference](#quick-reference)
+
+## Quick Links
+
+| What You Need | Where To Go |
+|---------------|-------------|
+| **Understand the core gameplay (recommended)** | [Core Gameplay (Consolidated)](core-gameplay.md) |
+| **Understand the mod (legacy index page)** | [How It All Works](#how-it-all-works-end-to-end) (below) |
+| **Add story content** | [story systems master](../StoryBlocks/story-systems-master.md) |
+| **Add decision events** | [decision events spec](../StoryBlocks/decision-events-spec.md) |
+| **Check implementation status** | [implementation status](../ImplementationPlans/implementation-status.md) |
+| **See full roadmap** | [master roadmap](../ImplementationPlans/master-implementation-roadmap.md) |
+
+---
 
 ---
 
@@ -14,8 +41,8 @@ Use it two ways:
 - You enlist with a lord and become an embedded soldier: you follow their movements, join their battles, and your wages accrue into the **muster ledger**.
 - Doc: **[Enlistment System](Core/enlistment.md)**
 
-### 2) First enlistment: Bag Check → Baggage Train
-About **12 in-game hours** after enlisting (when safe), a bag check runs with choices:
+### 2) First enlistment: Bag Check -> Baggage Train
+About **1 in-game hour** after enlisting (when safe), a bag check runs with choices:
 - **Stow it all (50g)**: stash inventory + equipped items into the **baggage train** and pay the wagon fee.
 - **Sell it all (60%)**: liquidate gear and receive denars.
 - **I'm keeping one thing (Roguery 30+)**: attempt to keep a single item.
@@ -28,23 +55,49 @@ This is how the mod prevents “walk in with endgame kit on day one” without d
 Your **troop identity** is what the Quartermaster uses to determine what gear variants you’re allowed to buy.
 - Doc: **[Troop Selection](Gameplay/troop-selection.md)**
 
-### 4) Buy / sell gear at the Quartermaster
-Quartermaster is purchase + buyback:
-- Buy troop-appropriate variants (with pricing multipliers)
-- Sell eligible items back at buyback rate
-- Doc: **[Quartermaster](UI/quartermaster.md)**
+### 4) Visit the Quartermaster (NPC Hero)
+Talk to the quartermaster to access equipment, provisions, and advice:
+- **Equipment**: Buy/sell formation-appropriate gear with culture variants
+- **Provisions**: Purchase rations for morale and fatigue benefits
+- **Retinue Provisioning** (T7+): Feed your personal soldiers
+- **Relationship**: Build trust for discounts (5-15% off at high relationship)
+- **PayTension Dialogue**: Get archetype-specific advice when pay is late
+- Docs: **[Quartermaster Hero System](Core/quartermaster-hero-system.md)**, **[Quartermaster UI](UI/quartermaster.md)**, **[Provisions System](Gameplay/provisions-system.md)**
 
 ### 5) Day-to-day: Duties, camp actions, and progression
-- Pick duties/roles for bonuses and wage modifiers
-- Use Camp (“My Camp”) for your service record, retinue (Tier 4+), and discharge actions
+- **Request duty assignments** via Camp Management → Duties (orders-screen style with persistent assignments)
+- Use **Camp Hub** for quick access to activities, medical tent, quartermaster, and retinue
+- Use **Camp Activities** (organized game menu) for quick action selection: training, tasks, social activities with fatigue costs, organized by category with stats display
+- Use Camp Management (deep UI) for your service record, retinue (T7+), and discharge actions
 - Docs:
-  - **[Duties System](Core/duties-system.md)**
-  - **[Camp](UI/command-tent.md)**
+  - **[Duties System](Core/duties-system.md)** - Persistent duty assignments with request system
+  - **[Camp](UI/camp-tent.md)**
   - **[Formation Training](Core/formation-training.md)**
+  - **[Menu Interface](UI/menu-interface.md)** (Camp Activities)
 
-### 6) Get paid (Pay Muster) and optionally discharge (Final Muster)
-Wages accrue daily, then resolve at a **pay muster** event. Discharge is handled via **Final Muster**.
-- Doc: **[Enlistment System](Core/enlistment.md)** (Pay Muster + Discharge/Final Muster)
+### 6) Get paid (Pay Muster) and manage pay tension
+Wages accrue daily with modifiers (culture, wartime, lord wealth). Paid at **pay muster** (~12 days).
+- When pay is late, **Pay Tension** builds (0-100) with escalating effects
+- **Desperate Measures** (40+ tension): Corruption path - bribe clerk, skim supplies, black market, sell equipment
+- **Help the Lord** (40+ tension): Loyalty path - collect debts, escort merchants, negotiate loans, raid enemies
+- At 60+ tension, **free desertion** becomes available (no penalties)
+- **Battle loot share** compensates T1-T3 soldiers; T4+ get native loot screens
+- Docs:
+  - **[Pay System](Core/pay-system.md)**
+  - **[PayTension Action Menus](Gameplay/paytension-action-menus.md)**
+  - **[Enlistment System](Core/enlistment.md)** (Discharge/Final Muster)
+
+### 7) Lance Life Events & Character Interactions
+Random events and NPC interactions shape your military career:
+- **Lance Life Events**: Camp events, training, supply issues, pay tension events
+- **Quartermaster Dialogue**: Archetype-specific advice during financial crisis
+- **Action Menus**: Choose corruption or loyalty paths when pay is late
+- **Consequences**: Heat, discipline, reputation, relations, tension reduction
+- Docs:
+  - **[Lance Life Events](Core/lance-life-events.md)**
+  - **[Camp Life Simulation](Gameplay/camp-life-simulation.md)**
+  - **[Quartermaster Hero System](Core/quartermaster-hero-system.md)**
+  - **[PayTension Action Menus](Gameplay/paytension-action-menus.md)**
 
 ---
 
@@ -52,12 +105,16 @@ Wages accrue daily, then resolve at a **pay muster** event. Discharge is handled
 
 The foundational systems that enable military service.
 
-- **[Enlistment System](Core/enlistment.md)** - Core service mechanics: muster ledger wages, pay muster incidents, XP, kills, pending discharge + Final Muster, grace periods, army following; naval join safety (sea-state sync before PlayerEncounter) and prisoner/encounter-safe discharge recovery
-- **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment and missions
+- **[Enlistment System](Core/enlistment.md)** - Core service mechanics, army following, discharge
+- **[Pay System](Core/pay-system.md)** - Wages, pay muster, pay tension, battle loot share, tier-gated loot
+- **[Lance Life Events](Core/lance-life-events.md)** - Data-driven events for camp life, training, pay tension, narrative
 - **[Duties System](Core/duties-system.md)** - Military roles and assignments with skill bonuses
-- **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression
-- **[Implementation Roadmap](Core/implementation-roadmap.md)** - Master phased plan for Camp Life + Lance Life development (source-of-truth and scope control)
-- **[Phase 4 Corruption Checklist](Core/corruption-phase-checklist.md)** - Acceptance gate for Heat/Discipline/Corruption escalation and consequences
+- **[Formation Training](Core/formation-training.md)** - Automatic formation-based skill XP progression (includes native skill XP systems: track detection, travel XP, hideout spotting, trade profit)
+- **[Lance Assignments](Core/lance-assignments.md)** - Lance roster, personas, culture-specific ranks
+- **[Camp Fatigue](Core/camp-fatigue.md)** - Daily fatigue system for activities
+- **[Companion Management](Core/companion-management.md)** - Companion behavior during enlistment
+- **[Quartermaster Hero System](Core/quartermaster-hero-system.md)** - Persistent NPC quartermaster with personality, relationship system, and PayTension dialogue
+- **[Retinue System](Core/retinue-system.md)** - Commander's personal force (T7-T9) with companion management
 
 ---
 
@@ -66,7 +123,7 @@ The foundational systems that enable military service.
 Menu systems and player interaction interfaces.
 
 - **[Menu Interface](UI/menu-interface.md)** - Main enlisted status menu and navigation
-- **[Camp](UI/command-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub ("My Camp" menu)
+- **[Camp](UI/camp-tent.md)** - Service records, personal retinue (Tier 4+), companion management hub ("Camp" menu)
 - **[Dialog System](UI/dialog-system.md)** - Conversation management with lords
 - **[Quartermaster](UI/quartermaster.md)** - Equipment selection UI and variant management
 
@@ -79,8 +136,10 @@ Additional gameplay mechanics and player choices.
 - **[Temporary Leave](Gameplay/temporary-leave.md)** - 14-day leave system with desertion penalties
 - **[Troop Selection](Gameplay/troop-selection.md)** - Real troop choice for promotions and formations
 - **[Town Access System](Gameplay/town-access-system.md)** - Settlement exploration and access control
-- **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts (phased plan)
-- **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and theft with consequences (data-driven, modular)
+- **[Camp Life Simulation](Gameplay/camp-life-simulation.md)** - Condition-driven camp logistics, morale shocks, delayed pay/IOUs, and Quartermaster mood/stockouts
+- **[Lance Life](Gameplay/lance-life.md)** - Lance-driven camp stories: drills, scrounging, corruption/contraband, and escalation/condition consequences (data-driven, modular)
+- **[Provisions System](Gameplay/provisions-system.md)** - Personal rations and retinue provisioning with morale/fatigue benefits
+- **[PayTension Action Menus](Gameplay/paytension-action-menus.md)** - Desperate Measures (corruption) and Help the Lord (loyalty) when pay is late
 
 ---
 
@@ -98,40 +157,55 @@ Low-level systems that ensure stability and prevent issues.
 
 - **[Encounter Safety](Technical/encounter-safety.md)** - Map encounter crash prevention, reserve watchdog, prisoner-state aware activation, besiege-menu fix, and naval battle fixes (ship assignment, captain lookup, troop deployment, AI behavior creation for shipless formations)
 - **[Formation Assignment](Technical/formation-assignment.md)** - Battle formation assignment and position teleportation to lord's deployment
-- **[Night Rest & Fatigue](Technical/night-rest-fatigue.md)** - Night halt logic for lords/armies with optional enlisted fatigue when rest is impossible; phased plan and safeguards
 
 ---
 
-## Research / Design Drafts
+## Story Content & Events
 
-Working notes and design drafts live under `docs/research`:
-- **[Research Index](../research/index.md)** - Entry point for prompts, design drafts, and API notes
+For adding or modifying story content:
+
+- **[story systems master](../StoryBlocks/story-systems-master.md)** - consolidated reference for all story systems, escalation mechanics, and content indexes
+- **[decision events spec](../StoryBlocks/decision-events-spec.md)** - ck3-style decision events (active development)
+
+## Implementation Status
+
+Track implementation progress:
+
+- **[implementation status](../ImplementationPlans/implementation-status.md)** - current state (what's done)
+- **[implementation roadmap](../ImplementationPlans/implementation-roadmap.md)** - future work (what's NOT done)
+
+## Guides & Research
+
+For creating content and technical reference:
+
+- **[duty events creation guide](../research/duty-events-creation-guide.md)** - how to create duty events
+- **[gauntlet ui playbook](../research/gauntlet-ui-screens-playbook.md)** - how to build UI safely
 
 ## Spec Structure
 
-Most feature pages follow this structure (some pages also include extra debugging/API reference sections):
+Feature pages follow this structure:
 
-- **Overview**: One sentence summary of what the feature does
-- **Purpose**: Why the feature exists and what problem it solves
-- **Inputs/Outputs**: What data flows in and out of the system
-- **Behavior**: Detailed description of how the feature works
-- **Technical Implementation**: Key files, APIs, and code patterns
-- **Edge Cases**: What can go wrong and how it's handled
-- **Acceptance Criteria**: Checklist for implementation verification
+- **Overview**: One sentence summary
+- **Purpose**: Why it exists
+- **Inputs/Outputs**: Data flow
+- **Behavior**: How it works
+- **Edge Cases**: Error handling
+- **Acceptance Criteria**: Verification checklist
 
 ---
 
 ## Quick Reference
 
 **By Tier Requirement:**
-- Tier 1+: Enlistment, Duties, Formation Training, Troop Selection, Companion Management, Camp (basic)
-- Tier 2+: Quartermaster, Menu Interface
-- Tier 4+: Personal Retinue (Camp), Recon Mission
+- Tier 1+: Enlistment, Duties, Formation Training, Camp Activities, Pay System
+- Tier 2+: Quartermaster, Duty Requests
+- Tier 4+: Native Loot Screens, Personal Retinue, Recon Mission
 
 **By Category:**
-- **Progression**: Enlistment, Duties, Formation Training, Troop Selection
-- **Party Management**: Companion Management, Personal Retinue (Camp)
+- **Progression**: Enlistment, Pay System, Duties, Formation Training
+- **Party Management**: Companion Management, Personal Retinue
+- **Events**: Lance Life Events, Pay Tension Events, Loyal Path Missions
 - **Interaction**: Dialog System, Menu Interface, Town Access, Camp
-- **Equipment**: Quartermaster
+- **Equipment**: Quartermaster, Tier-Gated Loot
 - **Special**: Temporary Leave, Recon Mission
-- **Technical/Safety**: Encounter Safety, Formation Assignment, Night Rest & Fatigue
+- **Technical/Safety**: Encounter Safety, Formation Assignment

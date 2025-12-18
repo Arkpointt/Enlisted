@@ -135,13 +135,13 @@ These placeholders are **only available when the trigger implies they exist**. U
 
 ### Rule 1: Only Use What Exists
 
-❌ **Wrong:** Using `{ENEMY_LORD}` in a training event
+X **Wrong:** Using `{ENEMY_LORD}` in a training event
 ```
 "Train hard, {PLAYER_NAME}. {ENEMY_LORD} won't show mercy."
 ```
 This breaks if there's no current enemy.
 
-✅ **Right:** Using `{ENEMY_FACTION}` only when contextually appropriate
+[x] **Right:** Using `{ENEMY_FACTION}` only when contextually appropriate
 ```
 // Event trigger: battle_won
 "We beat the {ENEMY_FACTION_ADJECTIVE} bastards today."
@@ -153,19 +153,19 @@ For optional placeholders, the system should gracefully handle missing data:
 
 ```csharp
 // If ENEMY_LORD is null, use faction instead
-"{ENEMY_LORD|the enemy}" → "Caladog" or "the enemy"
+"{ENEMY_LORD|the enemy}" -> "Caladog" or "the enemy"
 ```
 
 ### Rule 3: Keep It Natural
 
 Placeholders should fit natural speech patterns.
 
-❌ **Awkward:**
+X **Awkward:**
 ```
 "{PLAYER_NAME}, {LORD_NAME} of {FACTION_NAME} requires your presence."
 ```
 
-✅ **Natural:**
+[x] **Natural:**
 ```
 "{LORD_TITLE} {LORD_NAME} wants to see you, {PLAYER_NAME}."
 ```
@@ -174,12 +174,12 @@ Placeholders should fit natural speech patterns.
 
 One or two placeholders per paragraph. More feels robotic.
 
-❌ **Too many:**
+X **Too many:**
 ```
 "{PLAYER_NAME}, as a {PLAYER_TIER} {PLAYER_FORMATION} of {LANCE_NAME} serving {LORD_NAME} of {FACTION_NAME}..."
 ```
 
-✅ **Just enough:**
+[x] **Just enough:**
 ```
 "The sergeant catches your eye. 'You're with me today, {PLAYER_NAME}.'"
 ```

@@ -1,0 +1,1051 @@
+{
+  "schemaVersion": 1,
+  "packId": "duty_boatswain",
+  "category": "duty",
+  "events": [
+    {
+      "id": "boat_deck_management",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:boatswain",
+          "at_sea"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning",
+          "afternoon"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "boatswain",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 2,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_boat_deck_management_title",
+        "setupId": "ll_evt_boat_deck_management_setup",
+        "title": "Deck Discipline",
+        "setup": "{CAPTAIN_NAME} runs a tight ship. That's your job — making sure the crew follows orders.\n\nSomeone slacked on the night watch. Everyone knows who. Now they're watching to see what you do.",
+        "options": [
+          {
+            "id": "public_discipline_make_an_exampl",
+            "textId": "ll_evt_boat_deck_management_opt_public_discipline_make_an_exampl_text",
+            "text": "Public discipline — make an example",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30,
+                "leadership": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_deck_management_opt_public_discipline_make_an_exampl_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "private_warning_give_them_one_ch",
+            "textId": "ll_evt_boat_deck_management_opt_private_warning_give_them_one_ch_text",
+            "text": "Private warning — give them one chance",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 25,
+                "charm": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_deck_management_opt_private_warning_give_them_one_ch_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "extra_duty_punishment_through_wo",
+            "textId": "ll_evt_boat_deck_management_opt_extra_duty_punishment_through_wo_text",
+            "text": "Extra duty — punishment through work",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_deck_management_opt_extra_duty_punishment_through_wo_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "ignore_it_not_worth_the_trouble",
+            "textId": "ll_evt_boat_deck_management_opt_ignore_it_not_worth_the_trouble_text",
+            "text": "Ignore it — not worth the trouble",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_deck_management_opt_ignore_it_not_worth_the_trouble_outcome",
+            "outcome": "You do it, knowing it will have consequences.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "boat_storm_rigging",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:boatswain",
+          "at_sea, storm_coming"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "boatswain",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 3,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_boat_storm_rigging_title",
+        "setupId": "ll_evt_boat_storm_rigging_setup",
+        "title": "Rigging Emergency",
+        "setup": "Line snapped in the wind. The sail's loose, the mast is groaning, and {SHIP_NAME} is fighting the storm.\n\n\"Boatswain! Get that rigging fixed!\"",
+        "options": [
+          {
+            "id": "lead_the_crew_up_yourself",
+            "textId": "ll_evt_boat_storm_rigging_opt_lead_the_crew_up_yourself_text",
+            "text": "Lead the crew up yourself",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 45,
+                "athletics": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_storm_rigging_opt_lead_the_crew_up_yourself_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 20,
+              "severity": "minor",
+              "type": "strain"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "direct_from_deck_guide_the_sailo",
+            "textId": "ll_evt_boat_storm_rigging_opt_direct_from_deck_guide_the_sailo_text",
+            "text": "Direct from deck, guide the sailors",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 35,
+                "leadership": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_storm_rigging_opt_direct_from_deck_guide_the_sailo_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "send_the_most_experienced_sailor",
+            "textId": "ll_evt_boat_storm_rigging_opt_send_the_most_experienced_sailor_text",
+            "text": "Send the most experienced sailor up",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 25,
+                "leadership": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_storm_rigging_opt_send_the_most_experienced_sailor_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "cut_the_line_lose_the_sail_save_",
+            "textId": "ll_evt_boat_storm_rigging_opt_cut_the_line_lose_the_sail_save__text",
+            "text": "Cut the line, lose the sail, save the mast",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_storm_rigging_opt_cut_the_line_lose_the_sail_save__outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "boat_supply_rationing",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:boatswain",
+          "at_sea, voyage_long, logistics > 50"
+        ],
+        "any": [],
+        "time_of_day": [
+          "morning"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "boatswain",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_boat_supply_rationing_title",
+        "setupId": "ll_evt_boat_supply_rationing_setup",
+        "title": "Supply Rationing",
+        "setup": "{DAYS_AT_SEA} days out. Food's running low. Water's worse.\n\n{CAPTAIN_NAME} wants strict rationing. The crew won't like it.",
+        "options": [
+          {
+            "id": "implement_fair_rationing_explain",
+            "textId": "ll_evt_boat_supply_rationing_opt_implement_fair_rationing_explain_text",
+            "text": "Implement fair rationing, explain why",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30,
+                "steward": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_supply_rationing_opt_implement_fair_rationing_explain_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "short_the_rations_quietly_don_t_",
+            "textId": "ll_evt_boat_supply_rationing_opt_short_the_rations_quietly_don_t__text",
+            "text": "Short the rations quietly, don't announce",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 25,
+                "roguery": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_supply_rationing_opt_short_the_rations_quietly_don_t__outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "catch_fish_to_supplement",
+            "textId": "ll_evt_boat_supply_rationing_opt_catch_fish_to_supplement_text",
+            "text": "Catch fish to supplement",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 25,
+                "scouting": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_supply_rationing_opt_catch_fish_to_supplement_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "officers_eat_full_crew_gets_cut",
+            "textId": "ll_evt_boat_supply_rationing_opt_officers_eat_full_crew_gets_cut_text",
+            "text": "Officers eat full, crew gets cut",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_supply_rationing_opt_officers_eat_full_crew_gets_cut_outcome",
+            "outcome": "You do it, knowing it will have consequences.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "boat_man_overboard",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:boatswain",
+          "at_sea"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "boatswain",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_boat_man_overboard_title",
+        "setupId": "ll_evt_boat_man_overboard_setup",
+        "title": "Man Overboard",
+        "setup": "\"Man overboard!\"\n\nThe cry goes up. Someone's in the water. The ship's moving fast. The sea is cold.",
+        "options": [
+          {
+            "id": "organize_immediate_rescue",
+            "textId": "ll_evt_boat_man_overboard_opt_organize_immediate_rescue_text",
+            "text": "Organize immediate rescue",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 2,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 35,
+                "leadership": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_man_overboard_opt_organize_immediate_rescue_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "jump_in_yourself",
+            "textId": "ll_evt_boat_man_overboard_opt_jump_in_yourself_text",
+            "text": "Jump in yourself",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 3,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 40,
+                "athletics": 35
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_man_overboard_opt_jump_in_yourself_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": {
+              "chance": 15,
+              "severity": "minor",
+              "type": "strain"
+            },
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "throw_the_line_guide_from_deck",
+            "textId": "ll_evt_boat_man_overboard_opt_throw_the_line_guide_from_deck_text",
+            "text": "Throw the line, guide from deck",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_man_overboard_opt_throw_the_line_guide_from_deck_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "he_s_gone_don_t_risk_more_lives",
+            "textId": "ll_evt_boat_man_overboard_opt_he_s_gone_don_t_risk_more_lives_text",
+            "text": "He's gone — don't risk more lives",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 15
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_man_overboard_opt_he_s_gone_don_t_risk_more_lives_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
+      "id": "boat_crew_dispute",
+      "category": "duty",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/research"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "has_duty:boatswain",
+          "at_sea, morale_low"
+        ],
+        "any": [],
+        "time_of_day": [
+          "evening"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "boatswain",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_boat_crew_dispute_title",
+        "setupId": "ll_evt_boat_crew_dispute_setup",
+        "title": "Crew Dispute",
+        "setup": "Two sailors at each other's throats. Something about stolen rations, a woman back home, some old grudge. Doesn't matter — it's spreading.\n\nThe crew's watching you.",
+        "options": [
+          {
+            "id": "separate_them_hear_both_sides",
+            "textId": "ll_evt_boat_crew_dispute_opt_separate_them_hear_both_sides_text",
+            "text": "Separate them, hear both sides",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30,
+                "charm": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_crew_dispute_opt_separate_them_hear_both_sides_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "let_them_fight_it_out_controlled",
+            "textId": "ll_evt_boat_crew_dispute_opt_let_them_fight_it_out_controlled_text",
+            "text": "Let them fight it out (controlled)",
+            "tooltip": null,
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 25
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_crew_dispute_opt_let_them_fight_it_out_controlled_outcome",
+            "outcome": "You take the risk and see it through.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "punish_both_no_fighting_aboard",
+            "textId": "ll_evt_boat_crew_dispute_opt_punish_both_no_fighting_aboard_text",
+            "text": "Punish both — no fighting aboard",
+            "tooltip": null,
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 1,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 30,
+                "leadership": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_crew_dispute_opt_punish_both_no_fighting_aboard_outcome",
+            "outcome": "You carry it out.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          },
+          {
+            "id": "take_sides_with_the_senior_man",
+            "textId": "ll_evt_boat_crew_dispute_opt_take_sides_with_the_senior_man_text",
+            "text": "Take sides with the senior man",
+            "tooltip": null,
+            "condition": null,
+            "risk": "corrupt",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "boatswain": 20
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "heat": 0,
+              "discipline": 0,
+              "lance_reputation": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "resultTextId": "ll_evt_boat_crew_dispute_opt_take_sides_with_the_senior_man_outcome",
+            "outcome": "You do it, knowing it will have consequences.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false
+          }
+        ]
+      },
+      "variants": {}
+    }
+  ]
+}

@@ -63,7 +63,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **State:** Player party is inactive and hidden
 
 **Process:**
-1. Player enlists → `MobileParty.MainParty.IsActive = false`
+1. Player enlists -> `MobileParty.MainParty.IsActive = false`
 2. Nameplate hidden via `HidePartyNamePlatePatch`
 3. Game engine stops considering player for encounters
 4. Player follows lord's army without map interference
@@ -121,7 +121,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 **State:** Player party returns to normal visibility and encounter behavior
 
 **Process:**
-1. Player leaves service → `MobileParty.MainParty.IsActive = true`
+1. Player leaves service -> `MobileParty.MainParty.IsActive = true`
 2. Game engine re-enables normal encounter behavior
 3. Player returns to normal world interaction
 4. Nameplate restored
@@ -607,12 +607,12 @@ ModLogger.Info("Battle", $"Encounter active during lord capture - letting native
 **Naval Battle Crash Debugging:**
 
 If you see crashes in naval battles with stack traces containing:
-- `NavalDLC.GameComponents.NavalDLCShipDeploymentModel.GetSuitablePlayerShip` → Patch 1 should handle this
-- `NavalDLC.GameComponents.NavalDLCShipDeploymentModel.GetOrderedCaptainsForPlayerTeamShips` → Patch 2 should handle this
-- `NavalDLC.Missions.MissionLogics.NavalAgentsLogic.AddReservedTroopToShip` → Patch 3 should handle this
-- `NavalDLC.Missions.AI.Behaviors.BehaviorNavalEngageCorrespondingEnemy..ctor` → Patch 4 should handle this
-- `NavalDLC.Missions.MissionLogics.NavalTeamAgents.OnShipRemoved` → Patch 5 should handle this
-- `TaleWorlds.MountAndBlade.BattleObserverMissionLogic.OnAgentRemoved` (during naval cleanup) → Patch 5 handles indirectly
+- `NavalDLC.GameComponents.NavalDLCShipDeploymentModel.GetSuitablePlayerShip` -> Patch 1 should handle this
+- `NavalDLC.GameComponents.NavalDLCShipDeploymentModel.GetOrderedCaptainsForPlayerTeamShips` -> Patch 2 should handle this
+- `NavalDLC.Missions.MissionLogics.NavalAgentsLogic.AddReservedTroopToShip` -> Patch 3 should handle this
+- `NavalDLC.Missions.AI.Behaviors.BehaviorNavalEngageCorrespondingEnemy..ctor` -> Patch 4 should handle this
+- `NavalDLC.Missions.MissionLogics.NavalTeamAgents.OnShipRemoved` -> Patch 5 should handle this
+- `TaleWorlds.MountAndBlade.BattleObserverMissionLogic.OnAgentRemoved` (during naval cleanup) -> Patch 5 handles indirectly
 
 Log messages to look for:
 ```

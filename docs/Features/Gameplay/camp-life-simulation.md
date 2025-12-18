@@ -2,6 +2,14 @@
 
 This spec proposes an **internal, mod-friendly** “camp life” simulation layer that reacts to the campaign and makes enlisted service feel like a lived-in army: shortages, bad news, delayed pay, corruption, and small camp incidents.
 
+## Status (shipping)
+- The daily **Camp Conditions Snapshot** is implemented and persisted (**enabled by default**; can be disabled via config).
+- It currently drives:
+  - Quartermaster mood/pricing flavor (stable per day)
+  - Pay Muster text/options when pay tension is high (IOU/promissory path)
+- It is surfaced to the player via the **enlisted status header** (camp status line + days from town).
+- Research-only expansions (deep world scanning, full incident library) remain out of scope.
+
 ## Index
 - [Overview](#overview)
 - [Purpose](#purpose)
@@ -72,6 +80,9 @@ These exist in Bannerlord’s API (confirmed from decompiled `CampaignEvents`):
 - `CampaignEvents.MapEventEnded` (battle completion)
 - `CampaignEvents.SettlementEntered`, `CampaignEvents.OnSettlementLeftEvent` (town/castle/village visits)
 
+Current implementation note:
+- The shipping behavior stays event-driven + daily aggregation. We intentionally subscribe to a minimal subset (plus `DailyTickEvent`) and use clamps/decay rather than heavy scans.
+
 #### Enlisted-local state
 - Current enlisted lord / army context (already tracked by `EnlistmentBehavior`).
 - Pay ledger state (pending pay, next payday, last outcome) from the existing Pay System.
@@ -116,6 +127,9 @@ Design details:
 - Keep “IOU” **internal**: store `PendingPromissoryPay` as a number in the muster ledger, shown in text.
 - When conditions stabilize (pay tension drops or town access resumes), resolve IOUs at muster.
 
+Shipping note:
+- The Pay Muster surface remains inquiry-based; Camp Life only changes Enlisted-owned text/options and ledger fields.
+
 ### Quartermaster: mood, prices, and stockouts
 Quartermaster becomes a camp-life barometer.
 
@@ -138,6 +152,9 @@ When `LogisticsStrain` is high:
 - Push the player into **foraging** or **town resupply** loops.
 
 Important: stockouts should be framed as “camp supply reality” and backed by alternative actions (forage duty, rationing choices), not a hard soft-lock.
+
+Shipping note:
+- Current integrations are intentionally “minimum but real”: mood/pricing + localized intro dialogue, driven by the daily snapshot.
 
 ### Duties & camp actions: foraging, errands, contraband
 Use the snapshot to make duties feel necessary:
@@ -168,7 +185,7 @@ Camp conditions should also feed **lance-specific stories** (drills, scrounging,
 ### Phase 0 — Documentation + scaffolding (safe)
 - Add this spec.
 - Add a new behavior shell: `CampLifeBehavior` (or similar) that can store a daily snapshot and log it.
-- No gameplay changes yet (feature flag off by default).
+- Shipping note: Camp Life is enabled by default in `ModuleData/Enlisted/enlisted_config.json`, and can be disabled safely via `camp_life.enabled`.
 
 ### Phase 1 — Data collection (event-driven; no gameplay changes)
 - Subscribe to the relevant `CampaignEvents` and record “recent history”:
@@ -188,6 +205,8 @@ Camp conditions should also feed **lance-specific stories** (drills, scrounging,
 - Conditions-based text changes (short, grounded).
 - Ensure resolution paths exist (IOUs eventually pay out when conditions ease).
 
+Status: implemented baseline (enabled by default; can be disabled via config).
+
 ### Phase 4 — Incidents + contraband loops
 - Add camp incidents tied to snapshot triggers.
 - Add “smuggle beer” and “bribe the clerk” options with risks and consequences.
@@ -195,7 +214,7 @@ Camp conditions should also feed **lance-specific stories** (drills, scrounging,
 
 ### Phase 5 — Polish + tuning
 - Expose weights/thresholds in `enlisted_config.json`.
-- Add short “camp report” lines in the Command Tent / status UI.
+- Add short “camp report” lines in the Camp / status UI.
 - Logging: one-session diagnostics in `Modules/Enlisted/Debugging` for balancing (optional).
 
 ## Edge Cases
@@ -222,5 +241,9 @@ Camp conditions should also feed **lance-specific stories** (drills, scrounging,
   - Quartermaster: price multipliers + localized mood text.
   - Pay muster: additional options (IOU) and outcomes.
   - Incidents: condition-driven small events.
+
+## Configuration (shipping)
+Camp Life is gated by config:
+- `camp_life.enabled` in `ModuleData/Enlisted/enlisted_config.json`
 
 
