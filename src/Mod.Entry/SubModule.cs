@@ -6,7 +6,6 @@ using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
-using Enlisted.Features.Activities;
 using Enlisted.Features.Camp;
 // Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Conversations.Behaviors;
@@ -397,9 +396,6 @@ namespace Enlisted.Mod.Entry
                     // faction history, and lifetime summaries.
                     campaignStarter.AddBehavior(new CampMenuHandler());
 
-                    // Camp Activities: data-driven activity system for training, tasks, social, and lance activities
-                    campaignStarter.AddBehavior(new CampActivitiesBehavior());
-
                     // Camp Life Simulation: provides a daily snapshot and Quartermaster/Pay integrations.
                     campaignStarter.AddBehavior(new CampLifeBehavior());
 
@@ -471,7 +467,6 @@ namespace Enlisted.Mod.Entry
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),
-                        nameof(CampActivitiesBehavior),
                         nameof(CampLifeBehavior),
                         nameof(EscalationManager),
                         nameof(EnlistedNewsBehavior),

@@ -41,7 +41,8 @@
             "gold": 10
           },
           "text": "\"Who's up for a friendly game? Small stakes only.\"",
-          "outcome": "The dice favor you tonight. You rake in a modest pot as your lance mates good-naturedly grumble about their losses.",
+          "resultTextId": "player_dice_small_outcome",
+          "resultText": "The dice favor you tonight. You rake in a modest pot as your lance mates good-naturedly grumble about their losses.",
           "reward_choices": {
             "type": "compensation",
             "prompt": "What do you do with your winnings?",
@@ -141,7 +142,8 @@
             "fatigue": 3
           },
           "text": "\"Sergeant, I'd like some extra training.\"",
-          "outcome": "The drillmaster nods. \"Right then. What do you want to work on?\"",
+          "resultTextId": "player_training_request_outcome",
+          "resultText": "The drillmaster nods. \"Right then. What do you want to work on?\"",
           "reward_choices": {
             "type": "weapon_focus",
             "prompt": "Which area do you want to train?",

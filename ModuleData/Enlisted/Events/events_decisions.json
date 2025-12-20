@@ -42,7 +42,8 @@
             "fatigue": 2
           },
           "text": "\"I am honored, my Lord. I shall attend.\"",
-          "outcome": "You spend the day riding with {LORD_NAME}'s party. The hunt is successful - deer are brought down, and the mood is jovial. As the party returns, {LORD_NAME} offers you your share.",
+          "resultTextId": "decision_lord_hunt_accept_outcome",
+          "resultText": "You spend the day riding with {LORD_NAME}'s party. The hunt is successful - deer are brought down, and the mood is jovial. As the party returns, {LORD_NAME} offers you your share.",
           "reward_choices": {
             "type": "compensation",
             "prompt": "How do you handle your share of the hunt?",

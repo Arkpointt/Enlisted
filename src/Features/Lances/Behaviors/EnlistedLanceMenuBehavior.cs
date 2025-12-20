@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Enlisted.Features.Activities;
 using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -26,7 +25,6 @@ namespace Enlisted.Features.Lances.Behaviors
     {
         private const string LogCategory = "LanceMenu";
         private const string LanceMenuId = "enlisted_lance";
-        private const string LanceActivitiesMenuId = "enlisted_lance_activities";
 
         public static EnlistedLanceMenuBehavior Instance { get; private set; }
 
@@ -50,7 +48,6 @@ namespace Enlisted.Features.Lances.Behaviors
             try
             {
                 AddLanceMenu(starter);
-                AddLanceActivitiesMenu(starter);
                 ModLogger.Info(LogCategory, "Lance menu registered");
             }
             catch (Exception ex)
@@ -130,23 +127,6 @@ namespace Enlisted.Features.Lances.Behaviors
                 },
                 args => TalkToLanceSecond(),
                 false, 11);
-
-            // Lance Activities (moved out of Camp Activities)
-            starter.AddGameMenuOption(
-                LanceMenuId,
-                "lance_activities",
-                "{=lance_activities}Lance Activities",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Submenu;
-                    var count = GetAvailableLanceActivitiesCount();
-                    args.Tooltip = count > 0
-                        ? new TextObject("{=lance_activities_tooltip}Spend time with your lance. ({COUNT} available)").SetTextVariable("COUNT", count)
-                        : new TextObject("{=lance_activities_tooltip_none}No lance activities available at this time.");
-                    return true;
-                },
-                _ => GameMenu.SwitchToMenu(LanceActivitiesMenuId),
-                false, 12);
 
             // ═══════════════════════════════════════════════════════════════════
             // SECTION: WELFARE
@@ -229,294 +209,6 @@ namespace Enlisted.Features.Lances.Behaviors
                 },
                 args => GameMenu.SwitchToMenu("enlisted_status"),
                 true, 99);
-        }
-
-        /// <summary>
-        /// Creates a Lance Activities submenu (activities.json category "lance").
-        /// </summary>
-        private void AddLanceActivitiesMenu(CampaignGameStarter starter)
-        {
-            starter.AddWaitGameMenu(
-                LanceActivitiesMenuId,
-                "{=lance_act_intro}You find your lance-mates and fall into the small rituals of unit life. What will you do?",
-                OnLanceActivitiesMenuInit,
-                args => true,
-                null,
-                (args, dt) => { },
-                GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
-
-            AddLanceActivitiesMenuOptions(starter);
-        }
-
-        private void OnLanceActivitiesMenuInit(MenuCallbackArgs args)
-        {
-            try
-            {
-                // Start wait for time controls
-                args.MenuContext.GameMenu.StartWait();
-                Campaign.Current.SetTimeControlModeLock(false);
-
-                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
-                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
-                Campaign.Current.TimeControlMode = normalized;
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode(LogCategory, "E-LANCE-002", "Error initializing lance activities menu", ex);
-            }
-        }
-
-        private void AddLanceActivitiesMenuOptions(CampaignGameStarter starter)
-        {
-            var activitiesBehavior = CampActivitiesBehavior.Instance;
-            if (activitiesBehavior == null)
-            {
-                return;
-            }
-
-            var priority = 0;
-            var lanceActivities = activitiesBehavior.GetAllActivities()
-                .Where(a => string.Equals(a.Category, "lance", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (lanceActivities.Count == 0)
-            {
-                starter.AddGameMenuOption(
-                    LanceActivitiesMenuId,
-                    "lance_act_none",
-                    "{=lance_act_none}(No lance activities configured.)",
-                    args =>
-                    {
-                        args.optionLeaveType = GameMenuOption.LeaveType.Continue;
-                        args.IsEnabled = false;
-                        return true;
-                    },
-                    _ => { },
-                    false,
-                    priority++);
-            }
-            else
-            {
-                foreach (var activity in lanceActivities)
-                {
-                    var activityId = activity.Id;
-                    var currentPriority = priority++;
-                    starter.AddGameMenuOption(
-                        LanceActivitiesMenuId,
-                        $"lance_act_{activityId.Replace(".", "_")}",
-                        ResolveActivityText(activity.TextId, activity.TextFallback ?? activity.Id),
-                        args => IsLanceActivityOptionAvailable(args, activityId),
-                        _ => OnLanceActivitySelected(activityId),
-                        false,
-                        currentPriority);
-                }
-            }
-
-            // Back to My Lance
-            starter.AddGameMenuOption(
-                LanceActivitiesMenuId,
-                "lance_act_back",
-                "{=lance_act_back}Back to My Lance",
-                args =>
-                {
-                    args.optionLeaveType = GameMenuOption.LeaveType.Leave;
-                    args.Tooltip = new TextObject("{=lance_act_back_hint}Return to the lance menu.");
-                    return true;
-                },
-                _ => GameMenu.SwitchToMenu(LanceMenuId),
-                true,
-                100);
-        }
-
-        private bool IsLanceActivityOptionAvailable(MenuCallbackArgs args, string activityId)
-        {
-            var activitiesBehavior = CampActivitiesBehavior.Instance;
-            var enlistment = EnlistmentBehavior.Instance;
-
-            if (activitiesBehavior == null || enlistment?.IsEnlisted != true)
-            {
-                return false;
-            }
-
-            var activity = activitiesBehavior.GetAllActivities()
-                .FirstOrDefault(a => string.Equals(a.Id, activityId, StringComparison.OrdinalIgnoreCase));
-
-            if (activity == null)
-            {
-                return false;
-            }
-
-            args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
-
-            var timeBlock = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? Schedule.Models.TimeBlock.Morning;
-            var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
-            var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
-            var currentDay = (int)CampaignTime.Now.ToDays;
-
-            var disableReasons = new List<string>();
-            var statusParts = new List<string>();
-
-            // Tier check
-            if (enlistment.EnlistmentTier < activity.MinTier)
-            {
-                disableReasons.Add($"Requires Tier {activity.MinTier}");
-            }
-
-            // Formation check
-            if (activity.Formations != null && activity.Formations.Count > 0)
-            {
-                if (string.IsNullOrWhiteSpace(formation) ||
-                    !activity.Formations.Any(f => string.Equals(f, formation, StringComparison.OrdinalIgnoreCase)))
-                {
-                    var formationList = string.Join("/", activity.Formations.Select(f =>
-                        CultureInfo.CurrentCulture.TextInfo.ToTitleCase(f)));
-                    disableReasons.Add($"{formationList} only");
-                }
-            }
-
-            // Time block check (uses DayParts property for backward compatibility)
-            if (activity.DayParts != null && activity.DayParts.Count > 0)
-            {
-                if (string.IsNullOrWhiteSpace(timeBlockToken) ||
-                    !activity.DayParts.Any(dp => string.Equals(dp, timeBlockToken, StringComparison.OrdinalIgnoreCase)))
-                {
-                    var timeBlockList = string.Join("/", activity.DayParts.Select(dp =>
-                        CultureInfo.CurrentCulture.TextInfo.ToTitleCase(dp)));
-                    disableReasons.Add($"Available: {timeBlockList}");
-                }
-            }
-
-            // Cooldown check
-            if (activitiesBehavior.TryGetCooldownDaysRemaining(activity, currentDay, out var daysRemaining))
-            {
-                disableReasons.Add($"Cooldown: {daysRemaining} day{(daysRemaining > 1 ? "s" : "")}");
-            }
-
-            // Fatigue check
-            if (activity.FatigueCost > 0 && enlistment.FatigueCurrent < activity.FatigueCost)
-            {
-                disableReasons.Add("Too fatigued");
-            }
-
-            // Status lines for tooltip
-            if (activity.FatigueCost > 0) statusParts.Add($"Fatigue: -{activity.FatigueCost}");
-            if (activity.FatigueRelief > 0) statusParts.Add($"Rest: +{activity.FatigueRelief}");
-            if (activity.SkillXp != null && activity.SkillXp.Count > 0)
-            {
-                var xpList = activity.SkillXp.Select(kvp => $"{kvp.Key} +{kvp.Value}");
-                statusParts.Add(string.Join(", ", xpList));
-            }
-
-            var hint = ResolveActivityText(activity.HintId, activity.HintFallback ?? "");
-            if (statusParts.Count > 0)
-            {
-                hint += (string.IsNullOrEmpty(hint) ? "" : "\n") + string.Join(" | ", statusParts);
-            }
-            if (disableReasons.Count > 0)
-            {
-                hint += (string.IsNullOrEmpty(hint) ? "" : "\n") + "[" + string.Join(", ", disableReasons) + "]";
-            }
-
-            args.Tooltip = new TextObject(hint);
-            args.IsEnabled = disableReasons.Count == 0;
-            return true;
-        }
-
-        private void OnLanceActivitySelected(string activityId)
-        {
-            var activitiesBehavior = CampActivitiesBehavior.Instance;
-            if (activitiesBehavior == null)
-            {
-                return;
-            }
-
-            var activity = activitiesBehavior.GetAllActivities()
-                .FirstOrDefault(a => string.Equals(a.Id, activityId, StringComparison.OrdinalIgnoreCase));
-
-            if (activity == null)
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=act_not_found}Activity not found.").ToString(), Colors.Red));
-                return;
-            }
-
-            if (activitiesBehavior.TryExecuteActivity(activity, out var failReason))
-            {
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=lance_act_done}You spend the time well.").ToString(), Colors.Green));
-                GameMenu.SwitchToMenu(LanceActivitiesMenuId);
-            }
-            else
-            {
-                var failMsg = !string.IsNullOrEmpty(failReason)
-                    ? new TextObject("{=act_failed}Could not complete activity: {REASON}").SetTextVariable("REASON", failReason).ToString()
-                    : new TextObject("{=act_failed_generic}Could not complete the activity.").ToString();
-                InformationManager.DisplayMessage(new InformationMessage(failMsg, Colors.Red));
-            }
-        }
-
-        private static int GetAvailableLanceActivitiesCount()
-        {
-            try
-            {
-                var activitiesBehavior = CampActivitiesBehavior.Instance;
-                var enlistment = EnlistmentBehavior.Instance;
-                if (activitiesBehavior?.IsEnabled() != true || enlistment?.IsEnlisted != true)
-                {
-                    return 0;
-                }
-
-                var timeBlock = Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? Schedule.Models.TimeBlock.Morning;
-                var timeBlockToken = timeBlock.ToString().ToLowerInvariant();
-                var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType()?.ToLowerInvariant() ?? "infantry";
-                var currentDay = (int)CampaignTime.Now.ToDays;
-
-                var count = 0;
-                foreach (var def in activitiesBehavior.GetAllActivities()
-                             .Where(a => string.Equals(a.Category, "lance", StringComparison.OrdinalIgnoreCase)))
-                {
-                    if (!CampActivitiesBehavior.IsActivityVisibleFor(def, enlistment, formation, timeBlockToken))
-                    {
-                        continue;
-                    }
-
-                    // Enabled if not on cooldown and not blocked by fatigue; other checks handled in UI.
-                    if (activitiesBehavior.TryGetCooldownDaysRemaining(def, currentDay, out _))
-                    {
-                        continue;
-                    }
-
-                    if (def.FatigueCost > 0 && enlistment.FatigueCurrent < def.FatigueCost)
-                    {
-                        continue;
-                    }
-
-                    count++;
-                }
-
-                return count;
-            }
-            catch
-            {
-                return 0;
-            }
-        }
-
-        private static string ResolveActivityText(string textId, string fallback)
-        {
-            if (string.IsNullOrEmpty(textId))
-            {
-                return fallback ?? string.Empty;
-            }
-
-            try
-            {
-                return new TextObject("{=" + textId + "}" + (fallback ?? string.Empty)).ToString();
-            }
-            catch
-            {
-                return fallback ?? string.Empty;
-            }
         }
 
         /// <summary>

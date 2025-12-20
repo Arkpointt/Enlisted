@@ -205,14 +205,12 @@
     <string id="Enlisted_Menu_VisitQuartermaster" text="Visit Quartermaster" />
     <string id="Enlisted_Menu_TalkToLord" text="My Lord..." />
     <string id="Enlisted_Menu_ReportDuty" text="Report for Duty" />
-    <string id="Enlisted_Menu_CampActivities" text="Camp Activities" />
     <string id="Enlisted_Menu_MyCamp" text="Camp" />
     <string id="Enlisted_Menu_AskLeave" text="Ask for Leave" />
     <string id="Enlisted_Menu_FreeDesert" text="Leave Without Penalty" />
     <string id="Enlisted_Menu_DesertArmy" text="Desert the Army" />
     
     <!-- Menu Tooltips -->
-    <string id="menu_tooltip_camp_activities" text="Training, tasks, and social time — earn XP and build relationships." />
     <string id="menu_tooltip_my_camp" text="Service records, pay status, and retinue management." />
     <string id="menu_tooltip_my_camp_tension" text="Service records, pay status (tension high!), and retinue management." />
     <string id="menu_tooltip_free_desert" text="Pay is too late. You can leave with no penalties — no one would blame you." />
@@ -229,7 +227,6 @@
     <!-- Menu Option Tooltips -->
     <string id="menu_tooltip_master" text="Select your troop type and equipment loadout based on your current tier." />
     <string id="menu_tooltip_quartermaster" text="Purchase equipment and manage party supplies." />
-    <string id="menu_tooltip_activities" text="Training, tasks, and social time — earn XP through action." />
     <string id="menu_tooltip_talk" text="Speak with nearby lords for quests, news, and relation building." />
     <string id="menu_tooltip_visit" text="Enter the settlement while your lord is present." />
     <string id="menu_tooltip_duty" text="Select your daily duty and profession for bonuses and special abilities." />
@@ -253,7 +250,6 @@
 
     <!-- Menu Titles & Status -->
     <string id="Enlisted_Menu_Status_Title" text="Party Leader: {PARTY_LEADER}\n{PARTY_TEXT}" />
-    <string id="Enlisted_Menu_Activities_Title" text="Camp Activities\n{ACTIVITIES_TEXT}" />
     <string id="Enlisted_Menu_Duty_Title" text="Duty Selection: {DUTY_STATUS}\n{DUTY_TEXT}" />
     <string id="Enlisted_Status_NotEnlisted" text="You are not currently enlisted." />
     <string id="Enlisted_Status_ErrorNoLord" text="Error: No enlisted lord found." />
