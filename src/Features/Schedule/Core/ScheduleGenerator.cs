@@ -15,7 +15,7 @@ namespace Enlisted.Features.Schedule.Core
 {
     /// <summary>
     /// Generates daily schedules based on lord objectives, player tier/formation, and lance needs.
-    /// Phase 3: AI balances lord's orders with critical lance needs.
+    /// The AI balances the lord's orders with critical lance needs.
     /// </summary>
     public class ScheduleGenerator
     {
@@ -47,7 +47,7 @@ namespace Enlisted.Features.Schedule.Core
 
         /// <summary>
         /// Generate a daily schedule for the player based on lord's orders and current context.
-        /// Phase 3: AI balances lord's orders with lance needs intelligently.
+        /// The AI balances the lord's orders with lance needs intelligently.
         /// </summary>
         public DailySchedule GenerateSchedule(MobileParty army, int cycleDay)
         {
@@ -73,7 +73,7 @@ namespace Enlisted.Features.Schedule.Core
             var playerDuty = GetPlayerDuty();
             ModLogger.Debug(LogCategory, $"Player: Tier {playerTier}, Formation: {playerFormation}, Duty: {playerDuty}");
 
-            // Phase 3: Assess lance needs
+            // Assess lance needs.
             var lanceNeeds = ScheduleBehavior.Instance?.LanceNeeds;
             if (lanceNeeds == null)
             {
@@ -83,11 +83,11 @@ namespace Enlisted.Features.Schedule.Core
 
             LogNeedsAssessment(lanceNeeds);
 
-            // Phase 3: Determine critical needs
+            // Determine critical needs.
             var criticalNeeds = GetCriticalNeeds(lanceNeeds);
             var poorNeeds = GetPoorNeeds(lanceNeeds);
 
-            // Phase 3: Smart assignment logic
+            // Pick an assignment strategy based on needs and current priority.
             var assignmentStrategy = DetermineAssignmentStrategy(criticalNeeds, poorNeeds, priority);
             _decisionLog.Add($"Assignment Strategy: {assignmentStrategy}");
 
@@ -99,10 +99,9 @@ namespace Enlisted.Features.Schedule.Core
             
             _decisionLog.Add($"Situation: {(isAtPeace ? "Peace" : "Active")} | {(isHardship ? "HARDSHIP" : "Normal")} | Rest: {lanceNeeds.Rest}%");
             
-            // Generate context-aware schedule:
-            // - Rest can happen ANY time if player is exhausted
-            // - Free time can be skipped during hardship
-            // - But AI should try to take care of the player when possible
+            // Generate a context-aware schedule. Rest may be scheduled in any block when the player is exhausted.
+            // Free time may be skipped during hardship. When the situation allows it, the schedule should still
+            // try to take care of the player.
             
             schedule.AddBlock(GenerateContextAwareBlock(TimeBlock.Morning, objective, priority, 
                 lanceNeeds, criticalNeeds, poorNeeds, assignmentStrategy, 
@@ -131,7 +130,7 @@ namespace Enlisted.Features.Schedule.Core
 
         /// <summary>
         /// Generate a single schedule block for a time period.
-        /// Legacy method - use GenerateBlockWithNeeds for full feature support.
+        /// This method is retained for compatibility; GenerateBlockWithNeeds is preferred for full feature support.
         /// </summary>
         private ScheduledBlock GenerateBlock(TimeBlock timeBlock, LordObjective objective, int playerTier, string playerFormation)
         {
@@ -147,7 +146,7 @@ namespace Enlisted.Features.Schedule.Core
                 suitableActivities = _config.Activities.Where(a => a.BlockType == ScheduleBlockType.Rest).ToList();
             }
 
-            // Select activity (Phase 1: simple selection, Phase 2+ will add needs-based logic)
+            // Select an activity based on the current selection logic.
             var selectedActivity = SelectActivity(suitableActivities, timeBlock);
 
             // Create block with display text (use Title/Description if available, fallback to keys)
@@ -205,7 +204,7 @@ namespace Enlisted.Features.Schedule.Core
                 // Prefer activities favored by current objective
                 bool isFavoredByObjective = activity.FavoredByObjectives.Contains(objective.ToString());
 
-                // Phase 1: Simple scoring (Phase 2+ will add needs-based scoring)
+                // Simple scoring logic for activity selection.
                 if (isPreferredTime || isFavoredByObjective)
                 {
                     suitable.Add(activity);
@@ -228,8 +227,7 @@ namespace Enlisted.Features.Schedule.Core
 
         /// <summary>
         /// Select an activity from suitable options.
-        /// Phase 1: Simple selection based on time block defaults.
-        /// Phase 2+: Will add needs-based selection logic.
+        /// Activity selection based on time block defaults.
         /// </summary>
         private ScheduleActivityDefinition SelectActivity(List<ScheduleActivityDefinition> activities, TimeBlock timeBlock)
         {
@@ -239,7 +237,7 @@ namespace Enlisted.Features.Schedule.Core
                 return _config.Activities.First(a => a.BlockType == ScheduleBlockType.Rest);
             }
 
-            // Phase 1: Simple time-based defaults (4 blocks)
+            // Time-based defaults for the four daily blocks.
             ScheduleBlockType preferredType = timeBlock switch
             {
                 TimeBlock.Morning => ScheduleBlockType.TrainingDrill,
@@ -339,10 +337,8 @@ namespace Enlisted.Features.Schedule.Core
         
         /// <summary>
         /// Generate a schedule block that considers the full context:
-        /// - Time of day (expectations)
-        /// - Player's personal needs (exhaustion)
-        /// - Lance/company needs (mission requirements)
-        /// - Peace vs war vs hardship
+        /// The generation considers the time of day expectations, the player's personal needs such as exhaustion, 
+        /// lance and company mission requirements, and the overall state of peace, war, or hardship.
         /// The AI tries to take care of the player but will push them when necessary.
         /// </summary>
         private ScheduledBlock GenerateContextAwareBlock(
@@ -727,7 +723,7 @@ namespace Enlisted.Features.Schedule.Core
         
         /// <summary>
         /// Check if an activity can be scheduled for a given time block.
-        /// Enforces: once-per-day limits and preferred time block restrictions.
+        /// Enforces once-per-day limits and preferred time block restrictions.
         /// </summary>
         private bool CanScheduleActivity(ScheduleActivityDefinition activity, TimeBlock timeBlock)
         {
@@ -810,7 +806,7 @@ namespace Enlisted.Features.Schedule.Core
             return available;
         }
 
-        // ===== Phase 3: Need-Aware Assignment Logic =====
+        // ===== Need-Aware Assignment Logic =====
 
         /// <summary>
         /// Log current needs assessment for decision tracking.
@@ -870,7 +866,7 @@ namespace Enlisted.Features.Schedule.Core
 
         /// <summary>
         /// Determine overall assignment strategy based on needs and lord priority.
-        /// Phase 3: Core decision-making logic.
+        /// Core decision-making logic for activity assignments.
         /// </summary>
         private string DetermineAssignmentStrategy(List<LanceNeed> criticalNeeds, 
             List<LanceNeed> poorNeeds, LordOrderPriority lordPriority)
@@ -901,7 +897,7 @@ namespace Enlisted.Features.Schedule.Core
 
         /// <summary>
         /// Generate a single schedule block with need-aware logic.
-        /// Phase 3: Intelligent selection based on needs and priorities.
+        /// Intelligent activity selection based on needs and priorities.
         /// </summary>
         private ScheduledBlock GenerateBlockWithNeeds(
             TimeBlock timeBlock,
@@ -1165,17 +1161,12 @@ namespace Enlisted.Features.Schedule.Core
         /// <summary>
         /// Get default activity for a time block using a standard military routine.
         /// This creates a balanced day even when no specific activities match the context.
+        /// The standard routine includes morning formation and drills, followed by primary duties
+        /// like patrol or work in the morning and afternoon, with free time in the evening and dusk, 
+        /// and rest at night.
         /// </summary>
         private ScheduleActivityDefinition GetDefaultActivity(TimeBlock timeBlock)
         {
-            // Standard military daily routine:
-            // Dawn: Morning formation/drill
-            // Morning: Primary duty (patrol/sentry/work)
-            // Afternoon: Secondary duty or training
-            // Evening: Free time
-            // Dusk: Free time
-            // Night: Rest
-            
             ScheduleBlockType defaultType = timeBlock switch
             {
                 TimeBlock.Morning => ScheduleBlockType.TrainingDrill,

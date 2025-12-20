@@ -13,8 +13,8 @@ using TaleWorlds.Localization;
 namespace Enlisted.Features.Ranks.Behaviors
 {
     /// <summary>
-    ///     Phase 7: Requirements for promotion to each tier.
-    ///     Based on the Phase 7 promotion requirements table.
+    /// Requirements for promotion to each tier.
+    /// Based on the standard promotion requirements table.
     /// </summary>
     public sealed class PromotionRequirements
     {
@@ -31,7 +31,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         /// </summary>
         public static PromotionRequirements GetForTier(int targetTier)
         {
-            // Phase 7 promotion requirements table:
+            // Promotion requirements table:
             // | Promotion | XP | Days | Events | Battles | Lance Rep | Leader Rel | Max Disc |
             // |-----------|-----|------|--------|---------|-----------|------------|----------|
             // | T1→T2 | 700 | 14 | 5 | 2 | ≥0 | ≥0 | <8 |
@@ -72,8 +72,8 @@ namespace Enlisted.Features.Ranks.Behaviors
         private CampaignTime _lastPromotionCheck = CampaignTime.Zero;
 
         /// <summary>
-        ///     Phase 7: Track pending promotion tier to prevent event spam.
-        ///     Reset when promotion completes or is cancelled.
+        /// Track pending promotion tier to prevent event spam.
+        /// Reset when promotion completes or is cancelled.
         /// </summary>
         private int _pendingPromotionTier;
 
@@ -101,7 +101,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Get the proving event ID for a tier transition.
+        /// Get the proving event ID for a tier transition.
         /// </summary>
         private static string GetProvingEventId(int fromTier, int toTier)
         {
@@ -119,7 +119,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Clear the pending promotion flag (called when event completes).
+        /// Clear the pending promotion flag when the event completes.
         /// </summary>
         public void ClearPendingPromotion()
         {
@@ -132,8 +132,8 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Check if player meets all requirements for promotion to the next tier.
-        ///     Returns a tuple of (canPromote, failureReasons).
+        /// Check if player meets all requirements for promotion to the next tier.
+        /// Returns a tuple of (canPromote, failureReasons).
         /// </summary>
         public (bool CanPromote, List<string> FailureReasons) CanPromote()
         {
@@ -224,8 +224,8 @@ namespace Enlisted.Features.Ranks.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Get promotion progress as a percentage (0-100).
-        ///     Useful for UI display.
+        /// Get promotion progress as a percentage (0-100).
+        /// Useful for UI display.
         /// </summary>
         public int GetPromotionProgress()
         {
@@ -268,7 +268,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
         /// <summary>
         ///     Check if player has reached promotion thresholds.
-        ///     Phase 7: Now checks all promotion requirements (XP, days, events, battles, reputation).
+        ///     Check all promotion requirements, including XP, days, events, battles, and reputation.
         /// </summary>
         private void CheckForPromotion()
         {
@@ -290,7 +290,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return;
                 }
 
-                // Phase 7: Check all promotion requirements
+                // Check all promotion requirements
                 var (canPromote, failureReasons) = CanPromote();
                 
                 if (!canPromote)
@@ -305,7 +305,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return;
                 }
 
-                // Phase 7: Player meets all requirements - trigger proving event instead of auto-promoting
+                // Player meets all requirements - trigger proving event instead of auto-promoting
                 // The event's `promotes: true` effect will handle the actual tier advancement
                 var targetTier = currentTier + 1;
                 var eventId = GetProvingEventId(currentTier, targetTier);
@@ -385,7 +385,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 var chatMessage = GetPromotionChatMessage(newTier);
                 InformationManager.DisplayMessage(new InformationMessage(chatMessage.ToString(), Colors.Green));
 
-                // Phase 7: Show quartermaster prompt after promotion (no auto-equip)
+                // Show quartermaster prompt after promotion.
                 var qmPrompt = new TextObject("{=promo_qm_prompt}Report to the Quartermaster for your new kit.");
                 InformationManager.DisplayMessage(new InformationMessage(qmPrompt.ToString(), Colors.Cyan));
 
@@ -494,7 +494,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
 
-                // Phase 7: Prompt to visit Quartermaster for formation-specific gear (no auto-equip)
+                // Prompt to visit the Quartermaster for formation-specific gear.
                 var qmPrompt = new TextObject("{=formation_qm_prompt}Report to the Quartermaster for your {FORMATION} kit.");
                 qmPrompt.SetTextVariable("FORMATION", formationName);
                 InformationManager.DisplayMessage(new InformationMessage(qmPrompt.ToString(), Colors.Cyan));
@@ -526,13 +526,8 @@ namespace Enlisted.Features.Ranks.Behaviors
                     return FormationType.Infantry; // Default fallback
                 }
 
-                // Detect military formation based on equipment characteristics
-                // The formation type is determined by whether the character uses ranged weapons
-                // and whether they are mounted, creating four distinct categories:
-                // - Horse Archer: Ranged weapon + Mount
-                // - Cavalry: Melee weapon + Mount
-                // - Archer: Ranged weapon + No mount
-                // - Infantry: Melee weapon + No mount (default)
+                // Detect military formation based on equipment characteristics. We treat ranged+mounted as horse
+                // archer, mounted as cavalry, ranged as archer, and everything else as infantry.
                 if (characterObject.IsRanged && characterObject.IsMounted)
                 {
                     return FormationType.HorseArcher;

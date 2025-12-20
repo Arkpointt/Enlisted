@@ -23,8 +23,8 @@
 											</Children>
 										</Widget>
 
-										<!-- Title -->
-										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" MarginTop="4" Brush="SPGeneral.MediumText" Brush.FontSize="34" Brush.TextColor="#EAD7B0FF" Text="@EventTitle" />
+								<!-- Title -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" VerticalAlignment="Center" MarginTop="4" Brush="SPGeneral.LargeText" Brush.FontSize="34" Brush.TextColor="#EAD7B0FF" Text="@EventTitle" />
 
 										<!-- Time/Location -->
 										<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" MarginRight="74" MarginTop="28" HorizontalAlignment="Right" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextColor="#CBB894FF" Text="@TimeLocationText" />
@@ -61,7 +61,7 @@
 															<Children>
 																<Widget Id="StoryClipRect" WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" ClipContents="true">
 																	<Children>
-																		<RichTextWidget Id="StoryText" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="10" MarginRight="20" MarginTop="6" Brush="SPGeneral.MediumText" Brush.FontSize="17" Brush.TextColor="#E7D6B5FF" Brush.LineSpacing="26" Text="@StoryText" />
+																		<RichTextWidget Id="StoryText" WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" MarginLeft="10" MarginRight="20" MarginTop="6" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="17" Brush.TextColor="#E7D6B5FF" Brush.LineSpacing="26" Text="@StoryText" />
 																	</Children>
 																</Widget>
 															</Children>

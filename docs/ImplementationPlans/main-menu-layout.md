@@ -23,10 +23,11 @@ The menu balances information density with readability, ensuring players can qui
 - Enlistment state (lord, rank, tier, days enlisted)
 - Current lord activity (besieging, traveling, raiding, etc.)
 - Daily report excerpt (from `EnlistedNewsBehavior`)
-- Player schedule (from `EnlistedDutiesBehavior` - 4 time blocks)
+- Player schedule (from `ScheduleBehavior.CurrentSchedule` - 4 time blocks)
 - Current time block (from `CampaignTriggerTrackerBehavior.GetTimeBlock()`)
 - Active orders (from duty/quest system - time-sensitive tasks)
 - Current fatigue (displayed in header)
+- Optional “Company” warning line (from `CampLifeBehavior` snapshot; only shown when notable)
 
 ### Outputs
 - Formatted menu text with all status information
@@ -39,38 +40,28 @@ The menu balances information density with readability, ensuring players can qui
 ### Menu Structure
 
 ```
-═══════════════════════════════════════════════════════════
-                    ENLISTED STATUS MENU
-═══════════════════════════════════════════════════════════
-Lord: [Lord Name]
-Rank: [Rank Name] (T[Tier])
-Enlisted: [Days] days
+Lord: [Lord Name] | Fatigue [Current]/[Max]
+
+Company: Log [Strain]% | Mor [Morale]% | Pay [OK/Late/DUE]   (only shown when notable)
+
 Lord's Work: [Current Activity]
 
-Daily Report:
-[Report excerpt - max 5 lines, 450 chars]
+Service: [Rank Name] (T[Tier])
+
+Report: [Report excerpt - max ~2 lines, ~160 chars]
 
 Schedule:
-  [Morning: Duty Name]      ← Current block highlighted
-   Afternoon: Duty Name
-   Dusk: Duty Name
-   Night: Duty Name
+  [Morning: Duty Name]   ← Current block highlighted
+  Afternoon: Duty Name
+  Dusk: Duty Name
+  Night: Duty Name
 
-───────────────────────────────────────────────────────────
 Orders:
   • [Order 1] [Expires: Time]
   • [Order 2] [Expires: Time]
   (OR empty if no orders - header remains)
 
-───────────────────────────────────────────────────────────
-
-[Camp]                          (Submenu icon)
-[Decisions]                     (Submenu icon)
-[My Lord...]                    (Conversation icon)
-[Visit Settlement]              (Submenu icon - conditional)
-[Leave / Discharge / Desert]    (Leave icon)
-
-═══════════════════════════════════════════════════════════
+Now: [Current situation - reality layer]
 ```
 
 ### Layout Sections
@@ -87,16 +78,18 @@ Orders:
 
 #### 2. Daily Report Section
 - Pulled from `EnlistedNewsBehavior.GetLatestDailyReportExcerpt()`
-- Limited to 5 lines, 450 characters max
+- **Must be short** to avoid forcing scroll in the GameMenu UI.
+  - Recommended cap: **2 lines**, **~160 chars**
 - Single paragraph format for compactness
 - Blank line separator after
 
 #### 3. Schedule Section (NEW)
 - Shows all 4 time blocks: Morning, Afternoon, Dusk, Night
-- Each line shows: `[TimeBlock: Duty Name]`
+- Each line shows: `[TimeBlock: Duty Name]` (current block) or `TimeBlock: Duty Name` (others)
 - Current time block is visually highlighted (e.g., brackets `[Morning]` vs plain `Afternoon`)
-- Duties pulled from `EnlistedDutiesBehavior.GetPlayerSchedule()`
+- Duties pulled from `ScheduleBehavior.CurrentSchedule` (AI Camp Schedule system)
 - If no duty assigned for a block, shows "Free Time"
+- **Duty title length** should be truncated to avoid wrapping (recommended cap: ~22 chars)
 
 #### 4. Orders Section (NEW)
 - **Always shows the header**: `"Orders:"`
@@ -106,7 +99,7 @@ Orders:
   - Order description
   - Expiration time (Tonight, Tomorrow, etc.)
 - When empty: Just header with blank space below (no "No orders" message)
-- Separator line after
+- No long separator lines (GameMenu width varies by UI scale)
 
 #### 5. Menu Options Section
 - Existing 5 menu options remain unchanged:
@@ -118,8 +111,8 @@ Orders:
 
 ### Visual Formatting
 
-- **Line separators**: Use `\n───────────────────────────────────────────────────────────\n`
-- **Section spacing**: Single blank line between major sections
+- **No long ASCII/Unicode separators**: they wrap on some UI scales/resolutions and create visual “broken line” artifacts.
+- **Section spacing**: Single blank line between major sections; rely on headings (`Schedule:`, `Orders:`, `Now:`).
 - **Current time block**: Use brackets `[Morning: Training]` vs plain `Afternoon: Guard Duty`
 - **Orders**: Bullet character `•` for each order line
 - **Text alignment**: Left-aligned, no centering
@@ -155,7 +148,7 @@ Orders:
 
 1. ✅ Lord name, rank, and days enlisted appear at the top in correct format
 2. ✅ Lord's Work displays current activity using existing objective system
-3. ✅ Daily Report shows excerpt from news system (max 5 lines, 450 chars)
+3. ✅ Report shows excerpt from news system and remains short enough to avoid scroll (recommended cap ~2 lines / ~160 chars)
 4. ✅ Schedule section displays all 4 time blocks with assigned duties
 5. ✅ Current time block is visually highlighted (brackets or similar)
 6. ✅ Orders section always shows header, dynamically populates with active orders
@@ -163,7 +156,7 @@ Orders:
 8. ✅ Menu options remain at bottom, unchanged from current implementation
 9. ✅ Menu refreshes on hourly tick to update current time block
 10. ✅ All text fits within menu bounds without scrolling
-11. ✅ Separator lines appear between Orders section and menu options
+11. ✅ No “broken” separator artifacts (do not use long separator strings that wrap)
 12. ✅ "Visit Settlement" option only appears when at a town or castle
 
 ## Implementation Notes

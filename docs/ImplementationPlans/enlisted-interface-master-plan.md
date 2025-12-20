@@ -23,24 +23,27 @@ This creates a "Viking Conquest meets CK3" experience where being an enlisted so
 **Target State**: 
 ```
 ═══════════════════════════════════════════════════════════
-Lord: Derthert
-Rank: Man-at-Arms (T2) | Enlisted: 47 days
+Lord: Derthert | Fatigue 3/8
+
+Company: Log 72% | Mor 35% | Pay Late
+
 Lord's Work: Besieging Aserai
 
-Daily Report:
-Your lance joined the siege. Supplies are running low.
+Service: Man-at-Arms (T2)
+
+Report: Your lance joined the siege. Supplies are running low.
 
 Schedule:
-  [Morning: Training Drill]  ← Current
-   Afternoon: Guard Duty
-   Dusk: Free Time
-   Night: Rest
+  [Morning: Training Drill] ← Current
+  Afternoon: Guard Duty
+  Dusk: Free Time
+  Night: Rest
 
-───────────────────────────────────────────────────────────
 Orders:
   • Report to Quartermaster [Expires: Tonight]
   • Assist with Siege Prep [Expires: Tomorrow]
-───────────────────────────────────────────────────────────
+
+Now: Marching toward Tirby.
 
 [Camp] [Decisions] [My Lord...] [Leave Service]
 ═══════════════════════════════════════════════════════════

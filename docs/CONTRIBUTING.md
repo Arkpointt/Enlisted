@@ -103,13 +103,13 @@ Each crash creates a timestamped folder (e.g., `2025-12-08_03.41.58\`) containin
 
 When working with Bannerlord APIs, verify usage against:
 - The local native decompile included with this repository (authoritative)
-- The official API docs for the project's target version (currently **v1.3.4**) when needed for quick lookups
+- The official API docs for the project's target version (currently **v1.3.11+**) when needed for quick lookups
 
 ### Native Decompile Location
 
 The decompiled Bannerlord source is located at:
 ```
-C:\Dev\Enlisted\Decompile 1.3.4\
+C:\Dev\Enlisted\Decompile\
 ```
 
 Key decompiled assemblies:
@@ -133,6 +133,13 @@ Key APIs:
 
 ## Guidelines
 
+- **ReSharper is the linter**: follow ReSharper warnings/recommendations (Rider/VS). Fix issues; do not “paper over” them.
+- **No blanket suppression**: don’t disable warnings with pragmas or wide suppressions unless we have a very specific compatibility reason and a comment explaining why.
+- **XML for UI + localization**:
+  - **Gauntlet UI layout** lives in XML prefabs under `GUI/Prefabs/**.xml` (and shipped to `Modules/Enlisted/GUI/Prefabs/**.xml`).
+  - **Localized strings** live in `ModuleData/Languages/enlisted_strings.xml`.
+  - In code, prefer `TextObject("{=some_key}Fallback text")` and add the same key to `enlisted_strings.xml` (even if English fallback is used today).
+  - **Gameplay/config data** remains JSON (`ModuleData/Enlisted/*.json`) unless there is a specific reason to use XML.
 - Fix lint warnings, don't suppress
 - Comments explain *why*, not *what*
 - Use Harmony only when needed

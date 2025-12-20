@@ -18,7 +18,7 @@ namespace Enlisted.Features.Lances.Events
         private const string SupportedLegacySchemaVersion = "1.0"; // For backwards compatibility with older "1.0" format
 
         /// <summary>
-        /// Load the full events catalog from ModuleData/Enlisted/Events/*.json (Phase 0).
+        /// Load the full events catalog from ModuleData/Enlisted/Events/*.json.
         /// This is loader + validation only; it does not schedule or fire events.
         /// </summary>
         public static LanceLifeEventCatalog LoadCatalog()
@@ -270,7 +270,7 @@ namespace Enlisted.Features.Lances.Events
             {
                 var json = File.ReadAllText(filePath);
 
-                // Phase 5a: support both legacy {schemaVersion:int, events:[...]} and schema packs {schemaVersion:"1.0", packId,...,events:[...]}
+                // Support both legacy {schemaVersion:int, events:[...]} and schema packs {schemaVersion:"1.0", packId,...,events:[...]}.
                 var root = JObject.Parse(json);
                 var schemaToken = root["schemaVersion"];
                 var schema = schemaToken?.Type switch
@@ -351,7 +351,7 @@ namespace Enlisted.Features.Lances.Events
             src.Timing ??= new LanceLifeEventTiming();
             src.Options ??= new List<LanceLifeEventOptionDefinition>();
 
-            // Validate trigger tokens (no evaluation in Phase 0, just vocabulary checks).
+            // Validate trigger tokens. We do not evaluate them here; this is vocabulary checking only.
             ValidateTokens(src.Triggers?.All, recognizedButUnimplementedTokensUsed, unrecognizedTokensUsed);
             ValidateTokens(src.Triggers?.Any, recognizedButUnimplementedTokensUsed, unrecognizedTokensUsed);
             ValidateTokens(src.Triggers?.TimeOfDay, recognizedButUnimplementedTokensUsed, unrecognizedTokensUsed);
@@ -587,7 +587,7 @@ namespace Enlisted.Features.Lances.Events
                     o.Rewards.SkillXp = NormalizeSkillXp(o.Rewards.SchemaXp);
                 }
 
-                // Schema injury_risk normalization (Phase 5a)
+                // Schema injury_risk normalization.
                 if (o.Injury == null && o.Illness == null && o.InjuryRisk != null && o.InjuryRisk.Chance > 0)
                 {
                     NormalizeInjuryRisk(o);

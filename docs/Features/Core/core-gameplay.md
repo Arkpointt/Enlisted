@@ -157,9 +157,9 @@ Enlisted turns Bannerlord into a “soldier career” loop:
 
 ### Decision Events
 
-Decision Events are the CK3-like “decisions” system used for player-initiated and pushed decisions.
+Decision Events are the CK3-like "decisions" system used for player-initiated and pushed decisions.
 
-- **spec**: `docs/StoryBlocks/decision-events-spec.md`
+- **Spec**: [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md) (see Schema Reference section)
 - **Code**: `src/Features/Lances/Events/Decisions/*`
 - **Data**: `ModuleData/Enlisted/Events/events_decisions.json`, `events_player_decisions.json`
 
@@ -213,9 +213,9 @@ Leave temporarily suspends active service with a hard time limit; expiring leave
 
 ## Content authoring (quick rules)
 
-- **add/modify decision events**: follow `docs/StoryBlocks/decision-events-spec.md`.
-- **Add/modify non-decision events**: edit `ModuleData/Enlisted/Events/*.json` and corresponding localization in `ModuleData/Languages/enlisted_strings.xml`.
-- **Add/modify story packs**: follow the authoring contract at `docs/Features/Core/story-pack-contract.md`.
+- **Add/modify any events**: Follow [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md) (Schema Reference + Writing Guidelines sections)
+- **Edit event JSON**: `ModuleData/Enlisted/Events/*.json` and localization in `ModuleData/Languages/enlisted_strings.xml`
+- **Add/modify story packs**: Follow the authoring contract at `docs/Features/Core/story-pack-contract.md`
 - **Keep trigger vocabulary stable**: trigger tokens are code-defined and must not drift.
 
 ---

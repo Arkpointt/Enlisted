@@ -470,8 +470,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
         
         /// <summary>
-        /// Phase 4: Menu background initialization for enlisted_decisions menu.
-        /// Uses same culture-appropriate background as other enlisted menus.
+        /// Menu background initialization for enlisted_decisions menu.
+        /// Uses the same culture-appropriate background as other enlisted menus.
         /// </summary>
         [GameMenuInitializationHandler("enlisted_decisions")]
         private static void OnDecisionsBackgroundInit(MenuCallbackArgs args)
@@ -637,38 +637,25 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
-                // Override army_wait and army_wait_at_settlement menus when enlisted
-                // These are native army menus that appear when the lord leaves settlements or during army operations
-                // Enlisted soldiers should see their custom menu instead, unless in combat/siege
+                // FALLBACK: Override army_wait and army_wait_at_settlement menus if they somehow appear
+                // NOTE: GenericStateMenuPatch now prevents these menus from appearing in the first place
+                // when enlisted, but this serves as a defensive fallback in case something bypasses the patch.
+                // These are native army menus that would appear when the lord is at settlements or during army operations.
+                // Enlisted soldiers should see their custom menu instead, unless in combat/siege.
                 
-                // For army_wait_at_settlement, we EXPECT a settlement encounter - that's normal for entering a town
-                // We should only block during actual battles, not peaceful settlement entries
-                var isSettlementEncounter = PlayerEncounter.Current != null &&
-                    PlayerEncounter.EncounterSettlement != null &&
-                    MobileParty.MainParty?.Party.MapEvent == null;
-                
-                if (_currentMenuId == "army_wait_at_settlement")
+                if (_currentMenuId == "army_wait_at_settlement" || _currentMenuId == "army_wait")
                 {
-                    // Allow override for settlement encounters (peaceful town/castle entry)
-                    // Block only during sieges or siege-related battles
+                    // Only override if not in siege or siege-related battle
                     if (!lordSiegeEvent && !siegeRelatedBattle)
                     {
-                        ModLogger.Debug("Menu", $"Overriding army_wait_at_settlement (settlement encounter: {isSettlementEncounter})");
-                        // Defer the override to next frame to avoid conflicts with the native menu system
-                        NextFrameDispatcher.RunNextFrame(() =>
+                        // For army_wait, also check that player isn't in a battle/encounter
+                        if (_currentMenuId == "army_wait" && (playerBattle || playerEncounter))
                         {
-                            if (enlistment?.IsEnlisted == true)
-                            {
-                                SafeActivateEnlistedMenu();
-                            }
-                        });
-                    }
-                }
-                else if (_currentMenuId == "army_wait")
-                {
-                    // For army_wait (non-settlement), keep the original stricter check
-                    if (!playerBattle && !playerEncounter && !lordSiegeEvent && !siegeRelatedBattle)
-                    {
+                            // Don't override during battles
+                            return;
+                        }
+                        
+                        ModLogger.Warn("Menu", $"FALLBACK: Overriding {_currentMenuId} to enlisted menu (patch may have been bypassed)");
                         // Defer the override to next frame to avoid conflicts with the native menu system
                         NextFrameDispatcher.RunNextFrame(() =>
                         {
@@ -946,10 +933,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 OnDebugToolsSelected,
                 false, 2000);
 
-            // Master at Arms - DEPRECATED in Phase 7
-            // Formation is now chosen during T1→T2 proving event
-            // Equipment is purchased from Quartermaster based on formation+tier+culture
-            // Keeping the menu option hidden but code intact for save compatibility
+            // Master at Arms is deprecated. Formation is chosen during the T1→T2 proving event, and equipment is
+            // purchased from the Quartermaster based on formation, tier, and culture. We keep the code for save
+            // compatibility, but the menu option stays hidden.
 #pragma warning disable CS0618 // Intentionally using obsolete method for save compatibility
             starter.AddGameMenuOption("enlisted_status", "enlisted_master_at_arms",
                 "{=Enlisted_Menu_MasterAtArms}Master at Arms",
@@ -957,7 +943,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.TroopSelection;
                     args.Tooltip = new TextObject("{=menu_tooltip_master}Select your troop type and equipment loadout based on your current tier.");
-                    // Phase 7: Hide this option - formation is now chosen via proving event
+                    // Hidden: formation is now chosen via proving event.
                     return false;
                 },
                 OnMasterAtArmsSelected,
@@ -1072,10 +1058,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
             // No "return to duties" option needed - player IS doing duties by being in this menu
 
-            // =================================================================
-            // PHASE 4: DECISIONS SUBMENU
-            // Player-initiated decisions (CK3-style)
-            // =================================================================
+            // Decisions submenu: player-initiated decisions and queued free-time actions.
             RegisterDecisionsMenu(starter);
 
             // Add desertion confirmation menu
@@ -1190,14 +1173,13 @@ namespace Enlisted.Features.Interface.Behaviors
 
 
         /// <summary>
-        /// Phase 4: Register the decisions submenu for player-initiated decisions.
-        /// Follows same pattern as duty selection menu.
+        /// Register the decisions submenu for player-initiated decisions.
         /// </summary>
         private void RegisterDecisionsMenu(CampaignGameStarter starter)
         {
             // Create the decisions submenu (wait menu like duty selection)
             starter.AddWaitGameMenu("enlisted_decisions",
-                "{=Enlisted_Menu_Decisions_Title}— AVAILABLE DECISIONS —\n{DECISIONS_STATUS_TEXT}",
+                "{=Enlisted_Menu_Decisions_Title}— DECISIONS —\n{DECISIONS_STATUS_TEXT}",
                 OnDecisionsMenuInit,
                 OnDecisionsMenuCondition,
                 null,
@@ -1216,7 +1198,8 @@ namespace Enlisted.Features.Interface.Behaviors
                 false, 1);
 
             // Dynamic decision slots (up to 10 decisions shown)
-            for (var i = 0; i < 10; i++)
+            // Scrolling is allowed here; keep plenty of slots so sections can expand.
+            for (var i = 0; i < 40; i++)
             {
                 var slotIndex = i;
                 starter.AddGameMenuOption("enlisted_decisions", $"decision_slot_{i}",
@@ -2148,6 +2131,14 @@ namespace Enlisted.Features.Interface.Behaviors
                     /* best-effort */
                 }
 
+                // Company status is a lightweight "camp conditions" snapshot. It is intended to give the player a
+                // quick read on logistics strain, morale shock, and pay tension while enlisted.
+                var companyLine = TryBuildCompanyStatusLine(enlistment);
+                if (!string.IsNullOrWhiteSpace(companyLine))
+                {
+                    sb.AppendLine(companyLine);
+                }
+
                 sb.AppendLine($"Lord's Work: {objective}");
 
                 // Compact service status line (kept short to preserve option list space).
@@ -2164,15 +2155,26 @@ namespace Enlisted.Features.Interface.Behaviors
                 sb.AppendLine($"Service: {rank} (T{enlistment.EnlistmentTier})");
                 sb.AppendLine();
 
-                // Phase 3 (Camp News): main menu uses Today’s Report excerpt (single paragraph) instead of the old Daily Brief block.
-                // This keeps vertical space low and avoids “menu jitter” by pulling from the persisted daily report record.
-                var reportExcerpt = EnlistedNewsBehavior.Instance?.GetLatestDailyReportExcerpt(maxLines: 5, maxChars: 450);
+                // The main menu uses a short excerpt from today's persisted report (not the full brief). This keeps
+                // vertical space stable and avoids menu "jitter". The menu text area is narrow and uses a large
+                // font, so long reports would force scrolling. Keep this very short.
+                var reportExcerpt = EnlistedNewsBehavior.Instance?.GetLatestDailyReportExcerpt(maxLines: 2, maxChars: 160);
                 if (!string.IsNullOrWhiteSpace(reportExcerpt))
                 {
-                    sb.AppendLine($"Today’s Report: {reportExcerpt.Trim()}");
+                    var flattened = FlattenMenuParagraph(reportExcerpt);
+                    sb.AppendLine($"Report: {TruncateForMenu(flattened, 160)}");
                     sb.AppendLine();
                 }
 
+                // Schedule section (4 time blocks). This is the "what you're meant to be doing" plan layer.
+                AppendScheduleSection(sb);
+                sb.AppendLine();
+
+                // Orders section (always shows header; empty when no orders exist).
+                AppendOrdersSection(sb);
+                sb.AppendLine();
+
+                // "Now" is the reality layer (battle/settlement/forced states can override the schedule).
                 sb.AppendLine($"Now: {BuildCurrentSituationLine(enlistment)}");
 
                 return sb.ToString().TrimEnd();
@@ -2180,6 +2182,174 @@ namespace Enlisted.Features.Interface.Behaviors
             catch
             {
                 return "Status unavailable.";
+            }
+        }
+
+        private static void AppendScheduleSection(StringBuilder sb)
+        {
+            try
+            {
+                sb.AppendLine("Schedule:");
+
+                var tracker = Enlisted.Mod.Core.Triggers.CampaignTriggerTrackerBehavior.Instance;
+                var currentBlock = tracker?.GetTimeBlock() ?? Enlisted.Features.Schedule.Models.TimeBlock.Morning;
+
+                AppendScheduleLine(sb, Enlisted.Features.Schedule.Models.TimeBlock.Morning, currentBlock);
+                AppendScheduleLine(sb, Enlisted.Features.Schedule.Models.TimeBlock.Afternoon, currentBlock);
+                AppendScheduleLine(sb, Enlisted.Features.Schedule.Models.TimeBlock.Dusk, currentBlock);
+                AppendScheduleLine(sb, Enlisted.Features.Schedule.Models.TimeBlock.Night, currentBlock);
+            }
+            catch
+            {
+                // Best-effort: schedule is informational only; never hard-fail the menu.
+            }
+        }
+
+        private static void AppendScheduleLine(
+            StringBuilder sb,
+            Enlisted.Features.Schedule.Models.TimeBlock lineBlock,
+            Enlisted.Features.Schedule.Models.TimeBlock currentBlock)
+        {
+            var label = GetTimeBlockLabel(lineBlock);
+            var dutyTitle = TruncateForMenu(GetScheduleBlockTitleOrDefault(lineBlock), 22);
+
+            // Brackets visually mark the active time block.
+            if (lineBlock == currentBlock)
+            {
+                sb.AppendLine($"[{label}: {dutyTitle}]");
+            }
+            else
+            {
+                sb.AppendLine($"{label}: {dutyTitle}");
+            }
+        }
+
+        private static string GetScheduleBlockTitleOrDefault(Enlisted.Features.Schedule.Models.TimeBlock timeBlock)
+        {
+            try
+            {
+                var schedule = Enlisted.Features.Schedule.Behaviors.ScheduleBehavior.Instance?.CurrentSchedule;
+                var block = schedule?.GetBlock(timeBlock);
+                var title = block?.Title;
+                return string.IsNullOrWhiteSpace(title) ? "Free Time" : title.Trim();
+            }
+            catch
+            {
+                return "Free Time";
+            }
+        }
+
+        private static string GetTimeBlockLabel(Enlisted.Features.Schedule.Models.TimeBlock timeBlock)
+        {
+            // Keep labels short to avoid wrapping on narrower resolutions.
+            return timeBlock switch
+            {
+                Enlisted.Features.Schedule.Models.TimeBlock.Morning => "Morning",
+                Enlisted.Features.Schedule.Models.TimeBlock.Afternoon => "Afternoon",
+                Enlisted.Features.Schedule.Models.TimeBlock.Dusk => "Dusk",
+                Enlisted.Features.Schedule.Models.TimeBlock.Night => "Night",
+                _ => "Time"
+            };
+        }
+
+        private static void AppendOrdersSection(StringBuilder sb)
+        {
+            sb.AppendLine("Orders:");
+
+            // Orders system is intentionally stubbed for now.
+            // We keep the header visible (per spec) but do not show "No orders" when empty.
+            // Future: integrate with a real order provider / duty event system.
+            var orders = GetActiveOrdersForMenu();
+            foreach (var orderLine in orders)
+            {
+                if (!string.IsNullOrWhiteSpace(orderLine))
+                {
+                    sb.AppendLine($"  • {orderLine.Trim()}");
+                }
+            }
+        }
+
+        private static List<string> GetActiveOrdersForMenu()
+        {
+            // Placeholder: orders are not implemented yet.
+            return new List<string>();
+        }
+
+        private static string TruncateForMenu(string text, int maxChars)
+        {
+            if (string.IsNullOrWhiteSpace(text) || maxChars <= 0)
+            {
+                return string.Empty;
+            }
+
+            var trimmed = text.Trim();
+            if (trimmed.Length <= maxChars)
+            {
+                return trimmed;
+            }
+
+            // Use "..." instead of a unicode ellipsis to reduce font/layout quirks across installs.
+            if (maxChars <= 3)
+            {
+                return trimmed.Substring(0, maxChars);
+            }
+
+            return trimmed.Substring(0, maxChars - 3).TrimEnd() + "...";
+        }
+
+        private static string FlattenMenuParagraph(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            // Collapse line breaks (the Gauntlet menu wraps text anyway). This prevents huge vertical expansion
+            // when the underlying report contains deliberate newlines.
+            var flattened = text.Replace("\r", " ").Replace("\n", " ");
+            while (flattened.Contains("  "))
+            {
+                flattened = flattened.Replace("  ", " ");
+            }
+
+            return flattened.Trim();
+        }
+
+        private static string TryBuildCompanyStatusLine(EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var campLife = Enlisted.Features.Camp.CampLifeBehavior.Instance;
+                if (campLife == null || !campLife.IsActiveWhileEnlisted())
+                {
+                    return null;
+                }
+
+                // Keep the main menu focused. Only show a Company status line when it provides actionable signal.
+                // (This prevents the menu from growing vertically on higher UI-scale setups.)
+                if (!campLife.IsLogisticsHigh() && !campLife.IsMoraleLow() && !campLife.IsPayTensionHigh())
+                {
+                    return null;
+                }
+
+                // LogisticsStrain is a "pressure" meter (higher == worse). Display it explicitly to avoid implying
+                // we have the full equipment supply simulation shipped already.
+                var logisticsStrain = (int)Math.Round(campLife.LogisticsStrain);
+
+                // MoraleShock is an inverse-morale meter; translate to an intuitive "morale %" for UI.
+                var moralePct = (int)Math.Round(100f - campLife.MoraleShock);
+                moralePct = Math.Max(0, Math.Min(100, moralePct));
+
+                var payTension = enlistment?.PayTension ?? (int)Math.Round(campLife.PayTension);
+                var payStatus = payTension >= 60 ? "Pay DUE" : payTension >= 30 ? "Pay Late" : "Pay OK";
+
+                // Keep this short. The menu text area is narrower than it looks, and long status lines will wrap,
+                // pushing options off-screen and forcing scroll.
+                return $"Company: Log {logisticsStrain}% | Mor {moralePct}% | {payStatus}";
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -2508,21 +2678,20 @@ namespace Enlisted.Features.Interface.Behaviors
         // Menu Option Conditions and Actions
 
         /// <summary>
-        ///     DEPRECATED: Phase 7 - Master at Arms replaced by proving events.
-        ///     Formation is now chosen during T1→T2 proving event.
-        ///     Kept for save compatibility but menu option is hidden.
+        /// Kept for save compatibility. This option is obsolete and always hidden because formation is chosen via
+        /// proving events instead of the Master at Arms menu.
         /// </summary>
-        [System.Obsolete("Phase 7: Formation is now chosen via proving events, not Master at Arms menu.")]
+        [System.Obsolete("Formation is now chosen via proving events, not the Master at Arms menu.")]
         private bool IsMasterAtArmsAvailable(MenuCallbackArgs args)
         {
             _ = args;
-            return false; // Phase 7: Always hide this option
+            return false; // Always hidden.
         }
 
         /// <summary>
-        ///     DEPRECATED: Phase 7 - Master at Arms replaced by proving events.
+        /// Kept for save compatibility. This handler is obsolete and should not be reachable in normal play.
         /// </summary>
-        [System.Obsolete("Phase 7: Formation is now chosen via proving events, not Master at Arms menu.")]
+        [System.Obsolete("Formation is now chosen via proving events, not the Master at Arms menu.")]
         private void OnMasterAtArmsSelected(MenuCallbackArgs args)
         {
             try
@@ -2595,7 +2764,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     return;
                 }
 
-                // Phase 3: Try to open conversation with Quartermaster Hero
+                // Try to open conversation with the Quartermaster hero.
                 var qm = enlistment.GetOrCreateQuartermaster();
                 
                 if (qm != null && qm.IsAlive)
@@ -3471,10 +3640,220 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
 
-        #region Decision Events Menu Handlers (Phase 4)
+        #region Decision Events Menu Handlers
 
-        // Cache of available decisions for current menu session
-        private List<LanceLifeEventDefinition> _cachedDecisions = new List<LanceLifeEventDefinition>();
+        private sealed class DecisionsMenuEntry
+        {
+            public string Id { get; set; }
+            public string Text { get; set; }
+            public TextObject Tooltip { get; set; }
+            public GameMenuOption.LeaveType LeaveType { get; set; } = GameMenuOption.LeaveType.Continue;
+            public bool IsEnabled { get; set; } = true;
+            public bool IsVisible { get; set; } = true;
+            public Action<MenuCallbackArgs> OnSelected { get; set; }
+        }
+
+        private enum DecisionsMenuSection
+        {
+            Queued,
+            Training,
+            Social,
+            CampLife,
+            Opportunities
+        }
+
+        private List<DecisionsMenuEntry> _cachedDecisionsMenuEntries = new List<DecisionsMenuEntry>();
+
+        // Decision menu section collapse state (accordion-style). These persist while the campaign is running.
+        private bool _decisionsCollapsedQueued;
+        private bool _decisionsCollapsedTraining;
+        private bool _decisionsCollapsedSocial;
+        private bool _decisionsCollapsedCampLife;
+        private bool _decisionsCollapsedOpportunities;
+
+        // Accordion behavior: on the first open, everything starts collapsed. After that, we reopen the last expanded
+        // section (if any). Expanding one section collapses the others.
+        private bool _decisionsAccordionInitialized;
+        private DecisionsMenuSection? _decisionsLastExpandedSection;
+
+        // "New changes" tracking for accordion headers.
+        // Note: The GameMenu option list uses RichTextWidget, which supports <span style="...">. We use the built-in
+        // "Link" style as a safe, readable highlight color (instead of hard-coded hex colors).
+        private bool _decisionsSnapshotsInitialized;
+        private HashSet<string> _decisionsPrevQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _decisionsPrevOpportunityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private bool _decisionsPrevCampLifeEnabled;
+
+        private bool _decisionsNewQueued;
+        private bool _decisionsNewOpportunities;
+        private bool _decisionsNewCampLife;
+
+        private CampaignTime? _decisionsNewQueuedSince;
+        private CampaignTime? _decisionsNewOpportunitiesSince;
+        private CampaignTime? _decisionsNewCampLifeSince;
+
+        private static readonly CampaignTime DecisionsNewAutoClearThreshold = CampaignTime.Days(1f);
+
+        private static string NewTag(bool hasNew)
+        {
+            return hasNew ? " <span style=\"Link\">[NEW]</span>" : string.Empty;
+        }
+
+        private void MaybeClearExpiredDecisionsNewFlags()
+        {
+            try
+            {
+                var now = CampaignTime.Now;
+
+                if (_decisionsNewQueued && _decisionsNewQueuedSince.HasValue &&
+                    now - _decisionsNewQueuedSince.Value > DecisionsNewAutoClearThreshold)
+                {
+                    _decisionsNewQueued = false;
+                    _decisionsNewQueuedSince = null;
+                }
+
+                if (_decisionsNewOpportunities && _decisionsNewOpportunitiesSince.HasValue &&
+                    now - _decisionsNewOpportunitiesSince.Value > DecisionsNewAutoClearThreshold)
+                {
+                    _decisionsNewOpportunities = false;
+                    _decisionsNewOpportunitiesSince = null;
+                }
+
+                if (_decisionsNewCampLife && _decisionsNewCampLifeSince.HasValue &&
+                    now - _decisionsNewCampLifeSince.Value > DecisionsNewAutoClearThreshold)
+                {
+                    _decisionsNewCampLife = false;
+                    _decisionsNewCampLifeSince = null;
+                }
+            }
+            catch
+            {
+                // Best-effort only; never let a marker break the menu.
+            }
+        }
+
+        private void ToggleDecisionsSection(DecisionsMenuSection section, MenuCallbackArgs args)
+        {
+            try
+            {
+                // Accordion rules: expanding one section collapses the others. Collapsing the active section leaves
+                // everything collapsed.
+                var isCollapsed = IsDecisionsSectionCollapsed(section);
+                if (isCollapsed)
+                {
+                    CollapseAllDecisionsSections();
+                    SetDecisionsSectionCollapsed(section, collapsed: false);
+                    _decisionsLastExpandedSection = section;
+
+                    // Opening a section clears its "new" marker.
+                    if (section == DecisionsMenuSection.Queued)
+                    {
+                        _decisionsNewQueued = false;
+                        _decisionsNewQueuedSince = null;
+                    }
+                    else if (section == DecisionsMenuSection.CampLife)
+                    {
+                        _decisionsNewCampLife = false;
+                        _decisionsNewCampLifeSince = null;
+                    }
+                    else if (section == DecisionsMenuSection.Opportunities)
+                    {
+                        _decisionsNewOpportunities = false;
+                        _decisionsNewOpportunitiesSince = null;
+                    }
+                }
+                else
+                {
+                    SetDecisionsSectionCollapsed(section, collapsed: true);
+                    if (_decisionsLastExpandedSection.HasValue && _decisionsLastExpandedSection.Value == section)
+                    {
+                        _decisionsLastExpandedSection = null;
+                    }
+                }
+
+                // Rebuild menu entries/text and then force the menu to re-evaluate option visibility.
+                OnDecisionsMenuInit(args);
+
+                var menuContext = args?.MenuContext ?? Campaign.Current?.CurrentMenuContext;
+                if (Campaign.Current != null && menuContext?.GameMenu != null)
+                {
+                    Campaign.Current.GameMenuManager.RefreshMenuOptions(menuContext);
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.ErrorCode("Interface", "E-UI-044", "Failed to toggle decisions section", ex);
+            }
+        }
+
+        private void EnsureDecisionsAccordionInitialized()
+        {
+            // First open: everything collapsed.
+            if (!_decisionsAccordionInitialized)
+            {
+                CollapseAllDecisionsSections();
+                _decisionsLastExpandedSection = null;
+                _decisionsAccordionInitialized = true;
+                return;
+            }
+
+            // Subsequent opens: reopen to last expanded section (if any).
+            if (_decisionsLastExpandedSection.HasValue)
+            {
+                CollapseAllDecisionsSections();
+                SetDecisionsSectionCollapsed(_decisionsLastExpandedSection.Value, collapsed: false);
+            }
+        }
+
+        private void CollapseAllDecisionsSections()
+        {
+            _decisionsCollapsedQueued = true;
+            _decisionsCollapsedTraining = true;
+            _decisionsCollapsedSocial = true;
+            _decisionsCollapsedCampLife = true;
+            _decisionsCollapsedOpportunities = true;
+        }
+
+        private bool IsDecisionsSectionCollapsed(DecisionsMenuSection section)
+        {
+            switch (section)
+            {
+                case DecisionsMenuSection.Queued:
+                    return _decisionsCollapsedQueued;
+                case DecisionsMenuSection.Training:
+                    return _decisionsCollapsedTraining;
+                case DecisionsMenuSection.Social:
+                    return _decisionsCollapsedSocial;
+                case DecisionsMenuSection.CampLife:
+                    return _decisionsCollapsedCampLife;
+                case DecisionsMenuSection.Opportunities:
+                    return _decisionsCollapsedOpportunities;
+                default:
+                    return true;
+            }
+        }
+
+        private void SetDecisionsSectionCollapsed(DecisionsMenuSection section, bool collapsed)
+        {
+            switch (section)
+            {
+                case DecisionsMenuSection.Queued:
+                    _decisionsCollapsedQueued = collapsed;
+                    break;
+                case DecisionsMenuSection.Training:
+                    _decisionsCollapsedTraining = collapsed;
+                    break;
+                case DecisionsMenuSection.Social:
+                    _decisionsCollapsedSocial = collapsed;
+                    break;
+                case DecisionsMenuSection.CampLife:
+                    _decisionsCollapsedCampLife = collapsed;
+                    break;
+                case DecisionsMenuSection.Opportunities:
+                    _decisionsCollapsedOpportunities = collapsed;
+                    break;
+            }
+        }
 
         /// <summary>
         /// Handler for "Pending Decisions" option in enlisted_status menu.
@@ -3500,6 +3879,8 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                EnsureDecisionsAccordionInitialized();
+
                 // Restore time mode preserved from parent menu
                 var capturedMode = QuartermasterManager.CapturedTimeMode
                     ?? Campaign.Current?.TimeControlMode
@@ -3515,22 +3896,88 @@ namespace Enlisted.Features.Interface.Behaviors
                     Campaign.Current.TimeControlMode = capturedMode;
                 }
 
-                // Load available decisions
                 var decisionBehavior = DecisionEventBehavior.Instance;
-                _cachedDecisions = decisionBehavior?.GetAvailablePlayerDecisions() ?? new List<LanceLifeEventDefinition>();
+                var enlistment = EnlistmentBehavior.Instance;
+                var timeBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
 
-                // Set status text
-                var statusText = _cachedDecisions.Count > 0
-                    ? new TextObject("{=decisions_status_available}{COUNT} decision(s) available. Select one to review.")
-                    : new TextObject("{=decisions_status_none}No decisions are currently available. Check back later as opportunities arise.");
-                statusText.SetTextVariable("COUNT", _cachedDecisions.Count);
-                MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", statusText);
+                var queued = decisionBehavior?.GetQueuedFreeTimeDecisions() ?? new List<QueuedFreeTimeDecision>();
+                var available = decisionBehavior?.GetAvailablePlayerDecisions() ?? new List<LanceLifeEventDefinition>();
 
-                // Set text for each decision slot
-                for (var i = 0; i < 10; i++)
+                // Remove duplicates for the specific "static menu surfaced" events (we show them as free-time actions).
+                var suppressedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
-                    var slotText = i < _cachedDecisions.Count
-                        ? GetDecisionSlotText(_cachedDecisions[i])
+                    "player_organize_dice_game",
+                    "player_visit_wounded",
+                    "player_petition_lord",
+                    "player_write_letter",
+                    "player_request_training"
+                };
+                available = available.Where(d => d != null && !suppressedIds.Contains(d.Id)).ToList();
+
+                // Track changes between menu openings so section headers can show a [NEW] marker. We highlight when
+                // new queued decisions appear, when new opportunities appear, and when "Visit the Wounded" becomes
+                // available because wounded are present.
+                var currentQueuedIds = new HashSet<string>(
+                    queued.Where(q => q != null && !string.IsNullOrWhiteSpace(q.Id)).Select(q => q.Id),
+                    StringComparer.OrdinalIgnoreCase);
+
+                var currentOpportunityIds = new HashSet<string>(
+                    available.Where(d => d != null && !string.IsNullOrWhiteSpace(d.Id)).Select(d => d.Id),
+                    StringComparer.OrdinalIgnoreCase);
+
+                var campLifeEnabledNow = false;
+                try
+                {
+                    campLifeEnabledNow = MobileParty.MainParty?.MemberRoster?.TotalWounded > 0;
+                }
+                catch
+                {
+                    campLifeEnabledNow = false;
+                }
+
+                if (_decisionsSnapshotsInitialized)
+                {
+                    if (!_decisionsNewQueued && currentQueuedIds.Except(_decisionsPrevQueuedIds).Any())
+                    {
+                        _decisionsNewQueued = true;
+                        _decisionsNewQueuedSince ??= CampaignTime.Now;
+                    }
+
+                    if (!_decisionsNewOpportunities && currentOpportunityIds.Except(_decisionsPrevOpportunityIds).Any())
+                    {
+                        _decisionsNewOpportunities = true;
+                        _decisionsNewOpportunitiesSince ??= CampaignTime.Now;
+                    }
+
+                    if (!_decisionsNewCampLife && campLifeEnabledNow && !_decisionsPrevCampLifeEnabled)
+                    {
+                        _decisionsNewCampLife = true;
+                        _decisionsNewCampLifeSince ??= CampaignTime.Now;
+                    }
+                }
+
+                _decisionsSnapshotsInitialized = true;
+                _decisionsPrevQueuedIds = currentQueuedIds;
+                _decisionsPrevOpportunityIds = currentOpportunityIds;
+                _decisionsPrevCampLifeEnabled = campLifeEnabledNow;
+
+                // Auto-clear markers after a while so they don't stick forever if the player ignores them.
+                MaybeClearExpiredDecisionsNewFlags();
+
+                // Status text (short and readable; scrolling is allowed on the options list).
+                var status = new TextObject("{=enlisted_decisions_status}Time: {TIME} | Fatigue: {FAT}/{MAX} | Queued: {Q}\nSelect an action. It will execute at the next appropriate slot.");
+                status.SetTextVariable("TIME", timeBlock.ToString());
+                status.SetTextVariable("FAT", enlistment?.FatigueCurrent ?? 0);
+                status.SetTextVariable("MAX", enlistment?.FatigueMax ?? 0);
+                status.SetTextVariable("Q", queued.Count);
+                MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", status);
+
+                _cachedDecisionsMenuEntries = BuildDecisionsMenuEntries(enlistment, decisionBehavior, queued, available, timeBlock);
+
+                for (var i = 0; i < 40; i++)
+                {
+                    var slotText = i < _cachedDecisionsMenuEntries.Count
+                        ? (_cachedDecisionsMenuEntries[i]?.Text ?? string.Empty)
                         : string.Empty;
                     MBTextManager.SetTextVariable($"DECISION_SLOT_{i}_TEXT", slotText);
                 }
@@ -3540,6 +3987,371 @@ namespace Enlisted.Features.Interface.Behaviors
                 ModLogger.ErrorCode("Interface", "E-UI-043", "Failed to initialize decisions menu", ex);
                 MBTextManager.SetTextVariable("DECISIONS_STATUS_TEXT", "Error loading decisions.");
             }
+        }
+
+        private List<DecisionsMenuEntry> BuildDecisionsMenuEntries(
+            EnlistmentBehavior enlistment,
+            DecisionEventBehavior decisionBehavior,
+            IReadOnlyList<QueuedFreeTimeDecision> queued,
+            IReadOnlyList<LanceLifeEventDefinition> available,
+            TimeBlock timeBlock)
+        {
+            var list = new List<DecisionsMenuEntry>();
+
+            // Decisions is intentionally a native-looking GameMenu list.
+            // Instead of "blank lines" (which make rows taller and look awkward), we use styled header rows (Option A).
+
+            // Scheduled
+            list.Add(new DecisionsMenuEntry
+            {
+                Id = "header_queued",
+                Text = "<span style=\"Link\">SCHEDULED</span>" + NewTag(_decisionsNewQueued),
+                IsEnabled = true,
+                // Header: show a Bannerlord-native menu icon (rendered from LeaveType, not from text).
+                LeaveType = GameMenuOption.LeaveType.Wait,
+                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Queued, a)
+            });
+
+            if (!_decisionsCollapsedQueued)
+            {
+                if (queued == null || queued.Count == 0)
+                {
+                    list.Add(new DecisionsMenuEntry
+                    {
+                        Id = "queued_none",
+                        Text = "    (none)",
+                        IsEnabled = false,
+                        // Non-header: hide icon (using -1 as no sprite exists for it).
+                        LeaveType = (GameMenuOption.LeaveType)(-1)
+                    });
+                }
+                else
+                {
+                    foreach (var q in queued)
+                    {
+                        if (q == null || string.IsNullOrWhiteSpace(q.Id))
+                        {
+                            continue;
+                        }
+
+                        var windowText = q.Window == FreeTimeDecisionWindow.Training ? "Training" :
+                            q.Window == FreeTimeDecisionWindow.Social ? "Social" : "Any";
+
+                        var title = q.Id;
+                        if (q.Kind == FreeTimeDecisionKind.Event)
+                        {
+                            // Try to show the event title (if loaded).
+                            var evt = LanceLifeEventRuntime.GetCatalog()?.Events?.FirstOrDefault(e => e.Id == q.Id);
+                            title = !string.IsNullOrWhiteSpace(evt?.TitleFallback) ? evt.TitleFallback : q.Id;
+                        }
+
+                        list.Add(new DecisionsMenuEntry
+                        {
+                            Id = $"cancel_{q.Id}",
+                            Text = $"    Cancel: {title} (next {windowText})",
+                            LeaveType = (GameMenuOption.LeaveType)(-1),
+                            Tooltip = new TextObject("{=enlisted_decisions_cancel_tooltip}Remove this queued action."),
+                            OnSelected = _ =>
+                            {
+                                if (decisionBehavior == null)
+                                {
+                                    return;
+                                }
+
+                                if (decisionBehavior.TryCancelQueuedFreeTimeDecision(q.Id, out var msg))
+                                {
+                                    InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Training
+            list.Add(new DecisionsMenuEntry
+            {
+                Id = "header_training",
+                Text = "<span style=\"Link\">TRAINING</span>",
+                IsEnabled = true,
+                // Bannerlord-native menu icon
+                LeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack,
+                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Training, a)
+            });
+
+            if (!_decisionsCollapsedTraining)
+            {
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "ft_training_formation",
+                    text: "Formation Drill",
+                    tooltip: "{=enlisted_training_formation_tt}Extra drill time focused on conditioning and formation practice.\nCost: 5 Fatigue",
+                    kind: FreeTimeDecisionKind.TrainingAction,
+                    window: FreeTimeDecisionWindow.Training,
+                    desiredFatigue: 5);
+
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "ft_training_combat",
+                    text: "Combat Drill",
+                    tooltip: "{=enlisted_training_combat_tt}Extra practice with your equipped weapon.\nCost: 5 Fatigue",
+                    kind: FreeTimeDecisionKind.TrainingAction,
+                    window: FreeTimeDecisionWindow.Training,
+                    desiredFatigue: 5);
+
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "ft_training_specialist",
+                    text: "Specialist Practice",
+                    tooltip: "{=enlisted_training_specialist_tt}Focused practice on a specialist skill (placeholder until duty-role mapping is added).\nCost: 6 Fatigue",
+                    kind: FreeTimeDecisionKind.TrainingAction,
+                    window: FreeTimeDecisionWindow.Training,
+                    desiredFatigue: 6);
+            }
+
+            // Social (Free Time) - event-backed
+            list.Add(new DecisionsMenuEntry
+            {
+                Id = "header_social",
+                Text = "<span style=\"Link\">SOCIAL</span>",
+                IsEnabled = true,
+                // Bannerlord-native menu icon
+                LeaveType = GameMenuOption.LeaveType.Conversation,
+                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Social, a)
+            });
+
+            if (!_decisionsCollapsedSocial)
+            {
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "player_write_letter",
+                    text: "Write a Letter Home",
+                    tooltip: "{=enlisted_social_letter_tt}Spend time writing home. Costs fatigue but can steady morale over time.\nCost: 4 Fatigue",
+                    kind: FreeTimeDecisionKind.Event,
+                    window: FreeTimeDecisionWindow.Social,
+                    desiredFatigue: 4);
+
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "player_organize_dice_game",
+                    text: "Organize a Dice Game",
+                    tooltip: "{=enlisted_social_dice_tt}Pass the evening with your lance mates. Small risks, small rewards.\nCost: 4 Fatigue",
+                    kind: FreeTimeDecisionKind.Event,
+                    window: FreeTimeDecisionWindow.Social,
+                    desiredFatigue: 4);
+
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "player_petition_lord",
+                    text: "Petition the Lord",
+                    tooltip: "{=enlisted_social_petition_tt}Speak directly with your lord. Tier 3+.\nCost: 5 Fatigue",
+                    kind: FreeTimeDecisionKind.Event,
+                    window: FreeTimeDecisionWindow.Social,
+                    desiredFatigue: 5,
+                    extraEnabledCheck: () => (enlistment?.EnlistmentTier ?? 1) >= 3,
+                    extraDisabledTooltip: "{=enlisted_social_petition_locked}You must be Tier 3 or higher to petition the lord.");
+            }
+
+            // Camp Life (conditional)
+            list.Add(new DecisionsMenuEntry
+            {
+                Id = "header_camp",
+                Text = "<span style=\"Link\">CAMP LIFE</span>" + NewTag(_decisionsNewCampLife),
+                IsEnabled = true,
+                // Bannerlord-native menu icon
+                LeaveType = GameMenuOption.LeaveType.Manage,
+                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.CampLife, a)
+            });
+
+            if (!_decisionsCollapsedCampLife)
+            {
+                AddQueueEntry(list, decisionBehavior, enlistment,
+                    id: "player_visit_wounded",
+                    text: "Visit the Wounded",
+                    tooltip: "{=enlisted_camp_wounded_tt}Only available if your company has wounded.\nCost: 4 Fatigue",
+                    kind: FreeTimeDecisionKind.Event,
+                    window: FreeTimeDecisionWindow.Social,
+                    desiredFatigue: 4,
+                    extraEnabledCheck: HasWoundedInCamp,
+                    extraDisabledTooltip: "{=enlisted_camp_no_wounded}No wounded in camp right now.");
+            }
+
+            // Opportunities (events eligible right now)
+            list.Add(new DecisionsMenuEntry
+            {
+                Id = "header_events",
+                Text = "<span style=\"Link\">OPPORTUNITIES</span>" + NewTag(_decisionsNewOpportunities),
+                IsEnabled = true,
+                // Bannerlord-native menu icon
+                LeaveType = GameMenuOption.LeaveType.WaitQuest,
+                OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Opportunities, a)
+            });
+
+            if (!_decisionsCollapsedOpportunities)
+            {
+                if (available == null || available.Count == 0)
+                {
+                    list.Add(new DecisionsMenuEntry
+                    {
+                        Id = "events_none",
+                        Text = "    (none)",
+                        IsEnabled = false,
+                        LeaveType = (GameMenuOption.LeaveType)(-1)
+                    });
+                }
+                else
+                {
+                    foreach (var evt in available)
+                    {
+                        if (evt == null)
+                        {
+                            continue;
+                        }
+
+                        list.Add(new DecisionsMenuEntry
+                        {
+                            Id = $"event_{evt.Id}",
+                            Text = !string.IsNullOrWhiteSpace(evt.TitleFallback) ? evt.TitleFallback : evt.Id,
+                            LeaveType = (GameMenuOption.LeaveType)(-1),
+                            Tooltip = new TextObject(BuildDecisionTooltipStatic(evt)),
+                            OnSelected = _ =>
+                            {
+                                if (decisionBehavior == null)
+                                {
+                                    return;
+                                }
+
+                                // Fire immediately (opportunity-style; not queued).
+                                GameMenu.SwitchToMenu("enlisted_status");
+                                decisionBehavior.FirePlayerDecision(evt.Id, onEventClosed: () =>
+                                {
+                                    try
+                                    {
+                                        if (Campaign.Current != null && EnlistmentBehavior.Instance?.IsEnlisted == true)
+                                        {
+                                            GameMenu.ActivateGameMenu("enlisted_status");
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        // ignore restore errors
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            return list;
+
+            static bool HasWoundedInCamp()
+            {
+                try
+                {
+                    return MobileParty.MainParty?.MemberRoster?.TotalWounded > 0;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        private static void AddQueueEntry(
+            List<DecisionsMenuEntry> list,
+            DecisionEventBehavior decisionBehavior,
+            EnlistmentBehavior enlistment,
+            string id,
+            string text,
+            string tooltip,
+            FreeTimeDecisionKind kind,
+            FreeTimeDecisionWindow window,
+            int desiredFatigue,
+            Func<bool> extraEnabledCheck = null,
+            string extraDisabledTooltip = null)
+        {
+            var entry = new DecisionsMenuEntry
+            {
+                Id = id,
+                Text = "    " + text, // Indent items under headers
+                // Non-header: hide icon (using -1 as no sprite exists for it).
+                LeaveType = (GameMenuOption.LeaveType)(-1),
+                Tooltip = new TextObject(tooltip),
+                OnSelected = _ =>
+                {
+                    if (decisionBehavior == null)
+                    {
+                        return;
+                    }
+
+                    if (decisionBehavior.TryQueueFreeTimeDecision(kind, id, window, desiredFatigue, out var msg))
+                    {
+                        // Small, non-blocking feedback.
+                        InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+                    }
+                    else
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage(msg.ToString()));
+                    }
+                }
+            };
+
+            // Base fatigue gating.
+            if (desiredFatigue > 0 && enlistment != null && enlistment.FatigueCurrent < desiredFatigue)
+            {
+                entry.IsEnabled = false;
+                entry.Tooltip = new TextObject("{=enlisted_decisions_not_enough_fatigue}You are too exhausted for that right now.");
+            }
+
+            // Additional conditional gating.
+            if (extraEnabledCheck != null && entry.IsEnabled)
+            {
+                if (!extraEnabledCheck())
+                {
+                    entry.IsEnabled = false;
+                    if (!string.IsNullOrWhiteSpace(extraDisabledTooltip))
+                    {
+                        entry.Tooltip = new TextObject(extraDisabledTooltip);
+                    }
+                }
+            }
+
+            list.Add(entry);
+        }
+
+        private static string BuildDecisionTooltipStatic(LanceLifeEventDefinition decision)
+        {
+            // Copy of the old tooltip builder, but static (we can't reference instance methods here).
+            if (decision == null)
+            {
+                return string.Empty;
+            }
+
+            var lines = new List<string>();
+
+            var setup = !string.IsNullOrWhiteSpace(decision.SetupFallback)
+                ? decision.SetupFallback
+                : "Make a decision...";
+
+            if (setup.Length > 150)
+            {
+                setup = setup.Substring(0, 147) + "...";
+            }
+            lines.Add(setup);
+            lines.Add("");
+            lines.Add("Status: Ready");
+
+            var firstOption = decision.Options?.FirstOrDefault();
+            if (firstOption?.Costs != null)
+            {
+                var costs = new List<string>();
+                if (firstOption.Costs.Gold > 0)
+                    costs.Add($"{firstOption.Costs.Gold} gold");
+                if (firstOption.Costs.Fatigue > 0)
+                    costs.Add($"{firstOption.Costs.Fatigue} fatigue");
+
+                if (costs.Count > 0)
+                {
+                    lines.Add($"Cost: {string.Join(", ", costs)}");
+                }
+            }
+
+            return string.Join("\n", lines);
         }
 
         /// <summary>
@@ -3752,17 +4564,23 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private bool IsDecisionSlotAvailable(MenuCallbackArgs args, int slotIndex)
         {
-            if (slotIndex >= _cachedDecisions.Count)
+            if (slotIndex >= _cachedDecisionsMenuEntries.Count)
             {
                 return false; // No decision in this slot
             }
 
-            var decision = _cachedDecisions[slotIndex];
-            args.optionLeaveType = GameMenuOption.LeaveType.Continue;
+            var entry = _cachedDecisionsMenuEntries[slotIndex];
+            if (entry == null || !entry.IsVisible)
+            {
+                return false;
+            }
 
-            // Build tooltip with decision details
-            var tooltip = BuildDecisionTooltip(decision);
-            args.Tooltip = new TextObject(tooltip);
+            args.optionLeaveType = entry.LeaveType;
+            args.IsEnabled = entry.IsEnabled;
+            if (entry.Tooltip != null)
+            {
+                args.Tooltip = entry.Tooltip;
+            }
 
             return true;
         }
@@ -3775,146 +4593,23 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
-                if (slotIndex >= _cachedDecisions.Count)
+                if (slotIndex >= _cachedDecisionsMenuEntries.Count)
                 {
                     return;
                 }
 
-                var decision = _cachedDecisions[slotIndex];
-                var enlistment = EnlistmentBehavior.Instance;
-
-                if (decision == null || enlistment == null)
+                var entry = _cachedDecisionsMenuEntries[slotIndex];
+                if (entry?.OnSelected == null)
                 {
                     return;
                 }
 
-                ModLogger.Info("Interface", $"Player selected decision: {decision.Id}");
-
-                // Fire the decision through the modern event presenter
-                // This opens the LanceLifeEventScreen with full event experience
-                var decisionBehavior = DecisionEventBehavior.Instance;
-                if (decisionBehavior != null)
-                {
-                    // First, exit the decisions submenu back to enlisted_status
-                    // This ensures clean menu state before opening the event screen
-                    GameMenu.SwitchToMenu("enlisted_status");
-
-                    // Fire the decision (opens event screen as overlay on top of enlisted_status)
-                    // When the event closes, restore the enlisted_status menu to ensure it's active
-                    decisionBehavior.FirePlayerDecision(decision.Id, onEventClosed: () =>
-                    {
-                        // Restore the main Enlisted menu after the event screen closes
-                        // This handles cases where the screen close might have deactivated the menu
-                        try
-                        {
-                            if (TaleWorlds.CampaignSystem.Campaign.Current != null &&
-                                EnlistmentBehavior.Instance?.IsEnlisted == true)
-                            {
-                                GameMenu.ActivateGameMenu("enlisted_status");
-                                ModLogger.Debug("Interface", "Restored enlisted_status menu after decision event");
-                            }
-                        }
-                        catch (Exception restoreEx)
-                        {
-                            ModLogger.Warn("Interface", $"Failed to restore menu after decision: {restoreEx.Message}");
-                        }
-                    });
-                }
+                entry.OnSelected(args);
             }
             catch (Exception ex)
             {
                 ModLogger.ErrorCode("Interface", "E-UI-035", $"Failed to select decision slot {slotIndex}", ex);
             }
-        }
-
-        /// <summary>
-        /// Format the display text for a decision slot.
-        /// </summary>
-        private string GetDecisionSlotText(LanceLifeEventDefinition decision)
-        {
-            if (decision == null)
-            {
-                return string.Empty;
-            }
-
-            // Get title from event definition
-            var title = !string.IsNullOrWhiteSpace(decision.TitleFallback)
-                ? decision.TitleFallback
-                : decision.Id;
-
-            return title;
-        }
-
-        /// <summary>
-        /// Build tooltip text showing decision details.
-        /// </summary>
-        private string BuildDecisionTooltip(LanceLifeEventDefinition decision)
-        {
-            if (decision == null)
-            {
-                return string.Empty;
-            }
-
-            var lines = new List<string>();
-
-            // Setup/description text (truncated if too long)
-            var setup = !string.IsNullOrWhiteSpace(decision.SetupFallback)
-                ? decision.SetupFallback
-                : "Make a decision...";
-
-            if (setup.Length > 150)
-            {
-                setup = setup.Substring(0, 147) + "...";
-            }
-            lines.Add(setup);
-
-            // Add empty line
-            lines.Add("");
-
-            // Cooldown info
-            var state = DecisionEventBehavior.Instance?.State;
-            if (state != null && decision.Timing?.CooldownDays > 0)
-            {
-                var daysSince = state.GetDaysSinceEventFired(decision.Id);
-                if (daysSince < int.MaxValue)
-                {
-                    var daysRemaining = Math.Max(0, decision.Timing.CooldownDays - daysSince);
-                    if (daysRemaining > 0)
-                    {
-                        lines.Add($"Cooldown: {daysRemaining} days remaining");
-                    }
-                    else
-                    {
-                        lines.Add("Status: Ready");
-                    }
-                }
-                else
-                {
-                    lines.Add("Status: Ready");
-                }
-            }
-            else
-            {
-                lines.Add("Status: Ready");
-            }
-
-            // First option costs (as preview)
-            var firstOption = decision.Options?.FirstOrDefault();
-            if (firstOption?.Costs != null)
-            {
-                var costs = new List<string>();
-                if (firstOption.Costs.Gold > 0)
-                    costs.Add($"{firstOption.Costs.Gold} gold");
-                if (firstOption.Costs.Fatigue > 0)
-                    costs.Add($"{firstOption.Costs.Fatigue} fatigue");
-
-                if (costs.Count > 0)
-                {
-                    lines.Add($"Cost: {string.Join(", ", costs)}");
-                }
-            }
-
-            return string.Join("\n", lines);
         }
 
         #endregion

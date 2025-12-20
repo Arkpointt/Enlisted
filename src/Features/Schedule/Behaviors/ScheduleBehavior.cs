@@ -37,7 +37,6 @@ namespace Enlisted.Features.Schedule.Behaviors
     /// <summary>
     /// Core behavior for the AI Camp Schedule system.
     /// Manages schedule generation, execution, and state persistence.
-    /// Phase 1: Basic schedule generation with daily triggers.
     /// </summary>
     public class ScheduleBehavior : CampaignBehaviorBase
     {
@@ -88,16 +87,16 @@ namespace Enlisted.Features.Schedule.Behaviors
         /// <summary>Whether player is manually controlling schedule (T6 Lance Leader)</summary>
         public bool IsManualScheduleMode => _isManualScheduleMode;
 
-        /// <summary>Performance tracker for T5-T6 consequence system (Phase 5)</summary>
+        /// <summary>Performance tracker for T5-T6 consequence system.</summary>
         public SchedulePerformanceTracker PerformanceTracker => _performanceTracker;
 
-        /// <summary>Start time of current 12-day cycle (Phase 6)</summary>
+        /// <summary>Start time of current 12-day cycle.</summary>
         public CampaignTime CycleStartTime => _cycleStartTime;
 
-        /// <summary>Expected time of next Pay Muster (Phase 6)</summary>
+        /// <summary>Expected time of next Pay Muster.</summary>
         public CampaignTime NextMusterTime => _nextMusterTime;
 
-        /// <summary>Days remaining until next muster (Phase 6)</summary>
+        /// <summary>Days remaining until next muster.</summary>
         public int DaysUntilMuster
         {
             get
@@ -110,7 +109,7 @@ namespace Enlisted.Features.Schedule.Behaviors
             }
         }
 
-        /// <summary>Whether schedule was interrupted by combat (Phase 7)</summary>
+        /// <summary>Whether schedule was interrupted by combat.</summary>
         public bool CombatInterrupted => _combatInterrupted;
 
         public ScheduleBehavior()
@@ -127,7 +126,7 @@ namespace Enlisted.Features.Schedule.Behaviors
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, OnSessionLaunched);
             CampaignEvents.HourlyTickEvent.AddNonSerializedListener(this, OnHourlyTick);
             
-            // Phase 7: Listen for combat events to interrupt schedule
+            // Listen for combat events to interrupt schedule.
             CampaignEvents.MapEventStarted.AddNonSerializedListener(this, OnMapEventStarted);
             CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded);
         }
@@ -219,7 +218,7 @@ namespace Enlisted.Features.Schedule.Behaviors
         {
             try
             {
-                ModLogger.Info(LogCategory, "Initializing AI Camp Schedule system (Phase 0)");
+                ModLogger.Info(LogCategory, "Initializing AI Camp Schedule system");
 
                 // Load configuration from JSON
                 _config = ScheduleConfigLoader.LoadConfig();
@@ -235,7 +234,7 @@ namespace Enlisted.Features.Schedule.Behaviors
                     _lanceNeeds = new LanceNeedsState();
                 }
 
-                // Phase 5: Initialize performance tracker
+                // Initialize performance tracker.
                 if (_performanceTracker == null)
                 {
                     _performanceTracker = new SchedulePerformanceTracker();
@@ -250,10 +249,10 @@ namespace Enlisted.Features.Schedule.Behaviors
                 // Create schedule generator
                 _generator = new ScheduleGenerator(_config);
 
-                // Phase 5: Initialize player tier
+                // Initialize player tier.
                 UpdatePlayerTierAndMode();
 
-                // Phase 6: Initialize cycle tracking
+                // Initialize cycle tracking.
                 if (_cycleStartTime == CampaignTime.Zero)
                 {
                     _cycleStartTime = CampaignTime.Now;
@@ -285,11 +284,9 @@ namespace Enlisted.Features.Schedule.Behaviors
         }
 
         /// <summary>
-        /// Hourly tick - check for new day and generate schedule.
-        /// Phase 2: Also process daily degradation at midnight.
-        /// Phase 4: Auto-start schedule blocks when time arrives.
-        /// Phase 6: Sync with muster cycle and record daily performance.
-        /// Phase 7: Handle time skip recovery.
+        /// Hourly tick. Checks for a new day, generates schedules, and advances schedule state.
+        /// Also processes daily degradation at midnight, auto-starts blocks on transitions, syncs with the muster
+        /// cycle, and handles large time skips (fast-forward).
         /// </summary>
         private void OnHourlyTick()
         {
@@ -302,7 +299,7 @@ namespace Enlisted.Features.Schedule.Behaviors
             if (enlistment == null || !enlistment.IsEnlisted)
                 return;
 
-            // Phase 7: Skip schedule processing during combat
+            // Skip schedule processing during combat.
             if (_combatInterrupted)
             {
                 ModLogger.Debug(LogCategory, "Schedule processing paused - combat in progress");
@@ -311,7 +308,7 @@ namespace Enlisted.Features.Schedule.Behaviors
 
             int currentHour = (int)CampaignTime.Now.CurrentHourInDay;
 
-            // Phase 2: Process daily degradation at midnight (hour 0)
+            // Process daily degradation at midnight (hour 0).
             if (currentHour == 0 && _config.LanceNeeds.EnableDegradation)
             {
                 // Check if we already processed degradation today
@@ -355,13 +352,13 @@ namespace Enlisted.Features.Schedule.Behaviors
                 }
             }
 
-            // Phase 4: Check for time block transitions and auto-start blocks
+            // Check for time block transitions and auto-start blocks.
             TimeBlock currentTimeBlock = GetCurrentTimeBlock();
             if (currentTimeBlock != _previousTimeBlock)
             {
                 ModLogger.Debug(LogCategory, $"Time block changed: {_previousTimeBlock} -> {currentTimeBlock}");
                 
-                // Phase 7: Check if we skipped time blocks (fast forward)
+                // Check if we skipped time blocks (fast forward).
                 int skippedBlocks = (int)currentTimeBlock - (int)_previousTimeBlock;
                 if (skippedBlocks > 1)
                 {
@@ -378,7 +375,7 @@ namespace Enlisted.Features.Schedule.Behaviors
                 }
             }
 
-            // Phase 6: Check if Pay Muster is pending (sync with enlistment)
+            // Check if Pay Muster is pending (sync with enlistment).
             if (enlistment.IsPayMusterPending && _currentCycleDay >= 11)
             {
                 // Muster is imminent - the actual reset happens in OnPayMusterCompleted
@@ -419,7 +416,7 @@ namespace Enlisted.Features.Schedule.Behaviors
 
         /// <summary>
         /// Generate a new daily schedule.
-        /// Phase 5: Respects manual mode for T6 players.
+        /// Respects manual mode for T6 players.
         /// </summary>
         private void GenerateNewSchedule()
         {
@@ -432,10 +429,10 @@ namespace Enlisted.Features.Schedule.Behaviors
                     return;
                 }
 
-                // Phase 5: Update tier status
+                // Update tier status.
                 UpdatePlayerTierAndMode();
 
-                // Phase 5: Skip AI generation if in manual mode (T6 player controls schedule)
+                // Skip AI generation if in manual mode (T6 player controls schedule).
                 if (_isManualScheduleMode)
                 {
                     ModLogger.Info(LogCategory, $"Day {_currentCycleDay}/12 - Manual mode active, waiting for player to set schedule");
@@ -517,8 +514,6 @@ namespace Enlisted.Features.Schedule.Behaviors
 
         /// <summary>
         /// Mark a schedule block as completed and process need recovery.
-        /// Phase 2: Adds need recovery when blocks complete.
-        /// Phase 4: Will add event triggering and XP rewards.
         /// </summary>
         public void CompleteScheduleBlock(ScheduledBlock block)
         {
@@ -543,7 +538,7 @@ namespace Enlisted.Features.Schedule.Behaviors
             // Process need recovery
             LanceNeedsManager.ProcessActivityRecovery(_lanceNeeds, block);
 
-            // Phase 7: Track completion in performance tracker
+            // Track completion in performance tracker.
             if (_performanceTracker != null)
             {
                 _performanceTracker.SuccessfulDutiesCount++;
@@ -591,11 +586,11 @@ namespace Enlisted.Features.Schedule.Behaviors
             return TimeBlock.Night; // 22-6
         }
 
-        // ===== Phase 5: T5-T6 Leadership System =====
+        // ===== T5-T6 Leadership System =====
 
         /// <summary>
         /// Update cached player tier and adjust schedule mode accordingly.
-        /// Phase 5: T5 = tutorial mode, T6 = full management mode.
+        /// T5 uses guided mode, and T6 can use full management mode.
         /// </summary>
         private void UpdatePlayerTierAndMode()
         {
@@ -615,7 +610,7 @@ namespace Enlisted.Features.Schedule.Behaviors
 
                 ModLogger.Info(LogCategory, $"Player tier changed: {oldTier} -> {newTier}");
 
-                // Phase 5: Tier-specific mode changes
+                // Tier-specific mode changes.
                 if (newTier == 5)
                 {
                     // T5 "Lance Second" - tutorial mode
@@ -954,7 +949,7 @@ namespace Enlisted.Features.Schedule.Behaviors
             return approved;
         }
 
-        // ===== Phase 6: Pay Muster Integration =====
+        // ===== Pay Muster Integration =====
 
         /// <summary>
         /// Called when Pay Muster is completed to reset the 12-day schedule cycle.
@@ -964,7 +959,7 @@ namespace Enlisted.Features.Schedule.Behaviors
         {
             ModLogger.Info(LogCategory, "Pay Muster completed - resetting schedule cycle");
 
-            // Phase 5: Generate and log performance feedback for T5-T6 players
+            // Generate and log performance feedback for T5-T6 players.
             if (_cachedPlayerTier >= 5 && _performanceTracker != null)
             {
                 int score = _performanceTracker.CalculatePerformanceScore();
@@ -1047,7 +1042,7 @@ namespace Enlisted.Features.Schedule.Behaviors
 
         /// <summary>
         /// Apply consequences for exceptional or poor performance.
-        /// Phase 5: Basic consequence system for T5-T6 leaders.
+        /// Basic consequence system for T5-T6 leaders.
         /// </summary>
         private void ApplyPerformanceConsequences(int score, string rating)
         {
@@ -1091,7 +1086,7 @@ namespace Enlisted.Features.Schedule.Behaviors
             }
         }
 
-        // ===== Phase 7: Combat Interrupt Handling =====
+        // ===== Combat Interrupt Handling =====
 
         /// <summary>
         /// Handle map event start (combat, siege, etc.) - interrupts current schedule block.

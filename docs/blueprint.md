@@ -22,7 +22,7 @@ architecture and standards for the enlisted mod.
 - WorkshopUpdate.xml (for updating existing Workshop item) lives at `tools/workshop/`; uses Bannerlord's official format:
   - Root: `<Tasks>` with `<GetItem>` (contains Workshop ID) and `<UpdateItem>` sections
   - Uses `<ModuleFolder>`, `<ChangeNotes>`, `<Tags>` (not ModulePath/PreviewPath)
-  - Official tags: Type (`Partial Conversion`), Setting (`Medieval`), Game Mode (`Singleplayer`), Compatible Version (`1.3.10`)
+  - Official tags: Type (`Partial Conversion`), Setting (`Medieval`), Game Mode (`Singleplayer`), Compatible Version (`1.3.11`)
   - Image path points to `Modules\Enlisted\preview.png` (copied on build)
   - Escaped path: `Mount &amp; Blade II Bannerlord`
 - Upload via SteamCMD:
@@ -45,9 +45,9 @@ architecture and standards for the enlisted mod.
 
 ## Native Reference (Decompile)
 
-Decompiled Bannerlord 1.3.4 source for API reference:
+Decompiled Bannerlord source for API reference (keep it aligned with the target version in `SubModule.xml`):
 ```
-C:\Dev\Enlisted\Decompile 1.3.4\
+C:\Dev\Enlisted\Decompile\
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md#native-decompile-location) for detailed assembly locations and common API patterns.

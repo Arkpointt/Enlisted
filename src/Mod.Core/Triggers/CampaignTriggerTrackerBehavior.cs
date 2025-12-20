@@ -12,10 +12,10 @@ namespace Enlisted.Mod.Core.Triggers
     /// <summary>
     /// Shared, lightweight campaign signal tracker.
     ///
-    /// Phase 1 goal: provide a consistent trigger vocabulary across systems without heavy scanning loops.
-    /// We only record a small amount of "recent history" as timestamps/IDs so features can ask questions like:
-    /// - "Did we just enter a town?"
-    /// - "Did we just leave a battle?"
+    /// This tracker provides a consistent vocabulary across systems without heavy 
+    /// scanning loops. It records a small amount of recent history as timestamps 
+    /// and IDs, allowing features to check for events such as entering a town or 
+    /// leaving a battle.
     ///
     /// This data is intentionally minimal to avoid save bloat.
     /// </summary>
@@ -121,11 +121,9 @@ namespace Enlisted.Mod.Core.Triggers
                 hourOfDay = 0;
             }
 
-            // 4-block schedule:
-            // - Morning:   6–12  (training, patrols, primary duties)
-            // - Afternoon: 12–18 (work details, secondary duties)
-            // - Dusk:      18–22 (free time, social activities)
-            // - Night:     22–6  (rest, watch rotation)
+            // 4-block schedule by hour: Morning is 6–12 (training, patrols, primary duties). Afternoon is 12–18
+            // (work details, secondary duties). Dusk is 18–22 (free time, social activities). Night is 22–6 (rest,
+            // watch rotation).
             if (hourOfDay >= 6 && hourOfDay < 12)
             {
                 return TimeBlock.Morning;
@@ -142,8 +140,8 @@ namespace Enlisted.Mod.Core.Triggers
         }
 
         /// <summary>
-        /// Legacy method for backward compatibility. Use GetTimeBlock() instead.
-        /// Maps the 4-block TimeBlock system to the old 6-block DayPart enum.
+        /// Compatibility method for older callers. Use GetTimeBlock() instead.
+        /// Maps the 4-block TimeBlock system to the 6-block DayPart enum.
         /// </summary>
         [Obsolete("Use GetTimeBlock() instead. DayPart enum is deprecated.")]
         public DayPart GetDayPart()
@@ -154,13 +152,9 @@ namespace Enlisted.Mod.Core.Triggers
                 hourOfDay = 0;
             }
 
-            // Enhanced 6-period camp schedule (legacy):
-            // - Dawn:      5–7   (morning muster, wake-up)
-            // - Morning:   7–12  (active duty, training)
-            // - Afternoon: 12–17 (continued duty, maintenance)
-            // - Evening:   17–20 (wind-down, meals)
-            // - Dusk:      20–22 (campfire, prep for night)
-            // - Night:     22–5  (watch duty, sleep)
+            // 6-period schedule by hour: Dawn is 5–7 (muster, wake-up). Morning is 7–12 (active duty, training).
+            // Afternoon is 12–17 (continued duty, maintenance). Evening is 17–20 (wind-down, meals). Dusk is 20–22
+            // (campfire, prep for night). Night is 22–5 (watch duty, sleep).
             if (hourOfDay >= 5 && hourOfDay < 7)
             {
                 return DayPart.Dawn;

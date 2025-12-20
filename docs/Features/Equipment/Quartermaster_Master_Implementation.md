@@ -11,6 +11,15 @@
 **Last Updated**: 2025-12-18  
 **Status**: Master Implementation Plan (ready to execute in phases)
 
+## Engineering Standards (apply while implementing this plan)
+
+- Follow **ReSharper** linter/recommendations (see `docs/CONTRIBUTING.md`). Fix warnings; don’t blanket-suppress them.
+- Use **XML** for player-facing UI and text:
+  - Gauntlet UI prefabs: `GUI/Prefabs/**.xml`
+  - Localization keys: `ModuleData/Languages/enlisted_strings.xml`
+  - In code, prefer `TextObject("{=key}Fallback")` and add the key to `enlisted_strings.xml`.
+- Keep simulation/config data in **JSON** (`ModuleData/Enlisted/*.json`) unless a specific system requires XML.
+
 ---
 
 ## Read This First (Authority + Thresholds)

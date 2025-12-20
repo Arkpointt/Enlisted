@@ -18,8 +18,8 @@ namespace Enlisted.Features.Combat.Behaviors
     ///     Mission behavior that automatically assigns enlisted players to their designated formation
     ///     (Infantry, Ranged, Cavalry, Horse Archer) based on their duty when a battle starts.
     ///     
-    ///     At Commander tier (T7+), players can command their own formation (sergeant mode) - their retinue and
-    ///     companions are assigned to the same formation and the formation is made player-controllable.
+    ///     At Commander tier (T7+), players can command their own formation (sergeant mode). Their retinue and
+    ///     companions are assigned to the same formation, and the formation is made player-controllable.
     ///     Below T7, players join the formation but cannot issue commands.
     ///     
     ///     FIX: Also teleports the player to the correct position within their formation to handle
@@ -154,7 +154,7 @@ namespace Enlisted.Features.Combat.Behaviors
         /// <summary>
         ///     Called when an agent is built.
         ///     This catches late joins, respawns, and reinforcements immediately.
-        ///     Also handles Phase 8: "Stay Back" companions are immediately retreated from battle.
+        ///     Also handles "Stay Back" companions, ensuring they are immediately retreated from battle.
         /// </summary>
         public override void OnAgentBuild(Agent agent, Banner banner)
         {
@@ -167,7 +167,7 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
                 else
                 {
-                    // Phase 8: Check if this is a "stay back" companion and remove them from battle
+                    // Check if this is a "stay back" companion and remove them from battle.
                     TryRemoveStayBackCompanion(agent);
                 }
             }
@@ -178,7 +178,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Phase 8: Queues "stay back" companions for deferred removal from battle.
+        /// Queues "stay back" companions for deferred removal from battle.
         /// We can't remove them during OnAgentBuild because that corrupts the native spawn loop
         /// and causes crashes in Mission.SpawnAgent. Instead, we queue them for removal
         /// after the spawn phase completes.
@@ -349,8 +349,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     _needsLordAttachRetry = false;
                 }
                 
-                // Phase 7: Handle player party (companions + retinue) formation assignment
-                // Agents may not all be spawned in the first few ticks, so we keep trying
+                // Handle player party (companions and retinue) formation assignment.
+                // Agents may not all be spawned in the first few ticks, so we keep trying.
                 if (_needsPartyAssignment && !_partyAssignmentComplete && 
                     _partyAssignmentAttempts < MaxPartyAssignmentAttempts)
                 {
@@ -358,8 +358,8 @@ namespace Enlisted.Features.Combat.Behaviors
                     TryAssignPlayerPartyToFormation();
                 }
                 
-                // Phase 8: Process deferred companion removals after spawn phase completes
-                // This prevents crashes from FadeOut during OnAgentBuild corrupting the spawn loop
+                // Process deferred companion removals after the spawn phase completes.
+                // This prevents crashes from FadeOut during OnAgentBuild corrupting the spawn loop.
                 ProcessDeferredCompanionRemovals();
             }
             catch (Exception ex)
@@ -975,7 +975,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Assigns all agents from the player's party (companions + retinue) to the same formation.
+        ///     Assigns all agents from the player's party (companions and retinue) to the same formation.
         ///     At Commander tier (T7+), the player commands a unified squad of their personal troops.
         ///     This ensures companions and retinue soldiers fight together with the player.
         ///     FIX: Now also teleports reassigned soldiers to the player's position, since they may have
@@ -1382,7 +1382,7 @@ namespace Enlisted.Features.Combat.Behaviors
         }
 
         /// <summary>
-        /// Phase 8: Checks if a companion should spawn and fight in battle.
+        /// Checks if a companion should spawn and fight in battle.
         /// Delegates to CompanionAssignmentManager for the actual check.
         /// </summary>
         private static bool ShouldCompanionFight(Hero companion)

@@ -35,7 +35,7 @@ Prevents the player from triggering map encounters while enlisted by using the g
 - Player party hidden from map systems (UI and logical)
 - Smooth transitions between peace and battle states
 - Reliable cleanup when returning to normal campaign play
-- Hides native “Abandon army” menu options while enlisted (join_encounter, encounter, army_wait, raiding_village)
+- Hides native "Abandon army" and "Leave..." menu options while enlisted (join_encounter, encounter, army_wait, raiding_village)
 
 **Purpose:**
 Keep enlisted players from accidentally entering encounters that would break military service or cause pathfinding crashes, while ensuring they correctly join their Lord's battles without engine conflicts.
@@ -48,6 +48,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs` - Auto-joins lord's battle
 - `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs` - Prevents menu stutter during reserve mode
 - `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs` - Removes "Abandon army" options while enlisted; applied as a deferred patch on first campaign tick to avoid EncounterGameMenuBehavior static init issues
+- `src/Mod.GameAdapters/Patches/EncounterLeaveSuppressionPatch.cs` - Hides "Leave..." option from encounter menu while enlisted; applied as a deferred patch
 - `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs` - Blocks unwanted encounters, clears stale reserve flags
 - `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs` - Blocks party activation in vulnerable states
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs` - Controls party visibility, allows captivity system control
@@ -85,7 +86,7 @@ Keep enlisted players from accidentally entering encounters that would break mil
 3. Player party kept in same army/attachment so vanilla encounter stack automatically collects it
 4. `JoinEncounterAutoSelectPatch` intercepts "join_encounter" menu and automatically joins battle on lord's side
 5. Player sees standard encounter menu (Attack/Send Troops/Wait) instead of "Help X's Party / Don't get involved"
-6. `AbandonArmyBlockPatch` hides native “Abandon army” options while enlisted (join_encounter, encounter, army_wait, raiding_village)
+6. `AbandonArmyBlockPatch` and `EncounterLeaveSuppressionPatch` hide "Abandon army" and "Leave..." options while enlisted
 7. Player participates in battle
 7. If the player is a prisoner or capture cleanup is queued, battle handling is skipped to let native captivity finish (prevents crash when captors are defeated by friendlies).
 
@@ -202,9 +203,16 @@ public static void EnableEncounters()
 - Standard battle interface for player
 - Predictable behavior across all battle types
 
-**Abandon Army Suppression:**
-- Targeted menus: `join_encounter` (join_encounter_abandon), `encounter` (abandon_army), `army_wait` (abandon_army), `raiding_village` (abandon_army)
-- Patch files: `AbandonArmyBlockPatch` (army_wait, raiding_village) and `EncounterAbandonArmyBlockPatch/EncounterAbandonArmyBlockPatch2` (join_encounter, encounter)
+**Abandon Army & Leave Suppression:**
+- Targeted menus: 
+  - `join_encounter` (join_encounter_abandon)
+  - `encounter` (abandon_army, leave)
+  - `army_wait` (abandon_army)
+  - `raiding_village` (abandon_army)
+- Patch files: 
+  - `AbandonArmyBlockPatch` (army_wait, raiding_village)
+  - `EncounterAbandonArmyBlockPatch/EncounterAbandonArmyBlockPatch2` (join_encounter, encounter abandon)
+  - `EncounterLeaveSuppressionPatch` (encounter leave)
 - Application timing: encounter-menu patches are deferred to first campaign tick (after localization init) to avoid EncounterGameMenuBehavior static-init issues
 
 **Siege Auto-Resolve Crash Guard:**
@@ -651,6 +659,8 @@ If mission cleanup crash persists (crash after battle ends):
 - `src/Mod.GameAdapters/Patches/HidePartyNamePlatePatch.cs`
 - `src/Mod.GameAdapters/Patches/JoinEncounterAutoSelectPatch.cs`
 - `src/Mod.GameAdapters/Patches/GenericStateMenuPatch.cs`
+- `src/Mod.GameAdapters/Patches/AbandonArmyBlockPatch.cs`
+- `src/Mod.GameAdapters/Patches/EncounterLeaveSuppressionPatch.cs`
 - `src/Mod.GameAdapters/Patches/EncounterSuppressionPatch.cs`
 - `src/Mod.GameAdapters/Patches/PostDischargeProtectionPatch.cs`
 - `src/Mod.GameAdapters/Patches/VisibilityEnforcementPatch.cs`

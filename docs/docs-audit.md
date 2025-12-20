@@ -10,10 +10,9 @@ This file exists to answer: **“What’s behind, what’s missing, and what is 
 
 - **Start here (core loop overview):** `docs/Features/core-gameplay.md`
 - **Feature index (deep links):** `docs/Features/index.md`
-- **status (what’s done / next):** `docs/ImplementationPlans/implementation-status.md`
-- **roadmap (dependency / ordering):** `docs/ImplementationPlans/master-implementation-roadmap.md`
-- **story systems:** `docs/StoryBlocks/story-systems-master.md`
-- **decision events:** `docs/StoryBlocks/decision-events-spec.md`
+- **Status (what's done / next):** `docs/ImplementationPlans/implementation-status.md`
+- **Roadmap (dependency / ordering):** `docs/ImplementationPlans/master-implementation-roadmap.md`
+- **Story Blocks (single source of truth):** `docs/StoryBlocks/story-blocks-master-reference.md`
 
 ## index
 

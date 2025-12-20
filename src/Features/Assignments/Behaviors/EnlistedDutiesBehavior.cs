@@ -15,7 +15,7 @@ using TaleWorlds.ObjectSystem;
 namespace Enlisted.Features.Assignments.Behaviors
 {
     /// <summary>
-    ///     Phase 7: Result of a duty change request.
+    /// Result of a duty change request.
     /// </summary>
     public sealed class DutyRequestResult
     {
@@ -43,17 +43,17 @@ namespace Enlisted.Features.Assignments.Behaviors
         private int _saveVersion = 1;
 
         /// <summary>
-        ///     Phase 7: Last time the player requested a duty change. Used for cooldown.
+        /// Last time the player requested a duty change. Used for cooldown calculations.
         /// </summary>
         private CampaignTime _lastDutyChangeRequest = CampaignTime.Zero;
 
         /// <summary>
-        ///     Phase 7: Cooldown period between duty change requests (in days).
+        /// Cooldown period between duty change requests (in days).
         /// </summary>
         private const int DutyChangeCooldownDays = 14;
 
         /// <summary>
-        ///     Phase 7: Minimum lance reputation required to request duty change.
+        /// Minimum lance reputation required to request a duty change.
         /// </summary>
         private const int MinLanceReputationForDutyChange = 10;
 
@@ -84,7 +84,7 @@ namespace Enlisted.Features.Assignments.Behaviors
                 dataStore.SyncData("_dutyStartTimes", ref _dutyStartTimes);
                 dataStore.SyncData("_officerRolesEnabled", ref _officerRolesEnabled);
 
-                // Phase 7: Duty request cooldown tracking
+                // Duty request cooldown tracking
                 dataStore.SyncData("_lastDutyChangeRequest", ref _lastDutyChangeRequest);
 
                 // Initialize config after loading if not already done
@@ -93,20 +93,20 @@ namespace Enlisted.Features.Assignments.Behaviors
                     InitializeConfig();
                 }
 
-                // Phase 7: Migration for existing saves - assign starter duty if none exists
+                // Migration - assign starter duty if none exists
                 if (dataStore.IsLoading)
                 {
-                    MigratePhase7Data();
+                    MigrateLegacyData();
                 }
             });
         }
         
         /// <summary>
-        ///     Phase 7: Migrate existing save data to new Phase 7 structures.
-        ///     - Assigns starter duty if player is T2+ with no duties
-        ///     - Detects formation from equipment if not set
+        /// Migrate existing save data to new structures.
+        /// Assigns starter duty if player is T2+ with no duties.
+        /// Detects formation from equipment if not set.
         /// </summary>
-        private void MigratePhase7Data()
+        private void MigrateLegacyData()
         {
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
@@ -153,12 +153,12 @@ namespace Enlisted.Features.Assignments.Behaviors
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode("Duties", "E-DUTIES-001", "Phase 7 migration failed", ex);
+                ModLogger.ErrorCode("Duties", "E-DUTIES-001", "Data migration failed", ex);
             }
         }
         
         /// <summary>
-        ///     Phase 7: Derive formation from a troop's properties.
+        /// Derive formation from a troop's properties.
         /// </summary>
         private static string DeriveFormationFromTroop(TaleWorlds.CampaignSystem.CharacterObject troop)
         {
@@ -174,7 +174,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
         
         /// <summary>
-        ///     Phase 7: Get the default starter duty for a formation.
+        /// Get the default starter duty for a formation.
         /// </summary>
         public static string GetStarterDutyForFormation(string formation)
         {
@@ -297,12 +297,9 @@ namespace Enlisted.Features.Assignments.Behaviors
                     UpdateOfficerRoles();
                 }
 
-                // Process formation training only while actively enlisted.
-                //
-                // Rationale:
-                // - We want "time in the army" to feel productive, but we also want battles and player-initiated training
-                //   (Camp Activities, training events, etc.) to matter over a long career.
-                // - Continuing automatic daily training while on leave made skill growth feel overly passive.
+                // Process formation training only while actively enlisted. This keeps "time in the army" productive
+                // without turning training into passive growth while the player is on leave. It also helps battles
+                // and player-initiated training (camp activities, training events, etc.) stay meaningful.
                 if (enlistment.IsEnlisted)
                 {
                     ProcessFormationTraining();
@@ -514,7 +511,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        /// Phase 4.5: Public API for event systems to check whether a specific duty ID is active.
+        /// Public API for event systems to check whether a specific duty ID is active.
         /// Uses the persisted ID list (strings) for save compatibility.
         /// </summary>
         public bool HasActiveDuty(string dutyId)
@@ -573,8 +570,8 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Request a duty change, subject to approval.
-        ///     This replaces direct duty selection for T2+ players.
+        /// Request a duty change, subject to approval.
+        /// This replaces direct duty selection for T2+ players.
         /// </summary>
         /// <param name="newDutyId">The duty to request transfer to.</param>
         /// <returns>Result containing approval status and reason.</returns>
@@ -703,7 +700,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Check if duty request is on cooldown.
+        /// Check if duty request is on cooldown.
         /// </summary>
         public bool IsDutyRequestOnCooldown()
         {
@@ -716,7 +713,7 @@ namespace Enlisted.Features.Assignments.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Get days remaining on duty request cooldown.
+        /// Get days remaining on duty request cooldown.
         /// </summary>
         public int GetDutyRequestCooldownRemaining()
         {

@@ -83,8 +83,8 @@ namespace Enlisted.Features.Lances.Events
                     return false;
                 }
 
-                // Phase 1 is only a presentation + effects layer. Scheduling/ai_safe checks occur in Phase 2+.
-                // Still, we avoid showing anything if the player isn't in a campaign.
+                // This presenter is only responsible for UI + applying effects. Scheduling and ai_safe checks happen
+                // in the callers. Still, we avoid showing anything if the player isn't in a campaign.
                 if (Campaign.Current == null)
                 {
                     return false;
@@ -226,7 +226,7 @@ namespace Enlisted.Features.Lances.Events
             {
                 // If fatigue is already 0, consume would no-op and return false.
                 // We mimic that cheaply by attempting a 0-cost check: avoid calling TryConsumeFatigue here.
-                // Phase 2+ will provide better menu gating. For Phase 1, keep minimal.
+                // Keep gating minimal here. Higher-level systems can provide stricter menu gating.
             }
 
             return true;
@@ -239,7 +239,7 @@ namespace Enlisted.Features.Lances.Events
                 return string.Empty;
             }
 
-            // Phase 5a: onboarding variant overrides setup/options.
+            // Onboarding variant overrides setup/options.
             var onboarding = LanceLifeOnboardingBehavior.Instance;
             if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase) &&
                 onboarding != null &&
@@ -268,7 +268,7 @@ namespace Enlisted.Features.Lances.Events
             var enlistment = EnlistmentBehavior.Instance;
             var baseOptions = evt.Options ?? new List<LanceLifeEventOptionDefinition>();
 
-            // Phase 5a: onboarding variant override
+            // Onboarding variant override.
             var onboarding = LanceLifeOnboardingBehavior.Instance;
             if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase) &&
                 onboarding != null &&
@@ -281,7 +281,7 @@ namespace Enlisted.Features.Lances.Events
                 baseOptions = variant.Options;
             }
 
-            // Phase 5a: option.condition filtering
+            // option.condition filtering.
             var eval = new LanceLifeEventTriggerEvaluator();
             var result = new List<LanceLifeEventOptionDefinition>();
             foreach (var opt in baseOptions)

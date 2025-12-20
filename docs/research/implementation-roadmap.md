@@ -4,6 +4,14 @@
 **Purpose:** Planning document for features NOT yet implemented  
 **For Current Status:** See `implementation-status.md`
 
+## Engineering Standards (applies to everything in this folder)
+
+- Follow **ReSharper** linter/recommendations (see `docs/CONTRIBUTING.md`).
+- Use **XML** for:
+  - Gauntlet UI prefabs (`GUI/Prefabs/**.xml`)
+  - Localization strings (`ModuleData/Languages/enlisted_strings.xml`)
+- Keep gameplay/config data in **JSON** (`ModuleData/Enlisted/*.json`) unless there is a specific reason to use XML.
+
 ---
 
 ## Index
@@ -622,7 +630,7 @@ Week 19-28: AI Lord Lance Simulation (optional)
 - **[Duty Events Creation Guide](../research/duty-events-creation-guide.md)** - How to create duty events
 - **[Gauntlet UI Playbook](../research/gauntlet-ui-screens-playbook.md)** - How to build UI safely
 - **[Features Index](../Features/index.md)** - Implemented feature specs
-- **[Story Systems Master](../StoryBlocks/story-systems-master.md)** - Story content authoring
+- **[Story Blocks Master Reference](../StoryBlocks/story-blocks-master-reference.md)** - Story content authoring (single source of truth)
 
 ---
 

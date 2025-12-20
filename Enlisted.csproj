@@ -196,6 +196,7 @@
     <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventEvaluator.cs"/>
     <Compile Include="src\Features\Lances\Events\Decisions\DecisionEventBehavior.cs"/>
     <Compile Include="src\Features\Lances\Events\Decisions\DecisionOutcomeLog.cs"/>
+    <Compile Include="src\Features\Lances\Events\Decisions\QueuedFreeTimeDecision.cs"/>
     <Compile Include="src\Features\Lances\Events\Decisions\SituationFlags.cs"/>
     <Compile Include="src\Features\Lances\Events\Decisions\SituationFlagsProvider.cs"/>
     <Compile Include="src\Features\Lances\Text\LanceLifeTextVariables.cs"/>
@@ -294,6 +295,7 @@
     <Compile Include="src\Mod.GameAdapters\Patches\ArmyDispersedMenuPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\DutiesOfficerRolePatches.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\EncounterSuppressionPatch.cs"/>
+    <Compile Include="src\Mod.GameAdapters\Patches\EncounterLeaveSuppressionPatch.cs"/>
     <!-- Disabled: Native game handles siege dismounting -->
     <Compile Include="src\Mod.GameAdapters\Patches\DischargePenaltySuppressionPatch.cs"/>
     <Compile Include="src\Mod.GameAdapters\Patches\FoodSystemPatches.cs"/>

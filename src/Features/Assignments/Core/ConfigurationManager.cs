@@ -72,7 +72,7 @@ namespace Enlisted.Features.Assignments.Core
                     return CreateDefaultDutiesConfig();
                 }
 
-                // Phase 4.5: Expansion gating (War Sails / NavalDLC).
+                // Expansion gating for naval content (e.g., War Sails).
                 ApplyExpansionGates(config);
 
                 _cachedDutiesConfig = config;
@@ -183,7 +183,7 @@ namespace Enlisted.Features.Assignments.Core
                 return false;
             }
 
-            // Phase 4.5: Gate Naval duties on War Sails (NavalDLC).
+            // Gate naval duties on the presence of the War Sails DLC.
             // This is intentionally tolerant: duties declare "naval" formation, and we drop them if the DLC isn't present.
             if (def.RequiredFormations != null &&
                 def.RequiredFormations.Any(f => string.Equals(f, "naval", StringComparison.OrdinalIgnoreCase)))
@@ -1055,7 +1055,7 @@ namespace Enlisted.Features.Assignments.Core
         }
 
         /// <summary>
-        /// Phase 0 (Lance Life Events): feature gate and data folder selection.
+        /// Feature gate and data folder selection for the Lance Life Events system.
         /// Loaded from the lance_life_events section of enlisted_config.json.
         /// </summary>
         public static LanceLifeEventsConfig LoadLanceLifeEventsConfig()
@@ -1441,26 +1441,26 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    /// Phase 0: Lance Life Events (duty/training/general/onboarding/threshold) delivery pipeline.
+    /// Lance Life Events (duty, training, general, onboarding, and threshold) delivery pipeline.
     /// This config exists to provide a safe feature flag + rollback toggle before the system is wired into gameplay.
     /// </summary>
     public class LanceLifeEventsConfig
     {
         [JsonProperty("enabled")] public bool Enabled { get; set; } = true;
 
-        // Folder under ModuleData/Enlisted/ that contains event JSON files (Phase 5 content conversion).
+        // Folder under ModuleData/Enlisted/ that contains event definitions.
         [JsonProperty("events_folder")] public string EventsFolder { get; set; } = "Events";
 
-        // Phase 2: automatic scheduling (tick evaluation + queueing).
+        // Configuration for automatic scheduling, including tick evaluation and queuing.
         [JsonProperty("automatic")] public LanceLifeEventsAutomaticConfig Automatic { get; set; } = new LanceLifeEventsAutomaticConfig();
 
-        // Phase 3: player-initiated events surfaced in Camp Activities menu.
+        // Configuration for player-initiated events surfaced in the Camp Activities menu.
         [JsonProperty("player_initiated")] public LanceLifeEventsPlayerInitiatedConfig PlayerInitiated { get; set; } = new LanceLifeEventsPlayerInitiatedConfig();
 
-        // Phase 4: onboarding state machine (stage/track/variant).
+        // Configuration for the onboarding state machine.
         [JsonProperty("onboarding")] public LanceLifeEventsOnboardingConfig Onboarding { get; set; } = new LanceLifeEventsOnboardingConfig();
 
-        // Phase 5b: native incident channel delivery (MapState.NextIncident). Disabled by default for safe rollout.
+        // Native incident channel delivery. This is disabled by default.
         [JsonProperty("incident_channel")] public LanceLifeEventsIncidentChannelConfig IncidentChannel { get; set; } =
             new LanceLifeEventsIncidentChannelConfig();
     }
@@ -1515,8 +1515,8 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    ///     Phase 5: named lance role personas (text-only roster).
-    ///     Loaded from the lance_personas section of enlisted_config.json.
+    /// Named lance role personas, providing a text-only roster.
+    /// Loaded from the lance_personas section of enlisted_config.json.
     /// </summary>
     public class LancePersonasConfig
     {
@@ -1532,8 +1532,8 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    ///     Phase 5: player condition system (injury/illness/exhaustion).
-    ///     Loaded from the player_conditions section of enlisted_config.json.
+    /// Player condition system, managing injuries, illnesses, and exhaustion.
+    /// Loaded from the player_conditions section of enlisted_config.json.
     /// </summary>
     public class PlayerConditionsConfig
     {
@@ -1552,7 +1552,7 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    /// Phase 2 (menu_system_update): Camp Activities menu (data-driven actions).
+    /// Camp Activities menu configuration for data-driven actions.
     /// Loaded from the camp_activities section of enlisted_config.json.
     /// </summary>
     public class CampActivitiesConfig
@@ -1564,8 +1564,8 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    ///     Feature gating and tuning for Phase 4 Escalation System.
-    ///     Loaded from the escalation section of enlisted_config.json.
+    /// Feature gating and tuning for the Escalation System.
+    /// Loaded from the escalation section of enlisted_config.json.
     /// </summary>
     public class EscalationConfig
     {
@@ -1577,7 +1577,7 @@ namespace Enlisted.Features.Assignments.Core
         [JsonProperty("lance_rep_decay_interval_days")] public int LanceReputationDecayIntervalDays { get; set; } = 14;
         [JsonProperty("medical_risk_decay_interval_days")] public int MedicalRiskDecayIntervalDays { get; set; } = 1;
 
-        // Threshold event cooldown (used in Phase 4 threshold-event manager).
+        // Cooldown for threshold events.
         [JsonProperty("threshold_event_cooldown_days")] public int ThresholdEventCooldownDays { get; set; } = 7;
     }
 
@@ -1713,8 +1713,8 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    ///     Feature gating and tuning for lance life (text-based stories and camp activities).
-    ///     Loaded from the lance_life section of enlisted_config.json.
+    /// Feature gating and tuning for the lance life system, including stories and camp activities.
+    /// Loaded from the lance_life section of enlisted_config.json.
     /// </summary>
     public class LanceLifeConfig
     {
@@ -1728,7 +1728,7 @@ namespace Enlisted.Features.Assignments.Core
 
         [JsonProperty("min_days_between_stories")] public int MinDaysBetweenStories { get; set; } = 2;
 
-        // Content enable/disable controls (Phase 1 requirement).
+        // Content enable and disable controls for story packs.
         // These allow safe rollout and troubleshooting without editing pack JSON.
         [JsonProperty("disabled_story_ids")] public List<string> DisabledStoryIds { get; set; } = new List<string>();
         [JsonProperty("disabled_categories")] public List<string> DisabledCategories { get; set; } = new List<string>();
@@ -1736,8 +1736,8 @@ namespace Enlisted.Features.Assignments.Core
     }
 
     /// <summary>
-    ///     Feature gating and tuning for Camp Life Simulation (Phase 3).
-    ///     Loaded from the camp_life section of enlisted_config.json.
+    /// Feature gating and tuning for the Camp Life Simulation.
+    /// Loaded from the camp_life section of enlisted_config.json.
     /// </summary>
     public class CampLifeConfig
     {

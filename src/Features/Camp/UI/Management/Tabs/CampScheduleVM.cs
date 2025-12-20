@@ -59,7 +59,7 @@ namespace Enlisted.Features.Camp.UI.Management
         private string _revertToAutoText;
         private string _authorityLevelText;
         
-        // Phase 6: Cycle tracking display
+        // Cycle tracking display
         private string _cycleDayText;
         private string _daysUntilMusterText;
         private int _currentCycleDay;
@@ -557,7 +557,7 @@ namespace Enlisted.Features.Camp.UI.Management
         }
         
         /// <summary>
-        /// Phase 6: Refresh cycle information from ScheduleBehavior.
+        /// Refresh cycle information from ScheduleBehavior.
         /// </summary>
         private void RefreshCycleInfo()
         {
@@ -1081,10 +1081,8 @@ namespace Enlisted.Features.Camp.UI.Management
             }
         }
 
-        // ===== Action gating for Orders menu buttons =====
-        // These are intentionally separate from authority flags:
-        // - Authority says what you're allowed to do in general.
-        // - Action gating says whether the button should be clickable right now.
+        // Action gating for Orders menu buttons. Authority says what you're allowed to do in general. Action gating
+        // says whether the button should be clickable right now.
 
         private bool _canSetScheduleAction;
         private bool _canRequestChangeAction;
@@ -1143,7 +1141,7 @@ namespace Enlisted.Features.Camp.UI.Management
             }
         }
 
-        // ===== Phase 6: Cycle Info Properties =====
+        // ===== Cycle Info Properties =====
 
         [DataSourceProperty]
         public string CycleDayText

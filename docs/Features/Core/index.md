@@ -26,8 +26,7 @@ This is the **single entry point** for all Enlisted mod documentation.
 |---------------|-------------|
 | **Understand the core gameplay (recommended)** | [Core Gameplay (Consolidated)](core-gameplay.md) |
 | **Understand the mod (legacy index page)** | [How It All Works](#how-it-all-works-end-to-end) (below) |
-| **Add story content** | [story systems master](../StoryBlocks/story-systems-master.md) |
-| **Add decision events** | [decision events spec](../StoryBlocks/decision-events-spec.md) |
+| **Add story content** | [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md) (single source of truth) |
 | **Check implementation status** | [implementation status](../ImplementationPlans/implementation-status.md) |
 | **See full roadmap** | [master roadmap](../ImplementationPlans/master-implementation-roadmap.md) |
 
@@ -164,8 +163,7 @@ Low-level systems that ensure stability and prevent issues.
 
 For adding or modifying story content:
 
-- **[story systems master](../StoryBlocks/story-systems-master.md)** - consolidated reference for all story systems, escalation mechanics, and content indexes
-- **[decision events spec](../StoryBlocks/decision-events-spec.md)** - ck3-style decision events (active development)
+- **[Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md)** - Single source of truth for all story systems, events, escalation mechanics, schema, and writing guidelines
 
 ## Implementation Status
 

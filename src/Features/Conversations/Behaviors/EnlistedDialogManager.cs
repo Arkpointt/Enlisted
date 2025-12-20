@@ -1058,7 +1058,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         // ========================================================================
-        // QUARTERMASTER HERO DIALOG SYSTEM (Phase 3)
+        // QUARTERMASTER HERO DIALOG SYSTEM
         // Dialog tree for interaction with persistent quartermaster NPC
         // ========================================================================
 
@@ -1136,7 +1136,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     OnQuartermasterSellRequest,
                     100);
 
-                // Option 3: Provisions → Opens rations menu (Phase 5)
+                // Option 3: Provisions → Opens rations menu
                 starter.AddPlayerLine(
                     "qm_request_provisions",
                     "qm_hub",
@@ -1156,7 +1156,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     100);
 
                 // ========================================
-                // PAYTENSION DIALOG OPTIONS (Phase 7)
+                // PAYTENSION DIALOG OPTIONS
                 // ========================================
 
                 // Scoundrel Black Market (tension 40+)
@@ -1333,7 +1333,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         // ========================================
-        // PAYTENSION DIALOG CONDITIONS (Phase 7)
+        // PAYTENSION DIALOG CONDITIONS
         // ========================================
 
         /// <summary>
@@ -1458,11 +1458,11 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Gets the returning visit greeting based on archetype, mood, and PayTension level.
-        ///     Phase 7: Now includes tension-aware greetings at 40+, 60+, and 80+ thresholds.
+        ///     Now includes tension-aware greetings at 40+, 60+, and 80+ thresholds.
         /// </summary>
         private string GetReturningGreeting(string archetype, string mood)
         {
-            // Phase 7: Check PayTension for tension-aware greetings
+            // Check PayTension for tension-aware greetings
             var tension = EnlistmentBehavior.Instance?.PayTension ?? 0;
 
             // Critical tension (80+) - all archetypes show concern
@@ -1651,7 +1651,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         // ========================================
-        // PAYTENSION DIALOG TEXT GENERATION (Phase 7)
+        // PAYTENSION DIALOG TEXT GENERATION
         // Reserved for future dynamic dialog enhancement.
         // Currently using static localized strings in dialog registration.
         // ========================================
@@ -1884,7 +1884,7 @@ namespace Enlisted.Features.Conversations.Behaviors
 
         /// <summary>
         ///     Called when player requests provisions.
-        ///     Opens the rations purchase menu (Phase 5).
+        ///     Opens the rations purchase menu.
         /// </summary>
         private void OnQuartermasterProvisionsRequest()
         {
@@ -1903,7 +1903,7 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         // ========================================
-        // PAYTENSION DIALOG CONSEQUENCES (Phase 7)
+        // PAYTENSION DIALOG CONSEQUENCES
         // ========================================
 
         /// <summary>

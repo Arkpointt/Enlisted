@@ -8,9 +8,9 @@ using TaleWorlds.CampaignSystem;
 namespace Enlisted.Features.Lances.Events
 {
     /// <summary>
-    /// Phase 4: onboarding state machine (stage/track/variant).
+    /// Onboarding state machine (stage/track/variant).
     ///
-    /// This behavior does not deliver content itself; it provides:
+    /// This behavior does not deliver content itself. It provides:
     /// - Stage flags (onboarding_stage_1/2/3/complete)
     /// - Track selection (enlisted/officer/commander)
     /// - Variant selection (first_time/transfer/return)

@@ -7,7 +7,6 @@ namespace Enlisted.Features.Lances.Events
 {
     /// <summary>
     /// In-memory catalog of Lance Life Events loaded from ModuleData/Enlisted/Events/*.json.
-    /// Phase 0 delivers the loader + validation only; firing/scheduling is implemented in later phases.
     /// </summary>
     public sealed class LanceLifeEventCatalog
     {
@@ -29,15 +28,15 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("id")] public string Id { get; set; } = string.Empty;
         [JsonProperty("category")] public string Category { get; set; } = string.Empty;
 
-        // Phase 4/5: onboarding track filter ("enlisted" | "officer" | "commander"). Optional for non-onboarding events.
+        // Onboarding track filter ("enlisted" | "officer" | "commander"). Optional for non-onboarding events.
         [JsonProperty("track")] public string Track { get; set; } = string.Empty;
 
-        // Phase 6: Tier-Based Narrative Access - who initiates this event
+        // Tier-based narrative access. This field describes who initiates the event.
         // Values: "lord", "lance_leader", "lance_mate", "situation"
         // Used to filter events based on player tier (e.g., T1-2 can't get lord invitations)
         [JsonProperty("narrative_source")] public string NarrativeSource { get; set; } = string.Empty;
 
-        // Schema (Phase 5a): optional metadata block (authoring aid)
+        // Schema: optional metadata block (authoring aid).
         [JsonProperty("metadata")] public LanceLifeEventMetadata Metadata { get; set; } = new LanceLifeEventMetadata();
 
         [JsonProperty("delivery")] public LanceLifeEventDelivery Delivery { get; set; } = new LanceLifeEventDelivery();
@@ -45,19 +44,19 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("requirements")] public LanceLifeEventRequirements Requirements { get; set; } = new LanceLifeEventRequirements();
         [JsonProperty("timing")] public LanceLifeEventTiming Timing { get; set; } = new LanceLifeEventTiming();
 
-        // Legacy/engine-flat content (prefer IDs; allow fallback text for early authoring).
+        // Engine-flat content. Prefer IDs, but allow fallback text for early authoring.
         [JsonProperty("titleId")] public string TitleId { get; set; } = string.Empty;
         [JsonProperty("setupId")] public string SetupId { get; set; } = string.Empty;
         [JsonProperty("title")] public string TitleFallback { get; set; } = string.Empty;
         [JsonProperty("setup")] public string SetupFallback { get; set; } = string.Empty;
 
-        // Schema (Phase 5a): nested content block (authoring truth)
+        // Schema: nested content block (authoring truth).
         [JsonProperty("content")] public LanceLifeEventContentDefinition Content { get; set; } = new LanceLifeEventContentDefinition();
 
         // Engine uses a flat Options list; loader normalizes from Content.Options if present.
         [JsonProperty("options")] public List<LanceLifeEventOptionDefinition> Options { get; set; } = new List<LanceLifeEventOptionDefinition>();
 
-        // Phase 5: variant overrides (used primarily by onboarding: first_time/transfer/return).
+        // Variant overrides, used primarily by onboarding (first_time/transfer/return).
         [JsonProperty("variants")]
         public Dictionary<string, LanceLifeEventVariantDefinition> Variants { get; set; } =
             new Dictionary<string, LanceLifeEventVariantDefinition>(StringComparer.OrdinalIgnoreCase);
@@ -86,7 +85,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("resultSuccessTextId")] public string OutcomeSuccessTextId { get; set; } = string.Empty;
         [JsonProperty("resultFailureTextId")] public string OutcomeFailureTextId { get; set; } = string.Empty;
 
-        // Schema-style outcome fields (Phase 5a), normalized into the legacy result fields by loader.
+        // Schema-style outcome fields, normalized into the engine-flat result fields by the loader.
         [JsonProperty("outcome")] public string SchemaOutcome { get; set; } = string.Empty;
         [JsonProperty("outcome_failure")] public string SchemaOutcomeFailure { get; set; } = string.Empty;
 
@@ -98,34 +97,34 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("rewards")] public LanceLifeEventRewards Rewards { get; set; } = new LanceLifeEventRewards();
         [JsonProperty("effects")] public LanceLifeEventEscalationEffects Effects { get; set; } = new LanceLifeEventEscalationEffects();
 
-        // Phase 5: success/failure effect overrides for risky options (used by some threshold events).
+        // Success/failure effect overrides for risky options (used by some threshold events).
         [JsonProperty("effects_success")] public LanceLifeEventEscalationEffects EffectsSuccess { get; set; }
         [JsonProperty("effects_failure")] public LanceLifeEventEscalationEffects EffectsFailure { get; set; }
 
         [JsonProperty("injury")] public LanceLifeInjuryRoll Injury { get; set; }
         [JsonProperty("illness")] public LanceLifeIllnessRoll Illness { get; set; }
 
-        // Schema injury format (Phase 5a) normalized into Injury/Illness by loader.
+        // Schema injury format normalized into Injury/Illness by the loader.
         [JsonProperty("injury_risk")] public LanceLifeInjuryRiskSchema InjuryRisk { get; set; }
 
-        // Phase 3 (Decision Events): Event chains - selecting this option queues another event
+        // Event chains. Selecting this option can queue another event.
         // The chained event will fire after the specified delay (default: 12-36 hours)
         [JsonProperty("chains_to")] public string ChainsTo { get; set; } = string.Empty;
 
-        // Phase 3 (Decision Events): Delay in hours before the chained event fires (0 = use random default)
+        // Delay in hours before the chained event fires (0 = use random default).
         [JsonProperty("chain_delay_hours")] public float ChainDelayHours { get; set; }
 
-        // Phase 3 (Decision Events): Story flags to set when this option is selected
+        // Story flags to set when this option is selected.
         // These can be checked by future events using triggers.all/any/none
         [JsonProperty("set_flags")] public List<string> SetFlags { get; set; } = new List<string>();
 
-        // Phase 3 (Decision Events): Story flags to clear when this option is selected
+        // Story flags to clear when this option is selected.
         [JsonProperty("clear_flags")] public List<string> ClearFlags { get; set; } = new List<string>();
 
-        // Phase 3 (Decision Events): Duration in days for set_flags (0 = permanent until cleared)
+        // Duration in days for set_flags (0 = permanent until cleared).
         [JsonProperty("flag_duration_days")] public float FlagDurationDays { get; set; }
 
-        // Phase 4/5: onboarding stage advancement control.
+        // Onboarding stage advancement control.
         // If true and the event is an onboarding event, selecting this option advances the onboarding stage.
         [JsonProperty("advances_onboarding")] public bool AdvancesOnboarding { get; set; }
 
@@ -139,6 +138,22 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("method")] public string Method { get; set; } = "automatic"; // automatic | player_initiated
         [JsonProperty("channel")] public string Channel { get; set; } = string.Empty; // menu | inquiry | incident
         [JsonProperty("incident_trigger")] public string IncidentTrigger { get; set; } = string.Empty; // LeavingBattle | WaitingInSettlement | LeavingEncounter | ...
+        
+        /// <summary>
+        /// Schedule-based trigger for events fired during duty/activity execution.
+        /// If set to "on_activity_execution", this event can fire when its associated schedule activity executes.
+        /// The Schedule system will roll for this event based on event_pool configuration (typically 20% chance).
+        /// Requires: requirements.duty or activity_trigger to be set.
+        /// </summary>
+        [JsonProperty("schedule_trigger")] public string ScheduleTrigger { get; set; } = string.Empty; // on_activity_execution | empty
+        
+        /// <summary>
+        /// Optional: Specific activity ID that triggers this event (e.g., "work_detail", "patrol_duty").
+        /// If empty, uses requirements.duty to determine which duty holder can trigger this event.
+        /// Used with schedule_trigger = "on_activity_execution".
+        /// </summary>
+        [JsonProperty("activity_trigger")] public string ActivityTrigger { get; set; } = string.Empty;
+        
         [JsonProperty("menu")] public string Menu { get; set; } = string.Empty;
         [JsonProperty("menu_section")] public string MenuSection { get; set; } = string.Empty; // training | tasks | social
     }
@@ -149,10 +164,10 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("any")] public List<string> Any { get; set; } = new List<string>();
         [JsonProperty("time_of_day")] public List<string> TimeOfDay { get; set; } = new List<string>();
 
-        // Phase 3 (Decision Events): blocking flags - event won't fire if any of these flags are active
+        // Blocking flags. The event won't fire if any of these flags are active.
         [JsonProperty("none")] public List<string> None { get; set; } = new List<string>();
 
-        // Phase 5a: range constraints for escalation tracks
+        // Range constraints for escalation tracks.
         [JsonProperty("escalation_requirements")] public LanceLifeEventEscalationRequirements EscalationRequirements { get; set; } =
             new LanceLifeEventEscalationRequirements();
     }
@@ -170,10 +185,10 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("priority")] public string Priority { get; set; } = "normal"; // normal | high | critical
         [JsonProperty("one_time")] public bool OneTime { get; set; }
 
-        // Phase 3 (Decision Events): max times this event can fire per enlistment term
+        // Max times this event can fire per enlistment term.
         [JsonProperty("max_per_term")] public int MaxPerTerm { get; set; }
 
-        // Phase 3 (Decision Events): list of event IDs that cannot fire same day as this event
+        // List of event IDs that cannot fire on the same day as this event.
         [JsonProperty("excludes")] public List<string> Excludes { get; set; } = new List<string>();
     }
 
@@ -208,15 +223,15 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("lance_reputation")] public int LanceReputation { get; set; }
         [JsonProperty("medical_risk")] public int MedicalRisk { get; set; }
 
-        // Schema: effects.fatigue_relief (legacy mapping; engine also supports rewards.fatigueRelief).
+        // Schema: effects.fatigue_relief (compatibility mapping; engine also supports rewards.fatigueRelief).
         [JsonProperty("fatigue_relief")] public int FatigueRelief { get; set; }
 
-        // Schema: optional narrative/flag effects (Phase 5a)
+        // Optional narrative/flag effects.
         [JsonProperty("formation")] public string Formation { get; set; } = string.Empty;
         [JsonProperty("character_tag")] public string CharacterTag { get; set; } = string.Empty;
         [JsonProperty("loyalty_tag")] public string LoyaltyTag { get; set; } = string.Empty;
 
-        // Phase 7: Promotion and duty assignment effects
+        // Promotion and duty assignment effects.
         [JsonProperty("promotes")] public bool Promotes { get; set; }
         [JsonProperty("starter_duty")] public string StarterDuty { get; set; } = string.Empty;
     }
@@ -228,7 +243,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("lance_reputation")] public LanceLifeIntRange LanceReputation { get; set; } = new LanceLifeIntRange();
         [JsonProperty("medical_risk")] public LanceLifeIntRange MedicalRisk { get; set; } = new LanceLifeIntRange();
         
-        // Pay tension threshold for pay-related events (Phase 3 Pay System)
+        // Pay tension threshold for pay-related events.
         [JsonProperty("pay_tension_min")] public int? PayTensionMin { get; set; }
         [JsonProperty("pay_tension_max")] public int? PayTensionMax { get; set; }
     }
@@ -244,7 +259,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("content_doc")] public string ContentDoc { get; set; } = string.Empty;
         [JsonProperty("tier_range")] public LanceLifeTierRange TierRange { get; set; } = new LanceLifeTierRange();
 
-        // Phase 0 guardrail: keep metadata forward-compatible.
+        // Guardrail: keep metadata forward-compatible.
         // Authoring can add lightweight hints (e.g., impact tags) without requiring a code change for every new field.
         [JsonExtensionData] public IDictionary<string, JToken> ExtensionData { get; set; } = new Dictionary<string, JToken>();
     }
@@ -254,7 +269,7 @@ namespace Enlisted.Features.Lances.Events
         [JsonProperty("titleId")] public string TitleId { get; set; } = string.Empty;
         [JsonProperty("setupId")] public string SetupId { get; set; } = string.Empty;
 
-        // Schema allows raw text or localization keys; Phase 5 uses raw text initially.
+        // Schema allows raw text or localization keys.
         [JsonProperty("title")] public string Title { get; set; } = string.Empty;
         [JsonProperty("setup")] public string Setup { get; set; } = string.Empty;
 

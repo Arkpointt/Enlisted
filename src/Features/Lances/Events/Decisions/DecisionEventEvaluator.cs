@@ -234,8 +234,8 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 return false;
             }
 
-            // Protection Layer 9 (Phase 6): Tier-based narrative access
-            // A T1 peasant won't be invited hunting by the Lord
+            // Protection Layer 9: Tier-based narrative access
+            // Example: a T1 peasant won't be invited hunting by the Lord.
             if (!PassesNarrativeSourceCheck(evt, config, enlistment))
             {
                 return false;
@@ -477,7 +477,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
             return true;
         }
 
-        // Protection Layer 9 (Phase 6): Tier-based narrative access
+        // Protection Layer 9: Tier-based narrative access
         // Ensures roleplay authenticity: a T1 peasant doesn't get invited to hunt with the Lord.
         // Uses the narrative_source field on events + tier_gates config.
         private bool PassesNarrativeSourceCheck(

@@ -10,8 +10,7 @@ using TaleWorlds.CampaignSystem;
 namespace Enlisted.Features.Lances.Events
 {
     /// <summary>
-    /// Phase 2: automatic event scheduler.
-    ///
+    /// Automatic event scheduler.
     /// Evaluates eligible automatic events on a coarse cadence, queues one, and fires it at the next ai_safe moment.
     /// Persistence is safe: only primitives and strings are stored (count + keys).
     /// </summary>
@@ -316,8 +315,8 @@ namespace Enlisted.Features.Lances.Events
                 return priority == "high" || priority == "critical";
             }
 
-            // Phase 4 rule: onboarding takes priority until complete.
-            // Safety: if we don't have onboarding content yet (pre-Phase 5), do not block other categories.
+            // Onboarding takes priority until complete. If onboarding content is missing, do not block other
+            // categories just because onboarding is enabled.
             if (onboarding?.IsEnabled() == true && !onboarding.IsComplete && hasOnboardingContent)
             {
                 var onboardingCandidates = events

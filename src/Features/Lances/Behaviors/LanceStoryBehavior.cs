@@ -26,12 +26,12 @@ using TaleWorlds.ObjectSystem;
 namespace Enlisted.Features.Lances.Behaviors
 {
     /// <summary>
-    /// Text-based “Viking Conquest”-style lance activities.
+    /// Manages text-based lance activities.
     ///
-    /// - Runs only while enlisted
-    /// - Gated by config + player tier
-    /// - Presents occasional story popups with choices (skill XP, fatigue, gold)
-    /// - Designed to be easy to extend via JSON and easy to disable/remove
+    /// This system runs only while the player is enlisted and is gated by configuration 
+    /// and player tier. It presents occasional story popups with choices that can 
+    /// award skill XP, fatigue, or gold. The system is designed to be easily 
+    /// extendable via JSON and can be disabled or removed through settings.
     /// </summary>
     public sealed class LanceStoryBehavior : CampaignBehaviorBase
     {
@@ -134,9 +134,8 @@ namespace Enlisted.Features.Lances.Behaviors
 
         private static bool IsEnabled()
         {
-            // Lance Life is intentionally separated from lance assignment gating:
-            // - lances_enabled governs whether the player has a lance identity at all
-            // - lance_life.enabled governs whether stories should fire
+            // Lance Life gating is intentionally separate from lance identity gating. The player can have a lance
+            // identity without stories being enabled.
             var lancesEnabled = EnlistedConfig.LoadLancesConfig()?.LancesEnabled == true;
             var enabled = EnlistedConfig.LoadLanceLifeConfig()?.Enabled == true;
             return lancesEnabled && enabled;
@@ -205,10 +204,9 @@ namespace Enlisted.Features.Lances.Behaviors
                 var disabledCategories = new HashSet<string>(cfg.DisabledCategories ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
                 var disabledPacks = new HashSet<string>(cfg.DisabledPackIds ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
 
-                // Phase 4: threshold events are consequence popups and must not be blocked by normal Lance Life frequency caps.
-                // Rate limiting is enforced by:
-                // - this method firing at most one story per day
-                // - EscalationManager per-threshold cooldown + one threshold per day
+                // Threshold events are consequence popups and should not be blocked by the normal Lance Life
+                // frequency caps. Rate limiting still applies through the daily tick and the EscalationManager's
+                // own cooldown rules.
                 var escalation = EscalationManager.Instance;
                 if (escalation?.IsEnabled() == true)
                 {
@@ -332,7 +330,7 @@ namespace Enlisted.Features.Lances.Behaviors
                 return false;
             }
 
-            // Phase 5: player conditions can restrict training stories.
+            // Player conditions can restrict training stories.
             // Keep this minimal and predictable: only severe+ injury/illness blocks training category.
             if (string.Equals(story.Category, "training", StringComparison.OrdinalIgnoreCase))
             {
@@ -696,7 +694,7 @@ namespace Enlisted.Features.Lances.Behaviors
                 }
             }
 
-            // Phase 4: escalation track effects (feature-flagged).
+            // Escalation track effects (feature-flagged).
             // These are internal to Enlisted and are meant to create readable long-term consequences later.
             var escalation = EscalationManager.Instance;
             if (escalation?.IsEnabled() == true)
@@ -720,7 +718,7 @@ namespace Enlisted.Features.Lances.Behaviors
                 }
             }
 
-            // Phase 5: injury / illness rolls (feature-flagged).
+            // Injury / illness rolls (feature-flagged).
             var conditions = PlayerConditionBehavior.Instance;
             if (conditions?.IsEnabled() == true)
             {

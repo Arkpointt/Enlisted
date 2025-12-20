@@ -115,7 +115,7 @@
 - `src/Features/Lances/Events/Decisions/DecisionEventEvaluator.cs`
 - `ModuleData/Enlisted/Events/events_decisions.json`
 - `ModuleData/Enlisted/Events/events_player_decisions.json`
-- full spec: `docs/StoryBlocks/decision-events-spec.md`
+- Full spec: [Story Blocks Master Reference](../StoryBlocks/story-blocks-master-reference.md)
 
 ---
 
@@ -177,10 +177,9 @@
 | File | Purpose |
 |------|---------|
 | `docs/Features/index.md` | Feature documentation entry point |
-| `docs/StoryBlocks/story-systems-master.md` | story content reference |
-| `docs/StoryBlocks/decision-events-spec.md` | decision events specification |
-| `docs/ImplementationPlans/master-implementation-roadmap.md` | full roadmap |
-| `docs/ImplementationPlans/implementation-status.md` | this file |
+| `docs/StoryBlocks/story-blocks-master-reference.md` | Story content reference (single source of truth) |
+| `docs/ImplementationPlans/master-implementation-roadmap.md` | Full roadmap |
+| `docs/ImplementationPlans/implementation-status.md` | This file |
 
 ## Implementation Plans Folder
 
@@ -211,10 +210,9 @@ Older implementation-plan drafts were consolidated and removed (Dec 18, 2025)
 | If you want to... | Read this |
 |-------------------|-----------|
 | Understand all features | `docs/Features/index.md` |
-| add story content | `docs/StoryBlocks/story-systems-master.md` |
-| add decision events | `docs/StoryBlocks/decision-events-spec.md` |
-| check current status | `docs/ImplementationPlans/implementation-status.md` (this file) |
-| see what's NOT yet implemented | `docs/ImplementationPlans/implementation-roadmap.md` |
+| Add story content | `docs/StoryBlocks/story-blocks-master-reference.md` (all events, schema, guidelines) |
+| Check current status | `docs/ImplementationPlans/implementation-status.md` (this file) |
+| See what's NOT yet implemented | `docs/ImplementationPlans/implementation-roadmap.md` |
 | create duty events | `docs/research/duty-events-creation-guide.md` |
 | build UI safely | `docs/research/gauntlet-ui-screens-playbook.md` |
 

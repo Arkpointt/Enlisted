@@ -161,21 +161,21 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private int _enlistmentXP;
 
         /// <summary>
-        ///     Phase 7: Date of last promotion (or enlistment if T1). Used to calculate days in rank.
+        ///     Date of last promotion (or enlistment if T1). Used to calculate days in rank.
         /// </summary>
         private CampaignTime _lastPromotionDate = CampaignTime.Zero;
 
         /// <summary>
-        ///     Phase 7: Number of battles survived since enlistment. Used for promotion requirements.
+        ///     Number of battles survived since enlistment. Used for promotion requirements.
         /// </summary>
         private int _battlesSurvived;
 
         /// <summary>
-        ///     Phase 7: Number of Lance Life events completed. Used for promotion requirements.
+        ///     Number of Lance Life events completed. Used for promotion requirements.
         /// </summary>
         private int _eventsCompleted;
 
-        // Phase 4: promotion can be temporarily blocked at very high discipline risk.
+        // Promotion can be temporarily blocked at very high discipline risk.
         // This is rate-limited to avoid message spam when earning XP while blocked.
         private CampaignTime _lastPromotionBlockedMessageTime = CampaignTime.Zero;
 
@@ -333,11 +333,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _isLanceLegacy;
         private bool _savedGraceLanceLegacy;
 
-        // Camp/Fatigue flavor hooks (Phase 6)
+        // Camp/Fatigue flavor hooks
         private int _fatigueCurrent = 24;
         private int _fatigueMax = 24;
 
-        // Enhanced Fatigue System (Phase 1 - 24-point budget with health penalties)
+        // Enhanced fatigue system (24-point budget with health penalties)
         // _fatigueCurrent represents REMAINING fatigue points (24 = fresh, 0 = exhausted)
         // Health penalties trigger at LOW fatigue (8 or less remaining)
         private CampaignTime _lastFatigueRecoveryTime = CampaignTime.Zero;
@@ -372,7 +372,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _isOnProbation;
         private CampaignTime _probationEnds = CampaignTime.Zero;
 
-        // Pay tension and backpay tracking (Phase 1 Pay System)
+        // Pay tension and backpay tracking
         // PayTension escalates when pay is delayed; triggers events at thresholds
         private int _payTension;
         private int _owedBackpay;
@@ -403,7 +403,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private List<string> _minorFactionWarRelations = new List<string>();
 
         // ========================================================================
-        // QUARTERMASTER HERO SYSTEM (Phase 3)
+        // QUARTERMASTER HERO SYSTEM
         // Persistent NPC quartermaster with personality archetype
         // ========================================================================
 
@@ -435,7 +435,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _hasMetQuartermaster;
 
         // ========================================================================
-        // FOOD/RATIONS SYSTEM (Phase 5)
+        // FOOD/RATIONS SYSTEM
         // Allows player to purchase better rations for morale and fatigue bonuses
         // ========================================================================
 
@@ -453,7 +453,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private CampaignTime _foodQualityExpires = CampaignTime.Zero;
 
         // ========================================================================
-        // RETINUE PROVISIONING SYSTEM (Phase 6)
+        // RETINUE PROVISIONING SYSTEM
         // T7-T9 commanders must provision their retinue weekly
         // ========================================================================
 
@@ -566,7 +566,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public int EnlistmentXP => _enlistmentXP;
 
         /// <summary>
-        ///     Phase 7: Days since last promotion (or enlistment for T1).
+        ///     Days since last promotion (or enlistment for T1).
         /// </summary>
         public int DaysInRank
         {
@@ -584,12 +584,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Number of battles survived since enlistment.
+        ///     Number of battles survived since enlistment.
         /// </summary>
         public int BattlesSurvived => _battlesSurvived;
 
         /// <summary>
-        ///     Phase 7: Number of Lance Life events completed since enlistment.
+        ///     Number of Lance Life events completed since enlistment.
         /// </summary>
         public int EventsCompleted => _eventsCompleted;
 
@@ -618,7 +618,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public string LastPayOutcome => _lastPayOutcome ?? "none";
         public bool IsPayMusterPending => _payMusterPending;
         
-        // Pay tension properties (Phase 1 Pay System)
+        // Pay tension properties
         /// <summary>Pay tension level (0-100). Escalates when pay is delayed, triggers events at thresholds.</summary>
         public int PayTension => _payTension;
         /// <summary>Accumulated unpaid wages when lord can't afford to pay.</summary>
@@ -679,7 +679,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         // ========================================================================
-        // QUARTERMASTER HERO PROPERTIES (Phase 3)
+        // QUARTERMASTER HERO PROPERTIES
         // ========================================================================
 
         /// <summary>
@@ -1323,7 +1323,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_disbandArmyAfterBattle", ref _disbandArmyAfterBattle);
             SyncKey(dataStore, "_enlistmentDate", ref _enlistmentDate);
             
-            // Phase 7: Promotion requirements tracking
+            // Promotion requirements tracking
             SyncKey(dataStore, "_lastPromotionDate", ref _lastPromotionDate);
             SyncKey(dataStore, "_battlesSurvived", ref _battlesSurvived);
             SyncKey(dataStore, "_eventsCompleted", ref _eventsCompleted);
@@ -1342,7 +1342,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_payMusterPending", ref _payMusterPending);
             SyncKey(dataStore, "_lastPayOutcome", ref _lastPayOutcome);
             
-            // Pay tension state (Phase 1 Pay System)
+            // Pay tension state
             SyncKey(dataStore, "_payTension", ref _payTension);
             SyncKey(dataStore, "_owedBackpay", ref _owedBackpay);
             SyncKey(dataStore, "_lastPayDate", ref _lastPayDate);
@@ -1376,22 +1376,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
             SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
 
-            // Enhanced Fatigue System (Phase 1)
+            // Enhanced fatigue system
             SyncKey(dataStore, "_lastFatigueRecoveryTime", ref _lastFatigueRecoveryTime);
             SyncKey(dataStore, "_healthBeforeExhaustion", ref _healthBeforeExhaustion);
             SyncKey(dataStore, "_accumulatedFatigueRecovery", ref _accumulatedFatigueRecovery);
 
-            // Quartermaster Hero System (Phase 3)
+            // Quartermaster hero system
             SyncKey(dataStore, "_quartermasterHero", ref _quartermasterHero);
             SyncKey(dataStore, "_quartermasterArchetype", ref _quartermasterArchetype);
             SyncKey(dataStore, "_quartermasterRelationship", ref _quartermasterRelationship);
             SyncKey(dataStore, "_hasMetQuartermaster", ref _hasMetQuartermaster);
 
-            // Food/Rations System (Phase 5)
+            // Food/rations system
             SyncKey(dataStore, "_currentFoodQuality", ref _currentFoodQuality);
             SyncKey(dataStore, "_foodQualityExpires", ref _foodQualityExpires);
 
-            // Retinue Provisioning System (Phase 6)
+            // Retinue provisioning system
             SyncKey(dataStore, "_retinueProvisioningTier", ref _retinueProvisioningTier);
             SyncKey(dataStore, "_retinueProvisioningExpires", ref _retinueProvisioningExpires);
             SyncKey(dataStore, "_retinueProvisioningWarningShown", ref _retinueProvisioningWarningShown);
@@ -3283,13 +3283,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                 }
 
-                // Clean up Quartermaster Hero reference (Phase 3)
+                // Clean up Quartermaster hero reference
                 CleanupQuartermasterOnServiceEnd();
 
-                // Clear food quality bonus (Phase 5)
+                // Clear food quality bonus
                 ClearFoodQuality();
 
-                // Clear retinue provisioning (Phase 6)
+                // Clear retinue provisioning
                 ClearRetinueProvisioning();
 
                 _enlistedLord = null;
@@ -3841,7 +3841,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             ProcessDeferredBagCheck();
 
-            // Process hourly fatigue recovery (Enhanced Fatigue System - Phase 1)
+            // Process hourly fatigue recovery (enhanced fatigue system).
             // This runs for enlisted players during rest periods (night hours)
             ProcessFatigueRecovery();
 
@@ -3888,9 +3888,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
             }
 
-            // CRITICAL: Ensure non-enlisted players always stay visible and active
-            // This is a fallback check in case the realtime tick misses something
-            // Hourly tick runs once per in-game hour, providing periodic enforcement
+            // Fallback: ensure non-enlisted players stay visible and active in case the realtime tick misses an edge
+            // case. The hourly tick runs once per in-game hour, so it provides periodic enforcement.
             if (!IsEnlisted)
             {
                 var partyState = main?.Party;
@@ -3900,11 +3899,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var isActive = main.IsActive;
                 var isVisible = main.IsVisible;
 
-                // Only skip visibility enforcement when in a MEANINGFUL encounter state:
-                // - Actively in a MapEvent (battle in progress)
-                // - Player is a prisoner (captivity system owns the player)
-                // NOTE: We do NOT skip just because PlayerEncounter.Current exists - it can
-                // be stale after battle ends (LeaveEncounter=true set but not yet processed)
+                // Only skip visibility enforcement while vanilla systems own the player state. We skip when the
+                // player is actively in a MapEvent (battle) or is a prisoner (captivity system owns the player).
+                // We do not skip just because PlayerEncounter.Current exists, since it can be stale after a battle.
                 if (inMapEvent || isPrisoner)
                 {
                     ModLogger.LogOnce(
@@ -3914,14 +3911,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                // Enforce visibility and activity for non-enlisted players as a fallback
-                // This catches any cases where realtime tick might have missed something
+                // Enforce visibility and activity for non-enlisted players as a fallback. This catches cases where
+                // the realtime tick might have missed something.
                 bool needsActivation = !main.IsActive;
                 bool needsVisibility = !main.IsVisible;
 
                 if (needsActivation || needsVisibility)
                 {
-                    // Log when we're fixing visibility/activity to help diagnose issues
+                    // Log when we fix visibility/activity so issues are easier to diagnose.
                     if (needsVisibility)
                     {
                         ModLogger.Info("Hourly",
@@ -3938,7 +3935,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     main.IsVisible = true;
                 }
 
-                return; // Skip enlistment logic for non-enlisted players
+                return; // Skip enlistment logic for non-enlisted players.
             }
 
             // Check if the lord's party still exists
@@ -4188,10 +4185,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Check for retirement eligibility notification (first term complete)
                 CheckRetirementEligibility();
                 
-                // Phase 5: Check for NPC soldier desertion when pay tension is high
+                // Check for NPC soldier desertion when pay tension is high.
                 CheckNpcDesertionFromPayTension();
 
-                // Phase 6: Check retinue provisioning status (T7+ only)
+                // Check retinue provisioning status (T7+ only).
                 CheckRetinueProvisioningStatus();
             }
             catch (Exception ex)
@@ -4263,7 +4260,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ClearProbation("pay_muster_resolved");
             ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
             
-            // Phase 6: Notify Schedule system to reset 12-day cycle
+            // Notify the Schedule system to reset the 12-day cycle.
             Schedule.Behaviors.ScheduleBehavior.Instance?.OnPayMusterCompleted();
         }
 
@@ -4545,10 +4542,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                // Keep this internal and simple:
-                // - do not pay out today
-                // - keep pending pay in the ledger
-                // - retry soon so the player can resolve when conditions improve
+                // Keep this internal and simple. Do not pay out today. Keep the pending pay in the ledger. Retry
+                // soon so the player can resolve it when conditions improve.
                 _lastPayOutcome = $"promissory:{_pendingMusterPay}";
                 _payMusterPending = false;
                 _nextPayday = CampaignTime.Now + CampaignTime.Days(3f);
@@ -5037,7 +5032,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             return Math.Max(finalWage, 24); // Minimum 24 gold/day
         }
 
-        #region Pay System (Phase 1-2)
+        #region Pay System
 
         /// <summary>
         /// Lord's financial status affects pay reliability and amount.
@@ -5218,7 +5213,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         #endregion
 
-        #region Battle Loot Share (Phase 4 Pay System)
+        #region Battle Loot Share
 
         /// <summary>
         /// Get gold share percentage based on tier per pay_system.md spec.
@@ -5314,7 +5309,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         #endregion
 
-        #region PayTension Effects (Phase 5 Pay System)
+        #region PayTension Effects
 
         /// <summary>
         /// Get morale penalty based on PayTension level.
@@ -5349,7 +5344,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         /// Reduces PayTension by the specified amount.
-        /// Used when the player helps the lord (Phase 8).
+        /// Used when the player helps the lord.
         /// </summary>
         /// <param name="amount">Amount to reduce (positive value)</param>
         public void ReducePayTension(int amount)
@@ -5665,7 +5660,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Check if player has enough XP for next tier (up to max tier)
             while (_enlistmentTier < maxTier && _enlistmentXP >= tierXPRequirements[_enlistmentTier])
             {
-                // Phase 4: temporary promotion block at very high discipline risk.
+                // Temporary promotion block at very high discipline risk.
                 // This is a relief-valve-friendly block: XP keeps accumulating and promotion will resume
                 // once discipline improves below the threshold.
                 var escalation = EscalationManager.Instance;
@@ -5734,15 +5729,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
             ValidateLanceStateOnLoad();
             
-            // Phase 7: Migrate tracking fields for existing saves
+            // Migrate tracking fields for existing saves.
             MigratePhase7TrackingFields();
 
             ModLogger.Info("SaveLoad", $"Validated enlistment state - Tier: {_enlistmentTier}, XP: {_enlistmentXP}");
         }
         
         /// <summary>
-        ///     Phase 7: Migrate promotion tracking fields for existing saves.
-        ///     Initializes days in rank, events completed, and battles survived with reasonable estimates.
+        /// Migrate promotion tracking fields for existing saves.
+        /// Initializes days in rank, events completed, and battles survived with reasonable estimates.
         /// </summary>
         private void MigratePhase7TrackingFields()
         {
@@ -5793,12 +5788,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     // Non-spammy summary marker for support: confirms a migration occurred in this session.
                     ModLogger.LogOnce("enlistment_migrate_phase7_tracking", "SaveLoad",
-                        "[E-SAVELOAD-002] Applied Phase 7 tracking migration for an existing save.");
+                        "[E-SAVELOAD-002] Applied tracking migration for an existing save.");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-003", "Phase 7 tracking migration failed", ex);
+                ModLogger.ErrorCode("SaveLoad", "E-SAVELOAD-003", "Tracking migration failed", ex);
             }
         }
 
@@ -6305,11 +6300,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     }
                     _wasPrisonerLastTick = isPrisoner;
                     
-                    // Only skip visibility enforcement when in a MEANINGFUL encounter state:
-                    // - Actively in a MapEvent (battle in progress)
-                    // - Player is a prisoner (captivity system owns the player)
-                    // NOTE: We do NOT skip just because PlayerEncounter.Current exists - it can
-                    // be stale after battle ends (LeaveEncounter=true set but not yet processed)
+                    // Only skip visibility enforcement while vanilla systems own the player state. We skip when the
+                    // player is actively in a MapEvent (battle) or is a prisoner (captivity system owns the player).
+                    // We do not skip just because PlayerEncounter.Current exists, since it can be stale after a battle.
                     if (inMapEvent || isPrisoner)
                     {
                         ModLogger.LogOnce(
@@ -6319,9 +6312,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         return;
                     }
 
-                    // Enforce visibility and activity for non-enlisted players
-                    // This ensures the player remains visible even if native systems switch it off
-                    // Check both IsActive and IsVisible to catch any state changes
+                    // Enforce visibility and activity for non-enlisted players. This keeps the player visible even
+                    // if native systems switch it off, and checks both IsActive and IsVisible to catch state changes.
                     bool needsActivation = !mainParty.IsActive;
                     bool needsVisibility = !mainParty.IsVisible;
 
@@ -6711,7 +6703,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     if (lordInSiege || playerInSiege)
                     {
                         // CRITICAL: Only activate party if an assault (MapEvent) is actually in progress.
-                        // If we activate during the "waiting" phase (siege prep/camp), the native engine
+                        // If we activate during the "waiting" stage (siege prep/camp), the native engine
                         // constantly triggers the "Settlement is under siege" menu loop.
                         // As an enlisted soldier, we only need to act when the Lord attacks/defends (Assault).
                         var isAssault = lordParty.Party.MapEvent != null || mainParty.Party.MapEvent != null;
@@ -6735,7 +6727,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                             {
                                 mainParty.IsActive = false;
                                 ModLogger.Debug("Siege",
-                                    "Siege waiting phase - deactivating player to prevent menu loop");
+                                    "Siege waiting stage - deactivating player to prevent menu loop");
                             }
                         }
 
@@ -8584,7 +8576,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Increment the battles survived counter. Called after successfully completing a battle.
+        /// Increment the battles survived counter. Called after successfully completing a battle.
         /// </summary>
         public void IncrementBattlesSurvived()
         {
@@ -8597,7 +8589,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Phase 7: Increment the events completed counter. Called after completing a Lance Life event.
+        /// Increment the events completed counter. Called after completing a Lance Life event.
         /// </summary>
         public void IncrementEventsCompleted()
         {
@@ -8652,7 +8644,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     AddEnlistmentXP(battleXP, "Battle Participation");
                     _battleXPAwardedThisBattle = true;
 
-                    // Phase 7: Track battles for promotion requirements
+                    // Track battles for promotion requirements.
                     IncrementBattlesSurvived();
 
                     // Show notification to player
@@ -8684,7 +8676,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var previousTier = _enlistmentTier;
             _enlistmentTier = tier;
 
-            // Phase 7: Track promotion date for days-in-rank requirement
+            // Track promotion date for the days-in-rank requirement.
             if (tier > previousTier)
             {
                 _lastPromotionDate = CampaignTime.Now;
@@ -8715,7 +8707,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         // ========================================================================
-        // QUARTERMASTER HERO METHODS (Phase 3)
+        // QUARTERMASTER HERO METHODS
         // ========================================================================
 
         /// <summary>
@@ -9050,7 +9042,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Gets the quartermaster discount percentage based on relationship.
-        ///     Phase 8: High relationship provides discounts on equipment and rations.
+        ///     High relationship provides discounts on equipment and rations.
         /// </summary>
         /// <returns>Discount percentage (0-15)</returns>
         public int GetQuartermasterDiscount()
@@ -9127,7 +9119,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         // ========================================================================
-        // FOOD/RATIONS SYSTEM METHODS (Phase 5)
+        // FOOD/RATIONS SYSTEM METHODS
         // ========================================================================
 
         /// <summary>
@@ -9307,7 +9299,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         // ========================================================================
-        // RETINUE PROVISIONING SYSTEM METHODS (Phase 6)
+        // RETINUE PROVISIONING SYSTEM METHODS
         // ========================================================================
 
         /// <summary>
@@ -9574,7 +9566,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Check if promotion notification should be triggered after XP gain.
-        ///     Now integrates with Phase 2B troop selection system.
+        ///     Integrates with the troop selection system.
         /// </summary>
         private void CheckPromotionNotification(int previousXP, int currentXP)
         {
@@ -9602,7 +9594,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // If we crossed from below to above a threshold
                     if (previousXP < requiredXP && currentXP >= requiredXP)
                     {
-                        // Phase 7: Troop selection menu removed - promotions handled via PromotionBehavior
+                        // Troop selection menu removed. Promotions are handled via PromotionBehavior
                         // which triggers proving events and culture-specific notifications.
                         // Player visits Quartermaster manually for equipment after promotion.
                         // The PromotionBehavior.CheckForPromotion() handles the actual tier advancement.
@@ -9902,7 +9894,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
-                // Phase 2B: Use centralized equipment management
+                // Use centralized equipment management.
                 var equipmentManager = EquipmentManager.Instance;
                 if (equipmentManager != null)
                 {
@@ -9932,7 +9924,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             try
             {
-                // Phase 2B: Use centralized equipment management
+                // Use centralized equipment management.
                 var equipmentManager = EquipmentManager.Instance;
                 if (equipmentManager != null)
                 {
@@ -11505,7 +11497,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     {
                         AwardBattleXP(playerParticipated);
                         
-                        // Phase 4: Award battle loot share if we won
+                        // Award battle loot share if we won.
                         var playerWon = effectiveMapEvent?.WinningSide == effectiveMapEvent?.PlayerSide;
                         if (playerParticipated && playerWon)
                         {

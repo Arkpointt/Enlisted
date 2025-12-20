@@ -43,7 +43,11 @@ namespace Enlisted.Features.Lances.Events.Decisions
         // Chain delay tracking (hour number when each queued chain event becomes eligible)
         private Dictionary<string, int> _chainDelayHour = new Dictionary<string, int>();
 
-        // Phase 5: short outcome log (for Reports “Recent Outcomes” and Daily Report grounding)
+        // Free Time decision queue (player-selected actions that execute at the next valid slot).
+        // Stored as compact strings for stable save compatibility.
+        private List<string> _freeTimeDecisionQueue = new List<string>();
+
+        // Short outcome log (for Reports “Recent Outcomes” and Daily Report grounding).
         private DecisionOutcomeLog _outcomeLog = new DecisionOutcomeLog();
 
         // Property accessors for cleaner external use
@@ -51,6 +55,93 @@ namespace Enlisted.Features.Lances.Events.Decisions
         public int FiredToday => _firedToday;
         public int FiredThisWeek => _firedThisWeek;
         public DecisionOutcomeLog OutcomeLog => _outcomeLog;
+
+        public IReadOnlyList<QueuedFreeTimeDecision> GetQueuedFreeTimeDecisions()
+        {
+            var result = new List<QueuedFreeTimeDecision>();
+            if (_freeTimeDecisionQueue == null || _freeTimeDecisionQueue.Count == 0)
+            {
+                return result;
+            }
+
+            foreach (var raw in _freeTimeDecisionQueue)
+            {
+                if (QueuedFreeTimeDecision.TryParse(raw, out var parsed))
+                {
+                    result.Add(parsed);
+                }
+            }
+
+            return result;
+        }
+
+        public bool TryQueueFreeTimeDecision(QueuedFreeTimeDecision decision)
+        {
+            if (decision == null || string.IsNullOrWhiteSpace(decision.Id))
+            {
+                return false;
+            }
+
+            _freeTimeDecisionQueue ??= new List<string>();
+
+            // Prevent duplicate queue entries for the same ID (simple and predictable UX).
+            foreach (var raw in _freeTimeDecisionQueue)
+            {
+                if (QueuedFreeTimeDecision.TryParse(raw, out var existing) &&
+                    string.Equals(existing.Id, decision.Id, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+
+            _freeTimeDecisionQueue.Add(decision.ToSaveString());
+            return true;
+        }
+
+        public bool TryRemoveQueuedFreeTimeDecision(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id) || _freeTimeDecisionQueue == null || _freeTimeDecisionQueue.Count == 0)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < _freeTimeDecisionQueue.Count; i++)
+            {
+                if (!QueuedFreeTimeDecision.TryParse(_freeTimeDecisionQueue[i], out var existing))
+                {
+                    continue;
+                }
+
+                if (string.Equals(existing.Id, id, StringComparison.OrdinalIgnoreCase))
+                {
+                    _freeTimeDecisionQueue.RemoveAt(i);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void ReplaceQueuedFreeTimeDecisions(IReadOnlyList<QueuedFreeTimeDecision> decisions)
+        {
+            _freeTimeDecisionQueue ??= new List<string>();
+            _freeTimeDecisionQueue.Clear();
+
+            if (decisions == null)
+            {
+                return;
+            }
+
+            foreach (var d in decisions)
+            {
+                if (d == null || string.IsNullOrWhiteSpace(d.Id))
+                {
+                    continue;
+                }
+
+                _freeTimeDecisionQueue.Add(d.ToSaveString());
+            }
+        }
 
         /// <summary>
         /// Gets hours since last event fired.
@@ -332,7 +423,9 @@ namespace Enlisted.Features.Lances.Events.Decisions
             SyncList(dataStore, "de_chainQueue", ref _chainQueue);
             SyncDictionaryInt(dataStore, "de_chainDelay", ref _chainDelayHour);
 
-            // Phase 5: decision outcomes log
+            SyncList(dataStore, "de_freeTimeQueue", ref _freeTimeDecisionQueue);
+
+            // Decision outcomes log.
             _outcomeLog ??= new DecisionOutcomeLog();
             _outcomeLog.SyncData(dataStore, "de_outcome");
 
@@ -345,6 +438,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
             _flagExpiryDay ??= new Dictionary<string, int>();
             _chainQueue ??= new List<string>();
             _chainDelayHour ??= new Dictionary<string, int>();
+            _freeTimeDecisionQueue ??= new List<string>();
             _outcomeLog ??= new DecisionOutcomeLog();
         }
 

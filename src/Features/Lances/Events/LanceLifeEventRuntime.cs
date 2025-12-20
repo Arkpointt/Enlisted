@@ -6,10 +6,9 @@ using Enlisted.Mod.Core.Logging;
 namespace Enlisted.Features.Lances.Events
 {
     /// <summary>
-    /// Phase 1 runtime entry point for showing a specific Lance Life Event by ID.
-    ///
-    /// Note: Phase 1 does not schedule events. This is intentionally "pull-based" so we can
-    /// wire it into menus/triggers later without changing presentation/effect code.
+    /// Runtime entry point for showing a specific Lance Life Event by ID.
+    /// This method does not schedule events. It is intentionally "pull-based" so callers can wire it into menus
+    /// and triggers without changing presentation/effect code.
     /// </summary>
     internal static class LanceLifeEventRuntime
     {

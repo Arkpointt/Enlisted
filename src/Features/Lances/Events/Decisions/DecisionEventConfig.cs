@@ -167,7 +167,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
     }
 
     /// <summary>
-    /// Configuration for tier-based narrative access (Phase 6).
+    /// Configuration for tier-based narrative access.
     /// Controls which narrative sources are available at each player tier.
     /// A T1 peasant shouldn't hunt with the lord; these gates enforce that roleplay.
     /// </summary>

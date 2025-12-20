@@ -159,7 +159,7 @@ namespace Enlisted.Features.Lances.Events
                 return string.Empty;
             }
 
-            // Phase 7: Track event completion for promotion requirements
+            // Track event completion for promotion requirements.
             enlistment?.IncrementEventsCompleted();
 
             // If this option is risky, roll success once and reuse it for outcomes + conditional effects.
@@ -261,7 +261,7 @@ namespace Enlisted.Features.Lances.Events
                 }
             }
 
-            // Optional success/failure effect overrides (Phase 5)
+            // Optional success/failure effect overrides.
             if (escalation?.IsEnabled() == true && success.HasValue)
             {
                 var chosen = success.Value ? option.EffectsSuccess : option.EffectsFailure;
@@ -296,7 +296,7 @@ namespace Enlisted.Features.Lances.Events
             // Schema effects: tags/formation (stored as safe state; do not mutate formation training directly).
             LanceLifeEventsStateBehavior.Instance?.ApplySchemaEffectTags(option.Effects, $"event_effect:{evt.Id}:{option.Id}");
 
-            // Phase 5: injury / illness rolls (feature-flagged).
+            // Injury/illness rolls (feature-flagged).
             var conditions = PlayerConditionBehavior.Instance;
             if (conditions?.IsEnabled() == true)
             {
@@ -304,12 +304,12 @@ namespace Enlisted.Features.Lances.Events
                 TryApplyIllnessRoll(evt, option, conditions);
             }
 
-            // Phase 3 (Decision Events): Handle chain events and story flags
+            // Handle chain events and story flags for decision events.
             // This is done here in the applier to ensure consistent behavior regardless of which
             // presentation path (VM, Inquiry, Incident) fires the event.
             ApplyDecisionEventEffects(evt, option);
 
-            // Phase 4/5: Onboarding stage advancement (data-driven via option flag).
+            // Onboarding stage advancement (data-driven via option flag).
             // This runs on option selection so "close without choosing" cannot accidentally advance stages.
             if (string.Equals(evt.Category, "onboarding", StringComparison.OrdinalIgnoreCase) &&
                 option.AdvancesOnboarding)
@@ -320,7 +320,7 @@ namespace Enlisted.Features.Lances.Events
             // Result/outcome text (best-effort).
             var resultText = ResolveOptionResultText(option, enlistment, success);
 
-            // Phase 5 (Decision hooks): record outcomes + post a short follow-up dispatch.
+            // Decision hooks: record outcomes + post a short follow-up dispatch.
             // This lives here so ALL decision delivery paths (modern UI, inquiry, incident) behave consistently.
             try
             {
@@ -344,7 +344,7 @@ namespace Enlisted.Features.Lances.Events
                 return string.Empty;
             }
 
-            // Phase 5a: schema outcome_failure support (raw text) using the same success_chance roll.
+            // Schema outcome_failure support (raw text) using the same success_chance roll.
             if (success.HasValue && !string.IsNullOrWhiteSpace(option.SchemaOutcomeFailure))
             {
                 return success.Value
@@ -366,7 +366,7 @@ namespace Enlisted.Features.Lances.Events
         }
 
         /// <summary>
-        /// Applies Phase 3 Decision Event effects: chain events and story flags.
+        /// Applies Decision Event effects: chain events and story flags.
         /// Moved here from LanceLifeEventVM to ensure consistent handling across all presentation paths.
         /// </summary>
         private static void ApplyDecisionEventEffects(LanceLifeEventDefinition evt, LanceLifeEventOptionDefinition option)

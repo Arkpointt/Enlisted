@@ -4,9 +4,9 @@ Quick reference for extending or modifying Enlisted.
 
 ## Game / API Version
 
-This project targets **Bannerlord v1.3.4**.
+This project targets **Bannerlord v1.3.11+**.
 
-When you need to confirm Bannerlord APIs, prefer the **local native decompile** included with this repository (it matches the target version). Use the official API docs only as a secondary convenience reference.
+When you need to confirm Bannerlord APIs, prefer the **local native decompile** included with this repository (keep it aligned with the target version). Use the official API docs only as a secondary convenience reference.
 
 ## Build
 ```bash

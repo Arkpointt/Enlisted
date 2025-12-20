@@ -111,7 +111,7 @@ namespace Enlisted.Features.Camp
         // Companion Assignment Menu IDs
         private const string CompanionAssignmentsMenuId = "enlisted_companions";
 
-        // Phase 8: PayTension Action Menu IDs
+        // PayTension Action Menu IDs
         private const string DesperateMeasuresMenuId = "enlisted_desperate";
         private const string HelpTheLordMenuId = "enlisted_help_lord";
 
@@ -185,18 +185,18 @@ namespace Enlisted.Features.Camp
             // Lifetime Summary display
             AddLifetimeSummaryMenu(starter);
 
-            // Retinue menus (Phase 4)
+            // Retinue menus
             AddRetinueMenu(starter);
             AddRetinuePurchaseMenu(starter);
             AddRetinueDismissMenu(starter);
 
-            // Requisition menu (Phase 5)
+            // Requisition menu
             AddRetinueRequisitionMenu(starter);
 
-            // Companion Assignments menu (Phase 8)
+            // Companion Assignments menu
             AddCompanionAssignmentsMenu(starter);
 
-            // Phase 8: PayTension Action Menus
+            // PayTension Action Menus
             AddDesperateMeasuresMenu(starter);
             AddHelpTheLordMenu(starter);
         }
@@ -300,7 +300,7 @@ namespace Enlisted.Features.Camp
 
 
             // ========================================
-            // PAYTENSION ACTION MENUS (Phase 8)
+            // PAYTENSION ACTION MENUS
             // ========================================
 
             // Desperate Measures (corruption path) - only visible at tension 40+
@@ -2676,7 +2676,7 @@ namespace Enlisted.Features.Camp
 
         #endregion
 
-        #region Phase 8: PayTension Action Menus
+        #region PayTension Action Menus
 
         /// <summary>
         /// Creates the Desperate Measures menu - corruption path options.

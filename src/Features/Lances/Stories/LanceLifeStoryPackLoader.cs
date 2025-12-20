@@ -293,9 +293,8 @@ namespace Enlisted.Features.Lances.Stories
             var triggerAll = NormalizeTriggerList(triggers.All);
             var triggerAny = NormalizeTriggerList(triggers.Any);
 
-            // Trigger validation:
-            // - Unknown tokens => invalid story (skip).
-            // - Recognized but unimplemented tokens => keep story, but it will not fire until implemented.
+            // Trigger validation: unknown tokens make the story invalid and we skip it. Recognized but unimplemented
+            // tokens are allowed, but they will prevent the story from firing until the token is implemented.
             foreach (var token in triggerAll.Concat(triggerAny))
             {
                 if (!CampaignTriggerTokens.IsRecognized(token))

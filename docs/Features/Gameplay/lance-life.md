@@ -5,7 +5,7 @@ This spec builds “life around the lance”: small stories, camp events, and mo
 ## Status (shipping)
 - **Two Lance Life content layers ship today (both data-driven):**
   - **Lance Life Stories (StoryPacks)**: `ModuleData/Enlisted/StoryPacks/LanceLife/*.json` (daily-tick story popups).
-  - **Lance Life Events (Events Catalog)**: `ModuleData/Enlisted/Events/*.json` (109+ event definitions with delivery metadata).
+  - **Lance Life Events (Events Catalog)**: `ModuleData/Enlisted/Events/*.json` (80+ event definitions - see [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md)).
 - Phase 4 escalation is implemented (tracks + status UI + threshold consequences).
 - Phase 5 is implemented:
   - Named lance role personas (text-only) are implemented and exposed as placeholders.

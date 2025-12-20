@@ -21,7 +21,7 @@ namespace Enlisted.Features.Lances.Events
         private readonly Dictionary<string, int> _eventLastFiredDay = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _oneTimeFired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // Phase 5a: optional tag state driven by event effects (safe strings).
+        // Optional tag state driven by event effects (safe strings).
         private readonly HashSet<string> _characterTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _loyaltyTags = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private string _formationTag = string.Empty;
@@ -219,7 +219,7 @@ namespace Enlisted.Features.Lances.Events
                 return;
             }
 
-            // Phase 7: Apply formation choice to EnlistedDutiesBehavior (not just state tag)
+            // Apply formation choice to EnlistedDutiesBehavior (not just state tag).
             if (!string.IsNullOrWhiteSpace(effects.Formation))
             {
                 _formationTag = effects.Formation.Trim();
@@ -243,7 +243,7 @@ namespace Enlisted.Features.Lances.Events
                 }
             }
 
-            // Phase 7: Apply starter duty assignment
+            // Apply starter duty assignment.
             if (!string.IsNullOrWhiteSpace(effects.StarterDuty))
             {
                 var duties = Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
@@ -260,7 +260,7 @@ namespace Enlisted.Features.Lances.Events
                 }
             }
 
-            // Phase 7: Apply tier promotion
+            // Apply tier promotion.
             if (effects.Promotes)
             {
                 var enlistment = Enlistment.Behaviors.EnlistmentBehavior.Instance;

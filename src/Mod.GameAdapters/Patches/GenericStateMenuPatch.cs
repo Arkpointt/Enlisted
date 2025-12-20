@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using HarmonyLib;
+using TaleWorlds.CampaignSystem.Encounters;
 using TaleWorlds.CampaignSystem.GameComponents;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core;
@@ -10,21 +11,22 @@ using EnlistedEncounterBehavior = Enlisted.Features.Combat.Behaviors.EnlistedEnc
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
-    /// Patches the native GetGenericStateMenu() to return our custom menu when player is in reserve.
+    /// Patches the native GetGenericStateMenu() to return our custom enlisted menu when appropriate.
     /// 
-    /// Root cause: When in reserve mode, the native system thinks player should be in "army_wait"
-    /// because mainParty.AttachedTo != null. Various native systems call GetGenericStateMenu() and
-    /// switch menus accordingly, causing visual stutter as menus flip between army_wait and enlisted_battle_wait.
+    /// Root cause: When enlisted, the native system thinks player should be in "army_wait" or
+    /// "army_wait_at_settlement" because mainParty.AttachedTo != null. Various native systems
+    /// call GetGenericStateMenu() and switch menus accordingly, causing unwanted menu switches
+    /// even when the player just wants to stay in the enlisted menu.
     /// 
-    /// Fix: If player is waiting in reserve, override the result to return "enlisted_battle_wait".
-    /// This prevents ALL native systems from trying to switch away from our menu.
+    /// Fix: When player is enlisted and hasn't explicitly chosen to visit a settlement,
+    /// override settlement/army menus to stay on the enlisted menu instead.
     /// </summary>
     [HarmonyPatch(typeof(DefaultEncounterGameMenuModel), nameof(DefaultEncounterGameMenuModel.GetGenericStateMenu))]
     public class GenericStateMenuPatch
     {
         /// <summary>
-        /// Postfix that overrides the result when player is waiting in reserve.
-        /// Returns "enlisted_battle_wait" instead of "army_wait" to prevent menu switching stutter.
+        /// Postfix that overrides the result when player is enlisted.
+        /// Returns "enlisted_status" for non-combat situations and "enlisted_battle_wait" for combat.
         /// </summary>
         [HarmonyPostfix]
         [SuppressMessage("ReSharper", "InconsistentNaming", Justification = "Harmony convention: __result is a special injected parameter")]
@@ -40,43 +42,67 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     return;
                 }
                 
-                // Only intercept when player is waiting in reserve
-                if (!EnlistedEncounterBehavior.IsWaitingInReserve)
-                {
-                    return;
-                }
-                
-                // Check if actually enlisted - if not, reserve flag is stale
+                // Check if actually enlisted
                 var enlistment = EnlistmentBehavior.Instance;
                 var isEnlisted = enlistment?.IsEnlisted == true;
                 
                 if (!isEnlisted)
                 {
-                    // Reserve flag is stale - clear it and don't intercept
-                    ModLogger.Debug("GenericStateMenuPatch", "Clearing stale reserve flag during menu check");
+                    return;
+                }
+                
+                // If player is waiting in reserve during battle, use the battle wait menu
+                if (EnlistedEncounterBehavior.IsWaitingInReserve)
+                {
+                    var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
+                    var mapEvent = lordParty?.Party?.MapEvent;
+                    
+                    // Battle is over when: no MapEvent, OR MapEvent has a winner
+                    var battleOver = mapEvent == null || mapEvent.HasWinner;
+                    
+                    if (!battleOver)
+                    {
+                        // Battle is ongoing - use battle wait menu
+                        if (__result == "army_wait" || __result == "army_wait_at_settlement" || __result == "encounter")
+                        {
+                            ModLogger.Debug("Battle", $"Menu override: {__result} -> enlisted_battle_wait (player in reserve)");
+                            __result = "enlisted_battle_wait";
+                        }
+                        return;
+                    }
+                    
+                    // Battle is over - clear stale reserve flag and continue to normal enlisted menu logic
+                    ModLogger.Debug("GenericStateMenuPatch", "Clearing stale reserve flag - battle is over");
                     EnlistedEncounterBehavior.ClearReserveState();
+                }
+                
+                // Check if player is actually inside a settlement (has entered through "Visit Settlement")
+                // If so, don't override - let them use the native settlement menus
+                var insideSettlement = PlayerEncounter.InsideSettlement;
+                
+                if (insideSettlement)
+                {
+                    // Player has explicitly visited the settlement - don't override
                     return;
                 }
                 
-                // Check if battle is actually over - if so, DON'T override
-                // This allows the tick handler to detect battle end via genericStateMenu
-                var lordParty = enlistment?.CurrentLord?.PartyBelongedTo;
-                var mapEvent = lordParty?.Party?.MapEvent;
+                // Check if lord is in a battle or siege - if so, don't override combat-related menus
+                var lordPartyCheck = enlistment?.CurrentLord?.PartyBelongedTo;
+                var lordInBattle = lordPartyCheck?.Party?.MapEvent != null;
                 
-                // Battle is over when: no MapEvent, OR MapEvent has a winner, OR lord party is gone
-                var battleOver = mapEvent == null || mapEvent.HasWinner;
-                
-                if (battleOver)
+                if (lordInBattle && __result == "encounter")
                 {
-                    // Battle is over - don't override, let native menu system take over
+                    // Lord is in battle and native wants to show encounter menu - don't override
+                    // This will be handled by EnlistedMenuBehavior's battle activation logic
                     return;
                 }
                 
-                // When in reserve AND battle is ongoing, override to our custom menu
-                if (__result == "army_wait" || __result == "army_wait_at_settlement" || __result == "encounter")
+                // Override army_wait and army_wait_at_settlement to stay on enlisted menu
+                // This prevents unwanted menu switches when pausing at castles/towns
+                if (__result == "army_wait" || __result == "army_wait_at_settlement")
                 {
-                    ModLogger.Debug("Battle", $"Menu override: {__result} -> enlisted_battle_wait (player in reserve)");
-                    __result = "enlisted_battle_wait";
+                    ModLogger.Debug("Menu", $"Menu override: {__result} -> enlisted_status (keeping enlisted menu)");
+                    __result = "enlisted_status";
                 }
             }
             catch (Exception ex)

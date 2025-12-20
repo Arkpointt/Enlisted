@@ -303,7 +303,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 QuartermasterWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
-            // Rations purchase menu (Phase 5 Food System)
+            // Rations purchase menu.
             starter.AddWaitGameMenu(
                 "quartermaster_rations",
                 "Provisions\n{RATIONS_TEXT}",
@@ -376,7 +376,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 OnSupplyManagementSelected,
                 false, 6);
 
-            // Purchase rations (Phase 5 Food System - Trade icon for food purchase)
+            // Purchase rations (Trade icon).
             starter.AddGameMenuOption("quartermaster_equipment", "quartermaster_rations_option",
                 new TextObject("{=qm_menu_rations}Purchase provisions").ToString(),
                 args =>
@@ -425,7 +425,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 },
                 _ =>
                 {
-                    // Phase 7: Clear the "NEW" markers after player visits Quartermaster
+                    // Clear the "NEW" markers after the player visits the Quartermaster.
                     ClearNewlyUnlockedMarkers();
 
                     NextFrameDispatcher.RunNextFrame(() =>
@@ -507,13 +507,13 @@ namespace Enlisted.Features.Equipment.Behaviors
                 _ => ActivateMenuPreserveTime("quartermaster_equipment"));
         }
 
-        // Phase 7: Track items that became available after last promotion for "new item" indicators
+        // Track items that became available after the last promotion for "new item" indicators.
         private readonly HashSet<string> _previouslyAvailableItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _newlyUnlockedItems = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private int _lastPromotionTier;
 
         /// <summary>
-        /// Phase 7: Get all equipment available for a formation+tier+culture combination.
+        /// Get all equipment available for a formation+tier+culture combination.
         /// This replaces the single-troop approach with a comprehensive scan of all matching troops.
         /// </summary>
         /// <param name="formation">Player's formation (infantry, archer, cavalry, horsearcher)</param>
@@ -606,7 +606,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
-        /// Phase 7: Update the "newly unlocked items" set after a promotion.
+        /// Update the "newly unlocked items" set after a promotion.
         /// Call this when the player's tier changes.
         /// </summary>
         public void UpdateNewlyUnlockedItems()
@@ -672,7 +672,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
-        /// Phase 7: Check if an item is newly unlocked (for "NEW" indicators in UI).
+        /// Check if an item is newly unlocked (for "NEW" indicators in UI).
         /// </summary>
         public bool IsNewlyUnlockedItem(ItemObject item)
         {
@@ -684,7 +684,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         /// <summary>
-        /// Phase 7: Clear the newly unlocked items set (call when player visits QM or equips items).
+        /// Clear the newly unlocked items set (call when player visits QM or equips items).
         /// </summary>
         public void ClearNewlyUnlockedMarkers()
         {
@@ -695,8 +695,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Get equipment variants available to a specific troop type.
         /// Uses runtime discovery from actual game data.
         /// 
-        /// Phase 7 Note: This method is retained for backward compatibility but 
-        /// GetAvailableEquipmentByFormation() is now the preferred approach.
+        /// Note: This method is retained for backward compatibility, but GetAvailableEquipmentByFormation() is the
+        /// preferred approach.
         /// </summary>
         public Dictionary<EquipmentIndex, List<ItemObject>> GetTroopEquipmentVariants(CharacterObject selectedTroop)
         {
@@ -762,7 +762,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// <summary>
         /// Get the currently selected troop for the player.
         /// 
-        /// Phase 7 Note: This method now uses formation+tier+culture to find a representative troop.
+        /// Note: This method now uses formation+tier+culture to find a representative troop.
         /// The TroopSelectionManager.LastSelectedTroopId is no longer the primary lookup method.
         /// GetAvailableEquipmentByFormation() should be preferred for equipment queries.
         /// </summary>
@@ -778,7 +778,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return null;
                 }
                 
-                // Phase 7: Use formation+tier+culture directly
+                // Use formation+tier+culture directly.
                 var formation = duties.GetPlayerFormationType() ?? "infantry";
                 var culture = enlistment.EnlistedLord?.Culture;
                 var tier = enlistment.EnlistmentTier;
@@ -2076,7 +2076,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         // ========================================================================
-        // RATIONS/FOOD SYSTEM (Phase 5)
+        // RATIONS/FOOD SYSTEM
         // ========================================================================
 
         /// <summary>
@@ -2127,7 +2127,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     sb.AppendLine(new TextObject("{=qm_rations_gold}Your gold: {GOLD_ICON} {GOLD}").ToString());
                     MBTextManager.SetTextVariable("GOLD", Hero.MainHero.Gold);
 
-                    // Show retinue provisioning status (Phase 6)
+                    // Show retinue provisioning status.
                     if (enlistment.HasRetinueToProvision())
                     {
                         sb.AppendLine();
@@ -2237,7 +2237,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 false, 3);
 
             // ========================================
-            // RETINUE PROVISIONING OPTIONS (Phase 6)
+            // RETINUE PROVISIONING OPTIONS
             // Only shown for T7+ commanders with retinue
             // ========================================
 
@@ -2361,7 +2361,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         }
 
         // ========================================================================
-        // RETINUE PROVISIONING METHODS (Phase 6)
+        // RETINUE PROVISIONING METHODS
         // ========================================================================
 
         /// <summary>
@@ -2706,7 +2706,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     {
                         var title = variant.Item.Name?.ToString() ?? unknown;
                         
-                        // Phase 7: Add "NEW" indicator for recently unlocked items
+                        // Add "NEW" indicator for recently unlocked items.
                         if (variant.IsNewlyUnlocked)
                         {
                             title = $"{newTag} {title}";
@@ -4086,7 +4086,7 @@ namespace Enlisted.Features.Equipment.Behaviors
         public bool IsAtLimit { get; set; }
 
         /// <summary>
-        /// Phase 7: True if this item became available after the player's last promotion.
+        /// True if this item became available after the player's last promotion.
         /// Used for "NEW" indicators in the UI.
         /// </summary>
         public bool IsNewlyUnlocked { get; set; }

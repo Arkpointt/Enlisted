@@ -26,10 +26,7 @@ namespace Enlisted.Features.Interface.Behaviors
 {
     /// <summary>
     /// Manages kingdom-wide and personal news/dispatch feeds.
-    /// Read-only observer of campaign events; generates localized headlines.
-    ///
-    /// Phase 0: Infrastructure and persistence structure.
-    /// Phase 1+: Event wiring and news generation.
+    /// Read-only observer of campaign events that generates localized headlines.
     /// </summary>
     public sealed class EnlistedNewsBehavior : CampaignBehaviorBase
     {
@@ -84,15 +81,15 @@ namespace Enlisted.Features.Interface.Behaviors
         /// </summary>
         private bool _lordHadArmyYesterday;
 
-        // Camp News (Phase 2): persisted Daily Report + rolling ledger.
+        // Persisted Daily Report and rolling ledger state.
         private CampNewsState _campNewsState = new CampNewsState();
 
-        // Phase 5: expose the last generated snapshot to other systems (Decisions) without forcing recomputation.
-        // This snapshot contains primitives only; it is safe to cache and share as read-only.
+        // Expose the last generated snapshot to other systems (for example, Decisions) without forcing a
+        // recomputation. The snapshot contains primitives only, so it is safe to cache and share as read-only.
         private DailyReportSnapshot _lastDailyReportSnapshot;
         private int _lastDailyReportSnapshotDayNumber = -1;
 
-        // Phase 4: producer pattern to populate snapshot facts without sprawl.
+        // Producer set used to populate snapshot facts without scattering logic across the behavior.
         private static readonly IDailyReportFactProducer[] DailyReportFactProducers =
         {
             new CompanyMovementObjectiveProducer(),
@@ -147,7 +144,7 @@ namespace Enlisted.Features.Interface.Behaviors
             CampaignEvents.WarDeclared.AddNonSerializedListener(this, OnWarDeclared);
             CampaignEvents.MakePeace.AddNonSerializedListener(this, OnPeaceMade);
 
-            ModLogger.Info(LogCategory, "News behavior registered (Phase 5: personal news feed)");
+            ModLogger.Info(LogCategory, "News behavior registered");
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -240,7 +237,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Sync army tracking state
                 dataStore.SyncData("en_news_lordHadArmy", ref _lordHadArmyYesterday);
 
-                // Phase 2: Camp News state (Daily Report archive + ledger)
+                // Persisted camp news state (Daily Report archive + ledger).
                 _campNewsState ??= new CampNewsState();
                 _campNewsState.SyncData(dataStore);
 
@@ -433,10 +430,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     return string.Empty;
                 }
 
-                // Select which items are "currently visible" based on priority and backlog rules.
-                // - Every item must stay visible for at least 1 day once shown.
-                // - Important items stay visible for 2 days (MinDisplayDays = 2).
-                // - Items can be replaced by newer updates with the same StoryKey.
+                // Select which items are "currently visible" based on priority and backlog rules. Every item stays
+                // visible for at least one day once shown. Important items stay visible for two days. An item can be
+                // replaced by a newer update with the same StoryKey.
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 var candidates = _kingdomFeed
                     .Where(x =>
@@ -564,7 +560,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         #endregion
 
-        #region Event Handlers (Phase 1 Stubs)
+        #region Event Handlers
 
         /// <summary>
         /// Daily tick: check for bulletin generation and army formation detection.
@@ -583,7 +579,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Generate the daily brief once per day while enlisted so the main menu can display it without jitter.
                 EnsureDailyBriefGenerated();
 
-                // Phase 2: Generate the Daily Report once per in-game day (persisted, stable).
+                // Generate the Daily Report once per in-game day (persisted, stable).
                 EnsureDailyReportGenerated();
 
                 CheckForArmyFormation();
@@ -595,8 +591,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 2: Ensure we have a persisted Daily Report for the current day.
-        /// This does not change UI yet; Phase 3 consumes the record to show an excerpt on the main menu.
+        /// Ensure we have a persisted Daily Report for the current day.
         /// </summary>
         private void EnsureDailyReportGenerated()
         {
@@ -622,7 +617,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var snapshot = BuildDailyReportSnapshot(enlistment, dayNumber, out var aggregate, out var context);
 
-                // Cache snapshot for other systems (Phase 5 situation flags).
+                // Cache snapshot for other systems that need day facts.
                 _lastDailyReportSnapshot = snapshot;
                 _lastDailyReportSnapshotDayNumber = dayNumber;
 
@@ -654,8 +649,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 5: provides the current day’s Daily Report snapshot (facts), ensuring it exists first.
-        /// Intended for systems like Decisions that need the same “day facts” without duplicating producer logic.
+        /// Provides the current day’s Daily Report snapshot (facts), ensuring it exists first.
+        /// Intended for systems that need the same “day facts” without duplicating producer logic.
         /// </summary>
         public DailyReportSnapshot GetTodayDailyReportSnapshot()
         {
@@ -678,7 +673,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 5: posts a short high-signal personal dispatch line (used by decision outcomes).
+        /// Posts a short high-signal personal dispatch line (used by decision outcomes).
         /// </summary>
         public void PostPersonalDispatchText(string category, string text, string storyKey, int minDisplayDays = 2)
         {
@@ -758,7 +753,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 2 helper: get the latest Daily Report lines (already templated) if available.
+        /// Helper: get the latest Daily Report lines (already templated) if available.
         /// </summary>
         public IReadOnlyList<string> GetLatestDailyReportLines()
         {
@@ -780,8 +775,7 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Phase 2 helper: returns a compact excerpt suitable for a main-menu paragraph.
-        /// Phase 3 will switch the enlisted_status display over to this.
+        /// Helper: returns a compact excerpt suitable for a main-menu paragraph.
         /// </summary>
         public string GetLatestDailyReportExcerpt(int maxLines = 3, int maxChars = 260)
         {
@@ -812,8 +806,8 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var excerpt = string.Join(" ", parts).Trim();
 
-                // Phase 5.5: append one short "Opportunities" sentence when player decisions are available.
-                // This is deliberately dynamic (not persisted) so it reflects resolved decisions without regenerating the Daily Report.
+                // Append one short "Opportunities" sentence when player decisions are available. This is deliberately
+                // dynamic (not persisted) so it reflects resolved decisions without regenerating the Daily Report.
                 try
                 {
                     var decisionBehavior = DecisionEventBehavior.Instance;

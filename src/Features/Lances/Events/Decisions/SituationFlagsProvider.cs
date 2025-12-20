@@ -7,7 +7,7 @@ using Enlisted.Mod.Core.Triggers;
 namespace Enlisted.Features.Lances.Events.Decisions
 {
     /// <summary>
-    /// Computes situation flags from the Phase 4 Daily Report snapshot (preferred) plus a few “right now” live checks.
+    /// Computes situation flags from the Daily Report snapshot (preferred) plus a few “right now” live checks.
     /// The output should remain small and stable to keep content authoring predictable.
     /// </summary>
     public static class SituationFlagsProvider

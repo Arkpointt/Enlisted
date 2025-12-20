@@ -14,12 +14,12 @@ using TaleWorlds.Localization;
 namespace Enlisted.Features.Conditions
 {
     /// <summary>
-    /// Phase 5: Player condition system (injury/illness/exhaustion).
+    /// Manages the player condition system, including injuries, illnesses, and exhaustion.
     ///
-    /// - Feature-flagged (player_conditions.enabled)
-    /// - Safe persistence (only primitives/strings)
-    /// - Enlisted-only behavior
-    /// - Integrates with Phase 4 MedicalRisk escalation (untreated -> risk rises; treatment -> resets)
+    /// This system is feature-flagged and only active while the player is enlisted. 
+    /// It uses safe persistence by storing only primitives and strings, and integrates 
+    /// with the MedicalRisk escalation track where untreated conditions increase risk 
+    /// and treatment resets it.
     /// </summary>
     public sealed class PlayerConditionBehavior : CampaignBehaviorBase
     {
@@ -171,9 +171,7 @@ namespace Enlisted.Features.Conditions
                 _state.IllnessDaysRemaining = Math.Max(0, _state.IllnessDaysRemaining - recoveryTicks);
             }
 
-            // Phase 4 medical risk integration:
-            // - Untreated conditions raise medical risk slowly
-            // - Treatment resets medical risk (see ApplyTreatment)
+            // Medical risk rises slowly when conditions are untreated. Treatment resets it (see ApplyTreatment).
             if ((_state.HasInjury || _state.HasIllness) && !_state.UnderMedicalCare)
             {
                 EscalationManager.Instance?.ModifyMedicalRisk(1, "condition_untreated");

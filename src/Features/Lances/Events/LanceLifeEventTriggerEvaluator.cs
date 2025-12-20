@@ -32,7 +32,7 @@ namespace Enlisted.Features.Lances.Events
                 return false;
             }
 
-            // Phase 5a: escalation range requirements (min/max)
+            // Escalation range requirements (min/max).
             if (!AreEscalationRangesSatisfied(evt.Triggers?.EscalationRequirements))
             {
                 return false;
@@ -59,7 +59,7 @@ namespace Enlisted.Features.Lances.Events
 
         public bool IsConditionTrue(string token, EnlistmentBehavior enlistment)
         {
-            // Phase 5a: option.condition uses the same token grammar as triggers.
+            // option.condition uses the same token grammar as triggers.
             return IsTokenTrue(token, enlistment);
         }
 
@@ -79,8 +79,8 @@ namespace Enlisted.Features.Lances.Events
             var repOk = IsRangeSatisfied(enabled, esc?.State.LanceReputation ?? 0, req.LanceReputation);
             var medOk = IsRangeSatisfied(enabled, esc?.State.MedicalRisk ?? 0, req.MedicalRisk);
             
-            // Pay tension threshold check (Phase 3 Pay System)
-            // Pay tension is always enabled since it's part of the core pay system, not escalation
+            // Pay tension threshold check. Pay tension is part of the core pay system, so it is evaluated even when
+            // escalation is disabled.
             var payTensionOk = IsPayTensionSatisfied(req.PayTensionMin, req.PayTensionMax);
 
             return heatOk && discOk && repOk && medOk && payTensionOk;
@@ -451,7 +451,7 @@ namespace Enlisted.Features.Lances.Events
                 case CampaignTriggerTokens.HasCondition:
                     return PlayerConditionBehavior.Instance?.IsEnabled() == true && PlayerConditionBehavior.Instance.State.HasAnyCondition;
 
-                // Phase 7: Faction capability tokens
+                // Faction capability tokens.
                 case CampaignTriggerTokens.FactionHasHorseArchers:
                     return FactionHasHorseArcherTradition(enlistment);
 
@@ -561,8 +561,8 @@ namespace Enlisted.Features.Lances.Events
         }
 
         /// <summary>
-        /// Phase 7: Check if the player's enlisted faction has a horse archer tradition.
-        /// Khuzait and Aserai cultures have strong horse archer traditions.
+        /// Returns true when the player's enlisted faction is known for horse archers.
+        /// Currently, Khuzait and Aserai are treated as horse archer cultures.
         /// </summary>
         private static bool FactionHasHorseArcherTradition(EnlistmentBehavior enlistment)
         {
@@ -585,11 +585,8 @@ namespace Enlisted.Features.Lances.Events
                 return false;
             }
 
-            // Accept:
-            // - days_since_enlistment < 1
-            // - days_since_enlistment<=1
-            // - days_since_promotion >= 3
-            // - days_enlisted > 14   (alias for days_since_enlistment)
+            // Accepted formats include: days_since_enlistment < 1, days_since_enlistment<=1,
+            // days_since_promotion >= 3, and days_enlisted > 14 (alias for days_since_enlistment).
             var t = token.Trim();
 
             if (!t.StartsWith(CampaignTriggerTokens.DaysSinceEnlistment, StringComparison.OrdinalIgnoreCase) &&
@@ -671,12 +668,8 @@ namespace Enlisted.Features.Lances.Events
 
             var t = token.Trim();
 
-            // Supported numeric sources:
-            // - days_from_town
-            // - logistics_strain
-            // - morale_shock
-            // - pay_tension
-            // - heat / discipline / lance_reputation / medical_risk
+            // Supported numeric sources include days_from_town, logistics_strain, morale_shock, pay_tension, and the
+            // escalation values heat, discipline, lance_reputation, and medical_risk.
             var source = GetNumericSourceValue(t, out var sourceValue);
             if (string.IsNullOrWhiteSpace(source))
             {
@@ -796,11 +789,8 @@ namespace Enlisted.Features.Lances.Events
 
         public static bool IsAiSafe()
         {
-            // Conservative "safe moment" gating:
-            // - not in battle/map event
-            // - not in active PlayerEncounter
-            // - not in conversation
-            // - not prisoner
+            // Conservative gating. We only treat this as "safe" when the player is not in a map event, encounter,
+            // conversation, or captivity.
             var hero = Hero.MainHero;
             if (hero?.IsPrisoner == true)
             {

@@ -1,27 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.Assignments.Core;
+using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using Enlisted.Features.Activities;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Features.Lances.Events;
+using Enlisted.Features.Schedule.Models;
 using Enlisted.Mod.Core.Logging;
+using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
+using TaleWorlds.Library;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Lances.Events.Decisions
 {
     /// <summary>
     /// Decision Events behavior: CK3-style event delivery system.
-    /// 
-    /// Evaluates eligible decision events on specific hours, respects pacing limits,
-    /// and fires events through the existing Lance Life Events infrastructure.
-    /// 
-    /// This behavior handles the "pushed" automatic decision events.
-    /// Player-initiated decisions are surfaced through the Main Menu (Phase 4).
+    /// Evaluates eligible decision events on specific hours, respects pacing limits, and fires events through the
+    /// Lance Life Events infrastructure. This behavior handles the "pushed" automatic decision events.
+    /// Player-initiated decisions are surfaced through the main menu.
     /// </summary>
     public sealed class DecisionEventBehavior : CampaignBehaviorBase
     {
         private const string LogCategory = "DecisionEvents";
+        private const int FreeTimeQueueTimeoutHours = 48;
 
         public static DecisionEventBehavior Instance { get; private set; }
 
@@ -47,7 +51,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
         private int _lastEvaluationHour = -1;
         private bool _initialized;
 
-        // Phase 5: situation flag refresh gate
+        // Situation flag refresh gate.
         private int _lastSituationUpdateHourNumber = -1;
 
         public override void RegisterEvents()
@@ -100,13 +104,102 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 return new List<LanceLifeEventDefinition>();
             }
 
-            // Phase 5: keep situation flags fresh before evaluating availability.
+            // Keep situation flags fresh before evaluating availability.
             UpdateSituationFlagsIfNeeded(enlistment);
 
             var catalog = LanceLifeEventRuntime.GetCatalog();
             var allEvents = catalog?.Events ?? new List<LanceLifeEventDefinition>();
 
             return _evaluator.GetAvailablePlayerDecisions(allEvents, _state, config, enlistment);
+        }
+
+        public IReadOnlyList<QueuedFreeTimeDecision> GetQueuedFreeTimeDecisions()
+        {
+            return _state?.GetQueuedFreeTimeDecisions() ?? new List<QueuedFreeTimeDecision>();
+        }
+
+        public bool TryQueueFreeTimeDecision(
+            FreeTimeDecisionKind kind,
+            string id,
+            FreeTimeDecisionWindow window,
+            int desiredFatigueCost,
+            out TextObject resultText)
+        {
+            resultText = new TextObject(string.Empty);
+
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment?.IsEnlisted != true)
+                {
+                    resultText = new TextObject("{=enlisted_decision_not_enlisted}You are not currently enlisted.");
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    resultText = new TextObject("{=enlisted_decision_invalid}Invalid decision.");
+                    return false;
+                }
+
+                desiredFatigueCost = Math.Max(0, desiredFatigueCost);
+                if (desiredFatigueCost > 0 && enlistment.FatigueCurrent < desiredFatigueCost)
+                {
+                    resultText = new TextObject("{=enlisted_decision_too_tired}You are too exhausted for that right now.");
+                    return false;
+                }
+
+                var queuedAtHour = GetHourNumber();
+                var earliestHour = ComputeEarliestHourForWindow(window, queuedAtHour);
+
+                var record = new QueuedFreeTimeDecision
+                {
+                    Kind = kind,
+                    Window = window,
+                    Id = id,
+                    DesiredFatigueCost = desiredFatigueCost,
+                    EarliestHourNumber = earliestHour,
+                    QueuedAtHourNumber = queuedAtHour
+                };
+
+                if (_state?.TryQueueFreeTimeDecision(record) != true)
+                {
+                    resultText = new TextObject("{=enlisted_decision_already_queued}That is already queued.");
+                    return false;
+                }
+
+                resultText = new TextObject("{=enlisted_decision_queued}Queued.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to queue Free Time decision", ex);
+                resultText = new TextObject("{=enlisted_decision_queue_error}Failed to queue decision.");
+                return false;
+            }
+        }
+
+        public bool TryCancelQueuedFreeTimeDecision(string id, out TextObject resultText)
+        {
+            resultText = new TextObject(string.Empty);
+
+            try
+            {
+                if (_state?.TryRemoveQueuedFreeTimeDecision(id) == true)
+                {
+                    resultText = new TextObject("{=enlisted_decision_cancelled}Cancelled.");
+                    return true;
+                }
+
+                resultText = new TextObject("{=enlisted_decision_cancel_failed}Nothing to cancel.");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to cancel queued Free Time decision", ex);
+                resultText = new TextObject("{=enlisted_decision_cancel_error}Failed to cancel queued decision.");
+                return false;
+            }
         }
 
         /// <summary>
@@ -198,13 +291,19 @@ namespace Enlisted.Features.Lances.Events.Decisions
                     return;
                 }
 
-                // Phase 5: update situation flags for decision availability (derived from Daily Report snapshot + live state).
+                // Update situation flags for decision availability (derived from Daily Report snapshot + live state).
                 UpdateSituationFlagsIfNeeded(enlistment);
 
                 // Try to fire queued event first
                 if (!string.IsNullOrEmpty(_queuedEventId))
                 {
                     TryFireQueued(enlistment);
+                    return;
+                }
+
+                // Try to execute one queued Free Time decision when its window is reached.
+                if (TryFireQueuedFreeTimeDecision(enlistment))
+                {
                     return;
                 }
 
@@ -241,6 +340,338 @@ namespace Enlisted.Features.Lances.Events.Decisions
             }
         }
 
+        private bool TryFireQueuedFreeTimeDecision(EnlistmentBehavior enlistment)
+        {
+            var queue = _state?.GetQueuedFreeTimeDecisions();
+            if (queue == null || queue.Count == 0)
+            {
+                return false;
+            }
+
+            var nowHour = GetHourNumber();
+            var currentBlock = CampaignTriggerTrackerBehavior.Instance?.GetTimeBlock() ?? TimeBlock.Morning;
+
+            // Drop timed-out entries (keep queue lean and predictable).
+            var changed = false;
+            var normalized = queue.ToList();
+            for (var i = normalized.Count - 1; i >= 0; i--)
+            {
+                var age = nowHour - normalized[i].QueuedAtHourNumber;
+                if (age > FreeTimeQueueTimeoutHours)
+                {
+                    ModLogger.Warn(LogCategory, $"Dropping queued Free Time decision due to timeout: {normalized[i].Id}");
+                    normalized.RemoveAt(i);
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                _state.ReplaceQueuedFreeTimeDecisions(normalized);
+            }
+
+            // Find the first eligible entry.
+            var next = normalized.FirstOrDefault(d =>
+                d != null &&
+                nowHour >= d.EarliestHourNumber &&
+                IsTimeBlockAllowed(currentBlock, d.Window));
+
+            if (next == null)
+            {
+                return false;
+            }
+
+            // For event-backed decisions, use the same safety rules as automatic events.
+            // For training actions, we also respect these to avoid executing while the game is in a sensitive state.
+            if (!IsSafeToShowEvent())
+            {
+                return false;
+            }
+
+            var executed = false;
+            if (next.Kind == FreeTimeDecisionKind.TrainingAction)
+            {
+                executed = ExecuteTrainingAction(next, enlistment);
+            }
+            else
+            {
+                executed = ExecuteQueuedEventDecision(next, enlistment);
+            }
+
+            if (!executed)
+            {
+                return false;
+            }
+
+            // Remove from queue.
+            normalized.RemoveAll(d => d != null && string.Equals(d.Id, next.Id, StringComparison.OrdinalIgnoreCase));
+            _state.ReplaceQueuedFreeTimeDecisions(normalized);
+            return true;
+        }
+
+        private bool ExecuteQueuedEventDecision(QueuedFreeTimeDecision queued, EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var catalog = LanceLifeEventRuntime.GetCatalog();
+                var evt = catalog?.Events?.FirstOrDefault(e => e.Id == queued.Id);
+                if (evt == null)
+                {
+                    ModLogger.Warn(LogCategory, $"Queued Free Time event not found in catalog: {queued.Id}");
+                    return true; // treat as consumed; it will be removed by caller
+                }
+
+                // Ensure the action is "expensive" as a free-time spend: we top up fatigue cost to at least DesiredFatigueCost.
+                var minFatigue = GetMinFatigueCost(evt);
+                var additional = Math.Max(0, queued.DesiredFatigueCost - minFatigue);
+                if (additional > 0 && !enlistment.TryConsumeFatigue(additional, $"free_time:{queued.Id}"))
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=enlisted_decision_cancel_exhausted}You are too exhausted. Your queued decision is cancelled.").ToString()));
+                    return true; // treat as consumed; it will be removed by caller
+                }
+
+                return FireEvent(evt, enlistment);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Failed to execute queued Free Time event: {queued?.Id}", ex);
+                return false;
+            }
+        }
+
+        private bool ExecuteTrainingAction(QueuedFreeTimeDecision queued, EnlistmentBehavior enlistment)
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                if (hero == null)
+                {
+                    return true;
+                }
+
+                if (queued.DesiredFatigueCost > 0 && !enlistment.TryConsumeFatigue(queued.DesiredFatigueCost, $"training:{queued.Id}"))
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=enlisted_decision_cancel_exhausted}You are too exhausted. Your queued decision is cancelled.").ToString()));
+                    return true; // treat as consumed; it will be removed by caller
+                }
+
+                var tier = enlistment.EnlistmentTier <= 0 ? 1 : enlistment.EnlistmentTier;
+
+                switch (queued.Id)
+                {
+                    case "ft_training_formation":
+                        GrantTrainingXp(hero, DefaultSkills.Athletics, tier, 1.0f);
+                        if (HasMountEquipped(hero))
+                        {
+                            GrantTrainingXp(hero, DefaultSkills.Riding, tier, 0.8f);
+                        }
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=enlisted_training_done_formation}You complete a formation drill.").ToString()));
+                        return true;
+
+                    case "ft_training_combat":
+                        var weaponSkill = TryGetPrimaryWeaponSkill(hero) ?? DefaultSkills.OneHanded;
+                        GrantTrainingXp(hero, weaponSkill, tier, 1.0f);
+                        GrantTrainingXp(hero, DefaultSkills.Athletics, tier, 0.4f);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=enlisted_training_done_combat}You complete a combat drill.").ToString()));
+                        return true;
+
+                    case "ft_training_specialist":
+                        // Placeholder "specialist" training until we have duty-role mapping.
+                        // We keep this useful by awarding Leadership (drill discipline) plus a small Athletics component.
+                        GrantTrainingXp(hero, DefaultSkills.Leadership, tier, 0.8f);
+                        GrantTrainingXp(hero, DefaultSkills.Athletics, tier, 0.3f);
+                        InformationManager.DisplayMessage(new InformationMessage(
+                            new TextObject("{=enlisted_training_done_specialist}You complete specialist practice.").ToString()));
+                        return true;
+                }
+
+                // Unknown action id: treat as consumed so it doesn't get stuck.
+                ModLogger.Warn(LogCategory, $"Unknown training action id in queue: {queued.Id}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, $"Failed to execute training action: {queued?.Id}", ex);
+                return false;
+            }
+        }
+
+        private static int GetMinFatigueCost(LanceLifeEventDefinition evt)
+        {
+            try
+            {
+                var min = 0;
+                var first = true;
+                foreach (var opt in evt?.Options ?? new List<LanceLifeEventOptionDefinition>())
+                {
+                    var fat = opt?.Costs?.Fatigue ?? 0;
+                    if (first)
+                    {
+                        min = fat;
+                        first = false;
+                        continue;
+                    }
+                    min = Math.Min(min, fat);
+                }
+                return Math.Max(0, min);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        private static void GrantTrainingXp(Hero hero, SkillObject skill, int tier, float multiplier)
+        {
+            try
+            {
+                if (hero?.HeroDeveloper == null || skill == null)
+                {
+                    return;
+                }
+
+                multiplier = MathF.Clamp(multiplier, 0f, 5f);
+                if (multiplier <= 0f)
+                {
+                    return;
+                }
+
+                var raw = TrainingXpScaler.CalculateRawTrainingXp(hero, skill, tier) * multiplier;
+                if (raw <= 0f)
+                {
+                    return;
+                }
+
+                hero.HeroDeveloper.AddSkillXp(skill, raw, isAffectedByFocusFactor: true, shouldNotify: true);
+            }
+            catch
+            {
+                // Intentionally swallow: training XP should never hard-fail a campaign tick.
+            }
+        }
+
+        private static bool HasMountEquipped(Hero hero)
+        {
+            try
+            {
+                var horse = hero?.BattleEquipment[EquipmentIndex.Horse].Item;
+                return horse != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static SkillObject TryGetPrimaryWeaponSkill(Hero hero)
+        {
+            try
+            {
+                if (hero == null || Campaign.Current?.Models?.CombatXpModel == null)
+                {
+                    return null;
+                }
+
+                var equipment = hero.BattleEquipment;
+                var weaponSlots = new[] { EquipmentIndex.Weapon0, EquipmentIndex.Weapon1, EquipmentIndex.Weapon2, EquipmentIndex.Weapon3 };
+
+                foreach (var slot in weaponSlots)
+                {
+                    var item = equipment[slot].Item;
+                    if (item?.PrimaryWeapon == null)
+                    {
+                        continue;
+                    }
+
+                    var weapon = item.GetWeaponWithUsageIndex(0);
+                    if (weapon == null)
+                    {
+                        continue;
+                    }
+
+                    return Campaign.Current.Models.CombatXpModel.GetSkillForWeapon(weapon, isSiegeEngineHit: false);
+                }
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static bool IsTimeBlockAllowed(TimeBlock current, FreeTimeDecisionWindow window)
+        {
+            switch (window)
+            {
+                case FreeTimeDecisionWindow.Any:
+                    return true;
+                case FreeTimeDecisionWindow.Training:
+                    return current == TimeBlock.Morning || current == TimeBlock.Afternoon;
+                case FreeTimeDecisionWindow.Social:
+                    return current == TimeBlock.Dusk || current == TimeBlock.Night;
+                default:
+                    return false;
+            }
+        }
+
+        private static int ComputeEarliestHourForWindow(FreeTimeDecisionWindow window, int currentHourNumber)
+        {
+            // We schedule to "now" if currently inside the window; otherwise to the next window start hour.
+            // This is intentionally coarse (hour-based) since processing is driven by HourlyTickEvent.
+            var hourOfDay = ((currentHourNumber % 24) + 24) % 24;
+
+            int[] starts;
+            switch (window)
+            {
+                case FreeTimeDecisionWindow.Training:
+                    // Morning/Afternoon starts (approx): 6, 12
+                    starts = new[] { 6, 12 };
+                    break;
+                case FreeTimeDecisionWindow.Social:
+                    // Dusk/Night starts (approx): 18, 22
+                    starts = new[] { 18, 22 };
+                    break;
+                case FreeTimeDecisionWindow.Any:
+                default:
+                    return currentHourNumber;
+            }
+
+            // If inside the window already, allow firing as soon as safe.
+            if (window == FreeTimeDecisionWindow.Training && (hourOfDay >= 6 && hourOfDay < 18))
+            {
+                return currentHourNumber;
+            }
+
+            if (window == FreeTimeDecisionWindow.Social && (hourOfDay >= 18 || hourOfDay < 6))
+            {
+                return currentHourNumber;
+            }
+
+            // Otherwise, compute the next start hour >= now.
+            var bestDelta = int.MaxValue;
+            foreach (var start in starts)
+            {
+                var delta = start - hourOfDay;
+                if (delta <= 0)
+                {
+                    delta += 24;
+                }
+                bestDelta = Math.Min(bestDelta, delta);
+            }
+
+            if (bestDelta == int.MaxValue)
+            {
+                bestDelta = 0;
+            }
+
+            return currentHourNumber + bestDelta;
+        }
+
         private void OnDailyTick()
         {
             try
@@ -254,7 +685,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
                 // Expire old flags
                 _state.ExpireFlags();
 
-                // Phase 5: refresh situation flags at least once per day (safe fallback)
+                // Refresh situation flags at least once per day (safe fallback).
                 UpdateSituationFlagsIfNeeded(EnlistmentBehavior.Instance, force: true);
 
                 ModLogger.Debug(LogCategory, $"Daily reset complete. Fired today: {_state.FiredToday}, this week: {_state.FiredThisWeek}");
@@ -318,8 +749,8 @@ namespace Enlisted.Features.Lances.Events.Decisions
         }
 
         /// <summary>
-        /// Phase 5: record a resolved decision outcome (for Reports + Daily Report grounding) and post a short dispatch follow-up.
-        /// Called from the centralized effects applier to ensure all delivery paths are covered.
+        /// Record a resolved decision outcome (for Reports + Daily Report grounding) and post a short dispatch
+        /// follow-up. Called from the centralized effects applier to ensure all delivery paths are covered.
         /// </summary>
         public void RecordDecisionOutcome(LanceLifeEventDefinition evt, LanceLifeEventOptionDefinition option, string resultText)
         {
@@ -527,7 +958,7 @@ namespace Enlisted.Features.Lances.Events.Decisions
             // Reload config every hour
             if (_config == null || currentHour != _lastConfigLoadHour)
             {
-                _config = ConfigurationManager.LoadDecisionEventsConfig() ?? new DecisionEventConfig();
+                _config = EnlistedConfig.LoadDecisionEventsConfig() ?? new DecisionEventConfig();
                 _lastConfigLoadHour = currentHour;
             }
 
