@@ -146,6 +146,8 @@
     <Content Include="GUI\Prefabs\Camp\CampLancePanel.xml"/>
     <Content Include="GUI\Prefabs\Camp\LanceTuple.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampReportsPanel.xml"/>
+    <Content Include="GUI\Prefabs\Camp\ReportCategoryTuple.xml"/>
+    <Content Include="GUI\Prefabs\Camp\ReportTuple.xml"/>
     <Content Include="GUI\Prefabs\Camp\CampArmyPanel.xml"/>
   </ItemGroup>
   <ItemGroup>
