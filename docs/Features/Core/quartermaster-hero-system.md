@@ -23,11 +23,12 @@ The **Quartermaster Hero System** transforms equipment management into an immers
 
 ## Company Needs Integration
 
-In v0.9.0, the Quartermaster's services are directly tied to the unit's **Company Needs**:
+In v0.9.0, the Quartermaster's services are directly tied to the unit's **Company Needs** and the broader **Strategic Context**:
 
+- **Strategic Context Awareness**: The Quartermaster's inventory and dialogue change based on the current operation. During a "Grand Campaign," he prioritizes arrow bundles and repair kits. During "Winter Camp," he focuses on warm clothing and luxury provisions.
 - **Supplies Threshold**: If the unit's **Supplies** need falls below 30%, the Quartermaster will restrict access to high-tier gear and rations.
 - **Equipment Threshold**: If the unit's **Equipment** need is low, the cost of maintenance and repairs increases.
-- **Mood**: The Quartermaster’s dialogue reflects the current **Morale** and **Readiness** of the company.
+- **Mood**: The Quartermaster’s dialogue reflects the current **Morale** and **Readiness** of the company. During a "Last Stand," his tone becomes grim and urgent.
 
 ---
 

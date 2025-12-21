@@ -310,7 +310,7 @@
       },
       "content": {
         "title": "Commander's Commission",
-        "setup": "{LORD_NAME} calls you to the command tent. Maps are spread across the table, markers showing troop positions.\n\n'You've proven yourself, {PLAYER_NAME}. The rank of {NEXT_RANK} comes with command — twenty soldiers, yours to lead. This is no small responsibility. Are you ready?'",
+        "setup": "{LORD_NAME} summons you. Maps are spread across the table, markers showing troop positions.\n\n'You've proven yourself, {PLAYER_NAME}. The rank of {NEXT_RANK} comes with command — twenty soldiers, yours to lead. This is no small responsibility. Are you ready?'",
         "options": [
           {
             "id": "accept_command",

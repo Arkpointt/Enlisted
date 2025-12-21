@@ -1564,7 +1564,7 @@ namespace Enlisted.Features.Camp
             message.SetTextVariable("UPKEEP", count * 2);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
-            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
+            var pauseGameActiveState = ShouldPauseDuringCampInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -1634,7 +1634,7 @@ namespace Enlisted.Features.Camp
             message.SetTextVariable("COUNT", currentCount);
 
             // pauseGameActiveState = false so dialogs don't freeze game time
-            var pauseGameActiveState = ShouldPauseDuringCommandTentInquiry();
+            var pauseGameActiveState = ShouldPauseDuringCampInquiry();
             InformationManager.ShowInquiry(
                 new InquiryData(
                     title.ToString(),
@@ -2904,6 +2904,15 @@ namespace Enlisted.Features.Camp
         }
 
         #endregion
+
+        /// <summary>
+        /// Determine if the game should pause during Camp inquiries.
+        /// </summary>
+        private bool ShouldPauseDuringCampInquiry()
+        {
+            // Inquiries should not pause the game time to keep simulation running.
+            return false;
+        }
     }
 }
 

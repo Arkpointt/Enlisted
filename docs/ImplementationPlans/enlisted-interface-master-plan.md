@@ -3570,15 +3570,18 @@ Based on `strategic_context_config.json`, use these tags to ensure orders match 
 3. `src/Features/Context/ArmyContextAnalyzer.cs` (+300 lines) - Strategic detection methods
 4. `src/Features/Orders/Behaviors/OrderManager.cs` (+50 lines) - Context-aware order selection
 5. `src/Features/Company/CompanyNeedsManager.cs` (+100 lines) - Needs prediction system
-6. `ModuleData/Enlisted/Orders/orders_t1_t3.json` - Strategic tags added to 12 orders
-7. `ModuleData/Enlisted/Orders/orders_t4_t6.json` - Strategic tags added to 15 orders
-8. `ModuleData/Enlisted/Orders/orders_t7_t9.json` - Strategic tags added to 13 orders
+6. `src/Features/Interface/News/Generation/DailyReportGenerator.cs` - Strategic "WHY" narration in reports
+7. `src/Features/Interface/News/Generation/Producers/CompanyMovementObjectiveProducer.cs` - Strategic context data gathering
+8. `ModuleData/Enlisted/Orders/orders_t1_t3.json` - Strategic tags added to 12 orders
+9. `ModuleData/Enlisted/Orders/orders_t4_t6.json` - Strategic tags added to 15 orders
+10. `ModuleData/Enlisted/Orders/orders_t7_t9.json` - Strategic tags added to 13 orders
 
 **Key Features Implemented**:
 - War stance detection (desperate/defensive/balanced/offensive) based on faction strength
 - 8 strategic contexts: coordinated_offensive, desperate_defense, raid_operation, siege_operation, patrol_peacetime, garrison_duty, recruitment_drive, winter_camp
 - Context-aware order selection using strategic tags
 - Company needs prediction based on upcoming strategic operations
+- Strategic Narration in Daily Reports: Explains the "WHY" behind the campaign
 - Settlement strategic value calculation
 - Multi-army coordination detection
 - All configuration data-driven (JSON/XML) for easy modding

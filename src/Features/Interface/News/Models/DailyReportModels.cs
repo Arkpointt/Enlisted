@@ -85,6 +85,8 @@ namespace Enlisted.Features.Interface.News.Models
         public string DisciplineTag { get; set; } = string.Empty; // e.g. "clean", "troubled", "critical"
         public int DisciplineIssues { get; set; } = -1; // Escalation discipline track (0-10). -1 when unknown.
 
+        public string StrategicContextTag { get; set; } = string.Empty; // e.g. "coordinated_offensive", "winter_camp"
+
         // Optional: stabilization helpers used by template selection.
         public HealthDeltaBand HealthDeltaBand { get; set; } = HealthDeltaBand.Unknown;
         public TrainingTag TrainingTag { get; set; } = TrainingTag.Unknown;

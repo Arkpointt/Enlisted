@@ -261,7 +261,7 @@
       "titleId": "ll_discipline_title",
       "title": "Discipline Issues",
       "bodyId": "ll_discipline_body",
-      "body": "{LANCE_LEADER_FIRST} summons you to the command tent. Their expression is serious.\n\n\"Your discipline record is becoming a problem. Fighting. Insubordination. Complaints from other lances.\"\n\n\"I've defended you so far, but my patience has limits.\"",
+      "body": "{LANCE_LEADER_FIRST} summons you. Their expression is serious.\n\n\"Your discipline record is becoming a problem. Fighting. Insubordination. Complaints from other lances.\"\n\n\"I've defended you so far, but my patience has limits.\"",
       "options": [
         {
           "id": "apologize",

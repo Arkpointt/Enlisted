@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Interface.News.Templates;
+using TaleWorlds.Core;
+using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Interface.News.Generation
 {
@@ -35,6 +37,30 @@ namespace Enlisted.Features.Interface.News.Generation
             maxLines = Math.Max(1, Math.Min(maxLines, 12));
 
             var candidates = new List<Candidate>();
+
+            // ===== Strategic Context: The overarching "WHY" (HIGH PRIORITY) =====
+            if (!string.IsNullOrWhiteSpace(snapshot.StrategicContextTag))
+            {
+                string narrationId = $"context_narration_{snapshot.StrategicContextTag}";
+                TextObject narrationText = GameTexts.FindText(narrationId);
+                
+                // If targeting a settlement, add that context if possible
+                string narration = narrationText.ToString();
+                if (!string.IsNullOrWhiteSpace(context.TargetSettlementName))
+                {
+                    narration = narration.Replace("{target}", context.TargetSettlementName);
+                }
+                else
+                {
+                    narration = narration.Replace("{target}", "the enemy");
+                }
+
+                candidates.Add(Candidate.Raw(
+                    line: narration,
+                    priority: 92, // High priority but below recent critical order outcomes
+                    severity: 0,
+                    confidence: 1.0f));
+            }
 
             // ===== Player Actions: Recent order outcomes (HIGHEST PRIORITY) =====
             if (Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)

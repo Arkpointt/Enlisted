@@ -357,7 +357,7 @@
       "titleId": "lance_promotion_offer_title",
       "title": "A New Responsibility",
       "bodyId": "lance_promotion_offer_body",
-      "body": "A runner finds you: the commander wants to see you immediately.\n\nIn the command tent, {LORD_NAME} regards you with a measuring gaze.\n\n\"The lance needs a new leader. Your service record speaks well of you. Are you ready to take command?\"",
+      "body": "A runner finds you: the commander wants to see you immediately.\n\nYour lord regards you with a measuring gaze.\n\n\"The lance needs a new leader. Your service record speaks well of you. Are you ready to take command?\"",
       "options": [
         {
           "id": "accept",

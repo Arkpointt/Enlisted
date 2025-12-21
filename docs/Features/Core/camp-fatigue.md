@@ -7,6 +7,7 @@ Fatigue is currently used by:
 - Pay Muster options (e.g. Corruption Challenge, Side Deal)
 - Probation (caps max fatigue while probation is active)
 - Camp Activities (data-driven menu actions can cost or restore fatigue)
+- Strategic Operations (high-intensity contexts like "Grand Campaign" or "Siege Works" may increase fatigue costs for certain actions)
 - Lance Life Events (event options can cost or restore fatigue; menu availability considers fatigue)
 
 ## Data & State
@@ -30,4 +31,6 @@ Fatigue is currently used by:
 - Defaults safe if config missing; baseline is 24/24 unless modified by probation.
 
 ## Recovery
-- Fatigue is restored by rest and/or specific systems (implementation-owned by enlistment behavior). If fatigue is capped by probation, recovery cannot exceed the cap until probation ends.
+- Fatigue is restored by rest and/or specific systems (implementation-owned by enlistment behavior). 
+- **Strategic Context Impact**: Recovery is faster during restful contexts like "Winter Camp" or "Garrison Duty" and slower during high-tempo operations like "Last Stand" or "Harrying the Lands."
+- If fatigue is capped by probation, recovery cannot exceed the cap until probation ends.

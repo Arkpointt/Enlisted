@@ -1,4 +1,5 @@
 using System;
+using Enlisted.Features.Context;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem.Settlements;
@@ -19,6 +20,12 @@ namespace Enlisted.Features.Interface.News.Generation.Producers
 
             var party = context.LordParty;
             snapshot.LordPartyId = party?.StringId ?? string.Empty;
+
+            // Populate strategic context tag.
+            if (party != null)
+            {
+                snapshot.StrategicContextTag = ArmyContextAnalyzer.GetLordStrategicContext(party);
+            }
 
             // Food / morale bands (best-effort) from the CampLife snapshot meters.
             var camp = context.CampLife;
