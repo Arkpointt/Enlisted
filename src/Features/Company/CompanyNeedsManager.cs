@@ -36,16 +36,16 @@ namespace Enlisted.Features.Company
             ModLogger.Debug(LogCategory, "Processing daily degradation...");
 
             // Initial base degradation rates are hard-coded while the configuration system is being expanded.
-            int readinessDegradation = 2;
-            int equipmentDegradation = 3;
-            int moraleDegradation = 1;
-            int restDegradation = 4;
-            int suppliesDegradation = 5;
+            var readinessDegradation = 2;
+            var equipmentDegradation = 3;
+            var moraleDegradation = 1;
+            var restDegradation = 4;
+            var suppliesDegradation = 5;
 
             // Check for accelerated degradation conditions
-            bool isInCombat = army != null && army.MapEvent != null;
-            bool isOnLongMarch = army != null && army.IsMoving && army.CurrentSettlement == null;
-            bool lowMorale = needs.Morale < 40;
+            bool isInCombat = army?.MapEvent != null;
+            bool isOnLongMarch = army is { IsMoving: true, CurrentSettlement: null };
+            var lowMorale = needs.Morale < 40;
 
             // Accelerated degradation from combat
             if (isInCombat)
@@ -72,11 +72,11 @@ namespace Enlisted.Features.Company
             }
 
             // Apply degradation
-            int oldReadiness = needs.Readiness;
-            int oldEquipment = needs.Equipment;
-            int oldMorale = needs.Morale;
-            int oldRest = needs.Rest;
-            int oldSupplies = needs.Supplies;
+            var oldReadiness = needs.Readiness;
+            var oldEquipment = needs.Equipment;
+            var oldMorale = needs.Morale;
+            var oldRest = needs.Rest;
+            var oldSupplies = needs.Supplies;
 
             needs.SetNeed(CompanyNeed.Readiness, needs.Readiness - readinessDegradation);
             needs.SetNeed(CompanyNeed.Equipment, needs.Equipment - equipmentDegradation);
@@ -111,8 +111,8 @@ namespace Enlisted.Features.Company
             }
 
             // Critical thresholds are currently hard-coded while the configuration system is being expanded.
-            int criticalThresholdHigh = 20; // 20%
-            int criticalThresholdLow = 30;   // 30%
+            var criticalThresholdHigh = 20; // 20%
+            var criticalThresholdLow = 30;   // 30%
 
             // Check each need against thresholds
             CheckNeedThreshold(needs.Readiness, CompanyNeed.Readiness, criticalThresholdHigh, criticalThresholdLow, warnings);
@@ -178,7 +178,7 @@ namespace Enlisted.Features.Company
             try
             {
                 // Get current strategic context
-                string context = ArmyContextAnalyzer.GetLordStrategicContext(party);
+                var context = ArmyContextAnalyzer.GetLordStrategicContext(party);
 
                 // Load prediction template from config
                 var contextData = _strategicConfig?["strategic_contexts"]?[context];
@@ -238,7 +238,7 @@ namespace Enlisted.Features.Company
 
             try
             {
-                string configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "strategic_context_config.json");
+                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "strategic_context_config.json");
                 
                 if (!File.Exists(configPath))
                 {
@@ -248,7 +248,7 @@ namespace Enlisted.Features.Company
                     return;
                 }
 
-                string json = File.ReadAllText(configPath);
+                var json = File.ReadAllText(configPath);
                 _strategicConfig = JObject.Parse(json);
                 _configLoaded = true;
                 

@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Enlisted.Features.CommandTent.Data
+namespace Enlisted.Features.Retinue.Data
 {
     /// <summary>
     /// Per-faction service history for the player. Each faction maintains separate records.

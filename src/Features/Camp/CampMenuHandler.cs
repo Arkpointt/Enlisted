@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 // Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
-using Enlisted.Features.CommandTent.Core;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -46,19 +46,19 @@ namespace Enlisted.Features.Camp
 
 
         // Ensure Camp dialogs never pause the campaign clock.
-        private static bool ShouldPauseDuringCommandTentInquiry() => false;
+        private static bool ShouldPauseDuringRetinueInquiry() => false;
 
         #region Wait Menu Handlers (enables spacebar time control like Quartermaster menus)
         
         /// <summary>
         /// Wait condition - always returns true since we control exit via menu options.
         /// </summary>
-        private static bool CommandTentWaitCondition(MenuCallbackArgs args) => true;
+        private static bool CampWaitCondition(MenuCallbackArgs args) => true;
         
         /// <summary>
         /// Wait consequence - empty since we handle exit via menu options.
         /// </summary>
-        private static void CommandTentWaitConsequence(MenuCallbackArgs args)
+        private static void CampWaitConsequence(MenuCallbackArgs args)
         {
             // No consequence needed - we never let progress reach 100%
         }
@@ -70,7 +70,7 @@ namespace Enlisted.Features.Camp
         /// UnstoppableFastForward, but this fought with user input - when the user clicked
         /// fast forward, the next tick would immediately restore it. This caused x3 speed to pause.
         /// </summary>
-        private static void CommandTentWaitTick(MenuCallbackArgs args, CampaignTime dt)
+        private static void CampWaitTick(MenuCallbackArgs args, CampaignTime dt)
         {
             // Intentionally empty - time mode is handled in menu init, not per-tick
             // The old code here fought with user speed input and caused pausing issues
@@ -213,7 +213,7 @@ namespace Enlisted.Features.Camp
         [GameMenuInitializationHandler(RetinueDismissMenuId)]
         [GameMenuInitializationHandler(RetinueRequisitionMenuId)]
         [GameMenuInitializationHandler(CompanionAssignmentsMenuId)]
-        public static void CommandTentMenuBackgroundInit(MenuCallbackArgs args)
+        public static void CampMenuBackgroundInit(MenuCallbackArgs args)
         {
             // Use a military meeting/camp background
             args.MenuContext.SetBackgroundMeshName("encounter_meeting");
@@ -239,9 +239,9 @@ namespace Enlisted.Features.Camp
                 ServiceRecordsMenuId,
                 "{=ct_records_intro}Your service history and military records.",
                 OnServiceRecordsInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Posting
@@ -330,9 +330,9 @@ namespace Enlisted.Features.Camp
                 CurrentPostingMenuId,
                 "{CURRENT_POSTING_TEXT}",
                 OnCurrentPostingInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
@@ -414,7 +414,7 @@ namespace Enlisted.Features.Camp
             var pensionStatus = GetPensionStatus(enlistment);
 
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_record}— Current Service Record —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_record}â€” Current Service Record â€”").ToString());
             sb.AppendLine();
 
             var postingLine = new TextObject("{=enl_posting_line_posting}Posting: Army of {FACTION}");
@@ -439,7 +439,7 @@ namespace Enlisted.Features.Camp
             contractLine.SetTextVariable("CONTRACT", daysRemaining ?? string.Empty);
             sb.AppendLine(contractLine.ToString());
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_pay}— Pay Muster —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_pay}â€” Pay Muster â€”").ToString());
             sb.AppendLine();
 
             var pendingLine = new TextObject("{=enl_posting_line_pending_pay}Pending Muster Pay: {PAY} denars");
@@ -462,7 +462,7 @@ namespace Enlisted.Features.Camp
                 sb.AppendLine(new TextObject("{=enl_posting_status_discharge_pending}Status: Discharge pending (will resolve at next pay muster)").ToString());
             }
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_pension}— Pension —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_pension}â€” Pension â€”").ToString());
             sb.AppendLine();
 
             var pensionLine = new TextObject("{=enl_posting_line_pension_daily}Daily Pension: {PAY} denars");
@@ -473,7 +473,7 @@ namespace Enlisted.Features.Camp
             pensionStatusLine.SetTextVariable("STATUS", pensionStatus ?? string.Empty);
             sb.AppendLine(pensionStatusLine.ToString());
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_posting_header_term}— This Term —").ToString());
+            sb.AppendLine(new TextObject("{=enl_posting_header_term}â€” This Term â€”").ToString());
             sb.AppendLine();
 
             var battlesLine = new TextObject("{=enl_posting_line_battles}Battles Fought: {COUNT}");
@@ -549,9 +549,9 @@ namespace Enlisted.Features.Camp
                 FactionRecordsMenuId,
                 "{FACTION_RECORDS_TEXT}",
                 OnFactionRecordsInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic faction options will be added during init
@@ -611,7 +611,7 @@ namespace Enlisted.Features.Camp
             var records = recordManager?.GetAllRecords();
 
             sb.AppendLine();
-            sb.AppendLine("— Faction Service Records —");
+            sb.AppendLine("â€” Faction Service Records â€”");
             sb.AppendLine();
 
             if (records == null || records.Count == 0)
@@ -625,8 +625,8 @@ namespace Enlisted.Features.Camp
                 foreach (var record in records.Values.OrderByDescending(r => r.TotalDaysServed))
                 {
                     var factionType = FormatFactionType(record.FactionType);
-                    sb.AppendLine($"• {record.FactionDisplayName}");
-                    sb.AppendLine($"  {factionType} — {record.TermsCompleted} terms, {record.TotalDaysServed} days");
+                    sb.AppendLine($"â€¢ {record.FactionDisplayName}");
+                    sb.AppendLine($"  {factionType} â€” {record.TermsCompleted} terms, {record.TotalDaysServed} days");
                     sb.AppendLine($"  Kills: {record.TotalKills}");
                     sb.AppendLine();
                 }
@@ -664,9 +664,9 @@ namespace Enlisted.Features.Camp
                 FactionDetailMenuId,
                 "{FACTION_DETAIL_TEXT}",
                 OnFactionDetailInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
@@ -732,14 +732,14 @@ namespace Enlisted.Features.Camp
             var highestRank = GetRankName(record.HighestTier);
 
             sb.AppendLine();
-            sb.AppendLine($"— {record.FactionDisplayName} —");
+            sb.AppendLine($"â€” {record.FactionDisplayName} â€”");
             sb.AppendLine();
             sb.AppendLine($"Enlistments: {record.Enlistments}");
             sb.AppendLine($"Terms Completed: {record.TermsCompleted}");
             sb.AppendLine($"Days Served: {record.TotalDaysServed}");
             sb.AppendLine($"Highest Rank: {highestRank} (Tier {record.HighestTier})");
             sb.AppendLine();
-            sb.AppendLine("— Combat Record —");
+            sb.AppendLine("â€” Combat Record â€”");
             sb.AppendLine();
             sb.AppendLine($"Battles Fought: {record.BattlesFought}");
             sb.AppendLine($"Enemies Slain: {record.TotalKills}");
@@ -770,9 +770,9 @@ namespace Enlisted.Features.Camp
                 LifetimeSummaryMenuId,
                 "{LIFETIME_SUMMARY_TEXT}",
                 OnLifetimeSummaryInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Back option
@@ -831,7 +831,7 @@ namespace Enlisted.Features.Camp
             var lifetime = recordManager?.LifetimeRecord;
 
             sb.AppendLine();
-            sb.AppendLine("— Lifetime Service Summary —");
+            sb.AppendLine("â€” Lifetime Service Summary â€”");
             sb.AppendLine();
 
             if (lifetime == null)
@@ -862,7 +862,7 @@ namespace Enlisted.Features.Camp
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted == true)
                 {
-                    sb.AppendLine("— Current Enlistment —");
+                    sb.AppendLine("â€” Current Enlistment â€”");
                     sb.AppendLine();
                     sb.AppendLine($"Tier: {enlistment.EnlistmentTier}");
                     sb.AppendLine($"Service XP: {enlistment.EnlistmentXP}");
@@ -896,15 +896,15 @@ namespace Enlisted.Features.Camp
                     }
 
                     sb.AppendLine();
-                    sb.AppendLine("— XP Sources —");
+                    sb.AppendLine("â€” XP Sources â€”");
                     sb.AppendLine();
-                    sb.AppendLine("• Battles: XP for participating in combat");
-                    sb.AppendLine("• Duties: Daily XP for assigned tasks");
-                    sb.AppendLine("• Activities: Skill XP from camp and lance activities");
-                    sb.AppendLine("• Service: Passive XP for time served");
+                    sb.AppendLine("â€¢ Battles: XP for participating in combat");
+                    sb.AppendLine("â€¢ Duties: Daily XP for assigned tasks");
+                    sb.AppendLine("â€¢ Activities: Skill XP from camp and lance activities");
+                    sb.AppendLine("â€¢ Service: Passive XP for time served");
                     sb.AppendLine();
 
-                    sb.AppendLine("— This Term —");
+                    sb.AppendLine("â€” This Term â€”");
                     sb.AppendLine();
                     sb.AppendLine($"Battles: {recordManager.CurrentTermBattles}");
                     sb.AppendLine($"Kills: {recordManager.CurrentTermKills}");
@@ -914,7 +914,7 @@ namespace Enlisted.Features.Camp
                 // List factions served
                 if (lifetime.FactionsServed != null && lifetime.FactionsServed.Count > 0)
                 {
-                    sb.AppendLine("— Factions Served —");
+                    sb.AppendLine("â€” Factions Served â€”");
                     sb.AppendLine();
 
                     var allRecords = recordManager.GetAllRecords();
@@ -925,13 +925,13 @@ namespace Enlisted.Features.Camp
                             var terms = record.TermsCompleted > 0
                                 ? $"{record.TermsCompleted} term{(record.TermsCompleted > 1 ? "s" : "")}"
                                 : "in progress";
-                            sb.AppendLine($"• {record.FactionDisplayName} ({terms})");
+                            sb.AppendLine($"â€¢ {record.FactionDisplayName} ({terms})");
                         }
                     }
                     sb.AppendLine();
                 }
 
-                sb.AppendLine("— Combat Statistics —");
+                sb.AppendLine("â€” Combat Statistics â€”");
                 sb.AppendLine();
                 sb.AppendLine($"Total Battles: {lifetime.TotalBattlesFought}");
                 sb.AppendLine($"Enemies Slain: {lifetime.LifetimeKills}");
@@ -953,9 +953,9 @@ namespace Enlisted.Features.Camp
                 RetinueMenuId,
                 "{RETINUE_STATUS_TEXT}",
                 OnRetinueMenuInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Current Muster option - ManageGarrison icon (soldiers/shield)
@@ -1167,7 +1167,7 @@ namespace Enlisted.Features.Camp
             var currentMembers = PartyBase.MainParty?.NumberOfAllMembers ?? 0;
 
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_retinue_header_personal}— Personal Retinue —").ToString());
+            sb.AppendLine(new TextObject("{=enl_retinue_header_personal}â€” Personal Retinue â€”").ToString());
             sb.AppendLine();
 
             var rankLine = new TextObject("{=enl_retinue_line_rank}Rank: {RANK_NAME} (Tier {TIER})");
@@ -1179,7 +1179,7 @@ namespace Enlisted.Features.Camp
             limitLine.SetTextVariable("UNIT_NAME", unitName ?? string.Empty);
             sb.AppendLine(limitLine.ToString());
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_retinue_header_current_muster}— Current Muster —").ToString());
+            sb.AppendLine(new TextObject("{=enl_retinue_header_current_muster}â€” Current Muster â€”").ToString());
             sb.AppendLine();
 
             if (string.IsNullOrEmpty(selectedType))
@@ -1207,7 +1207,7 @@ namespace Enlisted.Features.Camp
             }
 
             sb.AppendLine();
-            sb.AppendLine(new TextObject("{=enl_retinue_header_party_capacity}— Party Capacity —").ToString());
+            sb.AppendLine(new TextObject("{=enl_retinue_header_party_capacity}â€” Party Capacity â€”").ToString());
             sb.AppendLine();
 
             var partyLimitLine = new TextObject("{=enl_retinue_line_party_limit}Party Limit: {LIMIT}");
@@ -1244,9 +1244,9 @@ namespace Enlisted.Features.Camp
                 RetinuePurchaseMenuId,
                 "{RETINUE_PURCHASE_TEXT}",
                 OnRetinuePurchaseInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Infantry option - Men-at-Arms
@@ -1330,7 +1330,7 @@ namespace Enlisted.Features.Camp
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Purchase Soldiers —");
+                sb.AppendLine("â€” Purchase Soldiers â€”");
                 sb.AppendLine();
                 sb.AppendLine("Select the type of soldiers to muster.");
                 sb.AppendLine();
@@ -1672,9 +1672,9 @@ namespace Enlisted.Features.Camp
                 RetinueDismissMenuId,
                 "{RETINUE_DISMISS_TEXT}",
                 OnRetinueDismissInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm dismiss option
@@ -1729,7 +1729,7 @@ namespace Enlisted.Features.Camp
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Dismiss Soldiers —");
+                sb.AppendLine("â€” Dismiss Soldiers â€”");
                 sb.AppendLine();
                 sb.AppendLine("Are you certain?");
                 sb.AppendLine();
@@ -1835,9 +1835,9 @@ namespace Enlisted.Features.Camp
                 RetinueRequisitionMenuId,
                 "{REQUISITION_MENU_TEXT}",
                 OnRetinueRequisitionInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Confirm requisition option
@@ -1904,7 +1904,7 @@ namespace Enlisted.Features.Camp
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Requisition Men —");
+                sb.AppendLine("â€” Requisition Men â€”");
                 sb.AppendLine();
                 sb.AppendLine("A word to the right quartermaster, a few coins changing hands, and fresh soldiers report for duty.");
                 sb.AppendLine();
@@ -1987,9 +1987,9 @@ namespace Enlisted.Features.Camp
                 CompanionAssignmentsMenuId,
                 "{COMPANION_ASSIGNMENTS_TEXT}",
                 OnCompanionAssignmentsInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Dynamic companion options are added via menu init text since GameMenu doesn't support 
@@ -2050,7 +2050,7 @@ namespace Enlisted.Features.Camp
 
                 var sb = new StringBuilder();
                 sb.AppendLine();
-                sb.AppendLine("— Companion Assignments —");
+                sb.AppendLine("â€” Companion Assignments â€”");
                 sb.AppendLine();
                 sb.AppendLine("Companions set to 'Stay Back' will not spawn in battle.");
                 sb.AppendLine("They remain safe, immune to death, wounds, or capture.");
@@ -2267,9 +2267,9 @@ namespace Enlisted.Features.Camp
                 "{=dm_menu_intro}Desperate Measures\n\nWhen legitimate channels fail, some turn to darker paths. " +
                 "Choose carefully - your reputation and honor are at stake.\n\n{DESPERATE_STATUS}",
                 OnDesperateMeasuresInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Option 1: Bribe Paymaster's Clerk (40+ tension)
@@ -2458,9 +2458,9 @@ namespace Enlisted.Features.Camp
                 "{=hlm_menu_intro}Help the Lord\n\nThe lord's coffers are running low, but loyal soldiers can help. " +
                 "Volunteer for missions that bring coin to the treasury.\n\n{HELP_LORD_STATUS}",
                 OnHelpTheLordInit,
-                CommandTentWaitCondition,
-                CommandTentWaitConsequence,
-                CommandTentWaitTick,
+                CampWaitCondition,
+                CampWaitConsequence,
+                CampWaitTick,
                 GameMenu.MenuAndOptionType.WaitMenuHideProgressAndHoursOption);
 
             // Option 1: Collect Debts (40+ tension)

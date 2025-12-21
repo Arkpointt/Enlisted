@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -9,7 +9,7 @@ using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
-namespace Enlisted.Features.CommandTent.Core
+namespace Enlisted.Features.Retinue.Core
 {
     /// <summary>
     /// Handles retinue lifecycle events: player capture, enlistment end, lord death, army defeat.
@@ -353,40 +353,6 @@ namespace Enlisted.Features.CommandTent.Core
                 _ =>
                     new TextObject("{=ct_defeat_retinue_lost}In the chaos of defeat, your retinue has scattered.").ToString()
             };
-        }
-
-        /// <summary>
-        /// Called when the player voluntarily changes their soldier type.
-        /// Clears existing retinue before allowing new type selection.
-        /// </summary>
-        public void HandleTypeChange()
-        {
-            var manager = RetinueManager.Instance;
-            if (manager == null || !manager.State.HasRetinue)
-            {
-                return;
-            }
-
-            ModLogger.Info(LogCategory, "Player changing soldier type - clearing existing retinue");
-            ClearRetinueWithMessage("type_change");
-        }
-
-        /// <summary>
-        /// Checks if the player currently has an active retinue that would be affected by lifecycle events.
-        /// </summary>
-        public bool HasActiveRetinue()
-        {
-            var manager = RetinueManager.Instance;
-            return manager?.State?.HasRetinue == true;
-        }
-
-        /// <summary>
-        /// Gets the current retinue soldier count for status displays.
-        /// </summary>
-        public int GetRetinueCount()
-        {
-            var manager = RetinueManager.Instance;
-            return manager?.State?.TotalSoldiers ?? 0;
         }
 
         #endregion

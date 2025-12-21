@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.CommandTent.Data;
+using Enlisted.Features.Retinue.Data;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Helpers;
@@ -12,7 +12,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
-namespace Enlisted.Features.CommandTent.Core
+namespace Enlisted.Features.Retinue.Core
 {
     /// <summary>
     /// Manages the player's personal retinue of soldiers. Handles soldier addition/removal,
@@ -37,20 +37,6 @@ namespace Enlisted.Features.CommandTent.Core
         public const int CommanderCapacity1 = 20;  // T7: 20 soldiers
         public const int CommanderCapacity2 = 30;  // T8: 30 soldiers
         public const int CommanderCapacity3 = 40;  // T9: 40 soldiers
-
-        // Legacy constants (for backward compatibility and gradual migration)
-        [Obsolete("Use CommanderTier1 instead. Retinue now starts at T7.")]
-        public const int LanceTier = 7;
-        [Obsolete("Use CommanderTier2 instead.")]
-        public const int SquadTier = 8;
-        [Obsolete("Use CommanderTier3 instead.")]
-        public const int RetinueTier = 9;
-        [Obsolete("Use CommanderCapacity1 instead.")]
-        public const int LanceCapacity = 20;
-        [Obsolete("Use CommanderCapacity2 instead.")]
-        public const int SquadCapacity = 30;
-        [Obsolete("Use CommanderCapacity3 instead.")]
-        public const int RetinueCapacity = 40;
 
         // Factions that don't have horse archers
         private static readonly HashSet<string> NoHorseArcherFactions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -104,73 +90,6 @@ namespace Enlisted.Features.CommandTent.Core
                 CommanderTier1 => CommanderCapacity1,      // T7: 20 soldiers
                 _ => 0  // T1-T6: companions only, no soldiers
             };
-        }
-
-        /// <summary>
-        /// Gets the unit name for a tier.
-        /// T1-T6: "Companions Only"
-        /// T7: "Command (Regular)"
-        /// T8: "Command (Veteran)"
-        /// T9: "Command (Elite)"
-        /// </summary>
-        public static string GetUnitName(int tier)
-        {
-            return tier switch
-            {
-                >= CommanderTier3 => "Command (Elite)",
-                CommanderTier2 => "Command (Veteran)",
-                CommanderTier1 => "Command (Regular)",
-                _ => "Companions Only"
-            };
-        }
-
-        /// <summary>
-        /// Checks if player can have a retinue at the given tier.
-        /// </summary>
-        public static bool CanHaveRetinueAtTier(int tier)
-        {
-            return tier >= CommanderTier1;
-        }
-
-        /// <summary>
-        /// Checks if the player can have a retinue at their current tier.
-        /// Retinue requires T7+ (Commander rank).
-        /// </summary>
-        public bool CanHaveRetinue(out string reason)
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (enlistment == null || !enlistment.IsEnlisted)
-            {
-                reason = new TextObject("{=enl_retinue_reason_must_be_enlisted}You must be enlisted to command soldiers.").ToString();
-                return false;
-            }
-
-            var currentTier = enlistment.EnlistmentTier;
-            if (currentTier < CommanderTier1)
-            {
-                var t = new TextObject("{=enl_retinue_reason_requires_commander}Requires Commander rank (Tier {REQ}). You are Tier {CUR}.");
-                t.SetTextVariable("REQ", CommanderTier1);
-                t.SetTextVariable("CUR", currentTier);
-                reason = t.ToString();
-                return false;
-            }
-
-            var party = PartyBase.MainParty;
-            if (party == null)
-            {
-                reason = new TextObject("{=enl_retinue_reason_no_party}No party found.").ToString();
-                return false;
-            }
-
-            var availableSpace = party.PartySizeLimit - party.NumberOfAllMembers;
-            if (availableSpace <= 0)
-            {
-                reason = new TextObject("{=enl_retinue_reason_no_space_companions}No party space available. Your companions fill your party.").ToString();
-                return false;
-            }
-
-            reason = null;
-            return true;
         }
 
         #endregion
@@ -471,32 +390,6 @@ namespace Enlisted.Features.CommandTent.Core
         #region Companion Tracking
 
         /// <summary>
-        /// Checks if a character is a player companion (not retinue).
-        /// </summary>
-        public static bool IsCompanion(CharacterObject character)
-        {
-            if (character == null || !character.IsHero)
-            {
-                return false;
-            }
-
-            return character.HeroObject?.IsPlayerCompanion == true;
-        }
-
-        /// <summary>
-        /// Checks if a character is a retinue soldier (tracked in our state).
-        /// </summary>
-        public bool IsRetinueSoldier(CharacterObject character)
-        {
-            if (character == null || string.IsNullOrEmpty(character.StringId))
-            {
-                return false;
-            }
-
-            return _state.TroopCounts?.ContainsKey(character.StringId) == true;
-        }
-
-        /// <summary>
         /// Gets the count of companions in the player's party.
         /// </summary>
         public static int GetCompanionCount()
@@ -510,27 +403,6 @@ namespace Enlisted.Features.CommandTent.Core
             return roster.GetTroopRoster()
                 .Count(e => e.Character.IsHero &&
                             e.Character.HeroObject?.IsPlayerCompanion == true);
-        }
-
-        /// <summary>
-        /// Logs a breakdown of the player's party for debugging.
-        /// </summary>
-        public void LogPartyBreakdown()
-        {
-            var roster = MobileParty.MainParty?.MemberRoster;
-            if (roster == null)
-            {
-                return;
-            }
-
-            var total = roster.TotalManCount;
-            var companions = GetCompanionCount();
-            var retinue = _state.TotalSoldiers;
-            var other = total - 1 - companions - retinue; // -1 for player
-
-            ModLogger.Debug("Party",
-                $"Breakdown: Player=1, Companions={companions}, " +
-                $"Retinue={retinue}, Other={other}, Total={total}");
         }
 
         #endregion
@@ -779,7 +651,7 @@ namespace Enlisted.Features.CommandTent.Core
             var title = new TextObject("{=ct_leadership_title}Commander's Commission");
             var message = new TextObject("{=ct_leadership_message}Your long service has been recognized. " +
                 "As a Commander, you've been granted authority over your own retinue of soldiers.\n\n" +
-                "Fifteen raw recruits have been assigned to your command. Train them well—their lives are in your hands.\n\n" +
+                "Fifteen raw recruits have been assigned to your command. Train them wellâ€”their lives are in your hands.\n\n" +
                 "Visit Camp to manage your forces.");
 
             // pauseGameActiveState = false so notifications don't freeze game time

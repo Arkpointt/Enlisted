@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.CommandTent.Core;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
@@ -36,14 +36,14 @@ namespace Enlisted.Features.Ranks.Behaviors
             // Promotion requirements table:
             // | Promotion | XP | Days | Battles | Soldier Rep | Leader Rel | Max Disc |
             // |-----------|-----|------|---------|-------------|------------|----------|
-            // | T1→T2 | 700 | 14 | 2 | ≥0 | ≥0 | <8 |
-            // | T2→T3 | 2,200 | 35 | 6 | ≥10 | ≥10 | <7 |
-            // | T3→T4 | 4,400 | 56 | 12 | ≥20 | ≥20 | <6 |
-            // | T4→T5 | 6,600 | 56 | 20 | ≥30 | ≥30 | <5 |
-            // | T5→T6 | 8,800 | 56 | 30 | ≥40 | ≥15 | <4 |
-            // | T6→T7 | 11,000 | 70 | 40 | ≥50 | ≥20 | <3 |
-            // | T7→T8 | 14,000 | 84 | 50 | ≥60 | ≥25 | <2 |
-            // | T8→T9 | 18,000 | 112 | 60 | ≥70 | ≥30 | <1 |
+            // | T1â†’T2 | 700 | 14 | 2 | â‰¥0 | â‰¥0 | <8 |
+            // | T2â†’T3 | 2,200 | 35 | 6 | â‰¥10 | â‰¥10 | <7 |
+            // | T3â†’T4 | 4,400 | 56 | 12 | â‰¥20 | â‰¥20 | <6 |
+            // | T4â†’T5 | 6,600 | 56 | 20 | â‰¥30 | â‰¥30 | <5 |
+            // | T5â†’T6 | 8,800 | 56 | 30 | â‰¥40 | â‰¥15 | <4 |
+            // | T6â†’T7 | 11,000 | 70 | 40 | â‰¥50 | â‰¥20 | <3 |
+            // | T7â†’T8 | 14,000 | 84 | 50 | â‰¥60 | â‰¥25 | <2 |
+            // | T8â†’T9 | 18,000 | 112 | 60 | â‰¥70 | â‰¥30 | <1 |
 
             return targetTier switch
             {
@@ -314,7 +314,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 _pendingPromotionTier = targetTier;
 
                 // Standard tier advancement is currently processed directly through the promotion system.
-                ModLogger.Info("Promotion", $"Promotion to T{currentTier}→T{targetTier} (Processing direct advancement)");
+                ModLogger.Info("Promotion", $"Promotion to T{currentTier}â†’T{targetTier} (Processing direct advancement)");
                 _pendingPromotionTier = 0;
                 
                 // SetTier handles retinue grant for T7/T8/T9 promotions

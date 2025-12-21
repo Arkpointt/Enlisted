@@ -45,8 +45,8 @@ These areas exist in code but are not yet fully documented as first-class pages:
 - **Player Conditions (Deep Dive)**
   - Code: `src/Features/Conditions/*`
   - Current: Brief mention in `provisions-system.md` and `core-gameplay.md`.
-- **Command Tent / Service Records**
-  - Code: `src/Features/CommandTent/*`
+- **Retinue / Service Records**
+  - Code: `src/Features/Retinue/*`
   - Current: Integrated into `retinue-system.md` but needs detail on lifetime records.
 - **News Behavior API**
   - Code: `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`

@@ -195,17 +195,18 @@
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedFormationAssignmentBehavior.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedKillTrackerBehavior.cs"/>
-    <Compile Include="src\Features\CommandTent\Data\FactionServiceRecord.cs"/>
-    <Compile Include="src\Features\CommandTent\Data\LifetimeServiceRecord.cs"/>
-    <Compile Include="src\Features\CommandTent\Data\RetinueState.cs"/>
-    <Compile Include="src\Features\CommandTent\Data\ReservistRecord.cs"/>
-    <Compile Include="src\Features\CommandTent\Core\ServiceRecordManager.cs"/>
-    <Compile Include="src\Features\CommandTent\Core\RetinueManager.cs"/>
-    <Compile Include="src\Features\CommandTent\Core\RetinueLifecycleHandler.cs"/>
-    <Compile Include="src\Features\CommandTent\Core\CompanionAssignmentManager.cs"/>
-    <Compile Include="src\Features\CommandTent\Core\RetinueRecruitmentGrant.cs"/>
-    <Compile Include="src\Features\CommandTent\Systems\RetinueTrickleSystem.cs"/>
-    <Compile Include="src\Features\CommandTent\Systems\RetinueCasualtyTracker.cs"/>
+    <Compile Include="src\Features\Retinue\Data\FactionServiceRecord.cs"/>
+    <Compile Include="src\Features\Retinue\Data\LifetimeServiceRecord.cs"/>
+    <Compile Include="src\Features\Retinue\Data\RetinueState.cs"/>
+    <Compile Include="src\Features\Retinue\Data\ReservistRecord.cs"/>
+    <Compile Include="src\Features\Retinue\Core\ServiceRecordManager.cs"/>
+    <Compile Include="src\Features\Retinue\Core\RetinueManager.cs"/>
+    <Compile Include="src\Features\Retinue\Core\RetinueLifecycleHandler.cs"/>
+    <Compile Include="src\Features\Retinue\Core\CompanionAssignmentManager.cs"/>
+    <Compile Include="src\Features\Retinue\Core\CompanionAssignmentSaveDefiner.cs"/>
+    <Compile Include="src\Features\Retinue\Core\RetinueRecruitmentGrant.cs"/>
+    <Compile Include="src\Features\Retinue\Systems\RetinueTrickleSystem.cs"/>
+    <Compile Include="src\Features\Retinue\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
     <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
     <!-- Camp Management UI deleted in Phase 1 refactor - replaced by Native Game Menu in Phase 2 -->
@@ -268,7 +269,7 @@
     <Content Include="ModuleData\Enlisted\equipment_kits.json"/>
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
-    <Content Include="ModuleData\Enlisted\command_tent_config.json"/>
+    <Content Include="ModuleData\Enlisted\retinue_config.json"/>
     <!-- Player condition definitions (content-editable) -->
     <Content Include="ModuleData\Enlisted\Conditions\*.json"/>
     <!-- Phase 2: camp activities (content-editable) -->
@@ -318,7 +319,7 @@
     <Copy SourceFiles="ModuleData\Enlisted\equipment_kits.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\equipment_pricing.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="ModuleData\Enlisted\menu_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
-    <Copy SourceFiles="ModuleData\Enlisted\command_tent_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
+    <Copy SourceFiles="ModuleData\Enlisted\retinue_config.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
     <Copy SourceFiles="@(PlayerConditionData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Conditions\"/>
     <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>

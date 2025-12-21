@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using TaleWorlds.CampaignSystem;
 
-namespace Enlisted.Features.CommandTent.Data
+namespace Enlisted.Features.Retinue.Data
 {
     /// <summary>
     /// Snapshot of enlistment state when discharged, for re-entry offers.

@@ -71,6 +71,7 @@ src/
   - Conversations/        # Dialog management
   - Combat/               # Battle participation and formation assignment
   - Conditions/           # Player medical status (injury/illness)
+  - Retinue/              # Service Records and Retinue/Companion management
   - Camp/                 # Camp activities and rest logic
 ```
 

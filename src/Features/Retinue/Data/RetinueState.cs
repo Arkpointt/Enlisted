@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaleWorlds.CampaignSystem;
 
-namespace Enlisted.Features.CommandTent.Data
+namespace Enlisted.Features.Retinue.Data
 {
     /// <summary>
     /// Tracks the player's personal retinue state including soldier type, counts, and replenishment tracking.

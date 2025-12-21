@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -8,16 +8,16 @@ using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
-namespace Enlisted.Features.CommandTent.Core
+namespace Enlisted.Features.Retinue.Core
 {
     /// <summary>
     /// Handles automatic granting of raw recruits when player reaches commander tiers (T7-T9).
     /// Part of Retinue System V2.0.
     /// 
     /// Grant amounts:
-    /// - T6→T7: 15 soldiers (initial grant)
-    /// - T7→T8: 10 soldiers (expansion)
-    /// - T8→T9: 10 soldiers (final expansion)
+    /// - T6â†’T7: 15 soldiers (initial grant)
+    /// - T7â†’T8: 10 soldiers (expansion)
+    /// - T8â†’T9: 10 soldiers (final expansion)
     /// 
     /// Recruits match player's formation type and enlisted lord's culture.
     /// </summary>
@@ -68,9 +68,9 @@ namespace Enlisted.Features.CommandTent.Core
 
         /// <summary>
         /// Calculates how many recruits to grant based on tier transition.
-        /// T6→T7: 15 (initial grant)
-        /// T7→T8: 10 (expansion)
-        /// T8→T9: 10 (final expansion)
+        /// T6â†’T7: 15 (initial grant)
+        /// T7â†’T8: 10 (expansion)
+        /// T8â†’T9: 10 (final expansion)
         /// </summary>
         public static int CalculateGrantCount(int newTier, int previousTier)
         {
@@ -230,10 +230,10 @@ namespace Enlisted.Features.CommandTent.Core
         private static CharacterObject FindFallbackRecruit(FormationClass formation)
         {
             var fallback = CharacterObject.All
-                .Where(t => t != null && t.IsBasicTroop && !t.IsHero)
+                .Where(t => t is { IsBasicTroop: true, IsHero: false })
                 .Where(t => t.DefaultFormationClass == formation)
                 .Where(t => t.Level <= 10)
-                .Where(t => t.UpgradeTargets != null && t.UpgradeTargets.Length > 0)
+                .Where(t => t.UpgradeTargets is { Length: > 0 })
                 .OrderBy(t => t.Level)
                 .FirstOrDefault();
 
@@ -269,26 +269,6 @@ namespace Enlisted.Features.CommandTent.Core
             // Fallback to empire if no lord culture
             ModLogger.Warn(LogCategory, "No lord culture found, using player culture fallback");
             return Hero.MainHero?.Culture;
-        }
-
-        /// <summary>
-        /// Parses formation string to FormationClass enum.
-        /// </summary>
-        private static FormationClass ParseFormationClass(string formation)
-        {
-            if (string.IsNullOrEmpty(formation))
-            {
-                return FormationClass.Infantry;
-            }
-
-            return formation.ToLowerInvariant() switch
-            {
-                "infantry" => FormationClass.Infantry,
-                "archers" or "archer" or "ranged" => FormationClass.Ranged,
-                "cavalry" => FormationClass.Cavalry,
-                "horse_archers" or "horsearcher" or "horsearchers" => FormationClass.HorseArcher,
-                _ => FormationClass.Infantry
-            };
         }
 
         /// <summary>
@@ -339,52 +319,6 @@ namespace Enlisted.Features.CommandTent.Core
         #endregion
 
         #region Helper Methods
-
-        /// <summary>
-        /// Checks if a troop is a raw recruit (lowest tier in upgrade tree).
-        /// </summary>
-        public static bool IsRawRecruit(CharacterObject troop)
-        {
-            if (troop == null || troop.IsHero)
-            {
-                return false;
-            }
-
-            // Check level
-            if (troop.Level > 10)
-            {
-                return false;
-            }
-
-            // Check if has upgrade targets (not dead-end)
-            if (troop.UpgradeTargets == null || troop.UpgradeTargets.Length == 0)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Gets the tier/quality level of a troop for display.
-        /// </summary>
-        public static string GetRecruitTierName(CharacterObject troop)
-        {
-            if (troop == null) return "Unknown";
-
-            if (troop.Level <= 10)
-            {
-                return "Recruit";
-            }
-            else if (troop.Level <= 20)
-            {
-                return "Regular";
-            }
-            else
-            {
-                return "Veteran";
-            }
-        }
 
         #endregion
     }

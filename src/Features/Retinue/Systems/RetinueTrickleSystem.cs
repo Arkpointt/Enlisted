@@ -1,5 +1,5 @@
-using System;
-using Enlisted.Features.CommandTent.Core;
+﻿using System;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -7,7 +7,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Localization;
 
-namespace Enlisted.Features.CommandTent.Systems
+namespace Enlisted.Features.Retinue.Systems
 {
     /// <summary>
     /// Handles the free, slow replenishment of retinue soldiers via daily tick.

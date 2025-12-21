@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
-namespace Enlisted.Features.CommandTent.Data
+namespace Enlisted.Features.Retinue.Data
 {
     /// <summary>
     /// Cross-faction lifetime statistics. Aggregates service across all factions.

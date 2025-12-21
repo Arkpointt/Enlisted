@@ -1,12 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.SaveSystem;
 
-namespace Enlisted.Features.CommandTent.Core
+namespace Enlisted.Features.Retinue.Core
 {
     /// <summary>
     /// Manages companion battle participation settings ("Fight" vs "Stay Back").
@@ -120,8 +119,7 @@ namespace Enlisted.Features.CommandTent.Core
             // Get companions from player's party
             foreach (var element in mainParty.MemberRoster.GetTroopRoster())
             {
-                if (element.Character is { IsHero: true, HeroObject: { } hero } &&
-                    hero.IsPlayerCompanion && hero.IsAlive && !hero.IsHumanPlayerCharacter)
+                if (element.Character is { IsHero: true, HeroObject: { IsPlayerCompanion: true, IsAlive: true, IsHumanPlayerCharacter: false } hero })
                 {
                     result.Add(hero);
                 }
@@ -155,51 +153,6 @@ namespace Enlisted.Features.CommandTent.Core
             var count = _companionBattleParticipation.Count;
             _companionBattleParticipation.Clear();
             ModLogger.Info(LogCategory, $"Cleared {count} companion participation settings");
-        }
-
-        /// <summary>
-        /// Removes settings for companions no longer in the player's clan.
-        /// Called periodically to clean up stale entries.
-        /// </summary>
-        public void CleanupStaleEntries()
-        {
-            if (_companionBattleParticipation.Count == 0)
-            {
-                return;
-            }
-
-            var validIds = new HashSet<string>(
-                Clan.PlayerClan?.Heroes
-                    .Where(h => h.IsPlayerCompanion && h.IsAlive)
-                    .Select(h => h.StringId) ?? Enumerable.Empty<string>());
-
-            var staleIds = _companionBattleParticipation.Keys
-                .Where(id => !validIds.Contains(id))
-                .ToList();
-
-            foreach (var id in staleIds)
-            {
-                _companionBattleParticipation.Remove(id);
-            }
-
-            if (staleIds.Count > 0)
-            {
-                ModLogger.Debug(LogCategory, $"Cleaned up {staleIds.Count} stale companion entries");
-            }
-        }
-    }
-
-    /// <summary>
-    /// Custom save definer for CompanionAssignmentManager fields.
-    /// Required for proper save/load of the participation dictionary.
-    /// </summary>
-    public class CompanionAssignmentSaveDefiner : SaveableTypeDefiner
-    {
-        public CompanionAssignmentSaveDefiner() : base(735201) { }
-
-        protected override void DefineContainerDefinitions()
-        {
-            ConstructContainerDefinition(typeof(Dictionary<string, bool>));
         }
     }
 }

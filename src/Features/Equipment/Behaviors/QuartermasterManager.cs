@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -889,7 +889,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var price = basePrice * soldierTax * discountMultiplier * campMultiplier;
                 var roundedPrice = Convert.ToInt32(MathF.Round(price));
                 
-                // Relationship discount (0–15%) comes from the Quartermaster Hero relationship system.
+                // Relationship discount (0â€“15%) comes from the Quartermaster Hero relationship system.
                 // This is intentionally applied AFTER soldier-tax and role/mood multipliers so the discount is predictable.
                 var enlistment = EnlistmentBehavior.Instance;
                 var discounted = enlistment?.IsEnlisted == true
@@ -2171,9 +2171,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                     if (enlistment.HasRetinueToProvision())
                     {
                         sb.AppendLine();
-                        sb.AppendLine("─── Retinue Provisioning ───");
+                        sb.AppendLine("â”€â”€â”€ Retinue Provisioning â”€â”€â”€");
 
-                        var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+                        var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
                         var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
 
                         var (retinueName, retinueMorale, retinueDays) = enlistment.GetRetinueProvisioningInfo();
@@ -2283,7 +2283,7 @@ namespace Enlisted.Features.Equipment.Behaviors
 
             // Section header for retinue provisioning
             starter.AddGameMenuOption("quartermaster_rations", "retinue_header",
-                new TextObject("{=qm_retinue_header}— RETINUE PROVISIONING —").ToString(),
+                new TextObject("{=qm_retinue_header}â€” RETINUE PROVISIONING â€”").ToString(),
                 args =>
                 {
                     args.optionLeaveType = GameMenuOption.LeaveType.Wait;
@@ -2416,7 +2416,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 return false;
             }
 
-            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
             var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
             var baseCost = EnlistmentBehavior.GetRetinueProvisioningCost(tier, soldierCount);
             var cost = enlistment.ApplyQuartermasterDiscount(baseCost);
@@ -2473,7 +2473,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return;
                 }
 
-                var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+                var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
                 var soldierCount = retinueManager?.State?.TotalSoldiers ?? 0;
 
                 if (soldierCount <= 0)
@@ -3884,7 +3884,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var sb = new StringBuilder();
                 var party = MobileParty.MainParty;
                 
-                sb.AppendLine("— Supply Status —");
+                sb.AppendLine("â€” Supply Status â€”");
                 sb.AppendLine();
                 
                 // Current supply status with cleaner formatting

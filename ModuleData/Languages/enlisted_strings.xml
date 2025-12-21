@@ -633,7 +633,7 @@
     <string id="enl_news_unknown_forces" text="unknown forces" />
     <string id="enl_news_countryside" text="the countryside" />
 
-    <!-- Command Tent - Retinue UI strings -->
+    <!-- Retinue - Retinue UI strings -->
     <string id="enl_retinue_error_loading_status" text="Error loading retinue status." />
     <string id="enl_retinue_option_requisition" text="Requisition Men" />
     <string id="enl_retinue_option_requisition_cooldown" text="Requisition Men ({DAYS}d cooldown)" />

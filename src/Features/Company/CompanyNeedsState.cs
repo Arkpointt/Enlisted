@@ -11,19 +11,19 @@ namespace Enlisted.Features.Company
     public class CompanyNeedsState
     {
         /// <summary>Combat readiness (0-100)</summary>
-        public int Readiness { get; set; }
+        public int Readiness { get; set; } = 60;
         
         /// <summary>Equipment condition (0-100)</summary>
-        public int Equipment { get; set; }
+        public int Equipment { get; set; } = 60;
         
         /// <summary>Morale level (0-100)</summary>
-        public int Morale { get; set; }
+        public int Morale { get; set; } = 60;
         
         /// <summary>Rest level (0-100)</summary>
-        public int Rest { get; set; }
+        public int Rest { get; set; } = 60;
         
         /// <summary>Supplies level (0-100)</summary>
-        public int Supplies { get; set; }
+        public int Supplies { get; set; } = 60;
 
         /// <summary>Thresholds for need levels</summary>
         public const int ExcellentThreshold = 80;
@@ -31,16 +31,6 @@ namespace Enlisted.Features.Company
         public const int FairThreshold = 40;
         public const int PoorThreshold = 30;
         public const int CriticalThreshold = 20;
-
-        public CompanyNeedsState()
-        {
-            // Initialize all needs at "Good" level (60%)
-            Readiness = 60;
-            Equipment = 60;
-            Morale = 60;
-            Rest = 60;
-            Supplies = 60;
-        }
 
         /// <summary>
         /// Get the value of a specific need.
@@ -90,7 +80,7 @@ namespace Enlisted.Features.Company
         /// </summary>
         public void ModifyNeed(CompanyNeed need, int delta)
         {
-            int current = GetNeed(need);
+            var current = GetNeed(need);
             SetNeed(need, current + delta);
         }
 
@@ -99,7 +89,7 @@ namespace Enlisted.Features.Company
         /// </summary>
         public string GetNeedStatus(CompanyNeed need)
         {
-            int value = GetNeed(need);
+            var value = GetNeed(need);
             
             if (value >= ExcellentThreshold)
             {
@@ -137,12 +127,12 @@ namespace Enlisted.Features.Company
         /// </summary>
         public CompanyNeed GetMostCriticalNeed()
         {
-            int minValue = 100;
-            CompanyNeed criticalNeed = CompanyNeed.Readiness;
+            var minValue = 100;
+            var criticalNeed = CompanyNeed.Readiness;
             
             foreach (CompanyNeed need in Enum.GetValues(typeof(CompanyNeed)))
             {
-                int value = GetNeed(need);
+                var value = GetNeed(need);
                 if (value < minValue)
                 {
                     minValue = value;

@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Enlisted.Features.CommandTent.Core;
+using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.Company;
 using Enlisted.Features.Escalation;
@@ -1833,12 +1833,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         new TextObject("{=qm_smuggle_one}\"I'm keeping one thing\" (Roguery 30+)").ToString(),
                         null,
                         true,
-                        new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, it’s gone.").ToString())
+                        new TextObject("{=qm_smuggle_hint}Slip one prized piece past the ledger; if caught, itâ€™s gone.").ToString())
                 };
 
                 var inquiry = new MultiSelectionInquiryData(
                     new TextObject("{=qm_bagcheck_title}Enlistment Bag Check").ToString(),
-                    new TextObject("{=qm_bagcheck_body}The quartermaster lifts his quill. \"You can’t march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?\"").ToString(),
+                    new TextObject("{=qm_bagcheck_body}The quartermaster lifts his quill. \"You canâ€™t march in that finery. Regimental rules. Everything goes in the wagons or my ledger. If the wagons burn, so does your past life. How do you want this written, soldier?\"").ToString(),
                     options,
                     false,
                     1,
@@ -2075,7 +2075,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _bagCheckInProgress = false;
             
             // NOTE: Do NOT call ContinueStartEnlistInternal here!
-            // The player is already enlisted from StartEnlist() → ContinueStartEnlistInternal() (first call).
+            // The player is already enlisted from StartEnlist() â†’ ContinueStartEnlistInternal() (first call).
             // Calling it again here causes:
             // 1. OnEnlisted event to fire twice
             // 2. Onboarding state to be re-initialized
@@ -2939,7 +2939,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Determine target kingdom based on discharge type
                 // Default: Return to independent status
-                // Exception: Honorably discharged after full service → restore original kingdom
+                // Exception: Honorably discharged after full service â†’ restore original kingdom
                 var playerClan = Clan.PlayerClan;
                 if (playerClan != null)
                 {
@@ -4642,7 +4642,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     case "honorable":
                     case "veteran":
                     case "heroic":
-                        // Keep armor (slots 6–9), clear weapons (0–3) and mounts (10–11) to inventory
+                        // Keep armor (slots 6â€“9), clear weapons (0â€“3) and mounts (10â€“11) to inventory
                         MoveSlotsToInventory(hero, new[] { 0, 1, 2, 3, 10, 11 });
                         break;
                 }
@@ -5204,7 +5204,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 StopEnlist("free_desertion_pay_crisis", isHonorableDischarge: false);
 
                 InformationManager.DisplayMessage(new InformationMessage(
-                    "You leave quietly. No one blames you — you weren't paid.",
+                    "You leave quietly. No one blames you â€” you weren't paid.",
                     Colors.Yellow));
             }
             catch (Exception ex)
@@ -8406,7 +8406,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _lastPromotionDate = CampaignTime.Now;
             }
 
-            ModLogger.Info("Enlistment", $"Tier changed: {previousTier} → {tier} (XP: {_enlistmentXP})");
+            ModLogger.Info("Enlistment", $"Tier changed: {previousTier} â†’ {tier} (XP: {_enlistmentXP})");
 
             // V2.0: Companions are now managed from T1 (enlistment start), not T4
             // Legacy reclaim kept for backward compatibility with older saves
@@ -8421,7 +8421,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 try
                 {
-                    Features.CommandTent.Core.RetinueRecruitmentGrant.GrantCommanderRetinue(tier, previousTier);
+                    Features.Retinue.Core.RetinueRecruitmentGrant.GrantCommanderRetinue(tier, previousTier);
                 }
                 catch (Exception ex)
                 {
@@ -8557,7 +8557,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return;
                 }
 
-                // Candidate civilian templates: “wealthy” town/camp types.
+                // Candidate civilian templates: â€œwealthyâ€ town/camp types.
                 // Note: We do not rely on string ids (mod compatibility); we rely on Occupation + culture.
                 var candidates = CharacterObject.All
                     .Where(t => t != null
@@ -8605,7 +8605,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 // Apply the outfit.
                 qm.CivilianEquipment.FillFrom(best.FirstCivilianEquipment, false);
 
-                // Keep the look “official” (no visible civilian weapons unless the template insists).
+                // Keep the look â€œofficialâ€ (no visible civilian weapons unless the template insists).
                 qm.CivilianEquipment[EquipmentIndex.Weapon0] = default;
                 qm.CivilianEquipment[EquipmentIndex.Weapon1] = default;
                 qm.CivilianEquipment[EquipmentIndex.Weapon2] = default;
@@ -8629,7 +8629,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     return 0;
                 }
 
-                // Focus on attire slots; treat item value as a decent “wealth” proxy.
+                // Focus on attire slots; treat item value as a decent â€œwealthâ€ proxy.
                 var slots = new[]
                 {
                     EquipmentIndex.Head,
@@ -9203,7 +9203,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
             if (retinueManager?.State == null || retinueManager.State.TotalSoldiers <= 0)
             {
                 return;
@@ -9252,7 +9252,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return false;
             }
 
-            var retinueManager = Features.CommandTent.Core.RetinueManager.Instance;
+            var retinueManager = Features.Retinue.Core.RetinueManager.Instance;
             return retinueManager?.State?.TotalSoldiers > 0;
         }
 
@@ -10185,7 +10185,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // At Tier 4+, companions stay with player to form the retinue squad
-                // This enables the Command Tent's Personal Retinue system
+                // This enables the Retinue system's Personal Retinue system
                 var keepCompanions = _enlistmentTier >= 4;
 
                 var transferCount = 0;
@@ -11373,7 +11373,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     ModLogger.Info("Battle",
                         $"Term kills updated: +{killsThisBattle} = {_currentTermKills} total this term");
                     
-                    // Update Service Records for Command Tent display
+                    // Update Service Records for Retinue display
                     ServiceRecordManager.Instance?.OnKillsRecorded(killsThisBattle);
                 }
             }

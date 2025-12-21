@@ -96,14 +96,9 @@ namespace Enlisted.Features.Conditions
             args.optionLeaveType = GameMenuOption.LeaveType.Manage;
 
             // Urgent indicator if condition is worsening
-            if (IsConditionWorsening())
-            {
-                args.Tooltip = new TextObject("{=medical_urgent}[!] Your condition requires attention.");
-            }
-            else
-            {
-                args.Tooltip = new TextObject("{=medical_tooltip}Visit the surgeon's tent.");
-            }
+            args.Tooltip = IsConditionWorsening()
+                ? new TextObject("{=medical_urgent}[!] Your condition requires attention.")
+                : new TextObject("{=medical_tooltip}Visit the surgeon's tent.");
 
             return true;
         }

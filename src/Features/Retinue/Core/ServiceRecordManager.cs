@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.CommandTent.Data;
+using Enlisted.Features.Retinue.Data;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Util;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 
-namespace Enlisted.Features.CommandTent.Core
+namespace Enlisted.Features.Retinue.Core
 {
     /// <summary>
     /// Manages service records for all factions and the player's retinue state.
@@ -23,7 +23,7 @@ namespace Enlisted.Features.CommandTent.Core
 
         private Dictionary<string, FactionServiceRecord> _factionRecords = new Dictionary<string, FactionServiceRecord>();
         private readonly LifetimeServiceRecord _lifetimeRecord = new LifetimeServiceRecord();
-        private ReservistRecord _reservistRecord = new ReservistRecord();
+        private readonly ReservistRecord _reservistRecord = new ReservistRecord();
 
         // Retinue system state
         private readonly RetinueState _retinueState = new RetinueState();
@@ -48,14 +48,6 @@ namespace Enlisted.Features.CommandTent.Core
         /// <summary>Kills in current enlistment term.</summary>
         [UsedImplicitly]
         public int CurrentTermKills => _currentTermKills;
-
-        /// <summary>Gets the retinue manager for soldier management operations.</summary>
-        public RetinueManager RetinueManager => _retinueManager;
-
-        /// <summary>Gets the current retinue state for UI display.</summary>
-        public RetinueState RetinueState => _retinueState;
-
-        public ReservistRecord ReservistRecord => _reservistRecord;
 
         public ServiceRecordManager()
         {
@@ -746,14 +738,6 @@ namespace Enlisted.Features.CommandTent.Core
 
             ModLogger.Debug(LogCategory, $"Kills recorded: {killCount}, term total={_currentTermKills}, " +
                                          $"lifetime={_lifetimeRecord.LifetimeKills}");
-        }
-
-        /// <summary>Called when player's tier changes (for updating highest tier).</summary>
-        [UsedImplicitly]
-        public void OnTierChanged(int newTier)
-        {
-            var record = GetCurrentFactionRecord();
-            record?.UpdateHighestTier(newTier);
         }
 
         #endregion

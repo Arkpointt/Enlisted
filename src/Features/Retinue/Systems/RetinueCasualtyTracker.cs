@@ -1,15 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.CommandTent.Core;
-using Enlisted.Features.CommandTent.Data;
+using Enlisted.Features.Retinue.Core;
+using Enlisted.Features.Retinue.Data;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 
-namespace Enlisted.Features.CommandTent.Systems
+namespace Enlisted.Features.Retinue.Systems
 {
     /// <summary>
     /// Tracks retinue casualties during battles. Takes a snapshot of troop counts before battle,
