@@ -33,7 +33,7 @@ namespace Enlisted.Features.Identity
         /// <param name="hero">The hero receiving XP (currently only supports MainHero)</param>
         /// <param name="trait">The trait to award XP to</param>
         /// <param name="xp">Amount of XP to award (can be negative for penalties)</param>
-        public static void AwardTraitXP(Hero hero, TraitObject trait, int xp)
+        public static void AwardTraitXp(Hero hero, TraitObject trait, int xp)
         {
             // Native API only supports player trait XP through TraitLevelingHelper
             // which internally uses Campaign.Current.PlayerTraitDeveloper

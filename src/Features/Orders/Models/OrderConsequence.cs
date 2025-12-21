@@ -10,26 +10,19 @@ namespace Enlisted.Features.Orders.Models
         /// Consequences if the order succeeds (determined by skill/trait checks).
         /// Generally positive effects on reputation, XP, and company needs.
         /// </summary>
-        public OrderOutcome Success { get; set; }
+        public OrderOutcome Success { get; set; } = new OrderOutcome();
 
         /// <summary>
         /// Consequences if the order fails (determined by skill/trait checks).
         /// Generally negative effects on reputation and company needs.
         /// </summary>
-        public OrderOutcome Failure { get; set; }
+        public OrderOutcome Failure { get; set; } = new OrderOutcome();
 
         /// <summary>
         /// Consequences if the player declines the order.
         /// Typically reputation penalties with the issuer and officers.
         /// </summary>
-        public OrderOutcome Decline { get; set; }
-
-        public OrderConsequence()
-        {
-            Success = new OrderOutcome();
-            Failure = new OrderOutcome();
-            Decline = new OrderOutcome();
-        }
+        public OrderOutcome Decline { get; set; } = new OrderOutcome();
     }
 }
 

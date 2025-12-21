@@ -43,25 +43,18 @@ namespace Enlisted.Features.Orders.Models
         /// <summary>
         /// Requirements that must be met to be eligible for this order.
         /// </summary>
-        public OrderRequirement Requirements { get; set; }
+        public OrderRequirement Requirements { get; set; } = new OrderRequirement();
 
         /// <summary>
         /// Outcomes for success, failure, and decline scenarios.
         /// </summary>
-        public OrderConsequence Consequences { get; set; }
+        public OrderConsequence Consequences { get; set; } = new OrderConsequence();
 
         /// <summary>
         /// Tags for order categorization (role, context, etc.).
         /// Examples: "scout", "medic", "siege", "patrol", "strategic".
         /// </summary>
-        public List<string> Tags { get; set; }
-
-        public Order()
-        {
-            Tags = new List<string>();
-            Requirements = new OrderRequirement();
-            Consequences = new OrderConsequence();
-        }
+        public List<string> Tags { get; set; } = [];
     }
 }
 

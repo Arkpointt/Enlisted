@@ -10,7 +10,6 @@ using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Extensions;
 using TaleWorlds.Core;
-using TaleWorlds.Library;
 
 namespace Enlisted.Features.Orders
 {
@@ -21,15 +20,15 @@ namespace Enlisted.Features.Orders
     public static class OrderCatalog
     {
         private const string LogCategory = "OrderCatalog";
-        private static List<Order> _orders;
+        private static List<Order> _orders = [];
 
         /// <summary>
         /// Initializes the order catalog with all available orders.
         /// </summary>
         public static void Initialize()
         {
-            _orders = new List<Order>
-            {
+            _orders =
+            [
                 // T1-T3: Basic soldier orders
                 CreateGuardDutyOrder(),
                 CreatePatrolCampOrder(),
@@ -54,7 +53,7 @@ namespace Enlisted.Features.Orders
                 CreateInterrogatePrisonerOrder(),
                 CreateInspectCompanyReadinessOrder(),
                 CreateNegotiateTruceOrder()
-            };
+            ];
 
             ModLogger.Info(LogCategory, $"Initialized {_orders.Count} orders");
         }
@@ -64,14 +63,16 @@ namespace Enlisted.Features.Orders
         /// </summary>
         public static Order SelectOrder()
         {
-            if (_orders == null || _orders.Count == 0)
+            if (_orders.Count == 0)
             {
                 Initialize();
             }
 
             var enlistment = EnlistmentBehavior.Instance;
             if (enlistment == null || !enlistment.IsEnlisted)
+            {
                 return null;
+            }
 
             var tier = enlistment.EnlistmentTier;
             var context = GetCampaignContext();
@@ -139,13 +140,25 @@ namespace Enlisted.Features.Orders
         {
             var enlistment = EnlistmentBehavior.Instance;
             var lord = enlistment?.CurrentLord;
-            string culture = lord?.Culture?.StringId ?? "empire";
+            var culture = lord?.Culture?.StringId ?? "empire";
 
             int issuerTier;
-            if (playerTier <= 2) issuerTier = 4;      // NCO
-            else if (playerTier <= 4) issuerTier = 6; // Officer
-            else if (playerTier <= 6) issuerTier = 8; // Commander
-            else issuerTier = 9;                       // Lord-level
+            if (playerTier <= 2)
+            {
+                issuerTier = 4; // NCO
+            }
+            else if (playerTier <= 4)
+            {
+                issuerTier = 6; // Officer
+            }
+            else if (playerTier <= 6)
+            {
+                issuerTier = 8; // Commander
+            }
+            else
+            {
+                issuerTier = 9; // Lord-level
+            }
 
             // Strategic orders from high ranks come directly from lord
             if (playerTier >= 7 && lord != null && order.Tags.Contains("strategic"))
@@ -154,7 +167,7 @@ namespace Enlisted.Features.Orders
             }
 
             // Get culture-specific rank title for issuer
-            string issuerRankTitle = RankHelper.GetRankTitle(issuerTier, culture);
+            var issuerRankTitle = RankHelper.GetRankTitle(issuerTier, culture);
             return issuerRankTitle;
         }
 
@@ -164,18 +177,28 @@ namespace Enlisted.Features.Orders
         private static string GetCampaignContext()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment.IsEnlisted) return "Peace";
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return "Peace";
+            }
 
             var lord = enlistment.CurrentLord;
-            if (lord?.PartyBelongedTo == null) return "Peace";
+            if (lord?.PartyBelongedTo == null)
+            {
+                return "Peace";
+            }
 
             var party = lord.PartyBelongedTo;
 
             if (party.BesiegerCamp != null || party.SiegeEvent != null)
+            {
                 return "Siege";
+            }
 
             if (party.MapEvent != null)
+            {
                 return "Battle";
+            }
 
             // Check for war state - check if at war with any faction
             if (lord.MapFaction != null)
@@ -190,7 +213,9 @@ namespace Enlisted.Features.Orders
             }
 
             if (party.CurrentSettlement != null)
+            {
                 return "Town";
+            }
 
             return "Peace";
         }
@@ -201,16 +226,23 @@ namespace Enlisted.Features.Orders
         private static bool MeetsSkillRequirements(Order order)
         {
             if (order.Requirements?.MinSkills == null || order.Requirements.MinSkills.Count == 0)
+            {
                 return true;
+            }
 
             var hero = Hero.MainHero;
             foreach (var skillReq in order.Requirements.MinSkills)
             {
                 var skill = GetSkillByName(skillReq.Key);
-                if (skill == null) continue;
+                if (skill == null)
+                {
+                    continue;
+                }
 
                 if (hero.GetSkillValue(skill) < skillReq.Value)
+                {
                     return false;
+                }
             }
 
             return true;
@@ -222,16 +254,23 @@ namespace Enlisted.Features.Orders
         private static bool MeetsTraitRequirements(Order order)
         {
             if (order.Requirements?.MinTraits == null || order.Requirements.MinTraits.Count == 0)
+            {
                 return true;
+            }
 
             var hero = Hero.MainHero;
             foreach (var traitReq in order.Requirements.MinTraits)
             {
                 var trait = GetTraitByName(traitReq.Key);
-                if (trait == null) continue;
+                if (trait == null)
+                {
+                    continue;
+                }
 
                 if (hero.GetTraitLevel(trait) < traitReq.Value)
+                {
                     return false;
+                }
             }
 
             return true;
@@ -248,23 +287,37 @@ namespace Enlisted.Features.Orders
         {
             // Check common traits by string ID match
             if (traitName.Equals("Surgery", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.Surgery;
+            }
             if (traitName.Equals("ScoutSkills", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.ScoutSkills;
+            }
             if (traitName.Equals("RogueSkills", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.RogueSkills;
+            }
             if (traitName.Equals("Siegecraft", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.Siegecraft;
+            }
             if (traitName.Equals("Commander", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.Commander;
+            }
             if (traitName.Equals("SergeantCommandSkills", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.SergeantCommandSkills;
+            }
 
             // Try personality traits
             foreach (var trait in DefaultTraits.Personality)
             {
                 if (trait.StringId.Equals(traitName, StringComparison.OrdinalIgnoreCase))
+                {
                     return trait;
+                }
             }
 
             return null;
@@ -285,7 +338,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Tactics", 20 } },
+                        SkillXp = new Dictionary<string, int> { { "Tactics", 20 } },
                         Reputation = new Dictionary<string, int> { { "officer", 3 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 2 } },
                         Text = "Your vigilance is noted. Nothing gets past your watch."
@@ -302,7 +355,7 @@ namespace Enlisted.Features.Orders
                         Text = "Refusing guard duty? The sergeant is not pleased."
                     }
                 },
-                Tags = new List<string> { "soldier", "camp", "peace" }
+                Tags = ["soldier", "camp", "peace"]
             };
         }
 
@@ -319,7 +372,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Tactics", 25 }, { "Scouting", 15 } },
+                        SkillXp = new Dictionary<string, int> { { "Tactics", 25 }, { "Scouting", 15 } },
                         Reputation = new Dictionary<string, int> { { "officer", 5 }, { "soldier", 2 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 3 }, { "Morale", 2 } },
                         Text = "Your patrol is thorough and professional. The men feel safer."
@@ -336,7 +389,7 @@ namespace Enlisted.Features.Orders
                         Text = "The men see you shirking duties. Your reputation suffers."
                     }
                 },
-                Tags = new List<string> { "soldier", "camp", "peace", "war" }
+                Tags = ["soldier", "camp", "peace", "war"]
             };
         }
 
@@ -353,7 +406,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Crafting", 30 } },
+                        SkillXp = new Dictionary<string, int> { { "Crafting", 30 } },
                         Reputation = new Dictionary<string, int> { { "officer", 5 }, { "soldier", 5 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Equipment", 5 }, { "Readiness", 2 } },
                         Text = "Equipment is spotless and battle-ready. The men appreciate your diligence."
@@ -371,7 +424,7 @@ namespace Enlisted.Features.Orders
                         Text = "Equipment checks are mandatory. Your refusal is noted."
                     }
                 },
-                Tags = new List<string> { "soldier", "camp", "peace", "town" }
+                Tags = ["soldier", "camp", "peace", "town"]
             };
         }
 
@@ -388,7 +441,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Athletics", 15 } },
+                        SkillXp = new Dictionary<string, int> { { "Athletics", 15 } },
                         Reputation = new Dictionary<string, int> { { "soldier", 3 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Morale", 3 }, { "Rest", 2 } },
                         Text = "The fires burn bright tonight. The men are warm and grateful."
@@ -404,7 +457,7 @@ namespace Enlisted.Features.Orders
                         Text = "The men freeze while you shirk basic duties."
                     }
                 },
-                Tags = new List<string> { "soldier", "camp", "peace" }
+                Tags = ["soldier", "camp", "peace"]
             };
         }
 
@@ -421,7 +474,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Scouting", 35 }, { "Tactics", 20 } },
+                        SkillXp = new Dictionary<string, int> { { "Scouting", 35 }, { "Tactics", 20 } },
                         Reputation = new Dictionary<string, int> { { "officer", 8 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 5 }, { "Rest", -2 } },
                         Text = "Your sharp eyes spot movement in the darkness. Alert raised in time."
@@ -439,7 +492,7 @@ namespace Enlisted.Features.Orders
                         Text = "Refusing sentry duty is a serious offense."
                     }
                 },
-                Tags = new List<string> { "soldier", "war", "scout" }
+                Tags = ["soldier", "war", "scout"]
             };
         }
 
@@ -473,7 +526,7 @@ namespace Enlisted.Features.Orders
                         Text = "Missing inspection is unacceptable. You're confined to camp."
                     }
                 },
-                Tags = new List<string> { "soldier", "camp", "town" }
+                Tags = ["soldier", "camp", "town"]
             };
         }
 
@@ -499,8 +552,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Scouting", 80 }, { "Tactics", 40 } },
-                        TraitXP = new Dictionary<string, int> { { "ScoutSkills", 100 } },
+                        SkillXp = new Dictionary<string, int> { { "Scouting", 80 }, { "Tactics", 40 } },
+                        TraitXp = new Dictionary<string, int> { { "ScoutSkills", 100 } },
                         Reputation = new Dictionary<string, int> { { "lord", 5 }, { "officer", 15 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 8 }, { "Morale", 3 } },
                         Denars = 50,
@@ -519,7 +572,7 @@ namespace Enlisted.Features.Orders
                         Text = "The captain's jaw tightens. 'Find someone else who can handle it.'"
                     }
                 },
-                Tags = new List<string> { "scout", "war", "outdoor" }
+                Tags = ["scout", "war", "outdoor"]
             };
         }
 
@@ -541,8 +594,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Medicine", 100 } },
-                        TraitXP = new Dictionary<string, int> { { "Surgery", 120 } },
+                        SkillXp = new Dictionary<string, int> { { "Medicine", 100 } },
+                        TraitXp = new Dictionary<string, int> { { "Surgery", 120 } },
                         Reputation = new Dictionary<string, int> { { "officer", 10 }, { "soldier", 15 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Morale", 10 }, { "Readiness", 5 } },
                         Text = "Your skill saves several lives. The men are deeply grateful."
@@ -560,7 +613,7 @@ namespace Enlisted.Features.Orders
                         Text = "Men die while you refuse to help. Your comrades won't forget this."
                     }
                 },
-                Tags = new List<string> { "medic", "camp", "battle", "siege" }
+                Tags = ["medic", "camp", "battle", "siege"]
             };
         }
 
@@ -582,8 +635,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Crafting", 90 } },
-                        TraitXP = new Dictionary<string, int> { { "Siegecraft", 80 } },
+                        SkillXp = new Dictionary<string, int> { { "Crafting", 90 } },
+                        TraitXp = new Dictionary<string, int> { { "Siegecraft", 80 } },
                         Reputation = new Dictionary<string, int> { { "officer", 12 }, { "soldier", 8 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Equipment", 15 }, { "Readiness", 5 } },
                         Text = "Weapons shine, armor holds. The company is battle-ready again."
@@ -601,7 +654,7 @@ namespace Enlisted.Features.Orders
                         Text = "Equipment remains damaged. The company's readiness suffers."
                     }
                 },
-                Tags = new List<string> { "engineer", "camp", "peace" }
+                Tags = ["engineer", "camp", "peace"]
             };
         }
 
@@ -623,7 +676,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Scouting", 60 }, { "Tactics", 30 } },
+                        SkillXp = new Dictionary<string, int> { { "Scouting", 60 }, { "Tactics", 30 } },
                         Reputation = new Dictionary<string, int> { { "officer", 10 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Supplies", 12 }, { "Morale", 5 } },
                         Text = "You return with wagons full. The company eats well tonight."
@@ -641,7 +694,7 @@ namespace Enlisted.Features.Orders
                         Text = "The company goes hungry while you refuse duty."
                     }
                 },
-                Tags = new List<string> { "soldier", "outdoor", "war", "peace" }
+                Tags = ["soldier", "outdoor", "war", "peace"]
             };
         }
 
@@ -663,8 +716,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Tactics", 70 }, { "Leadership", 60 } },
-                        TraitXP = new Dictionary<string, int> { { "SergeantCommandSkills", 100 } },
+                        SkillXp = new Dictionary<string, int> { { "Tactics", 70 }, { "Leadership", 60 } },
+                        TraitXp = new Dictionary<string, int> { { "SergeantCommandSkills", 100 } },
                         Reputation = new Dictionary<string, int> { { "lord", 8 }, { "officer", 15 }, { "soldier", 10 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 8 }, { "Morale", 10 } },
                         Denars = 75,
@@ -683,7 +736,7 @@ namespace Enlisted.Features.Orders
                         Text = "Refusing command? You'll never lead men again."
                     }
                 },
-                Tags = new List<string> { "nco", "war", "outdoor" }
+                Tags = ["nco", "war", "outdoor"]
             };
         }
 
@@ -705,8 +758,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Engineering", 80 }, { "Tactics", 40 } },
-                        TraitXP = new Dictionary<string, int> { { "Siegecraft", 100 } },
+                        SkillXp = new Dictionary<string, int> { { "Engineering", 80 }, { "Tactics", 40 } },
+                        TraitXp = new Dictionary<string, int> { { "Siegecraft", 100 } },
                         Reputation = new Dictionary<string, int> { { "lord", 6 }, { "officer", 12 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 10 } },
                         Text = "Your improvements significantly strengthen the camp's defenses."
@@ -723,7 +776,7 @@ namespace Enlisted.Features.Orders
                         Text = "The captain expected better from someone of your rank."
                     }
                 },
-                Tags = new List<string> { "engineer", "camp", "siege", "war" }
+                Tags = ["engineer", "camp", "siege", "war"]
             };
         }
 
@@ -745,8 +798,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Leadership", 90 } },
-                        TraitXP = new Dictionary<string, int> { { "SergeantCommandSkills", 120 } },
+                        SkillXp = new Dictionary<string, int> { { "Leadership", 90 } },
+                        TraitXp = new Dictionary<string, int> { { "SergeantCommandSkills", 120 } },
                         Reputation = new Dictionary<string, int> { { "officer", 15 }, { "soldier", 12 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 12 }, { "Morale", 8 } },
                         Text = "The recruits improve rapidly under your instruction."
@@ -764,7 +817,7 @@ namespace Enlisted.Features.Orders
                         Text = "The recruits remain green. Your refusal is noted."
                     }
                 },
-                Tags = new List<string> { "nco", "camp", "peace" }
+                Tags = ["nco", "camp", "peace"]
             };
         }
 
@@ -790,8 +843,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Leadership", 120 }, { "Tactics", 100 } },
-                        TraitXP = new Dictionary<string, int> { { "Commander", 150 } },
+                        SkillXp = new Dictionary<string, int> { { "Leadership", 120 }, { "Tactics", 100 } },
+                        TraitXp = new Dictionary<string, int> { { "Commander", 150 } },
                         Reputation = new Dictionary<string, int> { { "lord", 15 }, { "officer", 20 }, { "soldier", 20 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 15 }, { "Morale", 20 } },
                         Denars = 150,
@@ -812,7 +865,7 @@ namespace Enlisted.Features.Orders
                         Text = "Cowardice from an officer? You're stripped of command."
                     }
                 },
-                Tags = new List<string> { "officer", "battle", "war", "strategic" }
+                Tags = ["officer", "battle", "war", "strategic"]
             };
         }
 
@@ -834,8 +887,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Tactics", 150 }, { "Leadership", 100 } },
-                        TraitXP = new Dictionary<string, int> { { "Commander", 200 } },
+                        SkillXp = new Dictionary<string, int> { { "Tactics", 150 }, { "Leadership", 100 } },
+                        TraitXp = new Dictionary<string, int> { { "Commander", 200 } },
                         Reputation = new Dictionary<string, int> { { "lord", 25 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 20 } },
                         Denars = 200,
@@ -853,7 +906,7 @@ namespace Enlisted.Features.Orders
                         Text = "The lord's eyes narrow. 'I don't forget who refuses my summons.'"
                     }
                 },
-                Tags = new List<string> { "officer", "strategic", "war", "camp" }
+                Tags = ["officer", "strategic", "war", "camp"]
             };
         }
 
@@ -875,7 +928,7 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Steward", 130 }, { "Leadership", 80 } },
+                        SkillXp = new Dictionary<string, int> { { "Steward", 130 }, { "Leadership", 80 } },
                         Reputation = new Dictionary<string, int> { { "lord", 18 }, { "officer", 15 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Supplies", 25 }, { "Morale", 15 } },
                         Denars = 120,
@@ -893,7 +946,7 @@ namespace Enlisted.Features.Orders
                         Text = "Logistics are critical. Your refusal is a serious misstep."
                     }
                 },
-                Tags = new List<string> { "officer", "war", "strategic" }
+                Tags = ["officer", "war", "strategic"]
             };
         }
 
@@ -915,8 +968,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Charm", 100 }, { "Tactics", 80 } },
-                        TraitXP = new Dictionary<string, int> { { "RogueSkills", 150 } },
+                        SkillXp = new Dictionary<string, int> { { "Charm", 100 }, { "Tactics", 80 } },
+                        TraitXp = new Dictionary<string, int> { { "RogueSkills", 150 } },
                         Reputation = new Dictionary<string, int> { { "lord", 20 }, { "officer", 18 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 18 } },
                         Denars = 100,
@@ -933,7 +986,7 @@ namespace Enlisted.Features.Orders
                         Text = "Intelligence is vital. Your squeamishness is disappointing."
                     }
                 },
-                Tags = new List<string> { "operative", "officer", "war", "camp" }
+                Tags = ["operative", "officer", "war", "camp"]
             };
         }
 
@@ -955,8 +1008,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Leadership", 140 }, { "Tactics", 100 } },
-                        TraitXP = new Dictionary<string, int> { { "Commander", 180 } },
+                        SkillXp = new Dictionary<string, int> { { "Leadership", 140 }, { "Tactics", 100 } },
+                        TraitXp = new Dictionary<string, int> { { "Commander", 180 } },
                         Reputation = new Dictionary<string, int> { { "lord", 22 }, { "officer", 18 }, { "soldier", 15 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Readiness", 25 }, { "Morale", 12 } },
                         Text = "Your inspection identifies and corrects numerous issues. The company is battle-ready."
@@ -973,7 +1026,7 @@ namespace Enlisted.Features.Orders
                         Text = "This is a direct order from your lord. Unacceptable."
                     }
                 },
-                Tags = new List<string> { "officer", "camp", "war", "strategic" }
+                Tags = ["officer", "camp", "war", "strategic"]
             };
         }
 
@@ -995,8 +1048,8 @@ namespace Enlisted.Features.Orders
                 {
                     Success = new OrderOutcome
                     {
-                        SkillXP = new Dictionary<string, int> { { "Charm", 180 }, { "Leadership", 150 } },
-                        TraitXP = new Dictionary<string, int> { { "Commander", 250 } },
+                        SkillXp = new Dictionary<string, int> { { "Charm", 180 }, { "Leadership", 150 } },
+                        TraitXp = new Dictionary<string, int> { { "Commander", 250 } },
                         Reputation = new Dictionary<string, int> { { "lord", 35 } },
                         CompanyNeeds = new Dictionary<string, int> { { "Morale", 25 }, { "Rest", 15 } },
                         Denars = 300,
@@ -1015,7 +1068,7 @@ namespace Enlisted.Features.Orders
                         Text = "The lord's face darkens. 'Perhaps I've placed my trust unwisely.'"
                     }
                 },
-                Tags = new List<string> { "officer", "strategic", "war" }
+                Tags = ["officer", "strategic", "war"]
             };
         }
 

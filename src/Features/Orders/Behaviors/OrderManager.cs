@@ -13,7 +13,6 @@ using TaleWorlds.CampaignSystem.CharacterDevelopment;
 using TaleWorlds.CampaignSystem.Extensions;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
-using TaleWorlds.Localization;
 
 namespace Enlisted.Features.Orders.Behaviors
 {
@@ -28,7 +27,7 @@ namespace Enlisted.Features.Orders.Behaviors
         public static OrderManager Instance { get; private set; }
 
         private Order _currentOrder;
-        private CampaignTime _lastOrderTime;
+        private CampaignTime _lastOrderTime = CampaignTime.Never;
         private int _declineCount;
 
         public OrderManager()
@@ -54,7 +53,10 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private void OnDailyTick()
         {
-            if (!EnlistmentBehavior.Instance.IsEnlisted) return;
+            if (!EnlistmentBehavior.Instance.IsEnlisted)
+            {
+                return;
+            }
 
             if (_currentOrder == null && ShouldIssueOrder())
             {
@@ -68,23 +70,41 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private bool ShouldIssueOrder()
         {
-            if (_lastOrderTime == null) return true;
+            if (_lastOrderTime == CampaignTime.Never)
+            {
+                return true;
+            }
 
             var daysSinceLastOrder = CampaignTime.Now.ToDays - _lastOrderTime.ToDays;
             var tier = EnlistmentBehavior.Instance.EnlistmentTier;
             var context = GetCampaignContext();
 
             // Base: 3 days
-            int targetDays = 3;
+            var targetDays = 3;
 
             // Context modifiers: high tempo operations = more frequent orders
-            if (context == "Siege" || context == "Battle") targetDays = 1;
-            else if (context == "War") targetDays = 2;
-            else if (context == "Peace" || context == "Town") targetDays = 4;
+            if (context == "Siege" || context == "Battle")
+            {
+                targetDays = 1;
+            }
+            else if (context == "War")
+            {
+                targetDays = 2;
+            }
+            else if (context == "Peace" || context == "Town")
+            {
+                targetDays = 4;
+            }
 
             // Rank modifiers: lower ranks get more frequent orders
-            if (tier <= 3) targetDays = Math.Max(2, targetDays - 1);
-            else if (tier >= 7) targetDays = Math.Min(5, targetDays + 1);
+            if (tier <= 3)
+            {
+                targetDays = Math.Max(2, targetDays - 1);
+            }
+            else if (tier >= 7)
+            {
+                targetDays = Math.Min(5, targetDays + 1);
+            }
 
             return daysSinceLastOrder >= targetDays;
         }
@@ -104,7 +124,7 @@ namespace Enlisted.Features.Orders.Behaviors
             // Determine issuer dynamically if set to "auto"
             if (order.Issuer == "auto")
             {
-                int playerTier = EnlistmentBehavior.Instance.EnlistmentTier;
+                var playerTier = EnlistmentBehavior.Instance.EnlistmentTier;
                 order.Issuer = OrderCatalog.DetermineOrderIssuer(playerTier, order);
             }
 
@@ -123,7 +143,10 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         public void AcceptOrder()
         {
-            if (_currentOrder == null) return;
+            if (_currentOrder == null)
+            {
+                return;
+            }
 
             ExecuteOrder(_currentOrder);
             _currentOrder = null;
@@ -134,7 +157,10 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         public void DeclineOrder()
         {
-            if (_currentOrder == null) return;
+            if (_currentOrder == null)
+            {
+                return;
+            }
 
             _declineCount++;
 
@@ -143,12 +169,12 @@ namespace Enlisted.Features.Orders.Behaviors
             ModLogger.Info(LogCategory, $"Order declined: {_currentOrder.Title} ({_declineCount} total declines)");
 
             // Report decline to news system
-            if (Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            if (Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
             {
                 var briefSummary = $"Declined: {_currentOrder.Title}";
                 var detailedSummary = _currentOrder.Consequences.Decline.Text;
                 
-                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
+                Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
                     orderTitle: _currentOrder.Title,
                     success: false,
                     briefSummary: briefSummary,
@@ -175,7 +201,7 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private void ExecuteOrder(Order order)
         {
-            bool success = EvaluateOrderSuccess(order);
+            var success = EvaluateOrderSuccess(order);
 
             var outcome = success ? order.Consequences.Success : order.Consequences.Failure;
             ApplyOrderOutcome(outcome);
@@ -195,35 +221,43 @@ namespace Enlisted.Features.Orders.Behaviors
         {
             try
             {
-                if (Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance == null)
+                if (Interface.Behaviors.EnlistedNewsBehavior.Instance == null)
                 {
                     return;
                 }
 
                 // Create brief summary for daily report
-                string briefSummary = success
+                var briefSummary = success
                     ? $"{order.Title} completed successfully"
                     : $"{order.Title} - mission failed";
 
                 // Create detailed summary for full report
-                string detailedSummary = outcome.Text ?? (success ? "Order completed." : "Order failed.");
+                var detailedSummary = outcome.Text ?? (success ? "Order completed." : "Order failed.");
 
                 // Add reputation context if significant
                 if (outcome.Reputation != null)
                 {
                     var repEffects = new List<string>();
                     if (outcome.Reputation.ContainsKey("lord") && Math.Abs(outcome.Reputation["lord"]) >= 10)
+                    {
                         repEffects.Add($"Lord reputation {outcome.Reputation["lord"]:+#;-#;0}");
+                    }
                     if (outcome.Reputation.ContainsKey("officer") && Math.Abs(outcome.Reputation["officer"]) >= 10)
+                    {
                         repEffects.Add($"Officer reputation {outcome.Reputation["officer"]:+#;-#;0}");
+                    }
                     if (outcome.Reputation.ContainsKey("soldier") && Math.Abs(outcome.Reputation["soldier"]) >= 10)
+                    {
                         repEffects.Add($"Soldier reputation {outcome.Reputation["soldier"]:+#;-#;0}");
+                    }
 
                     if (repEffects.Count > 0)
+                    {
                         detailedSummary += $"\n({string.Join(", ", repEffects)})";
+                    }
                 }
 
-                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
+                Interface.Behaviors.EnlistedNewsBehavior.Instance.AddOrderOutcome(
                     orderTitle: order.Title,
                     success: success,
                     briefSummary: briefSummary,
@@ -244,7 +278,7 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private bool EvaluateOrderSuccess(Order order)
         {
-            float successChance = 0.6f;
+            var successChance = 0.6f;
 
             var hero = Hero.MainHero;
 
@@ -254,10 +288,13 @@ namespace Enlisted.Features.Orders.Behaviors
                 foreach (var skillReq in order.Requirements.MinSkills)
                 {
                     var skill = GetSkillByName(skillReq.Key);
-                    if (skill == null) continue;
+                    if (skill == null)
+                    {
+                        continue;
+                    }
 
-                    int playerSkill = hero.GetSkillValue(skill);
-                    int required = skillReq.Value;
+                    var playerSkill = hero.GetSkillValue(skill);
+                    var required = skillReq.Value;
 
                     // +1% per skill point above requirement, -2% per point below
                     if (playerSkill >= required)
@@ -277,10 +314,13 @@ namespace Enlisted.Features.Orders.Behaviors
                 foreach (var traitReq in order.Requirements.MinTraits)
                 {
                     var trait = GetTraitByName(traitReq.Key);
-                    if (trait == null) continue;
+                    if (trait == null)
+                    {
+                        continue;
+                    }
 
-                    int playerTrait = hero.GetTraitLevel(trait);
-                    int required = traitReq.Value;
+                    var playerTrait = hero.GetTraitLevel(trait);
+                    var required = traitReq.Value;
 
                     // +2% per trait level above requirement, -3% per level below
                     if (playerTrait >= required)
@@ -305,12 +345,15 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private void ApplyOrderOutcome(OrderOutcome outcome)
         {
-            if (outcome == null) return;
+            if (outcome == null)
+            {
+                return;
+            }
 
             // Apply skill XP
-            if (outcome.SkillXP != null)
+            if (outcome.SkillXp != null)
             {
-                foreach (var xp in outcome.SkillXP)
+                foreach (var xp in outcome.SkillXp)
                 {
                     var skill = GetSkillByName(xp.Key);
                     if (skill != null)
@@ -322,14 +365,14 @@ namespace Enlisted.Features.Orders.Behaviors
             }
 
             // Apply trait XP
-            if (outcome.TraitXP != null)
+            if (outcome.TraitXp != null)
             {
-                foreach (var xp in outcome.TraitXP)
+                foreach (var xp in outcome.TraitXp)
                 {
                     var trait = GetTraitByName(xp.Key);
                     if (trait != null)
                     {
-                        TraitHelper.AwardTraitXP(Hero.MainHero, trait, xp.Value);
+                        TraitHelper.AwardTraitXp(Hero.MainHero, trait, xp.Value);
                         ModLogger.Debug(LogCategory, $"Awarded {xp.Value} trait XP to {trait.Name}");
                     }
                 }
@@ -340,19 +383,24 @@ namespace Enlisted.Features.Orders.Behaviors
             {
                 var escalation = EscalationManager.Instance;
 
-                if (outcome.Reputation.ContainsKey("lord"))
-                    escalation.ModifyLordReputation(outcome.Reputation["lord"]);
-                if (outcome.Reputation.ContainsKey("officer"))
-                    escalation.ModifyOfficerReputation(outcome.Reputation["officer"]);
-                if (outcome.Reputation.ContainsKey("soldier"))
-                    escalation.ModifySoldierReputation(outcome.Reputation["soldier"]);
+                if (outcome.Reputation.TryGetValue("lord", out var lordRep))
+                {
+                    escalation.ModifyLordReputation(lordRep);
+                }
+                if (outcome.Reputation.TryGetValue("officer", out var officerRep))
+                {
+                    escalation.ModifyOfficerReputation(officerRep);
+                }
+                if (outcome.Reputation.TryGetValue("soldier", out var soldierRep))
+                {
+                    escalation.ModifySoldierReputation(soldierRep);
+                }
             }
 
             // Apply company need changes
-            if (outcome.CompanyNeeds != null && outcome.CompanyNeeds.Count > 0)
+            if (outcome.CompanyNeeds is { Count: > 0 })
             {
-                var enlistment = EnlistmentBehavior.Instance;
-                if (enlistment?.IsEnlisted == true && enlistment.CompanyNeeds != null)
+                if (EnlistmentBehavior.Instance is { IsEnlisted: true, CompanyNeeds: not null } enlistment)
                 {
                     var state = enlistment.CompanyNeeds;
                     
@@ -361,20 +409,20 @@ namespace Enlisted.Features.Orders.Behaviors
                         // Parse the need name to enum
                         if (Enum.TryParse<CompanyNeed>(needChange.Key, true, out var need))
                         {
-                            int oldValue = state.GetNeed(need);
-                            int newValue = oldValue + needChange.Value;
+                            var oldValue = state.GetNeed(need);
+                            var newValue = oldValue + needChange.Value;
                             state.SetNeed(need, newValue);
                             
                             // Log the change with before/after values
-                            string sign = needChange.Value >= 0 ? "+" : "";
+                            var sign = needChange.Value >= 0 ? "+" : "";
                             ModLogger.Info(LogCategory, 
                                 $"Company need changed: {need}: {oldValue} -> {newValue} ({sign}{needChange.Value})");
 
                             // Report significant changes to news system
                             if (ShouldReportNeedChange(need, needChange.Value, oldValue, newValue))
                             {
-                                string message = GetCompanyNeedChangeMessage(need, needChange.Value, oldValue, newValue);
-                                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance?.AddCompanyNeedChange(
+                                var message = GetCompanyNeedChangeMessage(need, needChange.Value, newValue);
+                                Interface.Behaviors.EnlistedNewsBehavior.Instance?.AddCompanyNeedChange(
                                     need: need.ToString(),
                                     delta: needChange.Value,
                                     oldValue: oldValue,
@@ -410,17 +458,25 @@ namespace Enlisted.Features.Orders.Behaviors
             {
                 var escalation = EscalationManager.Instance;
 
-                if (outcome.Escalation.ContainsKey("heat"))
-                    escalation.ModifyHeat(outcome.Escalation["heat"]);
-                if (outcome.Escalation.ContainsKey("discipline"))
-                    escalation.ModifyDiscipline(outcome.Escalation["discipline"]);
+                if (outcome.Escalation.TryGetValue("heat", out var heatEsc))
+                {
+                    escalation.ModifyHeat(heatEsc);
+                }
+                if (outcome.Escalation.TryGetValue("discipline", out var disciplineEsc))
+                {
+                    escalation.ModifyDiscipline(disciplineEsc);
+                }
             }
 
             // Apply denars/renown
             if (outcome.Denars != 0)
+            {
                 Hero.MainHero.ChangeHeroGold(outcome.Denars);
+            }
             if (outcome.Renown != 0)
+            {
                 Hero.MainHero.Clan.AddRenown(outcome.Renown);
+            }
         }
 
         /// <summary>
@@ -438,8 +494,8 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private void ShowOrderResult(Order order, bool success, OrderOutcome outcome, bool isDecline = false)
         {
-            string title = isDecline ? "Order Declined" : (success ? "Order Succeeded" : "Order Failed");
-            string text = outcome.Text;
+            var title = isDecline ? "Order Declined" : (success ? "Order Succeeded" : "Order Failed");
+            var text = outcome.Text;
 
             if (string.IsNullOrEmpty(text))
             {
@@ -487,17 +543,23 @@ namespace Enlisted.Features.Orders.Behaviors
         private string GetCampaignContext()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment.IsEnlisted) return "Peace";
+            if (!enlistment.IsEnlisted)
+            {
+                return "Peace";
+            }
 
             var lord = enlistment.CurrentLord;
-            if (lord?.PartyBelongedTo == null) return "Peace";
+            if (lord?.PartyBelongedTo == null)
+            {
+                return "Peace";
+            }
 
             var party = lord.PartyBelongedTo;
 
             // Use strategic context detection for more nuanced context awareness
             try
             {
-                string strategicContext = Enlisted.Features.Context.ArmyContextAnalyzer.GetLordStrategicContext(party);
+                var strategicContext = ArmyContextAnalyzer.GetLordStrategicContext(party);
                 
                 // Map strategic contexts to legacy context tags for backward compatibility
                 // This allows existing hardcoded orders to still work while supporting new strategic tags
@@ -521,10 +583,14 @@ namespace Enlisted.Features.Orders.Behaviors
 
             // Fallback to simple detection if strategic context fails
             if (party.BesiegerCamp != null || party.SiegeEvent != null)
+            {
                 return "Siege";
+            }
 
             if (party.MapEvent != null)
+            {
                 return "Battle";
+            }
 
             if (lord.MapFaction != null)
             {
@@ -538,32 +604,11 @@ namespace Enlisted.Features.Orders.Behaviors
             }
 
             if (party.CurrentSettlement != null)
+            {
                 return "Town";
+            }
 
             return "Peace";
-        }
-
-        /// <summary>
-        /// Gets the current strategic context (8 detailed contexts).
-        /// Used for strategic tag filtering when JSON orders are loaded.
-        /// </summary>
-        private string GetStrategicContext()
-        {
-            var enlistment = EnlistmentBehavior.Instance;
-            if (!enlistment.IsEnlisted) return "patrol_peacetime";
-
-            var lord = enlistment.CurrentLord;
-            if (lord?.PartyBelongedTo == null) return "patrol_peacetime";
-
-            try
-            {
-                return Enlisted.Features.Context.ArmyContextAnalyzer.GetLordStrategicContext(lord.PartyBelongedTo);
-            }
-            catch (Exception ex)
-            {
-                ModLogger.Error(LogCategory, "Error getting strategic context", ex);
-                return "patrol_peacetime";
-            }
         }
 
         /// <summary>
@@ -582,23 +627,37 @@ namespace Enlisted.Features.Orders.Behaviors
         {
             // Check common traits by string ID match
             if (traitName.Equals("Surgery", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.Surgery;
+            }
             if (traitName.Equals("ScoutSkills", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.ScoutSkills;
+            }
             if (traitName.Equals("RogueSkills", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.RogueSkills;
+            }
             if (traitName.Equals("Siegecraft", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.Siegecraft;
+            }
             if (traitName.Equals("Commander", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.Commander;
+            }
             if (traitName.Equals("SergeantCommandSkills", StringComparison.OrdinalIgnoreCase))
+            {
                 return DefaultTraits.SergeantCommandSkills;
+            }
 
             // Try personality traits
             foreach (var trait in DefaultTraits.Personality)
             {
                 if (trait.StringId.Equals(traitName, StringComparison.OrdinalIgnoreCase))
+                {
                     return trait;
+                }
             }
 
             return null;
@@ -626,15 +685,28 @@ namespace Enlisted.Features.Orders.Behaviors
         /// </summary>
         private static bool ShouldReportNeedChange(CompanyNeed need, int delta, int oldValue, int newValue)
         {
+            _ = need;
             // Report if change is significant (±10+)
-            if (Math.Abs(delta) >= 10) return true;
+            if (Math.Abs(delta) >= 10)
+            {
+                return true;
+            }
 
             // Report if crossing critical threshold (30%)
-            if (oldValue >= 30 && newValue < 30) return true;
-            if (oldValue < 30 && newValue >= 30) return true;
+            if (oldValue >= 30 && newValue < 30)
+            {
+                return true;
+            }
+            if (oldValue < 30 && newValue >= 30)
+            {
+                return true;
+            }
 
             // Report if crossing excellent threshold (80%)
-            if (oldValue < 80 && newValue >= 80) return true;
+            if (oldValue < 80 && newValue >= 80)
+            {
+                return true;
+            }
 
             return false;
         }
@@ -642,75 +714,107 @@ namespace Enlisted.Features.Orders.Behaviors
         /// <summary>
         /// Generates a contextual message for a company need change based on severity and direction.
         /// </summary>
-        private static string GetCompanyNeedChangeMessage(CompanyNeed need, int delta, int oldValue, int newValue)
+        private static string GetCompanyNeedChangeMessage(CompanyNeed need, int delta, int newValue)
         {
+            _ = need;
+            var needStr = need.ToString();
             // Critical thresholds
             if (newValue < 30)
             {
-                return need switch
+                switch (need)
                 {
-                    CompanyNeed.Supplies => "Supplies critically low - Equipment access restricted",
-                    CompanyNeed.Readiness => "Unit readiness critical - Combat effectiveness severely reduced",
-                    CompanyNeed.Morale => "Morale breaking - Risk of desertion",
-                    CompanyNeed.Rest => "Men exhausted - Need rest urgently",
-                    CompanyNeed.Equipment => "Equipment in poor condition - Combat capability compromised",
-                    _ => $"{need} is critically low"
-                };
+                    case CompanyNeed.Supplies:
+                        return "Supplies critically low - Equipment access restricted";
+                    case CompanyNeed.Readiness:
+                        return "Unit readiness critical - Combat effectiveness severely reduced";
+                    case CompanyNeed.Morale:
+                        return "Morale breaking - Risk of desertion";
+                    case CompanyNeed.Rest:
+                        return "Men exhausted - Need rest urgently";
+                    case CompanyNeed.Equipment:
+                        return "Equipment in poor condition - Combat capability compromised";
+                    default:
+                        return $"{needStr} is critically low";
+                }
             }
 
             // Positive changes
             if (delta >= 15)
             {
-                return need switch
+                switch (need)
                 {
-                    CompanyNeed.Supplies => "Company well-supplied after resupply",
-                    CompanyNeed.Readiness => "Unit readiness greatly improved",
-                    CompanyNeed.Morale => "Morale lifted significantly",
-                    CompanyNeed.Rest => "Men well-rested and ready",
-                    CompanyNeed.Equipment => "Equipment in good condition",
-                    _ => $"{need} significantly improved"
-                };
+                    case CompanyNeed.Supplies:
+                        return "Company well-supplied after resupply";
+                    case CompanyNeed.Readiness:
+                        return "Unit readiness greatly improved";
+                    case CompanyNeed.Morale:
+                        return "Morale lifted significantly";
+                    case CompanyNeed.Rest:
+                        return "Men well-rested and ready";
+                    case CompanyNeed.Equipment:
+                        return "Equipment in good condition";
+                    default:
+                        return $"{needStr} significantly improved";
+                }
             }
             else if (delta >= 10)
             {
-                return need switch
+                switch (need)
                 {
-                    CompanyNeed.Supplies => "Supplies replenished",
-                    CompanyNeed.Readiness => "Unit readiness improving",
-                    CompanyNeed.Morale => "Morale improving",
-                    CompanyNeed.Rest => "Men recovering from fatigue",
-                    CompanyNeed.Equipment => "Equipment condition improved",
-                    _ => $"{need} improved"
-                };
+                    case CompanyNeed.Supplies:
+                        return "Supplies replenished";
+                    case CompanyNeed.Readiness:
+                        return "Unit readiness improving";
+                    case CompanyNeed.Morale:
+                        return "Morale improving";
+                    case CompanyNeed.Rest:
+                        return "Men recovering from fatigue";
+                    case CompanyNeed.Equipment:
+                        return "Equipment condition improved";
+                    default:
+                        return $"{needStr} improved";
+                }
             }
 
             // Negative changes
             if (delta <= -15)
             {
-                return need switch
+                switch (need)
                 {
-                    CompanyNeed.Supplies => "Supplies depleted significantly",
-                    CompanyNeed.Readiness => "Unit readiness declining sharply",
-                    CompanyNeed.Morale => "Morale declining",
-                    CompanyNeed.Rest => "Men growing exhausted",
-                    CompanyNeed.Equipment => "Equipment wearing down",
-                    _ => $"{need} declined significantly"
-                };
+                    case CompanyNeed.Supplies:
+                        return "Supplies depleted significantly";
+                    case CompanyNeed.Readiness:
+                        return "Unit readiness declining sharply";
+                    case CompanyNeed.Morale:
+                        return "Morale declining";
+                    case CompanyNeed.Rest:
+                        return "Men growing exhausted";
+                    case CompanyNeed.Equipment:
+                        return "Equipment wearing down";
+                    default:
+                        return $"{needStr} declined significantly";
+                }
             }
             else if (delta <= -10)
             {
-                return need switch
+                switch (need)
                 {
-                    CompanyNeed.Supplies => "Supplies running low",
-                    CompanyNeed.Readiness => "Unit readiness declining",
-                    CompanyNeed.Morale => "Morale slipping",
-                    CompanyNeed.Rest => "Men growing tired",
-                    CompanyNeed.Equipment => "Equipment condition declining",
-                    _ => $"{need} declined"
-                };
+                    case CompanyNeed.Supplies:
+                        return "Supplies running low";
+                    case CompanyNeed.Readiness:
+                        return "Unit readiness declining";
+                    case CompanyNeed.Morale:
+                        return "Morale slipping";
+                    case CompanyNeed.Rest:
+                        return "Men growing tired";
+                    case CompanyNeed.Equipment:
+                        return "Equipment condition declining";
+                    default:
+                        return $"{needStr} declined";
+                }
             }
 
-            return $"{need} changed by {delta:+#;-#;0}";
+            return $"{needStr} changed by {delta:+#;-#;0}";
         }
     }
 }
