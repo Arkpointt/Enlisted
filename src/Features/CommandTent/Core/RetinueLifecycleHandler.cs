@@ -7,7 +7,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.CommandTent.Core
 {

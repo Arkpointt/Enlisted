@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 
@@ -81,12 +81,33 @@ namespace Enlisted.Features.Escalation
                 // Track values
                 var heat = _state.Heat;
                 var discipline = _state.Discipline;
-                var rep = _state.LanceReputation;
+                var soldierRep = _state.SoldierReputation;
+                var lordRep = _state.LordReputation;
+                var officerRep = _state.OfficerReputation;
                 var medical = _state.MedicalRisk;
 
                 dataStore.SyncData("esc_heat", ref heat);
                 dataStore.SyncData("esc_discipline", ref discipline);
-                dataStore.SyncData("esc_rep", ref rep);
+                
+                // Migration: Load old LanceReputation into SoldierReputation
+                if (dataStore.IsLoading)
+                {
+                    int oldLanceRep = 0;
+                    dataStore.SyncData("esc_rep", ref oldLanceRep);
+                    soldierRep = oldLanceRep;
+                    
+                    // Initialize new reputation fields at neutral
+                    lordRep = 50;
+                    officerRep = 50;
+                }
+                else
+                {
+                    // Save new reputation system
+                    dataStore.SyncData("esc_soldierRep", ref soldierRep);
+                    dataStore.SyncData("esc_lordRep", ref lordRep);
+                    dataStore.SyncData("esc_officerRep", ref officerRep);
+                }
+                
                 dataStore.SyncData("esc_medical", ref medical);
 
                 // Timestamps
@@ -121,7 +142,9 @@ namespace Enlisted.Features.Escalation
                 {
                     _state.Heat = heat;
                     _state.Discipline = discipline;
-                    _state.LanceReputation = rep;
+                    _state.SoldierReputation = soldierRep;
+                    _state.LordReputation = lordRep;
+                    _state.OfficerReputation = officerRep;
                     _state.MedicalRisk = medical;
 
                     _state.LastHeatRaisedTime = lastHeatRaised;
@@ -273,10 +296,10 @@ namespace Enlisted.Features.Escalation
             };
             var repCandidates = new[]
             {
-                (_state.LanceReputation <= EscalationThresholds.LanceSabotage, "lance_sabotage"),
-                (_state.LanceReputation <= EscalationThresholds.LanceIsolated, "lance_isolated"),
-                (_state.LanceReputation >= EscalationThresholds.LanceBonded, "lance_bonded"),
-                (_state.LanceReputation >= EscalationThresholds.LanceTrusted, "lance_trusted")
+                (_state.SoldierReputation <= EscalationThresholds.LanceSabotage, "lance_sabotage"),
+                (_state.SoldierReputation <= EscalationThresholds.LanceIsolated, "lance_isolated"),
+                (_state.SoldierReputation >= EscalationThresholds.LanceBonded, "lance_bonded"),
+                (_state.SoldierReputation >= EscalationThresholds.LanceTrusted, "lance_trusted")
             };
 
             foreach (var (ok, id) in heatCandidates)
@@ -384,33 +407,98 @@ namespace Enlisted.Features.Escalation
             EvaluateThresholdsAndQueueIfNeeded();
         }
 
-        public void ModifyLanceReputation(int delta, string reason = null)
+        public void ModifySoldierReputation(int delta, string reason = null)
         {
             if (!IsEnabled())
             {
                 return;
             }
 
-            var oldValue = _state.LanceReputation;
+            var oldValue = _state.SoldierReputation;
             var next = oldValue + delta;
-            _state.LanceReputation = Clamp(next, EscalationState.LanceReputationMin, EscalationState.LanceReputationMax);
-            LogTrackChange("LanceReputation", oldValue, _state.LanceReputation, reason);
+            _state.SoldierReputation = Clamp(next, EscalationState.SoldierReputationMin, EscalationState.SoldierReputationMax);
+            LogTrackChange("SoldierReputation", oldValue, _state.SoldierReputation, reason);
 
-            // Show UI notification for lance reputation changes
-            if (_state.LanceReputation != oldValue)
+            // Show UI notification for soldier reputation changes
+            if (_state.SoldierReputation != oldValue)
             {
-                var change = _state.LanceReputation - oldValue;
+                var change = _state.SoldierReputation - oldValue;
                 var sign = change > 0 ? "+" : "";
-                var statusText = GetLanceReputationStatus();
+                var statusText = GetSoldierReputationStatus();
                 var color = change > 0 ? TaleWorlds.Library.Colors.Cyan : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_rep_changed}Lance Reputation: {CHANGE} ({STATUS})");
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_rep_changed}Soldier Reputation: {CHANGE} ({STATUS})");
                 msg.SetTextVariable("CHANGE", $"{sign}{change}");
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
                     new TaleWorlds.Library.InformationMessage(msg.ToString(), color));
             }
 
+            // Report significant changes to news system
+            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                string message = GetReputationChangeMessage("Soldier", delta, _state.SoldierReputation);
+                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                    target: "Soldier",
+                    delta: delta,
+                    newValue: _state.SoldierReputation,
+                    message: message,
+                    dayNumber: (int)CampaignTime.Now.ToDays
+                );
+            }
+
             EvaluateThresholdsAndQueueIfNeeded();
+        }
+
+        public void ModifyLordReputation(int delta, string reason = null)
+        {
+            if (!IsEnabled())
+            {
+                return;
+            }
+
+            var oldValue = _state.LordReputation;
+            var next = oldValue + delta;
+            _state.LordReputation = Clamp(next, EscalationState.LordReputationMin, EscalationState.LordReputationMax);
+            LogTrackChange("LordReputation", oldValue, _state.LordReputation, reason);
+
+            // Report significant changes to news system
+            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                string message = GetReputationChangeMessage("Lord", delta, _state.LordReputation);
+                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                    target: "Lord",
+                    delta: delta,
+                    newValue: _state.LordReputation,
+                    message: message,
+                    dayNumber: (int)CampaignTime.Now.ToDays
+                );
+            }
+        }
+
+        public void ModifyOfficerReputation(int delta, string reason = null)
+        {
+            if (!IsEnabled())
+            {
+                return;
+            }
+
+            var oldValue = _state.OfficerReputation;
+            var next = oldValue + delta;
+            _state.OfficerReputation = Clamp(next, EscalationState.OfficerReputationMin, EscalationState.OfficerReputationMax);
+            LogTrackChange("OfficerReputation", oldValue, _state.OfficerReputation, reason);
+
+            // Report significant changes to news system
+            if (Math.Abs(delta) >= 10 && Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance != null)
+            {
+                string message = GetReputationChangeMessage("Officer", delta, _state.OfficerReputation);
+                Enlisted.Features.Interface.Behaviors.EnlistedNewsBehavior.Instance.AddReputationChange(
+                    target: "Officer",
+                    delta: delta,
+                    newValue: _state.OfficerReputation,
+                    message: message,
+                    dayNumber: (int)CampaignTime.Now.ToDays
+                );
+            }
         }
 
         public void ModifyMedicalRisk(int delta, string reason = null)
@@ -477,15 +565,15 @@ namespace Enlisted.Features.Escalation
                 }
             }
 
-            // Lance reputation: trends toward 0 by 1 per 14 days.
+            // Soldier reputation: trends toward 0 by 1 per 14 days.
             {
-                var old = _state.LanceReputation;
+                var old = _state.SoldierReputation;
                 if (TryDecayTowardZero(old, _state.LastLanceReputationDecayTime, cfg.LanceReputationDecayIntervalDays, 1,
-                        EscalationState.LanceReputationMin, EscalationState.LanceReputationMax, now, out var updated, out var updatedTime))
+                        EscalationState.SoldierReputationMin, EscalationState.SoldierReputationMax, now, out var updated, out var updatedTime))
                 {
-                    _state.LanceReputation = updated;
+                    _state.SoldierReputation = updated;
                     _state.LastLanceReputationDecayTime = updatedTime;
-                    ModLogger.Debug(LogCategory, $"Lance reputation decayed: {old} -> {updated}");
+                    ModLogger.Debug(LogCategory, $"Soldier reputation decayed: {old} -> {updated}");
                 }
             }
         }
@@ -696,9 +784,9 @@ namespace Enlisted.Features.Escalation
             return "Breaking";
         }
 
-        public string GetLanceReputationStatus()
+        public string GetSoldierReputationStatus()
         {
-            var rep = _state.LanceReputation;
+            var rep = _state.SoldierReputation;
             if (rep >= 40)
             {
                 return "Bonded";
@@ -724,6 +812,28 @@ namespace Enlisted.Features.Escalation
                 return "Outcast";
             }
             return "Hated";
+        }
+
+        public string GetLordReputationStatus()
+        {
+            var rep = _state.LordReputation;
+            if (rep >= 80) return "Celebrated";
+            if (rep >= 60) return "Trusted";
+            if (rep >= 40) return "Respected";
+            if (rep >= 20) return "Promising";
+            if (rep >= 10) return "Neutral";
+            return "Questionable";
+        }
+
+        public string GetOfficerReputationStatus()
+        {
+            var rep = _state.OfficerReputation;
+            if (rep >= 80) return "Celebrated";
+            if (rep >= 60) return "Trusted";
+            if (rep >= 40) return "Respected";
+            if (rep >= 20) return "Promising";
+            if (rep >= 10) return "Neutral";
+            return "Questionable";
         }
 
         public string GetMedicalRiskStatus()
@@ -768,6 +878,53 @@ namespace Enlisted.Features.Escalation
 
             var why = string.IsNullOrWhiteSpace(reason) ? string.Empty : $" ({reason})";
             ModLogger.Info(LogCategory, $"{track}: {oldValue} -> {newValue}{why}");
+        }
+
+        /// <summary>
+        /// Generates a contextual message for a reputation change based on target and magnitude.
+        /// </summary>
+        private static string GetReputationChangeMessage(string target, int delta, int newValue)
+        {
+            if (delta >= 20)
+            {
+                return target switch
+                {
+                    "Lord" => "Your lord took special notice of your recent performance",
+                    "Officer" => "The captain publicly commended your work",
+                    "Soldier" => "The men respect you greatly after your recent actions",
+                    _ => $"{target} reputation significantly improved"
+                };
+            }
+            else if (delta >= 10)
+            {
+                return target switch
+                {
+                    "Lord" => "Your lord's confidence in you is growing",
+                    "Officer" => "You've impressed the officers with your recent work",
+                    "Soldier" => "Your standing with the men has improved",
+                    _ => $"{target} reputation improved"
+                };
+            }
+            else if (delta <= -20)
+            {
+                return target switch
+                {
+                    "Lord" => "You've seriously disappointed your lord",
+                    "Officer" => "The officers question your competence",
+                    "Soldier" => "The men have lost respect for you",
+                    _ => $"{target} reputation significantly damaged"
+                };
+            }
+            else // delta <= -10
+            {
+                return target switch
+                {
+                    "Lord" => "Your lord's confidence in you has declined",
+                    "Officer" => "The officers are disappointed in your recent performance",
+                    "Soldier" => "Your standing with the men has suffered",
+                    _ => $"{target} reputation declined"
+                };
+            }
         }
     }
 }

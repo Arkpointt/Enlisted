@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -456,8 +455,8 @@ namespace Enlisted.Features.Combat.Behaviors
             var enlistmentTier = enlistment.EnlistmentTier;
             var isTier4Plus = enlistmentTier >= RetinueManager.CommanderTier1;
             
-            var duties = EnlistedDutiesBehavior.Instance;
-            var formationString = duties?.PlayerFormation ?? "infantry";
+            // The player's formation defaults to infantry while active duty assignments are being updated.
+            var formationString = "infantry";
             var formationClass = GetFormationClassFromString(formationString);
 
             // Get the formation from the team
@@ -745,9 +744,8 @@ namespace Enlisted.Features.Combat.Behaviors
                 var playerPosition = playerAgent.Position;
                 var mainParty = PartyBase.MainParty;
 
-                // Get the player's formation class from duties (Infantry, Ranged, Cavalry, HorseArcher)
-                var duties = EnlistedDutiesBehavior.Instance;
-                var formationString = duties?.PlayerFormation ?? "infantry";
+                // The player is typically assigned to the infantry formation unless specified by an order.
+                var formationString = "infantry";
                 var formationClass = GetFormationClassFromString(formationString);
                 var currentLord = enlistment.CurrentLord;
                 Vec3 targetPosition = Vec3.Invalid;

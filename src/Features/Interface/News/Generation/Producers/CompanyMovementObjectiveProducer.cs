@@ -1,6 +1,5 @@
 using System;
 using Enlisted.Features.Interface.News.Models;
-using Enlisted.Features.Lances.Events;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem.Settlements;
 
@@ -113,21 +112,7 @@ namespace Enlisted.Features.Interface.News.Generation.Producers
                         snapshot.Threat = ThreatBand.Low;
                     }
 
-                    // Token checks for “enemy nearby / before battle” (shared trigger vocabulary).
-                    // This is still best-effort: if a token implementation changes across versions, we fall back to the simple band above.
-                    var enlistment = context.Enlistment;
-                    if (enlistment != null)
-                    {
-                        var eval = new LanceLifeEventTriggerEvaluator();
-                        var danger =
-                            eval.IsConditionTrue(CampaignTriggerTokens.EnemyNearby, enlistment) ||
-                            eval.IsConditionTrue(CampaignTriggerTokens.BeforeBattle, enlistment);
-
-                        if (danger)
-                        {
-                            snapshot.Threat = ThreatBand.Medium;
-                        }
-                    }
+                    // Threat levels are currently determined by recent map events and the party's immediate surroundings.
                 }
                 catch
                 {

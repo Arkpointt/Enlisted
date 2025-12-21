@@ -5,8 +5,6 @@ using TaleWorlds.CampaignSystem.MapEvents;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.CampaignSystem.Settlements;
 using Enlisted.Mod.Core.Logging;
-using Enlisted.Features.Schedule.Models;
-
 namespace Enlisted.Mod.Core.Triggers
 {
     /// <summary>
@@ -288,6 +286,17 @@ namespace Enlisted.Mod.Core.Triggers
                 return false;
             }
         }
+    }
+
+    /// <summary>
+    /// 4-block time system for daily activities: Morning (6-12), Afternoon (12-18), Dusk (18-22), Night (22-6).
+    /// </summary>
+    public enum TimeBlock
+    {
+        Morning,
+        Afternoon,
+        Dusk,
+        Night
     }
 
     /// <summary>

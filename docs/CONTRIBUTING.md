@@ -103,7 +103,7 @@ Each crash creates a timestamped folder (e.g., `2025-12-08_03.41.58\`) containin
 
 When working with Bannerlord APIs, verify usage against:
 - The local native decompile included with this repository (authoritative)
-- The official API docs for the project's target version (currently **v1.3.11+**) when needed for quick lookups
+- The official API docs for the project's target version (currently **v1.3.12+**) when needed for quick lookups
 
 ### Native Decompile Location
 

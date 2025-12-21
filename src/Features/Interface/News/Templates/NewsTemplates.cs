@@ -7,7 +7,7 @@ namespace Enlisted.Features.Interface.News.Templates
     public enum NewsTemplateCategory
     {
         Unknown = 0,
-        Lance = 1,
+        Unit = 1,
         Company = 2,
         Kingdom = 3,
         Rumor = 4
@@ -146,33 +146,33 @@ namespace Enlisted.Features.Interface.News.Templates
     /// </summary>
     public static class NewsTemplateLibrary
     {
-        public static IReadOnlyList<NewsTemplate> LanceHealth { get; } = new List<NewsTemplate>
+        public static IReadOnlyList<NewsTemplate> UnitCasualties { get; } = new List<NewsTemplate>
         {
-            new NewsTemplate("lance_health_quiet", NewsTemplateCategory.Lance,
-                "The lance kept its feet today. No new names added to the ledger."),
-            new NewsTemplate("lance_health_wounded", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_casualties_quiet", NewsTemplateCategory.Unit,
+                "The unit kept its feet today. No new names added to the ledger."),
+            new NewsTemplate("unit_casualties_wounded", NewsTemplateCategory.Unit,
                 "{COUNT} wounded today. Bandages and gritted teeth all around."),
-            new NewsTemplate("lance_health_dead", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_casualties_dead", NewsTemplateCategory.Unit,
                 "{COUNT} lost today. The tents feel quieter after."),
-            new NewsTemplate("lance_health_sick", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_casualties_sick", NewsTemplateCategory.Unit,
                 "Sickness took {COUNT} off the line. The surgeon has his hands full.")
         };
 
-        public static IReadOnlyList<NewsTemplate> LanceTraining { get; } = new List<NewsTemplate>
+        public static IReadOnlyList<NewsTemplate> UnitTraining { get; } = new List<NewsTemplate>
         {
-            new NewsTemplate("lance_training_routine", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_training_routine", NewsTemplateCategory.Unit,
                 "Routine drills and corrections. Nothing glamorous, but it adds up."),
-            new NewsTemplate("lance_training_inspection", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_training_inspection", NewsTemplateCategory.Unit,
                 "Inspection day. Boots polished, straps tightened, tempers tested."),
-            new NewsTemplate("lance_training_sparring", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_training_sparring", NewsTemplateCategory.Unit,
                 "Sparring ran long. Bruises earned, lessons learned.")
         };
 
-        public static IReadOnlyList<NewsTemplate> LanceDiscipline { get; } = new List<NewsTemplate>
+        public static IReadOnlyList<NewsTemplate> UnitDiscipline { get; } = new List<NewsTemplate>
         {
-            new NewsTemplate("lance_discipline_serious", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_discipline_serious", NewsTemplateCategory.Unit,
                 "Discipline is tightening. The NCOs are watching for the next mistake."),
-            new NewsTemplate("lance_discipline_critical", NewsTemplateCategory.Lance,
+            new NewsTemplate("unit_discipline_critical", NewsTemplateCategory.Unit,
                 "Discipline is at a breaking point. One more incident could bring a hearing.")
         };
 
@@ -228,9 +228,9 @@ namespace Enlisted.Features.Interface.News.Templates
                 "{HEDGE} a siege tightens somewhere up the road, but names change with every telling.")
         };
 
-        public static IReadOnlyList<NewsTemplate> All { get; } = LanceHealth
-            .Concat(LanceTraining)
-            .Concat(LanceDiscipline)
+        public static IReadOnlyList<NewsTemplate> All { get; } = UnitCasualties
+            .Concat(UnitTraining)
+            .Concat(UnitDiscipline)
             .Concat(CompanyMovement)
             .Concat(CompanyNeeds)
             .Concat(CompanyThreat)

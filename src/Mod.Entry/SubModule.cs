@@ -2,27 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.CommandTent.Systems;
 using Enlisted.Features.Camp;
-// Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
 using Enlisted.Features.Conversations.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Equipment.UI;
+using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
-using Enlisted.Features.Lances.Behaviors;
-using Enlisted.Features.Lances.Events;
-using Enlisted.Features.Lances.Events.Decisions;
-using Enlisted.Features.Lances.Personas;
-using Enlisted.Features.Lances.Leaders;
-using Enlisted.Features.Lances.Simulation;
 using Enlisted.Features.Conditions;
+using Enlisted.Features.Orders.Behaviors;
 using Enlisted.Features.Ranks.Behaviors;
-using Enlisted.Features.Schedule.Behaviors;
+// Phase 1: Assignments, Lances, Schedule systems deleted
 using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core;
@@ -320,13 +314,15 @@ namespace Enlisted.Mod.Entry
                     // service status, promotions, and requesting leave.
                     campaignStarter.AddBehavior(new EnlistedDialogManager());
 
-                    // Duties system: manages military assignments (duties and professions) that provide
-                    // daily skill XP, wage multipliers, and officer role assignments.
-                    campaignStarter.AddBehavior(new EnlistedDutiesBehavior());
+                    // Duties system deleted in Phase 1 refactor
 
                     // Menu system: provides the main enlisted status menu and duty/profession selection interface.
                     // Handles menu state transitions, battle detection, and settlement access.
                     campaignStarter.AddBehavior(new EnlistedMenuBehavior());
+
+                    // Status manager: determines primary role and specializations based on traits and skills.
+                    // Provides formatted status descriptions for UI display.
+                    campaignStarter.AddBehavior(new EnlistedStatusManager());
 
                     // Troop selection: allows players to choose which troop type to represent during service,
                     // determining formation and equipment access.
@@ -351,36 +347,12 @@ namespace Enlisted.Mod.Entry
                     // Foundation for shared trigger vocabulary and minimal recent-history persistence.
                     campaignStarter.AddBehavior(new CampaignTriggerTrackerBehavior());
 
-                    // Named lance role personas (text-only roster). This feature is feature-flagged.
-                    campaignStarter.AddBehavior(new LancePersonaBehavior());
+                    // Lance persona system deleted in Phase 1 refactor
 
                     // Player condition system, managing injuries, illnesses, and exhaustion. This feature is feature-flagged.
                     campaignStarter.AddBehavior(new PlayerConditionBehavior());
 
-                    // Lance Life (text events): Viking Conquest-style camp activities and stories tied to lance identity
-                    campaignStarter.AddBehavior(new LanceStoryBehavior());
-
-                    // Lance Life Events (shared state): persisted cooldowns + one-time fired ids.
-                    campaignStarter.AddBehavior(new LanceLifeEventsStateBehavior());
-
-                    // Onboarding state machine for Lance Life Events. This feature is feature-flagged.
-                    campaignStarter.AddBehavior(new LanceLifeOnboardingBehavior());
-
-                    // Automatic scheduler for Lance Life Events. This feature is feature-flagged.
-                    campaignStarter.AddBehavior(new LanceLifeEventsAutomaticBehavior());
-
-                    // Incident channel delivery for Lance Life Events. This feature is feature-flagged.
-                    campaignStarter.AddBehavior(new LanceLifeEventsIncidentBehavior());
-
-                    // Decision Events: CK3-style decision system with activity-aware events,
-                    // pacing protections, and player-initiated decisions. This feature is feature-flagged.
-                    campaignStarter.AddBehavior(new DecisionEventBehavior());
-
-                    // Lance banner persistence: manages unique banners for each lance under each lord
-                    campaignStarter.AddBehavior(new LanceBannerManager());
-
-                    // My Lance menu: roster view, relationships, wounded/fallen tracking
-                    campaignStarter.AddBehavior(new EnlistedLanceMenuBehavior());
+                    // Lance Story system, Lance Life Events, Decision Events, Lance Banner, Lance Menu deleted in Phase 1 refactor
 
                     // Medical menu: treatment options when injured/ill/exhausted
                     campaignStarter.AddBehavior(new EnlistedMedicalMenuBehavior());
@@ -402,6 +374,9 @@ namespace Enlisted.Mod.Entry
                     // Escalation tracks for heat, discipline, lance reputation, and medical risk. This feature is feature-flagged.
                     campaignStarter.AddBehavior(new EscalationManager());
 
+                    // Orders system: issues orders from chain of command, tracks acceptance/decline, applies consequences.
+                    campaignStarter.AddBehavior(new OrderManager());
+
                     // News/Dispatches: generates kingdom-wide and personal news headlines.
                     // Read-only observer of campaign events; updates every 2 in-game days.
                     campaignStarter.AddBehavior(new EnlistedNewsBehavior());
@@ -419,17 +394,7 @@ namespace Enlisted.Mod.Entry
                     // Companions marked "stay back" don't spawn in battle, keeping them safe
                     campaignStarter.AddBehavior(new CompanionAssignmentManager());
 
-                    // Core AI Camp Schedule system, including data models and configuration loading.
-                    // Manages daily duty schedules and lance needs for T1-T6 enlisted gameplay.
-                    campaignStarter.AddBehavior(new ScheduleBehavior());
-
-                    // Lance Life Simulation (Track C1): member states, injuries, deaths, cover requests, promotions
-                    // Creates dynamic lance environment with member availability affecting AI Schedule
-                    campaignStarter.AddBehavior(new LanceLifeSimulationBehavior());
-
-                    // Persistent Lance Leaders (Track C2): unique leaders per lord with memory and personality
-                    // Leaders remember player actions, react based on traits, and persist across save/load
-                    campaignStarter.AddBehavior(new PersistentLanceLeadersBehavior());
+                    // Schedule, Lance Simulation, Persistent Leaders systems deleted in Phase 1 refactor
 
                     // Save/load diagnostics end marker: registered last so it runs after all other behaviors
                     // during save/load serialization passes.
@@ -449,33 +414,27 @@ namespace Enlisted.Mod.Entry
                         nameof(EnlistmentBehavior),
                         nameof(EnlistedIncidentsBehavior),
                         nameof(EnlistedDialogManager),
-                        nameof(EnlistedDutiesBehavior),
                         nameof(EnlistedMenuBehavior),
+                        "EnlistedStatusManager",
                         nameof(TroopSelectionManager),
                         nameof(EquipmentManager),
                         nameof(PromotionBehavior),
                         nameof(QuartermasterManager),
                         nameof(QuartermasterEquipmentSelectorBehavior),
                         nameof(CampaignTriggerTrackerBehavior),
-                        nameof(LancePersonaBehavior),
                         nameof(PlayerConditionBehavior),
-                        nameof(LanceStoryBehavior),
-                        nameof(LanceLifeEventsStateBehavior),
-                        nameof(LanceLifeOnboardingBehavior),
-                        nameof(LanceLifeEventsAutomaticBehavior),
-                        nameof(LanceLifeEventsIncidentBehavior),
+                        // Lance Life Event behaviors deleted in Phase 1 refactor
                         nameof(EnlistedEncounterBehavior),
                         nameof(ServiceRecordManager),
                         nameof(CampMenuHandler),
                         nameof(CampLifeBehavior),
                         nameof(EscalationManager),
+                        nameof(OrderManager),
                         nameof(EnlistedNewsBehavior),
                         nameof(RetinueTrickleSystem),
                         nameof(RetinueLifecycleHandler),
                         nameof(RetinueCasualtyTracker),
-                        nameof(CompanionAssignmentManager),
-                        nameof(LanceLifeSimulationBehavior),
-                        nameof(PersistentLanceLeadersBehavior)
+                        nameof(CompanionAssignmentManager)
                     });
                 }
             }

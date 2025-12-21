@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
@@ -10,7 +9,7 @@ using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Conditions
 {
@@ -327,10 +326,7 @@ namespace Enlisted.Features.Conditions
 
         private bool IsSelfTreatAvailable(MenuCallbackArgs args)
         {
-            // Check for Field Medic profession
-            var duties = Enlisted.Features.Assignments.Behaviors.EnlistedDutiesBehavior.Instance;
-            var hasFieldMedic = duties?.ActiveDuties?.Contains("field_medic") == true ||
-                               duties?.ActiveDuties?.Contains("medic") == true;
+            var hasFieldMedic = false;
 
             if (!hasFieldMedic)
             {
@@ -420,7 +416,7 @@ namespace Enlisted.Features.Conditions
         {
             var cond = PlayerConditionBehavior.Instance;
             var enlistment = EnlistmentBehavior.Instance;
-            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new PlayerConditionsConfig();
+            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Mod.Core.Config.PlayerConditionsConfig();
 
             if (cond?.IsEnabled() != true)
             {
@@ -473,7 +469,7 @@ namespace Enlisted.Features.Conditions
         private void ApplyRest()
         {
             var cond = PlayerConditionBehavior.Instance;
-            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new PlayerConditionsConfig();
+            var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Mod.Core.Config.PlayerConditionsConfig();
 
             if (cond?.IsEnabled() == true)
             {

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
@@ -343,9 +343,9 @@ namespace Enlisted.Features.Conditions
 
             try
             {
-                var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Enlisted.Features.Assignments.Core.PlayerConditionsConfig();
+                var cfg = EnlistedConfig.LoadPlayerConditionsConfig() ?? new Mod.Core.Config.PlayerConditionsConfig();
                 var rel = cfg.DefinitionsFile ?? "Conditions\\condition_defs.json";
-                var path = EnlistedConfig.GetModuleDataPathForConsumers(rel);
+                var path = Path.Combine(EnlistedConfig.GetModuleDataPathForConsumers(), rel);
                 if (!File.Exists(path))
                 {
                     ModLogger.Warn(LogCategory, $"Condition definitions missing at: {path}");

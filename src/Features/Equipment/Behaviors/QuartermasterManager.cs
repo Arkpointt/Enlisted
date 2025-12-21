@@ -13,11 +13,10 @@ using TaleWorlds.ObjectSystem;
 using Helpers;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Enlistment.Behaviors;
-using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Equipment.Behaviors
 {
@@ -614,15 +613,15 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                var duties = EnlistedDutiesBehavior.Instance;
-                if (enlistment?.IsEnlisted != true || duties == null)
+                if (enlistment?.IsEnlisted != true)
                 {
                     return;
                 }
 
                 var tier = enlistment.EnlistmentTier;
                 var culture = enlistment.EnlistedLord?.Culture;
-                var formation = duties.GetPlayerFormationType() ?? "infantry";
+                // Phase 1: Formation system deleted, default to infantry for equipment filtering
+                var formation = "infantry";
 
                 // Only update if tier actually changed
                 if (tier <= _lastPromotionTier)
@@ -771,15 +770,14 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                var duties = EnlistedDutiesBehavior.Instance;
                 
-                if (enlistment?.IsEnlisted != true || duties == null)
+                if (enlistment?.IsEnlisted != true)
                 {
                     return null;
                 }
                 
-                // Use formation+tier+culture directly.
-                var formation = duties.GetPlayerFormationType() ?? "infantry";
+                // Phase 1: Formation system deleted, default to infantry
+                var formation = "infantry";
                 var culture = enlistment.EnlistedLord?.Culture;
                 var tier = enlistment.EnlistmentTier;
                 
@@ -884,11 +882,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
                 var basePrice = item.Value;
 
-                // Quartermaster/provisioner discount.
-                var duties = EnlistedDutiesBehavior.Instance;
-                var isProvisioner = duties?.ActiveDuties.Contains("provisioner") == true;
-                var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
-                var discountMultiplier = (isProvisioner || isQuartermaster) ? 0.85f : 1.0f;
+                // Phase 1: Duties system deleted, no role-based discounts
+                var discountMultiplier = 1.0f;
 
                 var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
                 var price = basePrice * soldierTax * discountMultiplier * campMultiplier;
@@ -1594,7 +1589,6 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             var options = new Dictionary<EquipmentIndex, List<ItemObject>>();
             var hero = Hero.MainHero;
-            var duties = EnlistedDutiesBehavior.Instance;
             var enlistment = EnlistmentBehavior.Instance;
             var selectedTroop = _selectedTroop ?? GetPlayerSelectedTroop();
             var formation = DetectTroopFormation(selectedTroop);
@@ -1608,9 +1602,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 options[slotVariants.Key] = new List<ItemObject>(slotVariants.Value);
             }
             
-            // ENHANCEMENT: Quartermaster officers get access to culture-wide equipment
-            var isProvisioner = duties?.ActiveDuties.Contains("provisioner") == true;
-            var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
+            // Phase 1: Duties system deleted, no officer-based equipment expansion
+            var isProvisioner = false;
+            var isQuartermaster = false;
             
             if (isProvisioner || isQuartermaster)
             {
@@ -1847,7 +1841,6 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var sb = new StringBuilder();
-                var duties = EnlistedDutiesBehavior.Instance;
                 var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
                 var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
                 var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
@@ -1877,10 +1870,10 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine("--- Your Status ---");
                 sb.AppendLine();
                 
-                // Rank and formation info
+                // Current standing and assignment details
                 var enlistment = EnlistmentBehavior.Instance;
                 var rankName = Ranks.RankHelper.GetCurrentRank(enlistment);
-                var formation = EnlistedDutiesBehavior.Instance?.GetPlayerFormationType() ?? "Infantry";
+                var formation = "Infantry"; // Default service role
                 sb.AppendLine($"Rank: {rankName}");
                 sb.AppendLine($"Formation: {formation.ToTitleCase()}");
                 sb.AppendLine($"Troop Type: {_selectedTroop?.Name?.ToString() ?? "Unknown"}");
@@ -1911,9 +1904,9 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine($"Sell Price: {(int)(finalSellMult * 100)}% of value");
                 sb.AppendLine();
                 
-                // Officer privileges if applicable
-                var isProvisioner = duties?.ActiveDuties.Contains("provisioner") == true;
-                var isQuartermaster = duties?.GetCurrentOfficerRole() == "Quartermaster";
+                // Phase 1: Duties system deleted, no officer privileges display
+                var isProvisioner = false;
+                var isQuartermaster = false;
                 
                 if (isProvisioner || isQuartermaster)
                 {
@@ -2535,21 +2528,13 @@ namespace Enlisted.Features.Equipment.Behaviors
             try
             {
                 var enlistment = EnlistmentBehavior.Instance;
-                var duties = EnlistedDutiesBehavior.Instance;
                 
                 if (enlistment?.IsEnlisted != true)
                 {
                     return false;
                 }
                 
-                // Full access granted if player has quartermaster officer role or provisioner duty
-                if (duties?.GetCurrentOfficerRole() == "Quartermaster" || 
-                    duties?.ActiveDuties.Contains("provisioner") == true)
-                {
-                    return true; // Full access with officer privileges
-                }
-                
-                // Standard access for all enlisted soldiers without special roles
+                // Phase 1: Duties system deleted, standard access for all enlisted soldiers
                 return true;
             }
             catch
@@ -3753,9 +3738,8 @@ namespace Enlisted.Features.Equipment.Behaviors
         private bool IsSupplyManagementAvailable(MenuCallbackArgs args)
         {
             _ = args; // Required by API contract
-            var duties = EnlistedDutiesBehavior.Instance;
-            return duties?.GetCurrentOfficerRole() == "Quartermaster" ||
-                   duties?.ActiveDuties.Contains("provisioner") == true;
+            // Phase 1: Duties system deleted, supply management disabled
+            return false;
         }
         
         /// <summary>
@@ -3844,7 +3828,6 @@ namespace Enlisted.Features.Equipment.Behaviors
                 // Background is now set by GameMenuInitializationHandler
                 var sb = new StringBuilder();
                 var party = MobileParty.MainParty;
-                var duties = EnlistedDutiesBehavior.Instance;
                 
                 sb.AppendLine("— Supply Status —");
                 sb.AppendLine();
@@ -3855,15 +3838,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                 sb.AppendLine($"Morale: {party.Morale:F1} / 100");
                 sb.AppendLine();
                 
-                // Officer benefits display with modern formatting
-                if (duties?.GetCurrentOfficerRole() == "Quartermaster")
-                {
-                    sb.AppendLine("— Officer Benefits —");
-                    sb.AppendLine("• +50 party carry capacity");
-                    sb.AppendLine("• +15% food efficiency");
-                    sb.AppendLine("• Enhanced supply management options");
-                    sb.AppendLine();
-                }
+                // Phase 1: Duties system deleted, no officer benefits display
+                // (Officer benefits will be reintegrated via Orders system in later phase)
                 
                 MBTextManager.SetTextVariable("SUPPLY_TEXT", sb.ToString());
             }

@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Enlistment.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;

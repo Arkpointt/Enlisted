@@ -1,235 +1,162 @@
 # Enlisted – Core Gameplay (Consolidated)
 
-**last updated:** 2025-12-17  
-**Goal:** One maintained document for the mod’s core gameplay loop and the systems that implement it.
+**last updated:** December 20, 2025  
+**Goal:** One maintained document for the mod’s core gameplay loop and the systems that implement it (Mod Version v0.9.0, Game Target v1.3.12).
 
 This file replaces the older split docs under:
 - `docs/Features/Core/*.md`
 - `docs/Features/Gameplay/*.md`
 
-Those pages now link here to avoid drift.
+---
+
+## Index
+
+- [The Three Pillars](#the-three-pillars)
+- [System Map (Code + Data)](#system-map-code--data)
+- [Enlistment](#enlistment)
+- [Orders System (Chain of Command)](#orders-system-chain-of-command)
+- [Emergent Identity (Traits + Reputation)](#emergent-identity-traits--reputation)
+- [Native Game Menu (Interface)](#native-game-menu-interface)
+- [Company Needs](#company-needs)
+- [Pay System (Muster Ledger)](#pay-system-muster-ledger)
+- [Companions + Retinue](#companions--retinue)
+- [Fatigue + Conditions](#fatigue--conditions)
+- [Town Access + Temporary Leave](#town-access--temporary-leave)
+- [Content Authoring (Quick Rules)](#content-authoring-quick-rules)
 
 ---
 
-## index
+## The Three Pillars
 
-- [overview](#overview)
-- [system map (code + data)](#system-map-code--data)
-- [enlistment](#enlistment)
-- [duties + formation training](#duties--formation-training)
-- [pay system (muster ledger, pay tension, ious)](#pay-system-muster-ledger-pay-tension-ious)
-- [lance identity (assignments, ranks, personas)](#lance-identity-assignments-ranks-personas)
-- [events (lance life events + storypacks) + decision events](#events-lance-life-events--storypacks--decision-events)
-- [companions + retinue](#companions--retinue)
-- [fatigue + conditions](#fatigue--conditions)
-- [town access + temporary leave](#town-access--temporary-leave)
-- [content authoring (quick rules)](#content-authoring-quick-rules)
-- [acceptance checklist (core loop)](#acceptance-checklist-core-loop)
+The mod is built on three core transformations introduced in v2.0:
 
-## Overview
-
-Enlisted turns Bannerlord into a “soldier career” loop:
-
-1) **Enlist** with a lord (kingdom or minor faction).  
-2) **Live the routine**: duties, camp actions, fatigue, conditions, lance identity, events.  
-3) **Fight as a squad**: player + companions (+ retinue at higher tiers) are assigned into one formation.  
-4) **Get paid** via the muster ledger + pay muster, and deal with pay tension.  
-5) **Progress** through tiers via proving events (not just raw XP).  
-6) **Leave** via temporary leave, transfer, managed discharge (Final Muster), or desertion.
+1.  **Emergent Identity**: Identity emerges from choices, traits, and reputation rather than prescribed systems. Your specialization (Scout, Medic, Officer) is determined by your actions and native Bannerlord traits.
+2.  **Orders from Chain of Command**: Passive duties are replaced by explicit directives from your superiors. You receive orders from Sergeants, Lieutenants, or your Lord, with meaningful stakes for success or failure.
+3.  **Native Game Menu Interface**: All custom UI (ViewModels/XML) has been replaced by the native Bannerlord Game Menu system. It is fast, keyboard-friendly, and integrates seamlessly with the base game.
 
 ---
 
-## System map (code + data)
+## System Map (Code + Data)
 
-### Core code areas
+### Core Code Areas
 
-- **Enlistment + state**: `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
-- **Pay muster / incidents**: `src/Features/Enlistment/Behaviors/EnlistedIncidentsBehavior.cs`
-- **Duties + formation training**: `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs`
-- **Promotion / proving events**: `src/Features/Ranks/Behaviors/PromotionBehavior.cs`
-- **Lances (identity + UI + stories)**: `src/Features/Lances/*`
-- **Events (lance life + decisions)**: `src/Features/Lances/Events/*`
-- **Camp + camp UI**: `src/Features/Camp/*`
-- **Command tent systems (service record, retinue lifecycle, etc.)**: `src/Features/CommandTent/*`
-- **Combat formation assignment**: `src/Features/Combat/Behaviors/EnlistedFormationAssignmentBehavior.cs`
-- **Town access / menus**: `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
-- **Quartermaster + troop selection popup**: `src/Features/Equipment/*`
-- **Player conditions (injury/illness/etc.)**: `src/Features/Conditions/*`
+- **Enlistment + State**: `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
+- **Orders System**: `src/Features/Orders/Behaviors/OrderManager.cs`
+- **Identity & Traits**: `src/Features/Identity/EnlistedStatusManager.cs`
+- **Reputation & Escalation**: `src/Features/Escalation/EscalationManager.cs`
+- **Native Menus**: `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
+- **Company Needs**: `src/Features/Company/CompanyNeedsManager.cs`
+- **Context Analysis**: `src/Features/Context/ArmyContextAnalyzer.cs`
+- **News & Reports**: `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`
+- **Quartermaster**: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
+- **Medical Care**: `src/Features/Conditions/EnlistedMedicalMenuBehavior.cs`
 
-### Core data sources (ModuleData)
+### Core Data Sources (ModuleData)
 
 - **Config**: `ModuleData/Enlisted/enlisted_config.json`
 - **Progression**: `ModuleData/Enlisted/progression_config.json`
-- **Duties**: `ModuleData/Enlisted/duties_system.json`
-- **Schedule**: `ModuleData/Enlisted/schedule_config.json`
-- **Schedule popup events (Continue-only)**: `ModuleData/Enlisted/schedule_popup_events.json`
-- **Activities**: `ModuleData/Enlisted/Activities/activities.json`
-- **Events catalog**: `ModuleData/Enlisted/Events/*.json`
-- **Decision events**: `ModuleData/Enlisted/Events/events_decisions.json`, `events_player_decisions.json`
-- **Story packs (legacy-but-shipping layer)**: `ModuleData/Enlisted/StoryPacks/LanceLife/*.json`
-- **Lances**: `ModuleData/Enlisted/lances_config.json`, `LancePersonas/name_pools.json`
+- **Orders Catalog**: `ModuleData/Enlisted/Orders/*.json`
+- **Events Catalog**: `ModuleData/Enlisted/Events/*.json` (Role-based & Contextual)
+- **Rank Titles**: `ModuleData/Enlisted/progression_config.json` (Culture-specific)
 
 ---
 
 ## Enlistment
 
-### What it does
+Enlisted turns Bannerlord into a “soldier career” loop:
 
-- Lets the player **enter service** under a lord and follow their movements.
-- Hides the player party on the campaign map while enlisted.
-- Handles fragile campaign states safely: battles, encounters, captivity, lord death/capture, army disbanding.
-- Supports **minor faction enlistment** (war stance mirroring + desertion cooldowns).
-
-### Key gameplay beats
-
-- **Bag check** happens after enlistment (deferred) and prevents “walk in with endgame kit” abuse.
-- **Tier progression** is gated by proving events at key promotions.
-- **Managed discharge** is requested via Camp; it resolves at pay muster (Final Muster path).
-
-### Where it lives
-
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
-- `src/Features/Enlistment/Behaviors/EnlistedIncidentsBehavior.cs`
-- `src/Features/Conversations/Behaviors/EnlistedDialogManager.cs`
+1.  **Enlist** with a lord. Your party is hidden, and you follow the lord's army.
+2.  **Live the Routine**: Receive **Orders**, manage **Company Needs**, and navigate **Events**.
+3.  **Fight as a Unit**: Participate in the lord's battles. At higher tiers, you lead a **Retinue**.
+4.  **Get Paid**: Wages accrue in the **Muster Ledger** and are paid during Pay Muster.
+5.  **Progress**: Advance from T1 to T9. Rank gates authority and the scale of orders you receive.
+6.  **Leave**: Discharge honorably, transfer, or desert.
 
 ---
 
-## Duties + formation training
+## Orders System (Chain of Command)
 
-### What it does
+Replaces the legacy passive duties system with explicit, mission-driven tasks.
 
-- Duty system is **data-driven** and gives:
-  - daily skill XP
-  - wage multiplier surface for the pay system
-  - tokens for event triggers (e.g., `has_duty:{id}`)
-- Formation training is the “automatic daily XP by formation” layer and is configured in `duties_system.json`.
-
-### Where it lives
-
-- `src/Features/Assignments/Behaviors/EnlistedDutiesBehavior.cs`
-- `ModuleData/Enlisted/duties_system.json`
+-   **Frequency**: Orders are issued every ~3 days (adjusted by rank and campaign tempo).
+-   **Chain of Command**: Your rank determines who issues the order (e.g., T1-T2 get orders from a Sergeant; T7+ receive strategic orders from the Lord).
+-   **Requirements**: Orders are filtered by your current Rank, Skills, and Traits.
+-   **Outcomes**: Success or failure impacts **Reputation**, **Company Needs**, and grants **Skill/Trait XP**.
+-   **Discharge Risk**: Repeatedly declining orders (5+ times) triggers a risk of dishonorable discharge.
 
 ---
 
-## Pay system (muster ledger, pay tension, IOUs)
+## Emergent Identity (Traits + Reputation)
 
-### What it does
+### Traits & Roles
+Your "role" in the company is detected dynamically from your native traits:
+-   **Scout**: High Scouting/Rogue skills and traits.
+-   **Medic**: High Surgeon trait and Medicine skill.
+-   **Officer**: High Commander trait and Leadership skill.
+-   **Soldier**: The default role for general combatants.
 
-- Wages accrue into a **muster ledger** and are paid out at pay muster events.
-- When pay is late/disrupted, **Pay Tension** rises and unlocks pressure valves:
-  - “Desperate Measures” (corruption)
-  - “Help the Lord” (loyalty)
-  - free desertion at high tension
-- Supports an **IOU/promissory** path (retry sooner without losing owed backpay).
-
-### Where it lives
-
-- Pay state is owned by enlistment behavior: `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs`
-- Pay muster UI/options: `src/Features/Enlistment/Behaviors/EnlistedIncidentsBehavior.cs`
-
----
-
-## Lance identity (assignments, ranks, personas)
-
-### What it does
-
-- Gives the player a lance identity early, then finalizes it later.
-- Tracks culture-specific rank titles and (optional) text-only “personas” for story flavor.
-
-### Where it lives
-
-- `src/Features/Assignments/Core/LanceRegistry.cs`
-- `src/Features/Lances/Personas/*`
-- `ModuleData/Enlisted/lances_config.json`
+### Expanded Reputation
+We track three distinct reputation values (-50 to +100):
+1.  **Lord Reputation**: Your standing with the lord you serve.
+2.  **Officer Reputation**: How the NCOs and officers perceive your competence.
+3.  **Soldier Reputation**: Your popularity and respect among the rank-and-file.
 
 ---
 
-## Events (Lance Life Events + StoryPacks) + Decision Events
+## Native Game Menu (Interface)
 
-### Two “content layers” exist (both shipping)
-
-- **Events Catalog**: `ModuleData/Enlisted/Events/*.json`
-  - supports automatic delivery and player-initiated delivery
-  - supports inquiry / menu / incident delivery channels
-- **StoryPacks**: `ModuleData/Enlisted/StoryPacks/LanceLife/*.json`
-  - a legacy-but-shipping daily-tick story layer
-  - governed by a strict authoring contract (schema, localization, validation)
-
-### Decision Events
-
-Decision Events are the CK3-like "decisions" system used for player-initiated and pushed decisions.
-
-- **Spec**: [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md) (see Schema Reference section)
-- **Code**: `src/Features/Lances/Events/Decisions/*`
-- **Data**: `ModuleData/Enlisted/Events/events_decisions.json`, `events_player_decisions.json`
+All interactions occur through the **Enlisted Status** menu hub:
+-   **Enlisted Status**: View rank, active orders, and report summaries.
+-   **Camp Submenu**: Perform activities like Rest, Train, or Equipment Checks.
+-   **Reports Submenu**: Access the Daily Brief, Service Record, and Company Status.
+-   **Decisions Submenu**: Handle pending event choices.
+-   **Status Submenu**: Detailed view of reputation, traits, and role.
 
 ---
 
-## Companions + retinue
+## Company Needs
 
-### Companions
+The company's effectiveness is tracked via five core needs:
+-   **Readiness**: Combat effectiveness and preparation.
+-   **Morale**: The unit's will to fight.
+-   **Supplies**: Food and basic consumables.
+-   **Equipment**: Maintenance and quality of gear.
+-   **Rest**: Recovery from fatigue.
 
-- Companions stay with the player during enlistment.
-- They can be toggled “fight” vs “stay back” for battles.
-
-### Retinue (command track)
-
-- Higher tiers grant a personal force with lifecycle handling, casualty tracking, and provisioning integrations.
-
-### Where it lives
-
-- Companion settings / service record helpers: `src/Features/CommandTent/Core/*`
-- Retinue lifecycle and systems: `src/Features/CommandTent/*`
+Orders and events directly impact these needs. Low supplies or equipment will restrict access to certain services (like the Quartermaster).
 
 ---
 
-## Fatigue + conditions
+## Pay System (Muster Ledger)
 
-### Fatigue
-
-Fatigue is a stamina-like budget consumed/restored by certain actions and options (activities, some event options, etc.).
-
-### Player conditions
-
-Injury/illness/exhaustion (and treatment gating) live under the Conditions feature area and are used by some event outcomes.
-
-### Where it lives
-
-- Conditions: `src/Features/Conditions/*`
+Wages accrue into a **Muster Ledger** based on your rank and performance. They are paid out periodically at **Pay Muster** events.
+-   **Pay Tension**: Rises when pay is late or disrupted, leading to potential corruption or desertion.
 
 ---
 
-## Town access + temporary leave
+## Companions + Retinue
 
-### Town access
-
-The town/castle access system provides safe settlement exploration while the player party is normally hidden/inactive during enlistment.
-
-### Temporary leave
-
-Leave temporarily suspends active service with a hard time limit; expiring leave is treated as abandonment (penalties apply).
+-   **Companions**: Stay with you during enlistment and fight alongside you in your formation.
+-   **Retinue (T4+)**: You gain command over a small squad of soldiers. Their size and quality grow as you reach higher tiers (up to T9).
 
 ---
 
-## Content authoring (quick rules)
+## Fatigue + Conditions
 
-- **Add/modify any events**: Follow [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md) (Schema Reference + Writing Guidelines sections)
-- **Edit event JSON**: `ModuleData/Enlisted/Events/*.json` and localization in `ModuleData/Languages/enlisted_strings.xml`
-- **Add/modify story packs**: Follow the authoring contract at `docs/Features/Core/story-pack-contract.md`
-- **Keep trigger vocabulary stable**: trigger tokens are code-defined and must not drift.
+-   **Fatigue**: A budget consumed by orders and camp activities. Restores while resting in camp.
+-   **Conditions**: Tracks injuries, illnesses, and exhaustion. These must be managed via the Medical Care menu in camp.
 
 ---
 
-## Acceptance checklist (core loop)
+## Town Access + Temporary Leave
 
-- Enlist/leave/discharge flows do not crash across:
-  - battle entry/exit
-  - encounters
-  - captivity
-  - lord death/capture / army disband
-  - naval travel/battles (when applicable)
-- Pay muster pays, IOU path works, pay tension gates menus correctly.
-- Duties apply benefits and expose stable trigger tokens for events.
-- Events/decisions load, validate, and fail-safe skip invalid content.
+-   **Town Access**: Safely explore settlements while your party is hidden.
+-   **Temporary Leave**: Suspend service for a limited time (e.g., to handle clan business). Expiration without return is treated as desertion.
 
+---
 
+## Content Authoring (Quick Rules)
+
+-   **Events**: Tag with `role` and `context` (e.g., `scout`, `war`, `camp`).
+-   **Orders**: Defined in JSON with specific requirements and tiered consequences.
+-   **Strings**: All text must be localized in `enlisted_strings.xml`.

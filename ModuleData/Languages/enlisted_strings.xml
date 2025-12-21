@@ -3356,5 +3356,34 @@
     <string id="act_lance_train_recruits" text="Train Recruits [+35 Leadership, +20 Athletics | -3 Fatigue]" />
     <string id="act_lance_train_recruits_hint" text="Help new soldiers learn the basics of military life. Pass on what you know." />
 
+    <!-- Strategic Context Strings -->
+    <string id="war_stance_desperate" text="Desperate" />
+    <string id="war_stance_defensive" text="Defensive" />
+    <string id="war_stance_balanced" text="Balanced" />
+    <string id="war_stance_offensive" text="Offensive" />
+    
+    <string id="strategic_context_coordinated_offensive" text="Grand Campaign" />
+    <string id="strategic_context_desperate_defense" text="Last Stand" />
+    <string id="strategic_context_raid_operation" text="Harrying the Lands" />
+    <string id="strategic_context_siege_operation" text="Siege Works" />
+    <string id="strategic_context_patrol_peacetime" text="Riding the Marches" />
+    <string id="strategic_context_garrison_duty" text="Garrison Duty" />
+    <string id="strategic_context_recruitment_drive" text="Mustering for War" />
+    <string id="strategic_context_winter_camp" text="Winter Camp" />
+    
+    <string id="strategic_value_critical" text="Critical" />
+    <string id="strategic_value_high" text="High" />
+    <string id="strategic_value_moderate" text="Moderate" />
+    <string id="strategic_value_low" text="Low" />
+    
+    <string id="context_narration_coordinated_offensive" text="The banners are gathering. Your lord rides with allied hosts to bring the enemy under the sword." />
+    <string id="context_narration_desperate_defense" text="Dark days. The realm bleeds and every sword arm is needed. There will be no rest until the tide turns." />
+    <string id="context_narration_raid_operation" text="Your lord seeks to bleed the enemy's purse before the true campaign begins. Burn their stores, take their cattle." />
+    <string id="context_narration_siege_operation" text="The host encircles stone walls. Days turn to weeks as engines pound and patience wears thin." />
+    <string id="context_narration_patrol_peacetime" text="Peaceful times, but vigilance is required. The host patrols to ward off bandits and show the banner." />
+    <string id="context_narration_garrison_duty" text="The company holds a settlement, watching the walls and maintaining order within." />
+    <string id="context_narration_recruitment_drive" text="The host gathers strength. Supplies are stockpiled and blades sharpened. A great push is coming." />
+    <string id="context_narration_winter_camp" text="The campaign season ends. The company rests, trains, and tends to daily duties while snow blankets the land." />
+
 </strings>
 </base>

@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.CommandTent.Core;
-using Enlisted.Features.Assignments.Core;
 using Enlisted.Features.Combat.Behaviors;
+using Enlisted.Features.Company;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
-using Enlisted.Features.Lances.Leaders;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
@@ -29,7 +27,9 @@ using TaleWorlds.Library;
 using TaleWorlds.Localization;
 using Helpers;
 using TaleWorlds.ObjectSystem;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using Enlisted.Mod.Core.Config;
+using ConfigurationManager = Enlisted.Mod.Core.Config.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 using EnlistedIncidentsBehavior = Enlisted.Features.Enlistment.Behaviors.EnlistedIncidentsBehavior;
 
 namespace Enlisted.Features.Enlistment.Behaviors
@@ -178,6 +178,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
         // Promotion can be temporarily blocked at very high discipline risk.
         // This is rate-limited to avoid message spam when earning XP while blocked.
         private CampaignTime _lastPromotionBlockedMessageTime = CampaignTime.Zero;
+
+        /// <summary>
+        ///     Tracks the current state of all five company needs for the enlisted lord's party.
+        ///     Degrades daily and recovers through orders and camp activities.
+        /// </summary>
+        private CompanyNeedsState _companyNeeds;
 
         // UI anti-spam: wage breakdown is used by tooltips and can be queried frequently.
         // If it ever throws, log it once per session and fall back to a safe default breakdown.
@@ -564,6 +570,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Total XP accumulated in current service. Used for promotion calculations.
         /// </summary>
         public int EnlistmentXP => _enlistmentXP;
+
+        /// <summary>
+        ///     Gets the current company needs state for the enlisted lord's party.
+        ///     Initialized on first access. Returns null if not enlisted.
+        /// </summary>
+        public CompanyNeedsState CompanyNeeds
+        {
+            get
+            {
+                if (_companyNeeds == null && IsEnlisted)
+                {
+                    _companyNeeds = new CompanyNeedsState();
+                }
+                return _companyNeeds;
+            }
+        }
 
         /// <summary>
         ///     Days since last promotion (or enlistment for T1).
@@ -1408,6 +1430,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Bannerlord's save system can serialize this dictionary directly since both types are primitives
             SerializeMinorFactionDesertionCooldowns(dataStore);
 
+            // Company needs state - manual serialization since it's a custom class
+            SerializeCompanyNeeds(dataStore);
+
             // Veteran retirement system state - manual serialization for dictionary
             // Bannerlord's save system can't serialize custom class dictionaries directly
             SyncKey(dataStore, "_retirementNotificationShown", ref _retirementNotificationShown);
@@ -1453,6 +1478,77 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Debug("SaveLoad", "Deferred party state restoration to first campaign tick");
             }
             });
+        }
+
+        /// <summary>
+        ///     Manually serialize/deserialize company needs state.
+        ///     Persists all five need values (0-100 scale) to save file.
+        /// </summary>
+        private void SerializeCompanyNeeds(IDataStore dataStore)
+        {
+            try
+            {
+                if (!dataStore.IsLoading)
+                {
+                    // Saving: serialize each need value
+                    if (_companyNeeds != null)
+                    {
+                        var readiness = _companyNeeds.Readiness;
+                        var equipment = _companyNeeds.Equipment;
+                        var morale = _companyNeeds.Morale;
+                        var rest = _companyNeeds.Rest;
+                        var supplies = _companyNeeds.Supplies;
+
+                        SyncKey(dataStore, "_companyNeeds_readiness", ref readiness);
+                        SyncKey(dataStore, "_companyNeeds_equipment", ref equipment);
+                        SyncKey(dataStore, "_companyNeeds_morale", ref morale);
+                        SyncKey(dataStore, "_companyNeeds_rest", ref rest);
+                        SyncKey(dataStore, "_companyNeeds_supplies", ref supplies);
+                    }
+                    else
+                    {
+                        // No state to save - write defaults
+                        var defaultValue = 60;
+                        SyncKey(dataStore, "_companyNeeds_readiness", ref defaultValue);
+                        SyncKey(dataStore, "_companyNeeds_equipment", ref defaultValue);
+                        SyncKey(dataStore, "_companyNeeds_morale", ref defaultValue);
+                        SyncKey(dataStore, "_companyNeeds_rest", ref defaultValue);
+                        SyncKey(dataStore, "_companyNeeds_supplies", ref defaultValue);
+                    }
+                }
+                else
+                {
+                    // Loading: reconstruct CompanyNeedsState from saved values
+                    var readiness = 60;
+                    var equipment = 60;
+                    var morale = 60;
+                    var rest = 60;
+                    var supplies = 60;
+
+                    SyncKey(dataStore, "_companyNeeds_readiness", ref readiness);
+                    SyncKey(dataStore, "_companyNeeds_equipment", ref equipment);
+                    SyncKey(dataStore, "_companyNeeds_morale", ref morale);
+                    SyncKey(dataStore, "_companyNeeds_rest", ref rest);
+                    SyncKey(dataStore, "_companyNeeds_supplies", ref supplies);
+
+                    _companyNeeds = new CompanyNeedsState
+                    {
+                        Readiness = readiness,
+                        Equipment = equipment,
+                        Morale = morale,
+                        Rest = rest,
+                        Supplies = supplies
+                    };
+
+                    ModLogger.Debug("SaveLoad",
+                        $"Loaded company needs - R:{readiness} E:{equipment} M:{morale} Rs:{rest} S:{supplies}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("SaveLoad", "Failed to serialize company needs", ex);
+                _companyNeeds = new CompanyNeedsState();
+            }
         }
 
         /// <summary>
@@ -2460,16 +2556,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 TryPromptUnknownCultureStyle();
                 AssignProvisionalLance(resumedFromGrace);
 
-                // Register the formation-appropriate starter duty with the duties system
-                // This ensures daily XP processing begins immediately for the basic duty
-                var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-                if (dutiesBehavior != null)
-                {
-                    var formation = dutiesBehavior.PlayerFormation ?? "infantry";
-                    var starterDuty = EnlistedDutiesBehavior.GetStarterDutyForFormation(formation);
-                    dutiesBehavior.AssignDuty(starterDuty);
-                    _selectedDuty = starterDuty;
-                }
+                // Phase 1: EnlistedDutiesBehavior deleted
+                // Duty registration will be replaced by Orders system in Phase 4
 
                 // Log enlistment start for diagnostics
                 SessionDiagnostics.LogStateTransition("Enlistment", "Civilian", "Enlisted",
@@ -2617,9 +2705,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Persistent Lance Leaders: connect/create the current leader now that we are enlisted.
                 // Without this, the leader system only reconnects on session launch and never records state for new enlistments.
+                // Phase 1: PersistentLanceLeadersBehavior deleted
                 try
                 {
-                    PersistentLanceLeadersBehavior.Instance?.OnPlayerEnlisted(lord);
+                    // PersistentLanceLeadersBehavior.Instance?.OnPlayerEnlisted(lord);
                 }
                 catch (Exception ex)
                 {
@@ -2678,58 +2767,16 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         public void TryPromptLanceSelection(int? overrideSelectionCount = null)
         {
-            try
-            {
-                if (!LanceRegistry.IsFeatureEnabled() || !_isLanceProvisional || !IsEnlisted || _enlistedLord == null)
-                {
-                    return;
-                }
-
-                var config = Assignments.Core.ConfigurationManager.LoadLancesConfig();
-                var selectionCount = overrideSelectionCount ?? config?.LanceSelectionCount ?? 3;
-                selectionCount = Math.Max(1, Math.Min(selectionCount, 5)); // plan: 3–5 options
-
-                var duties = EnlistedDutiesBehavior.Instance;
-                var formation = duties?.PlayerFormation;
-                var candidates = LanceRegistry.GetCandidateLances(_enlistedLord, formation, selectionCount,
-                    _manualLanceStyleId);
-
-                if (candidates.Count == 0)
-                {
-                    ModLogger.Warn("Lance", "No lance candidates available for selection prompt");
-                    return;
-                }
-
-                var elements = candidates.Select(c =>
-                    new InquiryElement(c, c.Name, null,
-                        true, $"{c.Name} ({c.StyleId})")).ToList();
-
-                var inquiry = new MultiSelectionInquiryData(
-                    new TextObject("{=Lance_Select_Title}Select a Lance in need of recruits").ToString(),
-                    new TextObject("{=Lance_Select_Body}Choose a Lance to formally join at Tier 2.").ToString(),
-                    elements,
-                    false,
-                    1,
-                    1,
-                    new TextObject("{=Lance_Select_Confirm}Join").ToString(),
-                    new TextObject("{=Lance_Select_Cancel}Keep provisional").ToString(),
-                    OnLanceSelectionConfirmed,
-                    OnLanceSelectionCancelled);
-
-                MBInformationManager.ShowMultiSelectionInquiry(inquiry);
-                ModLogger.Info("Lance", $"Presented lance selection with {elements.Count} options");
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Lance", "E-LANCE-004", "Error prompting lance selection", ex);
-            }
+            // Phase 1: Lance system deleted. This method is a no-op for save compatibility.
+            ModLogger.Info("Lance", "PromptLanceSelection: Phase 1 stub (lance system deleted)");
         }
 
         private void OnLanceSelectionConfirmed(List<InquiryElement> selections)
         {
             try
             {
-                var chosen = selections?.FirstOrDefault()?.Identifier as LanceAssignment;
+                // Phase 1: LanceAssignment deleted
+                var chosen = (object)null;
                 if (chosen == null)
                 {
                     ModLogger.Warn("Lance", "Lance selection confirm without choice");
@@ -2749,8 +2796,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ModLogger.Info("Lance", "Player kept provisional lance (selection cancelled)");
         }
 
-        private void FinalizeLanceSelection(LanceAssignment chosen)
+        private void FinalizeLanceSelection(object chosen)
         {
+            // Lance assignments are currently inactive.
+            return;
+            /*
             _currentLanceId = chosen.Id;
             _currentLanceName = chosen.Name;
             _currentLanceStyle = chosen.StyleId;
@@ -2772,16 +2822,15 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Lightweight session log for diagnostics
             SessionDiagnostics.LogEvent("Lance", "LanceFinalized",
                 $"id={_currentLanceId}, style={_currentLanceStyle}, story={_currentLanceStoryId}");
+            */
         }
 
         private void AssignProvisionalLance(bool resumedFromGrace)
         {
-            if (!LanceRegistry.IsFeatureEnabled())
-            {
-                ClearLanceState();
-                return;
-            }
-
+            // Unit assignment logic is currently being updated.
+            return;
+            
+            #pragma warning disable CS0162 // Unreachable code detected
             if (resumedFromGrace && !string.IsNullOrWhiteSpace(_savedGraceLanceId))
             {
                 _currentLanceId = _savedGraceLanceId;
@@ -2796,33 +2845,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            var duties = EnlistedDutiesBehavior.Instance;
-            var formation = duties?.PlayerFormation;
-            var assignment = LanceRegistry.GenerateProvisionalLance(_enlistedLord, formation, _manualLanceStyleId);
-
-            if (assignment == null)
-            {
-                ClearLanceState();
-                return;
-            }
-
-            _currentLanceId = assignment.Id;
-            _currentLanceName = assignment.Name;
-            _currentLanceStyle = assignment.StyleId;
-            _currentLanceStoryId = assignment.StoryId;
-            _isLanceProvisional = true;
-            _isLanceLegacy = false;
-
-            var cultureTag = string.IsNullOrWhiteSpace(assignment.SourceCultureId)
-                ? "unknown"
-                : assignment.SourceCultureId;
-            var fallbackTag = assignment.UsedFallback ? " (fallback)" : string.Empty;
-            ModLogger.Info("Lance",
-                $"Provisional lance assigned: {_currentLanceName} [{_currentLanceStyle}] culture={cultureTag}{fallbackTag}");
-
-            // One-line session log for diagnostics
-            SessionDiagnostics.LogEvent("Lance", "LanceProvisional",
-                $"id={_currentLanceId}, style={_currentLanceStyle}, story={_currentLanceStoryId}, culture={cultureTag}, fallback={assignment.UsedFallback}");
+            // Phase 1: Lance system deleted. Clear lance state for save compatibility.
+            ClearLanceState();
+            ModLogger.Info("Lance", "AssignProvisionalLance: Phase 1 stub (lance system deleted)");
         }
 
         private void ClearLanceState()
@@ -2849,54 +2874,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         private void TryPromptUnknownCultureStyle()
         {
-            if (!LanceRegistry.IsFeatureEnabled() || _enlistedLord == null)
-            {
-                return;
-            }
-
-                var catalog = Assignments.Core.ConfigurationManager.LoadLanceCatalog();
-            if (catalog?.StyleDefinitions == null || catalog.StyleDefinitions.Count == 0)
-            {
-                return;
-            }
-
-            var cultureId = _enlistedLord.MapFaction?.Culture?.StringId ?? _enlistedLord.Culture?.StringId;
-            var mapped = catalog.CultureMap != null &&
-                         !string.IsNullOrWhiteSpace(cultureId) &&
-                         catalog.CultureMap.ContainsKey(cultureId);
-
-            if (mapped)
-            {
-                _manualLanceStyleId = null;
-                return;
-            }
-
-            var options = catalog.StyleDefinitions.Select(s =>
-                new InquiryElement(
-                    s.Id,
-                    FormatStyleDisplayName(s.Id),
-                    null,
-                    true,
-                    s.Id)).ToList();
-
-            if (options.Count == 0)
-            {
-                return;
-            }
-
-            var inquiry = new MultiSelectionInquiryData(
-                new TextObject("{=Lance_StylePrompt_Title}How does this army fight?").ToString(),
-                new TextObject("{=Lance_StylePrompt_Body}Choose a tradition for your lance.").ToString(),
-                options,
-                false,
-                1,
-                1,
-                new TextObject("{=Lance_StylePrompt_Confirm}Choose").ToString(),
-                new TextObject("{=Lance_StylePrompt_Cancel}Cancel").ToString(),
-                OnUnknownCultureStyleChosen,
-                OnUnknownCultureStyleCancelled);
-
-            MBInformationManager.ShowMultiSelectionInquiry(inquiry);
+            // Phase 1: Lance system deleted. This method is a no-op for save compatibility.
+            ModLogger.Info("Lance", "TryPromptUnknownCultureStyle: Phase 1 stub (lance system deleted)");
         }
 
         private void OnUnknownCultureStyleChosen(List<InquiryElement> selections)
@@ -2954,9 +2933,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 // Persistent Lance Leaders: record discharge memory and clear cached leader reference.
                 // Best effort only: enlistment discharge must not fail due to auxiliary systems.
+                // Phase 1: PersistentLanceLeadersBehavior deleted
                 try
                 {
-                    PersistentLanceLeadersBehavior.Instance?.OnPlayerDischarged();
+                    // PersistentLanceLeadersBehavior.Instance?.OnPlayerDischarged();
                 }
                 catch (Exception ex)
                 {
@@ -4260,8 +4240,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ClearProbation("pay_muster_resolved");
             ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
             
-            // Notify the Schedule system to reset the 12-day cycle.
-            Schedule.Behaviors.ScheduleBehavior.Instance?.OnPayMusterCompleted();
+            // Phase 1: Schedule system deleted
         }
 
         /// <summary>
@@ -5567,31 +5546,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private string GetActiveDutyName()
         {
-            try
-            {
-                var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-                if (dutiesBehavior?.IsInitialized != true)
-                {
-                    return null;
-                }
-
-                // Get the primary active duty name
-                var activeDuties = dutiesBehavior.ActiveDuties;
-                if (activeDuties != null && activeDuties.Count > 0)
-                {
-                    // Return the first active duty for display
-                    foreach (var duty in activeDuties)
-                    {
-                        return FormatDutyName(duty);
-                    }
-                }
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
+            // Active duties are now represented by explicit orders from the chain of command.
+            return null;
         }
 
         /// <summary>
@@ -5619,29 +5575,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Gets the wage multiplier from active duties and professions.
-        ///     Different duties and professions provide different wage bonuses,
-        ///     allowing players to earn more gold per day based on their assignments.
+        ///     Phase 1: Duties system deleted, returning neutral multiplier.
+        ///     Wage bonuses will be integrated via Orders system in later phase.
         /// </summary>
         /// <returns>Wage multiplier (1.0 = no bonus, higher values = bonus).</returns>
         private float GetDutiesWageMultiplier()
         {
-            try
-            {
-                // Get the duties behavior instance to access active duties
-                var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-                if (dutiesBehavior?.IsInitialized != true)
-                {
-                    return 1.0f; // Return no multiplier if duties system isn't initialized
-                }
-
-                // Get the combined wage multiplier from all active duties and professions
-                return dutiesBehavior.GetWageMultiplierForActiveDuties();
-            }
-            catch
-            {
-                // Return neutral multiplier if any error occurs
-                return 1.0f;
-            }
+            // Phase 1: Duties system deleted, return neutral multiplier
+            return 1.0f;
         }
 
         /// <summary>
@@ -5833,11 +5774,12 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _fatigueCurrent = _fatigueMax;
             }
 
-            // Resolve legacy lance ids against current config to refresh name/story when possible
-            if (Assignments.Core.ConfigurationManager.LoadLancesConfig()?.LancesEnabled == true &&
-                !string.IsNullOrWhiteSpace(_currentLanceId))
+            // Phase 1: Lance system deleted
+            if (false && !string.IsNullOrWhiteSpace(_currentLanceId))
             {
-                var resolved = LanceRegistry.ResolveLanceById(_currentLanceId);
+                // Unit structure reflects personal service rather than assigned lances.
+                /*
+                var resolved = (object)null;
                 if (resolved != null)
                 {
                     _currentLanceName = resolved.Name ?? _currentLanceName;
@@ -5850,6 +5792,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     // Mark as legacy but keep saved name for display
                     _isLanceLegacy = true;
                 }
+                */
             }
         }
 
@@ -7425,9 +7368,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public static event Action<string> OnDischarged;
 
         /// <summary>
-        ///     Fired when a lance is finalized (non-provisional). Args: lanceId, styleId, storyId.
+        ///     Fired when a unit assignment is finalized.
         /// </summary>
+        #pragma warning disable CS0067 // Event is currently inactive
         public static event Action<string, string, string> OnLanceFinalized;
+        #pragma warning restore CS0067
 
         /// <summary>
         ///     Fired when player is promoted. Passes the new tier number.
@@ -7445,7 +7390,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 var cultureId = CurrentLord?.Culture?.StringId ?? 
                                CurrentLord?.Clan?.Kingdom?.Culture?.StringId ?? 
                                "mercenary";
-                return Assignments.Core.ConfigurationManager.GetCultureRankTitle(_enlistmentTier, cultureId);
+                return Mod.Core.Config.ConfigurationManager.GetCultureRankTitle(_enlistmentTier, cultureId);
             }
         }
 
@@ -8558,7 +8503,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _enlistmentXP += xp;
 
             // Get tier requirements to show progress
-            var tierXP = Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var tierXP = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var nextTierXP = _enlistmentTier < tierXP.Length ? tierXP[_enlistmentTier] : tierXP[tierXP.Length - 1];
             var progressPercent = nextTierXP > 0 ? _enlistmentXP * 100 / nextTierXP : 100;
 
@@ -8637,7 +8582,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 }
 
                 // Get XP values from config
-                var battleXP = Enlisted.Features.Assignments.Core.ConfigurationManager.GetBattleParticipationXp();
+                var battleXP = Mod.Core.Config.ConfigurationManager.GetBattleParticipationXp();
 
                 if (battleXP > 0)
                 {
@@ -9534,6 +9479,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Change selected duty (called from duty selection menu).
+        ///     Phase 1: Duties system deleted; this method now only stores the value for save compatibility.
         /// </summary>
         public void SetSelectedDuty(string dutyId)
         {
@@ -9542,26 +9488,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            // Remove previous duty if different
-            if (_selectedDuty != dutyId && !string.IsNullOrEmpty(_selectedDuty))
-            {
-                var duties = EnlistedDutiesBehavior.Instance;
-                if (duties != null)
-                {
-                    duties.RemoveDuty(_selectedDuty);
-                }
-            }
-
+            // Phase 1: Duties system deleted, only store for save compatibility
             _selectedDuty = dutyId;
-
-            // Add the new duty to active duties for daily XP processing
-            var dutiesBehavior = EnlistedDutiesBehavior.Instance;
-            if (dutiesBehavior != null)
-            {
-                dutiesBehavior.AssignDuty(dutyId);
-            }
-
-            ModLogger.Info("Duties", $"Changed duty to: {dutyId}");
+            ModLogger.Info("Duties", $"Selected duty stored (legacy): {dutyId}");
         }
 
         /// <summary>
@@ -9665,12 +9594,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        ///     Get rank name for tier. Uses names from progression_config.json.
+        ///     Get rank name for tier. Uses culture-specific names from progression_config.json.
         /// </summary>
         public string GetRankName(int tier)
         {
-            // Use configured tier names from progression_config.json
-            return Enlisted.Features.Assignments.Core.ConfigurationManager.GetTierName(tier);
+            // Get culture-specific rank title from progression_config.json
+            var culture = _enlistedLord?.Culture?.StringId ?? "empire";
+            return Mod.Core.Config.ConfigurationManager.GetCultureRankTitle(tier, culture) ?? $"Tier {tier}";
         }
 
         #region Minor Faction War Relations
@@ -10107,49 +10037,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void SetInitialFormation()
         {
-            try
-            {
-                if (_enlistedLord?.Culture?.BasicTroop == null)
-                {
-                    // Fallback: Set to infantry for all new recruits
-                    EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
-                    ModLogger.Info("Enlistment", "Set initial formation to infantry (fallback)");
-                    return;
-                }
-
-                // Analyze the basic troop to determine formation
-                var basicTroop = _enlistedLord.Culture.BasicTroop;
-                var initialFormation = "infantry"; // Default for recruits
-
-                // Most culture basic troops are infantry, but check just in case
-                if (basicTroop.IsRanged && basicTroop.IsMounted)
-                {
-                    initialFormation = "horsearcher";
-                }
-                else if (basicTroop.IsMounted)
-                {
-                    initialFormation = "cavalry";
-                }
-                else if (basicTroop.IsRanged)
-                {
-                    initialFormation = "archer";
-                }
-                else
-                {
-                    initialFormation = "infantry";
-                }
-
-                // Set the formation in duties system
-                EnlistedDutiesBehavior.Instance?.SetPlayerFormation(initialFormation);
-
-                ModLogger.Info("Enlistment", $"Set initial formation to {initialFormation} based on {basicTroop.Name}");
-            }
-            catch (Exception ex)
-            {
-                // Fallback to infantry on any error
-                ModLogger.Error("Enlistment", "Error setting initial formation", ex);
-                EnlistedDutiesBehavior.Instance?.SetPlayerFormation("infantry");
-            }
+            // Phase 1: Duties/Formation system deleted.
+            // Formation preferences will be tracked via native traits in later phase.
+            ModLogger.Info("Enlistment", "SetInitialFormation: Phase 1 stub (duties deleted)");
         }
 
 
@@ -11698,6 +11588,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     AwardBattleXP(killsThisBattle);
                     
+                    // Lance persona system deleted in Phase 1
+                    /*
                     // Record battle for lance persona progression (promotions require 3+ battles)
                     var lancePersonas = Lances.Personas.LancePersonaBehavior.Instance;
                     if (lancePersonas != null && !string.IsNullOrEmpty(CurrentLanceId))
@@ -11706,6 +11598,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                         lancePersonas.RecordBattleParticipation(lanceKey, 10);
                         ModLogger.Debug("Battle", $"Lance battle recorded for {lanceKey}");
                     }
+                    */
                 }
 
                 // Add kills to current term total (persists to faction record on retirement)

@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
-using Enlisted.Features.Assignments.Behaviors;
+using System.Linq;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
+using ConfigurationManager = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Ranks.Behaviors
 {
@@ -22,7 +25,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         public int DaysInRank { get; set; }
         public int EventsRequired { get; set; }
         public int BattlesRequired { get; set; }
-        public int MinLanceReputation { get; set; }
+        public int MinSoldierReputation { get; set; }
         public int MinLeaderRelation { get; set; }
         public int MaxDiscipline { get; set; }
 
@@ -45,15 +48,15 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             return targetTier switch
             {
-                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, EventsRequired = 5, BattlesRequired = 2, MinLanceReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
-                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, EventsRequired = 12, BattlesRequired = 6, MinLanceReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
-                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, EventsRequired = 25, BattlesRequired = 12, MinLanceReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
-                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, EventsRequired = 40, BattlesRequired = 20, MinLanceReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
-                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, EventsRequired = 55, BattlesRequired = 30, MinLanceReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
-                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, EventsRequired = 70, BattlesRequired = 40, MinLanceReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
-                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, EventsRequired = 85, BattlesRequired = 50, MinLanceReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
-                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, EventsRequired = 100, BattlesRequired = 60, MinLanceReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
-                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, EventsRequired = 999, BattlesRequired = 999, MinLanceReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
+                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, EventsRequired = 5, BattlesRequired = 2, MinSoldierReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
+                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, EventsRequired = 12, BattlesRequired = 6, MinSoldierReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
+                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, EventsRequired = 25, BattlesRequired = 12, MinSoldierReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
+                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, EventsRequired = 40, BattlesRequired = 20, MinSoldierReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
+                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, EventsRequired = 55, BattlesRequired = 30, MinSoldierReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
+                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, EventsRequired = 70, BattlesRequired = 40, MinSoldierReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
+                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, EventsRequired = 85, BattlesRequired = 50, MinSoldierReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
+                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, EventsRequired = 100, BattlesRequired = 60, MinSoldierReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
+                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, EventsRequired = 999, BattlesRequired = 999, MinSoldierReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
             };
         }
     }
@@ -147,7 +150,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             }
 
             var currentTier = enlistment.EnlistmentTier;
-            var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
             
             if (currentTier >= maxTier)
             {
@@ -160,7 +163,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             var escalation = EscalationManager.Instance;
             
             // XP thresholds are owned by progression_config.json (single source of truth).
-            var tierXp = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var requiredXp = currentTier < tierXp.Length ? tierXp[currentTier] : tierXp[tierXp.Length - 1];
 
             // Check XP threshold
@@ -187,13 +190,13 @@ namespace Enlisted.Features.Ranks.Behaviors
                 reasons.Add($"Battles: {enlistment.BattlesSurvived}/{req.BattlesRequired}");
             }
 
-            // Check lance reputation (escalation system)
+            // Check soldier reputation (escalation system)
             if (escalation?.IsEnabled() == true)
             {
-                var lanceRep = escalation.State?.LanceReputation ?? 0;
-                if (lanceRep < req.MinLanceReputation)
+                var soldierRep = escalation.State?.SoldierReputation ?? 0;
+                if (soldierRep < req.MinSoldierReputation)
                 {
-                    reasons.Add($"Lance reputation: {lanceRep}/{req.MinLanceReputation}");
+                    reasons.Add($"Soldier reputation: {soldierRep}/{req.MinSoldierReputation}");
                 }
 
                 var discipline = escalation.State?.Discipline ?? 0;
@@ -230,7 +233,7 @@ namespace Enlisted.Features.Ranks.Behaviors
         public int GetPromotionProgress()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+            var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
             
             if (enlistment?.IsEnlisted != true || enlistment.EnlistmentTier >= maxTier)
             {
@@ -239,7 +242,7 @@ namespace Enlisted.Features.Ranks.Behaviors
 
             var req = PromotionRequirements.GetForTier(enlistment.EnlistmentTier + 1);
             var escalation = EscalationManager.Instance;
-            var tierXp = Assignments.Core.ConfigurationManager.GetTierXpRequirements();
+            var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
             var requiredXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
 
             // Calculate progress for each requirement
@@ -282,7 +285,7 @@ namespace Enlisted.Features.Ranks.Behaviors
             {
                 var currentTier = enlistment.EnlistmentTier;
                 var previousTier = currentTier;
-                var maxTier = Assignments.Core.ConfigurationManager.GetMaxTier();
+                var maxTier = Mod.Core.Config.ConfigurationManager.GetMaxTier();
 
                 // Already at max tier
                 if (currentTier >= maxTier)
@@ -318,22 +321,14 @@ namespace Enlisted.Features.Ranks.Behaviors
 
                 _pendingPromotionTier = targetTier;
 
-                // Try to show the proving event
-                if (Lances.Events.LanceLifeEventRuntime.TryShowEventById(eventId))
-                {
-                    ModLogger.Info("Promotion", $"Triggered proving event for T{currentTier}→T{targetTier}: {eventId}");
-                }
-                else
-                {
-                    // Fallback: If event not found or failed, do direct promotion
-                    ModLogger.Warn("Promotion", $"Proving event {eventId} not found, using fallback promotion");
-                    _pendingPromotionTier = 0;
-                    
-                    // SetTier handles retinue grant for T7/T8/T9 promotions
-                    enlistment.SetTier(targetTier);
-                    Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
-                    TriggerPromotionNotification(targetTier);
-                }
+                // Standard tier advancement is currently processed directly through the promotion system.
+                ModLogger.Info("Promotion", $"Promotion to T{currentTier}→T{targetTier} (Processing direct advancement)");
+                _pendingPromotionTier = 0;
+                
+                // SetTier handles retinue grant for T7/T8/T9 promotions
+                enlistment.SetTier(targetTier);
+                Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+                TriggerPromotionNotification(targetTier);
             }
             catch (Exception ex)
             {
@@ -484,9 +479,6 @@ namespace Enlisted.Features.Ranks.Behaviors
                 // For now, auto-detect formation from current equipment
                 // This can be enhanced with an interactive selection menu later
                 var currentFormation = DetectPlayerFormation();
-
-                var duties = EnlistedDutiesBehavior.Instance;
-                duties?.SetPlayerFormation(currentFormation.ToString().ToLower());
 
                 var formationName = GetFormationDisplayName(currentFormation);
                 var message = new TextObject("{=formation_assigned}Formation assigned: {FORMATION}. Your training and equipment will reflect your role.");

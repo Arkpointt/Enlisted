@@ -2,8 +2,6 @@ using System;
 using System.Threading;
 using HarmonyLib;
 using Enlisted.Mod.Core.Logging;
-using Enlisted.Features.Lances.UI;
-
 namespace Enlisted.Mod.GameAdapters.Patches
 {
     /// <summary>
@@ -23,7 +21,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
     {
         private const string LogCategory = "Naval";
         private static bool _patchApplied;
-        private static int _loggedSkipWhileEventScreenActive;
+        // Skip logs for event screens are currently disabled.
         private static int _loggedInvalidDt;
 
         /// <summary>
@@ -84,6 +82,8 @@ namespace Enlisted.Mod.GameAdapters.Patches
         {
             try
             {
+                // Visual crash guards are currently being reassessed for the updated event system.
+                /*
                 if (LanceLifeEventScreen.IsNavalVisualCrashGuardActive)
                 {
                     // Ultra-low overhead: log at most once per session, then silently skip.
@@ -95,6 +95,7 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     }
                     return false;
                 }
+                */
 
                 // Defensive: avoid ever feeding NaN/Infinity into the native side.
                 if (float.IsNaN(dt) || float.IsInfinity(dt) || float.IsNaN(realDt) || float.IsInfinity(realDt))

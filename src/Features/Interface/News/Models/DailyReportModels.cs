@@ -66,7 +66,7 @@ namespace Enlisted.Features.Interface.News.Models
         /// </summary>
         public string LordPartyId { get; set; } = string.Empty;
 
-        // Lance deltas (day-over-day)
+        // Unit deltas (day-over-day casualties and replacements)
         public int WoundedDelta { get; set; }
         public int SickDelta { get; set; }
         public int DeadDelta { get; set; }

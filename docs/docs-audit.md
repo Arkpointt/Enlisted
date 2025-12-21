@@ -1,70 +1,63 @@
-# docs audit (pending / gaps)
+# Docs Audit (Pending / Gaps)
 
-**last updated:** 2025-12-17
+**last updated:** December 20, 2025
 
-This file exists to answer: **“What’s behind, what’s missing, and what is the current source of truth?”**
+This file exists to answer: **“What’s behind, what’s missing, and what is the current source of truth?”** reflecting the v0.9.0 update.
 
----
+## Index
 
-## Current entry points (source of truth)
-
-- **Start here (core loop overview):** `docs/Features/core-gameplay.md`
-- **Feature index (deep links):** `docs/Features/index.md`
-- **Status (what's done / next):** `docs/ImplementationPlans/implementation-status.md`
-- **Roadmap (dependency / ordering):** `docs/ImplementationPlans/master-implementation-roadmap.md`
-- **Story Blocks (single source of truth):** `docs/StoryBlocks/story-blocks-master-reference.md`
-
-## index
-
-- [current entry points (source of truth)](#current-entry-points-source-of-truth)
-- [what we fixed in this audit pass](#what-we-fixed-in-this-audit-pass)
-- [known documentation gaps (still behind)](#known-documentation-gaps-still-behind)
-- [next consolidation targets (recommended)](#next-consolidation-targets-recommended)
+- [Current Entry Points (Source of Truth)](#current-entry-points-source-of-truth)
+- [What We Fixed in the v0.9.0 Pass](#what-we-fixed-in-the-v090-pass)
+- [Known Documentation Gaps](#known-documentation-gaps)
+- [Next Consolidation Targets](#next-consolidation-targets)
 
 ---
 
-## What we fixed in this audit pass
+## Current Entry Points (Source of Truth)
 
-- **Broken doc links**
-  - Removed references to non-existent `pay-system-rework.md` and `implementation-roadmap.md`.
-  - Updated the roadmap to stop pointing at old implementation-plan files (which are now deleted).
-- **Encoding cleanup (readability)**
-  - Fixed common “mojibake” sequences in frequently read gameplay docs and the menu interface doc.
-- **New navigation**
-  - Added `docs/index.md` as a top-level “start here”.
-  - Added `docs/Features/core-gameplay.md` as the high-level consolidated view of the core loop.
+- **Core Gameplay (Consolidated):** `docs/Features/Core/core-gameplay.md`
+- **Master Plan (Architectural Truth):** `docs/ImplementationPlans/enlisted-interface-master-plan.md`
+- **Story Blocks (Content Truth):** `docs/StoryBlocks/story-blocks-master-reference.md`
+- **Blueprint (Technical Standards):** `docs/blueprint.md`
 
 ---
 
-## Known documentation gaps (still behind)
+## What We Fixed in the v0.9.0 Pass
 
-These areas exist in code but are not documented as first-class pages (or are only mentioned briefly):
+- **Terminology Cleanup**
+  - Replaced "Lance" with "Unit/Company" across all core documents.
+  - Replaced "Lance Reputation" with "Soldier Reputation".
+- **Three Pillars Integration**
+  - Updated all core loop descriptions to reflect the **Orders System**, **Emergent Identity**, and **Native Interface**.
+- **Schema Refactor**
+  - Deleted deprecated "Lance Life" schemas.
+  - Updated `event-system-schemas.md` to reflect version 2.0 (role-based, trait-driven).
+- **Redundancy Removal**
+  - Deleted legacy "Action Menus" and "Story Pack Contract" documents.
+  - Consolidated scattered gameplay features into clear, indexed specifications.
 
-- **Schedule system**
-  - Code: `src/Features/Schedule/*`
-  - Data: `ModuleData/Enlisted/schedule_config.json`
-- **Command Tent systems (service record, retinue lifecycle, etc.)**
-  - Code: `src/Features/CommandTent/*`
-- **Player conditions**
+---
+
+## Known Documentation Gaps
+
+These areas exist in code but are not yet fully documented as first-class pages:
+
+- **Player Conditions (Deep Dive)**
   - Code: `src/Features/Conditions/*`
-- **News / interface behaviors**
+  - Current: Brief mention in `provisions-system.md` and `core-gameplay.md`.
+- **Command Tent / Service Records**
+  - Code: `src/Features/CommandTent/*`
+  - Current: Integrated into `retinue-system.md` but needs detail on lifetime records.
+- **News Behavior API**
   - Code: `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`
-- **Combat behaviors beyond formation assignment**
-  - Code: `src/Features/Combat/Behaviors/*`
+  - Current: Mentioned in the master plan but lacks a dedicated spec.
 
 ---
 
-## Next consolidation targets (recommended)
+## Next Consolidation Targets
 
-To keep docs “few files, easy to maintain”, the next useful consolidation is:
+To keep documentation lean and maintainable:
 
-- **One “Systems Reference” page** for:
-  - Schedule
-  - Conditions
-  - Command Tent (records/retinue)
-  - Interface/News
-  - Combat behaviors
-
-That page should link into existing feature docs instead of duplicating them.
-
-
+- **Medical & Welfare**: Consolidate **Player Conditions** and **Medical Menus** into a single "Medical Care" spec.
+- **Unit History**: Consolidate **Service Records** and **Lifetime Records** into a "Service Record" spec.
+- **Combat Logic**: Create a "Mission Logic" spec for behaviors beyond formation assignment (e.g., encounter guard, battle handling).

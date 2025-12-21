@@ -81,7 +81,8 @@ namespace Enlisted.Mod.Core.Triggers
         public const string PayTension = "pay_tension";
         public const string Heat = "heat";
         public const string Discipline = "discipline";
-        public const string LanceReputation = "lance_reputation";
+        public const string SoldierReputation = "soldier_reputation";
+        public const string LanceReputation = "lance_reputation"; // DEPRECATED: Use SoldierReputation instead
         public const string MedicalRisk = "medical_risk";
 
         // Prefix tokens (pattern-based)

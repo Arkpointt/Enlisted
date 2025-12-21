@@ -6,7 +6,8 @@ using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-using AssignmentsConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+// Dialogue regarding assignments is being updated to reflect the new order system.
+using AssignmentsConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
@@ -1448,11 +1449,6 @@ namespace Enlisted.Features.Conversations.Behaviors
             };
             
             text.SetTextVariable("QM_NAME", qmName);
-            if (enlistment != null)
-            {
-                Lances.Text.LanceLifeTextVariables.ApplyCommon(text, enlistment);
-            }
-            
             return text.ToString();
         }
 
@@ -1642,9 +1638,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                 _ => new TextObject("I've been doing this for years. It's honest work.")
             };
             
+            // Direct unit name variables are being updated.
             if (enlistment != null)
             {
-                Lances.Text.LanceLifeTextVariables.ApplyCommon(text, enlistment);
+                // Dynamic name replacement will be updated to support the new unit structure.
             }
             
             return text.ToString();
@@ -1776,9 +1773,10 @@ namespace Enlisted.Features.Conversations.Behaviors
                 _ => new TextObject("The lord needs gold. Find work that pays and bring back what you can.")
             };
             
+            // Direct unit name variables are being updated.
             if (enlistment != null)
             {
-                Lances.Text.LanceLifeTextVariables.ApplyCommon(text, enlistment);
+                // Dynamic name replacement will be updated to support the new unit structure.
             }
             
             return text.ToString();
@@ -3005,26 +3003,17 @@ namespace Enlisted.Features.Conversations.Behaviors
                 {
                     try
                     {
-                        // Try to fire the T6→T7 promotion event
-                        var eventId = "promotion_t6_t7_commanders_commission";
-                        if (Lances.Events.LanceLifeEventRuntime.TryShowEventById(eventId))
+                        // High-ranking commissions are processed directly through the promotion system.
+                        ModLogger.Info("DialogManager", "Processing commander promotion");
+                        
+                        var enlistmentCheck = EnlistmentBehavior.Instance;
+                        if (enlistmentCheck != null && enlistmentCheck.EnlistmentTier == 6)
                         {
-                            ModLogger.Info("DialogManager", $"Triggered promotion event: {eventId}");
-                        }
-                        else
-                        {
-                            // Fallback: Direct promotion if event not found
-                            ModLogger.Warn("DialogManager", $"Promotion event {eventId} not found, using direct promotion");
+                            enlistmentCheck.SetTier(7);
+                            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
                             
-                            var enlistmentCheck = EnlistmentBehavior.Instance;
-                            if (enlistmentCheck != null && enlistmentCheck.EnlistmentTier == 6)
-                            {
-                                enlistmentCheck.SetTier(7);
-                                Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
-                                
-                                var message = new TextObject("{=promotion_t7_notification}You have been promoted to Commander. Twenty recruits await your command.");
-                                InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
-                            }
+                            var message = new TextObject("{=promotion_t7_notification}You have been promoted to Commander. Twenty recruits await your command.");
+                            InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));
                         }
                     }
                     catch (Exception ex)

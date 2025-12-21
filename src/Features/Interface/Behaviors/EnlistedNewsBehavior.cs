@@ -8,9 +8,6 @@ using Enlisted.Features.Interface.News.Generation;
 using Enlisted.Features.Interface.News.Generation.Producers;
 using Enlisted.Features.Interface.News.Models;
 using Enlisted.Features.Interface.News.State;
-using Enlisted.Features.Schedule.Behaviors;
-using Enlisted.Features.Lances.Events;
-using Enlisted.Features.Lances.Events.Decisions;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Core.Triggers;
 using TaleWorlds.CampaignSystem;
@@ -64,10 +61,10 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Daily Brief lines (stable for the day).
-        /// Stored as raw values (without "Company:"/"Lance:"/"Kingdom:" prefixes) so UIs can format as needed.
+        /// Stored as raw values (without "Company:"/"Unit:"/"Kingdom:" prefixes) so UIs can format as needed.
         /// </summary>
         private string _dailyBriefCompany = string.Empty;
-        private string _dailyBriefLance = string.Empty;
+        private string _dailyBriefUnit = string.Empty;
         private string _dailyBriefKingdom = string.Empty;
 
         /// <summary>
@@ -84,6 +81,21 @@ namespace Enlisted.Features.Interface.Behaviors
         // Persisted Daily Report and rolling ledger state.
         private CampNewsState _campNewsState = new CampNewsState();
 
+        /// <summary>
+        /// Track order outcomes for display in daily brief and detailed reports.
+        /// </summary>
+        private List<OrderOutcomeRecord> _orderOutcomes = new List<OrderOutcomeRecord>();
+
+        /// <summary>
+        /// Track reputation changes for display in reports.
+        /// </summary>
+        private List<ReputationChangeRecord> _reputationChanges = new List<ReputationChangeRecord>();
+
+        /// <summary>
+        /// Track company need changes for display in reports.
+        /// </summary>
+        private List<CompanyNeedChangeRecord> _companyNeedChanges = new List<CompanyNeedChangeRecord>();
+
         // Expose the last generated snapshot to other systems (for example, Decisions) without forcing a
         // recomputation. The snapshot contains primitives only, so it is safe to cache and share as read-only.
         private DailyReportSnapshot _lastDailyReportSnapshot;
@@ -93,7 +105,7 @@ namespace Enlisted.Features.Interface.Behaviors
         private static readonly IDailyReportFactProducer[] DailyReportFactProducers =
         {
             new CompanyMovementObjectiveProducer(),
-            new LanceStatusFactProducer(),
+            new UnitStatusFactProducer(),
             new KingdomHeadlineFactProducer()
         };
 
@@ -201,12 +213,12 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Sync Daily Brief (once-per-day RP digest)
                 // Ensure strings are never null before syncing (Bannerlord SyncData requires non-null refs)
                 _dailyBriefCompany ??= string.Empty;
-                _dailyBriefLance ??= string.Empty;
+                _dailyBriefUnit ??= string.Empty;
                 _dailyBriefKingdom ??= string.Empty;
 
                 dataStore.SyncData("en_news_dailyBriefDay", ref _lastDailyBriefDayNumber);
                 dataStore.SyncData("en_news_dailyBriefCompany", ref _dailyBriefCompany);
-                dataStore.SyncData("en_news_dailyBriefLance", ref _dailyBriefLance);
+                dataStore.SyncData("en_news_dailyBriefUnit", ref _dailyBriefUnit);
                 dataStore.SyncData("en_news_dailyBriefKingdom", ref _dailyBriefKingdom);
 
                 // Sync battle snapshots (for pyrrhic detection across save/load)
@@ -241,13 +253,79 @@ namespace Enlisted.Features.Interface.Behaviors
                 _campNewsState ??= new CampNewsState();
                 _campNewsState.SyncData(dataStore);
 
+                // Sync order outcomes tracking
+                var orderOutcomesCount = _orderOutcomes?.Count ?? 0;
+                dataStore.SyncData("en_news_orderOutcomesCount", ref orderOutcomesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _orderOutcomes = new List<OrderOutcomeRecord>();
+                    for (var i = 0; i < orderOutcomesCount; i++)
+                    {
+                        var record = LoadOrderOutcomeRecord(dataStore, $"en_news_order_{i}");
+                        _orderOutcomes.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < orderOutcomesCount; i++)
+                    {
+                        SaveOrderOutcomeRecord(dataStore, $"en_news_order_{i}", _orderOutcomes[i]);
+                    }
+                }
+
+                // Sync reputation changes tracking
+                var reputationChangesCount = _reputationChanges?.Count ?? 0;
+                dataStore.SyncData("en_news_reputationChangesCount", ref reputationChangesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _reputationChanges = new List<ReputationChangeRecord>();
+                    for (var i = 0; i < reputationChangesCount; i++)
+                    {
+                        var record = LoadReputationChangeRecord(dataStore, $"en_news_rep_{i}");
+                        _reputationChanges.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < reputationChangesCount; i++)
+                    {
+                        SaveReputationChangeRecord(dataStore, $"en_news_rep_{i}", _reputationChanges[i]);
+                    }
+                }
+
+                // Sync company need changes tracking
+                var needChangesCount = _companyNeedChanges?.Count ?? 0;
+                dataStore.SyncData("en_news_needChangesCount", ref needChangesCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _companyNeedChanges = new List<CompanyNeedChangeRecord>();
+                    for (var i = 0; i < needChangesCount; i++)
+                    {
+                        var record = LoadCompanyNeedChangeRecord(dataStore, $"en_news_need_{i}");
+                        _companyNeedChanges.Add(record);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < needChangesCount; i++)
+                    {
+                        SaveCompanyNeedChangeRecord(dataStore, $"en_news_need_{i}", _companyNeedChanges[i]);
+                    }
+                }
+
                 // Safe initialization for null collections after load
                 _kingdomFeed ??= new List<DispatchItem>();
                 _personalFeed ??= new List<DispatchItem>();
                 _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
 
                 _dailyBriefCompany ??= string.Empty;
-                _dailyBriefLance ??= string.Empty;
+                _dailyBriefUnit ??= string.Empty;
                 _dailyBriefKingdom ??= string.Empty;
 
                 // Trim feeds to max size
@@ -260,7 +338,7 @@ namespace Enlisted.Features.Interface.Behaviors
         #region Public API (Menu Integration)
 
         /// <summary>
-        /// Builds the once-per-day Daily Brief section (Company/Lance/Kingdom).
+        /// Builds the once-per-day Daily Brief section (Company/Unit/Kingdom).
         /// This replaces the old "Kingdom News" block on the main enlisted menu.
         /// </summary>
         public string BuildDailyBriefSection()
@@ -276,7 +354,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // If generation produced no content (should be rare), hide the section rather than showing empties.
                 if (string.IsNullOrWhiteSpace(_dailyBriefCompany) &&
-                    string.IsNullOrWhiteSpace(_dailyBriefLance) &&
+                    string.IsNullOrWhiteSpace(_dailyBriefUnit) &&
                     string.IsNullOrWhiteSpace(_dailyBriefKingdom))
                 {
                     return string.Empty;
@@ -290,9 +368,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     sb.AppendLine($"Company: {_dailyBriefCompany}");
                 }
 
-                if (!string.IsNullOrWhiteSpace(_dailyBriefLance))
+                if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
-                    sb.AppendLine($"Lance:   {_dailyBriefLance}");
+                    sb.AppendLine($"Unit:    {_dailyBriefUnit}");
                 }
 
                 if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
@@ -649,8 +727,8 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        /// Provides the current day’s Daily Report snapshot (facts), ensuring it exists first.
-        /// Intended for systems that need the same “day facts” without duplicating producer logic.
+        /// Provides the current day's Daily Report snapshot (facts), ensuring it exists first.
+        /// Intended for systems that need the same "day facts" without duplicating producer logic.
         /// </summary>
         public DailyReportSnapshot GetTodayDailyReportSnapshot()
         {
@@ -669,6 +747,173 @@ namespace Enlisted.Features.Interface.Behaviors
             catch
             {
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Records an order outcome for display in daily brief and detailed reports.
+        /// </summary>
+        public void AddOrderOutcome(string orderTitle, bool success, string briefSummary,
+            string detailedSummary, string issuer, int dayNumber)
+        {
+            try
+            {
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                
+                _orderOutcomes.Add(new OrderOutcomeRecord
+                {
+                    OrderTitle = orderTitle ?? string.Empty,
+                    Success = success,
+                    BriefSummary = briefSummary ?? string.Empty,
+                    DetailedSummary = detailedSummary ?? string.Empty,
+                    Issuer = issuer ?? string.Empty,
+                    DayNumber = dayNumber
+                });
+
+                // Keep only last 10 order outcomes
+                if (_orderOutcomes.Count > 10)
+                {
+                    _orderOutcomes.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Order outcome recorded: {orderTitle} (success={success}, day={dayNumber})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add order outcome", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a reputation change for display in reports.
+        /// </summary>
+        public void AddReputationChange(string target, int delta, int newValue,
+            string message, int dayNumber)
+        {
+            try
+            {
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                
+                _reputationChanges.Add(new ReputationChangeRecord
+                {
+                    Target = target ?? string.Empty,
+                    Delta = delta,
+                    NewValue = newValue,
+                    Message = message ?? string.Empty,
+                    DayNumber = dayNumber
+                });
+
+                // Keep only last 10 reputation changes
+                if (_reputationChanges.Count > 10)
+                {
+                    _reputationChanges.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Reputation change recorded: {target} {delta:+#;-#;0} (day={dayNumber})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add reputation change", ex);
+            }
+        }
+
+        /// <summary>
+        /// Records a company need change for display in reports.
+        /// </summary>
+        public void AddCompanyNeedChange(string need, int delta, int oldValue, int newValue,
+            string message, int dayNumber)
+        {
+            try
+            {
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                
+                _companyNeedChanges.Add(new CompanyNeedChangeRecord
+                {
+                    Need = need ?? string.Empty,
+                    Delta = delta,
+                    OldValue = oldValue,
+                    NewValue = newValue,
+                    Message = message ?? string.Empty,
+                    DayNumber = dayNumber
+                });
+
+                // Keep only last 10 need changes
+                if (_companyNeedChanges.Count > 10)
+                {
+                    _companyNeedChanges.RemoveAt(0);
+                }
+
+                ModLogger.Debug(LogCategory, $"Company need change recorded: {need} {delta:+#;-#;0} (day={dayNumber})");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to add company need change", ex);
+            }
+        }
+
+        /// <summary>
+        /// Returns recent order outcomes within the specified number of days.
+        /// </summary>
+        public List<OrderOutcomeRecord> GetRecentOrderOutcomes(int maxDaysOld = 3)
+        {
+            try
+            {
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _orderOutcomes
+                    .Where(o => currentDay - o.DayNumber <= maxDaysOld)
+                    .OrderByDescending(o => o.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent order outcomes", ex);
+                return new List<OrderOutcomeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Returns recent reputation changes within the specified number of days.
+        /// </summary>
+        public List<ReputationChangeRecord> GetRecentReputationChanges(int maxDaysOld = 3)
+        {
+            try
+            {
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _reputationChanges
+                    .Where(r => currentDay - r.DayNumber <= maxDaysOld)
+                    .OrderByDescending(r => r.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent reputation changes", ex);
+                return new List<ReputationChangeRecord>();
+            }
+        }
+
+        /// <summary>
+        /// Returns recent company need changes within the specified number of days.
+        /// </summary>
+        public List<CompanyNeedChangeRecord> GetRecentCompanyNeedChanges(int maxDaysOld = 3)
+        {
+            try
+            {
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                
+                var currentDay = (int)CampaignTime.Now.ToDays;
+                return _companyNeedChanges
+                    .Where(c => currentDay - c.DayNumber <= maxDaysOld)
+                    .OrderByDescending(c => c.DayNumber)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to get recent company need changes", ex);
+                return new List<CompanyNeedChangeRecord>();
             }
         }
 
@@ -717,7 +962,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     LordParty = enlistment?.CurrentLord?.PartyBelongedTo,
                     TriggerTracker = CampaignTriggerTrackerBehavior.Instance,
                     CampLife = CampLifeBehavior.Instance,
-                    Schedule = ScheduleBehavior.Instance,
+                    // The unit schedule is managed through direct orders.
                     NewsState = _campNewsState,
                     NewsBehavior = this,
                     Generation = context
@@ -806,10 +1051,10 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var excerpt = string.Join(" ", parts).Trim();
 
-                // Append one short "Opportunities" sentence when player decisions are available. This is deliberately
-                // dynamic (not persisted) so it reflects resolved decisions without regenerating the Daily Report.
+                // Check for any urgent matters that require the soldier's attention.
                 try
                 {
+                    /*
                     var decisionBehavior = DecisionEventBehavior.Instance;
                     var available = decisionBehavior?.GetAvailablePlayerDecisions();
                     var count = available?.Count ?? 0;
@@ -868,6 +1113,7 @@ namespace Enlisted.Features.Interface.Behaviors
                                 : opp.Substring(0, maxChars).TrimEnd() + "...";
                         }
                     }
+                    */
                 }
                 catch
                 {
@@ -935,7 +1181,7 @@ namespace Enlisted.Features.Interface.Behaviors
                 var currentDay = (int)CampaignTime.Now.ToDays;
                 if (_lastDailyBriefDayNumber == currentDay &&
                     (!string.IsNullOrWhiteSpace(_dailyBriefCompany) ||
-                     !string.IsNullOrWhiteSpace(_dailyBriefLance) ||
+                     !string.IsNullOrWhiteSpace(_dailyBriefUnit) ||
                      !string.IsNullOrWhiteSpace(_dailyBriefKingdom)))
                 {
                     return;
@@ -946,14 +1192,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     _lastDailyBriefDayNumber = currentDay;
                     _dailyBriefCompany = string.Empty;
-                    _dailyBriefLance = string.Empty;
+                    _dailyBriefUnit = string.Empty;
                     _dailyBriefKingdom = string.Empty;
                     return;
                 }
 
                 _lastDailyBriefDayNumber = currentDay;
                 _dailyBriefCompany = BuildDailyCompanyLine(enlistment);
-                _dailyBriefLance = BuildDailyLanceLine(enlistment);
+                _dailyBriefUnit = BuildDailyUnitLine(enlistment);
                 _dailyBriefKingdom = BuildDailyKingdomLine(enlistment);
             }
             catch (Exception ex)
@@ -1007,14 +1253,14 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private static string BuildDailyLanceLine(EnlistmentBehavior enlistment)
+        private static string BuildDailyUnitLine(EnlistmentBehavior enlistment)
         {
             try
             {
-                var lanceName = enlistment?.CurrentLanceName;
-                if (string.IsNullOrWhiteSpace(lanceName))
+                var unitName = enlistment?.CurrentLanceName;
+                if (string.IsNullOrWhiteSpace(unitName))
                 {
-                    return "No lance assigned.";
+                    return "No unit assigned.";
                 }
 
                 // Keep this light and RP-flavored; detailed stats belong in Camp screens.
@@ -1023,24 +1269,24 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     if (cond.State.HasInjury)
                     {
-                        return $"{lanceName} keeps a slower pace while you recover.";
+                        return $"{unitName} keeps a slower pace while you recover.";
                     }
                     if (cond.State.HasIllness)
                     {
-                        return $"{lanceName} covers for you while sickness runs its course.";
+                        return $"{unitName} covers for you while sickness runs its course.";
                     }
                 }
 
                 if (enlistment != null && enlistment.FatigueMax > 0 && enlistment.FatigueCurrent <= enlistment.FatigueMax / 4)
                 {
-                    return $"{lanceName} looks worn down after long days.";
+                    return $"{unitName} looks worn down after long days.";
                 }
 
-                return $"{lanceName} holds steady and in good order.";
+                return $"{unitName} holds steady and in good order.";
             }
             catch
             {
-                return "Your lance holds steady.";
+                return "Your unit holds steady.";
             }
         }
 
@@ -2107,6 +2353,151 @@ namespace Enlisted.Features.Interface.Behaviors
             };
         }
 
+        /// <summary>
+        /// Saves an order outcome record to the data store.
+        /// </summary>
+        private static void SaveOrderOutcomeRecord(IDataStore dataStore, string prefix, OrderOutcomeRecord record)
+        {
+            var orderTitle = record.OrderTitle ?? string.Empty;
+            var success = record.Success;
+            var briefSummary = record.BriefSummary ?? string.Empty;
+            var detailedSummary = record.DetailedSummary ?? string.Empty;
+            var issuer = record.Issuer ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_title", ref orderTitle);
+            dataStore.SyncData($"{prefix}_success", ref success);
+            dataStore.SyncData($"{prefix}_brief", ref briefSummary);
+            dataStore.SyncData($"{prefix}_detail", ref detailedSummary);
+            dataStore.SyncData($"{prefix}_issuer", ref issuer);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+        }
+
+        /// <summary>
+        /// Loads an order outcome record from the data store.
+        /// </summary>
+        private static OrderOutcomeRecord LoadOrderOutcomeRecord(IDataStore dataStore, string prefix)
+        {
+            var orderTitle = string.Empty;
+            var success = false;
+            var briefSummary = string.Empty;
+            var detailedSummary = string.Empty;
+            var issuer = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_title", ref orderTitle);
+            dataStore.SyncData($"{prefix}_success", ref success);
+            dataStore.SyncData($"{prefix}_brief", ref briefSummary);
+            dataStore.SyncData($"{prefix}_detail", ref detailedSummary);
+            dataStore.SyncData($"{prefix}_issuer", ref issuer);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            return new OrderOutcomeRecord
+            {
+                OrderTitle = orderTitle,
+                Success = success,
+                BriefSummary = briefSummary,
+                DetailedSummary = detailedSummary,
+                Issuer = issuer,
+                DayNumber = dayNumber
+            };
+        }
+
+        /// <summary>
+        /// Saves a reputation change record to the data store.
+        /// </summary>
+        private static void SaveReputationChangeRecord(IDataStore dataStore, string prefix, ReputationChangeRecord record)
+        {
+            var target = record.Target ?? string.Empty;
+            var delta = record.Delta;
+            var newValue = record.NewValue;
+            var message = record.Message ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_target", ref target);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+        }
+
+        /// <summary>
+        /// Loads a reputation change record from the data store.
+        /// </summary>
+        private static ReputationChangeRecord LoadReputationChangeRecord(IDataStore dataStore, string prefix)
+        {
+            var target = string.Empty;
+            var delta = 0;
+            var newValue = 0;
+            var message = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_target", ref target);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            return new ReputationChangeRecord
+            {
+                Target = target,
+                Delta = delta,
+                NewValue = newValue,
+                Message = message,
+                DayNumber = dayNumber
+            };
+        }
+
+        /// <summary>
+        /// Saves a company need change record to the data store.
+        /// </summary>
+        private static void SaveCompanyNeedChangeRecord(IDataStore dataStore, string prefix, CompanyNeedChangeRecord record)
+        {
+            var need = record.Need ?? string.Empty;
+            var delta = record.Delta;
+            var oldValue = record.OldValue;
+            var newValue = record.NewValue;
+            var message = record.Message ?? string.Empty;
+            var dayNumber = record.DayNumber;
+
+            dataStore.SyncData($"{prefix}_need", ref need);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_oldVal", ref oldValue);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+        }
+
+        /// <summary>
+        /// Loads a company need change record from the data store.
+        /// </summary>
+        private static CompanyNeedChangeRecord LoadCompanyNeedChangeRecord(IDataStore dataStore, string prefix)
+        {
+            var need = string.Empty;
+            var delta = 0;
+            var oldValue = 0;
+            var newValue = 0;
+            var message = string.Empty;
+            var dayNumber = 0;
+
+            dataStore.SyncData($"{prefix}_need", ref need);
+            dataStore.SyncData($"{prefix}_delta", ref delta);
+            dataStore.SyncData($"{prefix}_oldVal", ref oldValue);
+            dataStore.SyncData($"{prefix}_newVal", ref newValue);
+            dataStore.SyncData($"{prefix}_msg", ref message);
+            dataStore.SyncData($"{prefix}_day", ref dayNumber);
+
+            return new CompanyNeedChangeRecord
+            {
+                Need = need,
+                Delta = delta,
+                OldValue = oldValue,
+                NewValue = newValue,
+                Message = message,
+                DayNumber = dayNumber
+            };
+        }
+
         #endregion
     }
 
@@ -2205,5 +2596,43 @@ namespace Enlisted.Features.Interface.Behaviors
         /// Defender side troop count at battle start.
         /// </summary>
         public int DefenderInitialStrength { get; set; }
+    }
+
+    /// <summary>
+    /// Records an order outcome for display in reports and daily brief.
+    /// </summary>
+    public sealed class OrderOutcomeRecord
+    {
+        public string OrderTitle { get; set; }
+        public bool Success { get; set; }
+        public string BriefSummary { get; set; }
+        public string DetailedSummary { get; set; }
+        public string Issuer { get; set; }
+        public int DayNumber { get; set; }
+    }
+
+    /// <summary>
+    /// Records a reputation change for display in reports.
+    /// </summary>
+    public sealed class ReputationChangeRecord
+    {
+        public string Target { get; set; } // "Lord", "Officer", "Soldier"
+        public int Delta { get; set; }
+        public int NewValue { get; set; }
+        public string Message { get; set; }
+        public int DayNumber { get; set; }
+    }
+
+    /// <summary>
+    /// Records a company need change for display in reports.
+    /// </summary>
+    public sealed class CompanyNeedChangeRecord
+    {
+        public string Need { get; set; }
+        public int Delta { get; set; }
+        public int OldValue { get; set; }
+        public int NewValue { get; set; }
+        public string Message { get; set; }
+        public int DayNumber { get; set; }
     }
 }

@@ -1,46 +1,65 @@
 ﻿# Temporary Leave System
 
+The **Temporary Leave** system allows enlisted soldiers to suspend active service for a limited time to handle clan business or personal matters, returning to the world map while preserving their rank and progression.
+
+## Index
+
+- [Overview](#overview)
+- [Requesting Leave](#requesting-leave)
+- [The Leave State](#the-leave-state)
+- [Returning to Service](#returning-to-service)
+- [Transferring Service](#transferring-service)
+- [Leave Expiration (Abandonment)](#leave-expiration-abandonment)
+
+---
+
 ## Overview
-Temporary Leave lets enlisted players suspend active service for a limited time, returning to normal (vanilla) world interaction while preserving enlistment progression for later return.
 
-Leave is **time-limited**. If it expires, the player is treated as having abandoned their post and penalties apply.
+Temporary Leave is a suspension of duty, not a discharge. It is **time-limited** (default 14 days). If you fail to return before the timer expires, you are marked as a deserter.
 
-## How it works
+---
 
-### Request Leave
-- While enlisted, you can request leave via the enlisted UI / lord dialog (depending on availability).
-- On approval, you enter a leave state:
-  - Player party becomes visible/active again
-  - Normal encounters and movement resume
-  - Enlistment progression state is preserved
+## Requesting Leave
 
-### Leave timer
-- Default maximum leave: **14 days** (configurable).
-- The UI warns you when leave is close to expiring.
+You can request leave through two primary channels:
+1.  **Enlisted Status Menu**: A "Request Leave" option is available in the main menu hub.
+2.  **Lord Dialogue**: You can speak directly with your lord to request time away from the unit.
 
-### Return to service
-- While on leave, you can return to service by speaking with your current/previous lord.
-- Returning restores enlisted behavior: following, battle participation, and enlisted menus.
+Approval is generally granted unless the unit is in a high-tempo situation (e.g., active siege or imminent battle).
 
-### Transfer service (while on leave)
-- While on leave, you can transfer to a different lord **in the same faction**.
-- Transfer preserves:
-  - Tier and XP
-  - Service date and term tracking
-  - Kill tracking and service record continuity
+---
 
-### Leave expiration (desertion via leave)
-If leave exceeds the maximum duration:
-- Service is terminated as an abandonment.
-- Relation penalties apply.
-- Re-enlistment with the same faction may be blocked for a cooldown window.
+## The Leave State
 
-## Leave vs Discharge vs Desert
-- **Leave**: Temporary suspension; you must return before the timer expires.
-- **Request Discharge (Final Muster)**: Managed separation requested from Camp ("Camp"); resolves at the next pay muster and can award severance/pension.
-- **Desert the Army**: Immediate abandonment from the enlisted status menu with severe penalties.
+Once on leave:
+-   **Visibility**: Your party becomes visible and active on the campaign map.
+-   **Movement**: You can move freely, trade, and engage in encounters as a vanilla mercenary/lord.
+-   **Persistence**: Your rank, XP, reputation, and service record are frozen and preserved.
+-   **Restrictions**: You cannot join other factions or enlist with foreign lords while on leave from your current post.
 
-## Related docs
-- [Enlistment](../Core/enlistment.md)
-- [Menu Interface](../UI/menu-interface.md)
-- [Pay System](../Core/pay-system.md)
+---
+
+## Returning to Service
+
+To resume your duties, you must find and speak with your lord.
+-   Selecting "Reporting for duty" immediately restores your enlisted state.
+-   Your party is hidden, and you resume following the lord's army.
+
+---
+
+## Transferring Service
+
+While on leave, you have the option to transfer your service to a **different lord within the same faction**.
+-   Speak with another lord of your kingdom.
+-   Select the option to transfer your service.
+-   All progression (tier, XP, reputation) is maintained with the new commander.
+
+---
+
+## Leave Expiration (Abandonment)
+
+If the leave timer reaches zero before you return:
+-   **Service Terminated**: You are automatically discharged as having abandoned your post.
+-   **Desertion Penalties**: Heavy relation hits with your lord and faction leader.
+-   **Cooldown**: You may be blocked from re-enlisting with that faction for a significant duration.
+-   **Gear**: Any Quartermaster-issued gear is considered stolen, and a crime rating is applied.

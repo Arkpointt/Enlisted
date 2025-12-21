@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Enlisted.Features.Assignments.Behaviors;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
@@ -252,18 +251,7 @@ namespace Enlisted.Features.CommandTent.Core
         /// </summary>
         private static FormationClass GetPlayerFormationType()
         {
-            var duties = EnlistedDutiesBehavior.Instance;
-            if (duties != null)
-            {
-                var formationStr = duties.PlayerFormation;
-                if (!string.IsNullOrEmpty(formationStr))
-                {
-                    return ParseFormationClass(formationStr);
-                }
-            }
-
-            // Fallback to infantry if no formation set
-            ModLogger.Warn(LogCategory, "No player formation set, defaulting to infantry");
+            // The player's default formation is infantry while unit specializations are being updated.
             return FormationClass.Infantry;
         }
 

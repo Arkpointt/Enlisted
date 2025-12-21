@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using Enlisted.Features.Assignments.Behaviors;
 // Removed: using Enlisted.Features.Camp.UI.Bulletin; (old Bulletin UI deleted)
-using Enlisted.Features.Camp.UI.Management;
 using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -19,7 +17,7 @@ using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using EnlistedConfig = Enlisted.Features.Assignments.Core.ConfigurationManager;
+using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 
 namespace Enlisted.Features.Camp
 {
@@ -272,8 +270,8 @@ namespace Enlisted.Features.Camp
                 },
                 _ => 
                 {
-                    // Camp Activities moved to Camp Management - open Reports tab (tab 3)
-                    Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(3);
+                    // The camp management interface is currently being updated to use native menus.
+                    // Enlisted.Features.Camp.UI.Management.CampManagementScreen.Open(3);
                 },
                 false,
                 3);
@@ -293,7 +291,8 @@ namespace Enlisted.Features.Camp
                 },
                 _ => 
                 {
-                    CampManagementScreen.Open(1); // Open to Schedule tab
+                    // Camp management is handled through native menus.
+                    InformationManager.DisplayMessage(new InformationMessage("Camp Management."));
                 },
                 false,
                 4);
@@ -1316,7 +1315,8 @@ namespace Enlisted.Features.Camp
 
                     if (enlistment.EnlistmentTier < 6)
                     {
-                        var nextTierXp = Enlisted.Features.Assignments.Core.ConfigurationManager.GetXpRequiredForTier(enlistment.EnlistmentTier);
+                        var tierXp = Mod.Core.Config.ConfigurationManager.GetTierXpRequirements();
+                        var nextTierXp = enlistment.EnlistmentTier < tierXp.Length ? tierXp[enlistment.EnlistmentTier] : tierXp[tierXp.Length - 1];
                         sb.AppendLine($"Next Tier Requirement: {nextTierXp} XP");
                     }
                     else
@@ -1841,10 +1841,8 @@ namespace Enlisted.Features.Camp
                 return true;
             }
 
-            // Formation match check - players can only recruit soldiers matching their own formation type
-            // An infantry soldier leads infantry, a cavalryman leads cavalry, etc.
-            var duties = EnlistedDutiesBehavior.Instance;
-            var playerFormation = duties?.PlayerFormation?.ToLowerInvariant() ?? "infantry";
+            // Recruitment defaults to infantry.
+            var playerFormation = "infantry";
             
             // Map player formation to retinue type for comparison
             var playerRetinueType = playerFormation switch

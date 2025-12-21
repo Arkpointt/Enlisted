@@ -7,10 +7,12 @@ namespace Enlisted.Features.Escalation
     /// <summary>
     /// Persisted escalation tracks (Phase 4).
     ///
-    /// Ranges (per docs/research/escalation_system.md):
+    /// Ranges (per docs/research/escalation_system.md and master plan v2.0):
     /// - Heat: 0–10
     /// - Discipline: 0–10
-    /// - Lance reputation: -50..+50
+    /// - Soldier reputation: -50..+50 (renamed from LanceReputation)
+    /// - Lord reputation: 0–100 (NEW)
+    /// - Officer reputation: 0–100 (NEW)
     /// - Medical risk: 0–5
     ///
     /// This class is intentionally "dumb storage". All rules live in EscalationManager.
@@ -22,15 +24,21 @@ namespace Enlisted.Features.Escalation
         public const int HeatMax = 10;
         public const int DisciplineMin = 0;
         public const int DisciplineMax = 10;
-        public const int LanceReputationMin = -50;
-        public const int LanceReputationMax = 50;
+        public const int SoldierReputationMin = -50;
+        public const int SoldierReputationMax = 50;
+        public const int LordReputationMin = 0;
+        public const int LordReputationMax = 100;
+        public const int OfficerReputationMin = 0;
+        public const int OfficerReputationMax = 100;
         public const int MedicalRiskMin = 0;
         public const int MedicalRiskMax = 5;
 
         // Track values
         public int Heat { get; set; }
         public int Discipline { get; set; }
-        public int LanceReputation { get; set; }
+        public int SoldierReputation { get; set; }
+        public int LordReputation { get; set; }
+        public int OfficerReputation { get; set; }
         public int MedicalRisk { get; set; }
 
         // Timestamps used for passive decay rules.
@@ -60,7 +68,9 @@ namespace Enlisted.Features.Escalation
         {
             Heat = Clamp(Heat, HeatMin, HeatMax);
             Discipline = Clamp(Discipline, DisciplineMin, DisciplineMax);
-            LanceReputation = Clamp(LanceReputation, LanceReputationMin, LanceReputationMax);
+            SoldierReputation = Clamp(SoldierReputation, SoldierReputationMin, SoldierReputationMax);
+            LordReputation = Clamp(LordReputation, LordReputationMin, LordReputationMax);
+            OfficerReputation = Clamp(OfficerReputation, OfficerReputationMin, OfficerReputationMax);
             MedicalRisk = Clamp(MedicalRisk, MedicalRiskMin, MedicalRiskMax);
 
             PendingThresholdStoryId ??= string.Empty;
