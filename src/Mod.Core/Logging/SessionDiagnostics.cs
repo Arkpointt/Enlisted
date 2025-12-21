@@ -252,7 +252,7 @@ namespace Enlisted.Mod.Core.Logging
                 ModLogger.ErrorCode(
                     "SaveLoad",
                     "E-SAVELOAD-001",
-                    $"Save/load failed in {behaviorName} during {phase}. This can break saves. Try: load an older save, disable recently-added mods, then share your latest Session log + Conflicts log (and the save file if possible).",
+                    $"Save/load failed in {behaviorName} during {phase}. This can break saves. Try: load an older save, disable recently-added mods, then share logs from <BannerlordInstall>\\Modules\\Enlisted\\Debugging\\ (Session-A and Conflicts-A) and the save file if possible.",
                     ex);
 
                 throw;

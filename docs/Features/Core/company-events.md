@@ -70,13 +70,18 @@ Events fire at an appropriate frequency (~1-2 per day) during `HourlyTickEvent`.
 3.  Filters the available event pool for eligible matches.
 4.  Selects a random event from the filtered pool.
 
-### Context Tags
--   `war`: Active warfare state.
--   `siege`: Currently involved in a siege.
--   `peace`: Peacetime.
--   `town`: Located inside a settlement.
--   `outdoor`: In the field/on the campaign map.
--   `camp`: Resting in camp.
+### Strategic Context Tags
+Events are filtered by the unit's current strategic situation:
+-   `coordinated_offensive`: The Grand Campaign (allied hosts gathering).
+-   `desperate_defense`: The Last Stand (bleeding realm, every sword needed).
+-   `raid_operation`: Harrying the Lands (bleeding the enemy's purse).
+-   `siege_operation`: Siege Works (active siege engines and encircling walls).
+-   `patrol_peacetime`: Riding the Marches (vigilance against bandits).
+-   `garrison_duty`: Watching the walls from within a settlement.
+-   `recruitment_drive`: Mustering for War (stockpiling and sharpening blades).
+-   `winter_camp`: Seasonal rest and daily duties in the snow.
+
+Legacy tactical tags (`war`, `peace`, `siege`, `town`, `outdoor`, `camp`) remain supported for broad categorization.
 
 ---
 

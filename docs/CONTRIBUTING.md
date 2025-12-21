@@ -64,29 +64,36 @@ All in `ModuleData/Enlisted/`:
 
 ### Mod Logs (Enlisted)
 
-Full path: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
+**ALL ENLISTED MOD LOGS OUTPUT TO THIS LOCATION:**
 
-Example: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+`<BannerlordInstall>\Modules\Enlisted\Debugging\`
 
-Files:
-- Session logs rotate across three files:
-  - `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
-  - `Session-B_{...}.log`
-  - `Session-C_{...}.log` (oldest kept)
-- Conflicts logs rotate similarly:
-  - `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
-  - `Conflicts-B_{...}.log`
-  - `Conflicts-C_{...}.log` (oldest kept)
-- `Current_Session_README.txt` summarizes Session/Conflicts A/B/C and how to share logs.
-- `enlisted.log` - Legacy name (redirected to session rotation); main activity log with category-based levels
-- `conflicts.log` - Comprehensive mod conflict diagnostics:
-  - Detects Harmony patch conflicts (other mods patching same methods)
-  - Shows patch execution order and priorities
-  - Lists all registered campaign behaviors
+**Example full path:**
+
+`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+
+**IMPORTANT:** The mod writes logs directly to the `Debugging` subfolder inside the Enlisted module directory. This is NOT the game's ProgramData crash logs and NOT your Documents folder.
+
+**Files created in this location:**
+- `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` - Current session (newest)
+- `Session-B_{yyyy-MM-dd_HH-mm-ss}.log` - Previous session
+- `Session-C_{yyyy-MM-dd_HH-mm-ss}.log` - Oldest kept session
+- `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` - Current conflicts diagnostics (newest)
+- `Conflicts-B_{yyyy-MM-dd_HH-mm-ss}.log` - Previous conflicts
+- `Conflicts-C_{yyyy-MM-dd_HH-mm-ss}.log` - Oldest kept conflicts
+- `Current_Session_README.txt` - Summary of active Session/Conflicts logs and sharing instructions
+
+**Note:** The mod no longer creates `enlisted.log` or `conflicts.log` (legacy filenames). All logs use timestamped Session/Conflicts rotation.
+
+**What's in the logs:**
+- Session logs: Main activity log with category-based verbosity (Enlistment, Equipment, Orders, etc.)
+- Conflicts logs: Comprehensive mod conflict diagnostics including:
+  - Harmony patch conflicts (other mods patching the same methods)
+  - Patch execution order and priorities
+  - All registered campaign behaviors
   - Environment info (game version, mod version, OS, runtime)
-  - Loaded modules enumeration
-  - Categorized patch list (Army/Party, Encounter, Finance, UI/Menu, Combat, etc.)
-  - Tracks both main and deferred Harmony instances
+  - Complete module list
+  - Categorized patch inventory (Army/Party, Encounter, Finance, UI/Menu, Combat, etc.)
 
 ### Game Crash Logs (Bannerlord)
 

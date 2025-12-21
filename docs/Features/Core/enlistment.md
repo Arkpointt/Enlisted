@@ -64,8 +64,9 @@ Related systems (shipping):
 
 **Daily Service:**
 - Follow enlisted lord's army movements.
-- Receive **Orders** every ~3 days from the chain of command.
-- Manage **Company Needs** through choices and activities in the Camp menu.
+- **Strategic Context Awareness**: Experience changes based on faction position (Desperate to Offensive) and 8 distinct strategic contexts (e.g., Grand Campaign, Winter Camp).
+- Receive **Orders** every ~3 days from the chain of command, filtered by strategic tags to match the current situation.
+- Manage **Company Needs** through choices and activities in the Camp menu, with predictions for upcoming requirements.
 - Participate in battles when lord fights.
 - Accrue daily wages into the muster ledger; periodic pay muster incident handles payouts.
 - Earn XP: +25 daily, +25 per battle, +1 per enemy killed.

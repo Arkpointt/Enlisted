@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Enlisted.Features.Camp;
+using Enlisted.Features.Conditions;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Interface.News.Generation;
 using Enlisted.Features.Interface.News.Generation.Producers;
@@ -68,6 +69,21 @@ namespace Enlisted.Features.Interface.Behaviors
         private string _dailyBriefKingdom = string.Empty;
 
         /// <summary>
+        /// Tracks when the player last participated in a battle (for "battle aftermath" flavor).
+        /// </summary>
+        private CampaignTime _lastPlayerBattleTime = CampaignTime.Zero;
+        
+        /// <summary>
+        /// Type of the last battle: "bandit", "army", "siege", or empty if none.
+        /// </summary>
+        private string _lastPlayerBattleType = string.Empty;
+        
+        /// <summary>
+        /// Whether the player won their last battle.
+        /// </summary>
+        private bool _lastPlayerBattleWon;
+
+        /// <summary>
         /// Cached battle initial strengths for pyrrhic detection.
         /// Key: MapEvent hash code as string.
         /// </summary>
@@ -99,7 +115,6 @@ namespace Enlisted.Features.Interface.Behaviors
         // Expose the last generated snapshot to other systems (for example, Decisions) without forcing a
         // recomputation. The snapshot contains primitives only, so it is safe to cache and share as read-only.
         private DailyReportSnapshot _lastDailyReportSnapshot;
-        private int _lastDailyReportSnapshotDayNumber = -1;
 
         // Producer set used to populate snapshot facts without scattering logic across the behavior.
         private static readonly IDailyReportFactProducer[] DailyReportFactProducers =
@@ -164,12 +179,13 @@ namespace Enlisted.Features.Interface.Behaviors
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
                 // Sync kingdom feed as individual primitives (lists of complex types require manual handling)
-                var kingdomCount = _kingdomFeed?.Count ?? 0;
+                _kingdomFeed ??= new List<DispatchItem>();
+                var kingdomCount = _kingdomFeed.Count;
                 dataStore.SyncData("en_news_kingdomCount", ref kingdomCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _kingdomFeed = new List<DispatchItem>();
+                    _kingdomFeed.Clear();
                     for (var i = 0; i < kingdomCount; i++)
                     {
                         var item = LoadDispatchItem(dataStore, $"en_news_k_{i}");
@@ -186,12 +202,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Sync personal feed
-                var personalCount = _personalFeed?.Count ?? 0;
+                _personalFeed ??= new List<DispatchItem>();
+                var personalCount = _personalFeed.Count;
                 dataStore.SyncData("en_news_personalCount", ref personalCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _personalFeed = new List<DispatchItem>();
+                    _personalFeed.Clear();
                     for (var i = 0; i < personalCount; i++)
                     {
                         var item = LoadDispatchItem(dataStore, $"en_news_p_{i}");
@@ -220,14 +237,21 @@ namespace Enlisted.Features.Interface.Behaviors
                 dataStore.SyncData("en_news_dailyBriefCompany", ref _dailyBriefCompany);
                 dataStore.SyncData("en_news_dailyBriefUnit", ref _dailyBriefUnit);
                 dataStore.SyncData("en_news_dailyBriefKingdom", ref _dailyBriefKingdom);
+                
+                // Battle aftermath tracking for daily brief flavor
+                _lastPlayerBattleType ??= string.Empty;
+                dataStore.SyncData("en_news_lastBattleTime", ref _lastPlayerBattleTime);
+                dataStore.SyncData("en_news_lastBattleType", ref _lastPlayerBattleType);
+                dataStore.SyncData("en_news_lastBattleWon", ref _lastPlayerBattleWon);
 
                 // Sync battle snapshots (for pyrrhic detection across save/load)
-                var snapshotCount = _battleSnapshots?.Count ?? 0;
+                _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
+                var snapshotCount = _battleSnapshots.Count;
                 dataStore.SyncData("en_news_snapshotCount", ref snapshotCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _battleSnapshots = new Dictionary<string, BattleSnapshot>();
+                    _battleSnapshots.Clear();
                     for (var i = 0; i < snapshotCount; i++)
                     {
                         var snapshot = LoadBattleSnapshot(dataStore, $"en_news_bs_{i}");
@@ -254,12 +278,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 _campNewsState.SyncData(dataStore);
 
                 // Sync order outcomes tracking
-                var orderOutcomesCount = _orderOutcomes?.Count ?? 0;
+                _orderOutcomes ??= new List<OrderOutcomeRecord>();
+                var orderOutcomesCount = _orderOutcomes.Count;
                 dataStore.SyncData("en_news_orderOutcomesCount", ref orderOutcomesCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _orderOutcomes = new List<OrderOutcomeRecord>();
+                    _orderOutcomes.Clear();
                     for (var i = 0; i < orderOutcomesCount; i++)
                     {
                         var record = LoadOrderOutcomeRecord(dataStore, $"en_news_order_{i}");
@@ -275,12 +300,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Sync reputation changes tracking
-                var reputationChangesCount = _reputationChanges?.Count ?? 0;
+                _reputationChanges ??= new List<ReputationChangeRecord>();
+                var reputationChangesCount = _reputationChanges.Count;
                 dataStore.SyncData("en_news_reputationChangesCount", ref reputationChangesCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _reputationChanges = new List<ReputationChangeRecord>();
+                    _reputationChanges.Clear();
                     for (var i = 0; i < reputationChangesCount; i++)
                     {
                         var record = LoadReputationChangeRecord(dataStore, $"en_news_rep_{i}");
@@ -296,12 +322,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 // Sync company need changes tracking
-                var needChangesCount = _companyNeedChanges?.Count ?? 0;
+                _companyNeedChanges ??= new List<CompanyNeedChangeRecord>();
+                var needChangesCount = _companyNeedChanges.Count;
                 dataStore.SyncData("en_news_needChangesCount", ref needChangesCount);
 
                 if (dataStore.IsLoading)
                 {
-                    _companyNeedChanges = new List<CompanyNeedChangeRecord>();
+                    _companyNeedChanges.Clear();
                     for (var i = 0; i < needChangesCount; i++)
                     {
                         var record = LoadCompanyNeedChangeRecord(dataStore, $"en_news_need_{i}");
@@ -338,8 +365,27 @@ namespace Enlisted.Features.Interface.Behaviors
         #region Public API (Menu Integration)
 
         /// <summary>
-        /// Builds the once-per-day Daily Brief section (Company/Unit/Kingdom).
-        /// This replaces the old "Kingdom News" block on the main enlisted menu.
+        /// Builds the player status RP flavor line for use in menus.
+        /// Returns tier-appropriate, context-aware text about the player's current condition.
+        /// </summary>
+        public string BuildPlayerStatusLine(EnlistmentBehavior enlistment)
+        {
+            return BuildDailyUnitLine(enlistment ?? EnlistmentBehavior.Instance);
+        }
+
+        /// <summary>
+        /// Returns the last battle the player participated in (if any), for contextual menu flavor.
+        /// </summary>
+        public bool TryGetLastPlayerBattleSummary(out CampaignTime battleTime, out bool playerWon)
+        {
+            battleTime = _lastPlayerBattleTime;
+            playerWon = _lastPlayerBattleWon;
+            return battleTime != CampaignTime.Zero;
+        }
+
+        /// <summary>
+        /// Builds the once-per-day Daily Brief as a single flowing RP narrative paragraph.
+        /// Combines company situation, player status, and kingdom news into immersive text.
         /// </summary>
         public string BuildDailyBriefSection()
         {
@@ -352,7 +398,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 EnsureDailyBriefGenerated();
 
-                // If generation produced no content (should be rare), hide the section rather than showing empties.
+                // If generation produced no content, hide the section
                 if (string.IsNullOrWhiteSpace(_dailyBriefCompany) &&
                     string.IsNullOrWhiteSpace(_dailyBriefUnit) &&
                     string.IsNullOrWhiteSpace(_dailyBriefKingdom))
@@ -360,25 +406,28 @@ namespace Enlisted.Features.Interface.Behaviors
                     return string.Empty;
                 }
 
-                var sb = new StringBuilder();
-                sb.AppendLine(new TextObject("{=en_daily_brief_header}--- Daily Brief (Today) ---").ToString());
-
+                // Build a flowing narrative paragraph instead of labeled lines
+                var parts = new List<string>();
+                
                 if (!string.IsNullOrWhiteSpace(_dailyBriefCompany))
                 {
-                    sb.AppendLine($"Company: {_dailyBriefCompany}");
+                    parts.Add(_dailyBriefCompany);
                 }
-
+                    
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
-                    sb.AppendLine($"Unit:    {_dailyBriefUnit}");
+                    parts.Add(_dailyBriefUnit);
                 }
-
+                    
                 if (!string.IsNullOrWhiteSpace(_dailyBriefKingdom))
                 {
-                    sb.AppendLine($"Kingdom: {_dailyBriefKingdom}");
+                    parts.Add(_dailyBriefKingdom);
                 }
 
-                return sb.ToString().TrimEnd();
+                // Join sentences into a flowing paragraph
+                var paragraph = string.Join(" ", parts);
+                
+                return paragraph;
             }
             catch (Exception ex)
             {
@@ -697,7 +746,6 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 // Cache snapshot for other systems that need day facts.
                 _lastDailyReportSnapshot = snapshot;
-                _lastDailyReportSnapshotDayNumber = dayNumber;
 
                 // Generate final report lines (templated strings) and persist them.
                 var lines = DailyReportGenerator.Generate(snapshot, context, maxLines: 8);
@@ -735,13 +783,6 @@ namespace Enlisted.Features.Interface.Behaviors
             try
             {
                 EnsureDailyReportGenerated();
-
-                var today = (int)CampaignTime.Now.ToDays;
-                if (_lastDailyReportSnapshot != null && _lastDailyReportSnapshotDayNumber == today)
-                {
-                    return _lastDailyReportSnapshot;
-                }
-
                 return _lastDailyReportSnapshot;
             }
             catch
@@ -1156,10 +1197,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     var placeholders = new Dictionary<string, string>
                     {
-                        { "LORD", lord?.Name?.ToString() ?? new TextObject("{=enl_ui_unknown}Unknown").ToString() }
+                        { "LORD", lord.Name.ToString() }
                     };
 
-                    AddPersonalNews("army", "News_ArmyForming", placeholders, $"army:{lord?.StringId}", 2);
+                    AddPersonalNews("army", "News_ArmyForming", placeholders, $"army:{lord.StringId}", 2);
                 }
 
                 _lordHadArmyYesterday = hasArmyNow;
@@ -1253,41 +1294,128 @@ namespace Enlisted.Features.Interface.Behaviors
             }
         }
 
-        private static string BuildDailyUnitLine(EnlistmentBehavior enlistment)
+        private static readonly Random FlavorRng = new Random();
+        
+        private string BuildDailyUnitLine(EnlistmentBehavior enlistment)
         {
             try
             {
-                var unitName = enlistment?.CurrentLanceName;
-                if (string.IsNullOrWhiteSpace(unitName))
+                var tier = enlistment?.EnlistmentTier ?? 1;
+                var hour = CampaignTime.Now.GetHourOfDay;
+                var tierKey = GetTierKey(tier);
+                
+                // Priority 1: Recent battle aftermath (within 1 day)
+                if (_lastPlayerBattleTime != CampaignTime.Zero)
                 {
-                    return "No unit assigned.";
+                    var hoursSinceBattle = (CampaignTime.Now - _lastPlayerBattleTime).ToHours;
+                    if (hoursSinceBattle < 24 && !string.IsNullOrEmpty(_lastPlayerBattleType))
+                    {
+                        var outcomeKey = _lastPlayerBattleWon ? "won" : "lost";
+                        var prefix = $"brief_{_lastPlayerBattleType}_{outcomeKey}_{tierKey}_";
+                        var text = PickRandomLocalizedString(prefix, 3);
+                        if (!string.IsNullOrEmpty(text))
+                        {
+                            return text;
+                        }
+                    }
                 }
-
-                // Keep this light and RP-flavored; detailed stats belong in Camp screens.
-                var cond = Enlisted.Features.Conditions.PlayerConditionBehavior.Instance;
+                
+                // Priority 2: Injuries/illness
+                var cond = PlayerConditionBehavior.Instance;
                 if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
                 {
                     if (cond.State.HasInjury)
                     {
-                        return $"{unitName} keeps a slower pace while you recover.";
+                        var prefix = $"brief_injury_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_injury");
                     }
                     if (cond.State.HasIllness)
                     {
-                        return $"{unitName} covers for you while sickness runs its course.";
+                        var prefix = $"brief_illness_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_illness");
                     }
                 }
 
-                if (enlistment != null && enlistment.FatigueMax > 0 && enlistment.FatigueCurrent <= enlistment.FatigueMax / 4)
+                // Priority 3: Fatigue
+                if (enlistment != null && enlistment.FatigueMax > 0)
                 {
-                    return $"{unitName} looks worn down after long days.";
+                    var fatiguePct = (float)enlistment.FatigueCurrent / enlistment.FatigueMax;
+                    
+                    if (fatiguePct <= 0.25f)
+                    {
+                        var prefix = $"brief_exhausted_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_exhausted");
+                    }
+                    if (fatiguePct <= 0.5f)
+                    {
+                        var prefix = $"brief_tired_{tierKey}_";
+                        return PickRandomLocalizedString(prefix, 3, "brief_fallback_tired");
+                    }
                 }
 
-                return $"{unitName} holds steady and in good order.";
+                // Priority 4: Good condition - vary by tier and time of day
+                var timeKey = GetTimeKey(hour);
+                var prefix2 = $"brief_good_{tierKey}_{timeKey}_";
+                return PickRandomLocalizedString(prefix2, 3, "brief_fallback_default");
             }
-            catch
+            catch (Exception ex)
             {
-                return "Your unit holds steady.";
+                ModLogger.Error(LogCategory, "Error building daily unit line", ex);
+                return new TextObject("{=brief_fallback_default}You're ready for whatever comes.").ToString();
             }
+        }
+        
+        private static string GetTierKey(int tier)
+        {
+            if (tier <= 2)
+            {
+                return "recruit";
+            }
+            if (tier <= 4)
+            {
+                return "soldier";
+            }
+            if (tier <= 6)
+            {
+                return "nco";
+            }
+            return "veteran";
+        }
+        
+        private static string GetTimeKey(int hour)
+        {
+            if (hour < 6 || hour >= 20)
+            {
+                return "night";
+            }
+            if (hour < 10)
+            {
+                return "morning";
+            }
+            if (hour >= 17)
+            {
+                return "evening";
+            }
+            return "day";
+        }
+        
+        private static string PickRandomLocalizedString(string prefix, int count, string fallbackId = null)
+        {
+            var index = FlavorRng.Next(1, count + 1);
+            var id = $"{prefix}{index}";
+            var text = new TextObject($"{{={id}}}").ToString();
+            
+            // If TextObject didn't resolve (returned the ID), try fallback
+            if (text.Contains($"{{={id}}}") || text == id)
+            {
+                if (!string.IsNullOrEmpty(fallbackId))
+                {
+                    return new TextObject($"{{={fallbackId}}}").ToString();
+                }
+                return string.Empty;
+            }
+            
+            return text;
         }
 
         private string BuildDailyKingdomLine(EnlistmentBehavior enlistment)
@@ -1442,6 +1570,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Checks if player participated in the battle and generates personal news.
+        /// Also records battle details for daily brief flavor.
         /// </summary>
         private void CheckPlayerBattleParticipation(MapEvent mapEvent, BattleSideEnum winnerSide)
         {
@@ -1479,6 +1608,29 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 var playerWon = (winnerSide == BattleSideEnum.Attacker && playerOnAttacker)
                              || (winnerSide == BattleSideEnum.Defender && playerOnDefender);
+
+                // Record battle details for daily brief flavor
+                _lastPlayerBattleTime = CampaignTime.Now;
+                _lastPlayerBattleWon = playerWon;
+                
+                // Determine battle type
+                var attackerFaction = mapEvent.AttackerSide?.LeaderParty?.MapFaction;
+                var defenderFaction = mapEvent.DefenderSide?.LeaderParty?.MapFaction;
+                var isBandit = (attackerFaction?.IsBanditFaction == true) || (defenderFaction?.IsBanditFaction == true);
+                var isSiege = mapEvent.IsSiegeAssault || mapEvent.MapEventSettlement?.IsFortification == true;
+                
+                if (isSiege)
+                {
+                    _lastPlayerBattleType = "siege";
+                }
+                else if (isBandit)
+                {
+                    _lastPlayerBattleType = "bandit";
+                }
+                else
+                {
+                    _lastPlayerBattleType = "army";
+                }
 
                 var headlineKey = playerWon ? "News_PlayerBattle" : "News_PlayerDefeat";
                 AddPersonalNews("participation", headlineKey, placeholders);

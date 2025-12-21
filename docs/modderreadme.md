@@ -55,30 +55,38 @@ Data and localization live outside `src/`:
 
 ### Mod Logs
 
-Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
+**ALL ENLISTED MOD LOGS OUTPUT TO THIS LOCATION:**
 
-- Session logs rotate across three files:
-  - `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
-  - `Session-B_{...}.log`
-  - `Session-C_{...}.log` (oldest kept)
-- Conflicts logs rotate similarly:
-  - `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` (newest)
-  - `Conflicts-B_{...}.log`
-  - `Conflicts-C_{...}.log` (oldest kept)
-- `Current_Session_README.txt` summarizes Session/Conflicts A/B/C and how to share logs.
-- `enlisted.log` - Legacy name (redirected to session rotation); main log with category-based verbosity control
-- `conflicts.log` - Mod conflict diagnostics:
-  - Harmony patch conflict detection (identifies mods sharing patches)
-  - Patch execution order analysis
-  - Registered behaviors list
-  - Environment and module information
-  - Categorized patch inventory
+`<BannerlordInstall>\Modules\Enlisted\Debugging\`
 
-### Game Crash Logs
+**Example full path:**
 
-Location: `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
+`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
 
-Each crash creates a timestamped folder containing `crash_tags.txt`, `rgl_log_*.txt`, and `dump.dmp`.
+**CRITICAL:** The mod writes all logs directly to the `Debugging` subfolder inside the Enlisted module directory. This is NOT the game's ProgramData crash folder and NOT your Documents folder.
+
+**Files created in the Debugging folder:**
+- `Session-A_{yyyy-MM-dd_HH-mm-ss}.log` - Current session (newest)
+- `Session-B_{yyyy-MM-dd_HH-mm-ss}.log` - Previous session
+- `Session-C_{yyyy-MM-dd_HH-mm-ss}.log` - Oldest kept session
+- `Conflicts-A_{yyyy-MM-dd_HH-mm-ss}.log` - Current conflicts diagnostics (newest)
+- `Conflicts-B_{yyyy-MM-dd_HH-mm-ss}.log` - Previous conflicts
+- `Conflicts-C_{yyyy-MM-dd_HH-mm-ss}.log` - Oldest kept conflicts
+- `Current_Session_README.txt` - Active log summary and sharing instructions
+
+**Note:** The mod no longer creates `enlisted.log` or `conflicts.log` (legacy filenames). All logs use timestamped Session/Conflicts rotation.
+
+**Session logs contain:** Main activity with category-based verbosity (Enlistment, Orders, Equipment, Combat, etc.)
+
+**Conflicts logs contain:** Mod conflict diagnostics including Harmony patch conflicts, execution order, behaviors, environment info
+
+### Game Crash Logs (Separate Location)
+
+**Bannerlord's crash logs are in a DIFFERENT location:**
+
+`C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
+
+Each crash creates a timestamped folder containing `crash_tags.txt`, `rgl_log_*.txt`, and `dump.dmp`. These are game logs, not Enlisted mod logs.
 
 Configure levels in `settings.json`:
 ```json

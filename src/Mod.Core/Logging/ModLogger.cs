@@ -112,7 +112,7 @@ namespace Enlisted.Mod.Core.Logging
 				// Try to set a fallback path with session rotation
 				try
 				{
-					_logFilePath = PrepareSessionLogFile(ResolveDocumentsPath("enlisted.log"));
+					_logFilePath = PrepareSessionLogFile(ResolveDocumentsPath());
 					_sessionId = Path.GetFileNameWithoutExtension(_logFilePath) ?? "Session-A";
 				}
 				catch
@@ -616,7 +616,7 @@ namespace Enlisted.Mod.Core.Logging
 				_logFilePath = ResolveDefaultLogPath();
 				if (string.IsNullOrWhiteSpace(_logFilePath))
 				{
-					_logFilePath = ResolveDocumentsPath("enlisted.log");
+					_logFilePath = ResolveDocumentsPath();
 				}
 			}
 			
@@ -635,7 +635,7 @@ namespace Enlisted.Mod.Core.Logging
 				// Fallback to Documents path
 				try
 				{
-					var fallback = ResolveDocumentsPath("enlisted.log");
+					var fallback = ResolveDocumentsPath();
 					var logDir = Path.GetDirectoryName(fallback);
 					EnsureDirectoryExists(logDir);
 					var line = FormatLine(level, category, message);
@@ -681,14 +681,14 @@ namespace Enlisted.Mod.Core.Logging
 				{
 					// Fallback: use Documents folder if we can't determine assembly location
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Assembly.Location is null/empty, using Documents fallback");
-					return ResolveDocumentsPath("enlisted.log");
+					return ResolveDocumentsPath();
 				}
 				
 				var dllDir = Path.GetDirectoryName(assemblyLocation);
 				if (string.IsNullOrWhiteSpace(dllDir))
 				{
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Could not get directory from assembly location, using Documents fallback");
-					return ResolveDocumentsPath("enlisted.log");
+					return ResolveDocumentsPath();
 				}
 				
 				// Navigate from bin/Win64_Shipping_Client/Enlisted.dll up to Modules/Enlisted/Debugging/
@@ -696,42 +696,36 @@ namespace Enlisted.Mod.Core.Logging
 				if (binDir == null)
 				{
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Could not get parent directory, using Documents fallback");
-					return ResolveDocumentsPath("enlisted.log");
+					return ResolveDocumentsPath();
 				}
 				
 				var enlistedRoot = binDir.Parent;
 				if (enlistedRoot == null)
 				{
 					System.Diagnostics.Debug.WriteLine("[Enlisted] Could not get module root directory, using Documents fallback");
-					return ResolveDocumentsPath("enlisted.log");
+					return ResolveDocumentsPath();
 				}
 				
 				var dir = Path.Combine(enlistedRoot.FullName, "Debugging");
-				var logPath = Path.Combine(dir, "enlisted.log");
 				
-				// Verify the path looks reasonable
-				if (logPath.Contains("Enlisted") && logPath.Contains("Debugging"))
-				{
-					return logPath;
-				}
-				
-				// Path doesn't look right, use fallback
-				System.Diagnostics.Debug.WriteLine($"[Enlisted] Resolved path doesn't look correct: {logPath}, using Documents fallback");
-				return ResolveDocumentsPath("enlisted.log");
+				// Return a path template - PrepareSessionLogFile will extract the directory
+				// and create the actual timestamped Session-A file. The "_.log" is just a placeholder.
+				return Path.Combine(dir, "_.log");
 			}
 			catch (Exception ex)
 			{
 				// Log to debug output so we can see what went wrong
 				System.Diagnostics.Debug.WriteLine($"[Enlisted] Failed to resolve log path: {ex.Message}\n{ex.StackTrace}");
-				return ResolveDocumentsPath("enlisted.log");
+				return ResolveDocumentsPath();
 			}
 		}
 
-		private static string ResolveDocumentsPath(string fileName)
+		private static string ResolveDocumentsPath(string fileName = null)
 		{
 			var docs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 			var dir = Path.Combine(docs, "Mount and Blade II Bannerlord", "Logs", "Enlisted");
-			return Path.Combine(dir, fileName);
+			// Use a placeholder filename if none provided - PrepareSessionLogFile extracts the directory anyway
+			return Path.Combine(dir, fileName ?? "_.log");
 		}
 
 		private static void EnsureDirectoryExists(string directory)
@@ -750,11 +744,11 @@ namespace Enlisted.Mod.Core.Logging
 		{
 			try
 			{
-				var basePath = string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath("enlisted.log") : preferredPath;
+				var basePath = string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath() : preferredPath;
 				var logDir = Path.GetDirectoryName(basePath);
 				if (string.IsNullOrWhiteSpace(logDir))
 				{
-					logDir = Path.GetDirectoryName(ResolveDocumentsPath("enlisted.log"));
+					logDir = Path.GetDirectoryName(ResolveDocumentsPath());
 				}
 
 				EnsureDirectoryExists(logDir);
@@ -799,7 +793,7 @@ namespace Enlisted.Mod.Core.Logging
 			catch
 			{
 				// Last resort: return the preferred path to let the caller fallback further
-				return string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath("enlisted.log") : preferredPath;
+				return string.IsNullOrWhiteSpace(preferredPath) ? ResolveDocumentsPath() : preferredPath;
 			}
 		}
 

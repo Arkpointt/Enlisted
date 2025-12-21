@@ -46,7 +46,7 @@ The mod is built on three core transformations introduced in v2.0:
 - **Reputation & Escalation**: `src/Features/Escalation/EscalationManager.cs`
 - **Native Menus**: `src/Features/Interface/Behaviors/EnlistedMenuBehavior.cs`
 - **Company Needs**: `src/Features/Company/CompanyNeedsManager.cs`
-- **Context Analysis**: `src/Features/Context/ArmyContextAnalyzer.cs`
+- **Strategic Context**: `src/Features/Context/ArmyContextAnalyzer.cs`
 - **News & Reports**: `src/Features/Interface/Behaviors/EnlistedNewsBehavior.cs`
 - **Quartermaster**: `src/Features/Equipment/Behaviors/QuartermasterManager.cs`
 - **Medical Care**: `src/Features/Conditions/EnlistedMedicalMenuBehavior.cs`
@@ -123,7 +123,34 @@ The company's effectiveness is tracked via five core needs:
 -   **Equipment**: Maintenance and quality of gear.
 -   **Rest**: Recovery from fatigue.
 
-Orders and events directly impact these needs. Low supplies or equipment will restrict access to certain services (like the Quartermaster).
+### Needs Prediction
+The mod forecasts upcoming needs based on the current **Strategic Context**. For example, a "Grand Campaign" (coordinated offensive) predicts high Readiness and Supply requirements, while a "Winter Camp" prioritizes Rest and Morale. This allows players to prepare for upcoming operations.
+
+---
+
+## Strategic Context & War Stance
+
+The mod leverages Bannerlord's strategic AI data to ensure the soldier's experience reflects the lord's actual plans.
+
+### War Stance
+The mod calculates a faction's overall strength (territory, military, economy) to determine its **War Stance**:
+-   **Desperate**: Losing badly; priorities shift to survival.
+-   **Defensive**: Unfavorable position; focused on holding territory.
+-   **Balanced**: Even footing; standard operations.
+-   **Offensive**: Winning; focused on expansion and aggression.
+
+### Strategic Contexts
+The unit operates within one of 8 distinct contexts that filter which orders and events are available:
+1.  **Grand Campaign** (coordinated offensive)
+2.  **Last Stand** (desperate defense)
+3.  **Harrying the Lands** (raid operation)
+4.  **Siege Works** (active siege)
+5.  **Riding the Marches** (peacetime patrol)
+6.  **Garrison Duty** (settlement defense)
+7.  **Mustering for War** (recruitment drive)
+8.  **Winter Camp** (seasonal rest and training)
+
+These contexts ensure you won't receive leisure orders during a desperate defense or siege operations while the realm is at peace.
 
 ---
 

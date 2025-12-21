@@ -18,11 +18,11 @@ namespace Enlisted.Features.Escalation
         public const int DisciplineBlocked = 7;
         public const int DisciplineDischarge = 10;
 
-        // Lance reputation thresholds
-        public const int LanceTrusted = 20;
-        public const int LanceBonded = 40;
-        public const int LanceIsolated = -20;
-        public const int LanceSabotage = -40;
+        // Soldier reputation thresholds
+        public const int SoldierTrusted = 20;
+        public const int SoldierBonded = 40;
+        public const int SoldierIsolated = -20;
+        public const int SoldierSabotage = -40;
 
         // Medical risk thresholds
         public const int MedicalWorsening = 3;

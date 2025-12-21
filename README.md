@@ -111,18 +111,27 @@ common files:
 
 #### where logs are
 
-primary location (next to the mod):
-- `<bannerlord>\Modules\Enlisted\Debugging\`
+**PRIMARY LOCATION (ENLISTED MOD LOGS):**
 
-you should usually share:
-- `Session-A_*.log` (latest session)
-- `Conflicts-A_*.log` (latest conflicts report)
-- `Current_Session_README.txt` (points to the current files)
+`<bannerlord>\Modules\Enlisted\Debugging\`
 
-fallback location (if the game can’t write into the module folder):
+**Example full path:**
+
+`C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+
+**IMPORTANT:** The mod writes all logs directly to the `Debugging` subfolder inside the Enlisted module directory. This is NOT the game's crash logs and NOT your Documents folder.
+
+**files you should share when reporting issues:**
+- `Session-A_{timestamp}.log` (latest session)
+- `Conflicts-A_{timestamp}.log` (latest conflicts report)
+- `Current_Session_README.txt` (points to the current files and explains what to share)
+
+**note:** The mod no longer creates `enlisted.log` or `conflicts.log` (legacy filenames). All logs use timestamped Session-A/B/C and Conflicts-A/B/C rotation.
+
+**fallback location (only if the mod can't write to the module folder):**
 - `%userprofile%\Documents\Mount and Blade II Bannerlord\Logs\Enlisted\`
 
-bannerlord crash dumps (when the game hard-crashes):
+**bannerlord crash dumps (separate - when the game itself hard-crashes):**
 - `C:\ProgramData\Mount and Blade II Bannerlord\crashes\`
 
 #### error codes (important)

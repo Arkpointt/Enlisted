@@ -26,7 +26,7 @@
     "KillTracker": "Info",
     "Enlistment": "Info",
     "Patch": "Warn",
-    "Interface": "Warn",
+    "Interface": "Info",
     "Bootstrap": "Info",
     "Session": "Info",
     "Config": "Info"

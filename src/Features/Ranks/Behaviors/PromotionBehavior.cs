@@ -23,7 +23,6 @@ namespace Enlisted.Features.Ranks.Behaviors
     {
         public int XP { get; set; }
         public int DaysInRank { get; set; }
-        public int EventsRequired { get; set; }
         public int BattlesRequired { get; set; }
         public int MinSoldierReputation { get; set; }
         public int MinLeaderRelation { get; set; }
@@ -35,28 +34,28 @@ namespace Enlisted.Features.Ranks.Behaviors
         public static PromotionRequirements GetForTier(int targetTier)
         {
             // Promotion requirements table:
-            // | Promotion | XP | Days | Events | Battles | Lance Rep | Leader Rel | Max Disc |
-            // |-----------|-----|------|--------|---------|-----------|------------|----------|
-            // | T1→T2 | 700 | 14 | 5 | 2 | ≥0 | ≥0 | <8 |
-            // | T2→T3 | 2,200 | 35 | 12 | 6 | ≥10 | ≥10 | <7 |
-            // | T3→T4 | 4,400 | 56 | 25 | 12 | ≥20 | ≥20 | <6 |
-            // | T4→T5 | 6,600 | 56 | 40 | 20 | ≥30 | ≥30 | <5 |
-            // | T5→T6 | 8,800 | 56 | 55 | 30 | ≥40 | ≥15 | <4 |
-            // | T6→T7 | 11,000 | 70 | 70 | 40 | ≥50 | ≥20 | <3 |
-            // | T7→T8 | 14,000 | 84 | 85 | 50 | ≥60 | ≥25 | <2 |
-            // | T8→T9 | 18,000 | 112 | 100 | 60 | ≥70 | ≥30 | <1 |
+            // | Promotion | XP | Days | Battles | Soldier Rep | Leader Rel | Max Disc |
+            // |-----------|-----|------|---------|-------------|------------|----------|
+            // | T1→T2 | 700 | 14 | 2 | ≥0 | ≥0 | <8 |
+            // | T2→T3 | 2,200 | 35 | 6 | ≥10 | ≥10 | <7 |
+            // | T3→T4 | 4,400 | 56 | 12 | ≥20 | ≥20 | <6 |
+            // | T4→T5 | 6,600 | 56 | 20 | ≥30 | ≥30 | <5 |
+            // | T5→T6 | 8,800 | 56 | 30 | ≥40 | ≥15 | <4 |
+            // | T6→T7 | 11,000 | 70 | 40 | ≥50 | ≥20 | <3 |
+            // | T7→T8 | 14,000 | 84 | 50 | ≥60 | ≥25 | <2 |
+            // | T8→T9 | 18,000 | 112 | 60 | ≥70 | ≥30 | <1 |
 
             return targetTier switch
             {
-                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, EventsRequired = 5, BattlesRequired = 2, MinSoldierReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
-                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, EventsRequired = 12, BattlesRequired = 6, MinSoldierReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
-                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, EventsRequired = 25, BattlesRequired = 12, MinSoldierReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
-                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, EventsRequired = 40, BattlesRequired = 20, MinSoldierReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
-                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, EventsRequired = 55, BattlesRequired = 30, MinSoldierReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
-                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, EventsRequired = 70, BattlesRequired = 40, MinSoldierReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
-                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, EventsRequired = 85, BattlesRequired = 50, MinSoldierReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
-                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, EventsRequired = 100, BattlesRequired = 60, MinSoldierReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
-                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, EventsRequired = 999, BattlesRequired = 999, MinSoldierReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
+                2 => new PromotionRequirements { XP = 700, DaysInRank = 14, BattlesRequired = 2, MinSoldierReputation = 0, MinLeaderRelation = 0, MaxDiscipline = 8 },
+                3 => new PromotionRequirements { XP = 2200, DaysInRank = 35, BattlesRequired = 6, MinSoldierReputation = 10, MinLeaderRelation = 10, MaxDiscipline = 7 },
+                4 => new PromotionRequirements { XP = 4400, DaysInRank = 56, BattlesRequired = 12, MinSoldierReputation = 20, MinLeaderRelation = 20, MaxDiscipline = 6 },
+                5 => new PromotionRequirements { XP = 6600, DaysInRank = 56, BattlesRequired = 20, MinSoldierReputation = 30, MinLeaderRelation = 30, MaxDiscipline = 5 },
+                6 => new PromotionRequirements { XP = 8800, DaysInRank = 56, BattlesRequired = 30, MinSoldierReputation = 40, MinLeaderRelation = 15, MaxDiscipline = 4 },
+                7 => new PromotionRequirements { XP = 11000, DaysInRank = 70, BattlesRequired = 40, MinSoldierReputation = 50, MinLeaderRelation = 20, MaxDiscipline = 3 },
+                8 => new PromotionRequirements { XP = 14000, DaysInRank = 84, BattlesRequired = 50, MinSoldierReputation = 60, MinLeaderRelation = 25, MaxDiscipline = 2 },
+                9 => new PromotionRequirements { XP = 18000, DaysInRank = 112, BattlesRequired = 60, MinSoldierReputation = 70, MinLeaderRelation = 30, MaxDiscipline = 1 },
+                _ => new PromotionRequirements { XP = int.MaxValue, DaysInRank = 999, BattlesRequired = 999, MinSoldierReputation = 999, MinLeaderRelation = 999, MaxDiscipline = 0 }
             };
         }
     }
@@ -114,7 +113,7 @@ namespace Enlisted.Features.Ranks.Behaviors
                 1 => "promotion_t1_t2_finding_your_place",
                 2 => "promotion_t2_t3_sergeants_test",
                 3 => "promotion_t3_t4_crisis_of_command",
-                4 => "promotion_t4_t5_lance_vote",
+                4 => "promotion_t4_t5_veterans_vote",
                 5 => "promotion_t5_t6_lord_audience",
                 6 => "promotion_t6_t7_commanders_commission",
                 _ => $"promotion_t{fromTier}_t{toTier}" // Fallback pattern
@@ -176,12 +175,6 @@ namespace Enlisted.Features.Ranks.Behaviors
             if (enlistment.DaysInRank < req.DaysInRank)
             {
                 reasons.Add($"Days in rank: {enlistment.DaysInRank}/{req.DaysInRank}");
-            }
-
-            // Check events completed
-            if (enlistment.EventsCompleted < req.EventsRequired)
-            {
-                reasons.Add($"Events: {enlistment.EventsCompleted}/{req.EventsRequired}");
             }
 
             // Check battles survived
@@ -248,11 +241,10 @@ namespace Enlisted.Features.Ranks.Behaviors
             // Calculate progress for each requirement
             var xpProgress = Math.Min(100, enlistment.EnlistmentXP * 100 / Math.Max(1, requiredXp));
             var daysProgress = Math.Min(100, enlistment.DaysInRank * 100 / Math.Max(1, req.DaysInRank));
-            var eventsProgress = Math.Min(100, enlistment.EventsCompleted * 100 / Math.Max(1, req.EventsRequired));
             var battlesProgress = Math.Min(100, enlistment.BattlesSurvived * 100 / Math.Max(1, req.BattlesRequired));
 
             // Average progress (can weight differently if desired)
-            var average = (xpProgress + daysProgress + eventsProgress + battlesProgress) / 4;
+            var average = (xpProgress + daysProgress + battlesProgress) / 3;
             return average;
         }
 

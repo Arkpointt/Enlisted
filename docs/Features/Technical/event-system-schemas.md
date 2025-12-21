@@ -50,6 +50,7 @@ Orders are mission-driven directives issued by the chain of command. They differ
 - **Issuer**: Auto-determined by rank or specific (Sergeant, Captain, Lord).
 - **Frequency**: Base days modified by campaign tempo (e.g., faster during war).
 - **Consequences**: Explicit Success, Failure, and Decline outcomes affecting reputation and company needs.
+- **Strategic Tags**: Used to match orders to the current **Strategic Context** (e.g., `assault`, `scout`, `preparation`). Inappropriate tags for a context will filter out orders.
 
 ---
 

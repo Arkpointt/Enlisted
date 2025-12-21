@@ -170,11 +170,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private int _battlesSurvived;
 
-        /// <summary>
-        ///     Number of Lance Life events completed. Used for promotion requirements.
-        /// </summary>
-        private int _eventsCompleted;
-
         // Promotion can be temporarily blocked at very high discipline risk.
         // This is rate-limited to avoid message spam when earning XP while blocked.
         private CampaignTime _lastPromotionBlockedMessageTime = CampaignTime.Zero;
@@ -329,16 +324,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool _bagCheckEverCompleted;
         private Hero _pendingBagCheckLord;
 
-        // Lance assignment state
-        private string _currentLanceId;
-        private string _currentLanceName;
-        private string _currentLanceStyle;
-        private string _currentLanceStoryId;
-        private bool _isLanceProvisional;
-        private string _manualLanceStyleId;
-        private bool _isLanceLegacy;
-        private bool _savedGraceLanceLegacy;
-
         // Camp/Fatigue flavor hooks
         private int _fatigueCurrent = 24;
         private int _fatigueMax = 24;
@@ -357,13 +342,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private string _savedGraceTroopId;
         private int _savedGraceXP;
 
-        // Lance state preserved during grace period transfers
-        private string _savedGraceLanceId;
-        private string _savedGraceLanceName;
-        private string _savedGraceLanceStyle;
-        private string _savedGraceLanceStoryId;
-        private bool _savedGraceLanceProvisional;
-        private string _savedGraceManualLanceStyleId;
+        // Grace period tracking for lord transfers
 
         // Ledger-based pay scheduling (custom muster system)
         private int _pendingMusterPay;
@@ -384,8 +363,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private int _owedBackpay;
         private CampaignTime _lastPayDate = CampaignTime.Zero;
         private int _consecutiveDelays;
-        private int _lanceFundBalance;
-
+        
         /// <summary>
         ///     Currently selected duty assignment ID (e.g., "runner", "scout", "field_medic").
         ///     Duties provide daily skill XP bonuses and may include wage multipliers.
@@ -611,30 +589,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public int BattlesSurvived => _battlesSurvived;
 
         /// <summary>
-        ///     Number of Lance Life events completed since enlistment.
-        /// </summary>
-        public int EventsCompleted => _eventsCompleted;
-
-        /// <summary>
         ///     Currently assigned duty (e.g., "runner", "scout", "field_medic").
         /// </summary>
         public string SelectedDuty => _selectedDuty;
 
-        /// <summary>
-        ///     Current lance identifiers for UI/story systems.
-        /// </summary>
-        public string CurrentLanceId => _currentLanceId ?? string.Empty;
-
-        public string CurrentLanceName => _currentLanceName ?? string.Empty;
-
-        public string CurrentLanceStyle => _currentLanceStyle ?? string.Empty;
-
-        public string CurrentLanceStoryId => _currentLanceStoryId ?? string.Empty;
-
-        public string ManualLanceStyleId => _manualLanceStyleId ?? string.Empty;
-
-        public bool IsLanceProvisional => _isLanceProvisional;
-        public bool IsLanceLegacy => _isLanceLegacy;
         public int PendingMusterPay => _pendingMusterPay;
         public CampaignTime NextPaydaySafe => _nextPayday != CampaignTime.Zero ? _nextPayday : (_nextPayday = ComputeNextPayday());
         public string LastPayOutcome => _lastPayOutcome ?? "none";
@@ -649,8 +607,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         public int DaysSincePay => _lastPayDate == CampaignTime.Zero ? 0 : (int)(CampaignTime.Now - _lastPayDate).ToDays;
         /// <summary>True if pay is overdue (more than 7 days since last pay).</summary>
         public bool IsPayOverdue => DaysSincePay > 7 && IsEnlisted;
-        /// <summary>Lance communal fund balance (5% deduction from pay).</summary>
-        public int LanceFundBalance => _lanceFundBalance;
         
         public int PensionAmountPerDay => _pensionAmountPerDay;
         public bool IsPensionPaused => _isPensionPaused;
@@ -693,9 +649,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
         {
             get
             {
-                if (_fatigueCurrent <= 0) return "Severely Exhausted";
-                if (_fatigueCurrent <= 8) return "Exhausted";
-                if (_fatigueCurrent <= 16) return "Tired";
+                if (_fatigueCurrent <= 0)
+                {
+                    return "Severely Exhausted";
+                }
+                if (_fatigueCurrent <= 8)
+                {
+                    return "Exhausted";
+                }
+                if (_fatigueCurrent <= 16)
+                {
+                    return "Tired";
+                }
                 return "Rested";
             }
         }
@@ -938,9 +903,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // T3-T4: 0.75/hour (~5.3 hours to full recovery)
             // T5-T6: 1.0/hour (4 hours to full recovery)
             // T7+: 1.25/hour (3.2 hours to full recovery)
-            if (_enlistmentTier <= 2) return 0.5f;
-            if (_enlistmentTier <= 4) return 0.75f;
-            if (_enlistmentTier <= 6) return 1.0f;
+            if (_enlistmentTier <= 2)
+            {
+                return 0.5f;
+            }
+            if (_enlistmentTier <= 4)
+            {
+                return 0.75f;
+            }
+            if (_enlistmentTier <= 6)
+            {
+                return 1.0f;
+            }
             return 1.25f;
         }
 
@@ -953,7 +927,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void CheckFatigueHealthPenalty()
         {
             var hero = Hero.MainHero;
-            if (hero == null) return;
+            if (hero == null)
+            {
+                return;
+            }
 
             // Fatigue thresholds (remaining points):
             // 0 = completely exhausted (severe penalty)
@@ -966,7 +943,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 // Severe exhaustion: Drop to 30% health
                 if (_healthBeforeExhaustion < 0)
+                {
                     _healthBeforeExhaustion = hero.HitPoints;
+                }
 
                 var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.30f));
                 if (hero.HitPoints > targetHealth)
@@ -982,7 +961,9 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 // Moderate exhaustion: Reduce to 85% max health
                 if (_healthBeforeExhaustion < 0)
+                {
                     _healthBeforeExhaustion = hero.HitPoints;
+                }
 
                 var targetHealth = Math.Max(1, (int)(hero.MaxHitPoints * 0.85f));
                 if (hero.HitPoints > targetHealth)
@@ -1003,7 +984,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private void CheckFatigueHealthRecovery()
         {
             var hero = Hero.MainHero;
-            if (hero == null || _healthBeforeExhaustion < 0) return;
+            if (hero == null || _healthBeforeExhaustion < 0)
+            {
+                return;
+            }
 
             const int ModerateThreshold = 8;
 
@@ -1030,8 +1014,14 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         public void ProcessFatigueRecovery()
         {
-            if (!IsEnlisted) return;
-            if (_fatigueCurrent >= _fatigueMax) return; // Already at max
+            if (!IsEnlisted)
+            {
+                return;
+            }
+            if (_fatigueCurrent >= _fatigueMax)
+            {
+                return; // Already at max
+            }
 
             // Only recover during rest hours (dusk, night, dawn)
             // Use Campaign.Current.IsNight as a simple check, or check time of day
@@ -1348,7 +1338,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             // Promotion requirements tracking
             SyncKey(dataStore, "_lastPromotionDate", ref _lastPromotionDate);
             SyncKey(dataStore, "_battlesSurvived", ref _battlesSurvived);
-            SyncKey(dataStore, "_eventsCompleted", ref _eventsCompleted);
 
             SyncKey(dataStore, "_isOnLeave", ref _isOnLeave);
             SyncKey(dataStore, "_leaveStartDate", ref _leaveStartDate);
@@ -1369,7 +1358,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_owedBackpay", ref _owedBackpay);
             SyncKey(dataStore, "_lastPayDate", ref _lastPayDate);
             SyncKey(dataStore, "_consecutiveDelays", ref _consecutiveDelays);
-            SyncKey(dataStore, "_lanceFundBalance", ref _lanceFundBalance);
             
             SyncKey(dataStore, "_pensionAmountPerDay", ref _pensionAmountPerDay);
             SyncKey(dataStore, "_pensionFactionId", ref _pensionFactionId);
@@ -1379,22 +1367,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             SyncKey(dataStore, "_isOnProbation", ref _isOnProbation);
             SyncKey(dataStore, "_probationEnds", ref _probationEnds);
             SyncKey(dataStore, "_savedGraceEnlistmentDate", ref _savedGraceEnlistmentDate);
-            SyncKey(dataStore, "_savedGraceLanceId", ref _savedGraceLanceId);
-            SyncKey(dataStore, "_savedGraceLanceName", ref _savedGraceLanceName);
-            SyncKey(dataStore, "_savedGraceLanceStyle", ref _savedGraceLanceStyle);
-            SyncKey(dataStore, "_savedGraceLanceStoryId", ref _savedGraceLanceStoryId);
-            SyncKey(dataStore, "_savedGraceLanceProvisional", ref _savedGraceLanceProvisional);
-            SyncKey(dataStore, "_savedGraceManualLanceStyleId", ref _savedGraceManualLanceStyleId);
-            SyncKey(dataStore, "_savedGraceLanceLegacy", ref _savedGraceLanceLegacy);
             SyncKey(dataStore, "_graceProtectionEnds", ref _graceProtectionEnds);
             SyncKey(dataStore, "_selectedDuty", ref _selectedDuty);
-            SyncKey(dataStore, "_currentLanceId", ref _currentLanceId);
-            SyncKey(dataStore, "_currentLanceName", ref _currentLanceName);
-            SyncKey(dataStore, "_currentLanceStyle", ref _currentLanceStyle);
-            SyncKey(dataStore, "_currentLanceStoryId", ref _currentLanceStoryId);
-            SyncKey(dataStore, "_isLanceProvisional", ref _isLanceProvisional);
-            SyncKey(dataStore, "_manualLanceStyleId", ref _manualLanceStyleId);
-            SyncKey(dataStore, "_isLanceLegacy", ref _isLanceLegacy);
             SyncKey(dataStore, "_fatigueCurrent", ref _fatigueCurrent);
             SyncKey(dataStore, "_fatigueMax", ref _fatigueMax);
 
@@ -2551,13 +2525,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
                 TryApplyReservistReentryBoost(_enlistedLord?.MapFaction);
 
-                // Assign provisional lance on enlist (or restore from grace)
-                // If culture is unknown, prompt for style before assigning provisional lance
-                TryPromptUnknownCultureStyle();
-                AssignProvisionalLance(resumedFromGrace);
 
-                // Phase 1: EnlistedDutiesBehavior deleted
-                // Duty registration will be replaced by Orders system in Phase 4
+                // Duty registration is handled by the Orders system
 
                 // Log enlistment start for diagnostics
                 SessionDiagnostics.LogStateTransition("Enlistment", "Civilian", "Enlisted",
@@ -2704,17 +2673,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 OnEnlisted?.Invoke(lord);
 
                 // Persistent Lance Leaders: connect/create the current leader now that we are enlisted.
-                // Without this, the leader system only reconnects on session launch and never records state for new enlistments.
-                // Phase 1: PersistentLanceLeadersBehavior deleted
-                try
-                {
-                    // PersistentLanceLeadersBehavior.Instance?.OnPlayerEnlisted(lord);
-                }
-                catch (Exception ex)
-                {
-                    ModLogger.ErrorCode("LanceLeaders", "E-LANCELEAD-001",
-                        "Failed to notify persistent lance leader system on enlist", ex);
-                }
 
                 // Trigger the deferred bag-check as soon as enlistment finishes (best-effort).
                 // The bag-check uses backed-up personal inventory, so this is safe even after military gear issuance.
@@ -2765,147 +2723,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        public void TryPromptLanceSelection(int? overrideSelectionCount = null)
-        {
-            // Phase 1: Lance system deleted. This method is a no-op for save compatibility.
-            ModLogger.Info("Lance", "PromptLanceSelection: Phase 1 stub (lance system deleted)");
-        }
-
-        private void OnLanceSelectionConfirmed(List<InquiryElement> selections)
-        {
-            try
-            {
-                // Phase 1: LanceAssignment deleted
-                var chosen = (object)null;
-                if (chosen == null)
-                {
-                    ModLogger.Warn("Lance", "Lance selection confirm without choice");
-                    return;
-                }
-
-                FinalizeLanceSelection(chosen);
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Lance", "E-LANCE-005", "Error finalizing lance selection", ex);
-            }
-        }
-
-        private void OnLanceSelectionCancelled(List<InquiryElement> _)
-        {
-            ModLogger.Info("Lance", "Player kept provisional lance (selection cancelled)");
-        }
-
-        private void FinalizeLanceSelection(object chosen)
-        {
-            // Lance assignments are currently inactive.
-            return;
-            /*
-            _currentLanceId = chosen.Id;
-            _currentLanceName = chosen.Name;
-            _currentLanceStyle = chosen.StyleId;
-            _currentLanceStoryId = chosen.StoryId;
-            _isLanceProvisional = false;
-            _manualLanceStyleId = null;
-            _isLanceLegacy = false;
-
-            var message = new TextObject("{=Lance_Select_Finalized}You have joined the {LANCE}.");
-            message.SetTextVariable("LANCE", _currentLanceName);
-            InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Cyan));
-
-            ModLogger.Info("Lance",
-                $"Lance finalized: {_currentLanceName} [{_currentLanceStyle}] story={_currentLanceStoryId}");
-
-            // Raise event for story/camp systems
-            OnLanceFinalized?.Invoke(_currentLanceId, _currentLanceStyle, _currentLanceStoryId);
-
-            // Lightweight session log for diagnostics
-            SessionDiagnostics.LogEvent("Lance", "LanceFinalized",
-                $"id={_currentLanceId}, style={_currentLanceStyle}, story={_currentLanceStoryId}");
-            */
-        }
-
-        private void AssignProvisionalLance(bool resumedFromGrace)
-        {
-            // Unit assignment logic is currently being updated.
-            return;
-            
-            #pragma warning disable CS0162 // Unreachable code detected
-            if (resumedFromGrace && !string.IsNullOrWhiteSpace(_savedGraceLanceId))
-            {
-                _currentLanceId = _savedGraceLanceId;
-                _currentLanceName = _savedGraceLanceName;
-                _currentLanceStyle = _savedGraceLanceStyle;
-                _currentLanceStoryId = _savedGraceLanceStoryId;
-                _isLanceProvisional = _savedGraceLanceProvisional;
-                _manualLanceStyleId = _savedGraceManualLanceStyleId;
-                ClearSavedGraceLance();
-                ModLogger.Info("Lance",
-                    $"Restored grace lance: {_currentLanceName} ({_currentLanceStyle})");
-                return;
-            }
-
-            // Phase 1: Lance system deleted. Clear lance state for save compatibility.
-            ClearLanceState();
-            ModLogger.Info("Lance", "AssignProvisionalLance: Phase 1 stub (lance system deleted)");
-        }
-
-        private void ClearLanceState()
-        {
-            _currentLanceId = null;
-            _currentLanceName = null;
-            _currentLanceStyle = null;
-            _currentLanceStoryId = null;
-            _isLanceProvisional = false;
-            _manualLanceStyleId = null;
-            _fatigueCurrent = _fatigueMax;
-        }
-
-        private void ClearSavedGraceLance()
-        {
-            _savedGraceLanceId = null;
-            _savedGraceLanceName = null;
-            _savedGraceLanceStyle = null;
-            _savedGraceLanceStoryId = null;
-            _savedGraceLanceProvisional = false;
-            _savedGraceManualLanceStyleId = null;
-            _savedGraceLanceLegacy = false;
-        }
-
-        private void TryPromptUnknownCultureStyle()
-        {
-            // Phase 1: Lance system deleted. This method is a no-op for save compatibility.
-            ModLogger.Info("Lance", "TryPromptUnknownCultureStyle: Phase 1 stub (lance system deleted)");
-        }
-
-        private void OnUnknownCultureStyleChosen(List<InquiryElement> selections)
-        {
-            try
-            {
-                var chosen = selections?.FirstOrDefault()?.Identifier as string;
-                if (string.IsNullOrWhiteSpace(chosen))
-                {
-                    ModLogger.Warn("Lance", "Style selection confirmed with no choice");
-                    return;
-                }
-
-                _manualLanceStyleId = chosen;
-                ModLogger.Info("Lance", $"Manual style selected for unknown culture: {_manualLanceStyleId}");
-                AssignProvisionalLance(false);
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Lance", "E-LANCE-006", "Error applying unknown-culture style selection", ex);
-            }
-        }
-
-        private void OnUnknownCultureStyleCancelled(List<InquiryElement> _)
-        {
-            ModLogger.Info("Lance", "Unknown-culture style selection cancelled; using fallback (mercenary)");
-            _manualLanceStyleId = null;
-
-            SessionDiagnostics.LogEvent("Lance", "UnknownCultureStyleCancelled", "fallback=mercenary");
-        }
+        // Obsolete stub methods kept for save compatibility with older event handlers
 
         private string FormatStyleDisplayName(string styleId)
         {
@@ -2932,18 +2750,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 ModLogger.Info("Enlistment", $"Service ended: {reason} (Honorable: {isHonorableDischarge})");
 
                 // Persistent Lance Leaders: record discharge memory and clear cached leader reference.
-                // Best effort only: enlistment discharge must not fail due to auxiliary systems.
-                // Phase 1: PersistentLanceLeadersBehavior deleted
-                try
-                {
-                    // PersistentLanceLeadersBehavior.Instance?.OnPlayerDischarged();
-                }
-                catch (Exception ex)
-                {
-                    // Best-effort only, but include the full exception detail for support.
-                    ModLogger.ErrorCode("LanceLeaders", "E-LANCELEAD-002",
-                        "Failed to notify persistent lance leader system on discharge", ex);
-                }
                 var retirementConfig = EnlistedConfig.LoadRetirementConfig();
                 var firstTermDays = retirementConfig?.FirstTermDays > 0 ? retirementConfig.FirstTermDays : 252;
                 
@@ -3230,19 +3036,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     _savedGraceXP = _enlistmentXP;
                     _savedGraceTroopId = TroopSelectionManager.Instance?.LastSelectedTroopId;
                     _savedGraceEnlistmentDate = _enlistmentDate;
-                    _savedGraceLanceId = _currentLanceId;
-                    _savedGraceLanceName = _currentLanceName;
-                    _savedGraceLanceStyle = _currentLanceStyle;
-                    _savedGraceLanceStoryId = _currentLanceStoryId;
-                    _savedGraceLanceProvisional = _isLanceProvisional;
-                    _savedGraceManualLanceStyleId = _manualLanceStyleId;
-                    _savedGraceLanceLegacy = _isLanceLegacy;
                     ModLogger.Info("Enlistment",
                         $"Saved grace progression state: Tier={_savedGraceTier}, XP={_savedGraceXP}, Lord={((_enlistedLord?.Name?.ToString()) ?? "deceased")}");
-                }
-                else
-                {
-                    ClearSavedGraceLance();
                 }
 
                 // Clear enlistment state
@@ -3278,7 +3073,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentDate = CampaignTime.Zero;
                 _disbandArmyAfterBattle = false; // Clear any pending army operations
                 ClearPayState("service_ended");
-                ClearLanceState();
                 if (!playerInBattleState)
                 {
                     ForceFinishLingeringEncounter("StopEnlist");
@@ -4240,7 +4034,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             ClearProbation("pay_muster_resolved");
             ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
             
-            // Phase 1: Schedule system deleted
         }
 
         /// <summary>
@@ -4248,13 +4041,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void ProcessFullPayment(int grossAmount)
         {
-            // Deduct lance fund (5%)
-            var lanceFundDeduction = (int)(grossAmount * 0.05f);
-            _lanceFundBalance += lanceFundDeduction;
-            var netPayout = grossAmount - lanceFundDeduction;
-            
-            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, netPayout);
-            OnWagePaid?.Invoke(netPayout);
+            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, grossAmount);
+            OnWagePaid?.Invoke(grossAmount);
             
             // Update pay tension state - successful full payment reduces tension by 30
             _lastPayDate = CampaignTime.Now;
@@ -4263,13 +4051,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _owedBackpay = 0;
             _consecutiveDelays = 0;
             
-            _lastPayOutcome = hadBackpay ? $"backpay:{netPayout}" : $"standard:{netPayout}";
-            ModLogger.Info("Gold", $"Full payment: {netPayout} (gross={grossAmount}, lanceFund={lanceFundDeduction})");
+            _lastPayOutcome = hadBackpay ? $"backpay:{grossAmount}" : $"standard:{grossAmount}";
+            ModLogger.Info("Gold", $"Full payment: {grossAmount}");
             
             if (hadBackpay)
             {
                 InformationManager.DisplayMessage(new InformationMessage(
-                    $"Back pay received! {netPayout} denars (including owed wages).",
+                    $"Back pay received! {grossAmount} denars (including owed wages).",
                     Colors.Green));
             }
         }
@@ -4283,13 +4071,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             var backpayPortion = _owedBackpay / 2;
             var grossAmount = currentPay + backpayPortion;
             
-            // Deduct lance fund (5%)
-            var lanceFundDeduction = (int)(grossAmount * 0.05f);
-            _lanceFundBalance += lanceFundDeduction;
-            var netPayout = grossAmount - lanceFundDeduction;
-            
-            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, netPayout);
-            OnWagePaid?.Invoke(netPayout);
+            GiveGoldAction.ApplyBetweenCharacters(null, Hero.MainHero, grossAmount);
+            OnWagePaid?.Invoke(grossAmount);
             
             // Update state - partial payment reduces tension by 10, halves remaining backpay
             _lastPayDate = CampaignTime.Now;
@@ -4297,11 +4080,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _payTension = Math.Max(0, _payTension - 10);
             // Don't reset consecutive delays for partial payment
             
-            _lastPayOutcome = $"partial_backpay:{netPayout}";
-            ModLogger.Info("Gold", $"Partial payment: {netPayout} (stillOwed={_owedBackpay})");
+            _lastPayOutcome = $"partial_backpay:{grossAmount}";
+            ModLogger.Info("Gold", $"Partial payment: {grossAmount} (stillOwed={_owedBackpay})");
             
             InformationManager.DisplayMessage(new InformationMessage(
-                $"Partial pay received: {netPayout} denars. Still owed: {_owedBackpay}.",
+                $"Partial pay received: {grossAmount} denars. Still owed: {_owedBackpay}.",
                 Colors.Yellow));
         }
 
@@ -4331,7 +4114,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         internal void WriteOffBackpay(string reason)
         {
-            if (_owedBackpay <= 0) return;
+            if (_owedBackpay <= 0)
+            {
+                return;
+            }
             
             var writtenOff = _owedBackpay;
             _owedBackpay = 0;
@@ -5066,7 +4852,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private float GetWartimePayModifier()
         {
             var lordFaction = _enlistedLord?.MapFaction;
-            if (lordFaction == null) return 1.0f;
+            if (lordFaction == null)
+            {
+                return 1.0f;
+            }
 
             // Check if we're in a siege
             var settlement = Settlement.CurrentSettlement;
@@ -5118,7 +4907,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool CanLordAffordPay(int amount)
         {
             var lord = _enlistedLord;
-            if (lord == null) return false;
+            if (lord == null)
+            {
+                return false;
+            }
 
             // Lord needs to keep a buffer - don't drain them to zero
             const int minimumBuffer = 500;
@@ -5131,7 +4923,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private bool CanLordAffordPartialPay(int amount)
         {
             var lord = _enlistedLord;
-            if (lord == null) return false;
+            if (lord == null)
+            {
+                return false;
+            }
 
             const int minimumBuffer = 200;
             return lord.Gold >= (amount / 2) + minimumBuffer;
@@ -5144,10 +4939,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         private LordWealthStatus GetLordWealthStatus()
         {
             var gold = _enlistedLord?.Gold ?? 0;
-            if (gold > 50000) return LordWealthStatus.Wealthy;
-            if (gold > 20000) return LordWealthStatus.Comfortable;
-            if (gold > 5000) return LordWealthStatus.Struggling;
-            if (gold > 1000) return LordWealthStatus.Poor;
+            if (gold > 50000)
+            {
+                return LordWealthStatus.Wealthy;
+            }
+            if (gold > 20000)
+            {
+                return LordWealthStatus.Comfortable;
+            }
+            if (gold > 5000)
+            {
+                return LordWealthStatus.Struggling;
+            }
+            if (gold > 1000)
+            {
+                return LordWealthStatus.Poor;
+            }
             return LordWealthStatus.Broke;
         }
 
@@ -5185,7 +4992,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private int GetPayTensionIncrease()
         {
-            if (_lastPayDate == CampaignTime.Zero) return 10;
+            if (_lastPayDate == CampaignTime.Zero)
+            {
+                return 10;
+            }
             var weeksOverdue = Math.Max(0, (DaysSincePay - 7) / 7);
             return 10 + (weeksOverdue * 5);
         }
@@ -5296,10 +5106,22 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         public int GetPayTensionMoralePenalty()
         {
-            if (_payTension < 20) return 0;
-            if (_payTension < 40) return -3;
-            if (_payTension < 60) return -6;
-            if (_payTension < 80) return -10;
+            if (_payTension < 20)
+            {
+                return 0;
+            }
+            if (_payTension < 40)
+            {
+                return -3;
+            }
+            if (_payTension < 60)
+            {
+                return -6;
+            }
+            if (_payTension < 80)
+            {
+                return -10;
+            }
             return -15;
         }
 
@@ -5309,9 +5131,18 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         public float GetPayTensionDisciplineModifier()
         {
-            if (_payTension < 40) return 0f;
-            if (_payTension < 60) return 0.05f;  // +5% chance
-            if (_payTension < 80) return 0.10f;  // +10% chance
+            if (_payTension < 40)
+            {
+                return 0f;
+            }
+            if (_payTension < 60)
+            {
+                return 0.05f;  // +5% chance
+            }
+            if (_payTension < 80)
+            {
+                return 0.10f;  // +10% chance
+            }
             return 0.20f;  // +20% chance
         }
 
@@ -5419,7 +5250,10 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 for (int i = roster.Count - 1; i >= 0; i--)
                 {
                     var element = roster.GetElementCopyAtIndex(i);
-                    if (element.Character?.IsHero == true) continue;
+                    if (element.Character?.IsHero == true)
+                    {
+                        continue;
+                    }
 
                     var count = element.Number;
                     var deserters = 0;
@@ -5575,13 +5409,11 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Gets the wage multiplier from active duties and professions.
-        ///     Phase 1: Duties system deleted, returning neutral multiplier.
-        ///     Wage bonuses will be integrated via Orders system in later phase.
+        ///     Currently returns neutral multiplier; wage bonuses are integrated via Orders system.
         /// </summary>
         /// <returns>Wage multiplier (1.0 = no bonus, higher values = bonus).</returns>
         private float GetDutiesWageMultiplier()
         {
-            // Phase 1: Duties system deleted, return neutral multiplier
             return 1.0f;
         }
 
@@ -5668,7 +5500,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _enlistmentXP = 0;
             }
 
-            ValidateLanceStateOnLoad();
+            ValidateFatigueOnLoad();
             
             // Migrate tracking fields for existing saves.
             MigratePhase7TrackingFields();
@@ -5709,15 +5541,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                     migrated = true;
                 }
                 
-                // If events/battles are 0 but player is T2+, estimate based on tier
-                // Players typically complete 2-3 events and survive 1-2 battles per tier
-                if (_eventsCompleted == 0 && _enlistmentTier > 1)
-                {
-                    _eventsCompleted = (_enlistmentTier - 1) * 2; // 2 events per tier
-                    ModLogger.Info("SaveLoad", $"Migration: Estimated eventsCompleted to {_eventsCompleted}");
-                    migrated = true;
-                }
-                
                 if (_battlesSurvived == 0 && _enlistmentTier > 1)
                 {
                     _battlesSurvived = (_enlistmentTier - 1); // 1 battle per tier
@@ -5753,18 +5576,8 @@ namespace Enlisted.Features.Enlistment.Behaviors
             }
         }
 
-        private void ValidateLanceStateOnLoad()
+        private void ValidateFatigueOnLoad()
         {
-            _currentLanceId ??= string.Empty;
-            _currentLanceName ??= string.Empty;
-            _currentLanceStyle ??= string.Empty;
-            _currentLanceStoryId ??= string.Empty;
-            _manualLanceStyleId ??= string.Empty;
-            _savedGraceLanceId ??= string.Empty;
-            _savedGraceLanceName ??= string.Empty;
-            _savedGraceLanceStyle ??= string.Empty;
-            _savedGraceLanceStoryId ??= string.Empty;
-            _savedGraceManualLanceStyleId ??= string.Empty;
             if (_fatigueMax <= 0)
             {
                 _fatigueMax = 24;
@@ -5772,27 +5585,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
             if (_fatigueCurrent <= 0 || _fatigueCurrent > _fatigueMax)
             {
                 _fatigueCurrent = _fatigueMax;
-            }
-
-            // Phase 1: Lance system deleted
-            if (false && !string.IsNullOrWhiteSpace(_currentLanceId))
-            {
-                // Unit structure reflects personal service rather than assigned lances.
-                /*
-                var resolved = (object)null;
-                if (resolved != null)
-                {
-                    _currentLanceName = resolved.Name ?? _currentLanceName;
-                    _currentLanceStyle = resolved.StyleId ?? _currentLanceStyle;
-                    _currentLanceStoryId = resolved.StoryId ?? _currentLanceStoryId;
-                    _isLanceLegacy = false;
-                }
-                else
-                {
-                    // Mark as legacy but keep saved name for display
-                    _isLanceLegacy = true;
-                }
-                */
             }
         }
 
@@ -8534,19 +8326,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
         }
 
         /// <summary>
-        /// Increment the events completed counter. Called after completing a Lance Life event.
-        /// </summary>
-        public void IncrementEventsCompleted()
-        {
-            if (!IsEnlisted)
-            {
-                return;
-            }
-            _eventsCompleted++;
-            ModLogger.Debug("Enlistment", $"Events completed: {_eventsCompleted}");
-        }
-
-        /// <summary>
         ///     Awards battle participation XP after a battle ends (called from OnMapEventEnded).
         ///     Reads values from progression_config.json for configurability.
         ///     Note: This is a fallback - OnPlayerBattleEnd awards XP first if it fires.
@@ -9479,7 +9258,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
 
         /// <summary>
         ///     Change selected duty (called from duty selection menu).
-        ///     Phase 1: Duties system deleted; this method now only stores the value for save compatibility.
+        ///     Currently stores the value for save compatibility but does not apply duty effects.
         /// </summary>
         public void SetSelectedDuty(string dutyId)
         {
@@ -9488,7 +9267,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 return;
             }
 
-            // Phase 1: Duties system deleted, only store for save compatibility
             _selectedDuty = dutyId;
             ModLogger.Info("Duties", $"Selected duty stored (legacy): {dutyId}");
         }
@@ -10037,9 +9815,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// </summary>
         private void SetInitialFormation()
         {
-            // Phase 1: Duties/Formation system deleted.
-            // Formation preferences will be tracked via native traits in later phase.
-            ModLogger.Info("Enlistment", "SetInitialFormation: Phase 1 stub (duties deleted)");
+            // Formation preferences are now tracked via native traits
         }
 
 
@@ -11588,17 +11364,6 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 {
                     AwardBattleXP(killsThisBattle);
                     
-                    // Lance persona system deleted in Phase 1
-                    /*
-                    // Record battle for lance persona progression (promotions require 3+ battles)
-                    var lancePersonas = Lances.Personas.LancePersonaBehavior.Instance;
-                    if (lancePersonas != null && !string.IsNullOrEmpty(CurrentLanceId))
-                    {
-                        var lanceKey = $"{CurrentLord?.StringId}_{CurrentLanceId}";
-                        lancePersonas.RecordBattleParticipation(lanceKey, 10);
-                        ModLogger.Debug("Battle", $"Lance battle recorded for {lanceKey}");
-                    }
-                    */
                 }
 
                 // Add kills to current term total (persists to faction record on retirement)

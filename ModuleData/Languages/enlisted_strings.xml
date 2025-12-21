@@ -3385,5 +3385,253 @@
     <string id="context_narration_recruitment_drive" text="The host gathers strength. Supplies are stockpiled and blades sharpened. A great push is coming." />
     <string id="context_narration_winter_camp" text="The campaign season ends. The company rests, trains, and tends to daily duties while snow blankets the land." />
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DAILY BRIEF FLAVOR - Player status RP text by context -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Condition: Injury -->
+    <string id="brief_injury_recruit_1" text="Your wounds remind you this isn't a game." />
+    <string id="brief_injury_recruit_2" text="Every step hurts, but you keep moving." />
+    <string id="brief_injury_recruit_3" text="You grit your teeth and try not to slow the others down." />
+    <string id="brief_injury_soldier_1" text="You've been hurt before. Keep moving, let it heal." />
+    <string id="brief_injury_soldier_2" text="The pain is familiar now. You push through." />
+    <string id="brief_injury_soldier_3" text="You bandage yourself and carry on." />
+    <string id="brief_injury_veteran_1" text="Another scar for the collection." />
+    <string id="brief_injury_veteran_2" text="You've had worse. Much worse." />
+    <string id="brief_injury_veteran_3" text="Pain is an old companion by now." />
+    
+    <!-- Condition: Illness -->
+    <string id="brief_illness_recruit_1" text="The sickness leaves you light-headed." />
+    <string id="brief_illness_recruit_2" text="You hope nobody notices how poorly you feel." />
+    <string id="brief_illness_recruit_3" text="Your stomach churns, but you force yourself to stand." />
+    <string id="brief_illness_soldier_1" text="You push through the fever." />
+    <string id="brief_illness_soldier_2" text="The company can't afford to slow down for you." />
+    <string id="brief_illness_soldier_3" text="You've learned to function through the misery." />
+    <string id="brief_illness_veteran_1" text="You've marched through worse." />
+    <string id="brief_illness_veteran_2" text="A little sickness won't stop you." />
+    <string id="brief_illness_veteran_3" text="Your body knows the routine even when your head doesn't." />
+    
+    <!-- Fatigue: Exhausted -->
+    <string id="brief_exhausted_recruit_1" text="Your legs feel like lead." />
+    <string id="brief_exhausted_recruit_2" text="You wonder how the veterans keep going." />
+    <string id="brief_exhausted_recruit_3" text="Every muscle aches. Is it always like this?" />
+    <string id="brief_exhausted_soldier_1" text="Exhaustion gnaws at you, but you function through it." />
+    <string id="brief_exhausted_soldier_2" text="You've learned to move on instinct when your mind is too tired." />
+    <string id="brief_exhausted_soldier_3" text="The weariness is bone-deep, but you've felt it before." />
+    <string id="brief_exhausted_veteran_1" text="You're running on fumes, but you've done this before." />
+    <string id="brief_exhausted_veteran_2" text="Your body protests, but you ignore it." />
+    <string id="brief_exhausted_veteran_3" text="You'll manage. You always do." />
+    
+    <!-- Fatigue: Tired -->
+    <string id="brief_tired_recruit_1" text="The long days are wearing on you." />
+    <string id="brief_tired_recruit_2" text="You're starting to understand what soldier life means." />
+    <string id="brief_tired_recruit_3" text="Sleep would be nice. Real sleep." />
+    <string id="brief_tired_soldier_1" text="Tired but steady. This is the grind of campaign work." />
+    <string id="brief_tired_soldier_2" text="You know how to pace yourself now." />
+    <string id="brief_tired_soldier_3" text="Not your best, but far from your worst." />
+    <string id="brief_tired_veteran_1" text="A bit worn, but nothing a night's rest won't fix." />
+    <string id="brief_tired_veteran_2" text="You've campaigned harder than this." />
+    <string id="brief_tired_veteran_3" text="Manageable. Everything is manageable." />
+    
+    <!-- Battle Aftermath: Bandit Won -->
+    <string id="brief_bandit_won_recruit_1" text="Yesterday's skirmish with the brigands still has your blood up." />
+    <string id="brief_bandit_won_recruit_2" text="You helped drive off bandits. It felt good." />
+    <string id="brief_bandit_won_recruit_3" text="The outlaws scattered before you. A small victory, but yours." />
+    <string id="brief_bandit_won_soldier_1" text="Another pack of bandits put down. Routine work." />
+    <string id="brief_bandit_won_soldier_2" text="The brigands didn't stand a chance. They never do." />
+    <string id="brief_bandit_won_soldier_3" text="Pest control, as the veterans call it." />
+    <string id="brief_bandit_won_veteran_1" text="More bandits culled. Hardly worth mentioning." />
+    <string id="brief_bandit_won_veteran_2" text="You barely remember the skirmish. There have been so many." />
+    <string id="brief_bandit_won_veteran_3" text="The outlaws broke fast. Smart of them." />
+    
+    <!-- Battle Aftermath: Bandit Lost -->
+    <string id="brief_bandit_lost_recruit_1" text="The bandits got the better of you. A hard lesson." />
+    <string id="brief_bandit_lost_recruit_2" text="You retreated from outlaws. The shame stings." />
+    <string id="brief_bandit_lost_recruit_3" text="Even bandits can be dangerous. You won't forget." />
+    <string id="brief_bandit_lost_soldier_1" text="The brigands fought harder than expected." />
+    <string id="brief_bandit_lost_soldier_2" text="A setback against common thieves. It happens." />
+    <string id="brief_bandit_lost_soldier_3" text="You'll find those bandits again." />
+    <string id="brief_bandit_lost_veteran_1" text="Underestimated the brigands. Won't happen twice." />
+    <string id="brief_bandit_lost_veteran_2" text="Even veterans have bad days." />
+    <string id="brief_bandit_lost_veteran_3" text="A tactical withdrawal. Nothing more." />
+    
+    <!-- Battle Aftermath: Army Won -->
+    <string id="brief_army_won_recruit_1" text="The battle still echoes in your mind. You survived." />
+    <string id="brief_army_won_recruit_2" text="You stood in a real battle and lived. That means something." />
+    <string id="brief_army_won_recruit_3" text="The clash of armies is nothing like you imagined. It's worse. And better." />
+    <string id="brief_army_won_soldier_1" text="Yesterday's victory sits well with you." />
+    <string id="brief_army_won_soldier_2" text="The enemy broke before your line. A good day." />
+    <string id="brief_army_won_soldier_3" text="You've seen enough battles to know that was a clean win." />
+    <string id="brief_army_won_veteran_1" text="Another battle won. The company performed well." />
+    <string id="brief_army_won_veteran_2" text="Victory in the field. The lord will be pleased." />
+    <string id="brief_army_won_veteran_3" text="You've seen better fights, but a win is a win." />
+    
+    <!-- Battle Aftermath: Army Lost -->
+    <string id="brief_army_lost_recruit_1" text="The defeat weighs heavy on you." />
+    <string id="brief_army_lost_recruit_2" text="You fought and lost. At least you survived." />
+    <string id="brief_army_lost_recruit_3" text="The enemy was stronger. There's no shame in that. Is there?" />
+    <string id="brief_army_lost_soldier_1" text="Yesterday's battle went poorly. You'll recover." />
+    <string id="brief_army_lost_soldier_2" text="Defeat is a teacher. A harsh one." />
+    <string id="brief_army_lost_soldier_3" text="The company took losses. You'll rebuild." />
+    <string id="brief_army_lost_veteran_1" text="A defeat, but not a disaster. You've seen both." />
+    <string id="brief_army_lost_veteran_2" text="The enemy had the day. It won't last." />
+    <string id="brief_army_lost_veteran_3" text="Wars aren't won in single battles. You know that." />
+    
+    <!-- Battle Aftermath: Siege Won -->
+    <string id="brief_siege_won_recruit_1" text="The walls fell. You were part of it." />
+    <string id="brief_siege_won_recruit_2" text="Siege work is brutal, but the fortress is taken." />
+    <string id="brief_siege_won_recruit_3" text="You climbed the ladders and lived. That's something." />
+    <string id="brief_siege_won_soldier_1" text="The siege is won. Time to rest and refit." />
+    <string id="brief_siege_won_soldier_2" text="Another fortress taken. Hard work, but worth it." />
+    <string id="brief_siege_won_soldier_3" text="The defenders held as long as they could. Not long enough." />
+    <string id="brief_siege_won_veteran_1" text="The siege succeeded. Costly, but done." />
+    <string id="brief_siege_won_veteran_2" text="You know what sieges cost. This one was lighter than most." />
+    <string id="brief_siege_won_veteran_3" text="Walls always fall eventually. This one fell to you." />
+    
+    <!-- Battle Aftermath: Siege Lost -->
+    <string id="brief_siege_lost_recruit_1" text="The assault failed. The walls were too strong." />
+    <string id="brief_siege_lost_recruit_2" text="Siege work is hell. And you lost." />
+    <string id="brief_siege_lost_recruit_3" text="You retreated from the walls with nothing to show for it." />
+    <string id="brief_siege_lost_soldier_1" text="The siege didn't go your way. Walls are patient enemies." />
+    <string id="brief_siege_lost_soldier_2" text="Sometimes sieges fail. This was one of those times." />
+    <string id="brief_siege_lost_soldier_3" text="The defenders held. You'll be back." />
+    <string id="brief_siege_lost_veteran_1" text="The fortress held. For now." />
+    <string id="brief_siege_lost_veteran_2" text="You've lost sieges before. It's part of the work." />
+    <string id="brief_siege_lost_veteran_3" text="A tactical setback. The campaign continues." />
+    
+    <!-- Good Condition: Recruit -->
+    <string id="brief_good_recruit_morning_1" text="You rise with the others, eager to prove yourself." />
+    <string id="brief_good_recruit_morning_2" text="A new day. Another chance to show what you're made of." />
+    <string id="brief_good_recruit_morning_3" text="You're up early, watching how the veterans prepare." />
+    <string id="brief_good_recruit_day_1" text="You watch the veterans and try to learn." />
+    <string id="brief_good_recruit_day_2" text="Every day is a lesson in this life." />
+    <string id="brief_good_recruit_day_3" text="You're starting to feel like part of the company." />
+    <string id="brief_good_recruit_evening_1" text="Another day done. You're finding your place." />
+    <string id="brief_good_recruit_evening_2" text="The camp settles in. You've earned your rest." />
+    <string id="brief_good_recruit_evening_3" text="You're tired, but it's the good kind of tired." />
+    <string id="brief_good_recruit_night_1" text="You take your watch seriously." />
+    <string id="brief_good_recruit_night_2" text="The night is quiet. You stay alert." />
+    <string id="brief_good_recruit_night_3" text="Stars overhead. You wonder what tomorrow brings." />
+    
+    <!-- Good Condition: Soldier -->
+    <string id="brief_good_soldier_morning_1" text="You wake before the horn sounds. Old habits." />
+    <string id="brief_good_soldier_morning_2" text="Another morning on campaign. Familiar routine." />
+    <string id="brief_good_soldier_morning_3" text="You're ready before the order comes. That's the trick." />
+    <string id="brief_good_soldier_day_1" text="You fall into the rhythm of campaign life." />
+    <string id="brief_good_soldier_day_2" text="The routine feels natural now." />
+    <string id="brief_good_soldier_day_3" text="You know your role. That's enough." />
+    <string id="brief_good_soldier_evening_1" text="The day's work is done. You know the rhythm now." />
+    <string id="brief_good_soldier_evening_2" text="Evening fires and soldier talk. Home, of a sort." />
+    <string id="brief_good_soldier_evening_3" text="You've done your part today. Rest earned." />
+    <string id="brief_good_soldier_night_1" text="Night watch. Your eyes adjust; your ears stay sharp." />
+    <string id="brief_good_soldier_night_2" text="The camp sleeps. You keep watch." />
+    <string id="brief_good_soldier_night_3" text="Quiet hours. Time to think, or not to." />
+    
+    <!-- Good Condition: NCO -->
+    <string id="brief_good_nco_morning_1" text="You're up before the recruits, checking gear and setting the pace." />
+    <string id="brief_good_nco_morning_2" text="Morning inspection. You know what to look for." />
+    <string id="brief_good_nco_morning_3" text="The company stirs. You make sure they stir in order." />
+    <string id="brief_good_nco_day_1" text="The younger soldiers look to you. You try not to let them down." />
+    <string id="brief_good_nco_day_2" text="Responsibility sits heavier than armor, but you bear it." />
+    <string id="brief_good_nco_day_3" text="You keep the company moving. That's your job." />
+    <string id="brief_good_nco_evening_1" text="You make the rounds, ensuring the company is settled for the night." />
+    <string id="brief_good_nco_evening_2" text="The recruits look exhausted. You remember that feeling." />
+    <string id="brief_good_nco_evening_3" text="You check on the new ones before resting yourself." />
+    <string id="brief_good_nco_night_1" text="You trust the watch, but you sleep with one eye open." />
+    <string id="brief_good_nco_night_2" text="The company rests. You rest lightly." />
+    <string id="brief_good_nco_night_3" text="Years of service have made you a light sleeper." />
+    
+    <!-- Good Condition: Veteran -->
+    <string id="brief_good_veteran_morning_1" text="Another day. You've seen enough dawns to know what they bring." />
+    <string id="brief_good_veteran_morning_2" text="The morning comes. So do you." />
+    <string id="brief_good_veteran_morning_3" text="You've learned not to waste energy on mornings." />
+    <string id="brief_good_veteran_day_1" text="You've been at this long enough to know when to worry. Today isn't that day." />
+    <string id="brief_good_veteran_day_2" text="Campaign life is just life now." />
+    <string id="brief_good_veteran_day_3" text="You do what needs doing. Same as always." />
+    <string id="brief_good_veteran_evening_1" text="The day ends as they always do. Tomorrow will be the same, or it won't." />
+    <string id="brief_good_veteran_evening_2" text="Evening comes. You've seen a thousand of them." />
+    <string id="brief_good_veteran_evening_3" text="Rest while you can. You know the value of that." />
+    <string id="brief_good_veteran_night_1" text="The camp sleeps. You think about battles past and battles to come." />
+    <string id="brief_good_veteran_night_2" text="Night thoughts. You've learned to let them pass." />
+    <string id="brief_good_veteran_night_3" text="The stars don't change. Everything else does." />
+    
+    <!-- Fallbacks -->
+    <string id="brief_fallback_injury" text="You're wounded but carrying on." />
+    <string id="brief_fallback_illness" text="You're sick but pushing through." />
+    <string id="brief_fallback_exhausted" text="You're exhausted." />
+    <string id="brief_fallback_tired" text="You're tired but steady." />
+    <string id="brief_fallback_default" text="You're ready for whatever comes." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CAMP HUB ATMOSPHERE - Context-based opening lines -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Camped at Settlement -->
+    <string id="camp_atmo_settlement_morning_1" text="Morning light filters through the camp as soldiers prepare for the day." />
+    <string id="camp_atmo_settlement_morning_2" text="The smell of cooking fires mingles with the sounds of a waking camp." />
+    <string id="camp_atmo_settlement_morning_3" text="Another day begins within sight of the walls." />
+    <string id="camp_atmo_settlement_day_1" text="The camp bustles with activity under the midday sun." />
+    <string id="camp_atmo_settlement_day_2" text="Soldiers go about their duties in the shadow of the settlement." />
+    <string id="camp_atmo_settlement_day_3" text="The routine of camp life continues under clear skies." />
+    <string id="camp_atmo_settlement_evening_1" text="Campfires spring to life as the sun dips below the horizon." />
+    <string id="camp_atmo_settlement_evening_2" text="The day's work winds down. Soldiers gather around the fires." />
+    <string id="camp_atmo_settlement_evening_3" text="Evening settles over the camp. The watch changes." />
+    <string id="camp_atmo_settlement_night_1" text="The camp sleeps beneath the stars. Watchfires flicker in the darkness." />
+    <string id="camp_atmo_settlement_night_2" text="Night has fallen. The camp is quiet save for the sentries' footsteps." />
+    <string id="camp_atmo_settlement_night_3" text="Darkness blankets the camp. Tomorrow will come soon enough." />
+    
+    <!-- On the March -->
+    <string id="camp_atmo_march_morning_1" text="The column forms up in the early light. Another day of marching ahead." />
+    <string id="camp_atmo_march_morning_2" text="Dawn breaks over the road. The company prepares to move." />
+    <string id="camp_atmo_march_morning_3" text="The morning horn sounds. Time to shoulder packs and march." />
+    <string id="camp_atmo_march_day_1" text="Dust rises from the column as the company pushes forward." />
+    <string id="camp_atmo_march_day_2" text="Mile after mile, the company marches on under the open sky." />
+    <string id="camp_atmo_march_day_3" text="The road stretches ahead. You march with the rest." />
+    <string id="camp_atmo_march_evening_1" text="The column halts for the night. Weary soldiers make camp." />
+    <string id="camp_atmo_march_evening_2" text="Another day's march behind you. The company sets up for the night." />
+    <string id="camp_atmo_march_evening_3" text="Evening falls on the road. Time to rest tired legs." />
+    <string id="camp_atmo_march_night_1" text="A roadside camp under the stars. The company rests for tomorrow's march." />
+    <string id="camp_atmo_march_night_2" text="Night on the road. The campfires are small but welcome." />
+    <string id="camp_atmo_march_night_3" text="The road is dark and quiet. Only the watch remains awake." />
+    
+    <!-- In Army -->
+    <string id="camp_atmo_army_morning_1" text="The great camp stirs to life. Banners of many lords flutter in the morning breeze." />
+    <string id="camp_atmo_army_morning_2" text="Dawn over the army encampment. Thousands prepare for the day ahead." />
+    <string id="camp_atmo_army_morning_3" text="The army wakes. Your company is one of many in the host." />
+    <string id="camp_atmo_army_day_1" text="The army camp stretches in all directions. Orders echo between pavilions." />
+    <string id="camp_atmo_army_day_2" text="The host musters. Your company stands ready among the assembled forces." />
+    <string id="camp_atmo_army_day_3" text="The combined strength of the realm gathers here. It is an impressive sight." />
+    <string id="camp_atmo_army_evening_1" text="Campfires dot the army camp like stars on the ground. The host settles in." />
+    <string id="camp_atmo_army_evening_2" text="Evening in the great camp. Soldiers from different companies share stories." />
+    <string id="camp_atmo_army_evening_3" text="The army rests. Tomorrow may bring battle." />
+    <string id="camp_atmo_army_night_1" text="The army sleeps under a blanket of stars. Watchfires mark the perimeter." />
+    <string id="camp_atmo_army_night_2" text="Night in the great camp. Thousands rest for whatever tomorrow brings." />
+    <string id="camp_atmo_army_night_3" text="The host is quiet. Only the sentries and the restless remain awake." />
+    
+    <!-- Siege -->
+    <string id="camp_atmo_siege_morning_1" text="Dawn breaks over the siege lines. The walls loom in the morning light." />
+    <string id="camp_atmo_siege_morning_2" text="Another day of siege work begins. The fortress waits." />
+    <string id="camp_atmo_siege_morning_3" text="Morning in the siege camp. The engineers are already at work." />
+    <string id="camp_atmo_siege_day_1" text="The siege continues. Catapults hurl stones at the stubborn walls." />
+    <string id="camp_atmo_siege_day_2" text="The camp rings with the sounds of siege work. The walls will fall—eventually." />
+    <string id="camp_atmo_siege_day_3" text="Under the siege lines, you wait for the order to assault." />
+    <string id="camp_atmo_siege_evening_1" text="The siege engines fall silent for the night. The walls remain." />
+    <string id="camp_atmo_siege_evening_2" text="Evening in the siege camp. The fortress is dark against the fading sky." />
+    <string id="camp_atmo_siege_evening_3" text="Another day without a breach. The siege grinds on." />
+    <string id="camp_atmo_siege_night_1" text="Night in the siege lines. The walls are shadows against the stars." />
+    <string id="camp_atmo_siege_night_2" text="The siege camp sleeps. The fortress watches, silent and waiting." />
+    <string id="camp_atmo_siege_night_3" text="Darkness over the siege. Tomorrow the work continues." />
+    
+    <!-- Battle Aftermath (within 24 hours of fight) -->
+    <string id="camp_atmo_aftermath_won_1" text="The camp is alive with the energy of victory. Soldiers celebrate and rest." />
+    <string id="camp_atmo_aftermath_won_2" text="Victory is still fresh. The company tends to wounds and counts the fallen." />
+    <string id="camp_atmo_aftermath_won_3" text="The battle is won, but the work isn't over. The wounded need tending." />
+    <string id="camp_atmo_aftermath_lost_1" text="The company regroups after the defeat. Morale is low but not broken." />
+    <string id="camp_atmo_aftermath_lost_2" text="A somber mood hangs over the camp. The losses weigh heavy." />
+    <string id="camp_atmo_aftermath_lost_3" text="After the defeat, the company licks its wounds. Tomorrow is another day." />
+    
+    <!-- Fallback -->
+    <string id="camp_atmo_fallback" text="The company goes about its duties." />
+
 </strings>
 </base>

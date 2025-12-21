@@ -94,9 +94,24 @@ ModuleData/
 
 ## Logging
 
-Location: `<BannerlordInstall>\Modules\Enlisted\Debugging\`
--   `current_session.txt` points to the active `Session-*.log`.
--   Throttled, category-based logging via `ModLogger`.
+**ALL MOD LOGS OUTPUT TO:** `<BannerlordInstall>\Modules\Enlisted\Debugging\`
+
+Example full path: `C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\Enlisted\Debugging\`
+
+The mod writes session logs directly to the `Debugging` folder inside the Enlisted module directory. This is NOT the game's crash logs folder and NOT Documents.
+
+Files written here:
+- `Session-A_{timestamp}.log` - Current session (newest)
+- `Session-B_{timestamp}.log` - Previous session
+- `Session-C_{timestamp}.log` - Oldest kept session
+- `Conflicts-A_{timestamp}.log` - Current conflicts diagnostics
+- `Conflicts-B_{timestamp}.log` - Previous conflicts
+- `Conflicts-C_{timestamp}.log` - Oldest kept conflicts
+- `Current_Session_README.txt` - Summary of active logs
+
+The mod no longer creates `enlisted.log` or `conflicts.log` (legacy filenames). All logs use timestamped rotation.
+
+Use `ModLogger` for all logging. Category-based verbosity control via `settings.json`.
 
 ---
 

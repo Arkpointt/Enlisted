@@ -38,6 +38,9 @@ We track five core meters (0–100) for the enlisted lord's company:
 -   **Stable (30-80)**: Standard operating conditions.
 -   **Critical (<30)**: Triggers warnings, penalties, and potentially negative events (e.g., equipment access restricted, desertion risk).
 
+### Needs Prediction
+The unit's requirements are predicted based on the **Strategic Context**. In contexts like "Grand Campaign" (coordinated offensive), the system forecasts higher Readiness and Supply requirements. "Winter Camp" or "Riding the Marches" (peacetime) prioritize Rest and Morale. Players can view these forecasts in the Reports menu to prioritize their camp activities.
+
 ---
 
 ## Camp Activities (Native Menu)

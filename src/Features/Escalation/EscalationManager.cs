@@ -12,7 +12,7 @@ namespace Enlisted.Features.Escalation
     ///
     /// Responsibilities:
     /// - Owns the persisted EscalationState (save/load via CampaignBehavior SyncData)
-    /// - Provides track modification APIs (Heat/Discipline/LanceRep/MedicalRisk)
+    /// - Provides track modification APIs (Heat/Discipline/SoldierRep/MedicalRisk)
     /// - Provides readable "state" descriptions for UI ("Watched", "Hot", "Trusted", etc.)
     /// - Provides passive decay logic (integration into daily tick is a later step)
     ///
@@ -115,7 +115,7 @@ namespace Enlisted.Features.Escalation
                 var lastHeatDecay = _state.LastHeatDecayTime;
                 var lastDiscRaised = _state.LastDisciplineRaisedTime;
                 var lastDiscDecay = _state.LastDisciplineDecayTime;
-                var lastRepDecay = _state.LastLanceReputationDecayTime;
+                var lastSoldierRepDecay = _state.LastSoldierReputationDecayTime;
                 var lastMedicalDecay = _state.LastMedicalRiskDecayTime;
                 var lastThresholdEvent = _state.LastThresholdEventTime;
 
@@ -123,7 +123,7 @@ namespace Enlisted.Features.Escalation
                 dataStore.SyncData("esc_lastHeatDecay", ref lastHeatDecay);
                 dataStore.SyncData("esc_lastDiscRaised", ref lastDiscRaised);
                 dataStore.SyncData("esc_lastDiscDecay", ref lastDiscDecay);
-                dataStore.SyncData("esc_lastRepDecay", ref lastRepDecay);
+                dataStore.SyncData("esc_lastRepDecay", ref lastSoldierRepDecay);
                 dataStore.SyncData("esc_lastMedicalDecay", ref lastMedicalDecay);
                 dataStore.SyncData("esc_lastThresholdEvent", ref lastThresholdEvent);
 
@@ -151,7 +151,7 @@ namespace Enlisted.Features.Escalation
                     _state.LastHeatDecayTime = lastHeatDecay;
                     _state.LastDisciplineRaisedTime = lastDiscRaised;
                     _state.LastDisciplineDecayTime = lastDiscDecay;
-                    _state.LastLanceReputationDecayTime = lastRepDecay;
+                    _state.LastSoldierReputationDecayTime = lastSoldierRepDecay;
                     _state.LastMedicalRiskDecayTime = lastMedicalDecay;
                     _state.LastThresholdEventTime = lastThresholdEvent;
 
@@ -273,7 +273,7 @@ namespace Enlisted.Features.Escalation
         private string PickBestThresholdCandidateId(int cooldownDays)
         {
             // Priority is deterministic and "highest threshold wins" per track.
-            // Order across tracks: Heat, Discipline, Medical, Lance Reputation.
+            // Order across tracks: Heat, Discipline, Medical, Soldier Reputation.
             var heatCandidates = new[]
             {
                 (_state.Heat >= EscalationThresholds.HeatExposed, "heat_exposed"),
@@ -296,10 +296,10 @@ namespace Enlisted.Features.Escalation
             };
             var repCandidates = new[]
             {
-                (_state.SoldierReputation <= EscalationThresholds.LanceSabotage, "lance_sabotage"),
-                (_state.SoldierReputation <= EscalationThresholds.LanceIsolated, "lance_isolated"),
-                (_state.SoldierReputation >= EscalationThresholds.LanceBonded, "lance_bonded"),
-                (_state.SoldierReputation >= EscalationThresholds.LanceTrusted, "lance_trusted")
+                (_state.SoldierReputation <= EscalationThresholds.SoldierSabotage, "soldier_sabotage"),
+                (_state.SoldierReputation <= EscalationThresholds.SoldierIsolated, "soldier_isolated"),
+                (_state.SoldierReputation >= EscalationThresholds.SoldierBonded, "soldier_bonded"),
+                (_state.SoldierReputation >= EscalationThresholds.SoldierTrusted, "soldier_trusted")
             };
 
             foreach (var (ok, id) in heatCandidates)
@@ -568,11 +568,11 @@ namespace Enlisted.Features.Escalation
             // Soldier reputation: trends toward 0 by 1 per 14 days.
             {
                 var old = _state.SoldierReputation;
-                if (TryDecayTowardZero(old, _state.LastLanceReputationDecayTime, cfg.LanceReputationDecayIntervalDays, 1,
+                if (TryDecayTowardZero(old, _state.LastSoldierReputationDecayTime, cfg.SoldierReputationDecayIntervalDays, 1,
                         EscalationState.SoldierReputationMin, EscalationState.SoldierReputationMax, now, out var updated, out var updatedTime))
                 {
                     _state.SoldierReputation = updated;
-                    _state.LastLanceReputationDecayTime = updatedTime;
+                    _state.LastSoldierReputationDecayTime = updatedTime;
                     ModLogger.Debug(LogCategory, $"Soldier reputation decayed: {old} -> {updated}");
                 }
             }
@@ -817,22 +817,52 @@ namespace Enlisted.Features.Escalation
         public string GetLordReputationStatus()
         {
             var rep = _state.LordReputation;
-            if (rep >= 80) return "Celebrated";
-            if (rep >= 60) return "Trusted";
-            if (rep >= 40) return "Respected";
-            if (rep >= 20) return "Promising";
-            if (rep >= 10) return "Neutral";
+            if (rep >= 80)
+            {
+                return "Celebrated";
+            }
+            if (rep >= 60)
+            {
+                return "Trusted";
+            }
+            if (rep >= 40)
+            {
+                return "Respected";
+            }
+            if (rep >= 20)
+            {
+                return "Promising";
+            }
+            if (rep >= 10)
+            {
+                return "Neutral";
+            }
             return "Questionable";
         }
 
         public string GetOfficerReputationStatus()
         {
             var rep = _state.OfficerReputation;
-            if (rep >= 80) return "Celebrated";
-            if (rep >= 60) return "Trusted";
-            if (rep >= 40) return "Respected";
-            if (rep >= 20) return "Promising";
-            if (rep >= 10) return "Neutral";
+            if (rep >= 80)
+            {
+                return "Celebrated";
+            }
+            if (rep >= 60)
+            {
+                return "Trusted";
+            }
+            if (rep >= 40)
+            {
+                return "Respected";
+            }
+            if (rep >= 20)
+            {
+                return "Promising";
+            }
+            if (rep >= 10)
+            {
+                return "Neutral";
+            }
             return "Questionable";
         }
 

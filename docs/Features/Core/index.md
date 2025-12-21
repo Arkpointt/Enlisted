@@ -43,12 +43,16 @@ About one hour after enlisting, you must stash or liquidate your personal gear t
 Instead of passive assignments, you receive explicit **Orders** from the chain of command every few days. Success builds your reputation; failure damages it.
 - Doc: **[Core Gameplay](core-gameplay.md)** (Orders System section)
 
-### 4) Build Your Identity
+### 4) build Your Identity
 Your role (Scout, Medic, Officer) emerges dynamically from your native skills and traits. We track your reputation with the Lord, the Officers, and your fellow Soldiers.
 - Doc: **[Core Gameplay](core-gameplay.md)** (Emergent Identity section)
 
-### 5) Manage Company Needs
-The unit's effectiveness is tracked via five core needs: Readiness, Morale, Supplies, Equipment, and Rest. Your choices impact these unit-wide metrics.
+### 5) Strategic Context & War Stance
+The unit's experience is now strategically aware. Your orders and events reflect the lord's actual campaign plans, whether you're in a "Grand Campaign" offensive or a "Winter Camp" rest period.
+- Doc: **[Core Gameplay](core-gameplay.md)** (Strategic Context section)
+
+### 6) Manage Company Needs
+The unit's effectiveness is tracked via five core needs: Readiness, Morale, Supplies, Equipment, and Rest. The system now predicts upcoming requirements based on strategic plans.
 - Doc: **[Camp Life Simulation](../Gameplay/camp-life-simulation.md)**
 
 ### 6) Visit the Quartermaster

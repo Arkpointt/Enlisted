@@ -425,7 +425,7 @@ namespace Enlisted.Mod.Core.Config
         public bool Enabled { get; set; } = true;
         public int HeatDecayIntervalDays { get; set; } = 7;
         public int DisciplineDecayIntervalDays { get; set; } = 14;
-        public int LanceReputationDecayIntervalDays { get; set; } = 14;
+        public int SoldierReputationDecayIntervalDays { get; set; } = 14;
         public int MedicalRiskDecayIntervalDays { get; set; } = 1;
         public int ThresholdEventCooldownDays { get; set; } = 3;
     }

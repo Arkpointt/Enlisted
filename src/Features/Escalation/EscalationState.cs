@@ -49,7 +49,7 @@ namespace Enlisted.Features.Escalation
         public CampaignTime LastDisciplineRaisedTime { get; set; } = CampaignTime.Zero;
         public CampaignTime LastDisciplineDecayTime { get; set; } = CampaignTime.Zero;
 
-        public CampaignTime LastLanceReputationDecayTime { get; set; } = CampaignTime.Zero;
+        public CampaignTime LastSoldierReputationDecayTime { get; set; } = CampaignTime.Zero;
 
         // Medical risk is special: it should reset when treated and decay only when resting.
         public CampaignTime LastMedicalRiskDecayTime { get; set; } = CampaignTime.Zero;
