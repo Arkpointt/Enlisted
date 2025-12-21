@@ -2952,19 +2952,20 @@ namespace Enlisted.Features.Interface.Behaviors
             {
                 EnsureDecisionsAccordionInitialized();
 
-                // Restore time mode preserved from parent menu
-                var capturedMode = QuartermasterManager.CapturedTimeMode
-                    ?? Campaign.Current?.TimeControlMode
-                    ?? CampaignTimeControlMode.Stop;
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
 
                 if (!QuartermasterManager.CapturedTimeMode.HasValue)
                 {
-                    QuartermasterManager.CapturedTimeMode = capturedMode;
-                }
-
-                if (Campaign.Current != null)
-                {
-                    Campaign.Current.TimeControlMode = capturedMode;
+                    QuartermasterManager.CapturedTimeMode = normalized;
                 }
 
                 var enlistment = EnlistmentBehavior.Instance;
@@ -3656,6 +3657,17 @@ namespace Enlisted.Features.Interface.Behaviors
         {
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = QuartermasterManager.CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = QuartermasterManager.NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true)
                 {

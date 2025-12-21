@@ -134,10 +134,22 @@ namespace Enlisted.Features.Company
         /// </summary>
         public static string GetNeedStatusText(int needValue)
         {
-            if (needValue >= 80) return "Excellent";
-            if (needValue >= 60) return "Good";
-            if (needValue >= 40) return "Fair";
-            if (needValue >= 20) return "Poor";
+            if (needValue >= 80)
+            {
+                return "Excellent";
+            }
+            if (needValue >= 60)
+            {
+                return "Good";
+            }
+            if (needValue >= 40)
+            {
+                return "Fair";
+            }
+            if (needValue >= 20)
+            {
+                return "Poor";
+            }
             return "Critical";
         }
 
@@ -219,7 +231,10 @@ namespace Enlisted.Features.Company
         /// </summary>
         private static void LoadStrategicConfig()
         {
-            if (_configLoaded) return;
+            if (_configLoaded)
+            {
+                return;
+            }
 
             try
             {

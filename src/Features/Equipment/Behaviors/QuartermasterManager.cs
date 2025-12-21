@@ -1480,9 +1480,23 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Time state is captured by caller before ActivateGameMenu (not here - too late)
-                
-                // 1.3.4+: Set proper menu background to avoid assertion failure
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
+                if (!CapturedTimeMode.HasValue)
+                {
+                    CapturedTimeMode = normalized;
+                }
+
+                // Set proper menu background to avoid assertion failure
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter"; // Safe fallback
                 
@@ -1958,6 +1972,17 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 // Time state is captured by caller before menu transition (not here - too late)
                 
                 // 1.3.4+: Set proper menu background to avoid assertion failure
@@ -2014,6 +2039,17 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 // Time state is captured by caller before menu transition (not here - too late)
                 
                 var enlistment = EnlistmentBehavior.Instance;
@@ -2079,6 +2115,17 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var enlistment = EnlistmentBehavior.Instance;
                 var backgroundMesh = "encounter_looter";
 
@@ -3823,9 +3870,17 @@ namespace Enlisted.Features.Equipment.Behaviors
         {
             try
             {
-                // Time state is captured by caller before menu transition (not here - too late)
-                
-                // Background is now set by GameMenuInitializationHandler
+                // Start wait to enable time controls for the wait menu
+                args.MenuContext.GameMenu.StartWait();
+
+                // Unlock time control so player can change speed, then restore their prior state
+                Campaign.Current.SetTimeControlModeLock(false);
+
+                // Restore captured time using stoppable equivalents, preserving Stop when paused
+                var captured = CapturedTimeMode ?? Campaign.Current.TimeControlMode;
+                var normalized = NormalizeToStoppable(captured);
+                Campaign.Current.TimeControlMode = normalized;
+
                 var sb = new StringBuilder();
                 var party = MobileParty.MainParty;
                 

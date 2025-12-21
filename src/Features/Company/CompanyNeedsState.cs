@@ -102,15 +102,22 @@ namespace Enlisted.Features.Company
             int value = GetNeed(need);
             
             if (value >= ExcellentThreshold)
+            {
                 return "Excellent";
-            else if (value >= GoodThreshold)
+            }
+            if (value >= GoodThreshold)
+            {
                 return "Good";
-            else if (value >= FairThreshold)
+            }
+            if (value >= FairThreshold)
+            {
                 return "Fair";
-            else if (value >= PoorThreshold)
+            }
+            if (value >= PoorThreshold)
+            {
                 return "Poor";
-            else
-                return "Critical";
+            }
+            return "Critical";
         }
 
         /// <summary>

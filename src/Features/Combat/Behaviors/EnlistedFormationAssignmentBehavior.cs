@@ -587,7 +587,6 @@ namespace Enlisted.Features.Combat.Behaviors
                         var preferred = missionTeam.GetFormation(desiredClass);
                         if (preferred != null && preferred.CountOfUnits > 1)
                         {
-                            bestAlliedFormation ??= preferred;
                             if (bestAlliedFormation == null || preferred.CountOfUnits > bestAlliedFormation.CountOfUnits)
                             {
                                 bestAlliedFormation = preferred;
@@ -598,7 +597,10 @@ namespace Enlisted.Features.Combat.Behaviors
                         foreach (var formation in missionTeam.FormationsIncludingSpecialAndEmpty)
                         {
                             if (formation == null || formation.CountOfUnits <= 1)
+                            {
                                 continue;
+                            }
+
                             if (bestAlliedFormation == null || formation.CountOfUnits > bestAlliedFormation.CountOfUnits)
                             {
                                 bestAlliedFormation = formation;
@@ -608,7 +610,7 @@ namespace Enlisted.Features.Combat.Behaviors
 
                     foreach (var agent in missionTeam.ActiveAgents)
                     {
-                        if (agent?.Character == currentLord.CharacterObject)
+                        if (agent?.Character != null && agent.Character == currentLord.CharacterObject)
                         {
                             lordFormation = agent.Formation;
                             lordTeam = missionTeam;
@@ -657,7 +659,7 @@ namespace Enlisted.Features.Combat.Behaviors
                     if (!_loggedSoloAttachOutcome)
                     {
                         ModLogger.Info("FormationAssignment",
-                            $"[{caller}] Joined lord formation (index {lordFormation.FormationIndex}, units {lordFormation.CountOfUnits}, side={lordTeam?.Side})");
+                            $"[{caller}] Joined lord formation (index {lordFormation.FormationIndex}, units {lordFormation.CountOfUnits}, side={lordTeam.Side})");
                         _loggedSoloAttachOutcome = true;
                     }
 
@@ -782,16 +784,18 @@ namespace Enlisted.Features.Combat.Behaviors
                 }
                 
                 // FALLBACK 1: If no allied formation found, fall back to LORD position
-                if (!targetPosition.IsValid && currentLord != null)
+                if (!targetPosition.IsValid && currentLord != null && Mission.Current?.Teams != null)
                 {
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
+                        {
                             continue;
-                        
+                        }
+
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
-                            if (agent?.Character == currentLord.CharacterObject)
+                            if (agent?.Character != null && agent.Character == currentLord.CharacterObject)
                             {
                                 targetPosition = agent.Position;
                                 formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
@@ -799,31 +803,46 @@ namespace Enlisted.Features.Combat.Behaviors
                                 break;
                             }
                         }
-                        if (targetPosition.IsValid) break;
+
+                        if (targetPosition.IsValid)
+                        {
+                            break;
+                        }
                     }
                 }
-                
+
                 // FALLBACK 2: If still nothing, use ANY non-player-party agent (last resort)
-                if (!targetPosition.IsValid)
+                if (!targetPosition.IsValid && Mission.Current?.Teams != null)
                 {
                     foreach (var missionTeam in Mission.Current.Teams)
                     {
                         if (missionTeam.Side != team.Side)
+                        {
                             continue;
-                        
+                        }
+
                         foreach (var agent in missionTeam.ActiveAgents)
                         {
                             if (agent == null || !agent.IsActive() || agent == playerAgent)
+                            {
                                 continue;
+                            }
+
                             if (agent.Origin is PartyGroupAgentOrigin partyOrigin && partyOrigin.Party == mainParty)
+                            {
                                 continue;
-                            
+                            }
+
                             targetPosition = agent.Position;
                             formationDirection = formation.Direction.IsValid ? formation.Direction : Vec2.Forward;
                             teleportSource = "allied agent (fallback)";
                             break;
                         }
-                        if (targetPosition.IsValid) break;
+
+                        if (targetPosition.IsValid)
+                        {
+                            break;
+                        }
                     }
                 }
                 

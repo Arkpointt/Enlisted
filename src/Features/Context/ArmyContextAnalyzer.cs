@@ -41,7 +41,7 @@ namespace Enlisted.Features.Context
             }
 
             // Check if defending (in settlement)
-            if (army.CurrentSettlement != null && army.CurrentSettlement.IsUnderSiege)
+            if (army.CurrentSettlement is { IsUnderSiege: true })
             {
                 return LordObjective.Defending;
             }
@@ -63,10 +63,8 @@ namespace Enlisted.Features.Context
                 if (armyLeader != null)
                 {
                     // Check if raiding (in enemy territory with hostile intent)
-                    if (armyLeader.MapFaction != null && 
-                        armyLeader.CurrentSettlement != null &&
-                        armyLeader.CurrentSettlement.MapFaction != null &&
-                        armyLeader.MapFaction.IsAtWarWith(armyLeader.CurrentSettlement.MapFaction))
+                    if (armyLeader is { MapFaction: { } faction, CurrentSettlement.MapFaction: { } settlementFaction } &&
+                        faction.IsAtWarWith(settlementFaction))
                     {
                         return LordObjective.Raiding;
                     }
@@ -81,9 +79,8 @@ namespace Enlisted.Features.Context
             }
 
             // Check if resting (in friendly settlement, not under siege)
-            if (army.CurrentSettlement != null && 
-                !army.CurrentSettlement.IsUnderSiege &&
-                army.CurrentSettlement.MapFaction == army.MapFaction)
+            if (army.CurrentSettlement is { IsUnderSiege: false } settlement &&
+                settlement.MapFaction == army.MapFaction)
             {
                 return LordObjective.Resting;
             }
@@ -157,11 +154,14 @@ namespace Enlisted.Features.Context
         /// </summary>
         private static void LoadStrategicContextConfig()
         {
-            if (_configLoaded) return;
+            if (_configLoaded)
+            {
+                return;
+            }
 
             try
             {
-                string configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "strategic_context_config.json");
+                var configPath = Path.Combine(BasePath.Name, "Modules", "Enlisted", "ModuleData", "Enlisted", "strategic_context_config.json");
                 
                 if (!File.Exists(configPath))
                 {
@@ -171,7 +171,7 @@ namespace Enlisted.Features.Context
                     return;
                 }
 
-                string json = File.ReadAllText(configPath);
+                var json = File.ReadAllText(configPath);
                 _strategicConfig = JObject.Parse(json);
                 _configLoaded = true;
                 
@@ -201,21 +201,27 @@ namespace Enlisted.Features.Context
             try
             {
                 // Calculate faction strength score (0.0 to 1.0+)
-                float strengthScore = CalculateFactionStrength(kingdom);
+                var strengthScore = CalculateFactionStrength(kingdom);
 
                 // Get thresholds from config
                 var thresholds = _strategicConfig?["war_stance_thresholds"];
-                float desperateThreshold = thresholds?["desperate"]?.Value<float>() ?? 0.3f;
-                float defensiveThreshold = thresholds?["defensive"]?.Value<float>() ?? 0.5f;
-                float balancedThreshold = thresholds?["balanced"]?.Value<float>() ?? 0.7f;
+                var desperateThreshold = thresholds?["desperate"]?.Value<float>() ?? 0.3f;
+                var defensiveThreshold = thresholds?["defensive"]?.Value<float>() ?? 0.5f;
+                var balancedThreshold = thresholds?["balanced"]?.Value<float>() ?? 0.7f;
 
                 // Determine stance based on thresholds
                 if (strengthScore < desperateThreshold)
+                {
                     return "desperate";
+                }
                 if (strengthScore < defensiveThreshold)
+                {
                     return "defensive";
+                }
                 if (strengthScore < balancedThreshold)
+                {
                     return "balanced";
+                }
                 
                 return "offensive";
             }
@@ -235,27 +241,27 @@ namespace Enlisted.Features.Context
             try
             {
                 var weights = _strategicConfig?["weights"];
-                float territoryWeight = weights?["territory_control"]?.Value<float>() ?? 0.4f;
-                float militaryWeight = weights?["military_strength"]?.Value<float>() ?? 0.4f;
-                float economicWeight = weights?["economic_situation"]?.Value<float>() ?? 0.2f;
+                var territoryWeight = weights?["territory_control"]?.Value<float>() ?? 0.4f;
+                var militaryWeight = weights?["military_strength"]?.Value<float>() ?? 0.4f;
+                var economicWeight = weights?["economic_situation"]?.Value<float>() ?? 0.2f;
 
                 // Territory control (settlements owned vs total)
-                int ownedSettlements = kingdom.Settlements.Count(s => s.IsTown || s.IsCastle);
-                int totalSettlements = Settlement.All.Count(s => s.IsTown || s.IsCastle);
-                float territoryScore = totalSettlements > 0 ? (float)ownedSettlements / totalSettlements : 0.5f;
+                var ownedSettlements = kingdom.Settlements.Count(s => s.IsTown || s.IsCastle);
+                var totalSettlements = Settlement.All.Count(s => s.IsTown || s.IsCastle);
+                var territoryScore = totalSettlements > 0 ? (float)ownedSettlements / totalSettlements : 0.5f;
 
                 // Military strength (active lords and total troops)
-                int activeLords = kingdom.AliveLords.Count(h => h.IsAlive && !h.IsDisabled && h.PartyBelongedTo != null);
-                int totalTroops = kingdom.Armies.Sum(a => a.TotalManCount) + 
+                var activeLords = kingdom.AliveLords.Count(h => h.IsAlive && !h.IsDisabled && h.PartyBelongedTo != null);
+                var totalTroops = kingdom.Armies.Sum(a => a.TotalManCount) + 
                                   kingdom.AliveLords.Where(h => h.PartyBelongedTo != null).Sum(h => h.PartyBelongedTo.MemberRoster.TotalManCount);
-                float militaryScore = MathF.Min(1.0f, (activeLords / 20f) * 0.5f + (totalTroops / 5000f) * 0.5f);
+                var militaryScore = MathF.Min(1.0f, (activeLords / 20f) * 0.5f + (totalTroops / 5000f) * 0.5f);
 
                 // Economic situation (clan gold average)
-                float avgGold = kingdom.Clans.Where(c => c.Leader != null).Average(c => (float)c.Leader.Gold);
-                float economicScore = MathF.Min(1.0f, avgGold / 100000f);
+                var avgGold = kingdom.Clans.Where(c => c.Leader != null).Average(c => (float)c.Leader.Gold);
+                var economicScore = MathF.Min(1.0f, avgGold / 100000f);
 
                 // Weighted combination
-                float strengthScore = (territoryScore * territoryWeight) + 
+                var strengthScore = (territoryScore * territoryWeight) + 
                                       (militaryScore * militaryWeight) + 
                                       (economicScore * economicWeight);
 
@@ -285,7 +291,6 @@ namespace Enlisted.Features.Context
             try
             {
                 var faction = party.MapFaction;
-                var rules = _strategicConfig?["context_detection_rules"];
 
                 // Check siege operation first (highest priority)
                 if (party.BesiegerCamp != null || party.SiegeEvent != null)
@@ -294,14 +299,14 @@ namespace Enlisted.Features.Context
                 }
 
                 // Check garrison duty
-                if (party.CurrentSettlement != null && party.IsActive == false)
+                if (party is { CurrentSettlement: not null, IsActive: false })
                 {
                     return "garrison_duty";
                 }
 
                 // Check winter camp (winter season + stationary)
                 if (CampaignTime.Now.GetSeasonOfYear == CampaignTime.Seasons.Winter && 
-                    party.CurrentSettlement != null)
+                    party.CurrentSettlement is not null)
                 {
                     return "winter_camp";
                 }
@@ -309,8 +314,8 @@ namespace Enlisted.Features.Context
                 // Check war stance for war-related contexts
                 if (faction != null)
                 {
-                    string warStance = GetWarStance(faction);
-                    bool atWar = IsAtWar(faction);
+                    var warStance = GetWarStance(faction);
+                    var atWar = IsAtWar(faction);
 
                     // Desperate defense
                     if (atWar && warStance == "desperate" && IsInOwnTerritory(party))
@@ -369,27 +374,33 @@ namespace Enlisted.Features.Context
             try
             {
                 var valueParams = _strategicConfig?["settlement_strategic_value"];
-                float fortificationBase = valueParams?["fortification_base"]?.Value<float>() ?? 0.3f;
-                float borderBonus = valueParams?["border_bonus"]?.Value<float>() ?? 0.2f;
-                float neighborMultiplier = valueParams?["neighbor_multiplier"]?.Value<float>() ?? 0.05f;
-                float prosperityScale = valueParams?["prosperity_scale"]?.Value<float>() ?? 0.00001f;
+                var fortificationBase = valueParams?["fortification_base"]?.Value<float>() ?? 0.3f;
+                var borderBonus = valueParams?["border_bonus"]?.Value<float>() ?? 0.2f;
+                var neighborMultiplier = valueParams?["neighbor_multiplier"]?.Value<float>() ?? 0.05f;
+                var prosperityScale = valueParams?["prosperity_scale"]?.Value<float>() ?? 0.00001f;
 
-                float value = 0f;
+                var value = 0f;
 
                 // Base value from fortification level
                 if (settlement.IsCastle)
+                {
                     value += fortificationBase;
+                }
                 else if (settlement.IsTown)
+                {
                     value += fortificationBase * 1.5f;
+                }
 
                 // Border settlement bonus (has neighbors from different factions)
-                bool isBorder = settlement.BoundVillages.Any(v => 
+                var isBorder = settlement.BoundVillages.Any(v => 
                     v.Settlement.OwnerClan?.MapFaction != settlement.OwnerClan?.MapFaction);
                 if (isBorder)
+                {
                     value += borderBonus;
+                }
 
                 // Neighbor count (more connections = more strategic)
-                int neighborCount = settlement.BoundVillages.Count;
+                var neighborCount = settlement.BoundVillages.Count;
                 value += neighborCount * neighborMultiplier;
 
                 // Prosperity contribution
@@ -422,8 +433,8 @@ namespace Enlisted.Features.Context
             try
             {
                 var coordParams = _strategicConfig?["coordination_detection"];
-                int minAlliedLords = coordParams?["min_allied_lords"]?.Value<int>() ?? 2;
-                float maxDistanceKm = coordParams?["max_distance_km"]?.Value<float>() ?? 20.0f;
+                var minAlliedLords = coordParams?["min_allied_lords"]?.Value<int>() ?? 2;
+                var maxDistanceKm = coordParams?["max_distance_km"]?.Value<float>() ?? 20.0f;
 
                 // Check if in an army
                 if (party.Army != null && party.Army.Parties.Count >= minAlliedLords + 1)
@@ -432,15 +443,17 @@ namespace Enlisted.Features.Context
                 }
 
                 // Check for nearby allied armies with same target
-                int nearbyAlliedArmies = 0;
-                Settlement targetSettlement = party.TargetSettlement;
+                var nearbyAlliedArmies = 0;
+                var targetSettlement = party.TargetSettlement;
 
                 foreach (var otherArmy in MobileParty.All)
                 {
                     if (otherArmy == party || otherArmy.MapFaction != party.MapFaction)
+                    {
                         continue;
+                    }
 
-                    float distance = otherArmy.Position.DistanceSquared(party.Position);
+                    var distance = otherArmy.Position.DistanceSquared(party.Position);
                     if (distance < maxDistanceKm)
                     {
                         // Check if targeting same settlement
@@ -520,66 +533,90 @@ namespace Enlisted.Features.Context
 
         private static bool IsAtWar(IFaction faction)
         {
-            if (faction == null) return false;
+            if (faction == null)
+            {
+                return false;
+            }
             
             return Kingdom.All.Any(k => k != faction && FactionManager.IsAtWarAgainstFaction(faction, k));
         }
 
         private static bool IsInOwnTerritory(MobileParty party)
         {
-            if (party?.CurrentSettlement != null)
+            if (party == null)
             {
-                return party.CurrentSettlement.MapFaction == party.MapFaction;
+                return false;
+            }
+
+            if (party.CurrentSettlement is { MapFaction: var faction })
+            {
+                return faction == party.MapFaction;
             }
 
             // Check nearest settlement
             Settlement nearestSettlement = null;
-            float minDistance = float.MaxValue;
+            var minDistance = float.MaxValue;
             foreach (var settlement in Settlement.All)
             {
-                float dist = settlement.GetPosition2D.Distance(party.Position.ToVec2());
+                if (settlement == null)
+                {
+                    continue;
+                }
+
+                var dist = settlement.GetPosition2D.Distance(party.Position.ToVec2());
                 if (dist < minDistance)
                 {
                     minDistance = dist;
                     nearestSettlement = settlement;
                 }
             }
-            return nearestSettlement?.MapFaction == party.MapFaction;
+            return nearestSettlement != null && nearestSettlement.MapFaction == party.MapFaction;
         }
 
         private static bool IsInEnemyTerritory(MobileParty party)
         {
-            if (party?.CurrentSettlement != null)
+            if (party == null)
             {
-                return party.CurrentSettlement.MapFaction != null && 
-                       party.MapFaction != null &&
-                       FactionManager.IsAtWarAgainstFaction(party.MapFaction, party.CurrentSettlement.MapFaction);
+                return false;
+            }
+
+            if (party.CurrentSettlement is { MapFaction: { } settlementFaction } && party.MapFaction is { } partyFaction)
+            {
+                return FactionManager.IsAtWarAgainstFaction(partyFaction, settlementFaction);
             }
 
             // Check nearest settlement
             Settlement nearestSettlement = null;
-            float minDistance = float.MaxValue;
+            var minDistance = float.MaxValue;
             foreach (var settlement in Settlement.All)
             {
-                float dist = settlement.GetPosition2D.Distance(party.Position.ToVec2());
+                if (settlement == null)
+                {
+                    continue;
+                }
+
+                var dist = settlement.GetPosition2D.Distance(party.Position.ToVec2());
                 if (dist < minDistance)
                 {
                     minDistance = dist;
                     nearestSettlement = settlement;
                 }
             }
-            return nearestSettlement?.MapFaction != null && 
+            return nearestSettlement != null && nearestSettlement.MapFaction != null && 
                    party.MapFaction != null &&
                    FactionManager.IsAtWarAgainstFaction(party.MapFaction, nearestSettlement.MapFaction);
         }
 
         private static bool IsArmyBelowStrength(MobileParty party)
         {
-            if (party?.LeaderHero == null) return false;
+            if (party?.LeaderHero == null)
+            {
+                return false;
+            }
 
             // Check if party is below 60% of its limit
-            int currentSize = party.MemberRoster.TotalManCount;
-            int limitSize = party.Party.PartySizeLimit;
+            var currentSize = party.MemberRoster.TotalManCount;
+            var limitSize = party.Party.PartySizeLimit;
 
             return currentSize < (limitSize * 0.6f);
         }

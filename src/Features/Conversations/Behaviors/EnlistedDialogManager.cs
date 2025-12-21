@@ -1,20 +1,16 @@
 using System;
 using Enlisted.Features.Camp;
-using Enlisted.Features.CommandTent.Core;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
 // Dialogue regarding assignments is being updated to reflect the new order system.
-using AssignmentsConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
-using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
-using TaleWorlds.ObjectSystem;
 
 namespace Enlisted.Features.Conversations.Behaviors
 {
@@ -1106,8 +1102,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_equipment_response",
                     "{=qm_request_equipment}I need equipment.",
                     null,
-                    null,
-                    100);
+                    null);
 
                 starter.AddDialogLine(
                     "qm_equipment_response",
@@ -1115,8 +1110,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "close_window",
                     "{=qm_equipment_response}Let me see what I've got in stock for you.",
                     null,
-                    OnQuartermasterEquipmentRequest,
-                    100);
+                    OnQuartermasterEquipmentRequest);
 
                 // Option 2: Sell Equipment → Opens existing returns menu
                 starter.AddPlayerLine(
@@ -1134,8 +1128,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "close_window",
                     "{=qm_sell_response}[Quartermaster responds to sell request]",
                     null,
-                    OnQuartermasterSellRequest,
-                    100);
+                    OnQuartermasterSellRequest);
 
                 // Option 3: Provisions → Opens rations menu
                 starter.AddPlayerLine(
@@ -1153,8 +1146,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "close_window",
                     "{=qm_provisions_response}Let me show you what provisions I have available.",
                     null,
-                    OnQuartermasterProvisionsRequest,
-                    100);
+                    OnQuartermasterProvisionsRequest);
 
                 // ========================================
                 // PAYTENSION DIALOG OPTIONS
@@ -1176,8 +1168,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_hub",
                     "{=qm_black_market_response}Looking for opportunities? I might know some people who can help... for a price.",
                     null,
-                    OnQuartermasterBlackMarket,
-                    100);
+                    OnQuartermasterBlackMarket);
 
                 // Believer Moral Guidance (tension 60+)
                 starter.AddPlayerLine(
@@ -1195,8 +1186,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_hub",
                     "{=qm_moral_guidance_response}These are trying times, but faith endures. Remember why you serve.",
                     null,
-                    OnQuartermasterMoralGuidance,
-                    100);
+                    OnQuartermasterMoralGuidance);
 
                 // Veteran Survival Advice (tension 80+)
                 starter.AddPlayerLine(
@@ -1214,8 +1204,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_hub",
                     "{=qm_survival_advice_response}I've seen armies fall apart before. Keep your head down and watch for opportunities.",
                     null,
-                    OnQuartermasterSurvivalAdvice,
-                    100);
+                    OnQuartermasterSurvivalAdvice);
 
                 // Help the Lord suggestion (any archetype, tension 40+)
                 starter.AddPlayerLine(
@@ -1233,8 +1222,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_hub",
                     "{=qm_help_lord_response}There are ways a loyal soldier could help. Collect debts, escort merchants, that sort of thing.",
                     null,
-                    OnQuartermasterHelpLordSuggestion,
-                    100);
+                    OnQuartermasterHelpLordSuggestion);
 
                 // Option 4: Chat (Relationship building) - first time or high relationship
                 starter.AddPlayerLine(
@@ -1252,8 +1240,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "qm_hub",
                     "{=qm_chat_response}It's a long story. Let's just say I ended up here after some... interesting experiences.",
                     null,
-                    OnQuartermasterChat,
-                    100);
+                    OnQuartermasterChat);
 
                 // Option 4: Leave
                 starter.AddPlayerLine(
@@ -1436,7 +1423,6 @@ namespace Enlisted.Features.Conversations.Behaviors
         /// </summary>
         private string GetFirstMeetingGreeting(string archetype, string qmName)
         {
-            var enlistment = EnlistmentBehavior.Instance;
             var text = archetype switch
             {
                 "veteran" => new TextObject("So you're the new {PLAYER_RANK}. Name's {QM_NAME}. I run the baggage train. You need gear, you come to me. Clear?"),
@@ -1714,7 +1700,6 @@ namespace Enlisted.Features.Conversations.Behaviors
         public string GetSurvivalAdviceResponseLine()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            var tension = enlistment?.PayTension ?? 0;
             var freeDesertion = enlistment?.IsFreeDesertionAvailable == true;
 
             if (freeDesertion)
@@ -1804,8 +1789,14 @@ namespace Enlisted.Features.Conversations.Behaviors
 
             // Fallback: Use pay tension as mood indicator
             var payTension = EnlistmentBehavior.Instance?.PayTension ?? 0;
-            if (payTension < 20) return "content";
-            if (payTension < 50) return "stressed";
+            if (payTension < 20)
+            {
+                return "content";
+            }
+            if (payTension < 50)
+            {
+                return "stressed";
+            }
             return "grim";
         }
 
@@ -2034,6 +2025,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             return new TextObject(key);
         }
 
+#if false
         /// <summary>
         ///     Cleans up the enlisted menu after discharge/retirement.
         ///     Called deferred (next frame) after retirement dialog closes to ensure
@@ -2055,6 +2047,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.ErrorCode("DialogManager", "E-DIALOG-003", "Error cleaning up menu after discharge", ex);
             }
         }
+#endif
 
         #endregion
 
@@ -2294,6 +2287,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             return main?.Army != null && main.Army.LeaderParty == main;
         }
 
+#if false
         /// <summary>
         ///     Checks if the player can discuss first-term retirement (after 252 days).
         ///     Must be enlisted with current lord, have completed minimum service,
@@ -2318,6 +2312,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                    enlistment.IsEligibleForRetirement &&
                    !enlistment.IsInDesertionGracePeriod;
         }
+#endif
 
         private bool CanDiscussDischargeGuidance()
         {
@@ -2329,6 +2324,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                    !enlistment.IsInDesertionGracePeriod;
         }
 
+#if false
         /// <summary>
         ///     Checks if the player can discuss retirement with a minor faction lord.
         ///     Same eligibility as kingdom lords but uses mercenary-themed dialog.
@@ -2348,7 +2344,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                    enlistment.IsEligibleForRetirement &&
                    !enlistment.IsInDesertionGracePeriod;
         }
+#endif
 
+#if false
         /// <summary>
         ///     Checks if the player can discuss renewal term completion.
         ///     Only for kingdom lords - minor factions use CanDiscussMinorFactionRenewalEnd.
@@ -2369,7 +2367,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                    enlistment.IsInRenewalTerm &&
                    enlistment.IsRenewalTermComplete;
         }
+#endif
 
+#if false
         /// <summary>
         ///     Checks if the player can discuss renewal term completion with a minor faction lord.
         /// </summary>
@@ -2388,7 +2388,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                    enlistment.IsInRenewalTerm &&
                    enlistment.IsRenewalTermComplete;
         }
+#endif
 
+#if false
         /// <summary>
         ///     Checks if the player can re-enlist after cooldown (veteran return).
         /// </summary>
@@ -2405,7 +2407,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             var kingdom = lord?.MapFaction as Kingdom;
             return kingdom != null && enlistment?.CanReEnlistAfterCooldown(kingdom) == true;
         }
+#endif
 
+#if false
         /// <summary>
         ///     Checks if the player can request early discharge (before full term).
         ///     Shows only when not eligible for full retirement benefits.
@@ -2428,7 +2432,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                    !enlistment.IsEligibleForRetirement &&
                    !enlistment.IsRenewalTermComplete;
         }
+#endif
 
+#if false
         /// <summary>
         ///     Checks if the player can request early discharge from a minor faction.
         /// </summary>
@@ -2447,6 +2453,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                    !enlistment.IsEligibleForRetirement &&
                    !enlistment.IsRenewalTermComplete;
         }
+#endif
 
         /// <summary>
         ///     Checks if the player can return from temporary leave.
@@ -2637,6 +2644,7 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
         }
 
+#if false
         /// <summary>
         ///     Handles first-term retirement with full benefits.
         ///     Schedules menu cleanup after dialog closes to prevent empty menu state.
@@ -2691,7 +2699,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during retirement with troops", ex);
             }
         }
+#endif
 
+#if false
         /// <summary>
         ///     Adds 10 grain to player inventory as retirement supplies.
         ///     Prevents immediate starvation when leaving the army's supply train.
@@ -2718,7 +2728,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.ErrorCode("DialogManager", "E-DIALOG-004", "Failed to add retirement supplies", ex);
             }
         }
+#endif
 
+#if false
         /// <summary>
         ///     Checks if player has a retinue that can be kept on retirement.
         ///     Used to determine which dialog branch to show.
@@ -2756,7 +2768,9 @@ namespace Enlisted.Features.Conversations.Behaviors
             text.SetTextVariable("COUNT", count);
             return text.ToString();
         }
+#endif
 
+#if false
         /// <summary>
         ///     Gets the unit name based on player's tier (Lance, Squad, or Retinue).
         /// </summary>
@@ -2770,7 +2784,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 _ => "lance"
             };
         }
+#endif
 
+#if false
         /// <summary>
         ///     Handles first-term re-enlistment with 20,000 gold bonus.
         /// </summary>
@@ -2833,7 +2849,9 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during renewal discharge with troops", ex);
             }
         }
+#endif
 
+#if false
         /// <summary>
         ///     Handles continuing service with 5,000 gold bonus.
         /// </summary>
@@ -2905,6 +2923,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                 ModLogger.Error("DialogManager", "Error during early discharge", ex);
             }
         }
+#endif
 
         /// <summary>
         ///     Handles the consequence of returning from temporary leave.
@@ -3010,7 +3029,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                         if (enlistmentCheck != null && enlistmentCheck.EnlistmentTier == 6)
                         {
                             enlistmentCheck.SetTier(7);
-                            Features.Equipment.Behaviors.QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
+                            QuartermasterManager.Instance?.UpdateNewlyUnlockedItems();
                             
                             var message = new TextObject("{=promotion_t7_notification}You have been promoted to Commander. Twenty recruits await your command.");
                             InformationManager.DisplayMessage(new InformationMessage(message.ToString(), Colors.Green));

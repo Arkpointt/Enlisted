@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using EnlistedConfig = Enlisted.Mod.Core.Config.ConfigurationManager;
 using Enlisted.Features.Enlistment.Behaviors;
@@ -7,7 +6,6 @@ using Enlisted.Features.Escalation;
 using Enlisted.Mod.Core.Logging;
 using Newtonsoft.Json;
 using TaleWorlds.CampaignSystem;
-using TaleWorlds.Core;
 using TaleWorlds.Library;
 using TaleWorlds.Localization;
 
