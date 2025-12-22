@@ -213,15 +213,17 @@ JSON fallback fields MUST immediately follow their ID fields for the parser to a
 
 ### NOT Yet Implemented ❌
 
-| Component | Why Needed | Notes |
-|-----------|------------|-------|
-| **Map Incidents** | Event delivery during travel | Phase 5+ |
-| **Ration Exchange** | T1-T4 food at muster | Deferred - needs design |
-| **Baggage Check** | Contraband search at muster | Deferred - complex system |
-| **Supply Simulation** | Hybrid 40/60 model | Currently just degrades, no observation |
-| **Flag System** | `set_flags`, `clear_flags`, `flag_duration_days` | Needed for complex decision gating |
-| **Chain Events** | `chains_to` with delayed follow-ups | Deferred to Phase B |
-| **Sub-choices** | `reward_choices` for branching outcomes | Deferred to Phase B |
+| Component | Why Needed | Notes | Implementation Plan |
+|-----------|------------|-------|---------------------|
+| **Reward Choices** | Sub-choice popups after main selection | 4 decisions use this | [Phase 8C](phase8-advanced-content-features.md#1-reward-choices-sub-choices) |
+| **Flag System** | `set_flags`, `clear_flags`, `flag_duration_days` | 16 JSON references | [Phase 8A](phase8-advanced-content-features.md#2-flag-system) |
+| **Chain Events** | `chains_to` with delayed follow-ups | 2 decisions use this | [Phase 8B](phase8-advanced-content-features.md#3-chain-events-with-delay) |
+| **Map Incidents** | Event delivery during travel | Hooks in EnlistedIncidentsBehavior | Future |
+| **Ration Exchange** | T1-T4 food at muster | Needs item tracking system | Future |
+| **Baggage Check** | Contraband search at muster | Complex system | Future |
+| **Supply Simulation** | Hybrid 40/60 model | Currently just degrades | Future |
+
+**Phase 8 Implementation Plan:** See [`phase8-advanced-content-features.md`](phase8-advanced-content-features.md) for detailed implementation steps for Reward Choices, Flag System, and Chain Events.
 
 ### Reusable Patterns
 
@@ -1053,6 +1055,8 @@ ModLogger.Info("Event", $"Applied effects: {EffectsToString(option.Effects)}");
 
 | Document | Purpose |
 |----------|---------|
+| `docs/ImplementationPlans/phase8-advanced-content-features.md` | **Phase 8: Flag system, chain events, reward choices** |
+| `docs/Features/UI/ui-systems-master.md` | UI systems and localization reference |
 | `docs/StoryBlocks/content-index.md` | Master content catalog (176 pieces) |
 | `docs/StoryBlocks/event-catalog-by-system.md` | Schema, design principles, systems |
 | `docs/Features/Equipment/Quartermaster_Master_Implementation.md` | QM-specific details |
@@ -1073,6 +1077,15 @@ ModLogger.Info("Event", $"Applied effects: {EffectsToString(option.Effects)}");
 | 5 | Content | JSON files, XML strings, loading | ✅ Complete |
 | 6 | Intelligence | Selection algorithm, pacing, weighting | ✅ Complete |
 | 7 | Polish | Logging, UI feedback, save/load, testing | Pending |
+| **8** | **Advanced Features** | **Flag system, chain events, reward choices** | **Ready** |
+
+**Phase 8 Details:** See [`phase8-advanced-content-features.md`](phase8-advanced-content-features.md) for implementation plans.
+
+| Sub-Phase | Feature | Estimated Time | Priority |
+|-----------|---------|----------------|----------|
+| 8A | Flag System | 2-3 hours | HIGH |
+| 8B | Chain Events with Delay | 1-2 hours | MEDIUM |
+| 8C | Reward Choices (Sub-choices) | 3-4 hours | HIGH |
 
 **Estimated Timeline**: Phases build on each other. Complete Phase 1-3 before significant content authoring. Phase 4 can parallel Phase 3. Phase 5-7 depend on earlier phases.
 
