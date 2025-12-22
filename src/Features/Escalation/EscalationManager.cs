@@ -249,6 +249,25 @@ namespace Enlisted.Features.Escalation
                         dataStore.SyncData($"esc_onetime_{i}", ref eventId);
                     }
                 }
+                
+                // Onboarding state serialization
+                var onboardingStage = _state.OnboardingStage;
+                var onboardingTrack = _state.OnboardingTrack ?? string.Empty;
+                var onboardingStartTime = _state.OnboardingStartTime;
+                
+                dataStore.SyncData("esc_onboardingStage", ref onboardingStage);
+                dataStore.SyncData("esc_onboardingTrack", ref onboardingTrack);
+                dataStore.SyncData("esc_onboardingStartTime", ref onboardingStartTime);
+                
+                if (dataStore.IsLoading)
+                {
+                    _state.OnboardingStage = onboardingStage;
+                    _state.OnboardingTrack = onboardingTrack ?? string.Empty;
+                    _state.OnboardingStartTime = onboardingStartTime;
+                    
+                    // Validate onboarding state to handle old saves or corrupted data
+                    _state.ValidateOnboardingState();
+                }
             });
         }
 

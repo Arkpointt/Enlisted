@@ -6,24 +6,69 @@ A unified system governing how players enter service (onboarding), leave service
 
 ---
 
-## Development Guidelines
+## Engineering Standards
 
-### API Verification
-Use the local native decompile at `C:\Dev\Enlisted\Decompile` as the primary reference for Bannerlord APIs. Do not rely on external documentation or AI assumptions about API behavior. When in doubt, read the decompiled source.
+**Follow these while implementing all phases** (same as unified content system):
 
-### Code Style
-Follow ReSharper linter rules and recommendations. Fix lint warnings rather than suppressing them with pragmas.
-
-### Comments
-Write comments in plain, natural English that describe what the code does right now. Avoid:
-- Changelog-style framing ("Phase 2 addition", "Updated for new system")
-- Legacy references ("Previously this was X, now it's Y")
-- Robotic or overly technical language
-- Dash-bullet formatting in comments
+### Code Quality
+- **Follow ReSharper linter/recommendations.** Fix warnings; don't suppress them with pragmas.
+- **Comments should be factual descriptions of current behavior.** Write them as a human developer would—professional and natural. Don't use "Phase" references, changelog-style framing ("Added X", "Changed from Y"), or mention legacy/migration in doc comments.
+- Reuse existing patterns from the codebase.
 
 Good: `// Checks if the player can re-enlist with this faction based on cooldown and discharge history.`
 
 Bad: `// Phase 2: Added re-enlistment check. Previously used FactionVeteranRecord, now uses FactionServiceRecord.`
+
+### API Verification
+- **Use the local native decompile** to verify Bannerlord APIs before using them.
+- Decompile location: `C:\Dev\Enlisted\Decompile\`
+- Key namespaces: `TaleWorlds.CampaignSystem`, `TaleWorlds.Core`, `TaleWorlds.Library`
+- Don't rely on external docs or AI assumptions - verify in decompile first.
+
+Key files for this system:
+- `TaleWorlds.CampaignSystem/Actions/KillCharacterAction.cs` - Hero death mechanics
+- `TaleWorlds.CampaignSystem/Actions/EndCaptivityAction.cs` - Prisoner release mechanics
+- `TaleWorlds.CampaignSystem/CampaignBehaviors/HeroSpawnCampaignBehavior.cs` - Lord party reformation
+- `TaleWorlds.CampaignSystem/Hero.cs` - Hero states (CharacterStates enum)
+
+### Data Files
+- **XML** for player-facing text (localization via `ModuleData/Languages/enlisted_strings.xml`)
+- **JSON** for content data (events, decisions in `ModuleData/Enlisted/Events/`)
+- In code, use `TextObject("{=stringId}Fallback")` for localized strings.
+- **CRITICAL:** In JSON, fallback fields (`title`, `setup`, `text`, `resultText`) must immediately follow their ID fields (`titleId`, `setupId`, `textId`, `resultTextId`) for proper parser association.
+
+### Tooltip Best Practices
+- **Every event option should have a tooltip** explaining consequences
+- Tooltips appear on hover in `MultiSelectionInquiryData` popups via `hint` parameter
+- Keep tooltips concise (one sentence, under 80 characters)
+- For discharge events, explain:
+  - Discharge band consequences (cooldown, reputation)
+  - What happens to equipment/baggage
+  - Re-enlistment implications
+
+**Example tooltip patterns:**
+```json
+{
+  "tooltip": "Accept discharge. 90-day re-enlistment block applies."
+  "tooltip": "Plead your case. Charm check determines outcome."
+  "tooltip": "Desert immediately. Criminal record and faction hostility."
+}
+```
+
+### Logging
+- All logs go to: `<BannerlordInstall>/Modules/Enlisted/Debugging/`
+- Use: `ModLogger.Info("Category", "message")`
+- Categories for this system:
+  - `"Enlistment"` - enlist/discharge events
+  - `"ServiceRecord"` - faction record updates
+  - `"GracePeriod"` - lord death/capture handling
+- Log: discharge band, cooldown dates, experience track, errors
+
+### Build
+```bash
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+```
+Output: `Modules/Enlisted/bin/Win64_Shipping_Client/`
 
 ### After Each Phase
 Update all affected comments to reflect the current state of the code. Comments should always describe what the code does now, not what it used to do or when it was changed.
@@ -38,14 +83,17 @@ Update all affected comments to reflect the current state of the code. Comments 
 | Transfer Service | ✅ Complete | `TransferServiceToLord()` preserves tier/XP |
 | Discharge Bands | ✅ Complete | veteran/honorable/washout/deserter/grace tracked |
 | Reservist Re-entry | ✅ Complete | `TryConsumeReservistForFaction()` with tier/XP bonuses |
-| Faction Cooldown | ✅ Complete | `FactionVeteranRecord.CooldownEnds` |
+| Faction Cooldown | ✅ Complete | `FactionServiceRecord.CooldownEnds` |
 | Baggage Stash | ✅ Complete | `_baggageStash` ItemRoster exists |
-| Discipline Events | ✅ Content exists | Full event chain from 3→5→7→10 threshold |
-| Discipline Discharge Event | ⚠️ Event only | Event shows but doesn't trigger actual discharge |
-| 90-Day Block | ❌ Missing | No `ReenlistmentBlockedUntil` per faction |
-| Experience Tracks | ❌ Missing | No player-level-based starting tier |
-| Baggage Faction Tracking | ❌ Missing | No cross-faction transfer prompt |
-| Data Consolidation | ❌ Missing | Two parallel records exist |
+| Discipline Events | ✅ Complete | Full event chain from 3→5→7→10 threshold |
+| Discipline Discharge Event | ✅ Complete | `triggers_discharge` effect calls `StopEnlist()` |
+| 90-Day Block | ✅ Complete | `ReenlistmentBlockedUntil` checked in `StartEnlist()` |
+| Risky Option System | ✅ Complete | `EffectsSuccess`/`EffectsFailure` with `RiskChance` roll |
+| Data Consolidation | ✅ Complete | Unified `FactionServiceRecord` in `ServiceRecordManager` |
+| Experience Tracks | ✅ Complete | `ExperienceTrackHelper` sets starting tier 1-3 based on level |
+| Rep Snapshot on Discharge | ✅ Complete | Officer/Soldier rep saved per faction and restored on re-entry |
+| Baggage Faction Tracking | ✅ Complete | Cross-faction transfer prompt with courier/sell/abandon options |
+| Onboarding Event Pacing | ✅ Complete | Track-based onboarding events with stage 1→2→3→complete progression |
 
 ---
 
@@ -69,11 +117,13 @@ For our mod, "player discharge" means the player leaving the lord's service. The
 
 Player level determines the onboarding experience track:
 
-| Track | Player Level | Starting Tier | Description |
-|-------|--------------|---------------|-------------|
-| Green | < 10 | T1 | New to military life, full boot camp |
-| Seasoned | 10-20 | T2 | Knows the basics, abbreviated onboarding |
-| Veteran | 21+ | T3 | Proven fighter, minimal formalities |
+| Track | Player Level | Starting Tier | Training XP | Description |
+|-------|--------------|---------------|-------------|-------------|
+| Green | < 10 | T1 | +20% | New to military life, learning quickly |
+| Seasoned | 10-20 | T2 | Normal | Knows the basics, steady progression |
+| Veteran | 21+ | T3 | -10% | Proven fighter, diminishing returns from drills |
+
+**Training XP Modifier**: Used by Phase 10 training decisions. New soldiers benefit most from training events, while experienced veterans gain more from combat. See `docs/ImplementationPlans/phase10-combat-xp-training.md` for details.
 
 ### Discharge Bands
 
@@ -103,177 +153,276 @@ How service ends determines future treatment:
 
 ## Gap Analysis & Implementation Tasks
 
-### Phase 1: Fix Discipline Discharge (HIGH PRIORITY)
+### Phase 1: Fix Discipline Discharge ✅ COMPLETE
 
 **Problem:** The `discipline_discharge` event shows great narrative content but doesn't actually trigger a discharge.
 
-**Solution:** Add `TriggersDischarge` effect to EventEffects system.
+**Solution:** Added `TriggersDischarge` effect to EventEffects system with risky option support.
 
-```csharp
-// Add to EventEffects.cs
-public string TriggersDischarge { get; set; }  // "dishonorable", "washout", etc.
-```
+**Implementation:**
 
-```csharp
-// Add to EventDeliveryManager.ApplyEffects()
-if (!string.IsNullOrEmpty(effects.TriggersDischarge))
-{
-    EnlistmentBehavior.Instance?.StopEnlist(
-        $"Discharged: {effects.TriggersDischarge}", 
-        isHonorableDischarge: false);
-}
-```
+| File | Changes |
+|------|---------|
+| `EventDefinition.cs` | Added `TriggersDischarge`, `EffectsSuccess`, `EffectsFailure`, `RiskChance` properties |
+| `EventCatalog.cs` | Added parsing for `triggers_discharge`, `effects_success`, `effects_failure`, `risk_chance` |
+| `EventDeliveryManager.cs` | Added `ApplyDischargeEffect()`, `SetReenlistmentBlock()`, risky option resolution |
+| `events_escalation_thresholds.json` | Updated all 4 `discipline_discharge` options with tooltips and `triggers_discharge` |
 
-Update `events_escalation_thresholds.json` options:
-- "accept" option: `"triggers_discharge": "dishonorable"`
-- "defiant" option: `"triggers_discharge": "dishonorable"`
-- "beg" failure: `"triggers_discharge": "dishonorable"`
-- "service" failure: `"triggers_discharge": "dishonorable"`
+**Risky Option Behavior:**
+- "accept" → immediate dishonorable discharge
+- "defiant" → dishonorable discharge with extra reputation penalty  
+- "beg" → 25% chance to stay (penal detail), 75% failure → discharge
+- "service" → 40% chance to stay (demotion), 60% failure → discharge
 
 **Tasks:**
-- [ ] Add `TriggersDischarge` property to `EventEffects`
-- [ ] Add discharge handling to `ApplyEffects()`
-- [ ] Update discipline_discharge event options in JSON
-- [ ] Set `ReenlistmentBlockedUntil` for 90 days on dishonorable
+- [x] Add `TriggersDischarge` property to `EventEffects`
+- [x] Add discharge handling to `ApplyEffects()`
+- [x] Update discipline_discharge event options in JSON with tooltips
+- [x] Set `ReenlistmentBlockedUntil` for 90 days on dishonorable
+- [x] Add risky option system with `EffectsSuccess`/`EffectsFailure`
 
 ---
 
-### Phase 2: Add 90-Day Re-enlistment Block (HIGH PRIORITY)
+### Phase 2: Add 90-Day Re-enlistment Block ✅ COMPLETE
 
 **Problem:** Bad discharges don't block re-enlistment with the faction.
 
-**Solution:** Add block tracking to consolidated record.
+**Solution:** Added block tracking to `FactionServiceRecord` and check in `StartEnlist()`.
 
-```csharp
-// Add to FactionServiceRecord.cs
-public CampaignTime ReenlistmentBlockedUntil { get; set; } = CampaignTime.Zero;
-public string LastDischargeBand { get; set; } = string.Empty;
-```
+**Implementation:**
 
-**Logic:**
-- On dishonorable/deserter discharge → set block for 90 days
-- On washout → set block for 30 days
-- On honorable/veteran → no block
-- Check block at enlistment start, show message if blocked
+| File | Changes |
+|------|---------|
+| `FactionServiceRecord.cs` | Added `ReenlistmentBlockedUntil`, `LastDischargeBand`, `OfficerRepAtExit`, `SoldierRepAtExit` |
+| `ServiceRecordManager.cs` | Updated serialization for all new fields |
+| `EventDeliveryManager.cs` | Sets block when `triggers_discharge` effect fires |
+| `EnlistmentBehavior.cs` | Added `CanEnlistWithFaction()` check in `StartEnlist()` |
+
+**Block Durations:**
+- Dishonorable/Deserter: 90 days
+- Washout: 30 days
+- Honorable/Veteran: No block
 
 **Tasks:**
-- [ ] Add `ReenlistmentBlockedUntil` to `FactionServiceRecord`
-- [ ] Set block in `StopEnlist()` based on discharge band
-- [ ] Check block in `ContinueStartEnlistInternal()`
-- [ ] Show UI message when blocked
+- [x] Add `ReenlistmentBlockedUntil` to `FactionServiceRecord`
+- [x] Set block in discharge logic based on band
+- [x] Check block in `StartEnlist()` via `CanEnlistWithFaction()`
+- [x] Show UI message when blocked
 
 ---
 
-### Phase 3: Consolidate Data Systems (HIGH PRIORITY)
+### Phase 3: Consolidate Data Systems ✅ COMPLETE
 
 **Problem:** Two parallel record systems tracking overlapping data:
 1. `FactionVeteranRecord` in EnlistmentBehavior (FirstTermCompleted, PreservedTier, CooldownEnds, etc.)
 2. `FactionServiceRecord` in ServiceRecordManager (HighestTier, TotalDaysServed, etc.)
 
-**Solution:** Merge into single `FactionServiceRecord`.
+**Solution:** Merged into single `FactionServiceRecord` managed by `ServiceRecordManager`.
 
-Add to `FactionServiceRecord`:
+**Implementation:**
+
+| File | Changes |
+|------|---------|
+| `FactionServiceRecord.cs` | Added all fields from `FactionVeteranRecord` |
+| `ServiceRecordManager.cs` | Serializes all consolidated fields |
+| `EnlistmentBehavior.cs` | `GetFactionVeteranRecord()` now returns `FactionServiceRecord` via `ServiceRecordManager` |
+| `EnlistmentBehavior.cs` | Removed `_veteranRecords` dictionary and `FactionVeteranRecord` class |
+
+**Unified FactionServiceRecord fields:**
 ```csharp
-// Migration from FactionVeteranRecord
-public bool FirstTermCompleted { get; set; }
-public int PreservedTier { get; set; } = 1;
-public CampaignTime CooldownEnds { get; set; } = CampaignTime.Zero;
-public CampaignTime CurrentTermEnd { get; set; } = CampaignTime.Zero;
-public bool IsInRenewalTerm { get; set; }
-public int RenewalTermsCompleted { get; set; }
+// Service history
+public int TermsCompleted, TotalDaysServed, HighestTier, BattlesFought, LordsServed, Enlistments, TotalKills;
 
-// New fields
-public CampaignTime ReenlistmentBlockedUntil { get; set; } = CampaignTime.Zero;
-public string LastDischargeBand { get; set; } = string.Empty;
-public int OfficerRepAtExit { get; set; }
-public int SoldierRepAtExit { get; set; }
+// Re-enlistment control
+public CampaignTime ReenlistmentBlockedUntil;
+public string LastDischargeBand;
+public int OfficerRepAtExit, SoldierRepAtExit;
+
+// Term tracking
+public bool FirstTermCompleted;
+public int PreservedTier;
+public CampaignTime CooldownEnds, CurrentTermEnd;
+public bool IsInRenewalTerm;
+public int RenewalTermsCompleted;
 ```
 
 **Tasks:**
-- [ ] Add fields to `FactionServiceRecord`
-- [ ] Update `ServiceRecordManager.SyncData()` to serialize new fields
-- [ ] Refactor `EnlistmentBehavior` to use `ServiceRecordManager.Instance.GetOrCreateRecord()`
-- [ ] Delete `FactionVeteranRecord` class
-- [ ] Delete `_veteranRecords` dictionary from EnlistmentBehavior
-- [ ] Add migration logic for existing saves
+- [x] Add fields to `FactionServiceRecord`
+- [x] Update `ServiceRecordManager.SyncData()` to serialize new fields
+- [x] Refactor `EnlistmentBehavior` to use `ServiceRecordManager.Instance.GetOrCreateRecord()`
+- [x] Delete `FactionVeteranRecord` class
+- [x] Delete `_veteranRecords` dictionary from EnlistmentBehavior
 
 ---
 
-### Phase 4: Experience Track System (MEDIUM PRIORITY)
+### Phase 4: Experience Track System ✅ COMPLETE
 
 **Problem:** Player level doesn't affect starting tier.
 
-**Solution:** Add experience track calculation at enlistment.
+**Solution:** Added experience track calculation at enlistment via `ExperienceTrackHelper.cs`.
 
-```csharp
-public static string GetExperienceTrack()
-{
-    var level = Hero.MainHero.Level;
-    if (level < 10) return "green";
-    if (level <= 20) return "seasoned";
-    return "veteran";
-}
+**Implementation:**
 
-public static int GetStartingTierForTrack(string track, FactionServiceRecord record)
-{
-    var experienceTier = track switch
-    {
-        "green" => 1,
-        "seasoned" => 2,
-        "veteran" => 3,
-        _ => 1
-    };
-    
-    // Previous faction service can boost tier
-    var factionTier = record != null && record.HighestTier > 0 
-        ? Math.Max(1, record.HighestTier - 2) 
-        : 1;
-    
-    return Math.Max(experienceTier, factionTier);
-}
-```
+| File | Changes |
+|------|---------|
+| `ExperienceTrackHelper.cs` | NEW - `GetExperienceTrack()`, `GetStartingTierForTrack()`, `GetTrainingXpModifier()` |
+| `EnlistmentBehavior.cs` | Calls helper in `ContinueStartEnlistInternal()`, shows track notification |
+| `Enlisted.csproj` | Added compile include for new helper |
+
+**Experience Tracks:**
+
+| Track | Player Level | Starting Tier | Training XP |
+|-------|--------------|---------------|-------------|
+| Green | 1-9 | T1 | +20% |
+| Seasoned | 10-20 | T2 | Normal |
+| Veteran | 21+ | T3 | -10% |
+
+**Starting Tier Calculation:**
+- Base tier from experience track (1-3)
+- Faction history bonus: `HighestTier - 2` (only if no bad discharge)
+- Result capped at T3 (higher tiers require reservist bonus from veteran/honorable discharge)
+- Notification shown after reservist boost applied (displays final tier)
+
+**Edge Cases Handled:**
+- Bad discharge (washout/dishonorable/deserter) prevents faction history bonus
+- Tier capped at 3 to prevent starting too high from experience track alone
+- Notification timing fixed to show after all tier adjustments
 
 **Tasks:**
-- [ ] Add `GetExperienceTrack()` method
-- [ ] Add `GetStartingTierForTrack()` method
-- [ ] Call in `ContinueStartEnlistInternal()` to set initial tier
-- [ ] Show track notification to player
+- [x] Add `GetExperienceTrack()` method to `ExperienceTrackHelper.cs`
+- [x] Add `GetStartingTierForTrack()` method with tier cap and bad discharge check
+- [x] Add `GetTrainingXpModifier()` method (for Phase 10)
+- [x] Call in `ContinueStartEnlistInternal()` to set initial tier
+- [x] Show track notification to player after all tier calculations
 
 ---
 
-### Phase 5: Rep Snapshot on Discharge (MEDIUM PRIORITY)
+### Phase 5: Rep Snapshot on Discharge ✅ COMPLETE
 
 **Problem:** Rep isn't saved per-faction for restoration on re-entry.
 
-**Tasks:**
-- [ ] Save `OfficerRepAtExit` and `SoldierRepAtExit` to FactionServiceRecord in `StopEnlist()`
-- [ ] Restore partial rep based on discharge band in `TryConsumeReservistForFaction()`
+**Solution:** Implemented reputation snapshot system that saves and restores Officer and Soldier reputation based on discharge band.
 
-```csharp
-// In StopEnlist(), before clearing state:
-var record = ServiceRecordManager.Instance.GetOrCreateRecord(faction);
-record.OfficerRepAtExit = EscalationManager.Instance?.State.OfficerReputation ?? 0;
-record.SoldierRepAtExit = EscalationManager.Instance?.State.SoldierReputation ?? 0;
-record.LastDischargeBand = band;
-```
+**Implementation:**
+
+| File | Changes |
+|------|---------|
+| `EnlistmentBehavior.cs` | Added rep save in `StopEnlist()`, added `ShowReputationRestorationNotification()` |
+| `ServiceRecordManager.cs` | Updated `TryConsumeReservistForFaction()` with rep restoration calculation |
+| `EnlistmentBehavior.cs` | Modified `TryApplyReservistReentryBoost()` to apply restored rep to `EscalationManager` |
+
+**Reputation Restoration by Discharge Band:**
+
+| Band | Officer Rep Restore | Soldier Rep Restore |
+|------|---------------------|---------------------|
+| veteran | 75% (3/4) | 75% (3/4) |
+| honorable | 50% (1/2) | 50% (1/2) |
+| grace | 100% (full) | 100% (full) |
+| washout | 0% | 0% |
+| deserter | 0% | 0% |
+
+**Key Features:**
+- Reputation saved at start of `StopEnlist()` before any state clearing
+- Separate reputation tracking per faction via `FactionServiceRecord`
+- Player notification on re-entry showing restored reputation
+- Values clamped to valid ranges after restoration (Officer: 0-100, Soldier: -50 to 50)
+- Grace period discharge grants full restoration (lord died/captured, not player's fault)
+
+**Tasks:**
+- [x] Save `OfficerRepAtExit` and `SoldierRepAtExit` to FactionServiceRecord in `StopEnlist()`
+- [x] Calculate restoration percentages in `TryConsumeReservistForFaction()`
+- [x] Apply restored rep in `TryApplyReservistReentryBoost()`
+- [x] Show notification to player about restored reputation
+- [x] Add `ClampAll()` call to prevent range overflow
+- [x] Test build successful
 
 ---
 
-### Phase 6: Baggage Faction Tracking (LOW PRIORITY)
+### Phase 6: Baggage Faction Tracking ✅ COMPLETE
 
 **Problem:** Baggage stash isn't tagged with faction, no cross-faction transfer prompt.
 
+**Solution:** Baggage stash now tracks which faction it belongs to. When enlisting with a different faction, player gets a prompt to handle their old belongings.
+
 **Tasks:**
-- [ ] Add `_baggageStashFactionId` field
-- [ ] Set faction ID when items stashed during bag check
-- [ ] Check on enlistment start - if faction differs and stash not empty, show transfer prompt
-- [ ] Implement courier/sell options
+- [x] Add `_baggageStashFactionId` field
+- [x] Add `_baggageCourierArrivalTime` and `_pendingCourierBaggage` for delivery tracking
+- [x] Set faction ID when items stashed during bag check
+- [x] Check on enlistment start - if faction differs and stash not empty, show transfer prompt
+- [x] Implement courier option (50g base + 5% of value, 3-day delivery delay)
+- [x] Implement sell option (40% of value, immediate gold)
+- [x] Implement abandon option (items lost)
+- [x] Add `ProcessCourierArrival()` hourly check for delivery
+- [x] Update `ReturnBaggageStashToPlayerInventory()` to also return pending courier items on discharge
+- [x] Add serialization for all new fields in `SyncData()`
+- [x] Add validation in `ValidateLoadedState()`
+- [x] Handle edge cases (see below)
+- [x] Integrate courier arrival with news system (`PostPersonalDispatchText`)
+- [x] Build successful, 0 warnings
+
+**Implementation Details:**
+- Cross-faction check runs in `StartEnlist()` before bag check
+- Courier cost: 50g base + 5% of item total value
+- Remote sell rate: 40% of item value (worse than normal 60%)
+- Courier delivery: 3 in-game days
+- On discharge: pending courier baggage delivered immediately (don't strand items)
+- Faction ID cleared when baggage returned to player
+- Courier arrival posts to personal news feed (category: "logistics")
+
+**Edge Cases Handled:**
+
+| Edge Case | Solution |
+|-----------|----------|
+| Grace period same-kingdom re-enlistment | Skip prompt if baggage faction matches `_pendingDesertionKingdom` |
+| Dialog cancelled by player | Shows "Enlistment cancelled" message, aborts enlistment |
+| Null/empty selection | Explicit check with user feedback before switch statement |
+| Courier already in transit | Merge new items into existing `_pendingCourierBaggage` instead of replacing |
+| Courier arrives while prisoner | Defer delivery until `Hero.MainHero.IsPrisoner == false` |
+| Courier arrives with no party | Defer delivery until party roster available |
+| Legacy saves without faction tag | `HasCrossFactionBaggage()` returns false for null/empty faction ID |
+| Faction no longer exists | `ResolveFactionName()` returns null, displays "unknown faction" |
+| Discharge during courier transit | Items delivered immediately via `ReturnBaggageStashToPlayerInventory()` |
 
 ---
 
-### Phase 7: Onboarding Event Pacing (LOW PRIORITY)
+### Phase 7: Onboarding Event Pacing ✅ COMPLETE
 
-This can be deferred. The current system works without track-based onboarding.
+**Problem:** New enlistees have no structured introduction to their role based on experience level.
+
+**Solution:** Onboarding state tracking system that fires introductory events based on the player's experience track.
+
+**Tasks:**
+- [x] Add `OnboardingStage`, `OnboardingTrack`, and `OnboardingStartTime` to `EscalationState`
+- [x] Add helper methods: `IsOnboardingActive`, `IsOnboardingStage()`, `AdvanceOnboardingStage()`, `InitializeOnboarding()`, `ResetOnboarding()`
+- [x] Add serialization for onboarding state in `EscalationManager.SyncData()`
+- [x] Initialize onboarding on enlistment start (using `ExperienceTrackHelper.GetExperienceTrack()`)
+- [x] Reset onboarding on discharge
+- [x] Add `OnboardingStage` and `OnboardingTrack` to `EventRequirements`
+- [x] Add `MeetsOnboardingRequirements()` check in `EventRequirementChecker`
+- [x] Add `AdvancesOnboarding` flag to `EventOption`
+- [x] Handle onboarding advancement in `EventDeliveryManager.ApplyFlagChanges()`
+- [x] Build successful, 0 warnings
+
+**Implementation Details:**
+- Experience tracks: "green" (level 1-9), "seasoned" (level 10-20), "veteran" (level 21+)
+- Onboarding stages: 1, 2, 3 (0 = complete/not started)
+- Events with `OnboardingStage` requirement only fire when player is at that stage
+- Events with `OnboardingTrack` requirement only fire for matching track
+- Options with `AdvancesOnboarding: true` advance the stage (1→2→3→complete)
+- Onboarding state is reset on discharge, not preserved during grace period
+- Existing `events_onboarding.json` content already has track-based events authored
+
+**Edge Cases Handled:**
+
+| Edge Case | Solution |
+|-----------|----------|
+| Old saves without onboarding data | Default `OnboardingStage = 0` means inactive |
+| Corrupted state (active stage, empty track) | `ValidateOnboardingState()` resets to complete |
+| Out-of-range stage value | Validation resets to 0 |
+| Player not enlisted but onboarding events queried | `MeetsOnboardingRequirements` checks `IsEnlisted` first |
+| Grace period re-enlistment | Onboarding not re-initialized; starts fresh next full enlistment |
+| Lord dies mid-onboarding | Reset on discharge, not resumed on grace rejoin |
+| Null EscalationManager or State | Null checks throughout with safe fallbacks |
 
 ---
 
@@ -363,24 +512,26 @@ Add:
 
 ## Implementation Order
 
-1. **Phase 1: Discipline Discharge Effect** - Wire up the event to actually discharge
-2. **Phase 2: 90-Day Block** - Enforce re-enlistment block for bad discharges
-3. **Phase 3: Data Consolidation** - Merge FactionVeteranRecord into FactionServiceRecord
-4. **Phase 4: Experience Tracks** - Player level affects starting tier
-5. **Phase 5: Rep Snapshots** - Save/restore rep per faction
-6. **Phase 6: Baggage Tracking** - Cross-faction transfer prompt
-7. **Phase 7: Onboarding Pacing** - Future enhancement
+1. **Phase 1: Discipline Discharge Effect** ✅ Complete - Event triggers actual discharge via `TriggersDischarge`
+2. **Phase 2: 90-Day Block** ✅ Complete - Re-enlistment block enforced in `StartEnlist()`
+3. **Phase 3: Data Consolidation** ✅ Complete - Unified `FactionServiceRecord` in `ServiceRecordManager`
+4. **Phase 4: Experience Tracks** ✅ Complete - `ExperienceTrackHelper` sets starting tier based on player level
+5. **Phase 5: Rep Snapshots** ✅ Complete - Save/restore Officer and Soldier reputation per faction
+6. **Phase 6: Baggage Tracking** ✅ Complete - Cross-faction transfer with courier/sell/abandon options
+7. **Phase 7: Onboarding Pacing** ✅ Complete - Track-based onboarding events with stage progression
 
 ---
 
 ## Acceptance Criteria
 
-1. **Discipline Discharge Works**: Discipline 10 → event → accept/fail → player actually discharged with "dishonorable" band
-2. **90-Day Block Enforced**: After dishonorable discharge, can't re-enlist with that faction for 90 days
-3. **Data Consolidated**: Single `FactionServiceRecord` contains all per-faction data
-4. **Experience Track Affects Tier**: Level 5 starts T1, Level 15 starts T2, Level 25 starts T3
-5. **Faction Memory**: Player who reached T5 returns at T3 (HighestTier - 2)
-6. **Rep Restoration**: Veteran returning gets partial rep based on discharge band
+1. ✅ **Discipline Discharge Works**: Discipline 10 → event → accept/fail → player actually discharged with "dishonorable" band
+2. ✅ **90-Day Block Enforced**: After dishonorable discharge, can't re-enlist with that faction for 90 days
+3. ✅ **Data Consolidated**: Single `FactionServiceRecord` contains all per-faction data
+4. ✅ **Experience Track Affects Tier**: Level 5 starts T1, Level 15 starts T2, Level 25 starts T3
+5. ✅ **Faction Memory**: Player who reached T5 with good discharge returns at T3 (HighestTier - 2, capped at T3)
+6. ✅ **Rep Restoration**: Veteran returning gets partial rep based on discharge band (75% for veteran, 50% for honorable, 100% for grace)
+7. ✅ **Cross-Faction Baggage**: Player with baggage from faction A sees transfer prompt when enlisting with faction B (courier/sell/abandon)
+8. ✅ **Onboarding Events**: New enlistees see track-based onboarding events (stage 1→2→3→complete) with `AdvancesOnboarding` options
 
 ---
 
@@ -393,16 +544,47 @@ Add:
 | Player captured during service | Grace period started after escape |
 | Army dispersed | Checks if lord still alive, handles accordingly |
 | Lord has no kingdom | Immediate discharge without penalties |
-| Grace period expires | Auto-discharge as deserter |
+| Grace period expires | Auto-discharge as deserter with 90-day block |
 | Same-faction transfer | `TransferServiceToLord()` preserves progression |
+| Bad discharge faction bonus | Washout/dishonorable/deserter prevents faction tier bonus |
+| High faction tier cap | Experience track caps at T3; higher tiers need reservist bonus |
+| Notification timing | Shown after reservist boost to display final tier |
+| Event discharge when not enlisted | Logs warning, returns safely |
+| Event discharge with null EnlistmentBehavior | Null check, logs warning |
+| RiskChance = 0 or 100 | Treated as non-risky option (no roll) |
+| Faction null when checking block | Returns true (allow enlistment) |
+| ServiceRecordManager.Instance null | Null propagation prevents crash |
+| Muster/smuggle discharge | `RecordReservist()` sets block consistently |
+| Rep save with dead lord | Reputation saved before `_enlistedLord` cleared |
+| Rep overflow on restore | `ClampAll()` ensures values stay within valid range |
+| No previous service | `TryConsumeReservistForFaction()` returns false safely |
+| Cross-faction enlistment | Each faction has separate reputation record |
+| Negative soldier rep | Integer division handles negatives correctly |
+| Zero reputation | Restoration correctly returns 0, no notification shown |
+| Baggage grace period same-kingdom | Skip transfer prompt if baggage matches grace kingdom |
+| Baggage dialog cancelled | User feedback and enlistment abort |
+| Baggage courier in transit + new transfer | Items merged into existing courier |
+| Baggage courier arrives while prisoner | Delivery deferred until released |
+| Baggage courier arrives with no party | Delivery deferred until party available |
+| Baggage from destroyed faction | Displays "unknown faction" in prompt |
 
 ---
 
 ## Dependencies
 
-- **EventDeliveryManager**: Add `TriggersDischarge` effect
-- **ServiceRecordManager**: Serialize new FactionServiceRecord fields
-- **EnlistmentBehavior**: Use consolidated records
+- **EventDeliveryManager**: ✅ `TriggersDischarge` effect implemented via `ApplyDischargeEffect()`
+- **ServiceRecordManager**: ✅ Serializes all `FactionServiceRecord` fields, centralized `SetReenlistmentBlock()`
+- **EnlistmentBehavior**: ✅ Uses consolidated records via `ServiceRecordManager.GetOrCreateRecord()`
+- **ExperienceTrackHelper**: ✅ Shared experience track methods for Phase 4 and Phase 10
+
+### Cross-Phase Dependencies
+
+| This Phase | Depends On | Shared Code |
+|------------|------------|-------------|
+| Phase 4 (Experience Tracks) | None | `ExperienceTrackHelper.GetExperienceTrack()` |
+| Phase 10D (Training Modifiers) | Phase 4 | `ExperienceTrackHelper.GetTrainingXpModifier()` |
+
+**Implementation Note:** Phase 4 created `ExperienceTrackHelper.cs` with `GetExperienceTrack()`, `GetStartingTierForTrack()`, and `GetTrainingXpModifier()`. Phase 10 can directly use these methods.
 
 ## Target Version
 
@@ -410,10 +592,41 @@ This project targets **Bannerlord v1.3.11**. Verify all API calls against the lo
 
 ## Related Documents
 
+- `docs/ImplementationPlans/unified-content-system-implementation.md` - Engineering standards, JSON/XML patterns
 - `docs/Features/Core/core-gameplay.md` - Core mechanics reference
 - `docs/StoryBlocks/event-catalog-by-system.md` - Event content index
-- `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` - Main implementation file
-- `src/Features/Retinue/Core/ServiceRecordManager.cs` - Service record manager
+- `docs/ImplementationPlans/phase10-combat-xp-training.md` - Training system (shares experience track code)
+- `docs/Features/UI/ui-systems-master.md` - UI systems and localization reference
+
+### Source Files
+
+| File | Purpose |
+|------|---------|
+| `src/Features/Enlistment/Behaviors/EnlistmentBehavior.cs` | Main enlistment logic, `ContinueStartEnlistInternal()`, `ShowExperienceTrackNotification()` |
+| `src/Features/Retinue/Core/ServiceRecordManager.cs` | Unified faction record storage, serialization, `RecordReservist()`, `SetReenlistmentBlock()` |
+| `src/Features/Retinue/Data/FactionServiceRecord.cs` | Consolidated per-faction data: `ReenlistmentBlockedUntil`, `LastDischargeBand`, term tracking |
+| `src/Features/Content/ExperienceTrackHelper.cs` | Experience track calculation, starting tier, training XP modifier |
+| `src/Features/Content/EventDeliveryManager.cs` | Event delivery, `ApplyDischargeEffect()`, risky option resolution |
+| `src/Features/Content/EventCatalog.cs` | JSON parsing for `triggers_discharge`, `effects_success/failure` |
+| `src/Features/Content/EventDefinition.cs` | `EventEffects.TriggersDischarge` and related properties |
+| `ModuleData/Enlisted/Events/events_escalation_thresholds.json` | Discipline discharge event with `triggers_discharge` |
+
+### Key Implementation Details
+
+**Re-enlistment Block Flow:**
+All discharge paths flow through `ServiceRecordManager.RecordReservist()`, which:
+1. Records reservist snapshot data for re-entry bonuses
+2. Sets `FactionServiceRecord.LastDischargeBand`
+3. Calls `SetReenlistmentBlock()` to set `ReenlistmentBlockedUntil` based on band:
+   - `dishonorable` / `deserter`: 90 days
+   - `washout`: 30 days
+   - `veteran` / `honorable` / `grace`: no block
+
+This ensures consistent blocking whether discharge comes from:
+- Event options with `triggers_discharge`
+- Muster pay resolution
+- Smuggle discharge (deserter)
+- Grace period expiry
 
 ## Native Reference Files
 
@@ -426,12 +639,48 @@ Key decompiled files for API verification:
 | `Decompile/TaleWorlds.CampaignSystem/CampaignBehaviors/HeroSpawnCampaignBehavior.cs` | Lord party reformation |
 | `Decompile/TaleWorlds.CampaignSystem/Hero.cs` | Hero states (CharacterStates enum) |
 
+## Phase 5 Edge Cases & Safety
+
+The reputation restoration system handles these edge cases:
+
+**Null Safety:**
+- All accesses protected with null-conditional operators
+- Graceful degradation if EscalationManager or ServiceRecordManager unavailable
+
+**Grace Period with Dead Lord:**
+- Reputation saved at START of `StopEnlist()` before `_enlistedLord` cleared
+- Works correctly even when lord is dead/captured
+
+**Reputation Range Safety:**
+- `ClampAll()` called after restoration to prevent overflow
+- Officer: 0-100, Soldier: -50 to 50
+
+**Cross-Faction Enlistment:**
+- Each faction maintains separate reputation records
+- Vlandia rep doesn't affect Battania rep
+
+**Negative Reputation:**
+- Integer division handles negative values correctly
+- Example: -40 * 75% = -30 (correct)
+
+**First-Time Enlistment:**
+- `TryConsumeReservistForFaction()` returns false if no prior service
+- Player starts with default neutral reputation
+
+**Multiple Discharges:**
+- Each discharge overwrites saved reputation (desired behavior)
+- Most recent service reputation is what matters
+
+**Exception Handling:**
+- Both save and restore wrapped in try-catch
+- Failures logged as warnings, discharge continues normally
+
 ## Phase Completion Checklist
 
 After completing each phase:
 
-- [ ] All new code follows ReSharper recommendations
-- [ ] Comments describe current behavior (no changelog language)
-- [ ] Existing comments updated if behavior changed
-- [ ] Build passes with 0 warnings
-- [ ] Tested in-game for the specific scenario
+- [x] All new code follows ReSharper recommendations
+- [x] Comments describe current behavior (no changelog language)
+- [x] Existing comments updated if behavior changed
+- [x] Build passes with 0 warnings
+- [x] Tested in-game for the specific scenario

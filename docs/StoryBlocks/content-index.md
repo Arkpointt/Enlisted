@@ -15,11 +15,14 @@ Master list of all narrative content. Reference the [Event Catalog](event-catalo
 | Category | Count | Description |
 |----------|-------|-------------|
 | **Orders** | 17 | Military directives from chain of command (6 T1-T3, 6 T4-T6, 5 T7-T9) |
-| **Decisions** | 31 | Player-initiated choices from Camp Hub with costs and risks |
+| **Decisions** | 34 | Player-initiated choices from Camp Hub with costs and risks |
 | **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
 | **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement) |
 | **Phase 5 Samples** | 9 | NEW SCHEMA v2 sample events for testing (3 scout, 2 muster, 4 camp) |
-| **Total** | **172** | Full content catalog (includes training chain) |
+| **Phase 10 Training** | 3 | NEW weapon-aware training decisions (combat drill, weapon spec, lead drill) |
+| **Total** | **176** | Full content catalog (includes training chain) |
+
+**Phase 10 Training Decisions**: 3 new training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for weapon-aware training. See `docs/ImplementationPlans/phase10-combat-xp-training.md` for implementation details.
 
 **Phase 5 Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
 
@@ -97,7 +100,7 @@ Some orders have severe failure penalties beyond reputation loss:
 | `dec_rest_extended` | Extended Rest | You need real sleep, not just a nap. | Rest |
 | `dec_seek_treatment` | Seek Treatment | The surgeon's tent. Time to deal with this properly. | Gold, Medical Risk, HP |
 
-### Training (6)
+### Training (9)
 
 | ID | Name | Premise | Skill Check | Base Risk | Outcomes |
 |----|------|---------|-------------|-----------|----------|
@@ -107,6 +110,9 @@ Some orders have severe failure penalties beyond reputation loss:
 | `dec_study_tactics` | Study Tactics | Borrow a map, think about formations. | Tactics | 0% | +XP. Tactics 60+: bonus insight |
 | `dec_practice_medicine` | Practice Medicine | Offer to help the surgeon with simple cases. | Medicine | 0% | +XP. Medicine 40+: required |
 | `dec_train_troops` | Train the Men | Take recruits through drills. | Leadership | 20% injury | **Troop XP**. Leadership 80+: no deaths |
+| `dec_combat_drill` | Combat Drill | Request extra drill time with the sergeant. (Phase 10) | — | 0% | **Equipped weapon XP** or weakest skill |
+| `dec_weapon_specialization` | Weapon Specialization | Focus training on your equipped weapon. (Phase 10) | — | 0% | **Dynamic XP** based on equipped weapon |
+| `dec_lead_drill` | Lead Drill Practice | Lead drill practice for younger soldiers. (Phase 10, T7+) | Leadership | 0% | **Troop XP**, Officer/Soldier Rep |
 
 ### Social (6)
 
@@ -199,7 +205,7 @@ Triggered during the 12-day muster cycle. See `quartermaster-dialogue-implementa
 
 | ID | Trigger | Name | Skill Check | Outcome |
 |----|---------|------|-------------|---------|
-| `evt_muster_ration_issued` | Muster + T1-T4 | Ration Issue | — | +1 Food (quality by QM Rep) |
+| `evt_muster_ration_issued` | Muster + T1-T6 | Ration Issue | — | +1 Food (quality by QM Rep) |
 | `evt_muster_ration_denied` | Muster + Supply <50% | No Ration | — | Player keeps old ration, warning |
 | `evt_baggage_clear` | Muster + 30% chance | Baggage Clear | — | Pass inspection |
 | `evt_baggage_lookaway` | Contraband + QM 65+ | QM Looks Away | — | No penalty (favor used) |
@@ -365,6 +371,12 @@ Events triggered by personal food inventory or company supply status. See `playe
 
 ## Map Incidents (45 total)
 
+**Implementation Status**: ✅ **System Complete** - MapIncidentManager delivers incidents during battle end, settlement entry/exit, and siege operations. 7 sample incidents implemented (3 battle, 4 settlement).
+
+**Sample Files**:
+- `ModuleData/Enlisted/Events/incidents_battle.json` - 3 battle incidents
+- `ModuleData/Enlisted/Events/incidents_settlement.json` - 4 settlement incidents
+
 ### LeavingBattle (11)
 
 | ID | Name | Premise | Skill Check | Options | Systems |
@@ -486,7 +498,7 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 | Category | Count | JSON File | Status |
 |----------|-------|-----------|--------|
 | Orders | 17 | `orders_catalog.json` | Indexed |
-| Decisions | 30 | `decisions_catalog.json` | Indexed |
+| Decisions | 34 | `decisions_catalog.json` + `events_training.json` | Indexed |
 | Events - Escalation | 14 | `events_escalation.json` | Indexed |
 | Events - Crisis | 5 | `events_crisis.json` | Indexed |
 | Events - Role | 41 | `events_role_*.json` | Indexed |
@@ -494,7 +506,7 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 | Events - Food/Supply | 10 | `events_food_supply.json` | Indexed |
 | Events - Muster | 6 | `events_muster.json` | Indexed |
 | Map Incidents | 45 | `incidents_*.json` | Indexed |
-| **Total** | **176** | — | — |
+| **Total** | **180** | — | — |
 
 ### By Trigger
 
@@ -529,16 +541,21 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 
 ### Implementation Status
 
-**Phase 6 Complete**: Intelligent event selection system implemented.
+**Phase 8 Complete**: Advanced content features (flags, chain events, reward choices) implemented.  
+**Phase 9B Complete**: Map incidents system implemented.
 
 | Component | File | Status |
 |-----------|------|--------|
-| Event Catalog | `EventCatalog.cs` | ✅ Loads events from JSON |
-| Event Delivery | `EventDeliveryManager.cs` | ✅ UI popups with options |
-| Requirement Checking | `EventRequirementChecker.cs` | ✅ Tier/role/context/skills/traits/escalation |
+| Event Catalog | `EventCatalog.cs` | ✅ Loads events from JSON, context filtering |
+| Event Delivery | `EventDeliveryManager.cs` | ✅ UI popups, sub-choice popups, effect application |
+| Requirement Checking | `EventRequirementChecker.cs` | ✅ Tier/role/context/skills/traits/escalation/flags |
 | Weighted Selection | `EventSelector.cs` | ✅ Role 2×, context 1.5×, priority modifiers |
-| Pacing System | `EventPacingManager.cs` | ✅ 3-5 days between events |
-| Cooldown Tracking | `EscalationState.cs` | ✅ Per-event + one-time event persistence |
+| Pacing System | `EventPacingManager.cs` | ✅ 3-5 days between events, chain event scheduling |
+| Map Incidents | `MapIncidentManager.cs` | ✅ Battle/settlement/siege context events with cooldowns |
+| Cooldown Tracking | `EscalationState.cs` | ✅ Per-event + one-time event persistence + flags |
+| Flag System | `EscalationState.cs` | ✅ ActiveFlags with duration, flag conditions |
+| Chain Events | `EscalationState.cs` | ✅ PendingChainEvents with delay scheduling |
+| Reward Choices | `EventDefinition.cs` | ✅ RewardChoices class, sub-option parsing |
 
 ### Next Steps
 
@@ -547,5 +564,12 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 3. ~~Implement event/incident selection in code~~ ✅ Phase 6 complete
 4. Playtest frequency and balance (Phase 7)
 5. Add more content events to catalog
-6. Implement map incidents (deferred)
+6. ~~Implement map incidents~~ ✅ **Phase 9B Complete** - 7 sample incidents, context-based delivery
+7. ~~Implement ration exchange~~ ✅ **Phase 9C Complete**
+8. ~~Implement baggage check~~ ✅ **Phase 9D Complete** - Contraband inspection at muster
+9. ~~Implement event context in news~~ ✅ **Phase 9E Complete**
+10. Implement weapon-aware training → **Phase 10A** (see `phase10-combat-xp-training.md`)
+11. Implement robust troop training → **Phase 10B** (see `phase10-combat-xp-training.md`)
+12. Implement XP feedback in news → **Phase 10C** (see `phase10-combat-xp-training.md`)
+13. Implement experience track modifiers → **Phase 10D** (see `phase10-combat-xp-training.md`)
 

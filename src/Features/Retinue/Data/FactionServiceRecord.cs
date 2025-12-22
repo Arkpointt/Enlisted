@@ -1,4 +1,5 @@
 ﻿using System;
+using TaleWorlds.CampaignSystem;
 
 namespace Enlisted.Features.Retinue.Data
 {
@@ -37,6 +38,40 @@ namespace Enlisted.Features.Retinue.Data
 
         /// <summary>Enemies killed while serving this faction.</summary>
         public int TotalKills { get; set; }
+
+        // Re-enlistment control fields (used by discharge system)
+
+        /// <summary>Campaign time when re-enlistment block expires. Zero means no block.</summary>
+        public CampaignTime ReenlistmentBlockedUntil { get; set; } = CampaignTime.Zero;
+
+        /// <summary>Band of the most recent discharge: "veteran", "honorable", "washout", "dishonorable", "deserter", "grace".</summary>
+        public string LastDischargeBand { get; set; } = string.Empty;
+
+        /// <summary>Officer reputation at time of last discharge. Used for partial restoration on re-enlistment.</summary>
+        public int OfficerRepAtExit { get; set; }
+
+        /// <summary>Soldier reputation at time of last discharge. Used for partial restoration on re-enlistment.</summary>
+        public int SoldierRepAtExit { get; set; }
+
+        // Term tracking fields (migrated from FactionVeteranRecord)
+
+        /// <summary>Whether the player has completed the initial full term with this faction.</summary>
+        public bool FirstTermCompleted { get; set; }
+
+        /// <summary>Preserved military tier from last service. Restored on re-enlistment after cooldown.</summary>
+        public int PreservedTier { get; set; } = 1;
+
+        /// <summary>Campaign time when the 6-month cooldown period ends after honorable discharge.</summary>
+        public CampaignTime CooldownEnds { get; set; } = CampaignTime.Zero;
+
+        /// <summary>Campaign time when the current service term ends.</summary>
+        public CampaignTime CurrentTermEnd { get; set; } = CampaignTime.Zero;
+
+        /// <summary>Whether the player is currently in a renewal term (post-first-term service).</summary>
+        public bool IsInRenewalTerm { get; set; }
+
+        /// <summary>Number of completed renewal terms after the first full term.</summary>
+        public int RenewalTermsCompleted { get; set; }
 
         public FactionServiceRecord()
         {

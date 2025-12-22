@@ -66,6 +66,12 @@ namespace Enlisted.Features.Content
                 {
                     return false;
                 }
+                
+                // Check onboarding requirements (stage and track match)
+                if (!MeetsOnboardingRequirements(requirements))
+                {
+                    return false;
+                }
 
                 return true;
             }
@@ -240,6 +246,56 @@ namespace Enlisted.Features.Content
                 _ => 0
             };
         }
+        
+        /// <summary>
+        /// Checks if the current onboarding state matches the event's requirements.
+        /// Events with OnboardingStage set are only eligible when the player is at that stage.
+        /// Events without OnboardingStage set are eligible regardless of onboarding state.
+        /// </summary>
+        private static bool MeetsOnboardingRequirements(EventRequirements requirements)
+        {
+            // No onboarding requirement = always eligible (not an onboarding event)
+            if (!requirements.OnboardingStage.HasValue)
+            {
+                return true;
+            }
+            
+            var escalation = EscalationManager.Instance?.State;
+            if (escalation == null)
+            {
+                return false;
+            }
+            
+            // Onboarding events require player to be actively enlisted
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment == null || !enlistment.IsEnlisted)
+            {
+                return false;
+            }
+            
+            // Check if player is at the required onboarding stage
+            if (!escalation.IsOnboardingStage(requirements.OnboardingStage.Value))
+            {
+                return false;
+            }
+            
+            // Stale state check: onboarding active but track is empty = corrupted state, skip
+            if (escalation.IsOnboardingActive && string.IsNullOrEmpty(escalation.OnboardingTrack))
+            {
+                return false;
+            }
+            
+            // If a specific track is required, check that too
+            if (!string.IsNullOrEmpty(requirements.OnboardingTrack))
+            {
+                if (!string.Equals(escalation.OnboardingTrack, requirements.OnboardingTrack, StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
 
         /// <summary>
         /// Gets the player's current enlistment tier.
@@ -328,6 +384,35 @@ namespace Enlisted.Features.Content
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Checks if a trigger condition string is met.
+        /// Supports flag: and has_flag: prefixes for flag checking.
+        /// </summary>
+        public static bool CheckTriggerCondition(string condition)
+        {
+            if (string.IsNullOrEmpty(condition))
+            {
+                return true;
+            }
+
+            // Check for flag: prefix (e.g., "flag:qm_owes_favor")
+            if (condition.StartsWith("flag:", StringComparison.OrdinalIgnoreCase))
+            {
+                var flagName = condition.Substring(5).Trim();
+                return EscalationManager.Instance?.State?.HasFlag(flagName) ?? false;
+            }
+
+            // Check for has_flag: prefix (e.g., "has_flag:mutiny_joined")
+            if (condition.StartsWith("has_flag:", StringComparison.OrdinalIgnoreCase))
+            {
+                var flagName = condition.Substring(9).Trim();
+                return EscalationManager.Instance?.State?.HasFlag(flagName) ?? false;
+            }
+
+            // For other conditions, return true (handled elsewhere or not implemented yet)
+            return true;
         }
     }
 }

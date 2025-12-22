@@ -1,6 +1,7 @@
 using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
+using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -71,6 +72,9 @@ namespace Enlisted.Features.Content
                     return;
                 }
 
+                // Check for pending chain events first (highest priority)
+                CheckPendingChainEvents(escalationState);
+
                 // Initialize pacing window if never set
                 if (escalationState.NextNarrativeEventWindow == CampaignTime.Zero)
                 {
@@ -93,6 +97,45 @@ namespace Enlisted.Features.Content
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Error in event pacing daily tick", ex);
+            }
+        }
+
+        /// <summary>
+        /// Checks for and fires any chain events that are ready to be delivered.
+        /// Chain events have highest priority and fire before normal paced events.
+        /// Also clears pending event hints from the news system when chain events fire.
+        /// </summary>
+        private void CheckPendingChainEvents(EscalationState escalationState)
+        {
+            var readyEvents = escalationState.PopReadyChainEvents();
+
+            if (readyEvents.Count == 0)
+            {
+                return;
+            }
+
+            var deliveryManager = EventDeliveryManager.Instance;
+            if (deliveryManager == null)
+            {
+                ModLogger.Warn(LogCategory, "EventDeliveryManager not available, cannot deliver chain events");
+                return;
+            }
+
+            foreach (var eventId in readyEvents)
+            {
+                // Clear pending event context from news system when chain event fires
+                EnlistedNewsBehavior.Instance?.ClearPendingEvent(eventId);
+
+                var evt = EventCatalog.GetEvent(eventId);
+                if (evt != null)
+                {
+                    ModLogger.Info(LogCategory, $"Firing scheduled chain event: {eventId}");
+                    deliveryManager.QueueEvent(evt);
+                }
+                else
+                {
+                    ModLogger.Warn(LogCategory, $"Scheduled chain event not found: {eventId}");
+                }
             }
         }
 

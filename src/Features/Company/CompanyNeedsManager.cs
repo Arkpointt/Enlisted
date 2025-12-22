@@ -36,11 +36,11 @@ namespace Enlisted.Features.Company
             ModLogger.Debug(LogCategory, "Processing daily degradation...");
 
             // Initial base degradation rates are hard-coded while the configuration system is being expanded.
+            // NOTE: Supplies degradation is now handled by CompanySupplyManager with its hybrid 40/60 model.
             var readinessDegradation = 2;
             var equipmentDegradation = 3;
             var moraleDegradation = 1;
             var restDegradation = 4;
-            var suppliesDegradation = 5;
 
             // Check for accelerated degradation conditions
             bool isInCombat = army?.MapEvent != null;
@@ -51,8 +51,7 @@ namespace Enlisted.Features.Company
             if (isInCombat)
             {
                 equipmentDegradation += 10;
-                suppliesDegradation += 15;
-                ModLogger.Debug(LogCategory, "Army in combat: accelerated Equipment and Supplies degradation");
+                ModLogger.Debug(LogCategory, "Army in combat: accelerated Equipment degradation");
             }
 
             // Accelerated degradation from long marches
@@ -60,8 +59,7 @@ namespace Enlisted.Features.Company
             {
                 restDegradation += 5;
                 readinessDegradation += 5;
-                suppliesDegradation += 8;
-                ModLogger.Debug(LogCategory, "Army on long march: accelerated Rest, Readiness, and Supplies degradation");
+                ModLogger.Debug(LogCategory, "Army on long march: accelerated Rest and Readiness degradation");
             }
 
             // Low morale affects readiness
@@ -71,25 +69,22 @@ namespace Enlisted.Features.Company
                 ModLogger.Debug(LogCategory, "Low morale: accelerated Readiness degradation");
             }
 
-            // Apply degradation
+            // Apply degradation (Supplies handled separately by CompanySupplyManager)
             var oldReadiness = needs.Readiness;
             var oldEquipment = needs.Equipment;
             var oldMorale = needs.Morale;
             var oldRest = needs.Rest;
-            var oldSupplies = needs.Supplies;
 
             needs.SetNeed(CompanyNeed.Readiness, needs.Readiness - readinessDegradation);
             needs.SetNeed(CompanyNeed.Equipment, needs.Equipment - equipmentDegradation);
             needs.SetNeed(CompanyNeed.Morale, needs.Morale - moraleDegradation);
             needs.SetNeed(CompanyNeed.Rest, needs.Rest - restDegradation);
-            needs.SetNeed(CompanyNeed.Supplies, needs.Supplies - suppliesDegradation);
 
             // Log changes
             ModLogger.Debug(LogCategory, $"Readiness: {oldReadiness} -> {needs.Readiness} (-{readinessDegradation})");
             ModLogger.Debug(LogCategory, $"Equipment: {oldEquipment} -> {needs.Equipment} (-{equipmentDegradation})");
             ModLogger.Debug(LogCategory, $"Morale: {oldMorale} -> {needs.Morale} (-{moraleDegradation})");
             ModLogger.Debug(LogCategory, $"Rest: {oldRest} -> {needs.Rest} (-{restDegradation})");
-            ModLogger.Debug(LogCategory, $"Supplies: {oldSupplies} -> {needs.Supplies} (-{suppliesDegradation})");
 
             ModLogger.Info(LogCategory, "Daily degradation applied.");
         }

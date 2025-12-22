@@ -14,12 +14,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
 {
     /// <summary>
     /// Registers and triggers custom incidents used by Enlisted.
-    /// Currently handles the enlistment bag-check incident.
+    /// Handles enlistment bag-check incident and pay muster incident.
     /// </summary>
     public sealed class EnlistedIncidentsBehavior : CampaignBehaviorBase
     {
         private Incident _bagCheckIncident;
         private Incident _payMusterIncident;
+        
         public static EnlistedIncidentsBehavior Instance { get; private set; }
 
         public EnlistedIncidentsBehavior()

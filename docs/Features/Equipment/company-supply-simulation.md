@@ -2,8 +2,8 @@
 
 > **Purpose**: Document how Company Supply is calculated, consumed, and replenished to create realistic military logistics gameplay.
 
-**Last Updated**: December 18, 2025  
-**Status**: Design Phase
+**Last Updated**: December 22, 2025  
+**Status**: Implemented (Phase 9A)
 
 ---
 
@@ -16,7 +16,7 @@
 - Camp supplies (tents, rope, tools, firewood)
 - **Note:** Food is tracked separately by vanilla Bannerlord's native food system
 
-**Tracked Value:** `LanceNeedsState.Supplies` (0-100%)
+**Tracked Value:** `CompanyNeedsState.Supplies` (0-100%) — backed by `CompanySupplyManager`
 
 **Impact:**
 - < 30% = Cannot access equipment changes (quartermaster menu blocked)
@@ -610,38 +610,30 @@ If player has "quartermaster" duty:
 
 ## Implementation Checklist
 
-### **Phase 1: Basic Consumption**
+### **Core System (Implemented Dec 2025)**
 
-- [ ] Add daily supply consumption calculation
-- [ ] Hook into hourly tick for time-based updates
-- [ ] Apply activity and terrain multipliers
-- [ ] Display supply % in main menu
+- [x] Add daily supply consumption calculation (CompanySupplyManager.CalculateNonFoodConsumption)
+- [x] Hook into daily tick for time-based updates (EnlistmentBehavior.OnDailyTick)
+- [x] Apply activity and terrain multipliers (GetActivityMultiplier, GetTerrainMultiplier)
+- [x] Implement settlement auto-resupply (+3-5% per day in towns/castles)
+- [x] Add post-battle supply looting (+1% per 25 kills, capped at 6%)
+- [x] Implement battle supply losses (casualties, defeat penalty, siege penalty)
+- [x] Add low supply warnings via logging (50%, 30% thresholds)
+- [x] Block equipment menu at <30% supply (existing CompanyNeedsState logic)
+- [x] Save/load non-food supply value (SerializeCompanyNeeds)
+- [x] Handle edge cases (lord captured, on leave, grace period re-enlistment)
 
-### **Phase 2: Resupply Sources**
+### **Future Enhancements (Not Yet Implemented)**
 
-- [ ] Implement settlement auto-resupply (+5% per day)
+- [ ] Display supply % in main menu UI
 - [ ] Add foraging duty supply gains (+3-8%)
-- [ ] Add post-battle supply looting (+1-6%)
 - [ ] Add supply purchase from merchants
-
-### **Phase 3: Supply Losses**
-
-- [ ] Implement battle supply losses
 - [ ] Add special loss events (raid, fire, spoilage)
 - [ ] Track deserter supply theft
-
-### **Phase 4: Crisis Management**
-
-- [ ] Add low supply warnings (50%, 30%)
-- [ ] Block equipment menu at <30% supply
 - [ ] Implement critical supply events (<20%)
 - [ ] Add automatic desertion at <10%
-
-### **Phase 5: Integration**
-
 - [ ] Connect to QM rep system (efficiency bonus)
 - [ ] Connect to quartermaster duty (consumption reduction)
-- [ ] Add supply tracking to schedule activities
 - [ ] Add supply caravan events (every 7-14 days)
 
 ---
@@ -776,13 +768,20 @@ Result: Intense siege pressure, realistic logistics, required active management
 
 ---
 
-**Status**: Ready for review and implementation planning.
+**Status**: Core implementation complete (December 2025).
 
-**Next Steps:**
-1. Implement `CompanySupplyManager` class
-2. Hook into `LanceNeedsState.Supplies` property
-3. Add daily tick handler for non-food consumption
-4. Update duty completion handlers to add non-food supplies
-5. Test with various lord behaviors (siege, travel, peace)
-6. Balance consumption/resupply rates based on playtesting
+**Completed:**
+1. ✅ Implemented `CompanySupplyManager` class with hybrid 40/60 model
+2. ✅ Hooked into `CompanyNeedsState.Supplies` property
+3. ✅ Added daily tick handler for non-food consumption/resupply
+4. ✅ Added battle supply changes (losses and loot)
+5. ✅ Added save/load support for non-food supply value
+6. ✅ Edge cases handled (lord captured, grace period, leave)
+
+**Next Steps (Future Enhancements):**
+1. Update duty completion handlers to add non-food supplies (foraging duty)
+2. Add supply purchase option from quartermaster
+3. Test with various lord behaviors (siege, travel, peace)
+4. Balance consumption/resupply rates based on playtesting
+5. Add visual UI indicator for supply status
 

@@ -191,7 +191,9 @@ namespace Enlisted.Features.Content
                 Category = eventDef.Category,
                 Requirements = eventDef.Requirements,
                 Timing = eventDef.Timing,
-                Options = eventDef.Options
+                Options = eventDef.Options,
+                RequiredFlags = [],
+                BlockingFlags = []
             };
 
             // Log what we're getting from EventDefinition
@@ -201,7 +203,67 @@ namespace Enlisted.Features.Content
             // Since we can't access the raw JSON here, we'll use naming conventions
             ExtractDeliveryInfo(decision);
 
+            // Extract flags from event definition (stored in a custom property we'll add)
+            ExtractFlagsFromEvent(eventDef, decision);
+
             return decision;
+        }
+
+        /// <summary>
+        /// Extracts flag requirements from trigger conditions in the event definition.
+        /// Looks for flag: and has_flag: prefixes in trigger strings.
+        /// </summary>
+        private static void ExtractFlagsFromEvent(EventDefinition eventDef, DecisionDefinition decision)
+        {
+            // Extract required flags from "all" triggers
+            if (eventDef.TriggersAll != null)
+            {
+                foreach (var trigger in eventDef.TriggersAll)
+                {
+                    var flagName = ExtractFlagName(trigger);
+                    if (!string.IsNullOrEmpty(flagName))
+                    {
+                        decision.RequiredFlags.Add(flagName);
+                    }
+                }
+            }
+
+            // Extract blocking flags from "none" triggers
+            if (eventDef.TriggersNone != null)
+            {
+                foreach (var trigger in eventDef.TriggersNone)
+                {
+                    var flagName = ExtractFlagName(trigger);
+                    if (!string.IsNullOrEmpty(flagName))
+                    {
+                        decision.BlockingFlags.Add(flagName);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extracts the flag name from a trigger condition string.
+        /// Returns null if the trigger is not a flag condition.
+        /// </summary>
+        private static string ExtractFlagName(string trigger)
+        {
+            if (string.IsNullOrEmpty(trigger))
+            {
+                return null;
+            }
+
+            if (trigger.StartsWith("flag:", StringComparison.OrdinalIgnoreCase))
+            {
+                return trigger.Substring(5).Trim();
+            }
+
+            if (trigger.StartsWith("has_flag:", StringComparison.OrdinalIgnoreCase))
+            {
+                return trigger.Substring(9).Trim();
+            }
+
+            return null;
         }
 
         /// <summary>

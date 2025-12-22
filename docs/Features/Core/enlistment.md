@@ -56,11 +56,17 @@ Related systems (shipping):
 4. Player confirms -> Immediate enlistment with safety measures
 5. Player party becomes invisible (`IsVisible = false`) and Nameplate removed via Patch
 6. Begin following lord and receiving military benefits
-7. Bag check is deferred **1 in-game hour** after enlistment and fires as a native map incident. It only triggers when safe and falls back to the inquiry prompt.
+7. **Cross-Faction Baggage Check**: If player has belongings stored with a different faction, they're prompted to handle them before proceeding:
+   - **Send a courier (50g + 5% of value)**: Items arrive in 3 days, posted to personal news feed.
+   - **Sell remotely (40%)**: Immediate gold at reduced rate.
+   - **Abandon**: Items lost forever.
+8. Bag check is deferred **1 in-game hour** after enlistment and fires as a native map incident. It only triggers when safe and falls back to the inquiry prompt.
    - **Stow it all (50g)**: stashes all inventory + equipped items into the baggage train.
    - **Sell it all (60%)**: liquidates inventory + equipped items at **60%**.
    - **I'm keeping one thing (Roguery 30+)**: attempts to keep a single item.
-8. **Minor factions only:** Mirror the lord faction’s current wars to the player clan.
+   - Baggage is tagged with the current faction for cross-faction tracking.
+9. **Minor factions only:** Mirror the lord faction's current wars to the player clan.
+10. **Onboarding Events**: New enlistees receive introductory events based on their experience track (green/seasoned/veteran). Events fire in stages (1→2→3→complete) and certain options advance the stage.
 
 **Daily Service:**
 - Follow enlisted lord's army movements.

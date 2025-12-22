@@ -71,7 +71,7 @@ This plan unifies two interrelated systems:
 
 **Quartermaster System**
 - Equipment: Master-at-Arms loadout selection with pricing
-- Food: T1-T4 issued rations, T5+ officer provisions shop
+- Food: T1-T6 issued rations, T7+ commander retinue provisioning
 - Supply: Hybrid simulation (40% food observed, 60% non-food simulated)
 - Baggage Checks: Muster inspections with contraband detection
 
@@ -94,7 +94,7 @@ The muster is a central event that triggers multiple systems:
 ```
 OnMusterDay():
   1. Pay wages (existing)
-  2. Ration exchange (T1-T4) OR refresh provisions shop (T5+)
+  2. Ration exchange (T1-T6) OR refresh provisions shop (T7+)
   3. Baggage check (30% chance)
   4. Reset schedule cycle
   5. Fire muster-triggered events
@@ -211,13 +211,18 @@ JSON fallback fields MUST immediately follow their ID fields for the parser to a
 | "lance mates" | "comrades" | Player-facing text |
 | "the lance" | "the company" | Player-facing text |
 
+### Phase 8 Implementations ✅
+
+| Component | Location | Notes | Status |
+|-----------|----------|-------|--------|
+| **Flag System** | `EscalationState.cs`, `EventDeliveryManager.cs` | ActiveFlags dictionary, SetFlag/ClearFlag/HasFlag methods | ✅ Phase 8A |
+| **Chain Events with Delay** | `EscalationState.cs`, `EventDeliveryManager.cs`, `EventPacingManager.cs` | PendingChainEvents, ScheduleChainEvent, PopReadyChainEvents, daily tick | ✅ Phase 8B (Dec 22, 2025) |
+| **Reward Choices (Sub-Choices)** | `EventDefinition.cs`, `EventCatalog.cs`, `EventDeliveryManager.cs` | RewardChoices/RewardChoiceOption classes, ParseRewardChoices, ShowSubChoicePopup, ApplyRewards/ApplyCosts | ✅ Phase 8C (Dec 22, 2025) |
+
 ### NOT Yet Implemented ❌
 
 | Component | Why Needed | Notes | Implementation Plan |
 |-----------|------------|-------|---------------------|
-| **Reward Choices** | Sub-choice popups after main selection | 4 decisions use this | [Phase 8C](phase8-advanced-content-features.md#1-reward-choices-sub-choices) |
-| **Flag System** | `set_flags`, `clear_flags`, `flag_duration_days` | 16 JSON references | [Phase 8A](phase8-advanced-content-features.md#2-flag-system) |
-| **Chain Events** | `chains_to` with delayed follow-ups | 2 decisions use this | [Phase 8B](phase8-advanced-content-features.md#3-chain-events-with-delay) |
 | **Map Incidents** | Event delivery during travel | Hooks in EnlistedIncidentsBehavior | Future |
 | **Ration Exchange** | T1-T4 food at muster | Needs item tracking system | Future |
 | **Baggage Check** | Contraband search at muster | Complex system | Future |
@@ -725,7 +730,7 @@ Shows "All quiet in camp. No urgent matters." when nothing notable to report.
 
 ### 4.5 Deferred to Future Phases
 
-- **Ration Exchange (T1-T4)**: Needs design work for issued ration tracking
+- **Ration Exchange (T1-T6)**: Needs design work for issued ration tracking
 - **Baggage Check**: Complex system with contraband scanning
 - **Decision Menu Integration**: Optional camp menu decisions
 
@@ -1034,7 +1039,7 @@ ModLogger.Info("Event", $"Applied effects: {EffectsToString(option.Effects)}");
 - [ ] QM Rep 65+ gives 30% equipment discount
 - [ ] QM Rep -25 gives 40% equipment markup
 - [ ] Supply <30% blocks equipment menu
-- [ ] T1-T4 receive rations at muster (quality by QM Rep)
+- [ ] T1-T6 receive rations at muster (quality by QM Rep)
 - [ ] Rations are reclaimed when issuing new ones
 - [ ] T5+ can buy from provisions shop (150-200% of town)
 - [ ] Baggage checks fire 30% at muster
@@ -1056,8 +1061,11 @@ ModLogger.Info("Event", $"Applied effects: {EffectsToString(option.Effects)}");
 | Document | Purpose |
 |----------|---------|
 | `docs/ImplementationPlans/phase8-advanced-content-features.md` | **Phase 8: Flag system, chain events, reward choices** |
+| `docs/ImplementationPlans/phase9-logistics-simulation.md` | **Phase 9: Supply simulation, map incidents, rations, news context** |
+| `docs/ImplementationPlans/phase10-combat-xp-training.md` | **Phase 10: Combat XP, weapon-aware training, troop training** |
+| `docs/ImplementationPlans/onboarding-retirement-system.md` | **Onboarding: Experience tracks, discharge bands** |
 | `docs/Features/UI/ui-systems-master.md` | UI systems and localization reference |
-| `docs/StoryBlocks/content-index.md` | Master content catalog (176 pieces) |
+| `docs/StoryBlocks/content-index.md` | Master content catalog (176+ pieces) |
 | `docs/StoryBlocks/event-catalog-by-system.md` | Schema, design principles, systems |
 | `docs/Features/Equipment/Quartermaster_Master_Implementation.md` | QM-specific details |
 | `docs/Features/Equipment/player-food-ration-system.md` | Food/ration system |
@@ -1077,15 +1085,49 @@ ModLogger.Info("Event", $"Applied effects: {EffectsToString(option.Effects)}");
 | 5 | Content | JSON files, XML strings, loading | ✅ Complete |
 | 6 | Intelligence | Selection algorithm, pacing, weighting | ✅ Complete |
 | 7 | Polish | Logging, UI feedback, save/load, testing | Pending |
-| **8** | **Advanced Features** | **Flag system, chain events, reward choices** | **Ready** |
+| **8A** | **Flag System** | **set_flags, clear_flags, flag_duration_days** | **✅ Complete** |
+| **8B** | **Chain Events** | **chains_to, chain_delay_hours, scheduling** | **✅ Complete (Dec 22, 2025)** |
+| **8C** | **Reward Choices** | **Sub-choice popups, reward_choices** | **✅ Complete (Dec 22, 2025)** |
 
 **Phase 8 Details:** See [`phase8-advanced-content-features.md`](phase8-advanced-content-features.md) for implementation plans.
 
-| Sub-Phase | Feature | Estimated Time | Priority |
-|-----------|---------|----------------|----------|
-| 8A | Flag System | 2-3 hours | HIGH |
-| 8B | Chain Events with Delay | 1-2 hours | MEDIUM |
-| 8C | Reward Choices (Sub-choices) | 3-4 hours | HIGH |
+| Sub-Phase | Feature | Time | Status |
+|-----------|---------|------|--------|
+| 8A | Flag System | 2-3 hours | ✅ Complete (Dec 2025) |
+| 8B | Chain Events with Delay | ~1 hour | ✅ Complete (Dec 22, 2025) |
+| 8C | Reward Choices (Sub-choices) | ~1 hour | ✅ Complete (Dec 22, 2025) |
 
-**Estimated Timeline**: Phases build on each other. Complete Phase 1-3 before significant content authoring. Phase 4 can parallel Phase 3. Phase 5-7 depend on earlier phases.
+---
+
+**Phase 9: Logistics, Map Simulation & News Context**
+
+See [`phase9-logistics-simulation.md`](phase9-logistics-simulation.md) for full implementation plans.
+
+| Sub-Phase | Feature | Time | Status |
+|-----------|---------|------|--------|
+| 9A | Supply Simulation (40/60 hybrid) | 3-4 days | ✅ Complete |
+| 9B | Map Incidents (45 incidents) | 2-3 days | ✅ Complete |
+| 9C | Ration Exchange (muster food) | 2-3 days | ✅ Complete |
+| 9D | Baggage Check (contraband) | 3-4 days | ✅ Complete (Dec 22, 2025) |
+| 9E | Event Context in News | 2-3 days | ✅ Complete |
+
+---
+
+**Phase 10: Combat XP & Training Enhancements**
+
+See [`phase10-combat-xp-training.md`](phase10-combat-xp-training.md) for full implementation plans.
+
+| Sub-Phase | Feature | Time | Status |
+|-----------|---------|------|--------|
+| 10A | Weapon-Aware Training | 2-3 hours | ✅ Complete (Dec 22, 2025) |
+| 10B | Robust Troop Training | 1-2 hours | ✅ Complete (Dec 22, 2025) |
+| 10C | XP Feedback in News | 1-2 hours | ✅ Complete (Dec 22, 2025) |
+| 10D | Experience Track Modifiers | 1 hour | ✅ Complete (Dec 22, 2025) |
+
+**Key Dependencies:**
+- Phase 10A uses Phase 8C's `reward_choices` for weapon focus selection
+- Phase 10B reports training to Phase 9E's Personal Feed
+- Phase 10D shares experience track code with Onboarding System
+
+**Estimated Timeline**: Phases build on each other. Complete Phase 1-3 before significant content authoring. Phase 4 can parallel Phase 3. Phase 5-7 depend on earlier phases. Phase 9A/9E can run in parallel. Phase 10 can begin after Phase 8-9.
 

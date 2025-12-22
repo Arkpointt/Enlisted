@@ -80,6 +80,203 @@ namespace Enlisted.Features.Escalation
         // Pacing system: next window when an event can fire (set to random 3-5 days after last event).
         public CampaignTime NextNarrativeEventWindow { get; set; } = CampaignTime.Zero;
 
+        // Flag system: active flags and their expiration times.
+        // Key: flag name, Value: expiration time (CampaignTime.Never for permanent).
+        // Flags are temporary boolean states that gate access to decisions/events.
+        public Dictionary<string, CampaignTime> ActiveFlags { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+        // Chain event system: pending chain events scheduled for future delivery.
+        // Key: event ID, Value: scheduled delivery time.
+        // Used for delayed follow-up events (e.g., friend repays loan after 7 days).
+        public Dictionary<string, CampaignTime> PendingChainEvents { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+        // Onboarding system: tracks progress through introductory events based on experience track.
+        // Stage 0 = not started or complete, 1-3 = active onboarding stages.
+        // Experience track: "green", "seasoned", "veteran" - determines which onboarding content fires.
+        // Default to 0 (not started) so old saves and fresh games don't trigger false onboarding.
+        public int OnboardingStage { get; set; } = 0;
+        public string OnboardingTrack { get; set; } = string.Empty;
+        public CampaignTime OnboardingStartTime { get; set; } = CampaignTime.Zero;
+
+        /// <summary>
+        /// Checks if onboarding is still in progress (not yet complete).
+        /// </summary>
+        public bool IsOnboardingActive => OnboardingStage > 0 && OnboardingStage <= 3;
+
+        /// <summary>
+        /// Checks if the player is at a specific onboarding stage.
+        /// </summary>
+        public bool IsOnboardingStage(int stage) => OnboardingStage == stage;
+
+        /// <summary>
+        /// Advances to the next onboarding stage. Marks complete when stage 3 is finished.
+        /// </summary>
+        public void AdvanceOnboardingStage()
+        {
+            if (OnboardingStage >= 1 && OnboardingStage <= 3)
+            {
+                OnboardingStage++;
+                if (OnboardingStage > 3)
+                {
+                    OnboardingStage = 0; // 0 = complete
+                }
+            }
+        }
+
+        /// <summary>
+        /// Initializes onboarding for a new enlistment.
+        /// </summary>
+        public void InitializeOnboarding(string track)
+        {
+            OnboardingStage = 1;
+            OnboardingTrack = track ?? "seasoned";
+            OnboardingStartTime = CampaignTime.Now;
+        }
+
+        /// <summary>
+        /// Resets onboarding state (called on discharge).
+        /// </summary>
+        public void ResetOnboarding()
+        {
+            OnboardingStage = 0;
+            OnboardingTrack = string.Empty;
+            OnboardingStartTime = CampaignTime.Zero;
+        }
+        
+        /// <summary>
+        /// Validates and repairs corrupted onboarding state.
+        /// Called after save/load to handle edge cases from old saves or data corruption.
+        /// </summary>
+        public void ValidateOnboardingState()
+        {
+            // Active onboarding with no track = corrupted, reset to complete
+            if (OnboardingStage > 0 && OnboardingStage <= 3 && string.IsNullOrEmpty(OnboardingTrack))
+            {
+                OnboardingStage = 0;
+                OnboardingStartTime = CampaignTime.Zero;
+            }
+            
+            // Out of range stage value = corrupted, reset
+            if (OnboardingStage < 0 || OnboardingStage > 3)
+            {
+                OnboardingStage = 0;
+                OnboardingTrack = string.Empty;
+                OnboardingStartTime = CampaignTime.Zero;
+            }
+        }
+
+        /// <summary>
+        /// Checks if a flag is currently active (set and not expired).
+        /// </summary>
+        public bool HasFlag(string flagName)
+        {
+            if (string.IsNullOrEmpty(flagName))
+            {
+                return false;
+            }
+
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            if (!ActiveFlags.TryGetValue(flagName, out var expiryTime))
+            {
+                return false;
+            }
+
+            // Check if expired
+            if (expiryTime != CampaignTime.Never && CampaignTime.Now >= expiryTime)
+            {
+                ActiveFlags.Remove(flagName);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Sets a flag with optional expiration.
+        /// </summary>
+        public void SetFlag(string flagName, int durationDays = 0)
+        {
+            if (string.IsNullOrEmpty(flagName))
+            {
+                return;
+            }
+
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            var expiryTime = durationDays > 0
+                ? CampaignTime.DaysFromNow(durationDays)
+                : CampaignTime.Never;
+
+            ActiveFlags[flagName] = expiryTime;
+        }
+
+        /// <summary>
+        /// Clears a flag.
+        /// </summary>
+        public void ClearFlag(string flagName)
+        {
+            if (string.IsNullOrEmpty(flagName))
+            {
+                return;
+            }
+
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            ActiveFlags.Remove(flagName);
+        }
+
+        /// <summary>
+        /// Schedules a chain event for future delivery.
+        /// If an event with the same ID is already scheduled, it will be rescheduled with the new delay.
+        /// </summary>
+        public void ScheduleChainEvent(string eventId, int delayHours)
+        {
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return;
+            }
+
+            if (delayHours <= 0)
+            {
+                return;
+            }
+
+            PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            var deliveryTime = CampaignTime.HoursFromNow(delayHours);
+            PendingChainEvents[eventId] = deliveryTime;
+        }
+
+        /// <summary>
+        /// Gets and removes any chain events that are ready to fire.
+        /// Returns a list of event IDs that should be delivered now.
+        /// </summary>
+        public List<string> PopReadyChainEvents()
+        {
+            PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
+            var ready = new List<string>();
+            var toRemove = new List<string>();
+
+            foreach (var kvp in PendingChainEvents)
+            {
+                if (CampaignTime.Now >= kvp.Value)
+                {
+                    ready.Add(kvp.Key);
+                    toRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var key in toRemove)
+            {
+                PendingChainEvents.Remove(key);
+            }
+
+            return ready;
+        }
+
         /// <summary>
         /// Checks if a specific event is on cooldown based on its last fired time and cooldown duration.
         /// Returns true if the event should not fire yet (still in cooldown).
@@ -157,6 +354,8 @@ namespace Enlisted.Features.Escalation
             ThresholdStoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
             EventLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
             OneTimeEventsFired ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
         }
 
         private static int Clamp(int value, int min, int max)

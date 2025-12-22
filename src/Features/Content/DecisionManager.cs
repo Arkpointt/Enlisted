@@ -161,8 +161,35 @@ namespace Enlisted.Features.Content
                 }
             }
 
-            // Gate 6: Required flags (future - not implemented yet)
-            // Gate 7: Blocking flags (future - not implemented yet)
+            // Gate 6: Required flags
+            if (decision.RequiredFlags != null && decision.RequiredFlags.Count > 0)
+            {
+                foreach (var flagName in decision.RequiredFlags)
+                {
+                    if (!escalation.State.HasFlag(flagName))
+                    {
+                        result.IsAvailable = false;
+                        result.IsVisible = false; // Hide decisions that require missing flags
+                        result.UnavailableReason = "Prerequisite not met";
+                        return result;
+                    }
+                }
+            }
+
+            // Gate 7: Blocking flags
+            if (decision.BlockingFlags != null && decision.BlockingFlags.Count > 0)
+            {
+                foreach (var flagName in decision.BlockingFlags)
+                {
+                    if (escalation.State.HasFlag(flagName))
+                    {
+                        result.IsAvailable = false;
+                        result.IsVisible = false; // Hide decisions blocked by flags
+                        result.UnavailableReason = "No longer available";
+                        return result;
+                    }
+                }
+            }
 
             return result;
         }

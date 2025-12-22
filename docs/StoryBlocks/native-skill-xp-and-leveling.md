@@ -1,8 +1,8 @@
 # Native Skill XP + Leveling (Bannerlord) — Research Notes
 
-**Last Updated:** 2025-12-18  
+**Last Updated:** 2025-12-22  
 **Audience:** Enlisted developers  
-**Purpose:** Capture how Bannerlord awards skill XP, converts it into skill levels, and how “hero level” (attribute/focus points) advances. This is a reference for designing Enlisted “Training / Decisions / Schedule” rewards without fighting native progression.
+**Purpose:** Capture how Bannerlord awards skill XP, converts it into skill levels, and how "hero level" (attribute/focus points) advances. This is a reference for designing Enlisted "Training / Decisions / Schedule" rewards without fighting native progression.
 
 ---
 
@@ -45,6 +45,176 @@ Use the local decompile as the authority (paths below are in this repo’s decom
 
 - **Example: combat skill XP awarding**
   - `Decompile/TaleWorlds.CampaignSystem/TaleWorlds/CampaignSystem/CharacterDevelopment/DefaultSkillLevelingManager.cs`
+
+- **Combat XP calculation and awarding**
+  - `Decompile/TaleWorlds.CampaignSystem/TaleWorlds/CampaignSystem/ComponentInterfaces/CombatXpModel.cs`
+  - `Decompile/TaleWorlds.CampaignSystem/TaleWorlds/CampaignSystem/GameComponents/DefaultCombatXpModel.cs`
+  - `Decompile/TaleWorlds.CampaignSystem/TaleWorlds/CampaignSystem/AgentOrigins/SimpleAgentOrigin.cs`
+  - `Decompile/TaleWorlds.CampaignSystem/TaleWorlds/CampaignSystem/AgentOrigins/PartyAgentOrigin.cs`
+  - `Decompile/TaleWorlds.MountAndBlade/TaleWorlds/MountAndBlade/CustomBattleAgentLogic.cs`
+  - `Decompile/TaleWorlds.Core/IAgentOriginBase.cs`
+
+---
+
+## How Combat XP Works (Kill/Damage in Battle)
+
+When a player or any hero deals damage in battle, the XP system follows this flow:
+
+### 1. Combat Hit Detection
+
+When an agent hits another agent, `CustomBattleAgentLogic.OnAgentHit()` is called. It determines:
+
+- **Is the hit fatal?** `affectedAgent.Health - blow.InflictedDamage < 1.0`
+- **Is it team kill?** `affectedAgent.Team.Side == affectorAgent.Team.Side`
+
+Then calls: `affectorAgent.Origin.OnScoreHit(victim, captain, damage, isFatal, isTeamKill, weapon)`
+
+Key parameters:
+- `victim` - The character who was hit
+- `captain` - The attacker's formation captain (can provide bonuses)
+- `damage` - Actual damage dealt
+- `isFatal` - Whether this hit killed the target
+- `isTeamKill` - Whether this was friendly fire (no XP if true)
+- `weapon` - Weapon component data (determines which skill to train)
+
+### 2. Agent Origin XP Handling
+
+**Critical distinction**: Only certain agent origins award XP, and only to heroes.
+
+**`SimpleAgentOrigin.OnScoreHit()`** (AWARDS XP):
+- Used for heroes in most singleplayer scenarios
+- Checks: `if (!isTeamKill)` - no XP for friendly fire
+- Calls `CombatXpModel.GetXpFromHit()` to calculate XP
+- If troop is a hero and has a weapon: `troop.HeroObject.AddSkillXp(skill, xp)`
+
+**`PartyAgentOrigin.OnScoreHit()`** (NO XP):
+- Used for regular troops in parties
+- This method is empty - regular troops don't gain XP from combat hits
+- Troops gain XP through other systems (party training, battle recovery, etc.)
+
+### 3. Combat XP Calculation (`DefaultCombatXpModel`)
+
+The XP calculation formula (simplified):
+
+```
+baseXP = 0.4 × (attackerPower + 0.5) × (victimPower + 0.5) × (min(damage, victimMaxHP) + (isFatal ? victimMaxHP : 0)) × missionTypeMultiplier
+```
+
+**Components**:
+- **Attacker power**: `MilitaryPowerModel.GetTroopPower(attackerTroop, side, context, leaderModifier)`
+- **Victim power**: `MilitaryPowerModel.GetTroopPower(victimTroop, oppositeSide, context, leaderModifier)`
+- **Damage component**: Both the damage dealt AND full HP if it's a killing blow
+- **Mission type multipliers**:
+  - Battle: 1.0
+  - SimulationBattle: 0.9
+  - Tournament: 0.33
+  - PracticeFight: 0.0625 (1/16)
+  - NoXp: 0.0
+
+**Perk bonuses** (applied via `GetBattleXpBonusFromPerks`):
+- Leadership.InspiringLeader (if captain has perk): +20% XP
+- OneHanded.Trainer: bonus for melee troops
+- TwoHanded.BaptisedInBlood: bonus for two-handed users
+- Throwing.Resourceful: bonus for troops with throwing weapons
+- OneHanded.CorpsACorps: bonus for infantry
+- OneHanded.LeadByExample: general bonus
+- Crossbow.MountedCrossbowman: bonus for mounted crossbowmen
+- Bow.BullsEye: bonus for archers
+- Roguery.NoRestForTheWicked: bonus when fighting bandits
+- Various garrison perks if in settlement
+
+### 4. Weapon Skill Mapping (`GetSkillForWeapon`)
+
+The XP is awarded to the skill matching the weapon used:
+
+- Siege engine hits → `Engineering`
+- Weapon-specific:
+  - One-handed weapons → `OneHanded`
+  - Two-handed weapons → `TwoHanded`
+  - Polearms → `Polearm`
+  - Bows → `Bow`
+  - Crossbows → `Crossbow`
+  - Thrown weapons → `Throwing`
+  - No weapon/unarmed → `Athletics`
+
+**Source**: `weapon.RelevantSkill` property determines the skill.
+
+### 5. Final XP Application
+
+The calculated XP is passed to `Hero.AddSkillXp(skill, xp)`, which:
+- Applies the generic XP multiplier
+- Applies the learning rate (based on focus and attributes)
+- Adds to skill XP pool
+- Checks for skill level-up
+- Adds to total hero XP for level progression
+
+### Key Takeaways for Enlisted
+
+1. **Only heroes gain XP from combat hits** - Regular troops use different progression systems
+2. **XP scales with both attacker and victim power** - Killing stronger enemies gives more XP
+3. **Killing blows give extra XP** - The victim's full HP is added to the calculation
+4. **Formation captains matter** - Some perks grant bonuses if your captain has them
+5. **Team kills give no XP** - Friendly fire is not rewarded
+6. **The weapon determines the skill** - One-handed sword = OneHanded XP, bow = Bow XP, etc.
+7. **Perk bonuses stack** - Multiple applicable perks can significantly boost XP gain
+
+---
+
+## How Troop (Non-Hero) XP Works
+
+Regular troops in parties don't gain XP from combat hits directly. Instead, they gain XP through several other systems:
+
+### 1. Party Training Behavior (`MobilePartyTrainingBehavior`)
+
+Daily passive training for troops in mobile parties:
+- Calculates effective daily XP based on party size, leader skills, and perks
+- Calls `party.MemberRoster.AddXpToTroop(troop, xpAmount)` for each troop
+- Training-related perks (e.g., Bow.Trainer) can grant additional XP
+
+### 2. Battle Recovery (`CampaignBattleRecoveryBehavior`)
+
+After battles, surviving wounded troops may gain XP:
+- `party.MemberRoster.AddXpToTroop(troop, xp * count)`
+- Represents experience gained from surviving combat
+
+### 3. Garrison Training (`GarrisonRecruitmentCampaignBehavior`)
+
+Troops in town garrisons receive daily training XP:
+- `town.GarrisonParty.MemberRoster.AddXpToTroop(troop, dailyXpBonus * xpMultiplier * troopCount)`
+- Scales with town prosperity and governor perks
+
+### 4. Recruitment and Leadership Perks
+
+When recruiting troops:
+- `recruiter.PartyBelongedTo.MemberRoster.AddXpToTroop(troop, xp * count)` (Leadership.FamousCommander perk)
+- Newly recruited troops can start with bonus XP
+
+### 5. Prisoner Training
+
+Prisoners can gain XP while held:
+- `mobileParty.PrisonRoster.AddXpToTroop(troop, xpAmount)`
+
+### 6. Siege Engineering Work
+
+Troops working on siege engines gain Engineering-related XP:
+- `siegeParty.MemberRoster.AddXpToTroop(troopCharacter, engineeringXp * troopCount)` (Engineering.Apprenticeship perk)
+
+### Troop XP API: `TroopRoster.AddXpToTroop()`
+
+The roster methods for troop XP:
+- `AddXpToTroop(CharacterObject character, int xpAmount)` - Add XP to a specific troop type
+- `AddXpToTroopAtIndex(int index, int xpAmount)` - Add XP to troops at a specific roster index
+- `CanTroopGainXp(PartyBase party, CharacterObject character, out int maxXp)` - Check if troop can gain XP (not at max tier)
+
+**Important**: Troops stop gaining XP when they reach their maximum upgrade tier (no further upgrades available).
+
+### Enlisted Implications
+
+For the Enlisted mod:
+- **Hero XP**: Use `Hero.AddSkillXp()` for the player and companion progression
+- **Troop XP**: If implementing troop training systems, use `MemberRoster.AddXpToTroop()` for party troops
+- **Check upgrade availability**: Always verify troops have valid upgrades before awarding XP
+- **Respect party context**: Garrison training is separate from field party training
 
 ---
 

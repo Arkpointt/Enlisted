@@ -133,6 +133,23 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Gets events matching the specified context.
+        /// Used by MapIncidentManager to filter events by map context (leaving_battle, entering_town, etc.).
+        /// Returns events where context matches exactly or context is "Any".
+        /// </summary>
+        public static IEnumerable<EventDefinition> GetEventsForContext(string context)
+        {
+            if (!_initialized)
+            {
+                Initialize();
+            }
+
+            return AllEvents.Where(e =>
+                e.Requirements.Context.Equals(context, StringComparison.OrdinalIgnoreCase) ||
+                e.Requirements.Context.Equals("Any", StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
         /// Gets the base path for event JSON files.
         /// </summary>
         private static string GetEventsBasePath()
@@ -261,6 +278,9 @@ namespace Enlisted.Features.Content
 
             // Parse timing
             ParseTiming(eventJson, eventDef);
+
+            // Parse triggers
+            ParseTriggers(eventJson, eventDef);
 
             // Parse options with migration support
             warnings += ParseOptions(eventJson, eventDef, sourceFile);
@@ -417,6 +437,27 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Parses trigger conditions from JSON.
+        /// </summary>
+        private static void ParseTriggers(JObject eventJson, EventDefinition eventDef)
+        {
+            var triggersJson = eventJson["triggers"] as JObject;
+            if (triggersJson == null)
+            {
+                return;
+            }
+
+            // Parse "all" triggers (must all be true)
+            eventDef.TriggersAll = ParseStringList(triggersJson["all"]);
+
+            // Parse "any" triggers (at least one must be true)
+            eventDef.TriggersAny = ParseStringList(triggersJson["any"]);
+
+            // Parse "none" triggers (must all be false)
+            eventDef.TriggersNone = ParseStringList(triggersJson["none"]);
+        }
+
+        /// <summary>
         /// Parses event options from JSON.
         /// Options can be at root level or nested inside a content object.
         /// </summary>
@@ -473,6 +514,40 @@ namespace Enlisted.Features.Content
 
                 // Parse effects with migration support
                 warnings += ParseOptionEffects(optJson, option, sourceFile);
+
+                // Parse success/failure effects for risky options
+                var effectsSuccessJson = optJson["effects_success"] as JObject ?? optJson["effectsSuccess"] as JObject;
+                if (effectsSuccessJson != null)
+                {
+                    option.EffectsSuccess = ParseEffectsObject(effectsSuccessJson);
+                }
+
+                var effectsFailureJson = optJson["effects_failure"] as JObject ?? optJson["effectsFailure"] as JObject;
+                if (effectsFailureJson != null)
+                {
+                    option.EffectsFailure = ParseEffectsObject(effectsFailureJson);
+                }
+
+                // Parse risk chance for risky options
+                option.RiskChance = optJson["risk_chance"]?.Value<int>() ?? optJson["riskChance"]?.Value<int>();
+
+                // Parse failure result text
+                option.ResultTextFailureId = optJson["resultFailureTextId"]?.ToString() ?? 
+                                             optJson["result_failure_text_id"]?.ToString() ?? string.Empty;
+                option.ResultTextFailureFallback = optJson["outcome_failure"]?.ToString() ?? 
+                                                   optJson["resultTextFailure"]?.ToString() ?? string.Empty;
+
+                // Parse flag operations
+                option.SetFlags = ParseStringList(optJson["set_flags"]);
+                option.ClearFlags = ParseStringList(optJson["clear_flags"]);
+                option.FlagDurationDays = optJson["flag_duration_days"]?.Value<int>() ?? 0;
+
+                // Parse chain event fields
+                option.ChainsTo = optJson["chains_to"]?.ToString() ?? string.Empty;
+                option.ChainDelayHours = optJson["chain_delay_hours"]?.Value<int>() ?? 0;
+
+                // Parse reward choices (sub-choice popup after main option)
+                option.RewardChoices = ParseRewardChoices(optJson["reward_choices"]);
 
                 eventDef.Options.Add(option);
             }
@@ -587,6 +662,8 @@ namespace Enlisted.Features.Content
                 effects.ChainEventId = effectsJson["chainEventId"]?.ToString() ??
                                        effectsJson["triggers_event"]?.ToString();
                 effects.Renown = effectsJson["renown"]?.Value<int>();
+                effects.TriggersDischarge = effectsJson["triggers_discharge"]?.ToString() ??
+                                            effectsJson["triggersDischarge"]?.ToString();
 
                 // Parse company needs
                 ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);
@@ -624,6 +701,24 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
+        /// Parses a string array from JSON (e.g., set_flags, clear_flags).
+        /// </summary>
+        private static List<string> ParseStringList(JToken token)
+        {
+            if (token == null)
+            {
+                return [];
+            }
+
+            if (token is JArray array)
+            {
+                return array.Select(t => t.Value<string>()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+            }
+
+            return [];
+        }
+
+        /// <summary>
         /// Migrates old formation names to new role names.
         /// </summary>
         private static string MigrateFormationToRole(string formation)
@@ -654,6 +749,238 @@ namespace Enlisted.Features.Content
                 "command" => "Commander",
                 _ => oldName
             };
+        }
+
+        /// <summary>
+        /// Parses a reward_choices block from JSON.
+        /// Contains sub-options for branching rewards after main option selection.
+        /// </summary>
+        private static RewardChoices ParseRewardChoices(JToken rewardChoicesToken)
+        {
+            if (rewardChoicesToken == null)
+            {
+                return null;
+            }
+
+            var rc = new RewardChoices
+            {
+                Type = rewardChoicesToken["type"]?.Value<string>() ?? string.Empty,
+                Prompt = rewardChoicesToken["prompt"]?.Value<string>() ?? string.Empty,
+                Options = []
+            };
+
+            var optionsArray = rewardChoicesToken["options"] as JArray;
+            if (optionsArray == null)
+            {
+                return rc;
+            }
+
+            foreach (var optToken in optionsArray)
+            {
+                var subOption = new RewardChoiceOption
+                {
+                    Id = optToken["id"]?.Value<string>() ?? string.Empty,
+                    Text = optToken["text"]?.Value<string>() ?? string.Empty,
+                    Tooltip = optToken["tooltip"]?.Value<string>() ?? string.Empty,
+                    Condition = optToken["condition"]?.Value<string>(),
+                    Rewards = ParseRewards(optToken["rewards"]),
+                    Effects = ParseSubChoiceEffects(optToken["effects"]),
+                    Costs = ParseCosts(optToken["costs"])
+                };
+                rc.Options.Add(subOption);
+            }
+
+            return rc;
+        }
+
+        /// <summary>
+        /// Parses a rewards block from JSON.
+        /// Contains gold, fatigue relief, xp, and skill xp rewards.
+        /// </summary>
+        private static EventRewards ParseRewards(JToken rewardsToken)
+        {
+            if (rewardsToken == null)
+            {
+                return null;
+            }
+
+            var rewards = new EventRewards
+            {
+                Gold = rewardsToken["gold"]?.Value<int>(),
+                FatigueRelief = rewardsToken["fatigueRelief"]?.Value<int>() ??
+                               rewardsToken["fatigue_relief"]?.Value<int>()
+            };
+
+            // Parse general XP (e.g., {"enlisted": 20})
+            var xpObj = rewardsToken["xp"] as JObject;
+            if (xpObj != null)
+            {
+                foreach (var prop in xpObj.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        rewards.Xp[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse skill XP (e.g., {"OneHanded": 40})
+            var skillXpObj = rewardsToken["skillXp"] as JObject ?? rewardsToken["skill_xp"] as JObject;
+            if (skillXpObj != null)
+            {
+                foreach (var prop in skillXpObj.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        rewards.SkillXp[prop.Name] = value;
+                    }
+                }
+            }
+
+            // Parse dynamic skill XP (e.g., {"equipped_weapon": 15, "weakest_combat": 12})
+            var dynamicSkillXpObj = rewardsToken["dynamicSkillXp"] as JObject ?? rewardsToken["dynamic_skill_xp"] as JObject;
+            if (dynamicSkillXpObj != null)
+            {
+                foreach (var prop in dynamicSkillXpObj.Properties())
+                {
+                    var value = prop.Value?.Value<int>() ?? 0;
+                    if (value != 0)
+                    {
+                        rewards.DynamicSkillXp[prop.Name] = value;
+                    }
+                }
+            }
+
+            return rewards;
+        }
+
+        /// <summary>
+        /// Parses a costs block from JSON.
+        /// Contains gold, fatigue, and time costs.
+        /// </summary>
+        private static EventCosts ParseCosts(JToken costsToken)
+        {
+            if (costsToken == null)
+            {
+                return null;
+            }
+
+            return new EventCosts
+            {
+                Gold = costsToken["gold"]?.Value<int>(),
+                Fatigue = costsToken["fatigue"]?.Value<int>(),
+                TimeHours = costsToken["time_hours"]?.Value<int>() ??
+                           costsToken["timeHours"]?.Value<int>()
+            };
+        }
+
+        /// <summary>
+        /// Parses an effects object from JSON into an EventEffects instance.
+        /// Handles both snake_case and camelCase field names.
+        /// </summary>
+        private static EventEffects ParseEffectsObject(JObject effectsJson)
+        {
+            if (effectsJson == null)
+            {
+                return null;
+            }
+
+            var effects = new EventEffects();
+
+            // Parse skill XP
+            ParseDictionaryField(effectsJson, "skillXp", effects.SkillXp);
+            ParseDictionaryField(effectsJson, "skill_xp", effects.SkillXp);
+
+            // Parse trait XP
+            ParseDictionaryField(effectsJson, "traitXp", effects.TraitXp);
+            ParseDictionaryField(effectsJson, "trait_xp", effects.TraitXp);
+
+            // Parse reputation changes
+            effects.LordRep = effectsJson["lordRep"]?.Value<int>() ?? effectsJson["lord_reputation"]?.Value<int>();
+            effects.OfficerRep = effectsJson["officerRep"]?.Value<int>() ?? effectsJson["officer_reputation"]?.Value<int>();
+            effects.SoldierRep = effectsJson["soldierRep"]?.Value<int>() ?? 
+                                 effectsJson["soldier_reputation"]?.Value<int>() ??
+                                 effectsJson["camp_reputation"]?.Value<int>() ??
+                                 effectsJson["lance_reputation"]?.Value<int>();
+
+            // Parse escalation changes
+            effects.Scrutiny = effectsJson["scrutiny"]?.Value<int>();
+            effects.Discipline = effectsJson["discipline"]?.Value<int>();
+            effects.MedicalRisk = effectsJson["medicalRisk"]?.Value<int>() ?? effectsJson["medical_risk"]?.Value<int>();
+
+            // Parse resource changes
+            effects.Gold = effectsJson["gold"]?.Value<int>();
+            effects.HpChange = effectsJson["hpChange"]?.Value<int>() ?? effectsJson["hp_change"]?.Value<int>();
+            effects.TroopLoss = effectsJson["troopLoss"]?.Value<int>() ?? effectsJson["troop_loss"]?.Value<int>();
+            effects.TroopWounded = effectsJson["troopWounded"]?.Value<int>() ?? effectsJson["troop_wounded"]?.Value<int>();
+            effects.FoodLoss = effectsJson["foodLoss"]?.Value<int>() ?? effectsJson["food_loss"]?.Value<int>();
+            effects.TroopXp = effectsJson["troopXp"]?.Value<int>() ?? effectsJson["troop_xp"]?.Value<int>();
+            effects.ApplyWound = effectsJson["applyWound"]?.ToString() ?? effectsJson["apply_wound"]?.ToString();
+            effects.ChainEventId = effectsJson["chainEventId"]?.ToString() ?? effectsJson["triggers_event"]?.ToString();
+            effects.Renown = effectsJson["renown"]?.Value<int>();
+            effects.TriggersDischarge = effectsJson["triggers_discharge"]?.ToString() ?? effectsJson["triggersDischarge"]?.ToString();
+
+            // Parse company needs
+            ParseDictionaryField(effectsJson, "companyNeeds", effects.CompanyNeeds);
+            ParseDictionaryField(effectsJson, "company_needs", effects.CompanyNeeds);
+
+            return effects;
+        }
+
+        /// <summary>
+        /// Parses effects for a sub-choice option.
+        /// Simplified version that handles the common effect fields.
+        /// </summary>
+        private static EventEffects ParseSubChoiceEffects(JToken effectsToken)
+        {
+            if (effectsToken == null)
+            {
+                return null;
+            }
+
+            var effects = new EventEffects();
+
+            // Parse camp_reputation / soldierRep
+            var campRep = effectsToken["camp_reputation"]?.Value<int>();
+            if (campRep.HasValue)
+            {
+                effects.SoldierRep = campRep;
+            }
+            else
+            {
+                effects.SoldierRep = effectsToken["soldierRep"]?.Value<int>() ??
+                                     effectsToken["soldier_reputation"]?.Value<int>();
+            }
+
+            // Parse other common effects
+            effects.LordRep = effectsToken["lordRep"]?.Value<int>() ??
+                              effectsToken["lord_reputation"]?.Value<int>();
+            effects.OfficerRep = effectsToken["officerRep"]?.Value<int>() ??
+                                 effectsToken["officer_reputation"]?.Value<int>();
+            effects.Scrutiny = effectsToken["scrutiny"]?.Value<int>();
+            effects.Discipline = effectsToken["discipline"]?.Value<int>();
+            effects.MedicalRisk = effectsToken["medicalRisk"]?.Value<int>() ??
+                                  effectsToken["medical_risk"]?.Value<int>();
+            effects.Gold = effectsToken["gold"]?.Value<int>();
+            effects.Renown = effectsToken["renown"]?.Value<int>();
+            effects.TriggersDischarge = effectsToken["triggers_discharge"]?.ToString() ??
+                                        effectsToken["triggersDischarge"]?.ToString();
+
+            // Parse skill XP
+            ParseDictionaryField(effectsToken as JObject, "skillXp", effects.SkillXp);
+            ParseDictionaryField(effectsToken as JObject, "skill_xp", effects.SkillXp);
+
+            // Parse trait XP
+            ParseDictionaryField(effectsToken as JObject, "traitXp", effects.TraitXp);
+            ParseDictionaryField(effectsToken as JObject, "trait_xp", effects.TraitXp);
+
+            // Parse company needs
+            ParseDictionaryField(effectsToken as JObject, "companyNeeds", effects.CompanyNeeds);
+            ParseDictionaryField(effectsToken as JObject, "company_needs", effects.CompanyNeeds);
+
+            return effects;
         }
 
         /// <summary>

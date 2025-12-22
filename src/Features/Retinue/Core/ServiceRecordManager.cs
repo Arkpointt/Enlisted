@@ -233,78 +233,141 @@ namespace Enlisted.Features.Retinue.Core
             var recordCount = _factionRecords?.Count ?? 0;
             dataStore.SyncData("svc_recordCount", ref recordCount);
 
-            if (dataStore.IsLoading)
-            {
-                _factionRecords = new Dictionary<string, FactionServiceRecord>();
-                for (var i = 0; i < recordCount; i++)
+                if (dataStore.IsLoading)
                 {
-                    var factionId = string.Empty;
-                    var factionType = string.Empty;
-                    var displayName = string.Empty;
-                    var terms = 0;
-                    var days = 0;
-                    var tier = 0;
-                    var battles = 0;
-                    var lords = 0;
-                    var enlistments = 0;
-                    var kills = 0;
-
-                    dataStore.SyncData($"svc_rec_{i}_id", ref factionId);
-                    dataStore.SyncData($"svc_rec_{i}_type", ref factionType);
-                    dataStore.SyncData($"svc_rec_{i}_name", ref displayName);
-                    dataStore.SyncData($"svc_rec_{i}_terms", ref terms);
-                    dataStore.SyncData($"svc_rec_{i}_days", ref days);
-                    dataStore.SyncData($"svc_rec_{i}_tier", ref tier);
-                    dataStore.SyncData($"svc_rec_{i}_battles", ref battles);
-                    dataStore.SyncData($"svc_rec_{i}_lords", ref lords);
-                    dataStore.SyncData($"svc_rec_{i}_enlist", ref enlistments);
-                    dataStore.SyncData($"svc_rec_{i}_kills", ref kills);
-
-                    if (!string.IsNullOrEmpty(factionId))
+                    _factionRecords = new Dictionary<string, FactionServiceRecord>();
+                    for (var i = 0; i < recordCount; i++)
                     {
-                        _factionRecords[factionId] = new FactionServiceRecord(factionId, factionType, displayName)
+                        var factionId = string.Empty;
+                        var factionType = string.Empty;
+                        var displayName = string.Empty;
+                        var terms = 0;
+                        var days = 0;
+                        var tier = 0;
+                        var battles = 0;
+                        var lords = 0;
+                        var enlistments = 0;
+                        var kills = 0;
+
+                        // New fields for discharge/re-enlistment tracking
+                        var reenlistBlockedUntil = CampaignTime.Zero;
+                        var lastDischargeBand = string.Empty;
+                        var officerRepAtExit = 0;
+                        var soldierRepAtExit = 0;
+
+                        // Term tracking fields (migrated from FactionVeteranRecord)
+                        var firstTermCompleted = false;
+                        var preservedTier = 1;
+                        var cooldownEnds = CampaignTime.Zero;
+                        var currentTermEnd = CampaignTime.Zero;
+                        var isInRenewalTerm = false;
+                        var renewalTermsCompleted = 0;
+
+                        dataStore.SyncData($"svc_rec_{i}_id", ref factionId);
+                        dataStore.SyncData($"svc_rec_{i}_type", ref factionType);
+                        dataStore.SyncData($"svc_rec_{i}_name", ref displayName);
+                        dataStore.SyncData($"svc_rec_{i}_terms", ref terms);
+                        dataStore.SyncData($"svc_rec_{i}_days", ref days);
+                        dataStore.SyncData($"svc_rec_{i}_tier", ref tier);
+                        dataStore.SyncData($"svc_rec_{i}_battles", ref battles);
+                        dataStore.SyncData($"svc_rec_{i}_lords", ref lords);
+                        dataStore.SyncData($"svc_rec_{i}_enlist", ref enlistments);
+                        dataStore.SyncData($"svc_rec_{i}_kills", ref kills);
+
+                        // Sync new fields
+                        dataStore.SyncData($"svc_rec_{i}_reblockUntil", ref reenlistBlockedUntil);
+                        dataStore.SyncData($"svc_rec_{i}_dischargeBand", ref lastDischargeBand);
+                        dataStore.SyncData($"svc_rec_{i}_officerRep", ref officerRepAtExit);
+                        dataStore.SyncData($"svc_rec_{i}_soldierRep", ref soldierRepAtExit);
+                        dataStore.SyncData($"svc_rec_{i}_firstTerm", ref firstTermCompleted);
+                        dataStore.SyncData($"svc_rec_{i}_preservedTier", ref preservedTier);
+                        dataStore.SyncData($"svc_rec_{i}_cooldownEnds", ref cooldownEnds);
+                        dataStore.SyncData($"svc_rec_{i}_termEnd", ref currentTermEnd);
+                        dataStore.SyncData($"svc_rec_{i}_inRenewal", ref isInRenewalTerm);
+                        dataStore.SyncData($"svc_rec_{i}_renewalCount", ref renewalTermsCompleted);
+
+                        if (!string.IsNullOrEmpty(factionId))
                         {
-                            TermsCompleted = terms,
-                            TotalDaysServed = days,
-                            HighestTier = tier,
-                            BattlesFought = battles,
-                            LordsServed = lords,
-                            Enlistments = enlistments,
-                            TotalKills = kills
-                        };
+                            _factionRecords[factionId] = new FactionServiceRecord(factionId, factionType, displayName)
+                            {
+                                TermsCompleted = terms,
+                                TotalDaysServed = days,
+                                HighestTier = tier,
+                                BattlesFought = battles,
+                                LordsServed = lords,
+                                Enlistments = enlistments,
+                                TotalKills = kills,
+                                ReenlistmentBlockedUntil = reenlistBlockedUntil,
+                                LastDischargeBand = lastDischargeBand ?? string.Empty,
+                                OfficerRepAtExit = officerRepAtExit,
+                                SoldierRepAtExit = soldierRepAtExit,
+                                FirstTermCompleted = firstTermCompleted,
+                                PreservedTier = preservedTier,
+                                CooldownEnds = cooldownEnds,
+                                CurrentTermEnd = currentTermEnd,
+                                IsInRenewalTerm = isInRenewalTerm,
+                                RenewalTermsCompleted = renewalTermsCompleted
+                            };
+                        }
                     }
                 }
-            }
-            else if (_factionRecords != null)
-            {
-                var idx = 0;
-                foreach (var kvp in _factionRecords)
+                else if (_factionRecords != null)
                 {
-                    var rec = kvp.Value;
-                    var factionId = rec.FactionId;
-                    var factionType = rec.FactionType;
-                    var displayName = rec.FactionDisplayName;
-                    var terms = rec.TermsCompleted;
-                    var days = rec.TotalDaysServed;
-                    var tier = rec.HighestTier;
-                    var battles = rec.BattlesFought;
-                    var lords = rec.LordsServed;
-                    var enlistments = rec.Enlistments;
-                    var kills = rec.TotalKills;
+                    var idx = 0;
+                    foreach (var kvp in _factionRecords)
+                    {
+                        var rec = kvp.Value;
+                        var factionId = rec.FactionId;
+                        var factionType = rec.FactionType;
+                        var displayName = rec.FactionDisplayName;
+                        var terms = rec.TermsCompleted;
+                        var days = rec.TotalDaysServed;
+                        var tier = rec.HighestTier;
+                        var battles = rec.BattlesFought;
+                        var lords = rec.LordsServed;
+                        var enlistments = rec.Enlistments;
+                        var kills = rec.TotalKills;
 
-                    dataStore.SyncData($"svc_rec_{idx}_id", ref factionId);
-                    dataStore.SyncData($"svc_rec_{idx}_type", ref factionType);
-                    dataStore.SyncData($"svc_rec_{idx}_name", ref displayName);
-                    dataStore.SyncData($"svc_rec_{idx}_terms", ref terms);
-                    dataStore.SyncData($"svc_rec_{idx}_days", ref days);
-                    dataStore.SyncData($"svc_rec_{idx}_tier", ref tier);
-                    dataStore.SyncData($"svc_rec_{idx}_battles", ref battles);
-                    dataStore.SyncData($"svc_rec_{idx}_lords", ref lords);
-                    dataStore.SyncData($"svc_rec_{idx}_enlist", ref enlistments);
-                    dataStore.SyncData($"svc_rec_{idx}_kills", ref kills);
-                    idx++;
+                        // New fields for discharge/re-enlistment tracking
+                        var reenlistBlockedUntil = rec.ReenlistmentBlockedUntil;
+                        var lastDischargeBand = rec.LastDischargeBand ?? string.Empty;
+                        var officerRepAtExit = rec.OfficerRepAtExit;
+                        var soldierRepAtExit = rec.SoldierRepAtExit;
+
+                        // Term tracking fields
+                        var firstTermCompleted = rec.FirstTermCompleted;
+                        var preservedTier = rec.PreservedTier;
+                        var cooldownEnds = rec.CooldownEnds;
+                        var currentTermEnd = rec.CurrentTermEnd;
+                        var isInRenewalTerm = rec.IsInRenewalTerm;
+                        var renewalTermsCompleted = rec.RenewalTermsCompleted;
+
+                        dataStore.SyncData($"svc_rec_{idx}_id", ref factionId);
+                        dataStore.SyncData($"svc_rec_{idx}_type", ref factionType);
+                        dataStore.SyncData($"svc_rec_{idx}_name", ref displayName);
+                        dataStore.SyncData($"svc_rec_{idx}_terms", ref terms);
+                        dataStore.SyncData($"svc_rec_{idx}_days", ref days);
+                        dataStore.SyncData($"svc_rec_{idx}_tier", ref tier);
+                        dataStore.SyncData($"svc_rec_{idx}_battles", ref battles);
+                        dataStore.SyncData($"svc_rec_{idx}_lords", ref lords);
+                        dataStore.SyncData($"svc_rec_{idx}_enlist", ref enlistments);
+                        dataStore.SyncData($"svc_rec_{idx}_kills", ref kills);
+
+                        // Sync new fields
+                        dataStore.SyncData($"svc_rec_{idx}_reblockUntil", ref reenlistBlockedUntil);
+                        dataStore.SyncData($"svc_rec_{idx}_dischargeBand", ref lastDischargeBand);
+                        dataStore.SyncData($"svc_rec_{idx}_officerRep", ref officerRepAtExit);
+                        dataStore.SyncData($"svc_rec_{idx}_soldierRep", ref soldierRepAtExit);
+                        dataStore.SyncData($"svc_rec_{idx}_firstTerm", ref firstTermCompleted);
+                        dataStore.SyncData($"svc_rec_{idx}_preservedTier", ref preservedTier);
+                        dataStore.SyncData($"svc_rec_{idx}_cooldownEnds", ref cooldownEnds);
+                        dataStore.SyncData($"svc_rec_{idx}_termEnd", ref currentTermEnd);
+                        dataStore.SyncData($"svc_rec_{idx}_inRenewal", ref isInRenewalTerm);
+                        dataStore.SyncData($"svc_rec_{idx}_renewalCount", ref renewalTermsCompleted);
+
+                        idx++;
+                    }
                 }
-            }
         }
 
         public void RecordReservist(string dischargeBand, int daysServed, int tier, int xp, Hero lord)
@@ -321,6 +384,16 @@ namespace Enlisted.Features.Retinue.Core
                 _reservistRecord.RecordedAt = CampaignTime.Now;
                 _reservistRecord.Consumed = false;
 
+                // Set re-enlistment block on the faction service record for bad discharges.
+                // This ensures all discharge paths (muster, smuggle, event-triggered) apply the block.
+                var faction = lord?.MapFaction;
+                if (faction != null)
+                {
+                    var record = GetOrCreateRecord(faction);
+                    record.LastDischargeBand = dischargeBand?.ToLowerInvariant() ?? string.Empty;
+                    SetReenlistmentBlock(record, dischargeBand);
+                }
+
                 ModLogger.Info(LogCategory,
                     $"Reservist snapshot recorded: band={dischargeBand}, days={daysServed}, tier={tier}, lord={lord?.Name}");
             }
@@ -330,13 +403,43 @@ namespace Enlisted.Features.Retinue.Core
             }
         }
 
-        public bool TryConsumeReservistForFaction(IFaction faction, out int targetTier, out int bonusXp, out int relationBonus, out string band, out bool probation)
+        /// <summary>
+        /// Sets the re-enlistment block duration based on discharge band.
+        /// Dishonorable and deserter discharges block for 90 days, washout for 30 days.
+        /// Honorable, veteran, and grace discharges have no block.
+        /// </summary>
+        public static void SetReenlistmentBlock(Data.FactionServiceRecord record, string dischargeBand)
+        {
+            if (record == null || string.IsNullOrEmpty(dischargeBand))
+            {
+                return;
+            }
+
+            var bandLower = dischargeBand.ToLowerInvariant();
+            var blockDays = bandLower switch
+            {
+                "dishonorable" => 90,
+                "deserter" => 90,
+                "washout" => 30,
+                _ => 0
+            };
+
+            if (blockDays > 0)
+            {
+                record.ReenlistmentBlockedUntil = CampaignTime.DaysFromNow(blockDays);
+                ModLogger.Info(LogCategory, $"Re-enlistment blocked for {blockDays} days (until {record.ReenlistmentBlockedUntil})");
+            }
+        }
+
+        public bool TryConsumeReservistForFaction(IFaction faction, out int targetTier, out int bonusXp, out int relationBonus, out string band, out bool probation, out int officerRepRestore, out int soldierRepRestore)
         {
             targetTier = 0;
             bonusXp = 0;
             relationBonus = 0;
             band = "none";
             probation = false;
+            officerRepRestore = 0;
+            soldierRepRestore = 0;
 
             try
             {
@@ -357,6 +460,11 @@ namespace Enlisted.Features.Retinue.Core
 
                 band = _reservistRecord.DischargeBand?.ToLowerInvariant() ?? "none";
 
+                // Get the faction record to retrieve saved reputation values
+                var record = GetOrCreateRecord(faction);
+                var savedOfficerRep = record?.OfficerRepAtExit ?? 0;
+                var savedSoldierRep = record?.SoldierRepAtExit ?? 0;
+
                 switch (band)
                 {
                     case "washout":
@@ -365,27 +473,37 @@ namespace Enlisted.Features.Retinue.Core
                         bonusXp = 0;
                         relationBonus = 0;
                         probation = true;
+                        // No reputation restoration for bad discharges
+                        officerRepRestore = 0;
+                        soldierRepRestore = 0;
                         break;
                     case "grace":
-                        // BUG FIX: "grace" band means player's lord died/captured but they're re-enlisting
-                        // Restore their previous tier and partial XP as a veteran returning to service
+                        // Grace discharge fully restores reputation (lord died/captured, not player's fault)
                         targetTier = Math.Max(1, _reservistRecord.TierAtExit);
                         bonusXp = _reservistRecord.XpAtExit / 2; // Half XP retained
                         relationBonus = 3;
                         probation = false;
+                        officerRepRestore = savedOfficerRep; // 100% restoration
+                        soldierRepRestore = savedSoldierRep; // 100% restoration
                         ModLogger.Info(LogCategory, 
-                            $"Grace re-entry: restoring tier {targetTier} with {bonusXp} bonus XP");
+                            $"Grace re-entry: restoring tier {targetTier} with {bonusXp} bonus XP, Officer Rep={officerRepRestore}, Soldier Rep={soldierRepRestore}");
                         break;
                     case "honorable":
                         targetTier = 3;
                         bonusXp = 500;
                         relationBonus = 5;
+                        // Honorable discharge restores 50% of reputation
+                        officerRepRestore = savedOfficerRep / 2;
+                        soldierRepRestore = savedSoldierRep / 2;
                         break;
                     case "veteran":
                     case "heroic":
                         targetTier = 4;
                         bonusXp = 1000;
                         relationBonus = 10;
+                        // Veteran discharge restores 75% of reputation
+                        officerRepRestore = (savedOfficerRep * 3) / 4;
+                        soldierRepRestore = (savedSoldierRep * 3) / 4;
                         break;
                     default:
                         return false;
@@ -394,7 +512,7 @@ namespace Enlisted.Features.Retinue.Core
                 _reservistRecord.Consumed = true;
                 _reservistRecord.GrantedProbation = probation;
                 ModLogger.Info(LogCategory,
-                    $"Reservist offer consumed for faction {faction.Name} (band={band}, targetTier={targetTier}, bonusXp={bonusXp}, relBonus={relationBonus}, probation={probation})");
+                    $"Reservist offer consumed for faction {faction.Name} (band={band}, targetTier={targetTier}, bonusXp={bonusXp}, relBonus={relationBonus}, probation={probation}, officerRep={officerRepRestore}, soldierRep={soldierRepRestore})");
                 return true;
             }
             catch (Exception ex)

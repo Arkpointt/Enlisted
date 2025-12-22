@@ -275,7 +275,7 @@
           {
             "id": "accept",
             "text": "\"I have nothing to say. I accept the judgment.\"",
-            "tooltip": null,
+            "tooltip": "Accept discharge. 90-day re-enlistment block with this faction.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -295,7 +295,8 @@
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "effects_success": null,
             "effects_failure": null,
@@ -312,7 +313,7 @@
           {
             "id": "beg",
             "text": "\"Please — one more chance. I'll be different. I swear it.\"",
-            "tooltip": null,
+            "tooltip": "25% chance to avoid discharge. Failure: dishonorable discharge.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 25,
@@ -336,7 +337,7 @@
             },
             "effects_success": {
               "scrutiny": 0,
-              "discipline": 0,
+              "discipline": -5,
               "lance_reputation": -20,
               "medical_risk": 0,
               "fatigue_relief": 0
@@ -346,7 +347,8 @@
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "flags_set": [],
             "flags_clear": [],
@@ -362,7 +364,7 @@
           {
             "id": "defiant",
             "text": "\"Discharge me then. This army never valued me anyway.\"",
-            "tooltip": null,
+            "tooltip": "Accept discharge with defiance. 90-day re-enlistment block.",
             "condition": null,
             "risk": "safe",
             "risk_chance": null,
@@ -380,9 +382,10 @@
             "effects": {
               "scrutiny": 0,
               "discipline": 0,
-              "lance_reputation": 0,
+              "lance_reputation": -10,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "effects_success": null,
             "effects_failure": null,
@@ -399,7 +402,7 @@
           {
             "id": "service",
             "text": "\"My service record — the battles, the duties, the blood I've shed for {LORD_NAME}—\"",
-            "tooltip": null,
+            "tooltip": "40% chance: demotion but stay enlisted. Failure: discharged.",
             "condition": null,
             "risk": "risky",
             "risk_chance": 40,
@@ -423,7 +426,7 @@
             },
             "effects_success": {
               "scrutiny": 0,
-              "discipline": 0,
+              "discipline": -5,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
@@ -433,7 +436,8 @@
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
-              "fatigue_relief": 0
+              "fatigue_relief": 0,
+              "triggers_discharge": "dishonorable"
             },
             "flags_set": [],
             "flags_clear": [],

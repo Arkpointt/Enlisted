@@ -1,0 +1,198 @@
+{
+  "schema_version": 2,
+  "description": "Map incidents triggered after battles (leaving_battle context)",
+  "events": [
+    {
+      "id": "mi_loot_decision",
+      "category": "map_incident",
+      "titleId": "mi_loot_title",
+      "title": "Dead Man's Purse",
+      "setupId": "mi_loot_setup",
+      "setup": "The battle is over. Bodies are scattered across the field. You notice a glint of gold on a corpse near your feet—someone's purse, spilled open. Officers aren't looking this way. No one would know.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 5
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "take",
+          "textId": "mi_loot_take",
+          "text": "Take the gold",
+          "resultTextId": "mi_loot_take_result",
+          "resultText": "You pocket the coins quickly, glancing around. No one saw. The weight feels heavier than it should.",
+          "risk": "moderate",
+          "effects": {
+            "gold": 25,
+            "scrutiny": 2
+          }
+        },
+        {
+          "id": "leave",
+          "textId": "mi_loot_leave",
+          "text": "Leave it be",
+          "resultTextId": "mi_loot_leave_result",
+          "resultText": "You step over the body and move on. Some things aren't worth the risk—or the guilt.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "report",
+          "textId": "mi_loot_report",
+          "text": "Report the find to an officer",
+          "resultTextId": "mi_loot_report_result",
+          "resultText": "An officer nods and pockets the purse himself. He slips you a few coins for your honesty. 'Good soldier,' he mutters.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "gold": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_wounded_enemy",
+      "category": "map_incident",
+      "titleId": "mi_wounded_enemy_title",
+      "title": "The Wounded Enemy",
+      "setupId": "mi_wounded_enemy_setup",
+      "setup": "A wounded enemy soldier lies in the mud, blood pooling beneath him. He's watching you, eyes wide with fear and pain. He's not dead yet. No one else is around.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 6
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "kill",
+          "textId": "mi_wounded_enemy_kill",
+          "text": "End his suffering",
+          "resultTextId": "mi_wounded_enemy_kill_result",
+          "resultText": "You draw your blade and finish it quickly. Mercy or cruelty—you're not sure which. The field is quieter now.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": -5,
+              "Valor": 3
+            }
+          }
+        },
+        {
+          "id": "spare",
+          "textId": "mi_wounded_enemy_spare",
+          "text": "Leave him to his fate",
+          "resultTextId": "mi_wounded_enemy_spare_result",
+          "resultText": "You walk away. His labored breathing fades behind you. He might live, he might not. That's not your decision to make.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 3
+            }
+          }
+        },
+        {
+          "id": "help",
+          "textId": "mi_wounded_enemy_help",
+          "text": "Call for a medic",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 20
+            }
+          },
+          "resultTextId": "mi_wounded_enemy_help_result",
+          "resultText": "You signal for the surgeon's assistant. He looks at you oddly but comes over. 'Strange to waste bandages on them,' he says, but he does it anyway.",
+          "tooltip": "Requires Medicine 20+",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 10
+            },
+            "soldierRep": -3,
+            "officerRep": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_battlefield_find",
+      "category": "map_incident",
+      "titleId": "mi_battlefield_find_title",
+      "title": "Battlefield Discovery",
+      "setupId": "mi_battlefield_find_setup",
+      "setup": "While sifting through the aftermath, you notice something valuable half-buried in the mud—a well-crafted weapon, a noble's signet ring, or a pouch of foreign coin. It's worth more than a soldier's pay for a month.",
+      "requirements": {
+        "context": "leaving_battle",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 7
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "keep",
+          "textId": "mi_battlefield_find_keep",
+          "text": "Keep it hidden",
+          "resultTextId": "mi_battlefield_find_keep_result",
+          "resultText": "You slip the item into your pack, covering it with a torn cloak. Your heart pounds, but no one saw. You hope.",
+          "risk": "risky",
+          "effects": {
+            "gold": 80,
+            "scrutiny": 3
+          }
+        },
+        {
+          "id": "turn_in",
+          "textId": "mi_battlefield_find_turn_in",
+          "text": "Turn it in to the quartermaster",
+          "resultTextId": "mi_battlefield_find_turn_in_result",
+          "resultText": "The quartermaster weighs the item in his hand, impressed. 'Honest work gets rewarded,' he says, and gives you a share of the value—less than it's worth, but clean coin.",
+          "risk": "safe",
+          "effects": {
+            "gold": 30,
+            "officerRep": 8,
+            "scrutiny": -2
+          }
+        },
+        {
+          "id": "sell_later",
+          "textId": "mi_battlefield_find_sell",
+          "text": "Hide it and sell it in town later",
+          "requirements": {
+            "minSkills": {
+              "Roguery": 30
+            }
+          },
+          "resultTextId": "mi_battlefield_find_sell_result",
+          "resultText": "You know a merchant who won't ask questions. You tuck the item away, planning your next visit to town. This could be profitable.",
+          "tooltip": "Requires Roguery 30+",
+          "risk": "dangerous",
+          "effects": {
+            "gold": 120,
+            "scrutiny": 5
+          }
+        }
+      ]
+    }
+  ]
+}
+

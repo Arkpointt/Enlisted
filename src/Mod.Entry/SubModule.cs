@@ -384,6 +384,9 @@ namespace Enlisted.Mod.Entry
                     // Event pacing system: fires narrative events every 3-5 days based on player role, context, and cooldowns.
                     campaignStarter.AddBehavior(new EventPacingManager());
 
+                    // Map incident system: delivers context-based events during travel (battle end, settlement entry/exit, siege).
+                    campaignStarter.AddBehavior(new MapIncidentManager());
+
                     // Decision system: loads player-initiated decisions from JSON and provides them to the Decisions menu.
                     campaignStarter.AddBehavior(new DecisionManager());
 

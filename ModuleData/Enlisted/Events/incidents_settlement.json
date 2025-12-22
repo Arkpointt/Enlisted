@@ -1,0 +1,270 @@
+{
+  "schema_version": 2,
+  "description": "Map incidents triggered when entering/leaving settlements",
+  "events": [
+    {
+      "id": "mi_town_tavern",
+      "category": "map_incident",
+      "titleId": "mi_town_tavern_title",
+      "title": "The Tavern",
+      "setupId": "mi_town_tavern_setup",
+      "setup": "You have a few hours of freedom in town. The tavern beckons—warm lights, loud voices, the smell of ale and roasted meat. A drink wouldn't hurt. Or maybe it would.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 6
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "drink_moderate",
+          "textId": "mi_town_tavern_moderate",
+          "text": "Have a few drinks, keep your wits",
+          "resultTextId": "mi_town_tavern_moderate_result",
+          "resultText": "You share stories with the soldiers, laugh at old jokes, and keep your coin purse close. A good evening, nothing more.",
+          "risk": "safe",
+          "effects": {
+            "gold": -10,
+            "soldierRep": 5,
+            "companyNeeds": {
+              "Rest": 5
+            }
+          }
+        },
+        {
+          "id": "drink_heavy",
+          "textId": "mi_town_tavern_heavy",
+          "text": "Drink deep and forget the war",
+          "resultTextId": "mi_town_tavern_heavy_result",
+          "resultText": "The night blurs. You wake with a pounding head, lighter coin, and a vague memory of singing. Worth it? Maybe.",
+          "risk": "moderate",
+          "effects": {
+            "gold": -30,
+            "soldierRep": 8,
+            "scrutiny": 1,
+            "companyNeeds": {
+              "Rest": -10
+            }
+          }
+        },
+        {
+          "id": "stay_sober",
+          "textId": "mi_town_tavern_sober",
+          "text": "Stay sober and keep watch",
+          "resultTextId": "mi_town_tavern_sober_result",
+          "resultText": "You nurse a single cup of ale for hours, watching the others. Someone needs to stay sharp. The men notice your discipline.",
+          "risk": "safe",
+          "effects": {
+            "gold": -5,
+            "officerRep": 5,
+            "soldierRep": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_message",
+      "category": "map_incident",
+      "titleId": "mi_town_message_title",
+      "title": "Message from Home",
+      "setupId": "mi_town_message_setup",
+      "setup": "The innkeeper hands you a sealed letter. 'Been waiting for you,' he says. Your name is written in familiar handwriting. A message from your old life, from before you took the king's coin.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 8
+      },
+      "timing": {
+        "cooldown_days": 15,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "read_now",
+          "textId": "mi_town_message_read",
+          "text": "Read it immediately",
+          "resultTextId": "mi_town_message_read_result",
+          "resultText": "The words bring comfort and pain in equal measure. Home feels both close and impossibly far. You fold the letter carefully and tuck it away.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 5
+            }
+          }
+        },
+        {
+          "id": "read_later",
+          "textId": "mi_town_message_later",
+          "text": "Save it for later",
+          "resultTextId": "mi_town_message_later_result",
+          "resultText": "You slip the letter into your pack, unopened. Some things are better saved for when you need them most.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Rest": 3
+            }
+          }
+        },
+        {
+          "id": "burn",
+          "textId": "mi_town_message_burn",
+          "text": "Burn it unread",
+          "resultTextId": "mi_town_message_burn_result",
+          "resultText": "You toss it into the nearest fire without breaking the seal. That life is gone. No point in looking back.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            },
+            "companyNeeds": {
+              "Morale": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_leave_hangover",
+      "category": "map_incident",
+      "titleId": "mi_leave_hangover_title",
+      "title": "Morning After",
+      "setupId": "mi_leave_hangover_setup",
+      "setup": "The company is preparing to march. Your head pounds like a war drum, and every ray of sunlight feels like a blade. You drank too much last night, and now you're paying for it.",
+      "requirements": {
+        "context": "leaving_settlement",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 5
+      },
+      "timing": {
+        "cooldown_days": 5,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "push_through",
+          "textId": "mi_leave_hangover_push",
+          "text": "Grit your teeth and march",
+          "resultTextId": "mi_leave_hangover_push_result",
+          "resultText": "You force yourself forward, step by agonizing step. The day is miserable, but you don't fall behind. The sergeant notices your suffering but says nothing.",
+          "risk": "moderate",
+          "effects": {
+            "companyNeeds": {
+              "Rest": -5
+            },
+            "officerRep": 3
+          }
+        },
+        {
+          "id": "seek_remedy",
+          "textId": "mi_leave_hangover_remedy",
+          "text": "Find a remedy from the surgeon",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 25
+            }
+          },
+          "resultTextId": "mi_leave_hangover_remedy_result",
+          "resultText": "The surgeon gives you a bitter tonic and a knowing look. 'This will help,' he says, 'but next time, drink less.' The relief is immediate.",
+          "tooltip": "Requires Medicine 25+",
+          "risk": "safe",
+          "effects": {
+            "gold": -5,
+            "companyNeeds": {
+              "Rest": 5
+            }
+          }
+        },
+        {
+          "id": "rest_first",
+          "textId": "mi_leave_hangover_rest",
+          "text": "Ask for a delay to recover",
+          "resultTextId": "mi_leave_hangover_rest_result",
+          "resultText": "The sergeant is not amused. 'March now or face discipline,' he growls. You join the column, shame burning worse than the headache.",
+          "risk": "risky",
+          "effects": {
+            "officerRep": -8,
+            "soldierRep": 3,
+            "discipline": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_village_gratitude",
+      "category": "map_incident",
+      "titleId": "mi_village_gratitude_title",
+      "title": "Village Welcome",
+      "setupId": "mi_village_gratitude_setup",
+      "setup": "The villagers greet the company with relief and gratitude. They've been raided before, and your lord's banner means protection. An elder offers bread and cheese to the soldiers. Simple fare, but freely given.",
+      "requirements": {
+        "context": "entering_village",
+        "role": "Any",
+        "minTier": 1,
+        "maxTier": 7
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "accept_graciously",
+          "textId": "mi_village_gratitude_accept",
+          "text": "Accept their hospitality with thanks",
+          "resultTextId": "mi_village_gratitude_accept_result",
+          "resultText": "You take the food and share stories with the villagers. They seem heartened by your presence. Simple kindness goes a long way.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 5,
+            "companyNeeds": {
+              "Morale": 5,
+              "Rest": 3
+            }
+          }
+        },
+        {
+          "id": "decline",
+          "textId": "mi_village_gratitude_decline",
+          "text": "Politely decline, they need it more",
+          "resultTextId": "mi_village_gratitude_decline_result",
+          "resultText": "You wave off the food. 'Save it for your children,' you say. The elder nods with respect, and the villagers whisper among themselves.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Mercy": 8,
+              "Generosity": 5
+            },
+            "soldierRep": 3
+          }
+        },
+        {
+          "id": "take_advantage",
+          "textId": "mi_village_gratitude_demand",
+          "text": "Demand more provisions as tribute",
+          "resultTextId": "mi_village_gratitude_demand_result",
+          "resultText": "The elder's face falls, but he complies. You take extra food and coin. The villagers won't forget this, and neither will your comrades.",
+          "risk": "dangerous",
+          "effects": {
+            "gold": 20,
+            "soldierRep": -8,
+            "scrutiny": 3,
+            "traitXp": {
+              "Mercy": -10
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

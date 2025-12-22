@@ -190,6 +190,8 @@
     <Compile Include="src\Features\Company\CompanyNeed.cs"/>
     <Compile Include="src\Features\Company\CompanyNeedsState.cs"/>
     <Compile Include="src\Features\Company\CompanyNeedsManager.cs"/>
+    <Compile Include="src\Features\Logistics\CompanySupplyManager.cs"/>
+    <Compile Include="src\Features\Logistics\ContrabandChecker.cs"/>
     <Compile Include="src\Features\Context\ArmyContextAnalyzer.cs"/>
     <Compile Include="src\Features\Context\LordObjective.cs"/>
     <Compile Include="src\Features\Combat\Behaviors\EnlistedEncounterBehavior.cs"/>
@@ -220,10 +222,13 @@
     <Compile Include="src\Features\Content\EventDefinition.cs"/>
     <Compile Include="src\Features\Content\EventCatalog.cs"/>
     <Compile Include="src\Features\Content\SkillCheckHelper.cs"/>
+    <Compile Include="src\Features\Content\WeaponSkillHelper.cs"/>
+    <Compile Include="src\Features\Content\ExperienceTrackHelper.cs"/>
     <Compile Include="src\Features\Content\EventDeliveryManager.cs"/>
     <Compile Include="src\Features\Content\EventRequirementChecker.cs"/>
     <Compile Include="src\Features\Content\EventSelector.cs"/>
     <Compile Include="src\Features\Content\EventPacingManager.cs"/>
+    <Compile Include="src\Features\Content\MapIncidentManager.cs"/>
     <Compile Include="src\Features\Content\DecisionCatalog.cs"/>
     <Compile Include="src\Features\Content\DecisionManager.cs"/>
     <Compile Include="src\Features\Identity\TraitHelper.cs"/>
