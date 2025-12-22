@@ -8,6 +8,16 @@
 
 ---
 
+## Quick Start
+
+**New to this project? Read these two files first:**
+1. **[BLUEPRINT.md](BLUEPRINT.md)** - Project architecture, constraints, and coding standards
+2. **[INDEX.md](INDEX.md)** - Complete documentation catalog with navigation guide
+
+These provide full project context and help you find anything you need.
+
+---
+
 ## Index
 
 1. [What is Enlisted?](#what-is-enlisted)
