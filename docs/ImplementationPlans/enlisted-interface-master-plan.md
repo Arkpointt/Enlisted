@@ -1,13 +1,15 @@
 # Enlisted Mod - Master Implementation Plan v2.0 (Mod Version v0.9.0)
 
 **Status**: Phases 1-4 Complete - Ready for Phase 5
-**Last Updated**: December 21, 2025
+**Last Updated**: December 22, 2025
 **Mod Version**: v0.9.0
 **Target Game Version**: v1.3.12
 **Current Phase**: Phase 5.6 - Strategic Context Enhancement
 **Related Documents**: 
 - `traits-identity-system.md` - Identity & trait integration details
 - `macro-schedule-simplification.md` - Orders & UI simplification details
+- `unified-content-system-implementation.md` - Content system (events, decisions, orders)
+- `docs/Features/UI/ui-systems-master.md` - UI systems and localization reference
 
 ---
 
@@ -159,6 +161,27 @@ This creates an experience where being an enlisted soldier feels **authentic, dy
 - Heavy losses: "The company has paid dearly — 12 souls lost since last muster."
 - Moderate: "Hard fighting has cost us 6 dead and left 14 wounded."
 - Light: "One of ours didn't make it through."
+
+### ✅ Decision Menu & Localization (December 22, 2025)
+
+**Decision Menu Completed:**
+- ✅ Accordion-style decision menu with 5 sections (OPPORTUNITIES, TRAINING, SOCIAL, CAMP LIFE, LOGISTICS)
+- ✅ 17 total decisions (6 player-initiated, 11 automatic opportunities)
+- ✅ Cooldown tracking and display
+- ✅ Tier/time/flag gates with tooltips
+- ✅ Section headers have icons, individual entries are indented without icons
+- ✅ 95+ XML localized strings for all decision text
+
+**Critical Localization Fix:**
+- ✅ Fixed JSON field ordering: fallback fields (`title`, `setup`) must immediately follow ID fields (`titleId`, `setupId`)
+- ✅ Prevents raw string IDs from displaying in popups
+- ✅ Applied fix to all 17 decision events in `events_player_decisions.json` and `events_decisions.json`
+
+**UI Documentation Created:**
+- ✅ `docs/Features/UI/ui-systems-master.md` - Comprehensive UI systems documentation
+- ✅ Localization system reference with troubleshooting
+- ✅ Documents dual-field pattern and common issues
+- ✅ Prevents future localization failures
 - Wounded only: "The surgeons are busy — 24 wounded in the company."
 
 ### Phase 5.6: Strategic Context Enhancement (High Value)

@@ -2,8 +2,8 @@
 
 > **Purpose**: Single implementation plan for the narrative content system (events, orders, decisions, map incidents) AND the quartermaster system (equipment, food, supply, baggage checks). These systems share dependencies and must be built together.
 
-**Last Updated**: December 21, 2025  
-**Status**: Phase 5 Complete - Content Loading, Localization & Decisions System  
+**Last Updated**: December 22, 2025  
+**Status**: Phase 5 Complete - Content Loading, Localization & Decisions System (with fixes)  
 **Target Game Version**: Bannerlord v1.3.11
 
 ---
@@ -27,6 +27,7 @@
 - **XML** for player-facing text (localization via `ModuleData/Languages/enlisted_strings.xml`)
 - **JSON** for content data (events, decisions, orders in `ModuleData/Enlisted/`)
 - In code, use `TextObject("{=stringId}Fallback")` for localized strings.
+- **CRITICAL:** In JSON, fallback fields (`title`, `setup`, `text`, `resultText`) must immediately follow their ID fields (`titleId`, `setupId`, `textId`, `resultTextId`) for proper parser association. See [Decisions System](#decisions-system--new---december-2025) for details.
 
 ### Logging
 - All logs go to: `<BannerlordInstall>/Modules/Enlisted/Debugging/`
@@ -178,10 +179,27 @@ OnMusterDay():
 |-----------|----------|-------|
 | **DecisionCatalog** | `src/Features/Content/DecisionCatalog.cs` | Filters events with `category: "decision"`, organizes by section |
 | **DecisionManager** | `src/Features/Content/DecisionManager.cs` | Cooldowns, gates (tier, time, flags), availability checking |
-| **Decision Menu** | `EnlistedMenuBehavior.cs` | Accordion-style menu with OPPORTUNITIES, TRAINING, SOCIAL, CAMP LIFE, LOGISTICS |
+| **Decision Menu** | `EnlistedMenuBehavior.cs` | Accordion-style menu with OPPORTUNITIES, TRAINING, SOCIAL, CAMP LIFE, LOGISTICS (no icons on individual entries) |
 | **Decision JSON** | `ModuleData/Enlisted/Events/events_player_decisions.json` | 6 player-initiated decisions |
 | **Decision JSON** | `ModuleData/Enlisted/Events/events_decisions.json` | 11 automatic decisions (opportunities) |
 | **Decision XML** | `ModuleData/Languages/enlisted_strings.xml` | 95+ localized strings for all decisions |
+| **UI Documentation** | `docs/Features/UI/ui-systems-master.md` | Comprehensive UI systems documentation with localization troubleshooting |
+
+**CRITICAL LOCALIZATION PATTERN (Fixed Dec 22, 2025):**
+
+JSON fallback fields MUST immediately follow their ID fields for the parser to associate them correctly:
+
+```json
+{
+  "titleId": "decision_training_title",
+  "title": "Request Extra Training",        ← Must be IMMEDIATELY after titleId
+  "setupId": "decision_training_setup",
+  "setup": "The drillmaster approaches...",  ← Must be IMMEDIATELY after setupId
+  "options": [...]
+}
+```
+
+**Common Mistake:** Placing `title` and `setup` at the end of the JSON object causes raw string IDs to display in popups instead of localized text. This affected 17 decision events and was fixed on Dec 22, 2025.
 
 **Terminology Update (December 2025):**
 
@@ -838,13 +856,16 @@ public class ContentLoader
 - [x] `ModuleData/Enlisted/Events/` has 15+ JSON files (old schema)
 - [x] `ModuleData/Languages/enlisted_strings.xml` exists
 
-*Phase 5 Complete (Dec 2024):*
+*Phase 5 Complete (Dec 2024-2025):*
 - [x] Created folder structure: `ModuleData/Enlisted/Events/Role/`
 - [x] Created 9 sample events in NEW schema format (3 files: scout_events.json, muster_events.json, camp_events.json)
 - [x] Added 72 XML strings for all sample events to enlisted_strings.xml
 - [x] EventCatalog already loads both old and new format with migration support
 - [x] Content count logging already implemented at startup (EventCatalog.cs line 76)
 - [x] Implemented ResolveText() in EventDeliveryManager using TextObject for XML lookup
+- [x] **Fixed JSON field ordering** (Dec 22): Moved fallback fields to immediately follow ID fields in 17 decision events
+- [x] **Created UI documentation** (Dec 22): `docs/Features/UI/ui-systems-master.md` with localization system reference
+- [x] **Fixed decision menu icons** (Dec 22): Individual entries no longer show icons, only section headers do
 
 ---
 
