@@ -7,6 +7,40 @@
 
 ---
 
+## Engineering Standards
+
+**Follow these while implementing all phases:**
+
+### Code Quality
+- **Follow ReSharper linter/recommendations.** Fix warnings; don't suppress them with pragmas.
+- **Comments should be factual descriptions of current behavior.** Write them as a human developer would—professional and natural. Don't use "Phase" references, changelog-style framing ("Added X", "Changed from Y"), or mention legacy/migration in doc comments. Just describe what the code does.
+- Reuse existing patterns (copy OrderCatalog → EventCatalog, etc.)
+
+### API Verification
+- **Use the local native decompile** to verify Bannerlord APIs before using them.
+- Decompile location: `C:\Dev\Enlisted\Decompile\`
+- Key namespaces: `TaleWorlds.CampaignSystem`, `TaleWorlds.Core`, `TaleWorlds.Library`
+- Don't rely on external docs or AI assumptions - verify in decompile first.
+
+### Data Files
+- **XML** for player-facing text (localization via `ModuleData/Languages/enlisted_strings.xml`)
+- **JSON** for content data (events, decisions, orders in `ModuleData/Enlisted/`)
+- In code, use `TextObject("{=stringId}Fallback")` for localized strings.
+- **CRITICAL:** In JSON, fallback fields (`title`, `setup`, `text`, `resultText`) must immediately follow their ID fields (`titleId`, `setupId`, `textId`, `resultTextId`) for proper parser association.
+
+### Logging
+- All logs go to: `<BannerlordInstall>/Modules/Enlisted/Debugging/`
+- Use: `ModLogger.Info("Category", "message")`
+- Log content loading counts, migration warnings, errors.
+
+### Build
+```bash
+dotnet build -c "Enlisted RETAIL" /p:Platform=x64
+```
+Output: `Modules/Enlisted/bin/Win64_Shipping_Client/`
+
+---
+
 ## Overview
 
 This document covers three advanced content features that are already defined in JSON but not yet implemented in code:
