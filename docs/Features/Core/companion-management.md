@@ -1,6 +1,12 @@
 # Companion Management System
 
-The **Companion Management System** governs how your personal heroes are handled during enlistment, including their location, battle participation, and command restrictions.
+**Summary:** The companion management system governs how personal heroes (companions) are handled during enlistment, controlling their location (stay in clan party or join player), battle participation eligibility, formation assignment (unified squad with player), and command restrictions to prevent players from issuing orders during enlisted service.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Core Gameplay](core-gameplay.md), [Enlistment](enlistment.md)
+
+---
 
 ## Index
 

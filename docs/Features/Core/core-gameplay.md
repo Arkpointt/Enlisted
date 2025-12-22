@@ -1,11 +1,10 @@
-# Enlisted – Core Gameplay (Consolidated)
+# Core Gameplay
 
-**last updated:** December 20, 2025  
-**Goal:** One maintained document for the mod’s core gameplay loop and the systems that implement it (Mod Version v0.9.0, Game Target v1.3.12).
+**Summary:** Comprehensive overview of the Enlisted mod's core gameplay loop covering enlistment, orders from chain of command, emergent identity through traits and reputation, and the native game menu interface. This is the main entry point for understanding how all systems fit together in the enlisted soldier experience.
 
-This file replaces the older split docs under:
-- `docs/Features/Core/*.md`
-- `docs/Features/Gameplay/*.md`
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Enlistment](enlistment.md), [Orders System](../Content/content-system-architecture.md), [Identity System](../Identity/identity-system.md)
 
 ---
 

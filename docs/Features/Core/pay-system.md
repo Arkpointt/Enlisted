@@ -1,6 +1,12 @@
 # Pay System
 
-The pay system tracks wages, bonuses, and pay tension for enlisted soldiers in v0.9.0.
+**Summary:** The pay system manages daily wages, muster payouts, bonuses, battle loot sharing, and pay tension for enlisted soldiers. Pay accumulates daily and is distributed every 12 days at muster, with tier-based wage scaling and various bonus mechanisms including unit fund contributions and loot shares.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Enlistment](enlistment.md), [Core Gameplay](core-gameplay.md)
+
+---
 
 ## Index
 

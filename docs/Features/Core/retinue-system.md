@@ -1,6 +1,12 @@
-# Retinue System — Commander's Personal Force
+# Retinue System
 
-The **Retinue System** provides enlisted commanders with a personal military force that grows with their rank. It represents the transition from a rank-and-file soldier to a leader of men.
+**Summary:** The retinue system provides high-rank enlisted commanders (T7+) with a personal military force that grows with their rank and authority. Players receive recruits, train them, manage casualties, and lead them in battle, representing the transition from rank-and-file soldier to a leader of men.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Core Gameplay](core-gameplay.md), [Training System](../Combat/training-system.md)
+
+---
 
 ## Index
 

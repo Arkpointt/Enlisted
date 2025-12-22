@@ -1,4 +1,23 @@
-# Camp Fatigue — Documentation
+# Camp Fatigue System
+
+**Summary:** Fatigue is a stamina-like resource that gates certain enlisted actions and choices. Players accumulate fatigue from demanding activities and restore it through rest, with a default capacity of 24 points. Fatigue is displayed in the UI and affects availability of camp menu decisions, pay muster options, and event choices.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Core Gameplay](core-gameplay.md), [Camp Life Simulation](../Campaign/camp-life-simulation.md)
+
+---
+
+## Index
+
+- [Overview](#overview)
+- [Data & State](#data--state)
+- [Fatigue Sources](#fatigue-sources)
+- [Restoration](#restoration)
+- [Probation Effects](#probation-effects)
+- [Integration](#integration)
+
+---
 
 ## Overview
 Fatigue is a stamina-like counter used to gate certain enlisted actions and choices. It displays in the enlisted UI so players can see how much capacity remains.

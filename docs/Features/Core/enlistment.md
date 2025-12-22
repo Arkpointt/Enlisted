@@ -1,9 +1,16 @@
-# Feature Spec: Enlistment System
+# Enlistment System
 
-> Note: This page is still valid, but the **high-level “how the core loop fits together”** now lives in  
-> `docs/Features/Core/core-gameplay.md`. Use this file for the deep-dive details.
+**Summary:** The enlistment system manages how players join a lord's service, progress through ranks (T1-T9), and eventually leave through discharge or desertion. This document covers the deep-dive technical details of enlistment mechanics, muster cycles, discharge types, and re-entry as a reservist.
 
-## Table of Contents
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Core Gameplay](core-gameplay.md), [Onboarding & Discharge](onboarding-discharge-system.md), [Pay System](pay-system.md)
+
+> **Note:** For high-level gameplay overview, see `core-gameplay.md`. This document provides technical implementation details.
+
+---
+
+## Index
 
 - [Overview](#overview)
 - [Purpose](#purpose)

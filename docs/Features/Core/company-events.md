@@ -1,6 +1,22 @@
 # Company Events
 
-Data-driven, role-based event system for camp life, training, reputation shifts, and narrative moments during enlisted service (Mod Version v0.9.0).
+**Summary:** Data-driven, role-based event system that delivers camp life moments, training opportunities, reputation shifts, and narrative choices during enlisted service. Events emerge based on player role (Scout, Medic, NCO, etc.) and campaign context, delivered through camp menu, automatic inquiries, or map incidents.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Content System Architecture](../Content/content-system-architecture.md), [Core Gameplay](core-gameplay.md)
+
+---
+
+## Index
+
+- [Overview](#overview)
+- [Delivery Channels](#delivery-channels)
+- [Role-Based Events](#role-based-events)
+- [Event Types](#event-types)
+- [Integration](#integration)
+
+---
 
 ## Overview
 
