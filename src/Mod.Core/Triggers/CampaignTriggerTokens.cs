@@ -82,7 +82,8 @@ namespace Enlisted.Mod.Core.Triggers
         public const string Scrutiny = "scrutiny";
         public const string Discipline = "discipline";
         public const string SoldierReputation = "soldier_reputation";
-        public const string LanceReputation = "lance_reputation"; // DEPRECATED: Use SoldierReputation instead
+        public const string CampReputation = "camp_reputation";
+        public const string LanceReputation = "lance_reputation"; // DEPRECATED: Use CampReputation instead
         public const string MedicalRisk = "medical_risk";
 
         // Prefix tokens (pattern-based)
@@ -119,6 +120,12 @@ namespace Enlisted.Mod.Core.Triggers
         public const string Discipline7 = "discipline_7";
         public const string Discipline10 = "discipline_10";
 
+        public const string CampRep20 = "camp_rep_20";
+        public const string CampRep40 = "camp_rep_40";
+        public const string CampRepNeg20 = "camp_rep_-20";
+        public const string CampRepNeg40 = "camp_rep_-40";
+        
+        // DEPRECATED: Use CampRep variants instead
         public const string LanceRep20 = "lance_rep_20";
         public const string LanceRep40 = "lance_rep_40";
         public const string LanceRepNeg20 = "lance_rep_-20";

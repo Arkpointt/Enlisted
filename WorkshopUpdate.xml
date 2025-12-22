@@ -7,7 +7,7 @@
     <UpdateItem>
         <ModuleFolder Value="C:\Program Files (x86)\Steam\steamapps\common\Mount &amp; Blade II Bannerlord\Modules\Enlisted"/>
         <!-- A direct path of your module -->   
-        <ChangeNotes Value="v0.6.0" />
+        <ChangeNotes Value="v0.9.0" />
         <!-- Insert patch notes -->
         <Tags> 
             <!-- You can use the following tags: -->
@@ -18,7 +18,7 @@
             <Tag Value="Partial Conversion" />
             <Tag Value="Medieval" />
             <Tag Value="Singleplayer" />
-            <Tag Value="1.3.10" />
+            <Tag Value="1.3.11" />
         </Tags>
     </UpdateItem>
 </Tasks>

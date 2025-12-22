@@ -7,6 +7,7 @@ using Enlisted.Features.Combat.Behaviors;
 using Enlisted.Features.Company;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Identity;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core;
 using Enlisted.Mod.Core.Logging;
@@ -592,6 +593,13 @@ namespace Enlisted.Features.Enlistment.Behaviors
         ///     Currently assigned duty (e.g., "runner", "scout", "field_medic").
         /// </summary>
         public string SelectedDuty => _selectedDuty;
+
+        /// <summary>
+        ///     Returns the player's current specialization role based on trait levels.
+        ///     Uses EnlistedStatusManager to determine role from trait hierarchy.
+        ///     Returns "Soldier" if no specialization is unlocked or if not properly initialized.
+        /// </summary>
+        public string CurrentSpecialization => EnlistedStatusManager.Instance?.GetPrimaryRole() ?? "Soldier";
 
         public int PendingMusterPay => _pendingMusterPay;
         public CampaignTime NextPaydaySafe => _nextPayday != CampaignTime.Zero ? _nextPayday : (_nextPayday = ComputeNextPayday());
@@ -4033,7 +4041,35 @@ namespace Enlisted.Features.Enlistment.Behaviors
             _payMusterPending = false;
             ClearProbation("pay_muster_resolved");
             ModLogger.Info("Pay", $"Pay muster resolved: {_lastPayOutcome} (NextPayday={_nextPayday}, Tension={_payTension})");
-            
+
+            // Roll quartermaster stock availability for the new muster cycle
+            OnMusterCycleComplete();
+        }
+
+        /// <summary>
+        /// Called after a muster cycle completes to trigger post-muster events.
+        /// Handles quartermaster stock availability rolling and resets news counters.
+        /// </summary>
+        private void OnMusterCycleComplete()
+        {
+            try
+            {
+                QuartermasterManager.Instance?.RollStockAvailability();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("Quartermaster", $"Failed to roll stock availability at muster: {ex.Message}");
+            }
+
+            try
+            {
+                // Reset "since last muster" counters for camp news display
+                Interface.Behaviors.EnlistedNewsBehavior.Instance?.ResetMusterCounters();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Warn("News", $"Failed to reset muster counters: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -4205,6 +4241,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _payMusterPending = false;
                 ClearProbation("pay_muster_resolved");
                 ModLogger.Info("Pay", $"Pay muster resolved: corruption (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+                OnMusterCycleComplete();
             }
             catch (Exception ex)
             {
@@ -4278,6 +4315,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
                 _payMusterPending = false;
                 ClearProbation("pay_muster_resolved");
                 ModLogger.Info("Pay", $"Pay muster resolved: side deal (Outcome={_lastPayOutcome}, NextPayday={_nextPayday})");
+                OnMusterCycleComplete();
             }
             catch (Exception ex)
             {
@@ -8825,6 +8863,67 @@ namespace Enlisted.Features.Enlistment.Behaviors
             {
                 return (100, 100 - current, "Maximum relationship");
             }
+        }
+
+        /// <summary>
+        ///     Gets the current QM reputation using the native Hero relationship system.
+        ///     Returns a value in the range -100 to +100, clamped to the mod's effective range of -50 to +100.
+        /// </summary>
+        public int GetQMReputation()
+        {
+            var qm = GetOrCreateQuartermaster();
+            if (qm == null)
+            {
+                return 0;
+            }
+
+            int nativeRep = Hero.MainHero.GetRelation(qm);
+            return Math.Max(-50, Math.Min(100, nativeRep));
+        }
+
+        /// <summary>
+        ///     Returns the price multiplier for equipment purchases based on QM reputation.
+        ///     Range: 0.70 (30% discount at high rep) to 1.40 (40% markup at low rep).
+        /// </summary>
+        public float GetEquipmentPriceMultiplier()
+        {
+            int rep = GetQMReputation();
+            if (rep >= 65) return 0.70f;  // 30% discount
+            if (rep >= 35) return 0.80f;  // 20% discount
+            if (rep >= 10) return 0.90f;  // 10% discount
+            if (rep >= -10) return 1.00f; // Standard price
+            if (rep >= -25) return 1.20f; // 20% markup
+            return 1.40f;                  // 40% markup
+        }
+
+        /// <summary>
+        ///     Returns the buyback multiplier based on QM reputation.
+        ///     Range: 0.30 (hostile) to 0.65 (trusted).
+        ///     Always less than purchase multiplier to prevent profit exploits.
+        /// </summary>
+        public float GetBuybackMultiplier()
+        {
+            int rep = GetQMReputation();
+            if (rep >= 65) return 0.65f;
+            if (rep >= 35) return 0.60f;
+            if (rep >= 10) return 0.55f;
+            if (rep >= -10) return 0.50f;
+            if (rep >= -25) return 0.40f;
+            return 0.30f;
+        }
+
+        /// <summary>
+        ///     Returns the price multiplier for officer provisions (T5+ food shop).
+        ///     Range: 1.50 (floor at high rep) to 2.00 (hostile rep).
+        ///     Officer food is always a premium and never cheaper than 150% of town price.
+        /// </summary>
+        public float GetOfficerFoodPriceMultiplier()
+        {
+            int rep = GetQMReputation();
+            if (rep >= 61) return 1.50f;  // Best price (still 150% of town)
+            if (rep >= 31) return 1.75f;
+            if (rep >= 1) return 1.90f;
+            return 2.00f;                  // Hostile/neutral: 200% of town
         }
 
         /// <summary>

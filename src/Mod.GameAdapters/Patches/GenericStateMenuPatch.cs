@@ -76,13 +76,15 @@ namespace Enlisted.Mod.GameAdapters.Patches
                     EnlistedEncounterBehavior.ClearReserveState();
                 }
                 
-                // Check if player is actually inside a settlement (has entered through "Visit Settlement")
-                // If so, don't override - let them use the native settlement menus
-                var insideSettlement = PlayerEncounter.InsideSettlement;
+                // Check if player has explicitly clicked "Visit Settlement" from the enlisted menu.
+                // If so, don't override - let them use the native settlement menus.
+                // We can't rely solely on PlayerEncounter.InsideSettlement because it can be true
+                // even when the lord just enters a settlement (not when player clicks Visit).
+                var hasExplicitlyVisited = Enlisted.Features.Interface.Behaviors.EnlistedMenuBehavior.HasExplicitlyVisitedSettlement;
                 
-                if (insideSettlement)
+                if (hasExplicitlyVisited)
                 {
-                    // Player has explicitly visited the settlement - don't override
+                    // Player has explicitly clicked "Visit Settlement" - don't override
                     return;
                 }
                 

@@ -18,7 +18,12 @@ Master list of all narrative content. Reference the [Event Catalog](event-catalo
 | **Decisions** | 31 | Player-initiated choices from Camp Hub with costs and risks |
 | **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
 | **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement) |
+| **Phase 5 Samples** | 9 | NEW SCHEMA v2 sample events for testing (3 scout, 2 muster, 4 camp) |
 | **Total** | **172** | Full content catalog (includes training chain) |
+
+**Phase 5 Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
+
+**Phase 6 Complete**: Intelligent selection algorithm implemented. Events now fire automatically every 3-5 days based on player role (2× weight for matching), context (1.5× weight for matching), and priority. Cooldowns prevent event spam. See `EventSelector.cs`, `EventRequirementChecker.cs`, and `EventPacingManager.cs`.
 
 ---
 
@@ -337,7 +342,7 @@ Events triggered by personal food inventory or company supply status. See `playe
 |----|------|---------|-------------|---------|---------|
 | `evt_food_spoilage` | Food Spoilage | Summer heat ruined your personal stores. | — | Accept loss | **-1 Personal Food** |
 | `evt_food_rats` | Rats in Camp | Vermin got into your supplies. | **Cunning** (hunt) | Accept / Hunt rats / Set traps | -1 Food, Cunning 50+: no loss |
-| `evt_food_theft` | Missing Provisions | A lancemate took from your pack. | **Charm** (confront) | Confront / Let slide / Report | -1 Food, Soldier Rep, Discipline |
+| `evt_food_theft` | Missing Provisions | A comrade took from your pack. | **Charm** (confront) | Confront / Let slide / Report | -1 Food, Soldier Rep, Discipline |
 | `evt_food_battle_damage` | Battle Damage | Your pack was hit. Provisions scattered. | — | Accept loss | -1 to -2 Food (based on intensity) |
 | `evt_food_refugee` | Desperate Refugee | A starving family begs for food. | — | Give / Refuse / Sell | -1 Food, Honor, Mercy, Charm |
 | `evt_food_checkpoint` | Checkpoint Shakedown | Guards demand tribute. They eye your provisions. | **Roguery** (bluff) | Pay gold / Give food / Refuse | -30g or -1 Food, Roguery 40+: no loss |
@@ -437,6 +442,43 @@ Events triggered by personal food inventory or company supply status. See `playe
 
 ---
 
+## Phase 5 Sample Events (9 total)
+
+These events use the NEW schema v2 format with full XML localization. Created for testing the content loading and text resolution system.
+
+### Scout Role Sample Events (3)
+
+| ID | Name | Premise | Skill Check | Options | Effects |
+|----|------|---------|-------------|---------|---------|
+| `evt_scout_enemy_patrol` | Enemy Patrol Spotted | Patrol moving through valley below. | **Scouting** 50-70 | Observe / Intercept / Follow | Scouting XP 12-45, ScoutSkills trait XP, rep gains, gold/renown |
+| `evt_scout_night_watch` | Night Watch | Movement in the brush during watch. | **Scouting** 35 | Stay alert / Investigate / Doze | Scouting XP 8-18, rep effects, scrutiny penalty if dozing |
+| `evt_scout_terrain_mastery` | Terrain Knowledge | Know a faster route through terrain. | **Scouting** 60-75 | Suggest shortcut / Teach juniors | Scouting XP 20-30, Leadership XP, trait XP, rep gains |
+
+### Muster Sample Events (2)
+
+| ID | Name | Premise | Skill Check | Options | Effects |
+|----|------|---------|-------------|---------|---------|
+| `evt_muster_inspection` | Morning Inspection | Captain inspects equipment and bearing. | **OneHanded** 30 | Perfect attention / Basic / Unprepared | OneHanded XP, rep effects, scrutiny/discipline penalties |
+| `evt_muster_new_recruit` | Green Recruit | Terrified recruit needs guidance. | **Leadership** 25 | Mentor / Ignore / Haze | Leadership XP, SergeantCommandSkills trait XP, rep trade-offs |
+
+### Camp Sample Events (4)
+
+| ID | Name | Premise | Skill Check | Options | Effects |
+|----|------|---------|-------------|---------|---------|
+| `evt_camp_gambling` | Dice Game | Illegal gambling game in progress. | — | Play / Watch / Report | Gold +50, Roguery XP, rep trade-offs (report = officer +6, soldier -12) |
+| `evt_camp_storytelling` | Tales by the Fire | Soldiers sharing stories around fire. | **Charm** 20-35 | Share battles / Tell legends / Listen | Charm XP, Leadership XP, soldier rep, troop XP |
+| `evt_camp_supply_shortage` | Hungry Soldiers | Rations low, soldiers hungry. | **Scouting** 40, Athletics 30 | Share rations / Forage / Hoard | Food effects ±3-5, GenerousCommander trait XP, rep impacts |
+| `evt_camp_brawl` | Camp Brawl | Two soldiers fighting near wagons. | **OneHanded** 25, T2+ | Break up / Back soldier / Fetch officer | OneHanded XP, Leadership XP, hp loss, rep/discipline trade-offs |
+
+**Files**: 
+- `ModuleData/Enlisted/Events/Role/scout_events.json`
+- `ModuleData/Enlisted/Events/muster_events.json`
+- `ModuleData/Enlisted/Events/camp_events.json`
+
+**Localization**: All 72 strings (titles, setup, options, results) in `ModuleData/Languages/enlisted_strings.xml` (lines 3673-3762)
+
+---
+
 ## Content Coverage Summary
 
 ### By Category
@@ -485,10 +527,25 @@ Events triggered by personal food inventory or company supply status. See `playe
 | **Food Loss** | 12 |
 | **QM Rep** | 8 |
 
+### Implementation Status
+
+**Phase 6 Complete**: Intelligent event selection system implemented.
+
+| Component | File | Status |
+|-----------|------|--------|
+| Event Catalog | `EventCatalog.cs` | ✅ Loads events from JSON |
+| Event Delivery | `EventDeliveryManager.cs` | ✅ UI popups with options |
+| Requirement Checking | `EventRequirementChecker.cs` | ✅ Tier/role/context/skills/traits/escalation |
+| Weighted Selection | `EventSelector.cs` | ✅ Role 2×, context 1.5×, priority modifiers |
+| Pacing System | `EventPacingManager.cs` | ✅ 3-5 days between events |
+| Cooldown Tracking | `EscalationState.cs` | ✅ Per-event + one-time event persistence |
+
 ### Next Steps
 
-1. Convert this index to JSON files per category
-2. Create XML strings in `enlisted_strings.xml`
-3. Implement event/incident selection in code
-4. Playtest frequency and balance
+1. ~~Convert this index to JSON files per category~~ ✅ 9 sample events created
+2. ~~Create XML strings in `enlisted_strings.xml`~~ ✅ 72 strings localized
+3. ~~Implement event/incident selection in code~~ ✅ Phase 6 complete
+4. Playtest frequency and balance (Phase 7)
+5. Add more content events to catalog
+6. Implement map incidents (deferred)
 

@@ -7,6 +7,7 @@ using Enlisted.Features.Retinue.Core;
 using Enlisted.Features.Retinue.Systems;
 using Enlisted.Features.Camp;
 using Enlisted.Features.Conversations.Behaviors;
+using Enlisted.Features.Content;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
@@ -299,6 +300,9 @@ namespace Enlisted.Mod.Entry
 
                 if (gameStarterObject is CampaignGameStarter campaignStarter)
                 {
+                    // Initialize event catalog before registering behaviors that might use it
+                    EventCatalog.Initialize();
+
                     // Save/load diagnostics: two marker behaviors registered first/last so we can log
                     // user-friendly "Saving..." / "Save finished" and "Loading..." / "Load finished" lines.
                     campaignStarter.AddBehavior(new SaveLoadDiagnosticsMarkerBehavior(SaveLoadDiagnosticsMarkerBehavior.Phase.Begin));
@@ -374,6 +378,15 @@ namespace Enlisted.Mod.Entry
                     // Escalation tracks for scrutiny, discipline, lance reputation, and medical risk. This feature is feature-flagged.
                     campaignStarter.AddBehavior(new EscalationManager());
 
+                    // Event delivery system: queues and delivers narrative events to the player via UI popups.
+                    campaignStarter.AddBehavior(new EventDeliveryManager());
+
+                    // Event pacing system: fires narrative events every 3-5 days based on player role, context, and cooldowns.
+                    campaignStarter.AddBehavior(new EventPacingManager());
+
+                    // Decision system: loads player-initiated decisions from JSON and provides them to the Decisions menu.
+                    campaignStarter.AddBehavior(new DecisionManager());
+
                     // Orders system: issues orders from chain of command, tracks acceptance/decline, applies consequences.
                     campaignStarter.AddBehavior(new OrderManager());
 
@@ -429,6 +442,7 @@ namespace Enlisted.Mod.Entry
                         nameof(CampMenuHandler),
                         nameof(CampLifeBehavior),
                         nameof(EscalationManager),
+                        nameof(EventDeliveryManager),
                         nameof(OrderManager),
                         nameof(EnlistedNewsBehavior),
                         nameof(RetinueTrickleSystem),

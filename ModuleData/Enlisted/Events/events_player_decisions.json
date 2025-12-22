@@ -32,7 +32,9 @@
         "priority": "normal"
       },
       "titleId": "player_dice_title",
+      "title": "Organize a Dice Game",
       "setupId": "player_dice_setup",
+      "setup": "The evening settles over camp, and you consider gathering some comrades for a round of dice. It's a good way to pass the time and build camaraderie - though gambling always carries some risk.",
       "options": [
         {
           "id": "small_stakes",
@@ -42,7 +44,7 @@
           },
           "text": "\"Who's up for a friendly game? Small stakes only.\"",
           "resultTextId": "player_dice_small_outcome",
-          "resultText": "The dice favor you tonight. You rake in a modest pot as your lance mates good-naturedly grumble about their losses.",
+          "resultText": "The dice favor you tonight. You rake in a modest pot as your comrades good-naturedly grumble about their losses.",
           "reward_choices": {
             "type": "compensation",
             "prompt": "What do you do with your winnings?",
@@ -57,21 +59,21 @@
               },
               {
                 "id": "buy_rounds",
-                "text": "Buy rounds for everyone (+4 Lance Rep)",
-                "tooltip": "Spend your winnings to treat the lance - builds camaraderie",
+                "text": "Buy rounds for everyone (+4 Camp Rep)",
+                "tooltip": "Spend your winnings to treat the company - builds camaraderie",
                 "effects": {
-                  "lance_reputation": 4
+                  "camp_reputation": 4
                 }
               },
               {
                 "id": "split_difference",
-                "text": "Keep half, treat the lance (+7 gold, +2 Lance Rep)",
+                "text": "Keep half, treat the company (+7 gold, +2 Camp Rep)",
                 "tooltip": "A balanced approach - profit and goodwill",
                 "rewards": {
                   "gold": 7
                 },
                 "effects": {
-                  "lance_reputation": 2
+                  "camp_reputation": 2
                 }
               }
             ]
@@ -88,10 +90,10 @@
             "gold": 150
           },
           "effects": {
-            "lance_reputation": 3,
+            "camp_reputation": 3,
             "scrutiny": 1
           },
-          "outcome_failure": "The dice betray you utterly. You lose your stake and then some. A few lance mates shoot you sympathetic looks as you count your remaining coins.",
+          "outcome_failure": "The dice betray you utterly. You lose your stake and then some. A few comrades shoot you sympathetic looks as you count your remaining coins.",
           "text": "\"Let's make this interesting. High stakes tonight.\"",
           "resultTextId": "player_dice_high_success",
           "resultText": "Lady luck smiles upon you! You rake in a substantial pot, earning respect for your boldness. Some grumble about their losses, but such is the game."
@@ -103,9 +105,7 @@
           "resultTextId": "player_dice_cancel_outcome",
           "resultText": "You decide to save your coin for another evening. Rest is more valuable tonight."
         }
-      ],
-      "title": "Organize a Dice Game",
-      "setup": "The evening settles over camp, and you consider gathering some lance mates for a round of dice. It's a good way to pass the time and build camaraderie - though gambling always carries some risk."
+      ]
     },
     {
       "id": "player_request_training",
@@ -133,7 +133,9 @@
         "priority": "normal"
       },
       "titleId": "player_training_title",
+      "title": "Request Extra Training",
       "setupId": "player_training_setup",
+      "setup": "The drillmaster is available, and you could ask for some additional instruction. It would be exhausting, but the improvement might be worth it.",
       "options": [
         {
           "id": "request_training",
@@ -254,9 +256,7 @@
           "resultTextId": "player_training_cancel_outcome",
           "resultText": "You decide to conserve your energy. Training can wait for another day."
         }
-      ],
-      "title": "Request Extra Training",
-      "setup": "The drillmaster is available, and you could ask for some additional instruction. It would be exhausting, but the improvement might be worth it."
+      ]
     },
     {
       "id": "player_visit_wounded",
@@ -284,7 +284,9 @@
         "priority": "normal"
       },
       "titleId": "player_wounded_title",
+      "title": "Visit the Wounded",
       "setupId": "player_wounded_setup",
+      "setup": "The medical tent holds several of your wounded comrades. A visit might lift their spirits - and yours. It's the right thing to do.",
       "options": [
         {
           "id": "visit",
@@ -293,7 +295,7 @@
             "fatigue": 1
           },
           "effects": {
-            "lance_reputation": 3,
+            "camp_reputation": 3,
             "medical_risk": -1
           },
           "text": "Spend time with the wounded, offering what comfort you can.",
@@ -307,9 +309,7 @@
           "resultTextId": "player_wounded_cancel_outcome",
           "resultText": "Duty calls elsewhere. Perhaps tomorrow."
         }
-      ],
-      "title": "Visit the Wounded",
-      "setup": "The medical tent holds several of your wounded comrades. A visit might lift their spirits - and yours. It's the right thing to do."
+      ]
     },
     {
       "id": "player_petition_lord",
@@ -336,7 +336,9 @@
         "priority": "normal"
       },
       "titleId": "player_petition_title",
+      "title": "Petition the Lord",
       "setupId": "player_petition_setup",
+      "setup": "Your rank allows you to request a brief audience with the Lord. This is not something to do lightly - you must have a purpose, or risk wasting his time.",
       "options": [
         {
           "id": "request_pay_advance",
@@ -356,7 +358,7 @@
           "id": "request_recognition",
           "textId": "player_petition_recognition",
           "effects": {
-            "lance_reputation": 5,
+            "camp_reputation": 5,
             "scrutiny": -2
           },
           "rewards": {
@@ -375,9 +377,7 @@
           "resultTextId": "player_petition_cancel_outcome",
           "resultText": "You step back without making your request. Better to wait for a more opportune moment."
         }
-      ],
-      "title": "Petition the Lord",
-      "setup": "Your rank allows you to request a brief audience with the Lord. This is not something to do lightly - you must have a purpose, or risk wasting his time."
+      ]
     },
     {
       "id": "player_write_letter",
@@ -404,7 +404,9 @@
         "priority": "low"
       },
       "titleId": "player_letter_title",
+      "title": "Write a Letter Home",
       "setupId": "player_letter_setup",
+      "setup": "You have a moment of quiet. Perhaps it's time to send word home - to family, friends, or whoever waits for your return. Ink and parchment aren't hard to come by.",
       "options": [
         {
           "id": "write_reassuring",
@@ -442,9 +444,7 @@
           "resultTextId": "player_letter_cancel_outcome",
           "resultText": "You set aside the parchment. The words aren't coming today."
         }
-      ],
-      "title": "Write a Letter Home",
-      "setup": "You have a moment of quiet. Perhaps it's time to send word home - to family, friends, or whoever waits for your return. Ink and parchment aren't hard to come by."
+      ]
     },
     {
       "id": "player_call_in_quartermaster_favor",
@@ -472,7 +472,9 @@
         "priority": "normal"
       },
       "titleId": "player_qm_favor_title",
+      "title": "Call in a Quartermaster Favor",
       "setupId": "player_qm_favor_setup",
+      "setup": "The quartermaster owes you one. You could call in that favor to ease the pressure — or keep it for later.",
       "options": [
         {
           "id": "call_in",
@@ -483,7 +485,7 @@
           "effects": {
             "scrutiny": -1,
             "discipline": 0,
-            "lance_reputation": 1,
+            "camp_reputation": 1,
             "medical_risk": 0,
             "fatigue_relief": 0,
             "pay_tension_change": -10
@@ -502,9 +504,7 @@
           "resultTextId": "player_qm_favor_hold_outcome",
           "resultText": "You keep the favor in your pocket. In this life, leverage is a kind of coin."
         }
-      ],
-      "title": "Call in a Quartermaster Favor",
-      "setup": "The quartermaster owes you one. You could call in that favor to ease the pressure — or keep it for later."
+      ]
     }
   ],
   "description": "Player-initiated decisions - always available from the Pending Decisions menu"

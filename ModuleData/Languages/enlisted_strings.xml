@@ -77,10 +77,10 @@
     <string id="lance_talk_second" text="Talk to Second" />
     <string id="lance_talk_second_hint" text="Speak with {SECOND}, the second-in-command." />
     <string id="lance_check_wounded" text="Check on the Wounded" />
-    <string id="lance_wounded_tooltip_active" text="{COUNT} lance mate(s) are recovering from wounds.\n\n+1 Lance Rep for showing concern." />
-    <string id="lance_wounded_tooltip_none" text="No wounded lance mates at this time." />
+    <string id="lance_wounded_tooltip_active" text="{COUNT} lance mate(s) are recovering from wounds.\n\n+1 Camp Rep for showing concern." />
+    <string id="lance_wounded_tooltip_none" text="No wounded comrades at this time." />
     <string id="lance_honor_fallen" text="Honor the Fallen" />
-    <string id="lance_honor_fallen_hint" text="{COUNT} comrade(s) have fallen in battle.\n\nTake a moment to remember them.\n+2 Lance Rep" />
+    <string id="lance_honor_fallen_hint" text="{COUNT} comrade(s) have fallen in battle.\n\nTake a moment to remember them.\n+2 Camp Rep" />
     <string id="lance_no_fallen" text="No fallen to honor. May fortune continue to favor your lance." />
     <string id="lance_view_stats" text="View Lance History" />
     <string id="lance_stats_tooltip" text="Review your lance's battle record, reputation, and achievements." />
@@ -99,12 +99,12 @@
     <string id="lance_talk_leader_title" text="Speaking with {LEADER}" />
     <string id="lance_talk_leader_body" text="You approach {LEADER} respectfully.\n\nRelationship: {REL}\n\n&quot;{MESSAGE}&quot;" />
     <string id="lance_talk_second_title" text="Speaking with {SECOND}" />
-    <string id="lance_talk_second_body" text="You find {SECOND} near the lance's kit.\n\n&quot;{MESSAGE}&quot;" />
+    <string id="lance_talk_second_body" text="You find {SECOND} near the company's kit.\n\n&quot;{MESSAGE}&quot;" />
     <string id="lance_talk_close" text="Take your leave" />
     
     <!-- Wounded -->
     <string id="lance_wounded_title" text="Checking on the Wounded" />
-    <string id="lance_wounded_body_active" text="You visit the wounded lance mates and offer words of encouragement. They appreciate your concern.\n\n+1 Lance Reputation" />
+    <string id="lance_wounded_body_active" text="You visit the wounded comrades and offer words of encouragement. They appreciate your concern.\n\n+1 Camp Reputation" />
     <string id="lance_wounded_body_none" text="No wounded to check on. The lance is in fighting shape." />
     <string id="lance_wounded_close" text="Close" />
     
@@ -276,13 +276,13 @@
     <string id="Enlisted_Status_OfficerRole" text="Serving as party {ROLE} - your {SKILL} skill affects the party." />
     <string id="Enlisted_Status_RetirementEligible" text="Eligible for honorable retirement with veteran benefits." />
     <string id="Enlisted_Status_Condition" text="Condition : {CONDITION}" />
-    <string id="Enlisted_Status_LanceRep" text="Lance Rep : {VALUE} ({STATUS})" />
+    <string id="Enlisted_Status_LanceRep" text="Camp Rep : {VALUE} ({STATUS})" />
     <string id="Enlisted_Status_Scrutiny" text="Scrutiny : {BAR} {VALUE}/10{WARNING}" />
     <string id="Enlisted_Status_Discipline" text="Discipline : {BAR} {VALUE}/10{WARNING}" />
     <string id="Enlisted_Status_CampStatus" text="Time: {DAYPART} | Days from Town: {DAYS}" />
     
     <!-- Escalation Notifications -->
-    <string id="esc_rep_changed" text="Lance Reputation: {CHANGE} ({STATUS})" />
+    <string id="esc_rep_changed" text="Camp Reputation: {CHANGE} ({STATUS})" />
     <string id="esc_scrutiny_changed" text="Scrutiny increased (+{DELTA}) - Status: {STATUS}" />
     <string id="esc_discipline_changed" text="Discipline issues (+{DELTA}) - Status: {STATUS}" />
     
@@ -602,7 +602,7 @@
     <string id="enl_reports_general_orders" text="General Orders" />
     <string id="enl_reports_opportunities" text="Opportunities" />
     <string id="enl_reports_recent_outcomes" text="Recent Outcomes" />
-    <string id="enl_reports_lance_reports" text="Lance Reports" />
+    <string id="enl_reports_lance_reports" text="Camp Reports" />
     <string id="enl_reports_company_reports" text="Company Reports" />
     <string id="enl_reports_kingdom_reports" text="Kingdom Reports" />
 
@@ -820,7 +820,7 @@
     <string id="enl_camp_duties_none_for_rank" text="No duties available for your rank." />
     <string id="enl_camp_duties_select_prompt" text="Select a duty to view details and request assignment." />
     <string id="enl_camp_duties_request_assignment" text="Request Assignment" />
-    <string id="enl_camp_duties_lance_rep_label" text="Lance Reputation" />
+    <string id="enl_camp_duties_lance_rep_label" text="Camp Reputation" />
     <string id="enl_camp_duties_not_enlisted" text="Not enlisted" />
     <string id="enl_camp_duties_current_prefix" text="Current: {DUTIES}" />
     <string id="enl_camp_duties_current_none" text="Current: None assigned" />
@@ -876,7 +876,7 @@
     <string id="ll_story_morale_campfire_song_title" text="A Song for the Cold" />
     <string id="ll_story_morale_campfire_song_body" text="The night wind cuts through the tents. Someone in your lance starts a low song to keep spirits up.\n\nA few voices join in—awkward at first—then steadier. You can let it happen... or you can take the lead." />
     <string id="ll_story_morale_campfire_song_opt_lead_text" text="Lead the song (Charm + Leadership)" />
-    <string id="ll_story_morale_campfire_song_opt_lead_hint" text="Spend a little energy to lift the lance." />
+    <string id="ll_story_morale_campfire_song_opt_lead_hint" text="Spend a little energy to lift the company." />
     <string id="ll_story_morale_campfire_song_opt_listen_text" text="Let the lads carry it" />
     <string id="ll_story_morale_campfire_song_opt_listen_hint" text="No cost. No fuss." />
     <string id="ll_story_morale_campfire_song_opt_turnin_text" text="Turn in early" />
@@ -886,7 +886,7 @@
     <string id="ll_story_morale_after_battle_words_title" text="After the Noise" />
     <string id="ll_story_morale_after_battle_words_body" text="When the fighting ends, the camp always feels too quiet. Your lance sits close, staring into the coals.\n\nSomeone asks, softly, if we did right today.\n\nYou think of {LORD_NAME}, of {FACTION_NAME}, and of the road back to {LAST_SETTLEMENT}." />
     <string id="ll_story_morale_after_battle_words_opt_steady_text" text="Steady them with hard truth (Leadership)" />
-    <string id="ll_story_morale_after_battle_words_opt_steady_hint" text="Keep the lance focused on tomorrow." />
+    <string id="ll_story_morale_after_battle_words_opt_steady_hint" text="Keep the company focused on tomorrow." />
     <string id="ll_story_morale_after_battle_words_opt_gentle_text" text="Speak gently (Charm)" />
     <string id="ll_story_morale_after_battle_words_opt_gentle_hint" text="Let grief have its place, without losing discipline." />
 
@@ -1531,7 +1531,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: qm_supply_inventory — Supply Inventory -->
     <string id="ll_evt_qm_supply_inventory_title" text="Supply Inventory" />
-    <string id="ll_evt_qm_supply_inventory_setup" text="{LANCE_LEADER_SHORT} catches your eye. &quot;Quartermaster duty, {PLAYER_NAME}. We need a full count before we resupply. Get it done.&quot;\n\nThe supply wagons are a mess. Someone&#x27;s been helping themselves, or the count was wrong to begin with." />
+    <string id="ll_evt_qm_supply_inventory_setup" text="{SERGEANT_NAME} catches your eye. &quot;Quartermaster duty, {PLAYER_NAME}. We need a full count before we resupply. Get it done.&quot;\n\nThe supply wagons are a mess. Someone&#x27;s been helping themselves, or the count was wrong to begin with." />
     <string id="ll_evt_qm_supply_inventory_opt_count_everything_properly_note_d_text" text="Count everything properly, note discrepancies" />
     <string id="ll_evt_qm_supply_inventory_opt_count_everything_properly_note_d_outcome" text="You carry it out." />
     <string id="ll_evt_qm_supply_inventory_opt_do_a_quick_count_estimate_the_re_text" text="Do a quick count, estimate the rest" />
@@ -1567,7 +1567,7 @@
 
     <!-- Event: qm_requisition_request — Equipment Distribution -->
     <string id="ll_evt_qm_requisition_request_title" text="Equipment Distribution" />
-    <string id="ll_evt_qm_requisition_request_setup" text="New equipment arrived, but there&#x27;s not enough to go around. The veterans want first pick. The recruits need it more. {LANCE_LEADER_SHORT} left it to you.\n\n&quot;Your call, Quartermaster.&quot;" />
+    <string id="ll_evt_qm_requisition_request_setup" text="New equipment arrived, but there&#x27;s not enough to go around. The veterans want first pick. The recruits need it more. {SERGEANT_NAME} left it to you.\n\n&quot;Your call, Quartermaster.&quot;" />
     <string id="ll_evt_qm_requisition_request_opt_veterans_first_they_ve_earned_it_text" text="Veterans first — they&#x27;ve earned it" />
     <string id="ll_evt_qm_requisition_request_opt_veterans_first_they_ve_earned_it_outcome" text="You carry it out." />
     <string id="ll_evt_qm_requisition_request_opt_recruits_first_they_ll_die_witho_text" text="Recruits first — they&#x27;ll die without it" />
@@ -1595,7 +1595,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: scout_terrain_recon — Terrain Reconnaissance -->
     <string id="ll_evt_scout_terrain_recon_title" text="Terrain Reconnaissance" />
-    <string id="ll_evt_scout_terrain_recon_setup" text="{LANCE_LEADER_SHORT} pulls you aside before dawn. &quot;Scout duty. The captain needs to know what we&#x27;re walking into. Terrain, cover, escape routes.&quot;\n\nThe enemy is somewhere ahead. The question is where." />
+    <string id="ll_evt_scout_terrain_recon_setup" text="{SERGEANT_NAME} pulls you aside before dawn. &quot;Scout duty. The captain needs to know what we&#x27;re walking into. Terrain, cover, escape routes.&quot;\n\nThe enemy is somewhere ahead. The question is where." />
     <string id="ll_evt_scout_terrain_recon_opt_standard_reconnaissance_stay_cau_text" text="Standard reconnaissance, stay cautious" />
     <string id="ll_evt_scout_terrain_recon_opt_standard_reconnaissance_stay_cau_outcome" text="You carry it out." />
     <string id="ll_evt_scout_terrain_recon_opt_push_deep_get_close_to_enemy_pos_text" text="Push deep, get close to enemy positions" />
@@ -1643,7 +1643,7 @@
 
     <!-- Event: scout_map_update — Lost Patrol -->
     <string id="ll_evt_scout_map_update_title" text="Lost Patrol" />
-    <string id="ll_evt_scout_map_update_setup" text="A patrol hasn&#x27;t reported back. Six soldiers, including {LANCE_MATE_NAME}&#x27;s friend. \n\n{LANCE_LEADER_SHORT} looks at you. &quot;You know the ground. Find them.&quot;" />
+    <string id="ll_evt_scout_map_update_setup" text="A patrol hasn&#x27;t reported back. Six soldiers, including {LANCE_MATE_NAME}&#x27;s friend. \n\n{SERGEANT_NAME} looks at you. &quot;You know the ground. Find them.&quot;" />
     <string id="ll_evt_scout_map_update_opt_track_them_systematically_text" text="Track them systematically" />
     <string id="ll_evt_scout_map_update_opt_track_them_systematically_outcome" text="You carry it out." />
     <string id="ll_evt_scout_map_update_opt_move_fast_cover_more_ground_text" text="Move fast, cover more ground" />
@@ -1787,7 +1787,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: arm_equipment_inspection — Pre-Battle Inspection -->
     <string id="ll_evt_arm_equipment_inspection_title" text="Pre-Battle Inspection" />
-    <string id="ll_evt_arm_equipment_inspection_setup" text="Battle tomorrow — maybe today. {LANCE_LEADER_SHORT} wants every blade sharp, every strap tight.\n\n&quot;Check everything, {PLAYER_NAME}. I don&#x27;t want anyone dying because their buckle broke.&quot;" />
+    <string id="ll_evt_arm_equipment_inspection_setup" text="Battle tomorrow — maybe today. {SERGEANT_NAME} wants every blade sharp, every strap tight.\n\n&quot;Check everything, {PLAYER_NAME}. I don&#x27;t want anyone dying because their buckle broke.&quot;" />
     <string id="ll_evt_arm_equipment_inspection_opt_thorough_inspection_fix_everythi_text" text="Thorough inspection, fix everything" />
     <string id="ll_evt_arm_equipment_inspection_opt_thorough_inspection_fix_everythi_outcome" text="You carry it out." />
     <string id="ll_evt_arm_equipment_inspection_opt_focus_on_weapons_they_matter_mos_text" text="Focus on weapons, they matter most" />
@@ -1863,7 +1863,7 @@
 
     <!-- Event: run_battle_runner — Urgent Summons -->
     <string id="ll_evt_run_battle_runner_title" text="Urgent Summons" />
-    <string id="ll_evt_run_battle_runner_setup" text="&quot;Get {LANCE_LEADER_SHORT}! Now! The captain wants all sergeants!&quot;\n\nYou don&#x27;t know why. You don&#x27;t need to know why. You just need to run." />
+    <string id="ll_evt_run_battle_runner_setup" text="&quot;Get {SERGEANT_NAME}! Now! The captain wants all sergeants!&quot;\n\nYou don&#x27;t know why. You don&#x27;t need to know why. You just need to run." />
     <string id="ll_evt_run_battle_runner_opt_sprint_every_second_counts_text" text="Sprint — every second counts" />
     <string id="ll_evt_run_battle_runner_opt_sprint_every_second_counts_outcome" text="You take the risk and see it through." />
     <string id="ll_evt_run_battle_runner_opt_run_steadily_find_him_fast_text" text="Run steadily, find him fast" />
@@ -1932,7 +1932,7 @@
     <string id="ll_evt_look_movement_spotted_opt_sound_the_alarm_immediately_outcome" text="You carry it out." />
     <string id="ll_evt_look_movement_spotted_opt_investigate_first_confirm_the_th_text" text="Investigate first, confirm the threat" />
     <string id="ll_evt_look_movement_spotted_opt_investigate_first_confirm_the_th_outcome" text="You take the risk and see it through." />
-    <string id="ll_evt_look_movement_spotted_opt_alert_lance_leader_short_quietly_text" text="Alert {LANCE_LEADER_SHORT} quietly" />
+    <string id="ll_evt_look_movement_spotted_opt_alert_lance_leader_short_quietly_text" text="Alert {SERGEANT_NAME} quietly" />
     <string id="ll_evt_look_movement_spotted_opt_alert_lance_leader_short_quietly_outcome" text="You carry it out." />
     <string id="ll_evt_look_movement_spotted_opt_wait_and_watch_confirm_before_ac_text" text="Wait and watch, confirm before acting" />
     <string id="ll_evt_look_movement_spotted_opt_wait_and_watch_confirm_before_ac_outcome" text="You take the risk and see it through." />
@@ -2195,7 +2195,7 @@
 
     <!-- Event: inf_train_march — March Conditioning -->
     <string id="ll_evt_inf_train_march_title" text="March Conditioning" />
-    <string id="ll_evt_inf_train_march_setup" text="Full kit march. {LANCE_LEADER_SHORT} sets a punishing pace.\n\n&quot;Any army can fight. Winners can fight after a hard march.&quot;" />
+    <string id="ll_evt_inf_train_march_setup" text="Full kit march. {SERGEANT_NAME} sets a punishing pace.\n\n&quot;Any army can fight. Winners can fight after a hard march.&quot;" />
     <string id="ll_evt_inf_train_march_opt_match_the_pace_endure_text" text="Match the pace, endure" />
     <string id="ll_evt_inf_train_march_opt_match_the_pace_endure_outcome" text="You carry it out." />
     <string id="ll_evt_inf_train_march_opt_push_ahead_set_the_pace_text" text="Push ahead, set the pace" />
@@ -2207,7 +2207,7 @@
 
     <!-- Event: inf_train_twohanded — Two-Handed Weapons Drill -->
     <string id="ll_evt_inf_train_twohanded_title" text="Two-Handed Weapons Drill" />
-    <string id="ll_evt_inf_train_twohanded_setup" text="{LANCE_LEADER_SHORT} holds up a training greatsword. &quot;Who thinks they can handle this? Real fighters, not show-offs.&quot;\n\nTwo-handed work needs space, timing, and strength." />
+    <string id="ll_evt_inf_train_twohanded_setup" text="{SERGEANT_NAME} holds up a training greatsword. &quot;Who thinks they can handle this? Real fighters, not show-offs.&quot;\n\nTwo-handed work needs space, timing, and strength." />
     <string id="ll_evt_inf_train_twohanded_opt_practice_basic_forms_text" text="Practice basic forms" />
     <string id="ll_evt_inf_train_twohanded_opt_practice_basic_forms_outcome" text="You carry it out." />
     <string id="ll_evt_inf_train_twohanded_opt_work_on_power_strikes_text" text="Work on power strikes" />
@@ -2231,7 +2231,7 @@
 
     <!-- Event: cav_train_mounted_combat — Mounted Combat Drill -->
     <string id="ll_evt_cav_train_mounted_combat_title" text="Mounted Combat Drill" />
-    <string id="ll_evt_cav_train_mounted_combat_setup" text="Quintain practice. Rings on posts. Moving targets. {LANCE_LEADER_SHORT} watches from horseback.\n\n&quot;Hit the target, not your horse.&quot;" />
+    <string id="ll_evt_cav_train_mounted_combat_setup" text="Quintain practice. Rings on posts. Moving targets. {SERGEANT_NAME} watches from horseback.\n\n&quot;Hit the target, not your horse.&quot;" />
     <string id="ll_evt_cav_train_mounted_combat_opt_practice_lance_work_text" text="Practice lance work" />
     <string id="ll_evt_cav_train_mounted_combat_opt_practice_lance_work_outcome" text="You carry it out." />
     <string id="ll_evt_cav_train_mounted_combat_opt_practice_sword_from_horseback_text" text="Practice sword from horseback" />
@@ -2243,7 +2243,7 @@
 
     <!-- Event: cav_train_charge — Charge Practice -->
     <string id="ll_evt_cav_train_charge_title" text="Charge Practice" />
-    <string id="ll_evt_cav_train_charge_setup" text="The infantry holds a line of dummies. Your job — hit it at full gallop without dying.\n\n{LANCE_LEADER_SHORT}: &quot;Control. Timing. Impact. In that order.&quot;" />
+    <string id="ll_evt_cav_train_charge_setup" text="The infantry holds a line of dummies. Your job — hit it at full gallop without dying.\n\n{SERGEANT_NAME}: &quot;Control. Timing. Impact. In that order.&quot;" />
     <string id="ll_evt_cav_train_charge_opt_standard_charge_proper_form_text" text="Standard charge, proper form" />
     <string id="ll_evt_cav_train_charge_opt_standard_charge_proper_form_outcome" text="You carry it out." />
     <string id="ll_evt_cav_train_charge_opt_full_speed_maximum_impact_text" text="Full speed, maximum impact" />
@@ -2255,7 +2255,7 @@
 
     <!-- Event: cav_train_skirmish — Skirmish Tactics -->
     <string id="ll_evt_cav_train_skirmish_title" text="Skirmish Tactics" />
-    <string id="ll_evt_cav_train_skirmish_setup" text="{LANCE_LEADER_SHORT} sets up a mock skirmish. Ride in, throw, ride out. Don&#x27;t get caught.\n\n&quot;You&#x27;re not knights. You&#x27;re killers. Get in, get out.&quot;" />
+    <string id="ll_evt_cav_train_skirmish_setup" text="{SERGEANT_NAME} sets up a mock skirmish. Ride in, throw, ride out. Don&#x27;t get caught.\n\n&quot;You&#x27;re not knights. You&#x27;re killers. Get in, get out.&quot;" />
     <string id="ll_evt_cav_train_skirmish_opt_practice_javelin_throws_text" text="Practice javelin throws" />
     <string id="ll_evt_cav_train_skirmish_opt_practice_javelin_throws_outcome" text="You carry it out." />
     <string id="ll_evt_cav_train_skirmish_opt_work_on_bow_from_horseback_text" text="Work on bow from horseback" />
@@ -2267,7 +2267,7 @@
 
     <!-- Event: arch_train_target — Target Practice -->
     <string id="ll_evt_arch_train_target_title" text="Target Practice" />
-    <string id="ll_evt_arch_train_target_setup" text="Straw targets at fifty paces. Then a hundred. Then whatever distance {LANCE_LEADER_SHORT} decides is funny.\n\n&quot;Hit the target. Not the sky. Not the dirt. The target.&quot;" />
+    <string id="ll_evt_arch_train_target_setup" text="Straw targets at fifty paces. Then a hundred. Then whatever distance {SERGEANT_NAME} decides is funny.\n\n&quot;Hit the target. Not the sky. Not the dirt. The target.&quot;" />
     <string id="ll_evt_arch_train_target_opt_steady_practice_work_on_consiste_text" text="Steady practice, work on consistency" />
     <string id="ll_evt_arch_train_target_opt_steady_practice_work_on_consiste_outcome" text="You carry it out." />
     <string id="ll_evt_arch_train_target_opt_long_range_shots_push_your_limit_text" text="Long range shots, push your limits" />
@@ -2279,7 +2279,7 @@
 
     <!-- Event: arch_train_volley — Volley Drill -->
     <string id="ll_evt_arch_train_volley_title" text="Volley Drill" />
-    <string id="ll_evt_arch_train_volley_setup" text="{LANCE_LEADER_SHORT} raises an arm. When it falls, you loose. Not before. Not after. Together.\n\n&quot;A volley breaks armies. Individuals break wind.&quot;" />
+    <string id="ll_evt_arch_train_volley_setup" text="{SERGEANT_NAME} raises an arm. When it falls, you loose. Not before. Not after. Together.\n\n&quot;A volley breaks armies. Individuals break wind.&quot;" />
     <string id="ll_evt_arch_train_volley_opt_focus_on_timing_with_the_unit_text" text="Focus on timing with the unit" />
     <string id="ll_evt_arch_train_volley_opt_focus_on_timing_with_the_unit_outcome" text="You carry it out." />
     <string id="ll_evt_arch_train_volley_opt_work_on_rapid_reload_text" text="Work on rapid reload" />
@@ -2303,7 +2303,7 @@
 
     <!-- Event: arch_train_hunting — Hunting Party -->
     <string id="ll_evt_arch_train_hunting_title" text="Hunting Party" />
-    <string id="ll_evt_arch_train_hunting_setup" text="{LANCE_LEADER_SHORT} got permission for a hunting party. Real targets, real meat, real skills.\n\n&quot;Don&#x27;t come back empty-handed.&quot;" />
+    <string id="ll_evt_arch_train_hunting_setup" text="{SERGEANT_NAME} got permission for a hunting party. Real targets, real meat, real skills.\n\n&quot;Don&#x27;t come back empty-handed.&quot;" />
     <string id="ll_evt_arch_train_hunting_opt_hunt_carefully_stalk_properly_text" text="Hunt carefully, stalk properly" />
     <string id="ll_evt_arch_train_hunting_opt_hunt_carefully_stalk_properly_outcome" text="You carry it out." />
     <string id="ll_evt_arch_train_hunting_opt_range_far_find_good_game_text" text="Range far, find good game" />
@@ -2367,7 +2367,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: gen_dawn_muster — Morning Muster -->
     <string id="ll_evt_gen_dawn_muster_title" text="Morning Muster" />
-    <string id="ll_evt_gen_dawn_muster_setup" text="{LANCE_LEADER_SHORT}&#x27;s voice shatters the dawn quiet. &quot;On your feet, {LANCE_NAME}! Muster in five!&quot;\n\nAround you, soldiers groan and fumble for boots. {LANCE_MATE_NAME} is still snoring." />
+    <string id="ll_evt_gen_dawn_muster_setup" text="{SERGEANT_NAME}&#x27;s voice shatters the dawn quiet. &quot;On your feet, {LANCE_NAME}! Muster in five!&quot;\n\nAround you, soldiers groan and fumble for boots. {LANCE_MATE_NAME} is still snoring." />
     <string id="ll_evt_gen_dawn_muster_opt_fall_in_first_look_sharp_text" text="Fall in first, look sharp" />
     <string id="ll_evt_gen_dawn_muster_opt_fall_in_first_look_sharp_outcome" text="You carry it out." />
     <string id="ll_evt_gen_dawn_muster_opt_fall_in_with_the_rest_text" text="Fall in with the rest" />
@@ -2386,7 +2386,7 @@
     <string id="ll_evt_gen_dawn_cold_start_opt_exercises_to_warm_up_outcome" text="You carry it out." />
     <string id="ll_evt_gen_dawn_cold_start_opt_wait_for_someone_else_to_fix_it_text" text="Wait for someone else to fix it" />
     <string id="ll_evt_gen_dawn_cold_start_opt_wait_for_someone_else_to_fix_it_outcome" text="You carry it out." />
-    <string id="ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_in_the_lance_text" text="Check for frostbite in the lance" />
+    <string id="ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_in_the_lance_text" text="Check for frostbite in the company" />
     <string id="ll_evt_gen_dawn_cold_start_opt_check_for_frostbite_in_the_lance_outcome" text="You carry it out." />
 
     <!-- Event: gen_dawn_early_duty — Sick Call -->
@@ -2432,7 +2432,7 @@
     <string id="ll_evt_gen_day_lance_mate_request_opt_step_between_them_break_it_up_outcome" text="You carry it out." />
     <string id="ll_evt_gen_day_lance_mate_request_opt_let_them_fight_keep_watch_for_of_text" text="Let them fight, keep watch for officers" />
     <string id="ll_evt_gen_day_lance_mate_request_opt_let_them_fight_keep_watch_for_of_outcome" text="You take the risk and see it through." />
-    <string id="ll_evt_gen_day_lance_mate_request_opt_get_lance_leader_short_text" text="Get {LANCE_LEADER_SHORT}" />
+    <string id="ll_evt_gen_day_lance_mate_request_opt_get_lance_leader_short_text" text="Get {SERGEANT_NAME}" />
     <string id="ll_evt_gen_day_lance_mate_request_opt_get_lance_leader_short_outcome" text="You carry it out." />
     <string id="ll_evt_gen_day_lance_mate_request_opt_take_sides_with_lance_mate_name_text" text="Take sides (with {LANCE_MATE_NAME})" />
     <string id="ll_evt_gen_day_lance_mate_request_opt_take_sides_with_lance_mate_name_outcome" text="You take the risk and see it through." />
@@ -2644,34 +2644,34 @@
 
     <!-- Event: enlisted_onboard_01_meet_lance — enlisted_onboard_01_meet_lance -->
     <string id="ll_evt_enlisted_onboard_01_meet_lance_title" text="Meeting Your Lance" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup" text="{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over like they&#x27;re inspecting a horse they&#x27;re not sure about buying.\n\n&quot;{PLAYER_NAME}, is it? You&#x27;re with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;\n\nThe rest of the lance watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n&quot;Understood?&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup" text="{LANCE_LEADER_RANK} {SERGEANT_NAME} looks you over like they&#x27;re inspecting a horse they&#x27;re not sure about buying.\n\n&quot;{PLAYER_NAME}, is it? You&#x27;re with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;\n\nThe rest of the company watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n&quot;Understood?&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_text" text="&quot;Understood, {LANCE_LEADER_RANK}.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome" text="{LANCE_LEADER_SHORT} gives a curt nod. &quot;Good. We&#x27;ll see if you last the week.&quot; They walk off. Not warm, but not hostile. You&#x27;ve made no enemies today." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_respectful_outcome" text="{SERGEANT_NAME} gives a curt nod. &quot;Good. We&#x27;ll see if you last the week.&quot; They walk off. Not warm, but not hostile. You&#x27;ve made no enemies today." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_text" text="&quot;Ready to prove myself, {LANCE_LEADER_RANK}.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome" text="A flicker of something — amusement? approval? — crosses {LANCE_LEADER_SHORT}&#x27;s face. &quot;Keen one, are you? We&#x27;ll see how long that lasts.&quot; Someone in the lance chuckles. But it&#x27;s not unfriendly." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_eager_outcome" text="A flicker of something — amusement? approval? — crosses {SERGEANT_NAME}&#x27;s face. &quot;Keen one, are you? We&#x27;ll see how long that lasts.&quot; Someone in the company chuckles. But it&#x27;s not unfriendly." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_text" text="Just nod." />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome" text="{LANCE_LEADER_SHORT} stares at you a moment longer, then shrugs. &quot;Quiet type. Fine. Just don&#x27;t be stupid.&quot; They leave. You&#x27;ve made no impression at all. That might be good. That might be bad." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_quiet_outcome" text="{SERGEANT_NAME} stares at you a moment longer, then shrugs. &quot;Quiet type. Fine. Just don&#x27;t be stupid.&quot; They leave. You&#x27;ve made no impression at all. That might be good. That might be bad." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_text" text="&quot;I&#x27;ve handled worse than this.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome" text="The lance goes quiet. {LANCE_LEADER_SHORT}&#x27;s eyes harden. &quot;Have you now.&quot; It&#x27;s not a question. &quot;We&#x27;ll see about that.&quot;\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads." />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_first_time" text="{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over like they&#x27;re inspecting a horse they&#x27;re not sure about buying.\n\n&quot;{PLAYER_NAME}, is it? You&#x27;re with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;\n\nThe rest of the lance watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n&quot;Understood?&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_return" text="Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier&#x27;s life settling back onto your shoulders.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over — and pauses. They see it. The way you stand. The way you&#x27;re already scanning the camp, reading the layout.\n\n&quot;Served before, have you?&quot;\n\nThe lance watches with new interest. A veteran returning to the ranks. That&#x27;s either wisdom or desperation." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_first_time_cocky_outcome" text="The lance goes quiet. {SERGEANT_NAME}&#x27;s eyes harden. &quot;Have you now.&quot; It&#x27;s not a question. &quot;We&#x27;ll see about that.&quot;\n\nAs they walk away, you hear snickering from the recruits. {RECRUIT_NAME} grins at you. The veterans just shake their heads." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_first_time" text="{LANCE_LEADER_RANK} {SERGEANT_NAME} looks you over like they&#x27;re inspecting a horse they&#x27;re not sure about buying.\n\n&quot;{PLAYER_NAME}, is it? You&#x27;re with {LANCE_NAME} now. That means you do what I say, when I say it. You eat when I say eat. You sleep when I say sleep. You shit when I say shit.&quot;\n\nThe rest of the company watches from a distance. Some smirk. Some look bored. One recruit looks as terrified as you feel.\n\n&quot;Understood?&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_return" text="Back in harness. The smell of camp, the sound of soldiers, the weight of a soldier&#x27;s life settling back onto your shoulders.\n\n{LANCE_LEADER_RANK} {SERGEANT_NAME} looks you over — and pauses. They see it. The way you stand. The way you&#x27;re already scanning the camp, reading the layout.\n\n&quot;Served before, have you?&quot;\n\nThe lance watches with new interest. A veteran returning to the ranks. That&#x27;s either wisdom or desperation." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_text" text="&quot;Aye. Took some time away. Ready to be back.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_outcome" text="{LANCE_LEADER_SHORT} considers this. &quot;Time away.&quot; They don&#x27;t ask why. Good sergeants don&#x27;t. &quot;Well, you know what&#x27;s expected then. Don&#x27;t make me teach you twice.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_honest_outcome" text="{SERGEANT_NAME} considers this. &quot;Time away.&quot; They don&#x27;t ask why. Good sergeants don&#x27;t. &quot;Well, you know what&#x27;s expected then. Don&#x27;t make me teach you twice.&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_text" text="&quot;Some time ago. I&#x27;m rusty. Treat me like a recruit.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_outcome" text="Respect flickers in {LANCE_LEADER_SHORT}&#x27;s eyes. A veteran who doesn&#x27;t assume they know everything. Rare. &quot;Fair enough. But I&#x27;ll lean on you when I need experience. That&#x27;s the deal.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_humble_outcome" text="Respect flickers in {SERGEANT_NAME}&#x27;s eyes. A veteran who doesn&#x27;t assume they know everything. Rare. &quot;Fair enough. But I&#x27;ll lean on you when I need experience. That&#x27;s the deal.&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_text" text="&quot;Three campaigns. I could run a lance in my sleep.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_outcome" text="{LANCE_LEADER_SHORT}&#x27;s expression cools. &quot;Could you now. Then you won&#x27;t mind showing the recruits how it&#x27;s done.&quot; They&#x27;ve just assigned you extra work. Well done." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_confident_outcome" text="{SERGEANT_NAME}&#x27;s expression cools. &quot;Could you now. Then you won&#x27;t mind showing the recruits how it&#x27;s done.&quot; They&#x27;ve just assigned you extra work. Well done." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_text" text="&quot;Rather not talk about before. I&#x27;m here now.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_outcome" text="A long look. {LANCE_LEADER_SHORT} doesn&#x27;t push. &quot;Fine. Your business. Just do your job.&quot; They walk off. You&#x27;ve got secrets. That&#x27;s fine. Everyone does." />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_transfer" text="Another lord, another lance. You know how this goes.\n\n{LANCE_LEADER_RANK} {LANCE_LEADER_SHORT} looks you over. They&#x27;ve seen transfers before too. &quot;You&#x27;re with {LANCE_NAME} now. I don&#x27;t care who you served before or what you did there. Here, you prove yourself fresh.&quot;\n\nThe lance watches. Sizing you up. Wondering if you&#x27;re an asset or a liability." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_return_private_outcome" text="A long look. {SERGEANT_NAME} doesn&#x27;t push. &quot;Fine. Your business. Just do your job.&quot; They walk off. You&#x27;ve got secrets. That&#x27;s fine. Everyone does." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_setup_transfer" text="Another lord, another lance. You know how this goes.\n\n{LANCE_LEADER_RANK} {SERGEANT_NAME} looks you over. They&#x27;ve seen transfers before too. &quot;You&#x27;re with {LANCE_NAME} now. I don&#x27;t care who you served before or what you did there. Here, you prove yourself fresh.&quot;\n\nThe lance watches. Sizing you up. Wondering if you&#x27;re an asset or a liability." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_text" text="&quot;Understood, {LANCE_LEADER_RANK}. Fresh start.&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_respectful_outcome" text="A hint of approval. They&#x27;ve dealt with transfers who brought baggage. You&#x27;re not going to be one of those. &quot;Good. Find a spot in the tent line. We march at dawn.&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_text" text="&quot;I know the work. Point me at it.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_outcome" text="{LANCE_LEADER_SHORT} nods slowly. &quot;Experienced, are you? Good. Less hand-holding.&quot; They point toward the supply wagons. &quot;Gear check in an hour. Don&#x27;t be late.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_professional_outcome" text="{SERGEANT_NAME} nods slowly. &quot;Experienced, are you? Good. Less hand-holding.&quot; They point toward the supply wagons. &quot;Gear check in an hour. Don&#x27;t be late.&quot;" />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_text" text="&quot;Served three years under Lord {PREVIOUS_LORD}. I know how a lance works.&quot;" />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_outcome" text="&quot;Did you now.&quot; {LANCE_LEADER_SHORT}&#x27;s tone is flat. &quot;And yet here you are, starting over.&quot; The implication hangs in the air. Maybe that wasn&#x27;t the right thing to say." />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_mention_experience_outcome" text="&quot;Did you now.&quot; {SERGEANT_NAME}&#x27;s tone is flat. &quot;And yet here you are, starting over.&quot; The implication hangs in the air. Maybe that wasn&#x27;t the right thing to say." />
     <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_text" text="Just nod. You know the drill." />
-    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_outcome" text="{LANCE_LEADER_SHORT} accepts your silence for what it is — a professional who doesn&#x27;t need the speech. &quot;Tent line. Dawn. Don&#x27;t make me come find you.&quot;" />
+    <string id="ll_evt_enlisted_onboard_01_meet_lance_opt_transfer_quiet_outcome" text="{SERGEANT_NAME} accepts your silence for what it is — a professional who doesn&#x27;t need the speech. &quot;Tent line. Dawn. Don&#x27;t make me come find you.&quot;" />
 
     <!-- Event: enlisted_onboard_02_fire_circle — enlisted_onboard_02_fire_circle -->
     <string id="ll_evt_enlisted_onboard_02_fire_circle_title" text="The Fire Circle" />
@@ -2691,7 +2691,7 @@
     <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_text" text="When asked, share a story from your old campaigns" />
     <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_share_wisdom_outcome" text="They ask. Veterans always do — sizing up the new old-timer.\n\nYou tell one. Not the best one. Not showing off. Just... a story. Real enough to ring true.\n\nWhen you finish, {VETERAN_1_NAME} nods slowly. &quot;You&#x27;ve seen some things.&quot;\n\n&quot;Haven&#x27;t we all.&quot;\n\nYou&#x27;re not one of them yet. But you speak the same language." />
     <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_text" text="Notice {RECRUIT_NAME} struggling. Offer quiet advice." />
-    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_outcome" text="The recruit is holding their spoon wrong. Small thing. But you remember being that green.\n\n&quot;Like this,&quot; you say quietly, demonstrating. &quot;Keeps the heat off your fingers.&quot;\n\n{RECRUIT_NAME} blinks. Adjusts. &quot;Thanks.&quot;\n\n{LANCE_LEADER_SHORT} notices the exchange. Doesn&#x27;t say anything. But they notice." />
+    <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_mentor_outcome" text="The recruit is holding their spoon wrong. Small thing. But you remember being that green.\n\n&quot;Like this,&quot; you say quietly, demonstrating. &quot;Keeps the heat off your fingers.&quot;\n\n{RECRUIT_NAME} blinks. Adjusts. &quot;Thanks.&quot;\n\n{SERGEANT_NAME} notices the exchange. Doesn&#x27;t say anything. But they notice." />
     <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_text" text="Stare into the fire. Some memories don&#x27;t need sharing." />
     <string id="ll_evt_enlisted_onboard_02_fire_circle_opt_return_ghosts_outcome" text="The fire crackles. Voices fade to background noise.\n\nYou&#x27;ve seen men die at fires like this. Celebrated victories that cost too much. Mourned friends whose names you&#x27;re starting to forget.\n\nYou eat. You don&#x27;t talk.\n\nThe lance gives you space. Veterans understand silence." />
     <string id="ll_evt_enlisted_onboard_02_fire_circle_setup_transfer" text="Evening. The fire circle.\n\nYou know this ritual. Every lance has one — the spot where stories are told and bonds form. {LANCE_NAME}&#x27;s fire is no different. Just unfamiliar faces around familiar flames.\n\n{VETERAN_1_NAME} catches your eye. The look says: we know you&#x27;re a transfer. Question is, what kind?\n\nThere&#x27;s space available. Where you sit matters." />
@@ -2706,30 +2706,30 @@
 
     <!-- Event: enlisted_onboard_03_prove_yourself — enlisted_onboard_03_prove_yourself -->
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_title" text="Prove Yourself" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup" text="{LANCE_LEADER_SHORT} finds you before the morning meal. The look on their face says this isn&#x27;t social.\n\n&quot;New blood gets the worst jobs. That&#x27;s how it works. That&#x27;s how it&#x27;s always worked. That&#x27;s how it&#x27;ll work long after both of us are worm food.&quot;\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n&quot;Pick one. Do it right. Don&#x27;t make me come check on you.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup" text="{SERGEANT_NAME} finds you before the morning meal. The look on their face says this isn&#x27;t social.\n\n&quot;New blood gets the worst jobs. That&#x27;s how it works. That&#x27;s how it&#x27;s always worked. That&#x27;s how it&#x27;ll work long after both of us are worm food.&quot;\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n&quot;Pick one. Do it right. Don&#x27;t make me come check on you.&quot;" />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_text" text="&quot;I&#x27;ll handle the equipment.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome" text="You spend the morning with oil, leather, and rust. It&#x27;s mindless work, but there&#x27;s skill in it — knowing what needs replacing, what can be salvaged, what&#x27;s good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}&#x27;s buckle won&#x27;t fail in battle because of you. Small victories.\n\n{LANCE_LEADER_SHORT} inspects your work. Says nothing. That&#x27;s approval." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_gear_outcome" text="You spend the morning with oil, leather, and rust. It&#x27;s mindless work, but there&#x27;s skill in it — knowing what needs replacing, what can be salvaged, what&#x27;s good enough.\n\nBy midday, the pile is sorted. {SOLDIER_NAME}&#x27;s buckle won&#x27;t fail in battle because of you. Small victories.\n\n{SERGEANT_NAME} inspects your work. Says nothing. That&#x27;s approval." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_text" text="&quot;I&#x27;ll get the firewood.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome" text="Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that&#x27;s your work.\n\n{LANCE_LEADER_SHORT} glances at the wood pile. Nods once. Moves on." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_wood_outcome" text="Hauling wood. Simple. Exhausting. Invisible.\n\nYou make trip after trip. Your shoulders burn. Your hands blister. By midday, the pile is tall enough.\n\nNobody thanks you. Nobody notices. But tonight, when the fires burn warm, that&#x27;s your work.\n\n{SERGEANT_NAME} glances at the wood pile. Nods once. Moves on." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_text" text="&quot;I&#x27;ll dig.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome" text="Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you&#x27;d expect. Worse, maybe. But you dig. You don&#x27;t complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{LANCE_LEADER_SHORT} finds you at midday, covered in dirt and worse. &quot;Didn&#x27;t expect you to pick that one.&quot; Almost respect in their voice. Almost." />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text" text="&quot;What does the lance need most?&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome" text="{LANCE_LEADER_SHORT} pauses. Considers you. &quot;Huh. One that thinks.&quot;\n\nThey assign you the gear — it&#x27;s most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n&quot;Maybe you&#x27;ll last after all,&quot; they mutter, walking away.\n\nHigh praise." />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_first_time" text="{LANCE_LEADER_SHORT} finds you before the morning meal. The look on their face says this isn&#x27;t social.\n\n&quot;New blood gets the worst jobs. That&#x27;s how it works. That&#x27;s how it&#x27;s always worked. That&#x27;s how it&#x27;ll work long after both of us are worm food.&quot;\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n&quot;Pick one. Do it right. Don&#x27;t make me come check on you.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_return" text="{LANCE_LEADER_SHORT} approaches you at dawn. But there&#x27;s no lecture about new blood and grunt work.\n\n&quot;I know you&#x27;ve done this before. Question is, are you still sharp, or did peace make you soft?&quot;\n\nThey gesture at the camp. &quot;Something needs doing. You pick. Show me what kind of soldier came back.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_latrine_outcome" text="Latrine duty. The job nobody wants.\n\nThe smell is exactly as bad as you&#x27;d expect. Worse, maybe. But you dig. You don&#x27;t complain. You do it right.\n\nWord gets around. The new blood took latrine duty without being forced. That means something.\n\n{SERGEANT_NAME} finds you at midday, covered in dirt and worse. &quot;Didn&#x27;t expect you to pick that one.&quot; Almost respect in their voice. Almost." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_text" text="&quot;What does the company need most?&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_first_time_ask_outcome" text="{SERGEANT_NAME} pauses. Considers you. &quot;Huh. One that thinks.&quot;\n\nThey assign you the gear — it&#x27;s most urgent. But they remember that you asked. That you thought about the unit, not just the task.\n\n&quot;Maybe you&#x27;ll last after all,&quot; they mutter, walking away.\n\nHigh praise." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_first_time" text="{SERGEANT_NAME} finds you before the morning meal. The look on their face says this isn&#x27;t social.\n\n&quot;New blood gets the worst jobs. That&#x27;s how it works. That&#x27;s how it&#x27;s always worked. That&#x27;s how it&#x27;ll work long after both of us are worm food.&quot;\n\nThey gesture at three unpleasant realities of camp life: a pile of gear that needs maintenance, a stack of wood that needs hauling, and a latrine trench that needs... attention.\n\n&quot;Pick one. Do it right. Don&#x27;t make me come check on you.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_return" text="{SERGEANT_NAME} approaches you at dawn. But there&#x27;s no lecture about new blood and grunt work.\n\n&quot;I know you&#x27;ve done this before. Question is, are you still sharp, or did peace make you soft?&quot;\n\nThey gesture at the camp. &quot;Something needs doing. You pick. Show me what kind of soldier came back.&quot;" />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_text" text="&quot;Grunt work. Same as any recruit. I&#x27;m not above it.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome" text="You take the latrine duty. The worst one. Deliberately.\n\n{LANCE_LEADER_SHORT} watches you work — not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n&quot;Alright,&quot; they say, when you&#x27;re done. &quot;You&#x27;re still one of us.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_grunt_work_outcome" text="You take the latrine duty. The worst one. Deliberately.\n\n{SERGEANT_NAME} watches you work — not like a soldier proving a point, but like a man who knows that pride is a luxury.\n\n&quot;Alright,&quot; they say, when you&#x27;re done. &quot;You&#x27;re still one of us.&quot;" />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_text" text="&quot;Put me where my experience helps. Gear inspection.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome" text="You work the gear pile. But you do more than maintain — you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n&quot;That would have broken in battle,&quot; you explain. &quot;Learn to see it.&quot;\n\n{LANCE_LEADER_SHORT} observes. &quot;Maybe we got lucky with this one,&quot; they mutter to {SECOND_SHORT}." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_skills_outcome" text="You work the gear pile. But you do more than maintain — you teach. {RECRUIT_NAME} watches you identify a stress crack invisible to untrained eyes.\n\n&quot;That would have broken in battle,&quot; you explain. &quot;Learn to see it.&quot;\n\n{SERGEANT_NAME} observes. &quot;Maybe we got lucky with this one,&quot; they mutter to {SECOND_SHORT}." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_text" text="&quot;What&#x27;s the real problem right now? Not the busy work — the actual issue.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome" text="{LANCE_LEADER_SHORT} pauses. Studies you.\n\n&quot;Supply count&#x27;s off. Someone&#x27;s skimming or the quartermasters can&#x27;t count. Either way, I need it fixed before the captain notices.&quot;\n\nA real problem. Not grunt work. They&#x27;re trusting you.\n\nYou spend the morning in the supply tents. By noon, you&#x27;ve found the discrepancy — honest mistake, not theft. The quartermaster owes you a favor. {LANCE_LEADER_SHORT} owes you more.\n\n&quot;Good to have you back,&quot; they admit." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_problem_outcome" text="{SERGEANT_NAME} pauses. Studies you.\n\n&quot;Supply count&#x27;s off. Someone&#x27;s skimming or the quartermasters can&#x27;t count. Either way, I need it fixed before the captain notices.&quot;\n\nA real problem. Not grunt work. They&#x27;re trusting you.\n\nYou spend the morning in the supply tents. By noon, you&#x27;ve found the discrepancy — honest mistake, not theft. The quartermaster owes you a favor. {SERGEANT_NAME} owes you more.\n\n&quot;Good to have you back,&quot; they admit." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_text" text="&quot;Dawn to dusk. Whatever needs doing. All of it.&quot;" />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_return_all_outcome" text="You take the risk and see it through." />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_transfer" text="{LANCE_LEADER_SHORT} catches you at dawn. &quot;Transfer, you know how this works. New to the lance means bottom of the pile. Doesn&#x27;t matter what rank you held before.&quot;\n\nThey&#x27;re testing you. Seeing if you&#x27;ll pull the &quot;but in my old unit&quot; card.\n\nGear maintenance. Wood hauling. Latrine duty. The eternal trinity of grunt work.\n\n&quot;Pick one. Show me you&#x27;re not too good for the basics.&quot;" />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_setup_transfer" text="{SERGEANT_NAME} catches you at dawn. &quot;Transfer, you know how this works. New to the company means bottom of the pile. Doesn&#x27;t matter what rank you held before.&quot;\n\nThey&#x27;re testing you. Seeing if you&#x27;ll pull the &quot;but in my old unit&quot; card.\n\nGear maintenance. Wood hauling. Latrine duty. The eternal trinity of grunt work.\n\n&quot;Pick one. Show me you&#x27;re not too good for the basics.&quot;" />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_text" text="&quot;Gear. I know equipment.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome" text="You work efficiently. You&#x27;ve done this a hundred times. The difference shows — you&#x27;re faster, more thorough, spot problems others would miss.\n\n{LANCE_LEADER_SHORT} inspects your work. Finds nothing to criticize. &quot;Your old unit taught you right, at least.&quot; Grudging respect." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_gear_outcome" text="You work efficiently. You&#x27;ve done this a hundred times. The difference shows — you&#x27;re faster, more thorough, spot problems others would miss.\n\n{SERGEANT_NAME} inspects your work. Finds nothing to criticize. &quot;Your old unit taught you right, at least.&quot; Grudging respect." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_text" text="&quot;Give me the worst one.&quot;" />
-    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome" text="&quot;Latrine it is.&quot; {LANCE_LEADER_SHORT} almost smiles.\n\nYou dig. You&#x27;ve dug before. The smell doesn&#x27;t bother you anymore — or rather, you&#x27;ve learned to ignore it.\n\nWhen you&#x27;re done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn&#x27;t complain.\n\nRespect is earned, not transferred. You know that." />
+    <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_hardest_outcome" text="&quot;Latrine it is.&quot; {SERGEANT_NAME} almost smiles.\n\nYou dig. You&#x27;ve dug before. The smell doesn&#x27;t bother you anymore — or rather, you&#x27;ve learned to ignore it.\n\nWhen you&#x27;re done, cleaner than necessary, the word spreads. Transfer took the shit job. Literally. Didn&#x27;t complain.\n\nRespect is earned, not transferred. You know that." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_text" text="&quot;I&#x27;ll do all three. By midday.&quot;" />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_efficient_outcome" text="You take the risk and see it through." />
     <string id="ll_evt_enlisted_onboard_03_prove_yourself_opt_transfer_delegate_text" text="&quot;I&#x27;ll take gear. {RECRUIT_NAME} can help with wood.&quot;" />
@@ -2737,7 +2737,7 @@
 
     <!-- Event: officer_onboard_01_shoulder_tabs — officer_onboard_01_shoulder_tabs -->
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_title" text="Shoulder Tabs" />
-    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup" text="The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they&#x27;re {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n&quot;Orders, {PLAYER_RANK}?&quot;\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup" text="The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{SERGEANT_NAME} — no, they&#x27;re {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n&quot;Orders, {PLAYER_RANK}?&quot;\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_text" text="&quot;At ease, {SECOND_RANK}. We know each other. That doesn&#x27;t change.&quot;" />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_steady_outcome" text="The tension eases slightly. {SECOND_SHORT} nods. &quot;Aye, {PLAYER_RANK}. But it does change. That&#x27;s how it works.&quot;\n\nThey&#x27;re right. It does. But you&#x27;ve signaled that you&#x27;re not going to be an ass about it.\n\nSmall mercies." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_formal_text" text="&quot;Carry on with morning duties, {SECOND_RANK}. Report to me after.&quot;" />
@@ -2746,7 +2746,7 @@
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_acknowledge_outcome" text="{SECOND_SHORT} almost smiles. &quot;Strange is one word for it.&quot;\n\nThe lance relaxes. You&#x27;ve acknowledged the elephant. Some things will be awkward. That&#x27;s fine. You&#x27;re human.\n\n&quot;I&#x27;ll have the duty roster for you within the hour, {PLAYER_RANK},&quot; {SECOND_SHORT} says. Back to business. But the air is clearer." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_text" text="Freeze. You don&#x27;t know what to say." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_first_time_uncertain_outcome" text="The silence stretches. {SECOND_SHORT} watches. Waits.\n\nFinally, they take pity. &quot;Perhaps we should discuss the roster, {PLAYER_RANK}. Privately.&quot;\n\nThey&#x27;re covering for you. The lance pretends not to notice your hesitation.\n\nYou&#x27;ll have to do better. But not everyone does better on the first day." />
-    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time" text="The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{LANCE_LEADER_SHORT} — no, they&#x27;re {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n&quot;Orders, {PLAYER_RANK}?&quot;\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do." />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup_first_time" text="The shoulder tabs feel heavier than they should. Just cloth and thread, but they change everything.\n\n{SERGEANT_NAME} — no, they&#x27;re {SECOND_SHORT} now, your sergeant — stands before you. The same person who shouted at you as a recruit. Who worked you until you dropped.\n\nNow they salute.\n\n&quot;Orders, {PLAYER_RANK}?&quot;\n\nThe lance watches. Your lance now. {VETERAN_1_NAME}. {SOLDIER_NAME}. {RECRUIT_NAME}. Men and women you ate with, dug latrines with, bled beside.\n\nNow they wait for you to tell them what to do." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_setup_return" text="The shoulder tabs again. You&#x27;d thought you&#x27;d left them behind.\n\n{SECOND_SHORT} salutes. They don&#x27;t know you, but they&#x27;ve been told: this one&#x27;s commanded before. Came back for some reason.\n\n&quot;Welcome to {LANCE_NAME}, {PLAYER_RANK}. I&#x27;m {SECOND_RANK} {SECOND_SHORT}.&quot;\n\nNo subtext about experience. They&#x27;re giving you the benefit of the doubt. For now.\n\nThe lance watches. Wondering why someone would come back to this life." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_text" text="&quot;I&#x27;ve done this before. Been away. Needed to come back.&quot;" />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_return_honest_outcome" text="{SECOND_SHORT} nods slowly. They don&#x27;t ask why. Good sergeants never do.\n\n&quot;Then you know how it works, {PLAYER_RANK}. I&#x27;ll bring you up to speed on {LANCE_NAME}&#x27;s particulars.&quot;\n\nProfessional. Clean. A good start." />
@@ -2763,7 +2763,7 @@
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_assert_outcome" text="Professional. Clear. You&#x27;re not dismissing their experience, but you&#x27;re not deferring either.\n\n{SECOND_SHORT} nods slowly. &quot;This way, {PLAYER_RANK}.&quot;\n\nThey spend the morning showing you how {LANCE_NAME} operates. By noon, you know who to trust and what needs fixing." />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_text" text="&quot;I know I need to earn your trust. Just give me a chance.&quot;" />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_prove_yourself_outcome" text="You take the risk and see it through." />
-    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_text" text="&quot;Form the lance for inspection, {SECOND_RANK}. Now.&quot;" />
+    <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_text" text="&quot;Form the company for inspection, {SECOND_RANK}. Now.&quot;" />
     <string id="ll_evt_officer_onboard_01_shoulder_tabs_opt_transfer_inspect_outcome" text="You take the risk and see it through." />
 
     <!-- Event: officer_onboard_02_first_command — officer_onboard_02_first_command -->
@@ -2772,9 +2772,9 @@
     <string id="ll_evt_officer_onboard_02_first_command_opt_all_stream_text" text="&quot;The stream. Water&#x27;s more important.&quot;" />
     <string id="ll_evt_officer_onboard_02_first_command_opt_all_stream_outcome" text="You give the order. {SECOND_SHORT} nods — they agree, you can tell.\n\nBy evening, {LANCE_NAME} has the best water access in the company. Some grumbling about the exposed position, but full waterskins quiet most complaints.\n\n&quot;Good call, {PLAYER_RANK},&quot; {SECOND_SHORT} says. Quietly. Privately. But they said it." />
     <string id="ll_evt_officer_onboard_02_first_command_opt_all_trees_text" text="&quot;The tree line. I don&#x27;t like being exposed.&quot;" />
-    <string id="ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome" text="{SECOND_SHORT}&#x27;s expression flickers — they would&#x27;ve picked the stream. But they relay the order without comment.\n\nThat night, the lance hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_trees_outcome" text="{SECOND_SHORT}&#x27;s expression flickers — they would&#x27;ve picked the stream. But they relay the order without comment.\n\nThat night, the company hauls water from further away. Grumbling. But when a sudden rain blows through, {LANCE_NAME} stays dry while the stream camp gets soaked.\n\nLucky? Good instincts? Either way, you made the call." />
     <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_text" text="&quot;What do you recommend, {SECOND_RANK}?&quot;" />
-    <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome" text="&quot;Stream, {PLAYER_RANK}. Water&#x27;s worth the exposure.&quot;\n\nYou nod. &quot;Stream it is.&quot;\n\nYou&#x27;ve shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n&quot;I&#x27;ll get the lance moving,&quot; they say. Pleased." />
+    <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_sergeant_outcome" text="&quot;Stream, {PLAYER_RANK}. Water&#x27;s worth the exposure.&quot;\n\nYou nod. &quot;Stream it is.&quot;\n\nYou&#x27;ve shown you value their experience. Some officers would see that as weakness. {SECOND_SHORT} sees it as wisdom.\n\n&quot;I&#x27;ll get the company moving,&quot; they say. Pleased." />
     <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_text" text="&quot;What would you do?&quot; Then pick the opposite." />
     <string id="ll_evt_officer_onboard_02_first_command_opt_all_ask_then_opposite_outcome" text="&quot;Stream,&quot; {SECOND_SHORT} says.\n\n&quot;Tree line,&quot; you decide.\n\n{SECOND_SHORT}&#x27;s jaw tightens slightly. You&#x27;ve made a point: you&#x27;re in command. Maybe too obviously.\n\nThe lance notices. They always notice." />
     <string id="ll_evt_officer_onboard_02_first_command_setup_all" text="First decision that&#x27;s actually yours to make.\n\nThe army&#x27;s moving. {SECOND_SHORT} approaches with a question: where does {LANCE_NAME} make camp tonight?\n\n&quot;There&#x27;s a spot by the stream — good water, but exposed. Or there&#x27;s the tree line — sheltered, but further from the main camp.&quot;\n\nThey have an opinion. You can see it in their eyes. But they&#x27;re waiting for you to decide.\n\nThe lance watches. Your first real order." />
@@ -2798,20 +2798,20 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- Event: discipline_blocked — Promotion Blocked -->
     <string id="ll_evt_discipline_blocked_title" text="Promotion Blocked" />
-    <string id="ll_evt_discipline_blocked_setup" text="The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it&#x27;s not there.\n\n{LANCE_LEADER_SHORT} finds you staring at the roster.\n\n&quot;Your record, {PLAYER_NAME}. Too many marks. The captain won&#x27;t sign off on promoting someone with your... history.&quot; They actually look sympathetic. &quot;Clean it up. Prove them wrong. Maybe next time.&quot;\n\nNext time. If there is one." />
+    <string id="ll_evt_discipline_blocked_setup" text="The promotion list goes up. Your name should be on it — the experience, the time served, the battles. But it&#x27;s not there.\n\n{SERGEANT_NAME} finds you staring at the roster.\n\n&quot;Your record, {PLAYER_NAME}. Too many marks. The captain won&#x27;t sign off on promoting someone with your... history.&quot; They actually look sympathetic. &quot;Clean it up. Prove them wrong. Maybe next time.&quot;\n\nNext time. If there is one." />
     <string id="ll_evt_discipline_blocked_opt_accept_text" text="&quot;I understand. I&#x27;ll earn it properly.&quot;" />
-    <string id="ll_evt_discipline_blocked_opt_accept_outcome" text="{LANCE_LEADER_SHORT} nods. &quot;That&#x27;s the spirit. Keep your head down, do good work. They&#x27;ll notice.&quot; A setback, not a defeat. The path forward is clear, if harder." />
+    <string id="ll_evt_discipline_blocked_opt_accept_outcome" text="{SERGEANT_NAME} nods. &quot;That&#x27;s the spirit. Keep your head down, do good work. They&#x27;ll notice.&quot; A setback, not a defeat. The path forward is clear, if harder." />
     <string id="ll_evt_discipline_blocked_opt_bitter_text" text="&quot;Politics. It&#x27;s always politics.&quot;" />
-    <string id="ll_evt_discipline_blocked_opt_bitter_outcome" text="&quot;Maybe.&quot; {LANCE_LEADER_SHORT} doesn&#x27;t argue. &quot;But politics or not, you gave them ammunition. Stop doing that.&quot; Cold comfort. True, though." />
+    <string id="ll_evt_discipline_blocked_opt_bitter_outcome" text="&quot;Maybe.&quot; {SERGEANT_NAME} doesn&#x27;t argue. &quot;But politics or not, you gave them ammunition. Stop doing that.&quot; Cold comfort. True, though." />
     <string id="ll_evt_discipline_blocked_opt_appeal_text" text="&quot;I want to speak to the captain. Make my case directly.&quot;" />
     <string id="ll_evt_discipline_blocked_opt_appeal_outcome" text="The captain hears you out. &quot;Convince me you&#x27;ve changed.&quot; You do. Or try to. &quot;Probationary advancement. One incident, and you&#x27;re back where you started.&quot; A chance." />
     <string id="ll_evt_discipline_blocked_opt_appeal_outcome_failure" text="&quot;The decision stands. Prove yourself through action, not words.&quot; Appeal denied. You&#x27;ve wasted political capital." />
     <string id="ll_evt_discipline_blocked_opt_despair_text" text="&quot;What&#x27;s the point? They&#x27;ll never promote someone like me.&quot;" />
-    <string id="ll_evt_discipline_blocked_opt_despair_outcome" text="{LANCE_LEADER_SHORT} grabs your shoulder. &quot;None of that. You&#x27;re a soldier, act like one.&quot; Harsh. But sometimes harsh is what you need." />
+    <string id="ll_evt_discipline_blocked_opt_despair_outcome" text="{SERGEANT_NAME} grabs your shoulder. &quot;None of that. You&#x27;re a soldier, act like one.&quot; Harsh. But sometimes harsh is what you need." />
 
     <!-- Event: discipline_discharge — Facing Discharge -->
     <string id="ll_evt_discipline_discharge_title" text="Facing Discharge" />
-    <string id="ll_evt_discipline_discharge_setup" text="&quot;Dishonorable discharge.&quot;\n\nThe words hang in the air. The captain doesn&#x27;t look pleased to say them — or maybe they do. Hard to tell.\n\n&quot;Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You&#x27;ve left us no choice.&quot;\n\n{LANCE_NAME} watches from the edge of the assembly. {LANCE_LEADER_SHORT}&#x27;s face is stone.\n\n&quot;You have one opportunity to speak before the sentence is carried out. Make it count.&quot;" />
+    <string id="ll_evt_discipline_discharge_setup" text="&quot;Dishonorable discharge.&quot;\n\nThe words hang in the air. The captain doesn&#x27;t look pleased to say them — or maybe they do. Hard to tell.\n\n&quot;Your record speaks for itself. Consistent failure to meet standards. Repeated infractions despite correction. You&#x27;ve left us no choice.&quot;\n\n{LANCE_NAME} watches from the edge of the assembly. {SERGEANT_NAME}&#x27;s face is stone.\n\n&quot;You have one opportunity to speak before the sentence is carried out. Make it count.&quot;" />
     <string id="ll_evt_discipline_discharge_opt_accept_text" text="&quot;I have nothing to say. I accept the judgment.&quot;" />
     <string id="ll_evt_discipline_discharge_opt_accept_outcome" text="The captain nods. &quot;Then it&#x27;s done. Turn in your equipment. You&#x27;re no longer part of this army.&quot; It&#x27;s over. Not with a bang, but with paperwork." />
     <string id="ll_evt_discipline_discharge_opt_beg_text" text="&quot;Please — one more chance. I&#x27;ll be different. I swear it.&quot;" />
@@ -2825,7 +2825,7 @@
 
     <!-- Event: discipline_extra_duty — Extra Duty -->
     <string id="ll_evt_discipline_extra_duty_title" text="Extra Duty" />
-    <string id="ll_evt_discipline_extra_duty_setup" text="The duty roster goes up. Your name&#x27;s on it. Again. And again. And twice more after that.\n\nExtra duty — the army&#x27;s favorite corrective measure. Latrine digging, night watch, hauling water, whatever&#x27;s worst. Your infractions have been noticed, and this is the price.\n\n{LANCE_LEADER_SHORT} shrugs when you look at them. &quot;Out of my hands. Sergeant&#x27;s orders.&quot;\n\nA week of this, minimum." />
+    <string id="ll_evt_discipline_extra_duty_setup" text="The duty roster goes up. Your name&#x27;s on it. Again. And again. And twice more after that.\n\nExtra duty — the army&#x27;s favorite corrective measure. Latrine digging, night watch, hauling water, whatever&#x27;s worst. Your infractions have been noticed, and this is the price.\n\n{SERGEANT_NAME} shrugs when you look at them. &quot;Out of my hands. Sergeant&#x27;s orders.&quot;\n\nA week of this, minimum." />
     <string id="ll_evt_discipline_extra_duty_opt_accept_text" text="Accept the punishment. Do the work." />
     <string id="ll_evt_discipline_extra_duty_opt_accept_outcome" text="It&#x27;s brutal. Every muscle aches. But you don&#x27;t complain, don&#x27;t slack. By week&#x27;s end, the sergeant gives you a curt nod. &quot;Maybe you&#x27;re learning after all.&quot;" />
     <string id="ll_evt_discipline_extra_duty_opt_complain_text" text="Protest the unfairness of the punishment." />
@@ -2851,13 +2851,13 @@
 
     <!-- Event: discipline_warning — On Notice -->
     <string id="ll_evt_discipline_warning_title" text="On Notice" />
-    <string id="ll_evt_discipline_warning_setup" text="{LANCE_LEADER_SHORT} doesn&#x27;t look happy.\n\n&quot;You&#x27;re on notice, {PLAYER_NAME}. The sergeant&#x27;s been keeping track — late to muster, sloppy kit, that business with the—&quot; they wave a hand. &quot;Doesn&#x27;t matter. Point is, you&#x27;re building a reputation, and not the good kind.&quot;\n\nThey lower their voice.\n\n&quot;I can only cover for you so many times. Get it together.&quot;" />
+    <string id="ll_evt_discipline_warning_setup" text="{SERGEANT_NAME} doesn&#x27;t look happy.\n\n&quot;You&#x27;re on notice, {PLAYER_NAME}. The sergeant&#x27;s been keeping track — late to muster, sloppy kit, that business with the—&quot; they wave a hand. &quot;Doesn&#x27;t matter. Point is, you&#x27;re building a reputation, and not the good kind.&quot;\n\nThey lower their voice.\n\n&quot;I can only cover for you so many times. Get it together.&quot;" />
     <string id="ll_evt_discipline_warning_opt_apologize_text" text="&quot;You&#x27;re right. I&#x27;ve been slipping. It won&#x27;t happen again.&quot;" />
-    <string id="ll_evt_discipline_warning_opt_apologize_outcome" text="{LANCE_LEADER_SHORT} nods slowly. &quot;See that it doesn&#x27;t.&quot; The warning&#x27;s been delivered. Ball&#x27;s in your court now." />
+    <string id="ll_evt_discipline_warning_opt_apologize_outcome" text="{SERGEANT_NAME} nods slowly. &quot;See that it doesn&#x27;t.&quot; The warning&#x27;s been delivered. Ball&#x27;s in your court now." />
     <string id="ll_evt_discipline_warning_opt_excuse_text" text="&quot;It&#x27;s not my fault — there were circumstances—&quot;" />
-    <string id="ll_evt_discipline_warning_opt_excuse_outcome" text="{LANCE_LEADER_SHORT}&#x27;s expression hardens. &quot;There are always circumstances. The question is whether you rise above them.&quot; They walk away. Not convinced." />
+    <string id="ll_evt_discipline_warning_opt_excuse_outcome" text="{SERGEANT_NAME}&#x27;s expression hardens. &quot;There are always circumstances. The question is whether you rise above them.&quot; They walk away. Not convinced." />
     <string id="ll_evt_discipline_warning_opt_resentful_text" text="&quot;Maybe if the duties weren&#x27;t so—&quot;" />
-    <string id="ll_evt_discipline_warning_opt_resentful_outcome" text="&quot;I don&#x27;t want to hear it.&quot; {LANCE_LEADER_SHORT} cuts you off. &quot;Everyone&#x27;s got complaints. Not everyone makes them the camp&#x27;s problem.&quot; The message is clear: shut up and soldier." />
+    <string id="ll_evt_discipline_warning_opt_resentful_outcome" text="&quot;I don&#x27;t want to hear it.&quot; {SERGEANT_NAME} cuts you off. &quot;Everyone&#x27;s got complaints. Not everyone makes them the camp&#x27;s problem.&quot; The message is clear: shut up and soldier." />
     <string id="ll_evt_discipline_warning_opt_grateful_text" text="&quot;Thanks for the heads up. I mean it.&quot;" />
     <string id="ll_evt_discipline_warning_opt_grateful_outcome" text="A slight softening. &quot;Just... be better. That&#x27;s all I&#x27;m asking.&quot; They&#x27;ve stuck their neck out for you. Don&#x27;t make them regret it." />
 
@@ -2877,7 +2877,7 @@
 
     <!-- Event: scrutiny_exposed — Exposed -->
     <string id="ll_evt_scrutiny_exposed_title" text="Exposed" />
-    <string id="ll_evt_scrutiny_exposed_setup" text="Guards. Four of them, armed, surrounding your tent at dawn.\n\n&quot;On your feet, soldier. Captain&#x27;s orders. You&#x27;re under arrest for theft of army supplies, falsification of records, and conduct unbecoming.&quot;\n\nNo warnings this time. No audits. They&#x27;ve built their case and now they&#x27;re collecting.\n\n{LANCE_LEADER_SHORT} watches from a distance. Their expression is unreadable. They can&#x27;t help you. Maybe they wouldn&#x27;t if they could.\n\n&quot;Come quietly, or don&#x27;t. Makes no difference to us.&quot;" />
+    <string id="ll_evt_scrutiny_exposed_setup" text="Guards. Four of them, armed, surrounding your tent at dawn.\n\n&quot;On your feet, soldier. Captain&#x27;s orders. You&#x27;re under arrest for theft of army supplies, falsification of records, and conduct unbecoming.&quot;\n\nNo warnings this time. No audits. They&#x27;ve built their case and now they&#x27;re collecting.\n\n{SERGEANT_NAME} watches from a distance. Their expression is unreadable. They can&#x27;t help you. Maybe they wouldn&#x27;t if they could.\n\n&quot;Come quietly, or don&#x27;t. Makes no difference to us.&quot;" />
     <string id="ll_evt_scrutiny_exposed_opt_surrender_text" text="Go quietly. Face the charges." />
     <string id="ll_evt_scrutiny_exposed_opt_surrender_outcome" text="You&#x27;re escorted to the stockade. A hearing will follow. The evidence is damning, but you&#x27;ll have a chance to speak. The army has procedures. Cold comfort, but it&#x27;s something." />
     <string id="ll_evt_scrutiny_exposed_opt_beg_text" text="&quot;Please — I&#x27;ll return everything, I&#x27;ll work it off, anything—&quot;" />
@@ -2907,31 +2907,31 @@
 
     <!-- Event: scrutiny_warning — The Warning -->
     <string id="ll_evt_scrutiny_warning_title" text="The Warning" />
-    <string id="ll_evt_scrutiny_warning_setup" text="{LANCE_LEADER_SHORT} pulls you aside after evening meal. Their voice is low, eyes checking that no one&#x27;s close enough to hear.\n\n&quot;I&#x27;m going to say this once, {PLAYER_NAME}. Whatever you&#x27;re doing — the extra coins, the supply discrepancies, the &#x27;gifts&#x27; from merchants — people are starting to notice.&quot;\n\nThey lean closer.\n\n&quot;I don&#x27;t care what you do on your own time. But if it comes back on {LANCE_NAME}, we&#x27;re going to have a problem. Understand?&quot;" />
+    <string id="ll_evt_scrutiny_warning_setup" text="{SERGEANT_NAME} pulls you aside after evening meal. Their voice is low, eyes checking that no one&#x27;s close enough to hear.\n\n&quot;I&#x27;m going to say this once, {PLAYER_NAME}. Whatever you&#x27;re doing — the extra coins, the supply discrepancies, the &#x27;gifts&#x27; from merchants — people are starting to notice.&quot;\n\nThey lean closer.\n\n&quot;I don&#x27;t care what you do on your own time. But if it comes back on {LANCE_NAME}, we&#x27;re going to have a problem. Understand?&quot;" />
     <string id="ll_evt_scrutiny_warning_opt_deny_text" text="&quot;I don&#x27;t know what you&#x27;re talking about, {LANCE_LEADER_RANK}.&quot;" />
-    <string id="ll_evt_scrutiny_warning_opt_deny_outcome" text="{LANCE_LEADER_SHORT} stares at you for a long moment. &quot;Right. You don&#x27;t.&quot; They walk away. The warning&#x27;s been given. What you do with it is your business." />
+    <string id="ll_evt_scrutiny_warning_opt_deny_outcome" text="{SERGEANT_NAME} stares at you for a long moment. &quot;Right. You don&#x27;t.&quot; They walk away. The warning&#x27;s been given. What you do with it is your business." />
     <string id="ll_evt_scrutiny_warning_opt_acknowledge_text" text="&quot;I hear you. I&#x27;ll be more careful.&quot;" />
-    <string id="ll_evt_scrutiny_warning_opt_acknowledge_outcome" text="A curt nod. &quot;See that you are.&quot; {LANCE_LEADER_SHORT} leaves. You&#x27;ve been warned — by someone who could&#x27;ve reported you instead. That&#x27;s worth something." />
+    <string id="ll_evt_scrutiny_warning_opt_acknowledge_outcome" text="A curt nod. &quot;See that you are.&quot; {SERGEANT_NAME} leaves. You&#x27;ve been warned — by someone who could&#x27;ve reported you instead. That&#x27;s worth something." />
     <string id="ll_evt_scrutiny_warning_opt_deflect_text" text="&quot;Everyone&#x27;s doing it. I&#x27;m just not as subtle.&quot;" />
-    <string id="ll_evt_scrutiny_warning_opt_deflect_outcome" text="&quot;Everyone&#x27;s NOT doing it,&quot; {LANCE_LEADER_SHORT} snaps. &quot;And the ones who are? They&#x27;re better at it than you.&quot; The words sting because they&#x27;re true." />
+    <string id="ll_evt_scrutiny_warning_opt_deflect_outcome" text="&quot;Everyone&#x27;s NOT doing it,&quot; {SERGEANT_NAME} snaps. &quot;And the ones who are? They&#x27;re better at it than you.&quot; The words sting because they&#x27;re true." />
     <string id="ll_evt_scrutiny_warning_opt_ask_help_text" text="&quot;I&#x27;m in deeper than I meant to be. Any advice?&quot;" />
-    <string id="ll_evt_scrutiny_warning_opt_ask_help_outcome" text="{LANCE_LEADER_SHORT} sighs. &quot;Keep your head down for a while. Volunteer for the shit jobs. Be visible doing honest work.&quot; They pause. &quot;And stop. Whatever it is, just stop.&quot;" />
+    <string id="ll_evt_scrutiny_warning_opt_ask_help_outcome" text="{SERGEANT_NAME} sighs. &quot;Keep your head down for a while. Volunteer for the shit jobs. Be visible doing honest work.&quot; They pause. &quot;And stop. Whatever it is, just stop.&quot;" />
 
     <!-- Event: lance_bonded — Bonded -->
     <string id="ll_evt_lance_bonded_title" text="Bonded" />
-    <string id="ll_evt_lance_bonded_setup" text="{LANCE_LEADER_SHORT} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n&quot;The sergeant&#x27;s planning a kit inspection tomorrow. The captain&#x27;s hound — looking for contraband, extra rations, anything they can nail someone for.&quot;\n\nThey meet your eyes.\n\n&quot;Thought you should know. In case you&#x27;ve got anything that needs... relocating.&quot;\n\nThis is a warning. The kind you don&#x27;t give to just anyone. The kind that could get {LANCE_LEADER_SHORT} in serious trouble if anyone found out.\n\nYou&#x27;re family now. {LANCE_NAME} protects its own." />
+    <string id="ll_evt_lance_bonded_setup" text="{SERGEANT_NAME} pulls you aside after weapons inspection. Their voice is barely above a whisper.\n\n&quot;The sergeant&#x27;s planning a kit inspection tomorrow. The captain&#x27;s hound — looking for contraband, extra rations, anything they can nail someone for.&quot;\n\nThey meet your eyes.\n\n&quot;Thought you should know. In case you&#x27;ve got anything that needs... relocating.&quot;\n\nThis is a warning. The kind you don&#x27;t give to just anyone. The kind that could get {SERGEANT_NAME} in serious trouble if anyone found out.\n\nYou&#x27;re family now. {LANCE_NAME} protects its own." />
     <string id="ll_evt_lance_bonded_opt_grateful_text" text="&quot;I appreciate this. More than you know.&quot;" />
-    <string id="ll_evt_lance_bonded_opt_grateful_outcome" text="{LANCE_LEADER_SHORT} nods. &quot;Just don&#x27;t make me regret it.&quot; You won&#x27;t. This is what a lance is supposed to be — watching each other&#x27;s backs. Even when the enemy wears the same uniform." />
+    <string id="ll_evt_lance_bonded_opt_grateful_outcome" text="{SERGEANT_NAME} nods. &quot;Just don&#x27;t make me regret it.&quot; You won&#x27;t. This is what a lance is supposed to be — watching each other&#x27;s backs. Even when the enemy wears the same uniform." />
     <string id="ll_evt_lance_bonded_opt_clean_text" text="&quot;I&#x27;m clean. But thanks for the warning.&quot;" />
-    <string id="ll_evt_lance_bonded_opt_clean_outcome" text="&quot;Good.&quot; {LANCE_LEADER_SHORT} looks relieved. &quot;Keep it that way.&quot; They didn&#x27;t have to warn you. They did anyway. That means something." />
-    <string id="ll_evt_lance_bonded_opt_share_text" text="&quot;Anyone else in the lance need to know?&quot;" />
-    <string id="ll_evt_lance_bonded_opt_share_outcome" text="{LANCE_LEADER_SHORT} considers. &quot;I&#x27;ll handle it. Quietly.&quot; They move off to warn the others. You&#x27;re not the only one they&#x27;re protecting. But you were first. That means something too." />
+    <string id="ll_evt_lance_bonded_opt_clean_outcome" text="&quot;Good.&quot; {SERGEANT_NAME} looks relieved. &quot;Keep it that way.&quot; They didn&#x27;t have to warn you. They did anyway. That means something." />
+    <string id="ll_evt_lance_bonded_opt_share_text" text="&quot;Anyone else in the company need to know?&quot;" />
+    <string id="ll_evt_lance_bonded_opt_share_outcome" text="{SERGEANT_NAME} considers. &quot;I&#x27;ll handle it. Quietly.&quot; They move off to warn the others. You&#x27;re not the only one they&#x27;re protecting. But you were first. That means something too." />
     <string id="ll_evt_lance_bonded_opt_warn_others_text" text="&quot;Let me tell the others. Less risk for you.&quot;" />
-    <string id="ll_evt_lance_bonded_opt_warn_others_outcome" text="&quot;You sure?&quot; You nod. Over the next hour, quiet words are exchanged. By morning, the lance is clean. The inspection finds nothing. {LANCE_LEADER_SHORT} never gets connected to the warning." />
+    <string id="ll_evt_lance_bonded_opt_warn_others_outcome" text="&quot;You sure?&quot; You nod. Over the next hour, quiet words are exchanged. By morning, the company is clean. The inspection finds nothing. {SERGEANT_NAME} never gets connected to the warning." />
 
     <!-- Event: lance_isolated — Isolated -->
     <string id="ll_evt_lance_isolated_title" text="Isolated" />
-    <string id="ll_evt_lance_isolated_setup" text="The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.\n\n{SOLDIER_NAME} doesn&#x27;t even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.\n\n{LANCE_LEADER_SHORT} watches from across the fire. Measuring. Not intervening.\n\nYou&#x27;re still part of {LANCE_NAME}. Technically. But the warmth is gone. You&#x27;re a stranger wearing a familiar uniform.\n\nThis is what isolation feels like." />
+    <string id="ll_evt_lance_isolated_setup" text="The fire circle again. But tonight, the gaps around you are wider. Conversations die when you approach. Laughter stops.\n\n{SOLDIER_NAME} doesn&#x27;t even look up when you sit down. {VETERAN_1_NAME} finds somewhere else to be. {RECRUIT_NAME} follows them.\n\n{SERGEANT_NAME} watches from across the fire. Measuring. Not intervening.\n\nYou&#x27;re still part of {LANCE_NAME}. Technically. But the warmth is gone. You&#x27;re a stranger wearing a familiar uniform.\n\nThis is what isolation feels like." />
     <string id="ll_evt_lance_isolated_opt_approach_text" text="Try to join a conversation. Break through the ice." />
     <string id="ll_evt_lance_isolated_opt_approach_outcome" text="{SOLDIER_NAME} doesn&#x27;t welcome you. But they don&#x27;t reject you either. A few words. A shared complaint about the food. It&#x27;s not much. It&#x27;s something." />
     <string id="ll_evt_lance_isolated_opt_approach_outcome_failure" text="Silence. They wait for you to leave. When you do, the talking resumes. You weren&#x27;t part of it. You aren&#x27;t now." />
@@ -2940,12 +2940,12 @@
     <string id="ll_evt_lance_isolated_opt_confront_text" text="&quot;Someone want to tell me what&#x27;s going on?&quot;" />
     <string id="ll_evt_lance_isolated_opt_confront_outcome" text="{VETERAN_1_NAME} speaks up. &quot;You know what you did.&quot; An argument follows. Ugly. But at least it&#x27;s honest. Grievances aired. Not forgiven, but acknowledged." />
     <string id="ll_evt_lance_isolated_opt_confront_outcome_failure" text="&quot;Nothing&#x27;s going on.&quot; Flat. Final. They&#x27;re not even willing to fight with you. That&#x27;s worse." />
-    <string id="ll_evt_lance_isolated_opt_leader_text" text="Find {LANCE_LEADER_SHORT}. Ask what happened." />
+    <string id="ll_evt_lance_isolated_opt_leader_text" text="Find {SERGEANT_NAME}. Ask what happened." />
     <string id="ll_evt_lance_isolated_opt_leader_outcome" text="They don&#x27;t sugarcoat it. &quot;You&#x27;ve lost their trust. The way you handled—&quot; they list examples. Each one a small betrayal you barely remember. &quot;You want back in? Start making different choices.&quot; A path forward. Hard, but real." />
 
     <!-- Event: lance_sabotage — Sabotage -->
     <string id="ll_evt_lance_sabotage_title" text="Sabotage" />
-    <string id="ll_evt_lance_sabotage_setup" text="Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn&#x27;t notice until half your water was gone.\n\nSomeone did this. Someone in {LANCE_NAME}.\n\n{LANCE_LEADER_SHORT} isn&#x27;t going to help. They&#x27;re part of this, or they&#x27;re looking the other way. Same result.\n\nYou&#x27;re on your own. In a unit that wants you gone — or worse." />
+    <string id="ll_evt_lance_sabotage_setup" text="Your kit is wrong.\n\nNothing obvious — nothing that would fail inspection. But your straps are loosened. Your blade is dull. Your waterskin has a slow leak you didn&#x27;t notice until half your water was gone.\n\nSomeone did this. Someone in {LANCE_NAME}.\n\n{SERGEANT_NAME} isn&#x27;t going to help. They&#x27;re part of this, or they&#x27;re looking the other way. Same result.\n\nYou&#x27;re on your own. In a unit that wants you gone — or worse." />
     <string id="ll_evt_lance_sabotage_opt_endure_text" text="Fix it silently. Don&#x27;t give them the satisfaction of reacting." />
     <string id="ll_evt_lance_sabotage_opt_endure_outcome" text="Hours of work restoring your kit. They wanted you angry. They wanted a confrontation they could win. You deny them both. Cold. Professional. They&#x27;ll get bored eventually. Or they won&#x27;t. Either way, you&#x27;re still standing." />
     <string id="ll_evt_lance_sabotage_opt_confront_text" text="Find out who did it. Make them answer." />
@@ -2954,7 +2954,7 @@
     <string id="ll_evt_lance_sabotage_opt_report_text" text="Take it to the sergeant. This is beyond lance politics." />
     <string id="ll_evt_lance_sabotage_opt_report_outcome" text="The sergeant listens. Investigates, maybe. &quot;I&#x27;ll handle it.&quot; They probably won&#x27;t. But it&#x27;s on record now. If something happens to you, there&#x27;s a trail." />
     <string id="ll_evt_lance_sabotage_opt_transfer_text" text="Request reassignment. This lance is done with you." />
-    <string id="ll_evt_lance_sabotage_opt_transfer_outcome" text="{LANCE_LEADER_SHORT} doesn&#x27;t argue. The paperwork goes through. New lance, new people, fresh start. You&#x27;re leaving enemies behind. Whether you&#x27;re also leaving the problem behind... time will tell." />
+    <string id="ll_evt_lance_sabotage_opt_transfer_outcome" text="{SERGEANT_NAME} doesn&#x27;t argue. The paperwork goes through. New lance, new people, fresh start. You&#x27;re leaving enemies behind. Whether you&#x27;re also leaving the problem behind... time will tell." />
 
     <!-- Event: lance_trusted — Trusted -->
     <string id="ll_evt_lance_trusted_title" text="Trusted" />
@@ -2979,19 +2979,19 @@
     <string id="ll_evt_medical_complication_opt_medicine_text" text="&quot;There&#x27;s medicine in my kit. Help me take it.&quot;" />
     <string id="ll_evt_medical_complication_opt_medicine_outcome" text="Whatever you had stashed works. The fever eases. Not cured, but stable. {LANCE_MATE_NAME} watches through the night. By dawn, you&#x27;re coherent again." />
     <string id="ll_evt_medical_complication_opt_medicine_outcome_failure" text="Wrong medicine. Or not enough. The fever climbs. You don&#x27;t remember {LANCE_MATE_NAME} carrying you to the surgeon. You&#x27;re told about it later." />
-    <string id="ll_evt_medical_complication_opt_lance_leader_text" text="&quot;Get {LANCE_LEADER_SHORT}. They&#x27;ll know what to do.&quot;" />
-    <string id="ll_evt_medical_complication_opt_lance_leader_outcome" text="{LANCE_LEADER_SHORT} arrives, assesses, takes charge. &quot;Surgeon. Now. No arguments.&quot; They organize a carry. The surgeon isn&#x27;t gentle, but they&#x27;re effective. {LANCE_LEADER_SHORT} checks on you twice. That means something." />
+    <string id="ll_evt_medical_complication_opt_lance_leader_text" text="&quot;Get {SERGEANT_NAME}. They&#x27;ll know what to do.&quot;" />
+    <string id="ll_evt_medical_complication_opt_lance_leader_outcome" text="{SERGEANT_NAME} arrives, assesses, takes charge. &quot;Surgeon. Now. No arguments.&quot; They organize a carry. The surgeon isn&#x27;t gentle, but they&#x27;re effective. {SERGEANT_NAME} checks on you twice. That means something." />
 
     <!-- Event: medical_emergency — Emergency -->
     <string id="ll_evt_medical_emergency_title" text="Emergency" />
-    <string id="ll_evt_medical_emergency_setup" text="You collapse.\n\nOne moment you&#x27;re standing, the next you&#x27;re on the ground. Voices around you, distant and echoey. Someone&#x27;s shouting for the surgeon. Someone else is pressing something against the {CONDITION_LOCATION}.\n\nThe sky is very bright. Or very dark. Hard to tell.\n\n{LANCE_LEADER_SHORT}&#x27;s face swims into view. Their mouth moves. The words don&#x27;t reach you.\n\nEverything goes sideways." />
+    <string id="ll_evt_medical_emergency_setup" text="You collapse.\n\nOne moment you&#x27;re standing, the next you&#x27;re on the ground. Voices around you, distant and echoey. Someone&#x27;s shouting for the surgeon. Someone else is pressing something against the {CONDITION_LOCATION}.\n\nThe sky is very bright. Or very dark. Hard to tell.\n\n{SERGEANT_NAME}&#x27;s face swims into view. Their mouth moves. The words don&#x27;t reach you.\n\nEverything goes sideways." />
     <string id="ll_evt_medical_emergency_opt_fight_text" text="Fight to stay conscious. You need to... something." />
     <string id="ll_evt_medical_emergency_opt_fight_outcome" text="Sheer will keeps you present. You hear the surgeon&#x27;s instructions. Feel them working. Pain means alive. You cling to the pain." />
     <string id="ll_evt_medical_emergency_opt_fight_outcome_failure" text="Darkness takes you anyway. When you wake, it&#x27;s over. You don&#x27;t know how long you were out." />
     <string id="ll_evt_medical_emergency_opt_surrender_text" text="Let go. Trust them to fix this." />
     <string id="ll_evt_medical_emergency_opt_surrender_outcome" text="You stop fighting. The darkness is almost peaceful. When you wake, it&#x27;s to the surgeon&#x27;s tent, the smell of herbs, and {LANCE_MATE_NAME} dozing in a chair beside you. Still here." />
     <string id="ll_evt_medical_emergency_opt_speak_text" text="Try to tell them something. Important." />
-    <string id="ll_evt_medical_emergency_opt_speak_outcome" text="Words come out. Maybe coherent. {LANCE_LEADER_SHORT} nods. &quot;We know. Rest now.&quot; You said what needed saying." />
+    <string id="ll_evt_medical_emergency_opt_speak_outcome" text="Words come out. Maybe coherent. {SERGEANT_NAME} nods. &quot;We know. Rest now.&quot; You said what needed saying." />
     <string id="ll_evt_medical_emergency_opt_speak_outcome_failure" text="Just sounds. No words. Then nothing." />
 
     <!-- Event: medical_worsening — Worsening -->
@@ -3018,7 +3018,7 @@
     <string id="ll_evt_pay_grumbling_opt_quiet" text="Stay quiet" />
     <string id="ll_evt_pay_grumbling_opt_quiet_outcome" text="You say nothing. The conversation moves on without you." />
     <string id="ll_evt_pay_grumbling_opt_defend" text="Defend the lord" />
-    <string id="ll_evt_pay_grumbling_opt_defend_outcome" text="&quot;Times are hard for everyone,&quot; you say. The others look at you with cold eyes. {LANCE_LEADER_SHORT} nods approvingly." />
+    <string id="ll_evt_pay_grumbling_opt_defend_outcome" text="&quot;Times are hard for everyone,&quot; you say. The others look at you with cold eyes. {SERGEANT_NAME} nods approvingly." />
     <string id="ll_evt_pay_grumbling_opt_rabble" text="Maybe we should do something about it" />
     <string id="ll_evt_pay_grumbling_opt_rabble_outcome" text="The words hang in the air. {VETERAN_1_NAME} meets your eyes. &quot;Maybe we should.&quot;" />
 
@@ -3072,13 +3072,13 @@
     <string id="ll_evt_pay_theft_invite_opt_decline" text="Too risky. Count me out." />
     <string id="ll_evt_pay_theft_invite_opt_decline_outcome" text="{SOLDIER_NAME} shrugs. &quot;Suit yourself. More for me.&quot;&#xA;&#xA;They walk away. You hope they don't get caught." />
     <string id="ll_evt_pay_theft_invite_opt_report" text="Report them" />
-    <string id="ll_evt_pay_theft_invite_opt_report_outcome" text="You go straight to {LANCE_LEADER_SHORT}. By morning, {SOLDIER_NAME} is in chains.&#xA;&#xA;They don't know who informed. But the lance is quieter around you now." />
+    <string id="ll_evt_pay_theft_invite_opt_report_outcome" text="You go straight to {SERGEANT_NAME}. By morning, {SOLDIER_NAME} is in chains.&#xA;&#xA;They don't know who informed. But the company is quieter around you now." />
 
     <!-- Loyal Path Missions (Phase 5 Pay System) -->
     
     <!-- Mission: Collect Debts -->
     <string id="ll_evt_mission_debts_title" text="Collect Debts" />
-    <string id="ll_evt_mission_debts_setup" text="The lord is owed money. Merchants, minor nobles, old debts gathering dust. Someone needs to collect.&#xA;&#xA;{LANCE_LEADER_SHORT} mentions they're looking for volunteers. &quot;Delicate work. Requires... persuasion.&quot;&#xA;&#xA;Do this right, and the lord remembers. Maybe pay comes faster." />
+    <string id="ll_evt_mission_debts_setup" text="The lord is owed money. Merchants, minor nobles, old debts gathering dust. Someone needs to collect.&#xA;&#xA;{SERGEANT_NAME} mentions they're looking for volunteers. &quot;Delicate work. Requires... persuasion.&quot;&#xA;&#xA;Do this right, and the lord remembers. Maybe pay comes faster." />
     <string id="ll_evt_mission_debts_opt_polite" text="Collect politely" />
     <string id="ll_evt_mission_debts_opt_polite_outcome" text="You knock on doors. Remind them of obligations. Most pay — eventually. The lord gets their coin, and you get noticed." />
     <string id="ll_evt_mission_debts_opt_aggressive" text="Collect aggressively" />
@@ -3092,7 +3092,7 @@
 
     <!-- Mission: Escort Merchant -->
     <string id="ll_evt_mission_escort_title" text="Escort Merchant" />
-    <string id="ll_evt_mission_escort_setup" text="A merchant owes the lord goods, not gold. Cloth, iron, supplies. They're willing to deliver — but the roads are dangerous.&#xA;&#xA;&quot;Need an escort,&quot; {LANCE_LEADER_SHORT} says. &quot;Three days, maybe five. Volunteer, and the lord owes you a favor.&quot;" />
+    <string id="ll_evt_mission_escort_setup" text="A merchant owes the lord goods, not gold. Cloth, iron, supplies. They're willing to deliver — but the roads are dangerous.&#xA;&#xA;&quot;Need an escort,&quot; {SERGEANT_NAME} says. &quot;Three days, maybe five. Volunteer, and the lord owes you a favor.&quot;" />
     <string id="ll_evt_mission_escort_opt_volunteer" text="Volunteer for the escort" />
     <string id="ll_evt_mission_escort_opt_volunteer_outcome" text="The merchant arrives safely. Goods delivered. The lord nods when they hear your name.&#xA;&#xA;&quot;Good work. I won't forget.&quot;" />
     <string id="ll_evt_mission_escort_opt_volunteer_outcome_failure" text="Bandits. Too many of them. You fight hard, but the merchant's wagon is looted. At least you're alive." />
@@ -3101,7 +3101,7 @@
 
     <!-- Mission: Negotiate Loan -->
     <string id="ll_evt_mission_loan_title" text="Negotiate a Loan" />
-    <string id="ll_evt_mission_loan_setup" text="The lord needs coin. Badly. A moneylender in town might help — but they need convincing.&#xA;&#xA;&quot;Your reputation precedes you,&quot; {LANCE_LEADER_SHORT} says. &quot;The lord thinks you could tip the scales. Interested?&quot;" />
+    <string id="ll_evt_mission_loan_setup" text="The lord needs coin. Badly. A moneylender in town might help — but they need convincing.&#xA;&#xA;&quot;Your reputation precedes you,&quot; {SERGEANT_NAME} says. &quot;The lord thinks you could tip the scales. Interested?&quot;" />
     <string id="ll_evt_mission_loan_opt_charm" text="Use charm and persuasion" />
     <string id="ll_evt_mission_loan_opt_charm_outcome" text="Words flow. You paint pictures of future profits, of stability, of opportunity. The moneylender hesitates... then nods.&#xA;&#xA;&quot;Very well. Tell your lord they have their loan.&quot;" />
     <string id="ll_evt_mission_loan_opt_charm_outcome_failure" text="The moneylender isn't buying it. They've heard promises before. No loan." />
@@ -3115,7 +3115,7 @@
 
     <!-- Mission: Raid Enemy -->
     <string id="ll_evt_mission_raid_title" text="Volunteer for Raid" />
-    <string id="ll_evt_mission_raid_setup" text="The lord's broke. But the enemy isn't.&#xA;&#xA;&quot;Supply convoy,&quot; {LANCE_LEADER_SHORT} says quietly. &quot;Poorly guarded. We hit it fast, take what we can, disappear before their army responds.&quot;&#xA;&#xA;Dangerous. But profitable. And the lord would owe you." />
+    <string id="ll_evt_mission_raid_setup" text="The lord's broke. But the enemy isn't.&#xA;&#xA;&quot;Supply convoy,&quot; {SERGEANT_NAME} says quietly. &quot;Poorly guarded. We hit it fast, take what we can, disappear before their army responds.&quot;&#xA;&#xA;Dangerous. But profitable. And the lord would owe you." />
     <string id="ll_evt_mission_raid_opt_volunteer" text="Volunteer for the raid" />
     <string id="ll_evt_mission_raid_opt_volunteer_outcome" text="The convoy never saw you coming. By the time they reacted, it was over.&#xA;&#xA;Wagons full of supplies. Coin. Weapons. Enough to pay the army for a month.&#xA;&#xA;The lord claps you on the shoulder. &quot;This changes things. Well done.&quot;" />
     <string id="ll_evt_mission_raid_opt_volunteer_outcome_failure" text="The convoy had more guards than expected. You fight hard but have to retreat. Some of the raid party didn't make it back." />
@@ -3124,11 +3124,11 @@
 
     <!-- Free Desertion -->
     <string id="ll_evt_free_desertion_title" text="Leave Without Penalty" />
-    <string id="ll_evt_free_desertion_setup" text="You approach {LANCE_LEADER_SHORT}. They already know what you're going to say.&#xA;&#xA;&quot;Can't blame you,&quot; they say quietly. &quot;Pay's late. Lord's broke. No one would fault you for leaving.&quot;&#xA;&#xA;They extend a hand. &quot;Go. Find something better. No hard feelings.&quot;" />
+    <string id="ll_evt_free_desertion_setup" text="You approach {SERGEANT_NAME}. They already know what you're going to say.&#xA;&#xA;&quot;Can't blame you,&quot; they say quietly. &quot;Pay's late. Lord's broke. No one would fault you for leaving.&quot;&#xA;&#xA;They extend a hand. &quot;Go. Find something better. No hard feelings.&quot;" />
     <string id="ll_evt_free_desertion_opt_leave" text="Thank you. I'm leaving." />
     <string id="ll_evt_free_desertion_opt_leave_outcome" text="You leave quietly. No one blames you — you weren't paid." />
     <string id="ll_evt_free_desertion_opt_stay" text="Actually, I'll stay." />
-    <string id="ll_evt_free_desertion_opt_stay_outcome" text="You shake your head. &quot;Not yet. I'll stick it out a bit longer.&quot;&#xA;&#xA;{LANCE_LEADER_SHORT} looks surprised, then nods with respect. &quot;Loyal to the end. We need more like you.&quot;" />
+    <string id="ll_evt_free_desertion_opt_stay_outcome" text="You shake your head. &quot;Not yet. I'll stick it out a bit longer.&quot;&#xA;&#xA;{SERGEANT_NAME} looks surprised, then nods with respect. &quot;Loyal to the end. We need more like you.&quot;" />
 
     <!-- ================== MUTINY &amp; DESERTION CHAINS ================== -->
     
@@ -3140,7 +3140,7 @@
     <string id="ll_evt_desert_plan_when_opt_tonight_outcome_failure" text="You're barely past the perimeter when the alarm sounds. Someone saw you.&#xA;&#xA;&quot;DESERTERS! Stop them!&quot;&#xA;&#xA;You run. But they're faster." />
     <string id="ll_evt_desert_plan_when_opt_town" text="Wait for the next town." />
     <string id="ll_evt_desert_plan_when_opt_town_outcome" text="&quot;Town,&quot; you say. &quot;We wait, blend in, disappear.&quot;&#xA;&#xA;Three days later, the army enters {SETTLEMENT_NAME}. You simply... don't leave with them.&#xA;&#xA;By the time anyone notices, you're long gone." />
-    <string id="ll_evt_desert_plan_when_opt_town_outcome_failure" text="{LANCE_LEADER_SHORT} is watching. They've been suspicious for days.&#xA;&#xA;&quot;Going somewhere?&quot; they ask as you try to slip away." />
+    <string id="ll_evt_desert_plan_when_opt_town_outcome_failure" text="{SERGEANT_NAME} is watching. They've been suspicious for days.&#xA;&#xA;&quot;Going somewhere?&quot; they ask as you try to slip away." />
     <string id="ll_evt_desert_plan_when_opt_battle" text="After the next battle." />
     <string id="ll_evt_desert_plan_when_opt_battle_outcome" text="&quot;After the fight,&quot; you say. &quot;Everyone's tired, distracted. Perfect cover.&quot;&#xA;&#xA;The battle comes. When it's over, in the chaos of the aftermath, you simply walk away.&#xA;&#xA;No one notices one more body missing from the count." />
     <string id="ll_evt_desert_plan_when_opt_battle_outcome_failure" text="The battle goes badly. There's no clean escape — just running for your life.&#xA;&#xA;You survive. Barely. But you're still with the army." />
@@ -3286,7 +3286,7 @@
     <string id="act_success_training" text="You complete the training. Your muscles ache, but you feel stronger." />
     <string id="act_success_tasks" text="You finish the task. The camp runs a little smoother for your effort." />
     <string id="act_success_social" text="Time passes pleasantly. The bonds of camaraderie strengthen." />
-    <string id="act_success_lance" text="You spend time with your lance mates. They appreciate your attention." />
+    <string id="act_success_lance" text="You spend time with your comrades. They appreciate your attention." />
     <string id="act_success_generic" text="Activity completed." />
     
     <!-- Error Messages -->
@@ -3332,7 +3332,7 @@
     <string id="act_social_fire_circle" text="Fire Circle [+10 Charm | +1 Fatigue Relief]" />
     <string id="act_social_fire_circle_hint" text="Gather around the campfire and share stories. The flames drive back the darkness." />
     <string id="act_social_drink" text="Drink with the Lads [+20 Charm | +3 Fatigue Relief]" />
-    <string id="act_social_drink_hint" text="Share drinks and stories with your lance mates. Tomorrow might be your last." />
+    <string id="act_social_drink_hint" text="Share drinks and stories with your comrades. Tomorrow might be your last." />
     <string id="act_social_dice" text="Play Dice [+20 Roguery, +10 Charm]" />
     <string id="act_social_dice_hint" text="Try your luck at the dice game behind the wagons. Fortune favors the bold." />
     <string id="act_social_letter" text="Write a Letter [+20 Charm, +15 Leadership]" />
@@ -3352,7 +3352,7 @@
     <string id="act_lance_share_rations" text="Share Rations [+30 Charm, +10 Leadership | -1 Fatigue]" />
     <string id="act_lance_share_rations_hint" text="Give part of your meal to a hungry lance mate. They won't forget." />
     <string id="act_lance_settle_dispute" text="Settle Dispute [+25 Charm, +20 Leadership | -1 Fatigue]" />
-    <string id="act_lance_settle_dispute_hint" text="Mediate an argument between lance mates before it escalates. Keep the peace." />
+    <string id="act_lance_settle_dispute_hint" text="Mediate an argument between comrades before it escalates. Keep the peace." />
     <string id="act_lance_train_recruits" text="Train Recruits [+35 Leadership, +20 Athletics | -3 Fatigue]" />
     <string id="act_lance_train_recruits_hint" text="Help new soldiers learn the basics of military life. Pass on what you know." />
 
@@ -3632,6 +3632,302 @@
     
     <!-- Fallback -->
     <string id="camp_atmo_fallback" text="The company goes about its duties." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SAMPLE EVENTS - Role, Escalation, and Camp Life                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Scout Event: Strange Tracks -->
+    <string id="evt_scout_tracks_title" text="Strange Tracks" />
+    <string id="evt_scout_tracks_setup" text="You find tracks that don't match our patrol routes. Fresh, heading east toward the ridge. Could be enemy scouts, could be deserters, could be nothing.\n\nThe prints are clear in the soft ground. Someone passed through here within the last few hours." />
+    <string id="evt_scout_tracks_opt_report" text="Report to the sergeant immediately." />
+    <string id="evt_scout_tracks_opt_report_result" text="The sergeant nods. 'Good eye. We'll send a patrol to check it out.' Your diligence is noted." />
+    <string id="evt_scout_tracks_opt_investigate" text="Follow the tracks yourself before reporting." />
+    <string id="evt_scout_tracks_opt_investigate_result" text="You trail the prints over the ridge, spotting a small enemy scouting party making camp. Valuable intel. The captain will want to know about this." />
+    <string id="evt_scout_tracks_opt_ambush" text="Set up an ambush along their likely return path." />
+    <string id="evt_scout_tracks_opt_ambush_result" text="Patient waiting pays off. When the enemy scouts return, your ambush catches them completely off guard. Two prisoners for interrogation and praise from the officers." />
+    
+    <!-- Escalation Event: Scrutiny Level 2 -->
+    <string id="evt_scrutiny_2_title" text="Watchful Eyes" />
+    <string id="evt_scrutiny_2_setup" text="You've noticed it for a few days now. Someone's paying attention to you.\n\nThe sergeant's gaze lingers a moment too long. A supply clerk watches as you pass. Nothing overt, but the feeling of being observed follows you through the camp.\n\nThey may suspect something. Or they may simply be cautious. Either way, you should consider your next moves carefully." />
+    <string id="evt_scrutiny_2_opt_laylow" text="Lay low. Keep your head down." />
+    <string id="evt_scrutiny_2_opt_laylow_result" text="You make yourself scarce, volunteer for no duties, draw no attention. The watchful eyes seem to find other targets. But some of the lads notice you avoiding them." />
+    <string id="evt_scrutiny_2_opt_normal" text="Act normal. Don't give them anything." />
+    <string id="evt_scrutiny_2_opt_normal_result" text="You carry on as if nothing has changed. Perhaps it hasn't. Perhaps you're imagining things. But you stay alert, just in case." />
+    <string id="evt_scrutiny_2_opt_deflect" text="Subtly redirect their suspicion elsewhere." />
+    <string id="evt_scrutiny_2_opt_deflect_result" text="A casual comment here, an observation there. You plant seeds of doubt about another soldier's behavior. It works, but you've added another transgression to your tally." />
+    
+    <!-- Universal Event: Campfire Stories -->
+    <string id="evt_camp_fire_title" text="Stories by the Fire" />
+    <string id="evt_camp_fire_setup" text="The evening fires are lit, and soldiers gather in small groups. Veterans share tales of battles past, recruits listen with wide eyes, and someone has produced a skin of something that definitely isn't water.\n\nA space opens up near the warmest fire. The men gesture for you to join them." />
+    <string id="evt_camp_fire_opt_listen" text="Sit and listen to their stories." />
+    <string id="evt_camp_fire_opt_listen_result" text="You settle in and let the veterans' tales wash over you. Tales of glory and loss, of comrades fallen and enemies bested. The men appreciate a good listener." />
+    <string id="evt_camp_fire_opt_share" text="Share a story of your own." />
+    <string id="evt_camp_fire_opt_share_result" text="You tell them of a time when things went wrong and how you got through it. The men nod along, recognizing the truth in your words. By the end, you're one of them." />
+    <string id="evt_camp_fire_opt_inspire" text="Rally the men with words of purpose." />
+    <string id="evt_camp_fire_opt_inspire_result" text="You stand and speak of what you fight for, why it matters. Your words kindle something in the men's eyes. By the time you finish, they're ready to follow you into the dark." />
+    <string id="evt_camp_fire_opt_leave" text="You have other matters to attend to." />
+    <string id="evt_camp_fire_opt_leave_result" text="You wave off the invitation and walk into the darkness. Behind you, the laughter continues without you." />
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PHASE 5 SAMPLE EVENTS - Scout Role Events -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Scout Enemy Patrol Event -->
+    <string id="evt_scout_enemy_patrol_title" text="Enemy Patrol Spotted" />
+    <string id="evt_scout_enemy_patrol_setup" text="While scouting ahead of the company, you spot an enemy patrol moving through the valley below. There are perhaps a dozen of them, armed and alert. Your position gives you the advantage of surprise, but engaging them alone would be risky." />
+    <string id="evt_scout_enemy_patrol_opt_observe" text="Observe from here and report their numbers" />
+    <string id="evt_scout_enemy_patrol_opt_observe_result" text="You count their numbers carefully, noting their equipment and direction. When you report back to the officers, they commend your diligence. This intelligence will help plan the company's movements." />
+    <string id="evt_scout_enemy_patrol_opt_intercept" text="Set an ambush with fellow scouts" />
+    <string id="evt_scout_enemy_patrol_opt_intercept_result" text="You signal two other scouts to join you. Together, you set a hasty ambush along their path. The fight is brief and decisive—your positioning and surprise carry the day. The officers are pleased with your initiative, and you claim a share of the patrol's supplies." />
+    <string id="evt_scout_enemy_patrol_opt_follow" text="Shadow them back to their camp" />
+    <string id="evt_scout_enemy_patrol_opt_follow_result" text="You move like a ghost through the terrain, keeping the patrol in sight without revealing yourself. Hours later, you discover their forward camp—a crucial piece of intelligence. Your lord personally commends you for this invaluable information, and word of your skill spreads through the company." />
+    
+    <!-- Scout Night Watch Event -->
+    <string id="evt_scout_night_watch_title" text="Night Watch" />
+    <string id="evt_scout_night_watch_setup" text="You're on night watch, stationed at the camp's edge under a moonless sky. Hours pass slowly in the cold darkness. Around midnight, you hear something—movement in the brush beyond the firelight. It could be an animal, a deserter, or something worse." />
+    <string id="evt_scout_night_watch_opt_alert" text="Stay alert and watch carefully" />
+    <string id="evt_scout_night_watch_opt_alert_result" text="You remain vigilant, tracking every sound and shadow. The movement turns out to be a deer, but your watchfulness doesn't go unnoticed. The officer making rounds praises your discipline, and your fellow soldiers sleep easier knowing you're on watch." />
+    <string id="evt_scout_night_watch_opt_investigate" text="Investigate the sounds personally" />
+    <string id="evt_scout_night_watch_opt_investigate_result" text="You move quietly into the darkness to investigate. After careful searching, you discover fresh footprints that don't belong to any game animal. You mark the spot and report it immediately. The officers dispatch a patrol at dawn, and your initiative potentially saves lives." />
+    <string id="evt_scout_night_watch_opt_doze" text="Rest your eyes briefly" />
+    <string id="evt_scout_night_watch_opt_doze_result" text="You close your eyes for just a moment... and wake with a start to find the dawn breaking and the relief watch standing over you with disapproval. Word spreads quickly. The officers assign you extra duties, and your reputation takes a hit." />
+    
+    <!-- Scout Terrain Mastery Event -->
+    <string id="evt_scout_terrain_mastery_title" text="Terrain Knowledge" />
+    <string id="evt_scout_terrain_mastery_setup" text="The company is making slow progress through difficult terrain. You recognize this region from previous campaigns and know a faster route that bypasses the worst of the ground. The officers haven't asked your opinion, but you could speak up." />
+    <string id="evt_scout_terrain_mastery_opt_shortcut" text="Suggest the hidden path" />
+    <string id="evt_scout_terrain_mastery_opt_shortcut_result" text="You step forward and describe the alternate route. The officers study their maps, then nod in agreement. Your path saves the company hours of difficult marching. Your lord personally thanks you, and the soldiers appreciate the easier journey." />
+    <string id="evt_scout_terrain_mastery_opt_teach" text="Share your knowledge with junior scouts" />
+    <string id="evt_scout_terrain_mastery_opt_teach_result" text="Rather than simply pointing out the route, you take the time to explain the signs and landmarks that reveal such paths. The junior scouts listen carefully, and the officers notice your leadership. This knowledge will serve the company long after you're gone." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PHASE 5 SAMPLE EVENTS - Muster Events -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Muster Inspection Event -->
+    <string id="evt_muster_inspection_title" text="Morning Inspection" />
+    <string id="evt_muster_inspection_setup" text="The company forms ranks for the morning muster. The captain walks the line, inspecting each soldier's equipment and bearing. He stops in front of you, looking you up and down with a critical eye." />
+    <string id="evt_muster_inspection_opt_perfect" text="Stand at perfect attention" />
+    <string id="evt_muster_inspection_opt_perfect_result" text="Your equipment gleams, your stance is flawless. The captain gives a curt nod of approval. 'This is the standard,' he tells the others. Your fellow soldiers take note, and the officers remember your discipline." />
+    <string id="evt_muster_inspection_opt_standard" text="Meet the basic requirements" />
+    <string id="evt_muster_inspection_opt_standard_result" text="You're presentable enough. The captain moves on without comment. You've met expectations—nothing more, nothing less." />
+    <string id="evt_muster_inspection_opt_unprepared" text="You're not ready" />
+    <string id="evt_muster_inspection_opt_unprepared_result" text="Your equipment is dirty, your bearing slovenly. The captain's face darkens. 'Five laps around camp with full pack,' he orders. 'Then report to the quartermaster for extra duties.' The other soldiers avoid your gaze as you fall out of formation." />
+    
+    <!-- Muster New Recruit Event -->
+    <string id="evt_muster_new_recruit_title" text="Green Recruit" />
+    <string id="evt_muster_new_recruit_setup" text="At morning muster, a terrified-looking recruit stands trembling in the front rank. He's barely holding his spear correctly, and his eyes dart nervously at every sound. The veterans are already snickering. As a seasoned soldier, you could step in—or let him learn the hard way." />
+    <string id="evt_muster_new_recruit_opt_mentor" text="Take him aside and show him the ropes" />
+    <string id="evt_muster_new_recruit_opt_mentor_result" text="You pull the recruit aside after muster and spend time correcting his grip, his stance, his bearing. He's grateful and eager to learn. The officers notice your leadership, and your fellow soldiers respect your patience. The recruit will remember this kindness." />
+    <string id="evt_muster_new_recruit_opt_ignore" text="Let him figure it out" />
+    <string id="evt_muster_new_recruit_opt_ignore_result" text="You keep to yourself. The recruit muddles through as best he can. Some soldiers grumble that veterans should help new blood, but you've got your own concerns." />
+    <string id="evt_muster_new_recruit_opt_haze" text="Give him the traditional welcome" />
+    <string id="evt_muster_new_recruit_opt_haze_result" text="You join the other soldiers in putting the recruit through a series of 'tests'—carrying extra gear, fetching water, standing extra watches. He's miserable but keeps his mouth shut. The soldiers accept you as one of them, though the officers frown at the hazing." />
+    
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PHASE 5 SAMPLE EVENTS - Camp Events -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <!-- Camp Gambling Event -->
+    <string id="evt_camp_gambling_title" text="Dice Game" />
+    <string id="evt_camp_gambling_setup" text="A group of soldiers have gathered around a blanket, shaking dice and passing coins. The game is technically against regulations, but the officers are occupied elsewhere. One of the soldiers notices you watching and waves you over. 'Got coin to lose, friend?'" />
+    <string id="evt_camp_gambling_opt_play" text="Join the game" />
+    <string id="evt_camp_gambling_opt_play_result" text="You sit down and toss your coin onto the blanket. The dice roll, fortunes shift, and when the game breaks up an hour later, you're up fifty denars. The other soldiers clap you on the back—you're one of them now." />
+    <string id="evt_camp_gambling_opt_watch" text="Watch without playing" />
+    <string id="evt_camp_gambling_opt_watch_result" text="You watch the game, learning the players' tells and tricks without risking your coin. The soldiers don't mind—at least you're not running to the officers. You pick up some useful knowledge about reading people." />
+    <string id="evt_camp_gambling_opt_report" text="Report the game to the officers" />
+    <string id="evt_camp_gambling_opt_report_result" text="You walk straight to the officers' tent and report the illegal gambling. They break up the game immediately. The officers appreciate your adherence to regulations, but your fellow soldiers won't forget your betrayal. The camp feels colder afterward." />
+    
+    <!-- Camp Storytelling Event -->
+    <string id="evt_camp_storytelling_title" text="Tales by the Fire" />
+    <string id="evt_camp_storytelling_setup" text="Soldiers gather around the evening fire, and the talk turns to stories. The veterans begin sharing tales of past campaigns and legendary warriors. Eyes turn to you expectantly—you've seen your share of action." />
+    <string id="evt_camp_storytelling_opt_tell_battle" text="Share your battle experiences" />
+    <string id="evt_camp_storytelling_opt_tell_battle_result" text="You recount the battle at the river crossing—the chaos, the fear, the moment the line nearly broke but held. The soldiers listen intently, nodding at the familiar details. When you finish, there's a moment of respectful silence. You've earned their respect." />
+    <string id="evt_camp_storytelling_opt_tell_legend" text="Tell the old legends" />
+    <string id="evt_camp_storytelling_opt_tell_legend_result" text="You reach back to the ancient tales—heroes and monsters, betrayals and triumphs. Your words paint pictures in the fire-lit darkness. The younger soldiers are captivated, and even the veterans lean in. The stories remind everyone what they're fighting for." />
+    <string id="evt_camp_storytelling_opt_listen" text="Listen to the veterans" />
+    <string id="evt_camp_storytelling_opt_listen_result" text="You sit back and let the veterans talk. Their stories contain hard-earned wisdom about tactics, terrain, and survival. You learn more from listening than you would from speaking." />
+    
+    <!-- Camp Supply Shortage Event -->
+    <string id="evt_camp_supply_shortage_title" text="Hungry Soldiers" />
+    <string id="evt_camp_supply_shortage_setup" text="The rations are running low again. As you collect your meager portion, you notice some soldiers getting even less—their eyes hollow with hunger. You have a few days' worth of food stashed away from previous campaigns. You could share it, but that's your safety margin if things get worse." />
+    <string id="evt_camp_supply_shortage_opt_share" text="Share your extra rations" />
+    <string id="evt_camp_supply_shortage_opt_share_result" text="You quietly distribute your stash among the hungriest soldiers. They're grateful beyond words. Your belly might be empty tonight, but you've earned genuine loyalty from your comrades. Even the officers hear about your generosity." />
+    <string id="evt_camp_supply_shortage_opt_forage" text="Lead a foraging party" />
+    <string id="evt_camp_supply_shortage_opt_forage_result" text="You volunteer to lead a small group into the countryside to forage. Hours of searching yield edible plants, some game, and a forgotten granary. You return with enough food to ease the shortage. The company is grateful, and your reputation as someone who takes action grows." />
+    <string id="evt_camp_supply_shortage_opt_hoard" text="Keep your supplies hidden" />
+    <string id="evt_camp_supply_shortage_opt_hoard_result" text="You keep your stash secret and eat when others aren't watching. You're well-fed, but some soldiers notice your relative health compared to their hunger. Suspicious looks and cold shoulders follow. Trust is harder to earn than food." />
+    
+    <!-- Camp Brawl Event -->
+    <string id="evt_camp_brawl_title" text="Camp Brawl" />
+    <string id="evt_camp_brawl_setup" text="A fight breaks out near the supply wagons—two soldiers, one from your unit and one from another company, trading vicious blows. A crowd forms, shouting encouragement. The officers haven't noticed yet, but they will soon. Your fellow soldier is losing." />
+    <string id="evt_camp_brawl_opt_intervene" text="Break up the fight" />
+    <string id="evt_camp_brawl_opt_intervene_result" text="You push through the crowd and step between them, taking a stray punch for your trouble. 'Enough!' you bark. Your authority and presence shock them into stopping. The officers arrive moments later and thank you for preventing a serious incident. Both brawlers are assigned punishment detail." />
+    <string id="evt_camp_brawl_opt_back_soldier" text="Back your comrade" />
+    <string id="evt_camp_brawl_opt_back_soldier_result" text="You wade in swinging. Together, you and your fellow soldier pummel the other man until he stays down. The crowd roars approval—but here come the officers. You all end up in chains for the night, but your comrades know you've got their backs. That counts for something." />
+    <string id="evt_camp_brawl_opt_fetch_officer" text="Run for an officer" />
+    <string id="evt_camp_brawl_opt_fetch_officer_result" text="You sprint to the officers' tent and return with a captain. He breaks up the fight immediately and hauls both brawlers off for punishment. The officers appreciate your quick thinking, but your fellow soldiers eye you with distrust. Nobody likes a snitch." />
+
+    <!-- ============================================== -->
+    <!-- PLAYER-INITIATED DECISIONS                     -->
+    <!-- ============================================== -->
+
+    <!-- Organize a Dice Game -->
+    <string id="player_dice_title" text="Organize a Dice Game" />
+    <string id="player_dice_setup" text="The evening settles over camp, and you consider gathering some comrades for a round of dice. It's a good way to pass the time and build camaraderie - though gambling always carries some risk." />
+    <string id="player_dice_small" text="&quot;Who's up for a friendly game? Small stakes only.&quot;" />
+    <string id="player_dice_small_outcome" text="The dice favor you tonight. You rake in a modest pot as your comrades good-naturedly grumble about their losses." />
+    <string id="player_dice_high" text="&quot;Let's make this interesting. High stakes tonight.&quot;" />
+    <string id="player_dice_high_success" text="Lady luck smiles upon you! You rake in a substantial pot, earning respect for your boldness. Some grumble about their losses, but such is the game." />
+    <string id="player_dice_cancel" text="Actually, maybe another night." />
+    <string id="player_dice_cancel_outcome" text="You decide to save your coin for another evening. Rest is more valuable tonight." />
+
+    <!-- Request Extra Training -->
+    <string id="player_training_title" text="Request Extra Training" />
+    <string id="player_training_setup" text="The drillmaster is available, and you could ask for some additional instruction. It would be exhausting, but the improvement might be worth it." />
+    <string id="player_training_request" text="&quot;Sergeant, I'd like some extra training.&quot;" />
+    <string id="player_training_request_outcome" text="The drillmaster nods. &quot;Right then. What do you want to work on?&quot;" />
+    <string id="player_training_cancel" text="On second thought, I'll rest instead." />
+    <string id="player_training_cancel_outcome" text="You decide to conserve your energy. Training can wait for another day." />
+
+    <!-- Visit the Wounded -->
+    <string id="player_wounded_title" text="Visit the Wounded" />
+    <string id="player_wounded_setup" text="The medical tent holds several of your wounded comrades. A visit might lift their spirits - and yours. It's the right thing to do." />
+    <string id="player_wounded_visit" text="Spend time with the wounded, offering what comfort you can." />
+    <string id="player_wounded_visit_outcome" text="You sit with the wounded, sharing stories and checking on their recovery. The medics appreciate the help keeping spirits up. Word spreads that you're the sort who looks after their own." />
+    <string id="player_wounded_cancel" text="I'll visit another time." />
+    <string id="player_wounded_cancel_outcome" text="Duty calls elsewhere. Perhaps tomorrow." />
+
+    <!-- Petition the Lord -->
+    <string id="player_petition_title" text="Petition the Lord" />
+    <string id="player_petition_setup" text="Your rank allows you to request a brief audience with the Lord. This is not something to do lightly - you must have a purpose, or risk wasting his time." />
+    <string id="player_petition_pay" text="&quot;My Lord, I humbly request an advance on my wages.&quot;" />
+    <string id="player_petition_pay_outcome" text="{LORD_NAME} considers your request, then nods. &quot;I trust you'll repay this faith with loyal service.&quot; A purse of coins is handed to you. The quartermaster notes it down." />
+    <string id="player_petition_recognition" text="&quot;My Lord, I wish to bring my service to your attention.&quot;" />
+    <string id="player_petition_recognition_outcome" text="{LORD_NAME} listens as you recount your recent actions. &quot;Your dedication is noted, soldier. Continue to serve well.&quot; You feel the weight of his regard - a valuable thing." />
+    <string id="player_petition_cancel" text="Perhaps this is not the right time." />
+    <string id="player_petition_cancel_outcome" text="You step back without making your request. Better to wait for a more opportune moment." />
+
+    <!-- Write a Letter Home -->
+    <string id="player_letter_title" text="Write a Letter Home" />
+    <string id="player_letter_setup" text="You have a moment of quiet. Perhaps it's time to send word home - to family, friends, or whoever waits for your return. Ink and parchment aren't hard to come by." />
+    <string id="player_letter_reassuring" text="Write a reassuring letter, downplaying the dangers." />
+    <string id="player_letter_reassuring_outcome" text="You craft a letter full of small triumphs and omitted hardships. It feels good to write, to remember there's a world beyond war. You hand it to the camp courier." />
+    <string id="player_letter_honest" text="Write an honest account of your experiences." />
+    <string id="player_letter_honest_outcome" text="The words flow more freely than expected. It's cathartic to put the truth on paper, even if it might worry those who read it." />
+    <string id="player_letter_cancel" text="I'll write when I have more to say." />
+    <string id="player_letter_cancel_outcome" text="You set aside the parchment. The words aren't coming today." />
+
+    <!-- Call in Quartermaster Favor -->
+    <string id="player_qm_favor_title" text="Call in a Quartermaster Favor" />
+    <string id="player_qm_favor_setup" text="The quartermaster owes you one. You could call in that favor to ease the pressure — or keep it for later." />
+    <string id="player_qm_favor_call_in" text="Call it in: smooth things over and keep the company steady." />
+    <string id="player_qm_favor_call_in_outcome" text="A quiet word, a quiet exchange. The wagons run smoother for a while, and the men complain a little less. The quartermaster's favor is spent." />
+    <string id="player_qm_favor_hold" text="Hold it: I'll save that favor for a worse day." />
+    <string id="player_qm_favor_hold_outcome" text="You keep the favor in your pocket. In this life, leverage is a kind of coin." />
+
+    <!-- ============================================== -->
+    <!-- AUTOMATIC DECISIONS (Opportunities)            -->
+    <!-- ============================================== -->
+
+    <!-- Lord's Hunt Invitation -->
+    <string id="decision_lord_hunt_title" text="Invitation to Hunt" />
+    <string id="decision_lord_hunt_body" text="{LORD_NAME} is organizing a hunting party. A messenger approaches you with an invitation. The Lord's hunts are known for good sport and fine company - though they can be tiring affairs." />
+    <string id="decision_lord_hunt_accept" text="&quot;I am honored, my Lord. I shall attend.&quot;" />
+    <string id="decision_lord_hunt_accept_outcome" text="You spend the day riding with {LORD_NAME}'s party. The hunt is successful - deer are brought down, and the mood is jovial. As the party returns, {LORD_NAME} offers you your share." />
+    <string id="decision_lord_hunt_decline" text="&quot;I am grateful for the honor, but duty keeps me at camp.&quot;" />
+    <string id="decision_lord_hunt_decline_outcome" text="The messenger nods and departs. Perhaps another time." />
+
+    <!-- Evening Dice Game (invitation) -->
+    <string id="decision_dice_title" text="Evening Dice Game" />
+    <string id="decision_dice_body" text="{COMRADE_NAME} waves you over to a group gathered around a small fire. &quot;Come on, {PLAYER_RANK}! We need fresh gold in the pot.&quot; The dice game looks lively, and you could use some relaxation." />
+    <string id="decision_dice_join_careful" text="&quot;Deal me in - small stakes only.&quot;" />
+    <string id="decision_dice_join_outcome" text="Lady luck favors you tonight. You walk away with your stake doubled and a few new friends." />
+    <string id="decision_dice_join_bold" text="&quot;I'm feeling lucky. High stakes.&quot;" />
+    <string id="decision_dice_bold_outcome" text="The dice fly, the gold flows. You take the pot with a winning streak that has the whole camp talking." />
+    <string id="decision_dice_decline" text="&quot;Not tonight. I need my rest.&quot;" />
+    <string id="decision_dice_decline_outcome" text="You retire to your tent. The sounds of laughter and curses drift through the night." />
+
+    <!-- Training Opportunity -->
+    <string id="decision_training_offer_title" text="Training Opportunity" />
+    <string id="decision_training_offer_body" text="{SERGEANT_NAME} approaches during training. &quot;You show promise, soldier. I could work with you after the regular session - push you harder than the rest. It'll be exhausting, but you'll improve faster.&quot;" />
+    <string id="decision_training_accept" text="&quot;I'm ready for whatever you can teach me, Sergeant.&quot;" />
+    <string id="decision_training_accept_outcome" text="The additional training is brutal, but effective. Your muscles ache, but your blade moves faster." />
+    <string id="decision_training_decline" text="&quot;I appreciate the offer, but I need to pace myself.&quot;" />
+    <string id="decision_training_decline_outcome" text="{SERGEANT_NAME} shrugs. &quot;Your choice. The offer stands.&quot; You continue with the standard regimen." />
+
+    <!-- Special Scouting Assignment -->
+    <string id="decision_scout_assignment_title" text="Special Scouting Assignment" />
+    <string id="decision_scout_assignment_body" text="{SERGEANT_NAME} pulls you aside. &quot;I need someone reliable for a longer patrol. Two days out, mapping the terrain ahead. It's harder work, but I'll make sure you're compensated.&quot;" />
+    <string id="decision_scout_accept" text="&quot;Consider it done. I'll have a full report for you.&quot;" />
+    <string id="decision_scout_accept_outcome" text="You ride out at dawn and return two days later with detailed reports. {SERGEANT_NAME} nods with approval and hands you a pouch of coins." />
+    <string id="decision_scout_decline" text="&quot;I'm not in condition for extended patrol right now.&quot;" />
+    <string id="decision_scout_decline_outcome" text="{SERGEANT_NAME} frowns slightly but accepts your answer. Someone else will take the assignment." />
+
+    <!-- Medical Emergency -->
+    <string id="decision_medic_emergency_title" text="Medical Emergency" />
+    <string id="decision_medic_emergency_body" text="A commotion breaks out near the medical tent. One of the wounded has taken a turn for the worse - fever and infection. The other medics look to you. &quot;What do we do? The surgeon isn't here!&quot;" />
+    <string id="decision_medic_charge" text="&quot;Get me clean water and fresh bandages. I'll handle this.&quot;" />
+    <string id="decision_medic_charge_outcome" text="You work through the night, applying poultices and monitoring the soldier's condition. By dawn, the fever breaks. Word spreads of your skill." />
+    <string id="decision_medic_help" text="&quot;We need the surgeon. Someone ride to find him - I'll stabilize the patient.&quot;" />
+    <string id="decision_medic_help_outcome" text="You keep the soldier stable until the surgeon arrives. A prudent choice - the surgeon handles the complication expertly." />
+
+    <!-- Merchant's Proposition (Quartermaster) -->
+    <string id="decision_qm_deal_title" text="Merchant's Proposition" />
+    <string id="decision_qm_deal_body" text="A traveling merchant approaches with a wagon of surplus goods. &quot;I've got quality supplies here - arrows, blankets, preserved meat. I can give you a good price, but I need to move quickly. The captain doesn't need to know the details...&quot;" />
+    <string id="decision_qm_official" text="&quot;I'll need to clear any purchase through proper channels.&quot;" />
+    <string id="decision_qm_official_outcome" text="The merchant grumbles but agrees to wait. You get authorization, and the company gains quality supplies through legitimate means." />
+    <string id="decision_qm_unofficial" text="&quot;Show me what you've got. We can work something out.&quot;" />
+    <string id="decision_qm_unofficial_outcome" text="You skim a little off the top while getting the company a good deal. Risky, but profitable." />
+    <string id="decision_qm_report" text="&quot;Something seems off here. I should report this.&quot;" />
+    <string id="decision_qm_report_outcome" text="You alert the captain. The merchant's goods turn out to be stolen from a nearby village. Your vigilance is noted." />
+
+    <!-- Weekly Supply Run -->
+    <string id="decision_qm_supply_run_title" text="Supply Run" />
+    <string id="decision_qm_supply_run_body" text="The wagons are light and the men are counting days between towns. You can make a run to secure supplies — properly, quietly, or harshly." />
+    <string id="decision_qm_supply_run_official" text="Do it properly: pay a fair price, record it cleanly." />
+    <string id="decision_qm_supply_run_official_outcome" text="You spend coin and time, but the wagons come back heavier and the ledger stays clean. The quartermaster gives you a rare, approving nod." />
+    <string id="decision_qm_supply_run_quiet" text="Make it work: buy cheap, skim a little, keep everyone fed." />
+    <string id="decision_qm_supply_run_quiet_outcome" text="You get the supplies. You also get paid. For now, nobody asks how the numbers work out." />
+    <string id="decision_qm_supply_run_ration" text="Ration hard: stretch what we have and keep the wagons moving." />
+    <string id="decision_qm_supply_run_ration_outcome" text="You tighten belts and enforce rationing. The men grumble, but the supplies last longer." />
+
+    <!-- Audit Pressure -->
+    <string id="decision_qm_audit_pressure_title" text="Audit Pressure" />
+    <string id="decision_qm_audit_pressure_body" text="A clerk is sniffing around the ledgers, asking careful questions. If anything is wrong, they'll find it. You can face it, bury it, or buy time." />
+    <string id="decision_qm_audit_cooperate" text="Cooperate: fix what you can and take the hit." />
+    <string id="decision_qm_audit_cooperate_outcome" text="You swallow pride and clean up the mess. It costs you standing, but the investigation cools — for now." />
+    <string id="decision_qm_audit_burn" text="Burn the paper trail: make the problem disappear." />
+    <string id="decision_qm_audit_burn_outcome" text="The ledger pages curl to ash. The questions stop. But you've crossed a line that doesn't uncross." />
+    <string id="decision_qm_audit_bribe" text="Buy time: pay a quiet bribe and keep things moving." />
+    <string id="decision_qm_audit_bribe_outcome" text="Coin changes hands. The clerk loses interest. You gain a few weeks of breathing room." />
+
+    <!-- Lance Mate Favor -->
+    <string id="decision_favor_title" text="A Favor Asked" />
+    <string id="decision_favor_body" text="{COMRADE_NAME} pulls you aside with a troubled look. &quot;I need to ask a favor. My family... they've fallen behind on their debts. I need coin, and quickly. Could you lend me something? I swear I'll repay you when I can.&quot;" />
+    <string id="decision_favor_generous" text="&quot;Take what you need, friend. We look after our own.&quot;" />
+    <string id="decision_favor_generous_outcome" text="{COMRADE_NAME}'s face floods with relief. &quot;You're a good soldier, {PLAYER_NAME}. I won't forget this.&quot; He takes the coin and hurries off to send it to his family." />
+    <string id="decision_favor_modest" text="&quot;I can spare a little. It's not much, but take it.&quot;" />
+    <string id="decision_favor_modest_outcome" text="{COMRADE_NAME} nods gratefully. &quot;Every bit helps. Thank you, {PLAYER_NAME}.&quot; He pockets the coins with a small smile." />
+    <string id="decision_favor_refuse" text="&quot;I can't afford to give away my coin. I'm sorry.&quot;" />
+    <string id="decision_favor_refuse_outcome" text="{COMRADE_NAME}'s expression hardens slightly, but he nods. &quot;I understand. Times are hard for everyone.&quot; He walks away without another word." />
+
+    <!-- Lance Mate Favor Repayment -->
+    <string id="decision_repayment_title" text="A Debt Repaid" />
+    <string id="decision_repayment_body" text="{COMRADE_NAME} approaches with a grin and a pouch of coins. &quot;I told you I'd repay you, didn't I? My sister sold some of the family land - we're back on our feet. Here's what I owe, and a little extra for your trust.&quot;" />
+    <string id="decision_repayment_accept" text="&quot;I'm glad things worked out. Thank you.&quot;" />
+    <string id="decision_repayment_accept_outcome" text="You pocket the coins with a nod. {COMRADE_NAME} claps you on the shoulder. &quot;If you ever need anything, just ask.&quot; A bond has been strengthened." />
+    <string id="decision_repayment_refuse" text="&quot;Keep it. Consider it a gift between comrades.&quot;" />
+    <string id="decision_repayment_refuse_outcome" text="{COMRADE_NAME} stares at you in surprise, then breaks into a broad smile. &quot;You're one of the good ones, {PLAYER_NAME}. I'll remember this.&quot; Your reputation in the company soars." />
+
+    <!-- Lance Mate Small Thanks -->
+    <string id="decision_gratitude_title" text="A Small Thanks" />
+    <string id="decision_gratitude_body" text="{COMRADE_NAME} finds you during a rest break and hands you a small bundle. &quot;It's not much, but I found this while foraging. Thought you might want it, after what you did for me.&quot;" />
+    <string id="decision_gratitude_accept" text="&quot;Thank you. It means a lot.&quot;" />
+    <string id="decision_gratitude_accept_outcome" text="You unwrap the bundle to find a few useful supplies. Small gestures, but they build trust within the company." />
+    <string id="decision_gratitude_refuse" text="&quot;Keep it. You don't owe me anything.&quot;" />
+    <string id="decision_gratitude_refuse_outcome" text="{COMRADE_NAME} insists once, then nods, embarrassed but grateful. &quot;Still... thank you.&quot; The gesture seems to matter more than the coin." />
 
 </strings>
 </base>

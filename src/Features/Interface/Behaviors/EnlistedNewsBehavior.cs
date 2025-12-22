@@ -97,6 +97,10 @@ namespace Enlisted.Features.Interface.Behaviors
         // Persisted Daily Report and rolling ledger state.
         private CampNewsState _campNewsState = new CampNewsState();
 
+        // "Since last muster" counters for camp news display. Reset at each muster cycle.
+        private int _lostSinceLastMuster;
+        private int _sickSinceLastMuster;
+
         /// <summary>
         /// Track order outcomes for display in daily brief and detailed reports.
         /// </summary>
@@ -244,6 +248,10 @@ namespace Enlisted.Features.Interface.Behaviors
                 dataStore.SyncData("en_news_lastBattleType", ref _lastPlayerBattleType);
                 dataStore.SyncData("en_news_lastBattleWon", ref _lastPlayerBattleWon);
 
+                // "Since last muster" counters for camp news display
+                dataStore.SyncData("en_news_lostSinceMuster", ref _lostSinceLastMuster);
+                dataStore.SyncData("en_news_sickSinceMuster", ref _sickSinceLastMuster);
+
                 // Sync battle snapshots (for pyrrhic detection across save/load)
                 _battleSnapshots ??= new Dictionary<string, BattleSnapshot>();
                 var snapshotCount = _battleSnapshots.Count;
@@ -385,7 +393,7 @@ namespace Enlisted.Features.Interface.Behaviors
 
         /// <summary>
         /// Builds the once-per-day Daily Brief as a single flowing RP narrative paragraph.
-        /// Combines company situation, player status, and kingdom news into immersive text.
+        /// Combines company situation, casualties, player status, and kingdom news into immersive text.
         /// </summary>
         public string BuildDailyBriefSection()
         {
@@ -413,6 +421,13 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     parts.Add(_dailyBriefCompany);
                 }
+
+                // Add casualty report with RP flavor (losses and wounded since last muster)
+                var casualtyLine = BuildCasualtyReportLine();
+                if (!string.IsNullOrWhiteSpace(casualtyLine))
+                {
+                    parts.Add(casualtyLine);
+                }
                     
                 if (!string.IsNullOrWhiteSpace(_dailyBriefUnit))
                 {
@@ -432,6 +447,90 @@ namespace Enlisted.Features.Interface.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error(LogCategory, "Error building Daily Brief section", ex);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Builds an RP-flavored casualty report line for the daily brief.
+        /// Shows losses and wounded since last muster in narrative style.
+        /// </summary>
+        private string BuildCasualtyReportLine()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var lord = enlistment?.CurrentLord;
+                var lordParty = lord?.PartyBelongedTo;
+                
+                var lostCount = _lostSinceLastMuster;
+                var woundedCount = lordParty?.MemberRoster?.TotalWounded ?? 0;
+                
+                // No casualties to report
+                if (lostCount <= 0 && woundedCount <= 0)
+                {
+                    return string.Empty;
+                }
+
+                // Heavy losses - somber tone
+                if (lostCount >= 10)
+                {
+                    return $"The company has paid dearly — {lostCount} souls lost since last muster.";
+                }
+                
+                // Moderate losses with wounded
+                if (lostCount >= 5)
+                {
+                    if (woundedCount >= 10)
+                    {
+                        return $"Hard fighting has cost us {lostCount} dead and left {woundedCount} wounded.";
+                    }
+                    return $"We've lost {lostCount} good soldiers since the last muster.";
+                }
+
+                // Some losses
+                if (lostCount >= 2)
+                {
+                    if (woundedCount >= 15)
+                    {
+                        return $"The wounded fill the medical tents. {lostCount} didn't make it.";
+                    }
+                    if (woundedCount >= 5)
+                    {
+                        return $"{lostCount} fallen, {woundedCount} wounded — the cost of the march.";
+                    }
+                    return $"{lostCount} soldiers have fallen since last muster.";
+                }
+
+                // Single loss
+                if (lostCount == 1)
+                {
+                    if (woundedCount >= 10)
+                    {
+                        return $"One soldier lost, {woundedCount} nursing wounds.";
+                    }
+                    return "One of ours didn't make it through.";
+                }
+
+                // No deaths but significant wounded
+                if (woundedCount >= 20)
+                {
+                    return $"The surgeons are busy — {woundedCount} wounded in the company.";
+                }
+                if (woundedCount >= 10)
+                {
+                    return $"{woundedCount} soldiers recovering from their wounds.";
+                }
+                if (woundedCount >= 5)
+                {
+                    return $"A few wounded among us, {woundedCount} in all.";
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Debug(LogCategory, $"Error building casualty report: {ex.Message}");
                 return string.Empty;
             }
         }
@@ -792,6 +891,44 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
+        /// Returns rolling totals from the camp life ledger for the specified window.
+        /// Useful for displaying recent losses, wounded, sick over time.
+        /// </summary>
+        public CampLifeRollingTotals GetRollingTotals(int windowDays = 7)
+        {
+            try
+            {
+                _campNewsState?.EnsureInitialized();
+                return _campNewsState?.Ledger?.GetRollingTotals(windowDays) 
+                       ?? new CampLifeRollingTotals(0, 0, 0, 0, 0, 0);
+            }
+            catch
+            {
+                return new CampLifeRollingTotals(0, 0, 0, 0, 0, 0);
+            }
+        }
+
+        /// <summary>
+        /// Soldiers lost since the last muster cycle. Resets when muster completes.
+        /// </summary>
+        public int LostSinceLastMuster => _lostSinceLastMuster;
+
+        /// <summary>
+        /// Soldiers who fell sick since the last muster cycle. Resets when muster completes.
+        /// </summary>
+        public int SickSinceLastMuster => _sickSinceLastMuster;
+
+        /// <summary>
+        /// Resets the "since last muster" counters. Called by EnlistmentBehavior.OnMusterCycleComplete().
+        /// </summary>
+        public void ResetMusterCounters()
+        {
+            _lostSinceLastMuster = 0;
+            _sickSinceLastMuster = 0;
+            ModLogger.Debug(LogCategory, "Muster counters reset");
+        }
+
+        /// <summary>
         /// Records an order outcome for display in daily brief and detailed reports.
         /// </summary>
         public void AddOrderOutcome(string orderTitle, bool success, string briefSummary,
@@ -1027,6 +1164,16 @@ namespace Enlisted.Features.Interface.Behaviors
                 aggregate.WoundedToday = Math.Max(0, snapshot.WoundedDelta);
                 aggregate.SickToday = Math.Max(0, snapshot.SickDelta);
                 // TrainingIncidents/DecisionsResolved/Dispatches tracked in later phases.
+
+                // Accumulate "since last muster" counters (reset at each muster).
+                if (snapshot.DeadDelta > 0)
+                {
+                    _lostSinceLastMuster += snapshot.DeadDelta;
+                }
+                if (snapshot.SickDelta > 0)
+                {
+                    _sickSinceLastMuster += snapshot.SickDelta;
+                }
 
                 snapshot.Normalize();
                 return snapshot;

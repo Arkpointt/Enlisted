@@ -49,6 +49,10 @@ namespace Enlisted.Features.Equipment.Behaviors
         private Dictionary<EquipmentIndex, List<EquipmentVariantOption>> _availableVariants;
         private readonly EquipmentIndex _selectedSlot = EquipmentIndex.None;
         private readonly List<ReturnOption> _returnOptions = new List<ReturnOption>();
+
+        // Stock availability tracking - items in this set are out of stock until next muster
+        private readonly HashSet<string> _outOfStockItems = new(StringComparer.OrdinalIgnoreCase);
+        private int _lastStockRollSupplyLevel = -1;
         
         // Conversation tracking for dynamic equipment selection
         [System.Diagnostics.CodeAnalysis.SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "May be used for future conversation-based equipment selection")]
@@ -112,12 +116,20 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Capture the current time control mode BEFORE activating a wait menu.
         /// Must be called from the calling code before ActivateGameMenu/SwitchToMenu,
         /// not from init handlers (which run after vanilla already sets Stop).
-        /// This is a shared capture used by all Enlisted wait menus.
+        /// Only captures if not already captured, so submenu navigation doesn't overwrite
+        /// the player's original time state (e.g., paused).
         /// </summary>
         public static void CaptureTimeStateBeforeMenuActivation()
         {
+            // Only capture if not already set. This preserves the player's original time state
+            // when navigating between submenus (e.g., Status -> Decisions -> Camp).
+            if (CapturedTimeMode.HasValue)
+            {
+                ModLogger.Debug("Quartermaster", $"Time state already captured: {CapturedTimeMode}, skipping recapture");
+                return;
+            }
+            
             CapturedTimeMode = Campaign.Current?.TimeControlMode;
-            // Debug-only: useful for diagnosing time-control issues without spamming normal logs.
             ModLogger.Debug("Quartermaster", $"Captured time state: {CapturedTimeMode}");
         }
 
@@ -878,25 +890,26 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return 0;
                 }
 
-                var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
-                var soldierTax = qmConfig?.SoldierTax ?? 1.2f;
                 var basePrice = item.Value;
-
-                // Phase 1: Duties system deleted, no role-based discounts
-                var discountMultiplier = 1.0f;
-
-                var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
-                var price = basePrice * soldierTax * discountMultiplier * campMultiplier;
-                var roundedPrice = Convert.ToInt32(MathF.Round(price));
-                
-                // Relationship discount (0â€“15%) comes from the Quartermaster Hero relationship system.
-                // This is intentionally applied AFTER soldier-tax and role/mood multipliers so the discount is predictable.
                 var enlistment = EnlistmentBehavior.Instance;
-                var discounted = enlistment?.IsEnlisted == true
-                    ? enlistment.ApplyQuartermasterDiscount(roundedPrice)
-                    : roundedPrice;
 
-                return Math.Max(5, discounted);
+                // QM reputation-based pricing multiplier (0.70 = 30% discount to 1.40 = 40% markup)
+                var repMultiplier = enlistment?.IsEnlisted == true
+                    ? enlistment.GetEquipmentPriceMultiplier()
+                    : 1.0f;
+
+                // Camp mood provides small day-to-day price variation (0.98-1.15)
+                var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterPurchaseMultiplier() ?? 1.0f;
+
+                var price = basePrice * repMultiplier * campMultiplier;
+                var roundedPrice = Convert.ToInt32(MathF.Round(price));
+                var finalPrice = Math.Max(5, roundedPrice);
+
+                // Debug logging showing calculation details
+                ModLogger.Debug("Quartermaster",
+                    $"Price calc: {item.Name} base={basePrice} × repMult={repMultiplier:F2} × campMult={campMultiplier:F2} = {finalPrice} denars");
+
+                return finalPrice;
             }
             catch
             {
@@ -913,13 +926,25 @@ namespace Enlisted.Features.Equipment.Behaviors
                     return 0;
                 }
 
-                var qmConfig = EnlistedConfig.LoadQuartermasterConfig();
-                var buybackRate = qmConfig?.BuybackRate ?? 0.5f;
                 var basePrice = item.Value;
+                var enlistment = EnlistmentBehavior.Instance;
+
+                // QM reputation-based buyback multiplier (0.30 hostile to 0.65 trusted)
+                var repMultiplier = enlistment?.IsEnlisted == true
+                    ? enlistment.GetBuybackMultiplier()
+                    : 0.5f;
+
+                // Camp mood affects buyback rates
                 var campMultiplier = CampLifeBehavior.Instance?.GetQuartermasterBuybackMultiplier() ?? 1.0f;
-                var priceFloat = MathF.Max(0f, basePrice * buybackRate * campMultiplier);
-                var price = (int)priceFloat;
-                return Math.Max(price, 0);
+
+                var priceFloat = MathF.Max(0f, basePrice * repMultiplier * campMultiplier);
+                var finalPrice = (int)priceFloat;
+
+                // Debug logging showing calculation details
+                ModLogger.Debug("Quartermaster",
+                    $"Buyback calc: {item.Name} base={basePrice} × repMult={repMultiplier:F2} × campMult={campMultiplier:F2} = {finalPrice} denars");
+
+                return Math.Max(finalPrice, 0);
             }
             catch
             {
@@ -981,6 +1006,15 @@ namespace Enlisted.Features.Equipment.Behaviors
                 {
                     InformationManager.DisplayMessage(new InformationMessage(
                         new TextObject("{=qm_already_equipped}Already equipped.").ToString(), Colors.Yellow));
+                    return;
+                }
+
+                // OUT OF STOCK CHECK - item availability is rolled at muster based on supply levels
+                if (!variant.IsInStock)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_out_of_stock}This item is out of stock. Check back after the next muster.").ToString(), Colors.Red));
+                    ModLogger.Debug("Quartermaster", $"Purchase blocked: {requestedItem.Name} is out of stock");
                     return;
                 }
                 
@@ -1704,6 +1738,7 @@ namespace Enlisted.Features.Equipment.Behaviors
                         
                         var price = CalculateQuartermasterPrice(item);
                         var canAfford = hero.Gold >= price;
+                        var isInStock = IsItemInStock(item);
 
                         variantOptions.Add(new EquipmentVariantOption
                         {
@@ -1715,7 +1750,8 @@ namespace Enlisted.Features.Equipment.Behaviors
                             IsOfficerExclusive = !variants.ContainsKey(slot) || !variants[slot].Contains(item),
                             AllowsDuplicatePurchase = allowsDuplicate,
                             IsAtLimit = isAtLimit,
-                            IsNewlyUnlocked = IsNewlyUnlockedItem(item)
+                            IsNewlyUnlocked = IsNewlyUnlockedItem(item),
+                            IsInStock = isInStock
                         });
                     }
                     
@@ -2013,9 +2049,24 @@ namespace Enlisted.Features.Equipment.Behaviors
                 
                 foreach (var option in options)
                 {
-                    var status = option.IsCurrent ? "(Current Equipment)" :
-                                option.CanAfford ? $"Cost: {option.Cost} denars" :
-                                $"Cost: {option.Cost} denars (Insufficient funds)";
+                    string status;
+                    if (option.IsCurrent)
+                    {
+                        status = "(Current Equipment)";
+                    }
+                    else if (!option.IsInStock)
+                    {
+                        status = "(Out of Stock)";
+                    }
+                    else if (!option.CanAfford)
+                    {
+                        status = $"Cost: {option.Cost} denars (Insufficient funds)";
+                    }
+                    else
+                    {
+                        status = $"Cost: {option.Cost} denars";
+                    }
+                    
                     var marker = option.IsCurrent ? "[*]" : "[ ]"; // Simple ASCII markers
                     
                     sb.AppendLine($"{marker} {option.Item.Name}");
@@ -4088,7 +4139,101 @@ namespace Enlisted.Features.Equipment.Behaviors
             
             return item.WeaponComponent.PrimaryWeapon.IsConsumable;
         }
-        
+
+        #endregion
+
+        #region Stock Availability System
+
+        /// <summary>
+        /// Re-rolls stock availability for all items based on current company supply level.
+        /// Called at muster to simulate supply chain fluctuations. Items marked out-of-stock
+        /// remain unavailable until the next muster cycle.
+        /// </summary>
+        public void RollStockAvailability()
+        {
+            var enlistment = EnlistmentBehavior.Instance;
+            var supplyLevel = enlistment?.CompanyNeeds?.Supplies ?? 100;
+
+            _outOfStockItems.Clear();
+            _lastStockRollSupplyLevel = supplyLevel;
+
+            // Calculate out-of-stock probability based on supply level
+            // >= 60%: All items in stock (0% out of stock chance)
+            // 40-59%: 20% chance each item is out of stock
+            // 15-39%: 50% chance each item is out of stock
+            // < 15%: Menu is blocked entirely (handled in EnlistedMenuBehavior)
+            float outOfStockChance;
+            if (supplyLevel >= 60)
+            {
+                outOfStockChance = 0f;
+                ModLogger.Debug("Quartermaster", $"Stock roll: Supplies at {supplyLevel}% - all items in stock");
+                return;
+            }
+            else if (supplyLevel >= 40)
+            {
+                outOfStockChance = 0.20f;
+            }
+            else
+            {
+                outOfStockChance = 0.50f;
+            }
+
+            // Roll for each item in the variant cache
+            var itemsRolled = 0;
+            var itemsOutOfStock = 0;
+
+            foreach (var troopEntry in _troopEquipmentVariants)
+            {
+                foreach (var slotEntry in troopEntry.Value)
+                {
+                    foreach (var item in slotEntry.Value)
+                    {
+                        if (item == null) continue;
+                        
+                        itemsRolled++;
+                        if (MBRandom.RandomFloat < outOfStockChance)
+                        {
+                            _outOfStockItems.Add(item.StringId);
+                            itemsOutOfStock++;
+                        }
+                    }
+                }
+            }
+
+            ModLogger.Info("Quartermaster", 
+                $"Stock roll complete: Supplies at {supplyLevel}% ({outOfStockChance:P0} out-of-stock chance), " +
+                $"{itemsOutOfStock}/{itemsRolled} items out of stock");
+        }
+
+        /// <summary>
+        /// Checks if a specific item is currently in stock.
+        /// </summary>
+        public bool IsItemInStock(ItemObject item)
+        {
+            if (item == null) return false;
+            return !_outOfStockItems.Contains(item.StringId);
+        }
+
+        /// <summary>
+        /// Checks if a specific item is currently in stock by string ID.
+        /// </summary>
+        public bool IsItemInStock(string itemStringId)
+        {
+            if (string.IsNullOrEmpty(itemStringId)) return false;
+            return !_outOfStockItems.Contains(itemStringId);
+        }
+
+        /// <summary>
+        /// Gets the supply level at which stock was last rolled.
+        /// Returns -1 if stock has never been rolled.
+        /// </summary>
+        public int LastStockRollSupplyLevel => _lastStockRollSupplyLevel;
+
+        /// <summary>
+        /// Gets the count of items currently out of stock.
+        /// </summary>
+        public int OutOfStockCount => _outOfStockItems.Count;
+
         #endregion
     }
     
@@ -4121,6 +4266,12 @@ namespace Enlisted.Features.Equipment.Behaviors
         /// Used for "NEW" indicators in the UI.
         /// </summary>
         public bool IsNewlyUnlocked { get; set; }
+
+        /// <summary>
+        /// True if the item is currently in stock. When false, purchase is blocked.
+        /// Stock availability is rolled at each muster based on company supply levels.
+        /// </summary>
+        public bool IsInStock { get; set; } = true;
     }
 }
 

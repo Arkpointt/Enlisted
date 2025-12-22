@@ -141,6 +141,26 @@ This creates an experience where being an enlisted soldier feels **authentic, dy
   - `orders_t7_t9.json` - 12 tactical/strategic orders (T7-T9: command, siege, campaign planning)
   - Total: 39 orders with tier-appropriate requirements, balanced rewards, and Bannerlord RP style
 
+### ✅ Menu System Refinements (December 21, 2025)
+
+**Time Control Preservation:**
+- Menus now preserve player's time state (pause/speed) when navigating submenus
+- `CaptureTimeStateBeforeMenuActivation()` only captures once on initial menu entry
+- Submenu navigation skips recapture to preserve original state
+- Time state cleared when exiting enlisted menu system entirely
+
+**Camp News Enhancements:**
+- Real battle data: wounded/dead from lord's party roster
+- "Since last muster" counters for losses/sickness (reset at muster)
+- Morale and food status from daily snapshot
+- RP-flavored casualty reports in COMPANY REPORT section
+
+**Casualty Report Examples:**
+- Heavy losses: "The company has paid dearly — 12 souls lost since last muster."
+- Moderate: "Hard fighting has cost us 6 dead and left 14 wounded."
+- Light: "One of ours didn't make it through."
+- Wounded only: "The surgeons are busy — 24 wounded in the company."
+
 ### Phase 5.6: Strategic Context Enhancement (High Value)
 
 **What Needs to Happen:**
@@ -196,13 +216,62 @@ This creates an experience where being an enlisted soldier feels **authentic, dy
 ### New System Overview
 
 ```
-┌─────────────────────────────────────────────────────┐
-│              ENLISTED STATUS (Main Menu)            │
-│  • Rank, Lord, Campaign Context                     │
-│  • Active Orders (from chain of command)            │
-│  • Brief Reports Summary                            │
-│  • Quick Links: Camp, Reports, Decisions, Status    │
-└─────────────────────────────────────────────────────┘
+╔═══════════════════════════════════════════════════════════════╗
+║  Lord: {LordName}                                             ║
+║  Your Rank: {RankTitle} (T{Tier})                             ║
+║  Your Status: {PlayerStatusFlavor}                            ║
+║                                                               ║
+║  ━━━ COMPANY REPORT ━━━                                      ║
+║  {DailyBrief - Company movement, player condition, kingdom}   ║
+║                                                               ║
+║  ━━━ RECENT ACTIONS ━━━                                      ║
+║  • {PersonalFeedItem1}                                        ║
+║  • {PersonalFeedItem2}                                        ║
+║  • {PersonalFeedItem3}                                        ║
+║                                                               ║
+║  Company: Log {X}% | Mor {Y}% | {PayStatus}                   ║
+║                                                               ║
+║  ☰  ORDERS              ← Accordion: expands when order exists║
+║      From {Issuer}: {Title} [NEW!]                            ║
+║  ☰  Decisions           ← Submenu                             ║
+║  ☰  Camp                ← Submenu                             ║
+║  ☰  Reports             ← Submenu                             ║
+║  ☰  Status              ← Submenu                             ║
+║  ☰  Debug Tools         ← QA only                             ║
+╚═══════════════════════════════════════════════════════════════╝
+```
+
+**Menu Option Order (top to bottom):**
+1. ORDERS - Accordion header. Auto-expands when new order arrives. Clickable order row appears beneath.
+2. Decisions - Submenu for player-initiated actions (Training, Social, Camp Life, etc.)
+3. Camp - Submenu for Service Records, Companions, Retinue, Quartermaster, Medical, Talk to Lord
+4. Reports - Submenu for Daily Brief, Company Status, Campaign Context
+5. Status - Submenu for detailed Rank, Reputation, Traits
+6. Debug Tools - QA testing (grant gold/XP, force events, etc.)
+
+**Header Content:**
+- Lord name (encyclopedia link)
+- Player rank and tier
+- Player status flavor (tier-aware, condition-aware RP text)
+
+**COMPANY REPORT Section:**
+- BuildDailyBriefSection() output combining:
+  - Company movement (marching, camping, siege, army attachment)
+  - Casualty report with RP flavor (losses since muster, wounded count)
+  - Player condition (battle aftermath, injuries, fatigue)
+  - Kingdom news
+- Flowing narrative paragraph, regenerated daily
+- Casualty counters reset at each muster cycle
+
+**RECENT ACTIONS Section:**
+- Personal feed items from GetVisiblePersonalFeedItems(3)
+- Battle participation, order outcomes, reputation changes, army news
+- Shows "Nothing notable to report." when empty
+
+**Company Status Line:**
+- Only appears when actionable (high logistics strain, low morale, or pay tension)
+
+```
                          │
         ┌────────────────┼────────────────┐
         │                │                │

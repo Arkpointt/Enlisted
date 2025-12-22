@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 2,
+  "packId": "muster_events",
+  "category": "general",
+  "events": [
+    {
+      "id": "evt_muster_inspection",
+      "category": "general",
+      "titleId": "evt_muster_inspection_title",
+      "setupId": "evt_muster_inspection_setup",
+      "requirements": {
+        "minTier": 2,
+        "role": "Any",
+        "context": "Camp"
+      },
+      "timing": {
+        "cooldownDays": 12,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "perfect",
+          "textId": "evt_muster_inspection_opt_perfect",
+          "resultTextId": "evt_muster_inspection_opt_perfect_result",
+          "tooltip": "Present yourself in perfect order.",
+          "risk": "safe",
+          "requirements": {
+            "minSkills": { "OneHanded": 30 }
+          },
+          "effects": {
+            "skillXp": { "OneHanded": 10 },
+            "officerRep": 6,
+            "soldierRep": 3
+          }
+        },
+        {
+          "id": "standard",
+          "textId": "evt_muster_inspection_opt_standard",
+          "resultTextId": "evt_muster_inspection_opt_standard_result",
+          "tooltip": "Meet the basic standards.",
+          "risk": "safe",
+          "effects": {
+            "skillXp": { "OneHanded": 5 },
+            "officerRep": 2
+          }
+        },
+        {
+          "id": "unprepared",
+          "textId": "evt_muster_inspection_opt_unprepared",
+          "resultTextId": "evt_muster_inspection_opt_unprepared_result",
+          "tooltip": "You're not ready. Hope for mercy.",
+          "risk": "risky",
+          "effects": {
+            "officerRep": -8,
+            "soldierRep": -4,
+            "scrutiny": 8,
+            "discipline": 5
+          }
+        }
+      ]
+    },
+    {
+      "id": "evt_muster_new_recruit",
+      "category": "general",
+      "titleId": "evt_muster_new_recruit_title",
+      "setupId": "evt_muster_new_recruit_setup",
+      "requirements": {
+        "minTier": 3,
+        "role": "Any",
+        "context": "Camp"
+      },
+      "timing": {
+        "cooldownDays": 10,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "mentor",
+          "textId": "evt_muster_new_recruit_opt_mentor",
+          "resultTextId": "evt_muster_new_recruit_opt_mentor_result",
+          "tooltip": "Take the new recruit under your wing.",
+          "risk": "safe",
+          "requirements": {
+            "minSkills": { "Leadership": 25 }
+          },
+          "effects": {
+            "skillXp": { "Leadership": 15 },
+            "traitXp": { "SergeantCommandSkills": 30 },
+            "officerRep": 5,
+            "soldierRep": 6,
+            "troopXp": 30
+          }
+        },
+        {
+          "id": "ignore",
+          "textId": "evt_muster_new_recruit_opt_ignore",
+          "resultTextId": "evt_muster_new_recruit_opt_ignore_result",
+          "tooltip": "Let them figure it out themselves.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": -2
+          }
+        },
+        {
+          "id": "haze",
+          "textId": "evt_muster_new_recruit_opt_haze",
+          "resultTextId": "evt_muster_new_recruit_opt_haze_result",
+          "tooltip": "Put them through the traditional 'welcome'.",
+          "risk": "moderate",
+          "effects": {
+            "soldierRep": 4,
+            "officerRep": -5,
+            "discipline": 8
+          }
+        }
+      ]
+    }
+  ]
+}
+

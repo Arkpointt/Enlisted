@@ -217,6 +217,15 @@
     <Compile Include="src\Features\Escalation\EscalationState.cs"/>
     <Compile Include="src\Features\Escalation\EscalationThresholds.cs"/>
     <Compile Include="src\Features\Escalation\EscalationManager.cs"/>
+    <Compile Include="src\Features\Content\EventDefinition.cs"/>
+    <Compile Include="src\Features\Content\EventCatalog.cs"/>
+    <Compile Include="src\Features\Content\SkillCheckHelper.cs"/>
+    <Compile Include="src\Features\Content\EventDeliveryManager.cs"/>
+    <Compile Include="src\Features\Content\EventRequirementChecker.cs"/>
+    <Compile Include="src\Features\Content\EventSelector.cs"/>
+    <Compile Include="src\Features\Content\EventPacingManager.cs"/>
+    <Compile Include="src\Features\Content\DecisionCatalog.cs"/>
+    <Compile Include="src\Features\Content\DecisionManager.cs"/>
     <Compile Include="src\Features\Identity\TraitHelper.cs"/>
     <Compile Include="src\Features\Identity\EnlistedStatusManager.cs"/>
     <Compile Include="src\Features\Orders\Models\Order.cs"/>
@@ -277,6 +286,7 @@
     <!-- Phase 0+: Lance Life Events (data-driven) -->
     <Content Include="ModuleData\Enlisted\Events\*.json"/>
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
+    <Content Include="ModuleData\Languages\language_data.xml"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Used by AfterBuild to copy player condition definition data into the Bannerlord module folder -->
@@ -289,6 +299,8 @@
   <ItemGroup>
     <!-- Used by AfterBuild to copy Lance Life Events data into the Bannerlord module folder -->
     <LanceLifeEventsData Include="ModuleData\Enlisted\Events\*.json"/>
+    <LanceLifeEventsRoleData Include="ModuleData\Enlisted\Events\Role\*.json"/>
+    <LanceLifeEventsSamplesData Include="ModuleData\Enlisted\Events\samples\*.json"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Documentation - All markdown files in docs folder and subfolders -->
@@ -311,6 +323,8 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Conditions"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Activities"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events\samples"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
@@ -323,7 +337,10 @@
     <Copy SourceFiles="@(PlayerConditionData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Conditions\"/>
     <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
+    <Copy SourceFiles="@(LanceLifeEventsRoleData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role\" Condition="'@(LanceLifeEventsRoleData)' != ''"/>
+    <Copy SourceFiles="@(LanceLifeEventsSamplesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\samples\" Condition="'@(LanceLifeEventsSamplesData)' != ''"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
+    <Copy SourceFiles="ModuleData\Languages\language_data.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>

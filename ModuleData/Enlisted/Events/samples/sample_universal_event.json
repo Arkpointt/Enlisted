@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 2,
+  "packId": "sample_universal",
+  "category": "universal",
+  "events": [
+    {
+      "id": "evt_camp_fire_stories",
+      "category": "universal",
+      "titleId": "evt_camp_fire_title",
+      "setupId": "evt_camp_fire_setup",
+      "requirements": {
+        "minTier": 1,
+        "maxTier": 6,
+        "context": "Any",
+        "role": "Any"
+      },
+      "timing": {
+        "cooldownDays": 10,
+        "priority": "normal",
+        "oneTime": false
+      },
+      "options": [
+        {
+          "id": "listen",
+          "textId": "evt_camp_fire_opt_listen",
+          "resultTextId": "evt_camp_fire_opt_listen_result",
+          "tooltip": "Just listen to the veterans share their tales.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 3,
+            "companyNeeds": { "Morale": 2 }
+          }
+        },
+        {
+          "id": "share_story",
+          "textId": "evt_camp_fire_opt_share",
+          "resultTextId": "evt_camp_fire_opt_share_result",
+          "tooltip": "Share one of your own experiences.",
+          "risk": "safe",
+          "requirements": {
+            "minTier": 2
+          },
+          "effects": {
+            "skillXp": { "Charm": 10 },
+            "soldierRep": 5,
+            "companyNeeds": { "Morale": 3 }
+          }
+        },
+        {
+          "id": "inspire",
+          "textId": "evt_camp_fire_opt_inspire",
+          "resultTextId": "evt_camp_fire_opt_inspire_result",
+          "tooltip": "Rally the men with an inspiring speech.",
+          "risk": "moderate",
+          "requirements": {
+            "minSkills": { "Leadership": 50 }
+          },
+          "effects": {
+            "skillXp": { "Leadership": 25, "Charm": 15 },
+            "traitXp": { "Commander": 30 },
+            "soldierRep": 8,
+            "officerRep": 3,
+            "companyNeeds": { "Morale": 8 }
+          }
+        },
+        {
+          "id": "leave",
+          "textId": "evt_camp_fire_opt_leave",
+          "resultTextId": "evt_camp_fire_opt_leave_result",
+          "tooltip": "You have better things to do.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": -2
+          }
+        }
+      ]
+    }
+  ]
+}
+

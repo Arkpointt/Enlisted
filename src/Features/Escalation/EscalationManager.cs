@@ -138,6 +138,24 @@ namespace Enlisted.Features.Escalation
                 var thresholdCount = thresholdKeys.Count;
                 dataStore.SyncData("esc_thresholdCount", ref thresholdCount);
 
+                // Event pacing timestamps
+                var lastNarrativeEvent = _state.LastNarrativeEventTime;
+                var nextNarrativeWindow = _state.NextNarrativeEventWindow;
+                dataStore.SyncData("esc_lastNarrativeEvent", ref lastNarrativeEvent);
+                dataStore.SyncData("esc_nextNarrativeWindow", ref nextNarrativeWindow);
+
+                // Event cooldown map (same pattern as threshold cooldowns)
+                var eventKeys = (_state.EventLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
+                    .Select(k => k.Key)
+                    .ToList();
+                var eventCooldownCount = eventKeys.Count;
+                dataStore.SyncData("esc_eventCooldownCount", ref eventCooldownCount);
+
+                // One-time events fired
+                var oneTimeKeys = (_state.OneTimeEventsFired ?? Enumerable.Empty<string>()).ToList();
+                var oneTimeCount = oneTimeKeys.Count;
+                dataStore.SyncData("esc_oneTimeCount", ref oneTimeCount);
+
                 if (dataStore.IsLoading)
                 {
                     _state.Scrutiny = scrutiny;
@@ -169,6 +187,36 @@ namespace Enlisted.Features.Escalation
                         }
                     }
 
+                    // Load event pacing timestamps
+                    _state.LastNarrativeEventTime = lastNarrativeEvent;
+                    _state.NextNarrativeEventWindow = nextNarrativeWindow;
+
+                    // Load event cooldown map
+                    _state.EventLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < eventCooldownCount; i++)
+                    {
+                        var key = string.Empty;
+                        var time = CampaignTime.Zero;
+                        dataStore.SyncData($"esc_event_{i}_id", ref key);
+                        dataStore.SyncData($"esc_event_{i}_time", ref time);
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            _state.EventLastFired[key] = time;
+                        }
+                    }
+
+                    // Load one-time events set
+                    _state.OneTimeEventsFired = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < oneTimeCount; i++)
+                    {
+                        var eventId = string.Empty;
+                        dataStore.SyncData($"esc_onetime_{i}", ref eventId);
+                        if (!string.IsNullOrWhiteSpace(eventId))
+                        {
+                            _state.OneTimeEventsFired.Add(eventId);
+                        }
+                    }
+
                     _state.ClampAll();
                 }
                 else
@@ -181,6 +229,24 @@ namespace Enlisted.Features.Escalation
                         var time = _state.ThresholdStoryLastFired.TryGetValue(key, out var t) ? t : CampaignTime.Zero;
                         dataStore.SyncData($"esc_threshold_{i}_id", ref key);
                         dataStore.SyncData($"esc_threshold_{i}_time", ref time);
+                    }
+
+                    // Save event cooldown map
+                    eventKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < eventKeys.Count; i++)
+                    {
+                        var key = eventKeys[i];
+                        var time = _state.EventLastFired.TryGetValue(key, out var t) ? t : CampaignTime.Zero;
+                        dataStore.SyncData($"esc_event_{i}_id", ref key);
+                        dataStore.SyncData($"esc_event_{i}_time", ref time);
+                    }
+
+                    // Save one-time events set
+                    oneTimeKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < oneTimeKeys.Count; i++)
+                    {
+                        var eventId = oneTimeKeys[i];
+                        dataStore.SyncData($"esc_onetime_{i}", ref eventId);
                     }
                 }
             });
@@ -354,6 +420,7 @@ namespace Enlisted.Features.Escalation
             }
 
             LogTrackChange("Scrutiny", oldValue, _state.Scrutiny, reason);
+            CheckThresholdCrossing("Scrutiny", oldValue, _state.Scrutiny, new[] { 2, 4, 6, 8, 10 });
 
             // Show UI notification for scrutiny changes (only when increasing - "attention" from authorities)
             if (_state.Scrutiny != oldValue && delta > 0)
@@ -389,6 +456,7 @@ namespace Enlisted.Features.Escalation
             }
 
             LogTrackChange("Discipline", oldValue, _state.Discipline, reason);
+            CheckThresholdCrossing("Discipline", oldValue, _state.Discipline, new[] { 2, 4, 6, 8, 10 });
 
             // Show UI notification for discipline changes (only when increasing - problems brewing)
             if (_state.Discipline != oldValue && delta > 0)
@@ -512,6 +580,7 @@ namespace Enlisted.Features.Escalation
             var next = oldValue + delta;
             _state.MedicalRisk = Clamp(next, EscalationState.MedicalRiskMin, EscalationState.MedicalRiskMax);
             LogTrackChange("MedicalRisk", oldValue, _state.MedicalRisk, reason);
+            CheckThresholdCrossing("MedicalRisk", oldValue, _state.MedicalRisk, new[] { 2, 3, 4, 5 });
             EvaluateThresholdsAndQueueIfNeeded();
         }
 
@@ -908,6 +977,67 @@ namespace Enlisted.Features.Escalation
 
             var why = string.IsNullOrWhiteSpace(reason) ? string.Empty : $" ({reason})";
             ModLogger.Info(LogCategory, $"{track}: {oldValue} -> {newValue}{why}");
+        }
+
+        /// <summary>
+        ///     Checks if any thresholds were crossed and triggers threshold events when crossed upward.
+        ///     Logs threshold crossings and queues appropriate events for delivery.
+        /// </summary>
+        private void CheckThresholdCrossing(string track, int oldValue, int newValue, int[] thresholds)
+        {
+            if (oldValue == newValue)
+            {
+                return;
+            }
+
+            foreach (var threshold in thresholds)
+            {
+                // Check if we crossed this threshold (either direction)
+                bool crossedUp = oldValue < threshold && newValue >= threshold;
+                bool crossedDown = oldValue >= threshold && newValue < threshold;
+
+                if (crossedUp)
+                {
+                    ModLogger.Info(LogCategory, $"{track} crossed threshold {threshold} (increased from {oldValue} to {newValue})");
+                    TryTriggerThresholdEvent(track, threshold);
+                }
+                else if (crossedDown)
+                {
+                    ModLogger.Info(LogCategory, $"{track} crossed threshold {threshold} (decreased from {oldValue} to {newValue})");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Attempts to trigger a threshold event when a track crosses a threshold upward.
+        /// Maps track name and threshold to event ID and queues the event if it exists.
+        /// </summary>
+        private void TryTriggerThresholdEvent(string track, int threshold)
+        {
+            // Map track name to event ID pattern
+            string eventId = track switch
+            {
+                "Scrutiny" => $"evt_scrutiny_{threshold}",
+                "Discipline" => $"evt_discipline_{threshold}",
+                "MedicalRisk" => $"evt_medical_{threshold}",
+                _ => null
+            };
+
+            if (string.IsNullOrEmpty(eventId))
+            {
+                return;
+            }
+
+            var evt = Content.EventCatalog.GetEvent(eventId);
+            if (evt != null && Content.EventDeliveryManager.Instance != null)
+            {
+                Content.EventDeliveryManager.Instance.QueueEvent(evt);
+                ModLogger.Info(LogCategory, $"Queued threshold event: {eventId}");
+            }
+            else
+            {
+                ModLogger.Debug(LogCategory, $"Threshold event not found: {eventId}");
+            }
         }
 
         /// <summary>

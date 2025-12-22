@@ -30,7 +30,7 @@ Architecture and standards for the Enlisted mod (v0.9.0).
 -   **Workshop ID**: `3621116083`
 -   **Config**: `tools/workshop/WorkshopUpdate.xml` and `workshop_upload.vdf`
 -   **Process**: Build first, then upload via SteamCMD.
--   **Compatible Version**: 1.3.12
+-   **Compatible Version**: 1.3.11
 
 ---
 
@@ -47,7 +47,7 @@ Architecture and standards for the Enlisted mod (v0.9.0).
 ## Native Reference (Decompile)
 
 Decompiled Bannerlord source for API reference:
-`C:\Dev\Enlisted\Decompile\` (Targeting v1.3.12)
+`C:\Dev\Enlisted\Decompile\` (Targeting v1.3.11)
 
 ---
 
@@ -61,11 +61,12 @@ src/
 - Features/
   - Enlistment/           # Core service state, retirement
   - Orders/               # Mission-driven directives (Chain of Command)
+  - Content/              # Events, Decisions, and narrative delivery system
   - Identity/             # Role detection (Traits) and Reputation helpers
   - Escalation/           # Lord/Officer/Soldier reputation and Scrutiny/Discipline
-  - Company/              # Company-wide Needs (Readiness, Morale, etc.)
+  - Company/              # Company-wide Needs (Readiness, Morale, Supply)
   - Context/              # Army context and objective analysis
-  - Interface/            # Native Game Menus and News/Reports
+  - Interface/            # Camp Hub menu, News/Reports
   - Equipment/            # Quartermaster and gear management
   - Ranks/                # Promotions and culture-specific titles
   - Conversations/        # Dialog management
@@ -118,8 +119,11 @@ Use `ModLogger` for all logging. Category-based verbosity control via `settings.
 
 ## Key Patterns
 
-### Native Game Menus
-We use `CampaignGameStarter.AddGameMenu()` and `AddGameMenuOption()` to build all interfaces. Avoid custom Gauntlet UI (ViewModels/XML).
+### UI Architecture
+- **GameMenus:** Main navigation and status displays via `CampaignGameStarter.AddGameMenu()` and `AddGameMenuOption()`
+- **Popups:** Event delivery via `MultiSelectionInquiryData` for narrative choices
+- **Gauntlet:** Quartermaster equipment grid (limited custom UI for complex selection interfaces)
+- **Localization:** Dual-field pattern in JSON (`titleId` + `title`) ensures fallback text always displays
 
 ### Party Following & Visibility
 ```csharp
@@ -152,12 +156,26 @@ Always use the centralized managers (`EscalationManager`, `CompanyNeedsManager`)
 
 ## Menu System
 
+**Primary Documentation:** See [UI Systems Master Reference](Features/UI/ui-systems-master.md)
+
 | Menu ID | Purpose |
 |---------|---------|
-| `enlisted_status` | Main hub: view rank, orders, and reports summary. |
-| `enlisted_camp` | Camp activities: Rest, Train, Morale, Equipment Check. |
-| `enlisted_reports` | Detailed reports: Daily brief, service record, company status. |
-| `enlisted_detail_status`| Detailed identity: Traits, role, and reputation levels. |
-| `enlisted_decisions` | Pending event choices. |
-| `enlisted_medical` | Medical care and treatment. |
-| `enlisted_quartermaster`| Equipment management. |
+| `enlisted_camp_hub` | Central navigation hub with accordion-style decision sections. |
+| `enlisted_medical` | Medical care and treatment (when player has active condition). |
+
+**Decision Sections (within Camp Hub):**
+- OPPORTUNITIES - Context-triggered automatic decisions
+- TRAINING - Training-related player choices
+- SOCIAL - Social interaction decisions
+- CAMP LIFE - Camp life decisions
+- LOGISTICS - Quartermaster-related decisions (if visible)
+
+**Event Delivery:**
+- Uses `MultiSelectionInquiryData` popups for narrative events
+- Triggered by: EventPacingManager, EscalationManager, DecisionManager
+- See [Event Delivery System](Features/UI/ui-systems-master.md#event-delivery-system)
+
+**Localization:**
+- JSON files use dual fields (`titleId` + `title`) for robust fallback text
+- XML strings in `ModuleData/Languages/enlisted_strings.xml`
+- See [Localization System](Features/UI/ui-systems-master.md#localization-system) for troubleshooting
