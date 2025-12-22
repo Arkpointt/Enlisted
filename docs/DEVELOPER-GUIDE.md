@@ -4,7 +4,7 @@
 
 **Last Updated:** 2025-12-22  
 **Target Game:** Bannerlord v1.3.11  
-**Related Docs:** [BLUEPRINT.md](BLUEPRINT.md), [Reference/campaignsystem-apis.md](Reference/campaignsystem-apis.md)
+**Related Docs:** [BLUEPRINT.md](BLUEPRINT.md), [Reference/native-apis.md](Reference/native-apis.md)
 
 ---
 

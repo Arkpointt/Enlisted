@@ -45,7 +45,7 @@ Enlisted is a comprehensive mod that transforms Mount & Blade II: Bannerlord int
 ### For Developers
 - **[Blueprint](BLUEPRINT.md)** - Project architecture and coding standards
 - **[Developer Guide](DEVELOPER-GUIDE.md)** - How to build and modify the mod
-- **[API Reference](Reference/campaignsystem-apis.md)** - Bannerlord API notes
+- **[API Reference](Reference/native-apis.md)** - Bannerlord API notes
 
 ### Planning & Reference
 - **[Complete Index](INDEX.md)** - All documentation files
