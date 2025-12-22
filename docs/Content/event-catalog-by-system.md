@@ -1,6 +1,10 @@
 # Enlisted Content System
 
-Single source of truth for all narrative content: Events, Map Incidents, Orders, and Decisions.
+**Summary:** Single source of truth for all narrative content including Events (63), Map Incidents (42), Orders (17), and Decisions (30). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
 
 ---
 

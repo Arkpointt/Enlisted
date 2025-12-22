@@ -1,8 +1,14 @@
-# Native Map Incidents (War Sails / 1.3.x) — Deep Dive
+# Native Map Incidents (War Sails / 1.3.x)
 
-This document is a native-reference deep dive for Bannerlord’s **Map Incidents** system (the map-level “choose an option” popups), which shipped with the **War Sails / NavalDLC era**.
+**Summary:** Deep dive reference for Bannerlord's native Map Incidents system (map-level popup choices) from War Sails / NavalDLC era. Documents native implementation patterns, triggers, and structure for modders creating custom map incidents.
 
-It is written against the local decompile in `C:\Dev\Enlisted\Decompile\` (see `docs/blueprint.md` → “Native Reference”).
+**Status:** 📚 Reference  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
+
+> **Note**: Written against local decompile in `C:\Dev\Enlisted\Decompile\` (see `docs/blueprint.md` → Native Reference).
+
+---
 
 ## Overview
 

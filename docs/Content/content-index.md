@@ -1,6 +1,12 @@
 # Enlisted Content Index
 
-Master list of all narrative content. Reference the [Event Catalog](event-catalog-by-system.md) for mechanics and schemas.
+**Summary:** Master list of all narrative content with IDs, titles, descriptions, requirements, effects, and skill checks. This index provides quick reference for all events, decisions, orders, and map incidents in the mod.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Event Catalog](event-catalog-by-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
+
+---
 
 **Skill Check Column Key:**
 - **Bold skill** = Required check, affects outcome
