@@ -1,8 +1,14 @@
-# CampaignSystem API Reference - From Decompiled Sources
+# CampaignSystem API Reference
 
-**Source**: `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\TaleWorlds.CampaignSystem\`
+**Summary:** API reference extracted from decompiled Bannerlord sources covering MapEvent, Settlement, Hero, Clan, Party, and other CampaignSystem APIs. Provides method signatures, enums, and usage patterns for mod development.
 
-**Date**: 2025-11-25
+**Status:** 📚 Reference  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [AI Behavior Analysis](ai-behavior-analysis.md)
+
+> **Source**: `C:\Dev\Enlisted\DECOMPILE\TaleWorlds.CampaignSystem\TaleWorlds.CampaignSystem\`
+
+---
 
 ## MapEvent APIs
 

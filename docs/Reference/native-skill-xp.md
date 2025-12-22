@@ -1,8 +1,10 @@
-# Native Skill XP + Leveling (Bannerlord) — Research Notes
+# Native Skill XP and Leveling
 
+**Summary:** Research notes documenting how Bannerlord awards skill XP, converts XP into skill levels, and advances hero level (attributes/focus points). This reference helps design Enlisted training, decisions, and schedule rewards that integrate with native progression mechanics.
+
+**Status:** 📚 Reference  
 **Last Updated:** 2025-12-22  
-**Audience:** Enlisted developers  
-**Purpose:** Capture how Bannerlord awards skill XP, converts it into skill levels, and how "hero level" (attribute/focus points) advances. This is a reference for designing Enlisted "Training / Decisions / Schedule" rewards without fighting native progression.
+**Related Docs:** [Training System](../Features/Combat/training-system.md), [Content System Architecture](../Features/Content/content-system-architecture.md)
 
 ---
 

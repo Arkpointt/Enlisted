@@ -1,3 +1,13 @@
+# Native Map Incidents Catalog
+
+**Summary:** Complete catalog of all native Bannerlord map incidents with IDs, triggers, types, and titles. This reference documents all built-in incidents from the base game and DLCs for mod development and content design.
+
+**Status:** 📚 Reference  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Map Incidents (War Sails)](../Content/map-incidents-warsails.md), [Event Catalog](../Content/event-catalog-by-system.md)
+
+---
+
 | ID | Trigger | Type | Title |
 |---|---|---|---|
 | `incident_abundance_of_troublemakers` | `LeavingVillage` | `TroopSettlementRelation` | Abundance of troublemakers |

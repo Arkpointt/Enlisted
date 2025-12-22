@@ -1,7 +1,14 @@
 # AI Strategic Behavior Analysis v2.0
-## Modern Approaches and Re-evaluation
 
-### Executive Summary
+**Summary:** Analysis of Bannerlord's native AI strategic behavior system, documenting the utility-based scoring system and all decision factors that influence AI army movements, target selection, and campaign behavior. Includes recommendations for modern enhancements and integration strategies for the Enlisted mod.
+
+**Status:** 📚 Reference  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Native APIs](native-apis.md)
+
+---
+
+## Executive Summary
 
 After researching cutting-edge game AI techniques and studying successful implementations in other strategy games, this document provides an updated analysis of how to enhance Bannerlord's AI strategic behavior. The key insight: **Bannerlord already has a sophisticated utility-based scoring system**, but it lacks hierarchical planning, spatial reasoning, and player-awareness that modern strategy games employ.
 
