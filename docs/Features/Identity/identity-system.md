@@ -1833,8 +1833,8 @@ src/Features/Lances/UI/ → src/Features/Events/UI/
 src/Features/Traits/
 └── TraitIntegrationHelper.cs
 
-docs/ImplementationPlans/
-└── traits-identity-system.md (this document)
+docs/Features/Identity/
+└── identity-system.md (this document)
 ```
 
 **MODIFIED:**

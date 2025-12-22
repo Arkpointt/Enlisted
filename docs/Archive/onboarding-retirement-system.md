@@ -123,7 +123,7 @@ Player level determines the onboarding experience track:
 | Seasoned | 10-20 | T2 | Normal | Knows the basics, steady progression |
 | Veteran | 21+ | T3 | -10% | Proven fighter, diminishing returns from drills |
 
-**Training XP Modifier**: Used by Phase 10 training decisions. New soldiers benefit most from training events, while experienced veterans gain more from combat. See `docs/ImplementationPlans/phase10-combat-xp-training.md` for details.
+**Training XP Modifier**: Used by training decisions. New soldiers benefit most from training events, while experienced veterans gain more from combat. See [Training System](../Features/Combat/training-system.md) for details.
 
 ### Discharge Bands
 
@@ -592,11 +592,11 @@ This project targets **Bannerlord v1.3.11**. Verify all API calls against the lo
 
 ## Related Documents
 
-- `docs/ImplementationPlans/unified-content-system-implementation.md` - Engineering standards, JSON/XML patterns
-- `docs/Features/Core/core-gameplay.md` - Core mechanics reference
-- `docs/StoryBlocks/event-catalog-by-system.md` - Event content index
-- `docs/ImplementationPlans/phase10-combat-xp-training.md` - Training system (shares experience track code)
-- `docs/Features/UI/ui-systems-master.md` - UI systems and localization reference
+- [Content System Architecture](../Features/Content/content-system-architecture.md) - Engineering standards, JSON/XML patterns
+- [Core Gameplay](../Features/Core/core-gameplay.md) - Core mechanics reference
+- [Event Catalog](../Content/event-catalog-by-system.md) - Event content index
+- [Training System](../Features/Combat/training-system.md) - Training system (shares experience track code)
+- [UI Systems](../Features/UI/ui-systems-master.md) - UI systems and localization reference
 
 ### Source Files
 

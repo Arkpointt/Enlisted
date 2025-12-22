@@ -26,9 +26,9 @@
 | What You Need | Where To Go |
 |---------------|-------------|
 | **Understand the core gameplay** | [Core Gameplay (Consolidated)](core-gameplay.md) |
-| **Understand the three pillars** | [Master Implementation Plan](../ImplementationPlans/enlisted-interface-master-plan.md) |
-| **Add story content** | [Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md) |
-| **Check implementation status** | [Implementation Status](../ImplementationPlans/enlisted-interface-master-plan.md#implementation-status) |
+| **Understand the roadmap** | [ROADMAP](../../ROADMAP.md) |
+| **Browse content** | [Content Catalog](../../Content/event-catalog-by-system.md) |
+| **Check implementation status** | [ROADMAP](../../ROADMAP.md) |
 
 ---
 
@@ -103,4 +103,5 @@ Enlisted uses the native Bannerlord Game Menu system for all interactions.
 
 ## Story Content & Events
 
-- **[Story Blocks Master Reference](../../StoryBlocks/story-blocks-master-reference.md)** - Single source of truth for all story systems and event schemas.
+- **[Content System Architecture](../Content/content-system-architecture.md)** - Single source of truth for all story systems and event schemas.
+- **[Event Catalog](../../Content/event-catalog-by-system.md)** - Complete catalog of all events, decisions, and orders.

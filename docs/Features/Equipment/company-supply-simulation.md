@@ -344,7 +344,7 @@ Player must:
 
 ## Supply Crisis Events
 
-> **Canonical Event Definitions**: See `docs/StoryBlocks/content-index.md` → "Food & Supply Events" section for event IDs and skill checks.
+> **Canonical Event Definitions**: See [Content Index](../../Content/content-index.md) → "Food & Supply Events" section for event IDs and skill checks.
 
 | Threshold | Event ID | Skill Check |
 |-----------|----------|-------------|

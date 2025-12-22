@@ -28,7 +28,7 @@
 | **Phase 10 Training** | 3 | NEW weapon-aware training decisions (combat drill, weapon spec, lead drill) |
 | **Total** | **176** | Full content catalog (includes training chain) |
 
-**Phase 10 Training Decisions**: 3 new training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for weapon-aware training. See `docs/ImplementationPlans/phase10-combat-xp-training.md` for implementation details.
+**Phase 10 Training Decisions**: 3 new training decisions using dynamic skill XP. Uses `reward_choices` and `dynamic_skill_xp` for weapon-aware training. See [Training System](../Features/Combat/training-system.md) for implementation details.
 
 **Phase 5 Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
 
