@@ -4579,7 +4579,9 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
 
-                sb.AppendLine($"Issued: {(int)currentOrder.IssuedTime.ToDays} days ago");
+                var daysAgo = (int)(CampaignTime.Now - currentOrder.IssuedTime).ToDays;
+                string timeStr = daysAgo == 0 ? "today" : daysAgo == 1 ? "yesterday" : $"{daysAgo} days ago";
+                sb.AppendLine($"Issued: {timeStr}");
                 sb.AppendLine($"Declines: {orderManager.GetDeclineCount()}");
 
                 InformationManager.ShowInquiry(new InquiryData(

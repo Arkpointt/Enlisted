@@ -991,7 +991,7 @@ namespace Enlisted.Features.Enlistment.Behaviors
         /// <summary>
         ///     Gets the hourly fatigue recovery rate based on military rank/tier.
         ///     Higher ranks recover faster due to better accommodations and rest privileges.
-        ///     See: docs/research/IMPLEMENTATION_PLAN.md lines 138-145
+        ///     See: docs/Features/Core/camp-fatigue.md
         /// </summary>
         /// <returns>Fatigue points recovered per hour during rest periods.</returns>
         public float GetFatigueRecoveryRate()

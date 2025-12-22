@@ -5,9 +5,9 @@ using TaleWorlds.CampaignSystem;
 namespace Enlisted.Features.Escalation
 {
     /// <summary>
-    /// Persisted escalation tracks (Phase 4).
+    /// Persisted escalation tracks.
     ///
-    /// Ranges (per docs/research/escalation_system.md and master plan v2.0):
+    /// Ranges (per docs/Features/Core/core-gameplay.md):
     /// - Scrutiny: 0–10
     /// - Discipline: 0–10
     /// - Soldier reputation: -50..+50 (renamed from LanceReputation)
