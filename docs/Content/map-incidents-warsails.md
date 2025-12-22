@@ -168,15 +168,15 @@ Result: even outside the storyline, **sea travel reduces incident variety**, bec
 
 ## Appendix: Extracting the full incident catalog
 
-This repo includes a small extractor (kept in `docs/research/` per project convention):
+This repo includes a small extractor (kept in project tools):
 
-- Script: `docs/research/extract_native_map_incidents.py`
+- Script: `tools/extract_native_map_incidents.py` (if available)
 - Source file: `Decompile/TaleWorlds.CampaignSystem/.../IncidentsCampaignBehaviour.cs`
 
 Example:
 
 ```powershell
-python docs/research/extract_native_map_incidents.py `
+python tools/extract_native_map_incidents.py `
   --input "C:\Dev\Enlisted\Decompile\TaleWorlds.CampaignSystem\TaleWorlds\CampaignSystem\CampaignBehaviors\IncidentsCampaignBehaviour.cs" `
   --output "C:\Dev\Enlisted\Enlisted\Debugging\native-map-incidents.json" `
   --markdown-output "C:\Dev\Enlisted\Enlisted\Debugging\native-map-incidents-table.md"

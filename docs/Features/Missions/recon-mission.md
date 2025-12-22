@@ -957,5 +957,5 @@ recon.enemies         - List all spawned enemy parties
 
 ## Scope boundaries (documentation)
 This page documents **shipping behavior** and stable API surfaces for the Recon Mission feature.
-Planning/prioritization details belong in `docs/research/` (not here).
+Planning/prioritization details belong in the ROADMAP (not here).
 
