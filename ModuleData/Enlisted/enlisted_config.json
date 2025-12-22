@@ -64,7 +64,7 @@
         "logistics_high_threshold": 70,
         "morale_low_threshold": 70,
         "pay_tension_high_threshold": 70,
-        "heat_high_threshold": 70,
+        "scrutiny_high_threshold": 70,
 
         "qm_purchase_fine": 0.98,
         "qm_purchase_tense": 1.0,
@@ -78,7 +78,7 @@
     },
     "escalation": {
         "enabled": true,
-        "heat_decay_interval_days": 7,
+        "scrutiny_decay_interval_days": 7,
         "discipline_decay_interval_days": 14,
         "lance_rep_decay_interval_days": 14,
         "medical_risk_decay_interval_days": 1,

@@ -203,7 +203,7 @@ Apply selected reward
       "failure": {
         "effects": { 
           "medical_risk": 3,
-          "heat": 2 
+          "scrutiny": 2 
         }
       }
     }

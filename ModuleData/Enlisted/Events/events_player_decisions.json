@@ -89,7 +89,7 @@
           },
           "effects": {
             "lance_reputation": 3,
-            "heat": 1
+            "scrutiny": 1
           },
           "outcome_failure": "The dice betray you utterly. You lose your stake and then some. A few lance mates shoot you sympathetic looks as you count your remaining coins.",
           "text": "\"Let's make this interesting. High stakes tonight.\"",
@@ -346,7 +346,7 @@
             "gold": 50
           },
           "effects": {
-            "heat": 2
+            "scrutiny": 2
           },
           "text": "\"My Lord, I humbly request an advance on my wages.\"",
           "resultTextId": "player_petition_pay_outcome",
@@ -357,7 +357,7 @@
           "textId": "player_petition_recognition",
           "effects": {
             "lance_reputation": 5,
-            "heat": -2
+            "scrutiny": -2
           },
           "rewards": {
             "xp": {
@@ -481,7 +481,7 @@
             "gold": 25
           },
           "effects": {
-            "heat": -1,
+            "scrutiny": -1,
             "discipline": 0,
             "lance_reputation": 1,
             "medical_risk": 0,

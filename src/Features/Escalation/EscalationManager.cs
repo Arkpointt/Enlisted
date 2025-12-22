@@ -12,7 +12,7 @@ namespace Enlisted.Features.Escalation
     ///
     /// Responsibilities:
     /// - Owns the persisted EscalationState (save/load via CampaignBehavior SyncData)
-    /// - Provides track modification APIs (Heat/Discipline/SoldierRep/MedicalRisk)
+    /// - Provides track modification APIs (Scrutiny/Discipline/SoldierRep/MedicalRisk)
     /// - Provides readable "state" descriptions for UI ("Watched", "Hot", "Trusted", etc.)
     /// - Provides passive decay logic (integration into daily tick is a later step)
     ///
@@ -79,14 +79,14 @@ namespace Enlisted.Features.Escalation
             SaveLoadDiagnostics.SafeSyncData(this, dataStore, () =>
             {
                 // Track values
-                var heat = _state.Heat;
+                var scrutiny = _state.Scrutiny;
                 var discipline = _state.Discipline;
                 var soldierRep = _state.SoldierReputation;
                 var lordRep = _state.LordReputation;
                 var officerRep = _state.OfficerReputation;
                 var medical = _state.MedicalRisk;
 
-                dataStore.SyncData("esc_heat", ref heat);
+                dataStore.SyncData("esc_scrutiny", ref scrutiny);
                 dataStore.SyncData("esc_discipline", ref discipline);
                 
                 // Migration: Load old LanceReputation into SoldierReputation
@@ -111,16 +111,16 @@ namespace Enlisted.Features.Escalation
                 dataStore.SyncData("esc_medical", ref medical);
 
                 // Timestamps
-                var lastHeatRaised = _state.LastHeatRaisedTime;
-                var lastHeatDecay = _state.LastHeatDecayTime;
+                var lastScrutinyRaised = _state.LastScrutinyRaisedTime;
+                var lastScrutinyDecay = _state.LastScrutinyDecayTime;
                 var lastDiscRaised = _state.LastDisciplineRaisedTime;
                 var lastDiscDecay = _state.LastDisciplineDecayTime;
                 var lastSoldierRepDecay = _state.LastSoldierReputationDecayTime;
                 var lastMedicalDecay = _state.LastMedicalRiskDecayTime;
                 var lastThresholdEvent = _state.LastThresholdEventTime;
 
-                dataStore.SyncData("esc_lastHeatRaised", ref lastHeatRaised);
-                dataStore.SyncData("esc_lastHeatDecay", ref lastHeatDecay);
+                dataStore.SyncData("esc_lastScrutinyRaised", ref lastScrutinyRaised);
+                dataStore.SyncData("esc_lastScrutinyDecay", ref lastScrutinyDecay);
                 dataStore.SyncData("esc_lastDiscRaised", ref lastDiscRaised);
                 dataStore.SyncData("esc_lastDiscDecay", ref lastDiscDecay);
                 dataStore.SyncData("esc_lastRepDecay", ref lastSoldierRepDecay);
@@ -140,15 +140,15 @@ namespace Enlisted.Features.Escalation
 
                 if (dataStore.IsLoading)
                 {
-                    _state.Heat = heat;
+                    _state.Scrutiny = scrutiny;
                     _state.Discipline = discipline;
                     _state.SoldierReputation = soldierRep;
                     _state.LordReputation = lordRep;
                     _state.OfficerReputation = officerRep;
                     _state.MedicalRisk = medical;
 
-                    _state.LastHeatRaisedTime = lastHeatRaised;
-                    _state.LastHeatDecayTime = lastHeatDecay;
+                    _state.LastScrutinyRaisedTime = lastScrutinyRaised;
+                    _state.LastScrutinyDecayTime = lastScrutinyDecay;
                     _state.LastDisciplineRaisedTime = lastDiscRaised;
                     _state.LastDisciplineDecayTime = lastDiscDecay;
                     _state.LastSoldierReputationDecayTime = lastSoldierRepDecay;
@@ -273,13 +273,13 @@ namespace Enlisted.Features.Escalation
         private string PickBestThresholdCandidateId(int cooldownDays)
         {
             // Priority is deterministic and "highest threshold wins" per track.
-            // Order across tracks: Heat, Discipline, Medical, Soldier Reputation.
-            var heatCandidates = new[]
+            // Order across tracks: Scrutiny, Discipline, Medical, Soldier Reputation.
+            var scrutinyCandidates = new[]
             {
-                (_state.Heat >= EscalationThresholds.HeatExposed, "heat_exposed"),
-                (_state.Heat >= EscalationThresholds.HeatAudit, "heat_audit"),
-                (_state.Heat >= EscalationThresholds.HeatShakedown, "heat_shakedown"),
-                (_state.Heat >= EscalationThresholds.HeatWarning, "heat_warning")
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyExposed, "scrutiny_exposed"),
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyAudit, "scrutiny_audit"),
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyShakedown, "scrutiny_shakedown"),
+                (_state.Scrutiny >= EscalationThresholds.ScrutinyWarning, "scrutiny_warning")
             };
             var disciplineCandidates = new[]
             {
@@ -302,7 +302,7 @@ namespace Enlisted.Features.Escalation
                 (_state.SoldierReputation >= EscalationThresholds.SoldierTrusted, "soldier_trusted")
             };
 
-            foreach (var (ok, id) in heatCandidates)
+            foreach (var (ok, id) in scrutinyCandidates)
             {
                 if (ok && !IsThresholdStoryOnCooldown(id, cooldownDays))
                 {
@@ -336,33 +336,33 @@ namespace Enlisted.Features.Escalation
 
         #region Track modification
 
-        public void ModifyHeat(int delta, string reason = null)
+        public void ModifyScrutiny(int delta, string reason = null)
         {
             if (!IsEnabled())
             {
                 return;
             }
 
-            var oldValue = _state.Heat;
+            var oldValue = _state.Scrutiny;
             var next = oldValue + delta;
-            _state.Heat = Clamp(next, EscalationState.HeatMin, EscalationState.HeatMax);
+            _state.Scrutiny = Clamp(next, EscalationState.ScrutinyMin, EscalationState.ScrutinyMax);
 
             if (delta > 0)
             {
-                // Heat decay requires a "quiet period" (no corrupt choices) since the last raise.
-                _state.LastHeatRaisedTime = CampaignTime.Now;
+                // Scrutiny decay requires a "quiet period" (no corrupt choices) since the last raise.
+                _state.LastScrutinyRaisedTime = CampaignTime.Now;
             }
 
-            LogTrackChange("Heat", oldValue, _state.Heat, reason);
+            LogTrackChange("Scrutiny", oldValue, _state.Scrutiny, reason);
 
-            // Show UI notification for heat changes (only when increasing - "attention" from authorities)
-            if (_state.Heat != oldValue && delta > 0)
+            // Show UI notification for scrutiny changes (only when increasing - "attention" from authorities)
+            if (_state.Scrutiny != oldValue && delta > 0)
             {
-                var statusText = GetHeatStatus();
-                var color = _state.Heat >= EscalationThresholds.HeatShakedown
+                var statusText = GetScrutinyStatus();
+                var color = _state.Scrutiny >= EscalationThresholds.ScrutinyShakedown
                     ? TaleWorlds.Library.Colors.Red
                     : TaleWorlds.Library.Colors.Yellow;
-                var msg = new TaleWorlds.Localization.TextObject("{=esc_heat_changed}Heat increased (+{DELTA}) - Status: {STATUS}");
+                var msg = new TaleWorlds.Localization.TextObject("{=esc_scrutiny_changed}Scrutiny increased (+{DELTA}) - Status: {STATUS}");
                 msg.SetTextVariable("DELTA", delta);
                 msg.SetTextVariable("STATUS", statusText);
                 TaleWorlds.Library.InformationManager.DisplayMessage(
@@ -541,15 +541,15 @@ namespace Enlisted.Features.Escalation
             var cfg = ConfigurationManager.LoadEscalationConfig() ?? new EscalationConfig();
             var now = CampaignTime.Now;
 
-            // Heat: -1 per 7 days with no corrupt choices.
+            // Scrutiny: -1 per 7 days with no corrupt choices.
             {
-                var old = _state.Heat;
-                if (TryDecayDown(old, _state.LastHeatDecayTime, _state.LastHeatRaisedTime, cfg.HeatDecayIntervalDays, 1,
-                        EscalationState.HeatMin, EscalationState.HeatMax, now, out var updated, out var updatedTime))
+                var old = _state.Scrutiny;
+                if (TryDecayDown(old, _state.LastScrutinyDecayTime, _state.LastScrutinyRaisedTime, cfg.ScrutinyDecayIntervalDays, 1,
+                        EscalationState.ScrutinyMin, EscalationState.ScrutinyMax, now, out var updated, out var updatedTime))
                 {
-                    _state.Heat = updated;
-                    _state.LastHeatDecayTime = updatedTime;
-                    ModLogger.Debug(LogCategory, $"Heat decayed: {old} -> {updated}");
+                    _state.Scrutiny = updated;
+                    _state.LastScrutinyDecayTime = updatedTime;
+                    ModLogger.Debug(LogCategory, $"Scrutiny decayed: {old} -> {updated}");
                 }
             }
 
@@ -732,26 +732,26 @@ namespace Enlisted.Features.Escalation
 
         #region Readable status labels (for UI)
 
-        public string GetHeatStatus()
+        public string GetScrutinyStatus()
         {
-            var heat = _state.Heat;
-            if (heat <= 0)
+            var scrutiny = _state.Scrutiny;
+            if (scrutiny <= 0)
             {
                 return "Clean";
             }
-            if (heat <= 2)
+            if (scrutiny <= 2)
             {
                 return "Watched";
             }
-            if (heat <= 4)
+            if (scrutiny <= 4)
             {
                 return "Noticed";
             }
-            if (heat <= 6)
+            if (scrutiny <= 6)
             {
                 return "Hot";
             }
-            if (heat <= 9)
+            if (scrutiny <= 9)
             {
                 return "Burning";
             }

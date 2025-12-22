@@ -383,11 +383,24 @@ For **T5+**, see the Officer Provisions section: the Quartermaster sells provisi
 
 ## Personal Food Loss Events
 
+> **Canonical Event Definitions**: See `docs/StoryBlocks/content-index.md` → "Food & Supply Events" section for event IDs, skill checks, and integration with the event system.
+
 ### **Problem: Building Reserves Without Risk**
 
 If players build large personal food reserves (3+ items), they can bypass the scarcity system entirely. We need random loss events to create ongoing food pressure.
 
 **Important:** These events ONLY affect **personal food** (bought/foraged). Issued rations are immune (they're reclaimed at muster anyway).
+
+### **Event ID Mapping:**
+
+| Event (this doc) | Content Index ID | Skill Check |
+|------------------|------------------|-------------|
+| Food Spoilage | `evt_food_spoilage` | — |
+| Rats in Camp | `evt_food_rats` | Cunning 50+ |
+| Missing Provisions | `evt_food_theft` | Charm |
+| Battle Damage | `evt_food_battle_damage` | — |
+| Desperate Refugee | `evt_food_refugee` | — |
+| Checkpoint Shakedown | `evt_food_checkpoint` | Roguery 40+ |
 
 ### **When to Trigger:**
 

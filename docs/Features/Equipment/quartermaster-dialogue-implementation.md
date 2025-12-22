@@ -410,6 +410,16 @@ Options:
 
 ### **3. Baggage Check Events**
 
+> **Integration**: These dialogues trigger during muster (30% chance). See `docs/StoryBlocks/content-index.md` for the parent event catalog. The Scrutiny escalation track affects outcomes.
+
+| Scenario | Event ID | QM Rep Range | Outcome |
+|----------|----------|--------------|---------|
+| No contraband | `evt_baggage_clear` | Any | Pass |
+| Contraband + high rep | `evt_baggage_lookaway` | 65+ | QM ignores |
+| Contraband + mid rep | `evt_baggage_bribe` | 35-65 | Bribe option |
+| Contraband + low rep | `evt_baggage_confiscate` | <35 | Confiscation + Scrutiny |
+| Contraband + hostile | `evt_baggage_report` | <-25 | Severe penalty |
+
 **No Contraband Found:**
 ```
 QM: "Routine inspection."
@@ -476,7 +486,7 @@ Options:
 QM: "Caught you. This is going in my report."
 
 [Confiscates item]
-[+5 to +15 Heat depending on rep]
+[+5 to +15 Scrutiny depending on rep]
 [Fine of 100-200g depending on rep]
 
 QM: "Don't let me catch you again."
@@ -490,7 +500,7 @@ QM: "Don't let me catch you again."
 QM: "THIEF! You're stealing from your own comrades!"
 
 [Confiscates item]
-[+15 Heat]
+[+15 Scrutiny]
 [Fine of 200g]
 [-10 QM Rep]
 
@@ -759,7 +769,7 @@ QM: "We've got a problem. Your conduct lately... it's not acceptable.
 ```
 QM: "I'm watching you. One more incident and I'm recommending discharge."
 
-[+5 Heat]
+[+5 Scrutiny]
 [End]
 ```
 

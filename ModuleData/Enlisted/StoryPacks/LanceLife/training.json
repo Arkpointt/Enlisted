@@ -33,7 +33,7 @@
           "text": "Lead the drill (Athletics + Polearm)",
           "hint": "Spend a little energy to build real soldiering skills.",
           "risk": "risky",
-          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 2, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Athletics": 35, "Polearm": 35 }, "gold": 0, "fatigueRelief": 0 },
           "injury": {
             "chance": 0.05,
@@ -50,7 +50,7 @@
           "text": "Let them run it without you (Leadership)",
           "hint": "You keep your strength. They still learn from your example.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Leadership": 20 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -62,7 +62,7 @@
           "text": "Turn in early",
           "hint": "No gains. No risks.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 1 },
           "resultTextId": "",
           "resultText": ""

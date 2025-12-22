@@ -458,9 +458,9 @@ namespace Enlisted.Features.Orders.Behaviors
             {
                 var escalation = EscalationManager.Instance;
 
-                if (outcome.Escalation.TryGetValue("heat", out var heatEsc))
+                if (outcome.Escalation.TryGetValue("scrutiny", out var scrutinyEsc))
                 {
-                    escalation.ModifyHeat(heatEsc);
+                    escalation.ModifyScrutiny(scrutinyEsc);
                 }
                 if (outcome.Escalation.TryGetValue("discipline", out var disciplineEsc))
                 {

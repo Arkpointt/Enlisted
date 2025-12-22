@@ -1,8 +1,10 @@
 # Macro Schedule & Interface Simplification
 
 **Created**: December 20, 2025  
-**Status**: Design Phase - Major Simplification  
-**Related**: traits-identity-system.md
+**Status**: ✅ COMPLETE - Code implemented, systems deleted  
+**Related**: traits-identity-system.md, storyblocks-v2-implementation.md
+
+> **Note**: This document describes what was ALREADY IMPLEMENTED. The Schedule, Lance, and Duties systems have been deleted from the codebase. The Orders system, Role-based events, and Native Game Menu are now live. See `StoryBlocks/storyblocks-v2-implementation.md` for event conversion guidance.
 
 ---
 
@@ -149,7 +151,7 @@ Events fire based on:
 - Context (war, siege, peace, town)
 - Time passing (hourly tick, daily tick)
 - Player actions (camp menu, decisions)
-- Escalation thresholds (Heat 7+, Discipline 8+)
+- Escalation thresholds (Scrutiny 7+, Discipline 8+)
 - Random chance (natural event frequency)
 
 Example:
@@ -1419,7 +1421,7 @@ No more multi-tab management screens - just simple menus!
 - **Note:** Renamed from `LanceNeedsState` to `CompanyNeedsState` for semantic clarity (Lance system deleted)
 
 ✅ **Escalation Tracking** (`EscalationState`)
-- Heat (0-10)
+- Scrutiny (0-10)
 - Discipline (0-10)
 - LanceReputation (-50 to +50) - being renamed to SoldierReputation
 - MedicalRisk (0-5)
@@ -1455,7 +1457,7 @@ No more multi-tab management screens - just simple menus!
 public sealed class EscalationState
 {
     // Existing (keep)
-    public int Heat { get; set; }
+    public int Scrutiny { get; set; }
     public int Discipline { get; set; }
     public int MedicalRisk { get; set; }
     
@@ -1545,7 +1547,7 @@ T7-T9 (Officers):  Every 4-5 days  (strategic planning)
 - Soldier Reputation -5 (seen as unreliable)
 
 **Repeated Declines** (3+ in short period):
-- Heat +1 (marked as problem soldier)
+- Scrutiny +1 (marked as problem soldier)
 - Lord Reputation -10 (word reaches lord)
 - Possible discharge event at 5+ declines
 
@@ -1563,7 +1565,7 @@ T7-T9 (Officers):  Every 4-5 days  (strategic planning)
 - Potential Discipline +1 (if gross negligence)
 
 **Mission-Critical Failures:**
-- Heat +1 (compromised operation)
+- Scrutiny +1 (compromised operation)
 - Lord Reputation -5 to -10
 - Possible court-martial event
 
@@ -1587,7 +1589,7 @@ T7-T9 (Officers):  Every 4-5 days  (strategic planning)
 **Exceptional Success:**
 - Lord Reputation +5 to +10
 - Discipline -1 (proven reliable)
-- Heat -1 (covering up past issues)
+- Scrutiny -1 (covering up past issues)
 - Bonus denars (50-200)
 - Equipment unlock (special gear access)
 
@@ -1670,7 +1672,7 @@ T7-T9 (Officers):  Every 4-5 days  (strategic planning)
     },
     "failure": {
       "officer_reputation": -15,
-      "heat": 2,
+      "scrutiny": 2,
       "text": "You were spotted. Had to retreat without intel. The captain is displeased."
     }
   }
@@ -1761,7 +1763,7 @@ T7-T9 (Officers):  Every 4-5 days  (strategic planning)
     "failure": {
       "lord_reputation": -20,
       "officer_reputation": -10,
-      "heat": 1,
+      "scrutiny": 1,
       "text": "Your timing was off. The flank failed. Men died. Your lord says nothing."
     }
   }
@@ -1810,7 +1812,7 @@ T7-T9 (Officers):  Every 4-5 days  (strategic planning)
     },
     "failure": {
       "lord_reputation": -30,
-      "heat": 3,
+      "scrutiny": 3,
       "text": "Ambushed. Lost men. Intelligence incomplete. A costly failure."
     }
   }
@@ -1921,7 +1923,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
         "morale": 3          // Successful mission boosts morale
       },
       "escalation": {
-        "heat": -1           // Reduced enemy awareness
+        "scrutiny": -1           // Reduced enemy awareness
       }
     },
     "failure": {
@@ -1930,7 +1932,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
         "morale": -5         // Failed mission damages morale
       },
       "escalation": {
-        "heat": 2            // Compromised, enemy aware
+        "scrutiny": 2            // Compromised, enemy aware
       }
     }
   }
@@ -1974,7 +1976,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
         "rest": -5           // Patrols are tiring
       },
       "escalation": {
-        "heat": -1,
+        "scrutiny": -1,
         "discipline": -1     // Tight operation
       }
     },
@@ -1986,7 +1988,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
         "rest": -10          // Exhausted from botched patrol
       },
       "escalation": {
-        "heat": 2,
+        "scrutiny": 2,
         "discipline": 1      // Sloppy operation
       }
     }
@@ -2008,7 +2010,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
         "supplies": -10      // Combat consumption
       },
       "escalation": {
-        "heat": -2           // Enemy demoralized
+        "scrutiny": -2           // Enemy demoralized
       }
     },
     "failure": {
@@ -2020,7 +2022,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
         "supplies": -15      // Heavy consumption, no gain
       },
       "escalation": {
-        "heat": 1,
+        "scrutiny": 1,
         "discipline": 1      // Questioning command
       }
     }
@@ -2045,7 +2047,7 @@ Orders leverage the **existing** `CompanyNeedsState` system (renamed from `Lance
 
 #### Order Impact Matrix
 
-| Order Type | Success | Failure | Heat | Discipline |
+| Order Type | Success | Failure | Scrutiny | Discipline |
 |-----------|---------|---------|------|------------|
 | **Patrol/Scout** | +Readiness +Morale | -Readiness -Morale | Success:-1 Fail:+2 | - |
 | **Supply Run** | +Supplies +Morale | -Supplies -Morale -Equipment | Fail:+1 | Fail:+1 |
@@ -2119,7 +2121,7 @@ public Order SelectOrder()
         "morale": 3
       },
       "escalation": {
-        "heat": -1
+        "scrutiny": -1
       },
       "denars": 100
     }
@@ -2190,9 +2192,9 @@ public void ApplyOrderEffects(OrderConsequences consequences)
         var escalation = EscalationManager.Instance;
         if (escalation != null)
         {
-            if (consequences.Escalation.ContainsKey("heat"))
+            if (consequences.Escalation.ContainsKey("scrutiny"))
             {
-                escalation.ModifyHeat(consequences.Escalation["heat"]);
+                escalation.ModifyScrutiny(consequences.Escalation["scrutiny"]);
             }
             if (consequences.Escalation.ContainsKey("discipline"))
             {
@@ -2216,14 +2218,14 @@ public void ApplyOrderEffects(OrderConsequences consequences)
       "trait_xp": { "scout": 100, "commander": 50 },
       "reputation": { "officer": 15, "lord": 5, "soldier": 3 },
       "company_needs": { "readiness": 5, "morale": 3, "rest": -5 },
-      "escalation": { "heat": -1, "discipline": -1 },
+      "escalation": { "scrutiny": -1, "discipline": -1 },
       "denars": 100,
       "renown": 5
     },
     "failure": {
       "reputation": { "officer": -15, "soldier": -5 },
       "company_needs": { "readiness": -10, "morale": -5 },
-      "escalation": { "heat": 2, "discipline": 1 }
+      "escalation": { "scrutiny": 2, "discipline": 1 }
     },
     "decline": {
       "reputation": { "officer": -20 },

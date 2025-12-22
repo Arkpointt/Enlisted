@@ -74,7 +74,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -111,7 +111,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -148,21 +148,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -2,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -198,7 +198,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -291,7 +291,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -328,21 +328,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": -20,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -378,7 +378,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -415,21 +415,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -521,7 +521,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -558,7 +558,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -595,7 +595,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -3,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -632,7 +632,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -725,7 +725,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -2,
               "lance_reputation": 10,
               "medical_risk": 0,
@@ -762,21 +762,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -3,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -812,7 +812,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -3,
               "lance_reputation": -15,
               "medical_risk": 0,
@@ -822,7 +822,7 @@
             "effects_failure": null,
             "flags_set": [],
             "flags_clear": [],
-            "outcome": "\"Interesting.\" The captain makes notes. \"We'll be speaking to these individuals.\" You've deflected heat. But someone's going to know you named names.",
+            "outcome": "\"Interesting.\" The captain makes notes. \"We'll be speaking to these individuals.\" You've deflected scrutiny. But someone's going to know you named names.",
             "outcome_failure": null,
             "injury_risk": null,
             "triggers_event": null,
@@ -849,21 +849,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -4,
               "lance_reputation": 15,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -955,7 +955,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -992,7 +992,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1029,7 +1029,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1066,7 +1066,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": -1,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1089,7 +1089,7 @@
       "variants": {}
     },
     {
-      "id": "heat_audit",
+      "id": "scrutiny_audit",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1109,7 +1109,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_7"
+          "scrutiny_7"
         ],
         "any": [],
         "time_of_day": [
@@ -1135,8 +1135,8 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_audit_title",
-        "setupId": "ll_evt_heat_audit_setup",
+        "titleId": "ll_evt_scrutiny_audit_title",
+        "setupId": "ll_evt_scrutiny_audit_setup",
         "title": "The Audit",
         "setup": "The captain's clerk finds you after morning muster. His smile doesn't reach his eyes.\n\n\"The captain's ordered a review of supply records. Your name came up several times — requisitions, distributions, inventory counts.\" He produces a ledger. \"Some discrepancies need explaining.\"\n\nThis is it. The numbers don't add up because you made sure they wouldn't. The question is whether you can talk your way out, or if the noose is already tightening.\n\n\"The captain will see you at midday. I suggest you have answers ready.\"",
         "options": [
@@ -1159,7 +1159,7 @@
               "items": []
             },
             "effects": {
-              "heat": -3,
+              "scrutiny": -3,
               "discipline": 3,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1174,8 +1174,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_honest_text",
-            "resultTextId": "ll_evt_heat_audit_opt_honest_outcome"
+            "textId": "ll_evt_scrutiny_audit_opt_honest_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_honest_outcome"
           },
           {
             "id": "excuse",
@@ -1196,21 +1196,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 2,
+              "scrutiny": 2,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1223,9 +1223,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_excuse_text",
-            "resultTextId": "ll_evt_heat_audit_opt_excuse_outcome",
-            "resultFailureTextId": "ll_evt_heat_audit_opt_excuse_outcome_failure"
+            "textId": "ll_evt_scrutiny_audit_opt_excuse_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_excuse_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_audit_opt_excuse_outcome_failure"
           },
           {
             "id": "implicate",
@@ -1246,7 +1246,7 @@
               "items": []
             },
             "effects": {
-              "heat": -5,
+              "scrutiny": -5,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1261,8 +1261,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_implicate_text",
-            "resultTextId": "ll_evt_heat_audit_opt_implicate_outcome"
+            "textId": "ll_evt_scrutiny_audit_opt_implicate_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_implicate_outcome"
           },
           {
             "id": "records",
@@ -1283,21 +1283,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -4,
+              "scrutiny": -4,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 3,
+              "scrutiny": 3,
               "discipline": 4,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1310,16 +1310,16 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_audit_opt_records_text",
-            "resultTextId": "ll_evt_heat_audit_opt_records_outcome",
-            "resultFailureTextId": "ll_evt_heat_audit_opt_records_outcome_failure"
+            "textId": "ll_evt_scrutiny_audit_opt_records_text",
+            "resultTextId": "ll_evt_scrutiny_audit_opt_records_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_audit_opt_records_outcome_failure"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "heat_exposed",
+      "id": "scrutiny_exposed",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1339,7 +1339,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_10"
+          "scrutiny_10"
         ],
         "any": [],
         "time_of_day": [
@@ -1365,8 +1365,8 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_exposed_title",
-        "setupId": "ll_evt_heat_exposed_setup",
+        "titleId": "ll_evt_scrutiny_exposed_title",
+        "setupId": "ll_evt_scrutiny_exposed_setup",
         "title": "Exposed",
         "setup": "Guards. Four of them, armed, surrounding your tent at dawn.\n\n\"On your feet, soldier. Captain's orders. You're under arrest for theft of army supplies, falsification of records, and conduct unbecoming.\"\n\nNo warnings this time. No audits. They've built their case and now they're collecting.\n\n{LANCE_LEADER_SHORT} watches from a distance. Their expression is unreadable. They can't help you. Maybe they wouldn't if they could.\n\n\"Come quietly, or don't. Makes no difference to us.\"",
         "options": [
@@ -1389,7 +1389,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 5,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1404,8 +1404,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_surrender_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_surrender_outcome"
+            "textId": "ll_evt_scrutiny_exposed_opt_surrender_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_surrender_outcome"
           },
           {
             "id": "beg",
@@ -1426,21 +1426,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 3,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 5,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1453,9 +1453,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_beg_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_beg_outcome",
-            "resultFailureTextId": "ll_evt_heat_exposed_opt_beg_outcome_failure"
+            "textId": "ll_evt_scrutiny_exposed_opt_beg_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_beg_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_exposed_opt_beg_outcome_failure"
           },
           {
             "id": "fight",
@@ -1476,21 +1476,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 7,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1503,9 +1503,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_fight_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_fight_outcome",
-            "resultFailureTextId": "ll_evt_heat_exposed_opt_fight_outcome_failure"
+            "textId": "ll_evt_scrutiny_exposed_opt_fight_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_fight_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_exposed_opt_fight_outcome_failure"
           },
           {
             "id": "leverage",
@@ -1526,21 +1526,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
               "lance_reputation": -30,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 5,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1553,16 +1553,16 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_exposed_opt_leverage_text",
-            "resultTextId": "ll_evt_heat_exposed_opt_leverage_outcome",
-            "resultFailureTextId": "ll_evt_heat_exposed_opt_leverage_outcome_failure"
+            "textId": "ll_evt_scrutiny_exposed_opt_leverage_text",
+            "resultTextId": "ll_evt_scrutiny_exposed_opt_leverage_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_exposed_opt_leverage_outcome_failure"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "heat_shakedown",
+      "id": "scrutiny_shakedown",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1582,7 +1582,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_5"
+          "scrutiny_5"
         ],
         "any": [],
         "time_of_day": [
@@ -1608,8 +1608,8 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_shakedown_title",
-        "setupId": "ll_evt_heat_shakedown_setup",
+        "titleId": "ll_evt_scrutiny_shakedown_title",
+        "setupId": "ll_evt_scrutiny_shakedown_setup",
         "title": "The Shakedown",
         "setup": "\"Kit inspection! Everyone out, gear on the ground, NOW!\"\n\n{SERGEANT_NAME} — not your lance's sergeant, one of the captain's dogs — is tearing through the camp with two soldiers. Random inspection, they're calling it. But the way they looked at you when they announced it... this isn't random.\n\nYour kit is laid out. There's nothing obviously wrong with it. But if they look closely at the coin pouch, or check the false bottom in your pack...",
         "options": [
@@ -1632,21 +1632,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -1,
+              "scrutiny": -1,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 2,
+              "scrutiny": 2,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1659,9 +1659,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_comply_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_comply_outcome",
-            "resultFailureTextId": "ll_evt_heat_shakedown_opt_comply_outcome_failure"
+            "textId": "ll_evt_scrutiny_shakedown_opt_comply_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_comply_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_shakedown_opt_comply_outcome_failure"
           },
           {
             "id": "bribe",
@@ -1682,21 +1682,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 3,
+              "scrutiny": 3,
               "discipline": 3,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1709,9 +1709,9 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_bribe_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_bribe_outcome",
-            "resultFailureTextId": "ll_evt_heat_shakedown_opt_bribe_outcome_failure"
+            "textId": "ll_evt_scrutiny_shakedown_opt_bribe_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_bribe_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_shakedown_opt_bribe_outcome_failure"
           },
           {
             "id": "distraction",
@@ -1732,7 +1732,7 @@
               "items": []
             },
             "effects": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
               "lance_reputation": -10,
               "medical_risk": 0,
@@ -1747,8 +1747,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_distraction_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_distraction_outcome"
+            "textId": "ll_evt_scrutiny_shakedown_opt_distraction_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_distraction_outcome"
           },
           {
             "id": "dump",
@@ -1769,21 +1769,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": -3,
+              "scrutiny": -3,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": -1,
+              "scrutiny": -1,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1796,16 +1796,16 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_shakedown_opt_dump_text",
-            "resultTextId": "ll_evt_heat_shakedown_opt_dump_outcome",
-            "resultFailureTextId": "ll_evt_heat_shakedown_opt_dump_outcome_failure"
+            "textId": "ll_evt_scrutiny_shakedown_opt_dump_text",
+            "resultTextId": "ll_evt_scrutiny_shakedown_opt_dump_outcome",
+            "resultFailureTextId": "ll_evt_scrutiny_shakedown_opt_dump_outcome_failure"
           }
         ]
       },
       "variants": {}
     },
     {
-      "id": "heat_warning",
+      "id": "scrutiny_warning",
       "category": "threshold",
       "metadata": {
         "tier_range": {
@@ -1825,7 +1825,7 @@
         "all": [
           "is_enlisted",
           "ai_safe",
-          "heat_3"
+          "scrutiny_3"
         ],
         "any": [],
         "time_of_day": [
@@ -1851,8 +1851,8 @@
         }
       },
       "content": {
-        "titleId": "ll_evt_heat_warning_title",
-        "setupId": "ll_evt_heat_warning_setup",
+        "titleId": "ll_evt_scrutiny_warning_title",
+        "setupId": "ll_evt_scrutiny_warning_setup",
         "title": "The Warning",
         "setup": "{LANCE_LEADER_SHORT} pulls you aside after evening meal. Their voice is low, eyes checking that no one's close enough to hear.\n\n\"I'm going to say this once, {PLAYER_NAME}. Whatever you're doing — the extra coins, the supply discrepancies, the 'gifts' from merchants — people are starting to notice.\"\n\nThey lean closer.\n\n\"I don't care what you do on your own time. But if it comes back on {LANCE_NAME}, we're going to have a problem. Understand?\"",
         "options": [
@@ -1875,7 +1875,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1890,8 +1890,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_deny_text",
-            "resultTextId": "ll_evt_heat_warning_opt_deny_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_deny_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_deny_outcome"
           },
           {
             "id": "acknowledge",
@@ -1912,7 +1912,7 @@
               "items": []
             },
             "effects": {
-              "heat": -1,
+              "scrutiny": -1,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1927,8 +1927,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_acknowledge_text",
-            "resultTextId": "ll_evt_heat_warning_opt_acknowledge_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_acknowledge_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_acknowledge_outcome"
           },
           {
             "id": "deflect",
@@ -1949,7 +1949,7 @@
               "items": []
             },
             "effects": {
-              "heat": 1,
+              "scrutiny": 1,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -1964,8 +1964,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_deflect_text",
-            "resultTextId": "ll_evt_heat_warning_opt_deflect_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_deflect_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_deflect_outcome"
           },
           {
             "id": "ask_help",
@@ -1986,7 +1986,7 @@
               "items": []
             },
             "effects": {
-              "heat": -2,
+              "scrutiny": -2,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -2001,8 +2001,8 @@
             "injury_risk": null,
             "triggers_event": null,
             "advances_onboarding": false,
-            "textId": "ll_evt_heat_warning_opt_ask_help_text",
-            "resultTextId": "ll_evt_heat_warning_opt_ask_help_outcome"
+            "textId": "ll_evt_scrutiny_warning_opt_ask_help_text",
+            "resultTextId": "ll_evt_scrutiny_warning_opt_ask_help_outcome"
           }
         ]
       },
@@ -2079,7 +2079,7 @@
               "items": []
             },
             "effects": {
-              "heat": -3,
+              "scrutiny": -3,
               "discipline": 0,
               "lance_reputation": 5,
               "medical_risk": 0,
@@ -2116,7 +2116,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 3,
               "medical_risk": 0,
@@ -2153,7 +2153,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 10,
               "medical_risk": 0,
@@ -2190,7 +2190,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 15,
               "medical_risk": 0,
@@ -2283,21 +2283,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 3,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": -2,
               "medical_risk": 0,
@@ -2333,7 +2333,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -2370,21 +2370,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": -5,
               "medical_risk": 0,
@@ -2420,7 +2420,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 2,
               "medical_risk": 0,
@@ -2513,7 +2513,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -2550,21 +2550,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 1,
               "lance_reputation": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
               "lance_reputation": -5,
               "medical_risk": 0,
@@ -2600,7 +2600,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 2,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -2637,7 +2637,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -2730,7 +2730,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 10,
               "medical_risk": 0,
@@ -2767,7 +2767,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 15,
               "medical_risk": 0,
@@ -2804,7 +2804,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": -10,
               "medical_risk": 0,
@@ -2841,7 +2841,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 5,
               "medical_risk": 0,
@@ -2934,7 +2934,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -2971,21 +2971,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 1,
@@ -3021,21 +3021,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 1,
@@ -3071,7 +3071,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -3164,21 +3164,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 5,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -3214,7 +3214,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -3251,21 +3251,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -3357,7 +3357,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
@@ -3394,21 +3394,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": -1,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 2,
@@ -3444,7 +3444,7 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": -2,
@@ -3481,21 +3481,21 @@
               "items": []
             },
             "effects": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 0,
               "fatigue_relief": 0
             },
             "effects_success": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": -2,
               "fatigue_relief": 0
             },
             "effects_failure": {
-              "heat": 0,
+              "scrutiny": 0,
               "discipline": 0,
               "lance_reputation": 0,
               "medical_risk": 1,

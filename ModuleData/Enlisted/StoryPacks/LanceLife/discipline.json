@@ -30,7 +30,7 @@
           "text": "Step in and put a stop to it (Leadership)",
           "hint": "Set the tone before the camp does it for you.",
           "risk": "risky",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Leadership": 20 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -42,7 +42,7 @@
           "text": "Pull them apart and move on",
           "hint": "Quick, quiet, and clean.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -54,7 +54,7 @@
           "text": "Look away",
           "hint": "No risks. No gains.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -89,7 +89,7 @@
           "text": "Put in the extra work (Steward)",
           "hint": "Costs energy, but keeps attention off your men.",
           "risk": "risky",
-          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 2, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Steward": 20 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -101,7 +101,7 @@
           "text": "Do the standard checks",
           "hint": "Keep it simple and avoid mistakes.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""

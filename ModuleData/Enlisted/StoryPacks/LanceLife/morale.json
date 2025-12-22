@@ -30,7 +30,7 @@
           "text": "Lead the song (Charm + Leadership)",
           "hint": "Spend a little energy to lift the lance.",
           "risk": "risky",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 15, "Leadership": 10 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -42,7 +42,7 @@
           "text": "Let the lads carry it",
           "hint": "No cost. No fuss.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Leadership": 5 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -54,7 +54,7 @@
           "text": "Turn in early",
           "hint": "Rest while you can.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 1 },
           "resultTextId": "",
           "resultText": ""
@@ -89,7 +89,7 @@
           "text": "Steady them with hard truth (Leadership)",
           "hint": "Keep the lance focused on tomorrow.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Leadership": 20 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -101,7 +101,7 @@
           "text": "Speak gently (Charm)",
           "hint": "Let grief have its place, without losing discipline.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 20 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""

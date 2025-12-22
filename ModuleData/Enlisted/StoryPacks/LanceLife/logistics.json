@@ -31,9 +31,9 @@
           "textId": "ll_story_lance_scrounge_rations_opt_forage_text",
           "hintId": "ll_story_lance_scrounge_rations_opt_forage_hint",
           "text": "Take a small party and forage (Scouting + Steward)",
-          "hint": "Do it the right way. Costs time and energy, but keeps heat down.",
+          "hint": "Do it the right way. Costs time and energy, but keeps scrutiny down.",
           "risk": "safe",
-          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 2, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Scouting": 30, "Steward": 30 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -45,7 +45,7 @@
           "text": "Buy from camp-followers (Charm)",
           "hint": "Coin changes hands. Nobody asks too many questions.",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 50, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 50, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 25 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -57,7 +57,7 @@
           "text": "Do nothing",
           "hint": "Hope the wagons catch up.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""

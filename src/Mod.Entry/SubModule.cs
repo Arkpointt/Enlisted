@@ -371,7 +371,7 @@ namespace Enlisted.Mod.Entry
                     // Camp Life Simulation: provides a daily snapshot and Quartermaster/Pay integrations.
                     campaignStarter.AddBehavior(new CampLifeBehavior());
 
-                    // Escalation tracks for heat, discipline, lance reputation, and medical risk. This feature is feature-flagged.
+                    // Escalation tracks for scrutiny, discipline, lance reputation, and medical risk. This feature is feature-flagged.
                     campaignStarter.AddBehavior(new EscalationManager());
 
                     // Orders system: issues orders from chain of command, tracks acceptance/decline, applies consequences.

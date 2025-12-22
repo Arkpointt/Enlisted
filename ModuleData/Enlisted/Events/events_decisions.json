@@ -58,11 +58,11 @@
               },
               {
                 "id": "decline_payment",
-                "text": "Decline - it was an honor to attend (+5 Lance Rep, +2 Heat reduction)",
+                "text": "Decline - it was an honor to attend (+5 Lance Rep, +2 Scrutiny reduction)",
                 "tooltip": "Show loyalty and ambition over coin - builds favor with the Lord",
                 "effects": {
                   "lance_reputation": 5,
-                  "heat": -2
+                  "scrutiny": -2
                 }
               },
               {
@@ -74,7 +74,7 @@
                 },
                 "effects": {
                   "lance_reputation": 2,
-                  "heat": -1
+                  "scrutiny": -1
                 }
               }
             ]
@@ -134,7 +134,7 @@
           },
           "effects": {
             "lance_reputation": 1,
-            "heat": 1
+            "scrutiny": 1
           },
           "text": "\"Deal me in - small stakes only.\"",
           "resultTextId": "decision_dice_join_outcome",
@@ -152,7 +152,7 @@
           },
           "effects": {
             "lance_reputation": 2,
-            "heat": 2,
+            "scrutiny": 2,
             "discipline": 1
           },
           "text": "\"I'm feeling lucky. High stakes.\"",
@@ -426,7 +426,7 @@
             "gold": 50
           },
           "effects": {
-            "heat": 3,
+            "scrutiny": 3,
             "discipline": 2
           },
           "set_flags": [
@@ -496,7 +496,7 @@
             "gold": 25
           },
           "effects": {
-            "heat": 0,
+            "scrutiny": 0,
             "discipline": -1,
             "lance_reputation": 2,
             "medical_risk": 0,
@@ -522,7 +522,7 @@
             "gold": 60
           },
           "effects": {
-            "heat": 3,
+            "scrutiny": 3,
             "discipline": 1,
             "lance_reputation": 0,
             "medical_risk": 0,
@@ -544,7 +544,7 @@
             "fatigue": 1
           },
           "effects": {
-            "heat": 0,
+            "scrutiny": 0,
             "discipline": 0,
             "lance_reputation": -2,
             "medical_risk": 0,
@@ -574,7 +574,7 @@
           "is_enlisted",
           "on_duty:quartermaster",
           "flag:corruption_pattern_detected",
-          "heat >= 5"
+          "scrutiny >= 5"
         ],
         "time_of_day": [
           "afternoon"
@@ -599,7 +599,7 @@
             "fatigue": 1
           },
           "effects": {
-            "heat": -2,
+            "scrutiny": -2,
             "discipline": -1,
             "lance_reputation": 1,
             "medical_risk": 0,
@@ -620,7 +620,7 @@
             "fatigue": 2
           },
           "effects": {
-            "heat": 2,
+            "scrutiny": 2,
             "discipline": 2,
             "lance_reputation": -1,
             "medical_risk": 0,
@@ -642,7 +642,7 @@
             "gold": 50
           },
           "effects": {
-            "heat": -1,
+            "scrutiny": -1,
             "discipline": 1,
             "lance_reputation": 0,
             "medical_risk": 0,

@@ -26,7 +26,7 @@ Events are organized into packs based on roles and special contexts:
 | `events_scout.json` | Scout Role | Reconnaissance, tracking, intelligence gathering. |
 | `events_officer.json` | Officer Role | Leadership challenges, disciplinary actions, strategic choices. |
 | `events_medic.json` | Medic Role | Triage, treatment decisions, health management. |
-| `events_escalation.json` | High Heat/Discipline | Crisis moments when reputation or discipline thresholds are crossed. |
+| `events_escalation.json` | High Scrutiny/Discipline | Crisis moments when reputation or discipline thresholds are crossed. |
 
 ---
 
@@ -34,7 +34,7 @@ Events are organized into packs based on roles and special contexts:
 
 The system detects your **Primary Role** based on your native Bannerlord traits (Commander, Surgeon, ScoutSkills, etc.) and routes events accordingly.
 
--   **Priority 1**: Escalation/Crisis events (triggered by high Heat or low Discipline).
+-   **Priority 1**: Escalation/Crisis events (triggered by high Scrutiny or low Discipline).
 -   **Priority 2**: Role-specific events matching your current specialization.
 -   **Priority 3**: General Soldier events (fallback).
 
@@ -56,7 +56,7 @@ Events can be gated by:
 Choices within events impact:
 -   **Reputation**: LordReputation, OfficerReputation, SoldierReputation.
 -   **Company Needs**: Readiness, Morale, Supplies, Equipment, Rest.
--   **Escalation**: Heat and Discipline levels.
+-   **Escalation**: Scrutiny and Discipline levels.
 -   **Rewards**: Denars, Renown, Items, and Skill/Trait XP.
 
 ---

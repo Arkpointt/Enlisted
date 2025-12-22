@@ -31,11 +31,11 @@
           "textId": "ll_story_lance_quartermaster_ledger_skim_opt_refuse_text",
           "hintId": "ll_story_lance_quartermaster_ledger_skim_opt_refuse_hint",
           "text": "Refuse. Pay the posted price.",
-          "hint": "No heat. No favors owed.",
+          "hint": "No scrutiny. No favors owed.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 10 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -1, "discipline": 0, "lance_reputation": 0, "medical_risk": 0 },
+          "effects": { "scrutiny": -1, "discipline": 0, "lance_reputation": 0, "medical_risk": 0 },
           "resultTextId": "",
           "resultText": ""
         },
@@ -46,9 +46,9 @@
           "text": "Slip him a little (Roguery)",
           "hint": "A small bribe. Lower prices today… and eyes on you tomorrow.",
           "risk": "corrupt",
-          "costs": { "fatigue": 0, "gold": 100, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 100, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 30 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": 2, "discipline": 0, "lance_reputation": 0, "medical_risk": 0 },
+          "effects": { "scrutiny": 2, "discipline": 0, "lance_reputation": 0, "medical_risk": 0 },
           "resultTextId": "",
           "resultText": ""
         }

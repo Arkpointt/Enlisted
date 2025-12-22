@@ -423,7 +423,7 @@ namespace Enlisted.Mod.Core.Config
     public class EscalationConfig
     {
         public bool Enabled { get; set; } = true;
-        public int HeatDecayIntervalDays { get; set; } = 7;
+        public int ScrutinyDecayIntervalDays { get; set; } = 7;
         public int DisciplineDecayIntervalDays { get; set; } = 14;
         public int SoldierReputationDecayIntervalDays { get; set; } = 14;
         public int MedicalRiskDecayIntervalDays { get; set; } = 1;
@@ -481,7 +481,7 @@ namespace Enlisted.Mod.Core.Config
         public float LogisticsHighThreshold { get; set; } = 70f;
         public float MoraleLowThreshold { get; set; } = 70f;
         public float PayTensionHighThreshold { get; set; } = 70f;
-        public float HeatHighThreshold { get; set; } = 70f;
+        public float ScrutinyHighThreshold { get; set; } = 70f;
 
         public float QuartermasterPurchaseFine { get; set; } = 0.98f;
         public float QuartermasterPurchaseTense { get; set; } = 1.0f;

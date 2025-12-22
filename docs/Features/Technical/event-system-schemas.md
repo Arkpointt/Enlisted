@@ -59,7 +59,7 @@ Orders are mission-driven directives issued by the chain of command. They differ
 Tracks the persistent standing of the player across three reputation tracks and two escalation meters.
 
 - **Reputation**: Lord, Officer, and Soldier (-100 to +100).
-- **Escalation**: Heat and Discipline (0 to 100).
+- **Escalation**: Scrutiny and Discipline (0 to 100).
 - **Thresholds**: Defined levels (e.g., "Trusted", "Disliked") that trigger specific events.
 
 ---

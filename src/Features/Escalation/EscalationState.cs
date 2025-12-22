@@ -8,7 +8,7 @@ namespace Enlisted.Features.Escalation
     /// Persisted escalation tracks (Phase 4).
     ///
     /// Ranges (per docs/research/escalation_system.md and master plan v2.0):
-    /// - Heat: 0–10
+    /// - Scrutiny: 0–10
     /// - Discipline: 0–10
     /// - Soldier reputation: -50..+50 (renamed from LanceReputation)
     /// - Lord reputation: 0–100 (NEW)
@@ -20,8 +20,8 @@ namespace Enlisted.Features.Escalation
     [Serializable]
     public sealed class EscalationState
     {
-        public const int HeatMin = 0;
-        public const int HeatMax = 10;
+        public const int ScrutinyMin = 0;
+        public const int ScrutinyMax = 10;
         public const int DisciplineMin = 0;
         public const int DisciplineMax = 10;
         public const int SoldierReputationMin = -50;
@@ -34,7 +34,7 @@ namespace Enlisted.Features.Escalation
         public const int MedicalRiskMax = 5;
 
         // Track values
-        public int Heat { get; set; }
+        public int Scrutiny { get; set; }
         public int Discipline { get; set; }
         public int SoldierReputation { get; set; }
         public int LordReputation { get; set; }
@@ -43,8 +43,8 @@ namespace Enlisted.Features.Escalation
 
         // Timestamps used for passive decay rules.
         // We store "last raised time" for tracks where decay requires a quiet period.
-        public CampaignTime LastHeatRaisedTime { get; set; } = CampaignTime.Zero;
-        public CampaignTime LastHeatDecayTime { get; set; } = CampaignTime.Zero;
+        public CampaignTime LastScrutinyRaisedTime { get; set; } = CampaignTime.Zero;
+        public CampaignTime LastScrutinyDecayTime { get; set; } = CampaignTime.Zero;
 
         public CampaignTime LastDisciplineRaisedTime { get; set; } = CampaignTime.Zero;
         public CampaignTime LastDisciplineDecayTime { get; set; } = CampaignTime.Zero;
@@ -66,7 +66,7 @@ namespace Enlisted.Features.Escalation
 
         public void ClampAll()
         {
-            Heat = Clamp(Heat, HeatMin, HeatMax);
+            Scrutiny = Clamp(Scrutiny, ScrutinyMin, ScrutinyMax);
             Discipline = Clamp(Discipline, DisciplineMin, DisciplineMax);
             SoldierReputation = Clamp(SoldierReputation, SoldierReputationMin, SoldierReputationMax);
             LordReputation = Clamp(LordReputation, LordReputationMin, LordReputationMax);

@@ -27,11 +27,12 @@ namespace Enlisted.Features.Camp
         public static CampLifeBehavior Instance { get; private set; }
 
         // Snapshot meters (0–100)
+        // These internal values drive Quartermaster mood and other systems.
+        // Player-visible crime suspicion uses Scrutiny in EscalationState instead.
         private float _logisticsStrain;
         private float _moraleShock;
         private float _territoryPressure;
         private float _payTension;
-        private float _contrabandHeat;
 
         // Daily update gate
         private int _lastSnapshotDayNumber = -1;
@@ -53,7 +54,6 @@ namespace Enlisted.Features.Camp
         public float MoraleShock => _moraleShock;
         public float TerritoryPressure => _territoryPressure;
         public float PayTension => _payTension;
-        public float ContrabandHeat => _contrabandHeat;
         public QuartermasterMoodTier QuartermasterMoodTier => _quartermasterMoodTier;
 
         public override void RegisterEvents()
@@ -71,7 +71,6 @@ namespace Enlisted.Features.Camp
                 dataStore.SyncData("cl_moraleShock", ref _moraleShock);
                 dataStore.SyncData("cl_territoryPressure", ref _territoryPressure);
                 dataStore.SyncData("cl_payTension", ref _payTension);
-                dataStore.SyncData("cl_contrabandHeat", ref _contrabandHeat);
 
                 var mood = (int)_quartermasterMoodTier;
                 dataStore.SyncData("cl_qmMoodTier", ref mood);
@@ -113,11 +112,6 @@ namespace Enlisted.Features.Camp
             return IsActiveWhileEnlisted() && _payTension >= (cfg?.PayTensionHighThreshold ?? 70f);
         }
 
-        public bool IsHeatHigh()
-        {
-            var cfg = ConfigurationManager.LoadCampLifeConfig();
-            return IsActiveWhileEnlisted() && _contrabandHeat >= (cfg?.HeatHighThreshold ?? 70f);
-        }
 
         public float GetQuartermasterPurchaseMultiplier()
         {
@@ -228,9 +222,6 @@ namespace Enlisted.Features.Camp
                 // Pay tension: read from EnlistmentBehavior pay system.
                 // This is the authoritative source - tracks actual pay delays, backpay, and tension escalation
                 _payTension = enlistment.PayTension;
-
-                // Contraband heat: keep it stable for now.
-                _contrabandHeat = Clamp01Hundred(_contrabandHeat * 0.95f);
 
                 _quartermasterMoodTier = ComputeQuartermasterMoodTier(_logisticsStrain, _moraleShock, _payTension);
 

@@ -30,7 +30,7 @@
           "text": "Help for a while (Medicine)",
           "hint": "Costs energy. You learn useful work.",
           "risk": "risky",
-          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 2, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 25 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -42,7 +42,7 @@
           "text": "Watch and take notes",
           "hint": "No cost, smaller gains.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 10 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -54,7 +54,7 @@
           "text": "Leave it to the professionals",
           "hint": "No risks. No gains.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": {}, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -89,7 +89,7 @@
           "text": "Take it seriously (Medicine)",
           "hint": "A little effort now saves pain later.",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 20 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""
@@ -101,7 +101,7 @@
           "text": "Half-listen and nod",
           "hint": "No cost. Minimal learning.",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 5 }, "gold": 0, "fatigueRelief": 0 },
           "resultTextId": "",
           "resultText": ""

@@ -357,7 +357,7 @@ ls -R src/Features/Lances/
 cat src/Features/Escalation/EscalationState.cs
 
 # Verify it has:
-# - Heat (int)
+# - Scrutiny (int)
 # - Discipline (int)
 # - LanceReputation (int) - will rename to SoldierReputation
 # - MedicalRisk (int)
@@ -450,7 +450,7 @@ Create a snapshot document listing:
 public sealed class EscalationState
 {
     // Existing (keep)
-    public int Heat { get; set; }             // 0-10
+    public int Scrutiny { get; set; }             // 0-10
     public int Discipline { get; set; }       // 0-10
     public int MedicalRisk { get; set; }      // 0-5
     
@@ -542,7 +542,7 @@ public override void SyncData(IDataStore dataStore)
     if (dataStore.IsLoading)
     {
         // Load existing fields
-        dataStore.SyncData("heat", ref _state.Heat);
+        dataStore.SyncData("scrutiny", ref _state.Scrutiny);
         dataStore.SyncData("discipline", ref _state.Discipline);
         dataStore.SyncData("medicalRisk", ref _state.MedicalRisk);
         
@@ -564,7 +564,7 @@ public override void SyncData(IDataStore dataStore)
     if (dataStore.IsSaving)
     {
         // Save new reputation system
-        dataStore.SyncData("heat", ref _state.Heat);
+        dataStore.SyncData("scrutiny", ref _state.Scrutiny);
         dataStore.SyncData("discipline", ref _state.Discipline);
         dataStore.SyncData("medicalRisk", ref _state.MedicalRisk);
         dataStore.SyncData("soldierReputation", ref _state.SoldierReputation);
@@ -1117,7 +1117,7 @@ public class OrderOutcome
     public Dictionary<string, int> TraitXP { get; set; }
     public Dictionary<string, int> Reputation { get; set; } // "lord", "officer", "soldier"
     public Dictionary<string, int> CompanyNeeds { get; set; } // "readiness", "morale", etc.
-    public Dictionary<string, int> Escalation { get; set; } // "heat", "discipline"
+    public Dictionary<string, int> Escalation { get; set; } // "scrutiny", "discipline"
     public int Denars { get; set; }
     public int Renown { get; set; }
     public string Text { get; set; }
@@ -1362,8 +1362,8 @@ public class OrderManager : CampaignBehaviorBase
         {
             var escalation = EscalationManager.Instance;
             
-            if (outcome.Escalation.ContainsKey("heat"))
-                escalation.ModifyHeat(outcome.Escalation["heat"]);
+            if (outcome.Escalation.ContainsKey("scrutiny"))
+                escalation.ModifyScrutiny(outcome.Escalation["scrutiny"]);
             if (outcome.Escalation.ContainsKey("discipline"))
                 escalation.ModifyDiscipline(outcome.Escalation["discipline"]);
         }
@@ -1520,7 +1520,7 @@ Create ~30-40 orders covering T1-T9, all role types, all contexts.
         "Morale": 3
       },
       "escalation": {
-        "heat": -1
+        "scrutiny": -1
       },
       "denars": 50,
       "text": "Excellent work. Your report helps the captain plan the assault."
@@ -1534,7 +1534,7 @@ Create ~30-40 orders covering T1-T9, all role types, all contexts.
         "Morale": -5
       },
       "escalation": {
-        "heat": 2
+        "scrutiny": 2
       },
       "text": "You were spotted. Had to retreat without intel. The captain is displeased."
     },
@@ -1574,7 +1574,7 @@ Create ~30-40 orders covering T1-T9, all role types, all contexts.
 - `trait_xp`: Dictionary of TraitName → XPAmount (use native trait names)
 - `reputation`: Dictionary with keys: `lord`, `officer`, `soldier`
 - `company_needs`: Dictionary with keys: `Readiness`, `Morale`, `Supplies`, `Equipment`, `Rest`
-- `escalation`: Dictionary with keys: `heat`, `discipline`
+- `escalation`: Dictionary with keys: `scrutiny`, `discipline`
 - `denars`: Gold reward/penalty
 - `renown`: Renown gain (for major successes)
 - `text`: Outcome description text

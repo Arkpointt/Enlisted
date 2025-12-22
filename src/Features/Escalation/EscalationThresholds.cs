@@ -6,11 +6,11 @@ namespace Enlisted.Features.Escalation
     /// </summary>
     public static class EscalationThresholds
     {
-        // Heat thresholds
-        public const int HeatWarning = 3;
-        public const int HeatShakedown = 5;
-        public const int HeatAudit = 7;
-        public const int HeatExposed = 10;
+        // Scrutiny thresholds
+        public const int ScrutinyWarning = 3;
+        public const int ScrutinyShakedown = 5;
+        public const int ScrutinyAudit = 7;
+        public const int ScrutinyExposed = 10;
 
         // Discipline thresholds
         public const int DisciplineExtraDuty = 3;

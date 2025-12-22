@@ -35,7 +35,7 @@ Periodic inspections are held to ensure soldiers are not hoarding contraband or 
 Every Pay Muster has a 30% chance to trigger a baggage check. The outcome depends on your **Officer Reputation**:
 -   **Trusted (60+)**: The Quartermaster may look the other way, allowing you to keep contraband.
 -   **Friendly (35-59)**: You may be offered the chance to pay a "processing fee" (bribe) to keep items.
--   **Neutral or Below (<35)**: Items are confiscated, and you face fines or disciplinary action (increased Heat).
+-   **Neutral or Below (<35)**: Items are confiscated, and you face fines or disciplinary action (increased Scrutiny).
 
 ---
 

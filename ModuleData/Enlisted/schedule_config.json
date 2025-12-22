@@ -3,7 +3,7 @@
   "enable_schedule": true,
   "show_notifications": true,
   "allow_skip_duties": true,
-  "skip_duty_heat_penalty": 10,
+  "skip_duty_scrutiny_penalty": 10,
   "skip_duty_rep_penalty": 5,
   
   "lance_needs": {

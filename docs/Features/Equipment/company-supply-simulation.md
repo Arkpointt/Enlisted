@@ -21,7 +21,7 @@
 **Impact:**
 - < 30% = Cannot access equipment changes (quartermaster menu blocked)
 - < 50% = Warning messages, morale penalties
-- < 20% = Critical - Heat increases, troops desert
+- < 20% = Critical - Scrutiny increases, troops desert
 
 ---
 
@@ -343,6 +343,15 @@ Player must:
 
 ## Supply Crisis Events
 
+> **Canonical Event Definitions**: See `docs/StoryBlocks/content-index.md` → "Food & Supply Events" section for event IDs and skill checks.
+
+| Threshold | Event ID | Skill Check |
+|-----------|----------|-------------|
+| 50% | `evt_supply_warning` | — |
+| 30% | `evt_supply_critical_gate` | — (Equipment blocked) |
+| 20% | `evt_supply_critical` | Scouting (forage) |
+| 10% | `evt_supply_catastrophic` | — (Automatic) |
+
 ### **Low Supply Warnings:**
 
 **50% Supply:**
@@ -357,7 +366,7 @@ QM: "We're nearly out of supplies! Equipment changes blocked."
 Effect:
   - Cannot access Master at Arms (equipment menu blocked)
   - -5 Morale per day
-  - +1 Heat per day
+  - +1 Scrutiny per day
   - Chance of desertion increases
 ```
 
@@ -379,7 +388,7 @@ Event fires:
 ```
 Automatic effects:
   - 1d6 troops desert per day
-  - +5 Heat per day
+  - +5 Scrutiny per day
   - -20 Morale per day
   - Lord may dismiss you for incompetence
 ```

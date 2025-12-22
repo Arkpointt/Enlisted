@@ -38,7 +38,7 @@ namespace Enlisted.Features.Orders.Models
 
         /// <summary>
         /// Escalation track modifications.
-        /// Keys: "heat", "discipline".
+        /// Keys: "scrutiny", "discipline".
         /// Values: delta to apply.
         /// </summary>
         public Dictionary<string, int> Escalation { get; set; } = [];

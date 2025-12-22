@@ -3,142 +3,142 @@
   "packId": "escalation_thresholds",
   "stories": [
     {
-      "id": "heat_warning",
+      "id": "scrutiny_warning",
       "category": "escalation",
-      "tags": ["threshold", "heat"],
-      "titleId": "ll_thr_heat_warning_title",
-      "bodyId": "ll_thr_heat_warning_body",
+      "tags": ["threshold", "scrutiny"],
+      "titleId": "ll_thr_scrutiny_warning_title",
+      "bodyId": "ll_thr_scrutiny_warning_body",
       "tierMin": 1,
       "tierMax": 999,
       "requireFinalLance": false,
       "cooldownDays": 0,
       "maxPerTerm": 0,
-      "triggers": { "all": ["heat_3"], "any": [] },
+      "triggers": { "all": ["scrutiny_3"], "any": [] },
       "options": [
         {
           "id": "clean_up",
-          "textId": "ll_thr_heat_warning_opt_clean_text",
-          "hintId": "ll_thr_heat_warning_opt_clean_hint",
+          "textId": "ll_thr_scrutiny_warning_opt_clean_text",
+          "hintId": "ll_thr_scrutiny_warning_opt_clean_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 10 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -1 },
-          "resultTextId": "ll_thr_heat_warning_opt_clean_result"
+          "effects": { "scrutiny": -1 },
+          "resultTextId": "ll_thr_scrutiny_warning_opt_clean_result"
         },
         {
           "id": "shrug",
-          "textId": "ll_thr_heat_warning_opt_shrug_text",
-          "hintId": "ll_thr_heat_warning_opt_shrug_hint",
+          "textId": "ll_thr_scrutiny_warning_opt_shrug_text",
+          "hintId": "ll_thr_scrutiny_warning_opt_shrug_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 5 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": 1 },
-          "resultTextId": "ll_thr_heat_warning_opt_shrug_result"
+          "effects": { "scrutiny": 1 },
+          "resultTextId": "ll_thr_scrutiny_warning_opt_shrug_result"
         }
       ]
     },
     {
-      "id": "heat_shakedown",
+      "id": "scrutiny_shakedown",
       "category": "escalation",
-      "tags": ["threshold", "heat"],
-      "titleId": "ll_thr_heat_shakedown_title",
-      "bodyId": "ll_thr_heat_shakedown_body",
+      "tags": ["threshold", "scrutiny"],
+      "titleId": "ll_thr_scrutiny_shakedown_title",
+      "bodyId": "ll_thr_scrutiny_shakedown_body",
       "tierMin": 1,
       "tierMax": 999,
       "requireFinalLance": false,
       "cooldownDays": 0,
       "maxPerTerm": 0,
-      "triggers": { "all": ["heat_5"], "any": [] },
+      "triggers": { "all": ["scrutiny_5"], "any": [] },
       "options": [
         {
           "id": "comply",
-          "textId": "ll_thr_heat_shakedown_opt_comply_text",
-          "hintId": "ll_thr_heat_shakedown_opt_comply_hint",
+          "textId": "ll_thr_scrutiny_shakedown_opt_comply_text",
+          "hintId": "ll_thr_scrutiny_shakedown_opt_comply_hint",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 10 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -1, "discipline": 1 },
-          "resultTextId": "ll_thr_heat_shakedown_opt_comply_result"
+          "effects": { "scrutiny": -1, "discipline": 1 },
+          "resultTextId": "ll_thr_scrutiny_shakedown_opt_comply_result"
         },
         {
           "id": "pay_off",
-          "textId": "ll_thr_heat_shakedown_opt_pay_text",
-          "hintId": "ll_thr_heat_shakedown_opt_pay_hint",
+          "textId": "ll_thr_scrutiny_shakedown_opt_pay_text",
+          "hintId": "ll_thr_scrutiny_shakedown_opt_pay_hint",
           "risk": "corrupt",
-          "costs": { "fatigue": 0, "gold": 250, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 250, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 15 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -2 },
-          "resultTextId": "ll_thr_heat_shakedown_opt_pay_result"
+          "effects": { "scrutiny": -2 },
+          "resultTextId": "ll_thr_scrutiny_shakedown_opt_pay_result"
         }
       ]
     },
     {
-      "id": "heat_audit",
+      "id": "scrutiny_audit",
       "category": "escalation",
-      "tags": ["threshold", "heat"],
-      "titleId": "ll_thr_heat_audit_title",
-      "bodyId": "ll_thr_heat_audit_body",
+      "tags": ["threshold", "scrutiny"],
+      "titleId": "ll_thr_scrutiny_audit_title",
+      "bodyId": "ll_thr_scrutiny_audit_body",
       "tierMin": 1,
       "tierMax": 999,
       "requireFinalLance": false,
       "cooldownDays": 0,
       "maxPerTerm": 0,
-      "triggers": { "all": ["heat_7"], "any": [] },
+      "triggers": { "all": ["scrutiny_7"], "any": [] },
       "options": [
         {
           "id": "cooperate",
-          "textId": "ll_thr_heat_audit_opt_cooperate_text",
-          "hintId": "ll_thr_heat_audit_opt_cooperate_hint",
+          "textId": "ll_thr_scrutiny_audit_opt_cooperate_text",
+          "hintId": "ll_thr_scrutiny_audit_opt_cooperate_hint",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Steward": 20 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -2, "discipline": 1 },
-          "resultTextId": "ll_thr_heat_audit_opt_cooperate_result"
+          "effects": { "scrutiny": -2, "discipline": 1 },
+          "resultTextId": "ll_thr_scrutiny_audit_opt_cooperate_result"
         },
         {
           "id": "confess",
-          "textId": "ll_thr_heat_audit_opt_confess_text",
-          "hintId": "ll_thr_heat_audit_opt_confess_hint",
+          "textId": "ll_thr_scrutiny_audit_opt_confess_text",
+          "hintId": "ll_thr_scrutiny_audit_opt_confess_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 15 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -4, "discipline": 2 },
-          "resultTextId": "ll_thr_heat_audit_opt_confess_result"
+          "effects": { "scrutiny": -4, "discipline": 2 },
+          "resultTextId": "ll_thr_scrutiny_audit_opt_confess_result"
         }
       ]
     },
     {
-      "id": "heat_exposed",
+      "id": "scrutiny_exposed",
       "category": "escalation",
-      "tags": ["threshold", "heat"],
-      "titleId": "ll_thr_heat_exposed_title",
-      "bodyId": "ll_thr_heat_exposed_body",
+      "tags": ["threshold", "scrutiny"],
+      "titleId": "ll_thr_scrutiny_exposed_title",
+      "bodyId": "ll_thr_scrutiny_exposed_body",
       "tierMin": 1,
       "tierMax": 999,
       "requireFinalLance": false,
       "cooldownDays": 0,
       "maxPerTerm": 0,
-      "triggers": { "all": ["heat_10"], "any": [] },
+      "triggers": { "all": ["scrutiny_10"], "any": [] },
       "options": [
         {
           "id": "pay_fine",
-          "textId": "ll_thr_heat_exposed_opt_fine_text",
-          "hintId": "ll_thr_heat_exposed_opt_fine_hint",
+          "textId": "ll_thr_scrutiny_exposed_opt_fine_text",
+          "hintId": "ll_thr_scrutiny_exposed_opt_fine_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 500, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 500, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Steward": 10 }, "gold": 0, "fatigueRelief": 0 },
-          "effects": { "heat": -10, "discipline": 3, "lance_reputation": -5 },
-          "resultTextId": "ll_thr_heat_exposed_opt_fine_result"
+          "effects": { "scrutiny": -10, "discipline": 3, "lance_reputation": -5 },
+          "resultTextId": "ll_thr_scrutiny_exposed_opt_fine_result"
         },
         {
           "id": "deny",
-          "textId": "ll_thr_heat_exposed_opt_deny_text",
-          "hintId": "ll_thr_heat_exposed_opt_deny_hint",
+          "textId": "ll_thr_scrutiny_exposed_opt_deny_text",
+          "hintId": "ll_thr_scrutiny_exposed_opt_deny_hint",
           "risk": "risky",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 10 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 2, "lance_reputation": -3 },
-          "resultTextId": "ll_thr_heat_exposed_opt_deny_result"
+          "resultTextId": "ll_thr_scrutiny_exposed_opt_deny_result"
         }
       ]
     },
@@ -161,7 +161,7 @@
           "textId": "ll_thr_disc_extra_opt_do_text",
           "hintId": "ll_thr_disc_extra_opt_do_hint",
           "risk": "safe",
-          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 2, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Athletics": 10 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": -1 },
           "resultTextId": "ll_thr_disc_extra_opt_do_result"
@@ -171,7 +171,7 @@
           "textId": "ll_thr_disc_extra_opt_mouth_text",
           "hintId": "ll_thr_disc_extra_opt_mouth_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 5 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 1, "lance_reputation": -2 },
           "resultTextId": "ll_thr_disc_extra_opt_mouth_result"
@@ -196,7 +196,7 @@
           "textId": "ll_thr_disc_hearing_opt_own_text",
           "hintId": "ll_thr_disc_hearing_opt_own_hint",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 15 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": -2 },
           "resultTextId": "ll_thr_disc_hearing_opt_own_result"
@@ -206,7 +206,7 @@
           "textId": "ll_thr_disc_hearing_opt_blame_text",
           "hintId": "ll_thr_disc_hearing_opt_blame_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 10 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 1, "lance_reputation": -5 },
           "resultTextId": "ll_thr_disc_hearing_opt_blame_result"
@@ -231,7 +231,7 @@
           "textId": "ll_thr_disc_blocked_opt_accept_text",
           "hintId": "ll_thr_disc_blocked_opt_accept_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 5 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 0 },
           "resultTextId": "ll_thr_disc_blocked_opt_accept_result"
@@ -241,7 +241,7 @@
           "textId": "ll_thr_disc_blocked_opt_volunteer_text",
           "hintId": "ll_thr_disc_blocked_opt_volunteer_hint",
           "risk": "risky",
-          "costs": { "fatigue": 3, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 3, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Athletics": 20 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": -2, "lance_reputation": 2 },
           "resultTextId": "ll_thr_disc_blocked_opt_volunteer_result"
@@ -266,7 +266,7 @@
           "textId": "ll_thr_disc_discharge_opt_plead_text",
           "hintId": "ll_thr_disc_discharge_opt_plead_hint",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 25 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": -5, "lance_reputation": -2 },
           "resultTextId": "ll_thr_disc_discharge_opt_plead_result"
@@ -276,7 +276,7 @@
           "textId": "ll_thr_disc_discharge_opt_defy_text",
           "hintId": "ll_thr_disc_discharge_opt_defy_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 20 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 1, "lance_reputation": -5 },
           "resultTextId": "ll_thr_disc_discharge_opt_defy_result"
@@ -302,7 +302,7 @@
           "textId": "ll_thr_rep_trusted_opt_help_text",
           "hintId": "ll_thr_rep_trusted_opt_help_hint",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 10 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "lance_reputation": 3 },
           "resultTextId": "ll_thr_rep_trusted_opt_help_result"
@@ -312,7 +312,7 @@
           "textId": "ll_thr_rep_trusted_opt_decline_text",
           "hintId": "ll_thr_rep_trusted_opt_decline_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 0 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "lance_reputation": -2 },
           "resultTextId": "ll_thr_rep_trusted_opt_decline_result"
@@ -337,9 +337,9 @@
           "textId": "ll_thr_rep_bonded_opt_accept_text",
           "hintId": "ll_thr_rep_bonded_opt_accept_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 10 }, "gold": 0, "fatigueRelief": 1 },
-          "effects": { "heat": -2 },
+          "effects": { "scrutiny": -2 },
           "resultTextId": "ll_thr_rep_bonded_opt_accept_result"
         },
         {
@@ -347,7 +347,7 @@
           "textId": "ll_thr_rep_bonded_opt_wave_text",
           "hintId": "ll_thr_rep_bonded_opt_wave_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 0 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "lance_reputation": -3 },
           "resultTextId": "ll_thr_rep_bonded_opt_wave_result"
@@ -372,7 +372,7 @@
           "textId": "ll_thr_rep_isolated_opt_head_text",
           "hintId": "ll_thr_rep_isolated_opt_head_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 5 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "lance_reputation": 2 },
           "resultTextId": "ll_thr_rep_isolated_opt_head_result"
@@ -382,7 +382,7 @@
           "textId": "ll_thr_rep_isolated_opt_snap_text",
           "hintId": "ll_thr_rep_isolated_opt_snap_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Roguery": 5 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 1, "lance_reputation": -3 },
           "resultTextId": "ll_thr_rep_isolated_opt_snap_result"
@@ -407,7 +407,7 @@
           "textId": "ll_thr_rep_sabotage_opt_loss_text",
           "hintId": "ll_thr_rep_sabotage_opt_loss_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 200, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 200, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Steward": 10 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "lance_reputation": 2 },
           "resultTextId": "ll_thr_rep_sabotage_opt_loss_result"
@@ -417,7 +417,7 @@
           "textId": "ll_thr_rep_sabotage_opt_confront_text",
           "hintId": "ll_thr_rep_sabotage_opt_confront_hint",
           "risk": "risky",
-          "costs": { "fatigue": 1, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Charm": 10 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "discipline": 1, "lance_reputation": -3 },
           "resultTextId": "ll_thr_rep_sabotage_opt_confront_result"
@@ -443,7 +443,7 @@
           "textId": "ll_thr_med_worsening_opt_rest_text",
           "hintId": "ll_thr_med_worsening_opt_rest_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 10 }, "gold": 0, "fatigueRelief": 1 },
           "effects": { "medical_risk": -1 },
           "resultTextId": "ll_thr_med_worsening_opt_rest_result"
@@ -453,7 +453,7 @@
           "textId": "ll_thr_med_worsening_opt_ignore_text",
           "hintId": "ll_thr_med_worsening_opt_ignore_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Athletics": 5 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "medical_risk": 1 },
           "resultTextId": "ll_thr_med_worsening_opt_ignore_result"
@@ -478,7 +478,7 @@
           "textId": "ll_thr_med_complication_opt_seek_text",
           "hintId": "ll_thr_med_complication_opt_seek_hint",
           "risk": "safe",
-          "costs": { "fatigue": 1, "gold": 50, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 1, "gold": 50, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 15 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "medical_risk": -2 },
           "resultTextId": "ll_thr_med_complication_opt_seek_result"
@@ -488,7 +488,7 @@
           "textId": "ll_thr_med_complication_opt_push_text",
           "hintId": "ll_thr_med_complication_opt_push_hint",
           "risk": "risky",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Athletics": 5 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "medical_risk": 1, "lance_reputation": -2 },
           "resultTextId": "ll_thr_med_complication_opt_push_result"
@@ -513,7 +513,7 @@
           "textId": "ll_thr_med_emergency_opt_rest_text",
           "hintId": "ll_thr_med_emergency_opt_rest_hint",
           "risk": "safe",
-          "costs": { "fatigue": 0, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 0, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Medicine": 20 }, "gold": 0, "fatigueRelief": 2 },
           "effects": { "medical_risk": -3, "discipline": -1 },
           "resultTextId": "ll_thr_med_emergency_opt_rest_result"
@@ -523,7 +523,7 @@
           "textId": "ll_thr_med_emergency_opt_stumble_text",
           "hintId": "ll_thr_med_emergency_opt_stumble_hint",
           "risk": "risky",
-          "costs": { "fatigue": 2, "gold": 0, "heat": 0, "discipline": 0 },
+          "costs": { "fatigue": 2, "gold": 0, "scrutiny": 0, "discipline": 0 },
           "rewards": { "skillXp": { "Athletics": 0 }, "gold": 0, "fatigueRelief": 0 },
           "effects": { "medical_risk": 0, "lance_reputation": -5 },
           "resultTextId": "ll_thr_med_emergency_opt_stumble_result"

@@ -164,7 +164,7 @@ Every pay muster (12 days):
 - Outcome depends on QM rep:
   - Trusted: looks away
   - Friendly/Close: bribe option (50–75% value)
-  - Neutral/Hostile: confiscation + fines + Heat
+  - Neutral/Hostile: confiscation + fines + Scrutiny
 
 ### 4) Food & scarcity
 
@@ -437,7 +437,7 @@ On discharge/retirement (non-deserter):
 - remove all QM-issued items (quest items excluded)
 - if some issued items are missing:
   - compute replacement fine and deduct from final pay / pension
-  - optionally increase Heat and reduce QM rep
+  - optionally increase Scrutiny and reduce QM rep
 
 ---
 
@@ -546,7 +546,7 @@ At T5+:
 Make muster feel like a real military checkpoint:
 - periodic inspection
 - consequences based on rep
-- ties into Heat/contraband systems
+- ties into Scrutiny/contraband systems
 
 ### Trigger
 
@@ -564,7 +564,7 @@ Start with a conservative definition:
 Use the table from `quartermaster-equipment-quality.md`:
 - Trusted: look away
 - Close/Friendly: bribe option
-- Neutral/Hostile: confiscation + fines + Heat
+- Neutral/Hostile: confiscation + fines + Scrutiny
 
 ---
 
@@ -636,7 +636,7 @@ Rename and reorganize existing options to match the new experience (purely UX; s
 ### Phase 6 — Muster baggage checks
 - Add inspection roll at muster
 - Implement contraband detection + consequences
-- Integrate with Heat/contraband meters
+- Integrate with Scrutiny/contraband systems
 
 ### Phase 7 — Officers Armory
 - Add eligibility gate

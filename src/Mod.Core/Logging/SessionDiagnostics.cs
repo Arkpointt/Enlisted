@@ -79,7 +79,7 @@ namespace Enlisted.Mod.Core.Logging
                 // Escalation config (still active)
                 var escalation = ConfigurationManager.LoadEscalationConfig();
                 sb.AppendLine($"[Escalation] enabled: {escalation?.Enabled == true}");
-                sb.AppendLine($"[Escalation] heat_decay_days: {escalation?.HeatDecayIntervalDays}");
+                sb.AppendLine($"[Escalation] scrutiny_decay_days: {escalation?.ScrutinyDecayIntervalDays}");
                 sb.AppendLine($"[Escalation] discipline_decay_days: {escalation?.DisciplineDecayIntervalDays}");
 
                 // Lance, Duties, Schedule, and related systems deleted in Phase 1

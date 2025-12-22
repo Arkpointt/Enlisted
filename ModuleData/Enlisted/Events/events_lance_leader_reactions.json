@@ -48,34 +48,34 @@
       ]
     },
     {
-      "id": "lance_leader_stern_heat_warning",
+      "id": "lance_leader_stern_scrutiny_warning",
       "category": "lance_leader",
       "channel": "inquiry",
       "weight": 20,
       "triggers": {
         "all": ["is_enlisted"],
         "leader_trait": ["stern"],
-        "min_heat": 5
+        "min_scrutiny": 5
       },
       "cooldown_hours": 168,
-      "titleId": "ll_stern_heat_title",
+      "titleId": "ll_stern_scrutiny_title",
       "title": "A Word in Private",
-      "bodyId": "ll_stern_heat_body",
+      "bodyId": "ll_stern_scrutiny_body",
       "body": "{LANCE_LEADER_FIRST} catches you after formation.\n\n\"We need to talk. Privately.\" Their eyes are cold as iron.\n\n\"I've heard whispers about your... activities. Quartermaster supplies going missing. Gold changing hands. I don't know the details, and I don't want to.\"\n\n\"But I'm telling you now: in my lance, we follow the code. Always. This is your only warning.\"",
       "options": [
         {
           "id": "accept",
-          "textId": "ll_stern_heat_accept",
+          "textId": "ll_stern_scrutiny_accept",
           "text": "[Accept] \"Understood, {LANCE_LEADER_RANK}. It won't happen again.\"",
           "effects": {
-            "heat": -1,
+            "scrutiny": -1,
             "lance_reputation": 1
           },
           "resultText": "{LANCE_LEADER_FIRST} holds your gaze for a long moment. \"See that it doesn't.\""
         },
         {
           "id": "deny",
-          "textId": "ll_stern_heat_deny",
+          "textId": "ll_stern_scrutiny_deny",
           "text": "[Deny] \"I don't know what you're talking about.\"",
           "effects": {
             "lance_reputation": -2
@@ -84,7 +84,7 @@
         },
         {
           "id": "defiant",
-          "textId": "ll_stern_heat_defiant",
+          "textId": "ll_stern_scrutiny_defiant",
           "text": "[Defiant] \"Everyone does it.\"",
           "effects": {
             "discipline": 2,
@@ -95,34 +95,34 @@
       ]
     },
     {
-      "id": "lance_leader_fatherly_heat_warning",
+      "id": "lance_leader_fatherly_scrutiny_warning",
       "category": "lance_leader",
       "channel": "inquiry",
       "weight": 20,
       "triggers": {
         "all": ["is_enlisted"],
         "leader_trait": ["fatherly"],
-        "min_heat": 5
+        "min_scrutiny": 5
       },
       "cooldown_hours": 168,
-      "titleId": "ll_fatherly_heat_title",
+      "titleId": "ll_fatherly_scrutiny_title",
       "title": "A Concerned Talk",
-      "bodyId": "ll_fatherly_heat_body",
+      "bodyId": "ll_fatherly_scrutiny_body",
       "body": "{LANCE_LEADER_FIRST} finds you during the evening meal, sitting down heavily beside you.\n\n\"Look, I'm not going to lecture you. You're not a child. But I've been around long enough to know what certain... patterns... look like.\"\n\nThey sigh. \"I've seen good soldiers destroy their careers over petty greed. Soldiers with more promise than you. Don't become another one of those stories.\"",
       "options": [
         {
           "id": "appreciate",
-          "textId": "ll_fatherly_heat_appreciate",
+          "textId": "ll_fatherly_scrutiny_appreciate",
           "text": "[Appreciate] \"Thank you for the warning. I'll be more careful.\"",
           "effects": {
-            "heat": -1,
+            "scrutiny": -1,
             "lance_reputation": 2
           },
           "resultText": "{LANCE_LEADER_FIRST} claps you on the shoulder. \"That's all I ask.\""
         },
         {
           "id": "explain",
-          "textId": "ll_fatherly_heat_explain",
+          "textId": "ll_fatherly_scrutiny_explain",
           "text": "[Explain] \"It's not what it looks like...\"",
           "effects": {
             "lance_reputation": 0
@@ -131,7 +131,7 @@
         },
         {
           "id": "dismiss",
-          "textId": "ll_fatherly_heat_dismiss",
+          "textId": "ll_fatherly_scrutiny_dismiss",
           "text": "[Dismiss] \"I can handle my own affairs.\"",
           "effects": {
             "lance_reputation": -2
@@ -141,24 +141,24 @@
       ]
     },
     {
-      "id": "lance_leader_pragmatic_heat_reaction",
+      "id": "lance_leader_pragmatic_scrutiny_reaction",
       "category": "lance_leader",
       "channel": "inquiry",
       "weight": 20,
       "triggers": {
         "all": ["is_enlisted"],
         "leader_trait": ["pragmatic"],
-        "min_heat": 5
+        "min_scrutiny": 5
       },
       "cooldown_hours": 168,
-      "titleId": "ll_pragmatic_heat_title",
+      "titleId": "ll_pragmatic_scrutiny_title",
       "title": "A Professional Discussion",
-      "bodyId": "ll_pragmatic_heat_body",
+      "bodyId": "ll_pragmatic_scrutiny_body",
       "body": "{LANCE_LEADER_FIRST} intercepts you during duty change.\n\n\"I notice things go missing around you. Gold finds its way into your pockets. I don't care—as long as the job gets done and the lord doesn't notice.\"\n\n\"But if this blows back on the lance, you'll answer for it. Not me. Understand?\"",
       "options": [
         {
           "id": "understand",
-          "textId": "ll_pragmatic_heat_understand",
+          "textId": "ll_pragmatic_scrutiny_understand",
           "text": "[Understand] \"Crystal clear. I'll keep it quiet.\"",
           "effects": {
             "lance_reputation": 1
@@ -167,7 +167,7 @@
         },
         {
           "id": "assure",
-          "textId": "ll_pragmatic_heat_assure",
+          "textId": "ll_pragmatic_scrutiny_assure",
           "text": "[Assure] \"It won't come back on anyone.\"",
           "effects": {
             "lance_reputation": 0

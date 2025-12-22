@@ -62,7 +62,7 @@ src/
   - Enlistment/           # Core service state, retirement
   - Orders/               # Mission-driven directives (Chain of Command)
   - Identity/             # Role detection (Traits) and Reputation helpers
-  - Escalation/           # Lord/Officer/Soldier reputation and Heat/Discipline
+  - Escalation/           # Lord/Officer/Soldier reputation and Scrutiny/Discipline
   - Company/              # Company-wide Needs (Readiness, Morale, etc.)
   - Context/              # Army context and objective analysis
   - Interface/            # Native Game Menus and News/Reports

@@ -53,7 +53,7 @@
           "textId": "ll_story_lance_scrounge_rations_opt_forage_text",
           "text": "Take a small party and forage (Scouting + Steward)",
           "hintId": "ll_story_lance_scrounge_rations_opt_forage_hint",
-          "hint": "Do it the right way. Costs time and energy, but keeps heat down.",
+          "hint": "Do it the right way. Costs time and energy, but keeps scrutiny down.",
           "fatigueCost": 2,
           "skillXp": { "Scouting": 30, "Steward": 30 }
         },
@@ -91,7 +91,7 @@
           "textId": "ll_story_lance_quartermaster_ledger_skim_opt_refuse_text",
           "text": "Refuse. Pay the posted price.",
           "hintId": "ll_story_lance_quartermaster_ledger_skim_opt_refuse_hint",
-          "hint": "No heat. No favors owed.",
+          "hint": "No scrutiny. No favors owed.",
           "skillXp": { "Charm": 10 }
         },
         {

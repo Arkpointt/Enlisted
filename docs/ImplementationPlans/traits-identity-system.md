@@ -1,8 +1,10 @@
 # Traits & Identity System — Implementation Study
 
 **Created**: December 20, 2025  
-**Status**: Design Phase - System Simplification  
+**Status**: ✅ COMPLETE - Code implemented, systems deleted  
 **Purpose**: Document how to replace Lance/Formation systems with native trait integration for emergent identity
+
+> **Note**: This document describes what was ALREADY IMPLEMENTED. The Identity system (`EnlistedStatusManager`, `TraitHelper`) is live. The Lance and Formation systems have been deleted. See `StoryBlocks/storyblocks-v2-implementation.md` for event conversion guidance.
 
 ---
 
@@ -137,7 +139,7 @@ src/Features/Escalation/
 ```
 
 **Current Tracks:**
-- Heat (0-10): Camp crime, contraband
+- Scrutiny (0-10): Camp crime, contraband
 - Discipline (0-10): Rule-breaking, insubordination
 - Lance Reputation (-50 to +50): Peer standing
 - Medical Risk (0-5): Injury/illness severity
@@ -407,7 +409,7 @@ private TraitObject GetTraitFromId(string traitId)
 | **Soldier Rep** | Social | -50 to +50 | Peer respect | Escalation (renamed) |
 | **Lord Rep** | Social | -50 to +50 | Trust/loyalty with lord | Escalation (new) |
 | **Officer Rep** | Social | -50 to +50 | Perceived potential | Escalation (new) |
-| **Heat** | Escalation | 0-10 | Camp crime level | Escalation |
+| **Scrutiny** | Escalation | 0-10 | Camp crime level | Escalation |
 | **Discipline** | Escalation | 0-10 | Rule-breaking level | Escalation |
 | **Medical Risk** | Condition | 0-5 | Injury/illness severity | Escalation |
 | **Context** | Situational | Various | Army state flags | Existing |
@@ -447,7 +449,7 @@ public class EventRequirements
     public int? OfficerReputationMin { get; set; }
     
     // Escalation
-    public int? HeatMin { get; set; }
+    public int? ScrutinyMin { get; set; }
     public int? DisciplineMin { get; set; }
     
     // Context
@@ -466,7 +468,7 @@ Rank: T5 (Veteran)
 Honor: +2, Valor: +1, Mercy: +1
 Commander: 8, Sergeant: 5
 Lord Rep: 45/100, Officer Rep: 40/100, Soldier Rep: 30/100
-Heat: 0, Discipline: 2
+Scrutiny: 0, Discipline: 2
 
 Available Content:
 → Leadership training events
@@ -481,7 +483,7 @@ Rank: T4 (Professional)
 Honor: -1, Calculating: +2, Mercy: 0
 Rogue: 12, Scout: 8, Smuggler: 6
 Lord Rep: 20, Officer Rep: 10, Soldier Rep: 35
-Heat: 6, Discipline: 5
+Scrutiny: 6, Discipline: 5
 
 Available Content:
 → Covert operations
@@ -496,7 +498,7 @@ Rank: T6 (NCO)
 Mercy: +2, Generosity: +1, Honor: +1
 Surgeon: 15, Commander: 5
 Lord Rep: 30, Officer Rep: 35, Soldier Rep: 50
-Heat: 1, Discipline: 1
+Scrutiny: 1, Discipline: 1
 
 Available Content:
 → Medical crisis events
@@ -511,7 +513,7 @@ Rank: T7 (Commander)
 Calculating: +2, Valor: 0, Honor: 0
 Commander: 18, Sergeant: 15, Scout: 10
 Lord Rep: 50, Officer Rep: 50, Soldier Rep: 20
-Heat: 3, Discipline: 8
+Scrutiny: 3, Discipline: 8
 
 Available Content:
 → Tactical command decisions
@@ -532,7 +534,7 @@ Available Content:
 Rank: T1
 All Traits: 0
 All Reputations: 0
-Heat: 0, Discipline: 0
+Scrutiny: 0, Discipline: 0
 ```
 
 **Early Events:**
@@ -683,7 +685,7 @@ Officer Track:
 Scout Track:
   Option: "Use him as double agent"
   Requires: Scout 10+, Calculating +1
-  → +Scout XP, +Lord Rep, +Heat
+  → +Scout XP, +Lord Rep, +Scrutiny
   
 Merciful Leader:
   Option: "Second chance with demotion"
@@ -743,7 +745,7 @@ Example: Honor +1, Smuggler 8, Calculating +2
       "lord": { "min": 30 }
     },
     "escalation": {
-      "heat": { "max": 5 },
+      "scrutiny": { "max": 5 },
       "discipline": { "max": 6 }
     },
     "context": {
@@ -851,7 +853,7 @@ Example: Honor +1, Smuggler 8, Calculating +2
 ```json
 "effects": {
   "escalation": {
-    "heat": 3,          // +3 Heat (camp crime)
+    "scrutiny": 3,          // +3 Scrutiny (camp crime)
     "discipline": -2,   // -2 Discipline (improved behavior)
     "medical_risk": 1   // +1 Medical Risk (injury worsens)
   }
@@ -871,7 +873,7 @@ Example: Honor +1, Smuggler 8, Calculating +2
     "soldier": -10
   },
   "escalation": {
-    "heat": -2,
+    "scrutiny": -2,
     "discipline": -1
   },
   "xp": {
@@ -924,7 +926,7 @@ Example: Honor +1, Smuggler 8, Calculating +2
     "officer": { "min": 35 }
   },
   "escalation": {
-    "heat": { "max": 3 },
+    "scrutiny": { "max": 3 },
     "discipline": { "max": 5 }
   },
   "context": {
@@ -938,7 +940,7 @@ This event only fires for:
 - T5-T7 veterans
 - Honorable leaders with command skills
 - Trusted by lord and officers
-- Clean record (low heat/discipline)
+- Clean record (low scrutiny/discipline)
 - During wartime in army context
 
 ### Content Routing Examples
@@ -1045,7 +1047,7 @@ This event only fires for:
 public sealed class EscalationState
 {
     // EXISTING
-    public int Heat { get; set; }
+    public int Scrutiny { get; set; }
     public int Discipline { get; set; }
     public int MedicalRisk { get; set; }
     
@@ -1464,7 +1466,7 @@ Design 10-15 new events that showcase trait system:
    - Lord gives you sensitive task
    - Options show different trait paths
 
-2. **"Criminal Contact"** (requires Rogue 5+, Heat 5+)
+2. **"Criminal Contact"** (requires Rogue 5+, Scrutiny 5+)
    - Underworld figure approaches
    - Can start criminal specialist path
 
@@ -1732,7 +1734,7 @@ LanceRegistry
 └── GetLanceById(string)
 
 EscalationState
-├── Heat
+├── Scrutiny
 ├── Discipline
 ├── LanceReputation
 └── MedicalRisk
@@ -1741,7 +1743,7 @@ EscalationState
 **AFTER:**
 ```
 EscalationState (expanded)
-├── Heat
+├── Scrutiny
 ├── Discipline
 ├── SoldierReputation (renamed from LanceReputation)
 ├── LordReputation (new)
