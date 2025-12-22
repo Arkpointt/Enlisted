@@ -1,11 +1,12 @@
-# Feature Spec: Camp Life Simulation
+# Camp Life Simulation
 
-This spec describes the “camp life” simulation layer in Enlisted v0.9.0. It moves away from complex hidden meters to the transparent **Company Needs** system and the **Native Game Menu** interface.
+**Summary:** The camp life simulation layer uses the Company Needs system to track party state (Readiness, Morale, Supplies, Equipment, Rest) and provides camp activities through the Native Game Menu. This system replaces complex hidden meters with transparent, player-facing mechanics integrated into the standard Bannerlord camp interface.
 
-## Status (v0.9.0 Update)
-- **Company Needs** system is the core simulation layer, tracking Readiness, Morale, Supplies, Equipment, and Rest.
-- **Native Game Menu** provides the interface for camp activities (Rest, Train, Morale Boost, Equipment Check).
-- **Custom UI is deleted**: No more multi-tab management screens; all actions are code-driven menus.
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Company Supply](../Equipment/company-supply-simulation.md), [Core Gameplay](../Core/core-gameplay.md)
+
+> **v0.9.0 Update:** Company Needs system provides simulation layer. Native Game Menu provides interface. Custom UI deleted.
 
 ---
 

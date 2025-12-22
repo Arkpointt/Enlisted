@@ -1,4 +1,12 @@
-# Feature Spec: Event Reward Choices
+# Event Reward Choices
+
+**Summary:** Feature specification for extending the event system to allow players to choose how they are rewarded. Players can select between different reward types (XP, gold, reputation) and customize which skills develop, providing meaningful agency over character progression through events.
+
+**Status:** 📋 Specification  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Content System Architecture](content-system-architecture.md), [Event System Schemas](event-system-schemas.md)
+
+---
 
 ## Overview
 

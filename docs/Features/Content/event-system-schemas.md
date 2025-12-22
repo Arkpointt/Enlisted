@@ -1,6 +1,12 @@
 # Event System Schemas
 
-This document defines the JSON schemas for the Enlisted event and orders system in v0.9.0. These schemas support a streamlined, trait-based, and role-driven architecture that replaces legacy systems.
+**Summary:** Comprehensive JSON schema definitions for the event and orders system in v0.9.0. This document specifies the structure for events, orders, escalation, reputation, company needs, promotions, trigger conditions, and validation rules used throughout the content delivery pipeline.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Content System Architecture](content-system-architecture.md), [Event Catalog](../../Content/event-catalog-by-system.md)
+
+---
 
 ## Index
 

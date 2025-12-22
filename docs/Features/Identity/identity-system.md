@@ -1,10 +1,12 @@
-# Traits & Identity System — Implementation Study
+# Traits & Identity System
 
-**Created**: December 20, 2025  
-**Status**: ✅ COMPLETE - Code implemented, systems deleted  
-**Purpose**: Document how to replace Lance/Formation systems with native trait integration for emergent identity
+**Summary:** The identity system replaces manual identity selection with native Bannerlord trait integration, allowing player personality to emerge from in-game choices. The system uses `EnlistedStatusManager` and `TraitHelper` to manage traits, integrating with Bannerlord's native trait system for consistent character development across all game systems.
 
-> **Note**: This document describes what was ALREADY IMPLEMENTED. The Identity system (`EnlistedStatusManager`, `TraitHelper`) is live. The Lance and Formation systems have been deleted. See `StoryBlocks/storyblocks-v2-implementation.md` for event conversion guidance.
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Content System](../Content/content-system-architecture.md), [Event System Schemas](../Content/event-system-schemas.md)
+
+> **Note**: This document describes the implemented identity system. The `EnlistedStatusManager` and `TraitHelper` are live. Legacy Lance and Formation systems have been removed.
 
 ---
 

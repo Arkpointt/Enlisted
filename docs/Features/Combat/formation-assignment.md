@@ -1,6 +1,12 @@
 # Formation Assignment and Teleportation System
 
-The **Formation Assignment and Teleportation System** ensures that enlisted soldiers and their squads are correctly positioned on the battlefield according to their unit type and specialization.
+**Summary:** The formation assignment system ensures enlisted soldiers and their squads are correctly positioned on the battlefield according to unit type and specialization. The system uses formation teleportation and unit-type-based positioning to integrate enlisted players seamlessly into battle formations.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Core Gameplay](../Core/core-gameplay.md), [Retinue System](../Core/retinue-system.md)
+
+---
 
 ## Index
 

@@ -1,6 +1,12 @@
 # Town Access System
 
-The **Town Access System** provides enlisted soldiers with full access to settlement features (trade, arena, tavern) while maintaining the stability of the invisible party state.
+**Summary:** The town access system provides enlisted soldiers with full access to settlement features (trade, arena, tavern, workshops) while maintaining the stability of the invisible party state. The system handles safe enter/exit transitions and menu access without breaking the enlistment state.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Enlistment](../Core/enlistment.md), [Core Gameplay](../Core/core-gameplay.md)
+
+---
 
 ## Index
 

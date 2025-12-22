@@ -1,6 +1,12 @@
 ﻿# Temporary Leave System
 
-The **Temporary Leave** system allows enlisted soldiers to suspend active service for a limited time to handle clan business or personal matters, returning to the world map while preserving their rank and progression.
+**Summary:** The temporary leave system allows enlisted soldiers to suspend active service temporarily while preserving rank and progression. Players can request leave to handle clan business, return to the world map, and later rejoin their original lord or transfer to a different commander.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Enlistment](../Core/enlistment.md), [Core Gameplay](../Core/core-gameplay.md)
+
+---
 
 ## Index
 
