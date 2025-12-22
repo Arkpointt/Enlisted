@@ -1,9 +1,10 @@
 # Company Supply Simulation System
 
-> **Purpose**: Document how Company Supply is calculated, consumed, and replenished to create realistic military logistics gameplay.
+**Summary:** The company supply system tracks logistical health of the military unit including equipment maintenance materials, ammunition/consumables, and fodder/animal care supplies. Supply levels are calculated from inventory, consumed through time and combat, and replenished through quartermaster purchases, creating realistic military logistics gameplay.
 
-**Last Updated**: December 22, 2025  
-**Status**: Implemented (Phase 9A)
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Quartermaster System](quartermaster-system.md), [Provisions & Rations](provisions-rations-system.md)
 
 ---
 

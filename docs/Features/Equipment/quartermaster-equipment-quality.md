@@ -1,6 +1,12 @@
 # Quartermaster Equipment & Supply System
 
-This specification describes how company supply levels and unit reputation affect equipment access, pricing, and the elite "Officers Armory" in v0.9.0.
+**Summary:** This specification describes how company supply levels and unit reputation affect equipment access, pricing, and the Officers Armory. It covers baggage checks, quartermaster pricing/buyback, supply gates, premium gear access, and discharge gear return mechanics.
+
+**Status:** ✅ Current  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Quartermaster System](quartermaster-system.md), [Company Supply](company-supply-simulation.md)
+
+---
 
 ## Index
 

@@ -1,9 +1,12 @@
 # Commander Track Schema (T7-T9)
 
-## Status
-This document is a **design draft** for a future “Commander Track” (T7–T9). It is **not implemented in shipping Enlisted**.
+**Summary:** Design draft for future Commander Track (T7-T9) including commander state schema, retinue management, soldier tracking, and progression mechanics. This document is a reference schema idea; not currently implemented.
 
-This file is kept as a reference schema idea only. Shipping behavior and data-driven systems are documented in the other `docs/Features/**` specs and in `ModuleData/Enlisted/`.
+**Status:** 📋 Specification (Future)  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Retinue System](../Core/retinue-system.md), [Training System](../Combat/training-system.md)
+
+> **Note**: This document is a **design draft** for a future Commander Track. Not implemented in shipping Enlisted. Shipping behavior is documented in `docs/Features/` specs and `ModuleData/Enlisted/`.
 
 ---
 
