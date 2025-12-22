@@ -13,13 +13,13 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Current System Analysis](#current-system-analysis)
+2. [Previous System Analysis](#previous-system-analysis)
 3. [Native Trait System Study](#native-trait-system-study)
-4. [Proposed Architecture](#proposed-architecture)
+4. [System Architecture](#system-architecture)
 5. [Identity Formation Model](#identity-formation-model)
 6. [Event Integration](#event-integration)
-7. [Implementation Roadmap](#implementation-roadmap)
-8. [Migration Plan](#migration-plan)
+7. [Implementation Details](#implementation-details)
+8. [Migration Notes](#migration-notes)
 9. [Technical Reference](#technical-reference)
 
 ---
@@ -48,7 +48,7 @@ Bannerlord already has a robust trait system that tracks personality and skills.
 
 ---
 
-## Current System Analysis
+## Previous System Analysis
 
 ### Systems to Delete
 
@@ -387,7 +387,7 @@ private TraitObject GetTraitFromId(string traitId)
 
 ---
 
-## Proposed Architecture
+## System Architecture
 
 ### Identity Components Matrix
 
@@ -1036,7 +1036,7 @@ This event only fires for:
 
 ---
 
-## Implementation Roadmap
+## Implementation Details
 
 ### Phase 1: Foundation (Week 1)
 
@@ -1592,7 +1592,7 @@ Test with existing saves:
 
 ---
 
-## Migration Plan
+## Migration Notes
 
 ### Save Compatibility
 
