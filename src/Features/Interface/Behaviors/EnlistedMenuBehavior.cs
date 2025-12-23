@@ -3077,14 +3077,21 @@ namespace Enlisted.Features.Interface.Behaviors
         private bool _decisionsSnapshotsInitialized;
         private HashSet<string> _decisionsPrevQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private HashSet<string> _decisionsPrevOpportunityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _decisionsPrevTrainingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _decisionsPrevSocialIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private HashSet<string> _decisionsPrevCampLifeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private bool _decisionsPrevCampLifeEnabled;
 
         private bool _decisionsNewQueued;
         private bool _decisionsNewOpportunities;
+        private bool _decisionsNewTraining;
+        private bool _decisionsNewSocial;
         private bool _decisionsNewCampLife;
 
         private CampaignTime? _decisionsNewQueuedSince;
         private CampaignTime? _decisionsNewOpportunitiesSince;
+        private CampaignTime? _decisionsNewTrainingSince;
+        private CampaignTime? _decisionsNewSocialSince;
         private CampaignTime? _decisionsNewCampLifeSince;
 
         private static readonly CampaignTime DecisionsNewAutoClearThreshold = CampaignTime.Days(1f);
@@ -3112,6 +3119,20 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     _decisionsNewOpportunities = false;
                     _decisionsNewOpportunitiesSince = null;
+                }
+
+                if (_decisionsNewTraining && _decisionsNewTrainingSince.HasValue &&
+                    now - _decisionsNewTrainingSince.Value > DecisionsNewAutoClearThreshold)
+                {
+                    _decisionsNewTraining = false;
+                    _decisionsNewTrainingSince = null;
+                }
+
+                if (_decisionsNewSocial && _decisionsNewSocialSince.HasValue &&
+                    now - _decisionsNewSocialSince.Value > DecisionsNewAutoClearThreshold)
+                {
+                    _decisionsNewSocial = false;
+                    _decisionsNewSocialSince = null;
                 }
 
                 if (_decisionsNewCampLife && _decisionsNewCampLifeSince.HasValue &&
@@ -3146,15 +3167,25 @@ namespace Enlisted.Features.Interface.Behaviors
                         _decisionsNewQueued = false;
                         _decisionsNewQueuedSince = null;
                     }
-                    else if (section == DecisionsMenuSection.CampLife)
-                    {
-                        _decisionsNewCampLife = false;
-                        _decisionsNewCampLifeSince = null;
-                    }
                     else if (section == DecisionsMenuSection.Opportunities)
                     {
                         _decisionsNewOpportunities = false;
                         _decisionsNewOpportunitiesSince = null;
+                    }
+                    else if (section == DecisionsMenuSection.Training)
+                    {
+                        _decisionsNewTraining = false;
+                        _decisionsNewTrainingSince = null;
+                    }
+                    else if (section == DecisionsMenuSection.Social)
+                    {
+                        _decisionsNewSocial = false;
+                        _decisionsNewSocialSince = null;
+                    }
+                    else if (section == DecisionsMenuSection.CampLife)
+                    {
+                        _decisionsNewCampLife = false;
+                        _decisionsNewCampLifeSince = null;
                     }
                 }
                 else
@@ -3276,9 +3307,26 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var enlistment = EnlistmentBehavior.Instance;
+                var decisionManager = DecisionManager.Instance;
                 
                 var currentQueuedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var currentOpportunityIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var currentTrainingIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var currentSocialIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var currentCampLifeIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // Collect current decision IDs per section
+                if (decisionManager != null)
+                {
+                    foreach (var dec in decisionManager.GetAvailableDecisionsForSection("training").Where(d => d.IsVisible))
+                        currentTrainingIds.Add(dec.Decision.Id);
+                    
+                    foreach (var dec in decisionManager.GetAvailableDecisionsForSection("social").Where(d => d.IsVisible))
+                        currentSocialIds.Add(dec.Decision.Id);
+                    
+                    foreach (var dec in decisionManager.GetAvailableDecisionsForSection("camp_life").Where(d => d.IsVisible))
+                        currentCampLifeIds.Add(dec.Decision.Id);
+                }
 
                 var campLifeEnabledNow = false;
                 var mainParty = MobileParty.MainParty;
@@ -3301,7 +3349,22 @@ namespace Enlisted.Features.Interface.Behaviors
                         _decisionsNewOpportunitiesSince ??= CampaignTime.Now;
                     }
 
-                    if (!_decisionsNewCampLife && campLifeEnabledNow && !_decisionsPrevCampLifeEnabled)
+                    // Detect new training decisions (came off cooldown, tier unlock, etc.)
+                    if (!_decisionsNewTraining && currentTrainingIds.Except(_decisionsPrevTrainingIds).Any())
+                    {
+                        _decisionsNewTraining = true;
+                        _decisionsNewTrainingSince ??= CampaignTime.Now;
+                    }
+
+                    // Detect new social decisions
+                    if (!_decisionsNewSocial && currentSocialIds.Except(_decisionsPrevSocialIds).Any())
+                    {
+                        _decisionsNewSocial = true;
+                        _decisionsNewSocialSince ??= CampaignTime.Now;
+                    }
+
+                    // Detect new camp life decisions
+                    if (!_decisionsNewCampLife && currentCampLifeIds.Except(_decisionsPrevCampLifeIds).Any())
                     {
                         _decisionsNewCampLife = true;
                         _decisionsNewCampLifeSince ??= CampaignTime.Now;
@@ -3311,6 +3374,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 _decisionsSnapshotsInitialized = true;
                 _decisionsPrevQueuedIds = currentQueuedIds;
                 _decisionsPrevOpportunityIds = currentOpportunityIds;
+                _decisionsPrevTrainingIds = currentTrainingIds;
+                _decisionsPrevSocialIds = currentSocialIds;
+                _decisionsPrevCampLifeIds = currentCampLifeIds;
                 _decisionsPrevCampLifeEnabled = campLifeEnabledNow;
 
                 // Auto-clear markers after a while so they don't stick forever if the player ignores them.
@@ -3490,7 +3556,7 @@ namespace Enlisted.Features.Interface.Behaviors
             list.Add(new DecisionsMenuEntry
             {
                 Id = "header_training",
-                Text = "<span style=\"Link\">TRAINING</span>",
+                Text = "<span style=\"Link\">TRAINING</span>" + NewTag(_decisionsNewTraining),
                 IsEnabled = true,
                 LeaveType = GameMenuOption.LeaveType.OrderTroopsToAttack,
                 OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Training, a)
@@ -3505,7 +3571,7 @@ namespace Enlisted.Features.Interface.Behaviors
             list.Add(new DecisionsMenuEntry
             {
                 Id = "header_social",
-                Text = "<span style=\"Link\">SOCIAL</span>",
+                Text = "<span style=\"Link\">SOCIAL</span>" + NewTag(_decisionsNewSocial),
                 IsEnabled = true,
                 LeaveType = GameMenuOption.LeaveType.Conversation,
                 OnSelected = a => ToggleDecisionsSection(DecisionsMenuSection.Social, a)
@@ -4169,25 +4235,196 @@ namespace Enlisted.Features.Interface.Behaviors
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment?.IsEnlisted != true || enlistment.CompanyNeeds == null)
                 {
-                    return "Company status unavailable.";
+                    return new TextObject("{=company_status_unavailable}Company status unavailable.").ToString();
                 }
 
                 var needs = enlistment.CompanyNeeds;
+                var lord = enlistment.CurrentLord;
+                var party = lord?.PartyBelongedTo;
                 var sb = new StringBuilder();
 
-                sb.AppendLine($"Readiness:  {needs.Readiness}% ({needs.GetNeedStatus(CompanyNeed.Readiness)})");
-                sb.AppendLine($"Morale:     {needs.Morale}% ({needs.GetNeedStatus(CompanyNeed.Morale)})");
-                sb.AppendLine($"Supplies:   {needs.Supplies}% ({needs.GetNeedStatus(CompanyNeed.Supplies)})");
-                sb.AppendLine($"Equipment:  {needs.Equipment}% ({needs.GetNeedStatus(CompanyNeed.Equipment)})");
-                sb.AppendLine($"Rest:       {needs.Rest}% ({needs.GetNeedStatus(CompanyNeed.Rest)})");
+                // Determine current conditions for context
+                var isMarching = party is { IsMoving: true, CurrentSettlement: null };
+                var isInCombat = party?.MapEvent != null;
+                var isInSiege = party?.Party?.SiegeEvent != null;
+                var isInSettlement = party?.CurrentSettlement != null;
+                var isInArmy = party?.Army != null;
 
-                return sb.ToString();
+                // READINESS: Combat effectiveness and preparation
+                sb.AppendLine(BuildReadinessLine(needs.Readiness, isMarching, isInCombat, needs.Morale < 40));
+                
+                // MORALE: The unit's will to fight
+                sb.AppendLine(BuildMoraleLine(needs.Morale, enlistment, isInCombat, isInSiege));
+                
+                // SUPPLIES: Food and consumables
+                sb.AppendLine(BuildSuppliesLine(needs.Supplies, isMarching, isInSiege));
+                
+                // EQUIPMENT: Maintenance and gear quality
+                sb.AppendLine(BuildEquipmentLine(needs.Equipment, isInCombat, isMarching, party));
+                
+                // REST: Fatigue and recovery
+                sb.AppendLine(BuildRestLine(needs.Rest, isMarching, isInSettlement, isInArmy));
+
+                return sb.ToString().TrimEnd();
             }
             catch (Exception ex)
             {
                 ModLogger.Error("Interface", "Failed to build company status report", ex);
-                return "Company status unavailable.";
+                return new TextObject("{=company_status_unavailable}Company status unavailable.").ToString();
             }
+        }
+        
+        private static string BuildReadinessLine(int value, bool isMarching, bool isInCombat, bool lowMorale)
+        {
+            // Context: What's affecting readiness?
+            var context = "";
+            if (isInCombat)
+            {
+                context = new TextObject("{=status_readiness_combat} Battle drains our reserves.").ToString();
+            }
+            else if (isMarching && lowMorale)
+            {
+                context = new TextObject("{=status_readiness_march_morale} The long march and low spirits take their toll.").ToString();
+            }
+            else if (isMarching)
+            {
+                context = new TextObject("{=status_readiness_march} The march wears on the men.").ToString();
+            }
+            else if (lowMorale)
+            {
+                context = new TextObject("{=status_readiness_morale} Low morale saps the company's edge.").ToString();
+            }
+
+            // Status description by level
+            var status = value switch
+            {
+                >= 80 => new TextObject("{=status_readiness_excellent}READINESS: The company stands battle-ready, formations tight and weapons sharp.").ToString(),
+                >= 60 => new TextObject("{=status_readiness_good}READINESS: The company is prepared for action, though some drills have been skipped.").ToString(),
+                >= 40 => new TextObject("{=status_readiness_fair}READINESS: The company can fight, but coordination has slipped.").ToString(),
+                >= 20 => new TextObject("{=status_readiness_poor}READINESS: The company is disorganized. Officers bark orders to restore discipline.").ToString(),
+                _ => new TextObject("{=status_readiness_critical}READINESS: The company is a shambles. Men mill about confused, barely fit for battle.").ToString()
+            };
+
+            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+        }
+        
+        private static string BuildMoraleLine(int value, EnlistmentBehavior enlistment, bool isInCombat, bool isInSiege)
+        {
+            // Context: What's affecting morale?
+            var context = "";
+            var payTension = enlistment?.PayTension ?? 0;
+            
+            if (payTension >= 50)
+            {
+                context = new TextObject("{=status_morale_pay_high} Pay is long overdue and the men are angry.").ToString();
+            }
+            else if (payTension >= 25)
+            {
+                context = new TextObject("{=status_morale_pay_low} The men grumble about late wages.").ToString();
+            }
+            else if (isInSiege)
+            {
+                context = new TextObject("{=status_morale_siege} The tedium of siege weighs on everyone.").ToString();
+            }
+            else if (isInCombat)
+            {
+                context = new TextObject("{=status_morale_combat} Battle tests every man's courage.").ToString();
+            }
+
+            var status = value switch
+            {
+                >= 80 => new TextObject("{=status_morale_excellent}MORALE: Spirits are high. The men sing as they march and talk of glory.").ToString(),
+                >= 60 => new TextObject("{=status_morale_good}MORALE: The company's mood is steady. Complaints are few.").ToString(),
+                >= 40 => new TextObject("{=status_morale_fair}MORALE: The men are restless. Grumbling spreads around the cookfires.").ToString(),
+                >= 20 => new TextObject("{=status_morale_poor}MORALE: The company is unhappy. Fights break out and discipline slips.").ToString(),
+                _ => new TextObject("{=status_morale_critical}MORALE: The company is on the edge. Desertion whispers spread through camp.").ToString()
+            };
+
+            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+        }
+        
+        private static string BuildSuppliesLine(int value, bool isMarching, bool isInSiege)
+        {
+            // Context: What's affecting supplies?
+            var context = "";
+            if (isInSiege)
+            {
+                context = new TextObject("{=status_supplies_siege} Siege rations are stretched thin.").ToString();
+            }
+            else if (isMarching)
+            {
+                context = new TextObject("{=status_supplies_march} The march consumes provisions quickly.").ToString();
+            }
+
+            var status = value switch
+            {
+                >= 80 => new TextObject("{=status_supplies_excellent}SUPPLIES: The wagons are well-stocked. Food is plentiful and gear is available.").ToString(),
+                >= 60 => new TextObject("{=status_supplies_good}SUPPLIES: Adequate provisions remain. The quartermaster is not worried.").ToString(),
+                >= 40 => new TextObject("{=status_supplies_fair}SUPPLIES: Rations are tightening. The quartermaster counts every sack of grain.").ToString(),
+                >= 20 => new TextObject("{=status_supplies_poor}SUPPLIES: Food is scarce. Men go hungry and equipment cannot be replaced.").ToString(),
+                _ => new TextObject("{=status_supplies_critical}SUPPLIES: The company is starving. Men eye the pack horses with desperation.").ToString()
+            };
+
+            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+        }
+        
+        private static string BuildEquipmentLine(int value, bool isInCombat, bool isMarching, MobileParty party)
+        {
+            // Context: What's affecting equipment?
+            var context = "";
+            if (isInCombat)
+            {
+                context = new TextObject("{=status_equipment_combat} Battle wears hard on arms and armor.").ToString();
+            }
+            else if (isMarching)
+            {
+                // Check terrain for equipment wear context
+                var terrainType = Campaign.Current?.MapSceneWrapper?.GetFaceTerrainType(party?.CurrentNavigationFace ?? default);
+                if (terrainType == TerrainType.Mountain || terrainType == TerrainType.Desert)
+                {
+                    context = new TextObject("{=status_equipment_terrain} Rough terrain damages gear faster than usual.").ToString();
+                }
+            }
+
+            var status = value switch
+            {
+                >= 80 => new TextObject("{=status_equipment_excellent}EQUIPMENT: Weapons are sharp, armor polished. The armorer has little to do.").ToString(),
+                >= 60 => new TextObject("{=status_equipment_good}EQUIPMENT: Gear is serviceable. Minor repairs needed here and there.").ToString(),
+                >= 40 => new TextObject("{=status_equipment_fair}EQUIPMENT: The armorer works constantly. Notched blades and dented helms are common.").ToString(),
+                >= 20 => new TextObject("{=status_equipment_poor}EQUIPMENT: Gear is failing. Men fight with bent swords and cracked shields.").ToString(),
+                _ => new TextObject("{=status_equipment_critical}EQUIPMENT: The company is barely armed. Some men wrap rags around their hands for lack of gloves.").ToString()
+            };
+
+            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
+        }
+        
+        private static string BuildRestLine(int value, bool isMarching, bool isInSettlement, bool isInArmy)
+        {
+            // Context: What's affecting rest?
+            var context = "";
+            if (isMarching && isInArmy)
+            {
+                context = new TextObject("{=status_rest_army_march} Forced marches with the army leave no time for rest.").ToString();
+            }
+            else if (isMarching)
+            {
+                context = new TextObject("{=status_rest_march} Days on the road exhaust even the hardiest soldiers.").ToString();
+            }
+            else if (isInSettlement)
+            {
+                context = new TextObject("{=status_rest_settlement} The settlement offers a chance to recover.").ToString();
+            }
+
+            var status = value switch
+            {
+                >= 80 => new TextObject("{=status_rest_excellent}REST: The company is well-rested. Men wake refreshed and ready.").ToString(),
+                >= 60 => new TextObject("{=status_rest_good}REST: The company has had adequate rest. Some yawning, but nothing serious.").ToString(),
+                >= 40 => new TextObject("{=status_rest_fair}REST: Fatigue is setting in. Men doze on their feet during long halts.").ToString(),
+                >= 20 => new TextObject("{=status_rest_poor}REST: The company is exhausted. Tempers flare and mistakes multiply.").ToString(),
+                _ => new TextObject("{=status_rest_critical}REST: The company is dead on their feet. Men collapse during marches.").ToString()
+            };
+
+            return string.IsNullOrEmpty(context) ? status : $"{status}{context}";
         }
 
         private static string GetPersonalityTraits()

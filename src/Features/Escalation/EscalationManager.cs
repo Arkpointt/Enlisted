@@ -268,6 +268,64 @@ namespace Enlisted.Features.Escalation
                     // Validate onboarding state to handle old saves or corrupted data
                     _state.ValidateOnboardingState();
                 }
+
+                // Global event pacing state (prevents event spam across all automatic sources)
+                var lastAutoEvent = _state.LastAutoEventTime;
+                var autoEventsToday = _state.AutoEventsToday;
+                var autoEventDayNum = _state.AutoEventDayNumber;
+                var autoEventsWeek = _state.AutoEventsThisWeek;
+                var autoEventWeekNum = _state.AutoEventWeekNumber;
+                var isQuietDay = _state.IsQuietDay;
+
+                dataStore.SyncData("esc_lastAutoEvent", ref lastAutoEvent);
+                dataStore.SyncData("esc_autoEventsToday", ref autoEventsToday);
+                dataStore.SyncData("esc_autoEventDayNum", ref autoEventDayNum);
+                dataStore.SyncData("esc_autoEventsWeek", ref autoEventsWeek);
+                dataStore.SyncData("esc_autoEventWeekNum", ref autoEventWeekNum);
+                dataStore.SyncData("esc_isQuietDay", ref isQuietDay);
+
+                // Category cooldown map (tracks last fired time per category)
+                var categoryKeys = (_state.CategoryLastFired ?? Enumerable.Empty<System.Collections.Generic.KeyValuePair<string, CampaignTime>>())
+                    .Select(k => k.Key)
+                    .ToList();
+                var categoryCount = categoryKeys.Count;
+                dataStore.SyncData("esc_categoryCooldownCount", ref categoryCount);
+
+                if (dataStore.IsLoading)
+                {
+                    _state.LastAutoEventTime = lastAutoEvent;
+                    _state.AutoEventsToday = autoEventsToday;
+                    _state.AutoEventDayNumber = autoEventDayNum;
+                    _state.AutoEventsThisWeek = autoEventsWeek;
+                    _state.AutoEventWeekNumber = autoEventWeekNum;
+                    _state.IsQuietDay = isQuietDay;
+
+                    // Load category cooldown map
+                    _state.CategoryLastFired = new System.Collections.Generic.Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < categoryCount; i++)
+                    {
+                        var key = string.Empty;
+                        var time = CampaignTime.Zero;
+                        dataStore.SyncData($"esc_category_{i}_id", ref key);
+                        dataStore.SyncData($"esc_category_{i}_time", ref time);
+                        if (!string.IsNullOrWhiteSpace(key))
+                        {
+                            _state.CategoryLastFired[key] = time;
+                        }
+                    }
+                }
+                else
+                {
+                    // Save category cooldown map
+                    categoryKeys.Sort(StringComparer.OrdinalIgnoreCase);
+                    for (var i = 0; i < categoryKeys.Count; i++)
+                    {
+                        var key = categoryKeys[i];
+                        var time = _state.CategoryLastFired[key];
+                        dataStore.SyncData($"esc_category_{i}_id", ref key);
+                        dataStore.SyncData($"esc_category_{i}_time", ref time);
+                    }
+                }
             });
         }
 

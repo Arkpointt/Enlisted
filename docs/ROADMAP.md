@@ -46,7 +46,7 @@ Dynamic contextual dialogue system for the Quartermaster with full localization 
 - Exception handling that logs errors without breaking conversations
 - Compatible with .NET Framework 4.x (Bannerlord runtime)
 
-**Documentation:** See [Quartermaster Conversation Refactor](Features/Equipment/quartermaster-conversation-refactor.md) for complete details.
+**Documentation:** See [Quartermaster System](Features/Equipment/quartermaster-system.md) for complete system documentation.
 
 ---
 

@@ -89,7 +89,10 @@ This is an **Enlisted mod for Mount & Blade II: Bannerlord v1.3.11** that transf
 **Add new event/decision/order:**
 1. Add JSON definition to `ModuleData/Enlisted/Events/`
 2. Add XML localization to `ModuleData/Enlisted/Languages/`
-3. Update `Content/event-catalog-by-system.md`
+3. Use placeholder variables in text (e.g., `{PLAYER_NAME}`, `{SERGEANT}`, `{LORD_NAME}`)
+4. Update `Content/event-catalog-by-system.md`
+
+**Placeholder variables:** See [Event Catalog - Placeholder Variables](Content/event-catalog-by-system.md#placeholder-variables) for complete list
 
 **Check if feature exists:**
 1. Search INDEX.md for topic

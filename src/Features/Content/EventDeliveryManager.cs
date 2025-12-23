@@ -1807,29 +1807,40 @@ namespace Enlisted.Features.Content
                 var enlistment = EnlistmentBehavior.Instance;
                 if (enlistment == null) return;
 
-                // NCO name variables (replaces deprecated {LANCE_LEADER_SHORT})
-                // {SERGEANT} - Full NCO name with rank, e.g., "Sergeant Aldric"
-                // {NCO_NAME} - Same as {SERGEANT}
-                // {NCO_RANK} - Just the rank title, e.g., "Sergeant"
+                // NCO/Sergeant names
                 var ncoFullName = enlistment.NcoFullName ?? "the Sergeant";
                 var ncoRank = enlistment.NcoRank ?? "Sergeant";
                 textObject.SetTextVariable("SERGEANT", ncoFullName);
+                textObject.SetTextVariable("SERGEANT_NAME", ncoFullName);
                 textObject.SetTextVariable("NCO_NAME", ncoFullName);
                 textObject.SetTextVariable("NCO_RANK", ncoRank);
 
-                // Soldier name variable (replaces deprecated {LANCE_MATE_NAME})
-                // {COMRADE_NAME} - Random soldier from the pool, e.g., "Bjorn"
-                // {SOLDIER_NAME} - Same as {COMRADE_NAME}
+                // Soldier names for multi-character events
                 var soldierName = enlistment.GetRandomSoldierName();
+                var veteran1Name = enlistment.GetRandomSoldierName();
+                var veteran2Name = enlistment.GetRandomSoldierName();
+                var recruitName = enlistment.GetRandomSoldierName();
                 textObject.SetTextVariable("COMRADE_NAME", soldierName);
                 textObject.SetTextVariable("SOLDIER_NAME", soldierName);
+                textObject.SetTextVariable("VETERAN_1_NAME", veteran1Name);
+                textObject.SetTextVariable("VETERAN_2_NAME", veteran2Name);
+                textObject.SetTextVariable("RECRUIT_NAME", recruitName);
+                textObject.SetTextVariable("SECOND_SHORT", veteran1Name);
 
-                // Company name variable (replaces deprecated {LANCE_NAME})
-                // {COMPANY_NAME} - The lord's party name
+                // Officer names
+                textObject.SetTextVariable("OFFICER_NAME", ncoFullName);
+                textObject.SetTextVariable("CAPTAIN_NAME", "the Captain");
+                
+                // Naval crew names (for War Sails DLC events)
+                textObject.SetTextVariable("BOATSWAIN_NAME", "the Boatswain");
+                textObject.SetTextVariable("NAVIGATOR_NAME", "the Navigator");
+                textObject.SetTextVariable("FIELD_MEDIC_NAME", "the Field Medic");
+
+                // Company/Party info
                 var companyName = enlistment.EnlistedLord?.PartyBelongedTo?.Name?.ToString() ?? "the company";
                 textObject.SetTextVariable("COMPANY_NAME", companyName);
 
-                // Player info for personalized text
+                // Player info
                 if (Hero.MainHero != null)
                 {
                     textObject.SetTextVariable("PLAYER_NAME", Hero.MainHero.FirstName?.ToString() ?? "Soldier");
@@ -1839,8 +1850,68 @@ namespace Enlisted.Features.Content
                 // Lord info
                 if (enlistment.EnlistedLord != null)
                 {
-                    textObject.SetTextVariable("LORD_NAME", enlistment.EnlistedLord.Name?.ToString() ?? "the Lord");
-                    textObject.SetTextVariable("LORD_TITLE", enlistment.EnlistedLord.IsFemale ? "Lady" : "Lord");
+                    var lord = enlistment.EnlistedLord;
+                    textObject.SetTextVariable("LORD_NAME", lord.Name?.ToString() ?? "the Lord");
+                    textObject.SetTextVariable("LORD_TITLE", lord.IsFemale ? "Lady" : "Lord");
+                    
+                    // Faction and kingdom names
+                    if (lord.MapFaction != null)
+                    {
+                        textObject.SetTextVariable("FACTION_NAME", lord.MapFaction.Name?.ToString() ?? "the faction");
+                        
+                        if (lord.MapFaction.IsKingdomFaction && lord.MapFaction is Kingdom kingdom)
+                        {
+                            textObject.SetTextVariable("KINGDOM_NAME", kingdom.Name?.ToString() ?? "the kingdom");
+                        }
+                        else
+                        {
+                            textObject.SetTextVariable("KINGDOM_NAME", lord.MapFaction.Name?.ToString() ?? "the realm");
+                        }
+                    }
+                }
+
+                // Rank progression variables
+                var currentRank = RankHelper.GetCurrentRank(enlistment);
+                textObject.SetTextVariable("NEXT_RANK", "the next rank");
+                textObject.SetTextVariable("SECOND_RANK", currentRank);
+
+                // Location variables
+                var party = enlistment.EnlistedLord?.PartyBelongedTo;
+                if (party?.CurrentSettlement != null)
+                {
+                    textObject.SetTextVariable("SETTLEMENT_NAME", party.CurrentSettlement.Name?.ToString() ?? "the settlement");
+                }
+                else
+                {
+                    textObject.SetTextVariable("SETTLEMENT_NAME", "the settlement");
+                }
+
+                // Previous lord (for transfer events)
+                textObject.SetTextVariable("PREVIOUS_LORD", "your previous lord");
+                textObject.SetTextVariable("ALLIED_LORD", "an allied lord");
+
+                // Enemy faction info
+                textObject.SetTextVariable("ENEMY_FACTION_ADJECTIVE", "enemy");
+
+                // Medical event variables
+                textObject.SetTextVariable("CONDITION_TYPE", "illness");
+                textObject.SetTextVariable("CONDITION_LOCATION", "your arm");
+                textObject.SetTextVariable("COMPLICATION_NAME", "infection");
+                textObject.SetTextVariable("REMEDY_NAME", "medicine");
+
+                // Naval event variables (for War Sails DLC)
+                textObject.SetTextVariable("SHIP_NAME", companyName);
+                textObject.SetTextVariable("DESTINATION_PORT", "port");
+                textObject.SetTextVariable("DAYS_AT_SEA", "7");
+
+                // Troop count for command events
+                if (party != null)
+                {
+                    textObject.SetTextVariable("TROOP_COUNT", party.MemberRoster.TotalManCount.ToString());
+                }
+                else
+                {
+                    textObject.SetTextVariable("TROOP_COUNT", "20");
                 }
             }
             catch (Exception ex)

@@ -291,12 +291,23 @@ namespace Enlisted.Features.Content
         /// <summary>
         /// Attempts to deliver an incident for the specified context.
         /// Filters events by context, checks requirements, selects weighted, and queues for delivery.
+        /// Checks GlobalEventPacer limits to prevent event spam across all automatic sources.
         /// Returns true if an incident was successfully queued.
         /// </summary>
         private bool TryDeliverIncident(string context)
         {
             try
             {
+                // Use "map_incident" as the category for per-category cooldown tracking
+                const string category = "map_incident";
+
+                // Check global pacing limits (skip evaluation_hours since map incidents are context-triggered)
+                if (!GlobalEventPacer.CanFireAutoEvent($"map_incident_{context}", category, skipEvaluationHours: true, out var blockReason))
+                {
+                    ModLogger.Debug(LogCategory, $"Blocked by global pacing for {context}: {blockReason}");
+                    return false;
+                }
+
                 // Get all events for this context
                 var candidates = EventCatalog.GetEventsForContext(context).ToList();
 
@@ -335,6 +346,9 @@ namespace Enlisted.Features.Content
                 }
 
                 deliveryManager.QueueEvent(selected);
+
+                // Record in global pacer (tracks daily/weekly limits + category cooldown)
+                GlobalEventPacer.RecordAutoEvent(selected.Id, category);
 
                 // Record event fired for cooldown tracking
                 var escalationState = EscalationManager.Instance?.State;
@@ -386,7 +400,50 @@ namespace Enlisted.Features.Content
                 return false;
             }
 
+            // Check trigger conditions (flags, contexts, etc.)
+            if (!CheckTriggerConditions(evt))
+            {
+                return false;
+            }
+
             return true;
+        }
+
+        /// <summary>
+        /// Checks if all trigger conditions for an event are satisfied.
+        /// Validates flag requirements and other trigger-based conditions.
+        /// </summary>
+        private bool CheckTriggerConditions(EventDefinition evt)
+        {
+            if (evt.TriggersAll == null || evt.TriggersAll.Count == 0)
+            {
+                return true; // No trigger conditions = always eligible
+            }
+
+            // Check each trigger condition in the "all" array
+            foreach (var trigger in evt.TriggersAll)
+            {
+                if (string.IsNullOrWhiteSpace(trigger))
+                {
+                    continue;
+                }
+
+                // Skip generic conditions that are handled by other systems
+                if (trigger.Equals("is_enlisted", StringComparison.OrdinalIgnoreCase) ||
+                    trigger.Equals("LeavingBattle", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Already checked by map incident context
+                    continue;
+                }
+
+                // Check flag conditions and other trigger types
+                if (!EventRequirementChecker.CheckTriggerCondition(trigger))
+                {
+                    return false; // At least one condition failed
+                }
+            }
+
+            return true; // All conditions passed
         }
 
         /// <summary>

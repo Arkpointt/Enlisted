@@ -227,6 +227,7 @@
     <Compile Include="src\Features\Content\EventSelector.cs"/>
     <Compile Include="src\Features\Content\EventPacingManager.cs"/>
     <Compile Include="src\Features\Content\MapIncidentManager.cs"/>
+    <Compile Include="src\Features\Content\GlobalEventPacer.cs"/>
     <Compile Include="src\Features\Content\DecisionCatalog.cs"/>
     <Compile Include="src\Features\Content\DecisionManager.cs"/>
     <Compile Include="src\Features\Identity\TraitHelper.cs"/>

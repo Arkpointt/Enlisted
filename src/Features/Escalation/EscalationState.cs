@@ -80,6 +80,22 @@ namespace Enlisted.Features.Escalation
         // Pacing system: next window when an event can fire (set to random 3-5 days after last event).
         public CampaignTime NextNarrativeEventWindow { get; set; } = CampaignTime.Zero;
 
+        // Global event pacing: tracks events across ALL automatic sources (EventPacingManager + MapIncidentManager).
+        // These enforce the limits from decision_events.pacing config to prevent event spam.
+        public CampaignTime LastAutoEventTime { get; set; } = CampaignTime.Zero;
+        public int AutoEventsToday { get; set; } = 0;
+        public int AutoEventDayNumber { get; set; } = -1;
+        public int AutoEventsThisWeek { get; set; } = 0;
+        public int AutoEventWeekNumber { get; set; } = -1;
+
+        // Quiet day flag: if true, no automatic events fire today (rolled once per day).
+        public bool IsQuietDay { get; set; } = false;
+
+        // Per-category cooldown tracking (key = category name, value = last fired time).
+        // Used by GlobalEventPacer to enforce per_category_cooldown_days config.
+        public Dictionary<string, CampaignTime> CategoryLastFired { get; set; } =
+            new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+
         // Flag system: active flags and their expiration times.
         // Key: flag name, Value: expiration time (CampaignTime.Never for permanent).
         // Flags are temporary boolean states that gate access to decisions/events.
@@ -341,6 +357,21 @@ namespace Enlisted.Features.Escalation
             return OneTimeEventsFired.Contains(eventId);
         }
 
+        /// <summary>
+        /// Records that an event category was just fired, updating its last-fired timestamp.
+        /// Used by GlobalEventPacer for per-category cooldown tracking.
+        /// </summary>
+        public void RecordCategoryFired(string category)
+        {
+            if (string.IsNullOrEmpty(category))
+            {
+                return;
+            }
+
+            CategoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            CategoryLastFired[category] = CampaignTime.Now;
+        }
+
         public void ClampAll()
         {
             Scrutiny = Clamp(Scrutiny, ScrutinyMin, ScrutinyMax);
@@ -356,6 +387,7 @@ namespace Enlisted.Features.Escalation
             OneTimeEventsFired ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             ActiveFlags ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
             PendingChainEvents ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
+            CategoryLastFired ??= new Dictionary<string, CampaignTime>(StringComparer.OrdinalIgnoreCase);
         }
 
         private static int Clamp(int value, int min, int max)

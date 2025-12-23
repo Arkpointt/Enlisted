@@ -586,7 +586,9 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Heavy losses - somber tone
                 if (lostCount >= 10)
                 {
-                    return $"The company has paid dearly — {lostCount} souls lost since last muster.";
+                    var text = new TextObject("{=brief_casualties_heavy}The company has paid dearly — {COUNT} souls lost since last muster. The men speak in hushed tones and sleep comes hard.");
+                    text.SetTextVariable("COUNT", lostCount);
+                    return text.ToString();
                 }
                 
                 // Moderate losses with wounded
@@ -594,9 +596,14 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     if (woundedCount >= 10)
                     {
-                        return $"Hard fighting has cost us {lostCount} dead and left {woundedCount} wounded.";
+                        var text = new TextObject("{=brief_casualties_moderate_wounded}Hard fighting has cost us {DEAD} dead and left {WOUNDED} nursing wounds. The surgeons work through the night.");
+                        text.SetTextVariable("DEAD", lostCount);
+                        text.SetTextVariable("WOUNDED", woundedCount);
+                        return text.ToString();
                     }
-                    return $"We've lost {lostCount} good soldiers since the last muster.";
+                    var text2 = new TextObject("{=brief_casualties_moderate}We've lost {COUNT} good soldiers since the last muster. Their names are spoken at the evening fire.");
+                    text2.SetTextVariable("COUNT", lostCount);
+                    return text2.ToString();
                 }
 
                 // Some losses
@@ -604,13 +611,20 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     if (woundedCount >= 15)
                     {
-                        return $"The wounded fill the medical tents. {lostCount} didn't make it.";
+                        var text = new TextObject("{=brief_casualties_few_manywounded}The wounded fill the medical tents, groaning through the night. {COUNT} didn't make it.");
+                        text.SetTextVariable("COUNT", lostCount);
+                        return text.ToString();
                     }
                     if (woundedCount >= 5)
                     {
-                        return $"{lostCount} fallen, {woundedCount} wounded — the cost of the march.";
+                        var text = new TextObject("{=brief_casualties_few_somewounded}{DEAD} fallen, {WOUNDED} wounded — the cost of the march weighs on every man.");
+                        text.SetTextVariable("DEAD", lostCount);
+                        text.SetTextVariable("WOUNDED", woundedCount);
+                        return text.ToString();
                     }
-                    return $"{lostCount} soldiers have fallen since last muster.";
+                    var text2 = new TextObject("{=brief_casualties_few}{COUNT} soldiers have fallen since last muster.");
+                    text2.SetTextVariable("COUNT", lostCount);
+                    return text2.ToString();
                 }
 
                 // Single loss
@@ -618,23 +632,31 @@ namespace Enlisted.Features.Interface.Behaviors
                 {
                     if (woundedCount >= 10)
                     {
-                        return $"One soldier lost, {woundedCount} nursing wounds.";
+                        var text = new TextObject("{=brief_casualties_one_manywounded}One of ours didn't make it. {WOUNDED} others nurse their wounds and pray they're luckier.");
+                        text.SetTextVariable("WOUNDED", woundedCount);
+                        return text.ToString();
                     }
-                    return "One of ours didn't make it through.";
+                    return new TextObject("{=brief_casualties_one}One of ours didn't make it through. The lads are quiet today.").ToString();
                 }
 
                 // No deaths but significant wounded
                 if (woundedCount >= 20)
                 {
-                    return $"The surgeons are busy — {woundedCount} wounded in the company.";
+                    var text = new TextObject("{=brief_wounded_many}The surgeons are overwhelmed — {COUNT} wounded fill the medical tents, and the air reeks of blood and poultices.");
+                    text.SetTextVariable("COUNT", woundedCount);
+                    return text.ToString();
                 }
                 if (woundedCount >= 10)
                 {
-                    return $"{woundedCount} soldiers recovering from their wounds.";
+                    var text = new TextObject("{=brief_wounded_moderate}{COUNT} soldiers recovering from their wounds. The company marches slower for it.");
+                    text.SetTextVariable("COUNT", woundedCount);
+                    return text.ToString();
                 }
                 if (woundedCount >= 5)
                 {
-                    return $"A few wounded among us, {woundedCount} in all.";
+                    var text = new TextObject("{=brief_wounded_few}A handful of wounded among us — {COUNT} in all, patched up and carrying on.");
+                    text.SetTextVariable("COUNT", woundedCount);
+                    return text.ToString();
                 }
 
                 return string.Empty;
@@ -658,15 +680,15 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 if (supply < 30)
                 {
-                    return "The company is nearly out of supplies. Equipment changes are restricted.";
+                    return new TextObject("{=brief_supply_critical}The supply wagons are nearly empty. Men eye what remains with worry, and the quartermaster has locked the stores. Equipment requisitions are on hold until the next resupply.").ToString();
                 }
                 if (supply < 50)
                 {
-                    return "Supplies are running thin. The quartermaster looks worried.";
+                    return new TextObject("{=brief_supply_low}Supplies are running thin. Rations have been cut and the quartermaster counts every bolt and bandage with a furrowed brow.").ToString();
                 }
                 if (supply < 70)
                 {
-                    return "Supplies are holding, but careful management is needed.";
+                    return new TextObject("{=brief_supply_moderate}Supplies are adequate but dwindling. The men grumble about the portions, though there's enough for now.").ToString();
                 }
 
                 // Good supply levels don't need mention
@@ -707,19 +729,19 @@ namespace Enlisted.Features.Interface.Behaviors
                 // Dice/gambling aftermath
                 if (eventId.Contains("dice") || eventId.Contains("gambling") || eventId.Contains("wager"))
                 {
-                    return "The men still talk about your dice game.";
+                    return new TextObject("{=brief_event_dice}The men still talk about your dice game — coin changed hands, and some are richer for it.").ToString();
                 }
 
                 // Training aftermath
                 if (eventId.Contains("training") || eventId.Contains("drill") || eventId.Contains("practice"))
                 {
-                    return "Yesterday's training session left your arms sore, but your skills improved.";
+                    return new TextObject("{=brief_event_training}Yesterday's training session left your arms sore and your muscles aching, but your skills are sharper for it.").ToString();
                 }
 
                 // Hunt aftermath
                 if (eventId.Contains("hunt"))
                 {
-                    return "Fresh game from the hunt has improved everyone's mood.";
+                    return new TextObject("{=brief_event_hunt}Fresh game from the hunt sizzles over the cookfires. The men eat well tonight.").ToString();
                 }
 
                 // Loan aftermath
@@ -729,19 +751,19 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         return string.Empty; // Repayment doesn't need aftermath
                     }
-                    return "A comrade owes you a debt.";
+                    return new TextObject("{=brief_event_loan}A comrade owes you coin. He catches your eye across the camp and nods, remembering his debt.").ToString();
                 }
 
                 // Tavern aftermath
                 if (eventId.Contains("tavern") || eventId.Contains("drinking"))
                 {
-                    return "Last night's drinking still echoes in your head.";
+                    return new TextObject("{=brief_event_tavern}Last night's drinking still echoes in your head. The ale was strong, and the songs were louder.").ToString();
                 }
 
                 // Battle loot aftermath
                 if (eventId.Contains("loot") || eventId.Contains("battlefield"))
                 {
-                    return "The spoils of battle weigh on your thoughts.";
+                    return new TextObject("{=brief_event_loot}The spoils of battle weigh in your pack. Some men did well, others came away empty-handed.").ToString();
                 }
 
                 return string.Empty;
@@ -787,24 +809,26 @@ namespace Enlisted.Features.Interface.Behaviors
                     {
                         if (daysRemaining <= 1)
                         {
-                            lines.Add("A comrade promised to repay you today.");
+                            lines.Add(new TextObject("{=brief_pending_repay_due}A comrade promised to repay you today. You catch him avoiding your gaze across the camp.").ToString());
                         }
                         else
                         {
                             // Clamp to minimum 1 to avoid negative or zero display
                             var daysSince = Math.Max(1, currentDay - pending.CreatedDay);
-                            lines.Add($"A comrade owes you money. It's been {daysSince} days.");
+                            var text = new TextObject("{=brief_pending_repay_waiting}A comrade owes you coin. It's been {DAYS} days, and you're starting to wonder if he'll make good on it.");
+                            text.SetTextVariable("DAYS", daysSince);
+                            lines.Add(text.ToString());
                         }
                     }
                     // Gratitude pending
                     else if (chainId.Contains("gratitude") || chainId.Contains("thank") || chainId.Contains("favor"))
                     {
-                        lines.Add("Someone remembers your kindness.");
+                        lines.Add(new TextObject("{=brief_pending_gratitude}Someone in the company remembers your kindness. A favor owed, perhaps.").ToString());
                     }
                     // Revenge/grudge pending
                     else if (chainId.Contains("revenge") || chainId.Contains("grudge"))
                     {
-                        lines.Add("Someone holds a grudge against you.");
+                        lines.Add(new TextObject("{=brief_pending_grudge}You've made an enemy. Someone watches you with hard eyes when they think you're not looking.").ToString());
                     }
                     // Generic hint from the record
                     else if (!string.IsNullOrEmpty(pending.ContextHint))
@@ -841,31 +865,31 @@ namespace Enlisted.Features.Interface.Behaviors
 
                 if (state.HasFlag("has_helped_comrade") || state.HasFlag("helped_comrade"))
                 {
-                    lines.Add("You're known for helping your comrades.");
+                    lines.Add(new TextObject("{=brief_flag_helpful}Word has spread that you look out for your comrades. Men nod when you pass.").ToString());
                 }
                 if (state.HasFlag("dice_winner") || state.HasFlag("gambling_winner"))
                 {
-                    lines.Add("Your luck at dice is remembered.");
+                    lines.Add(new TextObject("{=brief_flag_lucky}Your luck at dice is remembered. Some men avoid gambling with you; others can't resist trying their fortune.").ToString());
                 }
                 if (state.HasFlag("shared_winnings") || state.HasFlag("generous"))
                 {
-                    lines.Add("The men appreciate your generosity.");
+                    lines.Add(new TextObject("{=brief_flag_generous}The men appreciate your generosity. When you have coin, you share it, and that's not forgotten.").ToString());
                 }
                 if (state.HasFlag("officer_attention") || state.HasFlag("noticed_by_officers"))
                 {
-                    lines.Add("Officers have taken notice of you lately.");
+                    lines.Add(new TextObject("{=brief_flag_noticed}Officers have taken notice of you lately. Whether that's good or bad remains to be seen.").ToString());
                 }
                 if (state.HasFlag("training_focused") || state.HasFlag("dedicated_training"))
                 {
-                    lines.Add("Your dedication to training has been noted.");
+                    lines.Add(new TextObject("{=brief_flag_training}Your dedication to training has been noted. The drill sergeant speaks well of your discipline.").ToString());
                 }
                 if (state.HasFlag("good_hunter") || state.HasFlag("skilled_hunter"))
                 {
-                    lines.Add("Your hunting skills are well regarded.");
+                    lines.Add(new TextObject("{=brief_flag_hunter}Your hunting skills are well regarded. When the company needs fresh meat, they look to you.").ToString());
                 }
                 if (state.HasFlag("drinks_with_soldiers") || state.HasFlag("tavern_regular"))
                 {
-                    lines.Add("The soldiers enjoy drinking with you.");
+                    lines.Add(new TextObject("{=brief_flag_drinker}You're known to drink with the common soldiers. They count you as one of their own.").ToString());
                 }
 
                 // Return one random context to avoid spam and add variety
@@ -2341,40 +2365,178 @@ namespace Enlisted.Features.Interface.Behaviors
                 var party = lord?.PartyBelongedTo;
                 if (party == null)
                 {
-                    return "No company details available.";
+                    return new TextObject("{=brief_company_none}No company details available.").ToString();
                 }
 
+                var lordName = lord.Name?.ToString() ?? new TextObject("{=brief_the_lord}the lord").ToString();
+                var partySize = party.MemberRoster?.TotalManCount ?? 0;
+                var sizeDescId = partySize switch
+                {
+                    < 30 => "{=brief_size_small}small",
+                    < 80 => "{=brief_size_sizeable}sizeable",
+                    < 150 => "{=brief_size_large}large",
+                    _ => "{=brief_size_formidable}formidable"
+                };
+                var sizeDesc = new TextObject(sizeDescId).ToString();
+
+                // Active battle
                 if (party.Party?.MapEvent != null)
                 {
-                    return "Engaged in battle.";
+                    var enemyLeader = party.Party.MapEvent.GetLeaderParty(
+                        party.Party.Side == BattleSideEnum.Attacker ? BattleSideEnum.Defender : BattleSideEnum.Attacker)?.LeaderHero?.Name?.ToString();
+                    if (!string.IsNullOrEmpty(enemyLeader))
+                    {
+                        var text = new TextObject("{=brief_battle_enemy}The company is locked in battle against the forces of {ENEMY}. Steel clashes and war cries fill the air.");
+                        text.SetTextVariable("ENEMY", enemyLeader);
+                        return text.ToString();
+                    }
+                    return new TextObject("{=brief_battle_generic}The company is engaged in battle. The clash of steel and shouts of men echo across the field.").ToString();
                 }
 
+                // Active siege
                 if (party.Party?.SiegeEvent != null)
                 {
-                    return "Committed to siege operations.";
+                    var siegeTarget = party.Party.SiegeEvent.BesiegedSettlement?.Name?.ToString();
+                    if (!string.IsNullOrEmpty(siegeTarget))
+                    {
+                        var isAttacker = party.Party.Side == BattleSideEnum.Attacker;
+                        if (isAttacker)
+                        {
+                            var text = new TextObject("{=brief_siege_attack}The siege of {SETTLEMENT} continues. Siege engines creak and groan as the engineers work through the night. The walls loom ahead, defiant.");
+                            text.SetTextVariable("SETTLEMENT", siegeTarget);
+                            return text.ToString();
+                        }
+                        var textDef = new TextObject("{=brief_siege_defend}The company holds {SETTLEMENT} against the besiegers. The enemy camps spread across the horizon, their fires burning through the night.");
+                        textDef.SetTextVariable("SETTLEMENT", siegeTarget);
+                        return textDef.ToString();
+                    }
+                    return new TextObject("{=brief_siege_generic}The company is committed to siege operations. The days blend together in a rhythm of labor and watchfulness.").ToString();
                 }
 
+                // In settlement
                 if (party.CurrentSettlement != null)
                 {
-                    return $"Camped at {party.CurrentSettlement.Name}.";
+                    var settlement = party.CurrentSettlement;
+                    var settlementName = settlement.Name?.ToString() ?? new TextObject("{=brief_the_settlement}the settlement").ToString();
+                    
+                    if (settlement.IsTown)
+                    {
+                        var text = new TextObject("{=brief_rest_town}The company rests at {SETTLEMENT}. The sounds of the town drift into camp — merchants hawking wares, the clatter of cart wheels, the murmur of townsfolk going about their business.");
+                        text.SetTextVariable("SETTLEMENT", settlementName);
+                        return text.ToString();
+                    }
+                    if (settlement.IsCastle)
+                    {
+                        var text = new TextObject("{=brief_rest_castle}The company is garrisoned at {SETTLEMENT}. The castle walls provide welcome shelter, and the men take the chance to rest properly for once.");
+                        text.SetTextVariable("SETTLEMENT", settlementName);
+                        return text.ToString();
+                    }
+                    if (settlement.IsVillage)
+                    {
+                        var text = new TextObject("{=brief_rest_village}The company has made camp near {SETTLEMENT}. Smoke rises from village hearths, and the smell of cooking fires reminds you of simpler times.");
+                        text.SetTextVariable("SETTLEMENT", settlementName);
+                        return text.ToString();
+                    }
+                    var textGeneric = new TextObject("{=brief_rest_generic}The company is camped at {SETTLEMENT}.");
+                    textGeneric.SetTextVariable("SETTLEMENT", settlementName);
+                    return textGeneric.ToString();
                 }
 
+                // Part of army
                 if (party.Army != null)
                 {
-                    var leader = party.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? "the army leader";
-                    return $"Marching with the army of {leader}.";
+                    var armyLeader = party.Army.LeaderParty?.LeaderHero?.Name?.ToString() ?? new TextObject("{=brief_the_marshal}the marshal").ToString();
+                    var armySize = party.Army.TotalManCount;
+                    var armySizeDescId = armySize switch
+                    {
+                        < 200 => "{=brief_army_gathered}The gathered host",
+                        < 500 => "{=brief_army_formidable}A formidable army",
+                        < 1000 => "{=brief_army_great}A great host",
+                        _ => "{=brief_army_mighty}A mighty army"
+                    };
+                    var armySizeDesc = new TextObject(armySizeDescId).ToString();
+                    
+                    var text = new TextObject("{=brief_march_army}{ARMY_DESC} marches under the banner of {LEADER}. {LORD}'s {SIZE} company moves with the column, one warband among many.");
+                    text.SetTextVariable("ARMY_DESC", armySizeDesc);
+                    text.SetTextVariable("LEADER", armyLeader);
+                    text.SetTextVariable("LORD", lordName);
+                    text.SetTextVariable("SIZE", sizeDesc);
+                    return text.ToString();
                 }
 
+                // Moving toward target
                 if (party.TargetSettlement != null)
                 {
-                    return $"Marching toward {party.TargetSettlement.Name}.";
+                    var target = party.TargetSettlement.Name?.ToString() ?? new TextObject("{=brief_destination}destination").ToString();
+                    var terrain = GetTerrainFlavor(party);
+                    var text = new TextObject("{=brief_march_target}The company marches toward {TARGET}. {TERRAIN}");
+                    text.SetTextVariable("TARGET", target);
+                    text.SetTextVariable("TERRAIN", terrain);
+                    return text.ToString();
                 }
 
-                return "On the march.";
+                // Default march
+                var defaultTerrain = GetTerrainFlavor(party);
+                var defaultText = new TextObject("{=brief_march_default}{LORD}'s {SIZE} company is on the move. {TERRAIN}");
+                defaultText.SetTextVariable("LORD", lordName);
+                defaultText.SetTextVariable("SIZE", sizeDesc);
+                defaultText.SetTextVariable("TERRAIN", defaultTerrain);
+                return defaultText.ToString();
             }
             catch
             {
-                return "On the march.";
+                return new TextObject("{=brief_company_fallback}The company marches onward.").ToString();
+            }
+        }
+        
+        // Provides flavor text based on terrain and time of day for march descriptions.
+        private static string GetTerrainFlavor(MobileParty party)
+        {
+            try
+            {
+                var hour = CampaignTime.Now.GetHourOfDay;
+                var isNight = hour < 6 || hour >= 20;
+                var isMorning = hour >= 6 && hour < 10;
+                var isEvening = hour >= 17 && hour < 20;
+                
+                // Get terrain type from party position if available
+                var terrainType = Campaign.Current?.MapSceneWrapper?.GetFaceTerrainType(party.CurrentNavigationFace);
+                
+                var terrainId = terrainType switch
+                {
+                    TerrainType.Mountain or TerrainType.Canyon => isNight
+                        ? "{=brief_terrain_mountain_night}The mountain passes are treacherous in the dark, and the column moves slowly."
+                        : "{=brief_terrain_mountain_day}Rocky slopes and narrow passes slow the advance, but the views stretch for leagues.",
+                    TerrainType.Forest => isNight
+                        ? "{=brief_terrain_forest_night}The forest grows dark and the men keep close, wary of what lurks between the trees."
+                        : "{=brief_terrain_forest_day}The shade of the trees offers respite from the sun, though the undergrowth slows the wagons.",
+                    TerrainType.Desert or TerrainType.Dune => isNight
+                        ? "{=brief_terrain_desert_night}The desert cools at night, and the column makes good time across the sands."
+                        : "{=brief_terrain_desert_day}Heat shimmers off the sand, and the men wrap their faces against the biting wind.",
+                    TerrainType.Steppe => isNight
+                        ? "{=brief_terrain_steppe_night}The endless steppe stretches dark beneath the stars, the grass whispering in the wind."
+                        : "{=brief_terrain_steppe_day}The open steppe allows swift travel, the column stretching across the grasslands.",
+                    TerrainType.Snow => 
+                        "{=brief_terrain_cold}The cold bites at exposed skin, and the men huddle in their cloaks as they march.",
+                    TerrainType.Bridge or TerrainType.Fording =>
+                        "{=brief_terrain_crossing}The crossing slows the column as men and wagons navigate the water.",
+                    TerrainType.Plain or TerrainType.Water or TerrainType.River or TerrainType.Lake => isNight
+                        ? "{=brief_terrain_plain_night}The column moves by torchlight, the road stretching dark ahead."
+                        : isMorning
+                            ? "{=brief_terrain_plain_morning}Morning mist rises from the fields as the column forms up for the day's march."
+                            : isEvening
+                                ? "{=brief_terrain_plain_evening}The sun sinks low, casting long shadows as the men look for a place to make camp."
+                                : "{=brief_terrain_plain_day}Dust rises from the road as boots and hooves churn the packed earth.",
+                    _ => isNight
+                        ? "{=brief_terrain_default_night}The column marches through the night, torches bobbing in the darkness."
+                        : "{=brief_terrain_default_day}The road stretches ahead, and the men settle into the rhythm of the march."
+                };
+                
+                return new TextObject(terrainId).ToString();
+            }
+            catch
+            {
+                return new TextObject("{=brief_terrain_fallback}The road stretches ahead.").ToString();
             }
         }
 
@@ -2518,16 +2680,71 @@ namespace Enlisted.Features.Interface.Behaviors
                 }
 
                 var kingdom = enlistment?.CurrentLord?.MapFaction as Kingdom;
-                if (kingdom?.Name != null)
+                if (kingdom == null)
                 {
-                    return $"The banners of {kingdom.Name} remain in the field.";
+                    return new TextObject("{=brief_realm_quiet}The realm is quiet, for now.").ToString();
                 }
+                
+                var kingdomName = kingdom.Name?.ToString() ?? new TextObject("{=brief_the_realm}the realm").ToString();
 
-                return "The realm is quiet, for now.";
+                // Check active wars for strategic context using FactionManager
+                var enemyKingdoms = Kingdom.All
+                    .Where(k => k != kingdom && FactionManager.IsAtWarAgainstFaction(kingdom, k))
+                    .ToList();
+                
+                var warCount = enemyKingdoms.Count;
+                
+                // Count active sieges in the realm (where kingdom is involved)
+                var activeSieges = Campaign.Current?.SiegeEventManager?.SiegeEvents?
+                    .Count(s => s.BesiegedSettlement?.MapFaction == kingdom || 
+                               s.BesiegerCamp?.LeaderParty?.MapFaction == kingdom) ?? 0;
+
+                // Multi-front war with sieges
+                if (warCount >= 2 && activeSieges > 0)
+                {
+                    var text = new TextObject("{=brief_realm_multifront}{KINGDOM} fights on multiple fronts. Siege engines stand ready, and the roads are thick with soldiers marching to war.");
+                    text.SetTextVariable("KINGDOM", kingdomName);
+                    return text.ToString();
+                }
+                
+                // Multiple wars, no active sieges
+                if (warCount >= 2)
+                {
+                    var text = new TextObject("{=brief_realm_manywars}{KINGDOM} is pressed on all sides. Lords ride hard between campaigns, and the levies are called up again and again.");
+                    text.SetTextVariable("KINGDOM", kingdomName);
+                    return text.ToString();
+                }
+                
+                // Single war with active siege
+                if (warCount == 1 && activeSieges > 0)
+                {
+                    var enemyKingdom = enemyKingdoms[0];
+                    var enemyName = enemyKingdom?.Name?.ToString() ?? new TextObject("{=brief_the_enemy}the enemy").ToString();
+                    
+                    var text = new TextObject("{=brief_realm_war_siege}The war with {ENEMY} grinds on. Castle walls are contested, and the outcome hangs in the balance.");
+                    text.SetTextVariable("ENEMY", enemyName);
+                    return text.ToString();
+                }
+                
+                // Single war, no siege
+                if (warCount == 1)
+                {
+                    var enemyKingdom = enemyKingdoms[0];
+                    var enemyName = enemyKingdom?.Name?.ToString() ?? new TextObject("{=brief_the_enemy}the enemy").ToString();
+                    
+                    var text = new TextObject("{=brief_realm_war}The banners of {KINGDOM} march against {ENEMY}. Scouts bring word of enemy movements, and the lords sharpen their blades.");
+                    text.SetTextVariable("KINGDOM", kingdomName);
+                    text.SetTextVariable("ENEMY", enemyName);
+                    return text.ToString();
+                }
+                
+                // Peace time
+                var text2 = new TextObject("{=brief_realm_peace}The realm is at peace, for now. Lords tend to their estates and the common folk go about their business, though every soldier knows it won't last.");
+                return text2.ToString();
             }
             catch
             {
-                return "The realm is quiet, for now.";
+                return new TextObject("{=brief_realm_fallback}The realm is quiet, for now.").ToString();
             }
         }
 

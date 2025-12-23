@@ -2,6 +2,7 @@ using System;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Escalation;
 using Enlisted.Features.Interface.Behaviors;
+using Enlisted.Mod.Core.Config;
 using Enlisted.Mod.Core.Logging;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.Core;
@@ -9,20 +10,21 @@ using TaleWorlds.Core;
 namespace Enlisted.Features.Content
 {
     /// <summary>
-    /// Controls the pacing of narrative events, firing them every 3-5 days.
+    /// Controls the pacing of narrative events using config-driven timing.
     /// Registers as a CampaignBehavior and uses the daily tick to check if it's time for a new event.
     /// When the window arrives, selects an event via EventSelector and queues it for delivery.
+    /// Coordinates with GlobalEventPacer to enforce max_per_day and min_hours_between limits.
+    /// All timing values are config-driven from enlisted_config.json → decision_events.pacing.
     /// </summary>
     public class EventPacingManager : CampaignBehaviorBase
     {
         private const string LogCategory = "EventPacing";
 
-        // Pacing constraints from the design spec
-        private const int MinDaysBetweenEvents = 3;
-        private const int MaxDaysBetweenEvents = 5;
-
         // Track the last day we ran the tick to avoid double-processing
         private int _lastTickDayNumber = -1;
+
+        // Cached config for pacing window
+        private static EventPacingConfig _cachedConfig;
 
         public static EventPacingManager Instance { get; private set; }
 
@@ -30,6 +32,8 @@ namespace Enlisted.Features.Content
         {
             Instance = this;
         }
+
+        private static EventPacingConfig Config => _cachedConfig ??= ConfigurationManager.LoadEventPacingConfig();
 
         public override void RegisterEvents()
         {
@@ -141,9 +145,20 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Attempts to select and fire a narrative event.
+        /// Checks GlobalEventPacer limits before firing to prevent event spam.
         /// </summary>
         private void TryFireEvent(EscalationState escalationState)
         {
+            // Use "narrative" as the category for per-category cooldown tracking
+            const string category = "narrative";
+
+            // Check global pacing limits (max_per_day, min_hours_between, evaluation_hours, category cooldown)
+            if (!GlobalEventPacer.CanFireAutoEvent("paced_narrative", category, out var blockReason))
+            {
+                ModLogger.Debug(LogCategory, $"Blocked by global pacing: {blockReason}");
+                return;
+            }
+
             var selectedEvent = EventSelector.SelectEvent();
 
             if (selectedEvent == null)
@@ -164,6 +179,9 @@ namespace Enlisted.Features.Content
 
             deliveryManager.QueueEvent(selectedEvent);
 
+            // Record in global pacer (tracks daily/weekly limits + category cooldown)
+            GlobalEventPacer.RecordAutoEvent(selectedEvent.Id, category);
+
             // Record that this event was fired for cooldown tracking
             escalationState.RecordEventFired(selectedEvent.Id);
             if (selectedEvent.Timing.OneTime)
@@ -179,15 +197,20 @@ namespace Enlisted.Features.Content
         }
 
         /// <summary>
-        /// Sets the next event window to a random number of days (3-5) from now.
+        /// Sets the next event window to a random number of days from now (config-driven).
+        /// Uses event_window_min_days and event_window_max_days from enlisted_config.json.
         /// </summary>
         private static void SetNextEventWindow(EscalationState escalationState)
         {
+            var config = Config;
+            var minDays = Math.Max(1, config.EventWindowMinDays);
+            var maxDays = Math.Max(minDays, config.EventWindowMaxDays);
+
             // Random days between min and max (inclusive)
-            var days = MBRandom.RandomInt(MinDaysBetweenEvents, MaxDaysBetweenEvents + 1);
+            var days = MBRandom.RandomInt(minDays, maxDays + 1);
             escalationState.NextNarrativeEventWindow = CampaignTime.DaysFromNow(days);
 
-            ModLogger.Debug(LogCategory, $"Next event window: {days} days from now");
+            ModLogger.Debug(LogCategory, $"Next event window: {days} days from now (config: {minDays}-{maxDays})");
         }
 
         /// <summary>

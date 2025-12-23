@@ -32,7 +32,7 @@
 
 **Phase 5 Sample Events**: 9 events created in schema v2 format with full XML localization for testing the content loading and localization system. Located in `ModuleData/Enlisted/Events/Role/scout_events.json`, `muster_events.json`, and `camp_events.json`. These demonstrate proper event structure, skill checks, trait XP, and reputation effects. See below for details.
 
-**Phase 6 Complete**: Intelligent selection algorithm implemented. Events now fire automatically every 3-5 days based on player role (2× weight for matching), context (1.5× weight for matching), and priority. Cooldowns prevent event spam. See `EventSelector.cs`, `EventRequirementChecker.cs`, and `EventPacingManager.cs`.
+**Phase 6 Complete**: Intelligent selection algorithm implemented. Events fire automatically every 3-5 days based on player role (2× weight for matching), context (1.5× weight for matching), and priority. Global pacing limits prevent spam: max 2 events per day, 8 per week, minimum 6 hours between any automatic events. Limits are config-driven (see `enlisted_config.json` → `decision_events.pacing`). See `EventSelector.cs`, `EventPacingManager.cs`, `MapIncidentManager.cs`, and `GlobalEventPacer.cs`.
 
 ---
 
@@ -565,9 +565,10 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 | Event Delivery | `EventDeliveryManager.cs` | ✅ UI popups, sub-choice popups, effect application |
 | Requirement Checking | `EventRequirementChecker.cs` | ✅ Tier/role/context/skills/traits/escalation/flags |
 | Weighted Selection | `EventSelector.cs` | ✅ Role 2×, context 1.5×, priority modifiers |
-| Pacing System | `EventPacingManager.cs` | ✅ 3-5 days between events, chain event scheduling |
-| Map Incidents | `MapIncidentManager.cs` | ✅ Battle/settlement/siege context events with cooldowns |
-| Cooldown Tracking | `EscalationState.cs` | ✅ Per-event + one-time event persistence + flags |
+| Pacing System | `EventPacingManager.cs` | ✅ 3-5 day windows for narrative events, chain event scheduling |
+| Map Incidents | `MapIncidentManager.cs` | ✅ Battle/settlement/siege context events |
+| Global Pacing | `GlobalEventPacer.cs` | ✅ Config-driven: max/day, max/week, min hours, eval hours, quiet days, category cooldowns |
+| Cooldown Tracking | `EscalationState.cs` | ✅ Per-event + one-time event persistence + flags + global counts |
 | Flag System | `EscalationState.cs` | ✅ ActiveFlags with duration, flag conditions |
 | Chain Events | `EscalationState.cs` | ✅ PendingChainEvents with delay scheduling |
 | Reward Choices | `EventDefinition.cs` | ✅ RewardChoices class, sub-option parsing |

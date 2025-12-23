@@ -249,6 +249,7 @@ namespace Enlisted.Features.Content
                 "lordreputation" or "lord_reputation" or "lordrep" => state.LordReputation,
                 "officerreputation" or "officer_reputation" or "officerrep" => state.OfficerReputation,
                 "medicalrisk" or "medical_risk" => state.MedicalRisk,
+                "pay_tension" or "paytension" or "pay_tension_min" => 0, // TODO: Add PayTension property to EscalationState if needed
                 _ => 0
             };
         }

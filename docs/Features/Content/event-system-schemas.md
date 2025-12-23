@@ -83,6 +83,131 @@
 
 ---
 
+## Triggers Object
+
+**CRITICAL:** The `triggers` object controls **when** an event can fire through flag checks and escalation thresholds. This is **separate from** the `requirements` object which controls player eligibility.
+
+⚠️ **Common Bug:** Events with `triggers` but missing validation will fire incorrectly. The system now validates all trigger conditions before event selection.
+
+```json
+{
+  "triggers": {
+    "all": ["is_enlisted", "has_flag:mutiny_joined"],
+    "any": [],
+    "none": ["has_flag:mutiny_failed"],
+    "time_of_day": ["night"],
+    "escalation_requirements": {
+      "pay_tension_min": 85,
+      "scrutiny": 5
+    }
+  }
+}
+```
+
+### Trigger Fields
+
+| Field | JSON Name | Type | Purpose |
+|-------|-----------|------|---------|
+| All Conditions | `all` | array | ALL must be true for event to fire |
+| Any Conditions | `any` | array | At least ONE must be true |
+| None Conditions | `none` | array | NONE can be true (blocking conditions) |
+| Time of Day | `time_of_day` | array | Time blocks when eligible |
+| Escalation Requirements | `escalation_requirements` | object | Minimum escalation track values |
+
+### Trigger Condition Strings
+
+**Flag Checks:**
+```json
+"all": [
+  "has_flag:mutiny_joined",        // Player has this flag
+  "flag:completed_onboarding"      // Same as has_flag:
+]
+```
+
+**Generic Conditions:**
+```json
+"all": [
+  "is_enlisted",                   // Player is currently enlisted
+  "LeavingBattle"                  // Map incident context (battle ended)
+]
+```
+
+**Time of Day:**
+```json
+"time_of_day": ["night", "evening"]  // Only fires during these times
+```
+
+### Escalation Requirements
+
+Minimum values for escalation tracks. Event only eligible when threshold reached:
+
+```json
+"escalation_requirements": {
+  "pay_tension_min": 85,           // Pay tension must be 85+
+  "scrutiny": 5,                   // Scrutiny must be 5+
+  "discipline": 3,                 // Discipline must be 3+
+  "medical_risk": 2                // Medical risk must be 2+
+}
+```
+
+**Supported Tracks:**
+- `pay_tension_min` / `pay_tension` - Pay tension (0-100)
+- `scrutiny` - Crime suspicion (0-10)
+- `discipline` - Rule-breaking record (0-10)
+- `medical_risk` / `medicalrisk` - Health status (0-5)
+- `soldierreputation` / `soldier_reputation` - Soldier rep threshold
+- `officerreputation` / `officer_reputation` - Officer rep threshold
+- `lordreputation` / `lord_reputation` - Lord rep threshold
+
+### Triggers vs Requirements
+
+| Object | Purpose | Validated By | When Checked |
+|--------|---------|--------------|--------------|
+| **triggers** | Controls when event CAN fire (context, flags, escalation) | EventSelector, MapIncidentManager | Before event enters selection pool |
+| **requirements** | Controls player eligibility (tier, role, skills) | EventRequirementChecker | During selection filtering |
+
+**Example: Mutiny Event**
+```json
+{
+  "triggers": {
+    "all": ["has_flag:mutiny_joined"],        // Only fires if joined mutiny
+    "escalation_requirements": {}
+  },
+  "requirements": {
+    "tier": { "min": 1, "max": 9 }            // Any tier can participate
+  }
+}
+```
+
+### Common Trigger Patterns
+
+**Flag-Gated Chain Events:**
+```json
+"triggers": {
+  "all": ["is_enlisted", "has_flag:event_completed"]
+}
+```
+
+**High Escalation Events:**
+```json
+"triggers": {
+  "all": ["is_enlisted"],
+  "escalation_requirements": {
+    "pay_tension_min": 85
+  }
+}
+```
+
+**Time-Specific Events:**
+```json
+"triggers": {
+  "all": ["is_enlisted"],
+  "time_of_day": ["night", "evening"]
+}
+```
+
+---
+
 ## Requirements Object
 
 All fields are optional. If omitted, no restriction applies.
@@ -147,6 +272,73 @@ Map incident contexts are used by `MapIncidentManager` to filter incidents based
 | Cooldown | `cooldown_days` or `cooldownDays` | int | 7 | Days before re-available |
 | Priority | `priority` | string | `"normal"` | low/normal/high/critical |
 | One-Time | `one_time` or `oneTime` | bool | false | Fire once per playthrough |
+
+---
+
+## Global Event Pacing (enlisted_config.json)
+
+**Location:** `enlisted_config.json` → `decision_events.pacing`
+
+All automatic event timing is config-driven. These limits apply across ALL automatic event sources (EventPacingManager + MapIncidentManager) to ensure players aren't overwhelmed with events.
+
+```json
+{
+  "decision_events": {
+    "pacing": {
+      "max_per_day": 2,
+      "max_per_week": 8,
+      "min_hours_between": 6,
+      "event_window_min_days": 3,
+      "event_window_max_days": 5,
+      "per_event_cooldown_days": 7,
+      "per_category_cooldown_days": 1,
+      "evaluation_hours": [8, 14, 20],
+      "allow_quiet_days": true,
+      "quiet_day_chance": 0.15
+    }
+  }
+}
+```
+
+### Pacing Fields
+
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `max_per_day` | int | 2 | Maximum automatic events per day across ALL systems |
+| `max_per_week` | int | 8 | Maximum automatic events per week |
+| `min_hours_between` | int | 6 | Minimum hours between any automatic events |
+| `event_window_min_days` | int | 3 | Minimum days between narrative event windows |
+| `event_window_max_days` | int | 5 | Maximum days between narrative event windows |
+| `per_event_cooldown_days` | int | 7 | Default cooldown before same event can fire again |
+| `per_category_cooldown_days` | int | 1 | Cooldown between events of same category (narrative vs map_incident) |
+| `evaluation_hours` | array | [8,14,20] | Campaign hours when narrative events can fire (map incidents skip this check) |
+| `allow_quiet_days` | bool | true | Whether random quiet days can occur |
+| `quiet_day_chance` | float | 0.15 | Chance of no automatic events on a given day (rolled once daily) |
+
+### How Pacing Works
+
+1. **EventPacingManager** checks if current time is within event window (every 3-5 days, config-driven)
+2. **MapIncidentManager** fires context incidents on battles, settlements, sieges
+3. **GlobalEventPacer** checks ALL limits before any automatic event fires:
+   - `evaluation_hours`: Is current hour in allowed list?
+   - `max_per_day` / `max_per_week`: Daily/weekly limits reached?
+   - `min_hours_between`: Enough time since last event?
+   - `per_category_cooldown_days`: Same category fired too recently?
+   - `quiet_day_chance`: Is today a quiet day? (rolled once when first event is attempted)
+4. Events blocked by any check wait until the condition clears
+
+### Categories
+
+| Category | Source | Evaluation Hours | Purpose |
+|----------|--------|------------------|---------|
+| `narrative` | EventPacingManager | ✅ Enforced | Paced narrative events (every 3-5 days) |
+| `map_incident` | MapIncidentManager | ❌ Skipped | Context-triggered incidents fire immediately |
+
+Map incidents skip `evaluation_hours` check because they're context-triggered (battle just ended, you entered a settlement). It would feel odd to delay the reaction.
+
+Per-category cooldown ensures you don't get a narrative event and a map incident back-to-back.
+
+**Player-selected decisions** (from Camp Hub menu) bypass all pacing since the player explicitly chose them.
 
 ---
 
@@ -356,9 +548,49 @@ Options with success/failure outcomes:
 
 ## Escalation Track Names
 
-For `requirements.minEscalation` and `effects`:
+For `requirements.minEscalation`, `triggers.escalation_requirements`, and `effects`:
 
-`Scrutiny`, `Discipline`, `MedicalRisk` (or `medical_risk`), `SoldierReputation`, `LordReputation`, `OfficerReputation`
+**Primary Tracks:**
+- `scrutiny` - Crime suspicion (0-10)
+- `discipline` - Rule-breaking record (0-10)
+- `medical_risk` / `medicalrisk` / `MedicalRisk` - Health status (0-5)
+- `pay_tension` / `pay_tension_min` / `paytension` - Pay tension (0-100)
+
+**Reputation Tracks:**
+- `soldierreputation` / `soldier_reputation` / `SoldierReputation` - Soldier rep (-50 to +50)
+- `officerreputation` / `officer_reputation` / `OfficerReputation` - Officer rep (0-100)
+- `lordreputation` / `lord_reputation` / `LordReputation` - Lord rep (0-100)
+
+**Note:** Parser accepts multiple naming variants (camelCase, snake_case, PascalCase) for compatibility.
+
+---
+
+## Text Placeholder Variables
+
+All text fields (`title`, `setup`, `text`, `resultText`, etc.) support placeholder variables that are replaced at runtime with actual game data.
+
+### Common Placeholders
+
+| Category | Variables | Notes |
+|----------|-----------|-------|
+| **Player** | `{PLAYER_NAME}`, `{PLAYER_RANK}` | Player's name and current rank |
+| **NCO/Officers** | `{SERGEANT}`, `{SERGEANT_NAME}`, `{NCO_NAME}`, `{OFFICER_NAME}`, `{CAPTAIN_NAME}` | NCO and officer references |
+| **Soldiers** | `{SOLDIER_NAME}`, `{COMRADE_NAME}`, `{VETERAN_1_NAME}`, `{VETERAN_2_NAME}`, `{RECRUIT_NAME}` | Fellow soldiers in your unit |
+| **Lord/Faction** | `{LORD_NAME}`, `{LORD_TITLE}`, `{FACTION_NAME}`, `{KINGDOM_NAME}` | Your enlisted lord and faction |
+| **Location** | `{SETTLEMENT_NAME}`, `{COMPANY_NAME}` | Current settlement and party name |
+| **Rank** | `{NEXT_RANK}`, `{SECOND_RANK}` | Rank progression context |
+
+**Example Usage:**
+
+```json
+{
+  "setup": "{SERGEANT} pulls you aside. 'Listen, {PLAYER_NAME}, we need someone to scout ahead. {LORD_NAME} wants intel on {SETTLEMENT_NAME} before we march.'",
+  "text": "Tell {SERGEANT_NAME} you'll do it.",
+  "resultText": "You report back to {SERGEANT}. The information proves valuable."
+}
+```
+
+All variables use fallback values if data is unavailable (e.g., "the Sergeant" if no NCO name is set). See [Event Catalog - Placeholder Variables](../../Content/event-catalog-by-system.md#placeholder-variables) for the complete list.
 
 ---
 
@@ -436,6 +668,9 @@ Before committing content:
 - [ ] HP changes use `hpChange`, not `hp`
 - [ ] All string IDs have matching entries in `enlisted_strings.xml`
 - [ ] Skill/trait names match valid values exactly (case-sensitive)
+- [ ] Flag-gated events use `triggers.all` with `has_flag:` conditions
+- [ ] Pay tension events use `triggers.escalation_requirements.pay_tension_min`
+- [ ] Escalation track names match supported values (case variants accepted)
 
 ---
 

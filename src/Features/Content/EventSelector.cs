@@ -117,11 +117,53 @@ namespace Enlisted.Features.Content
                     continue;
                 }
 
+                // Check trigger conditions (flags, contexts, etc.)
+                if (!CheckTriggerConditions(evt))
+                {
+                    continue;
+                }
+
                 candidates.Add(evt);
             }
 
             ModLogger.Debug(LogCategory, $"Filtered to {candidates.Count} eligible candidates from {allEvents.Count} total events");
             return candidates;
+        }
+
+        /// <summary>
+        /// Checks if all trigger conditions for an event are satisfied.
+        /// Validates flag requirements, context requirements, and other trigger-based conditions.
+        /// </summary>
+        private static bool CheckTriggerConditions(EventDefinition evt)
+        {
+            if (evt.TriggersAll == null || evt.TriggersAll.Count == 0)
+            {
+                return true; // No trigger conditions = always eligible
+            }
+
+            // Check each trigger condition in the "all" array
+            foreach (var trigger in evt.TriggersAll)
+            {
+                if (string.IsNullOrWhiteSpace(trigger))
+                {
+                    continue;
+                }
+
+                // Skip generic conditions that are handled by other systems
+                if (trigger.Equals("is_enlisted", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Already checked by event system context
+                    continue;
+                }
+
+                // Check flag conditions and other trigger types
+                if (!EventRequirementChecker.CheckTriggerCondition(trigger))
+                {
+                    return false; // At least one condition failed
+                }
+            }
+
+            return true; // All conditions passed
         }
 
         /// <summary>

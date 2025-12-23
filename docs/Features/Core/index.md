@@ -3,7 +3,7 @@
 **Summary:** Single entry point for all Enlisted mod documentation, providing organized access to core systems, gameplay features, UI documentation, and technical references. This index reflects the current state of the mod (v0.9.0) targeting Bannerlord v1.3.12.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-23  
 **Mod Version:** v0.9.0  
 **Game Target:** v1.3.12
 
@@ -43,7 +43,7 @@ About one hour after enlisting, you must stash or liquidate your personal gear t
 - Doc: **[Enlistment System](enlistment.md)** (Behavior section)
 
 ### 3) Receive Orders
-Instead of passive assignments, you receive explicit **Orders** from the chain of command every few days. Success builds your reputation; failure damages it.
+Instead of passive assignments, you receive explicit **Orders** from the chain of command every 3-5 days (config-driven). Success builds your reputation; failure damages it.
 - Doc: **[Core Gameplay](core-gameplay.md)** (Orders System section)
 
 ### 4) build Your Identity
@@ -54,11 +54,15 @@ Your role (Scout, Medic, Officer) emerges dynamically from your native skills an
 The unit's experience is now strategically aware. Your orders and events reflect the lord's actual campaign plans, whether you're in a "Grand Campaign" offensive or a "Winter Camp" rest period.
 - Doc: **[Core Gameplay](core-gameplay.md)** (Strategic Context section)
 
-### 6) Manage Company Needs
-The unit's effectiveness is tracked via five core needs: Readiness, Morale, Supplies, Equipment, and Rest. The system now predicts upcoming requirements based on strategic plans.
-- Doc: **[Camp Life Simulation](../Gameplay/camp-life-simulation.md)**
+### 6) Monitor Company Status
+The unit's effectiveness is tracked via five core needs: Readiness, Morale, Supplies, Equipment, and Rest. The **Company Status Report** provides immersive descriptions of each need with contextual explanations.
+- Doc: **[News & Reporting System](../UI/news-reporting-system.md)** (Company Status section)
 
-### 6) Visit the Quartermaster
+### 7) Read the Daily Brief
+Each day, the **Daily Brief** summarizes your company's situation, casualties, supply status, recent events, and kingdom news in immersive narrative form.
+- Doc: **[News & Reporting System](../UI/news-reporting-system.md)** (Daily Brief section)
+
+### 8) Visit the Quartermaster
 The Quartermaster is your primary contact for gear and provisions. Access is gated by your reputation and the unit's supply levels.
 - Doc: **[Quartermaster Hero System](quartermaster-hero-system.md)**
 
@@ -81,7 +85,8 @@ The foundational systems that enable the Enlisted experience.
 Enlisted uses the native Bannerlord Game Menu system for all interactions.
 
 - **[Native Menus](core-gameplay.md#native-game-menu-interface)** - Overview of the menu hub.
-- **[Reports & News](core-gameplay.md#native-game-menu-interface)** - Detailed feedback on unit status and player actions.
+- **[News & Reporting System](../UI/news-reporting-system.md)** - Immersive narrative feedback: Daily Brief, Company Status, and kingdom news.
+- **[UI Systems Master](../UI/ui-systems-master.md)** - Technical reference for all UI components.
 
 ---
 

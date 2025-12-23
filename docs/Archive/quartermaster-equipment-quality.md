@@ -1,10 +1,13 @@
 # Quartermaster Equipment & Supply System
 
-**Summary:** This specification describes how company supply levels and unit reputation affect equipment access, pricing, and the Officers Armory. It covers baggage checks, quartermaster pricing/buyback, supply gates, premium gear access, and discharge gear return mechanics.
+**Summary:** Original design specification for equipment quality system, supply gating, and Officers Armory. Content has been integrated into the main quartermaster documentation.
 
-**Status:** ✅ Complete  
-**Last Updated:** 2025-12-22 (Phase 5: UI enhancements with tooltips and upgrade indicators)  
-**Related Docs:** [Quartermaster System](quartermaster-system.md), [Quartermaster Conversation Refactor](quartermaster-conversation-refactor.md)
+**Status:** 📦 ARCHIVED - Superseded by [Quartermaster System](quartermaster-system.md)  
+**Last Updated:** 2025-12-22  
+**Related Docs:** [Quartermaster System](quartermaster-system.md) ← **Primary Reference**
+
+> **⚠️ ARCHIVED DOCUMENT**  
+> This was the original design spec. All content has been integrated into **[Quartermaster System](quartermaster-system.md)**, which is now the authoritative reference.
 
 ---
 

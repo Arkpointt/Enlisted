@@ -203,6 +203,31 @@ namespace Enlisted.Mod.Core.Config
             }
         }
 
+        /// <summary>
+        /// Load event pacing configuration from decision_events.pacing section.
+        /// These settings control global limits across all automatic event sources.
+        /// </summary>
+        public static EventPacingConfig LoadEventPacingConfig()
+        {
+            try
+            {
+                var path = Path.Combine(ModuleDataPath, "enlisted_config.json");
+                if (!File.Exists(path))
+                {
+                    return new EventPacingConfig();
+                }
+
+                var json = File.ReadAllText(path);
+                var config = DeserializeSnakeCase<EnlistedConfigRoot>(json);
+                return config?.DecisionEvents?.Pacing ?? new EventPacingConfig();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to load event pacing config", ex);
+                return new EventPacingConfig();
+            }
+        }
+
         public static int GetDailyBaseXp()
         {
             return Math.Max(0, LoadProgressionConfig()?.XpSources?.DailyBase ?? 25);
@@ -393,6 +418,7 @@ namespace Enlisted.Mod.Core.Config
             public FinanceConfig Finance { get; set; }
             public CampLifeConfig CampLife { get; set; }
             public PlayerConditionsConfig PlayerConditions { get; set; }
+            public DecisionEventsConfig DecisionEvents { get; set; }
         }
 
         private sealed class ProgressionConfigFile
@@ -538,6 +564,44 @@ namespace Enlisted.Mod.Core.Config
         public float QuartermasterBuybackTense { get; set; } = 0.95f;
         public float QuartermasterBuybackSour { get; set; } = 0.85f;
         public float QuartermasterBuybackPredatory { get; set; } = 0.75f;
+    }
+
+    /// <summary>
+    /// Decision events system configuration including pacing limits.
+    /// Controls how often automatic events can fire to prevent spam.
+    /// </summary>
+    public sealed class DecisionEventsConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public string EventsFolder { get; set; } = "Events";
+        public EventPacingConfig Pacing { get; set; } = new EventPacingConfig();
+    }
+
+    /// <summary>
+    /// Global event pacing limits from enlisted_config.json.
+    /// These limits apply across ALL automatic event sources (paced events + map incidents).
+    /// </summary>
+    public sealed class EventPacingConfig
+    {
+        // Global limits across all automatic events
+        public int MaxPerDay { get; set; } = 2;
+        public int MaxPerWeek { get; set; } = 8;
+        public int MinHoursBetween { get; set; } = 6;
+
+        // Narrative event pacing window (EventPacingManager fires events within this range)
+        public int EventWindowMinDays { get; set; } = 3;
+        public int EventWindowMaxDays { get; set; } = 5;
+
+        // Per-event and per-category cooldowns
+        public int PerEventCooldownDays { get; set; } = 7;
+        public int PerCategoryCooldownDays { get; set; } = 1;
+
+        // Specific hours when events can be evaluated (e.g., morning, afternoon, evening)
+        public List<int> EvaluationHours { get; set; } = new List<int> { 8, 14, 20 };
+
+        // Quiet day system - random chance to skip events entirely for immersion
+        public bool AllowQuietDays { get; set; } = true;
+        public float QuietDayChance { get; set; } = 0.15f;
     }
 
     /// <summary>

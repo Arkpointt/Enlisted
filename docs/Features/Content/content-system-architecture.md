@@ -129,10 +129,51 @@ Content System
 ├── EventCatalog         (JSON loader, content registry)
 ├── EventDeliveryManager (Pipeline, effects, feedback)
 ├── EventRequirementChecker (Validation, gating)
+├── EventSelector        (Weighted event selection)
+├── EventPacingManager   (3-5 day paced narrative events)
+├── MapIncidentManager   (Context-based incidents: battles, settlements)
+├── GlobalEventPacer     (Enforces max_per_day, min_hours_between limits)
 ├── DecisionCatalog      (Decision-specific loading)
-├── OrderCatalog         (Order-specific loading)
-└── MapIncidentManager   (Native integration)
+└── OrderCatalog         (Order-specific loading)
 ```
+
+### Global Event Pacing
+
+All automatic events are coordinated through `GlobalEventPacer` to prevent spam. **All timing is config-driven** from `enlisted_config.json` → `decision_events.pacing`.
+
+```
+                    ┌─────────────────────────────────────────────────┐
+                    │              GlobalEventPacer                   │
+                    │  Enforces (all config-driven):                  │
+                    │    • max_per_day / max_per_week                 │
+                    │    • min_hours_between                          │
+                    │    • evaluation_hours (narrative only)          │
+                    │    • per_category_cooldown_days                 │
+                    │    • quiet_day_chance (random skip)             │
+                    └──────────────────────┬──────────────────────────┘
+                                           │
+              ┌────────────────────────────┼────────────────────────────┐
+              │                            │                            │
+     EventPacingManager           MapIncidentManager            (Chain Events)
+    category: "narrative"       category: "map_incident"         (immediate)
+    (event_window_min/max)       (skips evaluation_hours)
+    (follows eval hours)
+              │                            │                            │
+              └────────────────────────────┼────────────────────────────┘
+                                           │
+                                           ▼
+                               EventDeliveryManager
+                                 (queues and shows)
+```
+
+**Config Location:** `enlisted_config.json` → `decision_events.pacing`
+
+**What's NOT gated:**
+- Player-selected decisions (Camp Hub menu) - player chose to see it
+- Chain events from previous choices - immediate follow-up
+- Debug/test event triggers
+
+See [Event System Schemas - Global Event Pacing](event-system-schemas.md#global-event-pacing-enlisted_configjson) for full config reference.
 
 ### Data Flow
 
@@ -566,6 +607,29 @@ var title = new TextObject("{=evt_example_title}Example Event");
 // (useful during development)
 ```
 
+### Placeholder Variables
+
+All text fields (titles, descriptions, option text, result text) support placeholder variables that are dynamically replaced at runtime with game data:
+
+```json
+{
+  "setup": "{SERGEANT} pulls you aside. 'Listen, {PLAYER_NAME}, we need someone to scout ahead.'",
+  "text": "Tell {SERGEANT_NAME} you'll do it.",
+  "resultText": "You report back. {LORD_NAME} seems pleased with the intel."
+}
+```
+
+**Common Variables:**
+- Player: `{PLAYER_NAME}`, `{PLAYER_RANK}`
+- NCO/Officers: `{SERGEANT}`, `{OFFICER_NAME}`, `{CAPTAIN_NAME}`
+- Soldiers: `{SOLDIER_NAME}`, `{VETERAN_1_NAME}`, `{RECRUIT_NAME}`
+- Lord/Faction: `{LORD_NAME}`, `{FACTION_NAME}`, `{KINGDOM_NAME}`
+- Location: `{SETTLEMENT_NAME}`, `{COMPANY_NAME}`
+
+All variables automatically fall back to reasonable defaults if data is unavailable (e.g., "the Sergeant" if no NCO assigned). This ensures events work in all game states.
+
+**See:** [Event Catalog - Placeholder Variables](../../Content/event-catalog-by-system.md#placeholder-variables) for complete list.
+
 ### Fallback Strategy
 
 JSON files include fallback text for development:
@@ -592,7 +656,9 @@ JSON files include fallback text for development:
 | `src/Features/Content/EventDeliveryManager.cs` | Delivery pipeline, effects |
 | `src/Features/Content/EventRequirementChecker.cs` | Requirement validation |
 | `src/Features/Content/EventDefinition.cs` | Content data structures |
+| `src/Features/Content/EventPacingManager.cs` | 3-5 day narrative event pacing |
 | `src/Features/Content/MapIncidentManager.cs` | Map incident triggers and delivery |
+| `src/Features/Content/GlobalEventPacer.cs` | Global pacing limits across all auto events |
 
 ### Subsystems
 

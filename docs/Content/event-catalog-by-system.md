@@ -44,12 +44,21 @@
 
 | Type | Trigger | Player Control | Frequency |
 |------|---------|----------------|-----------|
-| **Orders** | System-assigned | Accept/Decline | Every 3-5 days |
+| **Orders** | System-assigned | Accept/Decline | Every 3-5 days (config) |
 | **Decisions** | Player-initiated | Full control | Always available |
-| **Events** | Context/state thresholds | Respond | 0-1 per day |
+| **Events** | Context/state thresholds | Respond | 0-1 per day (config) |
 | **Map Incidents** | Map actions (battle, settlement) | Respond | On trigger |
 
-**Total meaningful activity**: Something every 3-5 days. Quiet days are intentional.
+**Global pacing limits** (all config-driven via `enlisted_config.json` → `decision_events.pacing`):
+- **Event window:** Orders/Events fire every 3-5 days (`event_window_min_days`, `event_window_max_days`)
+- **Daily/weekly limits:** Max 2 automatic events per day, 8 per week (`max_per_day`, `max_per_week`)
+- **Minimum spacing:** 6 hours between any automatic events (`min_hours_between`)
+- **Evaluation hours:** Orders/Events only fire at hours 8, 14, 20 by default (`evaluation_hours`)
+- **Map incidents:** Fire immediately when triggered (ignore evaluation hours)
+- **Quiet days:** 15% chance of no events on a given day (`quiet_day_chance`)
+- **Category cooldowns:** 1 day between narrative and map incident (`per_category_cooldown_days`)
+
+**What bypasses pacing:** Player-initiated decisions (Camp Hub menu) and chain events from previous choices.
 
 ---
 
@@ -1010,11 +1019,79 @@ DECISIONS:
 
 ## Placeholder Variables
 
-Use in event text:
-- `{PLAYER_NAME}`, `{PLAYER_RANK}`, `{PLAYER_ROLE}`
-- `{LORD_NAME}`, `{LORD_TITLE}`, `{LORD_FACTION}`
-- `{SERGEANT_NAME}`, `{CAPTAIN_NAME}`
-- `{SETTLEMENT_NAME}`, `{FACTION_NAME}`
+All text in events, orders, and decisions can use placeholder variables that are replaced at runtime with actual game data.
+
+### Player & Identity
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{PLAYER_NAME}` | Player's first name | "Aldric" |
+| `{PLAYER_RANK}` | Current enlisted rank | "Veteran Soldier" |
+
+### NCO & Officers
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{SERGEANT}` | NCO full name with rank | "Sergeant Bjorn" |
+| `{SERGEANT_NAME}` | Same as {SERGEANT} | "Sergeant Bjorn" |
+| `{NCO_NAME}` | Same as {SERGEANT} | "Sergeant Bjorn" |
+| `{NCO_RANK}` | NCO rank title only | "Sergeant" |
+| `{OFFICER_NAME}` | Generic officer reference | "Sergeant Bjorn" |
+| `{CAPTAIN_NAME}` | Captain reference | "the Captain" |
+
+### Fellow Soldiers
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{COMRADE_NAME}` | Random soldier name | "Erik" |
+| `{SOLDIER_NAME}` | Same as {COMRADE_NAME} | "Erik" |
+| `{VETERAN_1_NAME}` | Veteran soldier (ringleaders, experienced) | "Magnus" |
+| `{VETERAN_2_NAME}` | Second veteran soldier | "Olaf" |
+| `{RECRUIT_NAME}` | New recruit name | "Young Tomas" |
+| `{SECOND_SHORT}` | Another soldier name | "Sven" |
+
+### Naval Crew (War Sails DLC)
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{BOATSWAIN_NAME}` | Ship's boatswain | "the Boatswain" |
+| `{NAVIGATOR_NAME}` | Ship's navigator | "the Navigator" |
+| `{FIELD_MEDIC_NAME}` | Medical specialist | "the Field Medic" |
+| `{SHIP_NAME}` | Ship name | "Sea Wolf" |
+| `{DESTINATION_PORT}` | Destination port | "port" |
+| `{DAYS_AT_SEA}` | Days at sea | "7" |
+
+### Lord & Faction
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{LORD_NAME}` | Enlisted lord's name | "Derthert" |
+| `{LORD_TITLE}` | Lord or Lady | "Lord" |
+| `{PREVIOUS_LORD}` | Previous lord (transfer events) | "your previous lord" |
+| `{ALLIED_LORD}` | Allied lord reference | "an allied lord" |
+| `{FACTION_NAME}` | Your faction's name | "Vlandia" |
+| `{KINGDOM_NAME}` | Kingdom name | "Kingdom of Vlandia" |
+| `{ENEMY_FACTION_ADJECTIVE}` | Enemy descriptor | "enemy" |
+
+### Location & Party
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{SETTLEMENT_NAME}` | Current settlement | "Sargot" |
+| `{COMPANY_NAME}` | Your party name | "Derthert's Retinue" |
+| `{TROOP_COUNT}` | Total troop count | "87" |
+
+### Rank Progression
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{NEXT_RANK}` | Next rank in progression | "the next rank" |
+| `{SECOND_RANK}` | Current rank (variant) | "Veteran Soldier" |
+
+### Medical Events
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `{CONDITION_TYPE}` | Type of illness/injury | "illness" |
+| `{CONDITION_LOCATION}` | Body part affected | "your arm" |
+| `{COMPLICATION_NAME}` | Medical complication | "infection" |
+| `{REMEDY_NAME}` | Treatment/medicine | "medicine" |
+
+### Usage Notes
+
+These variables are automatically populated when events are displayed. Character names are generated from culture-appropriate name pools based on your enlisted lord's faction. If a variable can't be resolved (e.g., no settlement nearby), it uses a reasonable fallback like "the settlement" or "the Captain".
 
 ---
 

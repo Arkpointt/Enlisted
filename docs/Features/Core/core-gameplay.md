@@ -3,7 +3,7 @@
 **Summary:** Comprehensive overview of the Enlisted mod's core gameplay loop covering enlistment, orders from chain of command, emergent identity through traits and reputation, and the native game menu interface. This is the main entry point for understanding how all systems fit together in the enlisted soldier experience.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-23  
 **Related Docs:** [Enlistment](enlistment.md), [Orders System](../Content/content-system-architecture.md), [Identity System](../Identity/identity-system.md)
 
 ---
@@ -77,11 +77,13 @@ Enlisted turns Bannerlord into a “soldier career” loop:
 
 Replaces the legacy passive duties system with explicit, mission-driven tasks.
 
--   **Frequency**: Orders are issued every ~3 days (adjusted by rank and campaign tempo).
+-   **Frequency**: Orders are issued every 3-5 days by default (config-driven via `enlisted_config.json` → `decision_events.pacing.event_window_min_days` and `event_window_max_days`).
 -   **Chain of Command**: Your rank determines who issues the order (e.g., T1-T2 get orders from a Sergeant; T7+ receive strategic orders from the Lord).
 -   **Requirements**: Orders are filtered by your current Rank, Skills, and Traits.
 -   **Outcomes**: Success or failure impacts **Reputation**, **Company Needs**, and grants **Skill/Trait XP**.
 -   **Discharge Risk**: Repeatedly declining orders (5+ times) triggers a risk of dishonorable discharge.
+
+**Note:** Orders follow the same pacing system as narrative events. See [Event System Schemas](../Content/event-system-schemas.md#global-event-pacing-enlisted_configjson) for full pacing config details.
 
 ---
 
@@ -107,9 +109,16 @@ We track three distinct reputation values (-50 to +100):
 All interactions occur through the **Enlisted Status** menu hub:
 -   **Enlisted Status**: View rank, active orders, and report summaries.
 -   **Camp Submenu**: Perform activities like Rest, Train, or Equipment Checks.
--   **Reports Submenu**: Access the Daily Brief, Service Record, and Company Status.
+-   **Reports Submenu**: Access the Daily Brief, Service Record, and Company Status (all with immersive RP narrative).
 -   **Decisions Submenu**: Handle pending event choices.
 -   **Status Submenu**: Detailed view of reputation, traits, and role.
+
+### Daily Brief & Reports
+The **Daily Brief** (accessed via Reports menu) provides an immersive narrative summary of your company's status, combining company situation, casualties, supply status, recent events, player condition, and kingdom news into a flowing paragraph.
+
+The **Company Status Report** displays the five company needs (Readiness, Morale, Supplies, Equipment, Rest) with narrative descriptions and contextual explanations for what's affecting each stat.
+
+**For complete details**, see: **[News & Reporting System](../UI/news-reporting-system.md)**
 
 ---
 
@@ -121,6 +130,12 @@ The company's effectiveness is tracked via five core needs:
 -   **Supplies**: Food and basic consumables.
 -   **Equipment**: Maintenance and quality of gear.
 -   **Rest**: Recovery from fatigue.
+
+### Status Reporting
+Company Needs are displayed in the **Reports → Company Status** menu with immersive, context-aware descriptions that explain what's affecting each stat:
+- **Descriptive states** instead of raw percentages (e.g., "The company is battle-ready, formations tight and weapons sharp" vs "85%")
+- **Contextual factors** explaining why stats are changing (late pay affecting morale, long marches draining rest, combat degrading equipment)
+- **5 severity levels** per need: Excellent → Good → Fair → Poor → Critical
 
 ### Needs Prediction
 The mod forecasts upcoming needs based on the current **Strategic Context**. For example, a "Grand Campaign" (coordinated offensive) predicts high Readiness and Supply requirements, while a "Winter Camp" prioritizes Rest and Morale. This allows players to prepare for upcoming operations.

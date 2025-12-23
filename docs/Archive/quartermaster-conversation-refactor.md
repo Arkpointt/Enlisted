@@ -1,11 +1,14 @@
 # Quartermaster Conversation Refactor
 
-**Summary:** Replace the GameMenu-based quartermaster submenu system with a conversation-driven interface. The text-based GameMenu is deleted; conversation drives access to the visual Gauntlet equipment browser. New features include equipment quality modifiers, an upgrade system, and dynamic contextual dialogue based on supply levels, reputation, archetype, and mood.
+**Summary:** Technical implementation specification for the quartermaster conversation system refactor. This document contains detailed phase tracking, edge cases, XML string references, and API patterns used during development.
 
-**Status:** ✅ COMPLETE (Phases 1-6 + Edge Case Fixes + Quality Improvements)  
+**Status:** 📦 ARCHIVED - Implementation Complete (2025-12-23)  
 **Created:** 2025-12-22  
-**Updated:** 2025-12-23 (Phase 6: Supply Inquiry & Contextual Responses complete; archetype-specific dialogue, reputation-aware tone, and strategic context awareness added)
-**Related Docs:** [Quartermaster System](quartermaster-system.md), [Quartermaster Hero System](../Core/quartermaster-hero-system.md)
+**Updated:** 2025-12-23  
+**Related Docs:** [Quartermaster System](quartermaster-system.md) ← **Primary Reference**
+
+> **⚠️ ARCHIVED DOCUMENT**  
+> This technical spec was used during development and is preserved for historical reference. For current system documentation, see **[Quartermaster System](quartermaster-system.md)**.
 
 ---
 

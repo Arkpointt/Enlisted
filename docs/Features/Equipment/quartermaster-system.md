@@ -3,13 +3,11 @@
 **Summary:** The Quartermaster manages all military logistics for the player's company including equipment purchases with quality modifiers, provisions/rations, buyback services, baggage inspections, and the Officers Armory. The system uses company supply levels to gate access, and quartermaster reputation to determine pricing, equipment quality, food quality, and enforcement strictness.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-23 (Phase 6: Contextual dialogue complete - XML localization, edge case hardening)  
-**Related Docs:** [Quartermaster Conversation Refactor](quartermaster-conversation-refactor.md), [Company Supply](company-supply-simulation.md)
+**Last Updated:** 2025-12-23  
+**Related Docs:** [Company Supply Simulation](company-supply-simulation.md), [Provisions & Rations System](provisions-rations-system.md)
 
-**Phase 6 Highlights (2025-12-23):**
-- ✅ **Dynamic Contextual Dialogue** - QM responses vary by supply levels, reputation, mood, archetype, and strategic context
-- ✅ **Full XML Localization** - ~150 dialogue strings moved to XML for translation support
-- ✅ **Edge Case Hardening** - Comprehensive error handling, validation, and fallback strings ensure bulletproof operation
+**System Overview:**
+The Quartermaster system uses a conversation-driven interface where face-to-face dialogue opens visual equipment browsers. Equipment has quality modifiers affecting stats and prices. Players can purchase gear, upgrade equipped items, sell equipment back, and buy provisions. The system integrates deeply with company supply levels and reputation mechanics.
 
 ---
 
@@ -91,55 +89,195 @@ private void OnPlayerEnlisted(Hero lord)
 
 ### Accessing the Quartermaster
 
-1. **In Camp:** Talk to Quartermaster NPC
-2. **Via Menu:** "Visit Quartermaster" option in camp menu
-3. **Opening Greeting:**
-   - First meeting: Introduction dialogue
-   - High rep (65+): Friendly greeting
-   - Neutral rep: Brief greeting
-   - Low rep (<0): Hostile greeting
+The Quartermaster is accessed through **face-to-face conversation** (not text menus). The conversation opens the visual Gauntlet UI for equipment browsing.
+
+**Access Methods:**
+1. **In Camp:** "Speak with the Quartermaster" option in camp menu
+2. **Conversation Flow:** Player selects category → Gauntlet UI opens → Browse/purchase → Return to conversation hub
+
+**Opening Greeting:**
+
+The QM's greeting varies dynamically based on multiple factors:
+
+- **Archetype Personality:** Each QM has a distinct voice (Veteran: military direct, Merchant: business-focused, Bookkeeper: precise logistics, Scoundrel: informal deals, Believer: faith-based, Eccentric: superstitious)
+- **Reputation Tone:** 
+  - Hostile (< 0): Terse, unwelcoming
+  - Neutral (0-30): Professional but distant
+  - Friendly (31-60): More detailed, helpful
+  - Trusted (61+): Candid, includes advice
+- **Supply Level Context:** QM mentions supply situation in greeting when notable
+- **Mood:** Based on camp morale and supply stress
+- **Strategic Context:** References current army operations (winter, siege prep, raiding, battle)
+
+### Contextual Dialogue System
+
+The QM responds intelligently to game context with over 150 localized dialogue strings covering different scenarios:
+
+**Supply Inquiry Response:**
+
+When player asks "How are our supplies?", the QM provides a detailed report that varies by:
+
+- **Archetype Flavor:** Each personality type describes supplies differently
+  - Veteran: "Supplies are solid" vs "Running low"
+  - Merchant: "Stock is excellent" vs "Margins are getting tight"
+  - Bookkeeper: "Supply levels: 80% or above" vs "CRITICAL"
+  - Scoundrel: "We're flush" vs "Scraping the bottom"
+  - Believer: "The Lord provides" vs "We face a trial"
+  - Eccentric: "The stars align favorably" vs "Dark portents"
+
+- **Supply Level Categories:**
+  - Excellent (80+): Positive, confident tone
+  - Good (60-79): Adequate, watchful tone
+  - Fair (40-59): Concerned, recommends action
+  - Low (20-39): Urgent, emphasizes need
+  - Critical (<20): Alarmed, demands immediate action
+
+- **Additional Context Notes:**
+  - Equipment condition mentioned if significantly worse than supplies
+  - Morale mentioned if critically low (<30) or exceptionally high (80+)
+  - Strategic context added (winter, siege prep, raiding, long march)
+
+**Browse Responses:**
+
+Equipment browsing dialogue reflects current conditions:
+- **Critical Supplies:** QM warns about slim pickings
+- **Low Equipment:** Mentions worn/rough gear condition
+- **Hostile Reputation:** Terse, unwelcoming responses
+- **Trusted Reputation:** Friendly, offers "the good stuff"
+
+**Sell Responses:**
+
+Selling dialogue varies by mood and context:
+- **Content Mood:** Welcoming, fair pricing mentioned
+- **Stressed Mood:** Busy, asks to make it quick
+- **Grim Mood:** Warns prices are low, supply issues
+- **Low Supplies:** Additional warnings about not buying much
+
+**Upgrade Responses:**
+
+Upgrade dialogue reflects relationship and archetype:
+- **Trusted:** Enthusiastic, emphasizes quality
+- **Hostile:** Demands payment upfront, no favors
+- **Neutral:** Professional, discusses pricing
+- **Archetype Variations:** Each personality has unique approach to craftsmanship
+
+**Technical Implementation:**
+- ~150 dialogue strings in XML for full localization support
+- Dynamic string IDs built from game state: `qm_supply_{archetype}_{level}_{reptone}`
+- Comprehensive error handling with fallback strings
+- Safe helpers prevent crashes from invalid data (null checks, value clamping, archetype validation)
 
 ---
 
-## Main Menu Structure
+## Conversation Flow
 
-### Standard Menu (All Ranks)
+### Main Conversation Hub
 
-```
-=== QUARTERMASTER ===
-
-[Player Rank: T3 - Corporal]
-[Company Supply: 65% (Adequate)]
-[QM Reputation: +35 (Friendly)]
-
-Options:
-  [1] Buy Armor
-  [2] Buy Weapons  
-  [3] Buy Accessories
-  [4] Sell Equipment Back
-  [5] Provisions (T5+ only) ← Greyed out for T1-T4
-  [6] Inquire About Supply Situation
-  [7] Leave
-```
-
-### Officer Menu (T5+, High Rep)
+The quartermaster system uses a conversation-driven interface where dialogue options open the visual equipment browser:
 
 ```
-=== QUARTERMASTER ===
+[Player approaches Quartermaster]
 
-[Player Rank: T5 - Lieutenant]
-[Company Supply: 45% (Low)]
-[QM Reputation: +65 (Trusted)]
+QM: [Greeting based on archetype, reputation, supply level, mood]
 
-Options:
-  [1] Buy Armor
-  [2] Buy Weapons
-  [3] Buy Accessories
-  [4] Sell Equipment Back
-  [5] Buy Provisions ← NOW AVAILABLE
-  [6] Inquire About Supply Situation
-  [7] Officers Armory (Rep 60+, Soldier 50+) ← Special access
-  [8] Leave
+Player Options:
+  → "I need equipment."
+  → "I want to upgrade my gear."
+  → "I want to sell something."
+  → "I need provisions." (T5+ only)
+  → "How are our supplies?"
+  → "Nothing for now."
+```
+
+### Equipment Category Selection
+
+When player selects "I need equipment.":
+
+```
+QM: [Browse response based on supply/reputation/mood]
+
+Player Options:
+  → "Weapons."
+  → "Armor."
+  → "Accessories."
+  → "Mounts."
+  → "Never mind."
+```
+
+### Armor Slot Drill-Down
+
+Armor requires slot selection:
+
+```
+QM: "What piece are you looking for?"
+
+Player Options:
+  → "Body armor."
+  → "Helmet."
+  → "Gloves."
+  → "Boots."
+  → "Cape or cloak."
+  → "Something else entirely."
+```
+
+### Gauntlet UI Opens
+
+After category/slot selection, the conversation closes and the **visual Gauntlet equipment grid** opens:
+
+- Shows available equipment with quality modifiers
+- Displays prices (modified by quality and reputation)
+- Shows stats and tooltips
+- Player browses, purchases, or exits
+- On exit, conversation resumes at hub for continued shopping
+
+### Supply Inquiry (Pure Dialogue)
+
+When player asks "How are our supplies?":
+
+```
+QM: [Detailed contextual report - see Contextual Dialogue System section]
+
+[Returns to conversation hub - no UI opens]
+```
+
+### Example Full Interaction
+
+```
+Player: [Visits Quartermaster]
+
+QM (Veteran, Friendly, Good Supply): 
+    "Good to see you. Supplies are holding steady, and I've 
+     got decent kit in stock."
+
+Player: "I need equipment."
+
+QM: "Let me see what's in stock for you."
+
+Player: "Armor."
+
+QM: "What piece are you looking for?"
+
+Player: "Body armor."
+
+QM: "Right. Let's see what we've got."
+
+[Gauntlet UI opens showing body armor options]
+[Player browses, selects Worn Vlandian Sergeant Armor - 416g (20% discount)]
+[Player purchases, UI closes]
+
+QM: "Anything else?"
+
+Player: "How are our supplies?"
+
+QM: "Supplies are at 65%. Adequate for now, but we're watching it. 
+     Equipment condition is a bit rough - lot of worn pieces - but 
+     serviceable."
+
+Player: "That's all for now."
+
+QM: "Come back when you need something."
+
+[Conversation ends]
 ```
 
 ---
@@ -254,12 +392,26 @@ Fine Quality (Fine Bastard Sword):
 **In Gauntlet Equipment Grid:**
 - Item name shows quality prefix: "Rusty Shortsword", "Fine Bastard Sword"
 - Quality tier displayed below item name with color coding
+- Color-coded quality badges with text labels for accessibility:
+  - Poor: Light gray (#909090FF) - "Poor"
+  - Inferior: Peru/tan (#CD853FFF) - "Worn"
+  - Common: Off-white (#E8E8E8FF) - "Standard"
+  - Fine: Light green (#90EE90FF) - "Fine"
+  - Masterwork: Cornflower blue (#6495EDFF) - "Masterwork"
+  - Legendary: Gold (#FFD700FF) - "Legendary"
 - Prices reflect both quality modifier and reputation discount
 - Stats shown are modified values (what player will actually get)
+- **Tooltips** show detailed stat breakdown:
+  - Quality name
+  - Weapon: Damage, speed, missile speed modifiers
+  - Armor: Armor value modifiers
+  - Price multiplier percentage
+- **Upgrade Indicators:** Gold "UPGRADE" badge on upgradeable items (top-right corner)
 
 **Items Without Modifier Groups:**
 - Some items don't support quality modifiers (banners, quest items)
 - Display as "Standard" quality with no color coding
+- Not shown in upgrade interface
 - Price calculations and purchase work normally
 
 ### Stock Floor
@@ -276,7 +428,124 @@ When purchasing equipment:
 3. Success message shows modified name: "Purchased Rusty Shortsword for 120 denars"
 4. If weapon slots full, item goes to inventory with modifier preserved
 
-**Implementation Status:** ✅ Complete (Phase 2, 2025-12-22)
+---
+
+## Equipment Upgrade System
+
+Players can pay the Quartermaster to improve the quality of their currently equipped gear. This is an alternative to buying new equipment when supply is low or reputation is insufficient for Officers Armory access.
+
+### Accessing Upgrades
+
+**Conversation Option:**
+```
+Player: "I want to upgrade my gear."
+
+QM: [Upgrade response based on reputation and archetype]
+```
+
+**Upgrade Response Examples:**
+- **Trusted Rep:** "Bring me what you've got. I'll make it shine. My work's expensive but worth it."
+- **Hostile Rep:** "Fine. Gold up front. Don't expect any favors."
+- **Neutral Rep:** "Let's see what you have. Upgrades aren't cheap."
+
+**Opens Upgrade Interface** showing all equipped items with available upgrade paths.
+
+### Upgrade Interface
+
+```
+=== IMPROVE EQUIPMENT ===
+
+Your Equipped Items:
+
+[Bastard Sword]
+  Current: Worn (Inferior quality)
+  Available Upgrades:
+    → Standard (Common) - 85g
+    → Fine - 320g
+    → Masterwork - 640g (LOCKED: Requires Rep 30+)
+
+[Vlandian Scale Armor]
+  Current: Standard (Common quality)
+  Available Upgrades:
+    → Fine - 280g
+    → Masterwork - 560g (LOCKED: Requires Rep 30+)
+    → Legendary - 1120g (LOCKED: Requires Rep 61+)
+
+[Imperial Helmet]
+  Current: Fine quality
+  Available Upgrades:
+    → Masterwork - 180g
+    → Legendary - 540g (LOCKED: Requires Rep 61+)
+
+[Worn Boots]
+  Already at maximum quality for this item.
+
+[Banner]
+  This item cannot be improved.
+
+[Done] [Back to Conversation]
+```
+
+### Upgrade Cost Formula
+
+```
+UpgradeCost = (TargetQualityPrice - CurrentQualityPrice) × ServiceMarkup
+
+Where:
+- TargetQualityPrice = BaseValue × TargetModifier.PriceMultiplier
+- CurrentQualityPrice = BaseValue × CurrentModifier.PriceMultiplier (or BaseValue if no modifier)
+- ServiceMarkup varies by reputation
+```
+
+### Reputation Effects on Upgrades
+
+| QM Reputation | Service Markup | Available Tiers | Example (500g sword, Common → Fine) |
+|---------------|----------------|-----------------|-------------------------------------|
+| < 30 | 2.0× | Fine only | 600g |
+| 30-60 | 1.5× | Fine, Masterwork | 450g |
+| 61+ | 1.25× | Fine, Masterwork, Legendary | 375g |
+
+**Key Points:**
+- Low reputation: Higher costs, limited to Fine quality
+- High reputation: Better prices, access to Masterwork/Legendary
+- Service markup applied to price difference only
+- Some items may not have all quality tiers available
+
+### Upgrade Restrictions
+
+**Items That Cannot Be Upgraded:**
+- Items without modifier groups (banners, quest items)
+- Items already at Legendary quality
+- Items already at maximum quality tier for their modifier group
+
+**Reputation Locks:**
+- Masterwork: Requires QM Rep 30+
+- Legendary: Requires QM Rep 61+
+
+**Transaction Validation:**
+- Must have sufficient gold
+- Must still be enlisted (service hasn't ended)
+- Reputation requirement must be met at transaction time
+
+### Edge Case Handling
+
+**External Interruptions:**
+- Battle start: Upgrade screen force-closes
+- Player capture: Screen closes gracefully
+- Settlement departure: Screen closes
+- Save/Load: Screen closes automatically
+
+**Service End During Upgrade:**
+- Transaction blocked if enlistment ends
+- Clear error message: "You are no longer enlisted. Service has ended."
+
+**Reputation Change During Screen:**
+- Double-checked at transaction time
+- If dropped below requirement: "The quartermaster will no longer perform this upgrade. Your standing may have changed."
+
+**Overflow Protection:**
+- Very expensive items (>500k base value) use safe arithmetic
+- Costs clamped to int.MaxValue with warning log
 
 **Tracking Purchases:**
 All quartermaster-issued equipment is tracked in a persistent registry for:
@@ -695,90 +964,81 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 
 ## Implementation Status
 
-### ✅ Fully Implemented (2025-12-22)
+### Current System Features
 
-**Conversation-Driven System (Phases 1-5):**
-- ✅ Conversation tree with category selection and armor slot drill-down
-- ✅ Gauntlet equipment browser with visual stats and tooltips
-- ✅ Smooth conversation ↔ UI transitions with ESC/X/Done support
-- ✅ External interruption handling (battle, capture, settlement departure)
+**Conversation Interface:**
+- Face-to-face dialogue with the Quartermaster NPC
+- Category selection for equipment types (weapons, armor, accessories, mounts)
+- Armor purchases include slot drill-down (helmet, body, gloves, boots, cape)
+- Supply inquiry provides dynamic contextual reports
+- Dialogue opens Gauntlet visual equipment browser
+- Smooth transitions between conversation and UI with return flow
+- External interruptions handled gracefully (battle, capture, settlement departure, save/load)
 
-**Equipment Quality System (Phases 2-3):**
-- ✅ Six quality tiers (Poor/Inferior/Common/Fine/Masterwork/Legendary)
-- ✅ Native ItemModifier integration with stat and price modifications
-- ✅ Reputation-based quality distribution in stock
-- ✅ Upgrade system for equipped items (pay to improve quality)
-- ✅ Officers' Armory with higher-tier gear (T5+, high reputation)
+**Equipment Quality System:**
+- Six quality tiers (Poor/Inferior/Common/Fine/Masterwork/Legendary)
+- Native ItemModifier integration affects item stats and prices
+- Quality distribution based on quartermaster reputation (low rep = damaged gear)
+- Quality modifiers applied to purchased items (both equipped and inventory)
+- Items without modifier groups display as Common quality
+- Stock floor guarantees at least 1 item per major equipment slot
 
-**UI Enhancements (Phase 5):**
-- ✅ Color-coded quality display with text labels (accessibility)
-- ✅ Tooltips showing base vs modified stats
-- ✅ Upgrade indicators on upgradeable items
-- ✅ Soft, readable colors (light green, cornflower blue, gold)
-- ✅ Name truncation for long item names
-- ✅ Quality-aware buyback pricing
+**Upgrade System:**
+- Players can pay to improve quality of equipped gear
+- Reputation gates access to higher tiers (Masterwork requires 30+ rep, Legendary requires 61+ rep)
+- Upgrade costs use service markup formula based on reputation
+- Robust error handling for external interruptions and invalid states
+- Transaction validation prevents upgrades after service ends or reputation drops
+- Proper cleanup prevents memory leaks
 
-**Core Systems:**
-- ✅ Quartermaster NPC generation and assignment
-- ✅ Equipment purchase with quality modifiers
-- ✅ Category filtering (armor/weapons/accessories)
-- ✅ Reputation-based pricing (0-30% discount range)
-- ✅ Supply level tracking and gating (< 30% blocks equipment)
-- ✅ Buyback system with quality-aware pricing
-- ✅ Provisions/rations system (T1-T4 issued, T5+ purchased)
+**User Interface:**
+- Color-coded quality display with text labels for accessibility
+- Tooltips show base vs modified stats with detailed breakdowns
+- Upgrade indicators appear on items that can be improved
+- Readable color palette (light gray, peru/tan, off-white, light green, cornflower blue, gold)
+- Long item names truncated to prevent overlap
+- Quality-aware pricing throughout (purchase and buyback)
+- Sell functionality uses popup inquiry with quality variants tracked separately
 
-### Planned Improvements
+**Contextual Dialogue:**
+- Quartermaster responses vary by archetype personality (Veteran/Merchant/Bookkeeper/Scoundrel/Believer/Eccentric)
+- Tone adjusts based on reputation (Hostile/Neutral/Friendly/Trusted)
+- Supply level affects responses (Excellent/Good/Fair/Low/Critical)
+- Strategic context referenced when relevant (winter, siege prep, raiding, battle, long march)
+- Approximately 150 dialogue strings in XML for full localization
+- Error handling with fallback strings ensures dialogue never breaks
+- Input validation prevents crashes from invalid game state
 
-**Phase 6-8 (Future):**
-- Supply inquiry with dynamic contextual responses
-- Camp News integration for QM events
-- Testing and polish
-- Show supply % in Quartermaster UI
-- Block equipment purchases when supply < 30%
+**Core Logistics:**
+- Quartermaster NPC generated and assigned when player enlists
+- Equipment purchase with quality modifiers and reputation discounts
+- Category filtering for browsing (armor/weapons/accessories/mounts)
+- Reputation-based pricing (0-30% discount range)
+- Supply level gating (company supply < 30% blocks equipment access)
+- Buyback system accepts only quartermaster-issued equipment
+- Provisions and rations (T1-T4 receive issued rations, T5+ purchase from shop)
 
-**Phase 2: Reputation System Rework**
-- Expand reputation to -50 to +100 range
-- Implement full multiplier tables (30% discount to 40% markup)
-- Apply to equipment, buyback, and food pricing
+### Planned Future Enhancements
 
-**Phase 3: QM-Purchased Tracking**
-- Track all QM-issued equipment persistently
-- Restrict buyback menu to tracked items only
-- Implement discharge reclamation
-- Add missing gear penalties
+**Camp News Integration:**
+- Daily Report entries for quartermaster events
+- Track significant transactions (upgrades, stock changes)
+- News templates for equipment activities
+- Camp News section shows current quartermaster status
+- Appropriate priority weighting relative to combat events
 
-**Phase 4: Ration Exchange System (T1-T4)**
-- Implement ration reclamation at each muster
-- Track issued rations separately from personal food
-- Integrate with company supply for availability
-- Add personal food loss events (rats, spoilage, theft)
-
-**Phase 5: Officer Provisions Shop (T5+)**
-- Create separate T5+ food shop UI
-- Implement inventory refresh every muster
-- Apply premium pricing (150-200% of town markets)
-- Supply-dependent stock quantities
-
-**Phase 6: Baggage Checks**
-- Add 30% muster inspection chance
-- Implement contraband detection
-- Reputation-based outcomes (lookaway/bribe/confiscate)
-- Integrate with Scrutiny system
-
-**Phase 7: Officers Armory**
-- Create high-rep equipment menu
-- Apply quality modifiers (Fine/Masterwork)
-- Gate by tier + QM rep + soldier rep
-- Test access granted/denied
+**Additional Features:**
+- Baggage inspections at muster with contraband detection
+- Enhanced ration exchange tracking for enlisted soldiers
+- Officer provisions shop improvements
+- Discharge equipment reclamation with missing gear penalties
+- Expanded reputation range (-50 to +100)
 
 ### Related Documentation
 
-- **Equipment Quality:** `quartermaster-equipment-quality.md` - Quality modifiers, item tiers
-- **Company Supply:** `company-supply-simulation.md` - Supply calculation, degradation
-- **Food System:** `player-food-ration-system.md` - Detailed ration mechanics (being replaced by this doc)
-- **Provisions:** `provisions-system.md` - Old provisions system (being replaced by this doc)
-- **Master Implementation:** `Quartermaster_Master_Implementation.md` - Technical implementation plan (being replaced by this doc)
-- **Dialogue:** `quartermaster-dialogue-implementation.md` - Full conversation trees (being replaced by this doc)
+- **[Company Supply Simulation](company-supply-simulation.md)** - How company supply is calculated and affects quartermaster access
+- **[Provisions & Rations System](provisions-rations-system.md)** - Detailed food mechanics for T1-T4 issued rations and T5+ officer provisions
+- **[Quartermaster Hero System](../Core/quartermaster-hero-system.md)** - Quartermaster NPC generation and assignment
 
 ### Source Files
 

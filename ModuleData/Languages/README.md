@@ -133,28 +133,89 @@ This allows players to test incomplete translations. Change to `"false"` when co
 
 ## Placeholders Reference
 
-The mod uses dynamic placeholders that get replaced with game data:
+The mod uses dynamic placeholders that get replaced with game data at runtime.
+
+### Character Names
 
 | Placeholder | Description | Example |
 |-------------|-------------|---------|
 | `{PLAYER_NAME}` | Player's character name | "John" |
+| `{PLAYER_RANK}` | Player's current rank | "Veteran Soldier" |
+| `{SERGEANT}` | NCO full name with rank | "Sergeant Harald" |
+| `{SERGEANT_NAME}` | Same as {SERGEANT} | "Sergeant Harald" |
+| `{NCO_NAME}` | Same as {SERGEANT} | "Sergeant Harald" |
+| `{NCO_RANK}` | NCO rank title only | "Sergeant" |
+| `{OFFICER_NAME}` | Generic officer reference | "Sergeant Harald" |
+| `{CAPTAIN_NAME}` | Captain reference | "the Captain" |
+| `{SOLDIER_NAME}` | Random soldier name | "Bjorn" |
+| `{COMRADE_NAME}` | Same as {SOLDIER_NAME} | "Bjorn" |
+| `{VETERAN_1_NAME}` | Veteran soldier (experienced) | "Erik" |
+| `{VETERAN_2_NAME}` | Second veteran soldier | "Magnus" |
+| `{RECRUIT_NAME}` | New recruit name | "Young Olaf" |
+| `{SECOND_SHORT}` | Another soldier name | "Sven" |
+
+### Naval Crew (War Sails DLC)
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{BOATSWAIN_NAME}` | Ship's boatswain | "the Boatswain" |
+| `{NAVIGATOR_NAME}` | Ship's navigator | "the Navigator" |
+| `{FIELD_MEDIC_NAME}` | Medical specialist | "the Field Medic" |
+| `{SHIP_NAME}` | Ship name | "Sea Wolf" |
+| `{DESTINATION_PORT}` | Destination port | "port" |
+| `{DAYS_AT_SEA}` | Days at sea | "7" |
+
+### Lord & Faction
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{LORD_NAME}` | Enlisted lord's name | "Caladog" |
+| `{LORD_TITLE}` | Lord or Lady | "Lord" |
+| `{PREVIOUS_LORD}` | Previous lord (transfer events) | "your previous lord" |
+| `{ALLIED_LORD}` | Allied lord reference | "an allied lord" |
+| `{FACTION_NAME}` | Your faction's name | "Vlandia" |
+| `{KINGDOM_NAME}` | Kingdom name | "Kingdom of Vlandia" |
+| `{ENEMY_FACTION_ADJECTIVE}` | Enemy descriptor | "enemy" |
+
+### Location & Party
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{SETTLEMENT_NAME}` | Current settlement | "Sargot" |
+| `{COMPANY_NAME}` | Your party name | "Wolf Company" |
+| `{TROOP_COUNT}` | Total troop count | "87" |
+
+### Rank & Progression
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
 | `{RANK}` | Current rank name | "Serjeant" |
 | `{TIER}` | Current tier number | "3" |
-| `{NCO_RANK}` | NCO's rank | "Serjeant" |
-| `{SERGEANT_NAME}` | NCO's name | "Harald" |
-| `{COMPANY_NAME}` | Squad name | "Wolf Company" |
-| `{SOLDIER_NAME}` | Random soldier name | "Bjorn" |
-| `{VETERAN_1_NAME}` | Veteran soldier name | "Erik" |
-| `{RECRUIT_NAME}` | Recruit soldier name | "Olaf" |
-| `{LORD_NAME}` | Lord's name | "Caladog" |
-| `{OFFICER_NAME}` | Officer's name | "Captain Aldric" |
+| `{NEXT_RANK}` | Next rank in progression | "the next rank" |
+| `{SECOND_RANK}` | Current rank (variant) | "Veteran Soldier" |
+
+### Medical Events
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{CONDITION_TYPE}` | Type of illness/injury | "illness" |
+| `{CONDITION_LOCATION}` | Body part affected | "your arm" |
+| `{COMPLICATION_NAME}` | Medical complication | "infection" |
+| `{REMEDY_NAME}` | Treatment/medicine | "medicine" |
+
+### Generic Values
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{GOLD}` | Gold amount | "150" |
+| `{DAYS}` | Days count | "42" |
+| `{COUNT}` | Generic count | "5" |
 | `{REL}` | Relationship number | "15" |
 | `{REL_DESC}` | Relationship description | "Friendly" |
-| `{COUNT}` | Generic count | "5" |
-| `{DAYS}` | Days count | "42" |
-| `{GOLD}` | Gold amount | "150" |
 
-**Never translate these placeholders!** They are replaced by the game at runtime.
+**CRITICAL: Never translate placeholder names!** They must remain in English (e.g., `{PLAYER_NAME}`, not `{NOM_JOUEUR}`). The game replaces these with actual values at runtime.
+
+**Full reference:** See [Event Catalog - Placeholder Variables](../../docs/Content/event-catalog-by-system.md#placeholder-variables)
 
 ## Line Breaks
 
