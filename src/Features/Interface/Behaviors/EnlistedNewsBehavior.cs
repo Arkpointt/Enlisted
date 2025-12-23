@@ -2566,7 +2566,7 @@ namespace Enlisted.Features.Interface.Behaviors
                     }
                 }
                 
-                // Priority 2: Injuries/illness
+                // Priority 2: Injuries/illness (from PlayerConditionBehavior)
                 var cond = PlayerConditionBehavior.Instance;
                 if (cond?.IsEnabled() == true && cond.State?.HasAnyCondition == true)
                 {
@@ -2580,6 +2580,25 @@ namespace Enlisted.Features.Interface.Behaviors
                         var prefix = $"brief_illness_{tierKey}_";
                         return PickRandomLocalizedString(prefix, 3, "brief_fallback_illness");
                     }
+                }
+
+                // Priority 2b: Medical Risk escalation (brewing sickness, not yet a full condition)
+                var escalation = EscalationManager.Instance;
+                if (escalation?.State != null && escalation.State.MedicalRisk >= 2)
+                {
+                    var medRisk = escalation.State.MedicalRisk;
+                    if (medRisk >= 4)
+                    {
+                        // Serious/Critical - urgent
+                        return new TextObject("{=brief_medrisk_serious}Fever won't break. Surgeon's tent calls.").ToString();
+                    }
+                    if (medRisk >= 3)
+                    {
+                        // Concerning - getting worse
+                        return new TextObject("{=brief_medrisk_concerning}The ache is constant now. Rest or surgeon.").ToString();
+                    }
+                    // Med Risk 2 - early warning
+                    return new TextObject("{=brief_medrisk_mild}Something's off. Tired. Aching. Watch it.").ToString();
                 }
 
                 // Priority 3: Fatigue

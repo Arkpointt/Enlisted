@@ -205,10 +205,10 @@ Some orders have severe failure penalties beyond reputation loss:
 
 | ID | Threshold | Name | Premise | Options |
 |----|-----------|------|---------|---------|
-| `evt_med_2` | 2 | Feeling Unwell | Something's not right. Fatigue, aches, fever starting. | Rest / Push through / See the surgeon |
-| `evt_med_3` | 3 | Illness Takes Hold | You're properly sick now. Can't hide it. | Bed rest / Light duties / Keep working |
-| `evt_med_4` | 4 | Serious Condition | The surgeon looks concerned. "You need to stop." | Follow orders / Refuse treatment / Self-medicate |
-| `evt_med_5` | 5 | Critical | This could kill you. The surgeon is blunt about it. | Intensive care / Risky treatment / Accept fate |
+| `medical_onset` | 2 | Feeling Unwell | Something's wrong. Fatigue that won't lift. Ache that wasn't there yesterday. | "Just tired. Need sleep." / "I'm fine. Back to it." (risky 50%) / "Should see the surgeon." / "Got herbs in my kit." (risky 60%) |
+| `medical_worsening` | 3 | Worsening | It's worse today. What started manageable has become harder to ignore. | "Finally give in. See the surgeon." / "Keep pushing. It's not that bad." (risky 60%) / "Take it easy. Rest without formal treatment." / "Try herbal remedies." (risky 50%) |
+| `medical_complication` | 4 | Complication | Fever hits in the night. The condition has become something worse. Infection, inflammation. | "Get me to the surgeon." / "I'm fine. Just need water." (risky 30%) / "There's medicine in my kit. Help me take it." (risky 50%) / "Get {SERGEANT_NAME}. They'll know what to do." |
+| `medical_emergency` | 5 | Emergency | You collapse. One moment standing, next on the ground. Voices distant and echoey. | "Fight to stay conscious." (risky 40%) / "Let go. Trust them to fix this." / "Try to tell them something. Important." (risky 30%) |
 
 ### Muster Events (6)
 

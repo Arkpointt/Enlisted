@@ -2868,6 +2868,238 @@
       "variants": {}
     },
     {
+      "id": "medical_onset",
+      "category": "threshold",
+      "metadata": {
+        "tier_range": {
+          "min": 1,
+          "max": 6
+        },
+        "content_doc": "docs/StoryBlocks/StoryBlock.md"
+      },
+      "delivery": {
+        "method": "automatic",
+        "channel": "inquiry",
+        "incident_trigger": null,
+        "menu": null,
+        "menu_section": null
+      },
+      "triggers": {
+        "all": [
+          "is_enlisted",
+          "ai_safe",
+          "medical_2"
+        ],
+        "any": [],
+        "time_of_day": [
+          "any"
+        ],
+        "escalation_requirements": {}
+      },
+      "requirements": {
+        "duty": "any",
+        "formation": "any",
+        "tier": {
+          "min": 1,
+          "max": 6
+        }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false,
+        "rate_limit": {
+          "max_per_week": 0,
+          "category_cooldown_days": 0
+        }
+      },
+      "content": {
+        "titleId": "ll_evt_medical_onset_title",
+        "setupId": "ll_evt_medical_onset_setup",
+        "title": "Feeling Unwell",
+        "setup": "Something's wrong.\n\nStarts small. Fatigue that won't lift. An ache that wasn't there yesterday. You tell yourself it's nothing. The march. Bad sleep. The usual.\n\nBut it's not lifting.\n\n{COMRADE_NAME} catches you wincing. \"You alright?\"",
+        "options": [
+          {
+            "id": "rest",
+            "text": "\"Just tired. Need sleep.\"",
+            "tooltip": "Rest it off. Safe, minor recovery.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -1,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You sleep hard that night. By morning, it's fading. Maybe nothing after all.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_rest_text",
+            "resultTextId": "ll_evt_medical_onset_opt_rest_outcome"
+          },
+          {
+            "id": "push_through",
+            "text": "\"I'm fine. Back to it.\"",
+            "tooltip": "Push through. 50% chance it gets worse.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 50,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 2,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 1,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "You push through. It fades. Body knows what it's doing.",
+            "outcome_failure": "Doesn't fade. Worse by evening. Should've listened.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_push_text",
+            "resultTextId": "ll_evt_medical_onset_opt_push_outcome",
+            "resultFailureTextId": "ll_evt_medical_onset_opt_push_outcome_failure"
+          },
+          {
+            "id": "see_surgeon",
+            "text": "\"Should see the surgeon.\"",
+            "tooltip": "Get proper treatment. Clears condition.",
+            "condition": null,
+            "risk": "safe",
+            "risk_chance": null,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {},
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -2,
+              "fatigue_relief": 0
+            },
+            "effects_success": null,
+            "effects_failure": null,
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "The surgeon looks you over. \"Caught it early. Smart.\" Day's treatment. Back to normal.",
+            "outcome_failure": null,
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_surgeon_text",
+            "resultTextId": "ll_evt_medical_onset_opt_surgeon_outcome"
+          },
+          {
+            "id": "herbal",
+            "text": "\"Got herbs in my kit.\"",
+            "tooltip": "Self-treat. 60% success, +Medicine XP.",
+            "condition": null,
+            "risk": "risky",
+            "risk_chance": 60,
+            "costs": {
+              "fatigue": 0,
+              "gold": 0,
+              "time_hours": 0
+            },
+            "rewards": {
+              "xp": {
+                "Medicine": 10
+              },
+              "gold": 0,
+              "relation": {},
+              "items": []
+            },
+            "effects": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "effects_success": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": -1,
+              "fatigue_relief": 0
+            },
+            "effects_failure": {
+              "scrutiny": 0,
+              "discipline": 0,
+              "soldierRep": 0,
+              "medical_risk": 0,
+              "fatigue_relief": 0
+            },
+            "flags_set": [],
+            "flags_clear": [],
+            "outcome": "Tastes terrible. Works anyway. Functional by morning.",
+            "outcome_failure": "Herbs don't help. Still aching. Needed a professional.",
+            "injury_risk": null,
+            "triggers_event": null,
+            "advances_onboarding": false,
+            "textId": "ll_evt_medical_onset_opt_herbal_text",
+            "resultTextId": "ll_evt_medical_onset_opt_herbal_outcome",
+            "resultFailureTextId": "ll_evt_medical_onset_opt_herbal_outcome_failure"
+          }
+        ]
+      },
+      "variants": {}
+    },
+    {
       "id": "medical_complication",
       "category": "threshold",
       "metadata": {

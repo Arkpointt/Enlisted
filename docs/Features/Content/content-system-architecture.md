@@ -173,6 +173,12 @@ All automatic events are coordinated through `GlobalEventPacer` to prevent spam.
 - Chain events from previous choices - immediate follow-up
 - Debug/test event triggers
 
+**Grace Period After Enlistment:**
+- **3-day grace period** after enlisting with a lord
+- No narrative events or map incidents fire during this period
+- Gives player time to learn systems and get oriented
+- Hardcoded in EventPacingManager and MapIncidentManager
+
 See [Event System Schemas - Global Event Pacing](event-system-schemas.md#global-event-pacing-enlisted_configjson) for full config reference.
 
 ### Data Flow
@@ -488,6 +494,29 @@ Options with success/failure outcomes:
 - Use MapIncidentManager to deliver context-specific incidents
 - Contexts: leaving_battle, during_siege, entering_town, entering_village, leaving_settlement, waiting_in_settlement
 - Have individual cooldowns (1-12 hours) and probability checks
+
+### Player Status Notifications
+
+**Medical Risk Status Line:**
+
+The player status line (shown in Enlisted Status menu and Daily Brief) displays Medical Risk warnings:
+
+| Medical Risk | Status Message |
+|--------------|----------------|
+| 0-1 | (normal status messages) |
+| 2 | "Something's off. Tired. Aching. Watch it." |
+| 3 | "The ache is constant now. Rest or surgeon." |
+| 4-5 | "Fever won't break. Surgeon's tent calls." |
+
+**Priority Order:**
+1. Recent battle aftermath
+2. Active injuries (PlayerConditionBehavior)
+3. Active illness (PlayerConditionBehavior)
+4. **Medical Risk escalation** (brewing sickness)
+5. Fatigue levels
+6. Good condition (tier/time flavor)
+
+This gives players early warning before threshold events fire, allowing proactive treatment.
 
 ---
 

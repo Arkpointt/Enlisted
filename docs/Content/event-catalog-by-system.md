@@ -476,10 +476,10 @@ Situations that arise based on context and state. Player responds.
 **Escalation: Medical**
 | Threshold | Event | Stakes |
 |-----------|-------|--------|
-| Med 2 | Feeling Unwell | Minor symptoms |
-| Med 3 | Illness | Performance impact |
-| Med 4 | Serious Condition | Can't perform duties |
-| Med 5 | Critical | Life-threatening |
+| Med 2 | Feeling Unwell (`medical_onset`) | Minor symptoms |
+| Med 3 | Worsening (`medical_worsening`) | Performance impact |
+| Med 4 | Complication (`medical_complication`) | Serious complications |
+| Med 5 | Emergency (`medical_emergency`) | Life-threatening |
 
 **Reputation Milestones** (First time crossing threshold)
 | Track | Thresholds | Effect |

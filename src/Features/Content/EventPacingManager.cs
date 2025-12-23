@@ -76,6 +76,23 @@ namespace Enlisted.Features.Content
                     return;
                 }
 
+                // Grace period: don't fire events for the first few days after enlistment
+                // Give player time to learn the systems before hitting them with narrative events
+                // EXCEPT for onboarding events, which ARE the introduction and should fire immediately
+                if (enlistment.EnlistmentDate != CampaignTime.Zero)
+                {
+                    var daysSinceEnlistment = (CampaignTime.Now - enlistment.EnlistmentDate).ToDays;
+                    const int gracePeriodDays = 3; // Config: min days before first narrative event
+
+                    // Allow onboarding events during grace period (they're the tutorial/intro)
+                    if (daysSinceEnlistment < gracePeriodDays && !escalationState.IsOnboardingActive)
+                    {
+                        ModLogger.Debug(LogCategory, 
+                            $"Grace period active: {daysSinceEnlistment:F1}/{gracePeriodDays} days since enlistment");
+                        return;
+                    }
+                }
+
                 // Check for pending chain events first (highest priority)
                 CheckPendingChainEvents(escalationState);
 

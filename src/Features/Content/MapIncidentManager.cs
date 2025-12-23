@@ -540,7 +540,27 @@ namespace Enlisted.Features.Content
         private bool IsEnlistedAndValid()
         {
             var enlistment = EnlistmentBehavior.Instance;
-            return enlistment?.IsEnlisted == true;
+            if (enlistment?.IsEnlisted != true)
+            {
+                return false;
+            }
+
+            // Grace period: don't fire map incidents for the first few days after enlistment
+            // Give player time to learn the systems before hitting them with context events
+            if (enlistment.EnlistmentDate != CampaignTime.Zero)
+            {
+                var daysSinceEnlistment = (CampaignTime.Now - enlistment.EnlistmentDate).ToDays;
+                const int gracePeriodDays = 3; // Config: min days before first map incident
+
+                if (daysSinceEnlistment < gracePeriodDays)
+                {
+                    ModLogger.Debug(LogCategory, 
+                        $"Grace period active for map incidents: {daysSinceEnlistment:F1}/{gracePeriodDays} days since enlistment");
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
