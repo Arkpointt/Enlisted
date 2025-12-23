@@ -268,7 +268,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Extracts delivery info from the decision ID naming convention.
-        /// Player-initiated decisions typically start with "player_".
+        /// Player-initiated decisions start with "player_" (legacy) or "dec_" (new spec).
         /// Menu section is inferred from the ID pattern or defaults based on content.
         /// </summary>
         private static void ExtractDeliveryInfo(DecisionDefinition decision)
@@ -276,15 +276,20 @@ namespace Enlisted.Features.Content
             var id = decision.Id?.ToLowerInvariant() ?? string.Empty;
 
             // Determine if player-initiated based on ID prefix
-            decision.IsPlayerInitiated = id.StartsWith("player_");
+            // "player_" = legacy player-initiated events (events_player_decisions.json)
+            // "dec_" = new spec player-initiated decisions (Decisions/decisions.json)
+            decision.IsPlayerInitiated = id.StartsWith("player_") || id.StartsWith("dec_");
 
             // Infer menu section from ID pattern
-            if (id.Contains("train") || id.Contains("drill") || id.Contains("spar"))
+            if (id.Contains("train") || id.Contains("drill") || id.Contains("spar") || 
+                id.Contains("endurance") || id.Contains("tactics") || id.Contains("medicine") ||
+                id.Contains("weapon") || id.Contains("combat") || id.Contains("lead"))
             {
                 decision.MenuSection = "training";
             }
-            else if (id.Contains("wound") || id.Contains("rest") || id.Contains("camp") ||
-                     id.Contains("gear") || id.Contains("medic") || id.Contains("medical"))
+            else if (id.Contains("rest") || id.Contains("treatment") || id.Contains("wound") ||
+                     id.Contains("gear") || id.Contains("maintain") || id.Contains("medic") || 
+                     id.Contains("medical") || id.Contains("camp"))
             {
                 decision.MenuSection = "camp_life";
             }
@@ -293,15 +298,32 @@ namespace Enlisted.Features.Content
             {
                 decision.MenuSection = "logistics";
             }
-            else if (id.Contains("dice") || id.Contains("letter") || id.Contains("petition") || 
-                     id.Contains("join") || id.Contains("drink") || id.Contains("social") ||
+            else if (id.Contains("join") || id.Contains("drink") || id.Contains("seek") || 
+                     id.Contains("letter") || id.Contains("confront") || id.Contains("keep_to") ||
+                     id.Contains("dice") || id.Contains("petition") || id.Contains("social") ||
                      id.Contains("favor") || id.Contains("hunt"))
             {
                 decision.MenuSection = "social";
             }
-            else if (id.Contains("scout") || id.Contains("intel") || id.Contains("rumor"))
+            else if (id.Contains("gamble") || id.Contains("side_work") || id.Contains("shady") ||
+                     id.Contains("market"))
             {
-                decision.MenuSection = "intel";
+                decision.MenuSection = "economic";
+            }
+            else if (id.Contains("audience") || id.Contains("volunteer") || id.Contains("leave") ||
+                     id.Contains("career"))
+            {
+                decision.MenuSection = "career";
+            }
+            else if (id.Contains("rumor") || id.Contains("scout") || id.Contains("intel") ||
+                     id.Contains("listen") || id.Contains("check_supplies"))
+            {
+                decision.MenuSection = "information";
+            }
+            else if (id.Contains("wager") || id.Contains("courage") || id.Contains("challenge") ||
+                     id.Contains("risk"))
+            {
+                decision.MenuSection = "risk_taking";
             }
             else
             {

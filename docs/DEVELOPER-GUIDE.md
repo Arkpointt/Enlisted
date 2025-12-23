@@ -106,7 +106,6 @@ All configuration files are in `ModuleData/Enlisted/`:
 | `Orders/*.json` | Order definitions for Chain of Command |
 | `Events/*.json` | Role-based narrative and social events |
 | `Decisions/*.json` | Decision definitions for Camp Hub |
-| `Activities/activities.json` | Data-driven camp actions |
 | `equipment_kits.json` | Culture-specific equipment loadouts |
 | `equipment_pricing.json` | Quartermaster costs |
 
@@ -406,6 +405,11 @@ if (eb?.IsEnlisted == true)
   - **Gauntlet UI layout** lives in XML prefabs under `GUI/Prefabs/**.xml`
   - **Localized strings** live in `ModuleData/Languages/enlisted_strings.xml`
   - In code, prefer `TextObject("{=some_key}Fallback text")` and add the same key to `enlisted_strings.xml`
+  - **Dynamic dialogue**: For contextual text (like quartermaster responses), use XML strings with C# logic:
+    - Build string ID dynamically: `string id = $"qm_supply_{archetype}_{level}";`
+    - Load with safe wrapper: `GetLocalizedTextSafe(id, "fallback text")`
+    - Always provide fallback strings for missing IDs
+    - See `EnlistedDialogManager.cs` Phase 6 implementation for reference
 - **Gameplay/config data** remains JSON (`ModuleData/Enlisted/*.json`) unless there's a specific reason to use XML
 
 ### Development Practices
@@ -421,6 +425,9 @@ if (eb?.IsEnlisted == true)
 4. Modifying reputation/needs directly instead of using managers
 5. Relying on external API docs instead of local decompile
 6. Forgetting tooltips in event options
+7. Not validating inputs for dynamic dialogue (null checks, archetype validation, value clamping)
+8. Using `GetLocalizedText()` without fallback handling (use `GetLocalizedTextSafe()` wrapper instead)
+9. Assuming localized strings exist (always provide fallbacks for missing XML strings)
 
 ---
 

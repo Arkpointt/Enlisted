@@ -1,7 +1,7 @@
 <Prefab>
 	<Window>
 		<!-- Equipment Card - Modern layout with stats below image -->
-		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="340" MarginTop="10" MarginLeft="10">
+		<Widget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedWidth="185" SuggestedHeight="340" MarginTop="10" MarginLeft="10" Tooltip="@TooltipText">
 			<Children>
 				<!-- Card background with subtle border -->
 				<BrushWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="StretchToParent" Brush="Encyclopedia.SubPage.Element">
@@ -24,17 +24,23 @@
 								<!-- Item Name -->
 								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="105" MarginLeft="2" MarginRight="2" Brush="Recruitment.Popup.Title.Text" Brush.FontSize="14" Brush.TextHorizontalAlignment="Center" Text="@ItemName"/>
 								
+								<!-- Quality Display (colored with text label for accessibility) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="130" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Brush.TextColor="@QualityColor" Text="@QualityText"/>
+								
+								<!-- Upgrade Indicator (shown if item is upgradeable) -->
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Right" MarginTop="10" MarginRight="10" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Brush.TextColor="#FFD700FF" Text="@UpgradeIndicatorText" IsVisible="@IsUpgradeable"/>
+								
 								<!-- Cost Display (prominent) -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="145" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Text="@CostText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="150" Brush="Recruitment.Popup.Description.Text" Brush.FontSize="15" Brush.TextHorizontalAlignment="Center" Text="@CostText"/>
 								
 								<!-- Primary Stats (armor/damage values) -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="170" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextHorizontalAlignment="Center" Text="@PrimaryStats"/>
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="180" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="12" Brush.TextHorizontalAlignment="Center" Text="@PrimaryStats"/>
 								
 								<!-- Secondary Stats (tier, material) -->
-								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="195" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Text="@SecondaryStats"/>
+								<RichTextWidget WidthSizePolicy="StretchToParent" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="205" MarginLeft="4" MarginRight="4" Brush="SPGeneral.SmallText" Brush.FontSize="11" Brush.TextHorizontalAlignment="Center" Text="@SecondaryStats"/>
 								
 								<!-- Status indicator -->
-								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="220" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
+								<RichTextWidget WidthSizePolicy="CoverChildren" HeightSizePolicy="CoverChildren" HorizontalAlignment="Center" MarginTop="230" Brush="SPGeneral.SmallText" Brush.FontSize="10" Brush.TextHorizontalAlignment="Center" Text="@StatusText"/>
 								
 							<!-- Single centered Buy Button -->
 							<ButtonWidget WidthSizePolicy="Fixed" HeightSizePolicy="Fixed" SuggestedHeight="45" SuggestedWidth="145" HorizontalAlignment="Center" VerticalAlignment="Bottom" MarginBottom="15" Brush="ButtonBrush1" Command.Click="ExecuteSelectItem" IsEnabled="@IsEnabled">

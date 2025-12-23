@@ -9,7 +9,7 @@ using TaleWorlds.Library;
 namespace Enlisted.Features.Content
 {
     /// <summary>
-    /// Catalog of narrative events loaded from JSON files in ModuleData/Enlisted/Events/.
+    /// Catalog of narrative events loaded from JSON files in ModuleData/Enlisted/Events/ and ModuleData/Enlisted/Decisions/.
     /// Handles both simplified and verbose JSON schemas with automatic field mapping.
     /// </summary>
     public static class EventCatalog
@@ -25,7 +25,7 @@ namespace Enlisted.Features.Content
         public static int EventCount => AllEvents.Count;
 
         /// <summary>
-        /// Initializes the event catalog by loading all JSON files from the Events directory.
+        /// Initializes the event catalog by loading all JSON files from the Events and Decisions directories.
         /// </summary>
         public static void Initialize()
         {
@@ -37,20 +37,54 @@ namespace Enlisted.Features.Content
             EventsById.Clear();
             AllEvents.Clear();
 
-            var basePath = GetEventsBasePath();
-            if (string.IsNullOrEmpty(basePath) || !Directory.Exists(basePath))
-            {
-                ModLogger.Warn(LogCategory, $"Events directory not found: {basePath}");
-                _initialized = true;
-                return;
-            }
-
             var filesLoaded = 0;
             var eventsLoaded = 0;
             var migrationWarnings = 0;
 
-            // Load all JSON files from the Events directory and subdirectories
-            var jsonFiles = Directory.GetFiles(basePath, "*.json", SearchOption.AllDirectories);
+            // Load from Events directory
+            var eventsPath = GetEventsBasePath();
+            if (!string.IsNullOrEmpty(eventsPath) && Directory.Exists(eventsPath))
+            {
+                var (eventsFiles, eventsCount, eventsWarnings) = LoadFromDirectory(eventsPath, "Events");
+                filesLoaded += eventsFiles;
+                eventsLoaded += eventsCount;
+                migrationWarnings += eventsWarnings;
+            }
+            else
+            {
+                ModLogger.Warn(LogCategory, $"Events directory not found: {eventsPath}");
+            }
+
+            // Load from Decisions directory
+            var decisionsPath = GetDecisionsBasePath();
+            if (!string.IsNullOrEmpty(decisionsPath) && Directory.Exists(decisionsPath))
+            {
+                var (decisionsFiles, decisionsCount, decisionsWarnings) = LoadFromDirectory(decisionsPath, "Decisions");
+                filesLoaded += decisionsFiles;
+                eventsLoaded += decisionsCount;
+                migrationWarnings += decisionsWarnings;
+            }
+            else
+            {
+                ModLogger.Warn(LogCategory, $"Decisions directory not found: {decisionsPath}");
+            }
+
+            _initialized = true;
+
+            var warningMsg = migrationWarnings > 0 ? $" ({migrationWarnings} migration warnings)" : "";
+            ModLogger.Info(LogCategory, $"Loaded {eventsLoaded} events from {filesLoaded} files{warningMsg}");
+        }
+
+        /// <summary>
+        /// Loads all JSON files from a directory and returns statistics.
+        /// </summary>
+        private static (int filesLoaded, int eventsLoaded, int migrationWarnings) LoadFromDirectory(string directoryPath, string directoryName)
+        {
+            var filesLoaded = 0;
+            var eventsLoaded = 0;
+            var migrationWarnings = 0;
+
+            var jsonFiles = Directory.GetFiles(directoryPath, "*.json", SearchOption.AllDirectories);
 
             foreach (var filePath in jsonFiles)
             {
@@ -66,14 +100,11 @@ namespace Enlisted.Features.Content
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.Error(LogCategory, $"Failed to load events from {Path.GetFileName(filePath)}", ex);
+                    ModLogger.Error(LogCategory, $"Failed to load events from {directoryName}/{Path.GetFileName(filePath)}", ex);
                 }
             }
 
-            _initialized = true;
-
-            var warningMsg = migrationWarnings > 0 ? $" ({migrationWarnings} migration warnings)" : "";
-            ModLogger.Info(LogCategory, $"Loaded {eventsLoaded} events from {filesLoaded} files{warningMsg}");
+            return (filesLoaded, eventsLoaded, migrationWarnings);
         }
 
         /// <summary>
@@ -162,6 +193,20 @@ namespace Enlisted.Features.Content
             }
 
             return Path.Combine(modulePath, "ModuleData", "Enlisted", "Events");
+        }
+
+        /// <summary>
+        /// Gets the base path for decision JSON files.
+        /// </summary>
+        private static string GetDecisionsBasePath()
+        {
+            var modulePath = GetModulePath();
+            if (string.IsNullOrEmpty(modulePath))
+            {
+                return string.Empty;
+            }
+
+            return Path.Combine(modulePath, "ModuleData", "Enlisted", "Decisions");
         }
 
         /// <summary>
@@ -390,6 +435,9 @@ namespace Enlisted.Features.Content
 
             // Parse trait requirements
             ParseDictionaryField(reqJson, "minTraits", reqs.MinTraits);
+
+            // Parse HP requirement (for decisions like Seek Treatment that require being wounded)
+            reqs.HpBelow = reqJson["hp_below"]?.Value<int>() ?? reqJson["hpBelow"]?.Value<int>();
 
             // Parse escalation requirements (check both locations)
             var escalationJson = reqJson["minEscalation"] as JObject;

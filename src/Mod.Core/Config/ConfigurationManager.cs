@@ -266,6 +266,52 @@ namespace Enlisted.Mod.Core.Config
         }
 
         /// <summary>
+        /// Load retinue system configuration.
+        /// </summary>
+        public static RetinueConfig LoadRetinueConfig()
+        {
+            try
+            {
+                var path = Path.Combine(ModuleDataPath, "retinue_config.json");
+                if (!File.Exists(path))
+                {
+                    return new RetinueConfig();
+                }
+
+                var json = File.ReadAllText(path);
+                return DeserializeSnakeCase<RetinueConfig>(json);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to load retinue config", ex);
+                return new RetinueConfig();
+            }
+        }
+
+        /// <summary>
+        /// Load equipment pricing configuration.
+        /// </summary>
+        public static EquipmentPricingConfig LoadEquipmentPricingConfig()
+        {
+            try
+            {
+                var path = Path.Combine(ModuleDataPath, "equipment_pricing.json");
+                if (!File.Exists(path))
+                {
+                    return new EquipmentPricingConfig();
+                }
+
+                var json = File.ReadAllText(path);
+                return DeserializeSnakeCase<EquipmentPricingConfig>(json);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error(LogCategory, "Failed to load equipment pricing config", ex);
+                return new EquipmentPricingConfig();
+            }
+        }
+
+        /// <summary>
         /// Get culture-specific rank title from progression config.
         /// </summary>
         public static string GetCultureRankTitle(int tier, string cultureId)
@@ -492,6 +538,94 @@ namespace Enlisted.Mod.Core.Config
         public float QuartermasterBuybackTense { get; set; } = 0.95f;
         public float QuartermasterBuybackSour { get; set; } = 0.85f;
         public float QuartermasterBuybackPredatory { get; set; } = 0.75f;
+    }
+
+    /// <summary>
+    /// Retinue system configuration for capacity, trickle, and economics.
+    /// </summary>
+    public sealed class RetinueConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public Dictionary<int, RetinueCapacityTier> CapacityByTier { get; set; } = new Dictionary<int, RetinueCapacityTier>();
+        public RetinueReplenishment Replenishment { get; set; } = new RetinueReplenishment();
+        public RetinueEconomics Economics { get; set; } = new RetinueEconomics();
+        public RetinueTierUnlock TierUnlock { get; set; } = new RetinueTierUnlock();
+    }
+
+    public sealed class RetinueCapacityTier
+    {
+        public string Name { get; set; } = string.Empty;
+        public int MaxSoldiers { get; set; }
+    }
+
+    public sealed class RetinueReplenishment
+    {
+        public RetinueTrickle Trickle { get; set; } = new RetinueTrickle();
+        public RetinueRequisition Requisition { get; set; } = new RetinueRequisition();
+    }
+
+    public sealed class RetinueTrickle
+    {
+        public bool Enabled { get; set; } = true;
+        public int MinDays { get; set; } = 2;
+        public int MaxDays { get; set; } = 3;
+        public int SoldiersPerTick { get; set; } = 1;
+    }
+
+    public sealed class RetinueRequisition
+    {
+        public bool Enabled { get; set; } = true;
+        public int CooldownDays { get; set; } = 14;
+        public float CostMultiplier { get; set; } = 1.0f;
+    }
+
+    public sealed class RetinueEconomics
+    {
+        public int DailyUpkeepPerSoldier { get; set; } = 2;
+        public bool DesertionEnabled { get; set; } = true;
+    }
+
+    public sealed class RetinueTierUnlock
+    {
+        public int LanceTier { get; set; } = 4;
+        public int SquadTier { get; set; } = 5;
+        public int RetinueTier { get; set; } = 6;
+    }
+
+    /// <summary>
+    /// Equipment pricing configuration for quartermaster and retirement.
+    /// </summary>
+    public sealed class EquipmentPricingConfig
+    {
+        public bool Enabled { get; set; } = true;
+        public PricingRules PricingRules { get; set; } = new PricingRules();
+        public Dictionary<string, int> TroopOverrides { get; set; } = new Dictionary<string, int>();
+        public RetirementRequirements RetirementRequirements { get; set; } = new RetirementRequirements();
+        public MedicalTreatment MedicalTreatment { get; set; } = new MedicalTreatment();
+    }
+
+    public sealed class PricingRules
+    {
+        public int BaseCostPerTier { get; set; } = 75;
+        public Dictionary<string, float> FormationMultipliers { get; set; } = new Dictionary<string, float>();
+        public float EliteMultiplier { get; set; } = 1.5f;
+        public Dictionary<string, float> CultureModifiers { get; set; } = new Dictionary<string, float>();
+    }
+
+    public sealed class RetirementRequirements
+    {
+        public int MinimumServiceDays { get; set; } = 365;
+        public float HonorableDischargeBonusMultiplier { get; set; } = 2.0f;
+        public int EquipmentRetentionTierRequirement { get; set; } = 5;
+    }
+
+    public sealed class MedicalTreatment
+    {
+        public int StandardCooldownDays { get; set; } = 5;
+        public int FieldMedicCooldownDays { get; set; } = 2;
+        public float BaseHealingPercentage { get; set; } = 0.8f;
+        public float FieldMedicHealingPercentage { get; set; } = 1.0f;
+        public int MinimumHealAmount { get; set; } = 20;
     }
 
 }

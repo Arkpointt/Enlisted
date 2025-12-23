@@ -125,6 +125,13 @@ namespace Enlisted.Features.Content
         /// Only checked if OnboardingStage is set.
         /// </summary>
         public string OnboardingTrack { get; set; }
+        
+        /// <summary>
+        /// Maximum HP percentage for this event to be available.
+        /// Used for decisions like "Seek Treatment" which only appear when wounded.
+        /// Value is 0-100. Null means no HP check.
+        /// </summary>
+        public int? HpBelow { get; set; }
     }
 
     /// <summary>

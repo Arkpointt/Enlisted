@@ -19,6 +19,12 @@ namespace Enlisted.Features.Orders.Models
         public OrderOutcome Failure { get; set; } = new OrderOutcome();
 
         /// <summary>
+        /// Consequences for catastrophic failure (very rare, high-stakes orders only).
+        /// Severe penalties including troop loss, serious injuries, or major reputation damage.
+        /// </summary>
+        public OrderOutcome CriticalFailure { get; set; }
+
+        /// <summary>
         /// Consequences if the player declines the order.
         /// Typically reputation penalties with the issuer and officers.
         /// </summary>

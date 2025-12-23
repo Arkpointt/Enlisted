@@ -23,7 +23,7 @@
 | **Orders** | 17 | Military directives from chain of command (6 T1-T3, 6 T4-T6, 5 T7-T9) |
 | **Decisions** | 34 | Player-initiated choices from Camp Hub with costs and risks |
 | **Events** | 68 | Context-triggered situations (14 escalation + 5 crisis + 49 role/universal) |
-| **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement) |
+| **Map Incidents** | 45 | Triggered by map actions (battle, siege, settlement entry/exit, waiting) |
 | **Phase 5 Samples** | 9 | NEW SCHEMA v2 sample events for testing (3 scout, 2 muster, 4 camp) |
 | **Phase 10 Training** | 3 | NEW weapon-aware training decisions (combat drill, weapon spec, lead drill) |
 | **Total** | **176** | Full content catalog (includes training chain) |
@@ -96,7 +96,12 @@ Some orders have severe failure penalties beyond reputation loss:
 
 ---
 
-## Decisions (30 total)
+## Decisions (34 total)
+
+**File:** `ModuleData/Enlisted/Decisions/decisions.json`  
+**Delivery:** Player-initiated from Camp Hub menu (inline selection, not popup)  
+**ID Prefix:** `dec_*` (e.g., `dec_rest`, `dec_spar`, `dec_gamble_low`)  
+**System:** Loaded by EventCatalog → filtered by DecisionCatalog → displayed in Camp Hub
 
 ### Self-Care (3)
 
@@ -111,14 +116,14 @@ Some orders have severe failure penalties beyond reputation loss:
 | ID | Name | Premise | Skill Check | Base Risk | Outcomes |
 |----|------|---------|-------------|-----------|----------|
 | `dec_weapon_drill` | Weapon Drill | Practice forms with the training posts. | Combat | 5% injury | +XP. High skill: bonus XP |
-| `dec_spar` | Sparring Match | Find someone willing to trade blows. | Combat, Athletics | 25% injury | Win/Lose/Injury. Skill 90+: "Impressive" |
+| `dec_spar` | Sparring Match | {SOLDIER_NAME} invites you to the practice ring. | Combat, Athletics | 25% injury | Friendly or hard sparring. Hard: more XP, HP loss |
 | `dec_endurance` | Endurance Training | Run the camp perimeter until your lungs burn. | Athletics | 10% injury | +XP. Athletics 60+: reduced injury |
 | `dec_study_tactics` | Study Tactics | Borrow a map, think about formations. | Tactics | 0% | +XP. Tactics 60+: bonus insight |
 | `dec_practice_medicine` | Practice Medicine | Offer to help the surgeon with simple cases. | Medicine | 0% | +XP. Medicine 40+: required |
 | `dec_train_troops` | Train the Men | Take recruits through drills. | Leadership | 20% injury | **Troop XP**. Leadership 80+: no deaths |
-| `dec_combat_drill` | Combat Drill | Request extra drill time with the sergeant. (Phase 10) | — | 0% | **Equipped weapon XP** or weakest skill |
-| `dec_weapon_specialization` | Weapon Specialization | Focus training on your equipped weapon. (Phase 10) | — | 0% | **Dynamic XP** based on equipped weapon |
-| `dec_lead_drill` | Lead Drill Practice | Lead drill practice for younger soldiers. (Phase 10, T7+) | Leadership | 0% | **Troop XP**, Officer/Soldier Rep |
+| `dec_combat_drill` | Combat Drill | Request extra drill time with the sergeant. | — | 0% | **Equipped weapon XP** or weakest skill |
+| `dec_weapon_specialization` | Weapon Specialization | Focus training on your equipped weapon. | — | 0% | **Dynamic XP** based on equipped weapon |
+| `dec_lead_drill` | Lead Drill Practice | Lead drill practice for younger soldiers. (T7+) | Leadership | 0% | **Troop XP**, Officer/Soldier Rep |
 
 ### Social (6)
 
@@ -135,7 +140,7 @@ Some orders have severe failure penalties beyond reputation loss:
 
 | ID | Name | Premise | Injury Risk | Systems |
 |----|------|---------|-------------|---------|
-| `dec_gamble_low` | Gamble (Low Stakes) | A few coins on dice. Nothing serious. | 5% | Gold, Scrutiny |
+| `dec_gamble_low` | Gamble (Low Stakes) | Dice game behind the wagons. Casual or shrewd play. | 5% | Gold, Soldier Rep, Scrutiny |
 | `dec_gamble_high` | Gamble (High Stakes) | Real money. Real risk. | 15% | Gold, Scrutiny, HP |
 | `dec_side_work` | Side Work | Someone in camp needs labor. Pays decent. | 10% | Gold, Rest, HP |
 | `dec_shady_deal` | Shady Deal | A man knows a man who has something to sell. | 20% | Gold, Scrutiny, HP |
@@ -145,7 +150,7 @@ Some orders have severe failure penalties beyond reputation loss:
 
 | ID | Name | Premise | Systems |
 |----|------|---------|---------|
-| `dec_request_audience` | Request an Audience | Ask to speak with the lord directly. | Lord Rep |
+| `dec_request_audience` | Request an Audience | Petition the lord. Recognition, pay advance, or opportunity. | Lord Rep, Officer Rep, Gold |
 | `dec_volunteer_duty` | Volunteer for Duty | Tell the sergeant you want extra work. | Officer Rep |
 | `dec_request_leave` | Request Leave | Ask permission to visit town on your own time. | Officer Rep |
 
@@ -168,7 +173,7 @@ Some orders have severe failure penalties beyond reputation loss:
 
 | ID | Name | Premise | Injury Risk | Systems |
 |----|------|---------|-------------|---------|
-| `dec_dangerous_wager` | Accept a Dangerous Wager | Someone's bet you can't do something stupid. | 50% | Gold, HP, Wound |
+| `dec_dangerous_wager` | Accept a Dangerous Wager | {SOLDIER_NAME} bets you can't do something stupid. Bold or clever approach. | 50% | Gold, HP, Soldier Rep, Valor |
 | `dec_prove_courage` | Prove Your Courage | Do something reckless to earn respect. | 35% | Valor, Rep, HP |
 | `dec_challenge` | Challenge Someone | Call them out. Settle it properly. | 60% | Rep, Valor, HP |
 
@@ -377,11 +382,15 @@ Events triggered by personal food inventory or company supply status. See `playe
 
 ## Map Incidents (45 total)
 
-**Implementation Status**: ✅ **System Complete** - MapIncidentManager delivers incidents during battle end, settlement entry/exit, and siege operations. 7 sample incidents implemented (3 battle, 4 settlement).
+**Implementation Status**: ✅ **Content Complete** - MapIncidentManager delivers incidents during battle end, settlement entry/exit, siege operations, and waiting in settlement. All 45 incidents implemented across 6 files matching spec exactly.
 
-**Sample Files**:
-- `ModuleData/Enlisted/Events/incidents_battle.json` - 3 battle incidents
-- `ModuleData/Enlisted/Events/incidents_settlement.json` - 4 settlement incidents
+**Files**:
+- `ModuleData/Enlisted/Events/incidents_battle.json` - 11 LeavingBattle incidents
+- `ModuleData/Enlisted/Events/incidents_siege.json` - 10 DuringSiege incidents
+- `ModuleData/Enlisted/Events/incidents_town.json` - 8 EnteringTown incidents
+- `ModuleData/Enlisted/Events/incidents_village.json` - 6 EnteringVillage incidents
+- `ModuleData/Enlisted/Events/incidents_leaving.json` - 6 LeavingSettlement incidents
+- `ModuleData/Enlisted/Events/incidents_waiting.json` - 4 WaitingInSettlement incidents
 
 ### LeavingBattle (11)
 
@@ -504,7 +513,7 @@ These events use the NEW schema v2 format with full XML localization. Created fo
 | Category | Count | JSON File | Status |
 |----------|-------|-----------|--------|
 | Orders | 17 | `orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` | ✅ Implemented |
-| Decisions | 34 | `decisions_catalog.json` + `events_training.json` | Indexed |
+| Decisions | 34 | `Decisions/decisions.json` | ✅ Implemented |
 | Events - Escalation | 14 | `events_escalation.json` | Indexed |
 | Events - Crisis | 5 | `events_crisis.json` | Indexed |
 | Events - Role | 41 | `events_role_*.json` | Indexed |

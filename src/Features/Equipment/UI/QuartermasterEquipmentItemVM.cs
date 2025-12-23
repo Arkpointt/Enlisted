@@ -57,6 +57,40 @@ namespace Enlisted.Features.Equipment.UI
         [DataSourceProperty]
         public string SlotTypeText { get; private set; }
         
+        /// <summary>
+        /// Quality tier display text (Poor, Worn, Standard, Fine, Masterwork, Legendary).
+        /// Empty string if Common quality (no modifier).
+        /// </summary>
+        [DataSourceProperty]
+        public string QualityText { get; private set; }
+        
+        /// <summary>
+        /// Quality tier color code for UI styling.
+        /// Empty string if Common quality (no modifier).
+        /// </summary>
+        [DataSourceProperty]
+        public string QualityColor { get; private set; }
+        
+        /// <summary>
+        /// Tooltip text showing base stats vs modified stats.
+        /// Displays stat differences when quality modifier is applied.
+        /// </summary>
+        [DataSourceProperty]
+        public string TooltipText { get; private set; }
+        
+        /// <summary>
+        /// Whether this item can be upgraded (has modifier group and not at max quality).
+        /// </summary>
+        [DataSourceProperty]
+        public bool IsUpgradeable { get; private set; }
+        
+        /// <summary>
+        /// Display text for upgrade indicator (e.g., "UPGRADE AVAILABLE").
+        /// Empty string if not upgradeable.
+        /// </summary>
+        [DataSourceProperty]
+        public string UpgradeIndicatorText { get; private set; }
+        
         // Legacy property for backwards compatibility
         [DataSourceProperty]
         public string WeaponDetails { get; private set; }
@@ -102,9 +136,22 @@ namespace Enlisted.Features.Equipment.UI
                 var item = _variant.Item;
                 CostText = $"Price: {_variant.Cost} denars";
                 
-                // Set item name and basic properties
-                // Phase 7: Add "NEW" indicator for recently unlocked items
+                // Set item name with quality modifier if present
                 var baseName = item.Name?.ToString() ?? "Unknown Item";
+                
+                // Apply quality modifier name if present
+                if (!string.IsNullOrEmpty(_variant.ModifiedName))
+                {
+                    baseName = _variant.ModifiedName;
+                }
+                
+                // Truncate very long names to prevent overlap (max 45 characters)
+                if (baseName.Length > 45)
+                {
+                    baseName = baseName.Substring(0, 42) + "...";
+                }
+                
+                // Add "NEW" indicator for recently unlocked items
                 ItemName = _variant.IsNewlyUnlocked ? $"[NEW] {baseName}" : baseName;
                 IsCurrentEquipment = _variant.IsCurrent;
                 CanAfford = _variant.CanAfford;
@@ -117,6 +164,15 @@ namespace Enlisted.Features.Equipment.UI
                 
                 // Build equipment stats based on item type (weapon, armor, or accessory)
                 BuildEquipmentStats(item);
+                
+                // Set quality display based on modifier
+                SetQualityDisplay(_variant.Modifier);
+                
+                // Build tooltip with base vs modified stats comparison
+                BuildTooltipText(item, _variant.Modifier);
+                
+                // Check if item is upgradeable
+                SetUpgradeIndicator(item, _variant.Quality);
                 
                 // Legacy support - combine stats into WeaponDetails for backwards compatibility
                 WeaponDetails = $"{PrimaryStats}\n{SecondaryStats}";
@@ -150,6 +206,11 @@ namespace Enlisted.Features.Equipment.UI
                 OnPropertyChanged(nameof(PrimaryStats));
                 OnPropertyChanged(nameof(SecondaryStats));
                 OnPropertyChanged(nameof(SlotTypeText));
+                OnPropertyChanged(nameof(QualityText));
+                OnPropertyChanged(nameof(QualityColor));
+                OnPropertyChanged(nameof(TooltipText));
+                OnPropertyChanged(nameof(IsUpgradeable));
+                OnPropertyChanged(nameof(UpgradeIndicatorText));
                 OnPropertyChanged(nameof(WeaponDetails));
             }
             catch (Exception ex)
@@ -173,6 +234,8 @@ namespace Enlisted.Features.Equipment.UI
                 PrimaryStats = "";
                 SecondaryStats = "";
                 SlotTypeText = "";
+                QualityText = "";
+                QualityColor = "";
                 WeaponDetails = "";
                 Image = new ItemImageIdentifierVM(null);
             }
@@ -185,6 +248,11 @@ namespace Enlisted.Features.Equipment.UI
                 PrimaryStats = "";
                 SecondaryStats = "";
                 SlotTypeText = "";
+                QualityText = "";
+                QualityColor = "";
+                TooltipText = "";
+                IsUpgradeable = false;
+                UpgradeIndicatorText = "";
                 WeaponDetails = "";
                 Image = new ItemImageIdentifierVM(null);
             }
@@ -466,6 +534,47 @@ namespace Enlisted.Features.Equipment.UI
         }
         
         /// <summary>
+        /// Sets quality display properties based on the item quality tier.
+        /// </summary>
+        private void SetQualityDisplay(ItemModifier modifier)
+        {
+            if (modifier == null || _variant.Quality == ItemQuality.Common)
+            {
+                // Common quality (no modifier) - no quality display
+                QualityText = "";
+                QualityColor = "";
+                return;
+            }
+            
+            var quality = _variant.Quality;
+            
+            // Set quality text using localized strings
+            QualityText = quality switch
+            {
+                ItemQuality.Poor => new TextObject("{=qm_quality_poor}Poor").ToString(),
+                ItemQuality.Inferior => new TextObject("{=qm_quality_inferior}Worn").ToString(),
+                ItemQuality.Common => new TextObject("{=qm_quality_common}Standard").ToString(),
+                ItemQuality.Fine => new TextObject("{=qm_quality_fine}Fine").ToString(),
+                ItemQuality.Masterwork => new TextObject("{=qm_quality_masterwork}Masterwork").ToString(),
+                ItemQuality.Legendary => new TextObject("{=qm_quality_legendary}Legendary").ToString(),
+                _ => ""
+            };
+            
+            // Set quality color (ARGB hex codes for Gauntlet UI - 8 digits with alpha channel)
+            // Using softer colors for better readability and reduced eye strain
+            QualityColor = quality switch
+            {
+                ItemQuality.Poor => "#909090FF",        // Light gray (more visible than dark gray)
+                ItemQuality.Inferior => "#CD853FFF",    // Peru/tan (lighter brown, more readable)
+                ItemQuality.Common => "#E8E8E8FF",      // Off-white (softer than pure white)
+                ItemQuality.Fine => "#90EE90FF",        // Light green (softer than lime)
+                ItemQuality.Masterwork => "#6495EDFF",  // Cornflower blue (lighter, more readable)
+                ItemQuality.Legendary => "#FFD700FF",   // Gold (keeping as-is, already good)
+                _ => "#E8E8E8FF"
+            };
+        }
+        
+        /// <summary>
         /// Get human-readable slot type name for display.
         /// </summary>
         private static string GetSlotTypeName(EquipmentIndex slot)
@@ -485,6 +594,177 @@ namespace Enlisted.Features.Equipment.UI
                 EquipmentIndex.HorseHarness => "Horse Armor",
                 _ => "Equipment"
             };
+        }
+        
+        /// <summary>
+        /// Build tooltip text showing base stats vs modified stats.
+        /// Displays stat differences when quality modifier is applied.
+        /// </summary>
+        private void BuildTooltipText(ItemObject item, ItemModifier modifier)
+        {
+            try
+            {
+                if (item == null)
+                {
+                    TooltipText = "";
+                    return;
+                }
+                
+                // If no modifier, just show basic item info
+                if (modifier == null || _variant.Quality == ItemQuality.Common)
+                {
+                    TooltipText = $"{item.Name?.ToString() ?? "Unknown"}\n{item.ItemType}";
+                    return;
+                }
+                
+                var tooltipParts = new List<string>();
+                
+                // Add item name (with fallback if both ModifiedName and item.Name are null)
+                var displayName = _variant.ModifiedName ?? item.Name?.ToString() ?? "Unknown Item";
+                tooltipParts.Add(displayName);
+                
+                // Add quality tier (with fallback)
+                if (!string.IsNullOrEmpty(QualityText))
+                {
+                    tooltipParts.Add($"Quality: {QualityText}");
+                }
+                
+                // Add modifier effects based on item type
+                if (item.WeaponComponent != null)
+                {
+                    BuildWeaponTooltip(item, modifier, tooltipParts);
+                }
+                else if (item.ArmorComponent != null)
+                {
+                    BuildArmorTooltip(item, modifier, tooltipParts);
+                }
+                
+                // Add price multiplier info with clearer text for large reductions
+                var priceMultiplier = modifier.PriceMultiplier;
+                if (Math.Abs(priceMultiplier - 1.0f) > 0.01f)
+                {
+                    var percentChange = (int)((priceMultiplier - 1.0f) * 100);
+                    
+                    // Use clearer wording for very low quality items
+                    if (percentChange <= -75)
+                    {
+                        tooltipParts.Add($"Value: {(int)(priceMultiplier * 100)}% of normal");
+                    }
+                    else
+                    {
+                        tooltipParts.Add($"Value: {(percentChange > 0 ? "+" : "")}{percentChange}%");
+                    }
+                }
+                
+                TooltipText = string.Join("\n", tooltipParts);
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("QuartermasterUI", "Error building tooltip text", ex);
+                TooltipText = item?.Name?.ToString() ?? "";
+            }
+        }
+        
+        /// <summary>
+        /// Build weapon-specific tooltip showing damage/speed modifiers.
+        /// </summary>
+        private void BuildWeaponTooltip(ItemObject item, ItemModifier modifier, List<string> tooltipParts)
+        {
+            if (item?.WeaponComponent == null || modifier == null || tooltipParts == null) return;
+            
+            var weapon = item.WeaponComponent.PrimaryWeapon;
+            if (weapon == null) return;
+            
+            // Show damage modifier
+            if (modifier.Damage != 0)
+            {
+                tooltipParts.Add($"Damage: {(modifier.Damage > 0 ? "+" : "")}{modifier.Damage}");
+            }
+            
+            // Show speed modifier
+            if (modifier.Speed != 0)
+            {
+                tooltipParts.Add($"Speed: {(modifier.Speed > 0 ? "+" : "")}{modifier.Speed}");
+            }
+            
+            // Show missile speed modifier for ranged weapons
+            if (weapon.IsRangedWeapon && modifier.MissileSpeed != 0)
+            {
+                tooltipParts.Add($"Missile Speed: {(modifier.MissileSpeed > 0 ? "+" : "")}{modifier.MissileSpeed}");
+            }
+        }
+        
+        /// <summary>
+        /// Build armor-specific tooltip showing armor value modifiers.
+        /// </summary>
+        private void BuildArmorTooltip(ItemObject item, ItemModifier modifier, List<string> tooltipParts)
+        {
+            if (item?.ArmorComponent == null || modifier == null || tooltipParts == null) return;
+            
+            if (modifier.Armor != 0)
+            {
+                tooltipParts.Add($"Armor: {(modifier.Armor > 0 ? "+" : "")}{modifier.Armor}");
+            }
+        }
+        
+        /// <summary>
+        /// Set upgrade indicator based on whether item can be upgraded.
+        /// Items with modifier groups and not at max quality show upgrade indicator.
+        /// </summary>
+        private void SetUpgradeIndicator(ItemObject item, ItemQuality currentQuality)
+        {
+            try
+            {
+                if (item == null)
+                {
+                    IsUpgradeable = false;
+                    UpgradeIndicatorText = "";
+                    return;
+                }
+                
+                // Check if item has modifier group (required for upgrades)
+                var modGroup = item.ItemComponent?.ItemModifierGroup;
+                if (modGroup == null)
+                {
+                    IsUpgradeable = false;
+                    UpgradeIndicatorText = "";
+                    return;
+                }
+                
+                // Check if already at max quality
+                if (currentQuality == ItemQuality.Legendary)
+                {
+                    IsUpgradeable = false;
+                    UpgradeIndicatorText = "";
+                    return;
+                }
+                
+                // Check if any higher quality tiers exist
+                var hasUpgrades = false;
+                var qualityTiers = new[] { ItemQuality.Fine, ItemQuality.Masterwork, ItemQuality.Legendary };
+                
+                foreach (var tier in qualityTiers)
+                {
+                    if (tier > currentQuality)
+                    {
+                        var modifiers = modGroup.GetModifiersBasedOnQuality(tier);
+                        if (modifiers != null && modifiers.Count > 0)
+                        {
+                            hasUpgrades = true;
+                            break;
+                        }
+                    }
+                }
+                
+                IsUpgradeable = hasUpgrades;
+                UpgradeIndicatorText = hasUpgrades ? new TextObject("{=qm_ui_upgrade_available}UPGRADE").ToString() : "";
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("QuartermasterUI", "Error setting upgrade indicator", ex);
+                IsUpgradeable = false;
+                UpgradeIndicatorText = "";
+            }
         }
     }
 }

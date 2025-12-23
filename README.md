@@ -60,10 +60,10 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
   - wages accrue daily into a ledger and pay out at pay muster events (with iou/promissory options when disrupted).
 - **pay tension**
   - when pay is late, tension rises and unlocks special choices (corruption/loyalty pressure valves, including leaving without penalty at high tension).
-- **lance identity**
-  - you’re assigned a culture-flavored lance identity and see it reflected in menus, ranks, and story hooks.
+- **squad identity**
+  - you're assigned a culture-flavored squad identity and see it reflected in menus, ranks, and story hooks.
 - **camp activities**
-  - a menu of action-based activities (training/tasks/social/lance) that spend/restore fatigue and grant xp.
+  - a menu of action-based activities (training/tasks/social/squad) that spend/restore fatigue and grant xp.
 - **quartermaster + equipment**
   - buy formation/tier/culture-appropriate gear; includes provisions (rations) and relationship flavor when enabled.
 - **companions**
@@ -79,8 +79,8 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
 
 ### what to expect (important rules)
 
-- **you serve; you don’t command**
-  - you manage your own small scope (your duty, your lance menus, camp actions), not the lord’s strategy.
+- **you serve; you don't command**
+  - you manage your own small scope (your duty, your squad menus, camp actions), not the lord's strategy.
 - **loot**
   - low tiers do not get normal loot screens; you’ll get compensation instead.
   - higher tiers regain native loot access.
@@ -90,9 +90,9 @@ serve as a soldier in any lord’s warband. follow orders, earn wages, climb ran
 - **leave vs discharge**
   - leave is temporary and time-limited.
   - discharge (final muster) is the "leave properly" path and resolves at the next pay muster.
-- **lance reputation**
-  - your standing with your lance mates affects available options and promotions.
-  - help your lance → better event options, they cover for you, promotion eligibility.
+- **soldier reputation**
+  - your standing with your fellow soldiers affects available options and promotions.
+  - help your comrades → better event options, they cover for you, promotion eligibility.
   - betray or ignore them → worse options, isolation, blocked promotions, possible sabotage.
 
 ### settings / config
@@ -104,8 +104,19 @@ configs live in:
 common files:
 - `enlisted_config.json` (main toggles and pacing)
 - `progression_config.json` (tiers/ranks)
-- `duties_system.json` (duties + formation training config)
 - `Events\*.json` (event content packs)
+- `Orders\*.json` (military orders by tier)
+
+### translations
+
+the mod is fully translatable and supports multiple languages. to add a translation:
+
+- see **[Translation Guide](ModuleData/Languages/README.md)** for complete instructions
+- copy the `_TEMPLATE` folder in `ModuleData/Languages/`
+- translate 1,822 strings to your language
+- submit via pull request or share with the community
+
+current languages: **english** (default)
 
 ### logs + troubleshooting
 

@@ -1,0 +1,118 @@
+﻿================================================================================
+CONTENT LOCALIZATION VERIFICATION REPORT
+Generated: 2025-12-22 21:27:45
+================================================================================
+
+SUMMARY
+-------
+Orders:        0 / 17 localized (17 missing)
+Decisions:     25 / 33 localized (8 missing)
+Map Incidents: 0 / 45 localized (45 missing)
+
+Total Missing: 70
+Total Found:   25
+================================================================================
+MISSING LOCALIZATION STRINGS
+================================================================================
+
+The following content IDs do not have localization strings in enlisted_strings.xml:
+  - Decision : dec_ask_around
+  - Decision : dec_contraband_run
+  - Decision : dec_cover_deserter
+  - Decision : dec_gather_intel
+  - Decision : dec_inspect_equipment
+  - Decision : dec_organize_kit
+  - Decision : dec_report_theft
+  - Decision : dec_seek_promotion
+  - MapIncident : mi_battle_cowardice_witnessed
+  - MapIncident : mi_battle_defeat_close
+  - MapIncident : mi_battle_defeat_rout
+  - MapIncident : mi_battle_friendly_fire
+  - MapIncident : mi_battle_heroic_stand
+  - MapIncident : mi_battle_looting_opportunity
+  - MapIncident : mi_battle_victory_close
+  - MapIncident : mi_battle_victory_decisive
+  - MapIncident : mi_leave_settlement_ambush
+  - MapIncident : mi_leave_settlement_deserter_temptation
+  - MapIncident : mi_leave_settlement_merchant_caravan
+  - MapIncident : mi_leave_settlement_patrol_encounter
+  - MapIncident : mi_leave_settlement_refugee_plea
+  - MapIncident : mi_siege_assault_failure
+  - MapIncident : mi_siege_assault_success
+  - MapIncident : mi_siege_bombardment_injury
+  - MapIncident : mi_siege_desertion_wave
+  - MapIncident : mi_siege_disease_outbreak
+  - MapIncident : mi_siege_mining_collapse
+  - MapIncident : mi_siege_sortie
+  - MapIncident : mi_siege_supply_crisis
+  - MapIncident : mi_town_black_market
+  - MapIncident : mi_town_gambling_den
+  - MapIncident : mi_town_market_opportunity
+  - MapIncident : mi_town_noble_encounter
+  - MapIncident : mi_town_old_comrade
+  - MapIncident : mi_town_recruitment_offer
+  - MapIncident : mi_town_suspicious_activity
+  - MapIncident : mi_town_tavern_brawl
+  - MapIncident : mi_village_bandit_threat
+  - MapIncident : mi_village_deserter_hiding
+  - MapIncident : mi_village_harvest_festival
+  - MapIncident : mi_village_local_conflict
+  - MapIncident : mi_village_refugee_family
+  - MapIncident : mi_village_requisition_fair
+  - MapIncident : mi_village_requisition_harsh
+  - MapIncident : mi_village_shrine_blessing
+  - MapIncident : mi_wait_settlement_equipment_issue
+  - MapIncident : mi_wait_settlement_inspection
+  - MapIncident : mi_wait_settlement_local_trouble
+  - MapIncident : mi_wait_settlement_officer_summons
+  - MapIncident : mi_wait_settlement_pay_dispute
+  - MapIncident : mi_wait_settlement_rest_interrupted
+  - MapIncident : mi_wait_settlement_rumor_mill
+  - MapIncident : mi_wait_settlement_training_opportunity
+  - Order : order_camp_patrol
+  - Order : order_command_squad
+  - Order : order_coordinate_supply
+  - Order : order_equipment_check
+  - Order : order_firewood
+  - Order : order_forage
+  - Order : order_guard_duty
+  - Order : order_inspect_defenses
+  - Order : order_inspect_readiness
+  - Order : order_interrogate
+  - Order : order_lead_patrol
+  - Order : order_muster
+  - Order : order_repair_equipment
+  - Order : order_scout_route
+  - Order : order_sentry
+  - Order : order_strategic_planning
+  - Order : order_treat_wounded
+
+================================================================================
+FOUND LOCALIZATION STRINGS
+================================================================================
+  [OK] Decision : dec_combat_drill
+  [OK] Decision : dec_confront_rival
+  [OK] Decision : dec_endurance
+  [OK] Decision : dec_gamble_high
+  [OK] Decision : dec_gamble_low
+  [OK] Decision : dec_join_drinking
+  [OK] Decision : dec_join_men
+  [OK] Decision : dec_keep_to_self
+  [OK] Decision : dec_lead_drill
+  [OK] Decision : dec_practice_medicine
+  [OK] Decision : dec_request_audience
+  [OK] Decision : dec_request_leave
+  [OK] Decision : dec_rest
+  [OK] Decision : dec_rest_extended
+  [OK] Decision : dec_seek_officers
+  [OK] Decision : dec_seek_treatment
+  [OK] Decision : dec_shady_deal
+  [OK] Decision : dec_side_work
+  [OK] Decision : dec_spar
+  [OK] Decision : dec_study_tactics
+  [OK] Decision : dec_train_troops
+  [OK] Decision : dec_visit_market
+  [OK] Decision : dec_weapon_drill
+  [OK] Decision : dec_weapon_specialization
+  [OK] Decision : dec_write_letter
+

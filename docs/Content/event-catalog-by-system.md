@@ -3,7 +3,7 @@
 **Summary:** Single source of truth for all narrative content including Events (63), Map Incidents (42), Orders (17), and Decisions (30). This comprehensive catalog organizes content by system and role, providing IDs, descriptions, requirements, effects, and implementation status for all content in the mod.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-22 (Phase 6: 45 map incidents across 6 contexts)  
 **Related Docs:** [Content System Architecture](../Features/Content/content-system-architecture.md), [Event System Schemas](../Features/Content/event-system-schemas.md)
 
 ---
@@ -15,9 +15,9 @@
 | **Orders** | 17 | 6 T1-T3, 6 T4-T6, 5 T7-T9 |
 | **Decisions** | 30 | 3 Self-Care, 5 Training, 6 Social, 5 Economic, 3 Career, 3 Info, 2 Equipment, 3 Risk-Taking |
 | **Events** | 63 | 14 Escalation (5 Scrutiny, 5 Discipline, 4 Medical) + 49 Role/Universal |
-| **Map Incidents** | 42 | 10 Battle, 8 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting |
+| **Map Incidents** | 45 | 11 Battle, 10 Siege, 8 Town, 6 Village, 6 Leaving, 4 Waiting |
 
-**Total**: 152 content pieces across all systems.
+**Total**: 155 content pieces across all systems.
 
 ---
 
@@ -501,52 +501,52 @@ Camp life, moral dilemmas, social situations. Not skill-gated but may have skill
 Events triggered by map actions. Leverage natural gameplay moments.
 
 ### Triggers
-| Trigger | When | Chance |
-|---------|------|--------|
-| LeavingBattle | After winning field battle | 35% |
-| DuringSiege | Hourly while besieging | 8% |
-| EnteringTown | Opening town menu | 25% |
-| EnteringVillage | Opening village menu | 20% |
-| EnteringCastle | Opening castle menu | 20% |
-| LeavingSettlement | Selecting leave | 20% |
-| WaitingInSettlement | Hourly while waiting | 5% |
+| Trigger | When | Cooldown | Chance/Condition |
+|---------|------|----------|------------------|
+| LeavingBattle | After player battle ends | 1 hour | When not on cooldown |
+| DuringSiege | Hourly while besieging settlement | 4 hours | 10% chance per hour |
+| EnteringTown | Opening town/castle menu | 12 hours | When not on cooldown |
+| EnteringVillage | Opening village menu | 12 hours | When not on cooldown |
+| LeavingSettlement | Leaving any settlement | 12 hours | When not on cooldown |
+| WaitingInSettlement | Hourly while lord stationed in town/castle | 8 hours | 15% chance per hour |
 
 ### Content by Trigger
 
-**LeavingBattle** (10 incidents)
+**LeavingBattle** (11 incidents)
 Post-combat moments. Adrenaline fading, death around you.
 - Loot decisions, wounded comrades, enemy survivors
-- Recognition from officers, first-kill processing
+- Recognition from officers, first-kill processing, battle trophies
 - Skill variants: Medicine (triage), Scouting (intel found), Leadership (casualty report)
 
-**DuringSiege** (8 incidents)
+**DuringSiege** (10 incidents)
 Attrition and waiting. Boredom, desperation, tempers fraying.
 - Water rationing, disease rumors, assault prep
-- Deserters, gambling, supply theft
+- Deserters, gambling, supply theft, spoiled food
 - Skill variants: Engineering (wall assessment), Medicine (disease), Scouting (sortie intel)
 
 **EnteringTown** (8 incidents)
 Shore leave. Temptation, release, civilian world.
 - Tavern opportunities, market spending, old acquaintances
-- Messages from home, criminal contacts
+- Messages from home, criminal contacts, brawls
 - Skill variants: Roguery (black market), Charm (negotiations), Trade (opportunities)
 
 **EnteringVillage** (6 incidents)
 Rural interactions. Simpler folk, different tensions.
 - Local gratitude or resentment, foraging results
-- Recruitment interest, rumors, omens
+- Recruitment interest, rumors, theft accusations
 - Skill variants: Scouting (tracks noticed), Medicine (village sick), Charm (locals)
 
 **LeavingSettlement** (6 incidents)
 Departure moments. Last chances, what's ahead.
 - Farewells, stolen property discovered, hangovers
-- Intelligence about destination, new recruits
+- Intelligence about destination, stowaways, last-minute purchases
 - Skill variants: Scouting (route assessment), Leadership (organizing departure)
 
 **WaitingInSettlement** (4 incidents)
-Time passing. Garrison life, town leave extended.
-- Encounters, opportunities, trouble brewing
-- Skill variants based on location (town vs. castle)
+Time passing while lord's party is garrisoned. Idle time in town or castle.
+- Unexpected opportunities, chance encounters
+- Trouble brewing among the men, boredom setting in
+- Fires during garrison duty: 15% chance per hour when lord stationed in settlement
 
 ---
 
@@ -1031,7 +1031,7 @@ ModuleData/Enlisted/Events/
 │   ├── orders_t4_t6.json           (6 specialist orders)
 │   └── orders_t7_t9.json           (5 leadership orders)
 ├── Decisions/
-│   └── decisions_catalog.json      (Player-initiated choices)
+│   └── decisions.json              (34 player-initiated Camp Hub decisions, dec_* prefix)
 ├── MapIncidents/
 │   ├── incidents_battle.json       (LeavingBattle)
 │   ├── incidents_siege.json        (DuringSiege)

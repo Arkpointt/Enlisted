@@ -3,7 +3,7 @@
 **Summary:** The unified content system manages all narrative content (events, decisions, orders, map incidents) through a centralized delivery pipeline. The system uses JSON content definitions, XML localization, requirement checking, and effect application to create dynamic player experiences that integrate with enlistment, reputation, and progression systems.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-22 (Phase 6: Map Incidents + waiting_in_settlement implementation)  
 **Related Docs:** [Event Catalog](../../Content/event-catalog-by-system.md), [Training System](../Combat/training-system.md)
 
 ---
@@ -28,9 +28,10 @@
 The content system provides a unified pipeline for delivering narrative content:
 
 **Content Types:**
-- **Orders** - Military directives from chain of command
-- **Decisions** - Player-initiated camp menu actions
-- **Events** - Context-triggered narrative moments
+- **Orders** - Military directives from chain of command (order_* prefix)
+- **Decisions** - Player-initiated Camp Hub menu actions (dec_* prefix, inline)
+- **Player Events** - Player-initiated popup events (player_* prefix, inquiry popup)
+- **Events** - Context-triggered narrative moments (automatic)
 - **Map Incidents** - Native Bannerlord incident integration
 
 **Core Responsibilities:**
@@ -68,10 +69,13 @@ Military directives from the chain of command that the player must complete:
 
 ### Decisions
 
-Player-initiated actions from the camp menu:
+Player-initiated actions from the Camp Hub menu:
 
 **Characteristics:**
-- Player chooses when to attempt
+- Player chooses when to attempt (full timing control)
+- Delivered as inline menu selections (not popups)
+- Use `dec_` ID prefix for Camp Hub decisions
+- Loaded from `ModuleData/Enlisted/Decisions/` folder
 - Often have skill checks or costs
 - Provide progression and customization
 - Can be daily or limited-use
@@ -195,11 +199,13 @@ PersonalDispatchManager.PostDispatch("Event Result", resultText);
 
 ### Decision Delivery Flow
 
+**Camp Hub Decisions (dec_* prefix):**
 ```csharp
-// 1. Player opens camp menu
+// 1. Player opens Camp Hub (C key)
 ShowCampMenu();
 
-// 2. Get available decisions
+// 2. Player navigates to category (Training, Social, etc.)
+// 3. Get available decisions for that category
 var decisions = DecisionCatalog.GetAvailableDecisions();
 
 // 3. Filter by requirements (tier, role, cooldowns, etc.)
@@ -417,9 +423,12 @@ Options with success/failure outcomes:
 | `"camp"` | In camp, daily | Gambling, storytelling, brawls |
 | `"march"` | Party moving | Patrol encounters, terrain challenges |
 | `"muster"` | Every 12 days | Pay events, inspections, promotions |
-| `"battle"` | After combat | Aftermath, looting, medical |
-| `"settlement"` | In town/village | Town events, market encounters |
-| `"waiting"` | Party waiting | Rest events, time-passing events |
+| `"leaving_battle"` | After player battle ends | Looting, wounded comrades, battlefield finds |
+| `"during_siege"` | Hourly while besieging | Water rationing, desertion, disease |
+| `"entering_town"` | Opening town/castle menu | Tavern encounters, merchants, old friends |
+| `"entering_village"` | Opening village menu | Local gratitude, rumors, recruitment |
+| `"leaving_settlement"` | Leaving any settlement | Hangovers, farewells, stolen items |
+| `"waiting_in_settlement"` | Hourly in town/castle garrison | Opportunities, encounters, trouble brewing |
 
 ### Context-Specific Behavior
 
@@ -433,10 +442,11 @@ Options with success/failure outcomes:
 - Integrate with pay, rations, baggage checks
 - Trigger promotions, reviews
 
-**Battle Events:**
-- Fire after combat ends
-- Check battle outcome, casualties
-- Award combat XP and trait progress
+**Map Incidents:**
+- Fire based on map actions (battle end, settlement entry/exit, hourly while stationed)
+- Use MapIncidentManager to deliver context-specific incidents
+- Contexts: leaving_battle, during_siege, entering_town, entering_village, leaving_settlement, waiting_in_settlement
+- Have individual cooldowns (1-12 hours) and probability checks
 
 ---
 
@@ -582,6 +592,7 @@ JSON files include fallback text for development:
 | `src/Features/Content/EventDeliveryManager.cs` | Delivery pipeline, effects |
 | `src/Features/Content/EventRequirementChecker.cs` | Requirement validation |
 | `src/Features/Content/EventDefinition.cs` | Content data structures |
+| `src/Features/Content/MapIncidentManager.cs` | Map incident triggers and delivery |
 
 ### Subsystems
 
@@ -599,8 +610,16 @@ JSON files include fallback text for development:
 | `ModuleData/Enlisted/Events/events_crisis.json` | Crisis events |
 | `ModuleData/Enlisted/Events/events_role_*.json` | Role-specific events |
 | `ModuleData/Enlisted/Events/events_camp_life.json` | Universal camp events |
-| `ModuleData/Enlisted/Events/events_training.json` | Training decisions |
-| `ModuleData/Enlisted/Events/decisions_catalog.json` | Camp menu decisions |
+| `ModuleData/Enlisted/Events/events_training.json` | Training-related events |
+| `ModuleData/Enlisted/Events/events_decisions.json` | Automatic decision events (game-triggered popups) |
+| `ModuleData/Enlisted/Events/events_player_decisions.json` | Player-initiated event popups (player_* prefix) |
+| `ModuleData/Enlisted/Events/incidents_battle.json` | Map incidents: leaving_battle (11 incidents) |
+| `ModuleData/Enlisted/Events/incidents_siege.json` | Map incidents: during_siege (10 incidents) |
+| `ModuleData/Enlisted/Events/incidents_town.json` | Map incidents: entering_town (8 incidents) |
+| `ModuleData/Enlisted/Events/incidents_village.json` | Map incidents: entering_village (6 incidents) |
+| `ModuleData/Enlisted/Events/incidents_leaving.json` | Map incidents: leaving_settlement (6 incidents) |
+| `ModuleData/Enlisted/Events/incidents_waiting.json` | Map incidents: waiting_in_settlement (4 incidents) |
+| `ModuleData/Enlisted/Decisions/decisions.json` | 34 Camp Hub decisions (dec_* prefix, inline menu) |
 
 ### Localization
 

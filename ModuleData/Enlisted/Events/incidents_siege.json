@@ -1,0 +1,809 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered during sieges (during_siege context). 10 total incidents.",
+  "events": [
+    {
+      "id": "mi_siege_water",
+      "category": "map_incident",
+      "titleId": "mi_siege_water_title",
+      "title": "Water Rations",
+      "setupId": "mi_siege_water_setup",
+      "setup": "The wells are running low, and the sun beats down without mercy. Men queue for their water ration, lips cracked and eyes hollow. You notice a soldier with more than his share.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "share",
+          "textId": "mi_siege_water_share",
+          "text": "Share your ration with someone weaker",
+          "resultTextId": "mi_siege_water_share_result",
+          "resultText": "You press your waterskin into a suffering soldier's hands. He drinks gratefully, and others see what you did. It costs you, but it matters.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": 10,
+            "companyNeeds": {
+              "Supplies": -2
+            },
+            "traitXp": {
+              "Mercy": 8,
+              "Generosity": 5
+            }
+          }
+        },
+        {
+          "id": "hoard",
+          "textId": "mi_siege_water_hoard",
+          "text": "Keep what's yours",
+          "resultTextId": "mi_siege_water_hoard_result",
+          "resultText": "You guard your water jealously. Survival comes first—there's no room for sentiment when the wells run dry.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Rest": 3
+            },
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "find_source",
+          "textId": "mi_siege_water_find",
+          "text": "Search for another water source",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 40
+            }
+          },
+          "resultTextId": "mi_siege_water_find_result",
+          "resultText": "You slip away and search the siege works. A spring, missed by others, trickles from the rocks. You mark the spot and report it to the sergeant.",
+          "tooltip": "Requires Scouting 40+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 20
+            }
+          },
+          "effects": {
+            "officerRep": 8,
+            "companyNeeds": {
+              "Supplies": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_boredom",
+      "category": "map_incident",
+      "titleId": "mi_siege_boredom_title",
+      "title": "Siege Tedium",
+      "setupId": "mi_siege_boredom_setup",
+      "setup": "Weeks of waiting have worn the men thin. Fights break out over nothing. Dice games turn sour. The walls don't fall, and neither does the boredom.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "organize_games",
+          "textId": "mi_siege_boredom_games",
+          "text": "Organize games and competitions",
+          "requirements": {
+            "minSkills": {
+              "Leadership": 35
+            }
+          },
+          "resultTextId": "mi_siege_boredom_games_result",
+          "resultText": "Wrestling, races, archery contests—you give the men something to do besides brood. Morale lifts, if only for a while.",
+          "tooltip": "Requires Leadership 35+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Leadership": 15
+            }
+          },
+          "effects": {
+            "soldierRep": 8,
+            "companyNeeds": {
+              "Morale": 8
+            }
+          }
+        },
+        {
+          "id": "discipline",
+          "textId": "mi_siege_boredom_discipline",
+          "text": "Enforce strict discipline",
+          "resultTextId": "mi_siege_boredom_discipline_result",
+          "resultText": "You crack down on idleness. Drills, patrols, pointless work details—anything to keep the men occupied. They grumble, but they stop fighting each other.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "soldierRep": -3,
+            "companyNeeds": {
+              "Morale": -3
+            },
+            "discipline": -2
+          }
+        },
+        {
+          "id": "let_be",
+          "textId": "mi_siege_boredom_let",
+          "text": "Let the men sort it out themselves",
+          "resultTextId": "mi_siege_boredom_let_result",
+          "resultText": "You stay out of it. Men will be men. A few black eyes and bruised egos won't change the course of the siege.",
+          "risk": "safe",
+          "effects": {
+            "discipline": 2,
+            "companyNeeds": {
+              "Morale": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_deserter",
+      "category": "map_incident",
+      "titleId": "mi_siege_deserter_title",
+      "title": "Watching the Walls",
+      "setupId": "mi_siege_deserter_setup",
+      "setup": "Late at night, you spot movement near the perimeter. Someone is creeping toward the enemy lines—a deserter, slipping away under cover of darkness. You could stop him, or let him go.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "report",
+          "textId": "mi_siege_deserter_report",
+          "text": "Report him to the watch",
+          "resultTextId": "mi_siege_deserter_report_result",
+          "resultText": "You raise the alarm quietly. Guards intercept the deserter before he reaches the walls. His fate is sealed—but you did your duty.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 10,
+            "traitXp": {
+              "Honor": 5
+            },
+            "discipline": -2
+          }
+        },
+        {
+          "id": "confront",
+          "textId": "mi_siege_deserter_confront",
+          "text": "Confront him yourself",
+          "requirements": {
+            "minSkills": {
+              "Charm": 40
+            }
+          },
+          "resultTextId": "mi_siege_deserter_confront_result",
+          "resultText": "'Where do you think you're going?' He freezes, terrified. You talk him down, and he creeps back to his tent. No one else needs to know.",
+          "tooltip": "Requires Charm 40+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Charm": 15
+            }
+          },
+          "effects": {
+            "soldierRep": 5,
+            "traitXp": {
+              "Mercy": 5
+            }
+          }
+        },
+        {
+          "id": "let_go",
+          "textId": "mi_siege_deserter_let",
+          "text": "Let him go",
+          "resultTextId": "mi_siege_deserter_let_result",
+          "resultText": "You pretend not to see. Maybe he has a family, maybe he's just afraid. Either way, it's not your place to judge. The darkness swallows him.",
+          "risk": "risky",
+          "effects": {
+            "traitXp": {
+              "Mercy": 8
+            },
+            "scrutiny": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_sickness",
+      "category": "map_incident",
+      "titleId": "mi_siege_sickness_title",
+      "title": "Camp Fever",
+      "setupId": "mi_siege_sickness_setup",
+      "setup": "Sickness is spreading through the siege camp. Men cough in their tents, and the latrines overflow with the afflicted. The source could be the water, the food, or just too many men in too small a space.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 2, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "high",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "investigate",
+          "textId": "mi_siege_sickness_investigate",
+          "text": "Investigate the cause",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 50
+            }
+          },
+          "resultTextId": "mi_siege_sickness_investigate_result",
+          "resultText": "You trace the sickness to a contaminated water source. With the surgeon's help, you identify the problem and warn the officers. The outbreak slows.",
+          "tooltip": "Requires Medicine 50+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Medicine": 25
+            }
+          },
+          "effects": {
+            "officerRep": 12,
+            "medicalRisk": -3,
+            "companyNeeds": {
+              "Morale": 5
+            }
+          }
+        },
+        {
+          "id": "quarantine",
+          "textId": "mi_siege_sickness_quarantine",
+          "text": "Help enforce a quarantine",
+          "resultTextId": "mi_siege_sickness_quarantine_result",
+          "resultText": "You help separate the sick from the healthy. It's grim work—many don't come back from the fever tents—but it stops the spread.",
+          "risk": "risky",
+          "effects": {
+            "medicalRisk": 2,
+            "soldierRep": 5,
+            "traitXp": {
+              "Mercy": 5
+            }
+          }
+        },
+        {
+          "id": "ignore",
+          "textId": "mi_siege_sickness_ignore",
+          "text": "Keep your distance and hope for the best",
+          "resultTextId": "mi_siege_sickness_ignore_result",
+          "resultText": "You stay as far from the sick tents as possible. Self-preservation isn't noble, but you're still healthy when others aren't.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5,
+              "Mercy": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_assault_prep",
+      "category": "map_incident",
+      "titleId": "mi_siege_assault_prep_title",
+      "title": "Before the Assault",
+      "setupId": "mi_siege_assault_prep_setup",
+      "setup": "Tomorrow, the walls. Ladders are being prepared, siege towers wheeled into position. Tonight, men pray, drink, or simply stare at the fires. What do you do on what might be your last night?",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 1, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "critical",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "prepare",
+          "textId": "mi_siege_assault_prep_prepare",
+          "text": "Prepare your equipment carefully",
+          "resultTextId": "mi_siege_assault_prep_prepare_result",
+          "resultText": "You check every strap, sharpen every edge, and test every buckle. When dawn comes, you're as ready as any man can be.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Equipment": 3,
+              "Readiness": 5
+            },
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "rally",
+          "textId": "mi_siege_assault_prep_rally",
+          "text": "Rally the men with words",
+          "requirements": {
+            "minSkills": {
+              "Leadership": 45
+            }
+          },
+          "resultTextId": "mi_siege_assault_prep_rally_result",
+          "resultText": "You speak of honor, of home, of the dawn to come. The men listen. Some nod, some weep, but all of them seem steadier when you finish.",
+          "tooltip": "Requires Leadership 45+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Leadership": 20
+            }
+          },
+          "effects": {
+            "soldierRep": 10,
+            "companyNeeds": {
+              "Morale": 10
+            },
+            "traitXp": {
+              "Valor": 5
+            }
+          }
+        },
+        {
+          "id": "drink",
+          "textId": "mi_siege_assault_prep_drink",
+          "text": "Drink and try to forget",
+          "resultTextId": "mi_siege_assault_prep_drink_result",
+          "resultText": "The wine doesn't make the fear go away, but it blurs the edges. You drink with the men who might not see tomorrow, sharing stories and lies in equal measure. When dawn comes, your hands shake—from drink or terror, who can tell?",
+          "risk": "moderate",
+          "effects": {
+            "soldierRep": 8,
+            "gold": -10,
+            "companyNeeds": {
+              "Rest": -8,
+              "Morale": 5
+            },
+            "traitXp": {
+              "Valor": -3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_opportunity",
+      "category": "map_incident",
+      "titleId": "mi_siege_opportunity_title",
+      "title": "Wall Weakness",
+      "setupId": "mi_siege_opportunity_setup",
+      "setup": "You notice something the officers missed—a section of wall where the mortar is crumbling, where a determined assault might break through. Valuable intelligence, if you share it.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 },
+        "minSkills": {
+          "Engineering": 40
+        }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "high",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "report_weakness",
+          "textId": "mi_siege_opportunity_report",
+          "text": "Report it to the engineers",
+          "resultTextId": "mi_siege_opportunity_report_result",
+          "resultText": "You bring your observation to the siege master. He squints at the wall, nods slowly, and orders sappers to concentrate there. 'Good eye, soldier.'",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Engineering": 25
+            }
+          },
+          "effects": {
+            "lordRep": 8,
+            "officerRep": 10
+          }
+        },
+        {
+          "id": "exploit",
+          "textId": "mi_siege_opportunity_exploit",
+          "text": "Lead a small party to exploit it",
+          "requirements": {
+            "minSkills": {
+              "Tactics": 50
+            }
+          },
+          "resultTextId": "mi_siege_opportunity_exploit_result",
+          "resultText": "You gather a handful of volunteers and slip forward in the night. The weak point crumbles under your assault, and you're the first through the gap.",
+          "tooltip": "Requires Tactics 50+",
+          "risk": "dangerous",
+          "risk_chance": 60,
+          "rewards": {
+            "skillXp": {
+              "Tactics": 30
+            }
+          },
+          "effects": {
+            "lordRep": 15,
+            "officerRep": 12,
+            "soldierRep": 10,
+            "traitXp": {
+              "Valor": 15
+            }
+          },
+          "effects_failure": {
+            "hpChange": -35,
+            "troopLoss": 2
+          },
+          "failure_resultText": "The assault goes wrong. The defenders were waiting, and your party is cut down. You barely escape with your life."
+        },
+        {
+          "id": "keep_secret",
+          "textId": "mi_siege_opportunity_secret",
+          "text": "Keep the knowledge to yourself",
+          "resultTextId": "mi_siege_opportunity_secret_result",
+          "resultText": "You say nothing. Secrets have value, and this one might be worth something someday—leverage with the right officer, or an escape route if things go badly. You file it away with all the other things you've learned not to share.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 8,
+              "Honor": -3
+            },
+            "scrutiny": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_gambling",
+      "category": "map_incident",
+      "titleId": "mi_siege_gambling_title",
+      "title": "Siege Gambling",
+      "setupId": "mi_siege_gambling_setup",
+      "setup": "The dice games have gotten serious. Men are betting their pay, their equipment, even their rations. Tempers are rising, and the stakes keep climbing.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "join",
+          "textId": "mi_siege_gambling_join",
+          "text": "Join the game",
+          "resultTextId": "mi_siege_gambling_join_result",
+          "resultText": "You take a seat and throw the dice. Fortune favors you tonight—the other players grumble as you rake in your winnings.",
+          "risk": "risky",
+          "risk_chance": 55,
+          "effects": {
+            "gold": 40,
+            "soldierRep": 3
+          },
+          "effects_failure": {
+            "gold": -30,
+            "soldierRep": -3
+          },
+          "failure_resultText": "The dice aren't kind. You lose more than you can afford and walk away poorer, watching your coin disappear into other pockets."
+        },
+        {
+          "id": "break_up",
+          "textId": "mi_siege_gambling_break",
+          "text": "Break up the game",
+          "requirements": {
+            "minSkills": {
+              "Leadership": 40
+            }
+          },
+          "resultTextId": "mi_siege_gambling_break_result",
+          "resultText": "'That's enough for tonight.' Your authority ends the game before blood is shed. Some men thank you later; others don't.",
+          "tooltip": "Requires Leadership 40+",
+          "risk": "moderate",
+          "effects": {
+            "officerRep": 8,
+            "soldierRep": -5,
+            "discipline": -2
+          }
+        },
+        {
+          "id": "report_gambling",
+          "textId": "mi_siege_gambling_report",
+          "text": "Report it to the officers",
+          "resultTextId": "mi_siege_gambling_report_result",
+          "resultText": "The sergeant arrives and scatters the game. Coin is confiscated, men are disciplined. You're not popular for it.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "soldierRep": -10,
+            "scrutiny": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_supply_theft",
+      "category": "map_incident",
+      "titleId": "mi_siege_supply_theft_title",
+      "title": "Missing Supplies",
+      "setupId": "mi_siege_supply_theft_setup",
+      "setup": "Food is disappearing from the company stores. Someone is stealing rations—either hoarding for themselves or selling on the black market. Hungry men are getting suspicious.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 12,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "investigate_theft",
+          "textId": "mi_siege_supply_theft_investigate",
+          "text": "Investigate the thefts",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 35
+            }
+          },
+          "resultTextId": "mi_siege_supply_theft_investigate_result",
+          "resultText": "You watch and wait. When the thief makes his move, you catch him red-handed. The quartermaster is grateful for your vigilance.",
+          "tooltip": "Requires Scouting 35+",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 15
+            }
+          },
+          "effects": {
+            "officerRep": 10,
+            "companyNeeds": {
+              "Supplies": 5
+            },
+            "discipline": -2
+          }
+        },
+        {
+          "id": "report_theft",
+          "textId": "mi_siege_supply_theft_report",
+          "text": "Report your suspicions to the officers",
+          "resultTextId": "mi_siege_supply_theft_report_result",
+          "resultText": "You tell the quartermaster what you've noticed. He promises to increase the guard. The thefts slow, but don't stop entirely.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 5,
+            "companyNeeds": {
+              "Supplies": 2
+            }
+          }
+        },
+        {
+          "id": "get_cut",
+          "textId": "mi_siege_supply_theft_cut",
+          "text": "Demand a cut to stay quiet",
+          "requirements": {
+            "minSkills": {
+              "Roguery": 40
+            }
+          },
+          "resultTextId": "mi_siege_supply_theft_cut_result",
+          "resultText": "You confront the thief privately. 'Share or I talk.' He agrees, and now you're eating better than most—and just as guilty.",
+          "tooltip": "Requires Roguery 40+",
+          "risk": "dangerous",
+          "effects": {
+            "companyNeeds": {
+              "Supplies": -3
+            },
+            "scrutiny": 3
+          },
+          "rewards": {
+            "skillXp": {
+              "Roguery": 15
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_disease",
+      "category": "map_incident",
+      "titleId": "mi_siege_disease_title",
+      "title": "The Plague",
+      "setupId": "mi_siege_disease_setup",
+      "setup": "Men are dying in their tents, not from enemy arrows but from disease. The surgeon is overwhelmed, and the burial details can't keep up. The siege may fail not to swords, but to sickness.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 3, "max": 9 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "critical",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "quarantine_strict",
+          "textId": "mi_siege_disease_quarantine",
+          "text": "Enforce strict quarantine",
+          "requirements": {
+            "minSkills": {
+              "Medicine": 60
+            }
+          },
+          "resultTextId": "mi_siege_disease_quarantine_result",
+          "resultText": "Working with the surgeon, you isolate the sick and burn the infected bedding. It's brutal, but the spread slows. Lives are saved.",
+          "tooltip": "Requires Medicine 60+",
+          "risk": "risky",
+          "risk_chance": 70,
+          "rewards": {
+            "skillXp": {
+              "Medicine": 30
+            }
+          },
+          "effects": {
+            "officerRep": 15,
+            "medicalRisk": -5,
+            "troopLoss": 2
+          },
+          "effects_failure": {
+            "medicalRisk": 3,
+            "troopLoss": 5
+          },
+          "failure_resultText": "Despite your efforts, the disease spreads faster than you can contain it. Too many die before the fever breaks."
+        },
+        {
+          "id": "pray",
+          "textId": "mi_siege_disease_pray",
+          "text": "Pray for divine intervention",
+          "resultTextId": "mi_siege_disease_pray_result",
+          "resultText": "You join the prayers. It brings comfort, if not healing. Some men die with peace in their hearts, at least.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 5
+            },
+            "troopLoss": 3
+          }
+        },
+        {
+          "id": "flee_plague",
+          "textId": "mi_siege_disease_flee",
+          "text": "Stay as far from the sick as possible",
+          "resultTextId": "mi_siege_disease_flee_result",
+          "resultText": "You keep your distance, sleeping far from the infected tents. Cowardly, perhaps, but you remain healthy while others fall.",
+          "risk": "moderate",
+          "effects": {
+            "soldierRep": -8,
+            "troopLoss": 4,
+            "traitXp": {
+              "Calculating": 5,
+              "Mercy": -10
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_siege_spoiled_food",
+      "category": "map_incident",
+      "titleId": "mi_siege_spoiled_food_title",
+      "title": "Spoiled Rations",
+      "setupId": "mi_siege_spoiled_food_setup",
+      "setup": "Half the provisions have gone bad—worms in the grain, mold on the meat. Men are getting sick from eating what's left, but there's nothing else. The siege has gone on too long.",
+      "requirements": {
+        "context": "during_siege",
+        "role": "Any",
+        "tier": { "min": 2, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "high",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "ration_carefully",
+          "textId": "mi_siege_spoiled_ration",
+          "text": "Ration the remaining good food carefully",
+          "requirements": {
+            "minSkills": {
+              "Steward": 40
+            }
+          },
+          "resultTextId": "mi_siege_spoiled_ration_result",
+          "resultText": "You help the quartermaster sort through the stores, separating the edible from the rotten. Portions are small, but at least they're safe.",
+          "tooltip": "Requires Steward 40+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Steward": 20
+            }
+          },
+          "effects": {
+            "officerRep": 8,
+            "foodLoss": 3
+          }
+        },
+        {
+          "id": "forage_siege",
+          "textId": "mi_siege_spoiled_forage",
+          "text": "Lead a foraging party",
+          "requirements": {
+            "minSkills": {
+              "Scouting": 45
+            }
+          },
+          "resultTextId": "mi_siege_spoiled_forage_result",
+          "resultText": "You slip out of camp and scour the countryside. A village, overlooked by other foragers, provides enough food to supplement the rotting stores.",
+          "tooltip": "Requires Scouting 45+",
+          "risk": "risky",
+          "risk_chance": 65,
+          "rewards": {
+            "skillXp": {
+              "Scouting": 25
+            }
+          },
+          "effects": {
+            "officerRep": 10,
+            "companyNeeds": {
+              "Supplies": 10
+            }
+          },
+          "effects_failure": {
+            "hpChange": -20,
+            "companyNeeds": {
+              "Supplies": -5
+            }
+          },
+          "failure_resultText": "The foraging party runs into enemy scouts. You fight your way back, wounded and empty-handed."
+        },
+        {
+          "id": "inform_officers",
+          "textId": "mi_siege_spoiled_inform",
+          "text": "Inform the officers and let them decide",
+          "resultTextId": "mi_siege_spoiled_inform_result",
+          "resultText": "You bring the problem to the captain. He looks grim but makes no decisions. The spoiled food is issued anyway. Men get sick.",
+          "risk": "safe",
+          "effects": {
+            "foodLoss": 5,
+            "medicalRisk": 2,
+            "companyNeeds": {
+              "Morale": -5
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

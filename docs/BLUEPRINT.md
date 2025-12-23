@@ -209,11 +209,34 @@ Find: GetPosition2D() → Vec2 (NOT Position2D property)
 - **In Code:** Use `TextObject("{=stringId}Fallback text")`
 - Add string keys to enlisted_strings.xml even if only using English
 
+**Dynamic Dialogue Pattern (Phase 6 Approach):**
+For context-sensitive dialogue that varies by game state (like quartermaster responses):
+1. Store strings in XML with predictable naming: `qm_supply_{archetype}_{level}`
+2. Build string IDs dynamically in C#: `string id = $"qm_supply_{archetype}_{level}";`
+3. Load with safe wrapper that provides fallbacks: `GetLocalizedTextSafe(id, "fallback")`
+4. Always validate inputs (null checks, archetype validation, value clamping)
+5. Never assume XML strings exist - always provide fallback text
+
+**Example:**
+```csharp
+// Validate and normalize input
+archetype = ValidateArchetype(archetype); // Returns "default" if invalid
+supplies = Clamp(supplies, 0, 100);
+
+// Build dynamic string ID
+string stringId = $"qm_supply_{archetype}_{supplyLevel}";
+
+// Load with fallback
+string text = GetLocalizedTextSafe(stringId, "Supplies are adequate.");
+```
+
+**Benefits:** Full localization support while maintaining dynamic, contextual dialogue.
+
 #### JSON for Content/Config
-- **Content:** `ModuleData/Enlisted/Events/*.json`
+- **Content:** `ModuleData/Enlisted/Events/*.json` (events, automatic decisions)
 - **Config:** `ModuleData/Enlisted/*.json`
 - **Orders:** `ModuleData/Enlisted/Orders/orders_t1_t3.json`, `orders_t4_t6.json`, `orders_t7_t9.json` (17 total)
-- **Decisions:** `ModuleData/Enlisted/Decisions/*.json`
+- **Decisions:** `ModuleData/Enlisted/Decisions/*.json` (34 player-initiated Camp Hub decisions)
 
 #### Critical JSON Rule
 In JSON, **fallback fields must immediately follow their ID fields** for proper parser association:
@@ -473,10 +496,9 @@ for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 |------|---------|
 | `enlisted_config.json` | Feature flags and core balancing. |
 | `progression_config.json` | Tier XP thresholds and culture-specific rank titles. |
-| `Orders/*.json` | Mission definitions for the Orders system. |
-| `Events/*.json` | Role-based narrative and social events. |
-| `Activities/activities.json` | Data-driven camp actions. |
-| `Decisions/*.json` | Decision definitions for Camp Hub. |
+| `Orders/*.json` | Mission definitions for the Orders system (order_* prefix). |
+| `Events/*.json` | Role-based narrative events, automatic decisions, player event popups. |
+| `Decisions/*.json` | Player-initiated Camp Hub decisions (dec_* prefix, 34 total). |
 
 ---
 
@@ -490,11 +512,15 @@ for (int i = 0; i < (int)EquipmentIndex.NumEquipmentSetSlots; i++)
 | `enlisted_medical` | Medical care and treatment (when player has active condition). |
 
 **Decision Sections (within Camp Hub):**
-- OPPORTUNITIES - Context-triggered automatic decisions
-- TRAINING - Training-related player choices
-- SOCIAL - Social interaction decisions
-- CAMP LIFE - Camp life decisions
-- LOGISTICS - Quartermaster-related decisions (if visible)
+- TRAINING - Training-related player decisions (dec_weapon_drill, dec_spar, etc.)
+- SOCIAL - Social interaction decisions (dec_join_men, dec_write_letter, etc.)
+- ECONOMIC - Economic decisions (dec_gamble_low, dec_side_work, etc.)
+- CAREER - Career advancement decisions (dec_request_audience, dec_volunteer_duty, etc.)
+- INFORMATION - Intelligence gathering (dec_listen_rumors, dec_scout_area, etc.)
+- EQUIPMENT - Gear management (dec_maintain_gear, dec_visit_quartermaster)
+- RISK_TAKING - High-risk actions (dec_dangerous_wager, dec_prove_courage, etc.)
+- CAMP_LIFE - Self-care and rest (dec_rest, dec_seek_treatment)
+- LOGISTICS - Quartermaster-related (from events_player_decisions.json)
 
 **Event Delivery:**
 - Uses `MultiSelectionInquiryData` popups for narrative events

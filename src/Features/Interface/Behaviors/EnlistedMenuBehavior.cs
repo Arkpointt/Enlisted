@@ -2314,32 +2314,18 @@ namespace Enlisted.Features.Interface.Behaviors
         }
 
         /// <summary>
-        ///     Opens the quartermaster menu directly (fallback for when Hero conversation fails).
+        ///     Fallback handler when quartermaster conversation cannot be opened.
+        ///     The GameMenu equipment system was removed in favor of conversation-driven Gauntlet UI.
         /// </summary>
         private void OpenQuartermasterMenuDirectly()
         {
-            try
-            {
-                var quartermasterManager = QuartermasterManager.Instance;
-                if (quartermasterManager != null)
-                {
-                    QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                    GameMenu.ActivateGameMenu("quartermaster_equipment");
-                }
-                else
-                {
-                    InformationManager.DisplayMessage(new InformationMessage(
-                        new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
-                    ModLogger.ErrorCode("Quartermaster", "E-QM-001",
-                        "Quartermaster menu failed: QuartermasterManager.Instance was null");
-                }
-            }
-            catch (Exception ex)
-            {
-                ModLogger.ErrorCode("Quartermaster", "E-QM-002", "Error opening quartermaster menu directly", ex);
-                InformationManager.DisplayMessage(new InformationMessage(
-                    new TextObject("{=menu_qm_error}Quartermaster system error. Please report this issue.").ToString()));
-            }
+            // The old GameMenu-based quartermaster system has been removed.
+            // Equipment access is now conversation-driven with Gauntlet UI.
+            // This fallback should not be reached in normal operation.
+            ModLogger.ErrorCode("Quartermaster", "E-QM-025", 
+                "Cannot open QM: conversation failed and no fallback available");
+            InformationManager.DisplayMessage(new InformationMessage(
+                new TextObject("{=menu_qm_unavailable}Quartermaster services temporarily unavailable.").ToString()));
         }
 
         private void OnTalkToSelected(MenuCallbackArgs args)

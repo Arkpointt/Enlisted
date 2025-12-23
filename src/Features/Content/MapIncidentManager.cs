@@ -24,7 +24,9 @@ namespace Enlisted.Features.Content
         private const float BattleIncidentCooldownHours = 1f; // 1 battle per battle (effectively no time cooldown)
         private const float SettlementIncidentCooldownHours = 12f; // 12 hours between settlement incidents
         private const float SiegeIncidentCooldownHours = 4f; // 4 hours between siege incidents
+        private const float WaitingIncidentCooldownHours = 8f; // 8 hours between waiting incidents
         private const float SiegeIncidentChancePerHour = 0.10f; // 10% chance per hour during siege
+        private const float WaitingIncidentChancePerHour = 0.15f; // 15% chance per hour while waiting in settlement
 
         public static MapIncidentManager Instance { get; private set; }
 
@@ -32,6 +34,7 @@ namespace Enlisted.Features.Content
         private CampaignTime _lastBattleIncidentTime = CampaignTime.Zero;
         private CampaignTime _lastSettlementIncidentTime = CampaignTime.Zero;
         private CampaignTime _lastSiegeIncidentTime = CampaignTime.Zero;
+        private CampaignTime _lastWaitingIncidentTime = CampaignTime.Zero;
 
         public MapIncidentManager()
         {
@@ -53,6 +56,7 @@ namespace Enlisted.Features.Content
             dataStore.SyncData("_lastBattleIncidentTime", ref _lastBattleIncidentTime);
             dataStore.SyncData("_lastSettlementIncidentTime", ref _lastSettlementIncidentTime);
             dataStore.SyncData("_lastSiegeIncidentTime", ref _lastSiegeIncidentTime);
+            dataStore.SyncData("_lastWaitingIncidentTime", ref _lastWaitingIncidentTime);
         }
 
         /// <summary>
@@ -187,7 +191,7 @@ namespace Enlisted.Features.Content
 
         /// <summary>
         /// Fires every campaign hour.
-        /// During siege operations, has a 10% chance per hour to trigger "during_siege" incidents.
+        /// Checks for siege incidents when besieging, or waiting incidents when stationed in settlement.
         /// </summary>
         private void OnHourlyTick()
         {
@@ -204,34 +208,83 @@ namespace Enlisted.Features.Content
                     return;
                 }
 
-                // Check if lord is currently besieging a settlement
-                if (lordParty.BesiegerCamp == null)
+                // If besieging, check for siege incidents
+                if (lordParty.BesiegerCamp != null)
                 {
+                    CheckSiegeIncident();
                     return;
                 }
 
-                // Check cooldown
-                if (!CheckCooldown(_lastSiegeIncidentTime, SiegeIncidentCooldownHours))
-                {
-                    return;
-                }
-
-                // 10% chance per hour to trigger siege incident
-                if (MBRandom.RandomFloat >= SiegeIncidentChancePerHour)
-                {
-                    return;
-                }
-
-                ModLogger.Info(LogCategory, "Siege detected, attempting to deliver during_siege incident");
-
-                if (TryDeliverIncident("during_siege"))
-                {
-                    _lastSiegeIncidentTime = CampaignTime.Now;
-                }
+                // If stationed in a settlement, check for waiting incidents
+                CheckWaitingInSettlement(lordParty);
             }
             catch (Exception ex)
             {
-                ModLogger.Error(LogCategory, "Error in hourly siege check", ex);
+                ModLogger.Error(LogCategory, "Error in hourly tick check", ex);
+            }
+        }
+
+        /// <summary>
+        /// Attempts to deliver a siege incident. Called when lord is besieging a settlement.
+        /// </summary>
+        private void CheckSiegeIncident()
+        {
+            // Check cooldown
+            if (!CheckCooldown(_lastSiegeIncidentTime, SiegeIncidentCooldownHours))
+            {
+                return;
+            }
+
+            // 10% chance per hour to trigger siege incident
+            if (MBRandom.RandomFloat >= SiegeIncidentChancePerHour)
+            {
+                return;
+            }
+
+            ModLogger.Info(LogCategory, "Siege detected, attempting to deliver during_siege incident");
+
+            if (TryDeliverIncident("during_siege"))
+            {
+                _lastSiegeIncidentTime = CampaignTime.Now;
+            }
+        }
+
+        /// <summary>
+        /// Checks if player is waiting in a settlement and triggers waiting_in_settlement incidents.
+        /// Fires when player's lord is stationed in a town or castle without active siege.
+        /// </summary>
+        private void CheckWaitingInSettlement(MobileParty lordParty)
+        {
+            // Check if lord is currently in a settlement (not just passing through)
+            var currentSettlement = lordParty.CurrentSettlement;
+            if (currentSettlement == null)
+            {
+                return;
+            }
+
+            // Only trigger for towns and castles (garrison situations)
+            if (!currentSettlement.IsTown && !currentSettlement.IsCastle)
+            {
+                return;
+            }
+
+            // Check cooldown
+            if (!CheckCooldown(_lastWaitingIncidentTime, WaitingIncidentCooldownHours))
+            {
+                return;
+            }
+
+            // 15% chance per hour to trigger waiting incident
+            if (MBRandom.RandomFloat >= WaitingIncidentChancePerHour)
+            {
+                return;
+            }
+
+            ModLogger.Info(LogCategory, $"Waiting in {currentSettlement.Name}, attempting to deliver waiting_in_settlement incident");
+
+            if (TryDeliverIncident("waiting_in_settlement"))
+            {
+                _lastWaitingIncidentTime = CampaignTime.Now;
             }
         }
 

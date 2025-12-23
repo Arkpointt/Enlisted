@@ -3,20 +3,50 @@
 **Summary:** Future development plans for the Enlisted mod, organized by priority and estimated effort. This roadmap represents planned enhancements beyond the current feature set.
 
 **Status:** ⚠️ Planning  
-**Last Updated:** 2025-12-22  
+**Last Updated:** 2025-12-23  
 **Current Version:** v0.9.0  
 **Target Game:** Bannerlord v1.3.11
+
+**Recent Completions (2025-12-23):**
+- ✅ Quartermaster Conversation Refactor Phase 6: Contextual dialogue with XML localization and edge case hardening
 
 ---
 
 ## Index
 
 1. [Vision](#vision)
-2. [Near-Term (Next Release)](#near-term-next-release)
-3. [Medium-Term (Future Releases)](#medium-term-future-releases)
-4. [Long-Term (Major Enhancements)](#long-term-major-enhancements)
-5. [Modding Support](#modding-support)
-6. [Technical Debt](#technical-debt)
+2. [Recent Completions](#recent-completions)
+3. [Near-Term (Next Release)](#near-term-next-release)
+4. [Medium-Term (Future Releases)](#medium-term-future-releases)
+5. [Long-Term (Major Enhancements)](#long-term-major-enhancements)
+6. [Modding Support](#modding-support)
+7. [Technical Debt](#technical-debt)
+
+---
+
+## Recent Completions
+
+### Quartermaster Conversation Refactor - Phase 6 (2025-12-23)
+
+**Status:** ✅ Complete  
+**Build:** 0 warnings, 0 errors
+
+Dynamic contextual dialogue system for the Quartermaster with full localization support:
+
+**Key Features:**
+- **Contextual Responses:** Dialogue varies based on supply levels, reputation, mood, archetype, and strategic context
+- **6 Archetype Personalities:** Veteran, Merchant, Bookkeeper, Scoundrel, Believer, Eccentric (each with unique voice)
+- **Dynamic Supply Reports:** Real-time awareness of company needs integrated into dialogue
+- **XML Localization:** ~150 dialogue strings moved to XML for full translation support
+- **Edge Case Hardening:** Comprehensive validation, error handling, and fallback strings ensure bulletproof operation
+
+**Technical Achievements:**
+- Safe string loading with automatic fallbacks
+- Input validation (null checks, archetype validation, value clamping)
+- Exception handling that logs errors without breaking conversations
+- Compatible with .NET Framework 4.x (Bannerlord runtime)
+
+**Documentation:** See [Quartermaster Conversation Refactor](Features/Equipment/quartermaster-conversation-refactor.md) for complete details.
 
 ---
 

@@ -72,6 +72,12 @@ namespace Enlisted.Features.Content
                 {
                     return false;
                 }
+                
+                // Check HP requirements (for decisions like Seek Treatment)
+                if (!MeetsHpRequirement(requirements))
+                {
+                    return false;
+                }
 
                 return true;
             }
@@ -295,6 +301,33 @@ namespace Enlisted.Features.Content
             }
             
             return true;
+        }
+
+        /// <summary>
+        /// Checks if the player's HP is below the required threshold.
+        /// Used for decisions like Seek Treatment which only appear when wounded.
+        /// </summary>
+        private static bool MeetsHpRequirement(EventRequirements requirements)
+        {
+            if (!requirements.HpBelow.HasValue)
+            {
+                return true; // No HP requirement
+            }
+
+            var hero = Hero.MainHero;
+            if (hero == null)
+            {
+                return false;
+            }
+
+            var maxHp = hero.CharacterObject.MaxHitPoints();
+            if (maxHp <= 0)
+            {
+                return false;
+            }
+
+            var hpPercent = (hero.HitPoints * 100) / maxHp;
+            return hpPercent < requirements.HpBelow.Value;
         }
 
         /// <summary>

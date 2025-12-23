@@ -197,21 +197,45 @@ namespace Enlisted.Features.Orders.Behaviors
         }
 
         /// <summary>
-        /// Executes the order, determining success or failure based on skills and traits.
+        /// Executes the order, determining success, failure, or critical failure based on skills and traits.
+        /// Critical failure occurs when the roll is exceptionally bad (below 15% of success threshold).
         /// </summary>
         private void ExecuteOrder(Order order)
         {
-            var success = EvaluateOrderSuccess(order);
+            var result = EvaluateOrderResult(order);
 
-            var outcome = success ? order.Consequences.Success : order.Consequences.Failure;
+            var outcome = result switch
+            {
+                OrderResult.Success => order.Consequences.Success,
+                OrderResult.CriticalFailure => order.Consequences.CriticalFailure ?? order.Consequences.Failure,
+                _ => order.Consequences.Failure
+            };
+
             ApplyOrderOutcome(outcome);
 
-            ModLogger.Info(LogCategory, $"Order {(success ? "succeeded" : "failed")}: {order.Title}");
+            var resultName = result switch
+            {
+                OrderResult.Success => "succeeded",
+                OrderResult.CriticalFailure => "critically failed",
+                _ => "failed"
+            };
+            ModLogger.Info(LogCategory, $"Order {resultName}: {order.Title}");
 
             // Report to news system
+            var success = result == OrderResult.Success;
             ReportOrderOutcome(order, success, outcome);
 
             ShowOrderResult(order, success, outcome);
+        }
+
+        /// <summary>
+        /// Result of an order execution roll.
+        /// </summary>
+        private enum OrderResult
+        {
+            Success,
+            Failure,
+            CriticalFailure
         }
 
         /// <summary>
@@ -273,10 +297,11 @@ namespace Enlisted.Features.Orders.Behaviors
         }
 
         /// <summary>
-        /// Evaluates whether the order succeeds based on player skills and traits.
+        /// Evaluates order outcome based on player skills and traits.
         /// Base 60% success chance, modified by skill/trait levels relative to requirements.
+        /// Critical failure threshold is 15% of the failure zone (very bad roll when already failing).
         /// </summary>
-        private bool EvaluateOrderSuccess(Order order)
+        private OrderResult EvaluateOrderResult(Order order)
         {
             var successChance = 0.6f;
 
@@ -337,7 +362,23 @@ namespace Enlisted.Features.Orders.Behaviors
             // Clamp to 10-95% range
             successChance = MathF.Clamp(successChance, 0.1f, 0.95f);
 
-            return MBRandom.RandomFloat < successChance;
+            var roll = MBRandom.RandomFloat;
+            if (roll < successChance)
+            {
+                return OrderResult.Success;
+            }
+
+            // Failed. Check if critical failure (bottom 15% of failure zone).
+            // Critical failure threshold = 15% of (1 - successChance)
+            var failureZone = 1f - successChance;
+            var criticalThreshold = successChance + (failureZone * 0.85f);
+
+            if (roll >= criticalThreshold)
+            {
+                return OrderResult.CriticalFailure;
+            }
+
+            return OrderResult.Failure;
         }
 
         /// <summary>
@@ -468,14 +509,120 @@ namespace Enlisted.Features.Orders.Behaviors
                 }
             }
 
-            // Apply denars/renown
-            if (outcome.Denars != 0)
+            // Apply medical risk (from spoiled food, disease exposure, etc.)
+            if (outcome.MedicalRisk.HasValue && outcome.MedicalRisk.Value != 0)
             {
-                Hero.MainHero.ChangeHeroGold(outcome.Denars);
+                EscalationManager.Instance.ModifyMedicalRisk(outcome.MedicalRisk.Value, "order outcome");
             }
-            if (outcome.Renown != 0)
+
+            // Apply denars/renown
+            if (outcome.Denars.HasValue && outcome.Denars.Value != 0)
             {
-                Hero.MainHero.Clan.AddRenown(outcome.Renown);
+                Hero.MainHero.ChangeHeroGold(outcome.Denars.Value);
+            }
+            if (outcome.Renown.HasValue && outcome.Renown.Value != 0)
+            {
+                Hero.MainHero.Clan.AddRenown(outcome.Renown.Value);
+            }
+
+            // Apply player HP loss (wounds from dangerous orders)
+            if (outcome.HpLoss.HasValue && outcome.HpLoss.Value > 0)
+            {
+                var hero = Hero.MainHero;
+                var oldHp = hero.HitPoints;
+                var newHp = Math.Max(1, oldHp - outcome.HpLoss.Value);
+                hero.HitPoints = newHp;
+
+                ModLogger.Info(LogCategory, $"Player took {outcome.HpLoss.Value} HP damage from order outcome ({oldHp} -> {newHp})");
+
+                if (newHp <= hero.CharacterObject.MaxHitPoints() * 0.25f)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        "You are badly wounded!",
+                        Color.FromUint(0xFFFF4444u)));
+                }
+            }
+
+            // Apply troop casualties (losses from dangerous orders)
+            if (outcome.TroopLossMin.HasValue || outcome.TroopLossMax.HasValue)
+            {
+                var minLoss = outcome.TroopLossMin ?? 0;
+                var maxLoss = outcome.TroopLossMax ?? minLoss;
+
+                if (maxLoss > 0)
+                {
+                    var actualLoss = minLoss == maxLoss ? minLoss : MBRandom.RandomInt(minLoss, maxLoss + 1);
+                    ApplyTroopCasualties(actualLoss);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Applies troop casualties to the enlisted lord's party as a result of order failure.
+        /// Kills random non-hero troops from the roster.
+        /// </summary>
+        private void ApplyTroopCasualties(int count)
+        {
+            if (count <= 0)
+            {
+                return;
+            }
+
+            var enlistment = EnlistmentBehavior.Instance;
+            if (enlistment?.IsEnlisted != true || enlistment.EnlistedLord?.PartyBelongedTo == null)
+            {
+                ModLogger.Warn(LogCategory, "Cannot apply troop casualties - not enlisted or lord party unavailable");
+                return;
+            }
+
+            var lordParty = enlistment.EnlistedLord.PartyBelongedTo;
+            var roster = lordParty.MemberRoster;
+            var killed = 0;
+
+            // Kill random non-hero troops
+            for (var i = 0; i < count && roster.TotalRegulars > 0; i++)
+            {
+                // Find a random non-hero troop to kill
+                var regularCount = roster.TotalRegulars;
+                if (regularCount <= 0)
+                {
+                    break;
+                }
+
+                var targetIndex = MBRandom.RandomInt(regularCount);
+                var currentIndex = 0;
+
+                for (var j = 0; j < roster.Count; j++)
+                {
+                    var element = roster.GetElementCopyAtIndex(j);
+                    if (element.Character.IsHero)
+                    {
+                        continue;
+                    }
+
+                    var troopCount = element.Number - element.WoundedNumber;
+                    if (troopCount <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (currentIndex + troopCount > targetIndex)
+                    {
+                        roster.AddToCounts(element.Character, -1);
+                        killed++;
+                        break;
+                    }
+
+                    currentIndex += troopCount;
+                }
+            }
+
+            if (killed > 0)
+            {
+                ModLogger.Info(LogCategory, $"Order outcome caused {killed} troop casualties in lord's party");
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"{killed} soldier{(killed > 1 ? "s" : "")} lost during the mission.",
+                    Color.FromUint(0xFFFF4444u)));
             }
         }
 

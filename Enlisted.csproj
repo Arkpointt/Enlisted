@@ -137,7 +137,6 @@
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml"/>
     <Content Include="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml"/>
-    <!-- Lance and Camp UI XML files deleted in Phase 1 refactor -->
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs"/>
@@ -159,12 +158,11 @@
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistmentBehavior.cs"/>
     <Compile Include="src\Features\Enlistment\Behaviors\EncounterGuard.cs"/>
     <Compile Include="src\Features\Enlistment\Core\ProgressionConfig.cs"/>
-    <!-- Assignments, Lances systems deleted in Phase 1 refactor -->
     <Compile Include="src\Features\Enlistment\Behaviors\EnlistedIncidentsBehavior.cs"/>
     <Compile Include="src\Debugging\Behaviors\DebugToolsBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedMenuBehavior.cs"/>
     <Compile Include="src\Features\Interface\Behaviors\EnlistedNewsBehavior.cs"/>
-    <!-- Camp News / Daily Report (Phase 1-2 foundations) -->
+    <!-- Camp News / Daily Report -->
     <Compile Include="src\Features\Interface\News\Models\DailyReportModels.cs"/>
     <Compile Include="src\Features\Interface\News\Models\CampLifeLedger.cs"/>
     <Compile Include="src\Features\Interface\News\State\CampNewsState.cs"/>
@@ -183,10 +181,11 @@
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentSelectorVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentRowVm.cs"/>
     <Compile Include="src\Features\Equipment\UI\QuartermasterEquipmentItemVm.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeVM.cs"/>
+    <Compile Include="src\Features\Equipment\UI\QuartermasterUpgradeItemVM.cs"/>
     <Compile Include="src\Features\Ranks\RankHelper.cs"/>
     <Compile Include="src\Features\Ranks\Behaviors\PromotionBehavior.cs"/>
-    <!-- Schedule system deleted in Phase 1 refactor -->
-    <!-- New Company and Context features added -->
+    <!-- Company state and strategic context -->
     <Compile Include="src\Features\Company\CompanyNeed.cs"/>
     <Compile Include="src\Features\Company\CompanyNeedsState.cs"/>
     <Compile Include="src\Features\Company\CompanyNeedsManager.cs"/>
@@ -211,7 +210,6 @@
     <Compile Include="src\Features\Retinue\Systems\RetinueCasualtyTracker.cs"/>
     <Compile Include="src\Features\Camp\CampMenuHandler.cs"/>
     <Compile Include="src\Features\Camp\CampLifeBehavior.cs"/>
-    <!-- Camp Management UI deleted in Phase 1 refactor - replaced by Native Game Menu in Phase 2 -->
     <Compile Include="src\Features\Activities\*.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionModels.cs"/>
     <Compile Include="src\Features\Conditions\PlayerConditionBehavior.cs"/>
@@ -283,12 +281,8 @@
     <Content Include="ModuleData\Enlisted\equipment_pricing.json"/>
     <Content Include="ModuleData\Enlisted\menu_config.json"/>
     <Content Include="ModuleData\Enlisted\retinue_config.json"/>
-    <!-- Player condition definitions (content-editable) -->
-    <Content Include="ModuleData\Enlisted\Conditions\*.json"/>
-    <!-- Phase 2: camp activities (content-editable) -->
-    <Content Include="ModuleData\Enlisted\Activities\*.json"/>
-    <!-- Phase 0+: Lance Life Events (data-driven) -->
-    <Content Include="ModuleData\Enlisted\Events\*.json"/>
+    <!-- JSON data files are referenced via custom ItemGroups below (for AfterBuild copy).
+         They are NOT duplicated here as Content to avoid ReSharper showing them twice. -->
     <Content Include="ModuleData\Languages\enlisted_strings.xml"/>
     <Content Include="ModuleData\Languages\language_data.xml"/>
   </ItemGroup>
@@ -301,20 +295,20 @@
     <CampActivitiesData Include="ModuleData\Enlisted\Activities\*.json"/>
   </ItemGroup>
   <ItemGroup>
-    <!-- Used by AfterBuild to copy Lance Life Events data into the Bannerlord module folder -->
+    <!-- Used by AfterBuild to copy event data into the Bannerlord module folder -->
     <LanceLifeEventsData Include="ModuleData\Enlisted\Events\*.json"/>
     <LanceLifeEventsRoleData Include="ModuleData\Enlisted\Events\Role\*.json"/>
-    <LanceLifeEventsSamplesData Include="ModuleData\Enlisted\Events\samples\*.json"/>
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Used by AfterBuild to copy Orders data into the Bannerlord module folder -->
+    <OrdersData Include="ModuleData\Enlisted\Orders\*.json"/>
   </ItemGroup>
   <ItemGroup>
     <!-- Documentation - All markdown files in docs folder and subfolders -->
     <None Include="docs\**\*.md"/>
     <None Include="packages.config"/>
   </ItemGroup>
-  <ItemGroup>
-    <!-- Language/Localization files -->
-    <None Include="ModuleData\Languages\*.xml"/>
-  </ItemGroup>
+  <!-- Language XML files are already referenced as Content above (lines 288-289) -->
   <ItemGroup>
     <!-- Module configuration -->
     <None Include="ModuleData\Enlisted\README.md"/>
@@ -328,7 +322,7 @@
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Activities"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role"/>
-    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Events\samples"/>
+    <MakeDir Directories="$(OutputPath)..\..\ModuleData\Enlisted\Orders"/>
     <MakeDir Directories="$(OutputPath)..\..\ModuleData\Languages"/>
     <Copy SourceFiles="SubModule.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="ModuleData\Enlisted\settings.json" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\"/>
@@ -341,13 +335,13 @@
     <Copy SourceFiles="@(CampActivitiesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Activities\"/>
     <Copy SourceFiles="@(LanceLifeEventsData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\"/>
     <Copy SourceFiles="@(LanceLifeEventsRoleData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\Role\" Condition="'@(LanceLifeEventsRoleData)' != ''"/>
-    <Copy SourceFiles="@(LanceLifeEventsSamplesData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Events\samples\" Condition="'@(LanceLifeEventsSamplesData)' != ''"/>
+    <Copy SourceFiles="@(OrdersData)" DestinationFolder="$(OutputPath)..\..\ModuleData\Enlisted\Orders\"/>
     <Copy SourceFiles="ModuleData\Languages\enlisted_strings.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="ModuleData\Languages\language_data.xml" DestinationFolder="$(OutputPath)..\..\ModuleData\Languages\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCard.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentCardRow.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterEquipmentGrid.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
-    <!-- Lance and Camp UI XML copy commands removed in Phase 1 refactor -->
+    <Copy SourceFiles="GUI\Prefabs\Equipment\QuartermasterUpgradeScreen.xml" DestinationFolder="$(OutputPath)..\..\GUI\Prefabs\Equipment\"/>
     <Copy SourceFiles="tools\workshop\WorkshopUpdate.xml" DestinationFolder="$(OutputPath)..\..\"/>
     <Copy SourceFiles="tools\workshop\preview.png" DestinationFolder="$(OutputPath)..\..\" Condition="Exists('tools\workshop\preview.png')"/>
     <WriteLinesToFile File="$(OutputPath)..\..\Debugging\enlisted.log" Lines="[Init] Precreated by build" Overwrite="false"/>

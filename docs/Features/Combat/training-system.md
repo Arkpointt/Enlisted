@@ -407,7 +407,7 @@ public void ApplyTroopTraining(TroopTraining training)
 ### Configuration
 
 Training XP values and modifiers can be adjusted in:
-- Event JSON files (`events_training.json`)
+- Event JSON files (`events_training.json` for events, `Decisions/decisions.json` for decisions)
 - Experience track configuration (code-based)
 - News feed templates (`enlisted_strings.xml`)
 

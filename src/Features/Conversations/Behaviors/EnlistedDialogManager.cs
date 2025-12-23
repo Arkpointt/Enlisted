@@ -1,12 +1,15 @@
 using System;
+using System.Linq;
 using Enlisted.Features.Camp;
+using Enlisted.Features.Context;
 using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
+using Enlisted.Features.Equipment.UI;
 using Enlisted.Features.Interface.Behaviors;
 using Enlisted.Mod.Core.Logging;
 using Enlisted.Mod.Entry;
-// Dialogue regarding assignments is being updated to reflect the new order system.
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.Conversation;
 using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.Party;
 using TaleWorlds.Library;
@@ -1055,13 +1058,21 @@ namespace Enlisted.Features.Conversations.Behaviors
         }
 
         // ========================================================================
-        // QUARTERMASTER HERO DIALOG SYSTEM
-        // Dialog tree for interaction with persistent quartermaster NPC
+        // QUARTERMASTER DIALOG SYSTEM
+        // Conversation-driven interface for equipment, sell, provisions, upgrades.
+        // Dialogue selections open Gauntlet UI for browsing/purchasing equipment.
         // ========================================================================
+
+        // Track selected equipment category for browse response
+        private string _selectedEquipmentCategory = "";
+        
+        // Track selected armor slot for armor drill-down
+        private TaleWorlds.Core.EquipmentIndex _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.None;
 
         /// <summary>
         ///     Add quartermaster NPC dialog tree.
-        ///     Player opens conversation via "Visit Quartermaster" menu option.
+        ///     Player opens conversation via "Speak with the Quartermaster" menu option.
+        ///     Category selection happens through dialogue, then Gauntlet UI opens for browsing.
         /// </summary>
         private void AddQuartermasterDialogs(CampaignGameStarter starter)
         {
@@ -1092,45 +1103,60 @@ namespace Enlisted.Features.Conversations.Behaviors
                     199); // Slightly lower priority for returning visits
 
                 // ========================================
-                // QUARTERMASTER HUB (Main Options)
+                // QUARTERMASTER HUB (Main Category Options)
                 // ========================================
 
-                // Option 1: Browse Equipment → Opens existing menu system
+                // Option: Browse Weapons → Opens Gauntlet grid for weapons
                 starter.AddPlayerLine(
-                    "qm_request_equipment",
+                    "qm_browse_weapons",
                     "qm_hub",
-                    "qm_equipment_response",
-                    "{=qm_request_equipment}I need equipment.",
-                    null,
-                    null);
+                    "qm_browse_response",
+                    "{=qm_browse_weapons}I need a weapon.",
+                    HasWeaponVariantsAvailable,
+                    () => { _selectedEquipmentCategory = "weapons"; },
+                    100);
 
-                starter.AddDialogLine(
-                    "qm_equipment_response",
-                    "qm_equipment_response",
-                    "close_window",
-                    "{=qm_equipment_response}Let me see what I've got in stock for you.",
+                // Option: Browse Armor → Leads to armor slot selection
+                starter.AddPlayerLine(
+                    "qm_browse_armor",
+                    "qm_hub",
+                    "qm_armor_slot_hub",
+                    "{=qm_browse_armor}I need armor.",
+                    HasArmorVariantsAvailable,
                     null,
-                    OnQuartermasterEquipmentRequest);
+                    99);
 
-                // Option 2: Sell Equipment → Opens existing returns menu
+                // Option: Browse Accessories → Opens Gauntlet grid for accessories
+                starter.AddPlayerLine(
+                    "qm_browse_accessories",
+                    "qm_hub",
+                    "qm_browse_response",
+                    "{=qm_browse_accessories}I need gear—cape, shield, harness.",
+                    HasAccessoryVariantsAvailable,
+                    () => { _selectedEquipmentCategory = "accessories"; },
+                    98);
+
+                // Option: Browse Mounts → Opens Gauntlet grid for mounts
+                starter.AddPlayerLine(
+                    "qm_browse_mounts",
+                    "qm_hub",
+                    "qm_browse_response",
+                    "{=qm_browse_mounts}I need a horse.",
+                    HasMountVariantsAvailable,
+                    () => { _selectedEquipmentCategory = "mounts"; },
+                    97);
+
+                // Option: Sell Equipment → Opens sell interface
                 starter.AddPlayerLine(
                     "qm_sell_equipment",
                     "qm_hub",
                     "qm_sell_response",
-                    "{=qm_sell_equipment}I want to sell some equipment.",
+                    "{=qm_sell_request}I want to sell some equipment.",
                     CanSellEquipment,
                     null,
-                    99);
+                    96);
 
-                starter.AddDialogLine(
-                    "qm_sell_response",
-                    "qm_sell_response",
-                    "close_window",
-                    "{=qm_sell_response}[Quartermaster responds to sell request]",
-                    null,
-                    OnQuartermasterSellRequest);
-
-                // Option 3: Provisions → Opens rations menu
+                // Option: Provisions → Opens rations menu
                 starter.AddPlayerLine(
                     "qm_request_provisions",
                     "qm_hub",
@@ -1138,15 +1164,27 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "{=qm_request_provisions}I need better provisions.",
                     null,
                     null,
-                    97);
+                    95);
 
-                starter.AddDialogLine(
-                    "qm_provisions_response",
-                    "qm_provisions_response",
-                    "close_window",
-                    "{=qm_provisions_response}Let me show you what provisions I have available.",
+                // Option: Upgrade equipment → Opens upgrade interface
+                starter.AddPlayerLine(
+                    "qm_upgrade_request",
+                    "qm_hub",
+                    "qm_upgrade_response",
+                    "{=qm_upgrade_request}Can you improve my equipment?",
+                    HasUpgradeableEquipment,
                     null,
-                    OnQuartermasterProvisionsRequest);
+                    94);
+
+                // Option: Supply inquiry → Pure dialogue response
+                starter.AddPlayerLine(
+                    "qm_supply_inquiry",
+                    "qm_hub",
+                    "qm_supply_response",
+                    "{=qm_supply_inquiry}How are our supplies?",
+                    null,
+                    null,
+                    93);
 
                 // ========================================
                 // PAYTENSION DIALOG OPTIONS
@@ -1160,15 +1198,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "{=qm_black_market}I need... alternative supplies.",
                     IsScoundrelBlackMarketAvailable,
                     null,
-                    96);
-
-                starter.AddDialogLine(
-                    "qm_black_market_response",
-                    "qm_black_market_response",
-                    "qm_hub",
-                    "{=qm_black_market_response}Looking for opportunities? I might know some people who can help... for a price.",
-                    null,
-                    OnQuartermasterBlackMarket);
+                    92);
 
                 // Believer Moral Guidance (tension 60+)
                 starter.AddPlayerLine(
@@ -1178,15 +1208,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "{=qm_moral_guidance}The men are losing hope. Any guidance?",
                     IsBelieverGuidanceAvailable,
                     null,
-                    95);
-
-                starter.AddDialogLine(
-                    "qm_moral_guidance_response",
-                    "qm_moral_guidance_response",
-                    "qm_hub",
-                    "{=qm_moral_guidance_response}These are trying times, but faith endures. Remember why you serve.",
-                    null,
-                    OnQuartermasterMoralGuidance);
+                    91);
 
                 // Veteran Survival Advice (tension 80+)
                 starter.AddPlayerLine(
@@ -1196,15 +1218,7 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "{=qm_survival_advice}Should I... consider my options?",
                     IsVeteranAdviceAvailable,
                     null,
-                    94);
-
-                starter.AddDialogLine(
-                    "qm_survival_advice_response",
-                    "qm_survival_advice_response",
-                    "qm_hub",
-                    "{=qm_survival_advice_response}I've seen armies fall apart before. Keep your head down and watch for opportunities.",
-                    null,
-                    OnQuartermasterSurvivalAdvice);
+                    90);
 
                 // Help the Lord suggestion (any archetype, tension 40+)
                 starter.AddPlayerLine(
@@ -1214,7 +1228,204 @@ namespace Enlisted.Features.Conversations.Behaviors
                     "{=qm_help_lord}Is there anything I can do to help with... the situation?",
                     IsHelpLordAvailable,
                     null,
-                    93);
+                    89);
+
+                // Chat (Relationship building) - first time or high relationship
+                starter.AddPlayerLine(
+                    "qm_chat",
+                    "qm_hub",
+                    "qm_chat_response",
+                    "{=qm_chat}How did you end up as quartermaster?",
+                    CanChatWithQuartermaster,
+                    null,
+                    88);
+
+                // Exit conversation
+                starter.AddPlayerLine(
+                    "qm_leave",
+                    "qm_hub",
+                    "qm_farewell_response",
+                    "{=qm_nothing_else}That's all for now.",
+                    null,
+                    null,
+                    50);
+
+                // ========================================
+                // QM RESPONSES - Equipment Categories
+                // ========================================
+
+                // Generic browse response that opens Gauntlet (for weapons/accessories/mounts)
+                // Now uses dynamic text based on supply levels, reputation, and archetype
+                starter.AddDialogLine(
+                    "qm_browse_response",
+                    "qm_browse_response",
+                    "close_window",
+                    "{=qm_browse_response_dynamic}{BROWSE_RESPONSE}",
+                    SetBrowseResponseText,
+                    OnQuartermasterBrowseCategory);
+
+                // Sell response → Opens sell interface
+                // Now uses dynamic text based on mood and reputation
+                starter.AddDialogLine(
+                    "qm_sell_response",
+                    "qm_sell_response",
+                    "close_window",
+                    "{=qm_sell_response_dynamic}{SELL_RESPONSE}",
+                    SetSellResponseText,
+                    OnQuartermasterSellRequest);
+
+                // Provisions response → Opens rations menu
+                starter.AddDialogLine(
+                    "qm_provisions_response",
+                    "qm_provisions_response",
+                    "close_window",
+                    "{=qm_provisions_response}Rations are what they are. Take it or leave it.",
+                    null,
+                    OnQuartermasterProvisionsRequest);
+
+                // Upgrade response → Opens upgrade interface
+                // Now uses dynamic text based on archetype and reputation
+                starter.AddDialogLine(
+                    "qm_upgrade_response",
+                    "qm_upgrade_response",
+                    "close_window",
+                    "{=qm_upgrade_response_dynamic}{UPGRADE_RESPONSE}",
+                    SetUpgradeResponseText,
+                    OnQuartermasterUpgradeRequest);
+                
+                // Upgrade response (no upgradeable items)
+                starter.AddDialogLine(
+                    "qm_upgrade_response_no",
+                    "qm_upgrade_response",
+                    "qm_hub",
+                    "{=qm_upgrade_response_no}Nothing on you worth the effort. Come back with proper kit.",
+                    () => !HasUpgradeableEquipment(),
+                    null,
+                    200); // Higher priority than the "yes" response
+
+                // Supply inquiry response with dynamic text
+                starter.AddDialogLine(
+                    "qm_supply_response",
+                    "qm_supply_response",
+                    "qm_hub",
+                    "{=qm_supply_response}{SUPPLY_STATUS}",
+                    SetSupplyStatusText,
+                    null);
+
+                // Farewell response
+                starter.AddDialogLine(
+                    "qm_farewell_response",
+                    "qm_farewell_response",
+                    "close_window",
+                    "{=qm_farewell}Come back when you need something.",
+                    null,
+                    null);
+
+                // ========================================
+                // ARMOR SLOT SELECTION HUB
+                // ========================================
+
+                // QM asks which armor piece
+                starter.AddDialogLine(
+                    "qm_armor_slot_hub",
+                    "qm_armor_slot_hub",
+                    "qm_armor_slot_options",
+                    "{=qm_armor_which_slot}What piece are you looking for?",
+                    null,
+                    null);
+
+                // Armor slot options
+                starter.AddPlayerLine(
+                    "qm_armor_helmet",
+                    "qm_armor_slot_options",
+                    "qm_armor_slot_response",
+                    "{=qm_armor_helmet}A helmet.",
+                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Head),
+                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Head; },
+                    100);
+
+                starter.AddPlayerLine(
+                    "qm_armor_body",
+                    "qm_armor_slot_options",
+                    "qm_armor_slot_response",
+                    "{=qm_armor_body}Body armor.",
+                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Body),
+                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Body; },
+                    99);
+
+                starter.AddPlayerLine(
+                    "qm_armor_gloves",
+                    "qm_armor_slot_options",
+                    "qm_armor_slot_response",
+                    "{=qm_armor_gloves}Gloves.",
+                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Gloves),
+                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Gloves; },
+                    98);
+
+                starter.AddPlayerLine(
+                    "qm_armor_boots",
+                    "qm_armor_slot_options",
+                    "qm_armor_slot_response",
+                    "{=qm_armor_boots}Boots.",
+                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Leg),
+                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Leg; },
+                    97);
+
+                starter.AddPlayerLine(
+                    "qm_armor_cape",
+                    "qm_armor_slot_options",
+                    "qm_armor_slot_response",
+                    "{=qm_armor_cape}A cape or cloak.",
+                    () => HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex.Cape),
+                    () => { _selectedArmorSlot = TaleWorlds.Core.EquipmentIndex.Cape; },
+                    96);
+
+                // Back to hub option
+                starter.AddPlayerLine(
+                    "qm_armor_back",
+                    "qm_armor_slot_options",
+                    "qm_hub",
+                    "{=qm_armor_back}Something else entirely.",
+                    null,
+                    null,
+                    50);
+
+                // Armor slot response → Opens Gauntlet for selected slot
+                starter.AddDialogLine(
+                    "qm_armor_slot_response",
+                    "qm_armor_slot_response",
+                    "close_window",
+                    "{=qm_browse_response}Let me see what's in stock for you.",
+                    null,
+                    OnQuartermasterArmorSlotSelected);
+
+                // ========================================
+                // PAYTENSION DIALOG RESPONSES
+                // ========================================
+
+                starter.AddDialogLine(
+                    "qm_black_market_response",
+                    "qm_black_market_response",
+                    "qm_hub",
+                    "{=qm_black_market_response}Looking for opportunities? I might know some people who can help... for a price.",
+                    null,
+                    OnQuartermasterBlackMarket);
+
+                starter.AddDialogLine(
+                    "qm_moral_guidance_response",
+                    "qm_moral_guidance_response",
+                    "qm_hub",
+                    "{=qm_moral_guidance_response}These are trying times, but faith endures. Remember why you serve.",
+                    null,
+                    OnQuartermasterMoralGuidance);
+
+                starter.AddDialogLine(
+                    "qm_survival_advice_response",
+                    "qm_survival_advice_response",
+                    "qm_hub",
+                    "{=qm_survival_advice_response}I've seen armies fall apart before. Keep your head down and watch for opportunities.",
+                    null,
+                    OnQuartermasterSurvivalAdvice);
 
                 starter.AddDialogLine(
                     "qm_help_lord_response",
@@ -1224,16 +1435,6 @@ namespace Enlisted.Features.Conversations.Behaviors
                     null,
                     OnQuartermasterHelpLordSuggestion);
 
-                // Option 4: Chat (Relationship building) - first time or high relationship
-                starter.AddPlayerLine(
-                    "qm_chat",
-                    "qm_hub",
-                    "qm_chat_response",
-                    "{=qm_chat}How did you end up as quartermaster?",
-                    CanChatWithQuartermaster,
-                    null,
-                    98);
-
                 starter.AddDialogLine(
                     "qm_chat_response",
                     "qm_chat_response",
@@ -1242,21 +1443,11 @@ namespace Enlisted.Features.Conversations.Behaviors
                     null,
                     OnQuartermasterChat);
 
-                // Option 4: Leave
-                starter.AddPlayerLine(
-                    "qm_leave",
-                    "qm_hub",
-                    "close_window",
-                    "{=qm_leave}I'll be going.",
-                    null,
-                    null,
-                    50);
-
-                ModLogger.Info("DialogManager", "Quartermaster dialog tree registered");
+                ModLogger.Info("Conversations", "Quartermaster dialog tree registered");
             }
             catch (Exception ex)
             {
-                ModLogger.Error("DialogManager", "Failed to register quartermaster dialogs", ex);
+                ModLogger.Error("Conversations", "Failed to register quartermaster dialogs", ex);
             }
         }
 
@@ -1386,6 +1577,627 @@ namespace Enlisted.Features.Conversations.Behaviors
             }
 
             return enlistment.PayTension >= 40;
+        }
+
+        // ========================================
+        // EQUIPMENT CATEGORY CONDITIONS
+        // ========================================
+
+        /// <summary>
+        ///     Checks if there are weapon variants available for the player's troop tree.
+        /// </summary>
+        private bool HasWeaponVariantsAvailable()
+        {
+            try
+            {
+                var qm = QuartermasterManager.Instance;
+                if (qm == null)
+                {
+                    return false;
+                }
+                
+                // Use reflection to call the private BuildWeaponOptionsFromCurrentTroop method
+                var method = typeof(QuartermasterManager).GetMethod("BuildWeaponOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (method == null)
+                {
+                    return true; // Default to available if can't check
+                }
+                
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                return options != null && options.Any(kvp => kvp.Value?.Any(opt => !opt.IsAtLimit) == true);
+            }
+            catch
+            {
+                return true; // Default to available on error
+            }
+        }
+
+        /// <summary>
+        ///     Checks if there are armor variants available for the player's troop tree.
+        /// </summary>
+        private bool HasArmorVariantsAvailable()
+        {
+            try
+            {
+                var qm = QuartermasterManager.Instance;
+                if (qm == null)
+                {
+                    return false;
+                }
+                
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (method == null)
+                {
+                    return true;
+                }
+                
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                if (options == null)
+                {
+                    return false;
+                }
+                
+                // Check armor slots (body, head, leg, gloves, cape)
+                var armorSlots = new[] { TaleWorlds.Core.EquipmentIndex.Body, TaleWorlds.Core.EquipmentIndex.Head, 
+                    TaleWorlds.Core.EquipmentIndex.Leg, TaleWorlds.Core.EquipmentIndex.Gloves, TaleWorlds.Core.EquipmentIndex.Cape };
+                return armorSlots.Any(slot => options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit));
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Checks if there are accessory variants available (capes, shields, harness).
+        /// </summary>
+        private bool HasAccessoryVariantsAvailable()
+        {
+            try
+            {
+                var qm = QuartermasterManager.Instance;
+                if (qm == null)
+                {
+                    return false;
+                }
+                
+                // Accessories include capes from armor, shields from weapons, and harness
+                // For now, always show if QM is available since accessories are common
+                return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Checks if there are mount variants available.
+        /// </summary>
+        private bool HasMountVariantsAvailable()
+        {
+            try
+            {
+                var qm = QuartermasterManager.Instance;
+                if (qm == null)
+                {
+                    return false;
+                }
+                
+                // Mounts are available if player's formation supports cavalry or player wants a horse
+                return EnlistmentBehavior.Instance?.IsEnlisted == true;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Checks if a specific armor slot has variants available.
+        /// </summary>
+        private bool HasArmorSlotVariants(TaleWorlds.Core.EquipmentIndex slot)
+        {
+            try
+            {
+                var qm = QuartermasterManager.Instance;
+                if (qm == null)
+                {
+                    return false;
+                }
+                
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (method == null)
+                {
+                    return true;
+                }
+                
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                return options != null && options.ContainsKey(slot) && options[slot].Any(opt => !opt.IsAtLimit);
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        ///     Sets the SUPPLY_STATUS text variable for supply inquiry response.
+        ///     Enhanced with archetype flavor, reputation tone, and strategic context.
+        ///     Returns true always (used in condition chain).
+        /// </summary>
+        private bool SetSupplyStatusText()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null)
+                {
+                    MBTextManager.SetTextVariable("SUPPLY_STATUS", "Can't say much about supplies right now.");
+                    return true;
+                }
+                
+                var companyNeeds = enlistment.CompanyNeeds;
+                if (companyNeeds == null)
+                {
+                    MBTextManager.SetTextVariable("SUPPLY_STATUS", "Hard to say. Things are... complicated.");
+                    return true;
+                }
+                
+                var supplies = companyNeeds.Supplies;
+                var equipment = companyNeeds.Equipment;
+                var morale = companyNeeds.Morale;
+                var readiness = companyNeeds.Readiness;
+                var archetype = enlistment.QuartermasterArchetype;
+                var reputation = enlistment.QuartermasterRelationship;
+                
+                // Get strategic context if available
+                var strategicContext = "";
+                try
+                {
+                    var lord = enlistment.EnlistedLord;
+                    if (lord?.PartyBelongedTo != null)
+                    {
+                        strategicContext = ArmyContextAnalyzer.GetLordStrategicContext(lord.PartyBelongedTo);
+                    }
+                }
+                catch
+                {
+                    // Strategic context is optional
+                }
+                
+                // Build contextual supply report with archetype flavor
+                string statusText = GetSupplyReportWithArchetypeFlavor(supplies, equipment, morale, readiness, 
+                    archetype, reputation, strategicContext);
+                
+                MBTextManager.SetTextVariable("SUPPLY_STATUS", statusText);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "Failed to set supply status text", ex);
+                MBTextManager.SetTextVariable("SUPPLY_STATUS", "Hard to say. Things are... complicated.");
+                return true;
+            }
+        }
+        
+        /// <summary>
+        ///     Generates a supply report with archetype personality and reputation tone.
+        ///     Includes strategic context awareness (winter, battle prep, etc.).
+        ///     Fully bulletproof with null checks, validation, and fallbacks.
+        /// </summary>
+        private string GetSupplyReportWithArchetypeFlavor(int supplies, int equipment, int morale, int readiness,
+            string archetype, int reputation, string strategicContext)
+        {
+            // Validate and normalize inputs
+            archetype = ValidateArchetype(archetype);
+            strategicContext = strategicContext ?? string.Empty;
+            
+            // Clamp values to safe ranges
+            supplies = Clamp(supplies, 0, 100);
+            equipment = Clamp(equipment, 0, 100);
+            morale = Clamp(morale, 0, 100);
+            
+            // Determine supply level category
+            string supplyLevel;
+            if (supplies >= 80) supplyLevel = "excellent";
+            else if (supplies >= 60) supplyLevel = "good";
+            else if (supplies >= 40) supplyLevel = "fair";
+            else if (supplies >= 20) supplyLevel = "low";
+            else supplyLevel = "critical";
+            
+            // Determine reputation tone (hostile, neutral, friendly, trusted)
+            string repTone;
+            if (reputation < 0) repTone = "hostile";
+            else if (reputation < 31) repTone = "neutral";
+            else if (reputation < 61) repTone = "friendly";
+            else repTone = "trusted";
+            
+            // Build string ID and load from XML with fallback
+            string stringId = BuildSupplyStringId(archetype, supplyLevel, repTone);
+            string baseReport = GetLocalizedTextSafe(stringId, 
+                $"Supplies are at {supplies}%. Equipment at {equipment}%.");
+            
+            // Add equipment context if significantly different from supplies
+            if (equipment < supplies - 20)
+            {
+                string equipStringId = $"qm_equip_note_{archetype}";
+                string equipNote = GetLocalizedTextSafe(equipStringId, " Equipment needs attention.");
+                baseReport += equipNote;
+            }
+            
+            // Add morale context if critically low or exceptionally high
+            if (morale < 30)
+            {
+                string moraleStringId = $"qm_morale_low_{archetype}";
+                string moraleNote = GetLocalizedTextSafe(moraleStringId, " Morale is very low.");
+                baseReport += moraleNote;
+            }
+            else if (morale >= 80)
+            {
+                string moraleStringId = $"qm_morale_high_{archetype}";
+                string moraleNote = GetLocalizedTextSafe(moraleStringId, " Morale is high.");
+                baseReport += moraleNote;
+            }
+            
+            // Add strategic context if relevant
+            if (!string.IsNullOrEmpty(strategicContext))
+            {
+                string contextStringId = strategicContext switch
+                {
+                    "winter_camp" => "qm_context_winter",
+                    "preparing_siege" => "qm_context_siege",
+                    "preparing_battle" => "qm_context_battle",
+                    "long_march" => "qm_context_march",
+                    "raiding" when archetype == "veteran" => "qm_context_raid_veteran",
+                    "raiding" when archetype == "merchant" => "qm_context_raid_merchant",
+                    "raiding" when archetype == "scoundrel" => "qm_context_raid_scoundrel",
+                    "raiding" when archetype == "believer" => "qm_context_raid_believer",
+                    "raiding" when archetype == "bookkeeper" => "qm_context_raid_bookkeeper",
+                    "raiding" when archetype == "eccentric" => "qm_context_raid_eccentric",
+                    _ => ""
+                };
+                if (!string.IsNullOrEmpty(contextStringId))
+                {
+                    string contextNote = GetLocalizedTextSafe(contextStringId, "");
+                    if (!string.IsNullOrEmpty(contextNote))
+                    {
+                        baseReport += contextNote;
+                    }
+                }
+            }
+            
+            return baseReport;
+        }
+        
+        /// <summary>
+        ///     Clamps a value between min and max (Math.Clamp not available in older .NET versions).
+        /// </summary>
+        private int Clamp(int value, int min, int max)
+        {
+            if (value < min) return min;
+            if (value > max) return max;
+            return value;
+        }
+        
+        /// <summary>
+        ///     Safely retrieves a localized string with fallback handling.
+        ///     Ensures the conversation never breaks due to missing strings or errors.
+        /// </summary>
+        private string GetLocalizedTextSafe(string stringId, string fallback)
+        {
+            try
+            {
+                var text = GetLocalizedText(stringId)?.ToString();
+                // If string not found, Bannerlord returns the ID itself or empty string
+                if (string.IsNullOrEmpty(text) || text == stringId)
+                {
+                    return fallback;
+                }
+                return text;
+            }
+            catch (Exception ex)
+            {
+                // Log the error for debugging but don't break the conversation
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"[Enlisted] Failed to load string '{stringId}': {ex.Message}", 
+                    Colors.Yellow));
+                return fallback;
+            }
+        }
+        
+        /// <summary>
+        ///     Validates and normalizes archetype names.
+        ///     Returns "default" for invalid/unknown archetypes.
+        /// </summary>
+        private string ValidateArchetype(string archetype)
+        {
+            if (string.IsNullOrEmpty(archetype))
+            {
+                return "default";
+            }
+            
+            var validArchetypes = new[] { "veteran", "merchant", "bookkeeper", "scoundrel", "believer", "eccentric" };
+            return validArchetypes.Contains(archetype.ToLower()) ? archetype.ToLower() : "default";
+        }
+        
+        /// <summary>
+        ///     Builds the XML string ID for supply reports based on archetype, level, and reputation.
+        /// </summary>
+        private string BuildSupplyStringId(string archetype, string supplyLevel, string repTone)
+        {
+            // Normalize archetype
+            archetype = ValidateArchetype(archetype);
+            
+            // Use default fallback if archetype is invalid
+            if (archetype == "default")
+            {
+                return $"qm_supply_default_{supplyLevel}";
+            }
+            
+            // Try specific archetype + level + reputation combo first
+            if ((archetype == "merchant" && supplyLevel == "good" && repTone == "friendly") ||
+                (archetype == "merchant" && supplyLevel == "fair" && repTone == "friendly") ||
+                (archetype == "merchant" && supplyLevel == "low" && repTone == "trusted") ||
+                (archetype == "bookkeeper" && supplyLevel == "fair" && repTone == "friendly") ||
+                (archetype == "bookkeeper" && supplyLevel == "low" && repTone == "trusted") ||
+                (archetype == "veteran" && supplyLevel == "low" && repTone == "trusted") ||
+                (archetype == "veteran" && supplyLevel == "critical" && repTone == "trusted") ||
+                (archetype == "scoundrel" && supplyLevel == "excellent" && repTone == "friendly") ||
+                (archetype == "scoundrel" && supplyLevel == "good" && repTone == "friendly") ||
+                (archetype == "scoundrel" && supplyLevel == "fair" && repTone == "friendly") ||
+                (archetype == "scoundrel" && supplyLevel == "low" && repTone == "trusted") ||
+                (archetype == "scoundrel" && supplyLevel == "critical" && repTone == "trusted") ||
+                (archetype == "believer" && supplyLevel == "fair" && repTone == "friendly") ||
+                (archetype == "believer" && supplyLevel == "low" && repTone == "trusted") ||
+                (archetype == "believer" && supplyLevel == "critical" && repTone == "trusted") ||
+                (archetype == "eccentric" && supplyLevel == "fair" && repTone == "friendly") ||
+                (archetype == "eccentric" && supplyLevel == "low" && repTone == "trusted"))
+            {
+                return $"qm_supply_{archetype}_{supplyLevel}_{repTone}";
+            }
+            
+            // Try archetype + level (most common case)
+            return $"qm_supply_{archetype}_{supplyLevel}";
+        }
+
+        /// <summary>
+        ///     Sets the BROWSE_RESPONSE text variable for contextual equipment browsing.
+        ///     Varies by supply level, reputation, and archetype.
+        ///     Returns true always (used in condition chain).
+        /// </summary>
+        private bool SetBrowseResponseText()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null)
+                {
+                    MBTextManager.SetTextVariable("BROWSE_RESPONSE", "Let me see what's in stock.");
+                    return true;
+                }
+                
+                var companyNeeds = enlistment.CompanyNeeds;
+                var supplies = companyNeeds?.Supplies ?? 60;
+                var equipment = companyNeeds?.Equipment ?? 60;
+                var archetype = enlistment.QuartermasterArchetype;
+                var reputation = enlistment.QuartermasterRelationship;
+                
+                // Generate contextual browse response
+                string response = GetBrowseResponse(supplies, equipment, archetype, reputation);
+                
+                MBTextManager.SetTextVariable("BROWSE_RESPONSE", response);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "Failed to set browse response text", ex);
+                MBTextManager.SetTextVariable("BROWSE_RESPONSE", "Let me see what's in stock.");
+                return true;
+            }
+        }
+        
+        /// <summary>
+        ///     Sets the SELL_RESPONSE text variable for contextual selling dialogue.
+        ///     Varies by mood, reputation, and archetype.
+        ///     Returns true always (used in condition chain).
+        /// </summary>
+        private bool SetSellResponseText()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null)
+                {
+                    MBTextManager.SetTextVariable("SELL_RESPONSE", "Show me what you've got.");
+                    return true;
+                }
+                
+                var archetype = enlistment.QuartermasterArchetype;
+                var reputation = enlistment.QuartermasterRelationship;
+                var mood = GetQuartermasterMood();
+                var companyNeeds = enlistment.CompanyNeeds;
+                var supplies = companyNeeds?.Supplies ?? 60;
+                
+                // Generate contextual sell response
+                string response = GetSellResponse(archetype, reputation, mood, supplies);
+                
+                MBTextManager.SetTextVariable("SELL_RESPONSE", response);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "Failed to set sell response text", ex);
+                MBTextManager.SetTextVariable("SELL_RESPONSE", "Show me what you've got.");
+                return true;
+            }
+        }
+        
+        /// <summary>
+        ///     Sets the UPGRADE_RESPONSE text variable for contextual upgrade dialogue.
+        ///     Varies by archetype and reputation.
+        ///     Returns true always (used in condition chain).
+        /// </summary>
+        private bool SetUpgradeResponseText()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                if (enlistment == null)
+                {
+                    MBTextManager.SetTextVariable("UPGRADE_RESPONSE", "Aye, bring me what you've got. Good work costs good coin.");
+                    return true;
+                }
+                
+                var archetype = enlistment.QuartermasterArchetype;
+                var reputation = enlistment.QuartermasterRelationship;
+                
+                // Generate contextual upgrade response
+                string response = GetUpgradeResponse(archetype, reputation);
+                
+                MBTextManager.SetTextVariable("UPGRADE_RESPONSE", response);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "Failed to set upgrade response text", ex);
+                MBTextManager.SetTextVariable("UPGRADE_RESPONSE", "Aye, bring me what you've got. Good work costs good coin.");
+                return true;
+            }
+        }
+        
+        /// <summary>
+        ///     Generates a contextual browse response based on supply/equipment levels, archetype, and reputation.
+        ///     Uses XML localization strings with full validation and fallback handling.
+        /// </summary>
+        private string GetBrowseResponse(int supplies, int equipment, string archetype, int reputation)
+        {
+            // Validate and normalize inputs
+            archetype = ValidateArchetype(archetype);
+            supplies = Clamp(supplies, 0, 100);
+            equipment = Clamp(equipment, 0, 100);
+            
+            // Determine supply situation
+            bool lowEquipment = equipment < 40;
+            bool criticalSupplies = supplies < 20;
+            
+            // Determine reputation tone
+            bool hostile = reputation < 0;
+            bool trusted = reputation >= 61;
+            
+            // Build string ID based on context priority: critical supplies > low equipment > reputation
+            string stringId;
+            
+            if (criticalSupplies)
+            {
+                stringId = $"qm_browse_critical_{archetype}";
+            }
+            else if (lowEquipment && trusted)
+            {
+                stringId = $"qm_browse_lowequip_trusted_{archetype}";
+            }
+            else if (lowEquipment)
+            {
+                stringId = $"qm_browse_lowequip_{archetype}";
+            }
+            else if (hostile)
+            {
+                stringId = $"qm_browse_hostile_{archetype}";
+            }
+            else if (trusted)
+            {
+                stringId = $"qm_browse_trusted_{archetype}";
+            }
+            else
+            {
+                stringId = $"qm_browse_default_{archetype}";
+            }
+            
+            return GetLocalizedTextSafe(stringId, "Let me see what's in stock for you.");
+        }
+        
+        /// <summary>
+        ///     Generates a contextual sell response based on archetype, reputation, mood, and supply levels.
+        ///     Uses XML localization strings with full validation and fallback handling.
+        /// </summary>
+        private string GetSellResponse(string archetype, int reputation, string mood, int supplies)
+        {
+            // Validate and normalize inputs
+            archetype = ValidateArchetype(archetype);
+            mood = (mood ?? "content").ToLower();
+            supplies = Clamp(supplies, 0, 100);
+            
+            // Determine reputation tone
+            bool trusted = reputation >= 61;
+            
+            // Determine if supplies are low (might affect buyback willingness)
+            bool lowSupplies = supplies < 40;
+            
+            // Build string ID based on context priority: mood > reputation > supplies
+            string stringId;
+            
+            if (mood == "content" && trusted)
+            {
+                stringId = $"qm_sell_content_trusted_{archetype}";
+            }
+            else if (mood == "content")
+            {
+                stringId = $"qm_sell_content_{archetype}";
+            }
+            else if (mood == "stressed")
+            {
+                stringId = $"qm_sell_stressed_{archetype}";
+            }
+            else if (mood == "grim" && lowSupplies)
+            {
+                stringId = $"qm_sell_grim_lowsup_{archetype}";
+            }
+            else if (mood == "grim")
+            {
+                stringId = $"qm_sell_grim_{archetype}";
+            }
+            else
+            {
+                // Unknown mood - use content as default
+                stringId = $"qm_sell_content_{archetype}";
+            }
+            
+            return GetLocalizedTextSafe(stringId, "Show me what you've got. I'll give you a fair price.");
+        }
+        
+        /// <summary>
+        ///     Generates a contextual upgrade response based on archetype and reputation.
+        ///     Uses XML localization strings with full validation and fallback handling.
+        /// </summary>
+        private string GetUpgradeResponse(string archetype, int reputation)
+        {
+            // Validate and normalize inputs
+            archetype = ValidateArchetype(archetype);
+            
+            // Determine reputation tone
+            bool hostile = reputation < 0;
+            bool trusted = reputation >= 61;
+            
+            // Build string ID based on reputation
+            string stringId;
+            
+            if (trusted)
+            {
+                stringId = $"qm_upgrade_trusted_{archetype}";
+            }
+            else if (hostile)
+            {
+                stringId = $"qm_upgrade_hostile_{archetype}";
+            }
+            else
+            {
+                stringId = $"qm_upgrade_default_{archetype}";
+            }
+            
+            return GetLocalizedTextSafe(stringId, "Aye, bring me what you've got. Good work costs good coin.");
         }
 
         #endregion
@@ -1811,35 +2623,375 @@ namespace Enlisted.Features.Conversations.Behaviors
         private void OnQuartermasterFirstMeeting()
         {
             EnlistmentBehavior.Instance?.MarkQuartermasterMet();
-            ModLogger.Info("Quartermaster", "First meeting with quartermaster completed");
+            ModLogger.Info("Conversations", "QM: First meeting with quartermaster completed");
         }
 
         /// <summary>
-        ///     Called when player requests equipment.
-        ///     Opens the quartermaster equipment menu.
+        ///     Called when player selects an equipment category (weapons, accessories, mounts).
+        ///     Opens Gauntlet UI for the selected category using NextFrameDispatcher.
         /// </summary>
-        private void OnQuartermasterEquipmentRequest()
+        private void OnQuartermasterBrowseCategory()
         {
             try
             {
-                // Increase relationship slightly for interaction
                 EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+                var category = _selectedEquipmentCategory;
+                
+                // Guard against empty category (shouldn't happen, but defensive)
+                if (string.IsNullOrEmpty(category))
+                {
+                    ModLogger.Warn("Conversations", "QM: Browse category called with empty category, defaulting to weapons");
+                    category = "weapons";
+                }
+                
+                ModLogger.Info("Conversations", $"QM: Player selected {category} category");
 
-                // Open equipment menu
-                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                GameMenu.ActivateGameMenu("quartermaster_equipment");
-
-                ModLogger.Info("Quartermaster", "Opened equipment menu from dialog");
+                // Use NextFrameDispatcher so the conversation fully closes before Gauntlet opens
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        OpenGauntletForCategory(category);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("Conversations", $"QM: Failed to open Gauntlet for {category}", ex);
+                        // Try to return to conversation on error
+                        RestartQuartermasterConversation();
+                    }
+                });
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Failed to open equipment menu from dialog", ex);
+                ModLogger.Error("Conversations", "QM: Failed to process browse category", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Called when player selects an armor slot.
+        ///     Opens Gauntlet UI filtered to that armor slot.
+        /// </summary>
+        private void OnQuartermasterArmorSlotSelected()
+        {
+            try
+            {
+                EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+                var slot = _selectedArmorSlot;
+                
+                // Guard against unset slot (shouldn't happen, but defensive)
+                if (slot == TaleWorlds.Core.EquipmentIndex.None)
+                {
+                    ModLogger.Warn("Conversations", "QM: Armor slot selection called with None, defaulting to Body");
+                    slot = TaleWorlds.Core.EquipmentIndex.Body;
+                }
+                
+                ModLogger.Info("Conversations", $"QM: Player selected armor slot {slot}");
+
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        OpenGauntletForArmorSlot(slot);
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("Conversations", $"QM: Failed to open Gauntlet for armor slot {slot}", ex);
+                        RestartQuartermasterConversation();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "QM: Failed to process armor slot selection", ex);
+            }
+        }
+
+        /// <summary>
+        ///     Opens Gauntlet equipment selector for the specified category.
+        /// </summary>
+        private void OpenGauntletForCategory(string category)
+        {
+            var qm = QuartermasterManager.Instance;
+            if (qm == null)
+            {
+                ModLogger.Warn("Conversations", "QM: QuartermasterManager instance not available");
+                return;
+            }
+
+            System.Collections.Generic.List<EquipmentVariantOption> variants = null;
+            TaleWorlds.Core.EquipmentIndex targetSlot = TaleWorlds.Core.EquipmentIndex.Weapon0;
+
+            switch (category)
+            {
+                case "weapons":
+                    variants = GetWeaponVariants(qm);
+                    targetSlot = TaleWorlds.Core.EquipmentIndex.Weapon0;
+                    break;
+                    
+                case "accessories":
+                    variants = GetAccessoryVariants(qm);
+                    targetSlot = TaleWorlds.Core.EquipmentIndex.Cape;
+                    break;
+                    
+                case "mounts":
+                    variants = GetMountVariants(qm);
+                    targetSlot = TaleWorlds.Core.EquipmentIndex.Horse;
+                    break;
+                    
+                default:
+                    ModLogger.Warn("Conversations", $"QM: Unknown equipment category: {category}");
+                    return;
+            }
+
+            if (variants == null || variants.Count == 0)
+            {
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"No {category} available in stock.", Colors.Red));
+                // Return to conversation since there's nothing to show
+                RestartQuartermasterConversation();
+                return;
+            }
+
+            ModLogger.Debug("Conversations", $"QM: Opening Gauntlet for {category} with {variants.Count} variants");
+            QuartermasterEquipmentSelectorBehavior.ShowEquipmentSelector(variants, targetSlot, category);
+        }
+
+        /// <summary>
+        ///     Opens Gauntlet equipment selector for a specific armor slot.
+        /// </summary>
+        private void OpenGauntletForArmorSlot(TaleWorlds.Core.EquipmentIndex slot)
+        {
+            var qm = QuartermasterManager.Instance;
+            if (qm == null)
+            {
+                ModLogger.Warn("Conversations", "QM: QuartermasterManager instance not available");
+                return;
+            }
+
+            var variants = GetArmorSlotVariants(qm, slot);
+            if (variants == null || variants.Count == 0)
+            {
+                var slotName = GetArmorSlotDisplayName(slot);
+                InformationManager.DisplayMessage(new InformationMessage(
+                    $"No {slotName} available in stock.", Colors.Red));
+                RestartQuartermasterConversation();
+                return;
+            }
+
+            var slotDisplayName = GetArmorSlotDisplayName(slot);
+            ModLogger.Debug("Conversations", $"QM: Opening Gauntlet for armor slot {slotDisplayName} with {variants.Count} variants");
+            QuartermasterEquipmentSelectorBehavior.ShowEquipmentSelector(variants, slot, slotDisplayName);
+        }
+
+        /// <summary>
+        ///     Gets a display name for an armor slot.
+        /// </summary>
+        private static string GetArmorSlotDisplayName(TaleWorlds.Core.EquipmentIndex slot)
+        {
+            return slot switch
+            {
+                TaleWorlds.Core.EquipmentIndex.Head => "helmets",
+                TaleWorlds.Core.EquipmentIndex.Body => "body armor",
+                TaleWorlds.Core.EquipmentIndex.Gloves => "gloves",
+                TaleWorlds.Core.EquipmentIndex.Leg => "boots",
+                TaleWorlds.Core.EquipmentIndex.Cape => "capes",
+                _ => "armor"
+            };
+        }
+
+        /// <summary>
+        ///     Gets weapon variants from QuartermasterManager.
+        /// </summary>
+        private System.Collections.Generic.List<EquipmentVariantOption> GetWeaponVariants(QuartermasterManager qm)
+        {
+            try
+            {
+                var method = typeof(QuartermasterManager).GetMethod("BuildWeaponOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (method == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                if (options == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                // Flatten all weapon variants into one list
+                return options.SelectMany(kvp => kvp.Value).ToList();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "QM: Failed to get weapon variants", ex);
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        ///     Gets accessory variants (capes, shields, harness) from QuartermasterManager.
+        /// </summary>
+        private System.Collections.Generic.List<EquipmentVariantOption> GetAccessoryVariants(QuartermasterManager qm)
+        {
+            try
+            {
+                var combined = new System.Collections.Generic.List<EquipmentVariantOption>();
+                
+                // Get capes from armor options
+                var armorMethod = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (armorMethod != null)
+                {
+                    var armorOptions = armorMethod.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                    if (armorOptions?.TryGetValue(TaleWorlds.Core.EquipmentIndex.Cape, out var capeOptions) == true)
+                    {
+                        combined.AddRange(capeOptions);
+                    }
+                }
+                
+                // Get shields from weapon slots
+                var shieldMethod = typeof(QuartermasterManager).GetMethod("BuildShieldOptionsFromWeapons", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (shieldMethod != null)
+                {
+                    var shieldOptions = shieldMethod.Invoke(qm, null) as System.Collections.Generic.List<EquipmentVariantOption>;
+                    if (shieldOptions != null)
+                    {
+                        combined.AddRange(shieldOptions);
+                    }
+                }
+                
+                return combined;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "QM: Failed to get accessory variants", ex);
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        ///     Gets mount variants from QuartermasterManager.
+        /// </summary>
+        private System.Collections.Generic.List<EquipmentVariantOption> GetMountVariants(QuartermasterManager qm)
+        {
+            try
+            {
+                // Get troop equipment variants to find mounts
+                var troopMethod = typeof(QuartermasterManager).GetMethod("GetPlayerSelectedTroop", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                var buildMethod = typeof(QuartermasterManager).GetMethod("BuildVariantOptions", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var equipMethod = typeof(QuartermasterManager).GetMethod("GetTroopEquipmentVariants", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                
+                if (troopMethod == null || buildMethod == null || equipMethod == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                var troop = troopMethod.Invoke(qm, null) as TaleWorlds.CampaignSystem.CharacterObject;
+                if (troop == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                var equipVariants = equipMethod.Invoke(qm, new object[] { troop }) 
+                    as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<TaleWorlds.Core.ItemObject>>;
+                if (equipVariants == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                var allVariants = buildMethod.Invoke(qm, new object[] { equipVariants }) 
+                    as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                
+                if (allVariants?.TryGetValue(TaleWorlds.Core.EquipmentIndex.Horse, out var mounts) == true)
+                {
+                    return mounts;
+                }
+                
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "QM: Failed to get mount variants", ex);
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        ///     Gets armor variants for a specific slot.
+        /// </summary>
+        private System.Collections.Generic.List<EquipmentVariantOption> GetArmorSlotVariants(QuartermasterManager qm, TaleWorlds.Core.EquipmentIndex slot)
+        {
+            try
+            {
+                var method = typeof(QuartermasterManager).GetMethod("BuildArmorOptionsFromCurrentTroop", 
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (method == null)
+                {
+                    return new System.Collections.Generic.List<EquipmentVariantOption>();
+                }
+                
+                var options = method.Invoke(qm, null) as System.Collections.Generic.Dictionary<TaleWorlds.Core.EquipmentIndex, System.Collections.Generic.List<EquipmentVariantOption>>;
+                if (options?.TryGetValue(slot, out var slotVariants) == true)
+                {
+                    return slotVariants;
+                }
+                
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", $"QM: Failed to get armor variants for slot {slot}", ex);
+                return new System.Collections.Generic.List<EquipmentVariantOption>();
+            }
+        }
+
+        /// <summary>
+        ///     Restarts the quartermaster conversation, returning player to qm_hub.
+        ///     Called after Gauntlet closes or when there's nothing to show.
+        /// </summary>
+        public static void RestartQuartermasterConversation()
+        {
+            try
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var qmHero = enlistment?.QuartermasterHero;
+                
+                if (qmHero == null || !qmHero.IsAlive)
+                {
+                    ModLogger.Warn("Conversations", "QM: Cannot restart conversation - QM hero not available");
+                    return;
+                }
+
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    try
+                    {
+                        CampaignMapConversation.OpenConversation(
+                            new ConversationCharacterData(CharacterObject.PlayerCharacter, PartyBase.MainParty),
+                            new ConversationCharacterData(qmHero.CharacterObject, qmHero.PartyBelongedTo?.Party));
+                        
+                        ModLogger.Debug("Conversations", "QM: Restarted conversation with quartermaster");
+                    }
+                    catch (Exception ex)
+                    {
+                        ModLogger.Error("Conversations", "QM: Failed to restart conversation", ex);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Conversations", "QM: Error in RestartQuartermasterConversation", ex);
             }
         }
 
         /// <summary>
         ///     Called when player wants to sell equipment.
-        ///     Opens the quartermaster returns menu.
+        ///     Opens a popup inquiry for selling items back to the quartermaster.
         /// </summary>
         private void OnQuartermasterSellRequest()
         {
@@ -1848,15 +3000,23 @@ namespace Enlisted.Features.Conversations.Behaviors
                 // Increase relationship for interaction
                 EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
 
-                // Open sell menu
-                QuartermasterManager.CaptureTimeStateBeforeMenuActivation();
-                GameMenu.ActivateGameMenu("quartermaster_returns");
-
-                ModLogger.Info("Quartermaster", "Opened sell menu from dialog");
+                // Open sell popup via QuartermasterManager
+                var qm = QuartermasterManager.Instance;
+                if (qm != null)
+                {
+                    qm.ShowSellPopup();
+                    ModLogger.Info("Quartermaster", "Opened sell popup from dialog");
+                }
+                else
+                {
+                    ModLogger.Error("Quartermaster", "Cannot open sell popup: QuartermasterManager.Instance is null");
+                    InformationManager.DisplayMessage(new InformationMessage(
+                        new TextObject("{=qm_return_error}Return processing unavailable.").ToString()));
+                }
             }
             catch (Exception ex)
             {
-                ModLogger.Error("Quartermaster", "Failed to open sell menu from dialog", ex);
+                ModLogger.Error("Quartermaster", "Failed to open sell popup from dialog", ex);
             }
         }
 
@@ -1888,6 +3048,107 @@ namespace Enlisted.Features.Conversations.Behaviors
             catch (Exception ex)
             {
                 ModLogger.Error("Quartermaster", "Failed to open rations menu from dialog", ex);
+            }
+        }
+        
+        /// <summary>
+        ///     Called when player requests equipment upgrades.
+        ///     Opens the upgrade interface using NextFrameDispatcher.
+        /// </summary>
+        private void OnQuartermasterUpgradeRequest()
+        {
+            try
+            {
+                // Increase relationship for interaction
+                EnlistmentBehavior.Instance?.ModifyQuartermasterRelationship(1);
+                
+                // Open upgrade screen after dialogue closes
+                NextFrameDispatcher.RunNextFrame(() =>
+                {
+                    QuartermasterEquipmentSelectorBehavior.ShowUpgradeScreen();
+                });
+                
+                ModLogger.Info("Quartermaster", "Player requested equipment upgrades");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error opening upgrade screen", ex);
+            }
+        }
+        
+        /// <summary>
+        ///     Checks if the player has any equipped items that can be upgraded.
+        /// </summary>
+        private bool HasUpgradeableEquipment()
+        {
+            try
+            {
+                var hero = Hero.MainHero;
+                if (hero == null)
+                {
+                    return false;
+                }
+                
+                var qm = QuartermasterManager.Instance;
+                if (qm == null)
+                {
+                    return false;
+                }
+                
+                var availableTiers = qm.GetAvailableUpgradeTiers();
+                if (availableTiers == null || availableTiers.Count == 0)
+                {
+                    return false;
+                }
+                
+                // Check all equipment slots for upgradeable items
+                for (int i = 0; i < (int)TaleWorlds.Core.EquipmentIndex.NumEquipmentSetSlots; i++)
+                {
+                    var slot = (TaleWorlds.Core.EquipmentIndex)i;
+                    var element = hero.BattleEquipment[slot];
+                    
+                    // Skip empty slots
+                    if (element.IsEmpty || element.Item == null)
+                    {
+                        continue;
+                    }
+                    
+                    // Skip items without modifier groups
+                    var modGroup = element.Item.ItemComponent?.ItemModifierGroup;
+                    if (modGroup == null)
+                    {
+                        continue;
+                    }
+                    
+                    // Skip items already at Legendary quality
+                    var currentQuality = QuartermasterManager.GetModifierQuality(element.Item, element.ItemModifier);
+                    if (currentQuality == TaleWorlds.Core.ItemQuality.Legendary)
+                    {
+                        continue;
+                    }
+                    
+                    // Check if any upgrade tier is available for this item
+                    foreach (var tier in availableTiers)
+                    {
+                        if (tier > currentQuality)
+                        {
+                            var modifiers = modGroup.GetModifiersBasedOnQuality(tier);
+                            if (modifiers != null && modifiers.Count > 0)
+                            {
+                                // Found at least one upgradeable item
+                                return true;
+                            }
+                        }
+                    }
+                }
+                
+                // No upgradeable items found
+                return false;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("Quartermaster", "Error checking for upgradeable equipment", ex);
+                return false;
             }
         }
 

@@ -79,9 +79,10 @@
 | Document | Topic | Status |
 |----------|-------|--------|
 | [quartermaster-system.md](Features/Equipment/quartermaster-system.md) | Complete quartermaster system | ✅ Current |
+| [quartermaster-conversation-refactor.md](Features/Equipment/quartermaster-conversation-refactor.md) | QM conversation system (Phase 6: XML localization + edge cases) | ✅ Current |
+| [quartermaster-equipment-quality.md](Features/Equipment/quartermaster-equipment-quality.md) | Equipment quality system | ✅ Current |
 | [provisions-rations-system.md](Features/Equipment/provisions-rations-system.md) | Food and rations | ✅ Current |
 | [company-supply-simulation.md](Features/Equipment/company-supply-simulation.md) | Company supply tracking | ✅ Current |
-| [quartermaster-equipment-quality.md](Features/Equipment/quartermaster-equipment-quality.md) | Equipment quality system | ✅ Current |
 
 ### Identity & Traits
 **Location:** `Features/Identity/`

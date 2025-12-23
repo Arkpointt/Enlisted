@@ -2,9 +2,9 @@
 
 **Summary:** The quartermaster hero system creates persistent NPC quartermasters for each lord, transforming equipment management into character relationships. Quartermasters have unique archetypes (veteran, merchant, bookkeeper, etc.), build reputation with the player, and reflect company supply needs through their dialogue and services.
 
-**Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
-**Related Docs:** [Quartermaster System](../Equipment/quartermaster-system.md), [Company Supply](../Equipment/company-supply-simulation.md)
+**Status:** ✅ Complete  
+**Last Updated:** 2025-12-22 (Phase 5: UI enhancements with tooltips and upgrade indicators)  
+**Related Docs:** [Quartermaster System](../Equipment/quartermaster-system.md), [Quartermaster Conversation Refactor](../Equipment/quartermaster-conversation-refactor.md)
 
 ---
 

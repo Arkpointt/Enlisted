@@ -10,7 +10,7 @@ namespace Enlisted.Features.Orders.Models
     public class Order
     {
         /// <summary>
-        /// Unique identifier for this order (e.g., "t4_scout_position").
+        /// Unique identifier for this order (e.g., "order_scout_route").
         /// </summary>
         public string Id { get; set; }
 
@@ -46,7 +46,7 @@ namespace Enlisted.Features.Orders.Models
         public OrderRequirement Requirements { get; set; } = new OrderRequirement();
 
         /// <summary>
-        /// Outcomes for success, failure, and decline scenarios.
+        /// Outcomes for success, failure, decline, and critical failure scenarios.
         /// </summary>
         public OrderConsequence Consequences { get; set; } = new OrderConsequence();
 

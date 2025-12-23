@@ -1,10 +1,15 @@
 # Quartermaster System
 
-**Summary:** The Quartermaster manages all military logistics for the player's company including equipment purchases, provisions/rations, buyback services, baggage inspections, and the Officers Armory. The system uses company supply levels to gate access, and quartermaster reputation to determine pricing, food quality, and enforcement strictness.
+**Summary:** The Quartermaster manages all military logistics for the player's company including equipment purchases with quality modifiers, provisions/rations, buyback services, baggage inspections, and the Officers Armory. The system uses company supply levels to gate access, and quartermaster reputation to determine pricing, equipment quality, food quality, and enforcement strictness.
 
 **Status:** ✅ Current  
-**Last Updated:** 2025-12-22  
-**Related Docs:** [Equipment Quality](quartermaster-equipment-quality.md), [Company Supply](company-supply-simulation.md)
+**Last Updated:** 2025-12-23 (Phase 6: Contextual dialogue complete - XML localization, edge case hardening)  
+**Related Docs:** [Quartermaster Conversation Refactor](quartermaster-conversation-refactor.md), [Company Supply](company-supply-simulation.md)
+
+**Phase 6 Highlights (2025-12-23):**
+- ✅ **Dynamic Contextual Dialogue** - QM responses vary by supply levels, reputation, mood, archetype, and strategic context
+- ✅ **Full XML Localization** - ~150 dialogue strings moved to XML for translation support
+- ✅ **Edge Case Hardening** - Comprehensive error handling, validation, and fallback strings ensure bulletproof operation
 
 ---
 
@@ -14,14 +19,15 @@
 2. [Quartermaster NPC](#quartermaster-npc)
 3. [Main Menu Structure](#main-menu-structure)
 4. [Equipment Purchasing](#equipment-purchasing)
-5. [Buyback System](#buyback-system)
-6. [Provisions & Rations](#provisions--rations)
-7. [Baggage Checks](#baggage-checks)
-8. [Officers Armory](#officers-armory)
-9. [Discharge & Retirement](#discharge--retirement)
-10. [Reputation System](#reputation-system)
-11. [Supply Integration](#supply-integration)
-12. [Implementation Status](#implementation-status)
+5. [Equipment Quality System](#equipment-quality-system)
+6. [Buyback System](#buyback-system)
+7. [Provisions & Rations](#provisions--rations)
+8. [Baggage Checks](#baggage-checks)
+9. [Officers Armory](#officers-armory)
+10. [Discharge & Retirement](#discharge--retirement)
+11. [Reputation System](#reputation-system)
+12. [Supply Integration](#supply-integration)
+13. [Implementation Status](#implementation-status)
 
 ---
 
@@ -30,8 +36,11 @@
 The Quartermaster is the central logistics hub for enlisted soldiers, managing:
 
 - **Equipment Access** - Buy armor, weapons, accessories with reputation-based discounts (0-30%)
+- **Equipment Quality** - Items have quality modifiers (Poor/Inferior/Common/Fine/Masterwork/Legendary)
+- **Upgrade System** - Pay to improve equipped gear quality based on reputation
 - **Master at Arms Integration** - Category-filtered equipment browsing (armor/weapons/accessories)
-- **Buyback Services** - Sell QM-purchased equipment back at 30-65% of value
+- **Enhanced UI** - Tooltips show stat modifiers, upgrade indicators, color-coded quality tiers
+- **Buyback Services** - Sell QM-purchased equipment back at 30-65% of value (quality-aware)
 - **Food Rations (T1-T4)** - Issued rations every 12 days, quality based on reputation
 - **Officer Provisions (T5+)** - Premium food shop at 150-200% of town prices
 - **Baggage Inspections** - Muster contraband checks with reputation-based outcomes
@@ -186,6 +195,88 @@ finalPrice = item.Value × repMultiplier × campMoodMultiplier × dutyDiscountMu
 - Company supply < 30%: "We can't issue equipment right now. Supplies are critically low."
 - Insufficient funds: "You don't have enough. Come back when you've got the coin."
 - Too high tier: "That equipment is above your rank."
+
+---
+
+## Equipment Quality System
+
+All equipment in the Quartermaster's stock has quality modifiers applied, using Bannerlord's native `ItemModifier` system. Quality affects item stats (damage, armor, speed) and prices.
+
+### Quality Tiers
+
+| Tier | Display Name | Color | Price Multiplier | Stats |
+|------|--------------|-------|------------------|-------|
+| **Poor** | Poor | Gray | ~0.5x | Reduced stats (damaged/rusty) |
+| **Inferior** | Worn | Brown | ~0.7-0.85x | Below average |
+| **Common** | Standard | White | 1.0x | No modifier (baseline) |
+| **Fine** | Fine | Green | ~1.2x | Above average |
+| **Masterwork** | Masterwork | Blue | ~1.5x | High quality |
+| **Legendary** | Legendary | Gold | ~2.0x | Exceptional |
+
+### Quality Distribution by QM Reputation
+
+Quality is rolled when equipment variants are built (affected by `RollItemQualityByReputation()`):
+
+| QM Reputation | Poor | Inferior | Common | Fine+ |
+|---------------|------|----------|--------|-------|
+| **< 0** | 50% | 40% | 10% | 0% |
+| **0-30** | 30% | 50% | 20% | 0% |
+| **31-60** | 15% | 45% | 35% | 5% |
+| **61+** | 5% | 30% | 50% | 15% |
+
+**Key Points:**
+- Low reputation = mostly damaged gear (Poor/Inferior)
+- High reputation = better stock (Common/Fine)
+- Masterwork/Legendary quality comes from upgrade system (Phase 3, future)
+
+### Quality Effects
+
+**Stat Modifications:**
+- **Weapons:** Damage, speed, reach affected by quality
+- **Armor:** Armor values modified (Poor = reduced protection, Fine = enhanced)
+- **Prices:** Quality modifier's `PriceMultiplier` applied before reputation discounts
+
+**Example:**
+```
+Base Item: Bastard Sword (500 denars, 35 swing damage)
+
+Poor Quality (Rusty Bastard Sword):
+- Price: 250 denars (0.5x modifier × 500)
+- Damage: ~28 swing (reduced by modifier)
+
+Fine Quality (Fine Bastard Sword):
+- Price: 600 denars (1.2x modifier × 500)
+- Damage: ~38 swing (increased by modifier)
+```
+
+### UI Display
+
+**In Gauntlet Equipment Grid:**
+- Item name shows quality prefix: "Rusty Shortsword", "Fine Bastard Sword"
+- Quality tier displayed below item name with color coding
+- Prices reflect both quality modifier and reputation discount
+- Stats shown are modified values (what player will actually get)
+
+**Items Without Modifier Groups:**
+- Some items don't support quality modifiers (banners, quest items)
+- Display as "Standard" quality with no color coding
+- Price calculations and purchase work normally
+
+### Stock Floor
+
+To prevent bad RNG from blocking player progress, at least 1 item per major equipment slot is guaranteed to be in stock after rolling availability:
+- Weapon0, Head, Body, Leg, Gloves, Cape, Horse slots checked
+- If all items out of stock in a slot, the first item is marked available
+
+### Purchase with Quality
+
+When purchasing equipment:
+1. Quality modifier applied to equipped item via `EquipmentElement(item, modifier)`
+2. Player receives the actual modified item with adjusted stats
+3. Success message shows modified name: "Purchased Rusty Shortsword for 120 denars"
+4. If weapon slots full, item goes to inventory with modifier preserved
+
+**Implementation Status:** ✅ Complete (Phase 2, 2025-12-22)
 
 **Tracking Purchases:**
 All quartermaster-issued equipment is tracked in a persistent registry for:
@@ -604,25 +695,44 @@ QM (<30%): "We're in crisis. I can't issue any equipment changes until
 
 ## Implementation Status
 
-### Currently Implemented
+### ✅ Fully Implemented (2025-12-22)
+
+**Conversation-Driven System (Phases 1-5):**
+- ✅ Conversation tree with category selection and armor slot drill-down
+- ✅ Gauntlet equipment browser with visual stats and tooltips
+- ✅ Smooth conversation ↔ UI transitions with ESC/X/Done support
+- ✅ External interruption handling (battle, capture, settlement departure)
+
+**Equipment Quality System (Phases 2-3):**
+- ✅ Six quality tiers (Poor/Inferior/Common/Fine/Masterwork/Legendary)
+- ✅ Native ItemModifier integration with stat and price modifications
+- ✅ Reputation-based quality distribution in stock
+- ✅ Upgrade system for equipped items (pay to improve quality)
+- ✅ Officers' Armory with higher-tier gear (T5+, high reputation)
+
+**UI Enhancements (Phase 5):**
+- ✅ Color-coded quality display with text labels (accessibility)
+- ✅ Tooltips showing base vs modified stats
+- ✅ Upgrade indicators on upgradeable items
+- ✅ Soft, readable colors (light green, cornflower blue, gold)
+- ✅ Name truncation for long item names
+- ✅ Quality-aware buyback pricing
 
 **Core Systems:**
 - ✅ Quartermaster NPC generation and assignment
-- ✅ Basic conversation tree and menu system
-- ✅ Equipment purchase via Master at Arms integration
+- ✅ Equipment purchase with quality modifiers
 - ✅ Category filtering (armor/weapons/accessories)
-- ✅ Reputation-based pricing (0-15% discount range)
-- ✅ Supply level tracking (0-100%)
-
-**Partially Implemented:**
-- ⚠️ Buyback system (exists but doesn't restrict to QM-issued items)
-- ⚠️ Provisions menu (exists but uses old "morale buff" model for T1-T4)
-- ⚠️ Baggage stash (exists but no muster inspections)
+- ✅ Reputation-based pricing (0-30% discount range)
+- ✅ Supply level tracking and gating (< 30% blocks equipment)
+- ✅ Buyback system with quality-aware pricing
+- ✅ Provisions/rations system (T1-T4 issued, T5+ purchased)
 
 ### Planned Improvements
 
-**Phase 1: Company Supply Integration**
-- Wire supply computation (hybrid observation + simulation)
+**Phase 6-8 (Future):**
+- Supply inquiry with dynamic contextual responses
+- Camp News integration for QM events
+- Testing and polish
 - Show supply % in Quartermaster UI
 - Block equipment purchases when supply < 30%
 

@@ -426,7 +426,7 @@ For players who don't want to micromanage, add preference system:
 ### Phase 2: Event Updates (Week 2)
 1. Update all `events_training.json` events with skill focus choices
 2. Update social events in `events_general.json` with gold/rep tradeoffs
-3. Update `events_player_decisions.json` weapon training with weapon selection
+3. Update weapon training decisions in `Decisions/decisions.json` with weapon selection
 4. Add risk-level choices to 3-5 dangerous events
 
 ### Phase 3: Polish & Balance (Week 3)

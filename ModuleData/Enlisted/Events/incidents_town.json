@@ -1,0 +1,566 @@
+{
+  "schemaVersion": 2,
+  "category": "map_incident",
+  "description": "Map incidents triggered when entering towns (entering_town context). 8 total incidents.",
+  "events": [
+    {
+      "id": "mi_town_tavern",
+      "category": "map_incident",
+      "titleId": "mi_town_tavern_title",
+      "title": "The Tavern",
+      "setupId": "mi_town_tavern_setup",
+      "setup": "You have a few hours of freedom in town. The tavern beckons—warm lights, loud voices, the smell of ale and roasted meat. A drink wouldn't hurt. Or maybe it would.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 7,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "drink_moderate",
+          "textId": "mi_town_tavern_moderate",
+          "text": "Have a few drinks, keep your wits",
+          "resultTextId": "mi_town_tavern_moderate_result",
+          "resultText": "You share stories with the soldiers, laugh at old jokes, and keep your coin purse close. A good evening, nothing more.",
+          "risk": "safe",
+          "effects": {
+            "gold": -10,
+            "soldierRep": 5,
+            "companyNeeds": {
+              "Rest": 5
+            }
+          }
+        },
+        {
+          "id": "drink_heavy",
+          "textId": "mi_town_tavern_heavy",
+          "text": "Drink deep and forget the war",
+          "resultTextId": "mi_town_tavern_heavy_result",
+          "resultText": "The night blurs into warmth and laughter. You buy rounds, tell stories that grow taller with each cup, and for a few hours you're not a soldier—just a man enjoying life. You wake with a pounding head, lighter coin, and a vague memory of arm-wrestling the sergeant. Worth it.",
+          "risk": "risky",
+          "risk_chance": 80,
+          "effects": {
+            "gold": -35,
+            "soldierRep": 12,
+            "scrutiny": 2,
+            "companyNeeds": {
+              "Rest": -10,
+              "Morale": 8
+            }
+          },
+          "effects_failure": {
+            "gold": -50,
+            "hpChange": -10,
+            "scrutiny": 4,
+            "discipline": 2
+          },
+          "failure_resultText": "The night goes too far. You wake in an alley, beaten and robbed, with no memory of how you got there. The sergeant finds you before muster, and his expression promises consequences."
+        },
+        {
+          "id": "stay_sober",
+          "textId": "mi_town_tavern_sober",
+          "text": "Stay sober and keep watch",
+          "resultTextId": "mi_town_tavern_sober_result",
+          "resultText": "You nurse a single cup of ale for hours, watching the others. Someone needs to stay sharp. The men notice your discipline.",
+          "risk": "safe",
+          "effects": {
+            "gold": -5,
+            "officerRep": 5,
+            "soldierRep": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_merchant",
+      "category": "map_incident",
+      "titleId": "mi_town_merchant_title",
+      "title": "Merchant's Offer",
+      "setupId": "mi_town_merchant_setup",
+      "setup": "A trader in the market catches your eye. He has goods at suspiciously good prices—weapons, armor, supplies. 'Fell off a wagon,' he says with a wink. Maybe legitimate salvage, maybe stolen.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 1, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "buy",
+          "textId": "mi_town_merchant_buy",
+          "text": "Buy what looks useful",
+          "resultTextId": "mi_town_merchant_buy_result",
+          "resultText": "You hand over coin and walk away with quality goods. Maybe stolen, maybe not. Either way, they're yours now.",
+          "risk": "safe",
+          "effects": {
+            "gold": -40,
+            "companyNeeds": {
+              "Equipment": 5
+            }
+          }
+        },
+        {
+          "id": "haggle",
+          "textId": "mi_town_merchant_haggle",
+          "text": "Haggle for a better price",
+          "requirements": {
+            "minSkills": {
+              "Trade": 35
+            }
+          },
+          "resultTextId": "mi_town_merchant_haggle_result",
+          "resultText": "'Half that,' you say flatly. The merchant grumbles but accepts. A soldier who knows his prices—rare enough to respect.",
+          "tooltip": "Requires Trade 35+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Trade": 15
+            }
+          },
+          "effects": {
+            "gold": -20,
+            "companyNeeds": {
+              "Equipment": 5
+            }
+          }
+        },
+        {
+          "id": "walk_away",
+          "textId": "mi_town_merchant_walk",
+          "text": "Walk away, it's not worth the risk",
+          "resultTextId": "mi_town_merchant_walk_result",
+          "resultText": "You shake your head and move on. Too many questions about where those goods came from. Best not to invite trouble.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_old_friend",
+      "category": "map_incident",
+      "titleId": "mi_town_old_friend_title",
+      "title": "Familiar Face",
+      "setupId": "mi_town_old_friend_setup",
+      "setup": "Someone from your past is here—a childhood friend, a former comrade, perhaps someone you'd rather forget. They haven't seen you yet. This could be a reunion or a complication.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 1, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "approach",
+          "textId": "mi_town_old_friend_approach",
+          "text": "Approach and reconnect",
+          "resultTextId": "mi_town_old_friend_approach_result",
+          "resultText": "You tap their shoulder. The recognition, the smile, the embrace—for a moment, you're not a soldier, you're just yourself again.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 10
+            }
+          }
+        },
+        {
+          "id": "avoid",
+          "textId": "mi_town_old_friend_avoid",
+          "text": "Avoid them and move on",
+          "resultTextId": "mi_town_old_friend_avoid_result",
+          "resultText": "You pull your hood lower and take another route. That life is gone. No point reopening old wounds.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "observe",
+          "textId": "mi_town_old_friend_observe",
+          "text": "Watch from a distance first",
+          "resultTextId": "mi_town_old_friend_observe_result",
+          "resultText": "You linger in the shadows, watching. They seem well, happy even. Maybe that's enough. You slip away without approaching.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_message",
+      "category": "map_incident",
+      "titleId": "mi_town_message_title",
+      "title": "Message from Home",
+      "setupId": "mi_town_message_setup",
+      "setup": "The innkeeper hands you a sealed letter. 'Been waiting for you,' he says. Your name is written in familiar handwriting. A message from your old life, from before you took the king's coin.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 1, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "read_now",
+          "textId": "mi_town_message_read",
+          "text": "Read it immediately",
+          "resultTextId": "mi_town_message_read_result",
+          "resultText": "The words bring comfort and pain in equal measure. Home feels both close and impossibly far. You fold the letter carefully and tuck it away.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Morale": 5
+            }
+          }
+        },
+        {
+          "id": "read_later",
+          "textId": "mi_town_message_later",
+          "text": "Save it for later",
+          "resultTextId": "mi_town_message_later_result",
+          "resultText": "You slip the letter into your pack, unopened. Some things are better saved for when you need them most.",
+          "risk": "safe",
+          "effects": {
+            "companyNeeds": {
+              "Rest": 3
+            }
+          }
+        },
+        {
+          "id": "burn",
+          "textId": "mi_town_message_burn",
+          "text": "Burn it unread",
+          "resultTextId": "mi_town_message_burn_result",
+          "resultText": "You toss it into the nearest fire without breaking the seal. That life is gone. No point in looking back.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            },
+            "companyNeeds": {
+              "Morale": -5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_criminal",
+      "category": "map_incident",
+      "titleId": "mi_town_criminal_title",
+      "title": "Criminal Contact",
+      "setupId": "mi_town_criminal_setup",
+      "setup": "A figure in the shadows knows your face. 'You're with the company,' he whispers. 'I have an offer. Good coin for a simple job. Interested?'",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 2, "max": 7 }
+      },
+      "timing": {
+        "cooldown_days": 14,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "listen",
+          "textId": "mi_town_criminal_listen",
+          "text": "Hear him out",
+          "resultTextId": "mi_town_criminal_listen_result",
+          "resultText": "Smuggling, he says. Move a package, ask no questions, get paid well. Risky, but the money is real.",
+          "risk": "moderate",
+          "rewards": {
+            "skillXp": {
+              "Roguery": 10
+            }
+          },
+          "effects": {
+            "gold": 60,
+            "scrutiny": 4
+          }
+        },
+        {
+          "id": "refuse",
+          "textId": "mi_town_criminal_refuse",
+          "text": "Refuse and walk away",
+          "resultTextId": "mi_town_criminal_refuse_result",
+          "resultText": "'Not interested.' The figure shrugs and melts back into the shadows. A wise choice, or a missed opportunity—hard to say.",
+          "risk": "safe",
+          "effects": {
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "report_criminal",
+          "textId": "mi_town_criminal_report",
+          "text": "Report him to the town guard",
+          "resultTextId": "mi_town_criminal_report_result",
+          "resultText": "You point out the criminal to a passing patrol. They chase him into the alleys. Whether they catch him, you don't know—but you did your duty.",
+          "risk": "safe",
+          "effects": {
+            "officerRep": 3,
+            "traitXp": {
+              "Honor": 8
+            },
+            "scrutiny": -1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_recruitment",
+      "category": "map_incident",
+      "titleId": "mi_town_recruitment_title",
+      "title": "Recruitment Pitch",
+      "setupId": "mi_town_recruitment_setup",
+      "setup": "A well-dressed man approaches. 'You look like a soldier with experience,' he says. 'My employer is hiring—better pay, less risk, more freedom. Think about it.'",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 3, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 21,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "consider",
+          "textId": "mi_town_recruitment_consider",
+          "text": "Consider the offer seriously",
+          "resultTextId": "mi_town_recruitment_consider_result",
+          "resultText": "You listen to the pitch. It's tempting—better conditions, honest pay. But changing masters isn't simple. You take his name, just in case.",
+          "risk": "risky",
+          "effects": {
+            "lordRep": -5,
+            "scrutiny": 2
+          }
+        },
+        {
+          "id": "refuse_firmly",
+          "textId": "mi_town_recruitment_refuse",
+          "text": "Refuse firmly",
+          "resultTextId": "mi_town_recruitment_refuse_result",
+          "resultText": "'I have a lord. Find someone else.' The recruiter nods and moves on. Loyalty has its price, but also its value.",
+          "risk": "safe",
+          "effects": {
+            "lordRep": 5,
+            "traitXp": {
+              "Honor": 5
+            }
+          }
+        },
+        {
+          "id": "hear_out",
+          "textId": "mi_town_recruitment_hear",
+          "text": "Hear them out but commit to nothing",
+          "resultTextId": "mi_town_recruitment_hear_result",
+          "resultText": "You listen politely, ask questions, and make no promises. The recruiter shares details about his employer—troop strength, pay rates, current campaigns. Information is useful, even if you never act on it. And information has value to those who know how to use it.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 8
+            }
+          },
+          "effects": {
+            "traitXp": {
+              "Calculating": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_brawl",
+      "category": "map_incident",
+      "titleId": "mi_town_brawl_title",
+      "title": "Tavern Trouble",
+      "setupId": "mi_town_brawl_setup",
+      "setup": "Local men don't like soldiers. Words become shoves, shoves become fists. A brawl is starting, and you're in the middle of it.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 1, "max": 6 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "fight",
+          "textId": "mi_town_brawl_fight",
+          "text": "Fight back",
+          "resultTextId": "mi_town_brawl_fight_result",
+          "resultText": "Fists fly and furniture breaks. You take some hits but give better than you get. When it's over, you're bloody but standing.",
+          "risk": "risky",
+          "risk_chance": 65,
+          "effects": {
+            "soldierRep": 8,
+            "hpChange": -10,
+            "traitXp": {
+              "Valor": 5
+            }
+          },
+          "effects_failure": {
+            "hpChange": -25,
+            "scrutiny": 2,
+            "gold": -15
+          },
+          "failure_resultText": "The locals are tougher than they looked. You're beaten badly and robbed of your coin before the watch arrives."
+        },
+        {
+          "id": "defuse",
+          "textId": "mi_town_brawl_defuse",
+          "text": "Try to defuse the situation",
+          "requirements": {
+            "minSkills": {
+              "Charm": 40
+            }
+          },
+          "resultTextId": "mi_town_brawl_defuse_result",
+          "resultText": "'Easy, friends. We're all just here for a drink.' Your calm voice cuts through the tension. The locals back off, and the evening continues peacefully.",
+          "tooltip": "Requires Charm 40+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Charm": 15
+            }
+          },
+          "effects": {
+            "officerRep": 5,
+            "soldierRep": 3
+          }
+        },
+        {
+          "id": "flee",
+          "textId": "mi_town_brawl_flee",
+          "text": "Slip away before it gets worse",
+          "resultTextId": "mi_town_brawl_flee_result",
+          "resultText": "You're not drunk enough to fight for nothing. You slip out the back door and let the fools sort themselves out.",
+          "risk": "safe",
+          "effects": {
+            "soldierRep": -5,
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "mi_town_information",
+      "category": "map_incident",
+      "titleId": "mi_town_information_title",
+      "title": "Town Gossip",
+      "setupId": "mi_town_information_setup",
+      "setup": "The locals are talking about the war—troop movements, supply problems, rumors of battles. Some of it sounds useful. You could listen carefully, or join the conversation.",
+      "requirements": {
+        "context": "entering_town",
+        "role": "Any",
+        "tier": { "min": 2, "max": 8 }
+      },
+      "timing": {
+        "cooldown_days": 10,
+        "priority": "normal",
+        "one_time": false
+      },
+      "options": [
+        {
+          "id": "listen_carefully",
+          "textId": "mi_town_information_listen",
+          "text": "Listen carefully without joining",
+          "resultTextId": "mi_town_information_listen_result",
+          "resultText": "You nurse your drink and let the talk wash over you. Most of it is nonsense, but a few details might be worth remembering.",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Scouting": 10
+            }
+          },
+          "effects": {
+            "traitXp": {
+              "Calculating": 3
+            }
+          }
+        },
+        {
+          "id": "join_conversation",
+          "textId": "mi_town_information_join",
+          "text": "Join the conversation",
+          "requirements": {
+            "minSkills": {
+              "Charm": 30
+            }
+          },
+          "resultTextId": "mi_town_information_join_result",
+          "resultText": "You pull up a chair and share a few war stories. The locals warm to you, and the conversation flows more freely. Useful details emerge.",
+          "tooltip": "Requires Charm 30+",
+          "risk": "safe",
+          "rewards": {
+            "skillXp": {
+              "Charm": 10,
+              "Scouting": 15
+            }
+          },
+          "effects": {
+            "soldierRep": 3
+          }
+        },
+        {
+          "id": "spread_disinfo",
+          "textId": "mi_town_information_disinfo",
+          "text": "Spread false information",
+          "requirements": {
+            "minSkills": {
+              "Roguery": 45
+            }
+          },
+          "resultTextId": "mi_town_information_disinfo_result",
+          "resultText": "You casually mention invented troop movements and supply routes. If these rumors spread to the enemy, they'll be chasing shadows.",
+          "tooltip": "Requires Roguery 45+",
+          "risk": "risky",
+          "rewards": {
+            "skillXp": {
+              "Roguery": 20
+            }
+          },
+          "effects": {
+            "lordRep": 5,
+            "scrutiny": 2
+          }
+        }
+      ]
+    }
+  ]
+}
+

@@ -44,14 +44,35 @@ namespace Enlisted.Features.Orders.Models
         public Dictionary<string, int> Escalation { get; set; } = [];
 
         /// <summary>
-        /// Denar reward or penalty for this outcome.
+        /// Medical risk delta (escalation track for illness/injury risk).
+        /// Positive values increase medical risk from spoiled food, disease exposure, etc.
         /// </summary>
-        public int Denars { get; set; }
+        public int? MedicalRisk { get; set; }
 
         /// <summary>
-        /// Renown reward or penalty for this outcome.
+        /// Denar reward or penalty for this outcome. Null if no gold change.
         /// </summary>
-        public int Renown { get; set; }
+        public int? Denars { get; set; }
+
+        /// <summary>
+        /// Renown reward or penalty for this outcome. Null if no renown change.
+        /// </summary>
+        public int? Renown { get; set; }
+
+        /// <summary>
+        /// HP loss for player character (injuries from dangerous orders). Null if no HP loss.
+        /// </summary>
+        public int? HpLoss { get; set; }
+
+        /// <summary>
+        /// Minimum troop casualties for critical failures. Used with TroopLossMax to determine random troop loss.
+        /// </summary>
+        public int? TroopLossMin { get; set; }
+
+        /// <summary>
+        /// Maximum troop casualties for critical failures. Used with TroopLossMin to determine random troop loss.
+        /// </summary>
+        public int? TroopLossMax { get; set; }
 
         /// <summary>
         /// Narrative text describing this outcome.

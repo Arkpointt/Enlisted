@@ -22,12 +22,9 @@ Data files for the Enlisted mod. All gameplay content and configuration.
 | `settings.json` | Logging levels, debug flags |
 | `progression_config.json` | Tier XP thresholds, culture-specific rank names |
 | `strategic_context_config.json` | War stance definitions, strategic contexts |
-| `schedule_config.json` | Camp schedule, activity timing |
-| `duties_system.json` | Duty definitions, role requirements |
-| `menu_config.json` | Game menu definitions |
-| `retinue_config.json` | Retinue capacity rules |
+| `menu_config.json` | Game menu definitions (future use) |
+| `retinue_config.json` | Retinue capacity rules, trickle rates, economics |
 | `equipment_pricing.json` | Quartermaster pricing, retirement costs |
-| `duty_event_pools.json` | Maps duties to event pools |
 
 ---
 
@@ -68,13 +65,34 @@ Narrative events triggered by context, role, or player action.
 | `incidents_settlement.json` | Entering/leaving settlements |
 
 ### Orders/
-Military directives from chain of command.
+Military directives from chain of command. Loaded dynamically from JSON at runtime.
 
 | File | Tier Range | Count |
 |------|------------|-------|
-| `orders_t1_t3.json` | Basic Soldier | 6 |
-| `orders_t4_t6.json` | Specialist | 6 |
-| `orders_t7_t9.json` | Leadership | 5 |
+| `orders_t1_t3.json` | Basic Soldier (T1-T3) | 6 |
+| `orders_t4_t6.json` | Specialist (T4-T6) | 6 |
+| `orders_t7_t9.json` | Leadership (T7-T9) | 5 |
+
+**Order Outcome Types:**
+- `success` - Player completed the order successfully
+- `failure` - Player failed the order (normal failure)
+- `critical_failure` - Player failed badly (bottom 15% of failure zone)
+- `decline` - Player refused the order
+
+**Outcome Effect Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `skill_xp` | object | Skill XP rewards (e.g., `{"Scouting": 50}`) |
+| `trait_xp` | object | Trait XP rewards (e.g., `{"Valor": 10}`) |
+| `reputation` | object | Reputation changes (`lord`, `officer`, `soldier`) |
+| `company_needs` | object | Company need changes (e.g., `{"Readiness": -10}`) |
+| `escalation` | object | Escalation changes (`scrutiny`, `discipline`) |
+| `medical_risk` | int | Medical risk escalation delta (illness/disease exposure) |
+| `denars` | int | Gold reward/penalty |
+| `renown` | int | Renown reward/penalty |
+| `hp_loss` | int | Player HP damage (wounds) |
+| `troop_loss` | object | Troop casualties (`{"min": 1, "max": 3}`) |
+| `text` | string | Narrative feedback shown to player |
 
 ### Decisions/
 Player-initiated actions from camp menu.

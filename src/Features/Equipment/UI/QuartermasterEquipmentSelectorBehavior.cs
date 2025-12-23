@@ -1,10 +1,15 @@
 using System;
 using System.Collections.Generic;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.MapEvents;
+using TaleWorlds.CampaignSystem.Party;
+using TaleWorlds.CampaignSystem.Settlements;
 using TaleWorlds.Core;
 using TaleWorlds.Engine.GauntletUI;
 using TaleWorlds.InputSystem;
 using TaleWorlds.ScreenSystem;
+using Enlisted.Features.Conversations.Behaviors;
+using Enlisted.Features.Enlistment.Behaviors;
 using Enlisted.Features.Equipment.Behaviors;
 using Enlisted.Mod.Core.Logging;
 
@@ -15,6 +20,8 @@ namespace Enlisted.Features.Equipment.UI
     /// 
     /// Creates a custom UI overlay showing equipment variants as clickable buttons.
     /// Uses TaleWorlds Gauntlet UI system for custom overlay creation and management.
+    /// After closing, the player returns to the quartermaster conversation hub for more shopping.
+    /// Registers for campaign events to force-close on battle/capture interruptions.
     /// </summary>
     public class QuartermasterEquipmentSelectorBehavior : CampaignBehaviorBase
     {
@@ -26,6 +33,14 @@ namespace Enlisted.Features.Equipment.UI
         private static GauntletMovieIdentifier _gauntletMovie;
         private static QuartermasterEquipmentSelectorVm _selectorViewModel;
         
+        // Track whether to return to conversation after closing
+        private static bool _returnToConversationOnClose = true;
+        
+        /// <summary>
+        /// Returns true if the equipment selector UI is currently open.
+        /// </summary>
+        public static bool IsOpen => _gauntletLayer != null;
+        
         public QuartermasterEquipmentSelectorBehavior()
         {
             Instance = this;
@@ -33,12 +48,96 @@ namespace Enlisted.Features.Equipment.UI
         
         public override void RegisterEvents()
         {
-            // No events needed for UI behavior
+            // Force-close Gauntlet on events that interrupt the QM interaction
+            CampaignEvents.OnPlayerBattleEndEvent.AddNonSerializedListener(this, OnBattleEnd);
+            CampaignEvents.OnSettlementLeftEvent.AddNonSerializedListener(this, OnSettlementLeft);
+            CampaignEvents.HeroPrisonerTaken.AddNonSerializedListener(this, OnHeroPrisonerTaken);
+            CampaignEvents.MapEventEnded.AddNonSerializedListener(this, OnMapEventEnded);
         }
         
         public override void SyncData(IDataStore dataStore)
         {
             // No persistent data for UI behavior
+            // Force-close on save/load to prevent stale UI
+            if (dataStore.IsLoading)
+            {
+                if (IsOpen)
+                {
+                    ForceCloseOnInterruption("save/load");
+                }
+                if (IsUpgradeScreenOpen)
+                {
+                    CloseUpgradeScreen(false);
+                    ModLogger.Info("QuartermasterUI", "Force-closed upgrade screen due to save load");
+                }
+            }
+        }
+        
+        private void OnBattleEnd(MapEvent mapEvent)
+        {
+            if (IsOpen)
+            {
+                ForceCloseOnInterruption("battle end");
+            }
+            if (IsUpgradeScreenOpen)
+            {
+                CloseUpgradeScreen(false);
+                ModLogger.Info("QuartermasterUI", "Force-closed upgrade screen due to battle end");
+            }
+        }
+        
+        private void OnSettlementLeft(MobileParty party, Settlement settlement)
+        {
+            if (party == MobileParty.MainParty)
+            {
+                if (IsOpen)
+                {
+                    ForceCloseOnInterruption("settlement left");
+                }
+                if (IsUpgradeScreenOpen)
+                {
+                    CloseUpgradeScreen(false);
+                    ModLogger.Info("QuartermasterUI", "Force-closed upgrade screen due to settlement departure");
+                }
+            }
+        }
+        
+        private void OnHeroPrisonerTaken(PartyBase capturer, Hero prisoner)
+        {
+            if (prisoner == Hero.MainHero)
+            {
+                if (IsOpen)
+                {
+                    ForceCloseOnInterruption("player captured");
+                }
+                if (IsUpgradeScreenOpen)
+                {
+                    CloseUpgradeScreen(false);
+                    ModLogger.Info("QuartermasterUI", "Force-closed upgrade screen due to player capture");
+                }
+            }
+        }
+        
+        private void OnMapEventEnded(MapEvent mapEvent)
+        {
+            if (IsOpen)
+            {
+                ForceCloseOnInterruption("map event ended");
+            }
+            if (IsUpgradeScreenOpen)
+            {
+                CloseUpgradeScreen(false);
+                ModLogger.Info("QuartermasterUI", "Force-closed upgrade screen due to map event end");
+            }
+        }
+        
+        /// <summary>
+        /// Force-close the selector due to external interruption. Does not return to conversation.
+        /// </summary>
+        private static void ForceCloseOnInterruption(string reason)
+        {
+            ModLogger.Info("QuartermasterUI", $"Force-closing equipment selector due to: {reason}");
+            CloseEquipmentSelector(false);
         }
         
         /// <summary>
@@ -49,10 +148,11 @@ namespace Enlisted.Features.Equipment.UI
         {
             try
             {
-                // Close any existing selector first
-                if (_gauntletLayer != null)
+                // Prevent double-open - close existing first without returning to conversation
+                if (IsOpen)
                 {
-                    CloseEquipmentSelector();
+                    ModLogger.Debug("QuartermasterUI", "Closing existing selector before opening new one");
+                    CloseEquipmentSelector(false);
                 }
                 
                 if (availableVariants == null || availableVariants.Count <= 1)
@@ -114,8 +214,10 @@ namespace Enlisted.Features.Equipment.UI
         
         /// <summary>
         /// Close equipment selector and clean up UI resources.
+        /// By default, returns to the quartermaster conversation hub for continued shopping.
         /// </summary>
-        public static void CloseEquipmentSelector()
+        /// <param name="returnToConversation">If true, restarts the QM conversation after closing.</param>
+        public static void CloseEquipmentSelector(bool returnToConversation = true)
         {
             try
             {
@@ -150,7 +252,144 @@ namespace Enlisted.Features.Equipment.UI
                 _gauntletMovie = null;
                 _selectorViewModel = null;
             }
+            
+            // Return to quartermaster conversation after closing (only if still enlisted with valid QM)
+            if (returnToConversation && _returnToConversationOnClose)
+            {
+                var enlistment = EnlistmentBehavior.Instance;
+                var qmHero = enlistment?.QuartermasterHero;
+                
+                if (enlistment?.IsEnlisted != true)
+                {
+                    ModLogger.Debug("QuartermasterUI", "Not returning to conversation - player no longer enlisted");
+                }
+                else if (qmHero == null || !qmHero.IsAlive)
+                {
+                    ModLogger.Debug("QuartermasterUI", "Not returning to conversation - QM hero unavailable");
+                }
+                else
+                {
+                    EnlistedDialogManager.RestartQuartermasterConversation();
+                }
+            }
         }
         
+        /// <summary>
+        /// Close the selector without returning to conversation.
+        /// Used when the player explicitly exits via the "Done" button or external interruption.
+        /// </summary>
+        public static void CloseWithoutConversation()
+        {
+            _returnToConversationOnClose = false;
+            CloseEquipmentSelector(false);
+            _returnToConversationOnClose = true;
+        }
+        
+        #region Upgrade Screen Support (Phase 3)
+        
+        // Upgrade screen UI components
+        private static GauntletLayer _upgradeLayer;
+        private static GauntletMovieIdentifier _upgradeMovie;
+        private static QuartermasterUpgradeVm _upgradeViewModel;
+        
+        /// <summary>
+        /// Check if upgrade screen is currently open.
+        /// </summary>
+        public static bool IsUpgradeScreenOpen => _upgradeLayer != null;
+        
+        /// <summary>
+        /// Show upgrade screen with player's equipped items.
+        /// </summary>
+        public static void ShowUpgradeScreen()
+        {
+            try
+            {
+                // Prevent double-open
+                if (IsUpgradeScreenOpen)
+                {
+                    ModLogger.Debug("QuartermasterUI", "Closing existing upgrade screen before opening new one");
+                    CloseUpgradeScreen(false);
+                }
+                
+                // Create ViewModel
+                _upgradeViewModel = new QuartermasterUpgradeVm();
+                _upgradeViewModel.RefreshValues();
+                
+                // Create Gauntlet layer for upgrade screen overlay
+                _upgradeLayer = new GauntletLayer("QuartermasterUpgradeScreen", 4000);
+                
+                // Load upgrade screen movie from GUI/Prefabs/Equipment/
+                _upgradeMovie = _upgradeLayer.LoadMovie("QuartermasterUpgradeScreen", _upgradeViewModel);
+                
+                // Apply input restrictions and add layer to screen
+                _upgradeLayer.InputRestrictions.SetInputRestrictions();
+                ScreenManager.TopScreen.AddLayer(_upgradeLayer);
+                _upgradeLayer.IsFocusLayer = true;
+                ScreenManager.TrySetFocus(_upgradeLayer);
+                
+                // Handle ESC key to close upgrade screen
+                _upgradeLayer.Input.RegisterHotKeyCategory(HotKeyManager.GetCategory("GenericCampaignPanelsGameKeyCategory"));
+                
+                ModLogger.Info("QuartermasterUI", "Upgrade screen opened successfully");
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("QuartermasterUI", "Failed to open upgrade screen", ex);
+                CloseUpgradeScreen();
+            }
+        }
+        
+        /// <summary>
+        /// Close upgrade screen and clean up UI resources.
+        /// By default, returns to the quartermaster conversation hub.
+        /// </summary>
+        /// <param name="returnToConversation">If true, restarts the QM conversation after closing.</param>
+        public static void CloseUpgradeScreen(bool returnToConversation = true)
+        {
+            try
+            {
+                if (_upgradeLayer != null)
+                {
+                    // Reset input restrictions and remove focus
+                    _upgradeLayer.InputRestrictions.ResetInputRestrictions();
+                    _upgradeLayer.IsFocusLayer = false;
+                    
+                    if (_upgradeMovie != null)
+                    {
+                        _upgradeLayer.ReleaseMovie(_upgradeMovie);
+                        _upgradeMovie = null;
+                    }
+                    
+                    // Remove layer from screen
+                    ScreenManager.TopScreen?.RemoveLayer(_upgradeLayer);
+                    _upgradeLayer = null;
+                    
+                    ModLogger.Debug("QuartermasterUI", "Upgrade screen closed successfully");
+                }
+                
+                // Clean up ViewModel (OnFinalize should cascade to child ViewModels in MBBindingList)
+                if (_upgradeViewModel != null)
+                {
+                    _upgradeViewModel.OnFinalize();
+                    _upgradeViewModel = null;
+                }
+                
+                // Note: Child ViewModels (QuartermasterUpgradeItemVm and UpgradeOptionVm) in MBBindingList
+                // should be automatically finalized by parent OnFinalize() call. Monitor for memory leaks
+                // if upgrade screen is used frequently.
+                
+                // Return to quartermaster conversation if requested
+                if (returnToConversation && _returnToConversationOnClose)
+                {
+                    EnlistedDialogManager.RestartQuartermasterConversation();
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.Error("QuartermasterUI", "Error closing upgrade screen", ex);
+            }
+        }
+        
+        #endregion
     }
 }
